@@ -18,7 +18,7 @@ Route::post('/login', function (Request $request) {
     if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
         $request->session()->regenerate();
         
-        return redirect()->route('dashboard');
+        return redirect('/dashboard');
     }
 
     throw ValidationException::withMessages([
@@ -36,5 +36,5 @@ Route::post('/logout', function (Request $request) {
 
 // Dashboard (etter innlogging)
 Route::middleware('auth')->get('/dashboard', function () {
-    return view('Tech.dashboard');
+    return view('dashboard');
 })->name('dashboard');
