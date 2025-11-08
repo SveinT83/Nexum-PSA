@@ -1,61 +1,134 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# tdPSA – Phase 1 Plan (MVP)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Scope
 
-## About Laravel
+1. **Ticket list (read-only)** – show incoming tickets.
+2. **Settings → Email accounts** – add/manage accounts to listen on.
+3. **Settings → Incoming email parsing/routing** – parser profiles to map headers to fields (customer, site, asset, alert).
+4. **Settings → Tickets → Queues** – configure queues.
+5. **Settings → Tickets → Categories** – configure categories/issues.
+6. **Settings → Tickets → Rules** – if/then rules for routing, categories, priority.
+7. **Mail-listener** – read enabled accounts, parse, apply rules, dedup, append/create tickets.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Defaults
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* **Queue (unmatched):** `default`
+* **Category (unmatched):** `Uncategorized`
+* **Priorities:** `Low`, `Normal`, `High` (later DB-customizable)
+* **Default priority:** `Normal`
+* **Language:** English (V3 = email templates for customer replies)
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Data model (simplified)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+* `email_accounts`
+* `parser_profiles`
+* `queues`
+* `categories`
+* `priorities`
+* `rules`
+* `tickets`
+* `ticket_messages`
+* `rule_executions`
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Features per area
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Tickets → List
 
-### Premium Partners
+* Columns: ID, Title, Queue, Category, Priority, Source, Updated.
+* Filters: Queue, Category, Source.
+* Default sort: Updated DESC.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Settings → Email accounts
 
-## Contributing
+* CRUD for accounts.
+* Fields: host, port, encryption, username, label, enabled.
+* Function: **Test connection**.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Settings → Parsers
 
-## Code of Conduct
+* Multiple profiles per account.
+* Match on: from, subject, header.
+* Field-map: customer, site, asset, alert.
+* Fallback: Generic parser.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Settings → Queues
 
-## Security Vulnerabilities
+* CRUD.
+* One marked as **default**.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Settings → Categories
 
-## License
+* CRUD (flat, later: parent/child).
+* Default = `Uncategorized`, cannot be deleted.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Settings → Rules
+
+* List + drag-sort.
+* Toggle on/off.
+* Condition builder (field + operator + value).
+* Actions: set queue, category, priority, tags, assign.
+* Policy: **stop on match** when action = final.
+
+### Settings → Incoming test (dry-run)
+
+* UI: headers + body + subject + from (prefilled standard).
+* Output:
+
+  1. Parser matched
+  2. Extracted fields
+  3. Dedup check
+  4. Thread match
+  5. Rule trace (true/false)
+  6. Outcome (queue, category, priority, new/append/suppressed)
+* API endpoint also available for automation.
+
+### Mail listener
+
+* Load enabled accounts from DB.
+* Flow:
+
+  1. Dedup (5 min window)
+  2. Thread match
+  3. Parser
+  4. Rules
+  5. Create/Append ticket
+* Dedup/merge policy:
+
+  * Within 5 min → suppress, log.
+  * After 5 min with same key → append note ("Duplicate merged").
+
+### Observability
+
+* `rule_executions` log.
+* Raw message reference stored (for debug).
+* Metrics: incoming, suppressed, new, appended.
+
+---
+
+## Acceptance criteria
+
+* Email to enabled account → appears in list within polling cycle.
+* Duplicate (same key within 5 min) → suppressed.
+* Reply (In-Reply-To / [T#1234]) → appended to correct ticket.
+* No parser match → Default queue/category/priority.
+* Dry-run test produces same outcome as real intake.
+
+---
+
+## Open points for later
+
+* Source-tagging visible in ticket list?
+* Tags in v1 or push to v2?
+* Dedicated “Untriaged view” for default queue?
+
+---
+
+## Next step
+
+Create a **week 1 build todo**: day-by-day tasks (data, settings UI, listener skeleton, ticket list).
