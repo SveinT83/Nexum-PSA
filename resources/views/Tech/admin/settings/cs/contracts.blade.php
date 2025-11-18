@@ -1,3 +1,12 @@
+@extends('layouts.default_tech')
+
+@section('title', 'Contract Settings')
+
+@section('pageHeader')
+    <h1>Contract Settings</h1>
+@endsection
+
+@section('content')
 # tech.admin.settings.cs.contracts – View Specification
 
 **Date:** 2025-10-17
@@ -140,3 +149,20 @@ Provide global configuration for **contract behavior, binding policies, indexing
 * No HTML; describes logic, structure, and intended UX only.
 * Static admin template; Livewire handles updates inline.
 * Changes propagate to contract create/edit views dynamically.
+@endsection
+
+@section('sidebar')
+    <h3>Tech Sidebar</h3>
+    <ul>
+        <li><a href="#">System Status</a></li>
+        <li><a href="#">Task Management</a></li>
+        <li><a href="#">Reports</a></li>
+    </ul>
+@endsection
+
+@section('rightbar')
+    <h3>Notifications</h3>
+    <ul>
+        <li>No new notifications.</li>
+    </ul>
+@endsection

@@ -18,10 +18,11 @@
         "spatie/laravel-backup": "^9.3",
         "spatie/laravel-health": "^1.34",
         "spatie/laravel-permission": "^6.21",
-        "webklex/laravel-imap": "^6.2"
+        "webklex/laravel-imap": "^6"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "laravel/boost": "^1.8",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",

@@ -1,3 +1,12 @@
+@extends('layouts.default_tech')
+
+@section('title', 'Tech Dashboard')
+
+@section('pageHeader')
+    <h1>Ticket Rules Settings</h1>
+@endsection
+
+@section('content')
 # tech.admin.settings.ticket.rules.index
 
 **Date:** 2025-10-21
@@ -148,3 +157,20 @@ The goal is to automate classification, prioritization, and routing of tickets, 
 * Follow standard PSA admin layout: header / main / right sidebar.
 
 ---
+@endsection
+
+@section('sidebar')
+    <h3>Tech Sidebar</h3>
+    <ul>
+        <li><a href="#">System Status</a></li>
+        <li><a href="#">Task Management</a></li>
+        <li><a href="#">Reports</a></li>
+    </ul>
+@endsection
+
+@section('rightbar')
+    <h3>Notifications</h3>
+    <ul>
+        <li>No new notifications.</li>
+    </ul>
+@endsection

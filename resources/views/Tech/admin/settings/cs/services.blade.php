@@ -1,3 +1,12 @@
+@extends('layouts.default_tech')
+
+@section('title', 'Service Settings')
+
+@section('pageHeader')
+    <h1>Service Settings</h1>
+@endsection
+
+@section('content')
 # tech.admin.settings.cs.services – View Specification
 
 **Date:** 2025-10-17
@@ -141,3 +150,20 @@ System-wide configuration for the **Service Catalog** that feeds contracts. Cont
 * No HTML or code; this is a behavioral/UX spec for developers and GitHub Copilot.
 * Follows top/main/rail layout; content updates live via Livewire.
 * Settings here influence both `tech.cs.services.*` and `tech.cs.contracts.*` flows.
+@endsection
+
+@section('sidebar')
+    <h3>Tech Sidebar</h3>
+    <ul>
+        <li><a href="#">System Status</a></li>
+        <li><a href="#">Task Management</a></li>
+        <li><a href="#">Reports</a></li>
+    </ul>
+@endsection
+
+@section('rightbar')
+    <h3>Notifications</h3>
+    <ul>
+        <li>No new notifications.</li>
+    </ul>
+@endsection

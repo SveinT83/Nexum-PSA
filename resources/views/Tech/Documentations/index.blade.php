@@ -1,3 +1,12 @@
+@extends('layouts.default_tech')
+
+@section('title', 'Documentations')
+
+@section('pageHeader')
+    <h1>Documentations</h1>
+@endsection
+
+@section('content')
 # tech.documentations.index — Documentation Index View
 
 **URL:** `tech/documentations/index`
@@ -97,3 +106,20 @@ A central view that lists **all documentation records**, grouped by **category**
 * Global search results should show category icons for visual clarity.
 
 ---
+@endsection
+
+@section('sidebar')
+    <h3>Left Sidebar</h3>
+    <ul>
+        <li><a href="#">System Status</a></li>
+        <li><a href="#">Task Management</a></li>
+        <li><a href="#">Reports</a></li>
+    </ul>
+@endsection
+
+@section('rightbar')
+    <h3>Right Sidebar</h3>
+    <ul>
+        <li>No new notifications.</li>
+    </ul>
+@endsection

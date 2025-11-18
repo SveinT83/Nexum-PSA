@@ -1,3 +1,12 @@
+@extends('layouts.default_tech')
+
+@section('title', 'Contracts')
+
+@section('pageHeader')
+    <h1>Contracts</h1>
+@endsection
+
+@section('content')
 # tech.cs.services.index – View Specification
 
 **Date:** 2025-10-17
@@ -161,3 +170,20 @@ Bulk actions (when rows selected): `Deprecate`, `Hide/Unhide`, `Export CSV`.
 * No HTML code; components and behaviors only.
 * Follows top/main/rail layout convention; dashboard is static, content live-updating.
 * Naming and structure optimized for developer handoff and GitHub Copilot understanding.
+@endsection
+
+@section('sidebar')
+    <h3>Left Sidebar</h3>
+    <ul>
+        <li><a href="#">System Status</a></li>
+        <li><a href="#">Task Management</a></li>
+        <li><a href="#">Reports</a></li>
+    </ul>
+@endsection
+
+@section('rightbar')
+    <h3>Right Sidebar</h3>
+    <ul>
+        <li>No new notifications.</li>
+    </ul>
+@endsection

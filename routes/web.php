@@ -17,8 +17,8 @@ Route::post('/login', function (Request $request) {
 
     if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
         $request->session()->regenerate();
-        
-        return redirect('/dashboard');
+        // Redirect to named route inside tech prefix group
+        return redirect()->route('tech.dashboard');
     }
 
     throw ValidationException::withMessages([
@@ -35,6 +35,8 @@ Route::post('/logout', function (Request $request) {
 })->name('logout');
 
 // Dashboard (etter innlogging)
+/*
 Route::middleware('auth')->get('/dashboard', function () {
     return view('Tech.dashboard');
 })->name('dashboard');
+*/
