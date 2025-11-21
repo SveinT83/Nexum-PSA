@@ -1,150 +1,343 @@
-# tech.cs.services.create – View Specification
+@extends('layouts.default_tech')
 
-**Date:** 2025-10-17
-**URL:** `tech.cs.services.create` → `/tech/cs/services/create`
-**Access levels:** `service.create`, `tech.admin`, `superuser`
-**Controller:** `App\\Http\\Controllers\\Tech\\CS\\ServicesController@create` (GET) / `@store` (POST)
-**Status:** Not completed
-**Difficulty:** Medium
-**Estimated time:** 3.5 hours
+@section('pageHeader')
+    <div class="d-flex justify-content-between align-items-center py-3">
+        <h2 class="h4 mb-0">New service</h2>
+        <div>
+            <a href="{{ route('tech.services.index') }}" class="btn btn-sm btn-primary">Back</a>
+        </div>
+    </div>
+@endsection
 
----
+@section('content')
+    @if(session('status'))
+        <div class="alert alert-success">{{ session('status') }}</div>
+    @endif
 
-## Purpose
+      <!-- ------------------------------------------------- -->
+      <!-- Form to create a new service -->
+      <!-- ------------------------------------------------- -->
+      <x-forms.form-default action="{{ route('tech.services.store') }}" buttonText="Create Service">
 
-Create a new **service offering** that can be used inside contracts. The service defines defaults (pricing, billing interval, SLA, binding, downgrade policy, terms) that are **snapshotted** into contracts. SKU must be unique; manual entry is allowed with collision warning.
+         <!-- ------------------------------------------------- -->
+         <!-- Card for Item details -->
+         <!-- ------------------------------------------------- -->
+         <x-forms.form-card title="Item info">
 
----
+            <!-- ------------------------------------------------- -->
+            <!-- Row fore SKU and name -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between pb-3 mt-3 mb-3">
 
-## Design & Layout (Bootstrap)
+               <!-- SKU -->
+               <div class="col-md-4 mb-3">
+                  <label for="sku" class="form-label fw-bold">SKU</label>
+                  <input type="text" class="form-control @error('sku') is-invalid @enderror" id="sku" name="sku" value="{{ old('sku') }}" />
+                  @error('sku')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-**Template regions:** Top header / Main content / Right slim rail.
-**Icons (suggested):** plus-circle, tag, layers, calendar, percent, shield, scale, clock, file-text, alert-triangle, save.
+               <!-- Name -->
+               <div class="col-md-8 mb-3">
+                  <label for="name" class="form-label fw-bold">Name</label>
+                  <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required />
+                  @error('name')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-* **Top header**
+            </div>
 
-  * Title: “Create Service”
-  * Secondary actions: `Cancel` (back to index), `Preview` (opens read preview in modal)
+            <!-- ------------------------------------------------- -->
+            <!-- short_description -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between pb-3 mt-3 mb-3">
 
-* **Main content** (grouped fieldsets)
+               <!-- short_description -->
+               <div class="col-md-12 mb-3">
+                  <label for="short_description" class="form-label fw-bold">Short Description</label>
+                  <textarea class="form-control @error('short_description') is-invalid @enderror" id="short_description" name="short_description" rows="2">{{ old('short_description') }}</textarea>
+                  @error('short_description')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-  1. **Identity**
+            </div>
 
-     * Service name (required)
-     * Category (select; e.g., Licensing, Support, Managed, Project)
-     * Visibility (Active / Hidden / Deprecated)
-  2. **SKU & Catalog**
+            <!-- ------------------------------------------------- -->
+            <!-- Row fore: long_description  -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between mt-3">
+               <!-- long_description -->
+               <div class="col-md-12 mb-3">
+                  <label for="long_description" class="form-label fw-bold">Long Description</label>
+                  <textarea class="form-control @error('long_description') is-invalid @enderror" id="long_description" name="long_description" rows="4">{{ old('long_description') }}</textarea>
+                  @error('long_description')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
+            </div>
 
-     * SKU (text, required) – manual entry allowed
-     * Button: `Generate SKU` (uses configured range; warns on collisions)
-     * Collision warning component (non-blocking until resolved)
-  3. **Pricing & Billing**
+         </x-forms.form-card>
 
-     * Billing model (dropdown): Per user / Per asset / Fixed / Tiered
-     * Unit price (currency from settings)
-     * Billing interval (Monthly / Quarterly / Yearly / Custom)
-     * Setup fee (optional)
-     * Discount default (percent or amount)
-  4. **Inclusions & Caps**
+         <!-- ------------------------------------------------- -->
+         <!-- Card for Pricing -->
+         <!-- ------------------------------------------------- -->
+         <x-forms.form-card title="Pricing">
 
-     * Included users (optional)
-     * Included assets (optional)
-     * Included hours / timebank (optional)
-     * Caps/overage policy (describe text + numeric fields)
-  5. **SLA Defaults**
+            <!-- ------------------------------------------------- -->
+            <!-- Row fore Prices: price_ex_vat, taxable, default_discount_value,  default_discount_type, billing_interval -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between pb-3 mt-3 mb-3">
 
-     * SLA policy (select from SLA profiles)
-     * Response/Resolution targets (read-only when profile selected; editable if custom)
-  6. **Binding & Downgrade**
+               <!-- price_ex_vat -->
+               <div class="col-md-3 mb-3">
+                  <label for="price_ex_vat" class="form-label fw-bold">Price Ex VAT</label>
+                  <input type="number" class="form-control @error('price_ex_vat') is-invalid @enderror" id="price_ex_vat" name="price_ex_vat" value="{{ old('price_ex_vat') }}" />
+                  @error('price_ex_vat')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-     * Binding required (checkbox)
-     * Binding duration (months: 12/24/36/custom)
-     * Downgrade allowed during binding (checkbox)
-     * Notes for binding (short text)
-  7. **Indexing Defaults**
+               <!-- taxable -->
+               <div class="col-md-3 mb-3 text-center">
+                  <label for="taxable" class="form-label fw-bold">Taxable</label>
+                  <br />
+                  <input type="checkbox" class="form-check-input @error('taxable') is-invalid @enderror" id="taxable" name="taxable" {{ old('taxable') ? 'checked' : '' }} />
+                  @error('taxable')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-     * Allow price indexing link (info text: contracts may restrict)
-     * Suggested max indexing % (number)
-     * Apply decreases allowed (checkbox)
-  8. **Terms & Descriptions**
+               <!-- billing_interval -->
+               <div class="col-md-3 mb-3">
+                  <label for="billing_interval" class="form-label fw-bold">Billing Interval</label>
+                  <select class="form-select @error('billing_interval') is-invalid @enderror"
+                        id="billing_interval"
+                        name="billing_interval">
+                     <option value="monthly" @selected(old('billing_interval')==='monthly')>Monthly</option>
+                     <option value="quarterly" @selected(old('billing_interval')==='quarterly')>Quarterly</option>
+                     <option value="yearly" @selected(old('billing_interval')==='yearly')>Yearly</option>
+                  </select>
+                  @error('billing_interval')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-     * Short description (for lists)
-     * Invoice description (will show on invoices)
-     * Service terms (rich text; becomes part of contract document)
+            </div>
 
-* **Right slim rail**
+            <!-- ------------------------------------------------- -->
+            <!-- Row fore One_time_fee and one_time_fee_recurrence, recurrence_value_x -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between mt-3">
 
-  * **ServicePreviewCard**: name, category, SKU, interval, unit price, estimated monthly value (computed)
-  * **PolicySummary**: binding, downgrade, indexing, SLA
-  * **AuditPreflight**: who is creating, timestamp, will be logged
-  * **Actions**: `Save`, `Save & New`
+               <!-- One_time -->
+               <div class="col-md-3 mb-3">
+                  <label for="one_time_fee" class="form-label fw-bold">One Time Fee</label>
+                  <input type="number" class="form-control @error('one_time_fee') is-invalid @enderror" id="one_time_fee" name="one_time_fee" value="{{ old('one_time_fee') }}" />
+                  @error('one_time_fee')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
----
+               <!-- recurrence_value_x -->
+               <div class="col-md-3 mb-3">
+                  <label for="recurrence_value_x" class="form-label fw-bold">Recurrence Value X</label>
+                  <input type="number" class="form-control @error('recurrence_value_x') is-invalid @enderror" id="recurrence_value_x" name="recurrence_value_x" value="{{ old('recurrence_value_x') }}" />
+                  @error('recurrence_value_x')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-## Components (Livewire)
+               <!-- one_time_fee_recurrence -->
+               <div class="col-md-3 mb-3">
+                  <label for="one_time_fee_recurrence" class="form-label fw-bold">One Time Fee Recurrence</label>
+                  <select class="form-select @error('one_time_fee_recurrence') is-invalid @enderror"
+                        id="one_time_fee_recurrence"
+                        name="one_time_fee_recurrence">
+                     <option value="" @selected(old('one_time_fee_recurrence')==='')>None</option>
+                     <option value="none" @selected(old('one_time_fee_recurrence')==='none')>None</option>
+                     <option value="yearly" @selected(old('one_time_fee_recurrence')==='yearly')>Yearly</option>
+                     <option value="every_x_years" @selected(old('one_time_fee_recurrence')==='every_x_years')>Every X Years</option>
+                     <option value="every_x_months" @selected(old('one_time_fee_recurrence')==='every_x_months')>Every X Months</option>
+                  </select>
+                  @error('one_time_fee_recurrence')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-* **`ServiceEditor`** – orchestrates all sections and validations.
-* **`SkuCollisionAlert`** – inline status for SKU uniqueness (checks on blur and before save).
-* **`PricingPanel`** – handles model/interval/unit price/discount with live totals.
-* **`BindingPolicyPanel`** – binding duration and downgrade rule.
-* **`IndexingPolicyPanel`** – suggested defaults for indexing and decreases.
-* **`SlaSelector`** – choose profile or custom; displays derived targets.
-* **`TermsEditor`** – rich text (no colors) with word count.
-* **`PreviewRail`** – condensed read-only preview of key fields.
+               </div>
+         </x-forms.form-card>
 
-Reusable elements: shared number inputs with currency suffix; shared select/autocomplete.
+         <!-- ------------------------------------------------- -->
+         <!-- Card for Discount details -->
+         <!-- ------------------------------------------------- -->
+         <x-forms.form-card title="Discount">
 
----
+            <!-- ------------------------------------------------- -->
+            <!-- Row fore default_discount_value, default_discount_type -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between mt-3">
 
-## Behaviors & Validation
+               <!-- default_discount_value -->
+               <div class="col-md-3 mb-3">
+                  <label for="default_discount_value" class="form-label fw-bold">Default Discount Value</label>
+                  <input type="number" class="form-control @error('default_discount_value') is-invalid @enderror" id="default_discount_value" name="default_discount_value" value="{{ old('default_discount_value') }}" />
+                  @error('default_discount_value')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-* **Live validation** on name, SKU uniqueness, numeric ranges, and required fields.
-* **SKU policy**: must be unique; generating uses settings-defined prefix/range; manual override allowed with collision warning.
-* **Currency**: pulled from settings; display symbol and ISO code; no conversion in this view.
-* **Binding logic**: if Binding required is enabled, enforce duration > 0; show downgrade toggle.
-* **Indexing defaults**: inform that contracts may further restrict indexing; decreases allowed as default toggle.
-* **SLA**: selecting a profile locks underlying targets; custom unlocks fields.
-* **Autosave guard**: warn before leaving if unsaved changes exist.
+               <!-- default_discount_type -->
+               <div class="col-md-3 mb-3">
+                  <label for="default_discount_type" class="form-label fw-bold">Default Discount Type</label>
+                  <select class="form-select @error('default_discount_type') is-invalid @enderror"
+                        id="default_discount_type"
+                        name="default_discount_type">
+                     <option value="" @selected(old('default_discount_type')==='')>None</option>
+                     <option value="amount" @selected(old('default_discount_type')==='amount')>Amount (currency)</option>
+                     <option value="percent" @selected(old('default_discount_type')==='percent')>Percent (%)</option>
+                  </select>
+                  @error('default_discount_type')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
+            </div>
+         </x-forms.form-card>
 
----
 
-## Permissions
+         <!-- ------------------------------------------------- -->
+         <!-- Card for Addon details -->
+         <!-- ------------------------------------------------- -->
+         
+         <x-forms.form-card title="Addon details">
 
-* View: `service.view` (for prefill lists like SLA profiles)
-* Create: `service.create`
-* Advanced (SKU generator, indexing defaults): `tech.admin` or above
-* Only `superuser` can bypass SKU collision in extreme cases (with audit reason)
+            <!-- ------------------------------------------------- -->
+            <!-- Row fore availability_addon_of_service_id, availability_audience, orderable_in_client_portal -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between mt-3">
 
----
+               <!-- availability_addon_of_service_id-->
+               <div class="col-md-6 mb-3">
+                  <label for="availability_addon_of_service_id" class="form-label fw-bold">Availability Addon Of Service</label>
+                  <select class="form-select @error('availability_addon_of_service_id') is-invalid @enderror"
+                        id="availability_addon_of_service_id"
+                        name="availability_addon_of_service_id">
+                     <option value="" @selected(old('availability_addon_of_service_id')==='')>None</option>
+                     <!-- Options to be populated dynamically -->
+                  </select>
+                  @error('availability_addon_of_service_id')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-## Audit & Logging
+               <!-- availability_audience -->
+               <div class="col-md-3 mb-3">
+                  <label for="availability_audience" class="form-label fw-bold">Availability Audience</label>
+                  <select class="form-select @error('availability_audience') is-invalid @enderror"
+                        id="availability_audience"
+                        name="availability_audience">
+                     <option value="internal" @selected(old('availability_audience')==='internal')>Internal</option>
+                     <option value="external" @selected(old('availability_audience')==='external')>External</option>
+                     <option value="both" @selected(old('availability_audience')==='both')>Both</option>
+                  </select>
+                  @error('availability_audience')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-* On create, log all core fields and policy toggles.
-* If SKU collision override by superuser, require mandatory comment.
-* Capture user, timestamp, and diff snapshot for initial version (service creation only).
 
----
+               <!-- orderable_in_client_portal -->
+               <div class="col-md-3 mb-3 text-center">
+                  <label for="orderable_in_client_portal" class="form-label fw-bold">Orderable In Client Portal</label>
+                  <br />
+                  <input type="checkbox" class="form-check-input @error('orderable_in_client_portal') is-invalid @enderror" id="orderable_in_client_portal" name="orderable_in_client_portal" {{ old('orderable_in_client_portal') ? 'checked' : '' }} />
+                  @error('orderable_in_client_portal')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-## Right Rail Widgets (suggested)
+               </div>
+         </x-forms.form-card>
 
-* **Readiness Checklist**: highlights missing mandatory fields before enabling Save
-* **Impact Hint**: “This service will be snapshotted into contracts; SKU cannot be changed there.”
-* **Quick Links**: to `tech.cs.services.index` and `tech.admin.settings.services`
 
----
+         <!-- ------------------------------------------------- -->
+         <!-- Card for Timebank details -->
+         <!-- ------------------------------------------------- -->
+         <x-forms.form-card title="Timebank details">
 
-## QA Scenarios (high level)
+            <!-- ------------------------------------------------- -->
+            <!-- Row fore: timebank_enabled, timebank_amount, timebank_minutes, timebank_interval  -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between mt-3">
 
-* Creating a service with duplicate SKU shows collision warning and blocks Save (unless superuser override with reason).
-* Binding required + duration = 0 prevents form submit.
-* Changing billing model updates computed monthly estimation in rail.
-* Selected SLA profile locks targets; switching to custom unlocks them.
-* Save & New returns a cleared form with success confirmation.
+               <!-- timebank_enabled -->
+               <div class="col-md-3 mb-3 text-center">
+                  <label for="timebank_enabled" class="form-label fw-bold">Timebank Enabled</label>
+                  <br />
+                  <input type="checkbox" class="form-check-input @error('timebank_enabled') is-invalid @enderror" id="timebank_enabled" name="timebank_enabled" {{ old('timebank_enabled') ? 'checked' : '' }} />
+                  @error('timebank_enabled')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
----
+               <!-- timebank_minutes -->
+               <div class="col-md-3 mb-3">
+                  <label for="timebank_minutes" class="form-label fw-bold">Timebank Minutes</label>
+                  <input type="number" class="form-control @error('timebank_minutes') is-invalid @enderror" id="timebank_minutes" name="timebank_minutes" value="{{ old('timebank_minutes') }}" />
+                  @error('timebank_minutes')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-## Notes
+               <!-- timebank_interval -->
+               <div class="col-md-3 mb-3">
+                  <label for="timebank_interval" class="form-label fw-bold">Timebank Interval</label>
+                  <select class="form-select @error('timebank_interval') is-invalid @enderror"
+                        id="timebank_interval"
+                        name="timebank_interval">
+                     <option value="monthly" @selected(old('timebank_interval')==='monthly')>Monthly</option>
+                     <option value="quarterly" @selected(old('timebank_interval')==='quarterly')>Quarterly</option>
+                     <option value="yearly" @selected(old('timebank_interval')==='yearly')>Yearly</option>
+                  </select>
+                  @error('timebank_interval')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
 
-* No HTML code in this doc; describes components and behaviors only.
-* Dashboard is static; content is live-updating as fields change.
-* Follows the same top/main/rail layout as other tech views.
+               </div>
+         </x-forms.form-card>
+
+
+         <!-- ------------------------------------------------- -->
+         <!-- Card for Timebank details -->
+         <!-- ------------------------------------------------- -->
+         <x-forms.form-card title="Timebank details">
+
+            <!-- ------------------------------------------------- -->
+            <!-- Row fore: terms  -->
+            <!-- ------------------------------------------------- -->
+            <div class="row justify-content-between mt-3">
+
+               <!-- terms -->
+               <div class="col-md-12 mb-3">
+                  <label for="terms" class="form-label fw-bold">Terms</label>
+                  <textarea class="form-control @error('terms') is-invalid @enderror" id="terms" name="terms" rows="4">{{ old('terms') }}</textarea>
+                  @error('terms')
+                     <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+               </div>
+            </div>
+         </x-forms.form-card>
+      </x-forms.form-default>
+
+@endsection
+
+@section('sidebar')
+    <div class="p-3 small text-muted">Service filters (later)</div>
+@endsection
+
+@section('rightbar')
+    <div class="p-3 small text-muted">Recent services (MVP later)</div>
+@endsection

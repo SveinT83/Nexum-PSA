@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Tech\CS\Services\IndexController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
@@ -134,9 +135,13 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
     // Services
     // -----------------------------------------
-    Route::get('/services', function () {
-        return view('Tech.cs.services.index');
-    })->name('services.index');
+    Route::get('/', [IndexController::class, 'index'])->name('services.index');
+
+    Route::post('/', [CreateController::class, 'store'])->name('services.store');
+
+    Route::get('/services/create', function () {
+        return view('Tech.cs.services.create');
+    })->name('services.create');
 
     // -----------------------------------------
     // Documentations
