@@ -7,7 +7,7 @@
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Tech\CS\Services\IndexController;
+use App\Http\Controllers\Tech\CS\Services\ServiceController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
@@ -121,7 +121,7 @@ Route::middleware(['auth','tech'])->group(function () {
 
     Route::post('/clients', [\App\Http\Controllers\Tech\Clients\CreateController::class, 'store'])
         ->name('clients.store');
-        
+
     Route::get('/clients/{client}', [\App\Http\Controllers\Tech\Clients\ShowController::class, 'show'])
         ->name('clients.show');
 
@@ -135,13 +135,16 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
     // Services
     // -----------------------------------------
-    Route::get('/', [IndexController::class, 'index'])->name('services.index');
+    Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
 
-    Route::post('/', [CreateController::class, 'store'])->name('services.store');
+    Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
 
     Route::get('/services/create', function () {
         return view('Tech.cs.services.create');
     })->name('services.create');
+
+    Route::get('/services/{id}', [ServiceController::class, 'show'])->name('services.show');
+    Route::get('/services/edit/{id}', [ServiceController::class, 'edit'])->name('services.edit');
 
     // -----------------------------------------
     // Documentations

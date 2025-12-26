@@ -1,169 +1,193 @@
-# tech.cs.services.edit – View Specification
+@extends('layouts.default_tech')
 
-**Date:** 2025-10-17
-**URL:** `tech.cs.services.edit` → `/tech/cs/services/{service}/edit`
-**Access levels:** `service.edit`, `tech.admin`, `superuser`
-**Controller:** `App\\Http\\Controllers\\Tech\\CS\\ServicesController@edit` (GET) / `@update` (PUT/PATCH)
-**Status:** Not completed
-**Difficulty:** Medium
-**Estimated time:** 3.5 hours
+@section('pageHeader')
+    <div class="d-flex justify-content-between align-items-center py-3">
+        <h2 class="h4 mb-0">Edit service</h2>
+        <div>
+            <a href="{{ route('tech.services.index') }}" class="btn btn-sm btn-primary">Back</a>
+        </div>
+    </div>
+@endsection
 
----
+@section('content')
 
-## Purpose
+    <x-forms.create-service-form title="New service"></x-forms.create-service-form>
 
-Edit an existing **service offering** in the catalog while respecting SKU integrity and downstream contract stability. Changes here affect **future contract snapshots**; existing contracts retain their stored snapshot values unless a refresh is explicitly applied from contract views.
+@endsection
 
----
+@section('sidebar')
+    <div class="p-3 small text-muted">Service filters (later)</div>
+@endsection
 
-## Design & Layout (Bootstrap)
+@section('rightbar')
+    <div class="p-3 small text-muted"># tech.cs.services.edit – View Specification
 
-**Template regions:** Top header / Main content / Right slim rail.
-**Icons (suggested):** edit, layers, tag, barcode, calendar, percent, shield, alert-triangle, save, history, copy.
+        **Date:** 2025-10-17
+        **URL:** `tech.cs.services.edit` → `/tech/cs/services/{service}/edit`
+        **Access levels:** `service.edit`, `tech.admin`, `superuser`
+        **Controller:** `App\\Http\\Controllers\\Tech\\CS\\ServicesController@edit` (GET) / `@update` (PUT/PATCH)
+        **Status:** Not completed
+        **Difficulty:** Medium
+        **Estimated time:** 3.5 hours
 
-* **Top header**
+        ---
 
-  * Title: “Edit Service – {Service Name}”
-  * Status chip: Active / Hidden / Deprecated
-  * Buttons: `Save`, `Save & Close`, `Cancel`
+        ## Purpose
 
-* **Main content** (grouped fieldsets)
+        Edit an existing **service offering** in the catalog while respecting SKU integrity and downstream contract stability. Changes here affect **future contract snapshots**; existing contracts retain their stored snapshot values unless a refresh is explicitly applied from contract views.
 
-  1. **Identity**
+        ---
 
-     * Service name (required)
-     * Category (select)
-     * Visibility (Active / Hidden / Deprecated)
-  2. **SKU & Catalog**
+        ## Design & Layout (Bootstrap)
 
-     * SKU (read-only if policy forbids change; otherwise editable with collision checks)
-     * `Generate SKU` button (if allowed) with live preview
-     * Collision warning component
-  3. **Pricing & Billing**
+        **Template regions:** Top header / Main content / Right slim rail.
+        **Icons (suggested):** edit, layers, tag, barcode, calendar, percent, shield, alert-triangle, save, history, copy.
 
-     * Billing model (Per user / Per asset / Fixed / Tiered)
-     * Unit price (currency from settings)
-     * Billing interval (Monthly / Quarterly / Yearly / Custom)
-     * Setup fee (optional)
-     * Discount default (percent or amount)
-  4. **Inclusions & Caps**
+        * **Top header**
 
-     * Included users / assets / hours (optional)
-     * Caps/overage policy fields
-  5. **SLA Defaults**
+        * Title: “Edit Service – {Service Name}”
+        * Status chip: Active / Hidden / Deprecated
+        * Buttons: `Save`, `Save & Close`, `Cancel`
 
-     * SLA policy (select profile or custom)
-     * Response/Resolution targets (read-only from profile or editable if custom)
-  6. **Binding & Downgrade**
+        * **Main content** (grouped fieldsets)
 
-     * Binding required (checkbox)
-     * Binding duration (months)
-     * Downgrade allowed during binding (checkbox)
-     * Notes
-  7. **Indexing Defaults**
+        1. **Identity**
 
-     * Suggest allow price indexing (checkbox)
-     * Suggested max indexing % (numeric)
-     * Allow decreases (checkbox)
-  8. **Terms & Descriptions**
+        * Service name (required)
+        * Category (select)
+        * Visibility (Active / Hidden / Deprecated)
+        2. **SKU & Catalog**
 
-     * Short description
-     * Invoice description
-     * Service terms (rich text)
+        * SKU (read-only if policy forbids change; otherwise editable with collision checks)
+        * `Generate SKU` button (if allowed) with live preview
+        * Collision warning component
+        3. **Pricing & Billing**
 
-* **Right slim rail**
+        * Billing model (Per user / Per asset / Fixed / Tiered)
+        * Unit price (currency from settings)
+        * Billing interval (Monthly / Quarterly / Yearly / Custom)
+        * Setup fee (optional)
+        * Discount default (percent or amount)
+        4. **Inclusions & Caps**
 
-  * **ImpactCard**: shows number of **linked contracts** (count) with quick link to filter contracts by this service
-  * **PreviewCard**: summarized read-only preview of key fields
-  * **PolicySummary**: binding, downgrade, indexing defaults
-  * **AuditTrail (recent)**: last 5 changes to this service
-  * **Quick Actions**: `Duplicate`, `Deprecate`, `Hide/Unhide`
+        * Included users / assets / hours (optional)
+        * Caps/overage policy fields
+        5. **SLA Defaults**
 
----
+        * SLA policy (select profile or custom)
+        * Response/Resolution targets (read-only from profile or editable if custom)
+        6. **Binding & Downgrade**
 
-## Components (Livewire)
+        * Binding required (checkbox)
+        * Binding duration (months)
+        * Downgrade allowed during binding (checkbox)
+        * Notes
+        7. **Indexing Defaults**
 
-* **`ServiceEditor`** – orchestrates field state and validation.
-* **`SkuCollisionAlert`** – checks SKU uniqueness on blur + pre-save.
-* **`PricingPanel`** – manages price, interval, and discount with live computed monthly equivalent.
-* **`BindingRulesPanel`** – controls binding/downgrade inputs with policy hints.
-* **`SlaSelector`** – profile vs custom handling.
-* **`TermsEditor`** – rich text editor with word count.
-* **`SideRail`** – renders preview, impact, and quick actions.
+        * Suggest allow price indexing (checkbox)
+        * Suggested max indexing % (numeric)
+        * Allow decreases (checkbox)
+        8. **Terms & Descriptions**
 
-Reusable: shared currency inputs, select with typeahead for categories and SLA profiles, shared status chips.
+        * Short description
+        * Invoice description
+        * Service terms (rich text)
 
----
+        * **Right slim rail**
 
-## Behaviors & Validation
+        * **ImpactCard**: shows number of **linked contracts** (count) with quick link to filter contracts by this service
+        * **PreviewCard**: summarized read-only preview of key fields
+        * **PolicySummary**: binding, downgrade, indexing defaults
+        * **AuditTrail (recent)**: last 5 changes to this service
+        * **Quick Actions**: `Duplicate`, `Deprecate`, `Hide/Unhide`
 
-* **SKU policy**
+        ---
 
-  * If `service.settings.manage` forbids manual SKU editing, field is read-only; show help text with reason.
-  * Collision policy: block or warn based on admin settings; superuser can override with reason.
-* **Status changes**
+        ## Components (Livewire)
 
-  * Deprecating a service warns if active contracts reference it; follows global policy (block/warn/allow).
-  * Hidden services do not appear in default contract searches unless explicitly filtered.
-* **Pricing model**
+        * **`ServiceEditor`** – orchestrates field state and validation.
+        * **`SkuCollisionAlert`** – checks SKU uniqueness on blur + pre-save.
+        * **`PricingPanel`** – manages price, interval, and discount with live computed monthly equivalent.
+        * **`BindingRulesPanel`** – controls binding/downgrade inputs with policy hints.
+        * **`SlaSelector`** – profile vs custom handling.
+        * **`TermsEditor`** – rich text editor with word count.
+        * **`SideRail`** – renders preview, impact, and quick actions.
 
-  * Changes recalculate previewed monthly equivalent in rail (display only).
-  * Tiered model shows inline helper link to open a tier editor (out of scope here).
-* **SLA**
+        Reusable: shared currency inputs, select with typeahead for categories and SLA profiles, shared status chips.
 
-  * Selecting a profile locks target fields; `Custom` unlocks them.
-* **Binding**
+        ---
 
-  * If binding required is enabled, duration > 0 enforced.
-* **Indexing defaults**
+        ## Behaviors & Validation
 
-  * Provide hints that contracts may further restrict during binding.
+        * **SKU policy**
 
----
+        * If `service.settings.manage` forbids manual SKU editing, field is read-only; show help text with reason.
+        * Collision policy: block or warn based on admin settings; superuser can override with reason.
+        * **Status changes**
 
-## Permissions
+        * Deprecating a service warns if active contracts reference it; follows global policy (block/warn/allow).
+        * Hidden services do not appear in default contract searches unless explicitly filtered.
+        * **Pricing model**
 
-* View: `service.view`
-* Edit/Save: `service.edit`
-* Override SKU collision or edit SKU when restricted: `superuser`
-* Deprecate/Hide: `service.edit` or `tech.admin` (subject to global policy)
+        * Changes recalculate previewed monthly equivalent in rail (display only).
+        * Tiered model shows inline helper link to open a tier editor (out of scope here).
+        * **SLA**
 
----
+        * Selecting a profile locks target fields; `Custom` unlocks them.
+        * **Binding**
 
-## Audit & Notifications
+        * If binding required is enabled, duration > 0 enforced.
+        * **Indexing defaults**
 
-* On save: audit log with field diffs, user, timestamp; if override, require comment.
-* Optional notifications to admins on deprecate/hide or significant price change (> threshold from settings).
+        * Provide hints that contracts may further restrict during binding.
 
----
+        ---
 
-## Right Rail Widgets (suggested)
+        ## Permissions
 
-* **Linked Contracts**: count + link to `tech.cs.contracts.index` prefiltered by this service SKU
-* **Recent Changes**: last 5 audit events
-* **Policy Summary**: binding/indexing/downgrade at-a-glance
+        * View: `service.view`
+        * Edit/Save: `service.edit`
+        * Override SKU collision or edit SKU when restricted: `superuser`
+        * Deprecate/Hide: `service.edit` or `tech.admin` (subject to global policy)
 
----
+        ---
 
-## Edge Cases
+        ## Audit & Notifications
 
-* Attempt to change SKU when duplicate exists and policy is block → show modal and prevent save.
-* Deprecate a service used by active `Floating` contracts → show stronger warning; allow/deny per settings.
-* Decrease unit price: note that contracts may be updated by indexing job if allowed.
+        * On save: audit log with field diffs, user, timestamp; if override, require comment.
+        * Optional notifications to admins on deprecate/hide or significant price change (> threshold from settings).
 
----
+        ---
 
-## QA Scenarios (high level)
+        ## Right Rail Widgets (suggested)
 
-* Edit price and ensure monthly preview updates.
-* Try to change SKU to an existing one; collision handling follows settings.
-* Deprecate a service with 10 linked contracts; see warning and behavior per policy.
-* Toggle binding required and set duration; validation enforces duration > 0.
+        * **Linked Contracts**: count + link to `tech.cs.contracts.index` prefiltered by this service SKU
+        * **Recent Changes**: last 5 audit events
+        * **Policy Summary**: binding/indexing/downgrade at-a-glance
 
----
+        ---
 
-## Notes
+        ## Edge Cases
 
-* No HTML in this document; components and behaviors only.
-* Static layout; content is live-updating via Livewire interactions.
-* Designed for developer handoff and GitHub Copilot comprehension.
+        * Attempt to change SKU when duplicate exists and policy is block → show modal and prevent save.
+        * Deprecate a service used by active `Floating` contracts → show stronger warning; allow/deny per settings.
+        * Decrease unit price: note that contracts may be updated by indexing job if allowed.
+
+        ---
+
+        ## QA Scenarios (high level)
+
+        * Edit price and ensure monthly preview updates.
+        * Try to change SKU to an existing one; collision handling follows settings.
+        * Deprecate a service with 10 linked contracts; see warning and behavior per policy.
+        * Toggle binding required and set duration; validation enforces duration > 0.
+
+        ---
+
+        ## Notes
+
+        * No HTML in this document; components and behaviors only.
+        * Static layout; content is live-updating via Livewire interactions.
+        * Designed for developer handoff and GitHub Copilot comprehension.
+    </div>
+@endsection

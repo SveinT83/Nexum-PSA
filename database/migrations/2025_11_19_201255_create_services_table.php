@@ -76,6 +76,9 @@ return new class extends Migration
             //Timebank interval (enum: monthly, yearly, one_time)
             $table->enum('timebank_interval', ['monthly', 'yearly', 'one_time'])->nullable();
             
+            //Timebank Minutes (integer nullable)
+            $table->integer('timebank_minutes')->nullable();
+
             //Description and terms
             //short_description (text nullable)
             $table->text('short_description')->nullable();
