@@ -2,23 +2,21 @@
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">New service</h2>
+        <h2 class="h4 mb-0">Costs</h2>
         <div>
-            <a href="{{ route('tech.services.index') }}" class="btn btn-sm btn-primary">Back</a>
+            <a href="{{ route('tech.costs.create') }}" class="btn btn-sm btn-primary">New Cost</a>
         </div>
     </div>
 @endsection
 
 @section('content')
 
-    @include('partials.forms.create-service-form', [
-        'service' => null,
-        'method' => 'post',
-        'enabled' => 'enabled',
-        'title' => 'New',
-        'formRoute' => 'store',
-        'buttonText' => 'Create'
-    ])
+    <!-- ------------------------------------------------- -->
+    <!-- Alert message -->
+    <!-- ------------------------------------------------- -->
+    @if(session('status'))
+        <div class="alert alert-success">{{ session('status') }}</div>
+    @endif
 
 @endsection
 

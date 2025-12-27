@@ -90,11 +90,16 @@
             <!-- Contracts -->
             <!-- ------------------------------------------------- -->
             <li><a class="dropdown-item {{ request()->routeIs('tech.contracts.index') ? 'active' : '' }}" href="{{ route('tech.contracts.index') }}">Contracts</a></li>
-            
+
             <!-- ------------------------------------------------- -->
             <!-- Services -->
             <!-- ------------------------------------------------- -->
             <li><a class="dropdown-item {{ request()->routeIs('tech.services.index') ? 'active' : '' }}" href="{{ route('tech.services.index') }}">Services</a></li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Costs -->
+            <!-- ------------------------------------------------- -->
+            <li><a class="dropdown-item {{ request()->routeIs('tech.costs.index') ? 'active' : '' }}" href="{{ route('tech.costs.index') }}">Costs</a></li>
         </ul>
     </li>
 

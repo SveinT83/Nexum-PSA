@@ -8,6 +8,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Tech\CS\Services\ServiceController;
+use App\Http\Controllers\Tech\CS\Costs\CostController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
@@ -155,6 +156,19 @@ Route::middleware(['auth','tech'])->group(function () {
 
     //Edit a service
     Route::get('/services/edit/{service}', [ServiceController::class, 'edit'])->name('services.edit');
+
+    // -----------------------------------------
+    // Costs
+    // -----------------------------------------
+
+    //List all costs
+    Route::get('/costs', [CostController::class, 'index'])->name('costs.index');
+
+    //New Cost Form
+    Route::get('/costs/create', [CostController::class, 'create'])->name('costs.create');
+
+    //Save a new cost
+    Route::post('/costs', [CostController::class, 'store'])->name('costs.store');
 
     // -----------------------------------------
     // Documentations
