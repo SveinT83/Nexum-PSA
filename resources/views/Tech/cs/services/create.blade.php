@@ -11,7 +11,7 @@
 
 @section('content')
 
-    <x-forms.create-service-form title="New service"></x-forms.create-service-form>
+    <x-forms.create-service-form title="New service" enabled="enabled"></x-forms.create-service-form>
 
 @endsection
 

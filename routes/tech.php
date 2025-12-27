@@ -135,16 +135,26 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
     // Services
     // -----------------------------------------
+
+    //List all services
     Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
 
+    //Save a new service
     Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
 
+    //Update a service
+    Route::post('/services/update/{service}', [ServiceController::class, 'update'])->name('services.update');
+
+    //Create a new service form
     Route::get('/services/create', function () {
         return view('Tech.cs.services.create');
     })->name('services.create');
 
-    Route::get('/services/{id}', [ServiceController::class, 'show'])->name('services.show');
-    Route::get('/services/edit/{id}', [ServiceController::class, 'edit'])->name('services.edit');
+    //Show a service
+    Route::get('/services/{service}', [ServiceController::class, 'show'])->name('services.show');
+
+    //Edit a service
+    Route::get('/services/edit/{service}', [ServiceController::class, 'edit'])->name('services.edit');
 
     // -----------------------------------------
     // Documentations

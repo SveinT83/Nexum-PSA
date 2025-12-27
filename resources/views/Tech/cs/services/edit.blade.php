@@ -4,14 +4,24 @@
     <div class="d-flex justify-content-between align-items-center py-3">
         <h2 class="h4 mb-0">Edit service</h2>
         <div>
-            <a href="{{ route('tech.services.index') }}" class="btn btn-sm btn-primary">Back</a>
+            <a href="{{ route('tech.services.show', $service) }}" class="btn btn-sm btn-primary">Back</a>
         </div>
     </div>
 @endsection
 
 @section('content')
 
-    <x-forms.create-service-form title="New service"></x-forms.create-service-form>
+    <!-- ------------------------------------------------- -->
+    <!-- Form -->
+    <!-- ------------------------------------------------- -->
+    @include('partials.forms.create-service-form', [
+        'service' => $service,
+        'method' => 'post',
+        'enabled' => 'enabled',
+        'title' => 'Update',
+        'formRoute' => "update",
+        'buttonText' => "Update"
+    ])
 
 @endsection
 
