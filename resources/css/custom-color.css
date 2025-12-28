@@ -1,0 +1,41 @@
+body {
+    background-color: #EAECEF !important;
+}
+
+.bg-primarily {
+    background-color: #233048 !important;
+    color: black;
+}
+
+.bg-secondary {
+    background-color: #4C5C7C !important;
+    color: black;
+}
+
+.bg-sidebar {
+    background-color: #485878 !important;
+    color: #233048;
+}
+
+.bg-page-header {
+    background-color: #FFFFFF !important;
+    color: #233048;
+}
+
+.bg-page-content {
+    background-color: #F8F8F9 !important;
+}
+
+.bg-primarily a.nav-link{
+    color: white;
+}
+
+.dropdown-item.active{
+    background-color: #233048 !important;
+    color: white;
+}
+
+.nav-link.disabled {
+    color: black !important;
+    font-weight: bold;
+}

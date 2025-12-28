@@ -168,7 +168,7 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::get('/costs/create', [CostController::class, 'create'])->name('costs.create');
 
     //Save a new cost
-    Route::post('/costs', [CostController::class, 'store'])->name('costs.store');
+    Route::post('/costs/store', [CostController::class, 'store'])->name('costs.store');
 
     // -----------------------------------------
     // Documentations

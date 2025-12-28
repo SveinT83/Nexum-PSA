@@ -21,7 +21,7 @@
     <!-- ------------------------------------------------- -->
     <!-- Form -->
     <!-- ------------------------------------------------- -->
-    <x-forms.form-default action="tech.costs.store" button-text="Save">
+    <x-forms.form-default action="store" button-text="Save">
 
         <div class="row">
 
@@ -42,16 +42,17 @@
                     <option value="user">User</option>
                     <option value="site">Site</option>
                     <option value="asset">Asset</option>
+                    <option value="other">Other</option>
                 </x-forms.select>
             </div>
 
             <!-- Cost Recurrence -->
             <div class="col-md-3 mb-3">
                 <x-forms.select name="recurrence" labelName="Recurrence">
+                    <option value="none">None</option>
                     <option value="month">Month</option>
-                    <option value="user">User</option>
-                    <option value="site">Site</option>
-                    <option value="asset">Asset</option>
+                    <option value="year">Year</option>
+                    <option value="quarter">Quarter</option>
                 </x-forms.select>
             </div>
         </div>
