@@ -23,7 +23,7 @@ class CreateController extends Controller
         $roles = ['Daglig leder', 'Innehaver', 'IT-kontakt', 'Økonomi', 'Annet'];
         $countries = ['NO' => 'Norway', 'SE' => 'Sweden', 'DK' => 'Denmark'];
 
-        return view('Tech.clients.create', [
+        return view('tech.clients.create', [
             'suggestedClientNumber' => $suggestedClientNumber,
             'roles' => $roles,
             'countries' => $countries,

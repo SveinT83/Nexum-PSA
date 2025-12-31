@@ -1,29 +1,90 @@
+/* ------------------------------------------- */
+/* ------------ Bootstrap overides ----------- */
+/* ------------------------------------------- */
+:root{
+    --bs-border-color: #faba98 !important;
+}
+
+/* ------------------------------------------- */
+/* -------------- Main Elements -------------- */
+/* ------------------------------------------- */
 body {
-    background-color: #EAECEF !important;
+    background-color: #d1d1d1 !important;
 }
 
-.bg-primarily {
-    background-color: #233048 !important;
+header {
+    background-color: #333 !important;
+    color: #FF6D1F;
+    border-color: #FF6D1F !important;
+}
+
+footer {
+    background-color: #333 !important;
+    color: #FF6D1F;
+}
+
+/* Sidebar */
+.sidebar {
+
+}
+
+.sidebar h1, .sidebar h2, .sidebar h3 {
+    color: #333;
+}
+
+/* Page Header */
+.page-header {
+    background-color: #5c5c5c !important;
+    color: #FF6D1F;
+}
+
+.page-header h1, .page-header h2, .page-header h3 {
+    color: white;
+}
+
+/*Content */
+.content {
+    background-color: white;
+    border-color: #FF6D1F !important;
+}
+
+/* ------------------------------------------- */
+/* --------------- HTML Element -------------- */
+/* ------------------------------------------- */
+a {
+    color: #FF6D1F;
+}
+a:hover {
+    color: #fc7730;
+}
+
+a.row {
+    color: #333;
+    background-color: #faf7f7;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #fc7730;
+    border-radius: 5px;
+    margin: 5px;
+    padding: 5px;
+    text-decoration: none;
+}
+
+/* ------------------------------------------- */
+/* ---------------- Navigation --------------- */
+/* ------------------------------------------- */
+
+.nav-link {
+    color: white;
+}
+
+.nav-link:hover {
+    color: #FF6D1F;
+}
+
+.nav-link.active{
+    background-color: #FF6D1F !important;
     color: black;
-}
-
-.bg-secondary {
-    background-color: #4C5C7C !important;
-    color: black;
-}
-
-.bg-sidebar {
-    background-color: #485878 !important;
-    color: #233048;
-}
-
-.bg-page-header {
-    background-color: #FFFFFF !important;
-    color: #233048;
-}
-
-.bg-page-content {
-    background-color: #F8F8F9 !important;
 }
 
 .bg-primarily a.nav-link{
@@ -31,11 +92,71 @@ body {
 }
 
 .dropdown-item.active{
-    background-color: #233048 !important;
+    background-color: #fc7730 !important;
     color: white;
 }
 
 .nav-link.disabled {
     color: black !important;
     font-weight: bold;
+}
+
+/* ------------------------------------------- */
+/* ---------------- Buttons ------------------ */
+/* ------------------------------------------- */
+
+/* Primary */
+.btn-primary {
+    background-color: #FF6D1F !important;
+    border-color: #fc7730 !important;
+}
+
+.btn-primary:hover {
+    background-color: #ba4304 !important;
+    border-color: #fc7730 !important;
+}
+
+/* Outline Primary */
+.btn-outline-primary {
+    background-color: transparent !important;
+    border-color: #FF6D1F !important;
+    color: #FF6D1F !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #FF6D1F !important;
+    border-color: #fc7730 !important;
+    color: black !important;
+}
+
+/* Secondary */
+.btn-secondary {
+    background-color: #fc7730 !important;
+    border-color: #fc7730 !important;
+}
+
+.btn-secondary:hover {
+    background-color: #ba4304 !important;
+    border-color: #fc7730 !important;
+}
+
+/* Outline Secondary */
+.btn-outline-secondary {
+    background-color: transparent !important;
+    border-color: #FF6D1F !important;
+    color: #FF6D1F !important;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #FF6D1F !important;
+    border-color: #fc7730 !important;
+    color: black !important;
+}
+
+/* ------------------------------------------- */
+/* ---------------- Borders ------------------ */
+/* ------------------------------------------- */
+
+.border-primary {
+    border-color: #FF6D1F !important;
 }

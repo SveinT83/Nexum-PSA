@@ -14,12 +14,12 @@ class AccountsController extends Controller
     public function index()
     {
         $accounts = EmailAccount::orderBy('address')->get();
-        return view('Tech.admin.settings.email.accounts.index', compact('accounts'));
+        return view('tech.admin.settings.email.accounts.index', compact('accounts'));
     }
 
     public function create()
     {
-        return view('Tech.admin.settings.email.accounts.create');
+        return view('tech.admin.settings.email.accounts.create');
     }
 
     public function store(Request $request)
@@ -33,7 +33,7 @@ class AccountsController extends Controller
 
     public function edit(EmailAccount $account)
     {
-        return view('Tech.admin.settings.email.accounts.create', compact('account'));
+        return view('tech.admin.settings.email.accounts.create', compact('account'));
     }
 
     public function update(EmailAccount $account, Request $request)

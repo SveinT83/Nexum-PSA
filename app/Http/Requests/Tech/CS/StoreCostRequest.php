@@ -13,6 +13,8 @@ class StoreCostRequest extends FormRequest
             'cost' => ['required', 'numeric', 'min:0'],
             'unit' => ['required', 'string', 'in:client,user,site,asset,other'],
             'recurrence' => ['required', 'string', 'in:month,year,quarter,none'],
+            'note' => ['nullable', 'string'],
+            'vendor_id' => ['required', 'exists:vendors,id'],
         ];
     }
 

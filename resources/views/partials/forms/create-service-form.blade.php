@@ -11,7 +11,7 @@
     <!-- ------------------------------------------------- -->
     <!-- Card for Item details -->
     <!-- ------------------------------------------------- -->
-    <x-forms.form-card title="Item info">
+    <x-card.default title="Item info">
 
         <!-- ------------------------------------------------- -->
         <!-- Row fore SKU and name -->
@@ -51,72 +51,17 @@
             </div>
         </div>
 
-    </x-forms.form-card>
+    </x-card.default>
 
     <!-- ------------------------------------------------- -->
-    <!-- Card for Pricing -->
+    <!-- Card for Cost and Pricing (Livewire) -->
     <!-- ------------------------------------------------- -->
-    <x-forms.form-card title="Pricing">
-
-        <!-- ------------------------------------------------- -->
-        <!-- Row fore Prices: price_ex_vat, taxable, default_discount_value,  default_discount_type, billing_interval -->
-        <!-- ------------------------------------------------- -->
-        <div class="row justify-content-between pb-3 mt-3 mb-3">
-
-            <!-- price_ex_vat -->
-            <div class="col-md-3 mb-3">
-                <x-forms.input_text name='price_ex_vat' labelName='Price Ex VAT' type='number' value="{{ old('price_ex_vat', $service->price_ex_vat ?? '') }}" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
-            </div>
-
-            <!-- taxable (%) numeric -->
-            <div class="col-md-3 mb-3">
-                <x-forms.input_text name='taxable' labelName='Taxable (%)' type='number' value="{{ old('taxable', $service->taxable ?? '') }}" inputVar="step='0.01' min='0' max='100'" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
-            </div>
-
-            <!-- billing_cycle -->
-            <div class="col-md-3 mb-3">
-                <x-forms.select name="billing_cycle" labelName="Billing Cycle" enabled="{{$enabled}}">
-                    <option value="monthly" @selected(old('billing_cycle', $service->billing_cycle ?? '') == 'monthly')>Monthly</option>
-                    <option value="yearly" @selected(old('billing_cycle', $service->billing_cycle ?? '') == 'yearly')>yearly</option>
-                    <option value="one_time" @selected(old('billing_cycle', $service->billing_cycle ?? '') == 'one_time')>One Time</option>
-                </x-forms.select>
-            </div>
-
-        </div>
-
-        <!-- ------------------------------------------------- -->
-        <!-- Row fore One_time_fee and one_time_fee_recurrence, recurrence_value_x -->
-        <!-- ------------------------------------------------- -->
-        <div class="row justify-content-between mt-3">
-
-            <!-- One_time -->
-            <div class="col-md-3 mb-3">
-                <x-forms.input_text name='one_time_fee' labelName='One Time Fee' type='number' value="{{ old('one_time_fee', $service->one_time_fee ?? '') }}" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
-            </div>
-
-            <!-- recurrence_value_x -->
-            <div class="col-md-3 mb-3">
-                <x-forms.input_text name='recurrence_value_x' labelName='Recurrence Value X' type='number' value="{{ old('recurrence_value_x', $service->recurrence_value_x ?? '') }}" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
-            </div>
-
-            <!-- one_time_fee_recurrence -->
-            <div class="col-md-3 mb-3">
-                <x-forms.select name="one_time_fee_recurrence" labelName="One Time Fee Recurrence" enabled="{{$enabled}}">
-                    <option value="" @selected(old('one_time_fee_recurrence', $service->one_time_fee_recurrence ?? '') == '')>None</option>
-                    <option value="none" @selected(old('one_time_fee_recurrence', $service->one_time_fee_recurrence ?? '') == 'none')>None</option>
-                    <option value="yearly" @selected(old('one_time_fee_recurrence', $service->one_time_fee_recurrence ?? '') == 'yearly')>Yearly</option>
-                    <option value="every_x_years" @selected(old('one_time_fee_recurrence', $service->one_time_fee_recurrence ?? '') == 'every_x_years')>Every X Years</option>
-                    <option value="every_x_months" @selected(old('one_time_fee_recurrence', $service->one_time_fee_recurrence ?? '') == 'every_x_months')>Every X Months</option>
-                </x-forms.select>
-            </div>
-
-        </div>
-    </x-forms.form-card>
+    <livewire:tech.cs.service-pricing :service="$service" :enabled="$enabled" />
 
     <!-- ------------------------------------------------- -->
     <!-- Card for Discount details -->
     <!-- ------------------------------------------------- -->
-    <x-forms.form-card title="Discount">
+    <x-card.default title="Discount">
 
         <!-- ------------------------------------------------- -->
         <!-- Row fore default_discount_value, default_discount_type -->
@@ -137,14 +82,14 @@
                 </x-forms.select>
             </div>
         </div>
-    </x-forms.form-card>
+    </x-card.default>
 
 
     <!-- ------------------------------------------------- -->
     <!-- Card for Addon details -->
     <!-- ------------------------------------------------- -->
 
-    <x-forms.form-card title="Addon details">
+    <x-card.default title="Addon details">
 
         <!-- ------------------------------------------------- -->
         <!-- Row fore availability_addon_of_service_id, availability_audience, orderable_in_client_portal -->
@@ -180,13 +125,13 @@
             </div>
 
         </div>
-    </x-forms.form-card>
+    </x-card.default>
 
 
     <!-- ------------------------------------------------- -->
     <!-- Card for Timebank details -->
     <!-- ------------------------------------------------- -->
-    <x-forms.form-card title="Timebank details">
+    <x-card.default title="Timebank details">
 
         <!-- ------------------------------------------------- -->
         <!-- Row fore: timebank_enabled, timebank_amount, timebank_minutes, timebank_interval  -->
@@ -218,13 +163,13 @@
             </div>
 
         </div>
-    </x-forms.form-card>
+    </x-card.default>
 
 
     <!-- ------------------------------------------------- -->
-    <!-- Card for Timebank details -->
+    <!-- Card for Terms -->
     <!-- ------------------------------------------------- -->
-    <x-forms.form-card title="Timebank details">
+    <x-card.default title="Terms">
 
         <!-- ------------------------------------------------- -->
         <!-- Row fore: terms  -->
@@ -236,5 +181,5 @@
                 <x-forms.textarea name="terms" labelName="Terms" value="{{ old('terms', $service->terms ?? '') }}" vars="rows='2' {{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.textarea>
             </div>
         </div>
-    </x-forms.form-card>
+    </x-card.default>
 </x-forms.form-default>

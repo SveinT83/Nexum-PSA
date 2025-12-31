@@ -19,7 +19,7 @@ class ShowController extends Controller
         }
 
         $message->load(['attachments']);
-        return view('Tech.Inbox.view', [
+        return view('tech.inbox.view', [
             'message' => $message,
             'search' => request('q')
         ]);

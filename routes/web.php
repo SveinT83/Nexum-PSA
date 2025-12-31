@@ -37,6 +37,6 @@ Route::post('/logout', function (Request $request) {
 // Dashboard (etter innlogging)
 /*
 Route::middleware('auth')->get('/dashboard', function () {
-    return view('Tech.dashboard');
+    return view('tech.dashboard');
 })->name('dashboard');
 */

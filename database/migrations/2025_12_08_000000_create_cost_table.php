@@ -26,6 +26,12 @@ return new class extends Migration
             // recurrence: none, month, year, quarter
             $table->enum('recurrence', ['none', 'month', 'year', 'quarter']);
 
+            //Vendor
+            $table->foreignId('vendor_id')->constrained('vendors');
+
+            // Note (text)
+            $table->text('note');
+
             //Policy / flags
             //created_by_user_id (foreign id -> users)
             $table->foreignId('created_by_user_id')->constrained('users');

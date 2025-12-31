@@ -61,4 +61,8 @@ class Services extends Model
     }
 
     // Add relationships here (queue, addon, creator, updater, clients whitelist)
+    public function costRelations()
+    {
+        return $this->hasMany(\App\Models\CS\CostRelations::class, 'serviceId');
+    }
 }

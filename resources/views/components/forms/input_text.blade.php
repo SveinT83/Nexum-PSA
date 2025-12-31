@@ -12,6 +12,6 @@
         {{ $inputVar ?? '' }}/>
 
 @error($name)
-    <div class="invalid-feedback">{{ $errorMsg }}</div>
+    <div class="invalid-feedback">{{ $message }}</div>
 @enderror
 

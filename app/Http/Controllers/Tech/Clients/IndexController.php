@@ -22,7 +22,7 @@ class IndexController extends Controller
 
         $clients = $query->orderBy('name')->paginate(25)->withQueryString();
 
-        return view('Tech.clients.index', [
+        return view('tech.clients.index', [
             'clients' => $clients,
             'search' => $search,
         ]);

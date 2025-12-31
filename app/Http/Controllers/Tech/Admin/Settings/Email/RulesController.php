@@ -9,6 +9,6 @@ class RulesController extends Controller
     public function index()
     {
         // Placeholder: pass rules list when implemented
-        return view('Tech.admin.settings.email.rules.index');
+        return view('tech.admin.settings.email.rules.index');
     }
 }

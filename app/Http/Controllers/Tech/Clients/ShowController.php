@@ -9,7 +9,7 @@ class ShowController extends Controller
 {
     public function show(Client $client)
     {
-        return view('Tech.clients.show', [
+        return view('tech.clients.show', [
             'client' => $client,
         ]);
     }

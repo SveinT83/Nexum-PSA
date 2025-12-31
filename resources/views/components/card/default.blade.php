@@ -1,15 +1,13 @@
-<form class="card mt-3 mb-3" method="{{$method ?? 'post'}}" action="{{ $action}}">
+<div class="card mt-3 mb-3">
     <div class="card-header">
         <h4>{{ $title ?? ''}}</h4>
     </div>
     <div class="card-body">
         {{ $slot }}
-
-        <button type="submit" class="btn btn-primary mt-3">{{$buttonText ?? 'Send'}}</button>
     </div>
     @isset($footer)
         <div class="card-footer">
             {{ $footer ?? ''}}
         </div>
     @endisset
-</form>
+</div>

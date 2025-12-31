@@ -18,7 +18,7 @@ class ConfigController extends Controller
             'size_limit_mb' => 25,
             'retention_months' => 24,
         ];
-        return view('Tech.admin.settings.email.config.index', compact('config'));
+        return view('tech.admin.settings.email.config.index', compact('config'));
     }
 
     public function update(Request $request)

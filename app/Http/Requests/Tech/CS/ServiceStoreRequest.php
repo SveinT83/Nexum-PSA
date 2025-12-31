@@ -33,6 +33,8 @@ class ServiceStoreRequest extends FormRequest
             'setup_fee' => ['nullable', 'numeric', 'min:0'],
             'price_ex_vat' => ['required', 'numeric', 'min:0'],
             'price_including_tax' => ['nullable', 'numeric', 'min:0'],
+            'costs' => ['nullable', 'array'],
+            'costs.*' => ['exists:costs,id'],
             'billing_cycle' => ['required', 'in:monthly,yearly,one_time'],
             'unit_pricing' => ['nullable', 'in:none,per_user,per_device,per_server'],
             'one_time_fee' => ['nullable', 'numeric', 'min:0'],
@@ -57,7 +59,7 @@ class ServiceStoreRequest extends FormRequest
             'name.required' => 'Name is required.',
             'sku.required' => 'SKU is required.',
             'price_ex_vat.required' => 'Price excl. VAT is required.',
-            'billing_interval.required' => 'Billing interval is required.',
+            'billing_cycle.required' => 'Billing cycle is required.',
         ];
     }
 }

@@ -16,7 +16,7 @@ use App\Http\Controllers\Tech\CS\Costs\CostController;
 Route::middleware(['auth','tech'])->group(function () {
 
     Route::get('/dashboard', function () {
-        return view('Tech.dashboard');
+        return view('tech.dashboard');
     })->name('dashboard');
 
     // ------------------------------------------------------------------------------------------
@@ -27,11 +27,11 @@ Route::middleware(['auth','tech'])->group(function () {
     // Contracts & Services Settings
     // -----------------------------------------
     Route::get('/admin/settings/cs/contacts', function () {
-        return view('Tech.admin.settings.cs.contracts');
+        return view('tech.admin.settings.cs.contracts');
     })->name('admin.settings.cs.contracts');
 
     Route::get('/admin/settings/cs/services', function () {
-        return view('Tech.admin.settings.cs.services');
+        return view('tech.admin.settings.cs.services');
     })->name('admin.settings.cs.services');
 
     // -----------------------------------------
@@ -67,26 +67,26 @@ Route::middleware(['auth','tech'])->group(function () {
     // Sales Settings
     // -----------------------------------------
     Route::get('/admin/settings/sales/rules', function () {
-        return view('Tech.admin.settings.sales.rules.index');
+        return view('tech.admin.settings.sales.rules.index');
     })->name('admin.settings.sales.rules');
 
     Route::get('/admin/settings/sales/workflows', function () {
-        return view('Tech.admin.settings.sales.workflows.index');
+        return view('tech.admin.settings.sales.workflows.index');
     })->name('admin.settings.sales.workflows');
 
     // -----------------------------------------
     // Ticket Settings
     // -----------------------------------------
     Route::get('/admin/settings/tickets', function () {
-        return view('Tech.admin.settings.tickets.index');
+        return view('tech.admin.settings.tickets.index');
     })->name('admin.settings.tickets');
 
     Route::get('/admin/settings/tickets/rules', function () {
-        return view('Tech.admin.settings.tickets.rules.index');
+        return view('tech.admin.settings.tickets.rules.index');
     })->name('admin.settings.tickets.rules');
 
     Route::get('/admin/settings/tickets/workflows', function () {
-        return view('Tech.admin.settings.tickets.workflows.index');
+        return view('tech.admin.settings.tickets.workflows.index');
     })->name('admin.settings.tickets.workflows');
 
     // ------------------------------------------------------------------------------------------
@@ -97,14 +97,14 @@ Route::middleware(['auth','tech'])->group(function () {
     // Templates
     // -----------------------------------------
     Route::get('/admin/templates', function () {
-        return view('Tech.admin.templates.index');
+        return view('tech.admin.templates.index');
     })->name('admin.templates.index');
 
     // -----------------------------------------
     // Users
     // -----------------------------------------
     Route::get('/admin/users', function () {
-        return view('Tech.admin.users.index');
+        return view('tech.admin.users.index');
     })->name('admin.users.index');
 
     // -----------------------------------------
@@ -130,7 +130,7 @@ Route::middleware(['auth','tech'])->group(function () {
     // Contracts
     // -----------------------------------------
     Route::get('/contracts', function () {
-        return view('Tech.cs.contracts.index');
+        return view('tech.cs.contracts.index');
     })->name('contracts.index');
 
     // -----------------------------------------
@@ -147,9 +147,7 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::post('/services/update/{service}', [ServiceController::class, 'update'])->name('services.update');
 
     //Create a new service form
-    Route::get('/services/create', function () {
-        return view('Tech.cs.services.create');
-    })->name('services.create');
+    Route::get('/services/create', [ServiceController::class, 'create'])->name('services.create');
 
     //Show a service
     Route::get('/services/{service}', [ServiceController::class, 'show'])->name('services.show');
@@ -164,17 +162,30 @@ Route::middleware(['auth','tech'])->group(function () {
     //List all costs
     Route::get('/costs', [CostController::class, 'index'])->name('costs.index');
 
+    //Delete a cost
+    Route::get('/costs/delete/{cost}', [CostController::class, 'delete'])->name('costs.delete');
+
+    //Update a cost
+    Route::post('/costs/update/{cost}', [CostController::class, 'update'])->name('costs.update');
+
     //New Cost Form
     Route::get('/costs/create', [CostController::class, 'create'])->name('costs.create');
 
     //Save a new cost
     Route::post('/costs/store', [CostController::class, 'store'])->name('costs.store');
 
+    //Show a cost
+    Route::get('/costs/{cost}', [CostController::class, 'show'])->name('costs.show');
+
+    //Edit a cost
+    Route::get('/costs/edit/{cost}', [CostController::class, 'edit'])->name('costs.edit');
+
+
     // -----------------------------------------
     // Documentations
     // -----------------------------------------
     Route::get('/documentations', function () {
-        return view('Tech.Documentations.index');
+        return view('tech.documentations.index');
     })->name('documentations.index');
 
     // -----------------------------------------
@@ -195,42 +206,42 @@ Route::middleware(['auth','tech'])->group(function () {
     // Knowledge
     // -----------------------------------------
     Route::get('/knowledge', function () {
-        return view('Tech.Knowledge.index');
+        return view('tech.knowledge.index');
     })->name('knowledge.index');
 
     // -----------------------------------------
     // Reports
     // -----------------------------------------
     Route::get('/reports', function () {
-        return view('Tech.Reports.index');
+        return view('tech.reports.index');
     })->name('reports.index');
 
     // -----------------------------------------
     // Sales
     // -----------------------------------------
     Route::get('/sales', function () {
-        return view('Tech.Sales.index');
+        return view('tech.sales.index');
     })->name('sales.index');
 
     // -----------------------------------------
     // Storage
     // -----------------------------------------
     Route::get('/storage', function () {
-        return view('Tech.Storage.index');
+        return view('tech.storage.index');
     })->name('storage.index');
 
     // -----------------------------------------
     // Tasks
     // -----------------------------------------
     Route::get('/tasks', function () {
-        return view('Tech.Tasks.index');
+        return view('tech.tasks.index');
     })->name('tasks.index');
 
     // -----------------------------------------
     // Tickets
     // -----------------------------------------
     Route::get('/tickets', function () {
-        return view('Tech.Tickets.index');
+        return view('tech.tickets.index');
     })->name('tickets.index');
 
 });

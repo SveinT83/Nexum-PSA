@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tech\CS\Services;
 
 use App\Http\Controllers\Controller;
+use App\Models\CS\CostRelations;
 use App\Models\CS\Services\Services;
 use Illuminate\Http\Request;
 
@@ -14,8 +15,18 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function show(\App\Models\CS\Services\Services $service)
     {
-        return view('Tech.cs.services.show', [
+        return view('tech.cs.services.show', [
             'service' => $service,
+        ]);
+    }
+
+    // -----------------------------------------
+    // Create - Show Create form
+    // -----------------------------------------
+    public function create()
+    {
+        return view('tech.cs.services.create', [
+            'service' => new Services(),
         ]);
     }
 
@@ -24,7 +35,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function edit(\App\Models\CS\Services\Services $service)
     {
-        return view('Tech.cs.services.edit', [
+        return view('tech.cs.services.edit', [
             'service' => $service,
         ]);
     }
@@ -39,7 +50,7 @@ class ServiceController extends Controller
         $data = $request->validated();
 
         // Save service
-        Services::query()->create([
+        $service = Services::query()->create([
             'name' => $data['name'],
             'sku' => $data['sku'],
             'status' => $data['status'] ?? 'Active',
@@ -63,11 +74,21 @@ class ServiceController extends Controller
             'timebank_interval' => $data['timebank_interval'] ?? null,
             'short_description' => $data['short_description'] ?? null,
             'long_description' => $data['long_description'] ?? null,
-            // DB currently does not have terms column
+            'terms' => $data['terms'] ?? '',
             'created_by_user_id' => auth()->id(),
             'updated_by_user_id' => auth()->id(),
             // published_at / archived_at not present in migration
         ]);
+
+        // Save costs relations
+        if (!empty($data['costs'])) {
+            foreach ($data['costs'] as $costId) {
+                CostRelations::create([
+                    'serviceId' => $service->id,
+                    'costId' => $costId,
+                ]);
+            }
+        }
 
         // Redirect back with success message
         return redirect()->route('tech.services.index')->with('success', 'Service created successfully.');
@@ -107,10 +128,34 @@ class ServiceController extends Controller
             'timebank_interval' => $data['timebank_interval'] ?? null,
             'short_description' => $data['short_description'] ?? null,
             'long_description' => $data['long_description'] ?? null,
-            // DB currently does not have terms column
+            'terms' => $data['terms'] ?? '',
             'updated_by_user_id' => auth()->id(),
             // published_at / archived_at not present in migration
         ]);
+
+        // Sync costs relations
+        if (isset($data['costs'])) {
+            $keep = $data['costs'];
+
+            // Delete removed
+            CostRelations::where('serviceId', $service->id)
+                ->whereNotIn('costId', $keep)
+                ->delete();
+
+            // Find existing
+            $existing = CostRelations::where('serviceId', $service->id)
+                ->pluck('costId')
+                ->all();
+
+            // Insert new
+            $toInsert = array_diff($keep, $existing);
+            foreach ($toInsert as $costId) {
+                CostRelations::create([
+                    'serviceId' => $service->id,
+                    'costId' => $costId,
+                ]);
+            }
+        }
 
         // Redirect back with success message
         return redirect()
@@ -135,7 +180,7 @@ class ServiceController extends Controller
 
         $services = $query->orderBy('name')->paginate(25)->withQueryString();
 
-        return view('Tech.cs.services.index', [
+        return view('tech.cs.services.index', [
             'services' => $services,
             'search' => $search,
         ]);

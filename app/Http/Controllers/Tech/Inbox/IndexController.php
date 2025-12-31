@@ -33,7 +33,7 @@ class IndexController extends Controller
         $messages = $query->orderByDesc('received_at')->orderByDesc('id')
             ->paginate(25)->withQueryString();
 
-        return view('Tech.Inbox.index', [
+        return view('tech.inbox.index', [
             'messages' => $messages,
             'search' => $request->get('q')
         ]);

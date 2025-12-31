@@ -2,9 +2,11 @@
 
 namespace App\Models\CS;
 
+use App\Models\Doc\Vendor;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 
 class Cost extends Model
 {
@@ -17,6 +19,8 @@ class Cost extends Model
         'cost',
         'unit',
         'recurrence',
+        'vendor_id',
+        'note',
         'created_by_user_id',
         'updated_by_user_id',
     ];
@@ -33,5 +37,10 @@ class Cost extends Model
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by_user_id');
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
     }
 }
