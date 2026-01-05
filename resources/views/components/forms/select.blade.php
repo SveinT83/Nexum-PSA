@@ -9,7 +9,7 @@
 <select class="form-select @error($name) is-invalid @enderror"
         id="{{$name}}"
         name="{{$name}}"
-    {{ $enabled ?? 'enabled' }}>
+        {{ $enabled ?? 'enabled' }}>
 
     {{ $slot }}
 </select>

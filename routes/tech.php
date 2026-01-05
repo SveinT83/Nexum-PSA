@@ -9,6 +9,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Tech\CS\Services\ServiceController;
 use App\Http\Controllers\Tech\CS\Costs\CostController;
+use App\Http\Controllers\Tech\CS\Contracts\ContractController;
+use App\Http\Controllers\Tech\CS\Sla\SlaController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
@@ -129,9 +131,14 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
     // Contracts
     // -----------------------------------------
-    Route::get('/contracts', function () {
-        return view('tech.cs.contracts.index');
-    })->name('contracts.index');
+
+    //Index: A list over all Contracts
+    Route::get('/contracts', [ContractController::class, 'index'])
+        ->name('contracts.index');
+
+    //New Contract
+    Route::get('/contracts/create', [ContractController::class, 'create'])
+        ->name('contracts.create');
 
     // -----------------------------------------
     // Services
@@ -180,6 +187,37 @@ Route::middleware(['auth','tech'])->group(function () {
     //Edit a cost
     Route::get('/costs/edit/{cost}', [CostController::class, 'edit'])->name('costs.edit');
 
+    // -----------------------------------------
+    // SLA
+    // -----------------------------------------
+
+    //Index: List of all SLA's
+    Route::get('/sla', [SlaController::class, 'index'])
+        ->name('sla.index');
+
+    //Show: Show a single sla profile
+    Route::get('/sla/show/{sla}', [SlaController::class, 'show'])
+        ->name('sla.show');
+
+    //EDIT: Edits a single sla profile
+    Route::get('/sla/edit/{sla}', [SlaController::class, 'show'])
+        ->name('sla.edit');
+
+    //Create: List of all SLA's
+    Route::get('/sla/create', [SlaController::class, 'create'])
+        ->name('sla.create');
+
+    //STORE: Save a new SLA Policy
+    Route::post('/sla/store', [SlaController::class, 'store'])
+        ->name('sla.store');
+
+    //UPDATE: Updates an existing SLA Policy
+    Route::put('/sla/update/{sla}', [SlaController::class, 'update'])
+        ->name('sla.update');
+
+    //DELETE: Deletes an existing SLA Policy
+    Route::delete('/sla/delete/{sla}', [SlaController::class, 'destroy'])
+        ->name('sla.delete');
 
     // -----------------------------------------
     // Documentations

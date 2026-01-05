@@ -100,6 +100,11 @@
             <!-- Costs -->
             <!-- ------------------------------------------------- -->
             <li><a class="dropdown-item {{ request()->routeIs('tech.costs.index') ? 'active' : '' }}" href="{{ route('tech.costs.index') }}">Costs</a></li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- SLA -->
+            <!-- ------------------------------------------------- -->
+            <li><a class="dropdown-item {{ request()->routeIs('tech.sla.index') ? 'active' : '' }}" href="{{ route('tech.sla.index') }}">SLA</a></li>
         </ul>
     </li>
 

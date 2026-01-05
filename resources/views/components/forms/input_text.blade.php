@@ -9,7 +9,8 @@
        name="{{ $name }}"
        value="{{ $value ?? '' }}"
         {{ $enabled ?? "enabled" }}
-        {{ $inputVar ?? '' }}/>
+        {{ $inputVar ?? '' }}
+       aria-describedby="{{$name ?? ''}}"/>
 
 @error($name)
     <div class="invalid-feedback">{{ $message }}</div>
