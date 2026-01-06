@@ -43,7 +43,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     // Store - Stores an new service
     // -----------------------------------------
-    public function store(\App\Http\Requests\Tech\CS\ServiceStoreRequest $request)
+    public function store(\App\Http\Requests\Tech\CS\Requests\Tech\CS\ServiceStoreRequest $request)
     {
 
         // Validate request via FormRequest
@@ -98,7 +98,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     // UPDATE - Updates an new service
     // -----------------------------------------
-    public function update(\App\Http\Requests\Tech\CS\ServiceStoreRequest $request, \App\Models\CS\Services\Services $service)
+    public function update(\App\Http\Requests\Tech\CS\Requests\Tech\CS\ServiceStoreRequest $request, \App\Models\CS\Services\Services $service)
     {
         // Validate request via FormRequest
         $data = $request->validated();

@@ -79,7 +79,7 @@
     <!-- Contracts & Services dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*');
+        $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*') || request()->routeIs('tech.packages.*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -92,6 +92,11 @@
             <li><a class="dropdown-item {{ request()->routeIs('tech.contracts.index') ? 'active' : '' }}" href="{{ route('tech.contracts.index') }}">Contracts</a></li>
 
             <!-- ------------------------------------------------- -->
+            <!-- Packages -->
+            <!-- ------------------------------------------------- -->
+            <li><a class="dropdown-item {{ request()->routeIs('tech.packages.*') ? 'active' : '' }}" href="{{ route('tech.packages.index') }}">Packages</a></li>
+
+            <!-- ------------------------------------------------- -->
             <!-- Services -->
             <!-- ------------------------------------------------- -->
             <li><a class="dropdown-item {{ request()->routeIs('tech.services.index') ? 'active' : '' }}" href="{{ route('tech.services.index') }}">Services</a></li>
@@ -100,6 +105,11 @@
             <!-- Costs -->
             <!-- ------------------------------------------------- -->
             <li><a class="dropdown-item {{ request()->routeIs('tech.costs.index') ? 'active' : '' }}" href="{{ route('tech.costs.index') }}">Costs</a></li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Legal - Legal & Terms -->
+            <!-- ------------------------------------------------- -->
+            <li><a class="dropdown-item {{ request()->routeIs('tech.legal.index') ? 'active' : '' }}" href="{{ route('tech.legal.index') }}">Legal & Terms</a></li>
 
             <!-- ------------------------------------------------- -->
             <!-- SLA -->

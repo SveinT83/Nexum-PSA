@@ -6,11 +6,12 @@
 // Routes fore tech url's - Middleware: auth, tech
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Tech\CS\Package\PackageController;
 use App\Http\Controllers\Tech\CS\Services\ServiceController;
-use App\Http\Controllers\Tech\CS\Costs\CostController;
 use App\Http\Controllers\Tech\CS\Contracts\ContractController;
+use App\Http\Controllers\Tech\CS\Costs\CostController;
 use App\Http\Controllers\Tech\CS\Sla\SlaController;
+use App\Http\Controllers\Tech\CS\Legal\LegalController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
@@ -141,6 +142,38 @@ Route::middleware(['auth','tech'])->group(function () {
         ->name('contracts.create');
 
     // -----------------------------------------
+    // PACKAGES
+    // -----------------------------------------
+
+    //Index: A list over all Packages
+    Route::get('/packages', [PackageController::class, 'index'])
+        ->name('packages.index');
+
+    //Create a new Package
+    Route::get('/package/create', [PackageController::class, 'create'])
+        ->name('packages.create');
+
+    //Store a new Package
+    Route::post('/package/store', [PackageController::class, 'store'])
+        ->name('packages.store');
+
+    //Show a Package
+    Route::get('/package/show/{package}', [PackageController::class, 'show'])
+        ->name('packages.show');
+
+    //Edit a Package
+    Route::get('/package/edit/{package}', [PackageController::class, 'edit'])
+        ->name('packages.edit');
+
+    //Update a Package
+    Route::put('/package/update/{package}', [PackageController::class, 'update'])
+        ->name('packages.update');
+
+    //Delete a Package
+    Route::delete('/package/delete/{package}', [PackageController::class, 'destroy'])
+        ->name('packages.delete');
+
+    // -----------------------------------------
     // Services
     // -----------------------------------------
 
@@ -186,6 +219,38 @@ Route::middleware(['auth','tech'])->group(function () {
 
     //Edit a cost
     Route::get('/costs/edit/{cost}', [CostController::class, 'edit'])->name('costs.edit');
+
+    // -----------------------------------------
+    // Legal - Legal & Terms
+    // -----------------------------------------
+
+    //List all costs
+    Route::get('/legal', [LegalController::class, 'index'])
+        ->name('legal.index');
+
+    //Show a single legal or term
+    Route::get('/legal/show/{term}', [LegalController::class, 'show'])
+        ->name('legal.show');
+
+    //Create a new legal or term
+    Route::get('/legal/create', [LegalController::class, 'create'])
+        ->name('legal.create');
+
+    //Store the new legal or term
+    Route::post('/legal/store', [LegalController::class, 'store'])
+        ->name('legal.store');
+
+    //Edit a legal or term
+    Route::get('/legal/edit/{term}', [LegalController::class, 'edit'])
+        ->name('legal.edit');
+
+    //Update a legal or term
+    Route::put('/legal/update/{term}', [LegalController::class, 'update'])
+        ->name('legal.update');
+
+    //Delete a legal or term
+    Route::delete('/legal/delete/{term}', [LegalController::class, 'delete'])
+        ->name('legal.delete');
 
     // -----------------------------------------
     // SLA

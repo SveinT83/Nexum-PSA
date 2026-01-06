@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Tech\Clients;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Tech\Clients\StoreClientRequest;
+use App\Http\Requests\Tech\CS\Requests\Tech\Clients\StoreClientRequest;
 use App\Models\Client;
 use App\Models\ClientSite;
 use App\Models\ClientUser;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 
 class CreateController extends Controller
 {
