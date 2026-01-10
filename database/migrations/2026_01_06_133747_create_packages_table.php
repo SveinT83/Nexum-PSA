@@ -15,6 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->decimal('sales_price_user', 10, 2)->nullable();
+            $table->decimal('sales_price_asset', 10, 2)->nullable();
+            $table->decimal('sales_price_site', 10, 2)->nullable();
+            $table->decimal('sales_price_client', 10, 2)->nullable();
+            $table->decimal('sales_price_other', 10, 2)->nullable();
             $table->string('status')->default('active');
             $table->foreignId('created_by_user_id')->nullable()->constrained('users');
             $table->foreignId('updated_by_user_id')->nullable()->constrained('users');

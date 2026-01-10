@@ -12,13 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
 
         then: function () {
-            // Teknisk grensesnitt
+
+            // Technisian & Admin routes
             Route::middleware('web')
                 ->prefix('tech')
                 ->as('tech.')
-                ->group(base_path('routes/tech.php'));
+                ->group(function () {
+                    require base_path('routes/tech.php');
+                    require base_path('routes/techAdmin.php');
+                });
 
-            // Kundeportal
+            // Client portal
             Route::middleware('web')
                 ->prefix('client')
                 ->as('client.')
@@ -29,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Alias custom middleware
         $middleware->alias([
             'tech' => \App\Http\Middleware\TechAccess::class,
+            'admin' => \App\Http\Middleware\AdminAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

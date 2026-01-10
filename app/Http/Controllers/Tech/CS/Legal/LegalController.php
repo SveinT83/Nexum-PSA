@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Tech\CS\Legal;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Tech\CS\termsRequest;
 use App\Models\CS\Terms\terms;
-use Illuminate\Http\Request;
-use App\Http\Requests\Tech\CS\Requests\Tech\CS\termsRequest;
 
 class LegalController extends Controller
 {

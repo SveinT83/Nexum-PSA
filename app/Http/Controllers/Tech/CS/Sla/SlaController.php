@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Tech\CS\Sla;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Tech\CS\Requests\Tech\CS\SlaRequest;
+use App\Http\Requests\Tech\CS\SlaRequest;
 use App\Models\CS\Sla\Sla;
 
 class SlaController extends Controller

@@ -5,22 +5,21 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
-class TechAccess
+class AdminAccess
 {
     /**
-     * Ensure the user is authenticated and has Tech/Superuser role.
+     * Ensure the user is authenticated and has Admin role.
      */
     public function handle(Request $request, Closure $next)
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
-        // Require Superuser, Tech or Admin role
-        if (! $user->hasRole('Superuser') && ! $user->hasRole('Tech') && ! $user->hasRole('Admin')) {
-            abort(403, 'Ingen tilgang');
+        if (! $user->hasRole('Superuser') && ! $user->hasRole('Admin')) {
+            abort(403, 'No access');
         }
 
         return $next($request);

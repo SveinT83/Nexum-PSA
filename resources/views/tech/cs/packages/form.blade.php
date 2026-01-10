@@ -64,6 +64,16 @@
         <livewire:tech.cs.service-picker :package="$package ?? null" :enabled="$disabled ?? 'enabled'" />
 
         <!-- ------------------------------------------------- -->
+        <!-- Legal -->
+        <!-- ------------------------------------------------- -->
+        <livewire:tech.cs.package-legal :package="$package ?? null" :enabled="$disabled ?? 'enabled'" />
+
+        <!-- ------------------------------------------------- -->
+        <!-- Pricing -->
+        <!-- ------------------------------------------------- -->
+        <livewire:tech.cs.package-pricing :package="$package ?? null" :enabled="$disabled ?? 'enabled'" />
+
+        <!-- ------------------------------------------------- -->
         <!-- FORM - End the form -->
         <!-- ------------------------------------------------- -->
     </x-forms.form-default>

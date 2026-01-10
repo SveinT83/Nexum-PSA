@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Tech\CS\Costs;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Tech\CS\Requests\Tech\CS\StoreCostRequest;
+use App\Http\Requests\Tech\CS\StoreCostRequest;
 use App\Models\CS\Cost;
 use App\Models\Doc\Vendor;
 

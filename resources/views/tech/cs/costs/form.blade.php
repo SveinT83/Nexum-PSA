@@ -48,6 +48,7 @@
                     <option value="user">User</option>
                     <option value="site">Site</option>
                     <option value="asset">Asset</option>
+                    <option value="license">License</option>
                     <option value="other">Other</option>
                 </x-forms.select>
             </div>

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Tech\Clients;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Tech\CS\Requests\Tech\Clients\StoreClientRequest;
+use App\Http\Requests\Tech\Clients\StoreClientRequest;
 use App\Models\Client;
 use App\Models\ClientSite;
 use App\Models\ClientUser;

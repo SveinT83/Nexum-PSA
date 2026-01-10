@@ -43,7 +43,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     // Store - Stores an new service
     // -----------------------------------------
-    public function store(\App\Http\Requests\Tech\CS\Requests\Tech\CS\ServiceStoreRequest $request)
+    public function store(\App\Http\Requests\Tech\CS\ServiceStoreRequest $request)
     {
 
         // Validate request via FormRequest
@@ -74,7 +74,6 @@ class ServiceController extends Controller
             'timebank_interval' => $data['timebank_interval'] ?? null,
             'short_description' => $data['short_description'] ?? null,
             'long_description' => $data['long_description'] ?? null,
-            'terms' => $data['terms'] ?? '',
             'created_by_user_id' => auth()->id(),
             'updated_by_user_id' => auth()->id(),
             // published_at / archived_at not present in migration
@@ -90,6 +89,9 @@ class ServiceController extends Controller
             }
         }
 
+        // Save terms (Legal)
+        $service->terms()->attach($data['terms'] ?? []);
+
         // Redirect back with success message
         return redirect()->route('tech.services.index')->with('success', 'Service created successfully.');
 
@@ -98,7 +100,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     // UPDATE - Updates an new service
     // -----------------------------------------
-    public function update(\App\Http\Requests\Tech\CS\Requests\Tech\CS\ServiceStoreRequest $request, \App\Models\CS\Services\Services $service)
+    public function update(\App\Http\Requests\Tech\CS\ServiceStoreRequest $request, \App\Models\CS\Services\Services $service)
     {
         // Validate request via FormRequest
         $data = $request->validated();
@@ -128,7 +130,6 @@ class ServiceController extends Controller
             'timebank_interval' => $data['timebank_interval'] ?? null,
             'short_description' => $data['short_description'] ?? null,
             'long_description' => $data['long_description'] ?? null,
-            'terms' => $data['terms'] ?? '',
             'updated_by_user_id' => auth()->id(),
             // published_at / archived_at not present in migration
         ]);
@@ -156,6 +157,9 @@ class ServiceController extends Controller
                 ]);
             }
         }
+
+        // Sync terms (Legal)
+        $service->terms()->sync($data['terms'] ?? []);
 
         // Redirect back with success message
         return redirect()

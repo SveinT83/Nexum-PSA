@@ -169,7 +169,7 @@
     <!-- ------------------------------------------------- -->
     <!-- Card for Terms -->
     <!-- ------------------------------------------------- -->
-    <x-card.default title="Terms">
+    <x-card.default title="Terms & Legal">
 
         <!-- ------------------------------------------------- -->
         <!-- Row fore: terms  -->
@@ -178,7 +178,11 @@
 
             <!-- terms -->
             <div class="col-md-12 mb-3">
-                <x-forms.textarea name="terms" labelName="Terms" value="{{ old('terms', $service->terms ?? '') }}" vars="rows='2' {{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.textarea>
+
+                <!-- ------------------------------------------------- -->
+                <!-- Card for Cost and Pricing (Livewire) -->
+                <!-- ------------------------------------------------- -->
+                <livewire:tech.cs.service-legal :service="$service" :enabled="$enabled" />
             </div>
         </div>
     </x-card.default>

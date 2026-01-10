@@ -23,6 +23,14 @@
             <li><hr class="dropdown-divider"></li>
 
             <!-- ------------------------------------------------- -->
+            <!-- Economy Settings -->
+            <!-- ------------------------------------------------- -->
+            <li><a class="nav-link disabled" aria-disabled="true">Economy Settings</a></li>
+            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.economy') }}">Economy</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <!-- ------------------------------------------------- -->
+
+            <!-- ------------------------------------------------- -->
             <!-- Email Settings -->
             <!-- ------------------------------------------------- -->
             <li><a class="nav-link disabled" aria-disabled="true">Email Settings</a></li>

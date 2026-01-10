@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Tech\CS\Requests\Tech\CS;
+namespace App\Http\Requests\Tech\CS;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -47,7 +47,8 @@ class ServiceStoreRequest extends FormRequest
             'timebank_interval' => ['nullable', 'in:monthly,yearly,one_time'],
             'short_description' => ['nullable', 'string'],
             'long_description' => ['nullable', 'string'],
-            'terms' => ['nullable'],
+            'terms' => ['nullable', 'array'],
+            'terms.*' => ['exists:terms,id'],
             'published_at' => ['nullable', 'date'],
             'archived_at' => ['nullable', 'date'],
         ];

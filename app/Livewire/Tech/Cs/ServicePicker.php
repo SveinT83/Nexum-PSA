@@ -47,11 +47,13 @@ class ServicePicker extends Component
         } else {
             $this->selectedServiceIds[] = $serviceId;
         }
+        $this->dispatch('servicesUpdated', $this->selectedServiceIds);
     }
 
     public function removeService($serviceId): void
     {
         $this->selectedServiceIds = array_values(array_diff($this->selectedServiceIds, [(string) $serviceId]));
+        $this->dispatch('servicesUpdated', $this->selectedServiceIds);
     }
 
     public function render()

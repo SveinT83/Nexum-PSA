@@ -36,7 +36,6 @@ class Services extends Model
         'timebank_interval',
         'short_description',
         'long_description',
-        'terms',
         'created_by_user_id',
         'updated_by_user_id',
         'published_at',
@@ -54,13 +53,22 @@ class Services extends Model
             'price_ex_vat' => 'decimal:2',
             'one_time_fee' => 'decimal:2',
             'default_discount_value' => 'decimal:2',
-            'terms' => 'array',
             'published_at' => 'datetime',
             'archived_at' => 'datetime',
         ];
     }
 
     // Add relationships here (queue, addon, creator, updater, clients whitelist)
+    public function terms()
+    {
+        return $this->belongsToMany(
+            \App\Models\CS\Terms\terms::class,
+            'service_term_pivot',
+            'service_id',
+            'term_id'
+        )->withTimestamps();
+    }
+
     public function costRelations()
     {
         return $this->hasMany(\App\Models\CS\CostRelations::class, 'serviceId');
