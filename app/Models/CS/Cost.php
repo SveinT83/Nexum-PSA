@@ -2,22 +2,22 @@
 
 namespace App\Models\CS;
 
-use App\Models\Doc\Vendor;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+Use App\Models\User;
+Use App\Models\Doc\Vendor;
+Use App\Models\Economy\Units;
 use Illuminate\Database\Eloquent\Model;
 
 
 class Cost extends Model
 {
-    use HasFactory;
 
     protected $table = 'costs';
 
     protected $fillable = [
         'name',
         'cost',
-        'unit',
+        'unitId', //The ID of the unit table
         'recurrence',
         'vendor_id',
         'note',
@@ -43,4 +43,10 @@ class Cost extends Model
     {
         return $this->belongsTo(Vendor::class);
     }
+
+    public function unit()
+    {
+        return $this->belongsTo(Units::class, 'unitId');
+    }
+
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tech\CS\StoreCostRequest;
 use App\Models\CS\Cost;
 use App\Models\Doc\Vendor;
+use App\Models\Economy\Units;
 
 class CostController extends Controller
 {
@@ -66,9 +67,13 @@ class CostController extends Controller
         //Get all vendors fore a option
         $vendors = Vendor::orderBy('name')->get();
 
+        //Get all Units for option
+        $units = Units::orderBy('name')->get();
+
         //Render
         return view('tech.cs.costs.form', [
             'vendors' => $vendors,
+            'units' => $units,
         ]);
     }
 
@@ -83,7 +88,7 @@ class CostController extends Controller
         Cost::create([
             'name' => $data['name'],
             'cost' => $data['cost'],
-            'unit' => $data['unit'],
+            'unitId' => $data['unitId'],
             'recurrence' => $data['recurrence'],
             'vendor_id' => $data['vendor_id'],
             'note' => $data['note'],
@@ -101,9 +106,13 @@ class CostController extends Controller
     {
         $vendors = Vendor::orderBy('name')->get();
 
+        //Get all Units for option
+        $units = Units::orderBy('name')->get();
+
         return view('tech.cs.costs.form', [
             'cost' => $cost,
             'vendors' => $vendors,
+            'units' => $units,
         ]);
     }
 
@@ -117,7 +126,7 @@ class CostController extends Controller
         $cost->update([
             'name' => $data['name'],
             'cost' => $data['cost'],
-            'unit' => $data['unit'],
+            'unitId' => $data['unitId'],
             'recurrence' => $data['recurrence'],
             'vendor_id' => $data['vendor_id'],
             'note' => $data['note'],

@@ -12,7 +12,21 @@
 
 @section('content')
 
+<x-forms.form-default action="{{route('tech.admin.settings.economy.update')}}" buttonText="Update">
 
+    <div class="row">
+
+        <!-- ------------------------------------------------- -->
+        <!-- Vat - Default 25% -->
+        <!-- ------------------------------------------------- -->
+        <div class="col-md-2">
+            <x-forms.input_text name="vat" labelName="VAT (Tax)" type="number" value="{{$vat->value ?? '25'}}"></x-forms.input_text>
+            <i>Value in percent!</i>
+        </div>
+
+    </div>
+
+</x-forms.form-default>
 
 @endsection
 

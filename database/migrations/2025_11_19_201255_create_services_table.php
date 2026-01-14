@@ -20,6 +20,9 @@ return new class extends Migration
             // name (string)
             $table->string('name');
 
+            //Que addon: availability_addon_of_service_id (foreign id nullable -> services.id)
+            $table->integer('unitId');
+
             // status (string default 'Active')
             $table->string('status')->default('Active');
 

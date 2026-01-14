@@ -11,7 +11,7 @@ class StoreCostRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'cost' => ['required', 'numeric', 'min:0'],
-            'unit' => ['required', 'string', 'in:client,user,site,asset,other'],
+            'unitId' => ['required', 'numeric'],
             'recurrence' => ['required', 'string', 'in:month,year,quarter,none'],
             'note' => ['nullable', 'string'],
             'vendor_id' => ['required', 'exists:vendors,id'],

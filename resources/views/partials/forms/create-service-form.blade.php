@@ -24,8 +24,19 @@
             </div>
 
             <!-- Name -->
-            <div class="col-md-8 mb-3">
+            <div class="col-md-4 mb-3">
                 <x-forms.input_text name='name' labelName='Name' type='text' value="{{ old('name', $service->name ?? '') }}" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
+            </div>
+
+            <!-- Unit -->
+            <div class="col-md-4 mb-3">
+                <x-forms.select name="unitId" labelName="Unit" enabled="{{$enabled}}">
+                    <option value="{{$service->unit->name ?? ''}}">{{$service->unit->name ?? 'Pleace select a unit'}}</option>
+
+                    @foreach($units as $unit)
+                        <option value="{{$unit->id}}">{{$unit->name}}</option>
+                    @endforeach
+                </x-forms.select>
             </div>
 
         </div>

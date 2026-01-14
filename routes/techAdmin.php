@@ -31,6 +31,10 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
     Route::get('/admin/settings/economy', [EconomyController::class, 'index'])
         ->name('admin.settings.economy');
 
+    // Economy Settings Update
+    Route::post('/admin/settings/economy/update', [EconomyController::class, 'update'])
+        ->name('admin.settings.economy.update');
+
     // Economy Unit View's
     Route::get('/admin/settings/economy/units', [UnitsController::class, 'index'])
         ->name('admin.settings.economy.units');

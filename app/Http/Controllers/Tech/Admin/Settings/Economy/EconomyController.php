@@ -26,16 +26,34 @@ class EconomyController extends Controller
         ];
 
         // -----------------------------------------
-        // Fetch economy settings (can be empty list)
+        // Fetch economy settings
         // -----------------------------------------
-        $economySettings = common_settings::where('type', 'economy')->get();
+        $vat = trim(common_settings::where('type', 'economy')
+            ->where('name', 'vat')
+            ->value('value') ?? '') ?: 25;
 
         // -----------------------------------------
         // Return view - Economy settings overview
         // -----------------------------------------
         return view('tech.admin.settings.economy.index', [
-            'economySettings' => $economySettings,
+            'vat' => $vat,
             'sidebarMenuItems' => $sidebarMenuItems,
         ]);
+    }
+
+    // ----------------------------------------------------------------------------------
+    // UPDATE
+    // Saves the update and return Economy Dashboard whit message
+    // ----------------------------------------------------------------------------------
+    public function update(Request $request)
+    {
+        if ($request->input('name') === 'vat') {
+
+        }
+
+        if ($request->input('name') === 'maxPrice') {
+
+        }
+
     }
 }

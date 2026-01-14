@@ -2,6 +2,7 @@
 
 namespace App\Models\CS\Services;
 
+use App\Models\Economy\Units;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +14,7 @@ class Services extends Model
 
     protected $fillable = [
         'name',
+        'unitId',
         'sku',
         'status',
         'icon',
@@ -72,5 +74,10 @@ class Services extends Model
     public function costRelations()
     {
         return $this->hasMany(\App\Models\CS\CostRelations::class, 'serviceId');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Units::class, 'unitId');
     }
 }

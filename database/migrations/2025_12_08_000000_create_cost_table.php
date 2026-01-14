@@ -20,8 +20,8 @@ return new class extends Migration
             // cost:
             $table->decimal('cost', 12, 2);
 
-            // unit: client, user, site, asset, other
-            $table->enum('unit', ['client', 'user', 'site', 'asset', 'other']);
+            // unitId: The id of the unit
+            $table->integer('unitId');
 
             // recurrence: none, month, year, quarter
             $table->enum('recurrence', ['none', 'month', 'year', 'quarter']);

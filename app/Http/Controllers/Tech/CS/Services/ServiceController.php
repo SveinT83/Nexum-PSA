@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tech\CS\Services;
 use App\Http\Controllers\Controller;
 use App\Models\CS\CostRelations;
 use App\Models\CS\Services\Services;
+use App\Models\Economy\Units;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -15,8 +16,12 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function show(\App\Models\CS\Services\Services $service)
     {
+        //Get all Units for option
+        $units = Units::orderBy('name')->get();
+
         return view('tech.cs.services.show', [
             'service' => $service,
+            'units' => $units,
         ]);
     }
 
@@ -25,8 +30,13 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function create()
     {
+
+        //Get all Units for option
+        $units = Units::orderBy('name')->get();
+
         return view('tech.cs.services.create', [
             'service' => new Services(),
+            'units' => $units,
         ]);
     }
 
@@ -35,8 +45,13 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function edit(\App\Models\CS\Services\Services $service)
     {
+
+        //Get all Units for option
+        $units = Units::orderBy('name')->get();
+
         return view('tech.cs.services.edit', [
             'service' => $service,
+            'units' => $units,
         ]);
     }
 
@@ -45,14 +60,14 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function store(\App\Http\Requests\Tech\CS\ServiceStoreRequest $request)
     {
-
         // Validate request via FormRequest
         $data = $request->validated();
 
         // Save service
         $service = Services::query()->create([
-            'name' => $data['name'],
             'sku' => $data['sku'],
+            'name' => $data['name'],
+            'unitId' => $data['unitId'],
             'status' => $data['status'] ?? 'Active',
             'icon' => $data['icon'] ?? null,
             // DB does not have sort_order or queue_default_id currently
@@ -107,8 +122,9 @@ class ServiceController extends Controller
 
         // Save service
         $service->update([
-            'name' => $data['name'],
             'sku' => $data['sku'],
+            'name' => $data['name'],
+            'unitId' => $data['unitId'],
             'status' => $data['status'] ?? 'Active',
             'icon' => $data['icon'] ?? null,
             // DB does not have sort_order or queue_default_id currently

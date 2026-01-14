@@ -13,7 +13,7 @@
                     <select class="form-select" name="costs[]" wire:model.live="selected" multiple size="5">
                         @foreach($allCosts as $cost)
                             <option value="{{ $cost->id }}">
-                                {{ $cost->name }} ({{ $cost->cost }} / {{ $cost->unit }}) - {{ $cost->vendor->name ?? 'No Vendor' }}
+                                {{ $cost->name }} ({{ $cost->cost }} / {{ $cost->unit->name }}) - {{ $cost->vendor->name ?? 'No Vendor' }}
                             </option>
                         @endforeach
                     </select>
@@ -47,19 +47,21 @@
                         </thead>
                         <tbody>
                             @foreach($linked as $item)
-                                <tr>
-                                    <td>{{ $item->cost->name }}</td>
-                                    <td>{{ $item->cost->vendor->name ?? '-' }}</td>
-                                    <td class="text-end">{{ number_format($item->cost->cost, 2) }}</td>
-                                    <td>{{ $item->cost->unit }}</td>
-                                    @if($enabled !== 'disabled')
-                                        <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-danger" wire:click="remove('{{ $item->costId }}')">
-                                                <i class="fas fa-trash-alt"></i> Remove
-                                            </button>
-                                        </td>
-                                    @endif
-                                </tr>
+                                @if ($item->cost)
+                                    <tr>
+                                        <td>{{ $item->cost->name ?? ""}}</td>
+                                        <td>{{ $item->cost->vendor->name ?? '-' }}</td>
+                                        <td class="text-end">{{ number_format($item->cost->cost, 2)}}</td>
+                                        <td>{{ $item->cost->unit->name ?? '-'}}</td>
+                                        @if($enabled !== 'disabled')
+                                            <td class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" wire:click="remove('{{ $item->costId }}')">
+                                                    <i class="fas fa-trash-alt"></i> Remove
+                                                </button>
+                                            </td>
+                                        @endif
+                                    </tr>
+                                @endif
                             @endforeach
                         </tbody>
                         <tfoot>

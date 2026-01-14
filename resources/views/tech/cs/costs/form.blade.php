@@ -43,14 +43,15 @@
 
             <!-- Cost PR. User, Client? -->
             <div class="col-md-2 mb-3">
-                <x-forms.select name="unit" labelName="Cost unit">
-                    <option value="{{$cost->client ?? 'client'}}">{{$cost->client ?? 'Client'}}</option>
-                    <option value="user">User</option>
-                    <option value="site">Site</option>
-                    <option value="asset">Asset</option>
-                    <option value="license">License</option>
-                    <option value="other">Other</option>
+                <x-forms.select name="unitId" labelName="Cost unit">
+                    <option value="{{$cost->unit->id ?? 'client'}}">{{$cost->unit->name ?? '-'}}</option>
+
+                    @foreach($units as $unit)
+                        <option value="{{$unit->id}}">{{$unit->name}}</option>
+                    @endforeach
+
                 </x-forms.select>
+
             </div>
 
             <!-- Cost Recurrence -->
@@ -66,6 +67,8 @@
             <!-- Vendor -->
             <div class="col-md-2 mb-3">
                 <x-forms.select name="vendor_id" labelName="Vendor">
+                    <option value="{{ $cost -> vendor -> id }}">{{ $cost -> vendor -> name }}</option>
+
                     @forelse($vendors ?? [] as $vendor)
                         <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
                     @empty

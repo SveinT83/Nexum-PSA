@@ -49,7 +49,7 @@
                                 <p><b class="d-sm-none">Cost: </b>{{ $cost -> cost }}</p>
                             </td>
                             <td>
-                                <p><b class="d-sm-none">Unit: </b>{{ $cost -> unit }}</p>
+                                <p><b class="d-sm-none">Unit: </b>{{ $cost->unit->name ?? '-' }}</p>
                             </td>
                             <td>
                                 <p><b class="d-sm-none">Recurrence: </b>{{ $cost -> recurrence }}</p>

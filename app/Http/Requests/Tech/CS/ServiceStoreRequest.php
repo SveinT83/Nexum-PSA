@@ -22,6 +22,7 @@ class ServiceStoreRequest extends FormRequest
                 'max:255',
                 Rule::unique('services')->ignore($this->route('service'))
             ],
+            'unitId' => ['required', 'numeric', 'max:255'],
             'status' => ['nullable', 'in:draft,published,archived'],
             'icon' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer'],
@@ -59,6 +60,7 @@ class ServiceStoreRequest extends FormRequest
         return [
             'name.required' => 'Name is required.',
             'sku.required' => 'SKU is required.',
+            'unit.required' => 'A unit is required',
             'price_ex_vat.required' => 'Price excl. VAT is required.',
             'billing_cycle.required' => 'Billing cycle is required.',
         ];

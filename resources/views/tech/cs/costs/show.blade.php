@@ -23,7 +23,7 @@
     <!-- Cost profile data -->
     <!-- ------------------------------------------------- -->
     <div class="row justify-content-between">
-        <p class="col"><i>Cost:</i> <b>{{$cost->cost}}</b> <i>Fore every</i> <b>{{$cost->unit}}</b> <i>pr.</i> <b>{{$cost->recurrence}}</b></p>
+        <p class="col"><i>Cost:</i> <b>{{$cost->cost}}</b> <i>Fore every</i> <b>{{$cost->unit->name}}</b> <i>pr.</i> <b>{{$cost->recurrence}}</b></p>
         <p class="col"><i>Description:</i> {{$cost->note}}</p>
     </div>
 
