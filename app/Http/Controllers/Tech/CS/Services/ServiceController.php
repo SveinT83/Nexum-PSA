@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Tech\CS\Services;
 
+//Use service
 use App\Http\Controllers\Controller;
 use App\Models\CS\CostRelations;
 use App\Models\CS\Services\Services;
 use App\Models\Economy\Units;
 use Illuminate\Http\Request;
+use App\Http\Requests\Tech\CS\ServiceStoreRequest;
 
 class ServiceController extends Controller
 {
@@ -14,7 +16,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     // Show - Displays a single service
     // -----------------------------------------
-    public function show(\App\Models\CS\Services\Services $service)
+    public function show(Services $service)
     {
         //Get all Units for option
         $units = Units::orderBy('name')->get();
@@ -43,7 +45,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     // Edit - Show Edit form
     // -----------------------------------------
-    public function edit(\App\Models\CS\Services\Services $service)
+    public function edit(Services $service)
     {
 
         //Get all Units for option
@@ -58,7 +60,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     // Store - Stores an new service
     // -----------------------------------------
-    public function store(\App\Http\Requests\Tech\CS\ServiceStoreRequest $request)
+    public function store(ServiceStoreRequest $request)
     {
         // Validate request via FormRequest
         $data = $request->validated();
@@ -115,7 +117,7 @@ class ServiceController extends Controller
     // -----------------------------------------
     // UPDATE - Updates an new service
     // -----------------------------------------
-    public function update(\App\Http\Requests\Tech\CS\ServiceStoreRequest $request, \App\Models\CS\Services\Services $service)
+    public function update(ServiceStoreRequest $request, Services $service)
     {
         // Validate request via FormRequest
         $data = $request->validated();
@@ -204,5 +206,20 @@ class ServiceController extends Controller
             'services' => $services,
             'search' => $search,
         ]);
+    }
+
+    // -----------------------------------------
+    // DELETE - Delete an service and the related poviot
+    // -----------------------------------------
+    public function destroy(Services $service)
+    {
+        // Relatertet rows in poviot tables Will be deleted from databasen migrations files.
+
+        //Delete the service
+        $service->delete();
+
+        return redirect()
+            ->route('tech.services.index')
+            ->with('success', 'Service deleted successfully.');
     }
 }

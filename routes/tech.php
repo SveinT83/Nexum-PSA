@@ -108,6 +108,9 @@ Route::middleware(['auth','tech'])->group(function () {
     //Edit a service
     Route::get('/services/edit/{service}', [ServiceController::class, 'edit'])->name('services.edit');
 
+    //Delete a service
+    Route::delete('/services/destroy/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+
     // -----------------------------------------
     // Costs
     // -----------------------------------------

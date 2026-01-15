@@ -9,8 +9,8 @@ return new class extends Migration {
     {
         Schema::create('cost_relations', function (Blueprint $table) {
             $table->id();
-            $table->string('costId');
-            $table->string('serviceId');
+            $table->foreignId('costId')->constrained('costs')->onDelete('cascade');
+            $table->foreignId('serviceId')->constrained('services')->onDelete('cascade');
             $table->timestamps();
         });
     }

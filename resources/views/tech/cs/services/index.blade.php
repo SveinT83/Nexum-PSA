@@ -53,6 +53,12 @@
                         @endif
                     </td>
                     <td class="text-end">
+                        <form action="{{ route('tech.services.destroy', $service) }}" method="POST" style="display:inline;">
+                            @csrf
+                            @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+
                         <a href="{{ route('tech.services.show', $service) }}" class="btn btn-sm btn-outline-primary">Open</a>
                     </td>
                 </tr>

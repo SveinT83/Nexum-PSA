@@ -31,7 +31,7 @@
             <!-- Unit -->
             <div class="col-md-4 mb-3">
                 <x-forms.select name="unitId" labelName="Unit" enabled="{{$enabled}}">
-                    <option value="{{$service->unit->name ?? ''}}">{{$service->unit->name ?? 'Pleace select a unit'}}</option>
+                    <option value="{{$service->unit->id ?? ''}}">{{$service->unit->name ?? 'Pleace select a unit'}}</option>
 
                     @foreach($units as $unit)
                         <option value="{{$unit->id}}">{{$unit->name}}</option>

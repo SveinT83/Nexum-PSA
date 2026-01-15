@@ -4,28 +4,20 @@ namespace App\Livewire\Tech\Cs;
 
 use App\Models\CS\Packages\Package;
 use App\Models\CS\Services\Services;
-use Livewire\Component;
-use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class PackagePricing extends Component
 {
     public ?Package $package = null;
+
     public array $selectedServiceIds = [];
-    public array $customSalesPrices = [
-        'user' => null,
-        'site' => null,
-        'asset' => null,
-        'client' => null,
-        'other' => null,
-    ];
-    public array $lastSuggestedPrices = [
-        'user' => 0,
-        'site' => 0,
-        'asset' => 0,
-        'client' => 0,
-        'other' => 0,
-    ];
+
+    public array $customSalesPrices = [];
+
+    public array $lastSuggestedPrices = [];
+
     public string $enabled = 'enabled';
 
     public function mount(?Package $package = null, string $enabled = 'enabled'): void
@@ -33,61 +25,58 @@ class PackagePricing extends Component
         $this->package = $package;
         $this->enabled = $enabled;
 
+        // Initialize with default units if package exists
         if ($this->package && $this->package->exists) {
             $this->selectedServiceIds = $this->package->services()
                 ->pluck('services.id')
-                ->map(fn($id) => (string) $id)
+                ->map(fn ($id) => (string) $id)
                 ->toArray();
 
-            $this->customSalesPrices = [
-                'user' => $this->package->sales_price_user,
-                'site' => $this->package->sales_price_site,
-                'asset' => $this->package->sales_price_asset,
-                'client' => $this->package->sales_price_client,
-                'other' => $this->package->sales_price_other,
-            ];
+            // Vi fjerner hardkodingen som prøvde å gjette enheter basert på navn (user, site, pc, kunde).
+            // I stedet henter vi priser som allerede er lagret på pakken hvis de finnes.
+            foreach ($this->package->prices ?? [] as $price) {
+                $this->customSalesPrices[$price->unit_id] = number_format((float) $price->amount, 2, '.', '');
+            }
         }
 
-        // Initialize last suggested prices
-        $pricing = $this->pricingByUnit();
-        foreach ($pricing as $unit => $data) {
-            $this->lastSuggestedPrices[$unit] = (float)$data['suggested_sales_price'];
-        }
+        $this->refreshPricing();
     }
 
     #[On('servicesUpdated')]
     public function updateServices($serviceIds): void
     {
         $this->selectedServiceIds = array_map('strval', $serviceIds);
+        $this->refreshPricing();
+    }
 
+    private function refreshPricing(): void
+    {
         // Get the new pricing data
         $pricing = $this->pricingByUnit();
 
-        foreach ($pricing as $unit => $data) {
-            $newSuggested = (float)$data['suggested_sales_price'];
-            $oldSuggested = (float)($this->lastSuggestedPrices[$unit] ?? 0);
-            $currentCustom = $this->customSalesPrices[$unit] ?? null;
+        foreach ($pricing as $unitId => $data) {
+            $newSuggested = (float) $data['suggested_sales_price'];
+            $oldSuggested = (float) ($this->lastSuggestedPrices[$unitId] ?? 0);
+            $currentCustom = $this->customSalesPrices[$unitId] ?? null;
 
             // If it was empty/null, or if it exactly matched the previous suggested price
-            // (meaning the user hasn't touched it or chose to keep it matching),
-            // we update it to the new suggested price.
-            if ($currentCustom === null || $currentCustom === '' || (float)$currentCustom === $oldSuggested) {
+            if ($currentCustom === null || $currentCustom === '' || (float) $currentCustom === $oldSuggested) {
                 if ($newSuggested > 0) {
-                    $this->customSalesPrices[$unit] = number_format($newSuggested, 2, '.', '');
+                    $this->customSalesPrices[$unitId] = number_format($newSuggested, 2, '.', '');
                 } else {
-                    $this->customSalesPrices[$unit] = null;
+                    $this->customSalesPrices[$unitId] = null;
                 }
             }
 
             // Update our tracker
-            $this->lastSuggestedPrices[$unit] = $newSuggested;
+            $this->lastSuggestedPrices[$unitId] = $newSuggested;
         }
     }
 
     #[Computed]
     public function selectedServices()
     {
-        return Services::with(['costRelations.cost'])
+        return Services::with(['costRelations.cost.unit', 'unit'])
             ->whereIn('id', $this->selectedServiceIds)
             ->get();
     }
@@ -95,47 +84,35 @@ class PackagePricing extends Component
     #[Computed]
     public function pricingByUnit(): array
     {
-        $units = ['user', 'site', 'asset', 'client', 'other'];
         $data = [];
-        foreach ($units as $unit) {
-            $data[$unit] = [
-                'cost' => 0.0,
-                'suggested_sales_price' => 0.0,
-                'has_services' => false,
-            ];
-        }
 
-        // Fetch services fresh to ensure we're not using stale cached data if IDs were recently updated
-        $services = Services::with(['costRelations.cost'])
+        // Fetch services fresh to ensure we're not using stale cached data
+        $services = Services::with(['costRelations.cost.unit', 'unit'])
             ->whereIn('id', $this->selectedServiceIds)
             ->get();
 
-        if ($services->isEmpty()) {
-            return $data;
-        }
-
         foreach ($services as $service) {
-            $serviceUnits = [];
-            foreach ($service->costRelations as $relation) {
-                if ($relation->cost && $relation->cost->unit) {
-                    $u = strtolower($relation->cost->unit);
-                    if (array_key_exists($u, $data)) {
-                        $data[$u]['cost'] += (float) $relation->cost->cost;
-                        $data[$u]['has_services'] = true;
-                        $serviceUnits[$u] = true;
-                    }
-                }
+            // 1. Attribute EVERYTHING (Service Price AND all its Costs) to the service's own unit
+            $unit = $service->unit;
+            $unitId = $unit ? $unit->id : 0; // 0 for 'No Unit'
+            $unitName = $unit ? ($unit->name) : '-';
+
+            if (! isset($data[$unitId])) {
+                $data[$unitId] = [
+                    'unit_name' => $unitName,
+                    'cost' => 0.0,
+                    'suggested_sales_price' => 0.0,
+                    'has_services' => false,
+                ];
             }
 
-            // Attribute service sales price to units
-            $unitCount = count($serviceUnits);
-            if ($unitCount === 0) {
-                $data['other']['suggested_sales_price'] += (float) $service->price_ex_vat;
-                $data['other']['has_services'] = true;
-            } else {
-                foreach (array_keys($serviceUnits) as $u) {
-                    $data[$u]['suggested_sales_price'] += (float) $service->price_ex_vat / $unitCount;
-                    $data[$u]['has_services'] = true;
+            $data[$unitId]['suggested_sales_price'] += (float) $service->price_ex_vat;
+            $data[$unitId]['has_services'] = true;
+
+            // Attribute all related costs to THIS service's unit, NOT the cost's unit
+            foreach ($service->costRelations as $relation) {
+                if ($relation->cost) {
+                    $data[$unitId]['cost'] += (float) $relation->cost->cost;
                 }
             }
         }
@@ -148,14 +125,14 @@ class PackagePricing extends Component
     {
         $pricing = $this->pricingByUnit();
         $rows = [];
-        foreach ($pricing as $unit => $data) {
-            $customPrice = $this->customSalesPrices[$unit] ?? null;
+        foreach ($pricing as $unitId => $data) {
+            $customPrice = $this->customSalesPrices[$unitId] ?? null;
             $hasCustom = $customPrice !== null && $customPrice !== '';
 
-            $suggested = (float)$data['suggested_sales_price'];
-            $cost = (float)$data['cost'];
+            $suggested = (float) $data['suggested_sales_price'];
+            $cost = (float) $data['cost'];
 
-            $salesPrice = $hasCustom ? (float)$customPrice : $suggested;
+            $salesPrice = $hasCustom ? (float) $customPrice : $suggested;
             $margin = $salesPrice - $cost;
             $marginPercent = $salesPrice > 0 ? ($margin / $salesPrice) * 100 : 0;
 
@@ -163,7 +140,7 @@ class PackagePricing extends Component
             $hasActivity = $hasCustom || ($data['has_services'] ?? false) || $cost > 0 || $suggested > 0;
 
             if ($hasActivity) {
-                $rows[$unit] = array_merge($data, [
+                $rows[$unitId] = array_merge($data, [
                     'custom_price' => $customPrice,
                     'has_custom' => $hasCustom,
                     'sales_price' => $salesPrice,
@@ -172,6 +149,7 @@ class PackagePricing extends Component
                 ]);
             }
         }
+
         return $rows;
     }
 
@@ -181,9 +159,10 @@ class PackagePricing extends Component
         $total = 0.0;
         $pricing = $this->pricingByUnit(); // Call directly to ensure fresh data
         foreach ($pricing as $unitData) {
-            $total += (float)$unitData['cost'];
+            $total += (float) $unitData['cost'];
         }
-        return (float)$total;
+
+        return (float) $total;
     }
 
     #[Computed]
@@ -192,9 +171,10 @@ class PackagePricing extends Component
         $total = 0.0;
         $pricing = $this->pricingByUnit(); // Call directly to ensure fresh data
         foreach ($pricing as $unitData) {
-            $total += (float)$unitData['suggested_sales_price'];
+            $total += (float) $unitData['suggested_sales_price'];
         }
-        return (float)$total;
+
+        return (float) $total;
     }
 
     #[Computed]
@@ -202,15 +182,16 @@ class PackagePricing extends Component
     {
         $total = 0.0;
         $pricing = $this->pricingByUnit(); // Call directly to ensure fresh data
-        foreach ($pricing as $unit => $unitData) {
-            $custom = $this->customSalesPrices[$unit] ?? null;
+        foreach ($pricing as $unitId => $unitData) {
+            $custom = $this->customSalesPrices[$unitId] ?? null;
             if ($custom !== null && $custom !== '') {
-                $total += (float)$custom;
+                $total += (float) $custom;
             } else {
-                $total += (float)$unitData['suggested_sales_price'];
+                $total += (float) $unitData['suggested_sales_price'];
             }
         }
-        return (float)$total;
+
+        return (float) $total;
     }
 
     #[Computed]
@@ -225,6 +206,7 @@ class PackagePricing extends Component
         if ($this->currentSalesPrice <= 0) {
             return 0;
         }
+
         return ($this->marginAmount / $this->currentSalesPrice) * 100;
     }
 

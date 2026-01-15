@@ -4,7 +4,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Category</th>
+                        <th>Unit</th>
                         <th class="text-end">Cost Price</th>
                         <th class="text-end">Suggested Sales Price</th>
                         <th class="text-end" style="width: 200px;">Sales Price</th>
@@ -12,17 +12,17 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($this->pricingRows as $unit => $row)
-                        <tr wire:key="pricing-row-{{ $unit }}">
-                            <td class="text-capitalize">{{ $unit }}</td>
+                    @foreach($this->pricingRows as $unitId => $row)
+                        <tr wire:key="pricing-row-{{ $unitId }}">
+                            <td>{{ $row['unit_name'] }}</td>
                             <td class="text-end text-muted">{{ number_format($row['cost'], 2) }}</td>
                             <td class="text-end text-muted">{{ number_format($row['suggested_sales_price'], 2) }}</td>
                             <td class="text-end">
                                 <div class="input-group input-group-sm">
                                     <input type="number"
                                            step="0.01"
-                                           wire:model.live="customSalesPrices.{{ $unit }}"
-                                           name="sales_price_{{ $unit }}"
+                                           wire:model.live="customSalesPrices.{{ $unitId }}"
+                                           name="sales_price_{{ $unitId }}"
                                            class="form-control text-end {{ $row['has_custom'] ? 'border-primary text-primary fw-bold' : '' }}"
                                            placeholder="{{ number_format($row['suggested_sales_price'], 2, '.', '') }}"
                                            {{ $enabled === 'disabled' ? 'disabled' : '' }}>
@@ -39,25 +39,6 @@
                         </tr>
                     @endforeach
                 </tbody>
-                        <tfoot class="table-light fw-bold">
-                    <tr>
-                        <td>Total</td>
-                        <td class="text-end">{{ number_format($this->totalCostPrice, 2) }}</td>
-                        <td class="text-end">{{ number_format($this->totalServiceSalesPrice, 2) }}</td>
-                        <td class="text-end">{{ number_format($this->currentSalesPrice, 2) }}</td>
-                        <td class="text-end">
-                            @php
-                                $totalMargin = $this->marginAmount;
-                                $totalMarginPercent = $this->marginPercentage;
-                            @endphp
-                            <span class="{{ $totalMargin >= 0 ? 'text-success' : 'text-danger' }} fs-5">
-                                {{ number_format($totalMargin, 2) }} kr
-                            </span>
-                            <br>
-                            <small class="text-muted">({{ number_format($totalMarginPercent, 1) }}%)</small>
-                        </td>
-                    </tr>
-                </tfoot>
             </table>
         </div>
 
