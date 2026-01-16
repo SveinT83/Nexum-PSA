@@ -4,7 +4,7 @@ namespace App\Http\Requests\Tech\Clients;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreClientRequest extends FormRequest
+class ClientRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -22,10 +22,10 @@ class StoreClientRequest extends FormRequest
             'notes' => ['nullable','string'],
             'active' => ['sometimes','boolean'],
 
-            // Default site (minimal for now)
+            // Default sites (minimal for now)
             'site_name' => ['required','string','max:255'],
 
-            // Default site user (minimal for now)
+            // Default sites user (minimal for now)
             'user_name' => ['required','string','max:255'],
             'user_email' => ['required','email','max:255'],
             'user_phone' => ['nullable','string','max:50'],

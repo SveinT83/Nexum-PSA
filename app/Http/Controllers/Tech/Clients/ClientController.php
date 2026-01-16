@@ -3,16 +3,58 @@
 namespace App\Http\Controllers\Tech\Clients;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Tech\Clients\StoreClientRequest;
-use App\Models\Client;
-use App\Models\ClientSite;
-use App\Models\ClientUser;
+use App\Http\Requests\Tech\Clients\ClientRequest;
+use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
+use App\Models\Clients\ClientUser;
+use App\Service\SideBarMenus\ClientsMenu;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
-class CreateController extends Controller
+class ClientController extends Controller
 {
+    public function index(Request $request)
+    {
+        $query = Client::query();
+
+        if ($search = $request->get('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%");
+                $q->orWhere('org_no', 'like', "%$search%");
+                $q->orWhere('billing_email', 'like', "%$search%");
+            });
+        }
+
+        $clients = $query->orderBy('name')->paginate(25)->withQueryString();
+
+        // -----------------------------------------
+        // Array of sidebar menu items
+        // -----------------------------------------
+        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu();
+
+        return view('tech.clients.index', [
+            'clients' => $clients,
+            'search' => $search,
+            'sidebarMenuItems' => $sidebarMenuItems
+        ]);
+    }
+
+    public function show(Client $client)
+    {
+
+        // -----------------------------------------
+        // Array of sidebar menu items
+        // -----------------------------------------
+        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu();
+
+        return view('tech.clients.show', [
+            'client' => $client,
+            'sidebarMenuItems' => $sidebarMenuItems
+        ]);
+    }
+
     public function create(): View
     {
         // Foreslå neste kundenummer (5 siffer)
@@ -30,7 +72,7 @@ class CreateController extends Controller
         ]);
     }
 
-    public function store(StoreClientRequest $request): RedirectResponse
+    public function store(ClientRequest $request): RedirectResponse
     {
         $data = $request->validated();
 
@@ -45,14 +87,14 @@ class CreateController extends Controller
                 'active' => $data['active'] ?? true,
             ]);
 
-            // Create default site
+            // Create default sites
             $site = ClientSite::query()->create([
                 'client_id' => $client->id,
                 'name' => $data['site_name'],
                 'is_default' => true,
             ]);
 
-            // Create default site user
+            // Create default sites user
             ClientUser::query()->create([
                 'client_site_id' => $site->id,
                 'user_id' => null,

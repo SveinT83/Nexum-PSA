@@ -32,7 +32,7 @@ class PackagePricing extends Component
                 ->map(fn ($id) => (string) $id)
                 ->toArray();
 
-            // Vi fjerner hardkodingen som prøvde å gjette enheter basert på navn (user, site, pc, kunde).
+            // Vi fjerner hardkodingen som prøvde å gjette enheter basert på navn (user, sites, pc, kunde).
             // I stedet henter vi priser som allerede er lagret på pakken hvis de finnes.
             foreach ($this->package->prices ?? [] as $price) {
                 $this->customSalesPrices[$price->unit_id] = number_format((float) $price->amount, 2, '.', '');

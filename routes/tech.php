@@ -13,6 +13,9 @@ use App\Http\Controllers\Tech\CS\Contracts\ContractController;
 use App\Http\Controllers\Tech\CS\Costs\CostController;
 use App\Http\Controllers\Tech\CS\Sla\SlaController;
 use App\Http\Controllers\Tech\CS\Legal\LegalController;
+use App\Http\Controllers\Tech\Clients\ClientSiteController;
+use App\Http\Controllers\Tech\Clients\ClientUsersController;
+use App\Http\Controllers\Tech\Clients\ClientController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
@@ -30,17 +33,83 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
     // Clients (basic MVP: index, create, store, show)
     // -----------------------------------------
-    Route::get('/clients', [\App\Http\Controllers\Tech\Clients\IndexController::class, 'index'])
+    Route::get('/clients', [ClientController::class, 'index'])
         ->name('clients.index');
 
-    Route::get('/clients/create', [\App\Http\Controllers\Tech\Clients\CreateController::class, 'create'])
+    Route::get('/clients/create', [ClientController::class, 'create'])
         ->name('clients.create');
 
-    Route::post('/clients', [\App\Http\Controllers\Tech\Clients\CreateController::class, 'store'])
+    Route::post('/clients/store', [ClientController::class, 'store'])
         ->name('clients.store');
 
-    Route::get('/clients/{client}', [\App\Http\Controllers\Tech\Clients\ShowController::class, 'show'])
+    Route::get('/clients/show/{client}', [ClientController::class, 'show'])
         ->name('clients.show');
+
+
+    // -----------------------------------------
+    // Users
+    // -----------------------------------------
+
+    //Index
+    Route::get('/clients/users/', [ClientUsersController::class, 'index'])
+        ->name('clients.users.index');
+
+    //Show
+    Route::get('/clients/users/show/{ClientUsers}', [ClientUsersController::class, 'show'])
+        ->name('clients.users.show');
+
+    //Create
+    Route::get('/clients/users.create/{Sites}', [ClientUsersController::class, 'create'])
+        ->name('clients.users.create');
+
+    //Store
+    Route::post('/clients/users.store/{Sites}', [ClientUsersController::class, 'store'])
+        ->name('clients.users.store');
+
+    //Edit
+    Route::get('/clients/users.edit/{ClientUsers}', [ClientUsersController::class, 'edit'])
+        ->name('clients.users.edit');
+
+    //Update
+    Route::put('/clients/users.update/{ClientUsers}', [ClientUsersController::class, 'update'])
+        ->name('clients.users.update');
+
+    //Destroy
+    Route::delete('/clients/users.delete/{ClientUsers}', [ClientUsersController::class, 'delete'])
+        ->name('clients.users.delete');
+
+
+    // -----------------------------------------
+    // Sites
+    // -----------------------------------------
+
+    //Index
+    Route::get('/clients/sites', [ClientSiteController::class, 'index'])
+        ->name('clients.sites.index');
+
+    //Show
+    Route::get('/clients/sites/{ClientSites}', [ClientSiteController::class, 'show'])
+        ->name('clients.sites.show');
+
+    //Create
+    Route::get('/clients/sites.create/{Clients}', [ClientSiteController::class, 'create'])
+        ->name('clients.sites.create');
+
+    //Store
+    Route::post('/clients/sites.store/{Clients}', [ClientSiteController::class, 'store'])
+        ->name('clients.sites.store');
+
+    //Edit
+    Route::get('/clients/sites.edit/{ClientSites}', [ClientSiteController::class, 'edit'])
+        ->name('clients.sites.edit');
+
+    //Update
+    Route::put('/clients/sites.update/{ClientSites}', [ClientSiteController::class, 'update'])
+        ->name('clients.sites.update');
+
+    //Destroy
+    Route::delete('/clients/sites.delete/{ClientSites}', [ClientSiteController::class, 'delete'])
+        ->name('clients.sites.delete');
 
     // -----------------------------------------
     // Contracts

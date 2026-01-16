@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Clients;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,14 +27,14 @@ class Client extends Model
 
     public function sites(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(\App\Models\ClientSite::class);
+        return $this->hasMany(\App\Models\Clients\ClientSite::class);
     }
 
     public function contacts(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
         return $this->hasManyThrough(
-            \App\Models\ClientUser::class,
-            \App\Models\ClientSite::class,
+            \App\Models\Clients\ClientUser::class,
+            \App\Models\Clients\ClientSite::class,
             'client_id',      // Foreign key on client_sites table...
             'client_site_id'  // Foreign key on client_users table...
         );

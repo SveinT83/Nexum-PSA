@@ -65,7 +65,12 @@
 @endsection
 
 @section('sidebar')
-    <div class="p-3 small text-muted">Client filters (later)</div>
+    <!-- ------------------------------------------------- -->
+    <!-- Show sidebar menu if there are any items -->
+    <!-- ------------------------------------------------- -->
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" />
+    @endif
 @endsection
 
 @section('rightbar')

@@ -31,14 +31,14 @@ All builder data is stored in the `fields` JSON attribute of the `Template` mode
     {
       "title": "Basics",
       "columns": [
-        { "span": {"md":6}, "fields": ["client", "site", "contact"] },
+        { "span": {"md":6}, "fields": ["client", "sites", "contact"] },
         { "span": {"md":6}, "fields": ["vendor", "manufacturer"] }
       ]
     }
   ],
   "fields": [
     { "key": "client", "type": "select.dynamic", "source": "clients" },
-    { "key": "site", "type": "select.dynamic", "source": "sites", "depends_on": {"client": "client"} },
+    { "key": "sites", "type": "select.dynamic", "source": "sites", "depends_on": {"client": "client"} },
     { "key": "manufacturer", "type": "select.dynamic", "source": "manufacturers" }
   ]
 }

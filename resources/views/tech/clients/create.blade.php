@@ -41,14 +41,14 @@
         </div>
 
         <!-- ------------------------------------------------- -->
-        <!-- Default site and user -->
+        <!-- Default sites and user -->
         <!-- ------------------------------------------------- -->
         <div class="row border-bottom mt-3 mb-3 pt-3 pb-3">
 
-            <!-- Default site -->
+            <!-- Default sites -->
             <div class="col-md-3 mb-3">
                 <label class="form-label fw-bold">Site name*</label>
-                <input type="text" name="site_name" value="{{ old('site_name') ?? "General site" }}" required class="form-control @error('site_name') is-invalid @enderror">
+                <input type="text" name="site_name" value="{{ old('site_name') ?? "General sites" }}" required class="form-control @error('site_name') is-invalid @enderror">
                 @error('site_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
@@ -89,7 +89,7 @@
                 @error('user_role')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
         </div>
-        
+
 		<div class="mb-3 mt-3">
 			<label class="form-label fw-bold">Billing Email</label>
 			<input type="email" name="billing_email" value="{{ old('billing_email') }}" class="form-control @error('billing_email') is-invalid @enderror">
