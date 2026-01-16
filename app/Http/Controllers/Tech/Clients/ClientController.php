@@ -32,7 +32,7 @@ class ClientController extends Controller
         // -----------------------------------------
         // Array of sidebar menu items
         // -----------------------------------------
-        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu();
+        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu(null);
 
         return view('tech.clients.index', [
             'clients' => $clients,
@@ -47,7 +47,7 @@ class ClientController extends Controller
         // -----------------------------------------
         // Array of sidebar menu items
         // -----------------------------------------
-        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu();
+        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu($client);
 
         return view('tech.clients.show', [
             'client' => $client,

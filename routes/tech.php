@@ -84,7 +84,7 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
 
     //Index
-    Route::get('/clients/sites', [ClientSiteController::class, 'index'])
+    Route::get('/clients/sites/{client}', [ClientSiteController::class, 'index'])
         ->name('clients.sites.index');
 
     //Show
