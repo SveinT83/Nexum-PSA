@@ -16,9 +16,6 @@
 @endsection
 
 @section('content')
-    @if(session('status'))
-        <div class="alert alert-success">{{ session('status') }}</div>
-    @endif
 
     <div class="table-responsive">
         <table class="table table-sm align-middle">
@@ -65,12 +62,7 @@
 @endsection
 
 @section('sidebar')
-    <!-- ------------------------------------------------- -->
-    <!-- Show sidebar menu if there are any items -->
-    <!-- ------------------------------------------------- -->
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
+
 @endsection
 
 @section('rightbar')

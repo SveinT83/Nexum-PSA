@@ -38,6 +38,17 @@
 
                     <!-- Sidebar (left) -->
                     <div class="col-md-2 sidebar">
+
+                        <!-- ------------------------------------------------- -->
+                        <!-- Show sidebar menu if there are any items -->
+                        <!-- ------------------------------------------------- -->
+                        @if(isset($sidebarMenuItems))
+                            <x-nav.side-bar :items="$sidebarMenuItems" />
+                        @endif
+
+                        <!-- ------------------------------------------------- -->
+                        <!-- More sidebar content from page file -->
+                        <!-- ------------------------------------------------- -->
                         @yield('sidebar')
                     </div>
 
@@ -52,6 +63,10 @@
                         <!-- Main content -->
                         <div class="row content p-1">
                             <div class="container">
+
+                                @if(session('status'))
+                                    <div class="alert alert-success">{{ session('status') }}</div>
+                                @endif
 
                                 @if(session('success'))
                                     <div class="row">

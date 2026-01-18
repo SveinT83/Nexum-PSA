@@ -68,9 +68,6 @@ class ClientsMenu
         // Add the main "Clients" menu item linking to the clients index page
         $sidebarMenuItems[] = ['name' => 'Clients', 'route' => 'tech.clients.index'];
 
-        // Add the "Users" menu item linking to the client users index page
-        $sidebarMenuItems[] = ['name' => 'Users', 'route' => 'tech.clients.users.index'];
-
         // Conditionally configure the "Sites" menu item based on client validity
         if ($clients && is_numeric($clients->id)) {
             // If a valid client object exists with a numeric ID, include the client ID
@@ -83,8 +80,11 @@ class ClientsMenu
         } else {
             // If no valid client is provided, add Sites menu with a placeholder parameter
             // The 'x' parameter likely triggers a default view or all sites view
-            $sidebarMenuItems[] = ['name' => 'Sites', 'route' => 'tech.clients.sites.index', 'params' => 'x'];
+            $sidebarMenuItems[] = ['name' => 'Sites', 'route' => 'tech.clients.sites.index', 'params' => 'all'];
         }
+
+        // Add the "Users" menu item linking to the client users index page
+        $sidebarMenuItems[] = ['name' => 'Users', 'route' => 'tech.clients.users.index'];
 
         // Return the complete array of sidebar menu items
         return $sidebarMenuItems;

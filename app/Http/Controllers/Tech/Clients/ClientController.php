@@ -29,15 +29,10 @@ class ClientController extends Controller
 
         $clients = $query->orderBy('name')->paginate(25)->withQueryString();
 
-        // -----------------------------------------
-        // Array of sidebar menu items
-        // -----------------------------------------
-        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu(null);
-
         return view('tech.clients.index', [
             'clients' => $clients,
             'search' => $search,
-            'sidebarMenuItems' => $sidebarMenuItems
+            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu(null),
         ]);
     }
 

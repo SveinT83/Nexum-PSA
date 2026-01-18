@@ -36,13 +36,6 @@
 
 @section('sidebar')
 
-    <!-- ------------------------------------------------- -->
-    <!-- Show sidebar menu if there are any items -->
-    <!-- ------------------------------------------------- -->
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
-
 @endsection
 
 @section('rightbar')

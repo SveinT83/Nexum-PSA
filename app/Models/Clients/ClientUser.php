@@ -24,6 +24,7 @@ class ClientUser extends Model
         'city',
         'county',
         'country',
+        'language',
         'is_default_for_site',
         'is_default_for_client',
         'active',

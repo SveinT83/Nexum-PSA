@@ -55,7 +55,7 @@ Route::middleware(['auth','tech'])->group(function () {
         ->name('clients.users.index');
 
     //Show
-    Route::get('/clients/users/show/{ClientUsers}', [ClientUsersController::class, 'show'])
+    Route::get('/clients/users/show/{userId}', [ClientUsersController::class, 'show'])
         ->name('clients.users.show');
 
     //Create
@@ -84,32 +84,32 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
 
     //Index
-    Route::get('/clients/sites/{client}', [ClientSiteController::class, 'index'])
+    Route::get('/clients/sites/{client?}', [ClientSiteController::class, 'index'])
         ->name('clients.sites.index');
 
     //Show
-    Route::get('/clients/sites/{ClientSites}', [ClientSiteController::class, 'show'])
+    Route::get('/clients/sites/show/{site}', [ClientSiteController::class, 'show'])
         ->name('clients.sites.show');
 
     //Create
-    Route::get('/clients/sites.create/{Clients}', [ClientSiteController::class, 'create'])
+    Route::get('/clients/sites/create/{client?}', [ClientSiteController::class, 'create'])
         ->name('clients.sites.create');
 
     //Store
-    Route::post('/clients/sites.store/{Clients}', [ClientSiteController::class, 'store'])
+    Route::post('/clients/sites/store/{client?}', [ClientSiteController::class, 'store'])
         ->name('clients.sites.store');
 
     //Edit
-    Route::get('/clients/sites.edit/{ClientSites}', [ClientSiteController::class, 'edit'])
+    Route::get('/clients/sites.edit/{site}', [ClientSiteController::class, 'edit'])
         ->name('clients.sites.edit');
 
     //Update
-    Route::put('/clients/sites.update/{ClientSites}', [ClientSiteController::class, 'update'])
+    Route::put('/clients/sites.update/{site}', [ClientSiteController::class, 'update'])
         ->name('clients.sites.update');
 
     //Destroy
-    Route::delete('/clients/sites.delete/{ClientSites}', [ClientSiteController::class, 'delete'])
-        ->name('clients.sites.delete');
+    Route::delete('/clients/sites/destroy/{site}', [ClientSiteController::class, 'destroy'])
+        ->name('clients.sites.destroy');
 
     // -----------------------------------------
     // Contracts

@@ -11,6 +11,8 @@ class ClientSite extends Model
 {
     use HasFactory;
 
+    protected $table = 'client_sites'; // Sikrer at vi bruker riktig tabell
+
     protected $fillable = [
         'client_id',
         'name',
@@ -23,9 +25,12 @@ class ClientSite extends Model
         'is_default',
     ];
 
+    /**
+     * @return BelongsTo<Client, ClientSite>
+     */
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class, 'client_id');
     }
 
     public function contacts(): HasMany

@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->string('city', 100)->nullable();
             $table->string('county', 100)->nullable();
             $table->string('country', 100)->nullable();
+            $table->string('language', 10)->nullable();
             $table->boolean('is_default_for_site')->default(false);
             $table->boolean('is_default_for_client')->default(false);
             $table->boolean('active')->default(true);
