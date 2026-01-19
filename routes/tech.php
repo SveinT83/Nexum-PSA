@@ -50,33 +50,33 @@ Route::middleware(['auth','tech'])->group(function () {
     // Users
     // -----------------------------------------
 
-    //Index
-    Route::get('/clients/users/', [ClientUsersController::class, 'index'])
-        ->name('clients.users.index');
-
     //Show
-    Route::get('/clients/users/show/{userId}', [ClientUsersController::class, 'show'])
-        ->name('clients.users.show');
+    Route::get('/clients/user/show/{User}', [ClientUsersController::class, 'show'])
+        ->name('clients.user.show');
 
     //Create
-    Route::get('/clients/users.create/{Sites}', [ClientUsersController::class, 'create'])
-        ->name('clients.users.create');
+    Route::get('/clients/user/create/{Sites}', [ClientUsersController::class, 'create'])
+        ->name('clients.user.create');
 
     //Store
-    Route::post('/clients/users.store/{Sites}', [ClientUsersController::class, 'store'])
-        ->name('clients.users.store');
+    Route::post('/clients/user/store/{Sites}', [ClientUsersController::class, 'store'])
+        ->name('clients.user.store');
 
     //Edit
-    Route::get('/clients/users.edit/{ClientUsers}', [ClientUsersController::class, 'edit'])
-        ->name('clients.users.edit');
+    Route::get('/clients/user/edit/{ClientUsers}', [ClientUsersController::class, 'edit'])
+        ->name('clients.user.edit');
 
     //Update
-    Route::put('/clients/users.update/{ClientUsers}', [ClientUsersController::class, 'update'])
-        ->name('clients.users.update');
+    Route::put('/clients/user/update/{ClientUsers}', [ClientUsersController::class, 'update'])
+        ->name('clients.user.update');
 
     //Destroy
-    Route::delete('/clients/users.delete/{ClientUsers}', [ClientUsersController::class, 'delete'])
-        ->name('clients.users.delete');
+    Route::delete('/clients/user/delete/{ClientUsers}', [ClientUsersController::class, 'delete'])
+        ->name('clients.user.delete');
+
+    //Index
+    Route::get('/clients/users/{client?}/{site?}', [ClientUsersController::class, 'index'])
+        ->name('clients.users.index');
 
 
     // -----------------------------------------
