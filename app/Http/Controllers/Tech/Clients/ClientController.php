@@ -15,8 +15,22 @@ use Illuminate\View\View;
 
 class ClientController extends Controller
 {
+    /**
+     * Display a paginated list of clients.
+     *
+     * This method resets any active client or site context in the session
+     * and allows searching for clients by name, organization number, or email.
+     *
+     * @param Request $request
+     * @return View
+     */
     public function index(Request $request)
     {
+        // -----------------------------------------
+        // Reset active client ID in session
+        // -----------------------------------------
+        session()->forget(['active_client_id', 'active_site_id']);
+
         $query = Client::query();
 
         if ($search = $request->get('search')) {
@@ -36,8 +50,22 @@ class ClientController extends Controller
         ]);
     }
 
+    /**
+     * Display the details of a specific client.
+     *
+     * This method sets the client as the "active client" in the session
+     * and prepares the sidebar menu based on this client context.
+     *
+     * @param Client $client
+     * @return View
+     */
     public function show(Client $client)
     {
+
+        // -----------------------------------------
+        // Set the active client ID in session
+        // -----------------------------------------
+        session(['active_client_id' => $client->id]);
 
         // -----------------------------------------
         // Array of sidebar menu items
@@ -50,6 +78,13 @@ class ClientController extends Controller
         ]);
     }
 
+    /**
+     * Show the form for creating a new client.
+     *
+     * Provides suggested client numbers and default configuration options.
+     *
+     * @return View
+     */
     public function create(): View
     {
         // Foreslå neste kundenummer (5 siffer)
@@ -64,9 +99,19 @@ class ClientController extends Controller
             'suggestedClientNumber' => $suggestedClientNumber,
             'roles' => $roles,
             'countries' => $countries,
+            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu(null),
         ]);
     }
 
+    /**
+     * Store a newly created client in the database.
+     *
+     * This operation is wrapped in a transaction to ensure that the client,
+     * its default site, and its default user are all created successfully.
+     *
+     * @param ClientRequest $request
+     * @return RedirectResponse
+     */
     public function store(ClientRequest $request): RedirectResponse
     {
         $data = $request->validated();

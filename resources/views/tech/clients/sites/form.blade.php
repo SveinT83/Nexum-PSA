@@ -101,7 +101,6 @@
 @endsection
 
 @section('sidebar')
-
 @endsection
 
 @section('rightbar')

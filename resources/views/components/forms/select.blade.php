@@ -1,22 +1,47 @@
+@props([
+    'name',
+    'selectClass' => '',
+    'labelName' => null,
+    'layout' => 'horizontal',
+    'enabled' => 'enabled',
+    'labelClass' => ''
+])
+
+<!-- ------------------------------------------------- -->
+<!-- Layout variables -->
+<!-- ------------------------------------------------- -->
+@php
+    $layout = $layout ?? "horizontal";
+
+    if($layout === 'vertical'){
+        $labelClass = "col-md-3 " . $labelClass;
+        // Vi sjekker om vi allerede har en col-klasse, hvis ikke legger vi til 'col'
+        if (!str_contains($selectClass, 'col')) {
+            $selectClass = "col " . $selectClass;
+        }
+    }
+@endphp
+
 <!-- ------------------------------------------------- -->
 <!-- Label -->
 <!-- ------------------------------------------------- -->
-<label for="{{$name}}" class="form-label fw-bold">{{$labelName}}</label>
+@if(isset($labelName))
+    <label for="{{$name}}" class="form-label fw-bold {{$labelClass}}">{{$labelName}}</label>
+@endif
 
-<!-- ------------------------------------------------- -->
-<!-- Select -->
-<!-- ------------------------------------------------- -->
-<select class="form-select @error($name) is-invalid @enderror"
-        id="{{$name}}"
-        name="{{$name}}"
+<!-- Hvis layout er vertical, legger vi selecten inni en div med kolonne-klassen -->
+@if($layout == 'vertical')<div class="{{$selectClass}}">@endif
+
+    <select class="form-select @error($name) is-invalid @enderror"
+            id="{{$name}}"
+            name="{{$name}}"
         {{ $enabled ?? 'enabled' }}>
 
-    {{ $slot }}
-</select>
+        {{ $slot }}
+    </select>
 
-<!-- ------------------------------------------------- -->
-<!-- Error message -->
-<!-- ------------------------------------------------- -->
-@error($name)
-<div class="invalid-feedback">{{ $message }}</div>
-@enderror
+    @error($name)
+    <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+
+    @if($layout == 'vertical')</div>@endif

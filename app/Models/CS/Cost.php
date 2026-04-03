@@ -3,7 +3,7 @@
 namespace App\Models\CS;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-Use App\Models\User;
+use App\Models\Core\User;
 Use App\Models\Doc\Vendor;
 Use App\Models\Economy\Units;
 use Illuminate\Database\Eloquent\Model;

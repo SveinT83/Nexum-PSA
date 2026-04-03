@@ -1,4 +1,6 @@
 <?php
+
+use App\Models\Clients\ClientUser;
 use Illuminate\Support\Facades\Route;
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -16,6 +18,8 @@ use App\Http\Controllers\Tech\CS\Legal\LegalController;
 use App\Http\Controllers\Tech\Clients\ClientSiteController;
 use App\Http\Controllers\Tech\Clients\ClientUsersController;
 use App\Http\Controllers\Tech\Clients\ClientController;
+use App\Http\Controllers\Tech\Doc\DocController;
+use App\Http\Controllers\Tech\Risk\RiskController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
@@ -51,11 +55,11 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
 
     //Show
-    Route::get('/clients/user/show/{User}', [ClientUsersController::class, 'show'])
+    Route::get('/clients/user/show/{ClientUser}', [ClientUsersController::class, 'show'])
         ->name('clients.user.show');
 
     //Create
-    Route::get('/clients/user/create/{Sites}', [ClientUsersController::class, 'create'])
+    Route::get('/clients/user/create/{client}', [ClientUsersController::class, 'create'])
         ->name('clients.user.create');
 
     //Store
@@ -75,7 +79,7 @@ Route::middleware(['auth','tech'])->group(function () {
         ->name('clients.user.delete');
 
     //Index
-    Route::get('/clients/users/{client?}/{site?}', [ClientUsersController::class, 'index'])
+    Route::get('/clients/users', [ClientUsersController::class, 'index'])
         ->name('clients.users.index');
 
 
@@ -84,7 +88,7 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
 
     //Index
-    Route::get('/clients/sites/{client?}', [ClientSiteController::class, 'index'])
+    Route::get('/clients/sites', [ClientSiteController::class, 'index'])
         ->name('clients.sites.index');
 
     //Show
@@ -272,9 +276,80 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
     // Documentations
     // -----------------------------------------
-    Route::get('/documentations', function () {
-        return view('tech.documentations.index');
-    })->name('documentations.index');
+
+    // Context setting
+    Route::post('/context/set', [DocController::class, 'setContext'])
+        ->name('context.set');
+
+    //Index
+    Route::get('/documentations', [DocController::class, 'index'])
+        ->name('documentations.index');
+
+    //Create
+    Route::get('/documentations/create', [DocController::class, 'create'])
+        ->name('documentations.create');
+
+    //Store
+    Route::post('/documentations/create', [DocController::class, 'store'])
+        ->name('documentations.store');
+
+    //Show
+    Route::get('/documentations/show/{documentation}', [DocController::class, 'show'])
+        ->name('documentations.show');
+
+    //Edit
+    Route::get('/documentations/edit/{documentation}', [DocController::class, 'edit'])
+        ->name('documentations.edit');
+
+    //Update
+    Route::put('/documentations/update/{documentation}', [DocController::class, 'update'])
+        ->name('documentations.update');
+
+    //Destroy
+    Route::delete('/documentations/destroy/{documentation}', [DocController::class, 'destroy'])
+        ->name('documentations.destroy');
+
+    // -----------------------------------------
+    // Risk
+    // -----------------------------------------
+
+    //Index
+    Route::get('/risk', [RiskController::class, 'index'])
+        ->name('risk.index');
+
+    //Create
+    Route::get('/risk/create', [RiskController::class, 'create'])
+        ->name('risk.create');
+
+    //Store
+    Route::post('/risk/store', [RiskController::class, 'store'])
+        ->name('risk.store');
+
+    //Show
+    Route::get('/risk/show/{risk}', [RiskController::class, 'show'])
+        ->name('risk.show');
+
+    //Update
+    Route::put('/risk/update/{risk}', [RiskController::class, 'update'])
+        ->name('risk.update');
+
+    //Destroy
+    Route::delete('/risk/destroy/{risk}', [RiskController::class, 'destroy'])
+        ->name('risk.destroy');
+
+    //Risk Items
+    Route::post('/risk/show/{risk}/items', [RiskController::class, 'storeItem'])
+        ->name('risk.items.store');
+
+    Route::post('/risk/show/{risk}/approve', [RiskController::class, 'approve'])
+        ->name('risk.approve');
+
+    Route::get('/risk/items/{item}', [RiskController::class, 'showItem'])
+        ->name('risk.items.show');
+
+    Route::post('/risk/items/{item}/updates', [RiskController::class, 'storeItemUpdate'])
+        ->name('risk.items.updates.store');
+
 
     // -----------------------------------------
     // Inbox

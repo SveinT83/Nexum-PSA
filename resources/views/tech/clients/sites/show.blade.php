@@ -76,7 +76,7 @@
                 @foreach($users as $user)
                     <tr>
                         <td>
-                            <a href="{{route ('tech.clients.users.show', $user)}}">{{$user->name}}</a>
+                            <a href="{{route ('tech.clients.user.show', $user)}}">{{$user->name}}</a>
                         </td>
                         <td>{{$user->role}}</td>
                         <td>{{$user->email}}</td>
@@ -93,7 +93,6 @@
 @endsection
 
 @section('sidebar')
-
 @endsection
 
 @section('rightbar')

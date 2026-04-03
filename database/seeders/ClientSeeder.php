@@ -14,6 +14,7 @@ class ClientSeeder extends Seeder
         }
 
         Client::create([
+            'client_number' => '1001',
             'name' => 'Acme AS',
             'org_no' => 'NO999888777',
             'billing_email' => 'billing@acme.test',
@@ -22,6 +23,7 @@ class ClientSeeder extends Seeder
         ]);
 
         Client::create([
+            'client_number' => '1002',
             'name' => 'Beta Konsulent',
             'org_no' => 'NO111222333',
             'billing_email' => 'post@beta.test',

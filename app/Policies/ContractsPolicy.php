@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\CS\Contracts\Contracts;
-use App\Models\User;
+use App\Models\Core\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ContractsPolicy

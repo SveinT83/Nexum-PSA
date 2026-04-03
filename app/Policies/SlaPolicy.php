@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\CS\Sla\Sla;
-use App\Models\User;
+use App\Models\Core\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class SlaPolicy

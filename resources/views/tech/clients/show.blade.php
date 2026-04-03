@@ -1,3 +1,10 @@
+{{--
+    Client Show View
+
+    This view displays the profile and summary information for a single client.
+    When this page is loaded, the client is set as the "active client" in the session,
+    affecting the context for sites, users, and documentation filters.
+--}}
 @extends('layouts.default_tech')
 
 @section('pageHeader')
@@ -35,7 +42,6 @@
 @endsection
 
 @section('sidebar')
-
 @endsection
 
 @section('rightbar')

@@ -1,94 +1,156 @@
-# tech.documentations.edit — Edit Document View
+@extends('layouts.default_tech')
 
-**URL:** `tech/documentations/edit:{docId}`
-**Access & permissions:** View: `documents.view.tech`; Edit: `documents.edit`; Delete: `documents.delete`
-**Creation date:** 2025-11-03
-**Controller / Path:** `App\Http\Controllers\Tech\Documentations\EditController@edit`
-**Renders partial:** `tech/documentations/_form` (`mode = edit`, `document` bound)
-**Status:** In progress
-**Difficulty:** Low
-**Estimated time:** 2.5 hours (5×30 min)
+{{--
+    Documentation Editing View
 
----
+    This view renders an edit form for an existing documentation record.
+    It dynamically generates form fields based on the 'template_snapshot_json' column,
+    ensuring that the documentation structure remains consistent with the time it was created,
+    even if the original template is later modified.
 
-## Purpose
+    Fields are pre-populated with data stored in 'data_json'.
+--}}
 
-Allow technicians/admins to **edit an existing document** using the same shared form. Ensures predictable behavior, auditability, and no schema drift from templates (schema copied at create-time).
+@section('title', 'Edit Documentation: ' . $documentation->title)
 
----
+@section('pageHeader')
+    <div class="d-flex justify-content-between align-items-center py-3">
+        <div>
+            <h1 class="h4 mb-0">Edit: {{ $documentation->title }}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ route('tech.documentations.index') }}">Documentations</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('tech.documentations.show', $documentation->id) }}">{{ $documentation->title }}</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </nav>
+        </div>
 
-## Entry & Scoping
+        <div>
+            <span class="badge bg-secondary">Scope: {{ ucfirst($documentation->scope_type) }}</span>
+        </div>
+    </div>
+@endsection
 
-* Entry points: from index list row click, from show page `Edit` button, or deep link.
-* Scope badge shows document scope (`Internal`/`Client`/`Site`). Scope is **read-only** here; changing scope requires a move action (future).
-* Category is editable unless locked by policy; **Template is not changeable** in edit mode.
+@section('content')
+    <div class="card mt-4">
+        <div class="card-body">
+            <form action="{{ route('tech.documentations.update', $documentation->id) }}" method="POST">
+                @csrf
+                @method('PUT')
 
----
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <x-forms.input_text Name="title" labelName="Dokument Tittel" :value="$documentation->title" />
+                    </div>
+                </div>
 
-## Layout (Bootstrap)
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <x-forms.select name="client_id" labelName="Klient">
+                            <option value="">Ingen klient (Internt)</option>
+                            @foreach($clients as $client)
+                                <option value="{{ $client->id }}" {{ $documentation->client_id == $client->id ? 'selected' : '' }}>
+                                    {{ $client->name }}
+                                </option>
+                            @endforeach
+                        </x-forms.select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <x-forms.select name="site_id" labelName="Site">
+                            <option value="">Velg site...</option>
+                            @foreach($sites as $site)
+                                <option value="{{ $site->id }}" {{ $documentation->site_id == $site->id ? 'selected' : '' }}>
+                                    {{ $site->name }}
+                                </option>
+                            @endforeach
+                        </x-forms.select>
+                    </div>
+                </div>
 
-**Top section**
+                <hr class="my-4">
+                {{--
+                    Render dynamic template fields.
+                    Logic handles section headers (rowStart) and populates data from 'data_json'.
+                --}}
+                <h5>Template Fields ({{ $documentation->template->name ?? 'N/A' }})</h5>
 
-* Title: `Edit Document`
-* Breadcrumb: `Documentation / Edit`
-* Scope badge (read-only)
+                <div class="row">
+                    @foreach($fields as $field)
+                        @php
+                            $fieldName = $field['Name'] ?? null;
+                            $fieldValue = $data[$fieldName] ?? '';
 
-**Main section**
+                            // Layout handling logic
+                            $isRowStart = isset($field['layout']) && $field['layout'] == "rowStart";
+                            $isRowEnd = isset($field['layout']) && $field['layout'] == "rowEnd";
+                            $colClass = (isset($field['type']) && $field['type'] == 'textarea') ? 'col-md-12' : 'col-md-3';
 
-* Renders `_form.blade.php` with `mode=edit` and pre-filled data.
-* Field groups provided by the partial: Title, Category, Description, Stored schema fields, Tags, Owner, Attachments
+                            if ($isRowStart) {
+                                 $colClass = 'col-md-12';
+                            }
+                        @endphp
 
-**Right-side panel (narrow)**
+                        {{-- Render section headers --}}
+                        @if($isRowStart)
+                            <div class="col-12 mt-4"><hr>@if(isset($field['labelName']))<h6 class="text-primary fw-bold">{{ $field['labelName'] }}</h6>@endif</div>
+                        @endif
 
-* **Document info:** ID, created by/at, last updated by/at
-* **Template snapshot info:** name/version at creation time (read-only)
-* **Validation status:** missing required fields
-* **Quick actions:** Duplicate, Preview, Delete (permission-gated)
+                        {{-- Render data-holding input fields --}}
+                        @if($fieldName)
+                            <div class="{{ $colClass }} mb-3">
+                                @if(isset($field['type']) && ($field['type'] == 'text' || $field['type'] == 'date'))
+                                    <x-forms.input_text
+                                        :Name="$fieldName"
+                                        :labelName="$field['labelName'] ?? $fieldName"
+                                        :type="$field['type']"
+                                        :value="$fieldValue"
+                                    />
+                                @endif
 
----
+                                @if(isset($field['type']) && ($field['type'] == 'checkbox'))
+                                    <x-forms.checkbox
+                                        :Name="$fieldName"
+                                        :id="$fieldName"
+                                        :labelName="$field['labelName'] ?? $fieldName"
+                                        :enabled="$fieldValue ? 'checked' : ''"
+                                    />
+                                @endif
 
-## Behaviors & Rules
+                                @if(isset($field['type']) && $field['type'] == 'textarea')
+                                    <x-forms.textarea
+                                        :Name="$fieldName"
+                                        :labelName="$field['labelName'] ?? $fieldName"
+                                        :value="$fieldValue"
+                                    />
+                                @endif
 
-* **No template switch** in edit mode to avoid breaking stored data. (Optional migration tool in future.)
-* **Autosave warning** on navigation if dirty.
-* **Duplicate** creates a new document using the **stored schema + current data**.
-* **Delete** requires confirmation; blocked when policy forbids (e.g., referenced by other records).
-* **Real-time updates**: emit event on save for list refresh elsewhere.
+                                @if(isset($field['type']) && $field['type'] == 'select')
+                                    <x-forms.select
+                                        :name="$fieldName"
+                                        :labelName="$field['labelName'] ?? $fieldName">
+                                        <option value="">Velg...</option>
+                                        @foreach($field['options'] as $optionValue => $optionLabel)
+                                            @php
+                                                $val = is_int($optionValue) ? $optionLabel : $optionValue;
+                                                $isSelected = $fieldValue == $val;
+                                            @endphp
+                                            <option value="{{ $val }}" {{ $isSelected ? 'selected' : '' }}>
+                                                {{ $optionLabel }}
+                                            </option>
+                                        @endforeach
+                                    </x-forms.select>
+                                @endif
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
 
----
-
-## Buttons & Actions
-
-* **Primary:** `Save changes`
-* **Secondary:** `Cancel` → back to `tech.documentations.show:{docId}` or previous
-* **More actions:** `Duplicate`, `Preview`, `Delete` (only with `documents.delete`)
-
----
-
-## Validation
-
-* Title and Category required.
-* Stored schema field rules enforced (required/min/max/regex/dependencies).
-
----
-
-## Components / Widgets / Icons (suggested)
-
-* Scope badge icon: building/users/map-pin
-* Inline errors component
-* Panel cards for audit info and snapshot
-
----
-
-## Events & Logging
-
-* Log: `document.update_attempt`, `document.updated`, `document.duplicated`, `document.deleted`
-* Include actor, document id, scope, category id, diff summary
-* Emit UI event: `document.saved`
-
----
-
-## Notes
-
-* Keep all edit logic in the shared partial; the edit view is a thin wrapper.
-* Moving scope (internal → client/site) is out of scope for this page; handle via a dedicated move flow later.
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary">Lagre endringer</button>
+                    <a href="{{ route('tech.documentations.show', $documentation->id) }}" class="btn btn-outline-secondary">Avbryt</a>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection

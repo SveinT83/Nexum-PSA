@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Tech\Admin\Settings\Economy;
 
 use App\Http\Controllers\Controller;
-use App\Models\common_settings;
+use App\Models\Settings\CommonSetting;
 use Illuminate\Http\Request;
 use App\Http\Requests\common_settingsRequest;
 
@@ -28,7 +28,7 @@ class EconomyController extends Controller
         // -----------------------------------------
         // Fetch economy settings
         // -----------------------------------------
-        $vat = trim(common_settings::where('type', 'economy')
+        $vat = trim(CommonSetting::where('type', 'economy')
             ->where('name', 'vat')
             ->value('value') ?? '') ?: 25;
 

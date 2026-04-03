@@ -1,10 +1,19 @@
+{{--
+    Client User List View
+
+    Displays a list of users (contacts) for clients and sites.
+    The list is dynamically filtered based on the active client or site
+    in the session to provide relevant context.
+--}}
 @extends('layouts.default_tech')
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center py-3">
         <h2 class="h4 mb-0">Users</h2>
         <div>
-            <a href="{{ route('tech.clients.create') }}" class="btn btn-sm btn-primary">New Client</a>
+            @if(isset($client))
+                <x-buttons.addlink url="{{ route('tech.clients.user.create', $client) }}">Add User</x-buttons.addlink>
+            @endif
         </div>
     </div>
     <form method="get" class="mb-3">

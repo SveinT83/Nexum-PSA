@@ -1,3 +1,10 @@
+{{--
+    Client List View
+
+    This view displays a paginated table of all clients in the system.
+    It includes a search bar to filter clients by name, organization number, or billing email.
+    Each client in the list can be clicked to open their detailed view.
+--}}
 @extends('layouts.default_tech')
 
 @section('pageHeader')
@@ -62,7 +69,6 @@
 @endsection
 
 @section('sidebar')
-
 @endsection
 
 @section('rightbar')

@@ -130,7 +130,14 @@
     <!-- Documentations -->
     <!-- ------------------------------------------------- -->
     <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.documentations.index') ? 'active' : '' }}" href="{{ route('tech.documentations.index') }}">Documentations</a>
+        <a class="nav-link {{ request()->routeIs('tech.documentations.index') ? 'active' : '' }}" href="{{ route('tech.documentations.index', 'all') }}">Documentations</a>
+    </li>
+
+    <!-- ------------------------------------------------- -->
+    <!-- Risk -->
+    <!-- ------------------------------------------------- -->
+    <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('tech.risk.index') ? 'active' : '' }}" href="{{ route('tech.risk.index', 'all') }}">Risk</a>
     </li>
 
     <!-- ------------------------------------------------- -->

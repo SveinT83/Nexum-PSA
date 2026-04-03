@@ -16,18 +16,27 @@ class ClientSiteController extends Controller
     // -----------------------------------------
     // INDEX - List all sites for a client
     // -----------------------------------------
-    public function index(Request $request, $client = null)
+    /**
+     * Display a paginated list of sites.
+     *
+     * Sites can be filtered by the active client in the session.
+     * If no client is active, it displays all sites.
+     *
+     * @param Request $request
+     * @return View
+     */
+    public function index(Request $request)
     {
-        // 1. Finn ut om vi har en spesifikk klient eller om vi skal vise alt
-        // Vi støtter både null og strengen 'all' fra meny-lenker
-        $targetClient = ($client && $client !== 'all') ? Client::find($client) : null;
+        // 1. URL overstyrer alt. Hvis URL er tom, sjekk sesjon.
+        $clientId = session('active_client_id');
 
-        // 2. Bygg spørringen basert på om vi har en klient eller ikke
-        $query = $targetClient
-            ? $targetClient->sites()
-            : ClientSite::query();
+        // 2. Finn kunden
+        $targetClient = $clientId ? Client::find($clientId) : null;
 
-        // 3. Legg til søk hvis det finnes
+        // 3. Bygg spørring (viser alt hvis $targetClient er null)
+        $query = $targetClient ? $targetClient->sites() : ClientSite::query();
+
+        // 4. Legg til søk hvis det finnes
         if ($search = $request->get('search')) {
             $query->where('name', 'like', "%$search%");
         }
@@ -45,12 +54,21 @@ class ClientSiteController extends Controller
     // -----------------------------------------
     // SHOW - Show a single site for a client
     // -----------------------------------------
+    /**
+     * Display the details of a specific site.
+     *
+     * Sets the site as the "active site" in the session and eager loads
+     * relations for better performance.
+     *
+     * @param ClientSite $site
+     * @return View
+     */
     public function show(ClientSite $site) {
 
         // -----------------------------------------
-        // Array of sidebar menu items
+        // Set the active site ID in session
         // -----------------------------------------
-        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu(null);
+        session(['active_site_id' => $site->id]);
 
         // Eager load relasjoner for bedre ytelse
         $site->load(['client', 'contacts']);
@@ -60,13 +78,19 @@ class ClientSiteController extends Controller
             'site' => $site,
             'client' => $site->client,
             'users' => $site->contacts,
-            'sidebarMenuItems' => $sidebarMenuItems
+            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($site->client),
         ]);
     }
 
     // -----------------------------------------
     // EDIT - Edit a single site for a client
     // -----------------------------------------
+    /**
+     * Show the form for editing an existing site.
+     *
+     * @param ClientSite $site
+     * @return View
+     */
     public function edit(ClientSite $site) {
 
         // -----------------------------------------
@@ -85,6 +109,15 @@ class ClientSiteController extends Controller
     // -----------------------------------------
     // CREATE - Create a new site for a client
     // -----------------------------------------
+    /**
+     * Show the form for creating a new site.
+     *
+     * If a client ID is provided, the site will be pre-linked to that client.
+     * Otherwise, the user will be presented with a list of all clients to choose from.
+     *
+     * @param int|null $client
+     * @return View
+     */
     public function create($client = null) {
 
         // -----------------------------------------
@@ -108,6 +141,13 @@ class ClientSiteController extends Controller
     // -----------------------------------------
     // STORE - Store a new sites for a client
     // -----------------------------------------
+    /**
+     * Store a newly created site in the database.
+     *
+     * @param SiteRequest $request
+     * @param int|null $client
+     * @return RedirectResponse
+     */
     public function store(SiteRequest $request, $client = null) {
 
         // -----------------------------------------
@@ -137,6 +177,13 @@ class ClientSiteController extends Controller
     // -----------------------------------------
     // UPDATE - Updates a single sites for a client
     // -----------------------------------------
+    /**
+     * Update an existing site in the database.
+     *
+     * @param ClientSite $site
+     * @param SiteRequest $request
+     * @return RedirectResponse
+     */
     public function update(ClientSite $site, SiteRequest $request) {
 
         // -----------------------------------------
@@ -159,6 +206,12 @@ class ClientSiteController extends Controller
     // -----------------------------------------
     // Destroy - Delete a sites
     // -----------------------------------------
+    /**
+     * Remove a site from the database.
+     *
+     * @param ClientSite $site
+     * @return RedirectResponse
+     */
     public function destroy(ClientSite $site)
     {
         $site->delete();

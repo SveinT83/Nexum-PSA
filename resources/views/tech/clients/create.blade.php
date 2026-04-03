@@ -1,3 +1,11 @@
+{{--
+    Client Creation Form
+
+    This form is used to register a new client. It automatically:
+    1. Suggests a new client number.
+    2. Creates a default site for the client.
+    3. Creates a default primary contact (user) for that site.
+--}}
 @extends('layouts.default_tech')
 
 @section('pageHeader')
@@ -111,7 +119,6 @@
 @endsection
 
 @section('sidebar')
-	<div class="p-3 small text-muted">Help text (later)</div>
 @endsection
 
 @section('rightbar')
