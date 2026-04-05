@@ -14,11 +14,11 @@
         <div>
             <!-- Edit button -->
             @if($isShow && isset($term))
-                <a href="{{ route('tech.legal.edit', $term) }}" class="btn btn-sm btn-primary bi bi-pencil"> Edit</a>
+                <a href="{{ route('tech.legal.edit', $term) }}" class="btn btn-sm btn-outline-warning bi bi-pencil"> Edit</a>
             @endif
 
             <!-- Back button -->
-            <a href="{{ route('tech.legal.index') }}" class="btn btn-sm btn-primary bi bi-backspace"> Back</a>
+            <a href="{{ route('tech.legal.index') }}" class="btn btn-sm btn-secondary bi bi-backspace"> Back</a>
         </div>
     </div>
 @endsection
@@ -36,7 +36,8 @@
     <!-- Form -->
     <!-- ------------------------------------------------- -->
 
-    <x-forms.form-default
+    <x-forms.form-card
+        title="Term og /and Legal"
         action="{{ $isShow
         ? route('tech.legal.edit', $term ?? null)
         : ($isEdit ? route('tech.legal.update', $term ?? null) : route('tech.legal.store')) }}"
@@ -48,42 +49,39 @@
             @method('PUT')
         @endif
 
-
         <!-- ------------------------------------------------- -->
         <!-- Name -->
         <!-- ------------------------------------------------- -->
         <div class="row">
-            <!-- Cost Name -->
+
+            <!-- Name -->
             <div class="col-md-4 mb-3">
                 <x-forms.input_text name="name" labelName="Name:" value="{{$term->name ?? ''}}" inputVar="required {{$disabled}}"></x-forms.input_text>
             </div>
-        </div>
 
-        <!-- ------------------------------------------------- -->
-        <!-- Legal -->
-        <!-- ------------------------------------------------- -->
-        <div class="row mt-3">
-            <!-- Cost Name -->
-            <div class="col-md-12 mb-3">
-                <x-forms.textarea name="legal" labelName="Legal" requried vars="{{$disabled}}">{{$term->legal ?? ''}}</x-forms.textarea>
-
-                <p class="fw-lighter"><strong>Terms (commercial/service conditions):</strong> Use this for the service’s usage conditions—license, SLA, price adjustments, liability limits, acceptable use, termination. This belongs in the contract as the service terms.</p>
+            <!-- type -->
+            <div class="col-md-4 mb-3">
+                <x-forms.select name="type" labelName="Type:" inputVar="required {{$disabled}}">
+                    <option value="terms" {{ (isset($term) && $term->type == 'terms') ? 'selected' : '' }}>Terms</option>
+                    <option value="dpa" {{ (isset($term) && $term->type == 'dpa') ? 'selected' : '' }}>DPA</option>
+                    <option value="legal" {{ (isset($term) && $term->type == 'legal') ? 'selected' : '' }}>Legal</option>
+                    <option value="sla" {{ (isset($term) && $term->type == 'sla') ? 'selected' : '' }}>SLA</option>
+                    <option value="general" {{ (isset($term) && $term->type == 'general') ? 'selected' : '' }}>General</option>
+                </x-forms.select>
             </div>
         </div>
 
         <!-- ------------------------------------------------- -->
-        <!-- Term -->
+        <!-- Content -->
         <!-- ------------------------------------------------- -->
         <div class="row mt-3">
             <!-- Cost Name -->
             <div class="col-md-12 mb-3">
-                <x-forms.textarea name="term" labelName="Term" vars="{{$disabled}}">{{$term->term ?? ''}}</x-forms.textarea>
-
-                <p class="fw-lighter"><strong>Legal (DPA/data processing):</strong> Use this for personal data handling—purpose, data categories, processing activities, sub-processors (e.g., Microsoft), transfers, security measures, retention, instructions, audit/oversight, any SCCs. This belongs in the data processing agreement.</p>
+                <x-forms.textarea name="content" labelName="Content" vars="{{$disabled}}">{{$term->content ?? ''}}</x-forms.textarea>
             </div>
         </div>
 
-    </x-forms.form-default>
+    </x-forms.form-card>
 
 @endsection
 
@@ -92,5 +90,26 @@
 @endsection
 
 @section('rightbar')
-    <div class="p-3 small text-muted">Recent services (MVP later)</div>
+
+    <!-- ------------------------------------------------- -->
+    <!-- Services -->
+    <!-- ------------------------------------------------- -->
+    <x-card.default title="Connected Services">
+        @if(isset($term) && $term->services->count() > 0)
+            <ul class="list-group list-group-flush">
+                @foreach($term->services as $service)
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <span class="fw-bold d-block">{{ $service->name }}</span>
+                            <small class="text-muted">{{ $service->sku }}</small>
+                        </div>
+                        <a href="{{ route('tech.services.edit', $service) }}" class="btn btn-sm btn-link p-0 bi bi-box-arrow-in-right"></a>
+                    </li>
+                @endforeach
+            </ul>
+        @else
+            <p class="text-muted mb-0">No services connected to this term.</p>
+        @endif
+    </x-card.default>
+
 @endsection

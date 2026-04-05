@@ -10,8 +10,8 @@ return new class extends Migration {
         Schema::create('terms', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('term')->nullable();
-            $table->text('legal')->nullable();
+            $table->string('type')->allowedValues(['terms', 'dpa', 'legal', 'sla', 'general']);
+            $table->text('content');
             $table->timestamps();
             $table->softDeletes();
         });

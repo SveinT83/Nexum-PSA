@@ -5,7 +5,8 @@
         <h2 class="h4 mb-0">{{$site->name}}
             <a href="{{ route('tech.clients.show', $client->id) }}">{{$client->name}}</a></h2>
         <div>
-            <x-buttons.back url="{{ route('tech.clients.sites.index')}}"> Back</x-buttons.back>
+            <x-buttons.back url="{{ route('tech.clients.show', $client->id) }}">Back to Client</x-buttons.back>
+            <x-buttons.addlink url="{{ route('tech.clients.user.create', $client) }}">Add User</x-buttons.addlink>
             <x-buttons.addlink url="{{ route('tech.clients.sites.create', $client) }}">New Site</x-buttons.addlink>
             <x-buttons.editlink url="{{ route('tech.clients.sites.edit', [$site, $client]) }}">Edit</x-buttons.editlink>
         </div>

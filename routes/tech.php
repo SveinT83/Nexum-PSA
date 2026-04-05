@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Tech\CS\Package\PackageController;
 use App\Http\Controllers\Tech\CS\Services\ServiceController;
 use App\Http\Controllers\Tech\CS\Contracts\ContractController;
+use App\Http\Controllers\Tech\CS\Contracts\PublicContractController;
 use App\Http\Controllers\Tech\CS\Costs\CostController;
 use App\Http\Controllers\Tech\CS\Sla\SlaController;
 use App\Http\Controllers\Tech\CS\Legal\LegalController;
@@ -29,6 +30,44 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::get('/dashboard', function () {
         return view('tech.dashboard');
     })->name('dashboard');
+
+    // -----------------------------------------
+    // Contracts
+    // -----------------------------------------
+
+    //Index: A list over all Contracts
+    Route::get('/contracts', [ContractController::class, 'index'])
+        ->name('contracts.index');
+
+    //Show: View details of a specific Contract
+    Route::get('/contracts/show/{contract}', [ContractController::class, 'show'])
+        ->name('contracts.show');
+
+    //New Contract
+    Route::get('/contracts/create', [ContractController::class, 'create'])
+        ->name('contracts.create');
+
+    //Store
+    Route::post('/contracts/store', [ContractController::class, 'store'])
+        ->name('contracts.store');
+
+    //Edit: Edit an existing Contract
+    Route::get('/contracts/edit/{contract}', [ContractController::class, 'edit'])
+        ->name('contracts.edit');
+
+    //Update: Save changes to an existing Contract
+    Route::put('/contracts/update/{contract}', [ContractController::class, 'update'])
+        ->name('contracts.update');
+
+    //Actions: Send Quote, Send Contract, Manual Approval
+    Route::post('/contracts/{contract}/send-quote', [ContractController::class, 'sendQuote'])
+        ->name('contracts.send-quote');
+    Route::post('/contracts/{contract}/send-contract', [ContractController::class, 'sendContract'])
+        ->name('contracts.send-contract');
+    Route::post('/contracts/{contract}/resend', [ContractController::class, 'resend'])
+        ->name('contracts.resend');
+    Route::post('/contracts/{contract}/approve-manual', [ContractController::class, 'approveManual'])
+        ->name('contracts.approve-manual');
 
     // -----------------------------------------
     // Clients
@@ -63,19 +102,19 @@ Route::middleware(['auth','tech'])->group(function () {
         ->name('clients.user.create');
 
     //Store
-    Route::post('/clients/user/store/{Sites}', [ClientUsersController::class, 'store'])
+    Route::post('/clients/user/store/{client}', [ClientUsersController::class, 'store'])
         ->name('clients.user.store');
 
     //Edit
-    Route::get('/clients/user/edit/{ClientUsers}', [ClientUsersController::class, 'edit'])
+    Route::get('/clients/user/edit/{ClientUser}', [ClientUsersController::class, 'edit'])
         ->name('clients.user.edit');
 
     //Update
-    Route::put('/clients/user/update/{ClientUsers}', [ClientUsersController::class, 'update'])
+    Route::put('/clients/user/update/{ClientUser}', [ClientUsersController::class, 'update'])
         ->name('clients.user.update');
 
     //Destroy
-    Route::delete('/clients/user/delete/{ClientUsers}', [ClientUsersController::class, 'delete'])
+    Route::delete('/clients/user/delete/{ClientUser}', [ClientUsersController::class, 'delete'])
         ->name('clients.user.delete');
 
     //Index
@@ -119,13 +158,25 @@ Route::middleware(['auth','tech'])->group(function () {
     // Contracts
     // -----------------------------------------
 
-    //Index: A list over all Contracts
-    Route::get('/contracts', [ContractController::class, 'index'])
-        ->name('contracts.index');
+    // -----------------------------------------
+    // Contracts: Services
+    // -----------------------------------------
 
-    //New Contract
-    Route::get('/contracts/create', [ContractController::class, 'create'])
-        ->name('contracts.create');
+    //Index: Add services to contract
+    Route::get('/contracts/{contract}/services', [ContractController::class, 'servicesEdit'])
+        ->name('contracts.services.edit');
+
+    //Update: Save services to contract
+    Route::post('/contracts/{contract}/services', [ContractController::class, 'servicesUpdate'])
+        ->name('contracts.services.update');
+
+    //Terms: Terms and Legal for contract
+    Route::get('/contracts/{contract}/terms', [ContractController::class, 'terms'])
+        ->name('contracts.terms');
+
+    //Update: Save terms to contract
+    Route::post('/contracts/{contract}/terms', [ContractController::class, 'termsUpdate'])
+        ->name('contracts.terms.update');
 
     // -----------------------------------------
     // PACKAGES

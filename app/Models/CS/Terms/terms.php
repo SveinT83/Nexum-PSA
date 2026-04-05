@@ -12,8 +12,8 @@ class terms extends Model
 
     protected $fillable = [
         'name',
-        'term',
-        'legal',
+        'type',
+        'content',
     ];
 
     public function services()

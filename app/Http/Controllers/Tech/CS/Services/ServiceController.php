@@ -107,7 +107,7 @@ class ServiceController extends Controller
         }
 
         // Save terms (Legal)
-        $service->terms()->attach($data['terms'] ?? []);
+        $service->serviceTerms()->attach($data['terms'] ?? []);
 
         // Redirect back with success message
         return redirect()->route('tech.services.index')->with('success', 'Service created successfully.');
@@ -177,7 +177,7 @@ class ServiceController extends Controller
         }
 
         // Sync terms (Legal)
-        $service->terms()->sync($data['terms'] ?? []);
+        $service->serviceTerms()->sync($data['terms'] ?? []);
 
         // Redirect back with success message
         return redirect()

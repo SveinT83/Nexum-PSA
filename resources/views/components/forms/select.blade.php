@@ -4,7 +4,8 @@
     'labelName' => null,
     'layout' => 'horizontal',
     'enabled' => 'enabled',
-    'labelClass' => ''
+    'labelClass' => '',
+    'inputVar' => ''
 ])
 
 <!-- ------------------------------------------------- -->
@@ -20,6 +21,8 @@
             $selectClass = "col " . $selectClass;
         }
     }
+
+    $disabledAttr = (str_contains($inputVar, 'disabled') || $enabled === 'disabled') ? 'disabled' : '';
 @endphp
 
 <!-- ------------------------------------------------- -->
@@ -35,7 +38,7 @@
     <select class="form-select @error($name) is-invalid @enderror"
             id="{{$name}}"
             name="{{$name}}"
-        {{ $enabled ?? 'enabled' }}>
+        {{ $disabledAttr }}>
 
         {{ $slot }}
     </select>

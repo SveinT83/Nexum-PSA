@@ -9,10 +9,11 @@
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">Users</h2>
+        <h2 class="h4 mb-0">Users for {{$client->name ?? 'all clients'}}</h2>
         <div>
             @if(isset($client))
-                <x-buttons.addlink url="{{ route('tech.clients.user.create', $client) }}">Add User</x-buttons.addlink>
+                <a href="{{ route('tech.clients.show', $client->id) }}" class="btn btn-sm btn-outline-secondary me-2">Back to Client</a>
+                <x-buttons.addlink url="{{ route('tech.clients.user.create', $client) }}">New User</x-buttons.addlink>
             @endif
         </div>
     </div>

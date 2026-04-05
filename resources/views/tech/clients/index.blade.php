@@ -31,6 +31,7 @@
                 <th>Name</th>
                 <th>Org No</th>
                 <th>Billing Email</th>
+                <th>Risk Score</th>
                 <th>Status</th>
                 <th></th>
             </tr>
@@ -44,6 +45,15 @@
                     <td>{{ $client->org_no ?? '—' }}</td>
                     <td>{{ $client->billing_email ?? '—' }}</td>
                     <td>
+                        @if($client->risk_score !== null)
+                            <span class="badge {{ $client->risk_score_badge_class }}">
+                                {{ $client->risk_score }}
+                            </span>
+                        @else
+                            <span class="text-muted small">N/A</span>
+                        @endif
+                    </td>
+                    <td>
                         @if($client->active)
                             <span class="badge bg-success">Active</span>
                         @else
@@ -56,7 +66,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="text-center py-4">No clients found.</td>
+                    <td colspan="6" class="text-center py-4">No clients found.</td>
                 </tr>
             @endforelse
             </tbody>

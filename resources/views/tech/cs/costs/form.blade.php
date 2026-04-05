@@ -2,7 +2,7 @@
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">Create cost</h2>
+        <h2 class="h4 mb-0">{{ isset($cost) ? 'Edit cost' : 'Create cost' }}</h2>
         <div>
             <a href="{{ route('tech.costs.index') }}" class="btn btn-sm btn-secondary">Back</a>
         </div>
@@ -44,20 +44,27 @@
             <!-- Cost PR. User, Client? -->
             <div class="col-md-2 mb-3">
                 <x-forms.select name="unitId" labelName="Cost unit">
-                    <option value="{{$cost->unit->id ?? 'client'}}">{{$cost->unit->name ?? '-'}}</option>
+                    @if(isset($cost) && $cost->unit)
+                        <option value="{{ $cost->unit->id }}">{{ $cost->unit->name }}</option>
+                    @else
+                        <option value="" disabled selected>Select unit</option>
+                    @endif
 
                     @foreach($units as $unit)
                         <option value="{{$unit->id}}">{{$unit->name}}</option>
                     @endforeach
-
                 </x-forms.select>
-
             </div>
 
             <!-- Cost Recurrence -->
             <div class="col-md-2 mb-3">
                 <x-forms.select name="recurrence" labelName="Recurrence">
-                    <option value="{{$cost->recurrence ?? 'none'}}">{{$cost->recurrence ?? 'none'}}</option>
+                    @if(isset($cost))
+                        <option value="{{$cost->recurrence}}">{{ ucfirst($cost->recurrence) }}</option>
+                    @else
+                        <option value="" disabled selected>Select recurrence</option>
+                    @endif
+                    <option value="none">None</option>
                     <option value="month">Month</option>
                     <option value="year">Year</option>
                     <option value="quarter">Quarter</option>
@@ -67,20 +74,22 @@
             <!-- Vendor -->
             <div class="col-md-2 mb-3">
                 <x-forms.select name="vendor_id" labelName="Vendor">
-                    <option value="{{ $cost -> vendor -> id }}">{{ $cost -> vendor -> name }}</option>
+                @if(isset($cost) && $cost->vendor)
+                    <option value="{{ $cost->vendor->id }}">{{ $cost->vendor->name }}</option>
+                @else
+                    <option value="" disabled selected>Select vendor</option>
+                @endif
 
-                    @forelse($vendors ?? [] as $vendor)
-                        <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                    @empty
-                        <option value="" disabled selected>No vendors</option>
-                    @endforelse
-                </x-forms.select>
+                @foreach($vendors ?? [] as $vendor)
+                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                @endforeach
+            </x-forms.select>
 
             </div>
 
             <div class="row">
                 <div class="col-12">
-                    <x-forms.textarea name="note" labelName="Note">{{$cost->note ?? 'none'}}</x-forms.textarea>
+                    <x-forms.textarea name="note" labelName="Note">{{$cost->note ?? ''}}</x-forms.textarea>
                 </div>
             </div>
 

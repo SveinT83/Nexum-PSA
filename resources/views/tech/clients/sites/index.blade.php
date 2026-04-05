@@ -10,6 +10,9 @@
     <div class="d-flex justify-content-between align-items-center py-3">
         <h2 class="h4 mb-0">Sites for {{$client->name ?? 'all clients'}}</h2>
         <div>
+            @if(isset($client))
+                <a href="{{ route('tech.clients.show', $client->id) }}" class="btn btn-sm btn-outline-secondary me-2">Back to Client</a>
+            @endif
             <a href="{{ route('tech.clients.sites.create', $client ?? 'null') }}" class="btn btn-sm btn-primary">New Site</a>
         </div>
     </div>

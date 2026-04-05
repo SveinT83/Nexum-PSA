@@ -4,7 +4,11 @@
     <div class="d-flex justify-content-between align-items-center py-3">
         <h2 class="h4 mb-0">New site</h2>
         <div>
-            <a href="{{ route('tech.clients.sites.index', $client) }}" class="btn btn-sm btn-primary">Back</a>
+            @if(isset($client))
+                <a href="{{ route('tech.clients.show', $client->id) }}" class="btn btn-sm btn-outline-secondary">Back to Client</a>
+            @else
+                <a href="{{ route('tech.clients.sites.index') }}" class="btn btn-sm btn-outline-secondary">Back to list</a>
+            @endif
         </div>
     </div>
 @endsection

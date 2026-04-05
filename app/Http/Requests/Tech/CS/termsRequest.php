@@ -10,8 +10,8 @@ class termsRequest extends FormRequest
     {
         return [
             'name'  => ['required'],
-            'term'  => ['nullable', 'required_without:legal'],
-            'legal' => ['nullable', 'required_without:term'],
+            'type' => ['required'],
+            'content'  => ['required'],
         ];
     }
 

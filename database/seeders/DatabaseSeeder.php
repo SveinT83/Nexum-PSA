@@ -19,6 +19,11 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             CategorySeeder::class,
             DocumentationTemplateSeeder::class,
+            SlaSeeder::class,
+            LegalTermsSeeder::class,
+            VendorSeeder::class,
+            UnitSeeder::class,
+            CostServicePackageSeeder::class,
         ]);
     }
 }

@@ -84,15 +84,92 @@
     </li>
 
     <!-- -------------------------------------------------------------------------------------------------- -->
-    <!-- Contracts & Services dropdown menu -->
+    <!-- Work dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*') || request()->routeIs('tech.packages.*');
+        $workGroupActive = request()->routeIs('tech.risk*' || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*'));
     @endphp
 
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle {{ $contractsGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Contracts & Services</a>
+        <a class="nav-link dropdown-toggle {{ $workGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Work</a>
         <ul class="dropdown-menu">
+
+            <!-- ------------------------------------------------- -->
+            <!-- Risk -->
+            <!-- ------------------------------------------------- -->
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('tech.risk.index') ? 'active' : '' }}" href="{{ route('tech.risk.index', 'all') }}">Risk</a>
+            </li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Inbox -->
+            <!-- ------------------------------------------------- -->
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('tech.inbox.index') ? 'active' : '' }}" href="{{ route('tech.inbox.index') }}">Inbox</a>
+            </li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Tasks -->
+            <!-- ------------------------------------------------- -->
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('tech.tasks.index') ? 'active' : '' }}" href="{{ route('tech.tasks.index') }}">Tasks</a>
+            </li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Tickets -->
+            <!-- ------------------------------------------------- -->
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('tech.tickets.index') ? 'active' : '' }}" href="{{ route('tech.tickets.index') }}">Tickets</a>
+            </li>
+
+        </ul>
+    </li>
+
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Knowledge dropdown menu -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    @php
+        $knowledgeGroupActive = request()->routeIs('tech.risk*' || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*'));
+    @endphp
+
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle {{ $knowledgeGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Knowledge</a>
+        <ul class="dropdown-menu">
+
+            <!-- ------------------------------------------------- -->
+            <!-- Documentations -->
+            <!-- ------------------------------------------------- -->
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('tech.documentations.index') ? 'active' : '' }}" href="{{ route('tech.documentations.index', 'all') }}">Documentations</a>
+            </li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Knowledge Base -->
+            <!-- ------------------------------------------------- -->
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('tech.knowledge.index') ? 'active' : '' }}" href="{{ route('tech.knowledge.index') }}">Knowledge Base</a>
+            </li>
+
+        </ul>
+    </li>
+
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Contracts & Services dropdown menu -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    @php
+        $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*') || request()->routeIs('tech.packages.*') || request()->routeIs('tech.sales.*');
+    @endphp
+
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle {{ $contractsGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Sales</a>
+        <ul class="dropdown-menu">
+
+            <!-- ------------------------------------------------- -->
+            <!-- Sales -->
+            <!-- ------------------------------------------------- -->
+            <li class="nav-item">
+                <a class="dropdown-item {{ request()->routeIs('tech.sales.index') ? 'active' : '' }}" href="{{ route('tech.sales.index') }}">Sales</a>
+            </li>
 
             <!-- ------------------------------------------------- -->
             <!-- Contracts -->
@@ -127,34 +204,6 @@
     </li>
 
     <!-- ------------------------------------------------- -->
-    <!-- Documentations -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.documentations.index') ? 'active' : '' }}" href="{{ route('tech.documentations.index', 'all') }}">Documentations</a>
-    </li>
-
-    <!-- ------------------------------------------------- -->
-    <!-- Risk -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.risk.index') ? 'active' : '' }}" href="{{ route('tech.risk.index', 'all') }}">Risk</a>
-    </li>
-
-    <!-- ------------------------------------------------- -->
-    <!-- Inbox -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.inbox.index') ? 'active' : '' }}" href="{{ route('tech.inbox.index') }}">Inbox</a>
-    </li>
-
-    <!-- ------------------------------------------------- -->
-    <!-- Knowledge Base -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.knowledge.index') ? 'active' : '' }}" href="{{ route('tech.knowledge.index') }}">Knowledge Base</a>
-    </li>
-
-    <!-- ------------------------------------------------- -->
     <!-- Reports -->
     <!-- ------------------------------------------------- -->
     <li class="nav-item">
@@ -162,31 +211,10 @@
     </li>
 
     <!-- ------------------------------------------------- -->
-    <!-- Sales -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.sales.index') ? 'active' : '' }}" href="{{ route('tech.sales.index') }}">Sales</a>
-    </li>
-
-    <!-- ------------------------------------------------- -->
     <!-- Storage -->
     <!-- ------------------------------------------------- -->
     <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('tech.storage.index') ? 'active' : '' }}" href="{{ route('tech.storage.index') }}">Storage</a>
-    </li>
-
-    <!-- ------------------------------------------------- -->
-    <!-- Tasks -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.tasks.index') ? 'active' : '' }}" href="{{ route('tech.tasks.index') }}">Tasks</a>
-    </li>
-
-    <!-- ------------------------------------------------- -->
-    <!-- Tickets -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.tickets.index') ? 'active' : '' }}" href="{{ route('tech.tickets.index') }}">Tickets</a>
     </li>
 
 </ul>

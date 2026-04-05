@@ -30,14 +30,14 @@
                 <thead class="table-light">
                 <tr>
                     <th>Name</th>
-                    <th>Description</th>
+                    <th>Type</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody>
 
                 <!-- ------------------------------------------------- -->
-                <!-- For Each SLA -->
+                <!-- For Each TERM -->
                 <!-- ------------------------------------------------- -->
                 @foreach($terms as $term)
                     <tr>
@@ -45,10 +45,8 @@
                             <a href="{{ route('tech.legal.show', $term) }}" class="text-decoration-none">{{ $term->name }}</a>
                         </td>
                         <td>
-                            <p>
-                                <b class="d-sm-none">Description: </b>
-                                {{ \Illuminate\Support\Str::limit($term->description, 120) }}
-                            </p>
+                            <b class="d-sm-none">Type: </b>
+                            <p>{{$term->type}}</p>
                         </td>
                         <td class="fs-6 fw-lighter text-end">
                             <a class="btn btn-sm btn-primary bi bi-door-open" href="{{ route('tech.legal.show', $term) }}"> Open</a>

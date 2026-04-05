@@ -53,6 +53,7 @@ class LegalController extends Controller
     // -----------------------------------------
     public function show(terms $term)
     {
+        $term->load('services');
         // $term kommer fra route model binding
         return view('tech.cs.legal.form', [
             'term' => $term,
@@ -64,6 +65,7 @@ class LegalController extends Controller
     // -----------------------------------------
     public function edit(terms $term)
     {
+        $term->load('services');
         return view('tech.cs.legal.form', [
             'term' => $term,
         ]);

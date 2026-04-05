@@ -9,28 +9,23 @@ class ContractsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_id' => ['required'],
-            'description' => ['required'],
-            'approval_status' => ['boolean'],
-            'approval_sent_at' => ['required'],
-            'approval_expires_at' => ['required'],
-            'approval_approved_at' => ['required', 'date'],
-            'approval_approved_by' => ['required'],
-            'approval_metadata' => ['required'],
+            'client_id' => ['required', 'exists:clients,id'],
+            'created_by' => ['required', 'exists:users,id'],
+
+            'description' => ['nullable', 'string'],
+
             'start_date' => ['required', 'date'],
-            'end_date' => ['required'],
-            'binding_end_date' => ['required'],
-            'auto_renew' => ['required'],
-            'renewal_months' => ['required'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'binding_end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+
+            'auto_renew' => ['boolean'],
+            'renewal_months' => ['nullable', 'integer', 'min:1'],
+
             'allow_indexing_during_binding' => ['boolean'],
-            'max_index_pct_binding' => ['required'],
-            'post_binding_index_pct' => ['required'],
             'allow_decrease_during_binding' => ['boolean'],
-            'billing_interval' => ['required'],
-            'total_monthly_amount' => ['required'],
-            'last_indexed_at' => ['required', 'date'],
-            'created_by' => ['required'],
-            'services' => ['required'],
+
+            'max_index_pct_binding' => ['nullable', 'numeric'],
+            'post_binding_index_pct' => ['nullable', 'numeric'],
         ];
     }
 

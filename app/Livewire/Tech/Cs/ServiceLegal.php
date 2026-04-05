@@ -35,11 +35,8 @@ class ServiceLegal extends Component
         // Hvis en tjeneste er sendt med og den eksisterer i databasen,
         // henter we ut ID-ene til betingelsene som allerede er knyttet til denne tjenesten.
         if ($this->service && $this->service->exists) {
-            // Vi antar at Services modellen har en relasjon 'terms' eller vi bruker pivot direkte
-            // Basert på terms.php, så har terms en 'services' relasjon.
-            // Vi sjekker om Services har en 'terms' relasjon, hvis ikke henter vi manuelt.
-            if (method_exists($this->service, 'terms')) {
-                 $this->selectedTermIds = $this->service->terms()
+            if (method_exists($this->service, 'serviceTerms')) {
+                 $this->selectedTermIds = $this->service->serviceTerms()
                     ->pluck('terms.id')
                     ->map(fn($id) => (string) $id)
                     ->toArray();

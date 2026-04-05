@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\Core\User;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Tech\CS\Contracts\PublicContractController;
 
 Route::get('/', function (Request $request) {
     $email = $request->query('email');
@@ -60,13 +61,21 @@ Route::post('/login', function (Request $request) {
     ]);
 })->name('login');
 
-Route::post('/logout', function (Request $request) {
+Route::get('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 
     return redirect('/');
 })->name('logout');
+
+// ------------------------------------------------------------------------------------------
+// Public Contract Routes (No Auth)
+// ------------------------------------------------------------------------------------------
+Route::get('/contract/view/{token}', [PublicContractController::class, 'view'])
+    ->name('contracts.public.view');
+Route::post('/contract/accept/{token}', [PublicContractController::class, 'accept'])
+    ->name('contracts.public.accept');
 
 // Dashboard (etter innlogging)
 /*

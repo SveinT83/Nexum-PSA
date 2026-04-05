@@ -31,7 +31,7 @@ class ClientController extends Controller
         // -----------------------------------------
         session()->forget(['active_client_id', 'active_site_id']);
 
-        $query = Client::query();
+        $query = Client::query()->with(['riskAssessments.items']);
 
         if ($search = $request->get('search')) {
             $query->where(function($q) use ($search) {
@@ -53,7 +53,8 @@ class ClientController extends Controller
     /**
      * Display the details of a specific client.
      *
-     * This method sets the client as the "active client" in the session
+     * This method sets the client as the "active client" in the session,
+     * eager-loads risk assessment data for the rightbar widget,
      * and prepares the sidebar menu based on this client context.
      *
      * @param Client $client
@@ -61,11 +62,16 @@ class ClientController extends Controller
      */
     public function show(Client $client)
     {
-
         // -----------------------------------------
         // Set the active client ID in session
         // -----------------------------------------
         session(['active_client_id' => $client->id]);
+
+        // -----------------------------------------
+        // Eager load risk assessments and items
+        // to avoid N+1 queries in the rightbar widget.
+        // -----------------------------------------
+        $client->load(['riskAssessments.items']);
 
         // -----------------------------------------
         // Array of sidebar menu items
@@ -87,11 +93,11 @@ class ClientController extends Controller
      */
     public function create(): View
     {
-        // Foreslå neste kundenummer (5 siffer)
+        // Suggest the next client number (5 digits)
         $maxNumber = Client::query()->max('client_number');
         $suggestedClientNumber = str_pad((string) (((int) $maxNumber) + 1), 5, '0', STR_PAD_LEFT);
 
-        // Enkle oppslagslister (kan flyttes til config eller DB senere)
+        // Simple lookup lists (can be moved to config or DB later)
         $roles = ['Daglig leder', 'Innehaver', 'IT-kontakt', 'Økonomi', 'Annet'];
         $countries = ['NO' => 'Norway', 'SE' => 'Sweden', 'DK' => 'Denmark'];
 

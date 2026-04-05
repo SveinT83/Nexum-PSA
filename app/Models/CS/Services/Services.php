@@ -61,7 +61,7 @@ class Services extends Model
     }
 
     // Add relationships here (queue, addon, creator, updater, clients whitelist)
-    public function terms()
+    public function serviceTerms()
     {
         return $this->belongsToMany(
             \App\Models\CS\Terms\terms::class,
