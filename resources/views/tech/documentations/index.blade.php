@@ -107,7 +107,7 @@
 @endsection
 
 @section('sidebar')
-
+    <x-nav.side-bar :items="$sidebarMenuItems" />
 @endsection
 
 @section('rightbar')

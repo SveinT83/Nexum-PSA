@@ -41,13 +41,6 @@
                     <div class="col-md-2 sidebar">
 
                         <!-- ------------------------------------------------- -->
-                        <!-- Show sidebar menu if there are any items -->
-                        <!-- ------------------------------------------------- -->
-                        @if(isset($sidebarMenuItems))
-                            <x-nav.side-bar :items="$sidebarMenuItems" />
-                        @endif
-
-                        <!-- ------------------------------------------------- -->
                         <!-- More sidebar content from page file -->
                         <!-- ------------------------------------------------- -->
                         @yield('sidebar')

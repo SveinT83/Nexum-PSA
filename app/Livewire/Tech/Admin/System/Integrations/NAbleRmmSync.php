@@ -1,0 +1,394 @@
+<?php
+namespace App\Livewire\Tech\Admin\System\Integrations;
+
+use App\Models\System\Integrations\Integration;
+use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
+use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
+use Livewire\Component;
+
+class NAbleRmmSync extends Component
+{
+    /**
+     * @var bool Whether the synchronization modal is visible
+     */
+    public $showModal = false;
+
+    /**
+     * @var string Type of synchronization: 'clients_from', 'clients_to', 'sites_from', 'sites_to'
+     */
+    public $syncType = '';
+
+    /**
+     * @var int Progress percentage (0-100)
+     */
+    public $progress = 0;
+
+    /**
+     * @var int Total number of items to process
+     */
+    public $total = 0;
+
+    /**
+     * @var int Current item index being processed
+     */
+    public $current = 0;
+
+    /**
+     * @var int Number of items successfully created or synchronized
+     */
+    public $successCount = 0;
+
+    /**
+     * @var int Number of items updated (e.g., name changes)
+     */
+    public $updatedCount = 0;
+
+    /**
+     * @var int Number of items existing locally but newly linked via ID
+     */
+    public $linkedCount = 0;
+
+    /**
+     * @var int Number of items that failed processing
+     */
+    public $errorCount = 0;
+
+    /**
+     * @var array List of error messages encountered during synchronization
+     */
+    public $errors = [];
+
+    /**
+     * @var bool Whether the entire process has finished
+     */
+    public $isComplete = false;
+
+    /**
+     * @var bool Whether a batch is currently being processed
+     */
+    public $isProcessing = false;
+
+    /**
+     * @var array The collection of items (Clients or Sites) queued for processing
+     */
+    public $itemsToProcess = [];
+
+    /**
+     * Livewire listeners for external event triggers
+     */
+    protected $listeners = ['startSync' => 'initSync'];
+
+    /**
+     * Initializes the synchronization process based on the requested type.
+     * Fetches the necessary data from RMM or local database to prepare the processing queue.
+     *
+     * @param string $type The sync direction/target
+     */
+    public function initSync($type)
+    {
+        $this->syncType = $type;
+        $this->resetProgress();
+        $this->showModal = true;
+
+        $integration = Integration::where('type', 'rmm')->first();
+        if (!$integration || !$integration->getSecret('api_key')) {
+            $this->addError('general', 'N-able RMM API key not found.');
+            return;
+        }
+
+        $client = new NAbleRmmClient($integration);
+
+        if ($this->syncType === 'clients_from') {
+            $rmmClients = $client->listClients();
+            if (isset($rmmClients['error'])) {
+                $this->addError('general', 'Failed to fetch clients: ' . $rmmClients['error']);
+                return;
+            }
+            $this->itemsToProcess = $rmmClients;
+        } elseif ($this->syncType === 'clients_to') {
+            $this->itemsToProcess = Client::whereNull('rmm_id')->where('active', true)->get()->toArray();
+        } elseif ($this->syncType === 'sites_from') {
+            $this->itemsToProcess = Client::whereNotNull('rmm_id')->where('active', true)->get()->toArray();
+        } elseif ($this->syncType === 'sites_to') {
+            $this->itemsToProcess = Client::whereNotNull('rmm_id')->where('active', true)->get()->toArray();
+        }
+
+        $this->total = count($this->itemsToProcess);
+        if ($this->total === 0) {
+            $this->isComplete = true;
+        } else {
+            $this->isProcessing = true;
+            // Kick off the first batch
+            $this->dispatch('triggerBatch');
+        }
+    }
+
+    /**
+     * Processes the next batch of items from the queue.
+     * Uses batching to prevent PHP timeout and keep the UI responsive.
+     * Dispatches a browser event to trigger the next batch after a short delay.
+     */
+    public function processNextBatch()
+    {
+        if (!$this->isProcessing || $this->current >= $this->total) {
+            $this->isProcessing = false;
+            $this->isComplete = true;
+            $this->updateLastSync();
+            return;
+        }
+
+        $batchSize = 5; // Process 5 at a time to keep it snappy
+        $batch = array_slice($this->itemsToProcess, $this->current, $batchSize);
+        $integration = Integration::where('type', 'rmm')->first();
+        $client = new NAbleRmmClient($integration);
+
+        foreach ($batch as $item) {
+            try {
+                if ($this->syncType === 'clients_from') {
+                    $this->syncClientFrom($item);
+                } elseif ($this->syncType === 'clients_to') {
+                    $this->syncClientTo($item, $client);
+                } elseif ($this->syncType === 'sites_from') {
+                    $this->syncSitesFrom($item, $client);
+                } elseif ($this->syncType === 'sites_to') {
+                    $this->syncSitesTo($item, $client);
+                }
+            } catch (\Exception $e) {
+                $this->errorCount++;
+                $this->errors[] = "Error processing " . ($item['name'] ?? 'item') . ": " . $e->getMessage();
+            }
+            $this->current++;
+        }
+
+        $this->progress = $this->total > 0 ? round(($this->current / $this->total) * 100) : 100;
+
+        if ($this->current < $this->total) {
+            $this->dispatch('triggerBatch');
+        } else {
+            $this->isProcessing = false;
+            $this->isComplete = true;
+            $this->updateLastSync();
+        }
+    }
+
+    /**
+     * Synchronizes a single client from N-able RMM to the local database.
+     * Handles matching by RMM ID or name, updates existing records, or creates new ones.
+     *
+     * @param array $rmmClient Client data from RMM API
+     */
+    protected function syncClientFrom($rmmClient)
+    {
+        $localClient = Client::where('rmm_id', $rmmClient['clientid'])
+            ->orWhere('name', $rmmClient['name'])
+            ->first();
+
+        if ($localClient) {
+            $hasChanges = false;
+            if (!$localClient->rmm_id) {
+                $localClient->rmm_id = $rmmClient['clientid'];
+                $hasChanges = true;
+                $this->linkedCount++;
+            }
+
+            if ($localClient->name !== $rmmClient['name']) {
+                $localClient->name = $rmmClient['name'];
+                $hasChanges = true;
+                if ($localClient->wasRecentlyCreated === false && $localClient->getOriginal('rmm_id')) {
+                    $this->updatedCount++;
+                }
+            }
+
+            if ($hasChanges) {
+                $localClient->save();
+            }
+        } else {
+            $suggestedClientNumber = $this->generateClientNumber();
+
+            $newClient = Client::create([
+                'name' => $rmmClient['name'],
+                'client_number' => $suggestedClientNumber,
+                'rmm_id' => $rmmClient['clientid'],
+                'active' => true,
+            ]);
+
+            ClientSite::create([
+                'client_id' => $newClient->id,
+                'name' => 'Default',
+                'is_default' => true,
+            ]);
+
+            $this->successCount++;
+        }
+    }
+
+    /**
+     * Synchronizes a single local client to N-able RMM.
+     * Creates the client in RMM and stores the returned RMM ID locally.
+     *
+     * @param array $item Local client data (array)
+     * @param NAbleRmmClient $client RMM API Service instance
+     */
+    protected function syncClientTo($item, $client)
+    {
+        $localClient = Client::find($item['id']);
+        if (!$localClient) return;
+
+        $result = $client->addClient($localClient->name);
+        if ($result['success']) {
+            $localClient->rmm_id = $result['clientid'];
+            $localClient->save();
+            $this->successCount++;
+        } else {
+            $this->errorCount++;
+            $this->errors[] = "RMM API Error for " . $localClient->name . ": " . ($result['error'] ?? 'Unknown error');
+        }
+    }
+
+    /**
+     * Synchronizes sites from N-able RMM to a specific local client.
+     * Matches by RMM ID or name and ensures all RMM sites exist locally.
+     *
+     * @param array $item Local client data (parent of the sites)
+     * @param NAbleRmmClient $client RMM API Service instance
+     */
+    protected function syncSitesFrom($item, $client)
+    {
+        $localClient = Client::find($item['id']);
+        if (!$localClient) return;
+
+        $rmmSites = $client->listSites($localClient->rmm_id);
+        if (isset($rmmSites['error'])) {
+            $this->errorCount++;
+            $this->errors[] = "Failed to fetch sites for " . $localClient->name . ": " . $rmmSites['error'];
+            return;
+        }
+
+        foreach ($rmmSites as $rmmSite) {
+            $localSite = ClientSite::where('client_id', $localClient->id)
+                ->where(function($q) use ($rmmSite) {
+                    $q->where('rmm_id', $rmmSite['siteid'])
+                      ->orWhere('name', $rmmSite['name']);
+                })->first();
+
+            if ($localSite) {
+                $hasChanges = false;
+                if (!$localSite->rmm_id) {
+                    $localSite->rmm_id = $rmmSite['siteid'];
+                    $hasChanges = true;
+                    $this->linkedCount++;
+                }
+                if ($localSite->name !== $rmmSite['name']) {
+                    $localSite->name = $rmmSite['name'];
+                    $hasChanges = true;
+                    $this->updatedCount++;
+                }
+                if ($hasChanges) $localSite->save();
+            } else {
+                ClientSite::create([
+                    'client_id' => $localClient->id,
+                    'name' => $rmmSite['name'],
+                    'rmm_id' => $rmmSite['siteid'],
+                ]);
+                $this->successCount++;
+            }
+        }
+    }
+
+    /**
+     * Synchronizes local sites to N-able RMM for a specific linked client.
+     * Only pushes sites that do not yet have an rmm_id.
+     *
+     * @param array $item Local client data (parent of the sites)
+     * @param NAbleRmmClient $client RMM API Service instance
+     */
+    protected function syncSitesTo($item, $client)
+    {
+        $localClient = Client::find($item['id']);
+        if (!$localClient) return;
+
+        $localSites = ClientSite::where('client_id', $localClient->id)
+            ->whereNull('rmm_id')
+            ->get();
+
+        foreach ($localSites as $localSite) {
+            $result = $client->addSite($localClient->rmm_id, $localSite->name);
+            if ($result['success']) {
+                $localSite->rmm_id = $result['siteid'];
+                $localSite->save();
+                $this->successCount++;
+            } else {
+                $this->errorCount++;
+                $this->errors[] = "Error adding site " . $localSite->name . " to RMM: " . ($result['error'] ?? 'Unknown error');
+            }
+        }
+    }
+
+    /**
+     * Generates a unique 5-digit client number.
+     * Attempts to find the next available number in the sequence.
+     *
+     * @return string|null The generated number, or null if generation fails after max attempts
+     */
+    protected function generateClientNumber()
+    {
+        $suggestedClientNumber = null;
+        $attempts = 0;
+        while (!$suggestedClientNumber && $attempts < 10) {
+            $maxNumber = Client::max('client_number') ?? 0;
+            $nextNumber = str_pad((string) (((int) $maxNumber) + 1), 5, '0', STR_PAD_LEFT);
+            if (!Client::where('client_number', $nextNumber)->exists()) {
+                $suggestedClientNumber = $nextNumber;
+            }
+            $attempts++;
+        }
+        return $suggestedClientNumber;
+    }
+
+    /**
+     * Updates the last_sync_at timestamp for the RMM integration record.
+     */
+    protected function updateLastSync()
+    {
+        $integration = Integration::where('type', 'rmm')->first();
+        if ($integration) {
+            $integration->last_sync_at = now();
+            $integration->save();
+        }
+    }
+
+    /**
+     * Resets all progress counters and state variables before a new sync run.
+     */
+    public function resetProgress()
+    {
+        $this->progress = 0;
+        $this->total = 0;
+        $this->current = 0;
+        $this->successCount = 0;
+        $this->updatedCount = 0;
+        $this->linkedCount = 0;
+        $this->errorCount = 0;
+        $this->errors = [];
+        $this->isComplete = false;
+        $this->isProcessing = false;
+        $this->itemsToProcess = [];
+    }
+
+    /**
+     * Closes the sync modal and redirects back to settings if the process was complete.
+     */
+    public function closeModal()
+    {
+        $this->showModal = false;
+        if ($this->isComplete) {
+            return redirect()->route('tech.admin.system.integrations.nable_rmm.settings');
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.tech.admin.system.integrations.n-able-rmm-sync');
+    }
+}

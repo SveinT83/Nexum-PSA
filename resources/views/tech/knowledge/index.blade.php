@@ -89,11 +89,12 @@
 @endsection
 
 @section('sidebar')
-    <h3>Left Sidebar</h3>
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" />
+    @endif
+    <h3>Knowledge Base</h3>
     <ul>
-        <li><a href="#">System Status</a></li>
-        <li><a href="#">Task Management</a></li>
-        <li><a href="#">Reports</a></li>
+        <li><a href="{{ route('tech.knowledge.index') }}">All Articles</a></li>
     </ul>
 @endsection
 

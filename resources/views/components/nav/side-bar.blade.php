@@ -34,9 +34,23 @@
 
             <!-- Generate the href URL: if route name exists and is valid, generate the route URL with optional params, otherwise use '#' -->
 
+            @php
+                $isActive = request()->routeIs($item['route']);
+
+                // If the route matches, also check if all provided parameters match the current request
+                if ($isActive && !empty($item['params']) && is_array($item['params'])) {
+                    foreach ($item['params'] as $key => $value) {
+                        if (request()->query($key) != $value && request()->route($key) != $value) {
+                            $isActive = false;
+                            break;
+                        }
+                    }
+                }
+            @endphp
+
             <li class="nav-item">
                 <a
-                    class="nav-link {{ request()->routeIs($item['route']) ? 'active' : '' }}"
+                    class="nav-link {{ $isActive ? 'active' : '' }}"
                     href="{{ !empty($item['route']) && Route::has($item['route']) ? route($item['route'], $item['params'] ?? []) : '#' }}">
 
                     {{ $item['name'] ?? '' }}

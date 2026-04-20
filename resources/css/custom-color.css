@@ -79,16 +79,17 @@ a.row {
 }
 
 .nav-link {
-    color: white;
+    color: #333;
 }
 
 .nav-link:hover {
+    background-color: #f1f1f1;
     color: #FF6D1F;
 }
 
 .nav-link.active{
     background-color: #FF6D1F !important;
-    color: black;
+    color: white !important;
 }
 
 .bg-primarily a.nav-link{

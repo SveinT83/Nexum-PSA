@@ -9,15 +9,22 @@
 @section('content')
     <div class="container-fluid">
         <div class="row">
-            {{-- N-able RMM Card --}}
+            {{--
+                N-able RMM Integration Card
+                This card allows administrators to enable/disable the N-able RMM integration
+                and provides access to its specific settings if activated.
+            --}}
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">N-able RMM</h5>
                         @php
+                            // Check if the integration record exists and is active
                             $nable = $integrations->get('rmm');
                             $isActive = $nable && $nable->status === 'active';
                         @endphp
+
+                        {{-- Toggle Switch for Integration Status --}}
                         <form action="{{ route('tech.admin.system.integrations.toggle') }}" method="POST">
                             @csrf
                             <input type="hidden" name="type" value="rmm">
@@ -36,10 +43,12 @@
                         <p class="card-text">Integrate with N-able RMM to sync clients, sites, and assets.</p>
 
                         @if($isActive)
+                            {{-- Settings are only accessible when the integration is enabled --}}
                             <a href="{{ route('tech.admin.system.integrations.nable_rmm.settings') }}" class="btn btn-primary">
                                 <i class="bi bi-gear"></i> Settings
                             </a>
                         @else
+                            {{-- Disabled settings button with a helpful hint --}}
                             <button class="btn btn-secondary" disabled>
                                 <i class="bi bi-gear"></i> Settings
                             </button>
@@ -49,7 +58,10 @@
                 </div>
             </div>
 
-            {{-- Example of another card for future --}}
+            {{--
+                Future Integrations Placeholder
+                Additional integration cards can be added here following the same pattern.
+            --}}
             <div class="col-md-4">
                 <div class="card opacity-50">
                     <div class="card-header d-flex justify-content-between align-items-center">
