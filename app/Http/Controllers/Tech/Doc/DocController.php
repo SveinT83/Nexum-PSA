@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Tech\Doc;
 
 use App\Http\Controllers\Controller;
-use App\Service\SideBarMenus\DocumentationsMenu;
-use App\Models\Doc\Category;
 use App\Models\Clients\Client;
+use App\Models\System\Category;
+use App\Service\SideBarMenus\DocumentationsMenu;
 use Illuminate\Http\Request;
 
 class DocController extends Controller
@@ -146,7 +146,12 @@ class DocController extends Controller
         $fields = [];
         $formView = null;
 
-        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $categories = Category::where('is_active', true)
+            ->whereHas('templates', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->orderBy('name')
+            ->get();
         $clients = Client::where('active', true)->orderBy('name')->get();
 
         // Populate sites if a client is already active in the session
@@ -258,7 +263,12 @@ class DocController extends Controller
         $documentation = \App\Models\Doc\Documentation::with(['category', 'client', 'site', 'template'])->findOrFail($id);
         $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
 
-        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $categories = Category::where('is_active', true)
+            ->whereHas('templates', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->orderBy('name')
+            ->get();
         $clients = Client::where('active', true)->orderBy('name')->get();
 
         $sites = [];

@@ -8,7 +8,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 ## Foundational Context
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
-- php - 8.2.29
+- php - 8.3.0
 - laravel/fortify (FORTIFY) - v1
 - laravel/framework (LARAVEL) - v12
 - laravel/horizon (HORIZON) - v5
@@ -21,7 +21,8 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - laravel/telescope (TELESCOPE) - v5
 - phpunit/phpunit (PHPUNIT) - v11
 - alpinejs (ALPINEJS) - v3
-- tailwindcss (TAILWINDCSS) - v4
+- bootstrap (BOOTSTRAP) - v5 <- Ikke bruk Tailwind, bruk Bootstrap
+- livewire/livewire (LIVEWIRE) - v3
 
 ## Conventions
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, naming.
@@ -42,7 +43,10 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - Be concise in your explanations - focus on what's important rather than explaining obvious details.
 
 ## Documentation Files
-- You must only create documentation files if explicitly requested by the user.
+- Every major view or feature should have a corresponding documentation file (Markdown) to guide users and administrators on setup, functionality, and troubleshooting.
+- These documentation files should be stored in the same directory as the view files they describe, with a `_doc.md` suffix (e.g., `nable_rmm_doc.md`).
+- If a view has a documentation file, it should be easily accessible from the UI (e.g., via a modal or a side-bar link).
+- Documentation must be written in English.
 
 
 === boost rules ===

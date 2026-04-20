@@ -2,122 +2,188 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Tech\Admin\Settings\Economy\EconomyController;
 use App\Http\Controllers\Tech\Admin\Settings\Economy\UnitsController;
+use App\Http\Controllers\Tech\Admin\System\integrations\IntegrationsController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech-Admin/Superuser routes
 // ------------------------------------------------------------------------------------------
 Route::middleware(['auth', 'tech', 'admin'])->group(function () {
 
-    // ------------------------------------------------------------------------------------------
-    // Admin Settings routes
-    // ------------------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------------------
+        // Admin Settings routes
+        // ------------------------------------------------------------------------------------------
 
-    // -----------------------------------------
-    // Contracts & Services Settings
-    // -----------------------------------------
-    Route::get('/admin/settings/cs/contacts', function () {
-        return view('tech.admin.settings.cs.contracts');
-    })->name('admin.settings.cs.contracts');
+        // -----------------------------------------
+        // Admin Page
+        // -----------------------------------------
+        Route::get('/admin', function () {
+            return view('tech.admin.index');
+        })->name('admin.index');
 
-    Route::get('/admin/settings/cs/services', function () {
-        return view('tech.admin.settings.cs.services');
-    })->name('admin.settings.cs.services');
+        // -----------------------------------------
+        // Contracts & Services Settings
+        // -----------------------------------------
+        Route::get('/admin/settings/cs/contacts', function () {
+            return view('tech.admin.settings.cs.contracts');
+        })->name('admin.settings.cs.contracts');
 
-    // -----------------------------------------
-    // Economy Settings
-    // -----------------------------------------
+        Route::get('/admin/settings/cs/services', function () {
+            return view('tech.admin.settings.cs.services');
+        })->name('admin.settings.cs.services');
 
-    // Economy Settings Dashboard
-    Route::get('/admin/settings/economy', [EconomyController::class, 'index'])
-        ->name('admin.settings.economy');
+        // -----------------------------------------
+        // Economy Settings
+        // -----------------------------------------
 
-    // Economy Settings Update
-    Route::post('/admin/settings/economy/update', [EconomyController::class, 'update'])
-        ->name('admin.settings.economy.update');
+        // Economy Settings Dashboard
+        Route::get('/admin/settings/economy', [EconomyController::class, 'index'])
+            ->name('admin.settings.economy');
 
-    // Economy Unit View's
-    Route::get('/admin/settings/economy/units', [UnitsController::class, 'index'])
-        ->name('admin.settings.economy.units');
+        // Economy Settings Update
+        Route::post('/admin/settings/economy/update', [EconomyController::class, 'update'])
+            ->name('admin.settings.economy.update');
 
-    //Unit Store
-    Route::get('/admin/settings/economy/units/store', [UnitsController::class, 'store'])
-        ->name('admin.settings.economy.units.store');
+        // Economy Unit View's
+        Route::get('/admin/settings/economy/units', [UnitsController::class, 'index'])
+            ->name('admin.settings.economy.units');
 
-    //Units Update
-    Route::post('/admin/settings/economy/units/update/{unit}', [UnitsController::class, 'update'])
-        ->name('admin.settings.economy.units.update');
+        //Unit Store
+        Route::get('/admin/settings/economy/units/store', [UnitsController::class, 'store'])
+            ->name('admin.settings.economy.units.store');
+
+        //Units Update
+        Route::post('/admin/settings/economy/units/update/{unit}', [UnitsController::class, 'update'])
+            ->name('admin.settings.economy.units.update');
 
 
-    // -----------------------------------------
-    // Email Settings
-    // -----------------------------------------
-    // Email Settings (controllers)
-    Route::get('/admin/settings/email/accounts', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'index'])
-        ->name('admin.settings.email.accounts');
-    Route::get('/admin/settings/email/accounts/create', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'create'])
-        ->name('admin.settings.email.accounts.create');
-    Route::post('/admin/settings/email/accounts', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'store'])
-        ->name('admin.settings.email.accounts.store');
-    Route::get('/admin/settings/email/accounts/{account}/edit', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'edit'])
-        ->name('admin.settings.email.accounts.edit');
-    Route::put('/admin/settings/email/accounts/{account}', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'update'])
-        ->name('admin.settings.email.accounts.update');
-    Route::post('/admin/settings/email/accounts/{account}/toggle', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'toggleActive'])
-        ->name('admin.settings.email.accounts.toggle');
+        // -----------------------------------------
+        // Email Settings
+        // -----------------------------------------
+        // Email Settings (controllers)
+        Route::get('/admin/settings/email/accounts', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'index'])
+            ->name('admin.settings.email.accounts');
+        Route::get('/admin/settings/email/accounts/create', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'create'])
+            ->name('admin.settings.email.accounts.create');
+        Route::post('/admin/settings/email/accounts', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'store'])
+            ->name('admin.settings.email.accounts.store');
+        Route::get('/admin/settings/email/accounts/{account}/edit', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'edit'])
+            ->name('admin.settings.email.accounts.edit');
+        Route::put('/admin/settings/email/accounts/{account}', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'update'])
+            ->name('admin.settings.email.accounts.update');
+        Route::post('/admin/settings/email/accounts/{account}/toggle', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'toggleActive'])
+            ->name('admin.settings.email.accounts.toggle');
 
-    // Live connection test (IMAP/SMTP)
-    Route::post('/admin/settings/email/accounts/{account}/test', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'test'])
-        ->name('admin.settings.email.accounts.test');
+        // Live connection test (IMAP/SMTP)
+        Route::post('/admin/settings/email/accounts/{account}/test', [\App\Http\Controllers\Tech\Admin\Settings\Email\AccountsController::class, 'test'])
+            ->name('admin.settings.email.accounts.test');
 
-    Route::get('/admin/settings/email/config', [\App\Http\Controllers\Tech\Admin\Settings\Email\ConfigController::class, 'index'])
-        ->name('admin.settings.email.config');
-    Route::post('/admin/settings/email/config', [\App\Http\Controllers\Tech\Admin\Settings\Email\ConfigController::class, 'update'])
-        ->name('admin.settings.email.config.update');
+        Route::get('/admin/settings/email/config', [\App\Http\Controllers\Tech\Admin\Settings\Email\ConfigController::class, 'index'])
+            ->name('admin.settings.email.config');
+        Route::post('/admin/settings/email/config', [\App\Http\Controllers\Tech\Admin\Settings\Email\ConfigController::class, 'update'])
+            ->name('admin.settings.email.config.update');
 
-    Route::get('/admin/settings/email/rules', [\App\Http\Controllers\Tech\Admin\Settings\Email\RulesController::class, 'index'])
-        ->name('admin.settings.email.rules');
+        Route::get('/admin/settings/email/rules', [\App\Http\Controllers\Tech\Admin\Settings\Email\RulesController::class, 'index'])
+            ->name('admin.settings.email.rules');
 
-    // -----------------------------------------
-    // Sales Settings
-    // -----------------------------------------
-    Route::get('/admin/settings/sales/rules', function () {
-        return view('tech.admin.settings.sales.rules.index');
-    })->name('admin.settings.sales.rules');
+        // -----------------------------------------
+        // Sales Settings
+        // -----------------------------------------
+        Route::get('/admin/settings/sales/rules', function () {
+            return view('tech.admin.settings.sales.rules.index');
+        })->name('admin.settings.sales.rules');
 
-    Route::get('/admin/settings/sales/workflows', function () {
-        return view('tech.admin.settings.sales.workflows.index');
-    })->name('admin.settings.sales.workflows');
+        Route::get('/admin/settings/sales/workflows', function () {
+            return view('tech.admin.settings.sales.workflows.index');
+        })->name('admin.settings.sales.workflows');
 
-    // -----------------------------------------
-    // Ticket Settings
-    // -----------------------------------------
-    Route::get('/admin/settings/tickets', function () {
-        return view('tech.admin.settings.tickets.index');
-    })->name('admin.settings.tickets');
+        // -----------------------------------------
+        // Ticket Settings
+        // -----------------------------------------
+        Route::get('/admin/settings/tickets', function () {
+            return view('tech.admin.settings.tickets.index');
+        })->name('admin.settings.tickets');
 
-    Route::get('/admin/settings/tickets/rules', function () {
-        return view('tech.admin.settings.tickets.rules.index');
-    })->name('admin.settings.tickets.rules');
+        Route::get('/admin/settings/tickets/rules', function () {
+            return view('tech.admin.settings.tickets.rules.index');
+        })->name('admin.settings.tickets.rules');
 
-    Route::get('/admin/settings/tickets/workflows', function () {
-        return view('tech.admin.settings.tickets.workflows.index');
-    })->name('admin.settings.tickets.workflows');
+        Route::get('/admin/settings/tickets/workflows', function () {
+            return view('tech.admin.settings.tickets.workflows.index');
+        })->name('admin.settings.tickets.workflows');
 
-    // ------------------------------------------------------------------------------------------
-    // Other Admin routes
-    // ------------------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------------------
+        // Other Admin routes
+        // ------------------------------------------------------------------------------------------
 
-    // -----------------------------------------
-    // Templates
-    // -----------------------------------------
-    Route::get('/admin/templates', function () {
-        return view('tech.admin.templates.index');
-    })->name('admin.templates.index');
+        // -----------------------------------------
+        // Templates
+        // -----------------------------------------
+        Route::get('/admin/templates', function () {
+            return view('tech.admin.templates.index');
+        })->name('admin.templates.index');
 
-    // -----------------------------------------
-    // Users
-    // -----------------------------------------
-    Route::get('/admin/users', function () {
-        return view('tech.admin.users.index');
-    })->name('admin.users.index');
+        // -----------------------------------------
+        // Users
+        // -----------------------------------------
+        Route::get('/admin/users', function () {
+            return view('tech.admin.users.index');
+        })->name('admin.users.index');
+
+        // -----------------------------------------
+        // Category
+        // -----------------------------------------
+        Route::get('/admin/system/category', [App\Http\Controllers\Tech\Admin\System\CategoryController::class, 'index'])
+            ->name('admin.system.category.index');
+
+        Route::post('/admin/system/category/store', [App\Http\Controllers\Tech\Admin\System\CategoryController::class, 'store'])
+            ->name('admin.system.category.store');
+
+        Route::put('/admin/system/category/update/{category}', [App\Http\Controllers\Tech\Admin\System\CategoryController::class, 'update'])
+            ->name('admin.system.category.update');
+
+        Route::delete('/admin/system/category/destroy/{category}', [App\Http\Controllers\Tech\Admin\System\CategoryController::class, 'destroy'])
+            ->name('admin.system.category.destroy');
+
+        // -----------------------------------------
+        // Tag
+        // -----------------------------------------
+        Route::get('/admin/system/tag', [App\Http\Controllers\Tech\Admin\System\TagController::class, 'index'])
+            ->name('admin.system.tag.index');
+
+        Route::post('/admin/system/tag/store', [App\Http\Controllers\Tech\Admin\System\TagController::class, 'store'])
+            ->name('admin.system.tag.store');
+
+        Route::put('/admin/system/tag/update/{tag}', [App\Http\Controllers\Tech\Admin\System\TagController::class, 'update'])
+            ->name('admin.system.tag.update');
+
+        Route::delete('/admin/system/tag/destroy/{tag}', [App\Http\Controllers\Tech\Admin\System\TagController::class, 'destroy'])
+            ->name('admin.system.tag.destroy');
+
+        // -----------------------------------------
+        // Integration Settings
+        // -----------------------------------------
+        Route::get('/admin/system/integrations', [IntegrationsController::class, 'index'])
+            ->name('admin.system.integrations.index');
+
+        Route::post('/admin/system/integrations/toggle', [IntegrationsController::class, 'toggle'])
+            ->name('admin.system.integrations.toggle');
+
+        Route::get('/admin/system/integrations/nable-rmm', [IntegrationsController::class, 'nableRmmSettings'])
+            ->name('admin.system.integrations.nable_rmm.settings');
+
+        Route::post('/admin/system/integrations/nable-rmm', [IntegrationsController::class, 'nableRmmUpdate'])
+            ->name('admin.system.integrations.nable_rmm.update');
+
+        Route::post('/admin/system/integrations/nable-rmm/sync-from', [IntegrationsController::class, 'nableRmmSyncFrom'])
+            ->name('admin.system.integrations.nable_rmm.sync_from');
+
+        Route::post('/admin/system/integrations/nable-rmm/sync-to', [IntegrationsController::class, 'nableRmmSyncTo'])
+            ->name('admin.system.integrations.nable_rmm.sync_to');
+
+        Route::post('/admin/system/integrations/nable-rmm/sync-sites-from', [IntegrationsController::class, 'nableRmmSyncSitesFrom'])
+            ->name('admin.system.integrations.nable_rmm.sync_sites_from');
+
+        Route::post('/admin/system/integrations/nable-rmm/sync-sites-to', [IntegrationsController::class, 'nableRmmSyncSitesTo'])
+            ->name('admin.system.integrations.nable_rmm.sync_sites_to');
+
     });

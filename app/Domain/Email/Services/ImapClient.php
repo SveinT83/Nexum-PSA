@@ -102,6 +102,18 @@ class ImapClient
         return null;
     }
 
+    /**
+     * Delete a message by IMAP UID from INBOX.
+     */
+    public function deleteByUid(int $uid): bool
+    {
+        $message = $this->fetchByUid($uid);
+        if ($message) {
+            return (bool)$message->delete();
+        }
+        return false;
+    }
+
     public function disconnect(): void
     {
         if (isset($this->client)) {

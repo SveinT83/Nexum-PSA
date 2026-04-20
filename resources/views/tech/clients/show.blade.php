@@ -20,23 +20,135 @@
 
     <div class="row">
 
-        <!-- ------------------------------------------------- -->
+        <!-- -------------------------------------------------------------------------------------------------- -->
         <!-- Client Summary -->
-        <!-- ------------------------------------------------- -->
+        <!-- -------------------------------------------------------------------------------------------------- -->
         <div class="col-12">
             <div class="card mb-4">
-                <div class="card-header">Summary</div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Summary</span>
+                    <a href="{{ route('tech.clients.settings.edit', $client->id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-gear"></i>
+                    </a>
+                </div>
                 <div class="card-body">
-                    <dl class="row mb-0">
+                    <div class="row mb-0">
                         <dt class="col-sm-3">Name</dt><dd class="col-sm-9">{{ $client->name }}</dd>
                         <dt class="col-sm-3">Org No</dt><dd class="col-sm-9">{{ $client->org_no ?? '—' }}</dd>
                         <dt class="col-sm-3">Billing Email</dt><dd class="col-sm-9">{{ $client->billing_email ?? '—' }}</dd>
                         <dt class="col-sm-3">Status</dt><dd class="col-sm-9">@if($client->active)<span class="badge bg-success">Active</span>@else<span class="badge bg-secondary">Inactive</span>@endif</dd>
+                        @php
+                            $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->first();
+                        @endphp
+                        @if($rmmIntegration && $rmmIntegration->status === 'active')
+                            <dt class="col-sm-3">N-able RMM</dt>
+                            <dd class="col-sm-9">
+                                @if($client->rmm_id)
+                                    <span class="badge bg-success">Active (ID: {{ $client->rmm_id }})</span>
+                                @else
+                                    <span class="badge bg-warning text-dark">Not Linked</span>
+                                @endif
+                            </dd>
+                        @endif
                         <dt class="col-sm-3">Notes</dt><dd class="col-sm-9">{{ $client->notes ?? '—' }}</dd>
-                    </dl>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- -------------------------------------------------------------------------------------------------- -->
+        <!-- Client Contract(s) if exists -->
+        <!-- -------------------------------------------------------------------------------------------------- -->
+        @if(isset($contracts))
+            @foreach($contracts as $contract)
+
+                <div class="col-12">
+                    <div class="card mb-4">
+
+                        <!-- ------------------------------------------------- -->
+                        <!-- Card Header -->
+                        <!-- ------------------------------------------------- -->
+                        <div class="card-header">
+                            <div class="row justify-content-between">
+
+                                <span class="col-md-6">Contract</span>
+
+                                <div class="col-auto">
+                                    <div class="row fw-lighter">
+                                        <p class="col-auto">Status: {{$contract->approval_status}}</p>
+                                        <p class="col-auto">From: {{ $contract->start_date->format('Y-m-d') }}</p>
+                                        <p class="col-auto">To: {{ $contract->end_date->format('Y-m-d') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ------------------------------------------------- -->
+                        <!-- Card Body -->
+                        <!-- ------------------------------------------------- -->
+                        <div class="card-body">
+
+                            <!-- Contract description -->
+                            <div class="accordion" id="contractAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                            Description:
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#contractAccordion">
+                                        <div class="accordion-body">
+                                            <p>{{ $contract->description }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Contract Service Items -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                                            Contract items:
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#contractAccordion">
+                                        <div class="accordion-body">
+
+                                            <!-- Check if relation has data -->
+                                            @if($contract->items->count() > 0)
+
+                                                <!-- Service item header -->
+                                                <div class="row justify-content-between">
+                                                    <p class="col-1">SKU:</p>
+                                                    <p class="col-4">Name:</p>
+                                                    <p class="col-2">Quantity:</p>
+                                                    <p class="col-2">Unit Price:</p>
+                                                </div>
+
+                                                <!-- Show the data one by one -->
+                                                @foreach($contract->items as $item)
+                                                    <div class="row justify-content-between">
+                                                        <p class="col-1">{{ $item->sku }}</p>
+                                                        <p class="col-4">{{ $item->name }}</p>
+                                                        <p class="col-2">{{ $item->quantity }} {{ $item->unit }}</p>
+                                                        <p class="col-2">{{ number_format($item->line_total, 2) }} {{ $item->billing_interval }}</p>
+                                                    </div>
+                                                @endforeach
+
+                                            @else
+                                                <p>No services is in this contract.</p>
+                                            @endif
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            @endforeach
+        @endif
 
     </div>
 @endsection

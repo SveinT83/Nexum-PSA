@@ -88,6 +88,12 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::get('/clients/show/{client}', [ClientController::class, 'show'])
         ->name('clients.show');
 
+    Route::get('/clients/{client}/settings', [\App\Http\Controllers\Tech\Clients\ClientSettingsController::class, 'edit'])
+        ->name('clients.settings.edit');
+
+    Route::put('/clients/{client}/settings', [\App\Http\Controllers\Tech\Clients\ClientSettingsController::class, 'update'])
+        ->name('clients.settings.update');
+
 
     // -----------------------------------------
     // Users
@@ -395,33 +401,55 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::post('/risk/show/{risk}/approve', [RiskController::class, 'approve'])
         ->name('risk.approve');
 
+    Route::get('/risk/show/{risk}/pdf', [RiskController::class, 'exportPdf'])
+        ->name('risk.pdf');
+
     Route::get('/risk/items/{item}', [RiskController::class, 'showItem'])
         ->name('risk.items.show');
 
     Route::post('/risk/items/{item}/updates', [RiskController::class, 'storeItemUpdate'])
         ->name('risk.items.updates.store');
 
+    Route::delete('/risk/updates/{update}', [RiskController::class, 'destroyUpdate'])
+        ->name('risk.updates.destroy');
+
+    Route::delete('/risk/items/{item}', [RiskController::class, 'destroyItem'])
+        ->name('risk.items.destroy');
+    Route::put('/risk/items/{item}', [RiskController::class, 'updateItem'])
+        ->name('risk.items.update');
+
 
     // -----------------------------------------
     // Inbox
     // -----------------------------------------
-    Route::get('/inbox', [\App\Http\Controllers\Tech\Inbox\IndexController::class, 'index'])
+    Route::get('/inbox', [\App\Http\Controllers\Tech\Inbox\EmailController::class, 'index'])
         ->name('inbox.index');
-    Route::post('/inbox/poll', [\App\Http\Controllers\Tech\Inbox\IndexController::class, 'poll'])
+    Route::post('/inbox/poll', [\App\Http\Controllers\Tech\Inbox\EmailController::class, 'poll'])
         ->name('inbox.poll');
-    Route::get('/inbox/show/{message}', [\App\Http\Controllers\Tech\Inbox\ShowController::class, 'show'])
+    Route::get('/inbox/show/{message}', [\App\Http\Controllers\Tech\Inbox\EmailController::class, 'show'])
         ->name('inbox.show');
-    Route::delete('/inbox/{message}', [\App\Http\Controllers\Tech\Inbox\ShowController::class, 'destroy'])
+    Route::delete('/inbox/{message}', [\App\Http\Controllers\Tech\Inbox\EmailController::class, 'destroy'])
         ->name('inbox.delete');
-    Route::get('/inbox/attachments/{attachment}/download', [\App\Http\Controllers\Tech\Inbox\ShowController::class, 'download'])
+    Route::get('/inbox/attachments/{attachment}/download', [\App\Http\Controllers\Tech\Inbox\EmailController::class, 'download'])
         ->name('inbox.download');
 
     // -----------------------------------------
     // Knowledge
     // -----------------------------------------
-    Route::get('/knowledge', function () {
-        return view('tech.knowledge.index');
-    })->name('knowledge.index');
+    Route::get('/knowledge', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'index'])
+        ->name('knowledge.index');
+    Route::get('/knowledge/create', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'create'])
+        ->name('knowledge.create');
+    Route::post('/knowledge/store', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'store'])
+        ->name('knowledge.store');
+    Route::get('/knowledge/show/{article}', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'show'])
+        ->name('knowledge.show');
+    Route::get('/knowledge/edit/{article}', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'edit'])
+        ->name('knowledge.edit');
+    Route::put('/knowledge/update/{article}', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'update'])
+        ->name('knowledge.update');
+    Route::delete('/knowledge/destroy/{article}', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'destroy'])
+        ->name('knowledge.destroy');
 
     // -----------------------------------------
     // Reports

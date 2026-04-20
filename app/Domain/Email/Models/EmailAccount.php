@@ -11,7 +11,7 @@ class EmailAccount extends Model
 
     protected $fillable = [
         'address', 'description', 'from_name',
-        'is_active', 'is_global_default', 'defaults_for',
+        'is_active', 'is_global_default', 'defaults_for', 'delete_policy',
         // IMAP
         'imap_host', 'imap_port', 'imap_encryption', 'imap_username', 'imap_secret', 'imap_auth_type',
         // SMTP

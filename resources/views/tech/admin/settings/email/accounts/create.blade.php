@@ -86,6 +86,22 @@
                   </div>
                 </div>
               </div>
+              <div class="col-12 mt-3 pt-3 border-top">
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="delete_policy" class="form-label fw-semibold">Retention & Deletion Policy</label>
+                    <select id="delete_policy" name="delete_policy" class="form-select" required>
+                      @php $policy = old('delete_policy', $isEdit ? $account->delete_policy : 'local_only'); @endphp
+                      <option value="local_only" {{ $policy === 'local_only' ? 'selected' : '' }}>Local hide only (Keep on server)</option>
+                      <option value="sync_delete" {{ $policy === 'sync_delete' ? 'selected' : '' }}>Sync delete (Remove from server when deleted in PSA)</option>
+                      <option value="auto_delete" {{ $policy === 'auto_delete' ? 'selected' : '' }}>Auto-delete from server after import</option>
+                    </select>
+                    <div class="form-text mt-2">
+                      <strong>Local hide only:</strong> Recommended for shared mailboxes. Uses Soft Delete to prevent re-import.
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -68,6 +68,11 @@ class ClientController extends Controller
         session(['active_client_id' => $client->id]);
 
         // -----------------------------------------
+        // Client Contract (s)
+        // -----------------------------------------
+        $contracts = $client->contracts()->paginate(25);
+
+        // -----------------------------------------
         // Eager load risk assessments and items
         // to avoid N+1 queries in the rightbar widget.
         // -----------------------------------------
@@ -80,7 +85,9 @@ class ClientController extends Controller
 
         return view('tech.clients.show', [
             'client' => $client,
-            'sidebarMenuItems' => $sidebarMenuItems
+            'sidebarMenuItems' => $sidebarMenuItems,
+            'contracts' => $contracts,
+
         ]);
     }
 

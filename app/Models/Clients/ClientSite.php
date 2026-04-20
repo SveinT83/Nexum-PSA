@@ -22,6 +22,7 @@ class ClientSite extends Model
         'city',
         'county',
         'country',
+        'rmm_id',
         'is_default',
     ];
 

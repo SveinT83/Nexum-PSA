@@ -44,6 +44,11 @@ Route::get('/', function (Request $request) {
     return view('welcome');
 });
 
+/*
+ * Fjernet for å ikek skape konflikt med Laravel Fortify
+ */
+
+/*
 Route::post('/login', function (Request $request) {
     $request->validate([
         'email' => 'required|email',
@@ -60,6 +65,7 @@ Route::post('/login', function (Request $request) {
         'email' => 'Feil e-post eller passord.',
     ]);
 })->name('login');
+-/
 
 Route::get('/logout', function (Request $request) {
     Auth::logout();

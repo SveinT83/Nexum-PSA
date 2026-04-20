@@ -17,11 +17,29 @@ class PollActiveEmailAccounts implements ShouldQueue
 
     public function handle(): void
     {
+        $settings = \App\Models\Settings\CommonSetting::where('type', 'emailhub')
+            ->get()->pluck('value', 'name')->toArray();
+
+        if (($settings['pause_ingest'] ?? '0') === '1') {
+            return;
+        }
+
+        $pollInterval = (int)($settings['poll_interval'] ?? 1);
+        $lastRun = \Illuminate\Support\Facades\Cache::get('email_last_poll_run');
+
+        if ($lastRun && now()->diffInMinutes($lastRun) < $pollInterval) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\Cache::put('email_last_poll_run', now());
+
+        $batchSize = (int)($settings['batch_size'] ?? 20);
+
         EmailAccount::query()
             ->where('is_active', true)
-            ->chunkById(50, function ($accounts) {
+            ->chunkById(50, function ($accounts) use ($batchSize) {
                 foreach ($accounts as $account) {
-                    FetchImapAccount::dispatch($account->id);
+                    FetchImapAccount::dispatch($account->id, $batchSize);
                 }
             });
     }

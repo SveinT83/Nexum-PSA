@@ -14,6 +14,7 @@ class Client extends Model
         'client_number',
         'org_no',
         'billing_email',
+        'rmm_id',
         'notes',
         'active',
     ];

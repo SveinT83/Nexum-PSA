@@ -1,176 +1,137 @@
-# tech.admin.settings.email.config.index
+@extends('layouts.default_tech')
 
-**URL:** `/tech/admin/settings/email/config`
+@section('pageHeader')
+    <div class="d-flex justify-content-between align-items-center py-3">
+        <h2 class="h4 mb-0">Email Configuration</h2>
+        <div class="d-flex gap-2">
+            <button type="submit" form="config-form" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-outline-secondary">Run Health Test</button>
+        </div>
+    </div>
+@endsection
 
-**Access & Permissions:**
+@section('content')
+<div class="container-fluid">
+    <form id="config-form" action="{{ route('tech.admin.settings.email.config.update') }}" method="POST">
+        @csrf
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 1. Ingest & Polling -->
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Ingest & Polling</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="poll_interval" class="form-label">Global poll interval (minutes)</label>
+                                <select name="poll_interval" id="poll_interval" class="form-select">
+                                    @foreach([1, 5, 15, 30] as $min)
+                                        <option value="{{ $min }}" {{ (isset($config['poll_interval']) && $config['poll_interval'] == $min) ? 'selected' : '' }}>{{ $min }} min</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="concurrency" class="form-label">Max concurrent fetch</label>
+                                <select name="concurrency" id="concurrency" class="form-select">
+                                    @foreach([1, 2, 4, 8] as $val)
+                                        <option value="{{ $val }}" {{ (isset($config['concurrency']) && $config['concurrency'] == $val) ? 'selected' : '' }}>{{ $val }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="batch_size" class="form-label">Messages per poll (Batch size)</label>
+                                <input type="number" name="batch_size" id="batch_size" class="form-control" value="{{ $config['batch_size'] ?? 20 }}" min="1">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mt-4">
+                                    <input class="form-check-input" type="checkbox" name="pause_ingest" id="pause_ingest" value="1" {{ (isset($config['pause_ingest']) && $config['pause_ingest'] == '1') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="pause_ingest">Pause all ingest (Maintenance mode)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-* Roles: `superadmin`, `emailadmin`
-* Permission required: `email.settings.manage`
+                <!-- 2. Retention & Deletion -->
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Retention & Deletion</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="delete_on_success" id="delete_on_success" value="1" {{ (isset($config['delete_on_success']) && $config['delete_on_success'] == '1') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="delete_on_success">Delete from server after successful import (Default)</label>
+                                    <div class="form-text">Note: Per-account settings can override this.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="retention_months" class="form-label">Email retention (months)</label>
+                                <input type="number" name="retention_months" id="retention_months" class="form-control" value="{{ $config['retention_months'] ?? 24 }}" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="size_limit_mb" class="form-label">Max message size (MB)</label>
+                                <input type="number" name="size_limit_mb" id="size_limit_mb" class="form-control" value="{{ $config['size_limit_mb'] ?? 25 }}" min="1">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="max_failures" class="form-label">Alarm after X failures</label>
+                                <input type="number" name="max_failures" id="max_failures" class="form-control" value="{{ $config['max_failures'] ?? 3 }}" min="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-**Creation date:** 2025-10-23
+                <!-- 3. Identification & Threading (Read-only) -->
+                <div class="card mb-4 bg-light text-muted border-0">
+                    <div class="card-header">
+                        <h5 class="mb-0">Identification & Threading (Policy)</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small mb-1">Precedence: <strong>Headers</strong> (Message-ID / In-Reply-To) over Subject token.</p>
+                        <p class="small mb-0">Subject token format: <code>[#{number}]</code></p>
+                    </div>
+                </div>
+            </div>
 
-**Controller (PSR-4 path):** `App\\Http\\Controllers\\Tech\\Admin\\Settings\\Email\\ConfigController@index`
+            <div class="col-lg-4">
+                <div class="card border-info mb-4 shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">System Health</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Active Accounts
+                                <span class="badge bg-success rounded-pill">OK</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Queue Worker
+                                <span class="badge bg-warning text-dark rounded-pill">Unknown</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center text-muted small">
+                                Last Sync
+                                <span>{{ now()->diffForHumans() }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
 
-**Status:** In progress
-**Difficulty:** Medium
-**Estimated time:** 3.0 hours
-
----
-
-## 1) Purpose
-
-System-wide configuration of the Email Hub: transport/security, ingest/polling, identification/threading policy (read-only), retention, error thresholds, and outbound defaults. This page defines how email behaves globally; per‑account details remain under **Accounts**, and rule logic under **Rules**.
-
----
-
-## 2) Layout (Bootstrap template)
-
-Top header / Main content / Right slim panel
-
-### Header
-
-* Title: **Email Configuration**
-* Buttons: `Save`, `Reset to Defaults`, `Run Health Test`
-* Breadcrumbs: Settings → Email → Config
-
-### Main Sections (cards)
-
-1. **Ingest & Polling**
-   **Fields**
-
-   * *Global poll interval* (select): 1 min, 5 min (default), 15 min, 30 min.
-   * *Max concurrent fetch* (select): 1, 2 (default), 4, 8.
-   * *Pause all ingest* (toggle): Off (default). Tooltip: Maintenance mode for IMAP polling.
-   * *Retry/backoff policy* (inputs): `1m → 5m → 15m` (editable).
-   * *Alarm after consecutive failures* (number): default 3.
-
-   **Validation**: poll ≥ 1 min; max fetch ≥ 1; backoff ascending.
-
-2. **Security & Transport**
-   **Fields**
-
-   * *Require encryption (inbound)* (select): `TLS/SSL required` (default), `Allow STARTTLS`, `Allow plain (discouraged)`.
-   * *Require encryption (outbound)* (select): `TLS/SSL required` (default), `Allow STARTTLS`, `Allow plain (discouraged)`.
-   * *Allowed ciphers/min TLS* (select): System default (recommended), TLS 1.2+, TLS 1.3.
-   * *Credentials storage note* (read-only): Secrets are masked; re-entry required to change.
-
-   **Validation**: If “plain” chosen, confirmation modal.
-
-3. **Identification & Threading (Policy)**
-   **Content (read-only info with toggles locked)**
-
-   * Precedence: **Headers** (Message-ID / In-Reply-To / References) over **Subject token**.
-   * Subject token format (info): `[#{number}]` used across modules.
-   * Conflict handling: Prefer headers; log discrepancy.
-
-4. **Defaults & Handover**
-   **Fields**
-
-   * *Unknown/ambiguous messages* (read-only): Route to **Global Inbox (Needs Triage)**.
-   * *Known contact or mapped domain* (read-only): Create **Ticket** (handover to Ticket module).
-
-5. **Retention & Deletion**
-   **Fields**
-
-   * *Delete on success* (toggle): On (default). Help: Remove message from server after successful processing.
-   * *Fallback Inbox retention (days)* (number): default 30.
-   * *Spam/Trash retention (days)* (number): default 30.
-   * *Attachment retention (months)* (number): default 12.
-
-   **Validation**: days ≥ 0; months ≥ 0.
-
-6. **Outbound Defaults**
-   **Fields**
-
-   * *Outbound account selection* (read-only default): Use account tied to owning module/entity.
-   * *Allow override sending account* (multi-select roles/permissions): `technician`, `ticket.admin` (default enabled).
-   * *Signature and language source* (info): From sending account profile.
-
-7. **Rules & Parser Interop (Behavior Defaults)**
-   **Fields**
-
-   * *Global rules evaluation default* (toggle): `Continue evaluation` (On by default).
-   * *Destructive actions require confirmation* (toggle): On (default).
-   * *Parser scan limits* (inputs): `Max body scan length (KB)` default 256; `Per-message parser time limit (ms)` default 200.
-
-   **Notes**: Rule ordering and parser profile order are managed on their dedicated pages. These toggles define platform defaults used by their UIs.
-
-8. **Errors & Health**
-   **Fields**
-
-   * *Raise dashboard alert after X failures* (number): default 3.
-   * *Acknowledge resolved alerts requires* (select): `emailadmin` or `superadmin`.
-
-   **Actions**
-
-   * `Run Health Test`: IMAP/SMTP connectivity check for all enabled accounts + rule engine dry-run; results appear in right panel widget.
-
----
-
-## 3) Right Slim Panel (widgets)
-
-* **System Health** (badges): ✓ OK, ⚠ Warning, ✕ Error — counts and last sync time.
-* **Recent Errors**: last 5 IMAP/SMTP failures with account name and time; `Acknowledge` button.
-* **Shortcuts**: `Open Accounts`, `Open Rules`, `Open Parser Profiles`, `Open Logs & Health`, `Open Fallback Inbox`.
-
-Icons (suggested, lucide): `shield`, `mail`, `activity`, `triangle-alert`, `check-circle`, `x-circle`, `wrench`, `play`.
-
----
-
-## 4) Components & Controls (reusable)
-
-* `Form.Select`, `Form.Toggle`, `Form.Number`, `HelpPopover`, `ConfirmModal`, `HealthBadge`, `RightPanel.Widget`, `List.InlineErrors`.
-
----
-
-## 5) Behaviors & Validation
-
-* **Save**: Persist changes; show toast “Saved successfully”.
-* **Reset to Defaults**: Confirm modal; revert to system defaults.
-* **Run Health Test**: Non-destructive diagnostics; updates right panel.
-* Client-side validation before submit; server-side recheck; all changes audited (who/what/when).
-
----
-
-## 6) Audit & Logging
-
-* All changes (before/after where safe; secrets masked) logged in Audit with actor and timestamp.
-* Health acknowledgements logged with actor and reason (optional).
-
----
-
-## 7) Permissions Matrix (summary)
-
-* View page: `email.admin`
-* Edit settings: `email.settings.manage`
-* Run Health Test: `email.settings.manage`
-* Acknowledge alerts: `emailadmin` or `superadmin` (configurable selector above)
-
----
-
-## 8) Out of Scope (here)
-
-* Managing accounts (go to Accounts)
-* Editing rule definitions/order (go to Rules)
-* Editing parser profiles/order (go to Parser Profiles)
-* Per-account polling overrides (set under Accounts)
-
----
-
-## 9) QA Checklist
-
-* Poll interval applies; per-account overrides respected.
-* Deletion on success confirmed with live inbox test.
-* Header-vs-token precedence enforced and logged.
-* Unknown routing → Global Inbox verified.
-* Health test lists failing accounts with clear messages.
-* Retention jobs pick up configured values.
-
----
-
-## 10) Notes for Developers
-
-* Expose config via `config('emailhub.*')` + DB-backed settings table; cache with tag `emailhub`.
-* Health test dispatches a queued job per account; aggregate in a temporary table or cache for UI.
-* Use policy checks (`Gate::allows('email.settings.manage')`) on write paths.
-* Emit domain events for changes (e.g., `EmailConfigUpdated`).
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Shortcuts</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            <a href="{{ route('tech.admin.settings.email.accounts') }}" class="list-group-item list-group-item-action">Open Accounts</a>
+                            <a href="{{ route('tech.admin.settings.email.rules') }}" class="list-group-item list-group-item-action">Open Rules</a>
+                            <a href="{{ route('tech.inbox.index') }}" class="list-group-item list-group-item-action">Open Fallback Inbox</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+@endsection

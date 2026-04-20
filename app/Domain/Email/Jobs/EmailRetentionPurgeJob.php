@@ -20,7 +20,11 @@ class EmailRetentionPurgeJob implements ShouldQueue
 
     public function handle(): void
     {
-        $cutoff = now()->subMonths($this->months);
+        $settings = \App\Models\Settings\CommonSetting::where('type', 'emailhub')
+            ->get()->pluck('value', 'name')->toArray();
+
+        $months = (int)($settings['retention_months'] ?? 24);
+        $cutoff = now()->subMonths($months);
 
         EmailMessage::query()
             ->where('received_at', '<', $cutoff)

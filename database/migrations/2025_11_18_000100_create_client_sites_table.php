@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->string('city', 100)->nullable();
             $table->string('county', 100)->nullable();
             $table->string('country', 100)->nullable();
+            $table->string('rmm_id')->nullable();
             $table->boolean('is_default')->default(false);
             $table->timestamps();
 

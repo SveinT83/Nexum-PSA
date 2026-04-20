@@ -80,7 +80,7 @@ class StoreInboundMessage implements ShouldQueue
         $sanitized = HtmlSanitizer::sanitize($html);
         $textNormalized = $text ?: BodyNormalizer::toText($html);
 
-        EmailMessage::updateOrCreate(
+        $messageModel = EmailMessage::updateOrCreate(
             [
                 'account_id' => $this->payload['account_id'],
                 'mailbox' => 'INBOX',
@@ -108,6 +108,24 @@ class StoreInboundMessage implements ShouldQueue
                 'checksum_sha1' => $this->payload['checksum_sha1'] ?? null,
             ]
         );
+
+        // Auto-delete from server if policy is set OR global default is ON
+        $globalDelete = \App\Models\Settings\CommonSetting::where('type', 'emailhub')
+            ->where('name', 'delete_on_success')
+            ->value('value') === '1';
+
+        $shouldDelete = ($account->delete_policy === 'auto_delete') || ($account->delete_policy === 'local_only' && $globalDelete);
+
+        if ($shouldDelete && $messageModel->wasRecentlyCreated) {
+            try {
+                $client = new ImapClient($account);
+                $client->connect();
+                $client->deleteByUid($messageModel->imap_uid);
+                $client->disconnect();
+            } catch (\Throwable $e) {
+                Log::warning('Auto-delete failed', ['uid' => $messageModel->imap_uid, 'error' => $e->getMessage()]);
+            }
+        }
 
         // TODO: Dispatch ProcessInboundRules job.
     }

@@ -1,185 +1,133 @@
-# Knowledge – Edit View (tech.knowledge.edit)
+@extends('layouts.default_tech')
 
-**Date:** 2025-10-16
-**URL:** `tech.knowledge.edit` → `/tech/knowledge/{id}/edit`
-**Access level (view):** `knowledge.edit`
-**Action permissions:**
+@section('title', 'Edit: ' . $article->title)
 
-* Save changes: `knowledge.edit`
-* Revert to draft: `knowledge.edit`
-* Publish: `knowledge.edit`
-* Archive: `knowledge.delete`
-* Delete: `knowledge.delete`
-  **Controller:** `App\\Http\\Controllers\\Tech\\Knowledge\\EditController`
-  **Status:** Not completed
-  **Difficulty:** Medium
-  **Estimated time:** 4.5 hours
+@section('pageHeader')
+    <div class="d-flex justify-content-between align-items-center py-3">
+        <h1 class="h4 mb-0">Edit: {{ $article->title }}</h1>
+        <a href="{{ route('tech.knowledge.show', $article->id) }}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+    </div>
+@endsection
 
-**Layout (Bootstrap):**
-Top header / Main editor / Right slim rail (meta + actions)
+@section('content')
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ route('tech.knowledge.update', $article->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
 
----
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control @error('title') is-invalid @enderror" id="title" name="title" value="{{ old('title', $article->title) }}" required>
+                            @error('title')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-## Purpose
+                        <div class="mb-3">
+                            <label for="body_markdown" class="form-label">Content (Markdown)</label>
+                            <textarea class="form-control @error('body_markdown') is-invalid @enderror" id="body_markdown" name="body_markdown" rows="15" required>{{ old('body_markdown', $article->body_markdown) }}</textarea>
+                            @error('body_markdown')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-Allow technicians and editors to update existing Knowledge articles safely while maintaining full versioning, validation, and audit tracking. The editor uses the same Markdown+ component as the create view, with added revision controls and publishing workflow options.
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category_id" class="form-label">Category</label>
+                                <select class="form-select @error('category_id') is-invalid @enderror" id="category_id" name="category_id">
+                                    <option value="">Select Category</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}" {{ old('category_id', $article->category_id) == $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('category_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
----
+                            <div class="col-md-6 mb-3">
+                                <label for="visibility" class="form-label">Visibility</label>
+                                <select class="form-select @error('visibility') is-invalid @enderror" id="visibility" name="visibility" required>
+                                    <option value="internal" {{ old('visibility', $article->visibility) == 'internal' ? 'selected' : '' }}>Internal</option>
+                                    <option value="client-wide" {{ old('visibility', $article->visibility) == 'client-wide' ? 'selected' : '' }}>Client-wide</option>
+                                    <option value="public" {{ old('visibility', $article->visibility) == 'public' ? 'selected' : '' }}>Public</option>
+                                </select>
+                                @error('visibility')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
 
-## Livewire components (mark as Livewire)
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
+                                    <option value="draft" {{ old('status', $article->status) == 'draft' ? 'selected' : '' }}>Draft</option>
+                                    <option value="published" {{ old('status', $article->status) == 'published' ? 'selected' : '' }}>Published</option>
+                                    <option value="archived" {{ old('status', $article->status) == 'archived' ? 'selected' : '' }}>Archived</option>
+                                    <option value="needs_review" {{ old('status', $article->status) == 'needs_review' ? 'selected' : '' }}>Needs Review</option>
+                                </select>
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-* **EditorCanvas** – same component as in create view, pre‑populated with current Markdown.
-* **MetaPanel** – shows current metadata (category, tags, visibility, owner, review info). Editable with inline validation.
-* **RevisionHistory** – new component: lists previous versions, with “View Diff” and “Restore” actions.
-* **AttachmentTray** – identical to create view.
-* **ActionBar** – contextual actions (Save, Publish, Archive, Restore version, etc.).
+                            <div class="col-md-6 mb-3">
+                                <label for="client_scope_id" class="form-label">Client Scope (if applicable)</label>
+                                <select class="form-select @error('client_scope_id') is-invalid @enderror" id="client_scope_id" name="client_scope_id">
+                                    <option value="">No Client Scope</option>
+                                    @foreach($clients as $client)
+                                        <option value="{{ $client->id }}" {{ old('client_scope_id', $article->client_scope_id) == $client->id ? 'selected' : '' }}>
+                                            {{ $client->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('client_scope_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
 
----
+                        <div class="mb-3">
+                            <label for="next_review_at" class="form-label">Next Review Date</label>
+                            <input type="date" class="form-control @error('next_review_at') is-invalid @enderror" id="next_review_at" name="next_review_at" value="{{ old('next_review_at', $article->next_review_at ? $article->next_review_at->format('Y-m-d') : '') }}">
+                            @error('next_review_at')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-## Fields & Model binding
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">Update Article</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-All fields from the create view apply. On load, populated from the selected article:
-
-* Title
-* Body_markdown
-* Category (multi‑select)
-* Tags (typeahead)
-* Visibility (Internal/Client/Public)
-* Client scope (if applicable)
-* Owner (editable if permitted)
-* Status (Draft/Published/Archived/Needs Review)
-* Review interval + next_review_at
-
-Additionally:
-
-* Version number & last updated by
-* Audit reference link (to audit log)
-
----
-
-## Versioning & Revision controls (RevisionHistory)
-
-* Show chronological list of versions with timestamp, editor, and change note.
-* Actions:
-
-  * **View Diff** → opens side‑by‑side Markdown diff.
-  * **Restore** → creates a new draft version based on the selected version.
-* Each save automatically increments version number and stores previous state.
-
----
-
-## Header (Top)
-
-* Breadcrumb: Knowledge → [Title]
-* Title (editable inline)
-* Actions: Save, Publish, Revert to Draft, Archive, Delete (dropdown)
-* Status badge (Draft, Published, Archived, Needs Review)
-
----
-
-## Main (EditorCanvas)
-
-* Same Markdown editor and toolbar as create view.
-* Pre‑loads article Markdown; autosaves on interval.
-* Conflict check: warns if another user saved a newer version (with option to merge or reload).
-
----
-
-## Right slim rail (MetaPanel)
-
-**Tabs:** Meta | Revisions | Preview | Activity
-
-**Meta**
-
-* Category, Tags, Visibility, Client scope, Owner, Review interval, Status.
-
-**Revisions**
-
-* Lists past versions with diff/restore actions.
-
-**Preview**
-
-* Rendered HTML snapshot.
-
-**Activity**
-
-* Recent audit entries for this article (edit, publish, archive, restore).
-
----
-
-## Actions (ActionBar)
-
-* **Save changes** – Updates current version and retains status.
-* **Publish** – Sets status Published; runs validation.
-* **Revert to Draft** – Clones current version as Draft.
-* **Archive** – Moves article to Archived state.
-* **Delete** – Soft delete; confirm required.
-* **Restore version** – Creates new draft from selected revision.
-
-All actions trigger audit events and Livewire notifications.
-
----
-
-## Validation rules (on Save/Publish)
-
-* Title and Body required.
-* At least one Category.
-* Visibility valid; if Client-wide → Client scope required.
-* Owner required.
-* Attachments resolved.
-
----
-
-## Keyboard shortcuts
-
-* `Ctrl/Cmd + S` → Save changes
-* `Ctrl/Cmd + Enter` → Publish
-* `Ctrl/Cmd + Z` → Undo last edit (local)
-* `Ctrl/Cmd + Shift + Z` → Redo
-* `/` → Slash menu in Markdown
-
----
-
-## Icons (no colors)
-
-Lucide: `file-text`, `save`, `edit-3`, `archive`, `trash-2`, `git-branch`, `history`, `diff`, `rotate-ccw`, `check`, `alert-circle`.
-
----
-
-## Notifications & UX feedback
-
-* Toasts: Saved, Published, Archived, Deleted, Version Restored.
-* Autosave state indicator.
-* Diff viewer in modal (two‑column Markdown → HTML render comparison).
-* Disabled publish button if validations fail.
-
----
-
-## Error & edge cases
-
-* Editing Archived article: opens read‑only with option “Revert to Draft”.
-* Concurrent editing: lock + prompt to reload.
-* Lost connection: queue autosave locally.
-* Unauthorized: disable fields and show permission banner.
-
----
-
-## Audit & Logging
-
-* `knowledge.updated` (fields changed)
-* `knowledge.published` (id, status)
-* `knowledge.reverted_to_draft`
-* `knowledge.archived`
-* `knowledge.deleted`
-* `knowledge.version.restored`
-
----
-
-## QA Acceptance
-
-* Editor preloads data correctly.
-* Saving preserves Markdown fidelity.
-* Version history appears and allows diff/restore.
-* Publish transitions status and triggers audit.
-* Archive and Delete update state accordingly.
-* Validation and permission enforcement match create view.
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Markdown Tips</h5>
+                </div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li># Heading 1</li>
+                        <li>## Heading 2</li>
+                        <li>**Bold Text**</li>
+                        <li>*Italic Text*</li>
+                        <li>[Link Text](URL)</li>
+                        <li>- Bullet Point</li>
+                        <li>1. Numbered List</li>
+                        <li>`Inline Code`</li>
+                        <li>```Code Block```</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection

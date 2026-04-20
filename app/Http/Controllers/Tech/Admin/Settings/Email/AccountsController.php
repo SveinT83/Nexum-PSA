@@ -65,6 +65,7 @@ class AccountsController extends Controller
             'is_active' => 'sometimes|boolean',
             'is_global_default' => 'sometimes|boolean',
             'defaults_for' => 'nullable|array',
+            'delete_policy' => 'required|in:local_only,sync_delete,auto_delete',
             // IMAP
             'imap_host' => 'required|string',
             'imap_port' => 'required|integer',

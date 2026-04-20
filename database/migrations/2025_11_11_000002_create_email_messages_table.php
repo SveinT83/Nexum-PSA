@@ -37,7 +37,7 @@ return new class extends Migration {
 
             $table->unsignedBigInteger('ticket_id')->nullable()->index();
             $table->timestamps();
-
+            $table->softDeletes();
             $table->unique(['account_id','mailbox','imap_uid'], 'uniq_account_mailbox_uid');
             $table->fullText(['subject', 'body_text'], 'ft_subject_body');
         });

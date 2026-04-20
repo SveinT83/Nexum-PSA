@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->boolean('is_active')->default(true)->index();
             $table->boolean('is_global_default')->default(false)->index();
             $table->json('defaults_for')->nullable(); // ["tickets","sales","alerts"]
+            $table->string('delete_policy')->default('local_only');
 
             // IMAP
             $table->string('imap_host');

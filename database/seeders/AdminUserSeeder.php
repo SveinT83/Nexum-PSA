@@ -27,7 +27,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'email' => 'admin@tdpsa.com',
-                'password' => Hash::make('JEStayeqU8h'),
+                'password' => 'JEStayeqU8h',
                 'email_verified_at' => now(),
             ]
         );

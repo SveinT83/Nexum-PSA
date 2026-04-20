@@ -38,6 +38,7 @@ class Services extends Model
         'timebank_interval',
         'short_description',
         'long_description',
+        'category_id',
         'created_by_user_id',
         'updated_by_user_id',
         'published_at',
@@ -79,5 +80,10 @@ class Services extends Model
     public function unit()
     {
         return $this->belongsTo(Units::class, 'unitId');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(\App\Models\System\Category::class, 'category_id');
     }
 }

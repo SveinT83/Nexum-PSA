@@ -8,6 +8,7 @@ use App\Domain\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Domain\Email\Jobs\EmailRetentionPurgeJob;
 use App\Domain\Email\Models\EmailAccount;
 use App\Domain\Email\Jobs\FetchImapAccount;
+use App\Jobs\Integrations\NAbleRmmSyncJob;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -35,6 +36,12 @@ Schedule::call(function () {
 Schedule::job(new EmailRetentionPurgeJob(24))
         ->monthlyOn(1, '03:00')
         ->name('email.retention.purge');
+
+// N-able RMM Sync every hour
+Schedule::job(new NAbleRmmSyncJob())
+    ->hourly()
+    ->name('integrations.nable_rmm.sync')
+    ->withoutOverlapping();
 
 // Manual polling via CLI: php artisan email:poll [--account=ID] [--async]
 Artisan::command('email:poll {--account=} {--async}', function () {

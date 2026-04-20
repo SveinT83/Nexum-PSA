@@ -4,75 +4,14 @@
     </li>
 
     @php
-        $contractsAdminGroupActive = request()->routeIs('tech.admin*');
+        $adminGroupActive = request()->routeIs('tech.admin*');
     @endphp
 
     <!-- -------------------------------------------------------------------------------------------------- -->
     <!-- Admin dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle {{ $contractsAdminGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Admin</a>
-        <ul class="dropdown-menu">
-
-            <!-- ------------------------------------------------- -->
-            <!-- Contracts & Services Settings -->
-            <!-- ------------------------------------------------- -->
-            <li><a class="nav-link disabled" aria-disabled="true">Contracts & Services</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.cs.contracts') }}">Contracts</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.cs.services') }}">Services</a></li>
-            <li><hr class="dropdown-divider"></li>
-
-            <!-- ------------------------------------------------- -->
-            <!-- Economy Settings -->
-            <!-- ------------------------------------------------- -->
-            <li><a class="nav-link disabled" aria-disabled="true">Economy Settings</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.economy') }}">Economy</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <!-- ------------------------------------------------- -->
-
-            <!-- ------------------------------------------------- -->
-            <!-- Email Settings -->
-            <!-- ------------------------------------------------- -->
-            <li><a class="nav-link disabled" aria-disabled="true">Email Settings</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.accounts') }}">Accounts</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.config') }}">Config</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.rules') }}">Rules</a></li>
-            <li><hr class="dropdown-divider"></li>
-
-            <!-- ------------------------------------------------- -->
-            <!-- Sales Settings -->
-            <!-- ------------------------------------------------- -->
-            <li><a class="nav-link disabled" aria-disabled="true">Sales Settings</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.sales.rules') }}">Rules</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.sales.workflows') }}">Workflows</a></li>
-
-            <li><hr class="dropdown-divider"></li>
-
-            <!-- ------------------------------------------------- -->
-            <!-- Ticket Settings -->
-            <!-- ------------------------------------------------- -->
-            <li><a class="nav-link disabled" aria-disabled="true">Ticket Settings</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.tickets') }}">Tickets</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.tickets.rules') }}">Rules</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.settings.tickets.workflows') }}">Workflows</a></li>
-
-            <li><hr class="dropdown-divider"></li>
-
-
-            <!-- ------------------------------------------------- -->
-            <!-- Templates -->
-            <!-- ------------------------------------------------- -->
-            <li><a class="nav-link disabled" aria-disabled="true">Templates</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.templates.index') }}">Templates</a></li>
-
-            <li><hr class="dropdown-divider"></li>
-
-            <!-- ------------------------------------------------- -->
-            <!-- Users -->
-            <!-- ------------------------------------------------- -->
-            <li><a class="nav-link disabled" aria-disabled="true">Users</a></li>
-            <li><a class="dropdown-item" href="{{ route('tech.admin.users.index') }}">Users</a></li>
-        </ul>
+    <li class="nav-item">
+        <a class="nav-link {{ $adminGroupActive ? 'active' : '' }}" href="{{ route('tech.admin.index') }}" role="button" aria-current="page">Admin</a>
     </li>
 
 
@@ -87,7 +26,7 @@
     <!-- Work dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $workGroupActive = request()->routeIs('tech.risk*' || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*'));
+        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -98,28 +37,28 @@
             <!-- Risk -->
             <!-- ------------------------------------------------- -->
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('tech.risk.index') ? 'active' : '' }}" href="{{ route('tech.risk.index', 'all') }}">Risk</a>
+                <a class="dropdown-item {{ request()->routeIs('tech.risk.index') ? 'active' : '' }}" href="{{ route('tech.risk.index', 'all') }}">Risk</a>
             </li>
 
             <!-- ------------------------------------------------- -->
             <!-- Inbox -->
             <!-- ------------------------------------------------- -->
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('tech.inbox.index') ? 'active' : '' }}" href="{{ route('tech.inbox.index') }}">Inbox</a>
+                <a class="dropdown-item {{ request()->routeIs('tech.inbox.index') ? 'active' : '' }}" href="{{ route('tech.inbox.index') }}">Inbox</a>
             </li>
 
             <!-- ------------------------------------------------- -->
             <!-- Tasks -->
             <!-- ------------------------------------------------- -->
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('tech.tasks.index') ? 'active' : '' }}" href="{{ route('tech.tasks.index') }}">Tasks</a>
+                <a class="dropdown-item {{ request()->routeIs('tech.tasks.index') ? 'active' : '' }}" href="{{ route('tech.tasks.index') }}">Tasks</a>
             </li>
 
             <!-- ------------------------------------------------- -->
             <!-- Tickets -->
             <!-- ------------------------------------------------- -->
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('tech.tickets.index') ? 'active' : '' }}" href="{{ route('tech.tickets.index') }}">Tickets</a>
+                <a class="dropdown-item {{ request()->routeIs('tech.tickets.index') ? 'active' : '' }}" href="{{ route('tech.tickets.index') }}">Tickets</a>
             </li>
 
         </ul>
@@ -129,7 +68,7 @@
     <!-- Knowledge dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $knowledgeGroupActive = request()->routeIs('tech.risk*' || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*'));
+        $knowledgeGroupActive = request()->routeIs('tech.documentations.index') || request()->routeIs('tech.knowledge*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -140,14 +79,14 @@
             <!-- Documentations -->
             <!-- ------------------------------------------------- -->
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('tech.documentations.index') ? 'active' : '' }}" href="{{ route('tech.documentations.index', 'all') }}">Documentations</a>
+                <a class="dropdown-item {{ request()->routeIs('tech.documentations.index') ? 'active' : '' }}" href="{{ route('tech.documentations.index', 'all') }}">Documentations</a>
             </li>
 
             <!-- ------------------------------------------------- -->
             <!-- Knowledge Base -->
             <!-- ------------------------------------------------- -->
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('tech.knowledge.index') ? 'active' : '' }}" href="{{ route('tech.knowledge.index') }}">Knowledge Base</a>
+                <a class="dropdown-item {{ request()->routeIs('tech.knowledge.index') ? 'active' : '' }}" href="{{ route('tech.knowledge.index') }}">Knowledge Base</a>
             </li>
 
         </ul>

@@ -2,9 +2,9 @@
 
 namespace App\Service\SideBarMenus;
 
-use App\Models\Doc\Category;
+use App\Models\System\Category;
 
-    /**
+/**
      * This class generates the sidebar menu for documentation.
      * It is "smart" in that it only displays categories that actually have documentation templates associated with them.
      */

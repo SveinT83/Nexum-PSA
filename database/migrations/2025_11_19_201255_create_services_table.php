@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-
+            $table->unsignedBigInteger('category_id')->nullable();
             // sku (string unique)
             $table->string('sku')->unique();
 
@@ -98,6 +98,8 @@ return new class extends Migration
 
             //Timestamp
             $table->timestamps();
+
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('set null');
         });
     }
 

@@ -18,7 +18,11 @@ class FetchImapAccount implements ShouldQueue
 
     public int $timeout = 120; // seconds
 
-    public function __construct(public int $accountId, public int $batchSize = 20) {}
+    public function __construct(
+        public int $accountId,
+        public int $batchSize = 20,
+        public bool $syncStore = false
+    ) {}
 
     public function handle(): void
     {
@@ -43,12 +47,23 @@ class FetchImapAccount implements ShouldQueue
                 continue;
             }
 
-            $oversize = isset($payload['size_bytes']) && $payload['size_bytes'] > 25 * 1024 * 1024; // 25MB
+            $settings = \App\Models\Settings\CommonSetting::where('type', 'emailhub')
+                ->get()->pluck('value', 'name')->toArray();
 
-            StoreInboundMessage::dispatch(array_merge($payload, [
-                'account_id' => $account->id,
-                'is_oversize' => $oversize,
-            ]));
+            $limitMb = (int)($settings['size_limit_mb'] ?? 25);
+            $oversize = isset($payload['size_bytes']) && $payload['size_bytes'] > $limitMb * 1024 * 1024;
+
+            if ($this->syncStore) {
+                StoreInboundMessage::dispatchSync(array_merge($payload, [
+                    'account_id' => $account->id,
+                    'is_oversize' => $oversize,
+                ]));
+            } else {
+                StoreInboundMessage::dispatch(array_merge($payload, [
+                    'account_id' => $account->id,
+                    'is_oversize' => $oversize,
+                ]));
+            }
         }
     }
 }

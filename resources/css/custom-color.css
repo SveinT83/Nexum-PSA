@@ -74,6 +74,10 @@ a.row {
 /* ---------------- Navigation --------------- */
 /* ------------------------------------------- */
 
+.nav-item {
+    color: black !important;
+}
+
 .nav-link {
     color: white;
 }
