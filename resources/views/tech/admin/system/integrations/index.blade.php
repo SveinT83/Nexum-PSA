@@ -58,6 +58,24 @@
                 </div>
             </div>
 
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">System API</h5>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Manage API keys and access system documentation.</p>
+                        <a href="{{ route('tech.admin.system.integrations.api.index') }}" class="btn btn-primary">
+                            <i class="bi bi-shield-lock"></i> API Management
+                        </a>
+                        <a href="{{ route('tech.admin.system.integrations.api.docs') }}" class="btn btn-outline-primary ms-2" target="_blank">
+                            <i class="bi bi-file-earmark-code"></i> Docs
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             {{--
                 Future Integrations Placeholder
                 Additional integration cards can be added here following the same pattern.

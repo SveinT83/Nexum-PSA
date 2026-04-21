@@ -59,12 +59,16 @@
                             <div class="container">
 
                                 @if(session('status'))
-                                    <div class="alert alert-success">{{ session('status') }}</div>
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        {{ session('status') }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
                                 @endif
 
                                 @if(session('success'))
-                                    <div class="row">
-                                        <div class="alert alert-success">{{ session('success') }}</div>
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        {!! session('success') !!}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                     </div>
                                 @endif
 
@@ -75,7 +79,7 @@
                     </div>
 
                     <!-- Right sidebar (right) -->
-                    <div class="col-md-2 sidebar">
+                    <div class="col-md-2 mt-3 sidebar">
                         @yield('rightbar')
                     </div>
                 </div>

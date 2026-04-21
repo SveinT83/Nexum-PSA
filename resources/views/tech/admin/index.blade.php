@@ -92,11 +92,12 @@
         </div>
 
         <!-- ------------------------------------------------- -->
-        <!-- Intregations -->
+        <!-- Integrations -->
         <!-- ------------------------------------------------- -->
         <div class="col-md-4">
             <x-card.default title="Integrations">
-                <li><a class="dropdown-item" href="{{ route('tech.admin.system.integrations.index') }}">All Intregrations</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.system.integrations.index') }}">All Integrations</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.system.integrations.api.index') }}">API Management</a></li>
             </x-card.default>
         </div>
 

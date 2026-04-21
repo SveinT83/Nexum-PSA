@@ -2,12 +2,19 @@
 
 namespace App\Models\Clients;
 
+use App\Models\Tech\Work\Assets\Asset;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
 {
     use HasFactory;
+
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
 
     protected $fillable = [
         'name',

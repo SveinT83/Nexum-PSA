@@ -26,7 +26,7 @@
     <!-- Work dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*');
+        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.assets*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -59,6 +59,13 @@
             <!-- ------------------------------------------------- -->
             <li class="nav-item">
                 <a class="dropdown-item {{ request()->routeIs('tech.tickets.index') ? 'active' : '' }}" href="{{ route('tech.tickets.index') }}">Tickets</a>
+            </li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Assets -->
+            <!-- ------------------------------------------------- -->
+            <li class="nav-item">
+                <a class="dropdown-item {{ request()->routeIs('tech.assets.index') ? 'active' : '' }}" href="{{ route('tech.assets.index') }}">Assets</a>
             </li>
 
         </ul>

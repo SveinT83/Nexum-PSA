@@ -1,6 +1,17 @@
 <?php
 
-use App\Models\Clients\ClientUser;
+use App\Http\Controllers\Tech\Clients\ClientController;
+use App\Http\Controllers\Tech\Clients\ClientSiteController;
+use App\Http\Controllers\Tech\Clients\ClientUsersController;
+use App\Http\Controllers\Tech\CS\Contracts\ContractController;
+use App\Http\Controllers\Tech\CS\Costs\CostController;
+use App\Http\Controllers\Tech\CS\Legal\LegalController;
+use App\Http\Controllers\Tech\CS\Package\PackageController;
+use App\Http\Controllers\Tech\CS\Services\ServiceController;
+use App\Http\Controllers\Tech\CS\Sla\SlaController;
+use App\Http\Controllers\Tech\Doc\DocController;
+use App\Http\Controllers\Tech\Risk\RiskController;
+use App\Http\Controllers\Tech\Work\Assets\AssetController;
 use Illuminate\Support\Facades\Route;
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -8,19 +19,6 @@ use Illuminate\Support\Facades\Route;
 //
 // Routes fore tech url's - Middleware: auth, tech
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
-
-use App\Http\Controllers\Tech\CS\Package\PackageController;
-use App\Http\Controllers\Tech\CS\Services\ServiceController;
-use App\Http\Controllers\Tech\CS\Contracts\ContractController;
-use App\Http\Controllers\Tech\CS\Contracts\PublicContractController;
-use App\Http\Controllers\Tech\CS\Costs\CostController;
-use App\Http\Controllers\Tech\CS\Sla\SlaController;
-use App\Http\Controllers\Tech\CS\Legal\LegalController;
-use App\Http\Controllers\Tech\Clients\ClientSiteController;
-use App\Http\Controllers\Tech\Clients\ClientUsersController;
-use App\Http\Controllers\Tech\Clients\ClientController;
-use App\Http\Controllers\Tech\Doc\DocController;
-use App\Http\Controllers\Tech\Risk\RiskController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
@@ -478,6 +476,33 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::get('/tasks', function () {
         return view('tech.tasks.index');
     })->name('tasks.index');
+
+    // -----------------------------------------
+    // Assets
+    // -----------------------------------------
+    Route::get('/assets/docs', [AssetController::class, 'docs'])
+        ->name('assets.docs');
+
+    Route::get('/assets', [AssetController::class, 'index'])
+        ->name('assets.index');
+
+    Route::get('/assets/create', [AssetController::class, 'create'])
+        ->name('assets.create');
+
+    Route::post('/assets/store', [AssetController::class, 'store'])
+        ->name('assets.store');
+
+    Route::get('/assets/{asset}', [AssetController::class, 'show'])
+        ->name('assets.show');
+
+    Route::get('/assets/edit/{asset}', [AssetController::class, 'edit'])
+        ->name('assets.edit');
+
+    Route::put('/assets/update/{asset}', [AssetController::class, 'update'])
+        ->name('assets.update');
+
+    Route::get('/clients/{client}/assets', [AssetController::class, 'index'])
+        ->name('clients.assets.index');
 
     // -----------------------------------------
     // Tickets

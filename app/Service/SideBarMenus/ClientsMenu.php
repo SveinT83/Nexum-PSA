@@ -20,6 +20,7 @@ class ClientsMenu
         $sidebarMenuItems[] = ['name' => 'Clients', 'route' => 'tech.clients.index'];
         $sidebarMenuItems[] = ['name' => 'Sites', 'route' => 'tech.clients.sites.index'];
         $sidebarMenuItems[] = ['name' => 'Users', 'route' => 'tech.clients.users.index'];
+        $sidebarMenuItems[] = ['name' => 'Assets', 'route' => 'tech.assets.index'];
 
         // --- Documentation Section ---
         // This section mirrors the documentation sidebar but within the client context.

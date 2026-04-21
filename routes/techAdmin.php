@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Tech\Admin\Settings\Economy\EconomyController;
 use App\Http\Controllers\Tech\Admin\Settings\Economy\UnitsController;
 use App\Http\Controllers\Tech\Admin\System\integrations\IntegrationsController;
+use App\Http\Controllers\Tech\Admin\System\integrations\ApiController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech-Admin/Superuser routes
@@ -185,5 +186,20 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
 
         Route::post('/admin/system/integrations/nable-rmm/sync-sites-to', [IntegrationsController::class, 'nableRmmSyncSitesTo'])
             ->name('admin.system.integrations.nable_rmm.sync_sites_to');
+
+        // -----------------------------------------
+        // API Management
+        // -----------------------------------------
+        Route::get('/admin/system/integrations/api', [ApiController::class, 'index'])
+            ->name('admin.system.integrations.api.index');
+
+        Route::post('/admin/system/integrations/api/store', [ApiController::class, 'store'])
+            ->name('admin.system.integrations.api.store');
+
+        Route::delete('/admin/system/integrations/api/{apiKey}', [ApiController::class, 'destroy'])
+            ->name('admin.system.integrations.api.destroy');
+
+        Route::get('/admin/system/integrations/api/docs', [ApiController::class, 'documentation'])
+            ->name('admin.system.integrations.api.docs');
 
     });
