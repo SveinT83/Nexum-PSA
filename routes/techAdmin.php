@@ -191,6 +191,24 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
             ->name('admin.system.integrations.nable_rmm.sync_sites_to');
 
         // -----------------------------------------
+        // TacticalRMM Integration Settings
+        // -----------------------------------------
+        Route::get('/admin/system/integrations/tacticalrmm', [IntegrationsController::class, 'tacticalRmmSettings'])
+            ->name('admin.system.integrations.tacticalrmm.settings');
+
+        Route::post('/admin/system/integrations/tacticalrmm', [IntegrationsController::class, 'tacticalRmmUpdate'])
+            ->name('admin.system.integrations.tacticalrmm.update');
+
+        Route::post('/admin/system/integrations/tacticalrmm/settings', [IntegrationsController::class, 'tacticalRmmUpdateSettings'])
+            ->name('admin.system.integrations.tacticalrmm.update_settings');
+
+        Route::post('/admin/system/integrations/tacticalrmm/sync', [IntegrationsController::class, 'tacticalRmmSync'])
+            ->name('admin.system.integrations.tacticalrmm.sync');
+
+        Route::post('/admin/system/integrations/tacticalrmm/test', [IntegrationsController::class, 'tacticalRmmTest'])
+            ->name('admin.system.integrations.tacticalrmm.test');
+
+        // -----------------------------------------
         // API Management
         // -----------------------------------------
         Route::get('/admin/system/integrations/api', [ApiController::class, 'index'])

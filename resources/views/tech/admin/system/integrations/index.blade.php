@@ -77,6 +77,50 @@
             </div>
 
             {{--
+                TacticalRMM Integration Card
+                Sync clients, sites, and agents from TacticalRMM
+            --}}
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">TacticalRMM</h5>
+                        @php
+                            $tactical = $integrations->get('tacticalrmm');
+                            $tacticalActive = $tactical && $tactical->status === 'active';
+                        @endphp
+
+                        <form action="{{ route('tech.admin.system.integrations.toggle') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="type" value="tacticalrmm">
+                            <input type="hidden" name="name" value="TacticalRMM">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="toggleTactical" onchange="this.form.submit()"
+                                       {{ $tacticalActive ? 'checked' : '' }}>
+                                <label class="form-check-label" for="toggleTactical">
+                                    {{ $tacticalActive ? 'Enabled' : 'Disabled' }}
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Integrate with TacticalRMM to sync clients, sites, and agents.</p>
+
+                        @if($tacticalActive)
+                            <a href="{{ route('tech.admin.system.integrations.tacticalrmm.settings') }}" class="btn btn-primary">
+                                <i class="bi bi-gear"></i> Settings
+                            </a>
+                        @else
+                            <button class="btn btn-secondary" disabled>
+                                <i class="bi bi-gear"></i> Settings
+                            </button>
+                            <p class="text-muted small mt-2">Enable the integration to configure settings and API key.</p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{--
                 Future Integrations Placeholder
                 Additional integration cards can be added here following the same pattern.
             --}}
