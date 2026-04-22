@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tech\Admin\System\integrations;
 use App\Http\Controllers\Controller;
 use App\Models\System\Integrations\Integration;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
+use App\Services\Integrations\TacticalRmm\TacticalRmmClient;
 use Illuminate\Http\Request;
 
 class IntegrationsController extends Controller
@@ -26,12 +27,16 @@ class IntegrationsController extends Controller
 
         if ($integration) {
             $integration->status = $integration->status === 'active' ? 'disabled' : 'active';
+            if ($integration->status === 'active' && $integration->is_healthy === null) {
+                $integration->is_healthy = false;
+            }
             $integration->save();
         } else {
             Integration::create([
                 'name' => $request->name,
                 'type' => $request->type,
                 'status' => 'active',
+                'is_healthy' => false,
             ]);
         }
 
@@ -126,5 +131,70 @@ class IntegrationsController extends Controller
     public function nableRmmSyncSitesTo()
     {
         return back()->with('info', 'Use the interactive sync tool instead.');
+    }
+
+    public function tacticalRmmSettings()
+    {
+        $integration = Integration::where('type', 'tactical_rmm')->first();
+        return view('tech.admin.system.integrations.tactical.settings', compact('integration'));
+    }
+
+    public function tacticalRmmUpdate(Request $request)
+    {
+        $request->validate([
+            'server' => 'required|url',
+            'api_key' => 'nullable|string',
+        ]);
+
+        $integration = Integration::firstOrCreate(
+            ['type' => 'tactical_rmm'],
+            ['name' => 'Tactical RMM', 'status' => 'disabled']
+        );
+
+        $integration->server = $request->input('server');
+
+        $apiKey = $request->input('api_key') ?: $integration->getSecret('api_key');
+
+        if ($request->has('api_key') && !empty($request->api_key)) {
+            $integration->setSecret('api_key', $request->api_key);
+        }
+
+        // Test connection
+        if ($apiKey && $integration->server) {
+            $client = new TacticalRmmClient($integration->server, $apiKey);
+            $test = $client->testConnection();
+
+            $integration->is_healthy = $test['success'];
+            $integration->last_error = $test['success'] ? null : $test['message'];
+        }
+
+        $integration->save();
+
+        if ($integration->is_healthy) {
+            return back()->with('success', 'Tactical RMM API configuration updated and connection verified.');
+        } else {
+            return back()->with('warning', 'Tactical RMM API configuration saved, but connection test failed: ' . $integration->last_error);
+        }
+    }
+
+    public function tacticalRmmUpdateSettings(Request $request)
+    {
+        $request->validate([
+            'client_sync_from' => 'boolean',
+            'site_sync_from' => 'boolean',
+            'asset_sync_from' => 'boolean',
+        ]);
+
+        $integration = Integration::where('type', 'tactical_rmm')->firstOrFail();
+
+        $config = $integration->config ?? [];
+        $config['client_sync_from'] = $request->boolean('client_sync_from');
+        $config['site_sync_from'] = $request->boolean('site_sync_from');
+        $config['asset_sync_from'] = $request->boolean('asset_sync_from');
+        $integration->config = $config;
+
+        $integration->save();
+
+        return back()->with('success', 'Tactical RMM automation settings updated.');
     }
 }

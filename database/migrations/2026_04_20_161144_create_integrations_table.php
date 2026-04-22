@@ -21,7 +21,7 @@ return new class extends Migration
             $table->json('secrets')->nullable();
             $table->timestamp('last_sync_at')->nullable();
             $table->text('last_error')->nullable();
-            $table->boolean('is_healthy')->default(true);
+            $table->boolean('is_healthy')->default(false);
             $table->timestamps();
         });
     }

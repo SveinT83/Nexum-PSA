@@ -14,8 +14,8 @@
                 This card allows administrators to enable/disable the N-able RMM integration
                 and provides access to its specific settings if activated.
             --}}
-            <div class="col-md-4">
-                <div class="card">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">N-able RMM</h5>
                         @php
@@ -39,39 +39,85 @@
                             </div>
                         </form>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
                         <p class="card-text">Integrate with N-able RMM to sync clients, sites, and assets.</p>
 
-                        @if($isActive)
-                            {{-- Settings are only accessible when the integration is enabled --}}
-                            <a href="{{ route('tech.admin.system.integrations.nable_rmm.settings') }}" class="btn btn-primary">
-                                <i class="bi bi-gear"></i> Settings
-                            </a>
-                        @else
-                            {{-- Disabled settings button with a helpful hint --}}
-                            <button class="btn btn-secondary" disabled>
-                                <i class="bi bi-gear"></i> Settings
-                            </button>
-                            <p class="text-muted small mt-2">Enable the integration to configure settings and API key.</p>
-                        @endif
+                        <div class="mt-auto">
+                            @if($isActive)
+                                {{-- Settings are only accessible when the integration is enabled --}}
+                                <a href="{{ route('tech.admin.system.integrations.nable_rmm.settings') }}" class="btn btn-primary">
+                                    <i class="bi bi-gear"></i> Settings
+                                </a>
+                            @else
+                                {{-- Disabled settings button with a helpful hint --}}
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="bi bi-gear"></i> Settings
+                                </button>
+                                <p class="text-muted small mt-2 mb-0">Enable the integration to configure settings and API key.</p>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="card">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Tactical RMM</h5>
+                        @php
+                            $tactical = $integrations->get('tactical_rmm');
+                            $isTacticalActive = $tactical && $tactical->status === 'active';
+                        @endphp
+
+                        <form action="{{ route('tech.admin.system.integrations.toggle') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="type" value="tactical_rmm">
+                            <input type="hidden" name="name" value="Tactical RMM">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="toggleTactical" onchange="this.form.submit()"
+                                       {{ $isTacticalActive ? 'checked' : '' }}>
+                                <label class="form-check-label" for="toggleTactical">
+                                    {{ $isTacticalActive ? 'Enabled' : 'Disabled' }}
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <p class="card-text">Integrate with Tactical RMM to sync clients, sites, and assets.</p>
+
+                        <div class="mt-auto">
+                            @if($isTacticalActive)
+                                <a href="{{ route('tech.admin.system.integrations.tactical_rmm.settings') }}" class="btn btn-primary">
+                                    <i class="bi bi-gear"></i> Settings
+                                </a>
+                            @else
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="bi bi-gear"></i> Settings
+                                </button>
+                                <p class="text-muted small mt-2 mb-0">Enable the integration to configure settings and API key.</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">System API</h5>
                         <span class="badge bg-success">Active</span>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
                         <p class="card-text">Manage API keys and access system documentation.</p>
-                        <a href="{{ route('tech.admin.system.integrations.api.index') }}" class="btn btn-primary">
-                            <i class="bi bi-shield-lock"></i> API Management
-                        </a>
-                        <a href="{{ route('tech.admin.system.integrations.api.docs') }}" class="btn btn-outline-primary ms-2" target="_blank">
-                            <i class="bi bi-file-earmark-code"></i> Docs
-                        </a>
+                        <div class="mt-auto">
+                            <a href="{{ route('tech.admin.system.integrations.api.index') }}" class="btn btn-primary">
+                                <i class="bi bi-shield-lock"></i> API Management
+                            </a>
+                            <a href="{{ route('tech.admin.system.integrations.api.docs') }}" class="btn btn-outline-primary ms-2" target="_blank">
+                                <i class="bi bi-file-earmark-code"></i> Docs
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

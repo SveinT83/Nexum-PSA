@@ -260,12 +260,15 @@
                                     {{ $integration ? ucfirst($integration->status) : 'Not Initialized' }}
                                 </span>
                 </li>
-                {{-- Connection health based on the last successful API handshake --}}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Connection Health
-                    <span class="badge bg-{{ ($integration && $integration->is_healthy) ? 'success' : 'danger' }}">
-                                    {{ ($integration && $integration->is_healthy) ? 'Healthy' : 'Error' }}
-                                </span>
+                    @if(!$integration || $integration->is_healthy === null || (!$integration->is_healthy && !$integration->last_error))
+                        <span class="badge bg-warning">Pending</span>
+                    @elseif($integration->is_healthy)
+                        <span class="badge bg-success">Healthy</span>
+                    @else
+                        <span class="badge bg-danger">Error</span>
+                    @endif
                 </li>
                 {{-- Relative time since the last synchronization task completed --}}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
