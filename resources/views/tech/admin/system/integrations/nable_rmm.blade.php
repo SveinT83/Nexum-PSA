@@ -14,14 +14,6 @@
 
 @section('content')
     <div class="container-fluid">
-
-        {{--
-            Livewire Synchronization Component
-            This component manages the batch processing and progress UI for
-            manual client and site synchronization tasks.
-        --}}
-        <livewire:tech.admin.system.integrations.n-able-rmm-sync />
-
         <div class="row">
             <div class="col-md-12">
                 {{-- API Configuration Form --}}
@@ -160,7 +152,7 @@
                             <div class="col-md-6 text-center border-end">
                                 <h6>Sync client from RMM</h6>
                                 <p class="text-muted small">Fetch new clients from N-able RMM.</p>
-                                <button type="button" class="btn btn-outline-info" onclick="Livewire.dispatch('startSync', { type: 'clients_from' })">
+                                <button type="button" class="btn btn-outline-info" onclick="Livewire.dispatch('startSync', { params: { type: 'clients_from' } })">
                                     <i class="fas fa-download"></i> Sync Clients from RMM
                                 </button>
                                 <div class="mt-2 small text-muted">
@@ -171,7 +163,7 @@
                             <div class="col-md-6 text-center">
                                 <h6>Sync clients to RMM</h6>
                                 <p class="text-muted small">Add local clients to your N-able RMM instance.</p>
-                                <button type="button" class="btn btn-outline-warning" onclick="Livewire.dispatch('startSync', { type: 'clients_to' })">
+                                <button type="button" class="btn btn-outline-warning" onclick="Livewire.dispatch('startSync', { params: { type: 'clients_to' } })">
                                     <i class="fas fa-upload"></i> Sync Clients to RMM
                                 </button>
                                 <div class="mt-2 small text-muted">
@@ -185,7 +177,7 @@
                             <div class="col-md-6 text-center border-end">
                                 <h6>Sync sites from RMM</h6>
                                 <p class="text-muted small">Fetch sites for linked clients from N-able RMM.</p>
-                                <button type="button" class="btn btn-outline-info" onclick="Livewire.dispatch('startSync', { type: 'sites_from' })">
+                                <button type="button" class="btn btn-outline-info" onclick="Livewire.dispatch('startSync', { params: { type: 'sites_from' } })">
                                     <i class="fas fa-download"></i> Sync Sites from RMM
                                 </button>
                                 <div class="mt-2 small text-muted">
@@ -196,7 +188,7 @@
                             <div class="col-md-6 text-center">
                                 <h6>Sync sites to RMM</h6>
                                 <p class="text-muted small">Add local sites to linked N-able RMM clients.</p>
-                                <button type="button" class="btn btn-outline-warning" onclick="Livewire.dispatch('startSync', { type: 'sites_to' })">
+                                <button type="button" class="btn btn-outline-warning" onclick="Livewire.dispatch('startSync', { params: { type: 'sites_to' } })">
                                     <i class="fas fa-upload"></i> Sync Sites to RMM
                                 </button>
                                 <div class="mt-2 small text-muted">
@@ -210,7 +202,7 @@
                             <div class="col-md-6 text-center border-end">
                                 <h6>Sync assets from RMM</h6>
                                 <p class="text-muted small">Fetch computers and servers from N-able RMM.</p>
-                                <button type="button" class="btn btn-outline-info" onclick="Livewire.dispatch('startSync', { type: 'assets_from' })">
+                                <button type="button" class="btn btn-outline-info" onclick="Livewire.dispatch('startSync', { params: { type: 'assets_from' } })">
                                     <i class="fas fa-desktop"></i> Sync Assets from RMM
                                 </button>
                                 <div class="mt-2 small text-muted">

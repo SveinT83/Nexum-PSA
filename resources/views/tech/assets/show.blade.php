@@ -18,9 +18,19 @@
     </nav>
     <div class="d-flex justify-content-between align-items-center">
         <h1>{{ $asset->name }}</h1>
-        <div class="btn-group">
-            <x-buttons.back :url="route('tech.assets.index')">Back to Assets</x-buttons.back>
-            <x-buttons.editlink :url="route('tech.assets.edit', $asset->id)">Edit</x-buttons.editlink>
+        <div class="btn-group mb-3">
+            <x-buttons.back :url="route('tech.assets.index')" class="btn btn-sm btn-outline-secondary bi bi-arrow-left">Back to Assets</x-buttons.back>
+            @php
+                $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
+                $canSync = $rmmIntegration && $asset->client && $asset->client->rmm_id;
+            @endphp
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    @if(!$canSync) disabled title="Client not linked to RMM" @endif
+                    onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
+                <i class="bi bi-arrow-repeat me-1"></i> Sync RMM
+            </button>
+            <x-buttons.editlink :url="route('tech.assets.edit', $asset->id)" class="btn btn-sm btn-outline-secondary bi bi-pencil">Edit</x-buttons.editlink>
         </div>
     </div>
 @endsection

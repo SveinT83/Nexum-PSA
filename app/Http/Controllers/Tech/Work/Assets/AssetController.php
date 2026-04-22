@@ -58,11 +58,15 @@ class AssetController extends Controller
      * Viser skjema for å opprette en ny asset.
      * Bruker Livewire-komponenten AssetForm for selve logikken.
      *
+     * @param Request $request
      * @return \Illuminate\View\View
      */
-    public function create()
+    public function create(Request $request)
     {
-        return view('tech.assets.create');
+        $clientId = $request->get('client_id');
+        $siteId = $request->get('site_id');
+
+        return view('tech.assets.create', compact('clientId', 'siteId'));
     }
 
     /**

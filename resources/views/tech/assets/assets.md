@@ -70,6 +70,7 @@ Følgende funksjonalitet er planlagt, men ikke implementert enda:
 - **Automatisert Synkronisering**: Systemet støtter nå automatisert bakgrunns-synkronisering fra N-able RMM. Dette kan aktiveres i **Integrations -> N-able RMM Settings**.
   - **Auto Import**: Når aktivert, vil systemet periodisk hente nye assets og oppdatere eksisterende.
   - **Intelligent Oppdatering**: Assets matches basert på deres unike RMM ID. Hvis en enhet allerede eksisterer (f.eks. manuelt opprettet eller fra forrige sync), vil systemet oppdatere Navn, Site, IP-adresse og annen teknisk info i stedet for å lage duplikater.
+  - **Målrettet Synkronisering**: Du kan starte synkronisering for hele klienten, eller for en spesifikk Site. Ved synkronisering av en Site vil systemet hente alle enheter for klienten fra RMM, men kun oppdatere de som tilhører den valgte siten.
 - **N-able RMM Spesifikasjoner**:
     - Servere (`server` i RMM)
     - Arbeidsstasjoner (`workstation` eller `workstation_node` i RMM)

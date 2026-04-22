@@ -86,9 +86,68 @@ class NAbleRmmSync extends Component
     public $itemsToProcess = [];
 
     /**
+     * @var int|null Targeted site ID for filtered synchronization
+     */
+    public $targetSiteId = null;
+
+    /**
      * Livewire listeners for external event triggers
      */
-    protected $listeners = ['startSync' => 'initSync'];
+    protected $listeners = ['startSync' => 'initSync', 'startTargetedSync' => 'initTargetedSync'];
+
+    /**
+     * Initializes a targeted synchronization process for a specific client or site.
+     *
+     * @param array $params Targeted parameters ['type' => string, 'client_id' => int, 'site_id' => int|null]
+     */
+    public function initTargetedSync($params)
+    {
+        $type = $params['type'] ?? 'assets_from';
+        $clientId = $params['client_id'] ?? null;
+        $siteId = $params['site_id'] ?? null;
+
+        if (!$clientId) {
+            $this->errors[] = 'Client ID is required for targeted sync.';
+            $this->errorCount++;
+            $this->isComplete = true;
+            $this->showModal = true;
+            return;
+        }
+
+        $this->syncType = $type;
+        $this->resetProgress();
+        $this->targetSiteId = $siteId;
+        $this->showModal = true;
+
+        $integration = Integration::where('type', 'rmm')->first();
+        if (!$integration || !$integration->getSecret('api_key')) {
+            $this->errors[] = 'N-able RMM API key not found.';
+            $this->errorCount++;
+            $this->isComplete = true;
+            return;
+        }
+
+        if ($this->syncType === 'assets_from') {
+            $client = Client::where('id', $clientId)->whereNotNull('rmm_id')->where('active', true)->first();
+            if (!$client) {
+                $this->errors[] = 'Client not found or not linked to RMM.';
+                $this->errorCount++;
+                $this->isComplete = true;
+                return;
+            }
+            $this->itemsToProcess = [$client->toArray()];
+        }
+
+        $this->total = count($this->itemsToProcess);
+        if ($this->total === 0) {
+            $this->isComplete = true;
+            $this->errors[] = 'No items found for synchronization.';
+            $this->errorCount++;
+        } else {
+            $this->isProcessing = true;
+            $this->dispatch('triggerBatch');
+        }
+    }
 
     /**
      * Initializes the synchronization process based on the requested type.
@@ -96,15 +155,18 @@ class NAbleRmmSync extends Component
      *
      * @param string $type The sync direction/target
      */
-    public function initSync($type)
+    public function initSync($params)
     {
+        $type = is_array($params) ? ($params['type'] ?? '') : $params;
         $this->syncType = $type;
         $this->resetProgress();
         $this->showModal = true;
 
         $integration = Integration::where('type', 'rmm')->first();
         if (!$integration || !$integration->getSecret('api_key')) {
-            $this->addError('general', 'N-able RMM API key not found.');
+            $this->errors[] = 'N-able RMM API key not found.';
+            $this->errorCount++;
+            $this->isComplete = true;
             return;
         }
 
@@ -113,7 +175,9 @@ class NAbleRmmSync extends Component
         if ($this->syncType === 'clients_from') {
             $rmmClients = $client->listClients();
             if (isset($rmmClients['error'])) {
-                $this->addError('general', 'Failed to fetch clients: ' . $rmmClients['error']);
+                $this->errors[] = 'Failed to fetch clients: ' . $rmmClients['error'];
+                $this->errorCount++;
+                $this->isComplete = true;
                 return;
             }
             $this->itemsToProcess = $rmmClients;
@@ -352,6 +416,20 @@ class NAbleRmmSync extends Component
         $localClient = Client::find($item['id']);
         if (!$localClient) return;
 
+        // If we have a targeted site ID, we need to fetch its RMM ID to filter the RMM results
+        $targetRmmSiteId = null;
+        if ($this->targetSiteId) {
+            $targetSite = ClientSite::where('id', $this->targetSiteId)
+                ->where('client_id', $localClient->id)
+                ->first();
+            $targetRmmSiteId = $targetSite ? (string)$targetSite->rmm_id : null;
+
+            // If the targeted site doesn't have an RMM ID, we can't sync it
+            if (!$targetRmmSiteId) {
+                return;
+            }
+        }
+
         $deviceTypes = ['server', 'workstation', 'mobile'];
 
         foreach ($deviceTypes as $type) {
@@ -381,6 +459,11 @@ class NAbleRmmSync extends Component
 
                 // Skip if site ID is missing in RMM data
                 if (empty($rmmDevice['siteid'])) {
+                    continue;
+                }
+
+                // If we are targeting a specific site, skip devices that don't match
+                if ($targetRmmSiteId && (string)$rmmDevice['siteid'] !== $targetRmmSiteId) {
                     continue;
                 }
 
@@ -479,16 +562,18 @@ class NAbleRmmSync extends Component
         $this->isComplete = false;
         $this->isProcessing = false;
         $this->itemsToProcess = [];
+        $this->targetSiteId = null;
     }
 
     /**
-     * Closes the sync modal and redirects back to settings if the process was complete.
+     * Closes the sync modal.
      */
     public function closeModal()
     {
         $this->showModal = false;
         if ($this->isComplete) {
-            return redirect()->route('tech.admin.system.integrations.nable_rmm.settings');
+            $this->resetProgress();
+            return redirect(request()->header('Referer'));
         }
     }
 

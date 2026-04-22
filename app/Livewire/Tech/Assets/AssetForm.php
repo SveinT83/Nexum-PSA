@@ -84,8 +84,10 @@ class AssetForm extends Component
      * Component Initialization
      *
      * @param Asset|null $asset Optional asset instance for editing
+     * @param int|null $client_id Initial client ID from request
+     * @param int|null $site_id Initial site ID from request
      */
-    public function mount(Asset $asset = null)
+    public function mount(Asset $asset = null, $client_id = null, $site_id = null)
     {
         $this->asset = $asset;
 
@@ -104,6 +106,15 @@ class AssetForm extends Component
             $this->fill($this->asset->toArray());
             // Trigger dependency update for sites and users
             $this->updatedClientId($this->client_id);
+        } else {
+            // Pre-fill if provided from request context
+            if ($client_id) {
+                $this->client_id = $client_id;
+                $this->updatedClientId($this->client_id);
+            }
+            if ($site_id) {
+                $this->site_id = $site_id;
+            }
         }
     }
 

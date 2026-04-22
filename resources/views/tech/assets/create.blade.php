@@ -40,7 +40,7 @@
                         - Real-time validation of asset attributes.
                         - Submission and creation of the Asset record.
                     --}}
-                    @livewire('tech.assets.asset-form')
+                    @livewire('tech.assets.asset-form', ['client_id' => $clientId ?? null, 'site_id' => $siteId ?? null])
                 </div>
             </div>
         </div>

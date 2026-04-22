@@ -26,51 +26,72 @@
                             @elseif($syncType === 'clients_to') Syncing Clients to RMM
                             @elseif($syncType === 'sites_from') Syncing Sites from RMM
                             @elseif($syncType === 'sites_to') Syncing Sites to RMM
+                            @elseif($syncType === 'assets_from')
+                                @if($targetSiteId)
+                                    Syncing Assets for Site from RMM
+                                @else
+                                    Syncing Assets for Client from RMM
+                                @endif
                             @endif
                         </h5>
-                        {{-- Close button is only enabled when processing is complete --}}
                         @if($isComplete)
-                            <button type="button" class="btn-close" wire:click="closeModal"></button>
+                            <button type="button" class="btn-close" wire:click="closeModal" aria-label="Close"></button>
                         @endif
                     </div>
-                    <div class="modal-body">
-                        {{-- Processing Indicator: Shows current batch progress --}}
+                    <div class="modal-body p-4">
                         @if($isProcessing)
                             <div class="text-center mb-4">
-                                <div class="spinner-border text-primary" role="status">
+                                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
-                                <div class="mt-2">Processing batch {{ $current }} of {{ $total }}...</div>
+                                <div class="mt-3 fw-bold">Processing batch {{ $current }} of {{ $total }}...</div>
+                                <div class="text-muted small">Please do not close this window</div>
                             </div>
                         @endif
 
-                        {{-- Progress Bar: Visual representation of completion percentage --}}
-                        <div class="progress mb-3" style="height: 25px;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-                                 style="width: {{ $progress }}%;" aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100">
-                                {{ $progress }}%
+                        <div class="progress mb-4" style="height: 30px; border-radius: 15px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated @if($isComplete) bg-success @endif"
+                                 role="progressbar"
+                                 style="width: {{ $progress }}%; transition: width 0.5s ease;"
+                                 aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100">
+                                <span class="fw-bold">{{ $progress }}%</span>
                             </div>
                         </div>
 
-                        {{-- Statistics Summary: Breakdown of synchronization results --}}
-                        <div class="row text-center mb-3">
-                            <div class="col">
-                                <div class="h4 mb-0 text-success">{{ $successCount }}</div>
-                                <div class="small text-muted">Created</div>
-                            </div>
-                            @if($syncType === 'clients_from' || $syncType === 'sites_from')
-                                <div class="col">
-                                    <div class="h4 mb-0 text-info">{{ $updatedCount }}</div>
-                                    <div class="small text-muted">Updated</div>
+                        <div class="row g-3 text-center mb-4">
+                            <div class="col-3">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body p-2">
+                                        <div class="h3 mb-0 text-success">{{ $successCount }}</div>
+                                        <div class="text-uppercase small fw-bold text-muted" style="font-size: 0.65rem;">Created</div>
+                                    </div>
                                 </div>
-                                <div class="col">
-                                    <div class="h4 mb-0 text-primary">{{ $linkedCount }}</div>
-                                    <div class="small text-muted">Linked</div>
+                            </div>
+                            @if($syncType === 'clients_from' || $syncType === 'sites_from' || $syncType === 'assets_from')
+                                <div class="col-3">
+                                    <div class="card bg-light border-0">
+                                        <div class="card-body p-2">
+                                            <div class="h3 mb-0 text-info">{{ $updatedCount }}</div>
+                                            <div class="text-uppercase small fw-bold text-muted" style="font-size: 0.65rem;">Updated</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="card bg-light border-0">
+                                        <div class="card-body p-2">
+                                            <div class="h3 mb-0 text-primary">{{ $linkedCount }}</div>
+                                            <div class="text-uppercase small fw-bold text-muted" style="font-size: 0.65rem;">Linked</div>
+                                        </div>
+                                    </div>
                                 </div>
                             @endif
-                            <div class="col">
-                                <div class="h4 mb-0 text-danger">{{ $errorCount }}</div>
-                                <div class="small text-muted">Errors</div>
+                            <div class="col-3">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body p-2">
+                                        <div class="h3 mb-0 text-danger">{{ $errorCount }}</div>
+                                        <div class="text-uppercase small fw-bold text-muted" style="font-size: 0.65rem;">Errors</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -87,16 +108,23 @@
 
                         {{-- Completion Alert: Confirms the process finished --}}
                         @if($isComplete)
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle me-2"></i> Synchronization completed successfully.
+                            <div class="alert alert-success d-flex align-items-center mb-0">
+                                <i class="bi bi-check-circle-fill me-2 h4 mb-0"></i>
+                                <div>
+                                    <div class="fw-bold">Synchronization completed!</div>
+                                    <div class="small">The process finished successfully with {{ $successCount + $updatedCount + $linkedCount }} items processed.</div>
+                                </div>
                             </div>
                         @endif
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light border-top-0">
                         @if($isComplete)
-                            <button type="button" class="btn btn-primary" wire:click="closeModal">Close</button>
+                            <button type="button" class="btn btn-primary px-4 fw-bold" wire:click="closeModal">Done</button>
                         @else
-                            <button type="button" class="btn btn-secondary" disabled>Processing...</button>
+                            <button type="button" class="btn btn-secondary px-4" disabled>
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Syncing...
+                            </button>
                         @endif
                     </div>
                 </div>
