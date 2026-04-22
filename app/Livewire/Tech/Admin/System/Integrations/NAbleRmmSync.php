@@ -15,9 +15,20 @@ class NAbleRmmSync extends Component
     public $showModal = false;
 
     /**
-     * @var string Type of synchronization: 'clients_from', 'clients_to', 'sites_from', 'sites_to'
+     * @var string Type of synchronization: 'clients_from', 'clients_to', 'sites_from', 'sites_to', 'assets_from'
      */
     public $syncType = '';
+
+    /**
+     * Label mapping for the synchronization modal.
+     */
+    protected $syncLabels = [
+        'clients_from' => 'Sync Clients from RMM',
+        'clients_to' => 'Sync Clients to RMM',
+        'sites_from' => 'Sync Sites from RMM',
+        'sites_to' => 'Sync Sites to RMM',
+        'assets_from' => 'Sync Assets from RMM',
+    ];
 
     /**
      * @var int Progress percentage (0-100)
@@ -112,6 +123,8 @@ class NAbleRmmSync extends Component
             $this->itemsToProcess = Client::whereNotNull('rmm_id')->where('active', true)->get()->toArray();
         } elseif ($this->syncType === 'sites_to') {
             $this->itemsToProcess = Client::whereNotNull('rmm_id')->where('active', true)->get()->toArray();
+        } elseif ($this->syncType === 'assets_from') {
+            $this->itemsToProcess = Client::whereNotNull('rmm_id')->where('active', true)->get()->toArray();
         }
 
         $this->total = count($this->itemsToProcess);
@@ -153,6 +166,8 @@ class NAbleRmmSync extends Component
                     $this->syncSitesFrom($item, $client);
                 } elseif ($this->syncType === 'sites_to') {
                     $this->syncSitesTo($item, $client);
+                } elseif ($this->syncType === 'assets_from') {
+                    $this->syncAssetsFrom($item, $client);
                 }
             } catch (\Exception $e) {
                 $this->errorCount++;
@@ -321,6 +336,96 @@ class NAbleRmmSync extends Component
             } else {
                 $this->errorCount++;
                 $this->errors[] = "Error adding site " . $localSite->name . " to RMM: " . ($result['error'] ?? 'Unknown error');
+            }
+        }
+    }
+
+    /**
+     * Synchronizes assets from N-able RMM to a specific local client.
+     * Fetches both servers and workstations for the client.
+     *
+     * @param array $item Local client data (parent of the assets)
+     * @param NAbleRmmClient $client RMM API Service instance
+     */
+    protected function syncAssetsFrom($item, $client)
+    {
+        $localClient = Client::find($item['id']);
+        if (!$localClient) return;
+
+        $deviceTypes = ['server', 'workstation', 'mobile'];
+
+        foreach ($deviceTypes as $type) {
+            $rmmDevices = $client->listDevices($localClient->rmm_id, $type);
+
+            if (isset($rmmDevices['error'])) {
+                // Ignore errors for mobile devices if not supported by the RMM instance
+                if ($type === 'mobile') {
+                    continue;
+                }
+
+                // If it's empty response but status OK, it's not really an error
+                if (str_contains($rmmDevices['error'], 'No devices found') || $rmmDevices['error'] === 'OK') {
+                    continue;
+                }
+
+                $this->errorCount++;
+                $this->errors[] = "Failed to fetch $type assets for " . $localClient->name . ": " . $rmmDevices['error'];
+                continue;
+            }
+
+            foreach ($rmmDevices as $rmmDevice) {
+                // Skip entries that are actually error messages or not devices
+                if (isset($rmmDevice['error']) || !isset($rmmDevice['deviceid']) || empty($rmmDevice['deviceid'])) {
+                    continue;
+                }
+
+                // Skip if site ID is missing in RMM data
+                if (empty($rmmDevice['siteid'])) {
+                    continue;
+                }
+
+                // Try to find corresponding local site
+                $localSite = ClientSite::where('client_id', $localClient->id)
+                    ->whereNotNull('rmm_id')
+                    ->where('rmm_id', (string)$rmmDevice['siteid'])
+                    ->first();
+
+                // Skip if site is not found or doesn't have an RMM ID (as per user request)
+                if (!$localSite) {
+                    continue;
+                }
+
+                $asset = \App\Models\Tech\Work\Assets\Asset::updateOrCreate(
+                    [
+                        'rmm_id' => (string)$rmmDevice['deviceid'],
+                    ],
+                    [
+                        'client_id' => $localClient->id,
+                        'site_id' => $localSite->id,
+                        'name' => $rmmDevice['name'],
+                        'type' => $rmmDevice['type'],
+                        'vendor' => $rmmDevice['vendor'] ?: null,
+                        'model' => $rmmDevice['model'] ?: null,
+                        'serial_number' => $rmmDevice['serial_number'] ?: null,
+                        'mac_address' => $rmmDevice['mac_address'] ?: null,
+                        'ip_address' => $rmmDevice['ip_address'] ?: null,
+                        'hostname' => $rmmDevice['name'],
+                        'source' => 'nable',
+                        'is_managed' => true,
+                        'status' => 'unknown',
+                        'last_seen_at' => now(),
+                        'metadata' => [
+                            'os' => $rmmDevice['os'],
+                            'rmm_type' => $type
+                        ]
+                    ]
+                );
+
+                if ($asset->wasRecentlyCreated) {
+                    $this->successCount++;
+                } else {
+                    $this->updatedCount++;
+                }
             }
         }
     }

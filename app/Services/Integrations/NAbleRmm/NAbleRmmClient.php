@@ -148,18 +148,37 @@ class NAbleRmmClient
                 return ['error' => 'Invalid XML response from RMM.'];
             }
 
-            if ((string) $xml->attributes()->status !== 'OK') {
-                $status = (string) $xml->attributes()->status;
-                Log::error('N-able RMM API error status in XML: ' . $status);
-                return ['error' => 'API returned status: ' . $status];
+            $status = (string) ($xml->attributes()->status ?? $xml->status ?? '');
+
+            // Fallback for missing status
+            if (empty($status) && (isset($xml->items) || isset($xml->item) || isset($xml->client))) {
+                $status = 'OK';
+            }
+
+            if ($status !== 'OK' && $status !== 'SUCCESS') {
+                Log::error('N-able RMM API error status in XML: ' . $status, ['xml' => $xmlString]);
+                return ['error' => 'API returned status: ' . ($status ?: 'Unknown status')];
             }
 
             $clients = [];
-            foreach ($xml->items->client as $client) {
-                $clients[] = [
-                    'name' => (string) $client->name,
-                    'clientid' => (string) $client->clientid,
-                ];
+
+            // Handle nested structure items -> client
+            if (isset($xml->items->client)) {
+                foreach ($xml->items->client as $client) {
+                    $clients[] = [
+                        'name' => (string) $client->name,
+                        'clientid' => (string) ($client->clientid ?? $client->id ?? ''),
+                    ];
+                }
+            }
+            // Handle flat structure client
+            elseif (isset($xml->client)) {
+                foreach ($xml->client as $client) {
+                    $clients[] = [
+                        'name' => (string) $client->name,
+                        'clientid' => (string) ($client->clientid ?? $client->id ?? ''),
+                    ];
+                }
             }
 
             return $clients;
@@ -200,36 +219,42 @@ class NAbleRmmClient
             if ($xml && isset($xml->data->success) && (string)$xml->data->success === '1') {
                 return [
                     'success' => true,
-                    'clientid' => (string)$xml->data->clientid
+                    'clientid' => (string)($xml->data->clientid ?? $xml->items->client->clientid ?? '')
                 ];
             }
 
             // Fallback to checking status attribute if data->success is not present
-            if ($xml && (string)$xml->attributes()->status === 'OK') {
-                // If it's add_client, it might have data->clientid even if status is OK
-                if (isset($xml->data->clientid)) {
-                    return [
-                        'success' => true,
-                        'clientid' => (string)$xml->data->clientid
-                    ];
-                }
+            $status = $xml ? (string)($xml->attributes()->status ?? $xml->status ?? '') : null;
 
-                // Keep the old items->client->clientid as a second fallback just in case
-                if (isset($xml->items->client->clientid)) {
-                    return [
-                        'success' => true,
-                        'clientid' => (string)$xml->items->client->clientid
-                    ];
-                }
+            if ($status === 'OK' || $status === 'SUCCESS') {
+                $clientid = (string)($xml->data->clientid ?? $xml->items->client->clientid ?? $xml->items->client->id ?? $xml->clientid ?? '');
 
-                return ['success' => true];
+                return [
+                    'success' => true,
+                    'clientid' => $clientid ?: null
+                ];
             }
+
+            $errorMsg = $xml ? (string)($xml->attributes()->status ?? $xml->status ?? $xml->error ?? '') : 'Invalid XML response.';
+            if (empty($errorMsg) && $xml) {
+                $errorMsg = 'Unknown RMM Error (No status provided)';
+            }
+
+            Log::error('N-able RMM addClient failed', [
+                'name' => $name,
+                'status' => $status,
+                'response' => $response->body()
+            ]);
 
             return [
                 'success' => false,
-                'error' => $xml ? 'RMM Error: ' . (string) $xml->attributes()->status : 'Invalid XML response.'
+                'error' => 'RMM Error: ' . $errorMsg
             ];
         } catch (\Exception $e) {
+            Log::error('N-able RMM addClient exception', [
+                'name' => $name,
+                'message' => $e->getMessage()
+            ]);
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -265,6 +290,202 @@ class NAbleRmmClient
     }
 
     /**
+     * Lists all devices (servers or workstations) for a specific client ID in N-able RMM.
+     *
+     * @param string $clientid The RMM internal client ID
+     * @param string $deviceType 'server' or 'workstation'
+     * @return array List of devices or error message
+     */
+    public function listDevices(string $clientid, string $deviceType = 'server'): array
+    {
+        if (!$this->isConfigured()) {
+            return ['error' => 'Integration not fully configured or active.'];
+        }
+
+        try {
+            $url = rtrim($this->server, '/') . '/api/';
+            $response = Http::get($url, [
+                'apikey' => $this->apiKey,
+                'service' => 'list_devices_at_client',
+                'clientid' => $clientid,
+                'devicetype' => $deviceType,
+            ]);
+
+            if ($response->failed()) {
+                return ['error' => 'HTTP Error: ' . $response->status()];
+            }
+
+            return $this->parseXmlDevices($response->body());
+        } catch (\Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Parse the XML response from list_devices_at_client.
+     * The structure can be nested: items -> client -> site -> (server|workstation)
+     *
+     * @param string $xmlString
+     * @return array
+     */
+    protected function parseXmlDevices(string $xmlString): array
+    {
+        try {
+            $xml = simplexml_load_string($xmlString);
+            if (!$xml) {
+                return ['error' => 'Invalid XML response.'];
+            }
+
+            // Check status in attributes or direct child
+            $status = (string) ($xml->attributes()->status ?? $xml->status ?? '');
+
+            // Fallback: If status is empty but we have <items>, <item>, or <client>, treat as OK
+            if (empty($status) && (isset($xml->items) || isset($xml->item) || isset($xml->client))) {
+                $status = 'OK';
+            }
+
+            // Log for debugging if status is not OK
+            if ($status !== 'OK' && $status !== 'SUCCESS') {
+                \Illuminate\Support\Facades\Log::warning("N-able RMM API returned non-OK status: $status", [
+                    'xml' => $xmlString
+                ]);
+            }
+
+            if ($status !== 'OK' && $status !== 'SUCCESS') {
+                return ['error' => 'API Error: ' . ($status ?: 'Unknown status')];
+            }
+
+            $devices = [];
+
+            // Check for servers
+            if (isset($xml->items->client->site->server)) {
+                foreach ($xml->items->client->site->server as $device) {
+                    $siteId = (string) ($xml->items->client->site->id ?? $xml->items->client->site->siteid ?? '');
+                    $devices[] = $this->mapDeviceData($device, $siteId, 'server');
+                }
+            }
+
+            // Check for workstations
+            if (isset($xml->items->client->site->workstation)) {
+                foreach ($xml->items->client->site->workstation as $device) {
+                    $siteId = (string) ($xml->items->client->site->id ?? $xml->items->client->site->siteid ?? '');
+                    $devices[] = $this->mapDeviceData($device, $siteId, 'workstation');
+                }
+            }
+
+            // Check for workstation nodes (alternative tag)
+            if (isset($xml->items->client->site->workstation_node)) {
+                foreach ($xml->items->client->site->workstation_node as $device) {
+                    $siteId = (string) ($xml->items->client->site->id ?? $xml->items->client->site->siteid ?? '');
+                    $devices[] = $this->mapDeviceData($device, $siteId, 'workstation');
+                }
+            }
+
+            // Check for mobile devices
+            if (isset($xml->items->client->site->mobile_device)) {
+                foreach ($xml->items->client->site->mobile_device as $device) {
+                    $siteId = (string) ($xml->items->client->site->id ?? $xml->items->client->site->siteid ?? '');
+                    $devices[] = $this->mapDeviceData($device, $siteId, 'mobile_device');
+                }
+            }
+
+            // Case 1: Nested structure (items -> client -> site -> deviceType)
+            if (isset($xml->items->client)) {
+                foreach ($xml->items->client as $client) {
+                    if (isset($client->site)) {
+                        foreach ($client->site as $site) {
+                            $siteId = (string) ($site->id ?? $site->siteid ?? $site->site_id);
+
+                            // Check for servers
+                            if (isset($site->server)) {
+                                foreach ($site->server as $device) {
+                                    $devices[] = $this->mapDeviceData($device, $siteId, 'server');
+                                }
+                            }
+
+                            // Check for workstations
+                            if (isset($site->workstation)) {
+                                foreach ($site->workstation as $device) {
+                                    $devices[] = $this->mapDeviceData($device, $siteId, 'workstation');
+                                }
+                            }
+
+                            // Check for workstation nodes (alternative tag)
+                            if (isset($site->workstation_node)) {
+                                foreach ($site->workstation_node as $device) {
+                                    $devices[] = $this->mapDeviceData($device, $siteId, 'workstation');
+                                }
+                            }
+
+                            // Check for mobile devices
+                            if (isset($site->mobile_device)) {
+                                foreach ($site->mobile_device as $device) {
+                                    $devices[] = $this->mapDeviceData($device, $siteId, 'mobile_device');
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Case 2: Direct device list (items -> device)
+            elseif (isset($xml->items->device)) {
+                foreach ($xml->items->device as $device) {
+                    $devices[] = $this->mapDeviceData($device, (string) ($device->siteid ?? $device->site_id ?? ''), 'unknown');
+                }
+            }
+
+            // Deduplicate devices based on their ID
+            $uniqueDevices = [];
+            foreach ($devices as $device) {
+                if (isset($device['deviceid'])) {
+                    $uniqueDevices[$device['deviceid']] = $device;
+                } else {
+                    $uniqueDevices[] = $device;
+                }
+            }
+
+            return array_values($uniqueDevices);
+        } catch (\Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Maps a device XML node to a standard array format.
+     *
+     * @param \SimpleXMLElement $device
+     * @param string $siteId
+     * @param string $type
+     * @return array
+     */
+    protected function mapDeviceData($device, $siteId, $type): array
+    {
+        $mappedType = 'other';
+        if ($type === 'server') {
+            $mappedType = 'server';
+        } elseif (in_array($type, ['workstation', 'workstation_node', 'pc'])) {
+            $mappedType = 'pc';
+        } elseif ($type === 'laptop') {
+            $mappedType = 'laptop';
+        } elseif ($type === 'mobile_device') {
+            $mappedType = 'mobile';
+        }
+
+        return [
+            'deviceid' => (string) ($device->id ?? $device->deviceid ?? $device->device_id ?? $device->id_device ?? ''),
+            'name' => (string) ($device->name ?? $device->hostname ?? $device->display_name ?? $device->description ?? ''),
+            'siteid' => $siteId,
+            'os' => (string) ($device->os ?? $device->operating_system ?? $device->os_name ?? $device->platform ?? ''),
+            'ip_address' => (string) ($device->ip_address ?? $device->ipaddress ?? $device->ip ?? $device->lan_ip ?? ''),
+            'mac_address' => (string) ($device->mac_address ?? $device->macaddress ?? $device->mac ?? $device->ethernet_address ?? ''),
+            'serial_number' => (string) ($device->serial_number ?? $device->serialnumber ?? $device->serial_no ?? $device->system_serial ?? ''),
+            'vendor' => (string) ($device->vendor ?? $device->manufacturer ?? $device->system_manufacturer ?? ''),
+            'model' => (string) ($device->model ?? $device->product ?? $device->system_product ?? ''),
+            'type' => $mappedType
+        ];
+    }
+
+    /**
      * Parse the XML response from list_sites.
      *
      * @param string $xmlString
@@ -274,16 +495,40 @@ class NAbleRmmClient
     {
         try {
             $xml = simplexml_load_string($xmlString);
-            if (!$xml || (string) $xml->attributes()->status !== 'OK') {
-                return ['error' => $xml ? (string) $xml->attributes()->status : 'Invalid XML response.'];
+            if (!$xml) {
+                return ['error' => 'Invalid XML response.'];
+            }
+
+            $status = (string) ($xml->attributes()->status ?? $xml->status ?? '');
+
+            // Fallback for missing status
+            if (empty($status) && (isset($xml->items) || isset($xml->item) || isset($xml->site))) {
+                $status = 'OK';
+            }
+
+            if ($status !== 'OK' && $status !== 'SUCCESS') {
+                return ['error' => 'API Error: ' . ($status ?: 'Unknown status')];
             }
 
             $sites = [];
-            foreach ($xml->items->site as $site) {
-                $sites[] = [
-                    'siteid' => (string) $site->siteid,
-                    'name' => (string) $site->name,
-                ];
+
+            // Handle nested structure items -> site
+            if (isset($xml->items->site)) {
+                foreach ($xml->items->site as $site) {
+                    $sites[] = [
+                        'siteid' => (string) ($site->siteid ?? $site->id ?? ''),
+                        'name' => (string) $site->name,
+                    ];
+                }
+            }
+            // Handle flat structure site
+            elseif (isset($xml->site)) {
+                foreach ($xml->site as $site) {
+                    $sites[] = [
+                        'siteid' => (string) ($site->siteid ?? $site->id ?? ''),
+                        'name' => (string) $site->name,
+                    ];
+                }
             }
 
             return $sites;
@@ -324,23 +569,43 @@ class NAbleRmmClient
             if ($xml && isset($xml->data->success) && (string)$xml->data->success === '1') {
                 return [
                     'success' => true,
-                    'siteid' => isset($xml->data->siteid) ? (string)$xml->data->siteid : null
+                    'siteid' => (string)($xml->data->siteid ?? $xml->items->site->siteid ?? '')
                 ];
             }
 
             // Fallback for different RMM API version/response style
-            if ($xml && (string) $xml->attributes()->status === 'OK') {
+            $status = $xml ? (string)($xml->attributes()->status ?? $xml->status ?? '') : null;
+
+            if ($status === 'OK' || $status === 'SUCCESS') {
+                $siteid = (string)($xml->data->siteid ?? $xml->items->site->siteid ?? $xml->items->site->id ?? $xml->siteid ?? '');
                 return [
                     'success' => true,
-                    'siteid' => isset($xml->items->site->siteid) ? (string)$xml->items->site->siteid : null
+                    'siteid' => $siteid ?: null
                 ];
             }
 
+            $errorMsg = $xml ? (string)($xml->attributes()->status ?? $xml->status ?? $xml->error ?? '') : 'Invalid XML response.';
+            if (empty($errorMsg) && $xml) {
+                $errorMsg = 'Unknown RMM Error (No status provided)';
+            }
+
+            Log::error('N-able RMM addSite failed', [
+                'clientid' => $clientid,
+                'sitename' => $sitename,
+                'status' => $status,
+                'response' => $response->body()
+            ]);
+
             return [
                 'success' => false,
-                'error' => $xml ? 'RMM Error: ' . ($xml->attributes()->status ?? 'Unknown error') : 'Invalid XML response.'
+                'error' => 'RMM Error: ' . $errorMsg
             ];
         } catch (\Exception $e) {
+            Log::error('N-able RMM addSite exception', [
+                'clientid' => $clientid,
+                'sitename' => $sitename,
+                'message' => $e->getMessage()
+            ]);
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }

@@ -5,6 +5,7 @@ namespace App\Jobs\Integrations;
 use App\Models\System\Integrations\Integration;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
+use App\Models\Tech\Work\Assets\Asset;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -62,6 +63,11 @@ class NAbleRmmSyncJob implements ShouldQueue
         // 4. Sync Sites TO RMM
         if (!empty($config['site_sync_to'])) {
             $this->syncSitesTo($client);
+        }
+
+        // 5. Sync Assets FROM RMM
+        if (!empty($config['asset_sync_from'])) {
+            $this->syncAssetsFrom($client);
         }
 
         $integration->last_sync_at = now();
@@ -170,6 +176,59 @@ class NAbleRmmSyncJob implements ShouldQueue
                         'name' => $rmmSite['name'],
                         'rmm_id' => $rmmSite['siteid'],
                     ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Imports and links assets from N-able RMM for all linked clients and sites.
+     *
+     * @param NAbleRmmClient $rmmClient
+     */
+    protected function syncAssetsFrom(NAbleRmmClient $rmmClient): void
+    {
+        $clients = Client::whereNotNull('rmm_id')->where('active', true)->get();
+        $deviceTypes = ['server', 'workstation', 'mobile'];
+
+        foreach ($clients as $localClient) {
+            foreach ($deviceTypes as $type) {
+                $rmmDevices = $rmmClient->listDevices($localClient->rmm_id, $type);
+                if (isset($rmmDevices['error'])) continue;
+
+                foreach ($rmmDevices as $rmmDevice) {
+                    if (isset($rmmDevice['error']) || !isset($rmmDevice['deviceid'])) continue;
+                    if (empty($rmmDevice['siteid'])) continue;
+
+                    $localSite = ClientSite::where('client_id', $localClient->id)
+                        ->where('rmm_id', (string)$rmmDevice['siteid'])
+                        ->first();
+
+                    if (!$localSite) continue;
+
+                    Asset::updateOrCreate(
+                        ['rmm_id' => (string)$rmmDevice['deviceid']],
+                        [
+                            'client_id' => $localClient->id,
+                            'site_id' => $localSite->id,
+                            'name' => $rmmDevice['name'],
+                            'type' => $rmmDevice['type'],
+                            'vendor' => $rmmDevice['vendor'] ?: null,
+                            'model' => $rmmDevice['model'] ?: null,
+                            'serial_number' => $rmmDevice['serial_number'] ?: null,
+                            'mac_address' => $rmmDevice['mac_address'] ?: null,
+                            'ip_address' => $rmmDevice['ip_address'] ?: null,
+                            'hostname' => $rmmDevice['name'],
+                            'source' => 'nable',
+                            'is_managed' => true,
+                            'status' => 'unknown',
+                            'last_seen_at' => now(),
+                            'metadata' => [
+                                'os' => $rmmDevice['os'],
+                                'rmm_type' => $type
+                            ]
+                        ]
+                    );
                 }
             }
         }

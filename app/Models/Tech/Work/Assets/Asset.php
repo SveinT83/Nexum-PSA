@@ -13,6 +13,15 @@ class Asset extends Model
     /** @use HasFactory<\Database\Factories\Assets\AssetFactory> */
     use HasFactory;
 
+    public const TYPE_SERVER = 'server';
+    public const TYPE_PC = 'pc';
+    public const TYPE_LAPTOP = 'laptop';
+    public const TYPE_SWITCH = 'switch';
+    public const TYPE_AP = 'ap';
+    public const TYPE_FIREWALL = 'firewall';
+    public const TYPE_MOBILE = 'mobile';
+    public const TYPE_OTHER = 'other';
+
     protected $fillable = [
         'client_id',
         'site_id',

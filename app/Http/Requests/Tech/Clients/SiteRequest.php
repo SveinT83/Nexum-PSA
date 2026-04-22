@@ -23,6 +23,7 @@ class SiteRequest extends FormRequest
             'county' => ['nullable','string','max:255'],
             'country' => ['nullable','string','max:255'],
             'is_default' => ['nullable','boolean'],
+            'create_in_rmm' => ['sometimes','boolean'],
         ];
     }
 

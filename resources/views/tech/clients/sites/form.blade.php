@@ -99,6 +99,17 @@
                 <x-forms.input_text name="country" labelName="Country" value="{{$site->country ?? ''}}"></x-forms.input_text>
             </div>
 
+            @if(!$isEdit && ($nableActive ?? false) && (isset($client) && $client->rmm_id))
+                <div class="col-12 mt-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" name="create_in_rmm" id="rmmCheck" {{ old('create_in_rmm') ? 'checked' : '' }}>
+                        <label class="form-check-label" for="rmmCheck">
+                            Create in N-able RMM
+                        </label>
+                    </div>
+                </div>
+            @endif
+
         </div>
 
     </x-forms.form-default>

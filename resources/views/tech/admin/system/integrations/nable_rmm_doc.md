@@ -5,11 +5,12 @@ This system handles the synchronization of clients and sites between tdPSA and N
 #### Functionality
 *   **Client Synchronization**: Imports new clients from RMM or exports local clients to RMM.
 *   **Site Synchronization**: Synchronizes sites for all linked clients.
+*   **Asset Synchronization**: Imports servers and workstations from RMM and links them to clients and sites. Uses `updateOrCreate` logic keyed by RMM Device ID to prevent duplicates.
 *   **Automatic Linking**: The system attempts to link existing clients based on name if they are not already linked via `rmm_id`.
 *   **Real-time Updates**: Uses Livewire to provide progress visualization during manual synchronization.
 
 #### Automation
-Synchronization runs automatically every hour if the integration is set to "Active".
+Synchronization runs automatically every hour if the integration is set to "Active" and the specific synchronization toggles (Clients, Sites, Assets) are enabled in the settings.
 
 **System Requirements for Automation:**
 1.  **Laravel Scheduler**: A cron job must run every minute on the server:

@@ -7,6 +7,8 @@ use App\Http\Requests\Tech\Clients\ClientRequest;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
+use App\Models\System\Integrations\Integration;
+use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use App\Service\SideBarMenus\ClientsMenu;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -108,10 +110,14 @@ class ClientController extends Controller
         $roles = ['Daglig leder', 'Innehaver', 'IT-kontakt', 'Økonomi', 'Annet'];
         $countries = ['NO' => 'Norway', 'SE' => 'Sweden', 'DK' => 'Denmark'];
 
+        // Check if N-able RMM is active
+        $nableActive = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->exists();
+
         return view('tech.clients.create', [
             'suggestedClientNumber' => $suggestedClientNumber,
             'roles' => $roles,
             'countries' => $countries,
+            'nableActive' => $nableActive,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu(null),
         ]);
     }
@@ -128,8 +134,9 @@ class ClientController extends Controller
     public function store(ClientRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $warning = null;
 
-        DB::transaction(function () use ($data): void {
+        DB::transaction(function () use ($data, &$warning): void {
             // Create client
             $client = Client::query()->create([
                 'name' => $data['name'],
@@ -159,8 +166,30 @@ class ClientController extends Controller
                 'is_default_for_client' => true,
                 'active' => true,
             ]);
+
+            // Handle N-able RMM creation if requested
+            if (!empty($data['create_in_rmm'])) {
+                $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
+                if ($integration) {
+                    $rmmClient = new NAbleRmmClient($integration);
+                    $rmmName = $client->client_number . ' - ' . $client->name;
+                    $result = $rmmClient->addClient($rmmName);
+                    $status = $result['success'] ? 'success' : 'error';
+
+                    if ($status === 'success' && !empty($result['clientid'])) {
+                        $client->update(['rmm_id' => $result['clientid']]);
+                    } else {
+                        $warning = "Client created locally, but failed to create in N-able RMM: " . ($result['error'] ?? 'Unknown error');
+                    }
+                }
+            }
         });
 
-        return redirect()->route('tech.clients.index')->with('status', 'Client created');
+        $response = redirect()->route('tech.clients.index')->with('status', 'Client created');
+        if ($warning) {
+            $response->with('warning', $warning);
+        }
+
+        return $response;
     }
 }

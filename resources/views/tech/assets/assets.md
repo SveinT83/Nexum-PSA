@@ -67,9 +67,18 @@ Tabellen `assets` inneholder følgende nøkkelfelt:
 Følgende funksjonalitet er planlagt, men ikke implementert enda:
 
 ### RMM Sync & Matching
-- Automatisk synkronisering av assets fra **N-Able RMM**, **Tactical RMM**, og **UniFi/Omada**.
+- **Automatisert Synkronisering**: Systemet støtter nå automatisert bakgrunns-synkronisering fra N-able RMM. Dette kan aktiveres i **Integrations -> N-able RMM Settings**.
+  - **Auto Import**: Når aktivert, vil systemet periodisk hente nye assets og oppdatere eksisterende.
+  - **Intelligent Oppdatering**: Assets matches basert på deres unike RMM ID. Hvis en enhet allerede eksisterer (f.eks. manuelt opprettet eller fra forrige sync), vil systemet oppdatere Navn, Site, IP-adresse og annen teknisk info i stedet for å lage duplikater.
+- **N-able RMM Spesifikasjoner**:
+    - Servere (`server` i RMM)
+    - Arbeidsstasjoner (`workstation` eller `workstation_node` i RMM)
+    - Mobil-enheter (`mobile_device` i RMM)
+  - *Merk: Assets synkroniseres kun dersom deres RMM Site ID samsvarer med en lokal lokasjon (Site) som har tilsvarende RMM ID registrert.*
+  - Følgende data hentes automatisk: Navn, Operativsystem, IP-adresse, MAC-adresse, Serienummer, Produsent og Modell.
+- **Tactical RMM & UniFi/Omada**: Planlagt for fremtidige oppdateringer.
 - Matching-logikk som kobler manuelt opprettede assets mot RMM-data basert på **Serial Number**, **MAC Address** eller **Hostname**.
-- Oppdatering av **Status** (Online/Offline) i sanntid via RMM-signaler.
+- Oppdatering av **Status** (Online/Offline) i sanntid via RMM-signaler (Under utvikling).
 
 ### Ticket Linkage
 - Mulighet til å knytte en eller flere assets direkte til en ticket.

@@ -30,6 +30,8 @@ class ClientRequest extends FormRequest
             'user_email' => ['required','email','max:255'],
             'user_phone' => ['nullable','string','max:50'],
             'user_role' => ['nullable','string','max:100'],
+
+            'create_in_rmm' => ['sometimes','boolean'],
         ];
     }
 

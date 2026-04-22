@@ -112,6 +112,17 @@
 			<input class="form-check-input" type="checkbox" value="1" name="active" id="activeCheck" checked>
 			<label class="form-check-label" for="activeCheck">Active</label>
 		</div>
+
+        @if($nableActive ?? false)
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" value="1" name="create_in_rmm" id="rmmCheck" {{ old('create_in_rmm') ? 'checked' : '' }}>
+                <label class="form-check-label" for="rmmCheck">
+                    Create in N-able RMM
+                    <span class="small text-muted">(Format: {client_number} - {name})</span>
+                </label>
+            </div>
+        @endif
+
 		<div class="mb-3">
 			<button type="submit" class="btn btn-primary">Create Client</button>
 		</div>

@@ -49,10 +49,6 @@ class IntegrationsController extends Controller
         $request->validate([
             'server' => 'required|url',
             'api_key' => 'nullable|string',
-            'client_sync_from' => 'boolean',
-            'client_sync_to' => 'boolean',
-            'site_sync_from' => 'boolean',
-            'site_sync_to' => 'boolean',
         ]);
 
         $integration = Integration::firstOrCreate(
@@ -68,13 +64,6 @@ class IntegrationsController extends Controller
             $integration->setSecret('api_key', $request->api_key);
         }
 
-        $config = $integration->config ?? [];
-        $config['client_sync_from'] = $request->boolean('client_sync_from');
-        $config['client_sync_to'] = $request->boolean('client_sync_to');
-        $config['site_sync_from'] = $request->boolean('site_sync_from');
-        $config['site_sync_to'] = $request->boolean('site_sync_to');
-        $integration->config = $config;
-
         // Test connection
         if ($apiKey && $integration->server) {
             $client = new NAbleRmmClient($integration);
@@ -88,10 +77,35 @@ class IntegrationsController extends Controller
         $integration->save();
 
         if ($integration->is_healthy) {
-            return back()->with('success', 'N-able RMM settings updated and connection verified.');
+            return back()->with('success', 'N-able RMM API configuration updated and connection verified.');
         } else {
-            return back()->with('warning', 'N-able RMM settings saved, but connection test failed: ' . $integration->last_error);
+            return back()->with('warning', 'N-able RMM API configuration saved, but connection test failed: ' . $integration->last_error);
         }
+    }
+
+    public function nableRmmUpdateSettings(Request $request)
+    {
+        $request->validate([
+            'client_sync_from' => 'boolean',
+            'client_sync_to' => 'boolean',
+            'site_sync_from' => 'boolean',
+            'site_sync_to' => 'boolean',
+            'asset_sync_from' => 'boolean',
+        ]);
+
+        $integration = Integration::where('type', 'rmm')->firstOrFail();
+
+        $config = $integration->config ?? [];
+        $config['client_sync_from'] = $request->boolean('client_sync_from');
+        $config['client_sync_to'] = $request->boolean('client_sync_to');
+        $config['site_sync_from'] = $request->boolean('site_sync_from');
+        $config['site_sync_to'] = $request->boolean('site_sync_to');
+        $config['asset_sync_from'] = $request->boolean('asset_sync_from');
+        $integration->config = $config;
+
+        $integration->save();
+
+        return back()->with('success', 'N-able RMM automation settings updated.');
     }
 
     public function nableRmmSyncFrom()

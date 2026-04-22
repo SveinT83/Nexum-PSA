@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
+use App\Models\System\Integrations\Integration;
+use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use App\Http\Requests\Tech\Clients\SiteRequest;
 use App\Service\SideBarMenus\ClientsMenu;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ClientSiteController extends Controller
 {
@@ -130,10 +133,14 @@ class ClientSiteController extends Controller
         // -----------------------------------------
         $allClients = !$targetClient ? Client::orderBy('name')->get() : collect();
 
+        // Check if N-able RMM is active
+        $nableActive = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->exists();
+
         return view('tech.clients.sites.form', [
             'site' => new ClientSite(),
             'client' => $targetClient,
             'allClients' => $allClients,
+            'nableActive' => $nableActive,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient),
         ]);
     }
@@ -162,16 +169,44 @@ class ClientSiteController extends Controller
 
         $targetClient = Client::findOrFail($clientId);
 
+        $warning = null;
+
         // -----------------------------------------
         //Save the form to DB
         // -----------------------------------------
-        $site = $targetClient->sites()->create($data);
+        $site = DB::transaction(function () use ($targetClient, $data, &$warning) {
+            $site = $targetClient->sites()->create($data);
+
+            // Handle N-able RMM creation if requested
+            if (!empty($data['create_in_rmm']) && $targetClient->rmm_id) {
+                $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
+                if ($integration) {
+                    $rmmClient = new NAbleRmmClient($integration);
+                    $result = $rmmClient->addSite($targetClient->rmm_id, $site->name);
+                    $status = $result['success'] ? 'success' : 'error';
+
+                    if ($status === 'success' && !empty($result['siteid'])) {
+                        $site->update(['rmm_id' => $result['siteid']]);
+                    } else {
+                        $warning = "Site created locally, but failed to create in N-able RMM: " . ($result['error'] ?? 'Unknown error');
+                    }
+                }
+            }
+
+            return $site;
+        });
 
         // -----------------------------------------
         //Redirect wiew whit message
         // -----------------------------------------
-        return redirect()->route('tech.clients.sites.show', $site)
+        $response = redirect()->route('tech.clients.sites.show', $site)
             ->with('success', 'Site created successfully.');
+
+        if ($warning) {
+            $response->with('warning', $warning);
+        }
+
+        return $response;
     }
 
     // -----------------------------------------

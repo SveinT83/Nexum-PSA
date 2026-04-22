@@ -175,6 +175,9 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
         Route::post('/admin/system/integrations/nable-rmm', [IntegrationsController::class, 'nableRmmUpdate'])
             ->name('admin.system.integrations.nable_rmm.update');
 
+        Route::post('/admin/system/integrations/nable-rmm/settings', [IntegrationsController::class, 'nableRmmUpdateSettings'])
+            ->name('admin.system.integrations.nable_rmm.update_settings');
+
         Route::post('/admin/system/integrations/nable-rmm/sync-from', [IntegrationsController::class, 'nableRmmSyncFrom'])
             ->name('admin.system.integrations.nable_rmm.sync_from');
 

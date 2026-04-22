@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
             $table->foreignId('site_id')->nullable()->constrained('client_sites')->onDelete('set null');
             $table->string('name');
-            $table->enum('type', ['server', 'pc', 'laptop', 'switch', 'ap', 'firewall', 'other'])->default('other');
+            $table->enum('type', ['server', 'pc', 'laptop', 'switch', 'ap', 'firewall', 'mobile', 'other'])->default('other');
             $table->string('vendor')->nullable();
             $table->string('model')->nullable();
             $table->string('serial_number')->nullable()->index();

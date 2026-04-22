@@ -24,15 +24,9 @@
 
         <div class="row">
             <div class="col-md-12">
-                {{--
-                    Main Settings Form
-                    This form handles both API configuration (Server, API Key)
-                    and synchronization logic toggles.
-                --}}
+                {{-- API Configuration Form --}}
                 <form action="{{ route('tech.admin.system.integrations.nable_rmm.update') }}" method="POST">
                     @csrf
-
-                    {{-- API Configuration Card: Server Region and API Credentials --}}
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="mb-0">API Configuration</h5>
@@ -41,7 +35,6 @@
                             <div class="mb-3">
                                 <label for="server" class="form-label">Server Region</label>
                                 <select class="form-select" id="server" name="server">
-                                    {{-- Region selections based on N-able RMM's distributed architecture --}}
                                     <option value="https://www.am.remote.management/" {{ ($integration->server ?? '') == 'https://www.am.remote.management/' ? 'selected' : '' }}>Americas: https://www.am.remote.management/</option>
                                     <option value="https://wwwasia.system-monitor.com/" {{ ($integration->server ?? '') == 'https://wwwasia.system-monitor.com/' ? 'selected' : '' }}>Asia: https://wwwasia.system-monitor.com/</option>
                                     <option value="https://www.system-monitor.com/" {{ ($integration->server ?? '') == 'https://www.system-monitor.com/' ? 'selected' : '' }}>Australia: https://www.system-monitor.com/</option>
@@ -59,22 +52,24 @@
 
                             <div class="mb-3">
                                 <label for="api_key" class="form-label">API Key</label>
-                                {{-- Input for API key; placeholder changes if a key is already saved --}}
-                                <input type="password" class="form-control" id="api_key" name="api_key"
+                                <input type="password" class="form-control" id="api_key" name="api_key" autocomplete="new-password"
                                        placeholder="{{ $integration && $integration->getSecret('api_key') ? '********' : 'Enter API Key' }}">
                                 <small class="text-muted">Enter a new API key to update it. It is stored encrypted in the database.</small>
                             </div>
 
                             <div class="mt-4">
-                                <button type="submit" class="btn btn-primary">Save Config</button>
+                                <button type="submit" class="btn btn-primary">Save API Config</button>
                             </div>
                         </div>
                     </div>
+                </form>
 
-                    {{-- Settings Card: Granular Synchronization Controls --}}
+                {{-- Settings Form: Granular Synchronization Controls --}}
+                <form action="{{ route('tech.admin.system.integrations.nable_rmm.update_settings') }}" method="POST">
+                    @csrf
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Settings</h5>
+                            <h5 class="mb-0">Automation Settings</h5>
                         </div>
                         <div class="card-body">
                             {{-- Configuration for automatic background client synchronization --}}
@@ -129,8 +124,22 @@
                                 </small>
                             </div>
 
+                            {{-- Configuration for automatic background asset synchronization --}}
+                            <h6 class="mb-3">Asset Synchronization</h6>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="asset_sync_from"
+                                           name="asset_sync_from" value="1"
+                                           {{ ($integration && isset($integration->config['asset_sync_from']) && $integration->config['asset_sync_from']) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="asset_sync_from">Import assets from RMM</label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Automatically import and update assets from N-able RMM for linked clients.
+                                </small>
+                            </div>
+
                             <div class="mt-4">
-                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                                <button type="submit" class="btn btn-primary">Save Automation Settings</button>
                             </div>
                         </div>
                     </div>
@@ -192,6 +201,31 @@
                                 </button>
                                 <div class="mt-2 small text-muted">
                                     Endpoint: <code>/api/?service=add_site</code>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row mt-4">
+                            {{-- Import Assets Row --}}
+                            <div class="col-md-6 text-center border-end">
+                                <h6>Sync assets from RMM</h6>
+                                <p class="text-muted small">Fetch computers and servers from N-able RMM.</p>
+                                <button type="button" class="btn btn-outline-info" onclick="Livewire.dispatch('startSync', { type: 'assets_from' })">
+                                    <i class="fas fa-desktop"></i> Sync Assets from RMM
+                                </button>
+                                <div class="mt-2 small text-muted">
+                                    Endpoint: <code>/api/?service=list_devices_at_client</code>
+                                </div>
+                            </div>
+                            {{-- Import Network Assets Row (Coming Soon) --}}
+                            <div class="col-md-6 text-center">
+                                <h6>Sync network devices from RMM</h6>
+                                <p class="text-muted small">Fetch network equipment from N-able RMM (Coming soon).</p>
+                                <button type="button" class="btn btn-outline-secondary" disabled>
+                                    <i class="fas fa-network-wired"></i> Sync Network from RMM
+                                </button>
+                                <div class="mt-2 small text-muted">
+                                    <i>API endpoint pending documentation</i>
                                 </div>
                             </div>
                         </div>
