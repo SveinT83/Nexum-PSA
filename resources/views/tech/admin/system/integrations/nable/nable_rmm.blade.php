@@ -325,7 +325,7 @@
                     <div class="markdown-body">
                         @php
                             // Path to the Markdown documentation file
-                            $docPath = resource_path('views/tech/admin/system/integrations/nable_rmm_doc.md');
+                            $docPath = resource_path('views/tech/admin/system/integrations/nable/nable_rmm_doc.md');
                             if (file_exists($docPath)) {
                                 // Attempt to parse Markdown using Parsedown
                                 if (class_exists('\Parsedown')) {

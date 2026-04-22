@@ -41,7 +41,7 @@ class IntegrationsController extends Controller
     public function nableRmmSettings()
     {
         $integration = Integration::where('type', 'rmm')->first();
-        return view('tech.admin.system.integrations.nable_rmm', compact('integration'));
+        return view('tech.admin.system.integrations.nable.nable_rmm', compact('integration'));
     }
 
     public function nableRmmUpdate(Request $request)
