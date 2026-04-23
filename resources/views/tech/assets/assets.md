@@ -67,17 +67,15 @@ Tabellen `assets` inneholder følgende nøkkelfelt:
 Følgende funksjonalitet er planlagt, men ikke implementert enda:
 
 ### RMM Sync & Matching
-- **Automatisert Synkronisering**: Systemet støtter nå automatisert bakgrunns-synkronisering fra N-able RMM. Dette kan aktiveres i **Integrations -> N-able RMM Settings**.
+- **Multi-RMM Architecture**: Systemet bruker en dedikert `client_rmm_links`-tabell for å koble klienter, siter og assets mot flere RMM-systemer samtidig. Dette forhindrer duplikater dersom en kunde finnes i både N-able og Tactical RMM, og gjør det mulig for en enhet å være knyttet til flere systemer.
+- **Automatisert Synkronisering**: Systemet støtter automatisert bakgrunns-synkronisering fra N-able RMM (og Tactical).
   - **Auto Import**: Når aktivert, vil systemet periodisk hente nye assets og oppdatere eksisterende.
-  - **Intelligent Oppdatering**: Assets matches basert på deres unike RMM ID. Hvis en enhet allerede eksisterer (f.eks. manuelt opprettet eller fra forrige sync), vil systemet oppdatere Navn, Site, IP-adresse og annen teknisk info i stedet for å lage duplikater.
-  - **Målrettet Synkronisering**: Du kan starte synkronisering for hele klienten, eller for en spesifikk Site. Ved synkronisering av en Site vil systemet hente alle enheter for klienten fra RMM, men kun oppdatere de som tilhører den valgte siten.
-- **N-able RMM Spesifikasjoner**:
-    - Servere (`server` i RMM)
-    - Arbeidsstasjoner (`workstation` eller `workstation_node` i RMM)
-    - Mobil-enheter (`mobile_device` i RMM)
-  - *Merk: Assets synkroniseres kun dersom deres RMM Site ID samsvarer med en lokal lokasjon (Site) som har tilsvarende RMM ID registrert.*
-  - Følgende data hentes automatisk: Navn, Operativsystem, IP-adresse, MAC-adresse, Serienummer, Produsent og Modell.
-- **Tactical RMM & UniFi/Omada**: Planlagt for fremtidige oppdateringer.
+  - **Intelligent Oppdatering**: Assets matches basert på deres unike RMM ID via koblingstabellen. Hvis en enhet allerede eksisterer, vil systemet oppdatere teknisk info i stedet for å lage duplikater.
+  - **Målrettet Synkronisering**: Du kan starte synkronisering for hele klienten, eller for en spesifikk Site.
+- **RMM Spesifikasjoner**:
+    - Servere, Arbeidsstasjoner og Mobil-enheter.
+  - *Merk: Assets synkroniseres kun dersom deres lokasjon i RMM er koblet til en lokal Site i tdPSA.*
+- **Tactical RMM & UniFi/Omada**: Tactical RMM støtter nå manuell synkronisering av klienter, siter og assets.
 - Matching-logikk som kobler manuelt opprettede assets mot RMM-data basert på **Serial Number**, **MAC Address** eller **Hostname**.
 - Oppdatering av **Status** (Online/Offline) i sanntid via RMM-signaler (Under utvikling).
 

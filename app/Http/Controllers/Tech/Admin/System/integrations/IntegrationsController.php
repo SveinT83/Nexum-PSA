@@ -135,8 +135,19 @@ class IntegrationsController extends Controller
 
     public function tacticalRmmSettings()
     {
-        $integration = Integration::where('type', 'tactical_rmm')->first();
-        return view('tech.admin.system.integrations.tactical.settings', compact('integration'));
+        $integration = Integration::where("type", "tactical_rmm")->first();
+
+        if ($integration && $integration->server && $integration->getSecret("api_key")) {
+            $client = new TacticalRmmClient($integration->server, $integration->getSecret("api_key"));
+
+            // Connection Health check
+            $test = $client->testConnection();
+            $integration->is_healthy = $test["success"];
+            $integration->last_error = $test["success"] ? null : $test["message"];
+            $integration->save();
+        }
+
+        return view("tech.admin.system.integrations.tactical.settings", compact("integration"));
     }
 
     public function tacticalRmmUpdate(Request $request)
@@ -181,7 +192,6 @@ class IntegrationsController extends Controller
     {
         $request->validate([
             'client_sync_from' => 'boolean',
-            'site_sync_from' => 'boolean',
             'asset_sync_from' => 'boolean',
         ]);
 
@@ -189,7 +199,8 @@ class IntegrationsController extends Controller
 
         $config = $integration->config ?? [];
         $config['client_sync_from'] = $request->boolean('client_sync_from');
-        $config['site_sync_from'] = $request->boolean('site_sync_from');
+        // We merged site_sync_from into client_sync_from as per user request
+        unset($config['site_sync_from']);
         $config['asset_sync_from'] = $request->boolean('asset_sync_from');
         $integration->config = $config;
 

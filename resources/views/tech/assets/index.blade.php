@@ -21,14 +21,27 @@
                 <x-buttons.back :url="route('tech.clients.show', $client->id)">Back to Client</x-buttons.back>
                 @php
                     $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
-                    $canSync = $rmmIntegration && $client->rmm_id;
+                    $tacticalIntegration = \App\Models\System\Integrations\Integration::where('type', 'tactical_rmm')->where('status', 'active')->first();
+
+                    $canSyncNable = $rmmIntegration && $client->rmmLinks()->where('integration_id', $rmmIntegration->id)->exists();
+                    $canSyncTactical = $tacticalIntegration && $client->rmmLinks()->where('integration_id', $tacticalIntegration->id)->exists();
                 @endphp
-                            <button type="button"
-                                    class="btn btn-outline-primary"
-                                    @if(!$canSync) disabled title="Client not linked to RMM" @endif
-                                    onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $client->id }} } })">
-                                <i class="bi bi-arrow-repeat me-1"></i> Sync RMM
-                            </button>
+                @if($rmmIntegration)
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            @if(!$canSyncNable) disabled title="Client not linked to N-able RMM" @endif
+                            onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $client->id }} } })">
+                        <i class="bi bi-arrow-repeat me-1"></i> Sync N-able
+                    </button>
+                @endif
+                @if($tacticalIntegration)
+                    <button type="button"
+                            class="btn btn-outline-info"
+                            @if(!$canSyncTactical) disabled title="Client not linked to Tactical RMM" @endif
+                            onclick="Livewire.dispatch('startTargetedTacticalSync', { params: { type: 'assets_from', client_id: {{ $client->id }} } })">
+                        <i class="bi bi-arrow-repeat me-1"></i> Sync Tactical
+                    </button>
+                @endif
             @endif
             <a href="{{ route('tech.assets.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg"></i> Create Asset

@@ -13,6 +13,7 @@
 
     // Check if RMM integration is active for the sync button
     $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
+    $tacticalIntegration = \App\Models\System\Integrations\Integration::where('type', 'tactical_rmm')->where('status', 'active')->first();
 
     $clientWithRmm = null;
     if ($client) {
@@ -21,7 +22,8 @@
         $clientWithRmm = $site->client;
     }
 
-    $canSync = $rmmIntegration && $clientWithRmm && $clientWithRmm->rmm_id;
+    $canSyncNable = $rmmIntegration && $clientWithRmm && $clientWithRmm->rmmLinks()->where('integration_id', $rmmIntegration->id)->exists();
+    $canSyncTactical = $tacticalIntegration && $clientWithRmm && $clientWithRmm->rmmLinks()->where('integration_id', $tacticalIntegration->id)->exists();
 @endphp
 
 <div class="card mb-4">
@@ -30,12 +32,22 @@
             <i class="bi bi-cpu me-2"></i> Assets
         </h6>
         <div class="btn-group">
-            <button type="button"
-                    class="btn btn-sm btn-outline-primary"
-                    @if(!$canSync) disabled title="Client not linked to RMM" @endif
-                    onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $client ? $client->id : ($site ? $site->client_id : 'null') }}, site_id: {{ $site ? $site->id : 'null' }} } })">
-                <i class="bi bi-arrow-repeat me-1"></i> Sync RMM
-            </button>
+            @if($rmmIntegration)
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        @if(!$canSyncNable) disabled title="Client not linked to N-able RMM" @endif
+                        onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $client ? $client->id : ($site ? $site->client_id : 'null') }}, site_id: {{ $site ? $site->id : 'null' }} } })">
+                    <i class="bi bi-arrow-repeat me-1"></i> Sync N-able
+                </button>
+            @endif
+            @if($tacticalIntegration)
+                <button type="button"
+                        class="btn btn-sm btn-outline-info"
+                        @if(!$canSyncTactical) disabled title="Client not linked to Tactical RMM" @endif
+                        onclick="Livewire.dispatch('startTargetedTacticalSync', { params: { type: 'assets_from', client_id: {{ $client ? $client->id : ($site ? $site->client_id : 'null') }}, site_id: {{ $site ? $site->id : 'null' }} } })">
+                    <i class="bi bi-arrow-repeat me-1"></i> Sync Tactical
+                </button>
+            @endif
             <a href="{{ route('tech.assets.create', ['client_id' => $client ? $client->id : ($site ? $site->client_id : null), 'site_id' => $site ? $site->id : null]) }}" class="btn btn-sm btn-primary">
                 <i class="bi bi-plus-lg me-1"></i> Create
             </a>

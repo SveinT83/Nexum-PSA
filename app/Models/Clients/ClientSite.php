@@ -2,6 +2,7 @@
 
 namespace App\Models\Clients;
 
+use App\Models\System\Integrations\ClientRmmLink;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,7 +23,6 @@ class ClientSite extends Model
         'city',
         'county',
         'country',
-        'rmm_id',
         'is_default',
     ];
 
@@ -37,5 +37,13 @@ class ClientSite extends Model
     public function contacts(): HasMany
     {
         return $this->hasMany(ClientUser::class, 'client_site_id');
+    }
+
+    /**
+     * Get all RMM links for the site.
+     */
+    public function rmmLinks()
+    {
+        return $this->morphMany(ClientRmmLink::class, 'linkable');
     }
 }

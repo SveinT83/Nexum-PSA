@@ -3,6 +3,7 @@
 namespace App\Models\Clients;
 
 use App\Models\Tech\Work\Assets\Asset;
+use App\Models\System\Integrations\ClientRmmLink;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,7 +22,6 @@ class Client extends Model
         'client_number',
         'org_no',
         'billing_email',
-        'rmm_id',
         'notes',
         'active',
     ];
@@ -44,6 +44,14 @@ class Client extends Model
     public function sites(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(\App\Models\Clients\ClientSite::class);
+    }
+
+    /**
+     * Get all RMM links for the client.
+     */
+    public function rmmLinks()
+    {
+        return $this->morphMany(ClientRmmLink::class, 'linkable');
     }
 
     public function contacts(): \Illuminate\Database\Eloquent\Relations\HasManyThrough

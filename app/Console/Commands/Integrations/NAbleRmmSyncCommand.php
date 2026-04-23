@@ -66,6 +66,9 @@ class NAbleRmmSyncCommand extends Command
     protected function syncClientsFrom($rmmClient)
     {
         $this->info('Syncing clients from RMM...');
+        $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
+        if (!$integration) return;
+
         $response = $rmmClient->listClients();
 
         if (isset($response['error'])) {
@@ -76,14 +79,38 @@ class NAbleRmmSyncCommand extends Command
         foreach ($response as $item) {
             if (isset($item['error']) || !isset($item['clientid'])) continue;
 
-            Client::updateOrCreate(
-                ['rmm_id' => (string)$item['clientid']],
-                [
+            $localClient = Client::whereHas('rmmLinks', function($q) use ($integration, $item) {
+                    $q->where('integration_id', $integration->id)
+                      ->where('external_id', $item['clientid']);
+                })
+                ->orWhere('name', $item['name'])
+                ->first();
+
+            if (!$localClient) {
+                $localClient = Client::create([
                     'name' => $item['name'],
-                    // Only generate client number for new clients
-                    'client_number' => Client::where('rmm_id', (string)$item['clientid'])->exists()
-                        ? Client::where('rmm_id', (string)$item['clientid'])->first()->client_number
-                        : $this->generateClientNumber()
+                    'client_number' => $this->generateClientNumber()
+                ]);
+
+                ClientSite::create([
+                    'client_id' => $localClient->id,
+                    'name' => 'Default',
+                    'is_default' => true,
+                ]);
+            } else {
+                if ($localClient->name !== $item['name']) {
+                    $localClient->update(['name' => $item['name']]);
+                }
+            }
+
+            \App\Models\System\Integrations\ClientRmmLink::updateOrCreate(
+                [
+                    'integration_id' => $integration->id,
+                    'external_id' => (string)$item['clientid'],
+                    'linkable_type' => Client::class,
+                ],
+                [
+                    'linkable_id' => $localClient->id,
                 ]
             );
         }
@@ -92,20 +119,50 @@ class NAbleRmmSyncCommand extends Command
     protected function syncSitesFrom($rmmClient)
     {
         $this->info('Syncing sites from RMM...');
-        $clients = Client::whereNotNull('rmm_id')->get();
+        $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
+        if (!$integration) return;
+
+        $clients = Client::whereHas('rmmLinks', function($q) use ($integration) {
+            $q->where('integration_id', $integration->id);
+        })->get();
 
         foreach ($clients as $localClient) {
-            $response = $rmmClient->listSites($localClient->rmm_id);
+            $clientLink = $localClient->rmmLinks()->where('integration_id', $integration->id)->first();
+            if (!$clientLink) continue;
+
+            $response = $rmmClient->listSites($clientLink->external_id);
             if (isset($response['error'])) continue;
 
             foreach ($response as $item) {
                 if (isset($item['error']) || !isset($item['siteid'])) continue;
 
-                ClientSite::updateOrCreate(
-                    ['rmm_id' => (string)$item['siteid']],
-                    [
+                $localSite = ClientSite::where('client_id', $localClient->id)
+                    ->where(function($q) use ($integration, $item) {
+                        $q->whereHas('rmmLinks', function($sq) use ($integration, $item) {
+                            $sq->where('integration_id', $integration->id)
+                               ->where('external_id', (string)$item['siteid']);
+                        })->orWhere('name', $item['name']);
+                    })->first();
+
+                if (!$localSite) {
+                    $localSite = ClientSite::create([
                         'client_id' => $localClient->id,
                         'name' => $item['name']
+                    ]);
+                } else {
+                    if ($localSite->name !== $item['name']) {
+                        $localSite->update(['name' => $item['name']]);
+                    }
+                }
+
+                \App\Models\System\Integrations\ClientRmmLink::updateOrCreate(
+                    [
+                        'integration_id' => $integration->id,
+                        'external_id' => (string)$item['siteid'],
+                        'linkable_type' => ClientSite::class,
+                    ],
+                    [
+                        'linkable_id' => $localSite->id,
                     ]
                 );
             }
@@ -115,45 +172,89 @@ class NAbleRmmSyncCommand extends Command
     protected function syncAssetsFrom($rmmClient)
     {
         $this->info('Syncing assets from RMM...');
-        $clients = Client::whereNotNull('rmm_id')->get();
-        $deviceTypes = ['server', 'workstation', 'mobile'];
+        $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
+        if (!$integration) return;
+
+        $clients = Client::whereHas('rmmLinks', function($q) use ($integration) {
+            $q->where('integration_id', $integration->id);
+        })->get();
+
+        $deviceTypes = ['server', 'workstation'];
 
         foreach ($clients as $localClient) {
+            $clientLink = $localClient->rmmLinks()->where('integration_id', $integration->id)->first();
+            if (!$clientLink) continue;
+
             foreach ($deviceTypes as $type) {
-                $rmmDevices = $rmmClient->listDevices($localClient->rmm_id, $type);
+                $rmmDevices = $rmmClient->listDevices($clientLink->external_id, $type);
                 if (isset($rmmDevices['error'])) continue;
 
                 foreach ($rmmDevices as $rmmDevice) {
                     if (isset($rmmDevice['error']) || !isset($rmmDevice['deviceid'])) continue;
                     if (empty($rmmDevice['siteid'])) continue;
 
-                    $localSite = ClientSite::where('client_id', $localClient->id)
-                        ->where('rmm_id', (string)$rmmDevice['siteid'])
+                    $siteLink = \App\Models\System\Integrations\ClientRmmLink::where('integration_id', $integration->id)
+                        ->where('linkable_type', ClientSite::class)
+                        ->where('external_id', (string)$rmmDevice['siteid'])
                         ->first();
 
-                    if (!$localSite) continue;
+                    if (!$siteLink) continue;
+                    $localSite = $siteLink->linkable;
 
-                    Asset::updateOrCreate(
-                        ['rmm_id' => (string)$rmmDevice['deviceid']],
+                    $asset = Asset::whereHas('rmmLinks', function($query) use ($integration, $rmmDevice) {
+                        $query->where('integration_id', $integration->id)
+                            ->where('external_id', (string)$rmmDevice['deviceid']);
+                    })->first();
+
+                    if (!$asset) {
+                        // Fallback match within client
+                        $asset = Asset::where('client_id', $localClient->id)
+                            ->where(function($query) use ($rmmDevice) {
+                                if (!empty($rmmDevice['name'])) {
+                                    $query->where('hostname', $rmmDevice['name']);
+                                }
+                                if (!empty($rmmDevice['serial_number'])) {
+                                    $query->orWhere('serial_number', $rmmDevice['serial_number']);
+                                }
+                            })->first();
+                    }
+
+                    $assetData = [
+                        'client_id' => $localClient->id,
+                        'site_id' => $localSite->id,
+                        'name' => $rmmDevice['name'],
+                        'type' => $rmmDevice['type'],
+                        'vendor' => $rmmDevice['vendor'] ?: null,
+                        'model' => $rmmDevice['model'] ?: null,
+                        'serial_number' => $rmmDevice['serial_number'] ?: null,
+                        'mac_address' => $rmmDevice['mac_address'] ?: null,
+                        'ip_address' => $rmmDevice['ip_address'] ?: null,
+                        'hostname' => $rmmDevice['name'],
+                        'source' => 'nable',
+                        'is_managed' => true,
+                        'status' => 'unknown',
+                        'last_seen_at' => now(),
+                        'metadata' => [
+                            'os' => $rmmDevice['os'],
+                            'rmm_type' => $type
+                        ]
+                    ];
+
+                    if ($asset) {
+                        $asset->update($assetData);
+                    } else {
+                        $asset = Asset::create($assetData);
+                    }
+
+                    // Link the asset
+                    \App\Models\System\Integrations\ClientRmmLink::updateOrCreate(
                         [
-                            'client_id' => $localClient->id,
-                            'site_id' => $localSite->id,
-                            'name' => $rmmDevice['name'],
-                            'type' => $rmmDevice['type'],
-                            'vendor' => $rmmDevice['vendor'] ?: null,
-                            'model' => $rmmDevice['model'] ?: null,
-                            'serial_number' => $rmmDevice['serial_number'] ?: null,
-                            'mac_address' => $rmmDevice['mac_address'] ?: null,
-                            'ip_address' => $rmmDevice['ip_address'] ?: null,
-                            'hostname' => $rmmDevice['name'],
-                            'source' => 'nable',
-                            'is_managed' => true,
-                            'status' => 'unknown',
-                            'last_seen_at' => now(),
-                            'metadata' => [
-                                'os' => $rmmDevice['os'],
-                                'rmm_type' => $type
-                            ]
+                            'integration_id' => $integration->id,
+                            'linkable_type' => Asset::class,
+                            'linkable_id' => $asset->id,
+                        ],
+                        [
+                            'external_id' => (string)$rmmDevice['deviceid'],
                         ]
                     );
                 }

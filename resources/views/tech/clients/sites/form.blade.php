@@ -99,7 +99,14 @@
                 <x-forms.input_text name="country" labelName="Country" value="{{$site->country ?? ''}}"></x-forms.input_text>
             </div>
 
-            @if(!$isEdit && ($nableActive ?? false) && (isset($client) && $client->rmm_id))
+            @php
+                $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
+                $isLinkedToRmm = false;
+                if ($rmmIntegration && isset($client)) {
+                    $isLinkedToRmm = $client->rmmLinks()->where('integration_id', $rmmIntegration->id)->exists();
+                }
+            @endphp
+            @if(!$isEdit && ($nableActive ?? false) && $isLinkedToRmm)
                 <div class="col-12 mt-3">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="1" name="create_in_rmm" id="rmmCheck" {{ old('create_in_rmm') ? 'checked' : '' }}>

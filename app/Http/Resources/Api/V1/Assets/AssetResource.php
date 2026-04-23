@@ -30,7 +30,12 @@ class AssetResource extends JsonResource
             'ip_type' => $this->ip_type,
             'hostname' => $this->hostname,
             'source' => $this->source,
-            'rmm_id' => $this->rmm_id,
+            'rmm_links' => $this->rmmLinks->map(function($link) {
+                return [
+                    'integration_id' => $link->integration_id,
+                    'external_id' => $link->external_id,
+                ];
+            }),
             'is_managed' => (bool) $this->is_managed,
             'status' => $this->status,
             'last_seen_at' => $this->last_seen_at,

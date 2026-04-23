@@ -32,11 +32,11 @@
                             @method('PUT')
 
                             <div class="mb-3">
-                                <label for="rmm_id" class="form-label">Link to N-able RMM Client</label>
-                                <select name="rmm_id" id="rmm_id" class="form-select" {{ isset($rmmError) ? 'disabled' : '' }}>
+                                <label for="rmm_external_id" class="form-label">Link to N-able RMM Client (Mapping)</label>
+                                <select name="rmm_external_id" id="rmm_external_id" class="form-select" {{ isset($rmmError) ? 'disabled' : '' }}>
                                     <option value="">-- {{ isset($rmmError) ? 'Error fetching clients' : 'Select RMM Client' }} --</option>
                                     @foreach($rmmClients as $rmmClient)
-                                        <option value="{{ $rmmClient['clientid'] }}" {{ $client->rmm_id == $rmmClient['clientid'] ? 'selected' : '' }}>
+                                        <option value="{{ $rmmClient['clientid'] }}" {{ ($currentRmmId ?? '') == $rmmClient['clientid'] ? 'selected' : '' }}>
                                             {{ $rmmClient['name'] }} ({{ $rmmClient['clientid'] }})
                                         </option>
                                     @endforeach

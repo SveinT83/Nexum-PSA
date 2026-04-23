@@ -66,21 +66,52 @@ class TacticalRmmClient
     }
 
     /**
+     * Get all agents from Tactical RMM.
+     */
+    public function getAgents(?int $siteId = null): array
+    {
+        $endpoint = '/agents/';
+        if ($siteId) {
+            $endpoint .= '?site=' . $siteId;
+        }
+        return $this->get($endpoint);
+    }
+
+    /**
+     * Get details for a specific agent.
+     */
+    public function getAgentDetails(string $agentId): array
+    {
+        return $this->get("/agents/{$agentId}/");
+    }
+
+    /**
      * Generic GET request to Tactical RMM API.
      */
     protected function get(string $endpoint): array
     {
         try {
+            $url = rtrim($this->baseUrl, "/") . "/" . ltrim($endpoint, "/");
+            Log::info("Tactical RMM API GET requesting: " . $url);
+
             $response = Http::withHeaders([
                 'X-API-KEY' => $this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->get($this->baseUrl . $endpoint);
+            ])->timeout(15)->get($url);
 
             if ($response->successful()) {
-                return $response->json();
+                $data = $response->json();
+                Log::info("Tactical RMM API GET {$endpoint} success", [
+                    'count' => is_array($data) ? count($data) : 'not an array',
+                    'raw_sample' => substr($response->body(), 0, 500)
+                ]);
+                return is_array($data) ? $data : [];
             }
 
-            Log::error("Tactical RMM API GET {$endpoint} failed: " . $response->status());
+            Log::error("Tactical RMM API GET {$endpoint} failed: " . $response->status(), [
+                'body' => $response->body(),
+                'url' => $url
+            ]);
             return [];
         } catch (\Exception $e) {
             Log::error("Tactical RMM API GET {$endpoint} exception: " . $e->getMessage());

@@ -25,17 +25,39 @@ class ClientSettingsController extends Controller
             }
         }
 
-        return view('tech.clients.settings.edit', compact('client', 'rmmIntegration', 'rmmClients', 'rmmError'));
+        // Get current RMM Link for this specific integration
+        $currentRmmId = null;
+        if ($rmmIntegration) {
+            $link = $client->rmmLinks()->where('integration_id', $rmmIntegration->id)->first();
+            $currentRmmId = $link ? $link->external_id : null;
+        }
+
+        return view('tech.clients.settings.edit', compact('client', 'rmmIntegration', 'rmmClients', 'rmmError', 'currentRmmId'));
     }
 
     public function update(Request $request, Client $client)
     {
         $request->validate([
-            'rmm_id' => 'nullable|string',
+            'rmm_external_id' => 'nullable|string',
         ]);
 
-        $client->rmm_id = $request->rmm_id;
-        $client->save();
+        $rmmIntegration = Integration::where('type', 'rmm')->where('status', 'active')->first();
+        if ($rmmIntegration) {
+            if ($request->rmm_external_id) {
+                \App\Models\System\Integrations\ClientRmmLink::updateOrCreate(
+                    [
+                        'integration_id' => $rmmIntegration->id,
+                        'linkable_type' => Client::class,
+                        'linkable_id' => $client->id,
+                    ],
+                    [
+                        'external_id' => $request->rmm_external_id,
+                    ]
+                );
+            } else {
+                $client->rmmLinks()->where('integration_id', $rmmIntegration->id)->delete();
+            }
+        }
 
         return redirect()->route('tech.clients.show', $client->id)
             ->with('success', 'Client settings updated.');

@@ -60,19 +60,9 @@
                                     <input class="form-check-input" type="checkbox" role="switch" id="client_sync_from"
                                            name="client_sync_from" value="1"
                                            {{ ($integration && isset($integration->config['client_sync_from']) && $integration->config['client_sync_from']) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="client_sync_from">Sync clients from Tactical RMM</label>
+                                    <label class="form-check-label" for="client_sync_from">Sync clients and sites from Tactical RMM</label>
                                 </div>
-                                <small class="text-muted d-block mt-1">Automatically import clients from Tactical RMM.</small>
-                            </div>
-
-                            <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="site_sync_from"
-                                           name="site_sync_from" value="1"
-                                           {{ ($integration && isset($integration->config['site_sync_from']) && $integration->config['site_sync_from']) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="site_sync_from">Sync sites from Tactical RMM</label>
-                                </div>
-                                <small class="text-muted d-block mt-1">Automatically import sites for linked clients.</small>
+                                <small class="text-muted d-block mt-1">Automatically import and update clients and their sites from Tactical RMM.</small>
                             </div>
 
                             <div class="mb-3">
@@ -92,13 +82,39 @@
                     </div>
                 </form>
 
-                {{-- Manual Synchronization Card (Placeholder for now) --}}
+                {{-- Manual Synchronization Card --}}
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Manual Synchronization</h5>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted">Interactive manual sync for Tactical RMM is coming soon.</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
+                                        <h6>Sync Clients and sites</h6>
+                                        <p class="small text-muted">Fetch and link clients from Tactical RMM.</p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                onclick="Livewire.dispatch('startTacticalSync', { params: { type: 'clients_from' } })">
+                                            Sync Clients from RMM
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
+                                        <h6>Sync Assets</h6>
+                                        <p class="small text-muted">Import and update assets from Tactical RMM.</p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                onclick="Livewire.dispatch('startTacticalSync', { params: { type: 'assets_from' } })">
+                                            Sync Assets from RMM
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,6 +123,7 @@
 @endsection
 
 @section('rightbar')
+
     {{-- Status Overview Card --}}
     <div class="card mb-4">
         <div class="card-header">
@@ -146,21 +163,21 @@
         </div>
     @endif
 
-    {{-- Documentation Card --}}
+    {{-- Documentation Card (Minimized) --}}
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Documentation</h5>
-            <i class="bi bi-info-circle"></i>
+            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#docModal">
+                <i class="bi bi-info-circle"></i>
+            </button>
         </div>
-        <div class="card-body">
-            <p class="small text-muted">
-                This integration handles Tactical RMM agents, clients, and sites.
-            </p>
-            <div class="d-grid gap-2">
-                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#docModal">
-                    <i class="bi bi-book me-1"></i> View Full Documentation
-                </button>
-            </div>
+
+        <div class="card-body text-center">
+            <p>This system handles the synchronization of clients, sites, and assets between tdPSA and Tactical RMM.</p>
+
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#docModal">
+                <i class="bi bi-info-circle"></i> View Documentation
+            </button>
         </div>
     </div>
 

@@ -43,8 +43,11 @@
                         @if($rmmIntegration && $rmmIntegration->status === 'active')
                             <dt class="col-sm-3">N-able RMM</dt>
                             <dd class="col-sm-9">
-                                @if($client->rmm_id)
-                                    <span class="badge bg-success">Active (ID: {{ $client->rmm_id }})</span>
+                                @php
+                                    $clientLink = $client->rmmLinks()->where('integration_id', $rmmIntegration->id)->first();
+                                @endphp
+                                @if($clientLink)
+                                    <span class="badge bg-success">Active (ID: {{ $clientLink->external_id }})</span>
                                 @else
                                     <span class="badge bg-warning text-dark">Not Linked</span>
                                 @endif

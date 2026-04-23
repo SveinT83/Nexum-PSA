@@ -7,10 +7,11 @@ This system handles the synchronization of clients, sites, and assets between td
 *   **Site Synchronization**: Synchronizes sites for all linked clients.
 *   **Asset Synchronization**:
     *   Imports servers, workstations, and mobile devices from RMM.
-    *   Links assets to clients and sites based on RMM IDs.
+    *   Links assets to clients and sites based on RMM IDs using the central `client_rmm_links` table.
+    *   Supports multiple RMM integrations (e.g., both N-able and Tactical) for the same client.
     *   Uses `updateOrCreate` logic keyed by RMM Device ID to prevent duplicates and keep data current (updates Name, IP, OS, etc.).
     *   **Targeted Sync**: Can be triggered from a Client or Site profile to sync only relevant assets.
-*   **Automatic Linking**: The system attempts to link existing clients based on name if they are not already linked via `rmm_id`.
+*   **Automatic Linking**: The system attempts to link existing clients based on name if they are not already linked via the mapping table.
 *   **Real-time Updates**: Uses Livewire to provide progress visualization and detailed results (Created, Updated, Linked, Errors) during manual synchronization.
 
 #### Automation

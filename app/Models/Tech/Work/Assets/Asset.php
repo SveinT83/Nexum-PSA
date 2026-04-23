@@ -4,6 +4,7 @@ namespace App\Models\Tech\Work\Assets;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
+use App\Models\System\Integrations\ClientRmmLink;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,7 +37,6 @@ class Asset extends Model
         'ip_type',
         'hostname',
         'source',
-        'rmm_id',
         'is_managed',
         'status',
         'last_seen_at',
@@ -67,5 +67,13 @@ class Asset extends Model
     public function vendorRelation(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Doc\Vendor::class, 'vendor_id');
+    }
+
+    /**
+     * Get all RMM links for the asset.
+     */
+    public function rmmLinks()
+    {
+        return $this->morphMany(ClientRmmLink::class, 'linkable');
     }
 }

@@ -93,13 +93,9 @@
 
             </div>
 
-            {{-- Hidden Livewire synchronization component for N-able RMM --}}
-            @php
-                $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
-            @endphp
-            @if($rmmIntegration)
-                <livewire:tech.admin.system.integrations.n-able-rmm-sync />
-            @endif
+            {{-- Hidden Livewire synchronization components for RMM --}}
+            <livewire:tech.admin.system.integrations.n-able-rmm-sync />
+            <livewire:tech.admin.system.integrations.tactical-rmm-sync />
         </main>
 
         <!-- ------------------------------------------------- -->

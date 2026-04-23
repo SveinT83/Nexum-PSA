@@ -302,13 +302,21 @@ class NAbleRmmClient
             return ['error' => 'Integration not fully configured or active.'];
         }
 
+        // Map internal device types to N-able RMM types
+        // Internal: server, workstation, mobile
+        // N-able RMM: server, workstation, mobile_device
+        $rmmType = $deviceType;
+        if ($deviceType === 'mobile') {
+            $rmmType = 'mobile_device';
+        }
+
         try {
             $url = rtrim($this->server, '/') . '/api/';
             $response = Http::get($url, [
                 'apikey' => $this->apiKey,
                 'service' => 'list_devices_at_client',
                 'clientid' => $clientid,
-                'devicetype' => $deviceType,
+                'devicetype' => $rmmType,
             ]);
 
             if ($response->failed()) {

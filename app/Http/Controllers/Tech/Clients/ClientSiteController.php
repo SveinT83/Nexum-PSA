@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
+use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use App\Http\Requests\Tech\Clients\SiteRequest;
@@ -178,15 +179,23 @@ class ClientSiteController extends Controller
             $site = $targetClient->sites()->create($data);
 
             // Handle N-able RMM creation if requested
-            if (!empty($data['create_in_rmm']) && $targetClient->rmm_id) {
+            if (!empty($data['create_in_rmm'])) {
                 $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
-                if ($integration) {
+                $clientLink = $targetClient->rmmLinks()->where('integration_id', $integration?->id)->first();
+
+                if ($integration && $clientLink) {
                     $rmmClient = new NAbleRmmClient($integration);
-                    $result = $rmmClient->addSite($targetClient->rmm_id, $site->name);
+                    $result = $rmmClient->addSite($clientLink->external_id, $site->name);
                     $status = $result['success'] ? 'success' : 'error';
 
                     if ($status === 'success' && !empty($result['siteid'])) {
-                        $site->update(['rmm_id' => $result['siteid']]);
+                        // Create RMM Link
+                        ClientRmmLink::create([
+                            'integration_id' => $integration->id,
+                            'external_id' => $result['siteid'],
+                            'linkable_type' => ClientSite::class,
+                            'linkable_id' => $site->id,
+                        ]);
                     } else {
                         $warning = "Site created locally, but failed to create in N-able RMM: " . ($result['error'] ?? 'Unknown error');
                     }

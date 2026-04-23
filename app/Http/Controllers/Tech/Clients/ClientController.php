@@ -7,6 +7,7 @@ use App\Http\Requests\Tech\Clients\ClientRequest;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
+use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use App\Service\SideBarMenus\ClientsMenu;
@@ -110,8 +111,9 @@ class ClientController extends Controller
         $roles = ['Daglig leder', 'Innehaver', 'IT-kontakt', 'Økonomi', 'Annet'];
         $countries = ['NO' => 'Norway', 'SE' => 'Sweden', 'DK' => 'Denmark'];
 
-        // Check if N-able RMM is active
-        $nableActive = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->exists();
+        // Check if RMM is active
+        $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
+        $nableActive = $rmmIntegration !== null;
 
         return view('tech.clients.create', [
             'suggestedClientNumber' => $suggestedClientNumber,
@@ -177,7 +179,13 @@ class ClientController extends Controller
                     $status = $result['success'] ? 'success' : 'error';
 
                     if ($status === 'success' && !empty($result['clientid'])) {
-                        $client->update(['rmm_id' => $result['clientid']]);
+                        // Create RMM Link
+                        ClientRmmLink::create([
+                            'integration_id' => $integration->id,
+                            'external_id' => $result['clientid'],
+                            'linkable_type' => Client::class,
+                            'linkable_id' => $client->id,
+                        ]);
                     } else {
                         $warning = "Client created locally, but failed to create in N-able RMM: " . ($result['error'] ?? 'Unknown error');
                     }
