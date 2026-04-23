@@ -48,6 +48,7 @@ The settings are split into two sections:
     *   Clients are matched by name or external ID in the `client_rmm_links` table.
     *   Sites are matched by name or external ID within the client.
     *   Assets are matched by Tactical RMM Agent ID (stored in the `client_rmm_links` table with `linkable_type` = `Asset`).
+    *   **Fallback Matching**: Hvis ingen direkte ID-link finnes for en Asset, vil systemet søke etter samme **hostname** under den identifiserte **klienten**. Dette gjør at Assets fra både N-Able og Tactical RMM kan samles på samme Asset-post i tdPSA.
 
 #### Troubleshooting
 *   **Connection Errors**: Verify that the API URL is accessible and the API key is correct.

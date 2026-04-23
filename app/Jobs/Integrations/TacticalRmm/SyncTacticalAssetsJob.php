@@ -113,10 +113,17 @@ class SyncTacticalAssetsJob implements ShouldQueue
             return;
         }
 
-        // 2. Resolve Asset (STRICT: Match using RMM link)
+        // 2. Resolve Asset
         $agentExternalId = (string)($agentData['agent_id'] ?? $agentData['pk']);
         $existingLink = $this->findExistingLink($agentExternalId, $integration);
         $asset = $existingLink ? $existingLink->linkable : null;
+
+        // Fallback: Match by hostname within the same client if no direct link exists
+        if (!$asset && isset($agentData['hostname'])) {
+            $asset = Asset::where('client_id', $localClient->id)
+                ->where('hostname', $agentData['hostname'])
+                ->first();
+        }
 
         // 3. Map Data
         $assetData = $this->mapAgentToAssetData($agentData, $localClient, $localSite);
