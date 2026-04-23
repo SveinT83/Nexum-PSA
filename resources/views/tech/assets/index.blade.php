@@ -31,7 +31,7 @@
                             class="btn btn-outline-primary"
                             @if(!$canSyncNable) disabled title="Client not linked to N-able RMM" @endif
                             onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $client->id }} } })">
-                        <i class="bi bi-arrow-repeat me-1"></i> Sync N-able
+                        <i class="bi bi-arrow-repeat me-1"></i> Sync Assets (N-able)
                     </button>
                 @endif
                 @if($tacticalIntegration)
@@ -39,13 +39,18 @@
                             class="btn btn-outline-info"
                             @if(!$canSyncTactical) disabled title="Client not linked to Tactical RMM" @endif
                             onclick="Livewire.dispatch('startTargetedTacticalSync', { params: { type: 'assets_from', client_id: {{ $client->id }} } })">
-                        <i class="bi bi-arrow-repeat me-1"></i> Sync Tactical
+                        <i class="bi bi-arrow-repeat me-1"></i> Sync Assets (Tactical)
                     </button>
                 @endif
             @endif
             <a href="{{ route('tech.assets.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg"></i> Create Asset
             </a>
+            @if($client)
+                <button type="button" class="btn btn-outline-warning" onclick="Livewire.dispatchTo('tech.work.assets.client-alerts-summary', 'syncAlerts')">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Sync Alerts
+                </button>
+            @endif
         </div>
     </div>
 @endsection
@@ -82,7 +87,7 @@
                         <option value="other" {{ request('type') == 'other' ? 'selected' : '' }}>Other</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="status" class="form-label text-muted small fw-bold text-uppercase">Status</label>
                     <select name="status" id="status" class="form-select">
                         <option value="">All Statuses</option>
@@ -91,6 +96,14 @@
                         <option value="unknown" {{ request('status') == 'unknown' ? 'selected' : '' }}>Unknown</option>
                         <option value="in_service" {{ request('status') == 'in_service' ? 'selected' : '' }}>In Service</option>
                     </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="has_alerts" value="1" id="has_alerts" {{ request('has_alerts') ? 'checked' : '' }}>
+                        <label class="form-check-label text-muted small fw-bold text-uppercase" for="has_alerts">
+                            With Active Alerts
+                        </label>
+                    </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-outline-secondary w-100">
@@ -145,9 +158,18 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge bg-light text-dark border">
-                                        N/A
-                                    </span>
+                                    @php
+                                        $activeAlertsCount = $asset->alerts()->where('status', 'active')->count();
+                                    @endphp
+                                    @if($activeAlertsCount > 0)
+                                        <a href="{{ route('tech.assets.show', $asset->id) }}#alerts" class="badge bg-danger text-decoration-none">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ $activeAlertsCount }} Alerts
+                                        </a>
+                                    @else
+                                        <span class="badge bg-light text-dark border">
+                                            Online
+                                        </span>
+                                    @endif
                                 </td>
                                 <td>
                                     <small>{{ $asset->last_seen_at ? $asset->last_seen_at->diffForHumans() : 'Never' }}</small>
@@ -186,6 +208,10 @@
 @endsection
 
 @section('rightbar')
+
+    <!-- Alerts Summary Widget -->
+    @livewire('tech.work.assets.client-alerts-summary', ['client' => $client])
+
     <!-- ======================================================================
          DOCUMENTATION CARD
          - Provides a summary of the module and a link to the full documentation

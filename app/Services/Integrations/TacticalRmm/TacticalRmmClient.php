@@ -86,6 +86,14 @@ class TacticalRmmClient
     }
 
     /**
+     * Get checks for a specific agent.
+     */
+    public function getAgentChecks(string $agentId): array
+    {
+        return $this->get("/agents/{$agentId}/checks/");
+    }
+
+    /**
      * Generic GET request to Tactical RMM API.
      */
     protected function get(string $endpoint): array

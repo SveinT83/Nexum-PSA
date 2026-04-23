@@ -76,4 +76,9 @@ class Asset extends Model
     {
         return $this->morphMany(ClientRmmLink::class, 'linkable');
     }
+
+    public function alerts()
+    {
+        return $this->hasMany(AssetAlert::class);
+    }
 }

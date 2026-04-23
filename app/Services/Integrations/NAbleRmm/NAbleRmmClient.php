@@ -617,4 +617,76 @@ class NAbleRmmClient
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
+
+    /**
+     * List failing checks from N-able RMM.
+     */
+    public function listFailingChecks(): array
+    {
+        if (!$this->isConfigured()) {
+            return ['error' => 'Integration not fully configured or active.'];
+        }
+
+        try {
+            $url = rtrim($this->server, '/') . '/api/';
+            $response = Http::get($url, [
+                'apikey' => $this->apiKey,
+                'service' => 'list_failing_checks',
+            ]);
+
+            if ($response->failed()) {
+                return ['error' => 'HTTP Error: ' . $response->status()];
+            }
+
+            return $this->parseXmlFailingChecks($response->body());
+        } catch (\Exception $e) {
+            Log::error('N-able RMM listFailingChecks exception', ['message' => $e->getMessage()]);
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Parse failing checks XML response.
+     */
+    protected function parseXmlFailingChecks(string $xmlString): array
+    {
+        try {
+            $xml = simplexml_load_string($xmlString);
+            if (!$xml) {
+                return ['error' => 'Invalid XML response.'];
+            }
+
+            $status = (string)($xml->attributes()->status ?? $xml->status ?? '');
+            if (empty($status) && isset($xml->items)) {
+                $status = 'OK';
+            }
+
+            if ($status !== 'OK' && $status !== 'SUCCESS') {
+                return ['error' => 'API Error: ' . ($status ?: 'Unknown status')];
+            }
+
+            $checks = [];
+
+            // The XML structure for list_failing_checks is highly nested:
+            // <result><items><client><site><workstations><workstation><failed_checks><check>...
+            // or <result><items><client><site><servers><server><failed_checks><check>...
+            // We'll use XPath to find all check elements regardless of nesting
+            $allChecks = $xml->xpath('//check');
+
+            if ($allChecks) {
+                foreach ($allChecks as $check) {
+                    $checks[] = [
+                        'checkid' => (string)$check->checkid,
+                        'deviceid' => (string)($check->deviceid ?? $check->xpath('ancestor::workstation/id')[0] ?? $check->xpath('ancestor::server/id')[0] ?? ''),
+                        'description' => (string)$check->description,
+                        'status' => (string)$check->status,
+                    ];
+                }
+            }
+
+            return $checks;
+        } catch (\Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
 }

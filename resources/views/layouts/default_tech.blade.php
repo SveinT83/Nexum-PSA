@@ -96,6 +96,7 @@
             {{-- Hidden Livewire synchronization components for RMM --}}
             <livewire:tech.admin.system.integrations.n-able-rmm-sync />
             <livewire:tech.admin.system.integrations.tactical-rmm-sync />
+            <livewire:tech.work.assets.alerts.alert-sync-processor />
         </main>
 
         <!-- ------------------------------------------------- -->

@@ -32,7 +32,7 @@
                         class="btn btn-sm btn-outline-primary"
                         @if(!$canSyncNable) disabled title="Client not linked to N-able RMM" @endif
                         onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
-                    <i class="bi bi-arrow-repeat me-1"></i> Sync N-able
+                    <i class="bi bi-arrow-repeat me-1"></i> Sync Assets (N-able)
                 </button>
             @endif
             @if($tacticalIntegration)
@@ -40,7 +40,7 @@
                         class="btn btn-sm btn-outline-info"
                         @if(!$canSyncTactical) disabled title="Client not linked to Tactical RMM" @endif
                         onclick="Livewire.dispatch('startTargetedTacticalSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
-                    <i class="bi bi-arrow-repeat me-1"></i> Sync Tactical
+                    <i class="bi bi-arrow-repeat me-1"></i> Sync Assets (Tactical)
                 </button>
             @endif
             <x-buttons.editlink :url="route('tech.assets.edit', $asset->id)" class="btn btn-sm btn-outline-secondary bi bi-pencil">Edit</x-buttons.editlink>
@@ -142,6 +142,9 @@
 @endsection
 
 @section('rightbar')
+        {{-- SECTION: Alerts Sidebar --}}
+        <livewire:tech.work.assets.asset-alerts :asset="$asset" />
+
         {{-- SECTION: Status & Lifecycle Sidebar --}}
         <div class="card mb-4">
             <div class="card-header">

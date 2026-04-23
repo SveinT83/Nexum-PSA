@@ -8,6 +8,7 @@ use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
+use App\Models\Tech\Work\Assets\Asset;
 use App\Services\Integrations\TacticalRmm\TacticalRmmClient;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -40,7 +41,10 @@ class TacticalRmmSync extends Component
     public $foundSitesCount = 0;
     public $foundAssetsCount = 0;
 
-    protected $listeners = ['startTacticalSync' => 'initSync', 'startTargetedTacticalSync' => 'initTargetedSync'];
+    protected $listeners = [
+        'startTacticalSync' => 'initSync',
+        'startTargetedTacticalSync' => 'initTargetedSync'
+    ];
 
     public function initTargetedSync($params = [])
     {

@@ -43,6 +43,18 @@ Schedule::job(new NAbleRmmSyncJob())
     ->name('integrations.nable_rmm.sync')
     ->withoutOverlapping();
 
+// RMM Alert Sync every 15 minutes
+Schedule::command('integrations:rmm-alert-sync')
+    ->everyFifteenMinutes()
+    ->name('integrations.rmm_alerts.sync')
+    ->withoutOverlapping();
+
+// Tactical RMM Sync every hour
+Schedule::command('integrations:tactical-rmm-sync')
+    ->hourly()
+    ->name('integrations.tactical_rmm.sync')
+    ->withoutOverlapping();
+
 // Manual polling via CLI: php artisan email:poll [--account=ID] [--async]
 Artisan::command('email:poll {--account=} {--async}', function () {
     $accountId = $this->option('account');

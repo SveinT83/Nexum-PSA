@@ -24,8 +24,13 @@ class AssetController extends Controller
      * @param Client|null $client Valgfri klient fra rute-parameter
      * @return \Illuminate\View\View
      */
-    public function index(Request $request, Client $client = null)
+    public function index(Request $request, $client = null)
     {
+        // Handle $client being passed as an ID or as a Model
+        if ($client && !($client instanceof Client)) {
+            $client = Client::find($client);
+        }
+
         // 1. Initialiser spørring med relasjoner for å unngå N+1 problemer
         $query = Asset::query()->with(['client', 'site', 'user', 'vendorRelation']);
 
@@ -45,6 +50,12 @@ class AssetController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->boolean('has_alerts')) {
+            $query->whereHas('alerts', function($q) {
+                $q->where('status', 'active');
+            });
         }
 
         // 4. Hent data med paginering
