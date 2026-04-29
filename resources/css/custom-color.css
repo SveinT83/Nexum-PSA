@@ -78,8 +78,16 @@ a.row {
     color: black !important;
 }
 
+.nav-item .black{
+    color: black !important;
+}
+
 .nav-link {
-    color: #333;
+    color: white;
+}
+
+.nav-link .black{
+    color: black;
 }
 
 .nav-link:hover {

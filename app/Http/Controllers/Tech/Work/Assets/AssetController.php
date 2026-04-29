@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tech\Work\Assets;
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Models\Tech\Work\Assets\AssetAlert;
 use Illuminate\Http\Request;
 
 /**
@@ -117,12 +118,16 @@ class AssetController extends Controller
      * @param Asset $asset
      * @return \Illuminate\View\View
      */
-    public function show(Asset $asset)
+    public function show(Asset $asset, $tab = 'summary')
     {
-        // Last inn nødvendige relasjoner for detaljvisning
-        $asset->load(['client', 'site', 'user', 'vendorRelation']);
+        // Last inn nødvendige relasjoner for detaljvisning, inkludert alerts
+        $asset->load(['client', 'site', 'user', 'vendorRelation', 'alerts']);
 
-        return view('tech.assets.show', compact('asset'));
+        // Hent alle alerts knyttet til denne asseten
+        // Vi bruker relasjonen 'alerts' som er definert i Asset-modellen
+        $outages = $asset->alerts;
+
+        return view('tech.assets.show', compact('asset', 'tab', 'outages'));
     }
 
     /**

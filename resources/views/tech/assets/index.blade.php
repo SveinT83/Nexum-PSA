@@ -137,7 +137,7 @@
                         @forelse($assets as $asset)
                             <tr>
                                 <td class="ps-3">
-                                    <a href="{{ route('tech.assets.show', $asset->id) }}" class="fw-bold text-decoration-none">
+                                    <a href="{{ route('tech.assets.show', ['asset' => $asset->id, 'tab' => 'summary']) }}" class="fw-bold text-decoration-none">
                                         {{ $asset->name }}
                                     </a>
                                     @if($asset->hostname)

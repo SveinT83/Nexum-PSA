@@ -527,4 +527,22 @@ class ContractController extends Controller
 
         return back()->with('success', 'Contract manually approved and marked as Won.');
     }
+
+    /**
+     * Delete the contract.
+     */
+    public function destroy(Contracts $contract)
+    {
+        if ($contract->approval_status !== 'draft') {
+            return back()->with('error', 'Only draft contracts can be deleted.');
+        }
+
+        if ($contract->end_date && $contract->end_date->isPast()) {
+            return back()->with('error', 'Cannot delete a contract that has already ended.');
+        }
+
+        $contract->delete();
+
+        return redirect()->route('tech.contracts.index')->with('success', 'Contract deleted successfully.');
+    }
 }

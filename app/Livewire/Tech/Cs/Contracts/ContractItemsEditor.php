@@ -31,6 +31,7 @@ class ContractItemsEditor extends Component
     {
         $this->contract = $contract;
         $this->isEditable = $contract->isEditable();
+        $this->availableServices = Services::all();
         $this->loadItems();
     }
 

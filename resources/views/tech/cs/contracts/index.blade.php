@@ -77,6 +77,13 @@
                                     @endif
                                     <a href="{{ route('tech.contracts.show', $contract) }}" class="btn btn-sm btn-outline-primary">Open</a>
 
+                                    @if($contract->approval_status === 'draft' && (!$contract->end_date || $contract->end_date->isFuture()))
+                                        <form action="{{ route('tech.contracts.destroy', $contract) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this draft contract?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

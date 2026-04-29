@@ -43,76 +43,202 @@
                     <i class="bi bi-arrow-repeat me-1"></i> Sync Assets (Tactical)
                 </button>
             @endif
+
+            <!-- Edit button -->
             <x-buttons.editlink :url="route('tech.assets.edit', $asset->id)" class="btn btn-sm btn-outline-secondary bi bi-pencil">Edit</x-buttons.editlink>
         </div>
     </div>
 @endsection
 
 @section('content')
+
+    <!-- ======================================================================
+         CONTENT TABS - Shows aktive from URL
+         ====================================================================== -->
+
+    <ul class="nav nav-tabs">
+        <li class="nav-item black">
+            <a class="nav-link black {{$tab == 'summary' ? 'active' : ''}}" href="{{ route('tech.assets.show', ['asset' => $asset->id, 'tab' => 'summary']) }}">Summary</a>
+        </li>
+        <li class="nav-item black">
+            <a class="nav-link black {{$tab == 'outage' ? 'active' : ''}}" aria-current="page" href="{{ route('tech.assets.show', ['asset' => $asset->id, 'tab' => 'outage']) }}">Outage</a>
+        </li>
+        <li class="nav-item black">
+            <a class="nav-link black {{$tab == 'checks' ? 'active' : ''}}" href="{{ route('tech.assets.show', ['asset' => $asset->id, 'tab' => 'checks']) }}">Checks</a>
+        </li>
+    </ul>
+
     <div class="row">
+
         <div class="col-md-12">
 
-            {{-- SECTION: Primary Asset Details --}}
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Asset Details</h5>
+            <!-- -------------------------------------------------------------------------------------------------- -->
+            <!-- Asset Summary -->
+            <!-- -------------------------------------------------------------------------------------------------- -->
+            @if($tab == 'summary')
+
+                <!-- ------------------------------------------------- -->
+                <!-- Asset summary Card -->
+                <!-- ------------------------------------------------- -->
+                <div class="card mt-2 mb-4">
+
+                    <!-- Asset summary Card Header -->
+                    <div class="card-header">
+                        <h5 class="mb-0">Asset Details</h5>
+                    </div>
+
+                    <!-- Asset summary Card Body -->
+                    <div class="card-body">
+
+                        <!-- Client -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">Client:</div>
+                            <div class="col-sm-9">
+                                <a href="{{ route('tech.clients.show', $asset->client_id) }}">
+                                    {{ $asset->client->name }}
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Site -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">Site:</div>
+                            <div class="col-sm-9">{{ $asset->site->name ?? '-' }}</div>
+                        </div>
+
+                        <!-- User Owner -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">User / Owner:</div>
+                            <div class="col-sm-9">{{ $asset->user->name ?? '-' }}</div>
+                        </div>
+
+                        <!-- Type -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">Type:</div>
+                            <div class="col-sm-9">{{ ucfirst($asset->type) }}</div>
+                        </div>
+
+                        <!-- Vendor -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">Vendor / Model:</div>
+                            <div class="col-sm-9">
+                                @if($asset->vendorRelation)
+                                    {{ $asset->vendorRelation->name }}
+                                @else
+                                    {{ $asset->vendor ?? 'Unknown' }}
+                                @endif
+                                 / {{ $asset->model ?? 'Unknown' }}
+                            </div>
+                        </div>
+
+                        <!-- Serial number -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">Serial Number:</div>
+                            <div class="col-sm-9">{{ $asset->serial_number ?? 'N/A' }}</div>
+                        </div>
+
+                        <!-- Hostname -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">Hostname:</div>
+                            <div class="col-sm-9">{{ $asset->hostname ?? 'N/A' }}</div>
+                        </div>
+
+                        <!-- IP Adress -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">IP Address:</div>
+                            <div class="col-sm-9">
+                                {{ $asset->ip_address ?? 'N/A' }}
+                                @if($asset->ip_type)
+                                    <span class="badge bg-light text-dark border ms-1">{{ strtoupper($asset->ip_type) }}</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- MAC adress -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">MAC Address:</div>
+                            <div class="col-sm-9">{{ $asset->mac_address ?? 'N/A' }}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">Client:</div>
-                        <div class="col-sm-9">
-                            <a href="{{ route('tech.clients.show', $asset->client_id) }}">
-                                {{ $asset->client->name }}
-                            </a>
-                        </div>
+            @endif
+
+            <!-- -------------------------------------------------------------------------------------------------- -->
+            <!-- Asset Outages -->
+            <!-- -------------------------------------------------------------------------------------------------- -->
+            @if($tab == 'outage')
+
+                <!-- ------------------------------------------------- -->
+                <!-- Asset outages Card -->
+                <!-- ------------------------------------------------- -->
+                <div class="card mt-2 mb-4">
+
+                    <!-- Asset outages Card Header -->
+                    <div class="card-header">
+                        <h5 class="mb-0">Outages</h5>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">Site:</div>
-                        <div class="col-sm-9">{{ $asset->site->name ?? '-' }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">User / Owner:</div>
-                        <div class="col-sm-9">{{ $asset->user->name ?? '-' }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">Type:</div>
-                        <div class="col-sm-9">{{ ucfirst($asset->type) }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">Vendor / Model:</div>
-                        <div class="col-sm-9">
-                            @if($asset->vendorRelation)
-                                {{ $asset->vendorRelation->name }}
-                            @else
-                                {{ $asset->vendor ?? 'Unknown' }}
-                            @endif
-                             / {{ $asset->model ?? 'Unknown' }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">Serial Number:</div>
-                        <div class="col-sm-9">{{ $asset->serial_number ?? 'N/A' }}</div>
-                    </div>
-                    <hr>
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">Hostname:</div>
-                        <div class="col-sm-9">{{ $asset->hostname ?? 'N/A' }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">IP Address:</div>
-                        <div class="col-sm-9">
-                            {{ $asset->ip_address ?? 'N/A' }}
-                            @if($asset->ip_type)
-                                <span class="badge bg-light text-dark border ms-1">{{ strtoupper($asset->ip_type) }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-3 fw-bold">MAC Address:</div>
-                        <div class="col-sm-9">{{ $asset->mac_address ?? 'N/A' }}</div>
+
+                    <!-- Asset outages Card Body -->
+                    <div class="card-body">
+
+                        @forelse($outages as $outage)
+                            <div class="row border-bottom mb-3 justify-content-between">
+                                <p class="col-6">{{ $outage->title }}</p>
+                                <p class="col-2">
+                                    {{ $outage->updated_at ?? $outage->created_at }}
+                                </p>
+
+                                @if($outage->resolved_at)
+                                    <p class="col-2">{{ $outage->resolved_at }}</p>
+                                @else
+                                    <p class="col-2 text-danger">Unresolved</p>
+                                @endif
+                            </div>
+                        @empty
+                            <div class="alert alert-info" role="alert">
+                                No outages found for this asset.
+                            </div>
+                        @endforelse
                     </div>
                 </div>
-            </div>
+
+            @endif
+
+            <!-- -------------------------------------------------------------------------------------------------- -->
+            <!-- Asset Checks -->
+            <!-- -------------------------------------------------------------------------------------------------- -->
+            @if($tab == 'checks')
+
+                <!-- ------------------------------------------------- -->
+                <!-- Asset checks Card -->
+                <!-- ------------------------------------------------- -->
+                <div class="card mt-2 mb-4">
+
+                    <!-- Asset checks Card Header -->
+                    <div class="card-header">
+                        <h5 class="mb-0">Checks</h5>
+                    </div>
+
+                    <!-- Asset checks Card Body -->
+                    <div class="card-body">
+                        @forelse($outages->whereNull('resolved_at') as $outage)
+                            <div class="row border-bottom mb-3 justify-content-between">
+                                <b class="col-6">{{ $outage->title }}</b>
+                                <p class="col-2">
+                                    {{ optional($outage->updated_at ?? $outage->created_at)->format('d.m.Y H:i') }}
+                                </p>
+                                <hr>
+                                <p class="col-12">{{ $outage->message ?? '' }}</p>
+                            </div>
+                        @empty
+                            <div class="alert alert-info" role="alert">
+                                No failing checks found for this asset.
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+            @endif
 
             <div class="card mb-4">
                 <div class="card-header">
@@ -153,10 +279,32 @@
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label d-block fw-bold">Current Status</label>
-                    <span class="badge bg-light text-dark border fs-6">
-                        N/A
+                    @php
+                        $status = strtolower($asset->status ?? 'unknown');
+                        $badgeClass = 'bg-light text-dark';
+                        $statusLabel = ucfirst($status);
+
+                        if ($status === 'online' || $status === 'active') {
+                            $badgeClass = 'bg-success';
+                        } elseif ($status === 'offline' || $status === 'inactive') {
+                            $badgeClass = 'bg-danger';
+                        } elseif ($status === 'warning') {
+                            $badgeClass = 'bg-warning text-dark';
+                        }
+
+                        // Check if it's recently seen as a fallback or additional info
+                        $isRecentlySeen = $asset->last_seen_at && $asset->last_seen_at->diffInMinutes(now()) < 30;
+                        if ($status === 'unknown' && $isRecentlySeen) {
+                            $badgeClass = 'bg-success';
+                            $statusLabel = 'Recently Seen';
+                        }
+                    @endphp
+                    <span class="badge {{ $badgeClass }} border fs-6">
+                        {{ $statusLabel }}
                     </span>
-                    <div class="small text-muted mt-1">(RMM integration pending)</div>
+                    @if($asset->is_managed)
+                        <div class="small text-muted mt-1">(Updated via RMM)</div>
+                    @endif
                 </div>
                 <div class="mb-3">
                     <label class="form-label d-block fw-bold">Source</label>

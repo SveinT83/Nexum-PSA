@@ -44,6 +44,14 @@
             <div class="mb-3 d-grid gap-2">
                 <a href="{{ route('tech.contracts.edit', $contract) }}" class="btn btn-sm btn-outline-warning bi bi-pencil-square text-start"> Edit Details</a>
                 <a href="{{ route('tech.contracts.terms', $contract) }}" class="btn btn-sm btn-outline-warning bi bi-file-text text-start"> Edit Terms</a>
+
+                @if($contract->approval_status === 'draft' && (!$contract->end_date || $contract->end_date->isFuture()))
+                    <form action="{{ route('tech.contracts.destroy', $contract) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this draft contract?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger bi bi-trash text-start w-100"> Delete Contract</button>
+                    </form>
+                @endif
             </div>
         @endif
         <div class="mb-2">

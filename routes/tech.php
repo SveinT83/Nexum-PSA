@@ -57,6 +57,9 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::put('/contracts/update/{contract}', [ContractController::class, 'update'])
         ->name('contracts.update');
 
+    Route::delete('/contracts/delete/{contract}', [ContractController::class, 'destroy'])
+        ->name('contracts.destroy');
+
     //Actions: Send Quote, Send Contract, Manual Approval
     Route::post('/contracts/{contract}/send-quote', [ContractController::class, 'sendQuote'])
         ->name('contracts.send-quote');
@@ -492,11 +495,11 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::post('/assets/store', [AssetController::class, 'store'])
         ->name('assets.store');
 
-    Route::get('/assets/{asset}', [AssetController::class, 'show'])
-        ->name('assets.show');
-
     Route::get('/assets/edit/{asset}', [AssetController::class, 'edit'])
         ->name('assets.edit');
+
+    Route::get('/assets/{asset}/{tab?}', [AssetController::class, 'show'])
+        ->name('assets.show');
 
     Route::put('/assets/update/{asset}', [AssetController::class, 'update'])
         ->name('assets.update');
