@@ -1,6 +1,6 @@
 @extends('layouts.default_tech')
 
-@section('title', 'Templates Management')
+@section('title', 'TemplatesManagement Management')
 
 @section('pageHeader')
     <h1>Templates Management</h1>
@@ -12,12 +12,9 @@
 @endsection
 
 @section('sidebar')
-    <h3>Tech Sidebar</h3>
-    <ul>
-        <li><a href="#">System Status</a></li>
-        <li><a href="#">Task Management</a></li>
-        <li><a href="#">Reports</a></li>
-    </ul>
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" />
+    @endif
 @endsection
 
 @section('rightbar')

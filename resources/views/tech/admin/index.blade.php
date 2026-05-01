@@ -3,6 +3,7 @@
 @section('title', 'Admin page')
 
 @section('pageHeader')
+    {{-- Page Header with title and breadcrumbs --}}
     <h1>Admin page</h1>
 @endsection
 
@@ -64,11 +65,11 @@
         </div>
 
         <!-- ------------------------------------------------- -->
-        <!-- Templates -->
+        <!-- TemplatesManagement -->
         <!-- ------------------------------------------------- -->
         <div class="col-md-4">
             <x-card.default title="Templates">
-                <li><a class="dropdown-item" href="{{ route('tech.admin.templates.index') }}">Templates</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.system.templatesManagement.index') }}">Templates</a></li>
             </x-card.default>
         </div>
 

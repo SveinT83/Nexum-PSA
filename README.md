@@ -13,6 +13,15 @@ It automates repetitive service operations while remaining fully transparent and
 
 Built initially for **Trønder Data**, Nexum PSA will evolve into an open platform adaptable for any MSP, IT consultant, or service-based business.
 
+### 🍞 Breadcrumbs
+
+The application uses a centralized breadcrumb system.
+
+*   **Configuration:** All breadcrumbs are defined in `config/breadcrumbs.php`.
+*   **Helper:** The `breadcrumbs()` helper function (found in `app/Helpers/helpers.php`) automatically resolves the current route to its configured breadcrumb trail.
+*   **Layout Integration:** Breadcrumbs are automatically rendered in `resources/views/layouts/default_tech.blade.php` via the `resources/views/partials/breadcrumbs.blade.php` partial.
+*   **Future Development:** When adding new routes/views, always ensure a corresponding entry is added to `config/breadcrumbs.php` to maintain consistent navigation.
+
 ---
 
 ## ⚙️ Core Principles

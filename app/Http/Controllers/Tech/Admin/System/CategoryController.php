@@ -125,10 +125,10 @@ class CategoryController extends Controller
                 ->with('error', 'Cannot delete category: It is currently linked to one or more services.');
         }
 
-        // Prevent deletion if the category has linked documentation templates
+        // Prevent deletion if the category has linked documentation templatesManagement
         if ($category->templates()->exists()) {
             return redirect()->route('tech.admin.system.category.index')
-                ->with('error', 'Cannot delete category: It is currently linked to one or more documentation templates.');
+                ->with('error', 'Cannot delete category: It is currently linked to one or more documentation templatesManagement.');
         }
 
         // Prevent deletion if the category has sub-categories

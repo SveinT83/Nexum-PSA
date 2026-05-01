@@ -1,3 +1,8 @@
+{{--
+    Main Layout for Tech Administration
+    This layout provides the standard shell for all tech admin pages,
+    including header, navigation, sidebar, and breadcrumbs.
+--}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -50,8 +55,15 @@
                     <div class="col-md-8 border-start border-end">
 
                         <!-- Page header -->
-                        <div class="row page-header pb-4 border-bottom border-primary">
+                        <div class="row page-header pb-4 pt-4 align-items-center justify-content-between border-bottom border-primary">
                             @yield('pageHeader')
+
+                            {{--
+                                Breadcrumbs are automatically generated based on the current route name.
+                                See config/breadcrumbs.php for definitions and app/Helpers/helpers.php
+                                for the logic.
+                            --}}
+                            @include('partials.breadcrumbs')
                         </div>
 
                         <!-- Main content -->

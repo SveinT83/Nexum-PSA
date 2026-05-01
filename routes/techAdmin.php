@@ -1,9 +1,18 @@
 <?php
+
+/**
+ * Tech Administration Routes
+ *
+ * This file contains routes for the technical administration dashboard.
+ * All routes are protected by auth, tech, and admin middleware.
+ */
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Tech\Admin\Settings\Economy\EconomyController;
 use App\Http\Controllers\Tech\Admin\Settings\Economy\UnitsController;
 use App\Http\Controllers\Tech\Admin\System\integrations\IntegrationsController;
 use App\Http\Controllers\Tech\Admin\System\integrations\ApiController;
+use App\Http\Controllers\Tech\Admin\System\TemplatesManagement\TemplatesManagementController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech-Admin/Superuser routes
@@ -117,11 +126,24 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
         // ------------------------------------------------------------------------------------------
 
         // -----------------------------------------
-        // Templates
+        // TemplatesManagement
         // -----------------------------------------
-        Route::get('/admin/templates', function () {
-            return view('tech.admin.templates.index');
-        })->name('admin.templates.index');
+
+        //Index: Main page
+        Route::get('/admin/system/templatesManagement', [TemplatesManagementController::class, 'index'])
+            ->name('admin.system.templatesManagement.index');
+
+        //doc: Documentation page
+        Route::get('/admin/system/templatesManagement/doc', [TemplatesManagementController::class, 'docIndex'])
+            ->name('admin.system.templatesManagement.doc.index');
+
+        //doc: Create page
+        Route::get('/admin/system/templatesManagement/doc/create', [TemplatesManagementController::class, 'docCreate'])
+            ->name('admin.system.templatesManagement.doc.create');
+
+        //doc: Edit page
+        Route::get('/admin/system/templatesManagement/doc/edit/{id}', [TemplatesManagementController::class, 'docEdit'])
+            ->name('admin.system.templatesManagement.doc.edit');
 
         // -----------------------------------------
         // Users
