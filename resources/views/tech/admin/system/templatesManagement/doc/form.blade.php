@@ -11,13 +11,6 @@
     <div class="col-auto">
         <x-buttons.back url="{{route('tech.admin.system.templatesManagement.doc.index') }}"> Back</x-buttons.back>
     </div>
-
-    <!-- BreadCrubs -->
-    <div class="row">
-        <div class="col-12">
-            <a href="{{route('tech.admin.index')}}">Admin</a>-><a href="{{route('tech.admin.system.templatesManagement.index')}}">Templates</a>->System-><a href="{{route('tech.admin.system.templatesManagement.doc.index') }}">Documentations</a>->Form
-        </div>
-    </div>
 @endsection
 
 @section('content')

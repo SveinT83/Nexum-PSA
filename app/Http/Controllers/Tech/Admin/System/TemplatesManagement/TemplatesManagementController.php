@@ -5,6 +5,11 @@ namespace App\Http\Controllers\Tech\Admin\System\TemplatesManagement;
 use App\Http\Controllers\Controller;
 use App\Models\Doc\DocumentationTemplate;
 use App\Service\SideBarMenus\Admin\TemplatesMenu;
+
+/**
+ * Controller for managing system templates.
+ * Handles the main hub and documentation templatesManagement specifically.
+ */
 class TemplatesManagementController extends Controller
 {
 

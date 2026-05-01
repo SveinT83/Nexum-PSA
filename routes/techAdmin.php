@@ -1,4 +1,12 @@
 <?php
+
+/**
+ * Tech Administration Routes
+ *
+ * This file contains routes for the technical administration dashboard.
+ * All routes are protected by auth, tech, and admin middleware.
+ */
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Tech\Admin\Settings\Economy\EconomyController;
 use App\Http\Controllers\Tech\Admin\Settings\Economy\UnitsController;

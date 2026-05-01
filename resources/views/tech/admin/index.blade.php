@@ -3,6 +3,7 @@
 @section('title', 'Admin page')
 
 @section('pageHeader')
+    {{-- Page Header with title and breadcrumbs --}}
     <h1>Admin page</h1>
 @endsection
 

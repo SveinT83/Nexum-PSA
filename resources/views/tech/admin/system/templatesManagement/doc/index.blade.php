@@ -11,13 +11,6 @@
             <x-buttons.back url="{{ route('tech.admin.system.templatesManagement.index') }}"> Back</x-buttons.back>
             <x-buttons.addlink url="{{ route('tech.admin.system.templatesManagement.doc.create') }}"> Create New Template</x-buttons.addlink>
         </div>
-
-        <!-- BreadCrubs -->
-        <div class="row">
-            <div class="col-12">
-                <a href="{{route('tech.admin.index')}}">Admin</a>-><a href="{{route('tech.admin.system.templatesManagement.index')}}">Templates</a>->System->Documentations
-            </div>
-        </div>
 @endsection
 
 @section('content')
