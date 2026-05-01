@@ -50,7 +50,7 @@
                     <div class="col-md-8 border-start border-end">
 
                         <!-- Page header -->
-                        <div class="row page-header pb-4 border-bottom border-primary">
+                        <div class="row page-header pb-4 pt-4 align-items-center justify-content-between border-bottom border-primary">
                             @yield('pageHeader')
                         </div>
 

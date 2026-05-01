@@ -10,7 +10,7 @@ class DocumentationTemplateSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * Restores default documentation templates for various categories.
+     * Restores default documentation templatesManagement for various categories.
      */
     public function run(): void
     {

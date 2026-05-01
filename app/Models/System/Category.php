@@ -36,7 +36,7 @@ class Category extends Model
     }
 
     /**
-     * Relationship with Documentation Templates.
+     * Relationship with Documentation TemplatesManagement.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */

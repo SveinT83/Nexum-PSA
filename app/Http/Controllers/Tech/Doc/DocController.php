@@ -172,7 +172,7 @@ class DocController extends Controller
         if ($selectedCategory) {
             $cat = $selectedCategory->id;
 
-            // Documentation templates define the dynamic fields (stored as JSON in the database)
+            // Documentation templatesManagement define the dynamic fields (stored as JSON in the database)
             $template = \App\Models\Doc\DocumentationTemplate::where('category_id', $selectedCategory->id)
                 ->where('is_active', true)
                 ->first();

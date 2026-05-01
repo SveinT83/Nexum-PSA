@@ -64,11 +64,11 @@
         </div>
 
         <!-- ------------------------------------------------- -->
-        <!-- Templates -->
+        <!-- TemplatesManagement -->
         <!-- ------------------------------------------------- -->
         <div class="col-md-4">
             <x-card.default title="Templates">
-                <li><a class="dropdown-item" href="{{ route('tech.admin.templates.index') }}">Templates</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.system.templatesManagement.index') }}">Templates</a></li>
             </x-card.default>
         </div>
 
