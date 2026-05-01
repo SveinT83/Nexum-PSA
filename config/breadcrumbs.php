@@ -42,7 +42,7 @@ return [
     ],
 
     'admin.system.templatesManagement.doc.edit' => [
-        ['label' => 'Admin', 'route' => 'admin.index'],
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
         ['label' => 'Templates', 'route' => 'tech.admin.system.templatesManagement.index'],
         ['label' => 'Documentation', 'route' => 'tech.admin.system.templatesManagement.doc.index'],
         ['label' => 'Form'],
