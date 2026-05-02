@@ -90,11 +90,11 @@ return new class extends Migration
             $table->text('terms')->nullable();
 
             //Policy / flags
-            //created_by_user_id (foreign id -> users)
-            $table->foreignId('created_by_user_id')->constrained('users');
+            //created_by_user_id (foreign id -> user_management)
+            $table->foreignId('created_by_user_id')->constrained('user_management');
 
-            //updated_by_user_id (foreign id -> users nullable)
-            $table->foreignId('updated_by_user_id')->nullable()->constrained('users');
+            //updated_by_user_id (foreign id -> user_management nullable)
+            $table->foreignId('updated_by_user_id')->nullable()->constrained('user_management');
 
             //Timestamp
             $table->timestamps();

@@ -78,7 +78,7 @@
         <!-- ------------------------------------------------- -->
         <div class="col-md-4">
             <x-card.default title="Users">
-                <li><a class="dropdown-item" href="{{ route('tech.admin.users.index') }}">Users</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.user_management.index') }}">Users</a></li>
             </x-card.default>
         </div>
 

@@ -81,7 +81,7 @@ class ClientSiteController extends Controller
         return view('tech.clients.sites.show', [
             'site' => $site,
             'client' => $site->client,
-            'users' => $site->contacts,
+            'user_management' => $site->contacts,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($site->client),
         ]);
     }

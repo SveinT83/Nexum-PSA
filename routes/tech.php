@@ -125,8 +125,8 @@ Route::middleware(['auth','tech'])->group(function () {
         ->name('clients.user.delete');
 
     //Index
-    Route::get('/clients/users', [ClientUsersController::class, 'index'])
-        ->name('clients.users.index');
+    Route::get('/clients/user_management', [ClientUsersController::class, 'index'])
+        ->name('clients.user_management.index');
 
 
     // -----------------------------------------

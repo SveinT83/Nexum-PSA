@@ -1,7 +1,7 @@
 {{--
     Client User List View
 
-    Displays a list of users (contacts) for clients and sites.
+    Displays a list of user_management (contacts) for clients and sites.
     The list is dynamically filtered based on the active client or site
     in the session to provide relevant context.
 --}}

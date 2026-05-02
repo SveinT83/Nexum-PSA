@@ -24,7 +24,7 @@ class RiskSystemTest extends TestCase
     {
         parent::setUp();
 
-        // Setup roles and users
+        // Setup roles and user_management
         Role::create(['name' => 'Superuser']);
         $this->superuser = User::factory()->create();
         $this->superuser->assignRole('Superuser');

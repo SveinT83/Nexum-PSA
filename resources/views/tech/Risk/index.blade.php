@@ -10,7 +10,7 @@
     Key Features:
     - Score badges: Visualizes risk severity using color-coded Bootstrap badges (Low to Critical).
     - Status tracking: Shows the lifecycle state (New, In Progress, Approved) with icons.
-    - Contextual links: Directs users to the detailed assessment page.
+    - Contextual links: Directs user_management to the detailed assessment page.
 --}}
 
 {{--

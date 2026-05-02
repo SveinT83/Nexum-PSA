@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('risk_item_updates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('risk_item_id')->constrained()->onDelete('cascade');
-            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('created_by')->nullable()->constrained('user_management');
             $table->text('note')->nullable();
             $table->integer('likelihood')->nullable();
             $table->integer('impact')->nullable();

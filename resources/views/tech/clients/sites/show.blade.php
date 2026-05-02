@@ -59,7 +59,7 @@
     <x-tech.assets.list-card :site="$site" />
 
     <!-- ------------------------------------------------- -->
-    <!-- USERS - Shows users of the site in an table -->
+    <!-- USERS - Shows user_management of the site in an table -->
     <!-- ------------------------------------------------- -->
     <x-card.default title="Users">
 
@@ -77,7 +77,7 @@
                 <tbody>
 
                 <!-- ------------------------------------------------- -->
-                <!-- For each users -->
+                <!-- For each user_management -->
                 <!-- ------------------------------------------------- -->
                 @foreach($users as $user)
                     <tr>

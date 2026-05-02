@@ -11,10 +11,10 @@
             @php
                 /**
                  * Navigation Logic:
-                 * Default back URL is the users index.
+                 * Default back URL is the user_management index.
                  * If the user is linked to a site (which belongs to a client), we prioritize returning to the client profile.
                  */
-                $backUrl = route('tech.clients.users.index');
+                $backUrl = route('tech.clients.user_management.index');
                 if (isset($user->site->client_id)) {
                     $backUrl = route('tech.clients.show', $user->site->client_id);
                 }

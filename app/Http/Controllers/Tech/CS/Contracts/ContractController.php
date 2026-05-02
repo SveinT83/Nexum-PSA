@@ -112,7 +112,7 @@ class ContractController extends Controller
         $clients = Client::all();
 
         // 2. Technicians / Responsible Personnel
-        // Filter users by roles that are allowed to manage services.
+        // Filter user_management by roles that are allowed to manage services.
         $requestedRoles = ['service.admin', 'tech.admin', 'Superuser', 'service.create', 'service.view'];
         $existingRoles = \Spatie\Permission\Models\Role::whereIn('name', $requestedRoles)->pluck('name')->toArray();
 

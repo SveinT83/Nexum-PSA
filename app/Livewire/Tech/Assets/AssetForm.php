@@ -104,7 +104,7 @@ class AssetForm extends Component
         // If we are editing an existing asset, fill the form fields
         if ($this->asset && $this->asset->exists) {
             $this->fill($this->asset->toArray());
-            // Trigger dependency update for sites and users
+            // Trigger dependency update for sites and user_management
             $this->updatedClientId($this->client_id);
         } else {
             // Pre-fill if provided from request context
@@ -125,7 +125,7 @@ class AssetForm extends Component
     /**
      * Dynamic Dependency Handler: Client Updated
      *
-     * Refreshes the sites and users collections when the client changes.
+     * Refreshes the sites and user_management collections when the client changes.
      *
      * @param mixed $value The new client_id
      */
@@ -133,7 +133,7 @@ class AssetForm extends Component
     {
         if ($value) {
             try {
-                // Filter sites and users by selected client
+                // Filter sites and user_management by selected client
                 $this->sites = ClientSite::where('client_id', $value)->orderBy('name')->get();
                 $this->users = ClientUser::whereHas('site', function($q) use ($value) {
                     $q->where('client_id', $value);

@@ -19,13 +19,13 @@ return new class extends Migration
             $table->text('body_html')->nullable();
             $table->string('visibility')->default('internal'); // internal, client-wide, public
             $table->string('status')->default('draft'); // draft, published, archived, needs_review
-            $table->foreignId('owner_id')->constrained('users');
+            $table->foreignId('owner_id')->constrained('user_management');
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
             $table->foreignId('client_scope_id')->nullable()->constrained('clients');
             $table->integer('view_count')->default(0);
             $table->timestamp('next_review_at')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users');
-            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('created_by')->nullable()->constrained('user_management');
+            $table->foreignId('updated_by')->nullable()->constrained('user_management');
             $table->softDeletes();
             $table->timestamps();
         });

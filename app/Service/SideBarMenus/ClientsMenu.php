@@ -16,10 +16,10 @@ class ClientsMenu
         // Initialize an empty array to hold the menu items
         $sidebarMenuItems = [];
 
-        // Add the main navigation items for clients, sites, and users
+        // Add the main navigation items for clients, sites, and user_management
         $sidebarMenuItems[] = ['name' => 'Clients', 'route' => 'tech.clients.index'];
         $sidebarMenuItems[] = ['name' => 'Sites', 'route' => 'tech.clients.sites.index'];
-        $sidebarMenuItems[] = ['name' => 'Users', 'route' => 'tech.clients.users.index'];
+        $sidebarMenuItems[] = ['name' => 'Users', 'route' => 'tech.clients.user_management.index'];
         $sidebarMenuItems[] = ['name' => 'Assets', 'route' => 'tech.assets.index'];
 
         // --- Documentation Section ---

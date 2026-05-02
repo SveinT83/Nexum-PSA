@@ -14,13 +14,13 @@ use Illuminate\Http\Request;
 class ClientUsersController extends Controller
 {
     // ----------------------------------------------------------------------------------
-    // INDEX - List all users for a client or a site or all
+    // INDEX - List all user_management for a client or a site or all
     // ----------------------------------------------------------------------------------
     /**
-     * Display a paginated list of client users (contacts).
+     * Display a paginated list of client user_management (contacts).
      *
      * The list is filtered based on the active site or client in the session.
-     * If neither is set, it returns all client users.
+     * If neither is set, it returns all client user_management.
      *
      * @param Request $request
      * @return View
@@ -59,7 +59,7 @@ class ClientUsersController extends Controller
 
         // 5. Return view
         return view('tech.clients.users.index', [
-            'users' => $users,
+            'user_management' => $users,
             'site' => $targetSite,
             'client' => $targetClient ?? ($targetSite ? $targetSite->client : null),
             'search' => $search,
@@ -186,7 +186,7 @@ class ClientUsersController extends Controller
         ]);
 
         // 2. Create the ClientUser
-        // Note: user_id is nullable in the migration, we don't handle linked system users here yet
+        // Note: user_id is nullable in the migration, we don't handle linked system user_management here yet
         $clientUser = new ClientUser($validated);
         $clientUser->save();
 
