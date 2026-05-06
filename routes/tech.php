@@ -10,8 +10,6 @@ use App\Http\Controllers\Tech\CS\Package\PackageController;
 use App\Http\Controllers\Tech\CS\Services\ServiceController;
 use App\Http\Controllers\Tech\CS\Sla\SlaController;
 use App\Http\Controllers\Tech\Doc\DocController;
-use App\Http\Controllers\Tech\Risk\RiskController;
-use App\Http\Controllers\Tech\Work\Assets\AssetController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -284,59 +282,6 @@ Route::middleware(['auth','tech'])->group(function () {
         ->name('documentations.destroy');
 
     // -----------------------------------------
-    // Risk
-    // -----------------------------------------
-
-    //Index
-    Route::get('/risk', [RiskController::class, 'index'])
-        ->name('risk.index');
-
-    //Create
-    Route::get('/risk/create', [RiskController::class, 'create'])
-        ->name('risk.create');
-
-    //Store
-    Route::post('/risk/store', [RiskController::class, 'store'])
-        ->name('risk.store');
-
-    //Show
-    Route::get('/risk/show/{risk}', [RiskController::class, 'show'])
-        ->name('risk.show');
-
-    //Update
-    Route::put('/risk/update/{risk}', [RiskController::class, 'update'])
-        ->name('risk.update');
-
-    //Destroy
-    Route::delete('/risk/destroy/{risk}', [RiskController::class, 'destroy'])
-        ->name('risk.destroy');
-
-    //Risk Items
-    Route::post('/risk/show/{risk}/items', [RiskController::class, 'storeItem'])
-        ->name('risk.items.store');
-
-    Route::post('/risk/show/{risk}/approve', [RiskController::class, 'approve'])
-        ->name('risk.approve');
-
-    Route::get('/risk/show/{risk}/pdf', [RiskController::class, 'exportPdf'])
-        ->name('risk.pdf');
-
-    Route::get('/risk/items/{item}', [RiskController::class, 'showItem'])
-        ->name('risk.items.show');
-
-    Route::post('/risk/items/{item}/updates', [RiskController::class, 'storeItemUpdate'])
-        ->name('risk.items.updates.store');
-
-    Route::delete('/risk/updates/{update}', [RiskController::class, 'destroyUpdate'])
-        ->name('risk.updates.destroy');
-
-    Route::delete('/risk/items/{item}', [RiskController::class, 'destroyItem'])
-        ->name('risk.items.destroy');
-    Route::put('/risk/items/{item}', [RiskController::class, 'updateItem'])
-        ->name('risk.items.update');
-
-
-    // -----------------------------------------
     // Inbox
     // -----------------------------------------
     Route::get('/inbox', [\App\Http\Controllers\Tech\Inbox\EmailController::class, 'index'])
@@ -353,21 +298,6 @@ Route::middleware(['auth','tech'])->group(function () {
     // -----------------------------------------
     // Knowledge
     // -----------------------------------------
-    Route::get('/knowledge', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'index'])
-        ->name('knowledge.index');
-    Route::get('/knowledge/create', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'create'])
-        ->name('knowledge.create');
-    Route::post('/knowledge/store', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'store'])
-        ->name('knowledge.store');
-    Route::get('/knowledge/show/{article}', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'show'])
-        ->name('knowledge.show');
-    Route::get('/knowledge/edit/{article}', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'edit'])
-        ->name('knowledge.edit');
-    Route::put('/knowledge/update/{article}', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'update'])
-        ->name('knowledge.update');
-    Route::delete('/knowledge/destroy/{article}', [\App\Http\Controllers\Tech\Work\Knowledge\KnowledgeController::class, 'destroy'])
-        ->name('knowledge.destroy');
-
     // -----------------------------------------
     // Reports
     // -----------------------------------------
@@ -395,33 +325,6 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::get('/tasks', function () {
         return view('tech.tasks.index');
     })->name('tasks.index');
-
-    // -----------------------------------------
-    // Assets
-    // -----------------------------------------
-    Route::get('/assets/docs', [AssetController::class, 'docs'])
-        ->name('assets.docs');
-
-    Route::get('/assets', [AssetController::class, 'index'])
-        ->name('assets.index');
-
-    Route::get('/assets/create', [AssetController::class, 'create'])
-        ->name('assets.create');
-
-    Route::post('/assets/store', [AssetController::class, 'store'])
-        ->name('assets.store');
-
-    Route::get('/assets/edit/{asset}', [AssetController::class, 'edit'])
-        ->name('assets.edit');
-
-    Route::get('/assets/{asset}/{tab?}', [AssetController::class, 'show'])
-        ->name('assets.show');
-
-    Route::put('/assets/update/{asset}', [AssetController::class, 'update'])
-        ->name('assets.update');
-
-    Route::get('/clients/{client}/assets', [AssetController::class, 'index'])
-        ->name('clients.assets.index');
 
     // -----------------------------------------
     // Tickets
