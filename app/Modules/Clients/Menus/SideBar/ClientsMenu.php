@@ -35,7 +35,10 @@ class ClientsMenu
 
         $sidebarMenuItems[] = [
             'name' => 'Assets',
-            'route' => 'tech.clients.assets.index',
+            // The Asset module owns asset routes. Without a client context the
+            // sidebar must link to the global asset list; the client-scoped
+            // route requires a `{client}` parameter.
+            'route' => $clientParam ? 'tech.clients.assets.index' : 'tech.assets.index',
             'params' => $clientParam
         ];
 

@@ -67,7 +67,7 @@ class ClientUsersController extends Controller
             ->withQueryString();
 
         // 5. Return view
-        return view('Tech.Users.index', [
+        return view('clients::Tech.Users.index', [
             'user_management' => $users,
             'site' => $targetSite,
             'client' => $targetClient ?? ($targetSite ? $targetSite->client : null),
@@ -95,7 +95,7 @@ class ClientUsersController extends Controller
         // -----------------------------------------
         // Return view with user data and context
         // -----------------------------------------
-        return view('Tech.Users.show', [
+        return view('clients::Tech.Users.show', [
             'user' => $ClientUser,
             'client' => $targetClient,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient),
@@ -123,7 +123,7 @@ class ClientUsersController extends Controller
         // -----------------------------------------
         $sites = $client ? $client->sites : null;
 
-        return view('Tech.Users.form', [
+        return view('clients::Tech.Users.form', [
             'user' => $ClientUser,
             'client' => $client,
             'sites' => $sites,
@@ -158,7 +158,7 @@ class ClientUsersController extends Controller
         // -----------------------------------------
         $sites = $client ? $client->sites : null;
 
-        return view('Tech.Users.form', [
+        return view('clients::Tech.Users.form', [
             'client' => $client,
             'sites' => $sites,
             'activeSite' => $ActiveSite,

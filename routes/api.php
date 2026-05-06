@@ -15,6 +15,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         // ------------------------------------------------------------------------------------------
         // Module API routes
         // ------------------------------------------------------------------------------------------
+        $tdpsaLoadingApiRoutes = true;
+        require app_path('Modules/Asset/routes.php');
+        unset($tdpsaLoadingApiRoutes);
+
         foreach (glob(app_path('Modules/*/api.php')) as $routeFile) {
             require $routeFile;
         }

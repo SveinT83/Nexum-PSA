@@ -11,15 +11,8 @@
     - Score badges: Visualizes risk severity using color-coded Bootstrap badges (Low to Critical).
     - Status tracking: Shows the lifecycle state (New, In Progress, Approved) with icons.
     - Contextual links: Directs user_management to the detailed assessment page.
---}}
-
-{{--
-    Documentation Index View
-
-    Displays a sortable/filterable list of all documentation records.
-    Filtering is based on:
-    1. Category (passed via 'cat' query parameter).
-    2. Session-based Context (Active Client, Sites, or Internal Scope).
+    - Superuser-only delete action: the controller repeats the permission check
+      so the UI hiding is convenience, not security.
 --}}
 
 @section('title', 'Risk Assessments')
@@ -105,7 +98,17 @@
                                 </td>
                                 <td>{{ $assessment->created_at->format('d.m.Y H:i') }}</td>
                                 <td class="text-end">
-                                    <a href="{{ route('tech.risk.show', $assessment) }}" class="btn btn-sm btn-outline-primary">Open</a>
+                                    <div class="d-inline-flex gap-1">
+                                        <a href="{{ route('tech.risk.show', $assessment) }}" class="btn btn-sm btn-outline-primary">Open</a>
+                                        <a href="{{ route('tech.risk.edit', $assessment) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                        @if(auth()->user()->hasRole('Superuser'))
+                                            <x-buttons.delete
+                                                :url="route('tech.risk.destroy', $assessment)"
+                                                :name="$assessment->title"
+                                                class="btn btn-sm btn-outline-danger"
+                                            />
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

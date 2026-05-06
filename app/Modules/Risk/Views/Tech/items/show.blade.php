@@ -14,6 +14,8 @@
     - History Persistence: Updates are never overwritten; a new record is saved for each action.
     - Status Snapshot: Parent RiskItem always shows the state of its *latest* update.
     - Polymorphic Links: Sidebar supports future linkage to Docs/Assets via `RiskItemLink`.
+    - Critical fields: Likelihood, impact, and status are edited through the
+      Add Update modal once history exists, not through the descriptive edit form.
 --}}
 
 @section('content')
@@ -392,7 +394,7 @@
                         @foreach($item->links as $link)
                             <li class="list-group-item px-0">
                                 <i class="bi bi-link-45deg me-2"></i>
-                                {{ $link->linked_type }}: #{{ $link->linked_id }}
+                                {{ class_basename($link->linkable_type) }}: #{{ $link->linkable_id }}
                             </li>
                         @endforeach
                     </ul>

@@ -5,6 +5,8 @@ namespace App\Modules\Clients\Tests\Feature;
 use App\Models\Clients\Client;
 use App\Models\Core\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class ClientTechTest extends TestCase
@@ -17,20 +19,16 @@ class ClientTechTest extends TestCase
     {
         parent::setUp();
 
-        // Create a tech user and assign appropriate role/permissions if necessary
-        // For now, we'll assume a user with 'tech' status or similar is needed.
-        // Based on previous issues, 'auth' and 'tech' middleware are used.
+        Role::create(['name' => 'Tech']);
+
         $this->techUser = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
         ]);
 
-        // If the 'tech' middleware checks for a role, we might need to assign it.
-        // For this environment, let's assume being logged in is a good start,
-        // and we might need to adjust if the 'tech' middleware is strict.
-        $this->techUser->assignRole('tech');
+        $this->techUser->assignRole('Tech');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_list_clients()
     {
         Client::factory()->count(3)->create();
@@ -39,11 +37,11 @@ class ClientTechTest extends TestCase
             ->get(route('tech.clients.index'));
 
         $response->assertStatus(200);
-        $response->assertViewIs('Tech.index');
+        $response->assertViewIs('clients::Tech.index');
         $response->assertViewHas('clients');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_show_a_client()
     {
         $client = Client::factory()->create();
@@ -52,23 +50,23 @@ class ClientTechTest extends TestCase
             ->get(route('tech.clients.show', $client));
 
         $response->assertStatus(200);
-        $response->assertViewIs('Tech.show');
+        $response->assertViewIs('clients::Tech.show');
         $response->assertViewHas('client');
         $this->assertEquals($client->id, session('active_client_id'));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_show_the_create_client_form()
     {
         $response = $this->actingAs($this->techUser)
             ->get(route('tech.clients.create'));
 
         $response->assertStatus(200);
-        $response->assertViewIs('Tech.create');
+        $response->assertViewIs('clients::Tech.create');
         $response->assertViewHas('suggestedClientNumber');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_store_a_new_client()
     {
         $clientData = [

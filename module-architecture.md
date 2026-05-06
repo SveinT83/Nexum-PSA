@@ -273,3 +273,5 @@ The following Laravel defaults are NOT used:
 * UI is separated
 
 This structure is REQUIRED for all development in tdPSA.
+
+For a reference implementation, see the `app/Modules/Skelteton` module.

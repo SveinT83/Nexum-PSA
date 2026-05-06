@@ -16,9 +16,6 @@ use App\Http\Controllers\Tech\Admin\Settings\Economy\UnitsController;
 use App\Http\Controllers\Tech\Admin\System\integrations\IntegrationsController;
 use App\Http\Controllers\Tech\Admin\System\integrations\ApiController;
 use App\Http\Controllers\Tech\Admin\System\TemplatesManagement\TemplatesManagementController;
-use App\Http\Controllers\Tech\Admin\UserManagement\UserManagementController;
-use App\Http\Controllers\Tech\Admin\UserManagement\RolesManagementController;
-use App\Http\Controllers\Tech\Admin\UserManagement\PermissionManagementController;
 
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech-Admin/Superuser routes
@@ -150,70 +147,6 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
         //doc: Edit page
         Route::get('/admin/system/templatesManagement/doc/edit/{id}', [TemplatesManagementController::class, 'docEdit'])
             ->name('admin.system.templatesManagement.doc.edit');
-
-        // -----------------------------------------
-        // Users
-        // -----------------------------------------
-
-        //User Dashboard
-        Route::get('/admin/user_management', [UserManagementController::class, 'index'])
-            ->name('admin.user_management.index');
-
-        //User Create
-        Route::get('/admin/user_management/create', [UserManagementController::class, 'create'])
-            ->name('admin.user_management.create');
-
-        //User store
-        Route::post('/admin/user_management/store', [UserManagementController::class, 'store'])
-            ->name('admin.user_management.store');
-
-        //Roles Dashboard
-        Route::get('/admin/user_management/roles', [RolesManagementController::class, 'rolesIndex'])
-            ->name('admin.user_management.roles.index');
-
-        //Roles Edit
-        Route::get('/admin/user_management/roles/edit/{id}', [RolesManagementController::class, 'rolesEdit'])
-            ->name('admin.user_management.roles.edit');
-
-        //Roles Update
-        Route::post('/admin/user_management/roles/update/{id}', [RolesManagementController::class, 'rolesUpdate'])
-            ->name('admin.user_management.roles.update');
-
-        //Roles Create
-        Route::get('/admin/user_management/roles/create', [RolesManagementController::class, 'rolesCreate'])
-            ->name('admin.user_management.roles.create');
-
-        //Roles Store
-        Route::post('/admin/user_management/roles/store', [RolesManagementController::class, 'rolesStore'])
-            ->name('admin.user_management.roles.store');
-
-        //Roles Destroy
-        Route::delete('/admin/user_management/roles/destroy/{id}', [RolesManagementController::class, 'rolesDestroy'])
-            ->name('admin.user_management.roles.destroy');
-
-        //Permissions Dashboard
-        Route::get('/admin/user_management/permissions', [PermissionManagementController::class, 'permissionsIndex'])
-            ->name('admin.user_management.permissions.index');
-
-        //Permissions Edit
-        Route::get('/admin/user_management/permissions/edit/{id}', [PermissionManagementController::class, 'permissionsEdit'])
-            ->name('admin.user_management.permissions.edit');
-
-        //Permissions Update
-        Route::post('/admin/user_management/permissions/update/{id}', [PermissionManagementController::class, 'permissionsUpdate'])
-            ->name('admin.user_management.permissions.update');
-
-        //Permissions Create
-        Route::get('/admin/user_management/permissions/create', [PermissionManagementController::class, 'permissionsCreate'])
-            ->name('admin.user_management.permissions.create');
-
-        //Permissions Store
-        Route::post('/admin/user_management/permissions/store', [PermissionManagementController::class, 'permissionsStore'])
-            ->name('admin.user_management.permissions.store');
-
-        //Permissions Destroy
-        Route::delete('/admin/user_management/permissions/destroy/{id}', [PermissionManagementController::class, 'permissionsDestroy'])
-            ->name('admin.user_management.permissions.destroy');
 
         // -----------------------------------------
         // Category

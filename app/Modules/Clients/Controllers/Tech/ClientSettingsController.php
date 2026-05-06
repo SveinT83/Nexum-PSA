@@ -32,7 +32,7 @@ class ClientSettingsController extends Controller
             $currentRmmId = $link ? $link->external_id : null;
         }
 
-        return view('Tech.Settings.edit', compact('client', 'rmmIntegration', 'rmmClients', 'rmmError', 'currentRmmId'));
+        return view('clients::Tech.Settings.edit', compact('client', 'rmmIntegration', 'rmmClients', 'rmmError', 'currentRmmId'));
     }
 
     public function update(Request $request, Client $client)

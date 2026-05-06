@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
+    {{--
+        Risk Assessment PDF Report
+
+        This view is rendered by RiskController::exportPdf() through Dompdf.
+        Keep CSS simple and self-contained: Dompdf has limited support for
+        modern layout features, so tables and conservative block styling are
+        preferred over flex/grid for reliable report output.
+    --}}
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Risikoanalyse: {{ $risk->title }}</title>
     <style>

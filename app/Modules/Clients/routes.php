@@ -28,10 +28,6 @@ Route::get('/clients/user/edit/{ClientUser}', [\App\Modules\Clients\Controllers\
 Route::put('/clients/user/update/{ClientUser}', [\App\Modules\Clients\Controllers\Tech\ClientUsersController::class, 'update'])->name('clients.user.update');
 Route::delete('/clients/user/delete/{ClientUser}', [\App\Modules\Clients\Controllers\Tech\ClientUsersController::class, 'delete'])->name('clients.user.delete');
 
-// Assets
-Route::get('/clients/assets/{client?}', [\App\Http\Controllers\Tech\Work\Assets\AssetController::class, 'index'])->name('clients.assets.index');
-
 // Settings
 Route::get('/clients/{client}/settings', [\App\Modules\Clients\Controllers\Tech\ClientSettingsController::class, 'edit'])->name('clients.settings.edit');
 Route::put('/clients/{client}/settings', [\App\Modules\Clients\Controllers\Tech\ClientSettingsController::class, 'update'])->name('clients.settings.update');
-

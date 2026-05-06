@@ -15,6 +15,8 @@
     Logic:
     - Approving: Controller enforces the `is_approvable` attribute (no "open" items allowed).
     - Status badges: Automatically styled based on assessment/item health.
+    - Item creation: The modal posts to the module route and StoreRiskItem
+      creates both the current item snapshot and its initial history update.
 --}}
 
 @section('title', 'Risk Assessment: ' . $risk->title)
@@ -31,6 +33,9 @@
             <h1 class="h4 mb-0">{{ $risk->title }}</h1>
         </div>
         <div>
+            <a href="{{ route('tech.risk.edit', $risk) }}" class="btn btn-sm btn-outline-primary me-2">
+                <i class="bi bi-pencil me-1"></i> Edit
+            </a>
             <a href="{{ route('tech.risk.pdf', $risk) }}" target="_blank" class="btn btn-sm btn-outline-danger me-2">
                 <i class="bi bi-file-earmark-pdf me-1"></i> Print PDF
             </a>
@@ -256,6 +261,11 @@
                                     <option value="mitigated">Mitigated</option>
                                     <option value="accepted">Accepted</option>
                                 </x-forms.select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <x-forms.input_text name="next_review_at" labelName="Next Review" type="date" />
                             </div>
                         </div>
                     </div>

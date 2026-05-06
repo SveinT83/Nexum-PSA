@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
@@ -39,7 +40,14 @@ return new class extends Migration {
             $table->timestamps();
             $table->softDeletes();
             $table->unique(['account_id','mailbox','imap_uid'], 'uniq_account_mailbox_uid');
-            $table->fullText(['subject', 'body_text'], 'ft_subject_body');
+
+            // SQLite is used by the test suite and Laravel's SQLite grammar
+            // does not support fulltext index creation through Blueprint.
+            // Keep the production fulltext index for supported drivers while
+            // allowing in-memory SQLite migrations to complete.
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->fullText(['subject', 'body_text'], 'ft_subject_body');
+            }
         });
     }
 

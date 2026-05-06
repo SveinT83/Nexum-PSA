@@ -54,7 +54,7 @@ class ClientSiteController extends Controller
 
         $sites = $query->orderBy('name')->paginate(25)->withQueryString();
 
-        return view('Tech.Sites.index', [
+        return view('clients::Tech.Sites.index', [
             'sites' => $sites,
             'client' => $targetClient, // Dette er nå enten Client-objektet eller null
             'search' => $search,
@@ -85,7 +85,7 @@ class ClientSiteController extends Controller
         $site->load(['client', 'contacts']);
 
         //Return view
-        return view('Tech.Sites.show', [
+        return view('clients::Tech.Sites.show', [
             'site' => $site,
             'client' => $site->client,
             'users' => $site->contacts,
@@ -109,7 +109,7 @@ class ClientSiteController extends Controller
         // -----------------------------------------
         $site->load(['client']);
 
-        return view('Tech.Sites.form', [
+        return view('clients::Tech.Sites.form', [
             'site' => $site,
             'client' => $site->client,
             'allClients' => collect(),
@@ -144,7 +144,7 @@ class ClientSiteController extends Controller
         // Check if N-able RMM is active
         $nableActive = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->exists();
 
-        return view('Tech.Sites.form', [
+        return view('clients::Tech.Sites.form', [
             'site' => new ClientSite(),
             'client' => $targetClient,
             'allClients' => $allClients,

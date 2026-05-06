@@ -57,7 +57,7 @@ class ClientController extends Controller
         // -----------------------------------------
         // Retun View:
         // -----------------------------------------
-        return view('Tech.index', [
+        return view('clients::Tech.index', [
             'clients' => $clients,
             'search' => $search,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu(null),
@@ -97,7 +97,7 @@ class ClientController extends Controller
         // -----------------------------------------
         $sidebarMenuItems = (new ClientsMenu())->ClientsMenu($client);
 
-        return view('Tech.show', [
+        return view('clients::Tech.show', [
             'client' => $client,
             'sidebarMenuItems' => $sidebarMenuItems,
             'contracts' => $contracts,
@@ -126,7 +126,7 @@ class ClientController extends Controller
         $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
         $nableActive = $rmmIntegration !== null;
 
-        return view('Tech.create', [
+        return view('clients::Tech.create', [
             'suggestedClientNumber' => $suggestedClientNumber,
             'roles' => $roles,
             'countries' => $countries,
