@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\Tech\Clients;
+namespace App\Modules\Clients\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
-use App\Models\Core\User;
-use App\Models\Clients\ClientUser;
+use App\Http\Controllers\Tech\Clients\View;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
-use App\Service\SideBarMenus\ClientsMenu;
+use App\Models\Clients\ClientUser;
+use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use Illuminate\Http\Request;
+
 //Users
 
 class ClientUsersController extends Controller
@@ -23,20 +24,28 @@ class ClientUsersController extends Controller
      * If neither is set, it returns all client user_management.
      *
      * @param Request $request
+     * @param int|null $client
      * @return View
      */
-    public function index(Request $request)
+    public function index(Request $request, $client = null)
     {
-        // 1. Check session for active site or client
+        // 1. Check URL first, then session for active site or client
         $siteId = session('active_site_id');
-        $clientId = session('active_client_id');
+        $clientId = $client ?: session('active_client_id');
 
         // 2. Build the query based on the most specific context we have
-        if ($siteId && $targetSite = ClientSite::find($siteId)) {
-            $query = $targetSite->contacts(); // Use contacts() relation from ClientSite
-        } elseif ($clientId && $targetClient = Client::find($clientId)) {
-            $query = $targetClient->contacts(); // Use hasManyThrough relation from Client
-            $targetSite = null;
+        if ($clientId && $targetClient = Client::find($clientId)) {
+             // If we have a client from URL, it overrides site context usually for index
+             if ($client) {
+                 session(['active_client_id' => $targetClient->id]);
+                 session()->forget('active_site_id');
+                 $siteId = null;
+             }
+             $query = $targetClient->contacts();
+             $targetSite = $siteId ? ClientSite::find($siteId) : null;
+        } elseif ($siteId && $targetSite = ClientSite::find($siteId)) {
+            $query = $targetSite->contacts();
+            $targetClient = $targetSite->client;
         } else {
             $query = ClientUser::query();
             $targetSite = null;
@@ -58,7 +67,7 @@ class ClientUsersController extends Controller
             ->withQueryString();
 
         // 5. Return view
-        return view('tech.clients.users.index', [
+        return view('Tech.Users.index', [
             'user_management' => $users,
             'site' => $targetSite,
             'client' => $targetClient ?? ($targetSite ? $targetSite->client : null),
@@ -86,7 +95,7 @@ class ClientUsersController extends Controller
         // -----------------------------------------
         // Return view with user data and context
         // -----------------------------------------
-        return view('tech.clients.users.show', [
+        return view('Tech.Users.show', [
             'user' => $ClientUser,
             'client' => $targetClient,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient),
@@ -114,7 +123,7 @@ class ClientUsersController extends Controller
         // -----------------------------------------
         $sites = $client ? $client->sites : null;
 
-        return view('tech.clients.users.form', [
+        return view('Tech.Users.form', [
             'user' => $ClientUser,
             'client' => $client,
             'sites' => $sites,
@@ -149,7 +158,7 @@ class ClientUsersController extends Controller
         // -----------------------------------------
         $sites = $client ? $client->sites : null;
 
-        return view('tech.clients.users.form', [
+        return view('Tech.Users.form', [
             'client' => $client,
             'sites' => $sites,
             'activeSite' => $ActiveSite,

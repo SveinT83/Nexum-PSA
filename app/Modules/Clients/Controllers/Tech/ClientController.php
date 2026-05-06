@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Tech\Clients;
+namespace App\Modules\Clients\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tech\Clients\ClientRequest;
@@ -9,8 +9,8 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
-use App\Service\SideBarMenus\ClientsMenu;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -44,9 +44,20 @@ class ClientController extends Controller
             });
         }
 
+        // -----------------------------------------
+        // Sidebar Menu Items
+        // -----------------------------------------
+        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu(null);
+
+        // -----------------------------------------
+        // Get Clients
+        // -----------------------------------------
         $clients = $query->orderBy('name')->paginate(25)->withQueryString();
 
-        return view('tech.clients.index', [
+        // -----------------------------------------
+        // Retun View:
+        // -----------------------------------------
+        return view('Tech.index', [
             'clients' => $clients,
             'search' => $search,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu(null),
@@ -86,7 +97,7 @@ class ClientController extends Controller
         // -----------------------------------------
         $sidebarMenuItems = (new ClientsMenu())->ClientsMenu($client);
 
-        return view('tech.clients.show', [
+        return view('Tech.show', [
             'client' => $client,
             'sidebarMenuItems' => $sidebarMenuItems,
             'contracts' => $contracts,
@@ -115,7 +126,7 @@ class ClientController extends Controller
         $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
         $nableActive = $rmmIntegration !== null;
 
-        return view('tech.clients.create', [
+        return view('Tech.create', [
             'suggestedClientNumber' => $suggestedClientNumber,
             'roles' => $roles,
             'countries' => $countries,

@@ -164,6 +164,9 @@
 @endsection
 
 @section('sidebar')
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" />
+    @endif
 @endsection
 
 @section('rightbar')

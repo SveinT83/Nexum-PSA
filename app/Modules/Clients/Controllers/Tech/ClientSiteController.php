@@ -1,16 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Tech\Clients;
+namespace App\Modules\Clients\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Tech\Clients\RedirectResponse;
+use App\Http\Controllers\Tech\Clients\View;
+use App\Http\Requests\Tech\Clients\SiteRequest;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
-use App\Models\Clients\ClientUser;
 use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
-use App\Http\Requests\Tech\Clients\SiteRequest;
-use App\Service\SideBarMenus\ClientsMenu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -27,15 +28,21 @@ class ClientSiteController extends Controller
      * If no client is active, it displays all sites.
      *
      * @param Request $request
+     * @param int|null $client
      * @return View
      */
-    public function index(Request $request)
+    public function index(Request $request, $client = null)
     {
         // 1. URL overstyrer alt. Hvis URL er tom, sjekk sesjon.
-        $clientId = session('active_client_id');
+        $clientId = $client ?: session('active_client_id');
 
         // 2. Finn kunden
         $targetClient = $clientId ? Client::find($clientId) : null;
+
+        // 3. Update session if we have a client from URL
+        if ($client && $targetClient) {
+            session(['active_client_id' => $targetClient->id]);
+        }
 
         // 3. Bygg spørring (viser alt hvis $targetClient er null)
         $query = $targetClient ? $targetClient->sites() : ClientSite::query();
@@ -47,7 +54,7 @@ class ClientSiteController extends Controller
 
         $sites = $query->orderBy('name')->paginate(25)->withQueryString();
 
-        return view('tech.clients.sites.index', [
+        return view('Tech.Sites.index', [
             'sites' => $sites,
             'client' => $targetClient, // Dette er nå enten Client-objektet eller null
             'search' => $search,
@@ -78,10 +85,10 @@ class ClientSiteController extends Controller
         $site->load(['client', 'contacts']);
 
         //Return view
-        return view('tech.clients.sites.show', [
+        return view('Tech.Sites.show', [
             'site' => $site,
             'client' => $site->client,
-            'user_management' => $site->contacts,
+            'users' => $site->contacts,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($site->client),
         ]);
     }
@@ -102,7 +109,7 @@ class ClientSiteController extends Controller
         // -----------------------------------------
         $site->load(['client']);
 
-        return view('tech.clients.sites.form', [
+        return view('Tech.Sites.form', [
             'site' => $site,
             'client' => $site->client,
             'allClients' => collect(),
@@ -137,7 +144,7 @@ class ClientSiteController extends Controller
         // Check if N-able RMM is active
         $nableActive = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->exists();
 
-        return view('tech.clients.sites.form', [
+        return view('Tech.Sites.form', [
             'site' => new ClientSite(),
             'client' => $targetClient,
             'allClients' => $allClients,
@@ -197,7 +204,7 @@ class ClientSiteController extends Controller
                             'linkable_id' => $site->id,
                         ]);
                     } else {
-                        $warning = "Site created locally, but failed to create in N-able RMM: " . ($result['error'] ?? 'Unknown error');
+                        $warning = "Sites created locally, but failed to create in N-able RMM: " . ($result['error'] ?? 'Unknown error');
                     }
                 }
             }
@@ -209,7 +216,7 @@ class ClientSiteController extends Controller
         //Redirect wiew whit message
         // -----------------------------------------
         $response = redirect()->route('tech.clients.sites.show', $site)
-            ->with('success', 'Site created successfully.');
+            ->with('success', 'Sites created successfully.');
 
         if ($warning) {
             $response->with('warning', $warning);
@@ -244,7 +251,7 @@ class ClientSiteController extends Controller
         //Redirect with message
         // -----------------------------------------
         return redirect()->route('tech.clients.sites.show', $site)
-            ->with('success', 'Site updated successfully.');
+            ->with('success', 'Sites updated successfully.');
     }
 
     // -----------------------------------------
@@ -260,6 +267,6 @@ class ClientSiteController extends Controller
     {
         $site->delete();
 
-        return redirect()->back()->with('status', 'Site deleted successfully.');
+        return redirect()->back()->with('status', 'Sites deleted successfully.');
     }
 }

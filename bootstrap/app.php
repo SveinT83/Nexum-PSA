@@ -24,10 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 });
 
             // Client portal
+            /*
             Route::middleware('web')
                 ->prefix('client')
                 ->as('client.')
                 ->group(base_path('routes/client.php'));
+            */
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -47,3 +49,5 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->create();
+
+

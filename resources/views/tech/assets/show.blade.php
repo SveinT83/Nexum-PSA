@@ -100,7 +100,7 @@
                             </div>
                         </div>
 
-                        <!-- Site -->
+                        <!-- Sites -->
                         <div class="row mb-3">
                             <div class="col-sm-3 fw-bold">Site:</div>
                             <div class="col-sm-9">{{ $asset->site->name ?? '-' }}</div>

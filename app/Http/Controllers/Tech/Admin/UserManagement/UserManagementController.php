@@ -37,4 +37,29 @@ class UserManagementController extends Controller
         return view('tech.admin.user_management.index', compact('sidebarMenuItems'));
     }
 
+    /**
+     * USER CREATE
+     * Shows the crete user form
+     *
+     * @return \Illuminate\View\View
+     */
+    public function create() {
+
+        // -----------------------------------------
+        // Get sidemenu
+        // -----------------------------------------
+        $sidebarMenuItems = (new UserManagement())->UserManagement(null);
+
+        // -----------------------------------------
+        // Get all roles
+        // -----------------------------------------
+        $roles = Role::with('permissions')->get();
+
+        // -----------------------------------------
+        // Return view: sidebar menu items
+        // -----------------------------------------
+        return view('tech.admin.user_management.form', compact('sidebarMenuItems', 'roles'));
+
+    }
+
 }

@@ -1,5 +1,5 @@
 {{--
-    Site List View
+    Sites List View
 
     Displays a list of sites, potentially filtered by the active client in the session.
     Provides options to view, edit, or delete individual sites.

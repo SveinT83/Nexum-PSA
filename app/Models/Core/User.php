@@ -15,22 +15,41 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    /*
+   |--------------------------------------------------------------------------
+   | Constants
+   |--------------------------------------------------------------------------
+   */
+    const STATUS_PENDING = 'PENDING_INVITE';
+    const STATUS_ACTIVE = 'ACTIVE';
+    const STATUS_DISABLED = 'DISABLED';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mass Assignment
+    |--------------------------------------------------------------------------
+    */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'status',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Default Attributes
+    |--------------------------------------------------------------------------
+    */
+    protected $attributes = [
+        'status' => self::STATUS_PENDING,
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hidden Attributes
+    |--------------------------------------------------------------------------
+    */
     protected $hidden = [
         'password',
         'remember_token',
@@ -38,16 +57,36 @@ class User extends Authenticatable
         'two_factor_secret',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Casts
+    |--------------------------------------------------------------------------
+    */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+    public function isActive()
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
+    public function isPending()
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isDisabled()
+    {
+        return $this->status === self::STATUS_DISABLED;
     }
 }

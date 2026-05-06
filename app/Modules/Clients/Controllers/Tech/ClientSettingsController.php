@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Tech\Clients;
+namespace App\Modules\Clients\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
@@ -32,7 +32,7 @@ class ClientSettingsController extends Controller
             $currentRmmId = $link ? $link->external_id : null;
         }
 
-        return view('tech.clients.settings.edit', compact('client', 'rmmIntegration', 'rmmClients', 'rmmError', 'currentRmmId'));
+        return view('Tech.Settings.edit', compact('client', 'rmmIntegration', 'rmmClients', 'rmmError', 'currentRmmId'));
     }
 
     public function update(Request $request, Client $client)

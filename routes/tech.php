@@ -1,8 +1,8 @@
 <?php
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
+// Use Domain Architecture rout file in the module folder, Read module-architecture.md for more info.
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-use App\Http\Controllers\Tech\Clients\ClientController;
-use App\Http\Controllers\Tech\Clients\ClientSiteController;
-use App\Http\Controllers\Tech\Clients\ClientUsersController;
 use App\Http\Controllers\Tech\CS\Contracts\ContractController;
 use App\Http\Controllers\Tech\CS\Costs\CostController;
 use App\Http\Controllers\Tech\CS\Legal\LegalController;
@@ -14,6 +14,7 @@ use App\Http\Controllers\Tech\Risk\RiskController;
 use App\Http\Controllers\Tech\Work\Assets\AssetController;
 use Illuminate\Support\Facades\Route;
 
+
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 // Tech routes
 //
@@ -24,6 +25,10 @@ use Illuminate\Support\Facades\Route;
 // Authenticated Tech/Superuser routes
 // ------------------------------------------------------------------------------------------
 Route::middleware(['auth','tech'])->group(function () {
+
+    foreach (glob(app_path('Modules/*/routes.php')) as $routeFile) {
+        require $routeFile;
+    }
 
     Route::get('/dashboard', function () {
         return view('tech.dashboard');
@@ -70,96 +75,7 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::post('/contracts/{contract}/approve-manual', [ContractController::class, 'approveManual'])
         ->name('contracts.approve-manual');
 
-    // -----------------------------------------
-    // Clients
-    // -----------------------------------------
 
-    // -----------------------------------------
-    // Clients (basic MVP: index, create, store, show)
-    // -----------------------------------------
-    Route::get('/clients', [ClientController::class, 'index'])
-        ->name('clients.index');
-
-    Route::get('/clients/create', [ClientController::class, 'create'])
-        ->name('clients.create');
-
-    Route::post('/clients/store', [ClientController::class, 'store'])
-        ->name('clients.store');
-
-    Route::get('/clients/show/{client}', [ClientController::class, 'show'])
-        ->name('clients.show');
-
-    Route::get('/clients/{client}/settings', [\App\Http\Controllers\Tech\Clients\ClientSettingsController::class, 'edit'])
-        ->name('clients.settings.edit');
-
-    Route::put('/clients/{client}/settings', [\App\Http\Controllers\Tech\Clients\ClientSettingsController::class, 'update'])
-        ->name('clients.settings.update');
-
-
-    // -----------------------------------------
-    // Users
-    // -----------------------------------------
-
-    //Show
-    Route::get('/clients/user/show/{ClientUser}', [ClientUsersController::class, 'show'])
-        ->name('clients.user.show');
-
-    //Create
-    Route::get('/clients/user/create/{client}', [ClientUsersController::class, 'create'])
-        ->name('clients.user.create');
-
-    //Store
-    Route::post('/clients/user/store/{client}', [ClientUsersController::class, 'store'])
-        ->name('clients.user.store');
-
-    //Edit
-    Route::get('/clients/user/edit/{ClientUser}', [ClientUsersController::class, 'edit'])
-        ->name('clients.user.edit');
-
-    //Update
-    Route::put('/clients/user/update/{ClientUser}', [ClientUsersController::class, 'update'])
-        ->name('clients.user.update');
-
-    //Destroy
-    Route::delete('/clients/user/delete/{ClientUser}', [ClientUsersController::class, 'delete'])
-        ->name('clients.user.delete');
-
-    //Index
-    Route::get('/clients/user_management', [ClientUsersController::class, 'index'])
-        ->name('clients.user_management.index');
-
-
-    // -----------------------------------------
-    // Sites
-    // -----------------------------------------
-
-    //Index
-    Route::get('/clients/sites', [ClientSiteController::class, 'index'])
-        ->name('clients.sites.index');
-
-    //Show
-    Route::get('/clients/sites/show/{site}', [ClientSiteController::class, 'show'])
-        ->name('clients.sites.show');
-
-    //Create
-    Route::get('/clients/sites/create/{client?}', [ClientSiteController::class, 'create'])
-        ->name('clients.sites.create');
-
-    //Store
-    Route::post('/clients/sites/store/{client?}', [ClientSiteController::class, 'store'])
-        ->name('clients.sites.store');
-
-    //Edit
-    Route::get('/clients/sites.edit/{site}', [ClientSiteController::class, 'edit'])
-        ->name('clients.sites.edit');
-
-    //Update
-    Route::put('/clients/sites.update/{site}', [ClientSiteController::class, 'update'])
-        ->name('clients.sites.update');
-
-    //Destroy
-    Route::delete('/clients/sites/destroy/{site}', [ClientSiteController::class, 'destroy'])
-        ->name('clients.sites.destroy');
 
     // -----------------------------------------
     // Contracts

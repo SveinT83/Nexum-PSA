@@ -1,13 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\Clients;
+namespace App\Modules\Clients\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\V1\Clients\ClientResource;
 use App\Http\Resources\Api\V1\Assets\AssetResource;
+use App\Http\Resources\Api\V1\Clients\ClientResource;
 use App\Models\Clients\Client;
-use Illuminate\Http\Request;
-
 use OpenApi\Attributes as OA;
 
 #[OA\Info(

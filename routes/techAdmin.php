@@ -1,4 +1,7 @@
 <?php
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
+// Use Domain Architecture rout file in the module folder, Read module-architecture.md for more info.
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  * Tech Administration Routes
@@ -155,6 +158,14 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
         //User Dashboard
         Route::get('/admin/user_management', [UserManagementController::class, 'index'])
             ->name('admin.user_management.index');
+
+        //User Create
+        Route::get('/admin/user_management/create', [UserManagementController::class, 'create'])
+            ->name('admin.user_management.create');
+
+        //User store
+        Route::post('/admin/user_management/store', [UserManagementController::class, 'store'])
+            ->name('admin.user_management.store');
 
         //Roles Dashboard
         Route::get('/admin/user_management/roles', [RolesManagementController::class, 'rolesIndex'])

@@ -8,6 +8,33 @@
 
 @section('content')
 
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Users Card -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <div class="card">
+
+        <!-- --------------------------------------------- -->
+        <!-- Card header -->
+        <!-- Card title and add button -->
+        <!-- --------------------------------------------- -->
+        <div class="card-header">
+            <div class="row">
+                <h4 class="col-10">Users</h4>
+
+                <div class="col-2 text-right">
+                    <x-buttons.addlink url="{{ route('tech.admin.user_management.create') }}"> New user </x-buttons.addlink>
+                </div>
+            </div>
+        </div>
+
+        <!-- --------------------------------------------- -->
+        <!-- Card body -->
+        <!-- List of users and they roles -->
+        <!-- --------------------------------------------- -->
+        <div class="card-body">
+            <p>List of users whit role</p>
+        </div>
+    </div>
 @endsection
 
 @section('sidebar')

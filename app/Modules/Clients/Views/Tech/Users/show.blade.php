@@ -24,9 +24,9 @@
             <x-buttons.back url="{{ $backUrl }}">Back to Client</x-buttons.back>
 
             @if(isset($user->client_site_id))
-                {{-- Link to the specific Site this user belongs to --}}
+                {{-- Link to the specific Sites this user belongs to --}}
                 <a href="{{ route('tech.clients.sites.show', $user->client_site_id) }}" class="btn btn-sm btn-outline-secondary mb-3 bi bi-building">
-                    Go to Site: {{ $user->site->name ?? 'Site Detail' }}
+                    Go to Site: {{ $user->site->name ?? 'Sites Detail' }}
                 </a>
             @endif
 

@@ -37,15 +37,16 @@ The application uses a centralized breadcrumb system.
 
 ## 🧹 Architecture Overview
 
-**Framework:** Laravel 11 + Livewire + Alpine.js
-**Frontend:** Bootstrap 5 (standardized layout and components)
-**Database:** MySQL / MariaDB
-**Authentication:** Laravel Breeze (customized for multi-role + tenant separation)
-**Queue / Jobs:** Redis / Horizon
-**Email handling:** IMAP + SMTP ingestion pipeline with rule engine
-**Audit & Logging:** native database audit trail, action history, and system logs
+**Framework:** Laravel 11 + Livewire + Alpine.js  
+**Architecture:** **STRICT Domain-Driven Modular Structure** (See `module-architecture.md`)  
+**Frontend:** Bootstrap 5 (standardized layout and components)  
+**Database:** MySQL / MariaDB  
+**Authentication:** Laravel Breeze (customized for multi-role + tenant separation)  
+**Queue / Jobs:** Redis / Horizon  
+**Email handling:** IMAP + SMTP ingestion pipeline with rule engine  
+**Audit & Logging:** native database audit trail, action history, and system logs  
 
-Each module lives independently but shares a unified component library and event bus.
+Each module lives independently under `app/Modules/{Domain}` and MUST contain its own Controllers, Views, and Routes. Standard Laravel directories for these assets are NOT used for domain logic.
 
 ---
 

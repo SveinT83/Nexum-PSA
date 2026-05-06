@@ -5,9 +5,11 @@
         <h2 class="h4 mb-0">New site</h2>
         <div>
             @if(isset($client))
-                <a href="{{ route('tech.clients.show', $client->id) }}" class="btn btn-sm btn-outline-secondary">Back to Client</a>
+                <a href="{{ route('tech.clients.show', $client->id) }}" class="btn btn-sm btn-outline-secondary">Back to
+                    Client</a>
             @else
-                <a href="{{ route('tech.clients.sites.index') }}" class="btn btn-sm btn-outline-secondary">Back to list</a>
+                <a href="{{ route('tech.clients.sites.index') }}" class="btn btn-sm btn-outline-secondary">Back to
+                    list</a>
             @endif
         </div>
     </div>
@@ -23,7 +25,7 @@
             : route('tech.clients.sites.store', $client);
     @endphp
 
-    <!-- ------------------------------------------------- -->
+            <!-- ------------------------------------------------- -->
     <!-- FORM START - Create and Edit -->
     <!-- ------------------------------------------------- -->
     <x-forms.form-default :action="$action" :button-text="$isEdit ? 'Update' : 'Save'">
@@ -31,9 +33,9 @@
             @method('PUT')
         @endif
 
-            @csrf
+        @csrf
 
-            @if(!$isEdit && $allClients->isNotEmpty())
+        @if(!$isEdit && $allClients->isNotEmpty())
             <div class="row">
                 <div class="col-4 mt-2">
                     <x-forms.select name="client_id" labelName="Client">
@@ -43,39 +45,43 @@
                     </x-forms.select>
                 </div>
             </div>
-            @else
-                {{-- Skjult felt hvis klient allerede er låst --}}
-                <input type="hidden" name="client_id" value="{{ $client->id ?? $site->client_id }}">
-            @endif
+        @else
+            {{-- Skjult felt hvis klient allerede er låst --}}
+            <input type="hidden" name="client_id" value="{{ $client->id ?? $site->client_id }}">
+        @endif
 
         <div class="row">
 
             <!-- ------------------------------------------------- -->
-            <!-- Site Name -->
+            <!-- Sites Name -->
             <!-- ------------------------------------------------- -->
             <div class="col-4 mt-2">
-                <x-forms.input_text name="name" labelName="Site Name" value="{{$site->name ?? ''}}" inputVar="required"></x-forms.input_text>
+                <x-forms.input_text name="name" labelName="Site Name" value="{{$site->name ?? ''}}"
+                                    inputVar="required"></x-forms.input_text>
             </div>
 
             <!-- ------------------------------------------------- -->
             <!-- Address -->
             <!-- ------------------------------------------------- -->
             <div class="col-4 mt-2">
-                <x-forms.input_text name="address" labelName="Address" value="{{$site->address ?? ''}}"></x-forms.input_text>
+                <x-forms.input_text name="address" labelName="Address"
+                                    value="{{$site->address ?? ''}}"></x-forms.input_text>
             </div>
 
             <!-- ------------------------------------------------- -->
             <!-- Address -->
             <!-- ------------------------------------------------- -->
             <div class="col-4 mt-2">
-                <x-forms.input_text name="co_address" labelName="CO Address" value="{{$site->co_address ?? ''}}"></x-forms.input_text>
+                <x-forms.input_text name="co_address" labelName="CO Address"
+                                    value="{{$site->co_address ?? ''}}"></x-forms.input_text>
             </div>
 
             <!-- ------------------------------------------------- -->
             <!-- Zip -->
             <!-- ------------------------------------------------- -->
             <div class="col-1 mt-2">
-                <x-forms.input_text type="number" name="zip" labelName="zip" value="{{$site->zip ?? ''}}"></x-forms.input_text>
+                <x-forms.input_text type="number" name="zip" labelName="zip"
+                                    value="{{$site->zip ?? ''}}"></x-forms.input_text>
             </div>
 
             <!-- ------------------------------------------------- -->
@@ -89,14 +95,16 @@
             <!-- County -->
             <!-- ------------------------------------------------- -->
             <div class="col-4 mt-2">
-                <x-forms.input_text name="county" labelName="County" value="{{$site->county ?? ''}}"></x-forms.input_text>
+                <x-forms.input_text name="county" labelName="County"
+                                    value="{{$site->county ?? ''}}"></x-forms.input_text>
             </div>
 
             <!-- ------------------------------------------------- -->
             <!-- Country -->
             <!-- ------------------------------------------------- -->
             <div class="col-4 mt-2">
-                <x-forms.input_text name="country" labelName="Country" value="{{$site->country ?? ''}}"></x-forms.input_text>
+                <x-forms.input_text name="country" labelName="Country"
+                                    value="{{$site->country ?? ''}}"></x-forms.input_text>
             </div>
 
             @php
@@ -109,7 +117,8 @@
             @if(!$isEdit && ($nableActive ?? false) && $isLinkedToRmm)
                 <div class="col-12 mt-3">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="1" name="create_in_rmm" id="rmmCheck" {{ old('create_in_rmm') ? 'checked' : '' }}>
+                        <input class="form-check-input" type="checkbox" value="1" name="create_in_rmm"
+                               id="rmmCheck" {{ old('create_in_rmm') ? 'checked' : '' }}>
                         <label class="form-check-label" for="rmmCheck">
                             Create in N-able RMM
                         </label>
