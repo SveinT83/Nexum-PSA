@@ -33,6 +33,10 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - Do not create verification scripts or tinker when tests cover that functionality and prove it works. Unit and feature tests are more important.
 
 ## Application Structure & Architecture
+- **STRICT Domain Architecture:** This project uses a custom modular structure. See `module-architecture.md` for mandatory rules.
+- **Module Location:** All domain logic MUST be in `app/Modules/{Domain}/`.
+- **Controllers & Views:** MUST be inside module folders, not in `app/Http/Controllers` or `resources/views`.
+- **Routes:** Module routes must be in `app/Modules/{Domain}/routes.php` and loaded explicitly in `routes/web.php` or `routes/api.php`.
 - Stick to existing directory structure - don't create new base folders without approval.
 - Do not change the application's dependencies without approval.
 

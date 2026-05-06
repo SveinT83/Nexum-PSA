@@ -99,12 +99,12 @@ class SyncTacticalAssetsJob implements ShouldQueue
 
     public function processAgent($agentData, $integration, &$results)
     {
-        // 1. Resolve Client & Site (STRICT: ONLY use external_id from RMM Link)
+        // 1. Resolve Client & Sites (STRICT: ONLY use external_id from RMM Link)
         $localClient = $this->resolveClient($agentData, $integration);
         $localSite = $this->resolveSite($agentData, $integration);
 
         if (!$localClient || !$localSite) {
-            $reason = !$localClient ? "Client mapping missing" : "Site mapping missing";
+            $reason = !$localClient ? "Client mapping missing" : "Sites mapping missing";
             throw new \Exception($reason);
         }
 

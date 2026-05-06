@@ -1,150 +1,181 @@
 # Routing & Middleware Overview
 
-This document describes how the routing structure and middleware work in the project.
+This document describes how routing is structured in Nexum PSA, how middleware protection is applied today, and how new routes should be created.
 
-## File Structure
+## Route Files and Responsibilities
 
-Standard Laravel + extra modular route files:
+The application is split across dedicated route files:
 
-- `routes/web.php` – public and authentication related routes (login, logout, landing page)
-- `routes/tech.php` – technical interface (prefix `tech`, name prefix `tech.`)
-- `routes/client.php` – client portal (prefix `client`, name prefix `client.`)
-- `routes/api.php` – API routes (Sanctum / future endpoints)
-- `routes/console.php` – artisan command closures
+- `routes/web.php` - public web routes (landing, iframe-based auto-login flow, public contract links).
+- `routes/tech.php` - technician workspace routes.
+- `routes/techAdmin.php` - technical administration routes.
+- `routes/client.php` - client portal (`Minesider`) routes.
+- `routes/api.php` - versioned API routes.
+- `routes/console.php` - Artisan closure commands.
 
-Registration of these happens in `bootstrap/app.php`:
+## How Route Files Are Registered
 
-```php
-return Application::configure(...)
-	->withRouting(
-		web: __DIR__.'/../routes/web.php',
-		commands: __DIR__.'/../routes/console.php',
-		health: '/up',
-		then: function () {
-			Route::middleware('web')
-				->prefix('tech')
-				->as('tech.')
-				->group(base_path('routes/tech.php'));
+Route registration is handled in `bootstrap/app.php`:
 
-			Route::middleware('web')
-				->prefix('client')
-				->as('client.')
-				->group(base_path('routes/client.php'));
-		},
-	)
-	->withMiddleware(...);
-```
+- `web.php` is registered as the primary web routes file.
+- `api.php` is registered as API routes.
+- `tech.php` and `techAdmin.php` are loaded inside a shared group with:
+  - URL prefix: `tech`
+  - route-name prefix: `tech.`
+  - middleware: `web`
+- `client.php` is loaded inside a group with:
+  - URL prefix: `client`
+  - route-name prefix: `client.`
+  - middleware: `web`
 
-## Prefix & Name
+## URL Prefix Rules (Current Team Rule)
 
-| File           | URL prefix | Name prefix | Example URL             | Example name          |
-|----------------|------------|-------------|-------------------------|-----------------------|
-| web.php        | (none)     | (none)      | `/login`                | `login`               |
-| tech.php       | `tech`     | `tech.`     | `/tech/dashboard`       | `tech.dashboard`      |
-| client.php     | `client`   | `client.`   | `/client/dashboard`     | `client.dashboard`    |
+For view routes in the internal workspace, URLs must start with `tech`.
 
-Use `route('tech.dashboard')` to generate the URL to the technical dashboard.
+- Correct: `/tech/dashboard`, `/tech/contracts`, `/tech/admin/...`
+- Not allowed for internal views: `/dashboard`, `/admin/...` without the `/tech` prefix
 
-## Authentication & Roles
+This is enforced by grouping both technician and tech-admin files under the `tech` prefix in `bootstrap/app.php`.
 
-Authentication is handled by Laravel Fortify + the standard `Auth::attempt()` call inside the login route in `routes/web.php`.
+## Access Zones
 
-Roles are provided by Spatie Permission. We assume at minimum these roles:
+### 1) Public Zone (`web.php`)
 
-- `Superuser`
-- `Tech`
-- (Future) `ClientUser`
+Typical routes:
+- `/` (welcome page and signed iframe-login flow)
+- `/contract/view/{token}`
+- `/contract/accept/{token}`
 
-## Middleware
+Security characteristics today:
+- No `auth` middleware required for these endpoints.
+- The root route supports signed HMAC auto-login with:
+  - `email`
+  - `ts` (timestamp)
+  - `sig` (HMAC-SHA256)
+- Token age check is currently 300 seconds.
 
-Custom middleware for technical access: `App\Http\Middleware\TechAccess`.
+### 2) Technician Zone (`tech.php`)
 
-Source (`app/Http/Middleware/TechAccess.php`):
-```php
-class TechAccess {
-	public function handle($request, Closure $next) {
-		$user = $request->user();
-		if (!$user) {
-			return redirect()->route('login');
-		}
-		if (! $user->hasRole('Superuser') && ! $user->hasRole('Tech')) {
-			abort(403, 'No access');
-		}
-		return $next($request);
-	}
-}
-```
+All routes are protected by:
+- `auth`
+- `tech`
 
-Alias registered in `bootstrap/app.php`:
-```php
-$middleware->alias([
-	'tech' => \App\Http\Middleware\TechAccess::class,
-]);
-```
+This means users must be logged in and pass `TechAccess` role checks.
 
-Usage in `routes/tech.php`:
-```php
-Route::middleware(['auth','tech'])->group(function() {
-	Route::get('/dashboard', fn() => view('Tech.dashboard'))->name('dashboard');
-	// ... additional technical routes
-});
-```
+### 3) Tech Admin Zone (`techAdmin.php`)
 
-## Login Flow
+All routes are protected by:
+- `auth`
+- `tech`
+- `admin`
 
-1. POST `/login` (in `web.php`) validates email/password.
-2. `Auth::attempt()` + session regeneration.
-3. Redirect to `route('tech.dashboard')` on success.
-4. On failure: throws ValidationException with message.
+This is a stricter layer on top of the technician zone for administration endpoints under `/tech/admin/...`.
 
-Login route (simplified):
-```php
-Route::post('/login', function (Request $request) {
-	$request->validate(['email'=>'required|email','password'=>'required']);
-	if (Auth::attempt($request->only('email','password'), $request->boolean('remember'))) {
-		$request->session()->regenerate();
-		return redirect()->route('tech.dashboard');
-	}
-	throw ValidationException::withMessages(['email' => 'Incorrect email or password.']);
-})->name('login');
-```
+### 4) Client Zone (`client.php`)
 
-Logout:
-```php
-Route::post('/logout', function (Request $request) {
-	Auth::logout();
-	$request->session()->invalidate();
-	$request->session()->regenerateToken();
-	return redirect()->route('welcome');
-})->name('logout');
-```
+Current state:
+- Mounted under `/client` with route names `client.*`.
+- Currently only `web` middleware is guaranteed by route registration.
+- No dedicated `client` middleware alias is configured today.
 
-## Naming Conventions
+Recommended target state:
+- Add explicit access middleware for portal users (for example `auth` + a dedicated `client` middleware).
+- Ensure role/tenant checks are enforced for all `client.*` routes.
 
-- Use the `tech.` namespace for internal operations/support functionality.
-- Use the `client.` namespace for client-facing pages.
-- API endpoints in `routes/api.php` will typically use `Route::middleware('auth:sanctum')`.
+### 5) API Zone (`api.php`)
 
-## Route Inspection
+API routes are versioned under `/api/v1` and named `api.v1.*`.
 
-Useful artisan commands:
+Current protection:
+- All exposed v1 endpoints are inside `Route::middleware('auth:sanctum')`.
+- Unauthenticated requests receive 401 responses.
+
+## Middleware Aliases in Use
+
+Custom aliases are registered in `bootstrap/app.php`:
+
+- `tech` => `App\Http\Middleware\TechAccess`
+- `admin` => `App\Http\Middleware\AdminAccess`
+
+### `TechAccess` behavior
+
+`App\Http\Middleware\TechAccess` enforces:
+
+1. If user is not authenticated: redirect to `login`.
+2. If authenticated, require one of these roles:
+   - `Superuser`
+   - `Tech`
+   - `Admin`
+3. Otherwise, abort with HTTP 403.
+
+### `AdminAccess` behavior
+
+`App\Http\Middleware\AdminAccess` enforces:
+
+1. If user is not authenticated: redirect to `login`.
+2. If authenticated, require one of these roles:
+   - `Superuser`
+   - `Admin`
+3. Otherwise, abort with HTTP 403.
+
+## API Security (Documented Current State)
+
+This section documents what is implemented now.
+
+1. **Authentication**
+   - API v1 endpoints require `auth:sanctum`.
+   - Access depends on valid Sanctum authentication.
+
+2. **Versioned endpoint structure**
+   - API is grouped under `/api/v1`.
+   - Route names use `api.v1.*`.
+
+3. **Data exposure pattern**
+   - Read-focused endpoints currently exposed (`index`, `show`, and client-assets relation).
+   - Responses are transformed through API Resources (`ClientResource`, `AssetResource`).
+
+4. **JSON error preference for API requests**
+   - Exception rendering is configured to return JSON automatically for `api/*` paths.
+
+> Note: OpenAPI annotations in API controllers currently describe bearer token auth (`bearerAuth`) while runtime enforcement is done by Laravel Sanctum middleware.
+
+## Naming & Creation Conventions
+
+When adding routes:
+
+- Internal workspace view route URLs must remain under `/tech/...`.
+- Put technician features in `routes/tech.php`.
+- Put admin-only features in `routes/techAdmin.php`.
+- Keep client portal features under `routes/client.php`.
+- Keep API endpoints under `routes/api.php`, grouped by version.
+- Prefer named routes consistently.
+
+## Checklist for New Routes (Recommended Standard)
+
+Use this checklist every time a new route is introduced:
+
+1. Place the route in the correct route file.
+2. Ensure URL prefix rule is respected (`/tech/...` for internal views).
+3. Apply correct middleware:
+   - technician route: `auth + tech`
+   - tech admin route: `auth + tech + admin`
+   - client portal route: current state vs target state decision
+   - API route: `auth:sanctum` where required
+4. Add/verify route name convention (`tech.*`, `client.*`, `api.v1.*`).
+5. Add/update breadcrumb mapping in `config/breadcrumbs.php` if it maps to a view.
+6. Verify registration with `php artisan route:list` filters.
+
+## Useful Commands
+
 ```bash
-php artisan route:list --path=tech
-php artisan route:list --name=dashboard
 php artisan route:list
+php artisan route:list --path=tech
+php artisan route:list --path=client
+php artisan route:list --path=api/v1
+php artisan route:list --name=tech.
+php artisan route:list --name=client.
+php artisan route:list --name=api.v1.
 ```
-
-## Error Handling / 403
-
-403 occurs when the user lacks a required role in `TechAccess`. Customize by creating a view:
-`resources/views/errors/403.blade.php` and handle via the `render()` method in your exception handler or rely on Laravel defaults.
-
-## Future Work
-
-- Separate middleware for clients (`ClientAccess`).
-- Granular permissions (e.g. `view tickets`, `edit tickets`).
-- API routes with versioning (`/api/v1/...`).
-- Role-based rate limiting.
 
 ---
-Updated: {{ date('Y-m-d') }}
+Updated: 2026-05-03

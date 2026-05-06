@@ -46,7 +46,7 @@ class DocController extends Controller
         }
 
         // Apply global context filters from session:
-        // 1. Specific Client (and optionally Site)
+        // 1. Specific Client (and optionally Sites)
         // 2. Or "Internal Only" records
         // 3. Otherwise, show everything (if none of the above are set)
         if ($activeClientId = session('active_client_id')) {
@@ -101,7 +101,7 @@ class DocController extends Controller
             }
         }
 
-        // Update Site session state (if applicable)
+        // Update Sites session state (if applicable)
         if ($siteId = $request->get('active_site_id')) {
             if ($siteId == 'none') {
                 session()->forget('active_site_id');

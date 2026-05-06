@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('status')->default('active'); // active, archived, completed
             $table->timestamp('approved_at')->nullable();
-            $table->foreignId('approved_by')->nullable()->constrained('users');
+            $table->foreignId('approved_by')->nullable()->constrained('user_management');
             $table->timestamps();
             $table->softDeletes();
         });

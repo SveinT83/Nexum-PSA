@@ -6,7 +6,7 @@
     Displays a sortable/filterable list of all documentation records.
     Filtering is based on:
     1. Category (passed via 'cat' query parameter).
-    2. Session-based Context (Active Client, Site, or Internal Scope).
+    2. Session-based Context (Active Client, Sites, or Internal Scope).
 --}}
 
 @section('title', 'Documentations')

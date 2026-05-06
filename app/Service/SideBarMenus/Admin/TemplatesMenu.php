@@ -9,7 +9,7 @@ class TemplatesMenu
         // Initialize an empty array to hold the menu items
         $sidebarMenuItems = [];
 
-        // Add the main navigation items for clients, sites, and users
+        // Add the main navigation items for clients, sites, and user_management
         $sidebarMenuItems[] = ['name' => 'Documentations', 'route' => 'tech.admin.system.templatesManagement.doc.index'];
 
         return $sidebarMenuItems;

@@ -40,7 +40,7 @@ class TacticalRmmSyncCommand extends Command
 
         // 1. Sync Clients and Sites (merged)
         if (!empty($config['client_sync_from'])) {
-            $this->info('Dispatching Tactical RMM Client and Site sync job...');
+            $this->info('Dispatching Tactical RMM Client and Sites sync job...');
             // Dispatch sync job without cache key for automation
             SyncTacticalClientsJob::dispatch($integration->id);
         }

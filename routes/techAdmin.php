@@ -1,4 +1,7 @@
 <?php
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
+// Use Domain Architecture rout file in the module folder, Read module-architecture.md for more info.
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  * Tech Administration Routes
@@ -144,13 +147,6 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
         //doc: Edit page
         Route::get('/admin/system/templatesManagement/doc/edit/{id}', [TemplatesManagementController::class, 'docEdit'])
             ->name('admin.system.templatesManagement.doc.edit');
-
-        // -----------------------------------------
-        // Users
-        // -----------------------------------------
-        Route::get('/admin/users', function () {
-            return view('tech.admin.users.index');
-        })->name('admin.users.index');
 
         // -----------------------------------------
         // Category

@@ -186,7 +186,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Same-Site Cookies
+    | Same-Sites Cookies
     |--------------------------------------------------------------------------
     |
     | This option determines how your cookies behave when cross-sites requests
@@ -208,7 +208,7 @@ return [
     |
     | Setting this value to true will tie the cookie to the top-level sites for
     | a cross-sites context. Partitioned cookies are accepted by the browser
-    | when flagged "secure" and the Same-Site attribute is set to "none".
+    | when flagged "secure" and the Same-Sites attribute is set to "none".
     |
     */
 

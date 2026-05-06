@@ -149,7 +149,7 @@ class ContractItemsEditor extends Component
             return $this->contract->client->contacts()->count() ?: 1;
         }
 
-        // Logic for "Site" or similar could go here
+        // Logic for "Sites" or similar could go here
         // If the service name or unit implies a count of sites
         if (str_contains(strtolower($unitName), 'site') || str_contains(strtolower($service->name), 'lokasjon')) {
             return $this->contract->client->sites()->count() ?: 1;

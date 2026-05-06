@@ -151,7 +151,7 @@ class SyncTacticalClientsJob implements ShouldQueue
             $localSite = $link ? $link->linkable : null;
 
             if (!$localSite) {
-                Log::info('SyncTacticalClientsJob: Site mapping missing or local record gone, handling site', ['external_id' => $externalId, 'name' => $rmmSiteData['name'], 'client' => $localClient->name]);
+                Log::info('SyncTacticalClientsJob: Sites mapping missing or local record gone, handling site', ['external_id' => $externalId, 'name' => $rmmSiteData['name'], 'client' => $localClient->name]);
 
                 $localSite = ClientSite::create([
                     'client_id' => $localClient->id,

@@ -11,6 +11,10 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <testsuite name="Modules">
+            <directory>app/Modules/*/Tests/Feature</directory>
+            <directory>app/Modules/*/Tests/Unit</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
@@ -22,6 +26,8 @@
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
+        <env name="AUTH_USER_TABLE" value="user_management"/>
+        <env name="VIEW_COMPILED_PATH" value="/tmp/tdpsa-test-views"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="MAIL_MAILER" value="array"/>

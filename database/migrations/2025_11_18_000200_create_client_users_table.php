@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('client_users', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('client_site_id')->constrained('client_sites')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('user_management')->nullOnDelete();
             $table->string('role', 100)->nullable();
             $table->string('name');
             $table->string('email')->nullable();
