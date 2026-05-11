@@ -63,6 +63,48 @@
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">BookStack</h5>
+                        @php
+                            $bookStack = $integrations->get('book_stack');
+                            $isBookStackActive = $bookStack && $bookStack->status === 'active';
+                        @endphp
+
+                        <form action="{{ route('tech.admin.system.integrations.toggle') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="type" value="book_stack">
+                            <input type="hidden" name="name" value="BookStack">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="toggleBookStack" onchange="this.form.submit()"
+                                       {{ $isBookStackActive ? 'checked' : '' }}>
+                                <label class="form-check-label" for="toggleBookStack">
+                                    {{ $isBookStackActive ? 'Enabled' : 'Disabled' }}
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <p class="card-text">Use BookStack as the read-only source of truth for knowledge content.</p>
+
+                        <div class="mt-auto">
+                            @if($isBookStackActive)
+                                <a href="{{ route('tech.admin.system.integrations.book_stack.settings') }}" class="btn btn-primary">
+                                    <i class="bi bi-gear"></i> Settings
+                                </a>
+                            @else
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="bi bi-gear"></i> Settings
+                                </button>
+                                <p class="text-muted small mt-2 mb-0">Enable the integration to configure BookStack API credentials.</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Tactical RMM</h5>
                         @php
                             $tactical = $integrations->get('tactical_rmm');

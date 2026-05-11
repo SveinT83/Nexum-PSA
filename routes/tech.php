@@ -36,20 +36,6 @@ Route::middleware(['auth','tech'])->group(function () {
     })->name('reports.index');
 
     // -----------------------------------------
-    // Sales
-    // -----------------------------------------
-    Route::get('/sales', function () {
-        return view('tech.sales.index');
-    })->name('sales.index');
-
-    // -----------------------------------------
-    // Storage
-    // -----------------------------------------
-    Route::get('/storage', function () {
-        return view('tech.storage.index');
-    })->name('storage.index');
-
-    // -----------------------------------------
     // Tasks
     // -----------------------------------------
     Route::get('/tasks', function () {

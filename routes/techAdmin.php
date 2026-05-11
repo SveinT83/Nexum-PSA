@@ -40,17 +40,6 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
         })->name('admin.settings.cs.services');
 
         // -----------------------------------------
-        // Sales Settings
-        // -----------------------------------------
-        Route::get('/admin/settings/sales/rules', function () {
-            return view('tech.admin.settings.sales.rules.index');
-        })->name('admin.settings.sales.rules');
-
-        Route::get('/admin/settings/sales/workflows', function () {
-            return view('tech.admin.settings.sales.workflows.index');
-        })->name('admin.settings.sales.workflows');
-
-        // -----------------------------------------
         // Ticket Settings
         // -----------------------------------------
         Route::get('/admin/settings/tickets', function () {

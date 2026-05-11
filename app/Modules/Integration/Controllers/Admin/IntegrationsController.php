@@ -4,6 +4,7 @@ namespace App\Modules\Integration\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Integration\Services\BookStack\BookStackClient;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use App\Services\Integrations\TacticalRmm\TacticalRmmClient;
 use Illuminate\Http\Request;
@@ -207,5 +208,81 @@ class IntegrationsController extends Controller
         $integration->save();
 
         return back()->with('success', 'Tactical RMM automation settings updated.');
+    }
+
+    public function bookStackSettings()
+    {
+        $integration = Integration::where('type', 'book_stack')->first();
+
+        return view('integration::Tech.Admin.System.Integrations.book_stack.settings', compact('integration'));
+    }
+
+    public function bookStackUpdate(Request $request)
+    {
+        $request->validate([
+            'server' => 'required|url',
+            'token_id' => 'nullable|string',
+            'token_secret' => 'nullable|string',
+            'sync_interval_minutes' => 'nullable|integer|min:1|max:1440',
+        ]);
+
+        $integration = Integration::firstOrCreate(
+            ['type' => 'book_stack'],
+            ['name' => 'BookStack', 'status' => 'disabled']
+        );
+
+        $integration->server = rtrim($request->input('server'), '/');
+
+        $tokenId = $request->input('token_id') ?: $integration->getSecret('token_id');
+        $tokenSecret = $request->input('token_secret') ?: $integration->getSecret('token_secret');
+
+        if ($request->filled('token_id')) {
+            $integration->setSecret('token_id', $request->input('token_id'));
+        }
+
+        if ($request->filled('token_secret')) {
+            $integration->setSecret('token_secret', $request->input('token_secret'));
+        }
+
+        $config = $integration->config ?? [];
+        $config['sync_interval_minutes'] = (int) $request->input('sync_interval_minutes', $config['sync_interval_minutes'] ?? 5);
+        $config['read_only'] = true;
+        $config['provider_role'] = 'knowledge_source';
+        $integration->config = $config;
+
+        if (!$tokenId || !$tokenSecret) {
+            $integration->is_healthy = false;
+            $integration->last_error = null;
+        }
+
+        $integration->save();
+
+        return back()->with('success', 'BookStack configuration saved.');
+    }
+
+    public function bookStackTestConnection()
+    {
+        $integration = Integration::where('type', 'book_stack')->firstOrFail();
+        $tokenId = $integration->getSecret('token_id');
+        $tokenSecret = $integration->getSecret('token_secret');
+
+        if ($tokenId && $tokenSecret && $integration->server) {
+            $client = new BookStackClient($integration->server, $tokenId, $tokenSecret);
+            $test = $client->testConnection();
+
+            $integration->is_healthy = $test['success'];
+            $integration->last_error = $test['success'] ? null : $test['message'];
+        } else {
+            $integration->is_healthy = false;
+            $integration->last_error = 'BookStack token ID and token secret are required.';
+        }
+
+        $integration->save();
+
+        if ($integration->is_healthy) {
+            return back()->with('success', 'BookStack connection verified.');
+        }
+
+        return back()->with('warning', 'BookStack connection test failed: ' . $integration->last_error);
     }
 }

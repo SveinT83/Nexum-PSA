@@ -41,6 +41,15 @@ Route::middleware('admin')->group(function () {
     Route::post('/admin/system/integrations/tactical-rmm/settings', [IntegrationsController::class, 'tacticalRmmUpdateSettings'])
         ->name('admin.system.integrations.tactical_rmm.update_settings');
 
+    Route::get('/admin/system/integrations/book-stack', [IntegrationsController::class, 'bookStackSettings'])
+        ->name('admin.system.integrations.book_stack.settings');
+
+    Route::post('/admin/system/integrations/book-stack', [IntegrationsController::class, 'bookStackUpdate'])
+        ->name('admin.system.integrations.book_stack.update');
+
+    Route::post('/admin/system/integrations/book-stack/test', [IntegrationsController::class, 'bookStackTestConnection'])
+        ->name('admin.system.integrations.book_stack.test');
+
     Route::get('/admin/system/integrations/api', [ApiController::class, 'index'])
         ->name('admin.system.integrations.api.index');
 
