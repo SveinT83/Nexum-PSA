@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Doc\DocumentationTemplate;
-use App\Models\System\Category;
+use App\Modules\Documentation\Models\DocumentationTemplate;
+use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Database\Seeder;
 
 class DocumentationTemplateSeeder extends Seeder

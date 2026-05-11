@@ -23,7 +23,8 @@
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center py-3">
         <h1 class="h4 mb-0">{{ $isEdit ? 'Edit Risk Assessment' : 'Create Risk Assessment' }}</h1>
-        <a href="{{ $isEdit ? route('tech.risk.show', $risk) : route('tech.risk.index') }}" class="btn btn-sm btn-secondary">Back</a>
+
+        <x-buttons.back url="{{ $isEdit ? route('tech.risk.show', $risk) : route('tech.risk.index') }}"> Back to Risk</x-buttons.back>
     </div>
 @endsection
 

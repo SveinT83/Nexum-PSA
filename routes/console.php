@@ -3,11 +3,11 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use App\Domain\Email\Jobs\PollActiveEmailAccounts;
-use App\Domain\Email\Jobs\EmailAccountHealthCheckJob;
-use App\Domain\Email\Jobs\EmailRetentionPurgeJob;
-use App\Domain\Email\Models\EmailAccount;
-use App\Domain\Email\Jobs\FetchImapAccount;
+use App\Modules\Email\Jobs\PollActiveEmailAccounts;
+use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
+use App\Modules\Email\Jobs\EmailRetentionPurgeJob;
+use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Jobs\Integrations\NAbleRmmSyncJob;
 
 Artisan::command('inspire', function () {

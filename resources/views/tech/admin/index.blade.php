@@ -14,21 +14,14 @@
     <div class="row">
 
         <!-- ------------------------------------------------- -->
-        <!-- Contracts & Services Settings -->
+        <!-- Commercial Settings -->
         <!-- ------------------------------------------------- -->
         <div class="col-md-4">
-            <x-card.default title="Contracts & Services Settings">
+            <x-card.default title="Commercial Settings">
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.cs.contracts') }}">Contracts</a></li>
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.cs.services') }}">Services</a></li>
-            </x-card.default>
-        </div>
-
-        <!-- ------------------------------------------------- -->
-        <!-- Economy Settings -->
-        <!-- ------------------------------------------------- -->
-        <div class="col-md-4">
-            <x-card.default title="Economy Settings">
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.economy') }}">Economy</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.settings.economy.units') }}">Units</a></li>
             </x-card.default>
         </div>
 

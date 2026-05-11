@@ -38,7 +38,7 @@ class Client extends Model
      */
     public function contracts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(\App\Models\CS\Contracts\Contracts::class);
+        return $this->hasMany(\App\Modules\Commercial\Models\Contracts\Contracts::class);
     }
 
     public function sites(): \Illuminate\Database\Eloquent\Relations\HasMany

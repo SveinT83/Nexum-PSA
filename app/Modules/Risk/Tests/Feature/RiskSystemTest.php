@@ -6,7 +6,7 @@ use App\Models\Core\User;
 use App\Models\Risk\RiskAssessment;
 use App\Models\Risk\RiskItem;
 use App\Models\Risk\RiskItemUpdate;
-use App\Models\System\Category;
+use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;

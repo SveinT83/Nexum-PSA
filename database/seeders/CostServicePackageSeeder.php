@@ -14,9 +14,9 @@ class CostServicePackageSeeder extends Seeder
     {
         $ms = \App\Models\Doc\Vendor::where('name', 'Microsoft')->first();
         $lenovo = \App\Models\Doc\Vendor::where('name', 'Lenovo')->first();
-        $stk = \App\Models\Economy\Units::where('name', 'Stykk')->first();
-        $mnd = \App\Models\Economy\Units::where('name', 'Måned')->first();
-        $bruker = \App\Models\Economy\Units::where('name', 'Bruker')->first();
+        $stk = \App\Modules\Commercial\Models\Economy\Units::where('name', 'Stykk')->first();
+        $mnd = \App\Modules\Commercial\Models\Economy\Units::where('name', 'Måned')->first();
+        $bruker = \App\Modules\Commercial\Models\Economy\Units::where('name', 'Bruker')->first();
 
         $admin = \App\Models\Core\User::where('email', 'admin@tdpsa.com')->first();
         $adminId = $admin ? $admin->id : 1;
@@ -57,7 +57,7 @@ class CostServicePackageSeeder extends Seeder
 
         $costModels = [];
         foreach ($costs as $costData) {
-            $costModels[] = \App\Models\CS\Cost::updateOrCreate(['name' => $costData['name']], $costData);
+            $costModels[] = \App\Modules\Commercial\Models\Cost::updateOrCreate(['name' => $costData['name']], $costData);
         }
 
         // 2. Seed Services
@@ -100,7 +100,7 @@ class CostServicePackageSeeder extends Seeder
 
         $serviceModels = [];
         foreach ($services as $serviceData) {
-            $service = \App\Models\CS\Services\Services::updateOrCreate(['sku' => $serviceData['sku']], $serviceData);
+            $service = \App\Modules\Commercial\Models\Services\Services::updateOrCreate(['sku' => $serviceData['sku']], $serviceData);
             $serviceModels[] = $service;
         }
 
@@ -121,13 +121,13 @@ class CostServicePackageSeeder extends Seeder
         ];
 
         foreach ($packages as $packageData) {
-            $package = \App\Models\CS\Packages\Package::updateOrCreate(['name' => $packageData['name']], $packageData);
+            $package = \App\Modules\Commercial\Models\Packages\Package::updateOrCreate(['name' => $packageData['name']], $packageData);
 
             if ($package->name === 'Standard Modern Workplace') {
-                $serviceIds = \App\Models\CS\Services\Services::whereIn('sku', ['M365-BP', 'HW-LAPTOP-X1'])->pluck('id');
+                $serviceIds = \App\Modules\Commercial\Models\Services\Services::whereIn('sku', ['M365-BP', 'HW-LAPTOP-X1'])->pluck('id');
                 $package->services()->sync($serviceIds);
             } elseif ($package->name === 'Support Only Package') {
-                $serviceId = \App\Models\CS\Services\Services::where('sku', 'SVC-SUPPORT-STD')->value('id');
+                $serviceId = \App\Modules\Commercial\Models\Services\Services::where('sku', 'SVC-SUPPORT-STD')->value('id');
                 $package->services()->sync([$serviceId]);
             }
         }

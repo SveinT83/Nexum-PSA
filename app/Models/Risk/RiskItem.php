@@ -93,7 +93,7 @@ class RiskItem extends Model
      */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\System\Category::class);
+        return $this->belongsTo(\App\Modules\Taxonomy\Models\Category::class);
     }
 
     /**

@@ -22,7 +22,7 @@ class UnitSeeder extends Seeder
         ];
 
         foreach ($units as $unit) {
-            \App\Models\Economy\Units::updateOrCreate(['name' => $unit['name']], $unit);
+            \App\Modules\Commercial\Models\Economy\Units::updateOrCreate(['name' => $unit['name']], $unit);
         }
     }
 }

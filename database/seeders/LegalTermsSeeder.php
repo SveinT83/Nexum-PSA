@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\CS\Terms\terms;
+use App\Modules\Commercial\Models\Terms\terms;
 
 class LegalTermsSeeder extends Seeder
 {

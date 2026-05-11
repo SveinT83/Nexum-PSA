@@ -48,7 +48,7 @@ class ClientsMenu
         $sidebarMenuItems[] = ['name' => 'Dokumentations', 'is_header' => true];
 
         // Retrieve all categories that have at least one documentation template associated
-        $categories = \App\Models\System\Category::has('templates')
+        $categories = \App\Modules\Taxonomy\Models\Category::has('templates')
             ->where('is_active', true)
             ->get();
 

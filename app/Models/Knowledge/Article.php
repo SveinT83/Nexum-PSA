@@ -2,10 +2,10 @@
 
 namespace App\Models\Knowledge;
 
-use App\Models\System\Category;
+use App\Modules\Taxonomy\Models\Category;
 use App\Models\Core\User;
 use App\Models\Clients\Client;
-use App\Models\System\Tag;
+use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\CS\Contracts\Contracts;
+use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Models\Core\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

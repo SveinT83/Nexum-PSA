@@ -11,7 +11,7 @@
 	<div class="d-flex justify-content-between align-items-center py-3">
 		<h2 class="h4 mb-0">Client: {{ $client->name }}</h2>
 		<div>
-			<a href="{{ route('tech.clients.index') }}" class="btn btn-sm btn-outline-secondary">Back</a>
+            <x-buttons.back url="{{ route('tech.clients.index') }}"> Back to Clients</x-buttons.back>
 		</div>
 	</div>
 @endsection
