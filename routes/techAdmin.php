@@ -39,19 +39,4 @@ Route::middleware(['auth', 'tech', 'admin'])->group(function () {
             return view('tech.admin.settings.cs.services');
         })->name('admin.settings.cs.services');
 
-        // -----------------------------------------
-        // Ticket Settings
-        // -----------------------------------------
-        Route::get('/admin/settings/tickets', function () {
-            return view('tech.admin.settings.tickets.index');
-        })->name('admin.settings.tickets');
-
-        Route::get('/admin/settings/tickets/rules', function () {
-            return view('tech.admin.settings.tickets.rules.index');
-        })->name('admin.settings.tickets.rules');
-
-        Route::get('/admin/settings/tickets/workflows', function () {
-            return view('tech.admin.settings.tickets.workflows.index');
-        })->name('admin.settings.tickets.workflows');
-
     });

@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Modules\Ticket\Actions;
+
+use App\Modules\Ticket\Models\TicketPriority;
+use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\Ticket\Models\TicketStatus;
+use Illuminate\Support\Str;
+
+class EnsureTicketDefaults
+{
+    /**
+     * @return array{queue: TicketQueue, status: TicketStatus, priority: TicketPriority}
+     */
+    public function handle(): array
+    {
+        $queue = TicketQueue::query()->where('is_default', true)->first()
+            ?? TicketQueue::query()->first()
+            ?? TicketQueue::create([
+                'name' => 'Support',
+                'slug' => 'support',
+                'description' => 'Default support queue.',
+                'is_default' => true,
+                'is_active' => true,
+                'sort_order' => 10,
+            ]);
+
+        $status = TicketStatus::query()->where('is_default', true)->first()
+            ?? TicketStatus::query()->first()
+            ?? TicketStatus::create([
+                'name' => 'New',
+                'slug' => 'new',
+                'state' => 'open',
+                'is_default' => true,
+                'is_closed' => false,
+                'is_active' => true,
+                'sort_order' => 10,
+            ]);
+
+        foreach ([1 => 'Critical', 2 => 'High', 3 => 'Normal', 4 => 'Low'] as $level => $name) {
+            TicketPriority::firstOrCreate(
+                ['slug' => Str::slug($name)],
+                [
+                    'name' => $name,
+                    'level' => $level,
+                    'is_default' => $level === 3,
+                    'is_active' => true,
+                    'sort_order' => $level * 10,
+                ]
+            );
+        }
+
+        $priority = TicketPriority::query()->where('is_default', true)->first()
+            ?? TicketPriority::query()->orderBy('level')->first();
+
+        return [
+            'queue' => $queue,
+            'status' => $status,
+            'priority' => $priority,
+        ];
+    }
+}

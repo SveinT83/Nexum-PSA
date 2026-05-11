@@ -59,4 +59,25 @@ class EmailModuleTest extends TestCase
             ->assertViewIs('email::Admin.Accounts.index')
             ->assertViewHas('accounts');
     }
+
+    #[Test]
+    public function legacy_email_job_namespaces_still_resolve_after_module_move(): void
+    {
+        $jobs = [
+            'StoreInboundMessage',
+            'FetchImapAccount',
+            'PollActiveEmailAccounts',
+            'ProcessInboundRules',
+            'EmailAccountHealthCheckJob',
+            'EmailRetentionPurgeJob',
+        ];
+
+        foreach ($jobs as $job) {
+            $legacyClass = 'App\\Domain\\Email\\Jobs\\' . $job;
+            $moduleClass = 'App\\Modules\\Email\\Jobs\\' . $job;
+
+            $this->assertTrue(class_exists($legacyClass));
+            $this->assertTrue(is_subclass_of($legacyClass, $moduleClass));
+        }
+    }
 }

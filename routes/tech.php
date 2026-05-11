@@ -42,11 +42,4 @@ Route::middleware(['auth','tech'])->group(function () {
         return view('tech.tasks.index');
     })->name('tasks.index');
 
-    // -----------------------------------------
-    // Tickets
-    // -----------------------------------------
-    Route::get('/tickets', function () {
-        return view('tech.tickets.index');
-    })->name('tickets.index');
-
 });

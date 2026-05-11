@@ -82,6 +82,7 @@
             <x-card.default title="System">
                 <a class="dropdown-item" href="{{ route('tech.admin.system.category.index') }}">Categories</a>
                 <a class="dropdown-item" href="{{ route('tech.admin.system.tag.index') }}">Tags</a>
+                <a class="dropdown-item" href="{{ route('tech.admin.system.queues-workers.index') }}">Queues and Workers</a>
             </x-card.default>
         </div>
 
