@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use Illuminate\Support\Facades\DB;
 
 class AddTicketMessage
@@ -39,6 +40,10 @@ class AddTicketMessage
                     'visibility' => $message->visibility,
                 ],
             ]);
+
+            if ($message->type === 'customer_reply') {
+                SendTicketReplyEmail::dispatch($message->id)->afterCommit();
+            }
 
             return $message;
         });

@@ -7,12 +7,16 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -211,6 +215,125 @@ class TicketModuleTest extends TestCase
             'type' => 'internal_note',
             'visibility' => 'internal',
             'body' => 'Internal note.',
+        ]);
+    }
+
+    #[Test]
+    public function customer_reply_is_queued_for_outbound_email(): void
+    {
+        Queue::fake();
+
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'email' => 'contact@example.com',
+        ]);
+
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-999003',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'client_id' => $client->id,
+            'contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Reply queue ticket',
+            'is_unread' => false,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'customer_reply',
+                'visibility' => 'public',
+                'body' => 'Reply body.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        Queue::assertPushed(SendTicketReplyEmail::class);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_renders_template_and_logs_success(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create([
+            'scope' => 'tickets',
+            'key' => 'ticket_reply',
+            'name' => 'Ticket reply',
+            'subject' => '[{{ ticket_key }}] {{ ticket_subject }}',
+            'body_html' => '<p>{{ message_body }}</p>',
+            'body_text' => '{{ message_body }}',
+            'variables' => ['ticket_key', 'ticket_subject', 'contact_name', 'message_body', 'technician_name'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-999004',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'client_id' => $client->id,
+            'contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'SMTP job ticket',
+            'is_unread' => false,
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Rendered reply.',
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text) =>
+                    $resolvedAccount->is($account)
+                    && $toEmail === 'ada@example.com'
+                    && $toName === 'Ada Contact'
+                    && $subject === '[TD-2026-999004] SMTP job ticket'
+                    && $html === '<p>Rendered reply.</p>'
+                    && $text === 'Rendered reply.'
+                )
+                ->andReturn('<message-id@example.com>');
+        });
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_EMAIL_SENT',
+            'rfc_message_id' => '<message-id@example.com>',
         ]);
     }
 

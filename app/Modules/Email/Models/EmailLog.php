@@ -11,7 +11,7 @@ class EmailLog extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'direction', 'account_id', 'email_message_id', 'scope', 'level', 'code', 'message', 'context_json',
+        'direction', 'account_id', 'email_message_id', 'rfc_message_id', 'scope', 'level', 'code', 'message', 'context_json',
     ];
 
     protected $casts = [
