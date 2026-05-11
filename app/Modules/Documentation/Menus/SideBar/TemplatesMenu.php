@@ -11,6 +11,7 @@ class TemplatesMenu
 
         // Add the main navigation items for clients, sites, and user_management
         $sidebarMenuItems[] = ['name' => 'Documentations', 'route' => 'tech.admin.system.templatesManagement.doc.index'];
+        $sidebarMenuItems[] = ['name' => 'Email', 'route' => 'tech.admin.system.templatesManagement.email.index'];
 
         return $sidebarMenuItems;
     }

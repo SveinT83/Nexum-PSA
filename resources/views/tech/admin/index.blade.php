@@ -33,6 +33,7 @@
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.accounts') }}">Accounts</a></li>
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.config') }}">Config</a></li>
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.rules') }}">Rules</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.system.templatesManagement.email.index') }}">Templates</a></li>
             </x-card.default>
         </div>
 

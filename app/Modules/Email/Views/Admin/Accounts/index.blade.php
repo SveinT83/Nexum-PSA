@@ -107,5 +107,14 @@
     <ul class="list-unstyled small">
       <li>No new notifications.</li>
     </ul>
+
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Email template shortcut -->
+    <!-- Keeps outbound template management reachable from Email Settings as well as the Templates hub. -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <x-card.default title="Templates">
+      <p class="small text-muted">Manage outbound email templates for tickets, system notifications, and future workflows.</p>
+      <a href="{{ route('tech.admin.system.templatesManagement.email.index') }}" class="btn btn-sm btn-outline-primary">Email Templates</a>
+    </x-card.default>
   </div>
 @endsection

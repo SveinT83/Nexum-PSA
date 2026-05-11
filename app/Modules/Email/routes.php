@@ -3,6 +3,7 @@
 use App\Modules\Email\Controllers\Admin\AccountsController;
 use App\Modules\Email\Controllers\Admin\ConfigController;
 use App\Modules\Email\Controllers\Admin\RulesController;
+use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
 use App\Modules\Email\Controllers\Tech\InboxController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,4 +52,15 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/admin/settings/email/rules', [RulesController::class, 'index'])
         ->name('admin.settings.email.rules');
+
+    Route::get('/admin/system/templatesManagement/email', [EmailTemplateController::class, 'index'])
+        ->name('admin.system.templatesManagement.email.index');
+    Route::get('/admin/system/templatesManagement/email/create', [EmailTemplateController::class, 'create'])
+        ->name('admin.system.templatesManagement.email.create');
+    Route::post('/admin/system/templatesManagement/email', [EmailTemplateController::class, 'store'])
+        ->name('admin.system.templatesManagement.email.store');
+    Route::get('/admin/system/templatesManagement/email/{template}/edit', [EmailTemplateController::class, 'edit'])
+        ->name('admin.system.templatesManagement.email.edit');
+    Route::put('/admin/system/templatesManagement/email/{template}', [EmailTemplateController::class, 'update'])
+        ->name('admin.system.templatesManagement.email.update');
 });

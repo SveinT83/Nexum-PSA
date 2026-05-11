@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             CategorySeeder::class,
             DocumentationTemplateSeeder::class,
+            EmailTemplateSeeder::class,
             SlaSeeder::class,
             LegalTermsSeeder::class,
             VendorSeeder::class,
