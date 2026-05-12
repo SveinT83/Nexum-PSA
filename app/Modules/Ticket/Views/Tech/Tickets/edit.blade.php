@@ -44,6 +44,54 @@
             </div>
         </x-card.default>
 
+        <x-card.default title="Client and contact">
+            <dl class="row mb-3 small">
+                <dt class="col-sm-3">Client</dt>
+                <dd class="col-sm-9">{{ $ticket->client?->name ?? 'Unassigned' }}</dd>
+                <dt class="col-sm-3">Contact</dt>
+                <dd class="col-sm-9">
+                    @if ($ticket->contact)
+                        {{ $ticket->contact->name }}@if ($ticket->contact->email) - {{ $ticket->contact->email }}@endif
+                    @else
+                        No contact
+                    @endif
+                </dd>
+            </dl>
+
+            <div class="mb-3">
+                <label for="site_id" class="form-label">Site</label>
+                <select id="site_id" name="site_id" class="form-select @error('site_id') is-invalid @enderror" @disabled($ticket->contact || $sites->isEmpty())>
+                    <option value="">No site</option>
+                    @foreach ($sites as $site)
+                        <option value="{{ $site->id }}" @selected(old('site_id', $ticket->site_id) == $site->id)>{{ $site->name }}</option>
+                    @endforeach
+                </select>
+                @error('site_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @if ($ticket->contact)
+                    <div class="form-text">Site is set from the selected contact.</div>
+                    <input type="hidden" name="site_id" value="{{ $ticket->site_id }}">
+                @endif
+            </div>
+
+            <div class="mb-0">
+                <label for="asset_id" class="form-label">Asset</label>
+                <select id="asset_id" name="asset_id" class="form-select @error('asset_id') is-invalid @enderror" @disabled($assetOptions->isEmpty())>
+                    <option value="">No asset</option>
+                    @foreach ($assetOptions->groupBy('group') as $group => $assets)
+                        <optgroup label="{{ $group }}">
+                            @foreach ($assets as $asset)
+                                <option value="{{ $asset['id'] }}" @selected(old('asset_id', $ticket->asset_id) == $asset['id'])>{{ $asset['label'] }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
+                </select>
+                @error('asset_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @if ($assetOptions->isEmpty())
+                    <div class="form-text">No assets found for the current client/contact selection.</div>
+                @endif
+            </div>
+        </x-card.default>
+
         <x-card.default title="Lifecycle">
             <div class="row g-3">
                 <div class="col-md-3">
@@ -118,7 +166,11 @@
             <dt>Priority</dt>
             <dd>P{{ $ticket->priority?->level }} {{ $ticket->priority?->name }}</dd>
             <dt>Owner</dt>
-            <dd class="mb-0">{{ $ticket->owner?->name ?? 'Unassigned' }}</dd>
+            <dd>{{ $ticket->owner?->name ?? 'Unassigned' }}</dd>
+            <dt>Site</dt>
+            <dd>{{ $ticket->site?->name ?? '-' }}</dd>
+            <dt>Asset</dt>
+            <dd class="mb-0">{{ $ticket->asset?->name ?? '-' }}</dd>
         </dl>
     </x-card.default>
 @endsection

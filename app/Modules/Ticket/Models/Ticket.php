@@ -3,8 +3,10 @@
 namespace App\Modules\Ticket\Models;
 
 use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -90,9 +92,19 @@ class Ticket extends Model
         return $this->belongsTo(ClientUser::class, 'contact_id');
     }
 
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(ClientSite::class, 'site_id');
+    }
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'asset_id');
     }
 
     public function messages(): HasMany

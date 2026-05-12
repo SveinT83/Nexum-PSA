@@ -109,9 +109,11 @@
                     <!-- Contact lookup -->
                     <!-- Contacts are loaded only for the selected client and are validated again on submit. -->
                     <!-- ------------------------------------------------- -->
-                    <div class="mb-0">
+                    <div class="mb-3">
                         @php
-                            $selectedContact = old('contact_id') ? $contacts->firstWhere('id', (int) old('contact_id')) : null;
+                            $selectedContact = old('contact_id')
+                                ? $contacts->firstWhere('id', (int) old('contact_id'))
+                                : $selectedContact;
                             $selectedContactLabel = $selectedContact
                                 ? $selectedContact->name . ($selectedContact->email ? ' - ' . $selectedContact->email : '')
                                 : '';
@@ -128,13 +130,54 @@
                             autocomplete="off"
                             @disabled(! $selectedClient)
                         >
-                        <input id="contact_id" name="contact_id" type="hidden" value="{{ old('contact_id') }}">
+                        <input id="contact_id" name="contact_id" type="hidden" value="{{ old('contact_id', $selectedContact?->id) }}">
                         <datalist id="contact_suggestions">
                             @foreach ($contacts as $contact)
                                 <option value="{{ $contact->name }}@if ($contact->email) - {{ $contact->email }}@endif" data-id="{{ $contact->id }}"></option>
                             @endforeach
                         </datalist>
                         @error('contact_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <!-- ------------------------------------------------- -->
+                    <!-- Site lookup -->
+                    <!-- Contact selection owns the site, otherwise technicians can scope the ticket and assets by site. -->
+                    <!-- ------------------------------------------------- -->
+                    <div class="mb-3">
+                        <label for="site_id" class="form-label">Site</label>
+                        <select id="site_id" name="site_id" class="form-select @error('site_id') is-invalid @enderror" @disabled(! $selectedClient || filled($selectedContact))>
+                            <option value="">No site</option>
+                            @foreach ($sites as $site)
+                                <option value="{{ $site->id }}" @selected(old('site_id', $selectedSite?->id) == $site->id)>{{ $site->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('site_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        @if ($selectedContact)
+                            <div class="form-text">Site is set from the selected contact.</div>
+                            <input type="hidden" name="site_id" value="{{ $selectedSite?->id }}">
+                        @endif
+                    </div>
+
+                    <!-- ------------------------------------------------- -->
+                    <!-- Asset lookup -->
+                    <!-- Assets are scoped by client, and when a contact is selected contact assets are listed before site assets. -->
+                    <!-- ------------------------------------------------- -->
+                    <div class="mb-0 mt-3">
+                        <label for="asset_id" class="form-label">Asset</label>
+                        <select id="asset_id" name="asset_id" class="form-select @error('asset_id') is-invalid @enderror" @disabled($assetOptions->isEmpty())>
+                            <option value="">No asset</option>
+                            @foreach ($assetOptions->groupBy('group') as $group => $assets)
+                                <optgroup label="{{ $group }}">
+                                    @foreach ($assets as $asset)
+                                        <option value="{{ $asset['id'] }}" @selected(old('asset_id') == $asset['id'])>{{ $asset['label'] }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                        @error('asset_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        @if ($assetOptions->isEmpty())
+                            <div class="form-text">{{ $selectedClient ? 'No assets found for the current client/contact selection.' : 'Select a client to choose an asset.' }}</div>
+                        @endif
                     </div>
                 </x-card.default>
             </div>
@@ -163,13 +206,24 @@
                         </select>
                     </div>
 
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label for="status_id" class="form-label">Status</label>
                         <select id="status_id" name="status_id" class="form-select">
                             @foreach ($statuses as $status)
                                 <option value="{{ $status->id }}" @selected(old('status_id') == $status->id || (! old('status_id') && $status->is_default))>{{ $status->name }}</option>
                             @endforeach
                         </select>
+                    </div>
+
+                    <div class="mb-0">
+                        <label for="category_id" class="form-label">Category</label>
+                        <select id="category_id" name="category_id" class="form-select @error('category_id') is-invalid @enderror">
+                            <option value="">No category</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </x-card.default>
             </div>
@@ -222,6 +276,7 @@
         const contactLookup = document.getElementById('contact_lookup');
         const contactId = document.getElementById('contact_id');
         const contactOptions = Array.from(document.getElementById('contact_suggestions').options);
+        const siteId = document.getElementById('site_id');
 
         function selectedOption(options, value) {
             return options.find(function (option) {
@@ -255,10 +310,48 @@
             clientId.value = option ? option.dataset.id : '';
         });
 
-        // Contact suggestions are already scoped by selected client; only exact matches should submit an ID.
+        // Contact selection changes available assets, so exact matches reload the page with client and contact context.
+        contactLookup.addEventListener('change', function () {
+            const option = selectedOption(contactOptions, this.value);
+            const nextContactId = option ? option.dataset.id : '';
+
+            contactId.value = nextContactId;
+
+            if (! nextContactId && this.value.trim() !== '') {
+                return;
+            }
+
+            const url = new URL(@json(route('tech.tickets.create')));
+
+            if (clientId.value) {
+                url.searchParams.set('client_id', clientId.value);
+            }
+
+            if (nextContactId) {
+                url.searchParams.set('contact_id', nextContactId);
+            }
+
+            window.location.href = url.toString();
+        });
+
+        // Contact suggestions are already scoped by selected client; only exact matches should submit an ID while typing.
         contactLookup.addEventListener('input', function () {
             const option = selectedOption(contactOptions, this.value);
             contactId.value = option ? option.dataset.id : '';
+        });
+
+        siteId.addEventListener('change', function () {
+            const url = new URL(@json(route('tech.tickets.create')));
+
+            if (clientId.value) {
+                url.searchParams.set('client_id', clientId.value);
+            }
+
+            if (this.value) {
+                url.searchParams.set('site_id', this.value);
+            }
+
+            window.location.href = url.toString();
         });
     });
 </script>

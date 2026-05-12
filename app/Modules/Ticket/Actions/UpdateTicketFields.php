@@ -16,13 +16,14 @@ class UpdateTicketFields
     |
      | This action captures the editable ticket fields technicians can change
      | before workflows exist. Status has a dedicated action because it drives
-     | lifecycle timestamps.
+     | lifecycle timestamps. Asset is included here because it is ticket context,
+     | not a workflow transition.
     |
     */
     public function handle(Ticket $ticket, array $data, ?User $actor = null): Ticket
     {
         return DB::transaction(function () use ($ticket, $data, $actor) {
-            $fields = ['subject', 'description', 'queue_id', 'priority_id', 'category_id', 'owner_id'];
+            $fields = ['subject', 'description', 'queue_id', 'priority_id', 'category_id', 'owner_id', 'site_id', 'asset_id'];
             $updates = array_intersect_key($data, array_flip($fields));
             $before = [];
             $after = [];

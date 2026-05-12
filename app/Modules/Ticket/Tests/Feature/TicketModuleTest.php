@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
@@ -78,15 +79,24 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function tech_user_can_create_ticket_and_add_internal_note(): void
     {
+        $category = Category::create([
+            'name' => 'Printing',
+            'slug' => 'printing',
+            'type' => 'ticket',
+            'is_active' => true,
+        ]);
+
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.create'))
             ->assertOk()
-            ->assertViewIs('ticket::Tech.Tickets.create');
+            ->assertViewIs('ticket::Tech.Tickets.create')
+            ->assertSee('Printing');
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.store'), [
                 'subject' => 'Printer cannot scan',
                 'description' => 'Scan to mail fails with authentication error.',
+                'category_id' => $category->id,
                 'channel' => 'manual',
             ])
             ->assertRedirect();
@@ -95,6 +105,7 @@ class TicketModuleTest extends TestCase
 
         $this->assertStringStartsWith('TD-' . now()->format('Y') . '-', $ticket->ticket_key);
         $this->assertSame('Printer cannot scan', $ticket->subject);
+        $this->assertSame($category->id, $ticket->category_id);
         $this->assertSame($this->tech->id, $ticket->owner_id);
         $this->assertSame(1, $ticket->messages()->count());
         $this->assertSame(1, $ticket->events()->where('type', 'created')->count());
@@ -168,6 +179,119 @@ class TicketModuleTest extends TestCase
             'contact_id' => $contact->id,
             'owner_id' => $this->tech->id,
             'channel' => 'manual',
+        ]);
+    }
+
+    #[Test]
+    public function create_ticket_form_prioritizes_contact_assets_before_site_assets(): void
+    {
+        $client = Client::factory()->create(['name' => 'Asset Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Asset Contact',
+        ]);
+        $contactAsset = Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'user_id' => $contact->id,
+            'name' => 'Contact Laptop',
+            'type' => Asset::TYPE_LAPTOP,
+            'hostname' => 'contact-laptop',
+        ]);
+        Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'name' => 'Site Printer',
+            'type' => Asset::TYPE_OTHER,
+            'hostname' => 'site-printer',
+        ]);
+        $otherClient = Client::factory()->create();
+        Asset::create([
+            'client_id' => $otherClient->id,
+            'name' => 'Other Client Server',
+            'type' => Asset::TYPE_SERVER,
+        ]);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create', [
+                'client_id' => $client->id,
+                'contact_id' => $contact->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Contact Laptop')
+            ->assertSee('Site Printer')
+            ->assertDontSee('Other Client Server');
+
+        $response->assertSeeInOrder(['Contact assets', 'Contact Laptop', 'Site assets', 'Site Printer']);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Asset linked issue',
+                'client_id' => $client->id,
+                'contact_id' => $contact->id,
+                'asset_id' => $contactAsset->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'Asset linked issue',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'asset_id' => $contactAsset->id,
+        ]);
+    }
+
+    #[Test]
+    public function create_ticket_form_scopes_assets_to_selected_site_without_contact(): void
+    {
+        $client = Client::factory()->create(['name' => 'Site Asset Client']);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Main Office',
+        ]);
+        $otherSite = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Branch Office',
+        ]);
+        $siteAsset = Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'name' => 'Main Office Firewall',
+            'type' => Asset::TYPE_FIREWALL,
+        ]);
+        Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $otherSite->id,
+            'name' => 'Branch Switch',
+            'type' => Asset::TYPE_SWITCH,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create', [
+                'client_id' => $client->id,
+                'site_id' => $site->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Main Office')
+            ->assertSee('Main Office Firewall')
+            ->assertDontSee('Branch Switch');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Site scoped asset issue',
+                'client_id' => $client->id,
+                'site_id' => $site->id,
+                'asset_id' => $siteAsset->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'Site scoped asset issue',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'asset_id' => $siteAsset->id,
         ]);
     }
 

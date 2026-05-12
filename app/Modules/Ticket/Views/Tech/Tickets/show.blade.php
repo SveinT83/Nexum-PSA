@@ -169,6 +169,10 @@
             <dd>{{ $ticket->category?->name ?? '-' }}</dd>
             <dt>Owner</dt>
             <dd>{{ $ticket->owner?->name ?? 'Unassigned' }}</dd>
+            <dt>Site</dt>
+            <dd>{{ $ticket->site?->name ?? '-' }}</dd>
+            <dt>Asset</dt>
+            <dd>{{ $ticket->asset?->name ?? '-' }}</dd>
             <dt>Channel</dt>
             <dd>{{ ucfirst($ticket->channel) }}</dd>
             <dt>Resolved</dt>

@@ -25,6 +25,8 @@ Implemented now:
 - Manual mark-as-read handling for unread tickets.
 - Basic lifecycle operations for status, queue, priority, category, owner, and close.
 - Dedicated ticket edit view for subject, description, and lifecycle fields.
+- Asset selection on create/edit, scoped by client/contact rules.
+- Explicit site selection and automatic site resolution from contact or asset.
 - Admin setting for selecting the default outbound ticket email account.
 - Feature tests for the current main flows.
 
@@ -97,9 +99,10 @@ Important current `tickets` relationships:
 - `priority_id` -> `ticket_priorities`
 - `category_id` -> Taxonomy module `categories`
 - `client_id` -> Client module client record
+- `site_id` -> Client module site record. Contact selection wins; otherwise selected site, asset site, or the client's only/default site can set it.
 - `contact_id` -> Client module contact record
+- `asset_id` -> Asset model. When a contact is selected, contact assets are listed before site assets; without a contact, all client assets are available.
 - `owner_id`, `created_by`, `updated_by` -> user IDs
-- `site_id` and `asset_id` are present for future module links, but are not fully connected in UI yet.
 
 Ticket route model binding uses `ticket_key`, not numeric ID. URLs therefore use keys such as `TD-2026-000001`.
 
