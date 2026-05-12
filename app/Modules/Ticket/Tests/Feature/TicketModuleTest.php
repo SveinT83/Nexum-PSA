@@ -7,13 +7,17 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketCategory;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketPriority;
+use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -44,6 +48,9 @@ class TicketModuleTest extends TestCase
     {
         $this->assertSame(TicketController::class . '@index', Route::getRoutes()->getByName('tech.tickets.index')->getActionName());
         $this->assertSame(TicketController::class . '@show', Route::getRoutes()->getByName('tech.tickets.show')->getActionName());
+        $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
+        $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
+        $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
     }
 
@@ -60,6 +67,10 @@ class TicketModuleTest extends TestCase
 
         $this->assertDatabaseHas('ticket_queues', ['slug' => 'support', 'is_default' => true]);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'new', 'is_default' => true]);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'in-progress', 'is_closed' => false]);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'waiting-customer', 'is_closed' => false]);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'resolved', 'state' => 'resolved']);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'closed', 'is_closed' => true]);
         $this->assertDatabaseHas('ticket_priorities', ['slug' => 'normal', 'is_default' => true]);
     }
 
@@ -255,6 +266,152 @@ class TicketModuleTest extends TestCase
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
         Queue::assertPushed(SendTicketReplyEmail::class);
+        $this->assertFalse($ticket->fresh()->is_unread);
+    }
+
+    #[Test]
+    public function tech_user_can_mark_ticket_as_read(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999109',
+            'is_unread' => true,
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => null,
+            'author_type' => 'contact',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Customer replied.',
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Mark as read');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.read', $ticket))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertFalse($ticket->fresh()->is_unread);
+        $this->assertNotNull($message->fresh()->read_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'marked_read',
+            'message' => 'Ticket marked as read.',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_update_ticket_lifecycle_fields(): void
+    {
+        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999110']);
+        $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
+        $high = TicketPriority::where('slug', 'high')->firstOrFail();
+        $category = TicketCategory::create([
+            'name' => 'Access',
+            'slug' => 'access',
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        $newOwner = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $newOwner->assignRole('Tech');
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.update', $ticket), [
+                'queue_id' => $ticket->queue_id,
+                'status_id' => $resolved->id,
+                'priority_id' => $high->id,
+                'category_id' => $category->id,
+                'owner_id' => $newOwner->id,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $ticket->refresh();
+
+        $this->assertSame($resolved->id, $ticket->status_id);
+        $this->assertSame($high->id, $ticket->priority_id);
+        $this->assertSame($category->id, $ticket->category_id);
+        $this->assertSame($newOwner->id, $ticket->owner_id);
+        $this->assertNotNull($ticket->resolved_at);
+        $this->assertNull($ticket->closed_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'fields_updated',
+            'message' => 'Ticket fields updated.',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'status_changed',
+            'message' => 'Ticket status changed to Resolved.',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_close_ticket_with_lifecycle_timestamps(): void
+    {
+        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999111']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Close');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.close', $ticket))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $ticket->refresh();
+
+        $this->assertTrue($ticket->status->is_closed);
+        $this->assertNotNull($ticket->resolved_at);
+        $this->assertNotNull($ticket->closed_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'status_changed',
+            'message' => 'Ticket status changed to Closed.',
+        ]);
+    }
+
+    #[Test]
+    public function ticket_show_displays_latest_outbound_email_status_per_customer_reply(): void
+    {
+        $contact = ClientUser::factory()->create([
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999104']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Visible reply.',
+        ]);
+
+        EmailLog::create([
+            'direction' => 'outbound',
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_EMAIL_SENT',
+            'message' => 'Ticket reply email sent.',
+            'context_json' => ['ticket_message_id' => $message->id],
+            'rfc_message_id' => '<show-status@example.com>',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Email sent')
+            ->assertSee('Ticket reply email sent.')
+            ->assertSee('&lt;show-status@example.com&gt;', false);
     }
 
     #[Test]
@@ -338,6 +495,150 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function send_ticket_reply_email_job_logs_missing_contact_email(): void
+    {
+        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999105']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Cannot send without contact.',
+        ]);
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'scope' => 'tickets',
+            'level' => 'error',
+            'code' => 'TICKET_EMAIL_NO_CONTACT',
+            'message' => 'Ticket reply has no contact email.',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_logs_missing_default_account(): void
+    {
+        $contact = ClientUser::factory()->create(['email' => 'ada@example.com']);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999106']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'No account reply.',
+        ]);
+
+        EmailTemplate::create($this->ticketReplyTemplateData());
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'scope' => 'tickets',
+            'level' => 'error',
+            'code' => 'TICKET_EMAIL_NO_ACCOUNT',
+            'message' => 'No active ticket outbound email account is configured.',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_logs_missing_template(): void
+    {
+        $contact = ClientUser::factory()->create(['email' => 'ada@example.com']);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999107']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'No template reply.',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'error',
+            'code' => 'TICKET_EMAIL_NO_TEMPLATE',
+            'message' => 'No active ticket_reply email template exists.',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_logs_smtp_failure_and_reraises(): void
+    {
+        $contact = ClientUser::factory()->create([
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999108']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Failure reply.',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create($this->ticketReplyTemplateData());
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->andThrow(new \RuntimeException('SMTP refused the message.'));
+        });
+
+        try {
+            app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+                app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+                app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+                app(SmtpAccountMailer::class)
+            );
+
+            $this->fail('Expected SMTP exception was not thrown.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('SMTP refused the message.', $e->getMessage());
+        }
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'error',
+            'code' => 'TICKET_EMAIL_SEND_FAILED',
+            'message' => 'SMTP refused the message.',
+        ]);
+        $this->assertSame('SMTP_SEND', $account->fresh()->last_error_code);
+    }
+
+    #[Test]
     public function admin_user_can_open_ticket_settings_from_module(): void
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -398,6 +699,42 @@ class TicketModuleTest extends TestCase
             'smtp_username' => 'ticket@example.com',
             'smtp_secret' => encrypt('secret'),
             'smtp_auth_type' => 'password',
+        ], $overrides);
+    }
+
+    private function createTicket(?ClientUser $contact = null, array $overrides = []): Ticket
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $contact?->loadMissing('site');
+
+        return Ticket::create(array_merge([
+            'ticket_key' => 'TD-2026-999100',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'client_id' => $contact?->site?->client_id,
+            'contact_id' => $contact?->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Ticket helper subject',
+            'is_unread' => false,
+        ], $overrides));
+    }
+
+    private function ticketReplyTemplateData(array $overrides = []): array
+    {
+        return array_merge([
+            'scope' => 'tickets',
+            'key' => 'ticket_reply',
+            'name' => 'Ticket reply',
+            'subject' => '[{{ ticket_key }}] {{ ticket_subject }}',
+            'body_html' => '<p>{{ message_body }}</p>',
+            'body_text' => '{{ message_body }}',
+            'variables' => ['ticket_key', 'ticket_subject', 'contact_name', 'message_body', 'technician_name'],
+            'is_default' => true,
+            'is_active' => true,
         ], $overrides);
     }
 }

@@ -25,17 +25,28 @@ class EnsureTicketDefaults
                 'sort_order' => 10,
             ]);
 
+        foreach ([
+            ['name' => 'New', 'slug' => 'new', 'state' => 'open', 'is_default' => true, 'is_closed' => false, 'sort_order' => 10],
+            ['name' => 'In Progress', 'slug' => 'in-progress', 'state' => 'open', 'is_default' => false, 'is_closed' => false, 'sort_order' => 20],
+            ['name' => 'Waiting Customer', 'slug' => 'waiting-customer', 'state' => 'waiting', 'is_default' => false, 'is_closed' => false, 'sort_order' => 30],
+            ['name' => 'Resolved', 'slug' => 'resolved', 'state' => 'resolved', 'is_default' => false, 'is_closed' => false, 'sort_order' => 40],
+            ['name' => 'Closed', 'slug' => 'closed', 'state' => 'closed', 'is_default' => false, 'is_closed' => true, 'sort_order' => 50],
+        ] as $statusData) {
+            TicketStatus::firstOrCreate(
+                ['slug' => $statusData['slug']],
+                [
+                    'name' => $statusData['name'],
+                    'state' => $statusData['state'],
+                    'is_default' => $statusData['is_default'],
+                    'is_closed' => $statusData['is_closed'],
+                    'is_active' => true,
+                    'sort_order' => $statusData['sort_order'],
+                ]
+            );
+        }
+
         $status = TicketStatus::query()->where('is_default', true)->first()
-            ?? TicketStatus::query()->first()
-            ?? TicketStatus::create([
-                'name' => 'New',
-                'slug' => 'new',
-                'state' => 'open',
-                'is_default' => true,
-                'is_closed' => false,
-                'is_active' => true,
-                'sort_order' => 10,
-            ]);
+            ?? TicketStatus::query()->orderBy('sort_order')->first();
 
         foreach ([1 => 'Critical', 2 => 'High', 3 => 'Normal', 4 => 'Low'] as $level => $name) {
             TicketPriority::firstOrCreate(

@@ -4,6 +4,7 @@ namespace App\Modules\Ticket\Models;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientUser;
+use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -86,6 +87,11 @@ class Ticket extends Model
     public function contact(): BelongsTo
     {
         return $this->belongsTo(ClientUser::class, 'contact_id');
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
     public function messages(): HasMany

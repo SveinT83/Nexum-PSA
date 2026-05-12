@@ -6,9 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Modules\Email\Models\EmailLog;
 use App\Modules\Ticket\Actions\AddTicketMessage;
+use App\Modules\Ticket\Actions\ChangeTicketStatus;
+use App\Modules\Ticket\Actions\CloseTicket;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\StoreTicket;
+use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCategory;
 use App\Modules\Ticket\Models\TicketPriority;
@@ -123,8 +128,25 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket): View
     {
+        app(EnsureTicketDefaults::class)->handle();
+
+        $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'contact', 'owner', 'messages', 'events']);
+        $messageIds = $ticket->messages->pluck('id')->all();
+
         return view('ticket::Tech.Tickets.show', [
-            'ticket' => $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'contact', 'messages', 'events']),
+            'ticket' => $ticket,
+            'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'categories' => TicketCategory::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'technicians' => $this->technicians(),
+            'emailLogsByMessageId' => EmailLog::query()
+                ->where('direction', 'outbound')
+                ->where('scope', 'tickets')
+                ->whereIn('context_json->ticket_message_id', $messageIds)
+                ->latest()
+                ->get()
+                ->groupBy(fn (EmailLog $log) => (int) ($log->context_json['ticket_message_id'] ?? 0)),
         ]);
     }
 
@@ -150,6 +172,52 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Message added.');
+    }
+
+    public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, ChangeTicketStatus $changeTicketStatus): RedirectResponse
+    {
+        $data = $request->validate([
+            'queue_id' => 'required|exists:ticket_queues,id',
+            'status_id' => 'required|exists:ticket_statuses,id',
+            'priority_id' => 'required|exists:ticket_priorities,id',
+            'category_id' => 'nullable|exists:ticket_categories,id',
+            'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
+        ]);
+
+        $queue = TicketQueue::where('is_active', true)->findOrFail($data['queue_id']);
+        $status = TicketStatus::where('is_active', true)->findOrFail($data['status_id']);
+        $priority = TicketPriority::where('is_active', true)->findOrFail($data['priority_id']);
+        $categoryId = empty($data['category_id'])
+            ? null
+            : TicketCategory::where('is_active', true)->findOrFail($data['category_id'])->id;
+
+        $updateTicketFields->handle($ticket, [
+            'queue_id' => $queue->id,
+            'priority_id' => $priority->id,
+            'category_id' => $categoryId,
+            'owner_id' => $data['owner_id'] ?? null,
+        ], $request->user());
+
+        $changeTicketStatus->handle($ticket->refresh(), $status, $request->user());
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Ticket updated.');
+    }
+
+    public function close(Request $request, Ticket $ticket, CloseTicket $closeTicket): RedirectResponse
+    {
+        $closeTicket->handle($ticket, $request->user());
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Ticket closed.');
+    }
+
+    public function markRead(Request $request, Ticket $ticket, MarkTicketRead $markTicketRead): RedirectResponse
+    {
+        $markTicketRead->handle($ticket, $request->user());
+
+        return redirect()->route('tech.tickets.show', $ticket)
+            ->with('success', 'Ticket marked as read.');
     }
 
     private function technicians()

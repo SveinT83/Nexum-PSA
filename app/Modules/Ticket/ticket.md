@@ -21,6 +21,9 @@ Implemented now:
 - Client/contact scoped ticket creation.
 - Internal notes.
 - Customer replies from a ticket to the ticket contact by email.
+- Per-message outbound email status on the ticket conversation.
+- Manual mark-as-read handling for unread tickets.
+- Basic lifecycle operations for status, queue, priority, category, owner, and close.
 - Admin setting for selecting the default outbound ticket email account.
 - Feature tests for the current main flows.
 
@@ -29,6 +32,12 @@ Most recent completed work:
 - Customer reply email sending was connected and tested.
 - `AddTicketMessage` now queues `SendTicketReplyEmail` after commit for messages of type `customer_reply`.
 - `SendTicketReplyEmail` resolves the `tickets` default email account, renders the `tickets/ticket_reply` template, sends via SMTP, and writes an outbound `EmailLog`.
+- Ticket show now displays the latest outbound email status for each customer reply.
+- Technician-authored customer replies no longer mark the ticket as unread.
+- Unread tickets can now be marked as read from the ticket show page; the action also stamps existing unread messages with `read_at`.
+- Workflow implementation was intentionally deferred. The Ticket module now has lower-level lifecycle actions that future workflows can validate instead of replacing.
+- Default statuses now include New, In Progress, Waiting Customer, Resolved, and Closed.
+- Tests now cover missing contact email, missing outbound account, missing email template, and SMTP failure logging.
 - Ticket settings can update `EmailAccount.defaults_for` so the Email module and Ticket module share the same source of truth for the ticket sender account.
 
 ## Module structure
@@ -41,7 +50,11 @@ Current important files:
 - `app/Modules/Ticket/Actions/EnsureTicketDefaults.php` - creates baseline queue/status/priority records when missing.
 - `app/Modules/Ticket/Actions/StoreTicket.php` - creates tickets, initial message, and creation event.
 - `app/Modules/Ticket/Actions/AddTicketMessage.php` - creates ticket messages and events, and dispatches outbound reply email when relevant.
+- `app/Modules/Ticket/Actions/ChangeTicketStatus.php` - changes ticket status and owns resolved/closed timestamps.
+- `app/Modules/Ticket/Actions/CloseTicket.php` - convenience close operation using the same lifecycle status change.
+- `app/Modules/Ticket/Actions/MarkTicketRead.php` - clears the ticket unread flag and stamps unread messages as read.
 - `app/Modules/Ticket/Actions/UpdateDefaultTicketEmailAccount.php` - updates the Email module's per-scope default for `tickets`.
+- `app/Modules/Ticket/Actions/UpdateTicketFields.php` - updates queue, priority, category, and owner with audit events.
 - `app/Modules/Ticket/Jobs/SendTicketReplyEmail.php` - queued SMTP send for customer replies.
 - `app/Modules/Ticket/Queries/TicketIndexQuery.php` - filtering, sorting, and pagination for the ticket index.
 - `app/Modules/Ticket/Models/*` - Ticket data model.
@@ -262,7 +275,7 @@ Not implemented:
 
 - Inbound email processing is still separate from Ticket. `EmailMessage.ticket_id` exists on the Email side, but the linking/creation flow is not implemented.
 - Customer reply email is queued, so production needs a working queue worker unless `QUEUE_CONNECTION=sync` is used for development.
-- Failed outbound sends are logged to `email_logs`, but the Ticket UI does not expose that failure yet.
+- Failed outbound sends are logged to `email_logs` and surfaced on the relevant customer reply in the Ticket UI.
 - Ticket messages have an `attachments` JSON column, but file upload/attachment handling is not implemented in the Ticket UI.
 - Time entries and watchers have tables and models, but no current UI/action flow.
 - Status changes, assignment changes, priority changes, close/resolution, and SLA dates are not yet first-class actions.
@@ -273,16 +286,14 @@ Not implemented:
 
 ### 1. Stabilize the current MVP
 
-- Add a visible ticket timeline item or status badge for outbound email send success/failure.
-- Add tests for missing template, missing default account, missing contact email, and SMTP failure behavior.
-- Decide whether customer replies should mark tickets unread. Current code sets `is_unread` to true for `customer_reply`, even when the reply is authored by a technician.
 - Add a clear operational note in deployment docs that ticket email requires queue processing.
+- Consider adding a dedicated outbound email event to `ticket_events`, in addition to the current per-message status badge.
+- Decide how future inbound/customer-authored replies should mark `is_unread`.
 
 ### 2. Finish basic ticket operations
 
-- Add actions and UI for changing status, priority, queue, category, owner, client, contact, site, and asset.
-- Write `TicketEvent` entries for every important field change.
-- Add close/resolution fields to the UI and define how `resolved_at` and `closed_at` should be set.
+- Add actions and UI for changing client, contact, site, and asset.
+- Expand `TicketEvent` display so before/after field changes are easier to read.
 - Add filters for priority, category, unread, unassigned, and closed/open.
 
 ### 3. Build attachment support

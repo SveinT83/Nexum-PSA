@@ -16,8 +16,17 @@ Route::post('/tickets', [TicketController::class, 'store'])
 Route::get('/tickets/{ticket}', [TicketController::class, 'show'])
     ->name('tickets.show');
 
+Route::patch('/tickets/{ticket}', [TicketController::class, 'update'])
+    ->name('tickets.update');
+
+Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])
+    ->name('tickets.close');
+
 Route::post('/tickets/{ticket}/messages', [TicketController::class, 'addMessage'])
     ->name('tickets.messages.store');
+
+Route::post('/tickets/{ticket}/read', [TicketController::class, 'markRead'])
+    ->name('tickets.read');
 
 Route::middleware('admin')->group(function () {
     Route::get('/admin/settings/tickets', [TicketSettingsController::class, 'index'])

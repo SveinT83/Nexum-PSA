@@ -26,7 +26,7 @@ class AddTicketMessage
 
             $ticket->forceFill([
                 'updated_by' => $actor?->id,
-                'is_unread' => ($data['type'] ?? null) === 'customer_reply',
+                'is_unread' => false,
             ])->touch();
 
             TicketEvent::create([
