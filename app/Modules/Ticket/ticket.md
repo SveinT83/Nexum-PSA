@@ -24,6 +24,7 @@ Implemented now:
 - Per-message outbound email status on the ticket conversation.
 - Manual mark-as-read handling for unread tickets.
 - Basic lifecycle operations for status, queue, priority, category, owner, and close.
+- Dedicated ticket edit view for subject, description, and lifecycle fields.
 - Admin setting for selecting the default outbound ticket email account.
 - Feature tests for the current main flows.
 
@@ -37,6 +38,7 @@ Most recent completed work:
 - Unread tickets can now be marked as read from the ticket show page; the action also stamps existing unread messages with `read_at`.
 - Workflow implementation was intentionally deferred. The Ticket module now has lower-level lifecycle actions that future workflows can validate instead of replacing.
 - Default statuses now include New, In Progress, Waiting Customer, Resolved, and Closed.
+- Ticket show keeps lifecycle details in the right-side Details card, while full edits happen on `tech.tickets.edit`.
 - Tests now cover missing contact email, missing outbound account, missing email template, and SMTP failure logging.
 - Ticket settings can update `EmailAccount.defaults_for` so the Email module and Ticket module share the same source of truth for the ticket sender account.
 
@@ -81,7 +83,7 @@ Main tables:
 - `ticket_queues` - logical work queues. Has `email_address` and `settings`, but those are not fully used yet.
 - `ticket_statuses` - status definitions. Has `state`, `is_default`, `is_closed`, and ordering fields.
 - `ticket_priorities` - priority definitions. Current default levels are Critical, High, Normal, and Low.
-- `ticket_categories` - nested ticket categories.
+- `categories` - shared Taxonomy categories used by tickets through `tickets.category_id`.
 - `tickets` - core ticket record.
 - `ticket_messages` - conversation messages and internal notes.
 - `ticket_events` - audit/history events for ticket activity.
@@ -93,7 +95,7 @@ Important current `tickets` relationships:
 - `queue_id` -> `ticket_queues`
 - `status_id` -> `ticket_statuses`
 - `priority_id` -> `ticket_priorities`
-- `category_id` -> `ticket_categories`
+- `category_id` -> Taxonomy module `categories`
 - `client_id` -> Client module client record
 - `contact_id` -> Client module contact record
 - `owner_id`, `created_by`, `updated_by` -> user IDs
@@ -314,7 +316,8 @@ Not implemented:
 
 ### 5. Build ticket settings properly
 
-- Implement queue, status, priority, and category management inside the Ticket module.
+- Implement queue, status, and priority management inside the Ticket module.
+- Keep category management in the Taxonomy module and reuse shared `categories`.
 - Keep settings controllers under `app/Modules/Ticket/Controllers/Admin`.
 - Keep settings views under `app/Modules/Ticket/Views/Admin`.
 - Replace or update old specification files so they match the actual module namespaces and routes.

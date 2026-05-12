@@ -41,78 +41,6 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <!-- -------------------------------------------------------------------------------------------------- -->
-            <!-- Ticket lifecycle fields -->
-            <!-- Basic ticket operations live here until Workflow validation is introduced. -->
-            <!-- -------------------------------------------------------------------------------------------------- -->
-            <div class="card mb-3">
-                <div class="card-header">Ticket lifecycle</div>
-                <div class="card-body">
-                    <form method="POST" action="{{ route('tech.tickets.update', $ticket) }}">
-                        @csrf
-                        @method('PATCH')
-
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label for="status_id" class="form-label">Status</label>
-                                <select id="status_id" name="status_id" class="form-select @error('status_id') is-invalid @enderror">
-                                    @foreach ($statuses as $status)
-                                        <option value="{{ $status->id }}" @selected(old('status_id', $ticket->status_id) == $status->id)>{{ $status->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('status_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="queue_id" class="form-label">Queue</label>
-                                <select id="queue_id" name="queue_id" class="form-select @error('queue_id') is-invalid @enderror">
-                                    @foreach ($queues as $queue)
-                                        <option value="{{ $queue->id }}" @selected(old('queue_id', $ticket->queue_id) == $queue->id)>{{ $queue->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('queue_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="priority_id" class="form-label">Priority</label>
-                                <select id="priority_id" name="priority_id" class="form-select @error('priority_id') is-invalid @enderror">
-                                    @foreach ($priorities as $priority)
-                                        <option value="{{ $priority->id }}" @selected(old('priority_id', $ticket->priority_id) == $priority->id)>P{{ $priority->level }} {{ $priority->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('priority_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="owner_id" class="form-label">Owner</label>
-                                <select id="owner_id" name="owner_id" class="form-select @error('owner_id') is-invalid @enderror">
-                                    <option value="">Unassigned</option>
-                                    @foreach ($technicians as $technician)
-                                        <option value="{{ $technician->id }}" @selected(old('owner_id', $ticket->owner_id) == $technician->id)>{{ $technician->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('owner_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="category_id" class="form-label">Category</label>
-                                <select id="category_id" name="category_id" class="form-select @error('category_id') is-invalid @enderror">
-                                    <option value="">No category</option>
-                                    @foreach ($categories as $category)
-                                        <option value="{{ $category->id }}" @selected(old('category_id', $ticket->category_id) == $category->id)>{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-
-                        <div class="mt-3">
-                            <button type="submit" class="btn btn-primary">Save ticket fields</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <div class="card mb-3">
                 <div class="card-header">Conversation</div>
                 <div class="card-body">
@@ -237,6 +165,8 @@
             <dd>{{ $ticket->status?->name }}</dd>
             <dt>Priority</dt>
             <dd>P{{ $ticket->priority?->level }} {{ $ticket->priority?->name }}</dd>
+            <dt>Category</dt>
+            <dd>{{ $ticket->category?->name ?? '-' }}</dd>
             <dt>Owner</dt>
             <dd>{{ $ticket->owner?->name ?? 'Unassigned' }}</dd>
             <dt>Channel</dt>
@@ -250,6 +180,10 @@
             <dt>Updated</dt>
             <dd class="mb-0">{{ $ticket->updated_at?->format('Y-m-d H:i') }}</dd>
         </dl>
+
+        <div class="mt-3">
+            <a href="{{ route('tech.tickets.edit', $ticket) }}" class="btn btn-sm btn-outline-primary w-100">Edit ticket</a>
+        </div>
     </x-card.default>
 
     <x-card.default title="Events">

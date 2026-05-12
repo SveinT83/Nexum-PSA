@@ -14,11 +14,11 @@ use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketCategory;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
+use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +48,7 @@ class TicketModuleTest extends TestCase
     {
         $this->assertSame(TicketController::class . '@index', Route::getRoutes()->getByName('tech.tickets.index')->getActionName());
         $this->assertSame(TicketController::class . '@show', Route::getRoutes()->getByName('tech.tickets.show')->getActionName());
+        $this->assertSame(TicketController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.edit')->getActionName());
         $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
         $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
@@ -311,17 +312,32 @@ class TicketModuleTest extends TestCase
         $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999110']);
         $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
         $high = TicketPriority::where('slug', 'high')->firstOrFail();
-        $category = TicketCategory::create([
+        $category = Category::create([
             'name' => 'Access',
             'slug' => 'access',
             'is_active' => true,
-            'sort_order' => 10,
+            'type' => 'ticket',
         ]);
         $newOwner = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $newOwner->assignRole('Tech');
 
         $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Edit ticket');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.edit', $ticket))
+            ->assertOk()
+            ->assertViewIs('ticket::Tech.Tickets.edit')
+            ->assertSee('Ticket text')
+            ->assertSee('Lifecycle')
+            ->assertSee('Access');
+
+        $this->actingAs($this->tech)
             ->patch(route('tech.tickets.update', $ticket), [
+                'subject' => 'Updated lifecycle subject',
+                'description' => 'Updated description text.',
                 'queue_id' => $ticket->queue_id,
                 'status_id' => $resolved->id,
                 'priority_id' => $high->id,
@@ -332,6 +348,8 @@ class TicketModuleTest extends TestCase
 
         $ticket->refresh();
 
+        $this->assertSame('Updated lifecycle subject', $ticket->subject);
+        $this->assertSame('Updated description text.', $ticket->description);
         $this->assertSame($resolved->id, $ticket->status_id);
         $this->assertSame($high->id, $ticket->priority_id);
         $this->assertSame($category->id, $ticket->category_id);

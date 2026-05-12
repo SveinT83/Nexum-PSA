@@ -15,11 +15,11 @@ use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketCategory;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Queries\TicketIndexQuery;
+use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -61,7 +61,7 @@ class TicketController extends Controller
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
-            'categories' => TicketCategory::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
             'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
             'contacts' => $selectedClient
                 ? ClientUser::whereHas('site', fn ($query) => $query->where('client_id', $selectedClient->id))
@@ -91,7 +91,7 @@ class TicketController extends Controller
             'queue_id' => 'nullable|exists:ticket_queues,id',
             'status_id' => 'nullable|exists:ticket_statuses,id',
             'priority_id' => 'nullable|exists:ticket_priorities,id',
-            'category_id' => 'nullable|exists:ticket_categories,id',
+            'category_id' => 'nullable|exists:categories,id',
             'client_id' => 'nullable|exists:clients,id',
             'contact_id' => 'nullable|exists:client_users,id',
             'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
@@ -138,7 +138,7 @@ class TicketController extends Controller
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
-            'categories' => TicketCategory::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
             'technicians' => $this->technicians(),
             'emailLogsByMessageId' => EmailLog::query()
                 ->where('direction', 'outbound')
@@ -147,6 +147,20 @@ class TicketController extends Controller
                 ->latest()
                 ->get()
                 ->groupBy(fn (EmailLog $log) => (int) ($log->context_json['ticket_message_id'] ?? 0)),
+        ]);
+    }
+
+    public function edit(Ticket $ticket): View
+    {
+        app(EnsureTicketDefaults::class)->handle();
+
+        return view('ticket::Tech.Tickets.edit', [
+            'ticket' => $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'contact', 'owner']),
+            'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
+            'technicians' => $this->technicians(),
         ]);
     }
 
@@ -177,10 +191,12 @@ class TicketController extends Controller
     public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, ChangeTicketStatus $changeTicketStatus): RedirectResponse
     {
         $data = $request->validate([
+            'subject' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'queue_id' => 'required|exists:ticket_queues,id',
             'status_id' => 'required|exists:ticket_statuses,id',
             'priority_id' => 'required|exists:ticket_priorities,id',
-            'category_id' => 'nullable|exists:ticket_categories,id',
+            'category_id' => 'nullable|exists:categories,id',
             'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
         ]);
 
@@ -189,9 +205,11 @@ class TicketController extends Controller
         $priority = TicketPriority::where('is_active', true)->findOrFail($data['priority_id']);
         $categoryId = empty($data['category_id'])
             ? null
-            : TicketCategory::where('is_active', true)->findOrFail($data['category_id'])->id;
+            : Category::where('is_active', true)->findOrFail($data['category_id'])->id;
 
         $updateTicketFields->handle($ticket, [
+            'subject' => $data['subject'],
+            'description' => $data['description'] ?? null,
             'queue_id' => $queue->id,
             'priority_id' => $priority->id,
             'category_id' => $categoryId,

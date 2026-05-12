@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Models;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -76,7 +77,7 @@ class Ticket extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(TicketCategory::class, 'category_id');
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     public function client(): BelongsTo
