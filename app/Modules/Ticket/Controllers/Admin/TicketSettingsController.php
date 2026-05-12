@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Ticket\Actions\UpdateDefaultTicketEmailAccount;
 use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\Ticket\Models\TicketPriority;
+use App\Modules\Ticket\Models\TicketRule;
 use App\Modules\Ticket\Models\TicketType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +56,7 @@ class TicketSettingsController extends Controller
 
     public function destroyQueue(TicketQueue $queue): RedirectResponse
     {
-        if ($queue->tickets()->exists()) {
+        if ($queue->tickets()->exists() || $this->ticketRuleReferences('set_queue', $queue->id)) {
             return back()->withErrors(['queue' => 'Queue cannot be deleted while tickets use it.']);
         }
 
@@ -79,7 +81,7 @@ class TicketSettingsController extends Controller
 
     public function destroyType(TicketType $type): RedirectResponse
     {
-        if (! $type->is_deletable || $type->tickets()->exists()) {
+        if (! $type->is_deletable || $type->tickets()->exists() || $this->ticketRuleReferences('set_ticket_type', $type->id)) {
             return back()->withErrors(['type' => 'Ticket type cannot be deleted while it is protected or in use.']);
         }
 
@@ -107,9 +109,79 @@ class TicketSettingsController extends Controller
 
     public function rules(): View
     {
-        return view()->exists('ticket::Admin.Settings.rules.index')
-            ? view('ticket::Admin.Settings.rules.index')
-            : view('ticket::Admin.Settings.index');
+        return view('ticket::Admin.Settings.rules.index', [
+            'rules' => TicketRule::query()->orderBy('weight')->orderBy('id')->get(),
+            'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+        ]);
+    }
+
+    public function createRule(): View
+    {
+        return view('ticket::Admin.Settings.rules.create', [
+            'rule' => new TicketRule([
+                'trigger' => TicketRule::TRIGGER_CREATE,
+                'weight' => 10,
+                'is_active' => true,
+                'stop_processing' => false,
+                'conditions_json' => [['field' => 'channel', 'operator' => 'equals', 'value' => 'email']],
+                'actions_json' => [['type' => 'set_ticket_type', 'value' => '']],
+            ]),
+            'mode' => 'create',
+            'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+        ]);
+    }
+
+    public function storeRule(Request $request): RedirectResponse
+    {
+        $data = $this->validatedRule($request);
+
+        TicketRule::create($data + [
+            'trigger' => TicketRule::TRIGGER_CREATE,
+            'created_by' => $request->user()?->id,
+            'updated_by' => $request->user()?->id,
+        ]);
+
+        return redirect()->route('tech.admin.settings.tickets.rules')
+            ->with('success', 'Ticket rule created.');
+    }
+
+    public function editRule(TicketRule $rule): View
+    {
+        return view('ticket::Admin.Settings.rules.create', [
+            'rule' => $rule,
+            'mode' => 'edit',
+            'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+        ]);
+    }
+
+    public function updateRule(Request $request, TicketRule $rule): RedirectResponse
+    {
+        $rule->update($this->validatedRule($request) + [
+            'updated_by' => $request->user()?->id,
+        ]);
+
+        return redirect()->route('tech.admin.settings.tickets.rules')
+            ->with('success', 'Ticket rule updated.');
+    }
+
+    public function toggleRule(TicketRule $rule): RedirectResponse
+    {
+        $rule->forceFill(['is_active' => ! $rule->is_active])->save();
+
+        return back()->with('success', 'Ticket rule status updated.');
+    }
+
+    public function destroyRule(TicketRule $rule): RedirectResponse
+    {
+        $rule->delete();
+
+        return back()->with('success', 'Ticket rule deleted.');
     }
 
     public function workflows(): View
@@ -160,6 +232,69 @@ class TicketSettingsController extends Controller
         return $data;
     }
 
+    private function validatedRule(Request $request): array
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'weight' => 'required|integer|min:0|max:100000',
+            'is_active' => 'nullable|boolean',
+            'stop_processing' => 'nullable|boolean',
+            'conditions' => 'required|array|min:1',
+            'conditions.*.field' => 'required|string|in:channel,subject,description,from_email,from_domain,client_known,client_has_active_contract',
+            'conditions.*.operator' => 'required|string|in:contains,equals,not_equals,starts_with,ends_with,regex,present',
+            'conditions.*.value' => 'nullable|string|max:1000',
+            'actions' => 'required|array|min:1',
+            'actions.*.type' => 'required|string|in:set_ticket_type,set_queue,set_priority',
+            'actions.*.value' => 'required|string|max:255',
+        ]);
+
+        $actions = collect($data['actions'])
+            ->map(fn (array $action) => [
+                'type' => $action['type'],
+                'value' => $action['value'],
+            ])
+            ->values()
+            ->all();
+
+        $this->validateRuleActionTargets($actions);
+
+        return [
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'weight' => $data['weight'],
+            'is_active' => (bool) ($data['is_active'] ?? false),
+            'stop_processing' => (bool) ($data['stop_processing'] ?? false),
+            'conditions_json' => collect($data['conditions'])
+                ->map(fn (array $condition) => [
+                    'field' => $condition['field'],
+                    'operator' => $condition['operator'],
+                    'value' => $condition['value'] ?? '',
+                ])
+                ->values()
+                ->all(),
+            'actions_json' => $actions,
+        ];
+    }
+
+    private function validateRuleActionTargets(array $actions): void
+    {
+        foreach ($actions as $action) {
+            $exists = match ($action['type']) {
+                'set_ticket_type' => TicketType::whereKey($action['value'])->exists(),
+                'set_queue' => TicketQueue::whereKey($action['value'])->exists(),
+                'set_priority' => TicketPriority::whereKey($action['value'])->exists(),
+                default => false,
+            };
+
+            if (! $exists) {
+                throw ValidationException::withMessages([
+                    'actions' => 'Rule action target does not exist.',
+                ]);
+            }
+        }
+    }
+
     private function ensureSingleDefaultQueue(?TicketQueue $defaultQueue = null): void
     {
         $defaultQueue ??= TicketQueue::where('is_default', true)->orderBy('sort_order')->first();
@@ -183,5 +318,20 @@ class TicketSettingsController extends Controller
                 $field => 'Slug is already in use.',
             ]);
         }
+    }
+
+    private function ticketRuleReferences(string $actionType, int $id): bool
+    {
+        return TicketRule::query()
+            ->get()
+            ->contains(function (TicketRule $rule) use ($actionType, $id) {
+                foreach ((array) $rule->actions_json as $action) {
+                    if (($action['type'] ?? '') === $actionType && (int) ($action['value'] ?? 0) === $id) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
     }
 }

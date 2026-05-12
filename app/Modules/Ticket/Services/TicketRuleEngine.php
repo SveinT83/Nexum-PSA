@@ -87,9 +87,9 @@ class TicketRuleEngine
             $value = $action['value'] ?? null;
 
             match ($type) {
-                'set_ticket_type' => $context['ticket_type_id'] = $value,
-                'set_queue' => $context['queue_id'] = $value,
-                'set_priority' => $context['priority_id'] = $value,
+                'set_ticket_type' => $context['ticket_type_id'] = (int) $value,
+                'set_queue' => $context['queue_id'] = (int) $value,
+                'set_priority' => $context['priority_id'] = (int) $value,
                 default => null,
             };
         }

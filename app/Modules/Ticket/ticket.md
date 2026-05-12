@@ -29,6 +29,7 @@ Implemented now:
 - Explicit site selection and automatic site resolution from contact or asset.
 - Admin setting for selecting the default outbound ticket email account.
 - Admin management for ticket queues and ticket types.
+- Ticket Rules MVP for `on_create` field routing.
 - Feature tests for the current main flows.
 
 Most recent completed work:
@@ -62,6 +63,7 @@ Current important files:
 - `app/Modules/Ticket/Actions/UpdateTicketFields.php` - updates queue, priority, category, and owner with audit events.
 - `app/Modules/Ticket/Jobs/SendTicketReplyEmail.php` - queued SMTP send for customer replies.
 - `app/Modules/Ticket/Queries/TicketIndexQuery.php` - filtering, sorting, and pagination for the ticket index.
+- `app/Modules/Ticket/Services/TicketRuleEngine.php` - evaluates active Ticket Rules for ticket creation context and applies field overrides.
 - `app/Modules/Ticket/Models/*` - Ticket data model.
 - `app/Modules/Ticket/Tests/Feature/TicketModuleTest.php` - current module feature coverage.
 
@@ -256,6 +258,7 @@ Planned but not implemented:
 - Per-queue inbound email address behavior.
 - Ticket key format settings.
 - Email rule actions for selecting ticket type and queue.
+- Email Rule action for `route_to_ticket_module`; Ticket Rules should handle type/queue/priority after that.
 - Contract-aware inbound routing: registered customer with active contract routes to support; registered customer without active contract routes to lead/sales ticket type.
 - Validation that ticket types referenced by email rules cannot be deleted.
 - SLA defaults.
@@ -268,16 +271,19 @@ Planned but not implemented:
 
 Current state:
 
-- Routes exist for `tech.admin.settings.tickets.rules` and `tech.admin.settings.tickets.workflows`.
-- The controller attempts to load future views and falls back to the main settings view when the namespaced view does not exist.
+- Ticket Rules have an MVP admin UI at `tech.admin.settings.tickets.rules`.
+- Active `on_create` rules are evaluated by `TicketRuleEngine` before a ticket is stored.
+- Current actions can set ticket type, queue, and priority.
+- Current conditions can use channel, subject, description/body, sender email/domain, known-client flags, and active-contract flags when those context values are provided.
+- Routes exist for `tech.admin.settings.tickets.workflows`.
 - Specification files exist under `Views/Admin/Settings/rules/` and `Views/Admin/Settings/workflows/`.
 
 Not implemented:
 
-- Ticket rules data model.
-- Rule editor.
-- Rule execution engine.
-- Rule audit/history.
+- Ticket Rule execution audit/history population.
+- Ticket Rule dry-run/test harness.
+- Ticket Rule actions for category, owner, status, SLA, workflow, tags, notes, notifications, and webhooks.
+- Automatic population of `client_known` and `client_has_active_contract` context from inbound email sender.
 - Workflow data model.
 - Workflow state machine.
 - Workflow transition validation.
@@ -318,7 +324,8 @@ Not implemented:
 
 ### 4. Connect inbound email to tickets
 
-- Extend Email Rules with actions for selecting ticket type, queue, priority, category, owner, and client/contact context.
+- Extend Email Rules with a module routing action that hands relevant unmatched inbound email to Ticket.
+- Build the inbound Ticket creation action that passes sender/client/contract context into Ticket Rules.
 - Match existing tickets by `In-Reply-To`, `References`, and stored RFC message IDs, in addition to the current ticket-key subject fallback.
 - Create new tickets from unmatched inbound messages sent to ticket queues.
 - Route registered customers with active contracts to a support ticket type, and registered customers without active contracts to a configurable lead/sales ticket type.
@@ -338,12 +345,12 @@ Not implemented:
 
 ### 6. Implement Ticket Rules
 
-- Create rule models/migrations.
-- Build the admin rule list and editor.
-- Define triggers for create, reply, internal note, field change, status change, timer, SLA warning, and SLA violation.
+- Expand beyond the current `on_create` MVP to reply, internal note, field change, status change, timer, SLA warning, and SLA violation triggers.
+- Populate Ticket Rule execution logs and surface them in ticket history.
+- Add dry-run tests and a UI test harness for sample ticket/email context.
 - Implement condition and action handlers in small module-owned classes.
-- Log rule execution into ticket history.
-- Add dry-run tests and deterministic ordering tests.
+- Add actions for category, owner, status, workflow, tags, notes, notifications, and webhooks.
+- Add deterministic ordering and conflict/collision tests.
 
 ### 7. Implement Workflows
 

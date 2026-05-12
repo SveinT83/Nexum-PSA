@@ -18,6 +18,7 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\Ticket\Models\TicketRule;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
@@ -950,6 +951,120 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_types', [
             'id' => $defaults['type']->id,
         ]);
+    }
+
+    #[Test]
+    public function admin_can_create_ticket_rule(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.rules.store'), [
+                'name' => 'Inbound email to support',
+                'description' => 'Route email-created tickets.',
+                'weight' => 10,
+                'is_active' => '1',
+                'stop_processing' => '1',
+                'conditions' => [
+                    ['field' => 'channel', 'operator' => 'equals', 'value' => 'email'],
+                ],
+                'actions' => [
+                    ['type' => 'set_ticket_type', 'value' => (string) $defaults['type']->id],
+                    ['type' => 'set_queue', 'value' => (string) $defaults['queue']->id],
+                ],
+            ])
+            ->assertRedirect(route('tech.admin.settings.tickets.rules'));
+
+        $this->assertDatabaseHas('ticket_rules', [
+            'name' => 'Inbound email to support',
+            'trigger' => 'on_create',
+            'is_active' => true,
+            'stop_processing' => true,
+        ]);
+    }
+
+    #[Test]
+    public function ticket_create_rules_can_set_type_queue_and_priority(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $leadType = TicketType::create([
+            'name' => 'Lead Test',
+            'slug' => 'lead-test',
+            'is_active' => true,
+            'is_deletable' => true,
+            'sort_order' => 90,
+        ]);
+        $salesQueue = TicketQueue::create([
+            'name' => 'Sales Test',
+            'slug' => 'sales-test',
+            'is_active' => true,
+            'sort_order' => 90,
+        ]);
+        $high = TicketPriority::where('slug', 'high')->firstOrFail();
+
+        TicketRule::create([
+            'name' => 'No contract becomes lead',
+            'trigger' => TicketRule::TRIGGER_CREATE,
+            'weight' => 1,
+            'is_active' => true,
+            'stop_processing' => true,
+            'conditions_json' => [
+                ['field' => 'client_has_active_contract', 'operator' => 'equals', 'value' => '0'],
+            ],
+            'actions_json' => [
+                ['type' => 'set_ticket_type', 'value' => (string) $leadType->id],
+                ['type' => 'set_queue', 'value' => (string) $salesQueue->id],
+                ['type' => 'set_priority', 'value' => (string) $high->id],
+            ],
+        ]);
+
+        $ticket = app(\App\Modules\Ticket\Actions\StoreTicket::class)->handle([
+            'subject' => 'Inbound sales question',
+            'channel' => 'email',
+            'client_has_active_contract' => '0',
+        ], $this->tech);
+
+        $this->assertSame($leadType->id, $ticket->ticket_type_id);
+        $this->assertSame('lead-test', $ticket->type);
+        $this->assertSame($salesQueue->id, $ticket->queue_id);
+        $this->assertSame($high->id, $ticket->priority_id);
+        $this->assertNotSame($defaults['queue']->id, $ticket->queue_id);
+    }
+
+    #[Test]
+    public function ticket_types_referenced_by_ticket_rules_cannot_be_deleted(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $type = TicketType::create([
+            'name' => 'Rule Lead',
+            'slug' => 'rule-lead',
+            'is_active' => true,
+            'is_deletable' => true,
+        ]);
+
+        TicketRule::create([
+            'name' => 'Rule references type',
+            'trigger' => TicketRule::TRIGGER_CREATE,
+            'weight' => 1,
+            'is_active' => true,
+            'conditions_json' => [
+                ['field' => 'channel', 'operator' => 'equals', 'value' => 'email'],
+            ],
+            'actions_json' => [
+                ['type' => 'set_ticket_type', 'value' => (string) $type->id],
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('tech.admin.settings.tickets.types.destroy', $type))
+            ->assertSessionHasErrors('type');
+
+        $this->assertDatabaseHas('ticket_types', ['id' => $type->id]);
     }
 
     private function emailAccountData(array $overrides = []): array

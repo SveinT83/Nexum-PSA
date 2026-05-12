@@ -1,202 +1,132 @@
-# tech.admin.settings.ticket.rules.create
+@extends('layouts.default_tech')
 
-**Date:** 2025-10-21
-**Primary URL:** `tech.admin.settings.ticket.rules.create`
-**Access level:** `superuser`, `tech.admin`, `ticket.admin`
-**Controller:** `App\\Http\\Controllers\\Tech\\Admin\\Settings\\Ticket\\RulesController@create`
-**Status:** Not completed
-**Difficulty:** Medium
-**Estimated time:** 4.0 hours
+@php
+    $isEdit = $mode === 'edit';
+    $conditions = old('conditions', $rule->conditions_json ?: [['field' => 'channel', 'operator' => 'equals', 'value' => 'email']]);
+    $actions = old('actions', $rule->actions_json ?: [['type' => 'set_ticket_type', 'value' => '']]);
+@endphp
 
----
+@section('title', $isEdit ? 'Edit ticket rule' : 'Create ticket rule')
 
-## Purpose
+@section('pageHeader')
+    <div class="d-flex align-items-center justify-content-between">
+        <h1>{{ $isEdit ? 'Edit Ticket Rule' : 'Create Ticket Rule' }}</h1>
+        <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Back to rules</a>
+    </div>
+@endsection
 
-This view allows administrators to create or edit **Ticket Rules**. Each rule defines a trigger, one or more conditions, and one or more actions that the system performs automatically on tickets.
+@section('content')
+    <div class="col-12 col-xl-9">
+        @if($errors->any())
+            <div class="alert alert-danger">{{ $errors->first() }}</div>
+        @endif
 
-The page uses the same form for both **create** and **edit** modes. The header title remains constant ("Create Ticket Rule"), while data determines whether a new or existing rule is being handled.
+        <form method="POST" action="{{ $isEdit ? route('tech.admin.settings.tickets.rules.update', $rule) : route('tech.admin.settings.tickets.rules.store') }}">
+            @csrf
+            @if($isEdit)
+                @method('PUT')
+            @endif
 
----
+            <x-card.default title="General">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label" for="name">Name</label>
+                        <input id="name" name="name" class="form-control" value="{{ old('name', $rule->name) }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="weight">Weight</label>
+                        <input id="weight" name="weight" type="number" min="0" max="100000" class="form-control" value="{{ old('weight', $rule->weight ?? 10) }}" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="2">{{ old('description', $rule->description) }}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="is_active" value="0">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" @checked(old('is_active', $rule->is_active ?? true))>
+                            <label class="form-check-label" for="is_active">Active</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="stop_processing" value="0">
+                            <input class="form-check-input" type="checkbox" id="stop_processing" name="stop_processing" value="1" @checked(old('stop_processing', $rule->stop_processing ?? false))>
+                            <label class="form-check-label" for="stop_processing">Stop processing after this rule</label>
+                        </div>
+                    </div>
+                </div>
+            </x-card.default>
 
-## Layout
+            <x-card.default title="Conditions">
+                <p class="small text-muted">All conditions must match. Contract fields are ready for context from inbound ticket creation.</p>
+                @foreach($conditions as $index => $condition)
+                    <div class="row g-2 align-items-end mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label" for="condition_field_{{ $index }}">Field</label>
+                            <select id="condition_field_{{ $index }}" name="conditions[{{ $index }}][field]" class="form-select">
+                                @foreach(['channel' => 'Channel', 'subject' => 'Subject', 'description' => 'Description/body', 'from_email' => 'From email', 'from_domain' => 'From domain', 'client_known' => 'Client known', 'client_has_active_contract' => 'Client has active contract'] as $value => $label)
+                                    <option value="{{ $value }}" @selected(($condition['field'] ?? '') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="condition_operator_{{ $index }}">Operator</label>
+                            <select id="condition_operator_{{ $index }}" name="conditions[{{ $index }}][operator]" class="form-select">
+                                @foreach(['contains' => 'Contains', 'equals' => 'Equals', 'not_equals' => 'Not equals', 'starts_with' => 'Starts with', 'ends_with' => 'Ends with', 'regex' => 'Regex', 'present' => 'Present'] as $value => $label)
+                                    <option value="{{ $value }}" @selected(($condition['operator'] ?? 'contains') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label" for="condition_value_{{ $index }}">Value</label>
+                            <input id="condition_value_{{ $index }}" name="conditions[{{ $index }}][value]" class="form-control" value="{{ $condition['value'] ?? '' }}">
+                        </div>
+                    </div>
+                @endforeach
+            </x-card.default>
 
-* **Header:** Static section with breadcrumbs, title, and two buttons:
+            <x-card.default title="Actions">
+                @foreach($actions as $index => $action)
+                    <div class="row g-2 align-items-end mb-2">
+                        <div class="col-md-5">
+                            <label class="form-label" for="action_type_{{ $index }}">Action</label>
+                            <select id="action_type_{{ $index }}" name="actions[{{ $index }}][type]" class="form-select">
+                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority'] as $value => $label)
+                                    <option value="{{ $value }}" @selected(($action['type'] ?? '') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label" for="action_value_{{ $index }}">Value ID</label>
+                            <input id="action_value_{{ $index }}" name="actions[{{ $index }}][value]" class="form-control" value="{{ $action['value'] ?? '' }}" list="ticket-rule-action-values" required>
+                        </div>
+                    </div>
+                @endforeach
+                <datalist id="ticket-rule-action-values">
+                    @foreach($types as $type)
+                        <option value="{{ $type->id }}">type: {{ $type->name }}</option>
+                    @endforeach
+                    @foreach($queues as $queue)
+                        <option value="{{ $queue->id }}">queue: {{ $queue->name }}</option>
+                    @endforeach
+                    @foreach($priorities as $priority)
+                        <option value="{{ $priority->id }}">priority: {{ $priority->name }}</option>
+                    @endforeach
+                </datalist>
+            </x-card.default>
 
-  * **Back to list** (left side)
-  * **Save** (right side, appears when valid and unsaved changes exist)
-* **Main scrollable content:** Three main sections stacked vertically:
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">{{ $isEdit ? 'Save rule' : 'Create rule' }}</button>
+            </div>
+        </form>
+    </div>
+@endsection
 
-  1. **Trigger**
-  2. **Conditions**
-  3. **Actions**
-     Each separated by a horizontal line (`<hr>`).
-* **Right sidebar (metadata):** Contains fields for rule name, status, weight, stop/continue behavior, and ID.
-
-All content scrolls in one continuous column. The header and sidebar behavior are controlled by the global template.
-
----
-
-## Components
-
-### Header
-
-* Title: **Create Ticket Rule** (static)
-* Buttons:
-
-  * **Back to list** → returns to `tech.admin.settings.ticket.rules.index`
-  * **Save** → active only when trigger and at least one action exist
-
-### Global layout
-
-* Uses the shared admin template with alert boxes for validation messages displayed **below the header**.
-* Page supports manual save only. No autosave.
-* Scroll position is preserved after save.
-
----
-
-## Section 1: Trigger
-
-* Section heading: **1. Trigger**
-* Button: **+ Add** → opens modal to choose one trigger (rules support one trigger only).
-* Modal positioned center-screen, sized dynamically to fit content.
-* Once saved, displays a **neutral box** summarizing trigger type and options.
-* Box includes **Edit** and **Delete** buttons.
-
-### Trigger options
-
-* on_ticket_created
-* on_ticket_updated
-* on_status_changed
-* on_assignment_changed
-* on_priority_changed
-* on_tag_added / on_tag_removed
-* on_comment_added
-* on_email_received
-* on_sla_threshold
-* on_timer_started / on_timer_stopped
-
----
-
-## Section 2: Conditions
-
-* Section heading: **2. Conditions**
-* Button: **+ Add** → opens modal to define logical rules.
-* Each condition appears as a **box** with summary text and Edit/Delete buttons.
-* Supports `AND`, `OR`, and `IF` blocks (flat structure, no nested groups).
-* Drag-and-drop available for reordering.
-* Multiple conditions allowed; all must be true for rule to match.
-* Conditions can use negation (`not equals`, `not contains`).
-
-### Condition fields (v1)
-
-* Queue, Category, Status, Priority
-* Assigned (user/team)
-* Client, Site, Requester (email/domain)
-* Tags
-* Title/Description text match
-* Source (email/web/api)
-* Has attachments (boolean)
-* Ticket age (minutes/hours/days)
-* Time in status (minutes/hours/days)
-* SLA state
-* Custom field (key/operator/value)
-
-### Condition modal
-
-* Field selector → operator → value input.
-* Live preview of built condition text.
-* Buttons: **Save** (commit + close) / **Cancel** (discard + close).
-
----
-
-## Section 3: Actions
-
-* Section heading: **3. Actions**
-* Button: **+ Add** → opens modal for selecting and configuring actions.
-* Actions displayed as boxes with neutral styling, edit/delete buttons, and optional note below the title.
-* Drag-and-drop determines execution order (top-to-bottom).
-
-### Example actions
-
-* Set queue / category / status / priority
-* Assign to user or team
-* Add/remove tags
-* Add internal note (from template)
-* Send email (choose type/template)
-* Change SLA profile
-* Set due date
-* Set workflow on ticket (choose workflow and start step)
-* Trigger webhook (URL + payload template)
-* Start/stop timer
-
-All actions execute sequentially in listed order.
-
----
-
-## Right Sidebar (Metadata)
-
-* **Name** (text, required, unique)
-* **Weight** (integer, default 10)
-* **Status** (Enabled/Disabled; default disabled)
-* **Stop behavior** (dropdown with: Stop, Stop scope, Continue)
-* **Description** (multiline note)
-* **Rule ID** (read-only text)
-
-Save is disabled until a trigger and at least one action exist.
-
----
-
-## Validation & Errors
-
-* Validation errors display in an alert box under the header.
-* Inline errors are not used.
-* Save button appears only when form is valid and unsaved changes exist.
-* Delete operations require confirmation modals.
-* No confirmation for Cancel; it navigates back immediately.
-
----
-
-## Interaction & UX
-
-* Manual Save only (no autosave).
-* Deleted elements are immediately removed from view.
-* New boxes added appear at the bottom of their section.
-* Conditions and Actions editable via modal only; drag used for order.
-* All sections always visible (no collapsible sections).
-* Scroll position retained after saving.
-* Unsaved indicator shown by visible Save button (no extra text).
-* Creation date and update timestamps are not shown on this view.
-* Header title remains fixed; does not change with rule name.
-
----
-
-## Notes & Behaviors
-
-* The form supports both creation and editing under the same route name (`create`).
-* Default: rule starts as disabled until manually activated in the list.
-* All boxes (trigger/conditions/actions) are neutral-styled; no icons or colors.
-* Comments/notes visible under box titles.
-* Modals show loading spinner while saving or loading.
-* ID displayed as plain text.
-* No nested groups, no drafts, no autosave.
-* Breadcrumbs show full path context; no extra module header needed.
-
----
-
-## Icons & Visuals
-
-Minimalistic: no icons or color codes in rule boxes.
-Breadcrumbs and alert template provide sufficient context.
-
----
-
-## Permissions
-
-* Accessible only to `superuser`, `tech.admin`, `ticket.admin`.
-* Data sources (queues, users, etc.) respect role visibility.
-
----
-
-## Summary
-
-This page defines the full UI behavior for building and managing ticket rules. It is static in layout but dynamic in content, offering modals for creating triggers, conditions, and actions, with simple visual order management and manual save control.
+@section('rightbar')
+    <x-card.default title="Examples">
+        <p class="small text-muted mb-2">Known client with no active contract: condition <code>client_has_active_contract equals 0</code>, action set ticket type to Lead.</p>
+        <p class="small text-muted mb-0">Support mailbox: condition <code>channel equals email</code>, action set queue to Support.</p>
+    </x-card.default>
+@endsection

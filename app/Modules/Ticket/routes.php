@@ -51,6 +51,18 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/admin/settings/tickets/rules', [TicketSettingsController::class, 'rules'])
         ->name('admin.settings.tickets.rules');
+    Route::get('/admin/settings/tickets/rules/create', [TicketSettingsController::class, 'createRule'])
+        ->name('admin.settings.tickets.rules.create');
+    Route::post('/admin/settings/tickets/rules', [TicketSettingsController::class, 'storeRule'])
+        ->name('admin.settings.tickets.rules.store');
+    Route::get('/admin/settings/tickets/rules/{rule}/edit', [TicketSettingsController::class, 'editRule'])
+        ->name('admin.settings.tickets.rules.edit');
+    Route::put('/admin/settings/tickets/rules/{rule}', [TicketSettingsController::class, 'updateRule'])
+        ->name('admin.settings.tickets.rules.update');
+    Route::post('/admin/settings/tickets/rules/{rule}/toggle', [TicketSettingsController::class, 'toggleRule'])
+        ->name('admin.settings.tickets.rules.toggle');
+    Route::delete('/admin/settings/tickets/rules/{rule}', [TicketSettingsController::class, 'destroyRule'])
+        ->name('admin.settings.tickets.rules.destroy');
 
     Route::get('/admin/settings/tickets/workflows', [TicketSettingsController::class, 'workflows'])
         ->name('admin.settings.tickets.workflows');
