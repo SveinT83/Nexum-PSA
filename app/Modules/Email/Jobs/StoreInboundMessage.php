@@ -127,6 +127,6 @@ class StoreInboundMessage implements ShouldQueue
             }
         }
 
-        // TODO: Dispatch ProcessInboundRules job.
+        ProcessInboundRules::dispatch($messageModel->id);
     }
 }

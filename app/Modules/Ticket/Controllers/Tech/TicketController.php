@@ -24,7 +24,9 @@ use App\Modules\Ticket\Queries\TicketIndexQuery;
 use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 
@@ -75,7 +77,7 @@ class TicketController extends Controller
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
-            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
+            'categories' => $this->ticketCategories(),
             'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
             'sites' => $selectedClient
                 ? ClientSite::where('client_id', $selectedClient->id)->orderByDesc('is_default')->orderBy('name')->get(['id', 'name'])
@@ -111,7 +113,7 @@ class TicketController extends Controller
             'queue_id' => 'nullable|exists:ticket_queues,id',
             'status_id' => 'nullable|exists:ticket_statuses,id',
             'priority_id' => 'nullable|exists:ticket_priorities,id',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => ['nullable', $this->ticketCategoryRule()],
             'client_id' => 'nullable|exists:clients,id',
             'site_id' => 'nullable|exists:client_sites,id',
             'contact_id' => 'nullable|exists:client_users,id',
@@ -148,7 +150,7 @@ class TicketController extends Controller
         );
 
         if (! empty($data['category_id'])) {
-            $data['category_id'] = Category::where('is_active', true)->findOrFail($data['category_id'])->id;
+            $data['category_id'] = Category::forTickets()->active()->findOrFail($data['category_id'])->id;
         }
 
         if (! empty($data['asset_id'])) {
@@ -175,7 +177,7 @@ class TicketController extends Controller
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
-            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
+            'categories' => $this->ticketCategories(),
             'technicians' => $this->technicians(),
             'emailLogsByMessageId' => EmailLog::query()
                 ->where('direction', 'outbound')
@@ -196,7 +198,7 @@ class TicketController extends Controller
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
-            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
+            'categories' => $this->ticketCategories(),
             'sites' => $ticket->client_id
                 ? ClientSite::where('client_id', $ticket->client_id)->orderByDesc('is_default')->orderBy('name')->get(['id', 'name'])
                 : collect(),
@@ -237,7 +239,7 @@ class TicketController extends Controller
             'queue_id' => 'required|exists:ticket_queues,id',
             'status_id' => 'required|exists:ticket_statuses,id',
             'priority_id' => 'required|exists:ticket_priorities,id',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => ['nullable', $this->ticketCategoryRule()],
             'site_id' => 'nullable|exists:client_sites,id',
             'asset_id' => 'nullable|exists:assets,id',
             'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
@@ -248,7 +250,7 @@ class TicketController extends Controller
         $priority = TicketPriority::where('is_active', true)->findOrFail($data['priority_id']);
         $categoryId = empty($data['category_id'])
             ? null
-            : Category::where('is_active', true)->findOrFail($data['category_id'])->id;
+            : Category::forTickets()->active()->findOrFail($data['category_id'])->id;
         $siteId = $this->resolveSiteId($ticket->client_id, $data['site_id'] ?? null, $ticket->contact_id, $data['asset_id'] ?? null);
         $assetId = empty($data['asset_id'])
             ? null
@@ -308,6 +310,18 @@ class TicketController extends Controller
         }
 
         return $technicians->sortBy('name')->values();
+    }
+
+    private function ticketCategories(): Collection
+    {
+        return Category::forTickets()->active()->orderBy('name')->get();
+    }
+
+    private function ticketCategoryRule(): Exists
+    {
+        return Rule::exists('categories', 'id')
+            ->where('type', Category::TYPE_TICKET)
+            ->where('is_active', true);
     }
 
     private function assetOptions(?int $clientId, ?int $contactId = null, ?int $siteId = null)

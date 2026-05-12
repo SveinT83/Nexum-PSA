@@ -52,6 +52,18 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/admin/settings/email/rules', [RulesController::class, 'index'])
         ->name('admin.settings.email.rules');
+    Route::get('/admin/settings/email/rules/create', [RulesController::class, 'create'])
+        ->name('admin.settings.email.rules.create');
+    Route::post('/admin/settings/email/rules', [RulesController::class, 'store'])
+        ->name('admin.settings.email.rules.store');
+    Route::get('/admin/settings/email/rules/{rule}/edit', [RulesController::class, 'edit'])
+        ->name('admin.settings.email.rules.edit');
+    Route::put('/admin/settings/email/rules/{rule}', [RulesController::class, 'update'])
+        ->name('admin.settings.email.rules.update');
+    Route::post('/admin/settings/email/rules/{rule}/toggle', [RulesController::class, 'toggle'])
+        ->name('admin.settings.email.rules.toggle');
+    Route::delete('/admin/settings/email/rules/{rule}', [RulesController::class, 'destroy'])
+        ->name('admin.settings.email.rules.destroy');
 
     Route::get('/admin/system/templatesManagement/email', [EmailTemplateController::class, 'index'])
         ->name('admin.system.templatesManagement.email.index');

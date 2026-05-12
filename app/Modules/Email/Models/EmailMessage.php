@@ -2,9 +2,11 @@
 
 namespace App\Modules\Email\Models;
 
+use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EmailMessage extends Model
@@ -38,5 +40,12 @@ class EmailMessage extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(EmailAttachment::class, 'message_id');
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(Tag::class, 'taggable', 'taggables')
+            ->withPivot('module')
+            ->withTimestamps();
     }
 }

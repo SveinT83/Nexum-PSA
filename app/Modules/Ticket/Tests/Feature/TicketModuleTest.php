@@ -82,7 +82,7 @@ class TicketModuleTest extends TestCase
         $category = Category::create([
             'name' => 'Printing',
             'slug' => 'printing',
-            'type' => 'ticket',
+            'type' => Category::TYPE_TICKET,
             'is_active' => true,
         ]);
 
@@ -120,6 +120,55 @@ class TicketModuleTest extends TestCase
 
         $this->assertSame(2, TicketMessage::count());
         $this->assertSame(1, $ticket->events()->where('type', 'message_added')->count());
+    }
+
+    #[Test]
+    public function ticket_forms_only_use_active_ticket_categories(): void
+    {
+        $ticketCategory = Category::create([
+            'name' => 'Access',
+            'slug' => 'ticket-access',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+        $documentationCategory = Category::create([
+            'name' => 'Documentation Only',
+            'slug' => 'documentation-only',
+            'type' => 'documentation',
+            'is_active' => true,
+        ]);
+        Category::create([
+            'name' => 'Inactive Ticket Category',
+            'slug' => 'inactive-ticket-category',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertSee('Access')
+            ->assertDontSee('Documentation Only')
+            ->assertDontSee('Inactive Ticket Category');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Wrong category type',
+                'category_id' => $documentationCategory->id,
+            ])
+            ->assertSessionHasErrors('category_id');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Right category type',
+                'category_id' => $ticketCategory->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'Right category type',
+            'category_id' => $ticketCategory->id,
+        ]);
     }
 
     #[Test]
@@ -440,7 +489,7 @@ class TicketModuleTest extends TestCase
             'name' => 'Access',
             'slug' => 'access',
             'is_active' => true,
-            'type' => 'ticket',
+            'type' => Category::TYPE_TICKET,
         ]);
         $newOwner = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $newOwner->assignRole('Tech');

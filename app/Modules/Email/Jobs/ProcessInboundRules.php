@@ -3,6 +3,7 @@
 namespace App\Modules\Email\Jobs;
 
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Services\InboundEmailRuleEngine;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,12 +18,13 @@ class ProcessInboundRules implements ShouldQueue
 
     public function __construct(public int $emailMessageId) {}
 
-    public function handle(): void
+    public function handle(InboundEmailRuleEngine $ruleEngine): void
     {
         $message = EmailMessage::find($this->emailMessageId);
-        if (!$message) {
+        if (! $message || $message->ticket_id !== null) {
             return;
         }
-        // TODO: Evaluate rules (OnInbound) and route message (Tickets or leave in Inbox).
+
+        $ruleEngine->process($message);
     }
 }

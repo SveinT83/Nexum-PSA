@@ -1,146 +1,148 @@
-# tech.admin.settings.email.rules.index
+@extends('layouts.default_tech')
 
-**Date:** 2025-10-23
-**Status:** In progress
-**Difficulty:** Medium
-**Estimated time:** 3.0 hours
+@section('title', 'Email rules')
 
-**Controller:**
-`App\\Http\\Controllers\\Tech\\Admin\\Settings\\Email\\RulesController@index`
+@section('pageHeader')
+  <div class="d-flex align-items-center justify-content-between">
+    <div>
+      <h1>Email Rules</h1>
+      <p class="text-muted mb-0">Inbound filters and routing rules for monitored mailboxes.</p>
+    </div>
+    <a href="{{ route('tech.admin.settings.email.rules.create') }}" class="btn btn-primary">Add rule</a>
+  </div>
+@endsection
 
-**Access:**
+@section('content')
+  <div class="col-12">
+    @if(session('success'))
+      <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
 
-* superadmin
-* tech.admin
-* emailadmin (if defined)
-* Permission required: `email.rules.manage`
+    @if($missingTable)
+      <div class="alert alert-warning">Email rules table not found. Run migrations before creating rules.</div>
+    @endif
 
-**URL:**
-`/tech/admin/settings/email/rules`
+    <div class="mb-4">
+      <h2 class="h5">System rules</h2>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th>
+              <th>Trigger</th>
+              <th>Condition</th>
+              <th>Action</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($systemRules as $rule)
+              <tr>
+                <td class="fw-semibold">{{ $rule['name'] }}</td>
+                <td><span class="badge text-bg-light">{{ $rule['trigger'] }}</span></td>
+                <td>{{ $rule['condition'] }}</td>
+                <td>{{ $rule['action'] }}</td>
+                <td class="text-center"><span class="badge text-bg-success">{{ $rule['status'] }}</span></td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </div>
 
----
+    <div>
+      <h2 class="h5">Custom inbound rules</h2>
 
-## 1. Purpose
+      @if($rules->isEmpty())
+        <div class="text-center py-5">
+          <h3 class="h6 text-muted mb-3">No custom rules yet</h3>
+          <a href="{{ route('tech.admin.settings.email.rules.create') }}" class="btn btn-outline-primary">Add first rule</a>
+        </div>
+      @else
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 90px;">Weight</th>
+                <th>Rule</th>
+                <th>Conditions</th>
+                <th>Actions</th>
+                <th class="text-center" style="width: 110px;">Flow</th>
+                <th class="text-center" style="width: 110px;">Status</th>
+                <th class="text-end" style="width: 220px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($rules as $rule)
+                <tr>
+                  <td>{{ $rule->weight }}</td>
+                  <td>
+                    <div class="fw-semibold">{{ $rule->name }}</div>
+                    @if($rule->description)
+                      <div class="small text-muted">{{ $rule->description }}</div>
+                    @endif
+                    @if($rule->last_hit_at)
+                      <div class="small text-muted">Hits: {{ $rule->hit_count }} · Last: {{ $rule->last_hit_at->diffForHumans() }}</div>
+                    @endif
+                  </td>
+                  <td>
+                    @foreach((array) $rule->conditions_json as $condition)
+                      <div class="small">
+                        <code>{{ $condition['field'] ?? '' }}</code>
+                        {{ str_replace('_', ' ', $condition['operator'] ?? '') }}
+                        @if(($condition['value'] ?? '') !== '')
+                          <code>{{ $condition['value'] }}</code>
+                        @endif
+                      </div>
+                    @endforeach
+                  </td>
+                  <td>
+                    @foreach((array) $rule->actions_json as $action)
+                      <div class="small">
+                        <code>{{ str_replace('_', ' ', $action['type'] ?? '') }}</code>
+                        @if(($action['value'] ?? '') !== '')
+                          <code>{{ $action['value'] }}</code>
+                        @endif
+                      </div>
+                    @endforeach
+                  </td>
+                  <td class="text-center">
+                    <span class="badge {{ $rule->stop_processing ? 'text-bg-warning' : 'text-bg-light' }}">
+                      {{ $rule->stop_processing ? 'Stop' : 'Continue' }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge {{ $rule->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">
+                      {{ $rule->is_active ? 'Active' : 'Disabled' }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <a href="{{ route('tech.admin.settings.email.rules.edit', $rule) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    <form action="{{ route('tech.admin.settings.email.rules.toggle', $rule) }}" method="POST" class="d-inline">
+                      @csrf
+                      <button type="submit" class="btn btn-sm {{ $rule->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}">
+                        {{ $rule->is_active ? 'Disable' : 'Enable' }}
+                      </button>
+                    </form>
+                    <form action="{{ route('tech.admin.settings.email.rules.destroy', $rule) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this email rule?');">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+      @endif
+    </div>
+  </div>
+@endsection
 
-Provide a central interface to manage **Global Email Rules** that run **before any module rules** (e.g., Tickets). Each rule has a **trigger** (inbound email ingest), multiple **conditions**, and multiple **actions**. Rules execute in a deterministic order to route, enrich, or delete messages—reducing manual triage and ensuring predictable behavior.
-
-> Scope notes: Rules can apply to **all accounts** or a **subset of IMAP accounts**. Deletion is always explicit and audited.
-
----
-
-## 2. Layout & Structure
-
-**Template layout:** Header / Main / Right slim sidebar (Bootstrap)
-
-### Components
-
-* **Header bar**
-
-  * Title: **Global Email Rules**
-  * Buttons: `+ Add Rule`, `Edit`, `Duplicate`, `Delete`, `Enable/Disable`, `Test…`
-  * Inline counters: Total, Active, Disabled
-
-* **Main content (rules list)**
-
-  * Columns:
-
-    * **Weight** (sortable integer, default **10**)
-    * **Rule name**
-    * **Trigger** (fixed: `on_inbound`)
-    * **Scope** (All accounts / Account list)
-    * **Flow** (Continue / Stop)
-    * **Status** (Active/Disabled)
-  * Sorting: ascending by **weight**, then by **id** for same weight.
-  * Row actions: Enable/Disable toggle, Edit, Duplicate, Delete.
-
-* **Right sidebar (context panel)**
-
-  * Selected rule metadata: ID, Created by, Updated at, Scope, Last hit (timestamp), Hit count (last 7/30d), Audit summary.
-  * Help widget: order of execution, Continue/Stop semantics, destructive rule warnings.
-
----
-
-## 3. Functional Behavior
-
-| Feature                      | Description                                                                                                                                                                                                                                                 |                                                                                                                                           |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Weight-based order**       | Rules execute in ascending **weight** (lower = higher priority). For equal weight, database **ID** decides order.                                                                                                                                           |                                                                                                                                           |
-| **Trigger**                  | Single trigger: **on_inbound** (IMAP ingest). Rules only execute at inbound stage (pre-module).                                                                                                                                                             |                                                                                                                                           |
-| **Continue/Stop**            | Default = **Continue** (recommended for enrichment). If **Stop**, global chain ends and the selected module starts with a fresh pipeline.                                                                                                                   |                                                                                                                                           |
-| **Conditions**               | Multiple AND/OR groups. Fields include: From, To, Cc, Subject, Message-ID, Account, Sender domain, Body contains/regex (lightweight), Presence of ticket token. Operators: equals, not equals, contains, startsWith, endsWith, regex, in list, not in list. |                                                                                                                                           |
-| **Actions**                  | `route.module = Tickets                                                                                                                                                                                                                                     | Leads`, `route.to_global_inbox`, `set.client`, `set.tags`, `set.priority (hint)`, `mark.delete`(destructive),`flow.stop`/`flow.continue`. |
-| **Conflict policy**          | For overlapping metadata, **last executed rule wins**. Deletion overrides all (with audit).                                                                                                                                                                 |                                                                                                                                           |
-| **Auto-save**                | Toggles, rename, weight edits persist immediately with toast confirmation.                                                                                                                                                                                  |                                                                                                                                           |
-| **Destructive confirmation** | `mark.delete` rules require confirmation on create/update. Deleting a rule prompts a confirm modal.                                                                                                                                                         |                                                                                                                                           |
-| **Filtering**                | Filter by status (All / Active / Disabled) and scope (All accounts / specific account).                                                                                                                                                                     |                                                                                                                                           |
-| **Search**                   | Text search on rule name.                                                                                                                                                                                                                                   |                                                                                                                                           |
-| **Duplication**              | Clone rule definition including conditions/actions/scope.                                                                                                                                                                                                   |                                                                                                                                           |
-| **Test harness**             | `Test…` opens modal to paste raw headers/body and preview: matched rules, actions, and final destination. Non‑destructive.                                                                                                                                  |                                                                                                                                           |
-
----
-
-## 4. Widgets & Components
-
-**Livewire components (suggested):**
-
-* `email-rules.table` – list & sort with inline weight editor
-* `email-rules.row` – status toggle, quick actions
-* `email-rules.meta` – right sidebar context (hits, audit)
-* `email-rules.test-modal` – paste sample email → preview evaluation
-* `confirm-modal` – destructive confirmations
-
-**UI elements:**
-
-* Inputs: weight (int), status toggle, scope selector (All / multi-select Accounts)
-* Icons (Lucide):
-
-  * `Mails` – email rules section
-  * `Zap` – trigger
-  * `ArrowUpDown` – sorting
-  * `Play` / `PauseCircle` – Continue / Stop
-  * `CheckCircle` / `XCircle` – enable/disable
-  * `FlaskRound` (or `Beaker`) – Test harness
-
-**UX details:**
-
-* Toast: *"Changes saved successfully"*
-* Tooltip over disabled rows: *"This rule will not execute"*
-* Badges: Green = Active, Gray = Disabled, Red = Destructive
-
----
-
-## 5. Smart UX & Behavior
-
-* Auto-refresh after edit/delete.
-* Inline validation for weight and required fields (name, scope, trigger).
-* Confirmation before disabling rules that contain `mark.delete` action.
-* Sticky header with counters and quick filters.
-* Bulk enable/disable (optional, later).
-
----
-
-## 6. Related Views
-
-| View                                      | Purpose                                         |
-| ----------------------------------------- | ----------------------------------------------- |
-| `tech.admin.settings.email.rules.create`  | Add new email rule                              |
-| `tech.admin.settings.email.rules.edit`    | Edit existing email rule                        |
-| `tech.admin.settings.email.index`         | Parent email settings overview                  |
-| `tech.admin.settings.tickets.rules.index` | Ticket rules (run **after** global email rules) |
-
----
-
-## 7. Integration & Flow
-
-* Runs **after parsing/normalization** and **before module selection**.
-* If a rule **Stops**, module pipeline (e.g., Ticket Route Rules) starts fresh.
-* All changes (create/update/reorder/enable/disable) are **audited**.
-
----
-
-## 8. Design Notes
-
-* Static dashboard; dynamic list content.
-* Bootstrap components; responsive, fast.
-* Right rail used for telemetry (last hit, hits by 7/30 days) and audit snippets.
-* Real-time updates where possible.
+@section('rightbar')
+  <div class="mt-3">
+    <h3 class="h6">Rule Order</h3>
+    <p class="small text-muted">Custom rules run by weight first. A stop rule prevents later custom rules and the built-in ticket-token fallback.</p>
+  </div>
+@endsection
