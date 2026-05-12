@@ -22,6 +22,7 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_key',
         'type',
+        'ticket_type_id',
         'queue_id',
         'status_id',
         'priority_id',
@@ -65,6 +66,11 @@ class Ticket extends Model
     public function queue(): BelongsTo
     {
         return $this->belongsTo(TicketQueue::class, 'queue_id');
+    }
+
+    public function ticketType(): BelongsTo
+    {
+        return $this->belongsTo(TicketType::class, 'ticket_type_id');
     }
 
     public function status(): BelongsTo

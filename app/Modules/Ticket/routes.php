@@ -36,6 +36,18 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.tickets');
     Route::post('/admin/settings/tickets/default-email-account', [TicketSettingsController::class, 'updateDefaultEmailAccount'])
         ->name('admin.settings.tickets.default-email-account.update');
+    Route::post('/admin/settings/tickets/queues', [TicketSettingsController::class, 'storeQueue'])
+        ->name('admin.settings.tickets.queues.store');
+    Route::put('/admin/settings/tickets/queues/{queue}', [TicketSettingsController::class, 'updateQueue'])
+        ->name('admin.settings.tickets.queues.update');
+    Route::delete('/admin/settings/tickets/queues/{queue}', [TicketSettingsController::class, 'destroyQueue'])
+        ->name('admin.settings.tickets.queues.destroy');
+    Route::post('/admin/settings/tickets/types', [TicketSettingsController::class, 'storeType'])
+        ->name('admin.settings.tickets.types.store');
+    Route::put('/admin/settings/tickets/types/{type}', [TicketSettingsController::class, 'updateType'])
+        ->name('admin.settings.tickets.types.update');
+    Route::delete('/admin/settings/tickets/types/{type}', [TicketSettingsController::class, 'destroyType'])
+        ->name('admin.settings.tickets.types.destroy');
 
     Route::get('/admin/settings/tickets/rules', [TicketSettingsController::class, 'rules'])
         ->name('admin.settings.tickets.rules');

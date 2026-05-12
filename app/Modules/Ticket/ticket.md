@@ -28,6 +28,7 @@ Implemented now:
 - Asset selection on create/edit, scoped by client/contact rules.
 - Explicit site selection and automatic site resolution from contact or asset.
 - Admin setting for selecting the default outbound ticket email account.
+- Admin management for ticket queues and ticket types.
 - Feature tests for the current main flows.
 
 Most recent completed work:
@@ -82,6 +83,7 @@ Ticket tables are created by the `2026_05_11_10000*` migrations.
 
 Main tables:
 
+- `ticket_types` - configurable ticket type definitions such as Support and Lead.
 - `ticket_queues` - logical work queues. Has `email_address` and `settings`, but those are not fully used yet.
 - `ticket_statuses` - status definitions. Has `state`, `is_default`, `is_closed`, and ordering fields.
 - `ticket_priorities` - priority definitions. Current default levels are Critical, High, Normal, and Low.
@@ -95,6 +97,7 @@ Main tables:
 Important current `tickets` relationships:
 
 - `queue_id` -> `ticket_queues`
+- `ticket_type_id` -> `ticket_types`. The legacy `tickets.type` string is still kept for compatibility while newer code moves toward type records.
 - `status_id` -> `ticket_statuses`
 - `priority_id` -> `ticket_priorities`
 - `category_id` -> Taxonomy module `categories`
@@ -242,14 +245,19 @@ Implemented:
 - Default outbound ticket email account.
 - The selected account is stored by adding `tickets` to `EmailAccount.defaults_for`.
 - Only one account should have the `tickets` scope after saving through the Ticket settings action.
+- Queue management.
+- Ticket type management.
 
 Planned but not implemented:
 
-- Queue management.
 - Status management.
 - Priority management.
 - Category management.
 - Per-queue inbound email address behavior.
+- Ticket key format settings.
+- Email rule actions for selecting ticket type and queue.
+- Contract-aware inbound routing: registered customer with active contract routes to support; registered customer without active contract routes to lead/sales ticket type.
+- Validation that ticket types referenced by email rules cannot be deleted.
 - SLA defaults.
 - Time tracking settings.
 - Notification toggles.
@@ -278,7 +286,7 @@ Not implemented:
 
 ## Known gaps and risks
 
-- Inbound email processing is still separate from Ticket. `EmailMessage.ticket_id` exists on the Email side, but the linking/creation flow is not implemented.
+- Inbound email processing can link replies to existing tickets by ticket key in the subject. Creating new tickets from unmatched inbound mail is not implemented yet.
 - Customer reply email is queued, so production needs a working queue worker unless `QUEUE_CONNECTION=sync` is used for development.
 - Failed outbound sends are logged to `email_logs` and surfaced on the relevant customer reply in the Ticket UI.
 - Ticket messages have an `attachments` JSON column, but file upload/attachment handling is not implemented in the Ticket UI.
@@ -310,21 +318,23 @@ Not implemented:
 
 ### 4. Connect inbound email to tickets
 
-- Extend `ProcessInboundRules` or add a Ticket-specific inbound action that can create or update tickets.
-- Match existing tickets by ticket key in subject, `In-Reply-To`, `References`, and stored RFC message IDs.
+- Extend Email Rules with actions for selecting ticket type, queue, priority, category, owner, and client/contact context.
+- Match existing tickets by `In-Reply-To`, `References`, and stored RFC message IDs, in addition to the current ticket-key subject fallback.
 - Create new tickets from unmatched inbound messages sent to ticket queues.
-- Link `email_messages.ticket_id` when an email becomes a ticket or ticket message.
-- Convert inbound email bodies and attachments into `TicketMessage` records.
+- Route registered customers with active contracts to a support ticket type, and registered customers without active contracts to a configurable lead/sales ticket type.
+- Convert inbound email attachments into Ticket attachment records once attachment storage is designed.
 - Add dedupe/idempotency tests so repeated IMAP processing does not duplicate ticket messages.
 
 ### 5. Build ticket settings properly
 
-- Implement queue, status, and priority management inside the Ticket module.
+- Finish status and priority management inside the Ticket module.
+- Add ticket key format settings and migration-safe key generation rules.
 - Keep category management in the Taxonomy module and reuse shared `categories`.
 - Keep settings controllers under `app/Modules/Ticket/Controllers/Admin`.
 - Keep settings views under `app/Modules/Ticket/Views/Admin`.
 - Replace or update old specification files so they match the actual module namespaces and routes.
 - Add audit events for settings changes.
+- Prevent deletion of ticket queues/types that are referenced by ticket rules, email rules, workflows, or existing tickets.
 
 ### 6. Implement Ticket Rules
 

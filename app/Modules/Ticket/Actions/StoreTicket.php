@@ -6,22 +6,33 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketType;
+use App\Modules\Ticket\Services\TicketRuleEngine;
 use Illuminate\Support\Facades\DB;
 
 class StoreTicket
 {
-    public function __construct(private readonly EnsureTicketDefaults $defaults)
-    {
-    }
+    public function __construct(
+        private readonly EnsureTicketDefaults $defaults,
+        private readonly TicketRuleEngine $ticketRuleEngine,
+    ) {}
 
     public function handle(array $data, ?User $actor = null): Ticket
     {
         return DB::transaction(function () use ($data, $actor) {
             $defaults = $this->defaults->handle();
+            $data = $this->ticketRuleEngine->apply('on_create', array_merge([
+                'channel' => 'manual',
+                'ticket_type_id' => $defaults['type']->id,
+                'queue_id' => $defaults['queue']->id,
+                'priority_id' => $defaults['priority']->id,
+            ], $data));
+            $ticketType = TicketType::find($data['ticket_type_id'] ?? null) ?? $defaults['type'];
 
             $ticket = Ticket::create([
                 'ticket_key' => $this->nextTicketKey(),
-                'type' => $data['type'] ?? 'support',
+                'type' => $ticketType->slug,
+                'ticket_type_id' => $ticketType->id,
                 'queue_id' => $data['queue_id'] ?? $defaults['queue']->id,
                 'status_id' => $data['status_id'] ?? $defaults['status']->id,
                 'priority_id' => $data['priority_id'] ?? $defaults['priority']->id,

@@ -5,12 +5,13 @@ namespace App\Modules\Ticket\Actions;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
+use App\Modules\Ticket\Models\TicketType;
 use Illuminate\Support\Str;
 
 class EnsureTicketDefaults
 {
     /**
-     * @return array{queue: TicketQueue, status: TicketStatus, priority: TicketPriority}
+     * @return array{queue: TicketQueue, status: TicketStatus, priority: TicketPriority, type: TicketType}
      */
     public function handle(): array
     {
@@ -21,6 +22,18 @@ class EnsureTicketDefaults
                 'slug' => 'support',
                 'description' => 'Default support queue.',
                 'is_default' => true,
+                'is_active' => true,
+                'sort_order' => 10,
+            ]);
+
+        $type = TicketType::query()->where('slug', 'support')->first()
+            ?? TicketType::query()->first()
+            ?? TicketType::create([
+                'name' => 'Support',
+                'slug' => 'support',
+                'description' => 'Default support ticket type.',
+                'is_system' => true,
+                'is_deletable' => false,
                 'is_active' => true,
                 'sort_order' => 10,
             ]);
@@ -68,6 +81,7 @@ class EnsureTicketDefaults
             'queue' => $queue,
             'status' => $status,
             'priority' => $priority,
+            'type' => $type,
         ];
     }
 }

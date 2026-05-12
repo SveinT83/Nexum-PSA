@@ -20,6 +20,7 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
+use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Queries\TicketIndexQuery;
 use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Http\RedirectResponse;
@@ -77,6 +78,7 @@ class TicketController extends Controller
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'categories' => $this->ticketCategories(),
             'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
             'sites' => $selectedClient
@@ -114,6 +116,7 @@ class TicketController extends Controller
             'status_id' => 'nullable|exists:ticket_statuses,id',
             'priority_id' => 'nullable|exists:ticket_priorities,id',
             'category_id' => ['nullable', $this->ticketCategoryRule()],
+            'ticket_type_id' => 'nullable|exists:ticket_types,id',
             'client_id' => 'nullable|exists:clients,id',
             'site_id' => 'nullable|exists:client_sites,id',
             'contact_id' => 'nullable|exists:client_users,id',
@@ -153,6 +156,12 @@ class TicketController extends Controller
             $data['category_id'] = Category::forTickets()->active()->findOrFail($data['category_id'])->id;
         }
 
+        if (! empty($data['ticket_type_id'])) {
+            $type = TicketType::where('is_active', true)->findOrFail($data['ticket_type_id']);
+            $data['ticket_type_id'] = $type->id;
+            $data['type'] = $type->slug;
+        }
+
         if (! empty($data['asset_id'])) {
             $this->validateAssetScope($data['asset_id'], $data['client_id'] ?? null, $data['contact_id'] ?? null, $data['site_id'] ?? null);
         }
@@ -177,6 +186,7 @@ class TicketController extends Controller
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'categories' => $this->ticketCategories(),
             'technicians' => $this->technicians(),
             'emailLogsByMessageId' => EmailLog::query()

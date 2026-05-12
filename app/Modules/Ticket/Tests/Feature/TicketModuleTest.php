@@ -17,7 +17,9 @@ use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
+use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
+use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -868,6 +870,88 @@ class TicketModuleTest extends TestCase
         $this->assertEqualsCanonicalizing(['alerts', 'tickets'], $newDefault->fresh()->defaults_for);
     }
 
+    #[Test]
+    public function admin_can_manage_ticket_types_and_queues(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.types.store'), [
+                'name' => 'Sales Lead',
+                'slug' => 'sales-lead',
+                'description' => 'Inbound sales conversations.',
+                'is_active' => '1',
+                'is_deletable' => '1',
+                'sort_order' => 30,
+            ])
+            ->assertRedirect();
+
+        $type = TicketType::where('slug', 'sales-lead')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.settings.tickets.types.update', $type), [
+                'name' => 'Lead',
+                'slug' => 'lead-custom',
+                'description' => 'Custom lead type.',
+                'is_active' => '1',
+                'is_deletable' => '1',
+                'sort_order' => 35,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('ticket_types', [
+            'id' => $type->id,
+            'name' => 'Lead',
+            'slug' => 'lead-custom',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.queues.store'), [
+                'name' => 'Sales',
+                'slug' => 'sales',
+                'description' => 'Sales queue.',
+                'email_address' => 'sales@example.com',
+                'is_active' => '1',
+                'is_default' => '1',
+                'sort_order' => 20,
+            ])
+            ->assertRedirect();
+
+        $queue = TicketQueue::where('slug', 'sales')->firstOrFail();
+
+        $this->assertTrue($queue->is_default);
+        $this->assertDatabaseHas('ticket_queues', [
+            'id' => $queue->id,
+            'email_address' => 'sales@example.com',
+        ]);
+    }
+
+    #[Test]
+    public function protected_or_used_ticket_types_cannot_be_deleted(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999112',
+            'ticket_type_id' => $defaults['type']->id,
+            'type' => $defaults['type']->slug,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('tech.admin.settings.tickets.types.destroy', $defaults['type']))
+            ->assertSessionHasErrors('type');
+
+        $this->assertDatabaseHas('ticket_types', [
+            'id' => $defaults['type']->id,
+        ]);
+    }
+
     private function emailAccountData(array $overrides = []): array
     {
         return array_merge([
@@ -901,6 +985,8 @@ class TicketModuleTest extends TestCase
         return Ticket::create(array_merge([
             'ticket_key' => 'TD-2026-999100',
             'queue_id' => $defaults['queue']->id,
+            'ticket_type_id' => $defaults['type']->id,
+            'type' => $defaults['type']->slug,
             'status_id' => $defaults['status']->id,
             'priority_id' => $defaults['priority']->id,
             'client_id' => $contact?->site?->client_id,
