@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class SendTicketReplyEmail implements ShouldQueue
 {
@@ -39,7 +40,7 @@ class SendTicketReplyEmail implements ShouldQueue
         EmailTemplateRenderer $renderer,
         SmtpAccountMailer $mailer
     ): void {
-        $message = TicketMessage::with(['ticket.contact', 'ticket.priority', 'ticket.status'])->find($this->ticketMessageId);
+        $message = TicketMessage::with(['ticket.contact', 'ticket.priority', 'ticket.status', 'fileAttachments'])->find($this->ticketMessageId);
 
         if (! $message || $message->type !== 'customer_reply') {
             return;
@@ -86,7 +87,8 @@ class SendTicketReplyEmail implements ShouldQueue
                 $contact->name,
                 $rendered['subject'],
                 $rendered['html'],
-                $rendered['text']
+                $rendered['text'],
+                $this->attachmentsForMailer($message)
             );
 
             $this->log($account->id, $message->id, 'info', 'TICKET_EMAIL_SENT', 'Ticket reply email sent.', [
@@ -94,6 +96,7 @@ class SendTicketReplyEmail implements ShouldQueue
                 'ticket_key' => $ticket->ticket_key,
                 'to' => $contact->email,
                 'rfc_message_id' => $messageId,
+                'attachments_count' => $message->fileAttachments->count(),
             ], $messageId);
         } catch (\Throwable $e) {
             $account->forceFill([
@@ -109,6 +112,36 @@ class SendTicketReplyEmail implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    private function attachmentsForMailer(TicketMessage $message): array
+    {
+        return $message->fileAttachments
+            ->map(function ($attachment) {
+                $disk = $attachment->disk ?: 'local';
+
+                if (! $attachment->path || ! Storage::disk($disk)->exists($attachment->path)) {
+                    return null;
+                }
+
+                // Local disks can stream from a filesystem path; other disks fall back to in-memory content.
+                if ($disk === 'local' && method_exists(Storage::disk($disk), 'path')) {
+                    return [
+                        'path' => Storage::disk($disk)->path($attachment->path),
+                        'filename' => $attachment->filename,
+                        'content_type' => $attachment->content_type,
+                    ];
+                }
+
+                return [
+                    'data' => Storage::disk($disk)->get($attachment->path),
+                    'filename' => $attachment->filename,
+                    'content_type' => $attachment->content_type,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 
     private function log(?int $accountId, int $messageId, string $level, string $code, string $message, array $context = [], ?string $rfcMessageId = null): void

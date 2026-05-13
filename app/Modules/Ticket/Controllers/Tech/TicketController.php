@@ -17,19 +17,24 @@ use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Queries\TicketIndexQuery;
+use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TicketController extends Controller
 {
@@ -94,6 +99,7 @@ class TicketController extends Controller
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'categories' => $this->ticketCategories(),
+            'tags' => $this->activeTags(),
             'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
             'sites' => $selectedClient
                 ? ClientSite::where('client_id', $selectedClient->id)->orderByDesc('is_default')->orderBy('name')->get(['id', 'name'])
@@ -136,6 +142,8 @@ class TicketController extends Controller
             'contact_id' => 'nullable|exists:client_users,id',
             'asset_id' => 'nullable|exists:assets,id',
             'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:tags,id',
             'type' => 'nullable|string|max:50',
             'impact' => 'nullable|integer|min:1|max:5',
             'urgency' => 'nullable|integer|min:1|max:5',
@@ -170,6 +178,8 @@ class TicketController extends Controller
             $data['category_id'] = Category::forTickets()->active()->findOrFail($data['category_id'])->id;
         }
 
+        $data['tag_ids'] = $this->activeTagIds($data['tag_ids'] ?? []);
+
         if (! empty($data['ticket_type_id'])) {
             $type = TicketType::where('is_active', true)->findOrFail($data['ticket_type_id']);
             $data['ticket_type_id'] = $type->id;
@@ -192,11 +202,15 @@ class TicketController extends Controller
     {
         app(EnsureTicketDefaults::class)->handle();
 
-        $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'messages', 'events']);
+        $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.fileAttachments', 'events']);
         $messageIds = $ticket->messages->pluck('id')->all();
 
         return view('ticket::Tech.Tickets.show', [
             'ticket' => $ticket,
+            'latestAssignmentEvent' => $ticket->events
+                ->where('type', 'assigned')
+                ->sortByDesc('created_at')
+                ->first(),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
@@ -218,11 +232,12 @@ class TicketController extends Controller
         app(EnsureTicketDefaults::class)->handle();
 
         return view('ticket::Tech.Tickets.edit', [
-            'ticket' => $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'site', 'contact.site', 'owner', 'asset']),
+            'ticket' => $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags']),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
             'categories' => $this->ticketCategories(),
+            'tags' => $this->activeTags(),
             'sites' => $ticket->client_id
                 ? ClientSite::where('client_id', $ticket->client_id)->orderByDesc('is_default')->orderBy('name')->get(['id', 'name'])
                 : collect(),
@@ -237,6 +252,8 @@ class TicketController extends Controller
             'body' => 'required|string',
             'type' => 'required|string|in:internal_note,customer_reply',
             'visibility' => 'required|string|in:internal,public',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|max:20480',
         ]);
 
         $ticket->loadMissing('contact');
@@ -255,6 +272,17 @@ class TicketController extends Controller
             ->with('success', 'Message added.');
     }
 
+    public function downloadAttachment(Ticket $ticket, TicketAttachment $attachment): StreamedResponse
+    {
+        abort_unless((int) $attachment->ticket_id === (int) $ticket->id, 404);
+
+        $disk = $attachment->disk ?: 'local';
+
+        abort_unless($attachment->path && Storage::disk($disk)->exists($attachment->path), 404);
+
+        return Storage::disk($disk)->download($attachment->path, $attachment->filename);
+    }
+
     public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, ChangeTicketStatus $changeTicketStatus): RedirectResponse
     {
         $data = $request->validate([
@@ -267,6 +295,8 @@ class TicketController extends Controller
             'site_id' => 'nullable|exists:client_sites,id',
             'asset_id' => 'nullable|exists:assets,id',
             'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:tags,id',
         ]);
 
         $queue = TicketQueue::where('is_active', true)->findOrFail($data['queue_id']);
@@ -292,6 +322,7 @@ class TicketController extends Controller
         ], $request->user());
 
         $changeTicketStatus->handle($ticket->refresh(), $status, $request->user());
+        $ticket->tags()->syncWithPivotValues($this->activeTagIds($data['tag_ids'] ?? []), ['module' => 'ticket']);
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Ticket updated.');
@@ -311,6 +342,24 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Ticket marked as read.');
+    }
+
+    public function assign(Request $request, Ticket $ticket, TicketAssignmentEngine $assignmentEngine): RedirectResponse
+    {
+        $previousOwnerId = $ticket->owner_id;
+        $ownerId = $assignmentEngine->assign($ticket, force: true);
+
+        if (! $ownerId) {
+            return redirect()->route('tech.tickets.show', $ticket->refresh())
+                ->withErrors(['assignment' => 'No matching assignment rule or available technician profile was found.']);
+        }
+
+        $message = $previousOwnerId === $ownerId
+            ? 'Ticket assignment already matched the current owner.'
+            : 'Ticket assignment updated.';
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', $message);
     }
 
     private function technicians()
@@ -339,6 +388,20 @@ class TicketController extends Controller
     private function ticketCategories(): Collection
     {
         return Category::forTickets()->active()->orderBy('name')->get();
+    }
+
+    private function activeTags(): Collection
+    {
+        return Tag::where('active', true)->orderBy('name')->get();
+    }
+
+    private function activeTagIds(array $tagIds): array
+    {
+        return Tag::where('active', true)
+            ->whereIn('id', $tagIds)
+            ->pluck('id')
+            ->map(fn ($tagId) => (int) $tagId)
+            ->all();
     }
 
     private function ticketCategoryRule(): Exists

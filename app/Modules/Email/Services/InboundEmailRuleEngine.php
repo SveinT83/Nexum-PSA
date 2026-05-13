@@ -2,12 +2,18 @@
 
 namespace App\Modules\Email\Services;
 
+use App\Models\Clients\ClientUser;
+use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailRuleLog;
 use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\Ticket\Actions\CreateTicketFromInboundEmail;
 use App\Modules\Ticket\Actions\LinkInboundEmailToTicket;
 use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\Ticket\Models\TicketType;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -15,6 +21,7 @@ class InboundEmailRuleEngine
 {
     public function __construct(
         private readonly LinkInboundEmailToTicket $linkInboundEmailToTicket,
+        private readonly CreateTicketFromInboundEmail $createTicketFromInboundEmail,
     ) {}
 
     public function process(EmailMessage $message): void
@@ -24,7 +31,8 @@ class InboundEmailRuleEngine
         }
 
         if (! Schema::hasTable('email_rules')) {
-            $this->linkByTicketKey($message);
+            $this->linkByHeaderReferences($message);
+            $this->linkByTicketKey($message->fresh());
             return;
         }
 
@@ -68,8 +76,8 @@ class InboundEmailRuleEngine
                 return null;
             });
 
-        if (! $stopped && $message->fresh()->ticket_id === null && $message->fresh()->state !== 'archived') {
-            $this->linkByTicketKey($message);
+        if (! $stopped) {
+            $this->routeByDefaultTicketPolicy($message);
         }
     }
 
@@ -122,8 +130,8 @@ class InboundEmailRuleEngine
         return match ($field) {
             'from' => (string) $message->from_email,
             'from_domain' => strtolower((string) str($message->from_email)->after('@')),
-            'to' => implode(' ', (array) $message->to_json),
-            'cc' => implode(' ', (array) $message->cc_json),
+            'to' => $this->recipientFieldValue((array) $message->to_json),
+            'cc' => $this->recipientFieldValue((array) $message->cc_json),
             'subject' => (string) $message->subject,
             'body' => (string) $message->body_text,
             'message_id' => (string) $message->message_id,
@@ -141,11 +149,38 @@ class InboundEmailRuleEngine
 
             match ($type) {
                 'link_ticket_by_subject_token' => $this->linkByTicketKey($message),
+                'create_ticket' => $this->createTicket($message, (string) $value),
                 'archive' => $message->forceFill(['state' => 'archived'])->save(),
                 'tag' => $this->tag($message, (string) $value),
                 default => null,
             };
         }
+    }
+
+    private function recipientFieldValue(array $recipients): string
+    {
+        return collect($recipients)
+            ->map(fn ($recipient) => is_array($recipient)
+                ? trim((string) (($recipient['name'] ?? '') . ' ' . ($recipient['email'] ?? $recipient['address'] ?? '')))
+                : (string) $recipient)
+            ->filter()
+            ->implode(' ');
+    }
+
+    private function createTicket(EmailMessage $message, string $queueValue = '', ?string $typeSlug = null): void
+    {
+        // Explicit queue values win; otherwise a queue can be inferred from To/Cc recipients.
+        $queue = $queueValue !== ''
+            ? TicketQueue::query()
+                ->whereKey($queueValue)
+                ->orWhere('slug', $queueValue)
+                ->first()
+            : $this->queueFromRecipients($message);
+        $ticketType = $typeSlug
+            ? TicketType::query()->where('slug', $typeSlug)->where('is_active', true)->first()
+            : null;
+
+        $this->createTicketFromInboundEmail->handle($message->fresh(), $queue, $ticketType);
     }
 
     private function linkByTicketKey(EmailMessage $message): void
@@ -163,6 +198,98 @@ class InboundEmailRuleEngine
         }
 
         $this->linkInboundEmailToTicket->handle($message->fresh(), $ticket);
+    }
+
+    private function linkByHeaderReferences(EmailMessage $message): void
+    {
+        $messageIds = $this->referencedMessageIds($message);
+
+        if (empty($messageIds)) {
+            return;
+        }
+
+        $logs = EmailLog::query()
+            ->where('direction', 'outbound')
+            ->where('scope', 'tickets')
+            ->whereIn('rfc_message_id', $messageIds)
+            ->latest('id')
+            ->get();
+
+        foreach ($logs as $log) {
+            $ticketMessageId = (int) ($log->context_json['ticket_message_id'] ?? 0);
+
+            if (! $ticketMessageId) {
+                continue;
+            }
+
+            $ticketMessage = TicketMessage::with('ticket')->find($ticketMessageId);
+
+            if (! $ticketMessage?->ticket) {
+                continue;
+            }
+
+            $this->linkInboundEmailToTicket->handle($message->fresh(), $ticketMessage->ticket);
+            return;
+        }
+    }
+
+    private function referencedMessageIds(EmailMessage $message): array
+    {
+        preg_match_all('/<[^>]+>/', trim((string) $message->in_reply_to . ' ' . (string) $message->references), $matches);
+
+        return collect($matches[0] ?? [])
+            ->map(fn ($messageId) => trim($messageId))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function routeByDefaultTicketPolicy(EmailMessage $message): void
+    {
+        $message = $message->fresh();
+
+        if ($message->ticket_id !== null || $message->state === 'archived') {
+            return;
+        }
+
+        $this->linkByHeaderReferences($message);
+
+        $message = $message->fresh();
+
+        if ($message->ticket_id !== null || $message->state === 'archived') {
+            return;
+        }
+
+        $this->linkByTicketKey($message);
+
+        $message = $message->fresh();
+
+        if ($message->ticket_id !== null || $message->state === 'archived' || $this->isSpamTagged($message)) {
+            return;
+        }
+
+        // tdPSA is ticket-first: known contacts become support tickets, unknown senders become lead tickets.
+        $this->createTicket($message, '', $this->senderIsKnownClientContact($message) ? null : 'lead');
+    }
+
+    private function senderIsKnownClientContact(EmailMessage $message): bool
+    {
+        if (! $message->from_email) {
+            return false;
+        }
+
+        return ClientUser::query()
+            ->where('email', $message->from_email)
+            ->where('active', true)
+            ->exists();
+    }
+
+    private function isSpamTagged(EmailMessage $message): bool
+    {
+        $message->loadMissing('tags');
+
+        return $message->tags->contains(fn (Tag $tag) => in_array(strtolower($tag->slug ?: $tag->name), ['spam', 'junk'], true));
     }
 
     private function tag(EmailMessage $message, string $tag): void
@@ -183,5 +310,25 @@ class InboundEmailRuleEngine
         if (! $message->tags()->where('tags.id', $tagModel->id)->exists()) {
             $message->tags()->attach($tagModel->id, ['module' => 'email']);
         }
+    }
+
+    private function queueFromRecipients(EmailMessage $message): ?TicketQueue
+    {
+        // Email addresses may be stored as plain strings or parsed address arrays depending on the source parser.
+        $recipients = collect((array) $message->to_json)
+            ->merge((array) $message->cc_json)
+            ->map(fn ($recipient) => is_array($recipient) ? ($recipient['email'] ?? $recipient['address'] ?? '') : $recipient)
+            ->filter()
+            ->map(fn ($recipient) => strtolower((string) $recipient))
+            ->values();
+
+        if ($recipients->isEmpty()) {
+            return null;
+        }
+
+        return TicketQueue::query()
+            ->whereNotNull('email_address')
+            ->get()
+            ->first(fn (TicketQueue $queue) => $recipients->contains(strtolower((string) $queue->email_address)));
     }
 }

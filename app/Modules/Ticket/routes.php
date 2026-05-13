@@ -1,6 +1,9 @@
 <?php
 
+use App\Modules\Ticket\Controllers\Admin\TechnicianProfileAdminController;
+use App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
+use App\Modules\Ticket\Controllers\Tech\TechnicianProfileController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use Illuminate\Support\Facades\Route;
 
@@ -9,6 +12,12 @@ Route::get('/tickets', [TicketController::class, 'index'])
 
 Route::get('/tickets/create', [TicketController::class, 'create'])
     ->name('tickets.create');
+
+Route::get('/tickets/profile', [TechnicianProfileController::class, 'edit'])
+    ->name('tickets.profile.edit');
+
+Route::patch('/tickets/profile', [TechnicianProfileController::class, 'update'])
+    ->name('tickets.profile.update');
 
 Route::post('/tickets', [TicketController::class, 'store'])
     ->name('tickets.store');
@@ -28,8 +37,14 @@ Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])
 Route::post('/tickets/{ticket}/messages', [TicketController::class, 'addMessage'])
     ->name('tickets.messages.store');
 
+Route::get('/tickets/{ticket}/attachments/{attachment}/download', [TicketController::class, 'downloadAttachment'])
+    ->name('tickets.attachments.download');
+
 Route::post('/tickets/{ticket}/read', [TicketController::class, 'markRead'])
     ->name('tickets.read');
+
+Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])
+    ->name('tickets.assign');
 
 Route::middleware('admin')->group(function () {
     Route::get('/admin/settings/tickets', [TicketSettingsController::class, 'index'])
@@ -62,6 +77,22 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.tickets.priorities.update');
     Route::delete('/admin/settings/tickets/priorities/{priority}', [TicketSettingsController::class, 'destroyPriority'])
         ->name('admin.settings.tickets.priorities.destroy');
+
+    Route::get('/admin/settings/tickets/technicians', [TechnicianProfileAdminController::class, 'index'])
+        ->name('admin.settings.tickets.technicians');
+    Route::post('/admin/settings/tickets/technicians', [TechnicianProfileAdminController::class, 'store'])
+        ->name('admin.settings.tickets.technicians.store');
+    Route::get('/admin/settings/tickets/technicians/{profile}/edit', [TechnicianProfileAdminController::class, 'edit'])
+        ->name('admin.settings.tickets.technicians.edit');
+    Route::patch('/admin/settings/tickets/technicians/{profile}', [TechnicianProfileAdminController::class, 'update'])
+        ->name('admin.settings.tickets.technicians.update');
+
+    Route::get('/admin/settings/tickets/assignment-rules', [AssignmentRuleAdminController::class, 'index'])
+        ->name('admin.settings.tickets.assignment-rules');
+    Route::post('/admin/settings/tickets/assignment-rules', [AssignmentRuleAdminController::class, 'store'])
+        ->name('admin.settings.tickets.assignment-rules.store');
+    Route::delete('/admin/settings/tickets/assignment-rules/{rule}', [AssignmentRuleAdminController::class, 'destroy'])
+        ->name('admin.settings.tickets.assignment-rules.destroy');
 
     Route::get('/admin/settings/tickets/rules', [TicketSettingsController::class, 'rules'])
         ->name('admin.settings.tickets.rules');

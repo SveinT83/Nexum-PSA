@@ -38,6 +38,18 @@ class EnsureTicketDefaults
                 'sort_order' => 10,
             ]);
 
+        TicketType::firstOrCreate(
+            ['slug' => 'lead'],
+            [
+                'name' => 'Lead',
+                'description' => 'Default lead or sales inquiry ticket type.',
+                'is_system' => true,
+                'is_deletable' => true,
+                'is_active' => true,
+                'sort_order' => 20,
+            ]
+        );
+
         foreach ([
             ['name' => 'New', 'slug' => 'new', 'state' => 'open', 'is_default' => true, 'is_closed' => false, 'sort_order' => 10],
             ['name' => 'In Progress', 'slug' => 'in-progress', 'state' => 'open', 'is_default' => false, 'is_closed' => false, 'sort_order' => 20],

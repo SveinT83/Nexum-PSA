@@ -54,7 +54,7 @@ class TicketRuleEngine
             $field = $condition['field'] ?? '';
             $operator = $condition['operator'] ?? 'contains';
             $expected = (string) ($condition['value'] ?? '');
-            $actual = (string) data_get($context, $field, '');
+            $actual = (string) data_get($context, $field, $field === 'description' ? data_get($context, 'body', '') : '');
 
             if (! $this->matchCondition($actual, $operator, $expected)) {
                 return false;
@@ -90,8 +90,21 @@ class TicketRuleEngine
                 'set_ticket_type' => $context['ticket_type_id'] = (int) $value,
                 'set_queue' => $context['queue_id'] = (int) $value,
                 'set_priority' => $context['priority_id'] = (int) $value,
+                'set_category' => $context['category_id'] = (int) $value,
+                'add_tag' => $context['tag_ids'] = $this->appendTagId($context['tag_ids'] ?? [], $value),
                 default => null,
             };
         }
+    }
+
+    private function appendTagId(mixed $tagIds, mixed $value): array
+    {
+        return collect((array) $tagIds)
+            ->push($value)
+            ->filter(fn ($tagId) => is_numeric($tagId))
+            ->map(fn ($tagId) => (int) $tagId)
+            ->unique()
+            ->values()
+            ->all();
     }
 }

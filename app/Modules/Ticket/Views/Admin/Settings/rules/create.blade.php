@@ -65,7 +65,7 @@
                         <div class="col-md-4">
                             <label class="form-label" for="condition_field_{{ $index }}">Field</label>
                             <select id="condition_field_{{ $index }}" name="conditions[{{ $index }}][field]" class="form-select">
-                                @foreach(['channel' => 'Channel', 'subject' => 'Subject', 'description' => 'Description/body', 'from_email' => 'From email', 'from_domain' => 'From domain', 'client_known' => 'Client known', 'client_has_active_contract' => 'Client has active contract'] as $value => $label)
+                                @foreach(['channel' => 'Channel', 'subject' => 'Subject', 'description' => 'Description/body', 'from_email' => 'From email', 'from_domain' => 'From domain', 'email_tags' => 'Email tags', 'client_known' => 'Client known', 'client_has_active_contract' => 'Client has active contract'] as $value => $label)
                                     <option value="{{ $value }}" @selected(($condition['field'] ?? '') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
@@ -92,7 +92,7 @@
                         <div class="col-md-5">
                             <label class="form-label" for="action_type_{{ $index }}">Action</label>
                             <select id="action_type_{{ $index }}" name="actions[{{ $index }}][type]" class="form-select">
-                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority'] as $value => $label)
+                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority', 'set_category' => 'Set category', 'add_tag' => 'Add tag'] as $value => $label)
                                     <option value="{{ $value }}" @selected(($action['type'] ?? '') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
@@ -112,6 +112,12 @@
                     @endforeach
                     @foreach($priorities as $priority)
                         <option value="{{ $priority->id }}">priority: {{ $priority->name }}</option>
+                    @endforeach
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}">category: {{ $category->name }}</option>
+                    @endforeach
+                    @foreach($tags as $tag)
+                        <option value="{{ $tag->id }}">tag: {{ $tag->name }}</option>
                     @endforeach
                 </datalist>
             </x-card.default>

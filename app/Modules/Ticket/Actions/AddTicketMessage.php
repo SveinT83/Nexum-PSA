@@ -24,6 +24,10 @@ class AddTicketMessage
                 'body' => $data['body'],
             ]);
 
+            foreach (($data['attachments'] ?? []) as $attachment) {
+                app(StoreTicketAttachment::class)->fromUpload($message, $attachment, $actor);
+            }
+
             $ticket->forceFill([
                 'updated_by' => $actor?->id,
                 'is_unread' => false,
@@ -38,6 +42,7 @@ class AddTicketMessage
                     'message_id' => $message->id,
                     'type' => $message->type,
                     'visibility' => $message->visibility,
+                    'attachments_count' => $message->fileAttachments()->count(),
                 ],
             ]);
 

@@ -4,6 +4,8 @@ namespace App\Modules\Ticket\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\UpdateDefaultTicketEmailAccount;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketPriority;
@@ -181,6 +183,8 @@ class TicketSettingsController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'categories' => Category::forTickets()->active()->orderBy('name')->get(),
+            'tags' => Tag::where('active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -199,6 +203,8 @@ class TicketSettingsController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'categories' => Category::forTickets()->active()->orderBy('name')->get(),
+            'tags' => Tag::where('active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -224,6 +230,8 @@ class TicketSettingsController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'categories' => Category::forTickets()->active()->orderBy('name')->get(),
+            'tags' => Tag::where('active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -350,11 +358,11 @@ class TicketSettingsController extends Controller
             'is_active' => 'nullable|boolean',
             'stop_processing' => 'nullable|boolean',
             'conditions' => 'required|array|min:1',
-            'conditions.*.field' => 'required|string|in:channel,subject,description,from_email,from_domain,client_known,client_has_active_contract',
+            'conditions.*.field' => 'required|string|in:channel,subject,description,from_email,from_domain,email_tags,client_known,client_has_active_contract',
             'conditions.*.operator' => 'required|string|in:contains,equals,not_equals,starts_with,ends_with,regex,present',
             'conditions.*.value' => 'nullable|string|max:1000',
             'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string|in:set_ticket_type,set_queue,set_priority',
+            'actions.*.type' => 'required|string|in:set_ticket_type,set_queue,set_priority,set_category,add_tag',
             'actions.*.value' => 'required|string|max:255',
         ]);
 
@@ -393,6 +401,8 @@ class TicketSettingsController extends Controller
                 'set_ticket_type' => TicketType::whereKey($action['value'])->exists(),
                 'set_queue' => TicketQueue::whereKey($action['value'])->exists(),
                 'set_priority' => TicketPriority::whereKey($action['value'])->exists(),
+                'set_category' => Category::forTickets()->active()->whereKey($action['value'])->exists(),
+                'add_tag' => Tag::where('active', true)->whereKey($action['value'])->exists(),
                 default => false,
             };
 

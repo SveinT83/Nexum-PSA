@@ -24,6 +24,7 @@
       @endif
 
       <div class="card mb-3">
+        <!-- Actions: these are executed in order by the inbound rule engine after all conditions match. -->
         <div class="card-body">
           <h2 class="h5">General</h2>
           <div class="row g-3">
@@ -99,14 +100,14 @@
               <div class="col-md-5">
                 <label class="form-label" for="action_type_{{ $index }}">Action</label>
                 <select id="action_type_{{ $index }}" name="actions[{{ $index }}][type]" class="form-select">
-                  @foreach(['link_ticket_by_subject_token' => 'Link to ticket by subject token', 'archive' => 'Archive / hide from inbox', 'tag' => 'Apply tag'] as $value => $label)
+                  @foreach(['link_ticket_by_subject_token' => 'Link to ticket by subject token', 'create_ticket' => 'Create ticket from inbound email', 'archive' => 'Archive / hide from inbox', 'tag' => 'Apply tag'] as $value => $label)
                     <option value="{{ $value }}" @selected(($action['type'] ?? '') === $value)>{{ $label }}</option>
                   @endforeach
                 </select>
               </div>
               <div class="col-md-7">
                 <label class="form-label" for="action_value_{{ $index }}">Value</label>
-                <input id="action_value_{{ $index }}" name="actions[{{ $index }}][value]" class="form-control" value="{{ $action['value'] ?? '' }}" placeholder="Tag name, if action uses one" list="email-rule-tag-suggestions">
+                <input id="action_value_{{ $index }}" name="actions[{{ $index }}][value]" class="form-control" value="{{ $action['value'] ?? '' }}" placeholder="Tag name, queue id, or queue slug if action uses one" list="email-rule-tag-suggestions">
               </div>
             </div>
           @endforeach
@@ -132,5 +133,6 @@
     <h3 class="h6">Examples</h3>
     <p class="small text-muted mb-2">Spam filter: from domain contains bad-domain.example, action archive, stop processing.</p>
     <p class="small text-muted">Ticket replies: has ticket key present, action link to ticket by subject token.</p>
+    <p class="small text-muted">New inbound tickets: recipient or mailbox condition, action create ticket from inbound email. Optional value can be a queue id or slug.</p>
   </div>
 @endsection

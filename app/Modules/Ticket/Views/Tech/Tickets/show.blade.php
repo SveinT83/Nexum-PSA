@@ -39,6 +39,14 @@
 
 @section('content')
 <div class="container-fluid">
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
+
     <div class="row">
         <div class="col-12">
             <div class="card mb-3">
@@ -75,6 +83,19 @@
                                 </div>
                             @endif
                             <div style="white-space: pre-wrap;">{{ $message->body }}</div>
+                            @if($message->fileAttachments->isNotEmpty())
+                                <!-- Attachments are stored as ticket-owned records even when they originated from inbound email. -->
+                                <div class="mt-3">
+                                    @foreach($message->fileAttachments as $attachment)
+                                        <a class="btn btn-sm btn-outline-secondary me-2 mb-2" href="{{ route('tech.tickets.attachments.download', [$ticket, $attachment]) }}">
+                                            {{ $attachment->filename }}
+                                            @if($attachment->size_bytes)
+                                                <span class="text-muted">({{ number_format($attachment->size_bytes / 1024, 1) }} KB)</span>
+                                            @endif
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     @empty
                         <p class="text-muted mb-0">No messages yet.</p>
@@ -91,7 +112,7 @@
                         $selectedMessageType = old('type', $defaultMessageType);
                     @endphp
 
-                    <form method="POST" action="{{ route('tech.tickets.messages.store', $ticket) }}">
+                    <form method="POST" action="{{ route('tech.tickets.messages.store', $ticket) }}" enctype="multipart/form-data">
                         @csrf
 
                         <input id="visibility" name="visibility" type="hidden" value="{{ $selectedMessageType === 'internal_note' ? 'internal' : 'public' }}">
@@ -130,6 +151,13 @@
                             <textarea id="body" name="body" rows="5" class="form-control @error('body') is-invalid @enderror" required>{{ old('body') }}</textarea>
                             @error('body')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                        <div class="form-group mt-3">
+                            <label for="attachments" class="form-label">Attachments</label>
+                            <input id="attachments" name="attachments[]" type="file" class="form-control @error('attachments') is-invalid @enderror @error('attachments.*') is-invalid @enderror" multiple>
+                            <div class="form-text">Up to 5 files, 20 MB each. Customer reply attachments are sent with the outbound email.</div>
+                            @error('attachments')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @error('attachments.*')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                         <button type="submit" class="btn btn-primary">Add message</button>
                     </form>
                 </div>
@@ -167,6 +195,14 @@
             <dd>P{{ $ticket->priority?->level }} {{ $ticket->priority?->name }}</dd>
             <dt>Category</dt>
             <dd>{{ $ticket->category?->name ?? '-' }}</dd>
+            <dt>Tags</dt>
+            <dd>
+                @forelse($ticket->tags as $tag)
+                    <span class="badge text-bg-light border">{{ $tag->name }}</span>
+                @empty
+                    -
+                @endforelse
+            </dd>
             <dt>Owner</dt>
             <dd>{{ $ticket->owner?->name ?? 'Unassigned' }}</dd>
             <dt>Site</dt>
@@ -188,6 +224,30 @@
         <div class="mt-3">
             <a href="{{ route('tech.tickets.edit', $ticket) }}" class="btn btn-sm btn-outline-primary w-100">Edit ticket</a>
         </div>
+        <form method="POST" action="{{ route('tech.tickets.assign', $ticket) }}" class="mt-2">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Run assignment</button>
+        </form>
+    </x-card.default>
+
+    <x-card.default title="Assignment">
+        @if($latestAssignmentEvent)
+            <div class="small">
+                <div class="fw-semibold">{{ $latestAssignmentEvent->message }}</div>
+                <div class="text-muted">{{ $latestAssignmentEvent->created_at?->diffForHumans() }}</div>
+                @if(isset($latestAssignmentEvent->after['assignment_rule_id']))
+                    <div>Rule ID: {{ $latestAssignmentEvent->after['assignment_rule_id'] }}</div>
+                @endif
+                @if(isset($latestAssignmentEvent->after['score']))
+                    <div>Score: {{ $latestAssignmentEvent->after['score'] }}</div>
+                @endif
+                @if(isset($latestAssignmentEvent->after['open_tickets']))
+                    <div>Open tickets: {{ $latestAssignmentEvent->after['open_tickets'] }}</div>
+                @endif
+            </div>
+        @else
+            <p class="text-muted small mb-0">No assignment decision has been logged yet.</p>
+        @endif
     </x-card.default>
 
     <x-card.default title="Events">

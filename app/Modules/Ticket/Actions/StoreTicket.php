@@ -7,6 +7,7 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketType;
+use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketRuleEngine;
 use Illuminate\Support\Facades\DB;
 
@@ -15,6 +16,7 @@ class StoreTicket
     public function __construct(
         private readonly EnsureTicketDefaults $defaults,
         private readonly TicketRuleEngine $ticketRuleEngine,
+        private readonly TicketAssignmentEngine $ticketAssignmentEngine,
     ) {}
 
     public function handle(array $data, ?User $actor = null): Ticket
@@ -75,8 +77,26 @@ class StoreTicket
                 ],
             ]);
 
-            return $ticket;
+            if (array_key_exists('tag_ids', $data)) {
+                // Ticket tags share the global taggables table with email, so keep the module pivot explicit.
+                $ticket->tags()->syncWithPivotValues($this->normalizeTagIds($data['tag_ids']), ['module' => 'ticket']);
+            }
+
+            // Assignment is intentionally last so Ticket Rules can set queue/category/priority first.
+            $this->ticketAssignmentEngine->assign($ticket);
+
+            return $ticket->fresh(['tags']);
         });
+    }
+
+    private function normalizeTagIds(mixed $tagIds): array
+    {
+        return collect((array) $tagIds)
+            ->filter(fn ($tagId) => is_numeric($tagId))
+            ->map(fn ($tagId) => (int) $tagId)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function nextTicketKey(): string

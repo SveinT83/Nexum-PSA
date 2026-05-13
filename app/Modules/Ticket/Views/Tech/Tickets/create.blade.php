@@ -215,7 +215,7 @@
                         </select>
                     </div>
 
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label for="category_id" class="form-label">Category</label>
                         <select id="category_id" name="category_id" class="form-select @error('category_id') is-invalid @enderror">
                             <option value="">No category</option>
@@ -224,6 +224,21 @@
                             @endforeach
                         </select>
                         @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label">Tags</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            @forelse($tags as $tag)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="tag_{{ $tag->id }}" name="tag_ids[]" value="{{ $tag->id }}" @checked(collect(old('tag_ids', []))->contains($tag->id))>
+                                    <label class="form-check-label" for="tag_{{ $tag->id }}">{{ $tag->name }}</label>
+                                </div>
+                            @empty
+                                <span class="text-muted small">No active tags.</span>
+                            @endforelse
+                        </div>
+                        @error('tag_ids')<div class="text-danger small">{{ $message }}</div>@enderror
                     </div>
                 </x-card.default>
             </div>

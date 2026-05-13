@@ -128,8 +128,8 @@
             <div class="mb-2">
                 <label for="lifecycle" class="form-label small text-muted mb-1">Lifecycle</label>
                 <select id="lifecycle" name="lifecycle" class="form-select form-select-sm">
-                    <option value="all" @selected(($filters['lifecycle'] ?? 'all') === 'all')>Open and closed</option>
                     <option value="open" @selected(($filters['lifecycle'] ?? 'all') === 'open')>Open only</option>
+                    <option value="all" @selected(($filters['lifecycle'] ?? 'all') === 'all')>Open and closed</option>
                     <option value="closed" @selected(($filters['lifecycle'] ?? 'all') === 'closed')>Closed only</option>
                 </select>
             </div>
