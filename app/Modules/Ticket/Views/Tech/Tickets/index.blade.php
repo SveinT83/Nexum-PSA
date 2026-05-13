@@ -96,6 +96,26 @@
             </div>
 
             <div class="mb-2">
+                <label for="priority_id" class="form-label small text-muted mb-1">Priority</label>
+                <select id="priority_id" name="priority_id" class="form-select form-select-sm">
+                    <option value="">All priorities</option>
+                    @foreach ($priorities as $priority)
+                        <option value="{{ $priority->id }}" @selected(($filters['priority_id'] ?? '') == $priority->id)>P{{ $priority->level }} {{ $priority->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mb-2">
+                <label for="category_id" class="form-label small text-muted mb-1">Category</label>
+                <select id="category_id" name="category_id" class="form-select form-select-sm">
+                    <option value="">All categories</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category->id }}" @selected(($filters['category_id'] ?? '') == $category->id)>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mb-2">
                 <label for="queue_id" class="form-label small text-muted mb-1">Queue</label>
                 <select id="queue_id" name="queue_id" class="form-select form-select-sm">
                     <option value="">All queues</option>
@@ -105,12 +125,32 @@
                 </select>
             </div>
 
+            <div class="mb-2">
+                <label for="lifecycle" class="form-label small text-muted mb-1">Lifecycle</label>
+                <select id="lifecycle" name="lifecycle" class="form-select form-select-sm">
+                    <option value="all" @selected(($filters['lifecycle'] ?? 'all') === 'all')>Open and closed</option>
+                    <option value="open" @selected(($filters['lifecycle'] ?? 'all') === 'open')>Open only</option>
+                    <option value="closed" @selected(($filters['lifecycle'] ?? 'all') === 'closed')>Closed only</option>
+                </select>
+            </div>
+
             <div class="mb-3">
                 <label for="ownership" class="form-label small text-muted mb-1">Ownership</label>
                 <select id="ownership" name="ownership" class="form-select form-select-sm">
                     <option value="mine" @selected(($filters['ownership'] ?? 'mine') === 'mine')>Mine</option>
                     <option value="all" @selected(($filters['ownership'] ?? 'mine') === 'all')>All</option>
                 </select>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="unread" name="unread" value="1" @checked(! empty($filters['unread']))>
+                    <label class="form-check-label small" for="unread">Unread only</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="unassigned" name="unassigned" value="1" @checked(! empty($filters['unassigned']))>
+                    <label class="form-check-label small" for="unassigned">Unassigned only</label>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-sm btn-secondary w-100">Apply</button>
@@ -124,7 +164,12 @@
                     'q' => $filters['q'] ?? null,
                     'sort' => $filters['sort'] ?? null,
                     'status_id' => $filters['status_id'] ?? null,
+                    'priority_id' => $filters['priority_id'] ?? null,
+                    'category_id' => $filters['category_id'] ?? null,
                     'queue_id' => $filters['queue_id'] ?? null,
+                    'lifecycle' => $filters['lifecycle'] ?? null,
+                    'unread' => $filters['unread'] ?? null,
+                    'unassigned' => $filters['unassigned'] ?? null,
                     'ownership' => $filters['ownership'] ?? null,
                 ])) }}">Clear</a>
             @endif
@@ -139,7 +184,12 @@
                         'q' => $filters['q'] ?? null,
                         'sort' => $filters['sort'] ?? null,
                         'status_id' => $filters['status_id'] ?? null,
+                        'priority_id' => $filters['priority_id'] ?? null,
+                        'category_id' => $filters['category_id'] ?? null,
                         'queue_id' => $filters['queue_id'] ?? null,
+                        'lifecycle' => $filters['lifecycle'] ?? null,
+                        'unread' => $filters['unread'] ?? null,
+                        'unassigned' => $filters['unassigned'] ?? null,
                         'ownership' => $filters['ownership'] ?? null,
                         'client_id' => $client->id,
                     ])) }}"

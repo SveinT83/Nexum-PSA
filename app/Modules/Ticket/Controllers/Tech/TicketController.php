@@ -37,12 +37,26 @@ class TicketController extends Controller
     {
         $defaults->handle();
 
-        $filters = $request->only(['q', 'status_id', 'queue_id', 'ownership', 'client_id', 'sort']);
+        $filters = $request->only([
+            'q',
+            'status_id',
+            'queue_id',
+            'priority_id',
+            'category_id',
+            'lifecycle',
+            'unread',
+            'unassigned',
+            'ownership',
+            'client_id',
+            'sort',
+        ]);
 
         return view('ticket::Tech.Tickets.index', [
             'tickets' => $query->paginate($filters),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'categories' => $this->ticketCategories(),
             'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
             'filters' => $filters,
             'stats' => [

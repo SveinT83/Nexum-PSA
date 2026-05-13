@@ -21,7 +21,14 @@ class TicketIndexQuery
             })
             ->when($filters['status_id'] ?? null, fn ($query, $statusId) => $query->where('status_id', $statusId))
             ->when($filters['queue_id'] ?? null, fn ($query, $queueId) => $query->where('queue_id', $queueId))
+            // These operational filters are intentionally composable so techs can narrow queues during triage.
+            ->when($filters['priority_id'] ?? null, fn ($query, $priorityId) => $query->where('priority_id', $priorityId))
+            ->when($filters['category_id'] ?? null, fn ($query, $categoryId) => $query->where('category_id', $categoryId))
             ->when($filters['client_id'] ?? null, fn ($query, $clientId) => $query->where('client_id', $clientId))
+            ->when(($filters['lifecycle'] ?? 'all') === 'open', fn ($query) => $query->whereHas('status', fn ($statusQuery) => $statusQuery->where('is_closed', false)))
+            ->when(($filters['lifecycle'] ?? 'all') === 'closed', fn ($query) => $query->whereHas('status', fn ($statusQuery) => $statusQuery->where('is_closed', true)))
+            ->when($filters['unread'] ?? null, fn ($query) => $query->where('is_unread', true))
+            ->when($filters['unassigned'] ?? null, fn ($query) => $query->whereNull('owner_id'))
             ->when(($filters['ownership'] ?? 'mine') === 'mine', fn ($query) => $query->where('owner_id', auth()->id()));
 
         match ($filters['sort'] ?? 'newest') {

@@ -49,6 +49,20 @@ Route::middleware('admin')->group(function () {
     Route::delete('/admin/settings/tickets/types/{type}', [TicketSettingsController::class, 'destroyType'])
         ->name('admin.settings.tickets.types.destroy');
 
+    // Ticket lifecycle and urgency records are managed inside the Ticket module settings surface.
+    Route::post('/admin/settings/tickets/statuses', [TicketSettingsController::class, 'storeStatus'])
+        ->name('admin.settings.tickets.statuses.store');
+    Route::put('/admin/settings/tickets/statuses/{status}', [TicketSettingsController::class, 'updateStatus'])
+        ->name('admin.settings.tickets.statuses.update');
+    Route::delete('/admin/settings/tickets/statuses/{status}', [TicketSettingsController::class, 'destroyStatus'])
+        ->name('admin.settings.tickets.statuses.destroy');
+    Route::post('/admin/settings/tickets/priorities', [TicketSettingsController::class, 'storePriority'])
+        ->name('admin.settings.tickets.priorities.store');
+    Route::put('/admin/settings/tickets/priorities/{priority}', [TicketSettingsController::class, 'updatePriority'])
+        ->name('admin.settings.tickets.priorities.update');
+    Route::delete('/admin/settings/tickets/priorities/{priority}', [TicketSettingsController::class, 'destroyPriority'])
+        ->name('admin.settings.tickets.priorities.destroy');
+
     Route::get('/admin/settings/tickets/rules', [TicketSettingsController::class, 'rules'])
         ->name('admin.settings.tickets.rules');
     Route::get('/admin/settings/tickets/rules/create', [TicketSettingsController::class, 'createRule'])

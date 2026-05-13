@@ -1,6 +1,6 @@
 # Ticket module - status, architecture, and remaining work
 
-Updated: 2026-05-12
+Updated: 2026-05-13
 
 This document describes the current Ticket module as it exists in code, how it connects to the rest of tdPSA, what was completed most recently, and the logical order for the remaining work.
 
@@ -29,11 +29,19 @@ Implemented now:
 - Explicit site selection and automatic site resolution from contact or asset.
 - Admin setting for selecting the default outbound ticket email account.
 - Admin management for ticket queues and ticket types.
+- Admin management for ticket statuses and ticket priorities.
 - Ticket Rules MVP for `on_create` field routing.
+- Inbound email linking to existing tickets by ticket key in the subject through Email Rules or fallback processing.
+- Ticket index filters for priority, category, unread, unassigned, and open/closed lifecycle.
 - Feature tests for the current main flows.
 
 Most recent completed work:
 
+- Ticket settings now manage queues, types, statuses, and priorities from module-owned admin routes.
+- Ticket settings moved queue/type/status/priority create and edit forms into module-owned partials and modal flows.
+- Ticket settings prevent deleting statuses and priorities that are already used by tickets; priorities referenced by Ticket Rules are also protected.
+- Ticket index gained priority, category, lifecycle, unread, and unassigned filters.
+- Inbound email can link an existing email message to an existing ticket when the subject contains a ticket key such as `TD-2026-000001`.
 - Customer reply email sending was connected and tested.
 - `AddTicketMessage` now queues `SendTicketReplyEmail` after commit for messages of type `customer_reply`.
 - `SendTicketReplyEmail` resolves the `tickets` default email account, renders the `tickets/ticket_reply` template, sends via SMTP, and writes an outbound `EmailLog`.
@@ -61,6 +69,7 @@ Current important files:
 - `app/Modules/Ticket/Actions/MarkTicketRead.php` - clears the ticket unread flag and stamps unread messages as read.
 - `app/Modules/Ticket/Actions/UpdateDefaultTicketEmailAccount.php` - updates the Email module's per-scope default for `tickets`.
 - `app/Modules/Ticket/Actions/UpdateTicketFields.php` - updates queue, priority, category, and owner with audit events.
+- `app/Modules/Ticket/Actions/LinkInboundEmailToTicket.php` - links an Email module inbound message to an existing ticket and creates a public customer reply.
 - `app/Modules/Ticket/Jobs/SendTicketReplyEmail.php` - queued SMTP send for customer replies.
 - `app/Modules/Ticket/Queries/TicketIndexQuery.php` - filtering, sorting, and pagination for the ticket index.
 - `app/Modules/Ticket/Services/TicketRuleEngine.php` - evaluates active Ticket Rules for ticket creation context and applies field overrides.
@@ -72,11 +81,33 @@ Routes are loaded through the existing Tech route loader, so the current public 
 - `tech.tickets.index`
 - `tech.tickets.create`
 - `tech.tickets.store`
+- `tech.tickets.edit`
+- `tech.tickets.update`
 - `tech.tickets.show`
+- `tech.tickets.close`
 - `tech.tickets.messages.store`
+- `tech.tickets.read`
 - `tech.admin.settings.tickets`
 - `tech.admin.settings.tickets.default-email-account.update`
+- `tech.admin.settings.tickets.queues.store`
+- `tech.admin.settings.tickets.queues.update`
+- `tech.admin.settings.tickets.queues.destroy`
+- `tech.admin.settings.tickets.types.store`
+- `tech.admin.settings.tickets.types.update`
+- `tech.admin.settings.tickets.types.destroy`
+- `tech.admin.settings.tickets.statuses.store`
+- `tech.admin.settings.tickets.statuses.update`
+- `tech.admin.settings.tickets.statuses.destroy`
+- `tech.admin.settings.tickets.priorities.store`
+- `tech.admin.settings.tickets.priorities.update`
+- `tech.admin.settings.tickets.priorities.destroy`
 - `tech.admin.settings.tickets.rules`
+- `tech.admin.settings.tickets.rules.create`
+- `tech.admin.settings.tickets.rules.store`
+- `tech.admin.settings.tickets.rules.edit`
+- `tech.admin.settings.tickets.rules.update`
+- `tech.admin.settings.tickets.rules.toggle`
+- `tech.admin.settings.tickets.rules.destroy`
 - `tech.admin.settings.tickets.workflows`
 
 ## Data model
@@ -160,16 +191,24 @@ Used by Ticket:
 - `EmailTemplateRenderer` - renders simple `{{ variable }}` templates.
 - `SmtpAccountMailer` - sends the rendered email through the selected SMTP account.
 - `EmailLog` - stores outbound success and failure logs.
+- `EmailMessage` - stores inbound messages that can be linked to existing tickets.
+- `InboundEmailRuleEngine` - can run the `link_ticket_by_subject_token` action or fall back to subject-token linking.
 
 Current shared setting:
 
 - The Ticket settings page updates `EmailAccount.defaults_for`.
 - This intentionally avoids a second ticket-only settings table for outbound sender selection.
 
+Current inbound behavior:
+
+- If an inbound email subject contains a ticket key such as `TD-2026-000001`, the Email module can link it to that ticket.
+- Linking creates a public `customer_reply` ticket message, marks the ticket unread, stores source email metadata on the message, marks the email message as linked, and writes an `inbound_email_linked` ticket event.
+- The link action is idempotent for the same email message and ticket.
+
 Not completed:
 
-- Inbound email to ticket creation/update.
-- Matching inbound replies to existing tickets by `Message-ID`, `In-Reply-To`, `References`, recipient address, or ticket key in subject.
+- Creating new tickets from unmatched inbound email.
+- Matching inbound replies to existing tickets by `Message-ID`, `In-Reply-To`, `References`, or recipient address.
 - Showing email send/log status directly inside the ticket timeline.
 
 ### Client module
@@ -249,11 +288,12 @@ Implemented:
 - Only one account should have the `tickets` scope after saving through the Ticket settings action.
 - Queue management.
 - Ticket type management.
+- Status management.
+- Priority management.
+- Protection against deleting queues, types, statuses, or priorities that are already in use by tickets or Ticket Rules where supported.
 
 Planned but not implemented:
 
-- Status management.
-- Priority management.
 - Category management.
 - Per-queue inbound email address behavior.
 - Ticket key format settings.
@@ -292,7 +332,7 @@ Not implemented:
 
 ## Known gaps and risks
 
-- Inbound email processing can link replies to existing tickets by ticket key in the subject. Creating new tickets from unmatched inbound mail is not implemented yet.
+- Inbound email processing can link replies to existing tickets by ticket key in the subject. Header-based matching and creating new tickets from unmatched inbound mail are not implemented yet.
 - Customer reply email is queued, so production needs a working queue worker unless `QUEUE_CONNECTION=sync` is used for development.
 - Failed outbound sends are logged to `email_logs` and surfaced on the relevant customer reply in the Ticket UI.
 - Ticket messages have an `attachments` JSON column, but file upload/attachment handling is not implemented in the Ticket UI.
@@ -313,7 +353,7 @@ Not implemented:
 
 - Add actions and UI for changing client, contact, site, and asset.
 - Expand `TicketEvent` display so before/after field changes are easier to read.
-- Add filters for priority, category, unread, unassigned, and closed/open.
+- Add filters for type, site, asset, and technician once those are needed in daily operations.
 
 ### 3. Build attachment support
 
@@ -334,7 +374,6 @@ Not implemented:
 
 ### 5. Build ticket settings properly
 
-- Finish status and priority management inside the Ticket module.
 - Add ticket key format settings and migration-safe key generation rules.
 - Keep category management in the Taxonomy module and reuse shared `categories`.
 - Keep settings controllers under `app/Modules/Ticket/Controllers/Admin`.

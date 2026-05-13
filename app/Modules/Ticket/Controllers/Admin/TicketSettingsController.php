@@ -8,6 +8,7 @@ use App\Modules\Ticket\Actions\UpdateDefaultTicketEmailAccount;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketRule;
+use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ class TicketSettingsController extends Controller
             ),
             'queues' => TicketQueue::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'types' => TicketType::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
+            'statuses' => TicketStatus::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
+            'priorities' => TicketPriority::withCount('tickets')->orderBy('level')->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 
@@ -88,6 +91,70 @@ class TicketSettingsController extends Controller
         $type->delete();
 
         return back()->with('success', 'Ticket type deleted.');
+    }
+
+    public function storeStatus(Request $request): RedirectResponse
+    {
+        // Status records control lifecycle behavior, so default normalization stays in this controller.
+        $data = $this->validatedStatus($request);
+
+        TicketStatus::create($data);
+
+        $this->ensureSingleDefaultStatus();
+
+        return back()->with('success', 'Ticket status created.');
+    }
+
+    public function updateStatus(Request $request, TicketStatus $status): RedirectResponse
+    {
+        $status->update($this->validatedStatus($request, $status));
+
+        $this->ensureSingleDefaultStatus($status);
+
+        return back()->with('success', 'Ticket status updated.');
+    }
+
+    public function destroyStatus(TicketStatus $status): RedirectResponse
+    {
+        if ($status->tickets()->exists()) {
+            return back()->withErrors(['status' => 'Ticket status cannot be deleted while tickets use it.']);
+        }
+
+        $status->delete();
+
+        return back()->with('success', 'Ticket status deleted.');
+    }
+
+    public function storePriority(Request $request): RedirectResponse
+    {
+        // Priority levels are shared by ticket sorting, forms, and Ticket Rule actions.
+        $data = $this->validatedPriority($request);
+
+        TicketPriority::create($data);
+
+        $this->ensureSingleDefaultPriority();
+
+        return back()->with('success', 'Ticket priority created.');
+    }
+
+    public function updatePriority(Request $request, TicketPriority $priority): RedirectResponse
+    {
+        $priority->update($this->validatedPriority($request, $priority));
+
+        $this->ensureSingleDefaultPriority($priority);
+
+        return back()->with('success', 'Ticket priority updated.');
+    }
+
+    public function destroyPriority(TicketPriority $priority): RedirectResponse
+    {
+        if ($priority->tickets()->exists() || $this->ticketRuleReferences('set_priority', $priority->id)) {
+            return back()->withErrors(['priority' => 'Ticket priority cannot be deleted while tickets or rules use it.']);
+        }
+
+        $priority->delete();
+
+        return back()->with('success', 'Ticket priority deleted.');
     }
 
     public function updateDefaultEmailAccount(
@@ -232,6 +299,48 @@ class TicketSettingsController extends Controller
         return $data;
     }
 
+    private function validatedStatus(Request $request, ?TicketStatus $status = null): array
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:ticket_statuses,slug,' . ($status?->id ?? 'NULL'),
+            'state' => 'required|string|in:open,waiting,resolved,closed',
+            'is_default' => 'nullable|boolean',
+            'is_closed' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0|max:100000',
+        ]);
+
+        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $this->ensureUniqueSlug(TicketStatus::class, $data['slug'], $status?->id, 'status');
+        $data['is_default'] = (bool) ($data['is_default'] ?? false);
+        $data['is_closed'] = (bool) ($data['is_closed'] ?? false);
+        $data['is_active'] = (bool) ($data['is_active'] ?? false);
+        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
+
+        return $data;
+    }
+
+    private function validatedPriority(Request $request, ?TicketPriority $priority = null): array
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:ticket_priorities,slug,' . ($priority?->id ?? 'NULL'),
+            'level' => 'required|integer|min:1|max:255',
+            'is_default' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0|max:100000',
+        ]);
+
+        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $this->ensureUniqueSlug(TicketPriority::class, $data['slug'], $priority?->id, 'priority');
+        $data['is_default'] = (bool) ($data['is_default'] ?? false);
+        $data['is_active'] = (bool) ($data['is_active'] ?? false);
+        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
+
+        return $data;
+    }
+
     private function validatedRule(Request $request): array
     {
         $data = $request->validate([
@@ -297,6 +406,11 @@ class TicketSettingsController extends Controller
 
     private function ensureSingleDefaultQueue(?TicketQueue $defaultQueue = null): void
     {
+        // Only a submitted default should clear competing defaults; ordinary edits must not unset them.
+        if ($defaultQueue && ! $defaultQueue->is_default) {
+            return;
+        }
+
         $defaultQueue ??= TicketQueue::where('is_default', true)->orderBy('sort_order')->first();
 
         if (! $defaultQueue) {
@@ -304,6 +418,36 @@ class TicketSettingsController extends Controller
         }
 
         TicketQueue::where('id', '!=', $defaultQueue->id)->update(['is_default' => false]);
+    }
+
+    private function ensureSingleDefaultStatus(?TicketStatus $defaultStatus = null): void
+    {
+        if ($defaultStatus && ! $defaultStatus->is_default) {
+            return;
+        }
+
+        $defaultStatus ??= TicketStatus::where('is_default', true)->orderBy('sort_order')->first();
+
+        if (! $defaultStatus) {
+            return;
+        }
+
+        TicketStatus::where('id', '!=', $defaultStatus->id)->update(['is_default' => false]);
+    }
+
+    private function ensureSingleDefaultPriority(?TicketPriority $defaultPriority = null): void
+    {
+        if ($defaultPriority && ! $defaultPriority->is_default) {
+            return;
+        }
+
+        $defaultPriority ??= TicketPriority::where('is_default', true)->orderBy('level')->first();
+
+        if (! $defaultPriority) {
+            return;
+        }
+
+        TicketPriority::where('id', '!=', $defaultPriority->id)->update(['is_default' => false]);
     }
 
     private function ensureUniqueSlug(string $modelClass, string $slug, ?int $ignoreId, string $field): void

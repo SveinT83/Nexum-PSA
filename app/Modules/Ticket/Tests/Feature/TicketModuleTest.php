@@ -57,6 +57,8 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
+        $this->assertSame(TicketSettingsController::class . '@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
+        $this->assertSame(TicketSettingsController::class . '@storePriority', Route::getRoutes()->getByName('tech.admin.settings.tickets.priorities.store')->getActionName());
     }
 
     #[Test]
@@ -77,6 +79,51 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'resolved', 'state' => 'resolved']);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'closed', 'is_closed' => true]);
         $this->assertDatabaseHas('ticket_priorities', ['slug' => 'normal', 'is_default' => true]);
+    }
+
+    #[Test]
+    public function ticket_index_can_filter_by_priority_category_unread_assignment_and_lifecycle(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $category = Category::create([
+            'name' => 'Network',
+            'slug' => 'network',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+        $high = TicketPriority::where('slug', 'high')->firstOrFail();
+
+        $matching = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999010',
+            'subject' => 'Filtered network issue',
+            'category_id' => $category->id,
+            'priority_id' => $high->id,
+            'owner_id' => null,
+            'is_unread' => true,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999011',
+            'subject' => 'Closed normal issue',
+            'status_id' => $closed->id,
+            'priority_id' => $defaults['priority']->id,
+            'category_id' => null,
+            'owner_id' => $this->tech->id,
+            'is_unread' => false,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index', [
+                'ownership' => 'all',
+                'priority_id' => $high->id,
+                'category_id' => $category->id,
+                'lifecycle' => 'open',
+                'unread' => '1',
+                'unassigned' => '1',
+            ]))
+            ->assertOk()
+            ->assertSee($matching->ticket_key)
+            ->assertDontSee('Closed normal issue');
     }
 
     #[Test]
@@ -928,6 +975,93 @@ class TicketModuleTest extends TestCase
             'id' => $queue->id,
             'email_address' => 'sales@example.com',
         ]);
+
+        $billingQueue = TicketQueue::create([
+            'name' => 'Billing',
+            'slug' => 'billing',
+            'is_active' => true,
+            'is_default' => false,
+            'sort_order' => 30,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.settings.tickets.queues.update', $billingQueue), [
+                'name' => $billingQueue->name,
+                'slug' => $billingQueue->slug,
+                'description' => $billingQueue->description,
+                'email_address' => $billingQueue->email_address,
+                'is_active' => '1',
+                'is_default' => '0',
+                'sort_order' => $billingQueue->sort_order,
+            ])
+            ->assertRedirect();
+
+        $this->assertTrue($queue->fresh()->is_default);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.statuses.store'), [
+                'name' => 'Pending Vendor',
+                'slug' => 'pending-vendor',
+                'state' => 'waiting',
+                'is_active' => '1',
+                'is_closed' => '0',
+                'is_default' => '1',
+                'sort_order' => 60,
+            ])
+            ->assertRedirect();
+
+        $status = TicketStatus::where('slug', 'pending-vendor')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.settings.tickets.statuses.update', $status), [
+                'name' => 'Waiting Vendor',
+                'slug' => 'waiting-vendor',
+                'state' => 'waiting',
+                'is_active' => '1',
+                'is_closed' => '0',
+                'is_default' => '1',
+                'sort_order' => 65,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('ticket_statuses', [
+            'id' => $status->id,
+            'name' => 'Waiting Vendor',
+            'slug' => 'waiting-vendor',
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.priorities.store'), [
+                'name' => 'Escalated',
+                'slug' => 'escalated',
+                'level' => 2,
+                'is_active' => '1',
+                'is_default' => '1',
+                'sort_order' => 15,
+            ])
+            ->assertRedirect();
+
+        $priority = TicketPriority::where('slug', 'escalated')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.settings.tickets.priorities.update', $priority), [
+                'name' => 'Urgent',
+                'slug' => 'urgent-custom',
+                'level' => 1,
+                'is_active' => '1',
+                'is_default' => '1',
+                'sort_order' => 12,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('ticket_priorities', [
+            'id' => $priority->id,
+            'name' => 'Urgent',
+            'slug' => 'urgent-custom',
+            'level' => 1,
+            'is_default' => true,
+        ]);
     }
 
     #[Test]
@@ -951,6 +1085,32 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_types', [
             'id' => $defaults['type']->id,
         ]);
+    }
+
+    #[Test]
+    public function used_statuses_and_priorities_cannot_be_deleted(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999113',
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('tech.admin.settings.tickets.statuses.destroy', $defaults['status']))
+            ->assertSessionHasErrors('status');
+
+        $this->actingAs($admin)
+            ->delete(route('tech.admin.settings.tickets.priorities.destroy', $defaults['priority']))
+            ->assertSessionHasErrors('priority');
+
+        $this->assertDatabaseHas('ticket_statuses', ['id' => $defaults['status']->id]);
+        $this->assertDatabaseHas('ticket_priorities', ['id' => $defaults['priority']->id]);
     }
 
     #[Test]
