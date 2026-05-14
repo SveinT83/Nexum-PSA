@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between align-items-center py-3">
         <h2 class="h4 mb-0">SLA</h2>
         <div>
-            <a href="{{ route('tech.sla.create') }}" class="btn btn-sm btn-primary">New SLA policy</a>
+            <x-buttons.addlink url="{{ route('tech.sla.create') }}">New SLA policy</x-buttons.addlink>
         </div>
     </div>
     <form method="get" class="mb-3">
@@ -70,14 +70,14 @@
     <!-- ------------------------------------------------- -->
     @else
         <div class="alert alert-warning">No costs yet.
-            <a href="{{ route('tech.sla.create') }}" class="btn btn-sm btn-secondary">Create the first SLA!</a>
+            <x-buttons.addlink url="{{ route('tech.sla.create') }}">Create the first SLA</x-buttons.addlink>
         </div>
     @endif
 
 @endsection
 
 @section('sidebar')
-    <div class="p-3 small text-muted">SLA filters (later)</div>
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')

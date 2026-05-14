@@ -3,6 +3,8 @@
 namespace App\Modules\Clients\Tests\Feature;
 
 use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
+use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -53,6 +55,22 @@ class ClientTechTest extends TestCase
         $response->assertViewIs('clients::Tech.show');
         $response->assertViewHas('client');
         $this->assertEquals($client->id, session('active_client_id'));
+    }
+
+    #[Test]
+    public function it_can_list_client_users_for_a_client()
+    {
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $clientUser = ClientUser::factory()->create(['client_site_id' => $site->id]);
+
+        $response = $this->actingAs($this->techUser)
+            ->get(route('tech.clients.users.index', $client));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('clients::Tech.Users.index');
+        $response->assertViewHas('users');
+        $response->assertSee($clientUser->name);
     }
 
     #[Test]

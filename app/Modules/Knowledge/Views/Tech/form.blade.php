@@ -30,6 +30,10 @@
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.knowledge-menu />
+@endsection
+
 @section('rightbar')
     <livewire:system.tag-manager :model="$article" module="knowledge" />
 

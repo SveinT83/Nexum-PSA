@@ -171,6 +171,10 @@
 </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.work-menu />
+@endsection
+
 @section('rightbar')
     <x-card.default title="Current details">
         <dl class="mb-0 small">

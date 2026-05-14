@@ -37,6 +37,9 @@ Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])
 Route::post('/tickets/{ticket}/messages', [TicketController::class, 'addMessage'])
     ->name('tickets.messages.store');
 
+Route::post('/tickets/{ticket}/messages/{message}/read', [TicketController::class, 'markMessageRead'])
+    ->name('tickets.messages.read');
+
 Route::get('/tickets/{ticket}/attachments/{attachment}/download', [TicketController::class, 'downloadAttachment'])
     ->name('tickets.attachments.download');
 

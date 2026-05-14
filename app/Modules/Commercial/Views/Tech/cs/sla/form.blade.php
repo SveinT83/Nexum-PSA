@@ -8,18 +8,31 @@
 @endphp
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">Create / Edit SLA</h2>
-
-
+    <div class="d-flex justify-content-between align-items-center py-2">
         <div>
+            <h2 class="h5 mb-0">
+                {{ $isShow ? ($sla->name ?? 'SLA Policy') : ($isEdit ? 'Edit SLA Policy' : 'Create SLA Policy') }}
+            </h2>
+            @if($isShow)
+                <div class="small text-muted">Service level response policy</div>
+            @endif
+        </div>
+
+
+        <div class="d-flex align-items-center gap-2">
             <!-- Edit button -->
             @if($isShow && isset($sla))
-                <a href="{{ route('tech.sla.edit', $sla) }}" class="btn btn-sm btn-primary bi bi-pencil"> Edit</a>
+                <a href="{{ route('tech.sla.edit', $sla) }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                    Edit
+                </a>
             @endif
 
             <!-- Back button -->
-            <a href="{{ route('tech.sla.index') }}" class="btn btn-sm btn-primary bi bi-backspace"> Back</a>
+            <a href="{{ route('tech.sla.index') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Back
+            </a>
         </div>
 
     </div>
@@ -27,48 +40,145 @@
 
 @section('content')
 
-    <x-forms.form-default
-        action="{{ $isShow
-        ? route('tech.sla.edit', $sla ?? null)
-        : ($isEdit ? route('tech.sla.update', $sla ?? null) : route('tech.sla.store')) }}"
-        method="{{ $isShow ? 'get' : 'post' }}"
-        button-text="{{ $isEdit ? 'Update' : ($isShow ? 'Edit' : 'Save') }}">
-
-        @if($isEdit)
-            @method('PUT')
-        @endif
+    @if($isShow && isset($sla))
+        @php
+            // The show view renders SLA values as operational policy cards instead of disabled form fields.
+            $responsePolicies = [
+                [
+                    'label' => 'Low',
+                    'icon' => 'bi-shield-check',
+                    'tone' => 'text-success',
+                    'firstResponse' => $sla->low_firstResponse,
+                    'firstResponseType' => $sla->low_firstResponse_type,
+                    'onsite' => $sla->low_onsite,
+                    'onsiteType' => $sla->low_onsite_type,
+                ],
+                [
+                    'label' => 'Medium',
+                    'icon' => 'bi-shield-exclamation',
+                    'tone' => 'text-warning',
+                    'firstResponse' => $sla->medium_firstResponse,
+                    'firstResponseType' => $sla->medium_firstResponse_type,
+                    'onsite' => $sla->medium_onsite,
+                    'onsiteType' => $sla->medium_onsite_type,
+                ],
+                [
+                    'label' => 'High',
+                    'icon' => 'bi-shield-fill-exclamation',
+                    'tone' => 'text-danger',
+                    'firstResponse' => $sla->high_firstResponse,
+                    'firstResponseType' => $sla->high_firstResponse_type,
+                    'onsite' => $sla->high_onsite,
+                    'onsiteType' => $sla->high_onsite_type,
+                ],
+            ];
+        @endphp
 
         <!-- ------------------------------------------------- -->
-        <!-- SLA Data -->
+        <!-- SLA Details -->
         <!-- ------------------------------------------------- -->
-        <div class="row mt-3">
-            <h2>Descriptions</h2>
-        </div>
+        <section class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between py-2">
+                <h3 class="h6 mb-0">SLA Details</h3>
+                <span class="badge text-bg-light border">
+                    <i class="bi bi-clock-history" aria-hidden="true"></i>
+                    {{ count($responsePolicies) }} priority levels
+                </span>
+            </div>
+            <div class="card-body py-3">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="small text-muted">Name</div>
+                        <div class="fw-semibold">{{ $sla->name }}</div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="small text-muted">Description</div>
+                        <div>{{ $sla->description ?: 'No description' }}</div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <div class="row mt-2">
-            <!-- SLA Name -->
-            <div class="col-md-4 mb-3">
-                <x-forms.input_text name="name" labelName="Name:" value="{{$sla->name ?? ''}}" inputVar="required {{$disabled ?? ''}}"></x-forms.input_text>
+        <!-- ------------------------------------------------- -->
+        <!-- Response Time Cards -->
+        <!-- ------------------------------------------------- -->
+        <section>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h3 class="h6 mb-0">Response Time</h3>
+                <div class="small text-muted">First response and onsite targets by priority</div>
             </div>
 
-        </div>
-        <div class="row mt-2">
-
-            <div class="col-md-8 mb-3">
-                <x-forms.textarea name="description" labelName="Description" vars="{{$disabled ?? ''}}">{{$sla->description ?? ''}}</x-forms.textarea>
+            <div class="row g-3">
+                @foreach($responsePolicies as $policy)
+                    <div class="col-md-4">
+                        <article class="card h-100">
+                            <div class="card-header d-flex align-items-center justify-content-between py-2">
+                                <h4 class="h6 mb-0">
+                                    <i class="bi {{ $policy['icon'] }} {{ $policy['tone'] }}" aria-hidden="true"></i>
+                                    {{ $policy['label'] }}
+                                </h4>
+                                <span class="badge text-bg-light border">{{ $policy['firstResponse'] }} {{ $policy['firstResponseType'] }}</span>
+                            </div>
+                            <div class="card-body py-3">
+                                <div class="d-grid gap-3">
+                                    <div>
+                                        <div class="small text-muted">First response</div>
+                                        <div class="fs-5 fw-semibold">{{ $policy['firstResponse'] }} {{ $policy['firstResponseType'] }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-muted">Onsite</div>
+                                        <div class="fs-5 fw-semibold">{{ $policy['onsite'] }} {{ $policy['onsiteType'] }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                @endforeach
             </div>
-        </div>
+        </section>
+    @else
+        <x-forms.form-default
+            action="{{ $isEdit ? route('tech.sla.update', $sla ?? null) : route('tech.sla.store') }}"
+            method="post"
+            button-text="{{ $isEdit ? 'Update' : 'Save' }}">
 
-        <!-- ------------------------------------------------- -->
-        <!-- Response Time Form -->
-        <!-- ------------------------------------------------- -->
-        @include("tech.cs.sla.partials.responseTime", ['sla' => $sla ?? null])
+            @if($isEdit)
+                @method('PUT')
+            @endif
 
-    </x-forms.form-default>
+            <!-- ------------------------------------------------- -->
+            <!-- SLA Details -->
+            <!-- ------------------------------------------------- -->
+            <section class="card mb-3">
+                <div class="card-header d-flex align-items-center justify-content-between py-2">
+                    <h3 class="h6 mb-0">SLA Details</h3>
+                    <span class="small text-muted">Required policy metadata</span>
+                </div>
+                <div class="card-body py-3">
+                    <div class="row g-3">
+                        <!-- SLA Name -->
+                        <div class="col-md-4">
+                            <x-forms.input_text name="name" labelName="Name:" value="{{$sla->name ?? ''}}" inputVar="required {{$disabled ?? ''}}"></x-forms.input_text>
+                        </div>
+
+                        <div class="col-md-8">
+                            <x-forms.textarea name="description" labelName="Description" vars="{{$disabled ?? ''}}">{{$sla->description ?? ''}}</x-forms.textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Response Time Form -->
+            <!-- ------------------------------------------------- -->
+            @include("commercial::Tech.cs.sla.partials.responseTime", ['sla' => $sla ?? null])
+
+        </x-forms.form-default>
+    @endif
 @endsection
 
 @section('sidebar')
-    <div class="p-3 small text-muted">SLA filters (later)</div>
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')

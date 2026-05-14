@@ -86,7 +86,7 @@
 @endsection
 
 @section('sidebar')
-    <div class="p-3 small text-muted">Service filters (later)</div>
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')

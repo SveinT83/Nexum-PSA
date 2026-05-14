@@ -372,6 +372,10 @@
 </script>
 @endsection
 
+@section('sidebar')
+    <x-nav.work-menu />
+@endsection
+
 <!-- -------------------------------------------------------------------------------------------------- -->
 <!-- Rightbar -->
 <!-- Shows existing open tickets for the selected client to reduce accidental duplicate tickets. -->

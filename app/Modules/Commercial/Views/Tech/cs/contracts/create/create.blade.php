@@ -321,7 +321,7 @@ Reusable: shared number/date inputs, client autocomplete, table component.
 @endsection
 
 @section('sidebar')
-
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')

@@ -62,6 +62,7 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
         $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
+        $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
         $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
         $this->assertSame(TicketController::class . '@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
@@ -135,6 +136,46 @@ class TicketModuleTest extends TestCase
             ->assertOk()
             ->assertSee($matching->ticket_key)
             ->assertDontSee('Closed normal issue');
+    }
+
+    #[Test]
+    public function ticket_index_defaults_to_open_mine_and_unassigned_tickets(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $otherTech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $otherTech->assignRole('Tech');
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+
+        $mine = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999020',
+            'subject' => 'Open mine default visible',
+            'owner_id' => $this->tech->id,
+        ]);
+        $unassigned = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999021',
+            'subject' => 'Open unassigned default visible',
+            'owner_id' => null,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999022',
+            'subject' => 'Open other owner hidden',
+            'owner_id' => $otherTech->id,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999023',
+            'subject' => 'Closed mine hidden',
+            'status_id' => $closed->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee($mine->ticket_key)
+            ->assertSee($unassigned->ticket_key)
+            ->assertDontSee('Open other owner hidden')
+            ->assertDontSee('Closed mine hidden');
     }
 
     #[Test]
@@ -561,6 +602,8 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
+            ->assertSee('ticketReplyShortcut')
+            ->assertSee('Reply')
             ->assertSee('Mark as read');
 
         $this->actingAs($this->tech)
@@ -574,6 +617,59 @@ class TicketModuleTest extends TestCase
             'actor_id' => $this->tech->id,
             'type' => 'marked_read',
             'message' => 'Ticket marked as read.',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_mark_single_customer_reply_as_read(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999115',
+            'is_unread' => true,
+        ]);
+        $firstMessage = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => null,
+            'author_type' => 'contact',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'First unread reply.',
+            'read_at' => null,
+        ]);
+        $secondMessage = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => null,
+            'author_type' => 'contact',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Second unread reply.',
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee(route('tech.tickets.messages.read', [$ticket, $firstMessage]), false)
+            ->assertSee(route('tech.tickets.messages.read', [$ticket, $secondMessage]), false);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.read', [$ticket, $firstMessage]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertNotNull($firstMessage->fresh()->read_at);
+        $this->assertNull($secondMessage->fresh()->read_at);
+        $this->assertTrue($ticket->fresh()->is_unread);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.read', [$ticket, $secondMessage]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertFalse($ticket->fresh()->is_unread);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'message_marked_read',
+            'message' => 'Ticket reply marked as read.',
         ]);
     }
 
@@ -698,6 +794,9 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
+            ->assertSee('Technician reply')
+            ->assertSee($this->tech->name)
+            ->assertSee('Visible reply.')
             ->assertSee('Email sent')
             ->assertSee('Ticket reply email sent.')
             ->assertSee('&lt;show-status@example.com&gt;', false);
@@ -761,8 +860,10 @@ class TicketModuleTest extends TestCase
                     && $toEmail === 'ada@example.com'
                     && $toName === 'Ada Contact'
                     && $subject === '[TD-2026-999004] SMTP job ticket'
-                    && $html === '<p>Rendered reply.</p>'
-                    && $text === 'Rendered reply.'
+                    && str_contains($html, '<p>Rendered reply.</p>')
+                    && str_contains($html, '--- Please reply above this line ---')
+                    && str_contains($text, 'Rendered reply.')
+                    && str_contains($text, '--- Please reply above this line ---')
                     && $attachments === []
                 )
                 ->andReturn('<message-id@example.com>');

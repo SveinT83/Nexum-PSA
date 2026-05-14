@@ -169,6 +169,21 @@ class InboundEmailRuleEngine
 
     private function createTicket(EmailMessage $message, string $queueValue = '', ?string $typeSlug = null): void
     {
+        // create_ticket is only for unmatched inbound mail; replies must stay on the existing ticket thread.
+        $this->linkByHeaderReferences($message);
+        $message = $message->fresh();
+
+        if ($message->ticket_id !== null || $message->state === 'archived') {
+            return;
+        }
+
+        $this->linkByTicketKey($message);
+        $message = $message->fresh();
+
+        if ($message->ticket_id !== null || $message->state === 'archived') {
+            return;
+        }
+
         // Explicit queue values win; otherwise a queue can be inferred from To/Cc recipients.
         $queue = $queueValue !== ''
             ? TicketQueue::query()

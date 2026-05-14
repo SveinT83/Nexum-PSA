@@ -90,6 +90,10 @@
     </form>
 @endsection
 
+@section('sidebar')
+    <x-nav.sales-menu />
+@endsection
+
 @section('rightbar')
     <x-card.default title="Included Services">
         <p class="text-muted small mb-3">Services contributing to these terms:</p>

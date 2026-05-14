@@ -18,6 +18,8 @@ use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
+use App\Modules\Ticket\Models\TicketEvent;
+use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -29,10 +31,11 @@ use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -202,7 +205,7 @@ class TicketController extends Controller
     {
         app(EnsureTicketDefaults::class)->handle();
 
-        $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.fileAttachments', 'events']);
+        $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events']);
         $messageIds = $ticket->messages->pluck('id')->all();
 
         return view('ticket::Tech.Tickets.show', [
@@ -342,6 +345,46 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Ticket marked as read.');
+    }
+
+    public function markMessageRead(Request $request, Ticket $ticket, TicketMessage $message): RedirectResponse
+    {
+        abort_unless((int) $message->ticket_id === (int) $ticket->id, 404);
+
+        DB::transaction(function () use ($ticket, $message, $request) {
+            $wasUnread = blank($message->read_at);
+
+            if ($wasUnread) {
+                $message->forceFill(['read_at' => now()])->save();
+            }
+
+            // Keep the ticket unread until every customer/contact reply has been handled.
+            $hasUnreadCustomerReplies = $ticket->messages()
+                ->where('author_type', 'contact')
+                ->whereNull('read_at')
+                ->exists();
+
+            $ticket->forceFill([
+                'is_unread' => $hasUnreadCustomerReplies,
+                'updated_by' => $request->user()?->id,
+            ])->save();
+
+            if ($wasUnread) {
+                TicketEvent::create([
+                    'ticket_id' => $ticket->id,
+                    'actor_id' => $request->user()?->id,
+                    'type' => 'message_marked_read',
+                    'message' => 'Ticket reply marked as read.',
+                    'after' => [
+                        'message_id' => $message->id,
+                        'is_unread' => $hasUnreadCustomerReplies,
+                    ],
+                ]);
+            }
+        });
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Reply marked as read.');
     }
 
     public function assign(Request $request, Ticket $ticket, TicketAssignmentEngine $assignmentEngine): RedirectResponse

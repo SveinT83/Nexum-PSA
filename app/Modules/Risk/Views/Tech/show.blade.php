@@ -195,6 +195,8 @@
 @endsection
 
 @section('sidebar')
+    <x-nav.work-menu />
+
     <!-- Modal -->
     <div class="modal fade" id="addRiskItemModal" tabindex="-1" aria-labelledby="addRiskItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">

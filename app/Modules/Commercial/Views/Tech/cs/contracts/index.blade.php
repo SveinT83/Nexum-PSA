@@ -105,6 +105,7 @@
 @endsection
 
 @section('sidebar')
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')

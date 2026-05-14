@@ -19,6 +19,8 @@ class SendTicketReplyEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private const REPLY_ABOVE_LINE = '--- Please reply above this line ---';
+
     public int $timeout = 120;
 
     /*
@@ -86,8 +88,8 @@ class SendTicketReplyEmail implements ShouldQueue
                 $contact->email,
                 $contact->name,
                 $rendered['subject'],
-                $rendered['html'],
-                $rendered['text'],
+                $this->appendReplyBoundaryToHtml($rendered['html']),
+                $this->appendReplyBoundaryToText($rendered['text']),
                 $this->attachmentsForMailer($message)
             );
 
@@ -112,6 +114,20 @@ class SendTicketReplyEmail implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    private function appendReplyBoundaryToHtml(string $html): string
+    {
+        $boundary = '<p style="margin-top:24px;color:#6c757d;font-size:12px;">' . e(self::REPLY_ABOVE_LINE) . '</p>';
+
+        return str_contains($html, self::REPLY_ABOVE_LINE) ? $html : rtrim($html) . $boundary;
+    }
+
+    private function appendReplyBoundaryToText(string $text): string
+    {
+        return str_contains($text, self::REPLY_ABOVE_LINE)
+            ? $text
+            : rtrim($text) . "\n\n" . self::REPLY_ABOVE_LINE;
     }
 
     private function attachmentsForMailer(TicketMessage $message): array

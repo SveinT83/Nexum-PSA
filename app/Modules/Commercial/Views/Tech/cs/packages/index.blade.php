@@ -58,7 +58,7 @@
 @endsection
 
 @section('sidebar')
-    <div class="p-3 small text-muted">Packages filters (later)</div>
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')

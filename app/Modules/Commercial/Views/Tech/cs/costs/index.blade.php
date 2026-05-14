@@ -80,6 +80,8 @@
 @endsection
 
 @section('sidebar')
+    <x-nav.sales-menu />
+
     <x-forms.form-card title="Order" action="{{ route('tech.costs.index') }}" method="get" button-text="Sorter">
         <div class="row">
             <div class="col">

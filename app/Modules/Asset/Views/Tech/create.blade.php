@@ -47,6 +47,10 @@
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.work-menu />
+@endsection
+
 @section('rightbar')
 
     {{-- Sidebar Information Card --}}

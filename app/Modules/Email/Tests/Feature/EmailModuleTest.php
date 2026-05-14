@@ -323,6 +323,112 @@ class EmailModuleTest extends TestCase
     }
 
     #[Test]
+    public function inbound_ticket_reply_strips_quoted_email_history(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-000015',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Quoted history ticket',
+            'is_unread' => false,
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'support@example.com',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.com',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.com',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 145,
+            'message_id' => '<quoted-customer-reply@example.com>',
+            'subject' => 'Re: [TD-2026-000015] Quoted history ticket',
+            'from_name' => 'Customer Name',
+            'from_email' => 'customer@gmail.com',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => "Det går bare bra. Jeg har ingen oppdateringer enda.\n\n"
+                . "tor. 14. mai 2026 kl. 13:51 skrev Svein Tore <post@example.com>:\n\n"
+                . "> Hello Svein Tore,\n>\n> Hei hvordan går det med deg?",
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $ticketMessage = TicketMessage::where('ticket_id', $ticket->id)->firstOrFail();
+
+        $this->assertSame('Det går bare bra. Jeg har ingen oppdateringer enda.', $ticketMessage->body);
+    }
+
+    #[Test]
+    public function inbound_ticket_reply_strips_content_below_reply_boundary(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-000016',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Reply boundary ticket',
+            'is_unread' => false,
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'support@example.com',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.com',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.com',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 146,
+            'message_id' => '<boundary-customer-reply@example.com>',
+            'subject' => 'Re: [TD-2026-000016] Reply boundary ticket',
+            'from_name' => 'Customer Name',
+            'from_email' => 'customer@gmail.com',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => "This is the only new text.\n\n"
+                . "--- Please reply above this line ---\n\n"
+                . "Hello Customer,\n\nOld technician message.",
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $ticketMessage = TicketMessage::where('ticket_id', $ticket->id)->firstOrFail();
+
+        $this->assertSame('This is the only new text.', $ticketMessage->body);
+    }
+
+    #[Test]
     public function inbound_email_rule_can_create_new_ticket_from_unmatched_email(): void
     {
         Storage::fake('local');
@@ -436,6 +542,84 @@ class EmailModuleTest extends TestCase
             'email_message_id' => $email->id,
             'status' => 'matched',
         ]);
+    }
+
+    #[Test]
+    public function create_ticket_rule_links_existing_ticket_reply_by_subject_key(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-000008',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Ny sak',
+            'is_unread' => false,
+        ]);
+        $queue = TicketQueue::create([
+            'name' => 'Post mailbox',
+            'slug' => 'post-mailbox',
+            'email_address' => 'post@example.com',
+            'is_active' => true,
+            'sort_order' => 30,
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'post@example.com',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'post@example.com',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'post@example.com',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 147,
+            'message_id' => '<reply-with-ticket-key@example.com>',
+            'subject' => 'Re: [TD-2026-000008] Ny sak',
+            'from_name' => 'Customer Name',
+            'from_email' => 'customer@example.com',
+            'to_json' => [['name' => 'Post', 'email' => 'post@example.com']],
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Reply belongs on the original ticket.',
+        ]);
+        EmailRule::create([
+            'name' => 'Create ticket from post mailbox',
+            'trigger' => EmailRule::TRIGGER_INBOUND,
+            'weight' => 1,
+            'is_active' => true,
+            'stop_processing' => true,
+            'conditions_json' => [
+                ['field' => 'to', 'operator' => 'contains', 'value' => 'post@example.com'],
+            ],
+            'actions_json' => [
+                ['type' => 'create_ticket', 'value' => $queue->slug],
+            ],
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $this->assertSame($ticket->id, $email->fresh()->ticket_id);
+        $this->assertSame('linked', $email->fresh()->state);
+        $this->assertTrue($ticket->fresh()->is_unread);
+        $this->assertSame(1, TicketMessage::where('ticket_id', $ticket->id)->count());
+        $this->assertSame(1, Ticket::count());
+
+        $message = TicketMessage::where('ticket_id', $ticket->id)->firstOrFail();
+        $this->assertSame('Reply belongs on the original ticket.', $message->body);
+        $this->assertSame($email->id, $message->metadata['email_message_id']);
     }
 
     #[Test]

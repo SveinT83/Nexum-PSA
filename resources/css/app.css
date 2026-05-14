@@ -1,2 +1,12 @@
 @import './custom-color.css';
 @tailwind utilities;
+
+/*
+ * Bootstrap and Tailwind both define `.collapse`. Tailwind's utility sets
+ * `visibility: collapse`, which hides Bootstrap accordions after the opening
+ * transition completes and the element receives `collapse show`.
+ */
+.collapse.show,
+.collapsing {
+    visibility: visible !important;
+}

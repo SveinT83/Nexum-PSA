@@ -107,7 +107,11 @@
 @endsection
 
 @section('sidebar')
-    <x-nav.side-bar :items="$sidebarMenuItems" />
+    <x-nav.knowledge-menu />
+
+    <hr class="my-3">
+
+    <x-nav.side-bar :items="$sidebarMenuItems" title="Documentation categories" />
 @endsection
 
 @section('rightbar')

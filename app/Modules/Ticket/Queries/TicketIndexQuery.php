@@ -25,11 +25,17 @@ class TicketIndexQuery
             ->when($filters['priority_id'] ?? null, fn ($query, $priorityId) => $query->where('priority_id', $priorityId))
             ->when($filters['category_id'] ?? null, fn ($query, $categoryId) => $query->where('category_id', $categoryId))
             ->when($filters['client_id'] ?? null, fn ($query, $clientId) => $query->where('client_id', $clientId))
-            ->when(($filters['lifecycle'] ?? 'all') === 'open', fn ($query) => $query->whereHas('status', fn ($statusQuery) => $statusQuery->where('is_closed', false)))
-            ->when(($filters['lifecycle'] ?? 'all') === 'closed', fn ($query) => $query->whereHas('status', fn ($statusQuery) => $statusQuery->where('is_closed', true)))
+            ->when(($filters['lifecycle'] ?? 'open') === 'open', fn ($query) => $query->whereHas('status', fn ($statusQuery) => $statusQuery->where('is_closed', false)))
+            ->when(($filters['lifecycle'] ?? 'open') === 'closed', fn ($query) => $query->whereHas('status', fn ($statusQuery) => $statusQuery->where('is_closed', true)))
             ->when($filters['unread'] ?? null, fn ($query) => $query->where('is_unread', true))
             ->when($filters['unassigned'] ?? null, fn ($query) => $query->whereNull('owner_id'))
-            ->when(($filters['ownership'] ?? 'mine') === 'mine', fn ($query) => $query->where('owner_id', auth()->id()));
+            ->when(($filters['ownership'] ?? 'mine_unassigned') === 'mine', fn ($query) => $query->where('owner_id', auth()->id()))
+            ->when(($filters['ownership'] ?? 'mine_unassigned') === 'mine_unassigned', function ($query) {
+                $query->where(function ($ownerQuery) {
+                    $ownerQuery->where('owner_id', auth()->id())
+                        ->orWhereNull('owner_id');
+                });
+            });
 
         match ($filters['sort'] ?? 'newest') {
             'oldest' => $query->oldest('updated_at'),

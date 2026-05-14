@@ -68,3 +68,7 @@
         </div>
     </div>
 @endsection
+
+@section('sidebar')
+    <x-nav.work-menu />
+@endsection

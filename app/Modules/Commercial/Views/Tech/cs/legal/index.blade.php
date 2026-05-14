@@ -79,7 +79,7 @@
 @endsection
 
 @section('sidebar')
-    <div class="p-3 small text-muted">SLA filters (later)</div>
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')

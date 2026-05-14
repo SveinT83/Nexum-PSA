@@ -174,12 +174,7 @@ List and operate on **sales orders lifecycle** (Quotes → Approved → Fulfillm
 @endsection
 
 @section('sidebar')
-    <h3>Left Sidebar</h3>
-    <ul>
-        <li><a href="#">System Status</a></li>
-        <li><a href="#">Task Management</a></li>
-        <li><a href="#">Reports</a></li>
-    </ul>
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')

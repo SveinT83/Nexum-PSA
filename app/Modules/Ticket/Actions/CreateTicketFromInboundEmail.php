@@ -25,6 +25,14 @@ class CreateTicketFromInboundEmail
                 return Ticket::findOrFail($email->ticket_id);
             }
 
+            $existingTicket = $this->ticketFromSubject($email);
+
+            if ($existingTicket) {
+                $this->linkInboundEmailToTicket->handle($email->fresh(), $existingTicket);
+
+                return $existingTicket->fresh();
+            }
+
             $email->loadMissing('tags');
             $contact = $this->contactFromSender($email);
             $emailTagNames = $email->tags->pluck('name')->filter()->implode(' ');
@@ -85,6 +93,17 @@ class CreateTicketFromInboundEmail
         $subject = trim((string) $email->subject) ?: 'Inbound email from ' . ($email->from_email ?: 'unknown sender');
 
         return Str::limit($subject, 255, '');
+    }
+
+    private function ticketFromSubject(EmailMessage $email): ?Ticket
+    {
+        preg_match('/\bTD-\d{4}-\d{6}\b/i', (string) $email->subject, $matches);
+
+        if (! isset($matches[0])) {
+            return null;
+        }
+
+        return Ticket::where('ticket_key', strtoupper($matches[0]))->first();
     }
 
     private function body(EmailMessage $email): string

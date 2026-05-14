@@ -97,13 +97,7 @@
 @endsection
 
 @section('sidebar')
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
-    <h3>Knowledge Base</h3>
-    <ul>
-        <li><a href="{{ route('tech.knowledge.index') }}">All Articles</a></li>
-    </ul>
+    <x-nav.knowledge-menu />
 @endsection
 
 @section('rightbar')
