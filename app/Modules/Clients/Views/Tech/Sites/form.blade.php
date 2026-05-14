@@ -132,6 +132,9 @@
 @endsection
 
 @section('sidebar')
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" title="Client workspace" />
+    @endif
 @endsection
 
 @section('rightbar')

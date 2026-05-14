@@ -7,7 +7,7 @@ use App\Models\Clients\Client;
 use App\Models\Risk\RiskAssessment;
 use App\Models\Risk\RiskItem;
 use App\Models\Risk\RiskItemUpdate;
-use App\Models\System\Category;
+use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Risk\Actions\ApproveRiskAssessment;
 use App\Modules\Risk\Actions\DeleteRiskItemUpdate;
 use App\Modules\Risk\Actions\StoreRiskAssessment;

@@ -18,24 +18,40 @@
 @section('title', 'Risk Assessments')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h1 class="h4 mb-0">
-            Risk & Compliance
-        </h1>
 
-        <!-- Active Client Selector -->
-        <div class="d-flex align-items-center">
-            <x-context.selector :clients="$clients" />
-        </div>
+        <h1>Risk & Compliance</h1>
 
-        <div>
-            <a href="{{ route('tech.risk.create') }}" class="btn btn-sm btn-primary">New Risk Assessment</a>
-        </div>
-    </div>
 @endsection
 
 @section('content')
+
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Risk Assessments Table Card -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
     <div class="card mt-4">
+
+        <!-- ------------------------------------------------- -->
+        <!-- Card Header: Client selector and new risk Assessment button -->
+        <!-- ------------------------------------------------- -->
+        <div class="card-header">
+            <div class="row">
+
+                <!-- Client selector -->
+                <div class="col-md-10">
+                    <x-context.selector :clients="$clients" />
+                </div>
+
+                <!-- New risk Assessment button -->
+                <div class="col-md-2 text-end">
+                    <x-buttons.addlink url="{{ route('tech.risk.create') }}">New Risk Assessment</x-buttons.addlink>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ------------------------------------------------- -->
+        <!-- Card Body: Risk assessments table -->
+        <!-- ------------------------------------------------- -->
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -130,7 +146,7 @@
 @endsection
 
 @section('sidebar')
-
+    <x-nav.work-menu />
 @endsection
 
 @section('rightbar')

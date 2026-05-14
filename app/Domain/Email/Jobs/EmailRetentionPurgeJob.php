@@ -2,47 +2,15 @@
 
 namespace App\Domain\Email\Jobs;
 
-use App\Domain\Email\Models\EmailMessage;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
-
-class EmailRetentionPurgeJob implements ShouldQueue
+/*
+|--------------------------------------------------------------------------
+| Legacy queue job bridge
+|--------------------------------------------------------------------------
+|
+| Serialized jobs created before Email moved into app/Modules/Email still
+| reference this namespace. Keep the bridge until old queue payloads age out.
+|
+*/
+class EmailRetentionPurgeJob extends \App\Modules\Email\Jobs\EmailRetentionPurgeJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public int $timeout = 300;
-
-    public function __construct(public int $months = 24) {}
-
-    public function handle(): void
-    {
-        $settings = \App\Models\Settings\CommonSetting::where('type', 'emailhub')
-            ->get()->pluck('value', 'name')->toArray();
-
-        $months = (int)($settings['retention_months'] ?? 24);
-        $cutoff = now()->subMonths($months);
-
-        EmailMessage::query()
-            ->where('received_at', '<', $cutoff)
-            ->chunkById(100, function ($messages) {
-                foreach ($messages as $msg) {
-                    // Delete attachments files
-                    foreach ($msg->attachments as $att) {
-                        if ($att->disk === 'local' && $att->path) {
-                            Storage::disk('local')->delete($att->path);
-                        }
-                        $att->delete();
-                    }
-                    // Delete raw .eml
-                    if ($msg->raw_path && Storage::disk('local')->exists($msg->raw_path)) {
-                        Storage::disk('local')->delete($msg->raw_path);
-                    }
-                    $msg->delete();
-                }
-            });
-    }
 }

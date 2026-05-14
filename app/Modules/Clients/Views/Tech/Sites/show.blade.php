@@ -99,9 +99,11 @@
 @endsection
 
 @section('sidebar')
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" title="Client workspace" />
+    @endif
 @endsection
 
 @section('rightbar')
     <div class="p-3 small text-muted">Recent clients (MVP later)</div>
 @endsection
-

@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\Core\User;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Tech\CS\Contracts\PublicContractController;
 
 Route::get('/', function (Request $request) {
     $email = $request->query('email');
@@ -68,7 +67,7 @@ Route::post('/login', function (Request $request) {
         'email' => 'Feil e-post eller passord.',
     ]);
 })->name('login');
--/
+*/
 
 Route::get('/logout', function (Request $request) {
     Auth::logout();
@@ -78,13 +77,8 @@ Route::get('/logout', function (Request $request) {
     return redirect('/');
 })->name('logout');
 
-// ------------------------------------------------------------------------------------------
-// Public Contract Routes (No Auth)
-// ------------------------------------------------------------------------------------------
-Route::get('/contract/view/{token}', [PublicContractController::class, 'view'])
-    ->name('contracts.public.view');
-Route::post('/contract/accept/{token}', [PublicContractController::class, 'accept'])
-    ->name('contracts.public.accept');
+$commercialPublicRoutes = true;
+require app_path('Modules/Commercial/routes.php');
 
 // Dashboard (etter innlogging)
 /*

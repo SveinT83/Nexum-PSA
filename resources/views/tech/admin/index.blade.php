@@ -14,21 +14,14 @@
     <div class="row">
 
         <!-- ------------------------------------------------- -->
-        <!-- Contracts & Services Settings -->
+        <!-- Commercial Settings -->
         <!-- ------------------------------------------------- -->
         <div class="col-md-4">
-            <x-card.default title="Contracts & Services Settings">
+            <x-card.default title="Commercial Settings">
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.cs.contracts') }}">Contracts</a></li>
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.cs.services') }}">Services</a></li>
-            </x-card.default>
-        </div>
-
-        <!-- ------------------------------------------------- -->
-        <!-- Economy Settings -->
-        <!-- ------------------------------------------------- -->
-        <div class="col-md-4">
-            <x-card.default title="Economy Settings">
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.economy') }}">Economy</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.settings.economy.units') }}">Units</a></li>
             </x-card.default>
         </div>
 
@@ -40,6 +33,7 @@
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.accounts') }}">Accounts</a></li>
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.config') }}">Config</a></li>
                 <li><a class="dropdown-item" href="{{ route('tech.admin.settings.email.rules') }}">Rules</a></li>
+                <li><a class="dropdown-item" href="{{ route('tech.admin.system.templatesManagement.email.index') }}">Templates</a></li>
             </x-card.default>
         </div>
 
@@ -89,6 +83,7 @@
             <x-card.default title="System">
                 <a class="dropdown-item" href="{{ route('tech.admin.system.category.index') }}">Categories</a>
                 <a class="dropdown-item" href="{{ route('tech.admin.system.tag.index') }}">Tags</a>
+                <a class="dropdown-item" href="{{ route('tech.admin.system.queues-workers.index') }}">Queues and Workers</a>
             </x-card.default>
         </div>
 

@@ -143,12 +143,7 @@ Fast, predictable list of tasks across all sources (tickets, orders, templates, 
 @endsection
 
 @section('sidebar')
-    <h3>Left Sidebar</h3>
-    <ul>
-        <li><a href="#">System Status</a></li>
-        <li><a href="#">Task Management</a></li>
-        <li><a href="#">Reports</a></li>
-    </ul>
+    <x-nav.work-menu />
 @endsection
 
 @section('rightbar')

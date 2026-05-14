@@ -267,6 +267,10 @@
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.work-menu />
+@endsection
+
 @section('rightbar')
         {{-- SECTION: Alerts Sidebar --}}
         <livewire:tech.work.assets.asset-alerts :asset="$asset" />

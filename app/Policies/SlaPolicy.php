@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\CS\Sla\Sla;
+use App\Modules\Commercial\Models\Sla\Sla;
 use App\Models\Core\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

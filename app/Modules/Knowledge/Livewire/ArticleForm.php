@@ -4,7 +4,7 @@ namespace App\Modules\Knowledge\Livewire;
 
 use App\Models\Clients\Client;
 use App\Models\Knowledge\Article;
-use App\Models\System\Category;
+use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Knowledge\Actions\StoreArticle;
 use App\Modules\Knowledge\Actions\UpdateArticle;
 use Livewire\Component;

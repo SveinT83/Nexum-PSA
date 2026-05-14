@@ -2,27 +2,15 @@
 
 namespace App\Domain\Email\Jobs;
 
-use App\Domain\Email\Models\EmailMessage;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-
-class ProcessInboundRules implements ShouldQueue
+/*
+|--------------------------------------------------------------------------
+| Legacy queue job bridge
+|--------------------------------------------------------------------------
+|
+| Serialized jobs created before Email moved into app/Modules/Email still
+| reference this namespace. Keep the bridge until old queue payloads age out.
+|
+*/
+class ProcessInboundRules extends \App\Modules\Email\Jobs\ProcessInboundRules
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public int $timeout = 60;
-
-    public function __construct(public int $emailMessageId) {}
-
-    public function handle(): void
-    {
-        $message = EmailMessage::find($this->emailMessageId);
-        if (!$message) {
-            return;
-        }
-        // TODO: Evaluate rules (OnInbound) and route message (Tickets or leave in Inbox).
-    }
 }

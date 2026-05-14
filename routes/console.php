@@ -3,11 +3,13 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use App\Domain\Email\Jobs\PollActiveEmailAccounts;
-use App\Domain\Email\Jobs\EmailAccountHealthCheckJob;
-use App\Domain\Email\Jobs\EmailRetentionPurgeJob;
-use App\Domain\Email\Models\EmailAccount;
-use App\Domain\Email\Jobs\FetchImapAccount;
+use App\Modules\Email\Jobs\PollActiveEmailAccounts;
+use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
+use App\Modules\Email\Jobs\EmailRetentionPurgeJob;
+use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Jobs\FetchImapAccount;
+use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Jobs\Integrations\NAbleRmmSyncJob;
 
 Artisan::command('inspire', function () {
@@ -84,3 +86,38 @@ Artisan::command('email:poll {--account=} {--async}', function () {
     $this->info(($async ? 'Queued poll for ' : 'Checked now for ') . $count . ' account' . ($count>1?'s':''));
     return 0;
 })->purpose('Fetch new mail for active accounts (optionally one account)');
+
+// Manual inbound rule processing: php artisan email:process-inbound-rules [--message=ID] [--limit=100] [--async]
+Artisan::command('email:process-inbound-rules {--message=} {--limit=100} {--async}', function () {
+    $messageId = $this->option('message');
+    $limit = max(1, (int) $this->option('limit'));
+    $async = (bool) $this->option('async');
+
+    $query = EmailMessage::query()
+        ->whereNull('ticket_id')
+        ->orderBy('received_at');
+
+    if (! empty($messageId)) {
+        $query->whereKey($messageId);
+    } else {
+        $query->limit($limit);
+    }
+
+    $messageIds = $query->pluck('id');
+
+    if ($messageIds->isEmpty()) {
+        $this->info('No unlinked inbound email messages to process.');
+        return 0;
+    }
+
+    foreach ($messageIds as $id) {
+        if ($async) {
+            ProcessInboundRules::dispatch($id)->onQueue('email');
+        } else {
+            ProcessInboundRules::dispatchSync($id);
+        }
+    }
+
+    $this->info(($async ? 'Queued rules for ' : 'Processed rules for ') . $messageIds->count() . ' message' . ($messageIds->count() > 1 ? 's' : '') . '.');
+    return 0;
+})->purpose('Process stored inbound email messages through routing rules');

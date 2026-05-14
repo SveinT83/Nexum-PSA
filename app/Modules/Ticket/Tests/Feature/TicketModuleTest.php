@@ -1,0 +1,1775 @@
+<?php
+
+namespace App\Modules\Ticket\Tests\Feature;
+
+use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
+use App\Models\Clients\ClientUser;
+use App\Models\Core\User;
+use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailLog;
+use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
+use App\Modules\Ticket\Controllers\Tech\TicketController;
+use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketAttachment;
+use App\Modules\Ticket\Models\TicketAssignmentRule;
+use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketPriority;
+use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\Ticket\Models\TicketRule;
+use App\Modules\Ticket\Models\TicketStatus;
+use App\Modules\Ticket\Models\TicketTechnicianProfile;
+use App\Modules\Ticket\Models\TicketType;
+use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
+use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Role;
+use Tests\TestCase;
+
+class TicketModuleTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $tech;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Role::create(['name' => 'Tech']);
+        Role::create(['name' => 'Admin']);
+
+        $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $this->tech->assignRole('Tech');
+    }
+
+    #[Test]
+    public function ticket_routes_are_owned_by_ticket_module(): void
+    {
+        $this->assertSame(TicketController::class . '@index', Route::getRoutes()->getByName('tech.tickets.index')->getActionName());
+        $this->assertSame(TicketController::class . '@show', Route::getRoutes()->getByName('tech.tickets.show')->getActionName());
+        $this->assertSame(TicketController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.edit')->getActionName());
+        $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
+        $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
+        $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
+        $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
+        $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
+        $this->assertSame(TicketController::class . '@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
+        $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
+        $this->assertSame(TicketSettingsController::class . '@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
+        $this->assertSame(TicketSettingsController::class . '@storePriority', Route::getRoutes()->getByName('tech.admin.settings.tickets.priorities.store')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TechnicianProfileController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\TechnicianProfileAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.technicians')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.assignment-rules')->getActionName());
+    }
+
+    #[Test]
+    public function tech_user_can_open_ticket_index_and_defaults_are_created(): void
+    {
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertViewIs('ticket::Tech.Tickets.index')
+            ->assertViewHas('tickets')
+            ->assertViewHas('queues')
+            ->assertViewHas('statuses');
+
+        $this->assertDatabaseHas('ticket_queues', ['slug' => 'support', 'is_default' => true]);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'new', 'is_default' => true]);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'in-progress', 'is_closed' => false]);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'waiting-customer', 'is_closed' => false]);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'resolved', 'state' => 'resolved']);
+        $this->assertDatabaseHas('ticket_statuses', ['slug' => 'closed', 'is_closed' => true]);
+        $this->assertDatabaseHas('ticket_priorities', ['slug' => 'normal', 'is_default' => true]);
+    }
+
+    #[Test]
+    public function ticket_index_can_filter_by_priority_category_unread_assignment_and_lifecycle(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $category = Category::create([
+            'name' => 'Network',
+            'slug' => 'network',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+        $high = TicketPriority::where('slug', 'high')->firstOrFail();
+
+        $matching = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999010',
+            'subject' => 'Filtered network issue',
+            'category_id' => $category->id,
+            'priority_id' => $high->id,
+            'owner_id' => null,
+            'is_unread' => true,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999011',
+            'subject' => 'Closed normal issue',
+            'status_id' => $closed->id,
+            'priority_id' => $defaults['priority']->id,
+            'category_id' => null,
+            'owner_id' => $this->tech->id,
+            'is_unread' => false,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index', [
+                'ownership' => 'all',
+                'priority_id' => $high->id,
+                'category_id' => $category->id,
+                'lifecycle' => 'open',
+                'unread' => '1',
+                'unassigned' => '1',
+            ]))
+            ->assertOk()
+            ->assertSee($matching->ticket_key)
+            ->assertDontSee('Closed normal issue');
+    }
+
+    #[Test]
+    public function ticket_index_defaults_to_open_mine_and_unassigned_tickets(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $otherTech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $otherTech->assignRole('Tech');
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+
+        $mine = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999020',
+            'subject' => 'Open mine default visible',
+            'owner_id' => $this->tech->id,
+        ]);
+        $unassigned = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999021',
+            'subject' => 'Open unassigned default visible',
+            'owner_id' => null,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999022',
+            'subject' => 'Open other owner hidden',
+            'owner_id' => $otherTech->id,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999023',
+            'subject' => 'Closed mine hidden',
+            'status_id' => $closed->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee($mine->ticket_key)
+            ->assertSee($unassigned->ticket_key)
+            ->assertDontSee('Open other owner hidden')
+            ->assertDontSee('Closed mine hidden');
+    }
+
+    #[Test]
+    public function tech_user_can_create_ticket_and_add_internal_note(): void
+    {
+        $category = Category::create([
+            'name' => 'Printing',
+            'slug' => 'printing',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertViewIs('ticket::Tech.Tickets.create')
+            ->assertSee('Printing');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Printer cannot scan',
+                'description' => 'Scan to mail fails with authentication error.',
+                'category_id' => $category->id,
+                'channel' => 'manual',
+            ])
+            ->assertRedirect();
+
+        $ticket = Ticket::firstOrFail();
+
+        $this->assertStringStartsWith('TD-' . now()->format('Y') . '-', $ticket->ticket_key);
+        $this->assertSame('Printer cannot scan', $ticket->subject);
+        $this->assertSame($category->id, $ticket->category_id);
+        $this->assertSame($this->tech->id, $ticket->owner_id);
+        $this->assertSame(1, $ticket->messages()->count());
+        $this->assertSame(1, $ticket->events()->where('type', 'created')->count());
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_note',
+                'visibility' => 'internal',
+                'body' => 'Restarted SMTP connector.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame(2, TicketMessage::count());
+        $this->assertSame(1, $ticket->events()->where('type', 'message_added')->count());
+    }
+
+    #[Test]
+    public function tech_user_can_upload_and_download_ticket_message_attachment(): void
+    {
+        Storage::fake('local');
+
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999020',
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_note',
+                'visibility' => 'internal',
+                'body' => 'Attached diagnostics.',
+                'attachments' => [
+                    UploadedFile::fake()->createWithContent('diagnostics.txt', 'log lines'),
+                ],
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $attachment = TicketAttachment::firstOrFail();
+
+        $this->assertSame($ticket->id, $attachment->ticket_id);
+        $this->assertSame('diagnostics.txt', $attachment->filename);
+        Storage::disk('local')->assertExists($attachment->path);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('diagnostics.txt');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.attachments.download', [$ticket, $attachment]))
+            ->assertOk();
+    }
+
+    #[Test]
+    public function ticket_forms_only_use_active_ticket_categories(): void
+    {
+        $ticketCategory = Category::create([
+            'name' => 'Access',
+            'slug' => 'ticket-access',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+        $documentationCategory = Category::create([
+            'name' => 'Documentation Only',
+            'slug' => 'documentation-only',
+            'type' => 'documentation',
+            'is_active' => true,
+        ]);
+        Category::create([
+            'name' => 'Inactive Ticket Category',
+            'slug' => 'inactive-ticket-category',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertSee('Access')
+            ->assertDontSee('Documentation Only')
+            ->assertDontSee('Inactive Ticket Category');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Wrong category type',
+                'category_id' => $documentationCategory->id,
+            ])
+            ->assertSessionHasErrors('category_id');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Right category type',
+                'category_id' => $ticketCategory->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'Right category type',
+            'category_id' => $ticketCategory->id,
+        ]);
+    }
+
+    #[Test]
+    public function create_ticket_form_scopes_contacts_and_open_tickets_to_selected_client(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $client = Client::factory()->create(['name' => 'Acme Support']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Ada Contact',
+        ]);
+        $otherContact = ClientUser::factory()->create(['name' => 'Other Contact']);
+
+        Ticket::create([
+            'ticket_key' => 'TD-2026-999001',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'client_id' => $client->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Existing open issue',
+            'is_unread' => false,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create', ['client_id' => $client->id]))
+            ->assertOk()
+            ->assertSee('Ada Contact')
+            ->assertDontSee('Other Contact')
+            ->assertSee('Existing open issue');
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.tickets.create', ['client_id' => $client->id]))
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'New issue',
+                'client_id' => $client->id,
+                'contact_id' => $otherContact->id,
+            ])
+            ->assertSessionHasErrors('contact_id');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'New issue',
+                'client_id' => $client->id,
+                'contact_id' => $contact->id,
+                'owner_id' => $this->tech->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'New issue',
+            'client_id' => $client->id,
+            'contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'channel' => 'manual',
+        ]);
+    }
+
+    #[Test]
+    public function create_ticket_form_prioritizes_contact_assets_before_site_assets(): void
+    {
+        $client = Client::factory()->create(['name' => 'Asset Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Asset Contact',
+        ]);
+        $contactAsset = Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'user_id' => $contact->id,
+            'name' => 'Contact Laptop',
+            'type' => Asset::TYPE_LAPTOP,
+            'hostname' => 'contact-laptop',
+        ]);
+        Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'name' => 'Site Printer',
+            'type' => Asset::TYPE_OTHER,
+            'hostname' => 'site-printer',
+        ]);
+        $otherClient = Client::factory()->create();
+        Asset::create([
+            'client_id' => $otherClient->id,
+            'name' => 'Other Client Server',
+            'type' => Asset::TYPE_SERVER,
+        ]);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create', [
+                'client_id' => $client->id,
+                'contact_id' => $contact->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Contact Laptop')
+            ->assertSee('Site Printer')
+            ->assertDontSee('Other Client Server');
+
+        $response->assertSeeInOrder(['Contact assets', 'Contact Laptop', 'Site assets', 'Site Printer']);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Asset linked issue',
+                'client_id' => $client->id,
+                'contact_id' => $contact->id,
+                'asset_id' => $contactAsset->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'Asset linked issue',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'asset_id' => $contactAsset->id,
+        ]);
+    }
+
+    #[Test]
+    public function create_ticket_form_scopes_assets_to_selected_site_without_contact(): void
+    {
+        $client = Client::factory()->create(['name' => 'Site Asset Client']);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Main Office',
+        ]);
+        $otherSite = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Branch Office',
+        ]);
+        $siteAsset = Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'name' => 'Main Office Firewall',
+            'type' => Asset::TYPE_FIREWALL,
+        ]);
+        Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $otherSite->id,
+            'name' => 'Branch Switch',
+            'type' => Asset::TYPE_SWITCH,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create', [
+                'client_id' => $client->id,
+                'site_id' => $site->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Main Office')
+            ->assertSee('Main Office Firewall')
+            ->assertDontSee('Branch Switch');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Site scoped asset issue',
+                'client_id' => $client->id,
+                'site_id' => $site->id,
+                'asset_id' => $siteAsset->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'Site scoped asset issue',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'asset_id' => $siteAsset->id,
+        ]);
+    }
+
+    #[Test]
+    public function create_ticket_form_does_not_require_a_tech_role_to_exist(): void
+    {
+        $admin = User::factory()->create([
+            'name' => 'Fallback Technician',
+            'status' => User::STATUS_ACTIVE,
+        ]);
+        $admin->assignRole('Admin');
+        Role::where('name', 'Tech')->delete();
+
+        $this->actingAs($admin)
+            ->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertSee('Fallback Technician');
+    }
+
+    #[Test]
+    public function customer_reply_requires_ticket_contact_with_email(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-999002',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'No contact ticket',
+            'is_unread' => false,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.tickets.show', $ticket))
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'customer_reply',
+                'visibility' => 'public',
+                'body' => 'Customer-facing message.',
+            ])
+            ->assertSessionHasErrors('type');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_note',
+                'visibility' => 'public',
+                'body' => 'Internal note.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertDatabaseHas('ticket_messages', [
+            'ticket_id' => $ticket->id,
+            'type' => 'internal_note',
+            'visibility' => 'internal',
+            'body' => 'Internal note.',
+        ]);
+    }
+
+    #[Test]
+    public function customer_reply_is_queued_for_outbound_email(): void
+    {
+        Queue::fake();
+
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'email' => 'contact@example.com',
+        ]);
+
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-999003',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'client_id' => $client->id,
+            'contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Reply queue ticket',
+            'is_unread' => false,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'customer_reply',
+                'visibility' => 'public',
+                'body' => 'Reply body.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        Queue::assertPushed(SendTicketReplyEmail::class);
+        $this->assertFalse($ticket->fresh()->is_unread);
+    }
+
+    #[Test]
+    public function tech_user_can_mark_ticket_as_read(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999109',
+            'is_unread' => true,
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => null,
+            'author_type' => 'contact',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Customer replied.',
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('ticketReplyShortcut')
+            ->assertSee('Reply')
+            ->assertSee('Mark as read');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.read', $ticket))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertFalse($ticket->fresh()->is_unread);
+        $this->assertNotNull($message->fresh()->read_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'marked_read',
+            'message' => 'Ticket marked as read.',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_mark_single_customer_reply_as_read(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999115',
+            'is_unread' => true,
+        ]);
+        $firstMessage = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => null,
+            'author_type' => 'contact',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'First unread reply.',
+            'read_at' => null,
+        ]);
+        $secondMessage = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => null,
+            'author_type' => 'contact',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Second unread reply.',
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee(route('tech.tickets.messages.read', [$ticket, $firstMessage]), false)
+            ->assertSee(route('tech.tickets.messages.read', [$ticket, $secondMessage]), false);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.read', [$ticket, $firstMessage]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertNotNull($firstMessage->fresh()->read_at);
+        $this->assertNull($secondMessage->fresh()->read_at);
+        $this->assertTrue($ticket->fresh()->is_unread);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.read', [$ticket, $secondMessage]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertFalse($ticket->fresh()->is_unread);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'message_marked_read',
+            'message' => 'Ticket reply marked as read.',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_update_ticket_lifecycle_fields(): void
+    {
+        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999110']);
+        $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
+        $high = TicketPriority::where('slug', 'high')->firstOrFail();
+        $category = Category::create([
+            'name' => 'Access',
+            'slug' => 'access',
+            'is_active' => true,
+            'type' => Category::TYPE_TICKET,
+        ]);
+        $newOwner = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $newOwner->assignRole('Tech');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Edit ticket');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.edit', $ticket))
+            ->assertOk()
+            ->assertViewIs('ticket::Tech.Tickets.edit')
+            ->assertSee('Ticket text')
+            ->assertSee('Lifecycle')
+            ->assertSee('Access');
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.update', $ticket), [
+                'subject' => 'Updated lifecycle subject',
+                'description' => 'Updated description text.',
+                'queue_id' => $ticket->queue_id,
+                'status_id' => $resolved->id,
+                'priority_id' => $high->id,
+                'category_id' => $category->id,
+                'owner_id' => $newOwner->id,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $ticket->refresh();
+
+        $this->assertSame('Updated lifecycle subject', $ticket->subject);
+        $this->assertSame('Updated description text.', $ticket->description);
+        $this->assertSame($resolved->id, $ticket->status_id);
+        $this->assertSame($high->id, $ticket->priority_id);
+        $this->assertSame($category->id, $ticket->category_id);
+        $this->assertSame($newOwner->id, $ticket->owner_id);
+        $this->assertNotNull($ticket->resolved_at);
+        $this->assertNull($ticket->closed_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'fields_updated',
+            'message' => 'Ticket fields updated.',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'status_changed',
+            'message' => 'Ticket status changed to Resolved.',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_close_ticket_with_lifecycle_timestamps(): void
+    {
+        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999111']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Close');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.close', $ticket))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $ticket->refresh();
+
+        $this->assertTrue($ticket->status->is_closed);
+        $this->assertNotNull($ticket->resolved_at);
+        $this->assertNotNull($ticket->closed_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'status_changed',
+            'message' => 'Ticket status changed to Closed.',
+        ]);
+    }
+
+    #[Test]
+    public function ticket_show_displays_latest_outbound_email_status_per_customer_reply(): void
+    {
+        $contact = ClientUser::factory()->create([
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999104']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Visible reply.',
+        ]);
+
+        EmailLog::create([
+            'direction' => 'outbound',
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_EMAIL_SENT',
+            'message' => 'Ticket reply email sent.',
+            'context_json' => ['ticket_message_id' => $message->id],
+            'rfc_message_id' => '<show-status@example.com>',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Technician reply')
+            ->assertSee($this->tech->name)
+            ->assertSee('Visible reply.')
+            ->assertSee('Email sent')
+            ->assertSee('Ticket reply email sent.')
+            ->assertSee('&lt;show-status@example.com&gt;', false);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_renders_template_and_logs_success(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create([
+            'scope' => 'tickets',
+            'key' => 'ticket_reply',
+            'name' => 'Ticket reply',
+            'subject' => '[{{ ticket_key }}] {{ ticket_subject }}',
+            'body_html' => '<p>{{ message_body }}</p>',
+            'body_text' => '{{ message_body }}',
+            'variables' => ['ticket_key', 'ticket_subject', 'contact_name', 'message_body', 'technician_name'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-999004',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'client_id' => $client->id,
+            'contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'SMTP job ticket',
+            'is_unread' => false,
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Rendered reply.',
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments = []) =>
+                    $resolvedAccount->is($account)
+                    && $toEmail === 'ada@example.com'
+                    && $toName === 'Ada Contact'
+                    && $subject === '[TD-2026-999004] SMTP job ticket'
+                    && str_contains($html, '<p>Rendered reply.</p>')
+                    && str_contains($html, '--- Please reply above this line ---')
+                    && str_contains($text, 'Rendered reply.')
+                    && str_contains($text, '--- Please reply above this line ---')
+                    && $attachments === []
+                )
+                ->andReturn('<message-id@example.com>');
+        });
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_EMAIL_SENT',
+            'rfc_message_id' => '<message-id@example.com>',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_sends_ticket_message_attachments(): void
+    {
+        Storage::fake('local');
+
+        $client = Client::factory()->create(['name' => 'Attachment Mail Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Attachment Contact',
+            'email' => 'attach@example.com',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support-attachments@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create($this->ticketReplyTemplateData());
+
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999024',
+            'client_id' => $client->id,
+            'contact_id' => $contact->id,
+            'subject' => 'Attachment reply ticket',
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'See attachment.',
+        ]);
+        Storage::disk('local')->put('ticket/attachments/test/report.txt', 'report body');
+        TicketAttachment::create([
+            'ticket_id' => $ticket->id,
+            'ticket_message_id' => $message->id,
+            'uploaded_by' => $this->tech->id,
+            'source' => 'upload',
+            'filename' => 'report.txt',
+            'original_filename' => 'report.txt',
+            'content_type' => 'text/plain',
+            'size_bytes' => 11,
+            'disk' => 'local',
+            'path' => 'ticket/attachments/test/report.txt',
+            'checksum_sha1' => sha1('report body'),
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments) =>
+                    $resolvedAccount->is($account)
+                    && $toEmail === 'attach@example.com'
+                    && $toName === 'Attachment Contact'
+                    && $subject === '[TD-2026-999024] Attachment reply ticket'
+                    && count($attachments) === 1
+                    && $attachments[0]['filename'] === 'report.txt'
+                    && $attachments[0]['content_type'] === 'text/plain'
+                    && is_file($attachments[0]['path'])
+                )
+                ->andReturn('<attachment-message@example.com>');
+        });
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_EMAIL_SENT',
+            'rfc_message_id' => '<attachment-message@example.com>',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_logs_missing_contact_email(): void
+    {
+        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999105']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Cannot send without contact.',
+        ]);
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'scope' => 'tickets',
+            'level' => 'error',
+            'code' => 'TICKET_EMAIL_NO_CONTACT',
+            'message' => 'Ticket reply has no contact email.',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_logs_missing_default_account(): void
+    {
+        $contact = ClientUser::factory()->create(['email' => 'ada@example.com']);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999106']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'No account reply.',
+        ]);
+
+        EmailTemplate::create($this->ticketReplyTemplateData());
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'scope' => 'tickets',
+            'level' => 'error',
+            'code' => 'TICKET_EMAIL_NO_ACCOUNT',
+            'message' => 'No active ticket outbound email account is configured.',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_logs_missing_template(): void
+    {
+        $contact = ClientUser::factory()->create(['email' => 'ada@example.com']);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999107']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'No template reply.',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'error',
+            'code' => 'TICKET_EMAIL_NO_TEMPLATE',
+            'message' => 'No active ticket_reply email template exists.',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_logs_smtp_failure_and_reraises(): void
+    {
+        $contact = ClientUser::factory()->create([
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999108']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Failure reply.',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create($this->ticketReplyTemplateData());
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->andThrow(new \RuntimeException('SMTP refused the message.'));
+        });
+
+        try {
+            app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+                app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+                app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+                app(SmtpAccountMailer::class)
+            );
+
+            $this->fail('Expected SMTP exception was not thrown.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('SMTP refused the message.', $e->getMessage());
+        }
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'error',
+            'code' => 'TICKET_EMAIL_SEND_FAILED',
+            'message' => 'SMTP refused the message.',
+        ]);
+        $this->assertSame('SMTP_SEND', $account->fresh()->last_error_code);
+    }
+
+    #[Test]
+    public function admin_user_can_open_ticket_settings_from_module(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $this->actingAs($admin)
+            ->get(route('tech.admin.settings.tickets'))
+            ->assertOk()
+            ->assertViewIs('ticket::Admin.Settings.index');
+    }
+
+    #[Test]
+    public function admin_can_update_default_ticket_email_account(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $oldDefault = EmailAccount::create($this->emailAccountData([
+            'address' => 'old@example.com',
+            'defaults_for' => ['tickets', 'sales'],
+        ]));
+        $newDefault = EmailAccount::create($this->emailAccountData([
+            'address' => 'new@example.com',
+            'defaults_for' => ['alerts'],
+        ]));
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.default-email-account.update'), [
+                'email_account_id' => $newDefault->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(['sales'], $oldDefault->fresh()->defaults_for);
+        $this->assertEqualsCanonicalizing(['alerts', 'tickets'], $newDefault->fresh()->defaults_for);
+    }
+
+    #[Test]
+    public function technician_can_manage_own_ticket_profile_skills_and_hours(): void
+    {
+        $category = Category::create([
+            'name' => 'Networking',
+            'slug' => 'networking',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+        $tag = Tag::create([
+            'name' => 'Fortigate',
+            'slug' => 'fortigate',
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.profile.edit'))
+            ->assertOk()
+            ->assertViewIs('ticket::Tech.TechnicianProfile.edit')
+            ->assertSee('Ticket Technician Profile');
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.profile.update'), [
+                'is_assignable' => '1',
+                'max_open_tickets' => 7,
+                'timezone' => 'Europe/Oslo',
+                'working_hours' => [
+                    'monday' => ['enabled' => '1', 'start' => '09:00', 'end' => '17:00'],
+                    'tuesday' => ['enabled' => '0', 'start' => '08:00', 'end' => '16:00'],
+                ],
+                'category_ids' => [$category->id],
+                'tag_ids' => [$tag->id],
+                'notes' => 'Prefers firewall tickets.',
+            ])
+            ->assertRedirect();
+
+        $profile = TicketTechnicianProfile::where('user_id', $this->tech->id)->firstOrFail();
+
+        $this->assertTrue($profile->is_assignable);
+        $this->assertSame(7, $profile->max_open_tickets);
+        $this->assertSame('Europe/Oslo', $profile->timezone);
+        $this->assertSame('09:00', $profile->working_hours['monday']['start']);
+        $this->assertFalse($profile->working_hours['tuesday']['enabled']);
+        $this->assertTrue($profile->categories()->whereKey($category->id)->exists());
+        $this->assertTrue($profile->tags()->whereKey($tag->id)->exists());
+    }
+
+    #[Test]
+    public function admin_can_create_and_update_ticket_technician_profile(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $technician = User::factory()->create([
+            'name' => 'Assignment Tech',
+            'status' => User::STATUS_ACTIVE,
+        ]);
+        $category = Category::create([
+            'name' => 'Email Support',
+            'slug' => 'email-support',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('tech.admin.settings.tickets.technicians'))
+            ->assertOk()
+            ->assertViewIs('ticket::Admin.TechnicianProfiles.index')
+            ->assertSee('Assignment Tech');
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.technicians.store'), [
+                'user_id' => $technician->id,
+            ])
+            ->assertRedirect();
+
+        $profile = TicketTechnicianProfile::where('user_id', $technician->id)->firstOrFail();
+
+        $this->actingAs($admin)
+            ->patch(route('tech.admin.settings.tickets.technicians.update', $profile), [
+                'is_assignable' => '0',
+                'max_open_tickets' => 4,
+                'timezone' => 'Europe/Oslo',
+                'working_hours' => [
+                    'monday' => ['enabled' => '1', 'start' => '10:00', 'end' => '15:00'],
+                ],
+                'category_ids' => [$category->id],
+            ])
+            ->assertRedirect(route('tech.admin.settings.tickets.technicians'));
+
+        $profile->refresh();
+
+        $this->assertFalse($profile->is_assignable);
+        $this->assertSame(4, $profile->max_open_tickets);
+        $this->assertTrue($profile->categories()->whereKey($category->id)->exists());
+    }
+
+    #[Test]
+    public function assignment_rule_can_assign_new_ticket_to_specific_technician(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $assignee = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $client = Client::factory()->create();
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.assignment-rules.store'), [
+                'name' => 'Client owner',
+                'weight' => 5,
+                'is_active' => '1',
+                'stop_processing' => '1',
+                'conditions' => [
+                    ['field' => 'client_id', 'operator' => 'equals', 'value' => (string) $client->id],
+                    ['field' => 'queue_id', 'operator' => 'equals', 'value' => ''],
+                ],
+                'action_value' => $assignee->id,
+            ])
+            ->assertRedirect();
+
+        $ticket = app(\App\Modules\Ticket\Actions\StoreTicket::class)->handle([
+            'subject' => 'Assignment rule subject',
+            'client_id' => $client->id,
+            'channel' => 'email',
+        ]);
+
+        $this->assertSame($assignee->id, $ticket->owner_id);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'assigned',
+            'message' => 'Ticket assigned by assignment rule: Client owner',
+        ]);
+        $this->assertSame(1, TicketAssignmentRule::firstOrFail()->hit_count);
+    }
+
+    #[Test]
+    public function assignment_engine_falls_back_to_profile_category_skill_and_capacity(): void
+    {
+        $category = Category::create([
+            'name' => 'Firewall',
+            'slug' => 'firewall',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+        $skilled = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $generalist = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $skilledProfile = TicketTechnicianProfile::create([
+            'user_id' => $skilled->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 10,
+            'timezone' => config('app.timezone'),
+            'working_hours' => [
+                strtolower(now()->format('l')) => ['enabled' => true, 'start' => '00:00', 'end' => '23:59'],
+            ],
+        ]);
+        TicketTechnicianProfile::create([
+            'user_id' => $generalist->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 10,
+            'timezone' => config('app.timezone'),
+            'working_hours' => [
+                strtolower(now()->format('l')) => ['enabled' => true, 'start' => '00:00', 'end' => '23:59'],
+            ],
+        ]);
+        $skilledProfile->categories()->attach($category->id);
+
+        $ticket = app(\App\Modules\Ticket\Actions\StoreTicket::class)->handle([
+            'subject' => 'Firewall assignment subject',
+            'category_id' => $category->id,
+            'channel' => 'email',
+        ]);
+
+        $this->assertSame($skilled->id, $ticket->owner_id);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'assigned',
+            'message' => 'Ticket assigned by technician profile scoring.',
+        ]);
+    }
+
+    #[Test]
+    public function assignment_engine_scores_matching_ticket_tag_skills(): void
+    {
+        $tag = Tag::create([
+            'name' => 'Fortigate',
+            'slug' => 'fortigate',
+            'active' => true,
+        ]);
+        $skilled = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $generalist = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $skilledProfile = TicketTechnicianProfile::create([
+            'user_id' => $skilled->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 10,
+            'timezone' => config('app.timezone'),
+            'working_hours' => [
+                strtolower(now()->format('l')) => ['enabled' => true, 'start' => '00:00', 'end' => '23:59'],
+            ],
+        ]);
+        TicketTechnicianProfile::create([
+            'user_id' => $generalist->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 10,
+            'timezone' => config('app.timezone'),
+            'working_hours' => [
+                strtolower(now()->format('l')) => ['enabled' => true, 'start' => '00:00', 'end' => '23:59'],
+            ],
+        ]);
+        $skilledProfile->tags()->attach($tag->id);
+
+        $ticket = app(\App\Modules\Ticket\Actions\StoreTicket::class)->handle([
+            'subject' => 'Tagged assignment subject',
+            'channel' => 'email',
+            'tag_ids' => [$tag->id],
+        ]);
+
+        $this->assertSame($skilled->id, $ticket->owner_id);
+    }
+
+    #[Test]
+    public function tech_can_rerun_assignment_from_ticket_show(): void
+    {
+        $assignee = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $client = Client::factory()->create();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999114',
+            'client_id' => $client->id,
+            'owner_id' => $this->tech->id,
+        ]);
+
+        TicketAssignmentRule::create([
+            'name' => 'Rerun client owner',
+            'weight' => 1,
+            'is_active' => true,
+            'conditions_json' => [
+                ['field' => 'client_id', 'operator' => 'equals', 'value' => (string) $client->id],
+            ],
+            'action_type' => 'assign_user',
+            'action_value' => (string) $assignee->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.assign', $ticket))
+            ->assertRedirect(route('tech.tickets.show', $ticket->refresh()));
+
+        $this->assertSame($assignee->id, $ticket->fresh()->owner_id);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket->fresh()))
+            ->assertOk()
+            ->assertSee('Run assignment')
+            ->assertSee('Ticket assigned by assignment rule: Rerun client owner');
+    }
+
+    #[Test]
+    public function admin_can_manage_ticket_types_and_queues(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.types.store'), [
+                'name' => 'Sales Lead',
+                'slug' => 'sales-lead',
+                'description' => 'Inbound sales conversations.',
+                'is_active' => '1',
+                'is_deletable' => '1',
+                'sort_order' => 30,
+            ])
+            ->assertRedirect();
+
+        $type = TicketType::where('slug', 'sales-lead')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.settings.tickets.types.update', $type), [
+                'name' => 'Lead',
+                'slug' => 'lead-custom',
+                'description' => 'Custom lead type.',
+                'is_active' => '1',
+                'is_deletable' => '1',
+                'sort_order' => 35,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('ticket_types', [
+            'id' => $type->id,
+            'name' => 'Lead',
+            'slug' => 'lead-custom',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.queues.store'), [
+                'name' => 'Sales',
+                'slug' => 'sales',
+                'description' => 'Sales queue.',
+                'email_address' => 'sales@example.com',
+                'is_active' => '1',
+                'is_default' => '1',
+                'sort_order' => 20,
+            ])
+            ->assertRedirect();
+
+        $queue = TicketQueue::where('slug', 'sales')->firstOrFail();
+
+        $this->assertTrue($queue->is_default);
+        $this->assertDatabaseHas('ticket_queues', [
+            'id' => $queue->id,
+            'email_address' => 'sales@example.com',
+        ]);
+
+        $billingQueue = TicketQueue::create([
+            'name' => 'Billing',
+            'slug' => 'billing',
+            'is_active' => true,
+            'is_default' => false,
+            'sort_order' => 30,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.settings.tickets.queues.update', $billingQueue), [
+                'name' => $billingQueue->name,
+                'slug' => $billingQueue->slug,
+                'description' => $billingQueue->description,
+                'email_address' => $billingQueue->email_address,
+                'is_active' => '1',
+                'is_default' => '0',
+                'sort_order' => $billingQueue->sort_order,
+            ])
+            ->assertRedirect();
+
+        $this->assertTrue($queue->fresh()->is_default);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.statuses.store'), [
+                'name' => 'Pending Vendor',
+                'slug' => 'pending-vendor',
+                'state' => 'waiting',
+                'is_active' => '1',
+                'is_closed' => '0',
+                'is_default' => '1',
+                'sort_order' => 60,
+            ])
+            ->assertRedirect();
+
+        $status = TicketStatus::where('slug', 'pending-vendor')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.settings.tickets.statuses.update', $status), [
+                'name' => 'Waiting Vendor',
+                'slug' => 'waiting-vendor',
+                'state' => 'waiting',
+                'is_active' => '1',
+                'is_closed' => '0',
+                'is_default' => '1',
+                'sort_order' => 65,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('ticket_statuses', [
+            'id' => $status->id,
+            'name' => 'Waiting Vendor',
+            'slug' => 'waiting-vendor',
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.priorities.store'), [
+                'name' => 'Escalated',
+                'slug' => 'escalated',
+                'level' => 2,
+                'is_active' => '1',
+                'is_default' => '1',
+                'sort_order' => 15,
+            ])
+            ->assertRedirect();
+
+        $priority = TicketPriority::where('slug', 'escalated')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.settings.tickets.priorities.update', $priority), [
+                'name' => 'Urgent',
+                'slug' => 'urgent-custom',
+                'level' => 1,
+                'is_active' => '1',
+                'is_default' => '1',
+                'sort_order' => 12,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('ticket_priorities', [
+            'id' => $priority->id,
+            'name' => 'Urgent',
+            'slug' => 'urgent-custom',
+            'level' => 1,
+            'is_default' => true,
+        ]);
+    }
+
+    #[Test]
+    public function protected_or_used_ticket_types_cannot_be_deleted(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999112',
+            'ticket_type_id' => $defaults['type']->id,
+            'type' => $defaults['type']->slug,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('tech.admin.settings.tickets.types.destroy', $defaults['type']))
+            ->assertSessionHasErrors('type');
+
+        $this->assertDatabaseHas('ticket_types', [
+            'id' => $defaults['type']->id,
+        ]);
+    }
+
+    #[Test]
+    public function used_statuses_and_priorities_cannot_be_deleted(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999113',
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('tech.admin.settings.tickets.statuses.destroy', $defaults['status']))
+            ->assertSessionHasErrors('status');
+
+        $this->actingAs($admin)
+            ->delete(route('tech.admin.settings.tickets.priorities.destroy', $defaults['priority']))
+            ->assertSessionHasErrors('priority');
+
+        $this->assertDatabaseHas('ticket_statuses', ['id' => $defaults['status']->id]);
+        $this->assertDatabaseHas('ticket_priorities', ['id' => $defaults['priority']->id]);
+    }
+
+    #[Test]
+    public function admin_can_create_ticket_rule(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.rules.store'), [
+                'name' => 'Inbound email to support',
+                'description' => 'Route email-created tickets.',
+                'weight' => 10,
+                'is_active' => '1',
+                'stop_processing' => '1',
+                'conditions' => [
+                    ['field' => 'channel', 'operator' => 'equals', 'value' => 'email'],
+                ],
+                'actions' => [
+                    ['type' => 'set_ticket_type', 'value' => (string) $defaults['type']->id],
+                    ['type' => 'set_queue', 'value' => (string) $defaults['queue']->id],
+                ],
+            ])
+            ->assertRedirect(route('tech.admin.settings.tickets.rules'));
+
+        $this->assertDatabaseHas('ticket_rules', [
+            'name' => 'Inbound email to support',
+            'trigger' => 'on_create',
+            'is_active' => true,
+            'stop_processing' => true,
+        ]);
+    }
+
+    #[Test]
+    public function ticket_create_rules_can_set_type_queue_and_priority(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $leadType = TicketType::create([
+            'name' => 'Lead Test',
+            'slug' => 'lead-test',
+            'is_active' => true,
+            'is_deletable' => true,
+            'sort_order' => 90,
+        ]);
+        $salesQueue = TicketQueue::create([
+            'name' => 'Sales Test',
+            'slug' => 'sales-test',
+            'is_active' => true,
+            'sort_order' => 90,
+        ]);
+        $high = TicketPriority::where('slug', 'high')->firstOrFail();
+
+        TicketRule::create([
+            'name' => 'No contract becomes lead',
+            'trigger' => TicketRule::TRIGGER_CREATE,
+            'weight' => 1,
+            'is_active' => true,
+            'stop_processing' => true,
+            'conditions_json' => [
+                ['field' => 'client_has_active_contract', 'operator' => 'equals', 'value' => '0'],
+            ],
+            'actions_json' => [
+                ['type' => 'set_ticket_type', 'value' => (string) $leadType->id],
+                ['type' => 'set_queue', 'value' => (string) $salesQueue->id],
+                ['type' => 'set_priority', 'value' => (string) $high->id],
+            ],
+        ]);
+
+        $ticket = app(\App\Modules\Ticket\Actions\StoreTicket::class)->handle([
+            'subject' => 'Inbound sales question',
+            'channel' => 'email',
+            'client_has_active_contract' => '0',
+        ], $this->tech);
+
+        $this->assertSame($leadType->id, $ticket->ticket_type_id);
+        $this->assertSame('lead-test', $ticket->type);
+        $this->assertSame($salesQueue->id, $ticket->queue_id);
+        $this->assertSame($high->id, $ticket->priority_id);
+        $this->assertNotSame($defaults['queue']->id, $ticket->queue_id);
+    }
+
+    #[Test]
+    public function ticket_types_referenced_by_ticket_rules_cannot_be_deleted(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+        $type = TicketType::create([
+            'name' => 'Rule Lead',
+            'slug' => 'rule-lead',
+            'is_active' => true,
+            'is_deletable' => true,
+        ]);
+
+        TicketRule::create([
+            'name' => 'Rule references type',
+            'trigger' => TicketRule::TRIGGER_CREATE,
+            'weight' => 1,
+            'is_active' => true,
+            'conditions_json' => [
+                ['field' => 'channel', 'operator' => 'equals', 'value' => 'email'],
+            ],
+            'actions_json' => [
+                ['type' => 'set_ticket_type', 'value' => (string) $type->id],
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('tech.admin.settings.tickets.types.destroy', $type))
+            ->assertSessionHasErrors('type');
+
+        $this->assertDatabaseHas('ticket_types', ['id' => $type->id]);
+    }
+
+    private function emailAccountData(array $overrides = []): array
+    {
+        return array_merge([
+            'address' => 'ticket@example.com',
+            'description' => 'Ticket account',
+            'from_name' => 'Support',
+            'is_active' => true,
+            'is_global_default' => false,
+            'defaults_for' => [],
+            'delete_policy' => 'local_only',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'ticket@example.com',
+            'imap_secret' => encrypt('secret'),
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 465,
+            'smtp_encryption' => 'ssl',
+            'smtp_username' => 'ticket@example.com',
+            'smtp_secret' => encrypt('secret'),
+            'smtp_auth_type' => 'password',
+        ], $overrides);
+    }
+
+    private function createTicket(?ClientUser $contact = null, array $overrides = []): Ticket
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $contact?->loadMissing('site');
+
+        return Ticket::create(array_merge([
+            'ticket_key' => 'TD-2026-999100',
+            'queue_id' => $defaults['queue']->id,
+            'ticket_type_id' => $defaults['type']->id,
+            'type' => $defaults['type']->slug,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'client_id' => $contact?->site?->client_id,
+            'contact_id' => $contact?->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Ticket helper subject',
+            'is_unread' => false,
+        ], $overrides));
+    }
+
+    private function ticketReplyTemplateData(array $overrides = []): array
+    {
+        return array_merge([
+            'scope' => 'tickets',
+            'key' => 'ticket_reply',
+            'name' => 'Ticket reply',
+            'subject' => '[{{ ticket_key }}] {{ ticket_subject }}',
+            'body_html' => '<p>{{ message_body }}</p>',
+            'body_text' => '{{ message_body }}',
+            'variables' => ['ticket_key', 'ticket_subject', 'contact_name', 'message_body', 'technician_name'],
+            'is_default' => true,
+            'is_active' => true,
+        ], $overrides);
+    }
+}

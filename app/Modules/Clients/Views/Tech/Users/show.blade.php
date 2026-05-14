@@ -72,11 +72,12 @@
 @endsection
 
 @section('sidebar')
-    {{-- Sidebar intentionally left empty for future contextual menu items --}}
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" title="Client workspace" />
+    @endif
 @endsection
 
 @section('rightbar')
     {{-- Right bar for contextual widgets, currently placeholder --}}
     <div class="p-3 small text-muted">Recent activities (MVP later)</div>
 @endsection
-

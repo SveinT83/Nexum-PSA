@@ -282,6 +282,10 @@
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.work-menu />
+@endsection
+
 @section('rightbar')
     <!-- Current State Card -->
     <div class="col-md-12">

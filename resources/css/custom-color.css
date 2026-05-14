@@ -28,6 +28,15 @@ footer {
 
 }
 
+.sidebar .nav-pills .nav-link.link-dark {
+    /* Workspace sidebars use the Sales menu pattern: dark text on light pill buttons. */
+    color: #212529 !important;
+}
+
+.sidebar .nav-pills .nav-link.active {
+    color: white !important;
+}
+
 .sidebar h1, .sidebar h2, .sidebar h3 {
     color: #333;
 }
@@ -46,6 +55,15 @@ footer {
 .content {
     background-color: white;
     border-color: #FF6D1F !important;
+}
+
+.content tr[data-href] {
+    cursor: pointer;
+}
+
+.content tr[data-href]:focus {
+    outline: 2px solid #FF6D1F;
+    outline-offset: -2px;
 }
 
 /* ------------------------------------------- */

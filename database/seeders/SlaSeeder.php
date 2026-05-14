@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\CS\Sla\Sla;
+use App\Modules\Commercial\Models\Sla\Sla;
 
 class SlaSeeder extends Seeder
 {

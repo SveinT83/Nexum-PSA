@@ -111,7 +111,7 @@ Important fields:
 
 Relationships:
 
-- `category()`: belongs to `App\Models\System\Category`.
+- `category()`: belongs to `App\Modules\Taxonomy\Models\Category`.
 - `owner()`: belongs to `App\Models\Core\User`.
 - `clientScope()`: belongs to `App\Models\Clients\Client`.
 - `creator()`: belongs to `App\Models\Core\User`.

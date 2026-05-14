@@ -68,6 +68,8 @@ class ClientUsersController extends Controller
 
         // 5. Return view
         return view('clients::Tech.Users.index', [
+            // Keep the view contract explicit: the Blade template iterates over $users.
+            'users' => $users,
             'user_management' => $users,
             'site' => $targetSite,
             'client' => $targetClient ?? ($targetSite ? $targetSite->client : null),

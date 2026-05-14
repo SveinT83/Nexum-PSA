@@ -7,6 +7,12 @@
 - Views MUST be in Modules/{Domain}/Views
 - Module names MUST be singular (Client, Ticket, not Clients)
 - When creating a new module or changing a module structure, you MUST read and follow `module-architecture.md`.
+- When changing UI, layout, Blade views, shared components, or page styling, you MUST read and follow `ui-guidelines.md`.
 - See the `app/Modules/Skelteton` module for a reference implementation and additional instructions.
+- Reuse global Blade components from `resources/views/components` wherever practical before creating module-specific markup or components.
+- Prefer shared components for common UI elements such as buttons, cards, form controls, navigation, and repeated layout patterns to reduce maintenance.
+- Files MUST include clear English comments that explain structure, intent, and non-obvious behavior.
+- Comments should help future debugging and maintenance; do not add noisy line-by-line comments for self-explanatory code.
+- Blade views should use visible section/block comments for major layout areas, matching the existing project style.
 
 If these rules are broken, the code is invalid.

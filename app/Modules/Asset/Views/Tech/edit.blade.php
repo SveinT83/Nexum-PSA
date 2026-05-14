@@ -18,6 +18,10 @@
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.work-menu />
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-md-12">

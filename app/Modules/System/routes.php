@@ -1,0 +1,34 @@
+<?php
+
+use App\Modules\System\Controllers\Admin\QueueWorkerController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| System Module Routes
+|--------------------------------------------------------------------------
+|
+| Loaded inside the authenticated /tech route group. These routes own
+| operational admin tools that are not part of a narrower business domain.
+|
+*/
+
+Route::middleware('admin')->group(function () {
+    // -------------------------------------------------
+    // Queue and worker operations
+    // -------------------------------------------------
+    Route::get('/admin/system/queues-workers', [QueueWorkerController::class, 'index'])
+        ->name('admin.system.queues-workers.index');
+
+    Route::post('/admin/system/queues-workers/restart', [QueueWorkerController::class, 'restartWorkers'])
+        ->name('admin.system.queues-workers.restart');
+
+    Route::post('/admin/system/queues-workers/clear', [QueueWorkerController::class, 'clearQueue'])
+        ->name('admin.system.queues-workers.clear');
+
+    Route::post('/admin/system/queues-workers/failed/retry', [QueueWorkerController::class, 'retryFailed'])
+        ->name('admin.system.queues-workers.failed.retry');
+
+    Route::post('/admin/system/queues-workers/failed/flush', [QueueWorkerController::class, 'flushFailed'])
+        ->name('admin.system.queues-workers.failed.flush');
+});
