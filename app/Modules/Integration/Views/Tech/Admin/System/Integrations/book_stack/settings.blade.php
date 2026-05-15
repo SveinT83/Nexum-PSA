@@ -48,13 +48,31 @@
                             <div class="mb-3">
                                 <label for="sync_interval_minutes" class="form-label">Sync Interval</label>
                                 <input type="number" class="form-control" id="sync_interval_minutes" name="sync_interval_minutes"
-                                       value="{{ old('sync_interval_minutes', $integration->config['sync_interval_minutes'] ?? 5) }}"
+                                       value="{{ old('sync_interval_minutes', $integration->config['sync_interval_minutes'] ?? 60) }}"
                                        min="1" max="1440">
-                                <small class="text-muted">Minutes between scheduled pulls. Default is 5.</small>
+                                <small class="text-muted">Minutes between scheduled pulls. Default is 60.</small>
+                            </div>
+
+                            <div class="form-check form-switch mb-3">
+                                <input type="hidden" name="two_way_sync_enabled" value="0">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    role="switch"
+                                    id="two_way_sync_enabled"
+                                    name="two_way_sync_enabled"
+                                    value="1"
+                                    {{ old('two_way_sync_enabled', $integration->config['two_way_sync_enabled'] ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="two_way_sync_enabled">
+                                    Enable two-way sync
+                                </label>
+                                <div class="form-text">
+                                    Allows local Knowledge shelves, books, chapters, and pages to be marked for future push back to BookStack.
+                                </div>
                             </div>
 
                             <div class="alert alert-info mb-0">
-                                BookStack is treated as read-only in v1. Nexum stores configuration here and will use cached/indexed content for runtime search.
+                                Two-way sync is a configuration flag for the upcoming push workflow. Current manual sync still pulls BookStack content into Knowledge.
                             </div>
 
                             <div class="mt-4 d-flex gap-2">
@@ -87,12 +105,135 @@
 
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">Synchronization</h5>
+                        <div class="d-flex justify-content-between align-items-center gap-3">
+                            <h5 class="mb-0">Synchronization</h5>
+                            @if($integration && $integration->last_sync_at)
+                                <span class="badge bg-light text-dark border">
+                                    Last sync {{ $integration->last_sync_at->diffForHumans() }}
+                                </span>
+                            @endif
+                        </div>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted mb-0">
-                            Manual and scheduled BookStack content synchronization will be added after the provider cache/index tables are introduced.
-                        </p>
+                        @php
+                            $syncSummary = $integration->config['last_sync_summary'] ?? null;
+                            $pushSummary = $integration->config['last_push_summary'] ?? null;
+                            $twoWayEnabled = $integration->config['two_way_sync_enabled'] ?? false;
+                            $canSync = $integration
+                                && $integration->server
+                                && $integration->getSecret('token_id')
+                                && $integration->getSecret('token_secret');
+                        @endphp
+
+                        {{-- Manual sync currently pulls BookStack content into Knowledge; the two-way setting prepares the later push workflow. --}}
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <p class="text-muted mb-1">
+                                    Pull visible BookStack pages into Knowledge as synchronized internal articles. Scheduled pulls run automatically when due.
+                                </p>
+                                <p class="small text-muted mb-0">
+                                    Existing synced articles are skipped when the source checksum has not changed.
+                                    Sync mode: {{ ($integration->config['two_way_sync_enabled'] ?? false) ? 'Two-way planned' : 'Pull only' }}.
+                                </p>
+                            </div>
+
+                            <form action="{{ route('tech.admin.system.integrations.book_stack.sync') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-primary" {{ $canSync ? '' : 'disabled' }}>
+                                    <i class="bi bi-arrow-repeat"></i> Sync Now
+                                </button>
+                            </form>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <p class="text-muted mb-1">
+                                    Push local Knowledge shelves, books, chapters, and pages into BookStack.
+                                </p>
+                                <p class="small text-muted mb-0">
+                                    Local records become BookStack-backed after a successful push.
+                                </p>
+                            </div>
+
+                            <form action="{{ route('tech.admin.system.integrations.book_stack.push') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-primary" {{ ($canSync && $twoWayEnabled) ? '' : 'disabled' }}>
+                                    <i class="bi bi-cloud-upload"></i> Push Local Changes
+                                </button>
+                            </form>
+                        </div>
+
+                        @if(!$canSync)
+                            <p class="text-muted small mt-3 mb-0">Save and test BookStack credentials before running sync.</p>
+                        @elseif(!$twoWayEnabled)
+                            <p class="text-muted small mt-3 mb-0">Enable two-way sync before pushing local content to BookStack.</p>
+                        @endif
+
+                        @if($syncSummary)
+                            <div class="row g-2 mt-3">
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Created</div>
+                                        <div class="fw-semibold">{{ $syncSummary['created'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Updated</div>
+                                        <div class="fw-semibold">{{ $syncSummary['updated'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Skipped</div>
+                                        <div class="fw-semibold">{{ $syncSummary['skipped'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Failed</div>
+                                        <div class="fw-semibold">{{ $syncSummary['failed'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($pushSummary)
+                            <div class="row g-2 mt-3">
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Pushed shelves</div>
+                                        <div class="fw-semibold">{{ $pushSummary['shelves'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Pushed books</div>
+                                        <div class="fw-semibold">{{ $pushSummary['books'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Pushed chapters</div>
+                                        <div class="fw-semibold">{{ $pushSummary['chapters'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Pushed pages</div>
+                                        <div class="fw-semibold">{{ $pushSummary['pages'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-lg-3">
+                                    <div class="border rounded p-2">
+                                        <div class="small text-muted">Push failed</div>
+                                        <div class="fw-semibold">{{ $pushSummary['failed'] ?? 0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -128,6 +269,12 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Last Sync
                     <span class="text-muted">{{ ($integration && $integration->last_sync_at) ? $integration->last_sync_at->diffForHumans() : 'Never' }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Sync Mode
+                    <span class="badge bg-{{ ($integration->config['two_way_sync_enabled'] ?? false) ? 'primary' : 'secondary' }}">
+                        {{ ($integration->config['two_way_sync_enabled'] ?? false) ? 'Two-way' : 'Pull only' }}
+                    </span>
                 </li>
             </ul>
         </div>

@@ -19,6 +19,13 @@ Do not add Knowledge routes to `routes/web.php`, `routes/tech.php`, or any new f
 
 A knowledge article captures operational guidance for technicians and, later, client-scoped or public-facing documentation.
 
+Knowledge is organized like BookStack:
+
+- Shelves group related books.
+- Books contain pages directly and can also contain chapters.
+- Chapters group pages inside a book.
+- Articles are the local page records.
+
 An `Article` answers:
 
 - What is the title and stable slug?
@@ -32,6 +39,31 @@ An `Article` answers:
 - Which client is it scoped to, if any?
 - When should the article be reviewed again?
 - How often has it been viewed?
+
+## Product Direction
+
+Knowledge is the internal knowledge system for tdPSA and should evolve toward a BookStack-compatible
+information model without becoming a thin BookStack clone. The goal is to support PSA-native
+ownership, review workflows, client context, tags, and permissions while being able to synchronize
+with BookStack when a customer already uses it.
+
+BookStack synchronization belongs to the Integration module, but Knowledge owns the local content
+model that synced data lands in. Future Knowledge records should be able to distinguish locally
+authored content from externally synced content by storing source system, external ID, source URL,
+checksum, sync status, and last synced timestamp.
+
+AI chat will depend on Knowledge as one of its primary context sources:
+
+- Page-context chat should retrieve relevant Knowledge articles for the current route, record,
+  client, ticket, asset, category, or visible page metadata.
+- Global chat should be able to search Knowledge more broadly while respecting user permissions.
+- Synced BookStack content should be searchable and retrievable through the same Knowledge-facing
+  context interface as local articles.
+- Context extraction should return structured article/source references so AI answers can be traced
+  back to the underlying documentation.
+
+This means BookStack sync and Knowledge source metadata should be completed before building the full
+AI chat experience.
 
 ## Directory Map
 
@@ -82,15 +114,22 @@ The visible UI uses the Livewire form for create/edit. The POST and PUT routes r
 
 ## Data Model
 
-The module currently uses the existing model:
+The module uses these Knowledge models:
 
 ```text
+app/Models/Knowledge/Shelf.php
+app/Models/Knowledge/Book.php
+app/Models/Knowledge/Chapter.php
 app/Models/Knowledge/Article.php
 ```
 
-The article table migration is:
+The library structure migrations are:
 
 ```text
+database/migrations/2026_05_14_173945_create_knowledge_shelves_table.php
+database/migrations/2026_05_14_173958_create_knowledge_books_table.php
+database/migrations/2026_05_14_173958_create_knowledge_chapters_table.php
+database/migrations/2026_05_14_174010_add_knowledge_structure_to_articles_table.php
 database/migrations/2026_04_07_192649_create_articles_table.php
 ```
 
@@ -108,6 +147,12 @@ Important fields:
 - `view_count`: simple article view counter.
 - `next_review_at`: review due date.
 - `created_by` / `updated_by`: audit metadata.
+- `source_system`, `source_type`, `source_id`: external source identity for synchronized content.
+- `source_url`: link back to the source document.
+- `source_checksum`: source content fingerprint used to skip unchanged sync records.
+- `source_synced_at` / `source_updated_at`: sync timing and upstream update timing.
+- `sync_status`: current sync state, such as `synced`.
+- `source_payload`: source metadata retained for debugging and future hierarchy mapping.
 
 Relationships:
 

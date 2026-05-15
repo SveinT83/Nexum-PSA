@@ -49,6 +49,61 @@
             </div>
         </div>
 
+        <!-- ------------------------------------------------- -->
+        <!-- Knowledge Library Placement -->
+        <!-- ------------------------------------------------- -->
+        <div class="border rounded p-3 mb-3">
+            <div class="small fw-bold text-uppercase text-muted mb-3">Library Placement</div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="knowledge_shelf_id" class="form-label fw-bold text-muted small text-uppercase">Shelf</label>
+                    <select class="form-select @error('knowledge_shelf_id') is-invalid @enderror" id="knowledge_shelf_id" wire:model="knowledge_shelf_id">
+                        <option value="">No Shelf</option>
+                        @foreach($shelves as $shelf)
+                            <option value="{{ $shelf->id }}">{{ $shelf->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('knowledge_shelf_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label for="knowledge_book_id" class="form-label fw-bold text-muted small text-uppercase">Book</label>
+                    <select class="form-select @error('knowledge_book_id') is-invalid @enderror" id="knowledge_book_id" wire:model="knowledge_book_id">
+                        <option value="">No Book</option>
+                        @foreach($books as $book)
+                            <option value="{{ $book->id }}">{{ $book->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('knowledge_book_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label for="knowledge_chapter_id" class="form-label fw-bold text-muted small text-uppercase">Chapter</label>
+                    <select class="form-select @error('knowledge_chapter_id') is-invalid @enderror" id="knowledge_chapter_id" wire:model="knowledge_chapter_id">
+                        <option value="">No Chapter</option>
+                        @foreach($chapters as $chapter)
+                            <option value="{{ $chapter->id }}">{{ $chapter->book->name ?? 'Book' }} / {{ $chapter->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('knowledge_chapter_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="mb-0">
+                <label for="priority" class="form-label fw-bold text-muted small text-uppercase">Sort Priority</label>
+                <input type="number" min="0" class="form-control @error('priority') is-invalid @enderror" id="priority" wire:model="priority">
+                @error('priority')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="status" class="form-label fw-bold text-muted small text-uppercase">Status</label>

@@ -3,6 +3,8 @@
 namespace App\Modules\Knowledge\Actions;
 
 use App\Models\Knowledge\Article;
+use App\Models\Knowledge\Book;
+use App\Models\Knowledge\Chapter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -15,9 +17,7 @@ use Illuminate\Support\Str;
  */
 class StoreArticle
 {
-    public function __construct(private readonly RenderArticleBody $renderer)
-    {
-    }
+    public function __construct(private readonly RenderArticleBody $renderer) {}
 
     /**
      * Persist a new article and return it.
@@ -28,6 +28,8 @@ class StoreArticle
             $data['client_scope_id'] = null;
         }
 
+        $data = $this->normalizeStructure($data);
+
         $article = new Article($data);
         $article->owner_id = Auth::id();
         $article->created_by = Auth::id();
@@ -36,6 +38,26 @@ class StoreArticle
         $article->save();
 
         return $article;
+    }
+
+    /**
+     * Keep manually created pages structurally consistent with selected book/chapter.
+     */
+    private function normalizeStructure(array $data): array
+    {
+        if (! empty($data['knowledge_chapter_id'])) {
+            $chapter = Chapter::query()->with('book')->find($data['knowledge_chapter_id']);
+
+            if ($chapter) {
+                $data['knowledge_book_id'] = $chapter->book_id;
+                $data['knowledge_shelf_id'] = $chapter->book?->shelf_id;
+            }
+        } elseif (! empty($data['knowledge_book_id'])) {
+            $book = Book::query()->find($data['knowledge_book_id']);
+            $data['knowledge_shelf_id'] = $book?->shelf_id;
+        }
+
+        return $data;
     }
 
     /**

@@ -4,16 +4,20 @@ namespace App\Modules\Integration\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Integration\Actions\PushKnowledgeToBookStack;
+use App\Modules\Integration\Actions\SyncBookStackToKnowledge;
 use App\Modules\Integration\Services\BookStack\BookStackClient;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use App\Services\Integrations\TacticalRmm\TacticalRmmClient;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class IntegrationsController extends Controller
 {
     public function index()
     {
         $integrations = Integration::all()->keyBy('type');
+
         return view('integration::Tech.Admin.System.Integrations.index', compact('integrations'));
     }
 
@@ -47,6 +51,7 @@ class IntegrationsController extends Controller
     public function nableRmmSettings()
     {
         $integration = Integration::where('type', 'rmm')->first();
+
         return view('integration::Tech.Admin.System.Integrations.nable.nable_rmm', compact('integration'));
     }
 
@@ -66,7 +71,7 @@ class IntegrationsController extends Controller
 
         $apiKey = $request->input('api_key') ?: $integration->getSecret('api_key');
 
-        if ($request->has('api_key') && !empty($request->api_key)) {
+        if ($request->has('api_key') && ! empty($request->api_key)) {
             $integration->setSecret('api_key', $request->api_key);
         }
 
@@ -85,7 +90,7 @@ class IntegrationsController extends Controller
         if ($integration->is_healthy) {
             return back()->with('success', 'N-able RMM API configuration updated and connection verified.');
         } else {
-            return back()->with('warning', 'N-able RMM API configuration saved, but connection test failed: ' . $integration->last_error);
+            return back()->with('warning', 'N-able RMM API configuration saved, but connection test failed: '.$integration->last_error);
         }
     }
 
@@ -136,19 +141,19 @@ class IntegrationsController extends Controller
 
     public function tacticalRmmSettings()
     {
-        $integration = Integration::where("type", "tactical_rmm")->first();
+        $integration = Integration::where('type', 'tactical_rmm')->first();
 
-        if ($integration && $integration->server && $integration->getSecret("api_key")) {
-            $client = new TacticalRmmClient($integration->server, $integration->getSecret("api_key"));
+        if ($integration && $integration->server && $integration->getSecret('api_key')) {
+            $client = new TacticalRmmClient($integration->server, $integration->getSecret('api_key'));
 
             // Connection Health check
             $test = $client->testConnection();
-            $integration->is_healthy = $test["success"];
-            $integration->last_error = $test["success"] ? null : $test["message"];
+            $integration->is_healthy = $test['success'];
+            $integration->last_error = $test['success'] ? null : $test['message'];
             $integration->save();
         }
 
-        return view("integration::Tech.Admin.System.Integrations.tactical.settings", compact("integration"));
+        return view('integration::Tech.Admin.System.Integrations.tactical.settings', compact('integration'));
     }
 
     public function tacticalRmmUpdate(Request $request)
@@ -167,7 +172,7 @@ class IntegrationsController extends Controller
 
         $apiKey = $request->input('api_key') ?: $integration->getSecret('api_key');
 
-        if ($request->has('api_key') && !empty($request->api_key)) {
+        if ($request->has('api_key') && ! empty($request->api_key)) {
             $integration->setSecret('api_key', $request->api_key);
         }
 
@@ -185,7 +190,7 @@ class IntegrationsController extends Controller
         if ($integration->is_healthy) {
             return back()->with('success', 'Tactical RMM API configuration updated and connection verified.');
         } else {
-            return back()->with('warning', 'Tactical RMM API configuration saved, but connection test failed: ' . $integration->last_error);
+            return back()->with('warning', 'Tactical RMM API configuration saved, but connection test failed: '.$integration->last_error);
         }
     }
 
@@ -224,6 +229,7 @@ class IntegrationsController extends Controller
             'token_id' => 'nullable|string',
             'token_secret' => 'nullable|string',
             'sync_interval_minutes' => 'nullable|integer|min:1|max:1440',
+            'two_way_sync_enabled' => 'nullable|boolean',
         ]);
 
         $integration = Integration::firstOrCreate(
@@ -245,12 +251,14 @@ class IntegrationsController extends Controller
         }
 
         $config = $integration->config ?? [];
-        $config['sync_interval_minutes'] = (int) $request->input('sync_interval_minutes', $config['sync_interval_minutes'] ?? 5);
-        $config['read_only'] = true;
+        $config['sync_interval_minutes'] = (int) $request->input('sync_interval_minutes', $config['sync_interval_minutes'] ?? 60);
+        $config['two_way_sync_enabled'] = $request->boolean('two_way_sync_enabled');
+        $config['sync_mode'] = $config['two_way_sync_enabled'] ? 'two_way' : 'pull_only';
+        $config['read_only'] = ! $config['two_way_sync_enabled'];
         $config['provider_role'] = 'knowledge_source';
         $integration->config = $config;
 
-        if (!$tokenId || !$tokenSecret) {
+        if (! $tokenId || ! $tokenSecret) {
             $integration->is_healthy = false;
             $integration->last_error = null;
         }
@@ -283,6 +291,68 @@ class IntegrationsController extends Controller
             return back()->with('success', 'BookStack connection verified.');
         }
 
-        return back()->with('warning', 'BookStack connection test failed: ' . $integration->last_error);
+        return back()->with('warning', 'BookStack connection test failed: '.$integration->last_error);
+    }
+
+    public function bookStackSync(Request $request)
+    {
+        $integration = Integration::where('type', 'book_stack')->firstOrFail();
+        $tokenId = $integration->getSecret('token_id');
+        $tokenSecret = $integration->getSecret('token_secret');
+
+        if (! $integration->server || ! $tokenId || ! $tokenSecret) {
+            return back()->with('warning', 'Save the BookStack URL and API credentials before syncing.');
+        }
+
+        if (! $request->user()) {
+            throw new RuntimeException('BookStack sync requires an authenticated admin user.');
+        }
+
+        $client = new BookStackClient($integration->server, $tokenId, $tokenSecret);
+        $summary = (new SyncBookStackToKnowledge($integration, $client, $request->user()))->execute();
+
+        $message = sprintf(
+            'BookStack sync finished. Created: %d. Updated: %d. Skipped: %d. Failed: %d.',
+            $summary['created'],
+            $summary['updated'],
+            $summary['skipped'],
+            $summary['failed'],
+        );
+
+        return back()->with($summary['failed'] > 0 ? 'warning' : 'success', $message);
+    }
+
+    public function bookStackPush(Request $request)
+    {
+        $integration = Integration::where('type', 'book_stack')->firstOrFail();
+        $tokenId = $integration->getSecret('token_id');
+        $tokenSecret = $integration->getSecret('token_secret');
+        $config = $integration->config ?? [];
+
+        if (! ($config['two_way_sync_enabled'] ?? false)) {
+            return back()->with('warning', 'Enable two-way sync before pushing local Knowledge content to BookStack.');
+        }
+
+        if (! $integration->server || ! $tokenId || ! $tokenSecret) {
+            return back()->with('warning', 'Save the BookStack URL and API credentials before pushing local content.');
+        }
+
+        if (! $request->user()) {
+            throw new RuntimeException('BookStack push requires an authenticated admin user.');
+        }
+
+        $client = new BookStackClient($integration->server, $tokenId, $tokenSecret);
+        $summary = (new PushKnowledgeToBookStack($integration, $client))->execute();
+
+        $message = sprintf(
+            'BookStack push finished. Shelves: %d. Books: %d. Pages: %d. Skipped: %d. Failed: %d.',
+            $summary['shelves'],
+            $summary['books'],
+            $summary['pages'],
+            $summary['skipped'],
+            $summary['failed'],
+        );
+
+        return back()->with($summary['failed'] > 0 ? 'warning' : 'success', $message);
     }
 }

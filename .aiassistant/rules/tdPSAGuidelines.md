@@ -5,7 +5,8 @@ apply: always
 # tdPSA Project Guidelines
 
 ## 1. Rule Prioritization
-- **CLAUDE.md takes precedence:** If there's a conflict between these guidelines and `CLAUDE.md`, follow `CLAUDE.md`.
+- **AGENTS.md takes precedence:** If there is a conflict between these guidelines and `AGENTS.md`, follow `AGENTS.md`.
+- **Specialized project standards:** Follow `module-architecture.md` for module/domain structure and `ui-guidelines.md` for UI, layout, Blade, component, and styling work.
 
 ## 2. Database Migrations
 - **Do not create new migration files** for changes to existing tables.
@@ -24,8 +25,9 @@ apply: always
 - **Service Layer:** Place business logic in dedicated `Service` classes instead of directly in Controllers or Livewire components to improve modularity and testability.
 
 ## 5. Project Structure & Modularization
-- **Modular subfolders:** Maintain the current pattern of categorizing files into subfolders within standard Laravel directories (e.g., `app/Http/Controllers/Tech/CS/Contracts/`).
-- Ensure related views and resources follow the same subfolder structure.
+- **Domain modules:** Domain code belongs in `app/Modules/{Domain}/` according to `module-architecture.md`.
+- **No default Laravel domain locations:** Do not place domain controllers in `app/Http/Controllers` or domain views in `resources/views`.
+- **Self-contained modules:** Ensure related controllers, views, routes, actions, queries, menus, and tests stay with the owning module.
 
 ## 6. Standardization & Decisions
 - **Ask to standardize:** If you have to make a design choice, or if the user points out a recurring issue/complaint, ask if this pattern should be officially standardized in these rules.
@@ -34,4 +36,3 @@ apply: always
 ## 7. Development Workflow
 - When code changes are made, update documentation/comments to reflect the new state.
 - Ensure that modules are self-contained as much as possible.
-

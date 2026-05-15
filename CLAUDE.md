@@ -1,3 +1,7 @@
+> Legacy note: `AGENTS.md` is the authoritative instruction file for tdPSA. This file is retained
+> for Claude/Laravel Boost context only and must not override `AGENTS.md`,
+> `module-architecture.md`, or `ui-guidelines.md`.
+
 <laravel-boost-guidelines>
 === foundation rules ===
 

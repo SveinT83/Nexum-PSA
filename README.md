@@ -112,6 +112,9 @@ Role and permission handling use **Spatie Laravel Permission** and policy-first 
 * SLA and timebank automation
 * Cross-tenant reports
 * Advanced RMM integration
+* BookStack synchronization into the internal Knowledge system
+* Provider-neutral AI integrations with Laravel AI SDK agents
+* Page-context and global AI chat grounded in tdPSA and Knowledge context
 * REST and GraphQL APIs
 * Full open-source community release under MIT license
 

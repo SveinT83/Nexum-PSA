@@ -1,7 +1,9 @@
 <?php
 
 use App\Modules\Integration\Controllers\Admin\ApiController;
+use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
 use App\Modules\Integration\Controllers\Admin\IntegrationsController;
+use App\Modules\Integration\Controllers\Tech\AiChatController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('admin')->group(function () {
@@ -50,6 +52,33 @@ Route::middleware('admin')->group(function () {
     Route::post('/admin/system/integrations/book-stack/test', [IntegrationsController::class, 'bookStackTestConnection'])
         ->name('admin.system.integrations.book_stack.test');
 
+    Route::post('/admin/system/integrations/book-stack/sync', [IntegrationsController::class, 'bookStackSync'])
+        ->name('admin.system.integrations.book_stack.sync');
+
+    Route::post('/admin/system/integrations/book-stack/push', [IntegrationsController::class, 'bookStackPush'])
+        ->name('admin.system.integrations.book_stack.push');
+
+    Route::get('/admin/system/integrations/ai', [AiIntegrationController::class, 'index'])
+        ->name('admin.system.integrations.ai.index');
+
+    Route::post('/admin/system/integrations/ai/providers', [AiIntegrationController::class, 'storeProvider'])
+        ->name('admin.system.integrations.ai.providers.store');
+
+    Route::put('/admin/system/integrations/ai/providers/{provider}', [AiIntegrationController::class, 'updateProvider'])
+        ->name('admin.system.integrations.ai.providers.update');
+
+    Route::delete('/admin/system/integrations/ai/providers/{provider}', [AiIntegrationController::class, 'destroyProvider'])
+        ->name('admin.system.integrations.ai.providers.destroy');
+
+    Route::post('/admin/system/integrations/ai/agents', [AiIntegrationController::class, 'storeAgent'])
+        ->name('admin.system.integrations.ai.agents.store');
+
+    Route::put('/admin/system/integrations/ai/agents/{agent}', [AiIntegrationController::class, 'updateAgent'])
+        ->name('admin.system.integrations.ai.agents.update');
+
+    Route::delete('/admin/system/integrations/ai/agents/{agent}', [AiIntegrationController::class, 'destroyAgent'])
+        ->name('admin.system.integrations.ai.agents.destroy');
+
     Route::get('/admin/system/integrations/api', [ApiController::class, 'index'])
         ->name('admin.system.integrations.api.index');
 
@@ -62,3 +91,12 @@ Route::middleware('admin')->group(function () {
     Route::get('/admin/system/integrations/api/docs', [ApiController::class, 'documentation'])
         ->name('admin.system.integrations.api.docs');
 });
+
+Route::get('/knowledge/ai', [AiChatController::class, 'index'])
+    ->name('ai.chats.index');
+
+Route::post('/knowledge/ai/chats', [AiChatController::class, 'store'])
+    ->name('ai.chats.store');
+
+Route::post('/knowledge/ai/chats/{chat}/messages', [AiChatController::class, 'message'])
+    ->name('ai.chats.messages.store');
