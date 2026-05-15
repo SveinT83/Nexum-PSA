@@ -18,14 +18,14 @@
             <p class="text-muted mb-0">{{ $ticket->subject }}</p>
         </div>
         <div class="d-flex gap-2">
-            @if ($ticket->is_unread)
+            @if ($ticket->is_unread && ($ticketActions['mark_read'] ?? true))
                 <!-- Marks the ticket and its current messages as read without changing ticket status or ownership. -->
                 <form method="POST" action="{{ route('tech.tickets.read', $ticket) }}">
                     @csrf
                     <button type="submit" class="btn btn-outline-primary">Mark as read</button>
                 </form>
             @endif
-            @if (! $ticket->status?->is_closed)
+            @if ($ticketActions['close'] ?? ! $ticket->status?->is_closed)
                 <!-- Convenience close action uses the same lifecycle action as manual status changes. -->
                 <form method="POST" action="{{ route('tech.tickets.close', $ticket) }}">
                     @csrf
@@ -48,7 +48,8 @@
     @endif
 
     @php
-        $canReplyToContact = filled($ticket->contact?->email);
+        $canReplyToContact = filled($ticket->contact?->email) && ($ticketActions['customer_reply'] ?? true);
+        $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
         $selectedMessageType = old('type', $defaultMessageType);
         $showAddMessage = $errors->any() || old('body') || old('type');
@@ -60,11 +61,13 @@
             <div class="card mb-3">
                 <div class="card-header d-flex align-items-center justify-content-between gap-3 py-2">
                     <h2 class="h6 mb-0">{{ $ticket->subject }}</h2>
-                    <x-buttons.editlink
-                        url="{{ route('tech.tickets.edit', $ticket) }}"
-                        class="btn btn-sm btn-outline-primary bi bi-pencil">
-                        Edit ticket
-                    </x-buttons.editlink>
+                    @if($ticketActions['update_fields'] ?? true)
+                        <x-buttons.editlink
+                            url="{{ route('tech.tickets.edit', $ticket) }}"
+                            class="btn btn-sm btn-outline-primary bi bi-pencil">
+                            Edit ticket
+                        </x-buttons.editlink>
+                    @endif
                 </div>
                 <div class="card-body">
                     @if(filled($ticket->description))
@@ -218,7 +221,9 @@
                                         @if ($canReplyToContact)
                                             <option value="customer_reply" @selected($selectedMessageType === 'customer_reply')>Reply to contact</option>
                                         @endif
-                                        <option value="internal_note" @selected($selectedMessageType === 'internal_note')>Internal note</option>
+                                        @if($canAddInternalNote)
+                                            <option value="internal_note" @selected($selectedMessageType === 'internal_note')>Internal note</option>
+                                        @endif
                                     </select>
                                     @error('type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 </div>
@@ -318,13 +323,60 @@
 @section('rightbar')
     <div class="accordion accordion-flush" id="ticketRightbarAccordion">
         <div class="accordion-item border rounded mb-2 overflow-hidden">
-            <h2 class="accordion-header" id="ticketDetailsHeading">
+            <h2 class="accordion-header" id="ticketWorkflowHeading">
                 <button
                     class="accordion-button py-2 px-3"
                     type="button"
                     data-bs-toggle="collapse"
-                    data-bs-target="#ticketDetailsCollapse"
+                    data-bs-target="#ticketWorkflowCollapse"
                     aria-expanded="true"
+                    aria-controls="ticketWorkflowCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-diagram-3" aria-hidden="true"></i>
+                        <span>Workflow</span>
+                        @if($ticket->workflow)
+                            <span class="badge text-bg-light border">{{ $ticket->workflow->name }}</span>
+                        @endif
+                    </span>
+                </button>
+            </h2>
+            <div
+                id="ticketWorkflowCollapse"
+                class="accordion-collapse collapse show"
+                aria-labelledby="ticketWorkflowHeading"
+                data-bs-parent="#ticketRightbarAccordion">
+                <div class="accordion-body p-3">
+                    <div class="small mb-2">
+                        <div class="text-muted text-uppercase" style="font-size: .68rem;">Current state</div>
+                        <div class="fw-semibold">{{ $ticket->status?->name ?? '-' }}</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        @forelse($workflowTransitions as $transition)
+                            <form method="POST" action="{{ route('tech.tickets.workflow.transition', [$ticket, $transition]) }}">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-primary w-100 text-start">
+                                    <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+                                    {{ $transition->label }}
+                                    <span class="text-muted">to {{ $transition->toStatus?->name }}</span>
+                                </button>
+                            </form>
+                        @empty
+                            <p class="text-muted small mb-0">No workflow transitions available.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item border rounded mb-2 overflow-hidden">
+            <h2 class="accordion-header" id="ticketDetailsHeading">
+                <button
+                    class="accordion-button collapsed py-2 px-3"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#ticketDetailsCollapse"
+                    aria-expanded="false"
                     aria-controls="ticketDetailsCollapse">
                     <span class="d-flex align-items-center gap-2">
                         <i class="bi bi-info-circle" aria-hidden="true"></i>
@@ -334,7 +386,7 @@
             </h2>
             <div
                 id="ticketDetailsCollapse"
-                class="accordion-collapse collapse show"
+                class="accordion-collapse collapse"
                 aria-labelledby="ticketDetailsHeading"
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">
@@ -379,13 +431,140 @@
                         </div>
                     </div>
 
-                    <div class="mt-3">
-                        <a href="{{ route('tech.tickets.edit', $ticket) }}" class="btn btn-sm btn-outline-primary w-100">Edit ticket</a>
+                    @if($ticketActions['update_fields'] ?? true)
+                        <div class="mt-3">
+                            <a href="{{ route('tech.tickets.edit', $ticket) }}" class="btn btn-sm btn-outline-primary w-100">Edit ticket</a>
+                        </div>
+                    @endif
+                    @if($ticketActions['assign_owner'] ?? true)
+                        <form method="POST" action="{{ route('tech.tickets.assign', $ticket) }}" class="mt-2">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Run assignment</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item border rounded mb-2 overflow-hidden">
+            <h2 class="accordion-header" id="ticketKnowledgeHeading">
+                <button
+                    class="accordion-button collapsed py-2 px-3"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#ticketKnowledgeCollapse"
+                    aria-expanded="false"
+                    aria-controls="ticketKnowledgeCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-journal-text" aria-hidden="true"></i>
+                        <span>Knowledge</span>
+                        <span class="badge text-bg-secondary">{{ $knowledgeSuggestions->count() }}</span>
+                    </span>
+                </button>
+            </h2>
+            <div
+                id="ticketKnowledgeCollapse"
+                class="accordion-collapse collapse"
+                aria-labelledby="ticketKnowledgeHeading"
+                data-bs-parent="#ticketRightbarAccordion">
+                <div class="accordion-body p-3">
+                    @forelse ($knowledgeSuggestions as $article)
+                        <!-- Suggested articles are ranked from ticket context and opened separately so the ticket workflow stays in place. -->
+                        <a
+                            href="{{ route('tech.knowledge.show', $article) }}"
+                            target="_blank"
+                            rel="noopener"
+                            class="d-block text-decoration-none text-reset border rounded bg-light px-2 py-2 mb-2">
+                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                <div class="fw-semibold small lh-sm">{{ $article->title }}</div>
+                                <i class="bi bi-box-arrow-up-right text-muted small flex-shrink-0" aria-hidden="true"></i>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                {{ $article->knowledgeBook?->name ?? $article->knowledgeShelf?->name ?? $article->category?->name ?? 'Knowledge article' }}
+                            </div>
+                            <div class="text-muted small mt-1">
+                                {{ \Illuminate\Support\Str::limit(trim(strip_tags($article->body_markdown ?: $article->body_html)), 110) }}
+                            </div>
+                        </a>
+                    @empty
+                        <p class="text-muted small mb-0">No matching articles found.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item border rounded mb-2 overflow-hidden">
+            <h2 class="accordion-header" id="ticketSlaHeading">
+                <button
+                    class="accordion-button collapsed py-2 px-3"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#ticketSlaCollapse"
+                    aria-expanded="false"
+                    aria-controls="ticketSlaCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-stopwatch" aria-hidden="true"></i>
+                        <span>SLA</span>
+                        @if($ticket->sla)
+                            <span class="badge text-bg-light border">{{ $ticket->sla->name }}</span>
+                        @endif
+                    </span>
+                </button>
+            </h2>
+            <div
+                id="ticketSlaCollapse"
+                class="accordion-collapse collapse"
+                aria-labelledby="ticketSlaHeading"
+                data-bs-parent="#ticketRightbarAccordion">
+                <div class="accordion-body p-3">
+                    @php
+                        $slaSource = match ($ticket->sla_source) {
+                            'ticket_rule' => 'Ticket rule',
+                            'contract' => 'Contract',
+                            'default' => 'Default',
+                            default => 'Not selected',
+                        };
+                        $firstResponseClass = $ticket->first_response_due_at?->isPast() && ! $ticket->first_responded_at ? 'text-danger' : 'text-body';
+                        $resolveClass = $ticket->resolve_due_at?->isPast() && ! $ticket->resolved_at ? 'text-danger' : 'text-body';
+                    @endphp
+
+                    <div class="row g-1 small">
+                        <div class="col-6">
+                            <div class="border rounded bg-light px-2 py-1 h-100">
+                                <div class="text-muted text-uppercase" style="font-size: .68rem;">Policy</div>
+                                <div class="fw-semibold text-truncate">{{ $ticket->sla?->name ?? ($ticket->sla_snapshot['name'] ?? '-') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded bg-light px-2 py-1 h-100">
+                                <div class="text-muted text-uppercase" style="font-size: .68rem;">Source</div>
+                                <div class="fw-semibold text-truncate">{{ $slaSource }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded bg-light px-2 py-1 h-100">
+                                <div class="text-muted text-uppercase" style="font-size: .68rem;">First response</div>
+                                <div class="fw-semibold {{ $firstResponseClass }}">{{ $ticket->first_response_due_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                                @if($ticket->first_responded_at)
+                                    <div class="text-muted" style="font-size: .72rem;">Done {{ $ticket->first_responded_at->format('Y-m-d H:i') }}</div>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded bg-light px-2 py-1 h-100">
+                                <div class="text-muted text-uppercase" style="font-size: .68rem;">Resolve</div>
+                                <div class="fw-semibold {{ $resolveClass }}">{{ $ticket->resolve_due_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                            </div>
+                        </div>
                     </div>
-                    <form method="POST" action="{{ route('tech.tickets.assign', $ticket) }}" class="mt-2">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Run assignment</button>
-                    </form>
+
+                    @if($ticket->sla_snapshot)
+                        <div class="mt-2 small text-muted">
+                            {{ ucfirst($ticket->sla_snapshot['priority_band'] ?? 'medium') }} target:
+                            {{ $ticket->sla_snapshot['first_response_value'] ?? '-' }} {{ $ticket->sla_snapshot['first_response_unit'] ?? '' }} response,
+                            {{ $ticket->sla_snapshot['resolve_value'] ?? '-' }} {{ $ticket->sla_snapshot['resolve_unit'] ?? '' }} resolve
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

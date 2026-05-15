@@ -17,6 +17,7 @@ class SlaSeeder extends Seeder
             ['name' => 'Default'],
             [
                 'description' => 'Default SLA policy with balanced response and onsite times for different priorities.',
+                'is_default' => true,
 
                 // Low Priority: 8 hours response, 40 hours onsite (5 business days)
                 'low_firstResponse' => 8,

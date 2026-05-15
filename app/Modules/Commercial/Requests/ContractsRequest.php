@@ -10,6 +10,7 @@ class ContractsRequest extends FormRequest
     {
         return [
             'client_id' => ['required', 'exists:clients,id'],
+            'sla_id' => ['nullable', 'exists:sla,id'],
             'created_by' => ['required', 'exists:user_management,id'],
 
             'description' => ['nullable', 'string'],

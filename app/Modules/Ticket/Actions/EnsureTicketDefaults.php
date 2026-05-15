@@ -89,6 +89,8 @@ class EnsureTicketDefaults
         $priority = TicketPriority::query()->where('is_default', true)->first()
             ?? TicketPriority::query()->orderBy('level')->first();
 
+        app(EnsureTicketWorkflowDefaults::class)->handle();
+
         return [
             'queue' => $queue,
             'status' => $status,

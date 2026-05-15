@@ -26,6 +26,7 @@
                         <th>Client</th>
                         <th>Queue</th>
                         <th>Priority</th>
+                        <th>SLA</th>
                         <th>Status</th>
                         <th>Updated</th>
                     </tr>
@@ -49,12 +50,27 @@
                             <td>{{ $ticket->client?->name ?? 'Unassigned' }}</td>
                             <td>{{ $ticket->queue?->name }}</td>
                             <td>P{{ $ticket->priority?->level }} {{ $ticket->priority?->name }}</td>
+                            <td>
+                                @php
+                                    $responseOverdue = $ticket->first_response_due_at && ! $ticket->first_responded_at && $ticket->first_response_due_at->isPast();
+                                    $resolveOverdue = $ticket->resolve_due_at && ! $ticket->resolved_at && $ticket->resolve_due_at->isPast();
+                                    $nextSlaTarget = ! $ticket->first_responded_at ? $ticket->first_response_due_at : $ticket->resolve_due_at;
+                                    $slaTone = $responseOverdue || $resolveOverdue ? 'text-bg-danger' : ($nextSlaTarget ? 'text-bg-light border' : 'text-bg-secondary');
+                                    $slaLabel = $responseOverdue ? 'Response overdue' : ($resolveOverdue ? 'Resolve overdue' : ($nextSlaTarget ? $nextSlaTarget->diffForHumans(null, true) : 'No SLA'));
+                                @endphp
+                                <div class="d-flex flex-column gap-1 align-items-start">
+                                    <span class="badge {{ $slaTone }}">{{ $slaLabel }}</span>
+                                    @if($ticket->sla)
+                                        <span class="text-muted small">{{ $ticket->sla->name }}</span>
+                                    @endif
+                                </div>
+                            </td>
                             <td>{{ $ticket->status?->name }}</td>
                             <td>{{ $ticket->updated_at?->diffForHumans() }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No tickets found.</td>
+                            <td colspan="8" class="text-center text-muted py-4">No tickets found.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -157,6 +173,7 @@
                                     <option value="newest" @selected(($filters['sort'] ?? 'newest') === 'newest')>Newest updated</option>
                                     <option value="oldest" @selected(($filters['sort'] ?? 'newest') === 'oldest')>Oldest updated</option>
                                     <option value="priority" @selected(($filters['sort'] ?? 'newest') === 'priority')>Priority</option>
+                                    <option value="sla" @selected(($filters['sort'] ?? 'newest') === 'sla')>SLA risk</option>
                                     <option value="unread" @selected(($filters['sort'] ?? 'newest') === 'unread')>Unread first</option>
                                 </select>
                             </div>

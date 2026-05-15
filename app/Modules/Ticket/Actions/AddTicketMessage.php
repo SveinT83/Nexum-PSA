@@ -28,10 +28,16 @@ class AddTicketMessage
                 app(StoreTicketAttachment::class)->fromUpload($message, $attachment, $actor);
             }
 
-            $ticket->forceFill([
+            $ticketUpdates = [
                 'updated_by' => $actor?->id,
                 'is_unread' => false,
-            ])->touch();
+            ];
+
+            if ($message->type === 'customer_reply' && $message->visibility === 'public' && ! $ticket->first_responded_at) {
+                $ticketUpdates['first_responded_at'] = now();
+            }
+
+            $ticket->forceFill($ticketUpdates)->touch();
 
             TicketEvent::create([
                 'ticket_id' => $ticket->id,

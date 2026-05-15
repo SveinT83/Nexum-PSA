@@ -100,6 +100,10 @@
                     <!-- Right sidebar (right) -->
                     <div class="col-md-2 mt-3 sidebar">
                         @yield('rightbar')
+
+                        @auth
+                            <livewire:tech.ai.context-chat :page-title="trim($__env->yieldContent('title'))" />
+                        @endauth
                     </div>
                 </div>
 

@@ -13,6 +13,12 @@
             'pattern' => 'tech.knowledge.*',
             'icon' => 'bi-journal-text',
         ],
+        [
+            'label' => 'AI Chats',
+            'route' => 'tech.ai.chats.index',
+            'pattern' => 'tech.ai.chats.*',
+            'icon' => 'bi-stars',
+        ],
     ];
 @endphp
 

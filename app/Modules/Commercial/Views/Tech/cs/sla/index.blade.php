@@ -43,6 +43,9 @@
                         <tr>
                             <td>
                                 <a href="{{ route('tech.sla.show', $slax) }}" class="text-decoration-none">{{ $slax->name }}</a>
+                                @if($slax->is_default)
+                                    <span class="badge text-bg-primary ms-1">Default</span>
+                                @endif
                             </td>
                             <td>
                                 <p>

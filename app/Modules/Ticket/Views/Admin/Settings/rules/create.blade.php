@@ -92,7 +92,7 @@
                         <div class="col-md-5">
                             <label class="form-label" for="action_type_{{ $index }}">Action</label>
                             <select id="action_type_{{ $index }}" name="actions[{{ $index }}][type]" class="form-select">
-                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority', 'set_category' => 'Set category', 'add_tag' => 'Add tag'] as $value => $label)
+                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority', 'set_sla' => 'Set SLA', 'set_category' => 'Set category', 'add_tag' => 'Add tag'] as $value => $label)
                                     <option value="{{ $value }}" @selected(($action['type'] ?? '') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
@@ -112,6 +112,9 @@
                     @endforeach
                     @foreach($priorities as $priority)
                         <option value="{{ $priority->id }}">priority: {{ $priority->name }}</option>
+                    @endforeach
+                    @foreach($slas as $sla)
+                        <option value="{{ $sla->id }}">sla: {{ $sla->name }}{{ $sla->is_default ? ' (default)' : '' }}</option>
                     @endforeach
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}">category: {{ $category->name }}</option>

@@ -14,7 +14,9 @@ use App\Modules\Commercial\Livewire\Tech\ServicePicker as CommercialServicePicke
 use App\Modules\Commercial\Livewire\Tech\ServicePricing as CommercialServicePricing;
 use App\Modules\Documentation\Livewire\Admin\TemplateForm as DocumentationTemplateForm;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\NAbleRmmSync as IntegrationNAbleRmmSync;
+use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\AiSettings as IntegrationAiSettings;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\TacticalRmmSync as IntegrationTacticalRmmSync;
+use App\Modules\Integration\Livewire\Tech\Ai\ContextChat as IntegrationContextChat;
 use App\Modules\Knowledge\Livewire\ArticleForm as KnowledgeArticleForm;
 use App\Modules\Taxonomy\Livewire\TagManager as TaxonomyTagManager;
 use App\Modules\UserManagement\Livewire\Roles\RolePermissions as UserManagementRolePermissions;
@@ -56,6 +58,8 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('tech.admin.user_management.roles.role-permissions', UserManagementRolePermissions::class);
         Livewire::component('tech.admin.system.integrations.n-able-rmm-sync', IntegrationNAbleRmmSync::class);
         Livewire::component('tech.admin.system.integrations.tactical-rmm-sync', IntegrationTacticalRmmSync::class);
+        Livewire::component('tech.admin.system.integrations.ai-settings', IntegrationAiSettings::class);
+        Livewire::component('tech.ai.context-chat', IntegrationContextChat::class);
 
         foreach (glob(app_path('Modules/*/Views')) as $viewPath) {
             // Register both plain lookup paths and module namespaces.

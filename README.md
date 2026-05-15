@@ -122,6 +122,10 @@ Role and permission handling use **Spatie Laravel Permission** and policy-first 
 
 ## 🚀 Getting Started (developer)
 
+### Shared Development Backlog
+
+Use `TODO.md` as the shared delegation list for active development. Pick one task, add an owner, keep status current, and update Knowledge/BookStack documentation when domain work is completed or materially changed.
+
 **Requirements:**
 
 * PHP 8.3+

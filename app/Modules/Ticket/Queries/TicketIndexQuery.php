@@ -11,7 +11,7 @@ class TicketIndexQuery
     public function paginate(array $filters = [], int $perPage = 25): LengthAwarePaginator
     {
         $query = Ticket::query()
-            ->with(['queue', 'status', 'priority', 'category', 'client'])
+            ->with(['queue', 'status', 'priority', 'sla', 'category', 'client'])
             ->when($filters['q'] ?? null, function ($query, string $search) {
                 $query->where(function ($nested) use ($search) {
                     $nested->where('ticket_key', 'like', '%' . $search . '%')
@@ -41,6 +41,11 @@ class TicketIndexQuery
             'oldest' => $query->oldest('updated_at'),
             'priority' => $query
                 ->orderBy(TicketPriority::select('level')->whereColumn('ticket_priorities.id', 'tickets.priority_id'))
+                ->latest('updated_at'),
+            'sla' => $query
+                ->orderByRaw('CASE WHEN first_response_due_at IS NOT NULL AND first_response_due_at < ? AND first_responded_at IS NULL THEN 0 ELSE 1 END', [now()])
+                ->orderByRaw('CASE WHEN resolve_due_at IS NOT NULL AND resolve_due_at < ? AND resolved_at IS NULL THEN 0 ELSE 1 END', [now()])
+                ->orderByRaw('COALESCE(first_response_due_at, resolve_due_at, updated_at) ASC')
                 ->latest('updated_at'),
             'unread' => $query->orderByDesc('is_unread')->latest('updated_at'),
             default => $query->latest('updated_at'),

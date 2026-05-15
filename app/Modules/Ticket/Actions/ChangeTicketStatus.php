@@ -6,10 +6,16 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketStatus;
+use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ChangeTicketStatus
 {
+    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime)
+    {
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Status lifecycle foundation
@@ -23,6 +29,19 @@ class ChangeTicketStatus
     public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null): Ticket
     {
         return DB::transaction(function () use ($ticket, $status, $actor) {
+            if ($reason = $this->workflowRuntime->blockedReason($ticket, $status)) {
+                TicketEvent::create([
+                    'ticket_id' => $ticket->id,
+                    'actor_id' => $actor?->id,
+                    'type' => 'workflow_transition_blocked',
+                    'message' => $reason,
+                    'before' => ['status_id' => $ticket->status_id],
+                    'after' => ['status_id' => $status->id],
+                ]);
+
+                throw ValidationException::withMessages(['status_id' => $reason]);
+            }
+
             $before = [
                 'status_id' => $ticket->status_id,
                 'resolved_at' => $ticket->resolved_at?->toISOString(),

@@ -6,9 +6,12 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketType;
+use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketRuleEngine;
+use App\Modules\Ticket\Services\TicketSlaResolver;
 use Illuminate\Support\Facades\DB;
 
 class StoreTicket
@@ -17,6 +20,7 @@ class StoreTicket
         private readonly EnsureTicketDefaults $defaults,
         private readonly TicketRuleEngine $ticketRuleEngine,
         private readonly TicketAssignmentEngine $ticketAssignmentEngine,
+        private readonly TicketSlaResolver $ticketSlaResolver,
     ) {}
 
     public function handle(array $data, ?User $actor = null): Ticket
@@ -30,6 +34,8 @@ class StoreTicket
                 'priority_id' => $defaults['priority']->id,
             ], $data));
             $ticketType = TicketType::find($data['ticket_type_id'] ?? null) ?? $defaults['type'];
+            $priority = TicketPriority::find($data['priority_id'] ?? null) ?? $defaults['priority'];
+            $sla = $this->ticketSlaResolver->resolve($data, $priority);
 
             $ticket = Ticket::create([
                 'ticket_key' => $this->nextTicketKey(),
@@ -37,7 +43,12 @@ class StoreTicket
                 'ticket_type_id' => $ticketType->id,
                 'queue_id' => $data['queue_id'] ?? $defaults['queue']->id,
                 'status_id' => $data['status_id'] ?? $defaults['status']->id,
-                'priority_id' => $data['priority_id'] ?? $defaults['priority']->id,
+                'priority_id' => $priority->id,
+                'sla_id' => $sla['sla_id'],
+                'sla_source' => $sla['sla_source'],
+                'sla_source_id' => $sla['sla_source_id'],
+                'sla_snapshot' => $sla['sla_snapshot'],
+                'workflow_id' => $data['workflow_id'] ?? TicketWorkflow::query()->where('is_active', true)->where('is_default', true)->value('id'),
                 'category_id' => $data['category_id'] ?? null,
                 'client_id' => $data['client_id'] ?? null,
                 'site_id' => $data['site_id'] ?? null,
@@ -52,6 +63,8 @@ class StoreTicket
                 'impact' => $data['impact'] ?? null,
                 'urgency' => $data['urgency'] ?? null,
                 'is_unread' => false,
+                'first_response_due_at' => $sla['first_response_due_at'],
+                'resolve_due_at' => $sla['resolve_due_at'],
             ]);
 
             if (! empty($data['description'])) {

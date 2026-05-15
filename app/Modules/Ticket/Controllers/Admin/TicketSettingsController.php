@@ -4,6 +4,7 @@ namespace App\Modules\Ticket\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\UpdateDefaultTicketEmailAccount;
@@ -12,6 +13,9 @@ use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketRule;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
+use App\Modules\Ticket\Models\TicketWorkflow;
+use App\Modules\Ticket\Models\TicketWorkflowTransition;
+use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -36,6 +40,7 @@ class TicketSettingsController extends Controller
             'types' => TicketType::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::withCount('tickets')->orderBy('level')->orderBy('sort_order')->orderBy('name')->get(),
+            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
         ]);
     }
 
@@ -183,6 +188,7 @@ class TicketSettingsController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'categories' => Category::forTickets()->active()->orderBy('name')->get(),
             'tags' => Tag::where('active', true)->orderBy('name')->get(),
         ]);
@@ -203,6 +209,7 @@ class TicketSettingsController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'categories' => Category::forTickets()->active()->orderBy('name')->get(),
             'tags' => Tag::where('active', true)->orderBy('name')->get(),
         ]);
@@ -230,6 +237,7 @@ class TicketSettingsController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
+            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'categories' => Category::forTickets()->active()->orderBy('name')->get(),
             'tags' => Tag::where('active', true)->orderBy('name')->get(),
         ]);
@@ -261,9 +269,77 @@ class TicketSettingsController extends Controller
 
     public function workflows(): View
     {
+        app(EnsureTicketDefaults::class)->handle();
+
         return view()->exists('ticket::Admin.Settings.workflows.index')
-            ? view('ticket::Admin.Settings.workflows.index')
+            ? view('ticket::Admin.Settings.workflows.index', [
+                'workflows' => TicketWorkflow::query()
+                    ->withCount(['states', 'transitions'])
+                    ->orderByDesc('is_default')
+                    ->orderBy('sort_order')
+                    ->orderBy('name')
+                    ->get(),
+            ])
             : view('ticket::Admin.Settings.index');
+    }
+
+    public function createWorkflow(): View
+    {
+        app(EnsureTicketDefaults::class)->handle();
+
+        return view('ticket::Admin.Settings.workflows.form', [
+            'mode' => 'create',
+            'workflow' => new TicketWorkflow([
+                'name' => '',
+                'is_active' => true,
+                'is_default' => false,
+                'sort_order' => 10,
+            ]),
+            'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'stateMap' => collect(),
+            'transitions' => collect(),
+        ]);
+    }
+
+    public function storeWorkflow(Request $request): RedirectResponse
+    {
+        $data = $this->validatedWorkflow($request);
+
+        $workflow = TicketWorkflow::create($data['workflow']);
+
+        $this->syncWorkflowStates($workflow, $data['states']);
+        $this->syncWorkflowTransitions($workflow, $data['transitions']);
+        $this->ensureSingleDefaultWorkflow($workflow);
+
+        return redirect()->route('tech.admin.settings.tickets.workflows.edit', $workflow)
+            ->with('success', 'Ticket workflow created.');
+    }
+
+    public function editWorkflow(TicketWorkflow $workflow): View
+    {
+        $workflow->load(['states', 'transitions']);
+
+        return view('ticket::Admin.Settings.workflows.form', [
+            'mode' => 'edit',
+            'workflow' => $workflow,
+            'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'stateMap' => $workflow->states->keyBy('ticket_status_id'),
+            'transitions' => $workflow->transitions,
+        ]);
+    }
+
+    public function updateWorkflow(Request $request, TicketWorkflow $workflow): RedirectResponse
+    {
+        $data = $this->validatedWorkflow($request, $workflow);
+
+        $workflow->update($data['workflow']);
+
+        $this->syncWorkflowStates($workflow, $data['states']);
+        $this->syncWorkflowTransitions($workflow, $data['transitions']);
+        $this->ensureSingleDefaultWorkflow($workflow);
+
+        return redirect()->route('tech.admin.settings.tickets.workflows.edit', $workflow)
+            ->with('success', 'Ticket workflow updated.');
     }
 
     private function validatedQueue(Request $request, ?TicketQueue $queue = null): array
@@ -285,6 +361,149 @@ class TicketSettingsController extends Controller
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
 
         return $data;
+    }
+
+    /**
+     * @return array{workflow: array<string, mixed>, states: array<int, array<string, mixed>>, transitions: array<int, array<string, mixed>>}
+     */
+    private function validatedWorkflow(Request $request, ?TicketWorkflow $workflow = null): array
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:ticket_workflows,slug,' . ($workflow?->id ?? 'NULL'),
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+            'is_default' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0|max:100000',
+            'states' => 'required|array|min:1',
+            'states.*.enabled' => 'nullable|boolean',
+            'states.*.name' => 'nullable|string|max:255',
+            'states.*.is_initial' => 'nullable|boolean',
+            'states.*.is_terminal' => 'nullable|boolean',
+            'states.*.requires_note' => 'nullable|boolean',
+            'states.*.requires_resolution' => 'nullable|boolean',
+            'states.*.requires_knowledge_update' => 'nullable|boolean',
+            'states.*.sort_order' => 'nullable|integer|min:0|max:100000',
+            'transitions' => 'nullable|array',
+            'transitions.*.enabled' => 'nullable|boolean',
+            'transitions.*.from_status_id' => 'nullable|integer|exists:ticket_statuses,id',
+            'transitions.*.to_status_id' => 'nullable|integer|exists:ticket_statuses,id',
+            'transitions.*.label' => 'nullable|string|max:255',
+            'transitions.*.requires_note' => 'nullable|boolean',
+            'transitions.*.requires_resolution' => 'nullable|boolean',
+            'transitions.*.requires_knowledge_update' => 'nullable|boolean',
+            'transitions.*.sort_order' => 'nullable|integer|min:0|max:100000',
+        ]);
+
+        $slug = $data['slug'] ?: Str::slug($data['name']);
+        $this->ensureUniqueSlug(TicketWorkflow::class, $slug, $workflow?->id, 'workflow');
+
+        $states = collect($data['states'])
+            ->filter(fn (array $state) => (bool) ($state['enabled'] ?? false))
+            ->map(function (array $state, int|string $statusId) {
+                return [
+                    'ticket_status_id' => (int) $statusId,
+                    'name' => $state['name'] ?: TicketStatus::find($statusId)?->name ?: 'State',
+                    'is_initial' => (bool) ($state['is_initial'] ?? false),
+                    'is_terminal' => (bool) ($state['is_terminal'] ?? false),
+                    'requires_note' => (bool) ($state['requires_note'] ?? false),
+                    'requires_resolution' => (bool) ($state['requires_resolution'] ?? false),
+                    'requires_knowledge_update' => (bool) ($state['requires_knowledge_update'] ?? false),
+                    'sort_order' => (int) ($state['sort_order'] ?? 10),
+                ];
+            })
+            ->values()
+            ->all();
+
+        if ($states === []) {
+            throw ValidationException::withMessages(['states' => 'A workflow must include at least one state.']);
+        }
+
+        if (collect($states)->where('is_initial', true)->count() !== 1) {
+            throw ValidationException::withMessages(['states' => 'A workflow must have exactly one initial state.']);
+        }
+
+        $enabledStatusIds = collect($states)->pluck('ticket_status_id')->all();
+        $seenTransitions = [];
+
+        $transitions = collect($data['transitions'] ?? [])
+            ->filter(fn (array $transition) => (bool) ($transition['enabled'] ?? false))
+            ->map(function (array $transition, int $index) use ($enabledStatusIds, &$seenTransitions) {
+                $from = (int) ($transition['from_status_id'] ?? 0);
+                $to = (int) ($transition['to_status_id'] ?? 0);
+
+                if (! in_array($from, $enabledStatusIds, true) || ! in_array($to, $enabledStatusIds, true) || $from === $to) {
+                    throw ValidationException::withMessages(['transitions' => 'Transitions must use two different enabled states.']);
+                }
+
+                $key = $from.'-'.$to;
+
+                if (isset($seenTransitions[$key])) {
+                    throw ValidationException::withMessages(['transitions' => 'Duplicate workflow transitions are not allowed.']);
+                }
+
+                $seenTransitions[$key] = true;
+
+                return [
+                    'from_status_id' => $from,
+                    'to_status_id' => $to,
+                    'label' => $transition['label'] ?: 'Move to '.(TicketStatus::find($to)?->name ?? 'state'),
+                    'is_active' => true,
+                    'requires_note' => (bool) ($transition['requires_note'] ?? false),
+                    'requires_resolution' => (bool) ($transition['requires_resolution'] ?? false),
+                    'requires_knowledge_update' => (bool) ($transition['requires_knowledge_update'] ?? false),
+                    'sort_order' => (int) ($transition['sort_order'] ?? (($index + 1) * 10)),
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'workflow' => [
+                'name' => $data['name'],
+                'slug' => $slug,
+                'description' => $data['description'] ?? null,
+                'is_active' => (bool) ($data['is_active'] ?? false),
+                'is_default' => (bool) ($data['is_default'] ?? false),
+                'sort_order' => (int) ($data['sort_order'] ?? 10),
+            ],
+            'states' => $states,
+            'transitions' => $transitions,
+        ];
+    }
+
+    private function syncWorkflowStates(TicketWorkflow $workflow, array $states): void
+    {
+        $statusIds = collect($states)->pluck('ticket_status_id')->all();
+
+        $workflow->states()->whereNotIn('ticket_status_id', $statusIds)->delete();
+
+        foreach ($states as $state) {
+            $workflow->states()->updateOrCreate(
+                ['ticket_status_id' => $state['ticket_status_id']],
+                $state
+            );
+        }
+    }
+
+    private function syncWorkflowTransitions(TicketWorkflow $workflow, array $transitions): void
+    {
+        $workflow->transitions()->delete();
+
+        foreach ($transitions as $transition) {
+            $workflow->transitions()->create($transition);
+        }
+    }
+
+    private function ensureSingleDefaultWorkflow(TicketWorkflow $workflow): void
+    {
+        if (! $workflow->is_default) {
+            return;
+        }
+
+        TicketWorkflow::query()
+            ->whereKeyNot($workflow->id)
+            ->update(['is_default' => false]);
     }
 
     private function validatedType(Request $request, ?TicketType $type = null): array
@@ -362,7 +581,7 @@ class TicketSettingsController extends Controller
             'conditions.*.operator' => 'required|string|in:contains,equals,not_equals,starts_with,ends_with,regex,present',
             'conditions.*.value' => 'nullable|string|max:1000',
             'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string|in:set_ticket_type,set_queue,set_priority,set_category,add_tag',
+            'actions.*.type' => 'required|string|in:set_ticket_type,set_queue,set_priority,set_sla,set_category,add_tag',
             'actions.*.value' => 'required|string|max:255',
         ]);
 
@@ -401,6 +620,7 @@ class TicketSettingsController extends Controller
                 'set_ticket_type' => TicketType::whereKey($action['value'])->exists(),
                 'set_queue' => TicketQueue::whereKey($action['value'])->exists(),
                 'set_priority' => TicketPriority::whereKey($action['value'])->exists(),
+                'set_sla' => Sla::whereKey($action['value'])->exists(),
                 'set_category' => Category::forTickets()->active()->whereKey($action['value'])->exists(),
                 'add_tag' => Tag::where('active', true)->whereKey($action['value'])->exists(),
                 default => false,

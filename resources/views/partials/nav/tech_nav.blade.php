@@ -75,7 +75,7 @@
     <!-- Knowledge dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $knowledgeGroupActive = request()->routeIs('tech.documentations.index') || request()->routeIs('tech.knowledge*');
+        $knowledgeGroupActive = request()->routeIs('tech.documentations.index') || request()->routeIs('tech.knowledge*') || request()->routeIs('tech.ai.chats.*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -95,6 +95,15 @@
             <li class="nav-item">
                 <a class="dropdown-item {{ request()->routeIs('tech.knowledge.index') ? 'active' : '' }}" href="{{ route('tech.knowledge.index') }}">Knowledge Base</a>
             </li>
+
+            @if(Route::has('tech.ai.chats.index'))
+                <!-- ------------------------------------------------- -->
+                <!-- AI Chats -->
+                <!-- ------------------------------------------------- -->
+                <li class="nav-item">
+                    <a class="dropdown-item {{ request()->routeIs('tech.ai.chats.*') ? 'active' : '' }}" href="{{ route('tech.ai.chats.index') }}">AI Chats</a>
+                </li>
+            @endif
 
         </ul>
     </li>
