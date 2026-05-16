@@ -188,14 +188,83 @@ class AiChatResponder
             return '';
         }
 
-        return collect([
+        $lines = collect([
             'Current tdPSA page context:',
             '- Domain: '.(data_get($context, 'domain') ?: 'unknown'),
             '- Route: '.(data_get($context, 'route_name') ?: 'unknown'),
             '- Title: '.(data_get($context, 'title') ?: 'unknown'),
             '- URL: '.(data_get($context, 'url') ?: 'unknown'),
-            'Use this as local context for the conversation. Do not claim that the page data has been changed unless a write tool is explicitly available and executed.',
-        ])->implode("\n");
+        ]);
+
+        $record = data_get($context, 'record');
+
+        if (is_array($record) && data_get($record, 'type') === 'ticket') {
+            $lines = $lines->merge($this->ticketContextInstructions($record));
+        }
+
+        $lines->push('Use this as local context for the conversation. Do not claim that the page data has been changed unless a write tool is explicitly available and executed.');
+
+        return $lines->implode("\n");
+    }
+
+    private function ticketContextInstructions(array $ticket): array
+    {
+        $lines = [
+            '',
+            'Current ticket context:',
+            '- Ticket: '.(data_get($ticket, 'key') ?: 'unknown'),
+            '- Subject: '.(data_get($ticket, 'subject') ?: 'unknown'),
+            '- Status: '.(data_get($ticket, 'status.name') ?: 'unknown').' ('.(data_get($ticket, 'status.slug') ?: 'unknown').')',
+            '- Workflow: '.(data_get($ticket, 'workflow.name') ?: 'none'),
+            '- Queue: '.(data_get($ticket, 'queue') ?: 'none'),
+            '- Priority: '.(data_get($ticket, 'priority') ?: 'none'),
+            '- Client: '.(data_get($ticket, 'client') ?: 'none'),
+            '- Contact: '.trim((string) data_get($ticket, 'contact.name').' <'.(string) data_get($ticket, 'contact.email').'>'),
+            '- Owner: '.(data_get($ticket, 'owner') ?: 'unassigned'),
+            '- Channel: '.(data_get($ticket, 'channel') ?: 'unknown'),
+            '- Unread customer activity: '.(data_get($ticket, 'is_unread') ? 'yes' : 'no'),
+        ];
+
+        $tags = collect(data_get($ticket, 'tags', []))->filter()->implode(', ');
+        if (filled($tags)) {
+            $lines[] = '- Tags: '.$tags;
+        }
+
+        $description = trim((string) data_get($ticket, 'description'));
+        if (filled($description)) {
+            $lines[] = '';
+            $lines[] = 'Ticket description:';
+            $lines[] = Str::limit($description, 3000);
+        }
+
+        $messages = collect(data_get($ticket, 'recent_messages', []))->filter(fn ($message) => is_array($message));
+        if ($messages->isNotEmpty()) {
+            $lines[] = '';
+            $lines[] = 'Recent ticket messages, oldest to newest:';
+
+            foreach ($messages as $message) {
+                $author = data_get($message, 'author_name') ?: data_get($message, 'author_type') ?: 'unknown';
+                $type = data_get($message, 'type') ?: 'message';
+                $visibility = data_get($message, 'visibility') ?: 'unknown';
+                $solution = data_get($message, 'is_solution') ? ' solution' : '';
+                $intent = data_get($message, 'reply_intent') ? ' intent='.data_get($message, 'reply_intent') : '';
+                $body = Str::limit(trim((string) data_get($message, 'body')), 2000);
+
+                $lines[] = '- ['.$type.'/'.$visibility.$solution.$intent.'] '.$author.' at '.(data_get($message, 'created_at') ?: 'unknown').': '.$body;
+            }
+        }
+
+        $events = collect(data_get($ticket, 'recent_events', []))->filter(fn ($event) => is_array($event));
+        if ($events->isNotEmpty()) {
+            $lines[] = '';
+            $lines[] = 'Recent ticket events:';
+
+            foreach ($events as $event) {
+                $lines[] = '- '.(data_get($event, 'type') ?: 'event').' at '.(data_get($event, 'created_at') ?: 'unknown').': '.Str::limit((string) data_get($event, 'message'), 500);
+            }
+        }
+
+        return $lines;
     }
 
     private function toolInstructions(AiAgent $agent): string

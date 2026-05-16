@@ -349,12 +349,12 @@
         <div class="modal d-block overflow-y-auto" tabindex="-1" role="dialog" aria-modal="true">
             <div class="modal-dialog modal-xl modal-dialog-scrollable my-4">
                 <div class="modal-content" style="max-height: calc(100vh - 3rem);">
-                    <form wire:submit.prevent="saveAgent">
-                        <div class="modal-header">
+                    <form wire:submit.prevent="saveAgent" class="d-flex flex-column overflow-hidden" style="max-height: inherit;">
+                        <div class="modal-header flex-shrink-0">
                             <h2 class="modal-title h5">{{ $editingAgentId ? 'Edit agent' : 'Add agent' }}</h2>
                             <button type="button" class="btn-close" aria-label="Close" wire:click="closeAgentModal"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body overflow-auto">
                             <div class="row g-3">
                         <div class="col-md-3">
                             <label for="agent_name" class="form-label">Name</label>
@@ -448,7 +448,7 @@
 
                             </div>
                         </div>
-                        <div class="modal-footer d-flex flex-wrap align-items-center gap-3">
+                        <div class="modal-footer d-flex flex-wrap align-items-center gap-3 flex-shrink-0">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" wire:model="agentForm.is_active" id="agent_is_active">
                                 <label class="form-check-label" for="agent_is_active">Active</label>

@@ -67,7 +67,7 @@ class StoreTicket
                 'resolve_due_at' => $sla['resolve_due_at'],
             ]);
 
-            if (! empty($data['description'])) {
+            if (! empty($data['description']) && ($data['channel'] ?? 'manual') !== 'email') {
                 TicketMessage::create([
                     'ticket_id' => $ticket->id,
                     'author_id' => $actor?->id,

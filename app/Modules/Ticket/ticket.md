@@ -92,6 +92,7 @@ Most recent completed work:
 - Workflow transitions now decide whether the Ticket show button is manually available. They can also list ticket actions, such as internal note or customer reply, that automatically advance the ticket when the action is completed.
 - Customer replies now capture intent so workflow can distinguish a normal update from a request for customer input or a solution reply.
 - Workflow can now auto-advance non-closing transitions when their requirements become satisfied, such as after marking a response as the solution. Closing remains a manual click.
+- Inbound customer replies now emit a workflow action so tickets waiting on customer input can automatically resume when the customer answers.
 - The Ticket show message composer now keeps message type and reply intent on one row. Customer replies can target any active contact for the same client and include CC recipients. Internal notes can notify a selected technician by email.
 - Ticket show disables blocked workflow buttons and shows the requirement reason instead of allowing technicians to click through unfinished work.
 - Default statuses now include New, In Progress, Waiting Customer, Resolved, and Closed.

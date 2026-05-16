@@ -12,6 +12,7 @@ class TicketAction
     public const CUSTOMER_UPDATE = 'customer_update';
     public const REQUEST_CUSTOMER_INPUT = 'request_customer_input';
     public const SEND_SOLUTION = 'send_solution';
+    public const CUSTOMER_REPLY_RECEIVED = 'customer_reply_received';
     public const CLOSE = 'close';
     public const MARK_READ = 'mark_read';
     public const APPLY_SLA = 'apply_sla';
@@ -31,6 +32,7 @@ class TicketAction
             self::CUSTOMER_UPDATE => ['label' => 'Send customer update', 'type' => 'message', 'write' => true],
             self::REQUEST_CUSTOMER_INPUT => ['label' => 'Request customer input', 'type' => 'message', 'write' => true],
             self::SEND_SOLUTION => ['label' => 'Send solution', 'type' => 'message', 'write' => true],
+            self::CUSTOMER_REPLY_RECEIVED => ['label' => 'Customer reply received', 'type' => 'message', 'write' => false],
             self::CLOSE => ['label' => 'Close ticket', 'type' => 'workflow', 'write' => true],
             self::MARK_READ => ['label' => 'Mark read', 'type' => 'triage', 'write' => true],
             self::APPLY_SLA => ['label' => 'Apply SLA', 'type' => 'sla', 'write' => true],

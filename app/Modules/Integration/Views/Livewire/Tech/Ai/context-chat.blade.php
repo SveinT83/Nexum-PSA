@@ -41,7 +41,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="small text-muted">Ask about this page. The route and domain are sent as local context.</div>
+                        <div class="small text-muted">Ask about this page. Page and record context are sent with the chat.</div>
                     @endforelse
                 </div>
 

@@ -2,6 +2,9 @@
 
 namespace App\Modules\Integration\Tests\Feature;
 
+use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
+use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
@@ -274,6 +277,159 @@ class IntegrationModuleTest extends TestCase
         ) && str_contains(
             collect($request['messages'])->pluck('content')->implode("\n"),
             'TD-2026-000101'
+        ));
+    }
+
+    #[Test]
+    public function rightbar_ai_chat_sends_current_ticket_context_to_provider(): void
+    {
+        Http::fake([
+            'https://ollama.example.test/api/chat' => Http::response([
+                'message' => [
+                    'content' => 'Ticket context received.',
+                ],
+            ], 200),
+        ]);
+
+        $techRole = Role::create(['name' => 'Tech']);
+        $tech = User::factory()->create(['status' => User::STATUS_ACTIVE, 'name' => 'Ticket Tech']);
+        $tech->assignRole($techRole);
+        $provider = AiProvider::create([
+            'name' => 'Managed Ollama',
+            'provider_key' => 'ollama',
+            'base_url' => 'https://ollama.example.test',
+            'default_model' => 'llama3.1',
+            'status' => 'active',
+        ]);
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Ticket Desk',
+            'slug' => 'ticket-desk-context',
+            'model' => 'llama3.1',
+            'instructions' => 'Use ticket context.',
+            'data_sources' => ['active_tickets'],
+            'allowed_tools' => ['records.read'],
+            'allowed_api_scopes' => ['tickets.read'],
+            'default_domains' => ['tickets'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+        $agent->roles()->sync([$techRole->id]);
+
+        $queue = TicketQueue::create([
+            'name' => 'Support',
+            'slug' => 'support-context',
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+        $status = TicketStatus::create([
+            'name' => 'Waiting Customer',
+            'slug' => 'waiting-customer',
+            'state' => 'waiting',
+            'is_default' => true,
+            'is_closed' => false,
+            'is_active' => true,
+        ]);
+        $priority = TicketPriority::create([
+            'name' => 'High',
+            'slug' => 'high-context',
+            'level' => 1,
+            'is_active' => true,
+        ]);
+        $client = Client::factory()->create(['name' => 'Acme Support']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Main Office']);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Ada Customer',
+            'email' => 'ada@example.test',
+        ]);
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-000777',
+            'queue_id' => $queue->id,
+            'status_id' => $status->id,
+            'priority_id' => $priority->id,
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'owner_id' => $tech->id,
+            'channel' => 'email',
+            'subject' => 'Bluetooth speaker problem',
+            'description' => 'Customer cannot pair Bluetooth speakers in Windows.',
+            'is_unread' => true,
+        ]);
+        $ticket->messages()->create([
+            'author_type' => 'contact',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'subject' => 'Hjelp med Windows',
+            'body' => 'Får ikke til å koble til høyttalere med Bluetooth.',
+        ]);
+        $ticket->messages()->create([
+            'author_id' => $tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Har du prøvd å fjerne enheten og pare på nytt?',
+            'metadata' => ['reply_intent' => 'request_customer_input'],
+        ]);
+
+        Route::get('/_test-ai-ticket-context/{ticket}', function (Ticket $ticket) use ($tech) {
+            Livewire::actingAs($tech)
+                ->test('tech.ai.context-chat', ['pageTitle' => $ticket->ticket_key])
+                ->set('domain', 'tickets')
+                ->set('routeName', 'tech.tickets.show')
+                ->set('pageUrl', 'http://localhost/tech/tickets/'.$ticket->ticket_key)
+                ->set('recordContext', [
+                    'type' => 'ticket',
+                    'key' => 'TD-2026-000777',
+                    'subject' => 'Bluetooth speaker problem',
+                    'description' => 'Customer cannot pair Bluetooth speakers in Windows.',
+                    'channel' => 'email',
+                    'status' => ['name' => 'Waiting Customer', 'slug' => 'waiting-customer'],
+                    'client' => 'Acme Support',
+                    'contact' => ['name' => 'Ada Customer', 'email' => 'ada@example.test'],
+                    'owner' => 'Ticket Tech',
+                    'is_unread' => true,
+                    'recent_messages' => [
+                        [
+                            'author_type' => 'contact',
+                            'type' => 'customer_reply',
+                            'visibility' => 'public',
+                            'body' => 'Får ikke til å koble til høyttalere med Bluetooth.',
+                            'created_at' => now()->toIso8601String(),
+                        ],
+                    ],
+                ])
+                ->set('message', 'Hva er status her?')
+                ->call('send')
+                ->call('processPendingResponse')
+                ->assertHasNoErrors();
+
+            return response('ok');
+        })->name('test.ticket.context');
+
+        $this->actingAs($tech)
+            ->get('/_test-ai-ticket-context/'.$ticket->ticket_key)
+            ->assertOk();
+
+        $chat = AiChat::with('messages')->firstOrFail();
+
+        $this->assertSame('TD-2026-000777', data_get($chat->metadata, 'page_context.record.key'));
+        $this->assertSame('Bluetooth speaker problem', data_get($chat->metadata, 'page_context.record.subject'));
+        $this->assertSame('Ticket context received.', $chat->messages->last()->body);
+
+        Http::assertSent(fn ($request) => str_contains(
+            collect($request['messages'])->pluck('content')->implode("\n"),
+            'Current ticket context:'
+        ) && str_contains(
+            collect($request['messages'])->pluck('content')->implode("\n"),
+            'TD-2026-000777'
+        ) && str_contains(
+            collect($request['messages'])->pluck('content')->implode("\n"),
+            'Customer cannot pair Bluetooth speakers in Windows.'
+        ) && str_contains(
+            collect($request['messages'])->pluck('content')->implode("\n"),
+            'Får ikke til å koble til høyttalere med Bluetooth.'
         ));
     }
 

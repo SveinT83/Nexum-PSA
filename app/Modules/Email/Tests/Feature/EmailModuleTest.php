@@ -23,6 +23,8 @@ use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketRule;
+use App\Modules\Ticket\Models\TicketStatus;
+use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Database\Seeders\EmailTemplateSeeder;
@@ -245,6 +247,60 @@ class EmailModuleTest extends TestCase
             'type' => 'inbound_email_linked',
             'message' => 'Customer reply received by email.',
         ]);
+    }
+
+    #[Test]
+    public function inbound_customer_reply_resumes_ticket_waiting_for_customer(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $waiting = TicketStatus::where('slug', 'waiting-customer')->firstOrFail();
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-000044',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $waiting->id,
+            'workflow_id' => $workflow->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Waiting customer reply',
+            'is_unread' => false,
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'support@example.com',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.com',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.com',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 144,
+            'message_id' => '<waiting-reply@example.com>',
+            'subject' => 'Re: "[TD-2026-000044] Waiting customer reply"',
+            'from_name' => 'Customer Name',
+            'from_email' => 'customer@example.com',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Here is the information you asked for.',
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $this->assertSame($inProgress->id, $ticket->fresh()->status_id);
+        $this->assertTrue($ticket->fresh()->is_unread);
     }
 
     #[Test]
@@ -512,6 +568,7 @@ class EmailModuleTest extends TestCase
         $this->assertSame($site->id, $ticket->site_id);
         $this->assertSame($contact->id, $ticket->contact_id);
         $this->assertSame('email', $ticket->channel);
+        $this->assertSame('I cannot connect to VPN this morning.', $ticket->description);
         $this->assertTrue($ticket->is_unread);
         $this->assertSame(1, TicketMessage::where('ticket_id', $ticket->id)->count());
 

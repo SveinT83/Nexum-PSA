@@ -58,7 +58,9 @@ class EnsureTicketWorkflowDefaults
         $this->ensureTransition($workflow, 'in-progress', 'waiting-customer', 'Request customer input', 20, triggerActions: [
             TicketAction::REQUEST_CUSTOMER_INPUT,
         ]);
-        $this->ensureTransition($workflow, 'waiting-customer', 'in-progress', 'Resume work', 30);
+        $this->ensureTransition($workflow, 'waiting-customer', 'in-progress', 'Resume work', 30, triggerActions: [
+            TicketAction::CUSTOMER_REPLY_RECEIVED,
+        ]);
         $this->ensureTransition($workflow, 'in-progress', 'resolved', 'Mark as solved', 40, requiresResponse: true, requiresResolution: true);
         $this->ensureTransition($workflow, 'new', 'resolved', 'Mark as solved', 45, requiresResponse: true, requiresResolution: true);
         $this->ensureTransition($workflow, 'waiting-customer', 'resolved', 'Mark as solved', 46, requiresResponse: true, requiresResolution: true);
