@@ -89,7 +89,12 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <div class="small text-muted">Name</div>
-                        <div class="fw-semibold">{{ $sla->name }}</div>
+                        <div class="fw-semibold">
+                            {{ $sla->name }}
+                            @if($sla->is_default)
+                                <span class="badge text-bg-primary ms-1">Default</span>
+                            @endif
+                        </div>
                     </div>
                     <div class="col-md-8">
                         <div class="small text-muted">Description</div>
@@ -163,6 +168,13 @@
 
                         <div class="col-md-8">
                             <x-forms.textarea name="description" labelName="Description" vars="{{$disabled ?? ''}}">{{$sla->description ?? ''}}</x-forms.textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="is_default" value="0">
+                                <input class="form-check-input" type="checkbox" id="is_default" name="is_default" value="1" @checked(old('is_default', $sla->is_default ?? false)) {{ $disabled ?? '' }}>
+                                <label class="form-check-label" for="is_default">Default SLA policy</label>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -9,10 +9,12 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Email\Models\EmailLog;
+use App\Modules\Knowledge\Queries\ArticleQuery;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
 use App\Modules\Ticket\Actions\CloseTicket;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
@@ -24,9 +26,13 @@ use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
+use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Queries\TicketIndexQuery;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
+use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -201,15 +207,21 @@ class TicketController extends Controller
             ->with('success', 'Ticket ' . $ticket->ticket_key . ' created.');
     }
 
-    public function show(Ticket $ticket): View
+    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime): View
     {
         app(EnsureTicketDefaults::class)->handle();
 
-        $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events']);
         $messageIds = $ticket->messages->pluck('id')->all();
+
+        $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);
+        $closeTransition = $workflowTransitions->first(fn (TicketWorkflowTransition $transition) => (bool) $transition->toStatus?->is_closed);
 
         return view('ticket::Tech.Tickets.show', [
             'ticket' => $ticket,
+            'ticketActions' => $actionGuard->map($ticket, request()->user()),
+            'workflowTransitions' => $workflowTransitions,
+            'closeTransition' => $closeTransition,
             'latestAssignmentEvent' => $ticket->events
                 ->where('type', 'assigned')
                 ->sortByDesc('created_at')
@@ -220,6 +232,8 @@ class TicketController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'categories' => $this->ticketCategories(),
             'technicians' => $this->technicians(),
+            'replyContacts' => $this->replyContactOptions($ticket),
+            'knowledgeSuggestions' => $articleQuery->relevantForTicket($ticket, 3),
             'emailLogsByMessageId' => EmailLog::query()
                 ->where('direction', 'outbound')
                 ->where('scope', 'tickets')
@@ -249,25 +263,43 @@ class TicketController extends Controller
         ]);
     }
 
-    public function addMessage(Request $request, Ticket $ticket, AddTicketMessage $addTicketMessage): RedirectResponse
+    public function addMessage(Request $request, Ticket $ticket, AddTicketMessage $addTicketMessage, TicketActionGuard $actionGuard): RedirectResponse
     {
         $data = $request->validate([
             'body' => 'required|string',
             'type' => 'required|string|in:internal_note,customer_reply',
+            'reply_intent' => 'nullable|string|in:customer_update,request_customer_input,send_solution',
+            'reply_contact_id' => 'nullable|integer|exists:client_users,id',
+            'cc' => 'nullable|string|max:1000',
+            'notify_user_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
             'visibility' => 'required|string|in:internal,public',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|max:20480',
         ]);
 
-        $ticket->loadMissing('contact');
+        $data['visibility'] = $data['type'] === 'internal_note' ? 'internal' : 'public';
+        $data['reply_intent'] = $data['type'] === 'customer_reply'
+            ? ($data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE)
+            : null;
+        $action = $data['type'] === 'customer_reply' ? TicketAction::CUSTOMER_REPLY : TicketAction::ADD_INTERNAL_NOTE;
 
-        if ($data['type'] === 'customer_reply' && empty($ticket->contact?->email)) {
-            return back()
-                ->withErrors(['type' => 'A customer reply requires a ticket contact with an email address.'])
-                ->withInput();
+        if ($reason = $actionGuard->reason($ticket, $action, $request->user())) {
+            return back()->withErrors(['type' => $reason])->withInput();
         }
 
-        $data['visibility'] = $data['type'] === 'internal_note' ? 'internal' : 'public';
+        if ($data['type'] === 'customer_reply') {
+            $replyContactId = $data['reply_contact_id'] ?? $ticket->contact_id;
+            $replyContact = $this->replyContactOptions($ticket)->firstWhere('id', (int) $replyContactId);
+
+            if (! $replyContact || blank($replyContact->email)) {
+                return back()->withErrors(['reply_contact_id' => 'Select an active client contact with an email address.'])->withInput();
+            }
+
+            $data['reply_contact_id'] = $replyContact->id;
+        } else {
+            $data['reply_contact_id'] = null;
+            $data['cc'] = null;
+        }
 
         $addTicketMessage->handle($ticket, $data, $request->user());
 
@@ -286,8 +318,12 @@ class TicketController extends Controller
         return Storage::disk($disk)->download($attachment->path, $attachment->filename);
     }
 
-    public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, ChangeTicketStatus $changeTicketStatus): RedirectResponse
+    public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, ChangeTicketStatus $changeTicketStatus, TicketActionGuard $actionGuard): RedirectResponse
     {
+        if ($reason = $actionGuard->reason($ticket, TicketAction::UPDATE_FIELDS, $request->user())) {
+            return back()->withErrors(['ticket' => $reason])->withInput();
+        }
+
         $data = $request->validate([
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -331,12 +367,32 @@ class TicketController extends Controller
             ->with('success', 'Ticket updated.');
     }
 
-    public function close(Request $request, Ticket $ticket, CloseTicket $closeTicket): RedirectResponse
+    public function close(Request $request, Ticket $ticket, CloseTicket $closeTicket, TicketActionGuard $actionGuard): RedirectResponse
     {
+        if ($reason = $actionGuard->reason($ticket, TicketAction::CLOSE, $request->user())) {
+            return back()->withErrors(['ticket' => $reason]);
+        }
+
         $closeTicket->handle($ticket, $request->user());
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Ticket closed.');
+    }
+
+    public function transition(Request $request, Ticket $ticket, TicketWorkflowTransition $transition, ChangeTicketStatus $changeTicketStatus, TicketWorkflowRuntime $workflowRuntime): RedirectResponse
+    {
+        abort_unless((int) $transition->from_status_id === (int) $ticket->status_id, 404);
+
+        $transition->loadMissing('toStatus');
+
+        if ($reason = $workflowRuntime->manualBlockedReason($ticket, $transition)) {
+            return back()->withErrors(['status_id' => $reason]);
+        }
+
+        $changeTicketStatus->handle($ticket, $transition->toStatus, $request->user());
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Workflow transition completed.');
     }
 
     public function markRead(Request $request, Ticket $ticket, MarkTicketRead $markTicketRead): RedirectResponse
@@ -387,8 +443,20 @@ class TicketController extends Controller
             ->with('success', 'Reply marked as read.');
     }
 
-    public function assign(Request $request, Ticket $ticket, TicketAssignmentEngine $assignmentEngine): RedirectResponse
+    public function markMessageSolution(Request $request, Ticket $ticket, TicketMessage $message, MarkTicketMessageSolution $markSolution): RedirectResponse
     {
+        $markSolution->handle($ticket, $message, $request->user());
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Response marked as solution.');
+    }
+
+    public function assign(Request $request, Ticket $ticket, TicketAssignmentEngine $assignmentEngine, TicketActionGuard $actionGuard): RedirectResponse
+    {
+        if ($reason = $actionGuard->reason($ticket, TicketAction::ASSIGN_OWNER, $request->user())) {
+            return back()->withErrors(['assignment' => $reason]);
+        }
+
         $previousOwnerId = $ticket->owner_id;
         $ownerId = $assignmentEngine->assign($ticket, force: true);
 
@@ -426,6 +494,21 @@ class TicketController extends Controller
         }
 
         return $technicians->sortBy('name')->values();
+    }
+
+    private function replyContactOptions(Ticket $ticket): Collection
+    {
+        if (! $ticket->client_id) {
+            return $ticket->contact ? collect([$ticket->contact]) : collect();
+        }
+
+        return ClientUser::query()
+            ->whereHas('site', fn ($query) => $query->where('client_id', $ticket->client_id))
+            ->where('active', true)
+            ->whereNotNull('email')
+            ->orderByDesc('is_default_for_client')
+            ->orderBy('name')
+            ->get(['id', 'client_site_id', 'name', 'email']);
     }
 
     private function ticketCategories(): Collection

@@ -5,6 +5,7 @@ namespace App\Modules\Commercial\Controllers\Tech\Contracts;
 use App\Http\Controllers\Controller;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Mail\ContractLinkSent;
+use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Email\Models\EmailAccount;
 use Illuminate\Http\Request;
 use App\Models\Clients\Client;
@@ -43,7 +44,7 @@ class ContractController extends Controller
      */
     public function show(Contracts $contract)
     {
-        $contract->load(['client', 'items.service.serviceTerms', 'items.service.costRelations.cost']);
+        $contract->load(['client', 'sla', 'items.service.serviceTerms', 'items.service.costRelations.cost']);
 
         // Check for missing terms (services that have terms not in snapshot)
         // This ensures the legal base is synchronized with the actual service list.
@@ -136,6 +137,7 @@ class ContractController extends Controller
             'activeClient' => $activeClient,
             'clients' => $clients,
             'technicians' => $technicians,
+            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'startDate' => $startDate->toDateString(),
             'endDate' => $endDate->toDateString(),
             'bindingEndDate' => $bindingEndDate->toDateString(),
@@ -210,6 +212,7 @@ class ContractController extends Controller
             'activeClient' => $activeClient,
             'clients' => $clients,
             'technicians' => $technicians,
+            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'startDate' => $contract->start_date ? $contract->start_date->toDateString() : null,
             'endDate' => $contract->end_date ? $contract->end_date->toDateString() : null,
             'bindingEndDate' => $contract->binding_end_date ? $contract->binding_end_date->toDateString() : null,

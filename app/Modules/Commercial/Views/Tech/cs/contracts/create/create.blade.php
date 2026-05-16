@@ -63,6 +63,21 @@
                     </x-forms.select>
                 </div>
 
+                <!-- ------------------------------------------------- -->
+                <!-- SLA Policy -->
+                <!-- Selects the structured SLA profile inherited by new tickets for this contract. -->
+                <!-- ------------------------------------------------- -->
+                <div class="col-md-6 mt-3">
+                    <x-forms.select name="sla_id" labelName="SLA Policy">
+                        <option value="">Use system default SLA</option>
+                        @foreach($slas as $sla)
+                            <option value="{{ $sla->id }}" {{ (int) old('sla_id', $contract->sla_id ?? 0) === $sla->id ? 'selected' : '' }}>
+                                {{ $sla->name }}{{ $sla->is_default ? ' (default)' : '' }}
+                            </option>
+                        @endforeach
+                    </x-forms.select>
+                </div>
+
             </div>
         </x-card.default>
 

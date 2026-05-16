@@ -24,6 +24,13 @@ Implemented now:
 - Per-message outbound email status on the ticket conversation.
 - Manual mark-as-read handling for unread tickets.
 - Basic lifecycle operations for status, queue, priority, category, owner, and close.
+- Ticket Actions v1 with named action definitions and a shared guard for mutable ticket operations.
+- Ticket Workflow v1 with workflow, state, and transition models plus runtime transition validation.
+- Workflow runtime requirements for internal notes, public technician responses, and selected solution responses.
+- Workflow transition controls for whether a transition is manually clickable and which ticket actions can trigger it automatically.
+- Customer reply intents for update, request customer input, and send solution.
+- Ticket reply recipient override, CC recipients, and internal note technician notifications.
+- Ticket conversation actions for marking a public technician reply as the ticket solution.
 - Dedicated ticket edit view for subject, description, and lifecycle fields.
 - Asset selection on create/edit, scoped by client/contact rules.
 - Explicit site selection and automatic site resolution from contact or asset.
@@ -31,6 +38,9 @@ Implemented now:
 - Admin management for ticket queues and ticket types.
 - Admin management for ticket statuses and ticket priorities.
 - Ticket Rules MVP for `on_create` field routing.
+- SLA resolution on ticket creation using Ticket Rule override, active contract SLA, then default SLA.
+- Ticket SLA source tracking with policy snapshot and first response / resolve due timestamps.
+- Ticket show displays SLA policy, source, first response target, resolve target, and first response completion.
 - Inbound email linking to existing tickets by ticket key in the subject through Email Rules or fallback processing.
 - Inbound email linking to existing tickets by `In-Reply-To`/`References` matching prior outbound ticket reply `Message-ID` logs.
 - Inbound email rule action for creating a new ticket from an unmatched email.
@@ -43,6 +53,7 @@ Implemented now:
 - Assignment Engine that runs after Ticket Rules and can fall back to technician profile scoring.
 - Ticket show assignment panel and manual re-run assignment action.
 - Ticket index filters for priority, category, unread, unassigned, and open/closed lifecycle.
+- Ticket index shows compact SLA risk badges and can sort by SLA risk.
 - Feature tests for the current main flows.
 
 Most recent completed work:
@@ -73,11 +84,32 @@ Most recent completed work:
 - Ticket show now displays the latest outbound email status for each customer reply.
 - Technician-authored customer replies no longer mark the ticket as unread.
 - Unread tickets can now be marked as read from the ticket show page; the action also stamps existing unread messages with `read_at`.
-- Workflow implementation was intentionally deferred. The Ticket module now has lower-level lifecycle actions that future workflows can validate instead of replacing.
+- Workflow v1 now validates status transitions and shows available workflow actions on Ticket show.
+- Workflow Editor v2 can create and edit workflows, states, and transitions from the admin UI.
+- Workflow Editor v3 uses a Livewire builder for adding states, assigning requirements, and adding next-status transitions from each state.
+- Workflow transitions now enforce configured requirements before status changes commit. Default "Mark as solved" transitions require a public technician response and a response marked as the solution.
+- The default workflow no longer allows quick close from open states; tickets must move through Resolved before Closed.
+- Workflow transitions now decide whether the Ticket show button is manually available. They can also list ticket actions, such as internal note or customer reply, that automatically advance the ticket when the action is completed.
+- Customer replies now capture intent so workflow can distinguish a normal update from a request for customer input or a solution reply.
+- Workflow can now auto-advance non-closing transitions when their requirements become satisfied, such as after marking a response as the solution. Closing remains a manual click.
+- Inbound customer replies now emit a workflow action so tickets waiting on customer input can automatically resume when the customer answers.
+- The Ticket show message composer now keeps message type and reply intent on one row. Customer replies can target any active contact for the same client and include CC recipients. Internal notes can notify a selected technician by email.
+- Ticket show disables blocked workflow buttons and shows the requirement reason instead of allowing technicians to click through unfinished work.
 - Default statuses now include New, In Progress, Waiting Customer, Resolved, and Closed.
 - Ticket show keeps lifecycle details in the right-side Details card, while full edits happen on `tech.tickets.edit`.
 - Tests now cover missing contact email, missing outbound account, missing email template, and SMTP failure logging.
 - Ticket settings can update `EmailAccount.defaults_for` so the Email module and Ticket module share the same source of truth for the ticket sender account.
+- Ticket SLA v1 now stores `sla_id`, `sla_source`, `sla_source_id`, and `sla_snapshot` on tickets.
+- `TicketSlaResolver` maps Commercial SLA profiles to Ticket timers and resolves SLA in this order: Ticket Rule, active Contract, default SLA.
+- Ticket Rules can now use the `set_sla` action during `on_create`.
+- SLA policies can be marked as the default policy from the Commercial SLA form.
+- Contracts can now select a structured SLA policy, and active contracts pass that policy to new tickets for the client.
+- Customer replies now stamp `first_responded_at` the first time a technician sends a public reply.
+- Ticket index now surfaces response overdue, resolve overdue, upcoming SLA target, and SLA policy name.
+- Ticket Actions v1 now defines shared action names for update fields, status changes, assignment, internal notes, customer replies, close, mark read, apply SLA, and Knowledge update requests.
+- `TicketActionGuard` centralizes basic action checks for active users, closed-ticket restrictions, and customer reply contact-email requirements.
+- Ticket show receives an allowed-action map so UI controls can hide blocked operations before workflow rules are fully implemented.
+- `ApplyTicketSla` provides a reusable backend action for manually applying an SLA policy and writing an audit event.
 
 ## Module structure
 
@@ -93,6 +125,7 @@ Current important files:
 - `app/Modules/Ticket/Actions/ChangeTicketStatus.php` - changes ticket status and owns resolved/closed timestamps.
 - `app/Modules/Ticket/Actions/CloseTicket.php` - convenience close operation using the same lifecycle status change.
 - `app/Modules/Ticket/Actions/MarkTicketRead.php` - clears the ticket unread flag and stamps unread messages as read.
+- `app/Modules/Ticket/Actions/MarkTicketMessageSolution.php` - marks one public technician response as the ticket solution for workflow requirements.
 - `app/Modules/Ticket/Actions/UpdateDefaultTicketEmailAccount.php` - updates the Email module's per-scope default for `tickets`.
 - `app/Modules/Ticket/Actions/UpdateTicketFields.php` - updates queue, priority, category, and owner with audit events.
 - `app/Modules/Ticket/Actions/LinkInboundEmailToTicket.php` - links an Email module inbound message to an existing ticket, inherits Email tags, and creates a public customer reply.
@@ -104,6 +137,7 @@ Current important files:
 - `app/Modules/Ticket/Queries/TicketIndexQuery.php` - filtering, sorting, and pagination for the ticket index.
 - `app/Modules/Ticket/Services/TicketRuleEngine.php` - evaluates active Ticket Rules for ticket creation context and applies field overrides.
 - `app/Modules/Ticket/Services/TicketAssignmentEngine.php` - assigns unowned tickets by assignment rules or technician profile scoring.
+- `app/Modules/Ticket/Livewire/Admin/WorkflowEditor.php` - interactive workflow builder for state selection, requirements, and transitions.
 - `app/Modules/Ticket/Models/*` - Ticket data model.
 - `app/Modules/Ticket/Tests/Feature/TicketModuleTest.php` - current module feature coverage.
 
@@ -117,6 +151,7 @@ Routes are loaded through the existing Tech route loader, so the current public 
 - `tech.tickets.show`
 - `tech.tickets.close`
 - `tech.tickets.messages.store`
+- `tech.tickets.messages.solution`
 - `tech.tickets.read`
 - `tech.tickets.assign`
 - `tech.tickets.profile.edit`
@@ -364,22 +399,25 @@ Current state:
 
 - Ticket Rules have an MVP admin UI at `tech.admin.settings.tickets.rules`.
 - Active `on_create` rules are evaluated by `TicketRuleEngine` before a ticket is stored.
-- Current actions can set ticket type, queue, priority, category, and tags.
+- Current actions can set ticket type, queue, priority, SLA, category, and tags.
 - Current conditions can use channel, subject, description/body, sender email/domain, email tags, known-client flags, and active-contract flags when those context values are provided.
 - Routes exist for `tech.admin.settings.tickets.workflows`.
+- Default workflow is generated from active ticket statuses.
+- Tickets can store `workflow_id`; new tickets use the active global default workflow.
+- Ticket show displays available workflow transitions for the current state.
+- Status changes are blocked when the active workflow has no matching transition, and the blocked attempt is logged.
+- Admin workflow editor can persist workflow metadata, enabled states, initial/terminal flags, transition rows, and stored transition requirements.
 - Specification files exist under `Views/Admin/Settings/rules/` and `Views/Admin/Settings/workflows/`.
 
 Not implemented:
 
 - Ticket Rule execution audit/history population.
 - Ticket Rule dry-run/test harness.
-- Ticket Rule actions for owner, status, SLA, workflow, notes, notifications, and webhooks.
+- Ticket Rule actions for owner, status, workflow, notes, notifications, and webhooks.
 - Automatic population of `client_known` and `client_has_active_contract` context from inbound email sender.
-- Workflow data model.
-- Workflow state machine.
-- Workflow transition validation.
 - Workflow binding to queues/categories.
-- Runtime workflow panel on the ticket view.
+- Runtime enforcement for stored transition requirements such as note, resolution text, and Knowledge update.
+- Workflow bindings to queues/categories.
 
 ## Known gaps and risks
 
@@ -388,7 +426,7 @@ Not implemented:
 - Failed outbound sends are logged to `email_logs` and surfaced on the relevant customer reply in the Ticket UI.
 - Ticket messages still have a legacy `attachments` JSON column, but new file handling uses `ticket_attachments`.
 - Time entries and watchers have tables and models, but no current UI/action flow.
-- Status changes, assignment changes, priority changes, close/resolution, and SLA dates are not yet first-class actions.
+- Some future workflow actions, such as required Knowledge updates and transition-specific validation, still need first-class execution handlers.
 - Some older documentation still references legacy namespaces such as `App\Http\Controllers\...`; new Ticket work must stay inside `app/Modules/Ticket`.
 - `routes/tech.php` currently loads module routes by glob. This works today, but `module-architecture.md` recommends explicit module route loading for AI compatibility.
 
@@ -441,17 +479,13 @@ Not implemented:
 
 ### 7. Implement Workflows
 
-- Create workflow, version, state, transition, and binding models/migrations.
-- Bind workflows by global default, queue, category, or Ticket Rule.
-- Add allowed transition checks to ticket status changes.
-- Add a workflow panel to the ticket show view.
-- Log blocked transitions, overrides, and workflow changes.
+- Enforce transition requirements for note, resolution text, and Knowledge update.
+- Bind workflows by queue, category, or Ticket Rule.
+- Add override handling with justification and audit.
 
 ### 8. Add SLA and time tracking
 
-- Decide how Commercial SLA records map to Ticket SLA policy.
-- Populate `first_response_due_at` and `resolve_due_at` when tickets are created.
-- Set `first_responded_at` when the first public technician response is sent.
+- Add SLA reporting and breach trend views.
 - Add time entry UI using `ticket_time_entries`.
 - Add reports and billing handoff only after the basic time entry flow is reliable.
 

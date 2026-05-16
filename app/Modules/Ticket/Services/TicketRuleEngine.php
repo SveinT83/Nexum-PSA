@@ -90,6 +90,7 @@ class TicketRuleEngine
                 'set_ticket_type' => $context['ticket_type_id'] = (int) $value,
                 'set_queue' => $context['queue_id'] = (int) $value,
                 'set_priority' => $context['priority_id'] = (int) $value,
+                'set_sla' => $context['sla_id'] = (int) $value,
                 'set_category' => $context['category_id'] = (int) $value,
                 'add_tag' => $context['tag_ids'] = $this->appendTagId($context['tag_ids'] ?? [], $value),
                 default => null,

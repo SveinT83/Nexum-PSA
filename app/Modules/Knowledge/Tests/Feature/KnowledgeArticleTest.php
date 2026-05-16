@@ -4,8 +4,15 @@ namespace App\Modules\Knowledge\Tests\Feature;
 
 use App\Models\Core\User;
 use App\Models\Knowledge\Article;
+use App\Models\Knowledge\Book;
+use App\Models\Knowledge\Chapter;
+use App\Models\Knowledge\Shelf;
+use App\Models\System\Integrations\Integration;
+use App\Modules\Integration\Jobs\PushPendingKnowledgeToBookStack;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -58,6 +65,1034 @@ class KnowledgeArticleTest extends TestCase
         $this->assertSame($this->tech->id, $article->created_by);
         $this->assertNotEmpty($article->slug);
         $this->assertNotEmpty($article->body_html);
+    }
+
+    #[Test]
+    public function tech_user_can_browse_knowledge_library_books(): void
+    {
+        $this->actingAs($this->tech);
+
+        $shelf = Shelf::create([
+            'name' => 'Operations',
+            'slug' => 'operations',
+        ]);
+
+        $book = Book::create([
+            'shelf_id' => $shelf->id,
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+        ]);
+
+        Article::create([
+            'title' => 'VPN Setup',
+            'slug' => 'vpn-setup',
+            'body_markdown' => 'VPN setup steps',
+            'body_html' => 'VPN setup steps',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'knowledge_shelf_id' => $shelf->id,
+            'knowledge_book_id' => $book->id,
+        ]);
+
+        $this->get(route('tech.knowledge.index'))
+            ->assertOk()
+            ->assertSee('Operations')
+            ->assertSee('New Shelf')
+            ->assertSee('Runbooks')
+            ->assertSee('Library Status')
+            ->assertSee('Shelves')
+            ->assertSee('Books')
+            ->assertDontSee('Sync Now');
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => false,
+                'sync_mode' => 'pull_only',
+                'read_only' => true,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $this->get(route('tech.knowledge.index'))
+            ->assertOk()
+            ->assertSee('Sync Now');
+
+        $this->get(route('tech.knowledge.shelf', $shelf))
+            ->assertOk()
+            ->assertSee('New Book');
+
+        $this->get(route('tech.knowledge.book', $book))
+            ->assertOk()
+            ->assertSee('New Chapter')
+            ->assertSee('New Page')
+            ->assertSee('VPN Setup');
+    }
+
+    #[Test]
+    public function tech_user_can_create_shelf_and_book(): void
+    {
+        $this->actingAs($this->tech);
+
+        $shelfResponse = $this->post(route('tech.knowledge.shelves.store'), [
+            'name' => 'Customer Documentation',
+            'description' => 'Shared customer runbooks and standards.',
+        ]);
+
+        $shelf = Shelf::firstOrFail();
+
+        $shelfResponse->assertRedirect(route('tech.knowledge.shelf', $shelf));
+        $this->assertSame('Customer Documentation', $shelf->name);
+        $this->assertSame('customer-documentation', $shelf->slug);
+        $this->assertSame('local', $shelf->sync_status);
+
+        $bookResponse = $this->post(route('tech.knowledge.books.store', $shelf), [
+            'name' => 'Onboarding',
+            'description' => 'Customer onboarding pages.',
+            'priority' => 10,
+        ]);
+
+        $book = Book::firstOrFail();
+
+        $bookResponse->assertRedirect(route('tech.knowledge.book', $book));
+        $this->assertSame($shelf->id, $book->shelf_id);
+        $this->assertSame('onboarding', $book->slug);
+        $this->assertSame(10, $book->priority);
+        $this->assertSame('local', $book->sync_status);
+    }
+
+    #[Test]
+    public function tech_user_can_edit_book_and_move_it_to_another_shelf(): void
+    {
+        $this->actingAs($this->tech);
+
+        $sourceShelf = Shelf::create([
+            'name' => 'Old Shelf',
+            'slug' => 'old-shelf',
+        ]);
+        $targetShelf = Shelf::create([
+            'name' => 'New Shelf',
+            'slug' => 'new-shelf',
+        ]);
+        $book = Book::create([
+            'shelf_id' => $sourceShelf->id,
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+            'description' => 'Old text',
+            'priority' => 1,
+            'sync_status' => 'local',
+        ]);
+
+        $this->get(route('tech.knowledge.book', $book))
+            ->assertOk()
+            ->assertSee('Edit Book');
+
+        $this->get(route('tech.knowledge.books.edit', $book))
+            ->assertOk()
+            ->assertSee('Save Book')
+            ->assertSee('New Shelf');
+
+        $this->put(route('tech.knowledge.books.update', $book), [
+            'shelf_id' => $targetShelf->id,
+            'name' => 'Runbooks Updated',
+            'description' => 'Updated text',
+            'priority' => 9,
+        ])->assertRedirect(route('tech.knowledge.book', $book));
+
+        $book->refresh();
+
+        $this->assertSame($targetShelf->id, $book->shelf_id);
+        $this->assertSame('Runbooks Updated', $book->name);
+        $this->assertSame('Updated text', $book->description);
+        $this->assertSame(9, $book->priority);
+        $this->assertSame('local', $book->sync_status);
+    }
+
+    #[Test]
+    public function book_stack_sync_switch_is_only_visible_when_two_way_sync_is_active(): void
+    {
+        $this->actingAs($this->tech);
+
+        $this->get(route('tech.knowledge.shelves.create'))
+            ->assertOk()
+            ->assertDontSee('Sync to BookStack');
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+
+        $shelf = Shelf::create([
+            'name' => 'Operations',
+            'slug' => 'operations',
+        ]);
+
+        $this->get(route('tech.knowledge.shelves.create'))
+            ->assertOk()
+            ->assertSee('Sync to BookStack')
+            ->assertSee('name="sync_to_book_stack" value="1" checked', false);
+
+        $this->get(route('tech.knowledge.books.create', $shelf))
+            ->assertOk()
+            ->assertSee('Sync to BookStack')
+            ->assertSee('name="sync_to_book_stack" value="1" checked', false);
+    }
+
+    #[Test]
+    public function checked_book_stack_sync_switch_marks_records_for_worker_push(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->tech);
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+
+        $this->post(route('tech.knowledge.shelves.store'), [
+            'name' => 'Queued Shelf',
+            'description' => 'Should be pushed.',
+            'sync_to_book_stack' => '1',
+        ])->assertRedirect();
+
+        $shelf = Shelf::where('name', 'Queued Shelf')->firstOrFail();
+
+        $this->assertSame('pending_push', $shelf->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+
+        $this->post(route('tech.knowledge.books.store', $shelf), [
+            'name' => 'Queued Book',
+            'description' => 'Should be pushed.',
+            'priority' => 5,
+            'sync_to_book_stack' => '1',
+        ])->assertRedirect();
+
+        $book = Book::where('name', 'Queued Book')->firstOrFail();
+
+        $this->assertSame('pending_push', $book->sync_status);
+        $this->assertSame('pending_push', $shelf->fresh()->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class, 2);
+
+        $this->post(route('tech.knowledge.chapters.store', $book), [
+            'name' => 'Queued Chapter',
+            'description' => 'Should be pushed.',
+            'priority' => 10,
+            'sync_to_book_stack' => '1',
+        ])->assertRedirect();
+
+        $chapter = Chapter::where('name', 'Queued Chapter')->firstOrFail();
+
+        $this->assertSame('pending_push', $chapter->sync_status);
+        $this->assertSame('pending_push', $book->fresh()->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class, 3);
+    }
+
+    #[Test]
+    public function tech_user_can_create_chapter_inside_book(): void
+    {
+        $this->actingAs($this->tech);
+
+        $shelf = Shelf::create([
+            'name' => 'Operations',
+            'slug' => 'operations',
+        ]);
+
+        $book = Book::create([
+            'shelf_id' => $shelf->id,
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+        ]);
+
+        $this->get(route('tech.knowledge.chapters.create', $book))
+            ->assertOk()
+            ->assertSee('Create Chapter')
+            ->assertSee('Runbooks');
+
+        $response = $this->post(route('tech.knowledge.chapters.store', $book), [
+            'name' => 'Network',
+            'description' => 'Network runbook pages.',
+            'priority' => 20,
+        ]);
+
+        $chapter = Chapter::firstOrFail();
+
+        $response->assertRedirect(route('tech.knowledge.book', $book));
+        $this->assertSame($book->id, $chapter->book_id);
+        $this->assertSame('Network', $chapter->name);
+        $this->assertSame('network', $chapter->slug);
+        $this->assertSame(20, $chapter->priority);
+        $this->assertSame('local', $chapter->sync_status);
+    }
+
+    #[Test]
+    public function tech_user_can_edit_and_delete_empty_local_chapter_from_form(): void
+    {
+        $this->actingAs($this->tech);
+
+        $book = Book::create([
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+        ]);
+
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Network',
+            'slug' => 'network',
+            'description' => 'Old text',
+            'priority' => 5,
+            'sync_status' => 'local',
+        ]);
+
+        $this->get(route('tech.knowledge.book', $book))
+            ->assertOk()
+            ->assertSee('Edit');
+
+        $this->get(route('tech.knowledge.chapters.edit', $chapter))
+            ->assertOk()
+            ->assertSee('Save Chapter')
+            ->assertSee('Confirm Deletion', false);
+
+        $this->put(route('tech.knowledge.chapters.update', $chapter), [
+            'name' => 'Network Updated',
+            'description' => 'Updated text',
+            'priority' => 9,
+        ])->assertRedirect(route('tech.knowledge.book', $book));
+
+        $this->assertSame('Network Updated', $chapter->fresh()->name);
+        $this->assertSame(9, $chapter->fresh()->priority);
+
+        $this->delete(route('tech.knowledge.chapters.destroy', $chapter))
+            ->assertRedirect(route('tech.knowledge.book', $book));
+
+        $this->assertDatabaseMissing('knowledge_chapters', ['id' => $chapter->id]);
+    }
+
+    #[Test]
+    public function chapter_with_pages_cannot_be_deleted(): void
+    {
+        $this->actingAs($this->tech);
+
+        $book = Book::create([
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+        ]);
+
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Network',
+            'slug' => 'network',
+            'sync_status' => 'local',
+        ]);
+
+        Article::create([
+            'title' => 'VPN Setup',
+            'slug' => 'vpn-setup',
+            'body_markdown' => 'VPN setup steps',
+            'body_html' => 'VPN setup steps',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'knowledge_book_id' => $book->id,
+            'knowledge_chapter_id' => $chapter->id,
+        ]);
+
+        $this->get(route('tech.knowledge.chapters.edit', $chapter))
+            ->assertOk()
+            ->assertDontSee('Confirm Deletion', false)
+            ->assertSee('Delete is available when the chapter has no pages.');
+
+        $this->delete(route('tech.knowledge.chapters.destroy', $chapter))
+            ->assertRedirect(route('tech.knowledge.chapters.edit', $chapter))
+            ->assertSessionHas('warning');
+
+        $this->assertDatabaseHas('knowledge_chapters', ['id' => $chapter->id]);
+    }
+
+    #[Test]
+    public function book_stack_owned_empty_chapter_can_be_deleted_when_two_way_sync_is_enabled(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/chapters/10' => Http::response(null, 204),
+        ]);
+        $this->actingAs($this->tech);
+
+        $book = Book::create([
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '2',
+        ]);
+
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Empty Synced Chapter',
+            'slug' => 'empty-synced-chapter',
+            'source_system' => 'book_stack',
+            'source_type' => 'chapter',
+            'source_id' => '10',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->get(route('tech.knowledge.chapters.edit', $chapter))
+            ->assertRedirect(route('tech.knowledge.book', $book))
+            ->assertSessionHas('warning');
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $this->get(route('tech.knowledge.chapters.edit', $chapter))
+            ->assertOk()
+            ->assertSee('Confirm Deletion', false);
+
+        $this->delete(route('tech.knowledge.chapters.destroy', $chapter))
+            ->assertRedirect(route('tech.knowledge.book', $book))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('knowledge_chapters', ['id' => $chapter->id]);
+        Http::assertSent(fn ($request) => $request->method() === 'DELETE'
+            && $request->url() === 'https://docs.example.test/api/chapters/10'
+        );
+    }
+
+    #[Test]
+    public function missing_book_stack_chapter_is_deleted_locally_when_empty(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/chapters/340' => Http::response([
+                'message' => 'No query results for model [BookStack\Entities\Models\Chapter] 340',
+            ], 404),
+        ]);
+        $this->actingAs($this->tech);
+
+        $book = Book::create([
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '2',
+        ]);
+
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Missing Synced Chapter',
+            'slug' => 'missing-synced-chapter',
+            'source_system' => 'book_stack',
+            'source_type' => 'chapter',
+            'source_id' => '340',
+            'sync_status' => 'synced',
+        ]);
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $this->delete(route('tech.knowledge.chapters.destroy', $chapter))
+            ->assertRedirect(route('tech.knowledge.book', $book))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('knowledge_chapters', ['id' => $chapter->id]);
+    }
+
+    #[Test]
+    public function tech_user_can_delete_empty_local_shelf_and_book(): void
+    {
+        $this->actingAs($this->tech);
+
+        $shelf = Shelf::create([
+            'name' => 'Temporary Shelf',
+            'slug' => 'temporary-shelf',
+            'sync_status' => 'local',
+        ]);
+
+        $book = Book::create([
+            'shelf_id' => $shelf->id,
+            'name' => 'Temporary Book',
+            'slug' => 'temporary-book',
+            'sync_status' => 'local',
+        ]);
+
+        $this->get(route('tech.knowledge.shelf', $shelf))
+            ->assertOk()
+            ->assertSee('Edit Shelf');
+
+        $this->put(route('tech.knowledge.shelves.update', $shelf), [
+            'name' => 'Temporary Shelf Updated',
+            'description' => 'Updated shelf text',
+        ])->assertRedirect(route('tech.knowledge.shelf', $shelf));
+
+        $shelf->refresh();
+
+        $this->assertSame('Temporary Shelf Updated', $shelf->name);
+        $this->assertSame('Updated shelf text', $shelf->description);
+        $this->assertSame('local', $shelf->sync_status);
+
+        $this->get(route('tech.knowledge.book', $book))
+            ->assertOk()
+            ->assertDontSee('Confirm Deletion', false);
+
+        $this->get(route('tech.knowledge.books.edit', $book))
+            ->assertOk()
+            ->assertSee('Delete Book')
+            ->assertSee('Confirm Deletion', false);
+
+        $this->delete(route('tech.knowledge.books.destroy', $book))
+            ->assertRedirect(route('tech.knowledge.shelf', $shelf));
+
+        $this->assertDatabaseMissing('knowledge_books', ['id' => $book->id]);
+
+        $this->get(route('tech.knowledge.shelf', $shelf))
+            ->assertOk()
+            ->assertDontSee('Delete is available from Edit Shelf.')
+            ->assertDontSee('Confirm Deletion', false);
+
+        $this->get(route('tech.knowledge.shelves.edit', $shelf))
+            ->assertOk()
+            ->assertSee('Delete Shelf')
+            ->assertSee('Confirm Deletion', false);
+
+        $this->delete(route('tech.knowledge.shelves.destroy', $shelf))
+            ->assertRedirect(route('tech.knowledge.index'));
+
+        $this->assertDatabaseMissing('knowledge_shelves', ['id' => $shelf->id]);
+    }
+
+    #[Test]
+    public function book_stack_owned_empty_shelf_edit_and_delete_requires_two_way_sync(): void
+    {
+        Queue::fake();
+        Http::fake([
+            'https://docs.example.test/api/shelves/10' => Http::response(null, 204),
+        ]);
+        $this->actingAs($this->tech);
+
+        $shelf = Shelf::create([
+            'name' => 'BookStack Shelf',
+            'slug' => 'bookstack-shelf',
+            'description' => 'Old text',
+            'source_system' => 'book_stack',
+            'source_type' => 'shelf',
+            'source_id' => '10',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->get(route('tech.knowledge.shelves.edit', $shelf))
+            ->assertRedirect(route('tech.knowledge.shelf', $shelf))
+            ->assertSessionHas('warning');
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $this->put(route('tech.knowledge.shelves.update', $shelf), [
+            'name' => 'BookStack Shelf Updated',
+            'description' => 'Updated text',
+        ])->assertRedirect(route('tech.knowledge.shelf', $shelf));
+
+        $shelf->refresh();
+
+        $this->assertSame('BookStack Shelf Updated', $shelf->name);
+        $this->assertSame('pending_push', $shelf->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+
+        $this->get(route('tech.knowledge.shelves.edit', $shelf))
+            ->assertOk()
+            ->assertSee('Delete Shelf')
+            ->assertSee('Confirm Deletion', false);
+
+        $this->delete(route('tech.knowledge.shelves.destroy', $shelf))
+            ->assertRedirect(route('tech.knowledge.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('knowledge_shelves', ['id' => $shelf->id]);
+        Http::assertSent(fn ($request) => $request->method() === 'DELETE'
+            && $request->url() === 'https://docs.example.test/api/shelves/10'
+        );
+    }
+
+    #[Test]
+    public function book_stack_owned_empty_book_can_be_deleted_when_two_way_sync_is_enabled(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/books/20' => Http::response(null, 204),
+        ]);
+        $this->actingAs($this->tech);
+
+        $shelf = Shelf::create([
+            'name' => 'BookStack Shelf',
+            'slug' => 'bookstack-shelf',
+            'source_system' => 'book_stack',
+            'source_type' => 'shelf',
+            'source_id' => '10',
+            'sync_status' => 'synced',
+        ]);
+        $book = Book::create([
+            'shelf_id' => $shelf->id,
+            'name' => 'Empty Synced Book',
+            'slug' => 'empty-synced-book',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '20',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->get(route('tech.knowledge.books.edit', $book))
+            ->assertRedirect(route('tech.knowledge.book', $book))
+            ->assertSessionHas('warning');
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $this->get(route('tech.knowledge.book', $book))
+            ->assertOk()
+            ->assertDontSee('Confirm Deletion', false);
+
+        $this->get(route('tech.knowledge.books.edit', $book))
+            ->assertOk()
+            ->assertSee('Delete Book')
+            ->assertSee('Confirm Deletion', false);
+
+        $this->delete(route('tech.knowledge.books.destroy', $book))
+            ->assertRedirect(route('tech.knowledge.shelf', $shelf))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('knowledge_books', ['id' => $book->id]);
+        Http::assertSent(fn ($request) => $request->method() === 'DELETE'
+            && $request->url() === 'https://docs.example.test/api/books/20'
+        );
+    }
+
+    #[Test]
+    public function missing_book_stack_book_is_deleted_locally_when_empty(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/books/20' => Http::response([
+                'message' => 'No query results for model [BookStack\Entities\Models\Book] 20',
+            ], 404),
+        ]);
+        $this->actingAs($this->tech);
+
+        $shelf = Shelf::create([
+            'name' => 'BookStack Shelf',
+            'slug' => 'bookstack-shelf',
+            'source_system' => 'book_stack',
+            'source_type' => 'shelf',
+            'source_id' => '10',
+            'sync_status' => 'synced',
+        ]);
+        $book = Book::create([
+            'shelf_id' => $shelf->id,
+            'name' => 'Missing Synced Book',
+            'slug' => 'missing-synced-book',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '20',
+            'sync_status' => 'synced',
+        ]);
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $this->delete(route('tech.knowledge.books.destroy', $book))
+            ->assertRedirect(route('tech.knowledge.shelf', $shelf))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('knowledge_books', ['id' => $book->id]);
+    }
+
+    #[Test]
+    public function synced_knowledge_items_link_to_book_stack_instead_of_local_delete(): void
+    {
+        $this->actingAs($this->tech);
+
+        $shelf = Shelf::create([
+            'name' => 'Operations',
+            'slug' => 'operations',
+            'source_system' => 'book_stack',
+            'source_type' => 'shelf',
+            'source_id' => '1',
+            'source_url' => 'https://docs.example.test/shelves/operations',
+        ]);
+
+        $book = Book::create([
+            'shelf_id' => $shelf->id,
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '2',
+            'source_url' => 'https://docs.example.test/books/runbooks',
+        ]);
+
+        $article = Article::create([
+            'title' => 'VPN Setup',
+            'slug' => 'vpn-setup',
+            'body_markdown' => 'VPN setup steps',
+            'body_html' => 'VPN setup steps',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'knowledge_shelf_id' => $shelf->id,
+            'knowledge_book_id' => $book->id,
+            'source_system' => 'book_stack',
+            'source_type' => 'page',
+            'source_id' => '3',
+            'source_url' => 'https://docs.example.test/books/runbooks/page/vpn-setup',
+        ]);
+
+        $this->get(route('tech.knowledge.shelf', $shelf))
+            ->assertOk()
+            ->assertSee('Open in BookStack')
+            ->assertSee('Delete is available when the synced shelf has no books.');
+
+        $this->get(route('tech.knowledge.book', $book))
+            ->assertOk()
+            ->assertSee('Open in BookStack')
+            ->assertSee('Delete is available when the synced book has no chapters or pages.');
+
+        $this->get(route('tech.knowledge.show', $article))
+            ->assertOk()
+            ->assertSee('Open in BookStack')
+            ->assertDontSee('Edit</a>', false);
+
+        $this->delete(route('tech.knowledge.destroy', $article))
+            ->assertRedirect(route('tech.knowledge.show', $article))
+            ->assertSessionHas('warning');
+
+        $this->delete(route('tech.knowledge.books.destroy', $book))
+            ->assertRedirect(route('tech.knowledge.book', $book))
+            ->assertSessionHas('warning');
+
+        $this->delete(route('tech.knowledge.shelves.destroy', $shelf))
+            ->assertRedirect(route('tech.knowledge.shelf', $shelf))
+            ->assertSessionHas('warning');
+
+        $this->assertDatabaseHas('articles', ['id' => $article->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('knowledge_books', ['id' => $book->id]);
+        $this->assertDatabaseHas('knowledge_shelves', ['id' => $shelf->id]);
+    }
+
+    #[Test]
+    public function book_stack_owned_page_edit_requires_two_way_sync_and_queues_push(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->tech);
+
+        $book = Book::create([
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '2',
+        ]);
+
+        $article = Article::create([
+            'title' => 'VPN Setup',
+            'slug' => 'vpn-setup',
+            'body_markdown' => 'VPN setup steps',
+            'body_html' => 'VPN setup steps',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'knowledge_book_id' => $book->id,
+            'source_system' => 'book_stack',
+            'source_type' => 'page',
+            'source_id' => '3',
+        ]);
+
+        $this->get(route('tech.knowledge.edit', $article))
+            ->assertRedirect(route('tech.knowledge.show', $article))
+            ->assertSessionHas('warning');
+
+        Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+
+        $this->get(route('tech.knowledge.show', $article))
+            ->assertOk()
+            ->assertSee('Edit</a>', false);
+
+        $this->put(route('tech.knowledge.update', $article), [
+            'title' => 'VPN Setup Updated',
+            'body_markdown' => 'Updated VPN setup steps',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'knowledge_book_id' => $book->id,
+        ])->assertRedirect(route('tech.knowledge.show', $article));
+
+        $this->assertSame('pending_push', $article->fresh()->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+    }
+
+    #[Test]
+    public function book_stack_owned_book_edit_requires_two_way_sync_and_queues_push(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->tech);
+
+        $sourceShelf = Shelf::create([
+            'name' => 'Old Shelf',
+            'slug' => 'old-shelf',
+            'source_system' => 'book_stack',
+            'source_type' => 'shelf',
+            'source_id' => '10',
+        ]);
+        $targetShelf = Shelf::create([
+            'name' => 'New Shelf',
+            'slug' => 'new-shelf',
+            'source_system' => 'book_stack',
+            'source_type' => 'shelf',
+            'source_id' => '11',
+        ]);
+        $book = Book::create([
+            'shelf_id' => $sourceShelf->id,
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '2',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->get(route('tech.knowledge.books.edit', $book))
+            ->assertRedirect(route('tech.knowledge.book', $book))
+            ->assertSessionHas('warning');
+
+        Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+
+        $this->put(route('tech.knowledge.books.update', $book), [
+            'shelf_id' => $targetShelf->id,
+            'name' => 'Runbooks Updated',
+            'description' => 'Updated text',
+            'priority' => 9,
+        ])->assertRedirect(route('tech.knowledge.book', $book));
+
+        $book->refresh();
+
+        $this->assertSame($targetShelf->id, $book->shelf_id);
+        $this->assertSame('Runbooks Updated', $book->name);
+        $this->assertSame('pending_push', $book->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+    }
+
+    #[Test]
+    public function local_page_inside_book_stack_hierarchy_queues_push_on_create_and_update(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->tech);
+
+        Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+
+        $book = Book::create([
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '2',
+        ]);
+
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Network',
+            'slug' => 'network',
+            'source_system' => 'book_stack',
+            'source_type' => 'chapter',
+            'source_id' => '3',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->post(route('tech.knowledge.store'), [
+            'title' => 'New Synced Page',
+            'body_markdown' => 'Initial text',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'knowledge_chapter_id' => $chapter->id,
+        ])->assertRedirect();
+
+        $article = Article::where('title', 'New Synced Page')->firstOrFail();
+
+        $this->assertSame('pending_push', $article->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+
+        $article->forceFill(['sync_status' => 'local'])->save();
+
+        $this->put(route('tech.knowledge.update', $article), [
+            'title' => 'New Synced Page Updated',
+            'body_markdown' => 'Updated text',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'knowledge_chapter_id' => $chapter->id,
+        ])->assertRedirect(route('tech.knowledge.show', $article));
+
+        $this->assertSame('pending_push', $article->fresh()->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class, 2);
+    }
+
+    #[Test]
+    public function book_stack_owned_chapter_edit_requires_two_way_sync_and_queues_push(): void
+    {
+        Queue::fake();
+        $this->actingAs($this->tech);
+
+        $book = Book::create([
+            'name' => 'Runbooks',
+            'slug' => 'runbooks',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '2',
+        ]);
+
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Network',
+            'slug' => 'network',
+            'description' => 'Old text',
+            'priority' => 5,
+            'source_system' => 'book_stack',
+            'source_type' => 'chapter',
+            'source_id' => '3',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->get(route('tech.knowledge.chapters.edit', $chapter))
+            ->assertRedirect(route('tech.knowledge.book', $book))
+            ->assertSessionHas('warning');
+
+        Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'read_only' => false,
+            ],
+        ]);
+
+        $this->put(route('tech.knowledge.chapters.update', $chapter), [
+            'name' => 'Network Updated',
+            'description' => 'Updated text',
+            'priority' => 9,
+        ])->assertRedirect(route('tech.knowledge.book', $book));
+
+        $chapter->refresh();
+
+        $this->assertSame('Network Updated', $chapter->name);
+        $this->assertSame('Updated text', $chapter->description);
+        $this->assertSame(9, $chapter->priority);
+        $this->assertSame('pending_push', $chapter->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
     }
 
     #[Test]

@@ -11,6 +11,7 @@ class SlaRequest extends FormRequest
         return [
             'name' => ['required'],
             'description' => ['required'],
+            'is_default' => ['nullable', 'boolean'],
 
             'low_firstResponse' => ['required', 'integer'],
             'low_firstResponse_type' => ['required'],

@@ -34,11 +34,17 @@ Route::patch('/tickets/{ticket}', [TicketController::class, 'update'])
 Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])
     ->name('tickets.close');
 
+Route::post('/tickets/{ticket}/workflow/{transition}', [TicketController::class, 'transition'])
+    ->name('tickets.workflow.transition');
+
 Route::post('/tickets/{ticket}/messages', [TicketController::class, 'addMessage'])
     ->name('tickets.messages.store');
 
 Route::post('/tickets/{ticket}/messages/{message}/read', [TicketController::class, 'markMessageRead'])
     ->name('tickets.messages.read');
+
+Route::post('/tickets/{ticket}/messages/{message}/solution', [TicketController::class, 'markMessageSolution'])
+    ->name('tickets.messages.solution');
 
 Route::get('/tickets/{ticket}/attachments/{attachment}/download', [TicketController::class, 'downloadAttachment'])
     ->name('tickets.attachments.download');
@@ -114,4 +120,12 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/admin/settings/tickets/workflows', [TicketSettingsController::class, 'workflows'])
         ->name('admin.settings.tickets.workflows');
+    Route::get('/admin/settings/tickets/workflows/create', [TicketSettingsController::class, 'createWorkflow'])
+        ->name('admin.settings.tickets.workflows.create');
+    Route::post('/admin/settings/tickets/workflows', [TicketSettingsController::class, 'storeWorkflow'])
+        ->name('admin.settings.tickets.workflows.store');
+    Route::get('/admin/settings/tickets/workflows/{workflow}/edit', [TicketSettingsController::class, 'editWorkflow'])
+        ->name('admin.settings.tickets.workflows.edit');
+    Route::put('/admin/settings/tickets/workflows/{workflow}', [TicketSettingsController::class, 'updateWorkflow'])
+        ->name('admin.settings.tickets.workflows.update');
 });

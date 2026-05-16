@@ -46,6 +46,7 @@ class CreateTicketFromInboundEmail
                 'client_id' => $contact?->site?->client_id,
                 'site_id' => $contact?->client_site_id,
                 'contact_id' => $contact?->id,
+                'description' => $this->body($email),
                 'from_email' => $email->from_email,
                 'from_domain' => strtolower((string) str($email->from_email)->after('@')),
                 'body' => $this->body($email),

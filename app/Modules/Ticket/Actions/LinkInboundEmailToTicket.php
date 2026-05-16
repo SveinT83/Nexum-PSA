@@ -6,6 +6,7 @@ use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
 
 class LinkInboundEmailToTicket
@@ -76,6 +77,8 @@ class LinkInboundEmailToTicket
                     'attachments_count' => $message->fileAttachments()->count(),
                 ],
             ]);
+
+            app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::CUSTOMER_REPLY_RECEIVED);
 
             return $message;
         });

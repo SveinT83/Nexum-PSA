@@ -1,108 +1,140 @@
 @extends('layouts.default_tech')
 
 {{--
-    Knowledge Article Index
+    Knowledge Library Index
 
-    Lists all knowledge base articles with their operational metadata. The
-    ArticleQuery class supplies the paginated collection and eager-loads the
-    relations used in this table.
+    Presents Knowledge as a BookStack-style library of shelves and books.
 --}}
 
 @section('title', 'Knowledge')
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center w-100">
-        <h1>Knowledge</h1>
-        <a href="{{ route('tech.knowledge.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus"></i> New Article
+        <div>
+            <h1 class="h4 mb-0">Knowledge</h1>
+            <div class="small text-muted">Shelves, books, chapters, and pages</div>
+        </div>
+        <a href="{{ route('tech.knowledge.shelves.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus"></i> New Shelf
         </a>
     </div>
 @endsection
 
 @section('content')
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Title</th>
-                                <th>Category</th>
-                                <th>Owner</th>
-                                <th>Visibility</th>
-                                <th>Status</th>
-                                <th>Views</th>
-                                <th>Last Updated</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($articles as $article)
-                                <tr onclick="window.location='{{ route('tech.knowledge.show', $article) }}'" style="cursor: pointer;">
-                                    <td>
-                                        <strong>{{ $article->title }}</strong>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ $article->category->name ?? 'Uncategorized' }}</span>
-                                    </td>
-                                    <td>{{ $article->owner->name ?? 'Unknown' }}</td>
-                                    <td>
-                                        @if($article->visibility == 'internal')
-                                            <span class="badge bg-info">Internal</span>
-                                        @elseif($article->visibility == 'client-wide')
-                                            <span class="badge bg-primary">Client</span>
-                                        @elseif($article->visibility == 'public')
-                                            <span class="badge bg-success">Public</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($article->status == 'published')
-                                            <span class="badge bg-success">Published</span>
-                                        @elseif($article->status == 'draft')
-                                            <span class="badge bg-warning">Draft</span>
-                                        @elseif($article->status == 'archived')
-                                            <span class="badge bg-danger">Archived</span>
-                                        @else
-                                            <span class="badge bg-secondary">{{ ucfirst($article->status) }}</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $article->view_count }}</td>
-                                    <td>{{ $article->updated_at->format('d.m.Y H:i') }}</td>
-                                    <td class="text-end">
-                                        <div class="btn-group">
-                                            <a href="{{ route('tech.knowledge.show', $article) }}" class="btn btn-sm btn-outline-primary">View</a>
-                                            <a href="{{ route('tech.knowledge.edit', $article) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="text-center py-4">
-                                        <p class="text-muted mb-0">No articles found.</p>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                @if($articles->hasPages())
-                    <div class="card-footer">
-                        {{ $articles->links() }}
+    <!-- ------------------------------------------------- -->
+    <!-- Knowledge Shelves -->
+    <!-- ------------------------------------------------- -->
+    <div class="row g-3 mb-4" id="knowledgeShelfAccordion">
+        @forelse($shelves as $shelf)
+            @php
+                $shelfBooksCollapseId = 'knowledgeShelfBooks' . $shelf->id;
+                $shelfBooksHeadingId = 'knowledgeShelfBooksHeading' . $shelf->id;
+            @endphp
+            <div class="col-12 col-xl-6">
+                <div class="card h-100 knowledge-shelf-card">
+                    <div class="card-header d-flex justify-content-between align-items-start gap-3">
+                        <div class="min-w-0">
+                            <a href="{{ route('tech.knowledge.shelf', $shelf) }}" class="d-block fw-semibold text-decoration-none text-truncate">
+                                <i class="bi bi-bookshelf me-1"></i>{{ $shelf->name }}
+                            </a>
+                            <div class="small text-muted">
+                                {{ $shelf->source_system ? ucfirst(str_replace('_', ' ', $shelf->source_system)) . ' synced shelf' : 'Local shelf' }}
+                            </div>
+                        </div>
+                        <span class="badge bg-light text-dark border">{{ $shelf->books_count }} books</span>
                     </div>
-                @endif
+                    <div class="card-body d-flex flex-column">
+                        @if($shelf->description)
+                            <p class="text-muted small mb-3 knowledge-shelf-description">{{ $shelf->description }}</p>
+                        @else
+                            <p class="text-muted small mb-3 knowledge-shelf-description">No shelf description.</p>
+                        @endif
+
+                        <div class="d-flex align-items-center justify-content-between small mt-auto">
+                            <span class="text-muted">Open the shelf for the full BookStack structure.</span>
+                            <a href="{{ route('tech.knowledge.shelf', $shelf) }}" class="text-decoration-none">View shelf</a>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <h2 class="accordion-header" id="{{ $shelfBooksHeadingId }}">
+                            <button
+                                class="accordion-button collapsed px-0 py-1 bg-white shadow-none small"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#{{ $shelfBooksCollapseId }}"
+                                aria-expanded="false"
+                                aria-controls="{{ $shelfBooksCollapseId }}">
+                                <span class="d-flex align-items-center gap-2 w-100 pe-2">
+                                    <i class="bi bi-journal-text text-muted" aria-hidden="true"></i>
+                                    <span class="fw-semibold">Books on this shelf</span>
+                                    <span class="badge bg-light text-dark border ms-auto">{{ $shelf->books_count }}</span>
+                                </span>
+                            </button>
+                        </h2>
+                        <div
+                            id="{{ $shelfBooksCollapseId }}"
+                            class="accordion-collapse collapse"
+                            aria-labelledby="{{ $shelfBooksHeadingId }}"
+                            data-bs-parent="#knowledgeShelfAccordion">
+                            <div class="list-group list-group-flush pt-2">
+                                @forelse($shelf->books as $book)
+                                    <a href="{{ route('tech.knowledge.book', $book) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-0">
+                                        <span>
+                                            <i class="bi bi-journal-text me-1 text-muted"></i>
+                                            {{ $book->name }}
+                                        </span>
+                                        <span class="small text-muted">
+                                            {{ $book->chapters_count }} chapters / {{ $book->pages_count }} pages
+                                        </span>
+                                    </a>
+                                @empty
+                                    <div class="text-muted small">No books on this shelf yet.</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        @empty
+            <div class="col-12">
+                <div class="alert alert-light border mb-0">
+                    No shelves yet. Run BookStack sync or create books to start organizing Knowledge.
+                </div>
+            </div>
+        @endforelse
     </div>
+
 @endsection
 
 @section('sidebar')
     <x-nav.knowledge-menu />
+    <x-nav.knowledge-tree />
 @endsection
 
 @section('rightbar')
-    <h3>Right Sidebar</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between gap-2">
+            <h2 class="h6 mb-0">Library Status</h2>
+            @if($bookStackCanSync)
+                <form action="{{ route('tech.admin.system.integrations.book_stack.sync') }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-arrow-repeat"></i> Sync Now
+                    </button>
+                </form>
+            @endif
+        </div>
+        <div class="card-body small">
+            <div class="row g-2 text-center">
+                <div class="col-6">
+                    <div class="text-muted text-uppercase fw-semibold">Shelves</div>
+                    <div class="fs-5 fw-semibold">{{ $shelves->count() }}</div>
+                </div>
+                <div class="col-6">
+                    <div class="text-muted text-uppercase fw-semibold">Books</div>
+                    <div class="fs-5 fw-semibold">{{ $shelves->sum(fn ($shelf) => $shelf->books->count()) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection

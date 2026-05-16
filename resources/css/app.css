@@ -10,3 +10,135 @@
 .collapsing {
     visibility: visible !important;
 }
+
+/*
+ * Knowledge shelf cards use a bounded compact body so the library grid stays
+ * scannable while detailed book lists remain available through accordions.
+ */
+.knowledge-shelf-card {
+    min-height: 12rem;
+}
+
+.knowledge-shelf-card .card-header {
+    min-height: 4.25rem;
+}
+
+.knowledge-shelf-description {
+    display: -webkit-box;
+    min-height: 3.75rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+/*
+ * Left sidebar tree mirrors the BookStack hierarchy. Fixed row dimensions and
+ * truncation keep large documentation sets scannable inside the narrow panel.
+ */
+.knowledge-tree {
+    margin-bottom: 1rem;
+    padding: .75rem;
+    background: #ffffff;
+    border: 1px solid #faba98;
+    border-radius: .5rem;
+    box-shadow: 0 .125rem .35rem rgba(51, 51, 51, .08);
+}
+
+.knowledge-tree-scroll {
+    max-height: calc(100vh - 18rem);
+    overflow-y: auto;
+    padding-right: .125rem;
+}
+
+.knowledge-tree-group,
+.knowledge-tree-item {
+    margin-bottom: .25rem;
+}
+
+.knowledge-tree-row {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    min-height: 2rem;
+    border: 1px solid transparent;
+    border-radius: .375rem;
+}
+
+.knowledge-tree-link,
+.knowledge-tree-page {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .375rem .5rem;
+    color: #212529;
+    text-decoration: none;
+    border-radius: .375rem;
+}
+
+.knowledge-tree-page {
+    min-height: 1.875rem;
+    font-size: .8125rem;
+}
+
+.knowledge-tree-link:hover,
+.knowledge-tree-page:hover {
+    background: #f8f9fa;
+    color: #212529;
+}
+
+.knowledge-tree-row.is-active,
+.knowledge-tree-page.is-active {
+    background: #fff3ec;
+    border-color: #faba98;
+}
+
+.knowledge-tree-row.is-active > .knowledge-tree-link,
+.knowledge-tree-page.is-active {
+    font-weight: 600;
+}
+
+.knowledge-tree-toggle {
+    flex: 0 0 1.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: .375rem;
+    background: transparent;
+    color: #6c757d;
+}
+
+.knowledge-tree-toggle[aria-expanded="true"] .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+.knowledge-tree-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.knowledge-tree-children {
+    margin-left: .65rem;
+    padding-left: .5rem;
+    border-left: 1px solid #e9ecef;
+}
+
+.knowledge-tree-children-book {
+    margin-left: .8rem;
+}
+
+.knowledge-tree-children-chapter {
+    margin-left: .7rem;
+}
+
+.knowledge-tree-empty {
+    padding: .25rem .5rem;
+    color: #6c757d;
+    font-size: .8125rem;
+}

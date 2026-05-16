@@ -245,6 +245,10 @@
                             {{ $contract->start_date ? $contract->start_date->format('d.m.Y') : 'Not set' }}
                         </span>
                     </div>
+                    <div class="mb-2">
+                        <span class="text-muted d-block small uppercase font-weight-bold mb-1">SLA Policy:</span>
+                        <span class="fw-semibold">{{ $contract->sla?->name ?? 'System default' }}</span>
+                    </div>
                 </div>
             </x-card.default>
         </div>

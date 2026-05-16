@@ -6,7 +6,9 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
 
 class AddTicketMessage
@@ -22,16 +24,23 @@ class AddTicketMessage
                 'visibility' => $data['visibility'] ?? 'internal',
                 'subject' => $data['subject'] ?? null,
                 'body' => $data['body'],
+                'metadata' => $this->messageMetadata($data, $actor),
             ]);
 
             foreach (($data['attachments'] ?? []) as $attachment) {
                 app(StoreTicketAttachment::class)->fromUpload($message, $attachment, $actor);
             }
 
-            $ticket->forceFill([
+            $ticketUpdates = [
                 'updated_by' => $actor?->id,
                 'is_unread' => false,
-            ])->touch();
+            ];
+
+            if ($message->type === 'customer_reply' && $message->visibility === 'public' && ! $ticket->first_responded_at) {
+                $ticketUpdates['first_responded_at'] = now();
+            }
+
+            $ticket->forceFill($ticketUpdates)->touch();
 
             TicketEvent::create([
                 'ticket_id' => $ticket->id,
@@ -48,9 +57,60 @@ class AddTicketMessage
 
             if ($message->type === 'customer_reply') {
                 SendTicketReplyEmail::dispatch($message->id)->afterCommit();
+            } elseif (! empty($message->metadata['notify_user_id'])) {
+                SendTicketInternalNotificationEmail::dispatch($message->id)->afterCommit();
             }
+
+            app(ApplyTicketWorkflowActionTrigger::class)->handle(
+                $ticket->refresh(),
+                $this->workflowActionFor($message),
+                $actor
+            );
 
             return $message;
         });
+    }
+
+    private function messageMetadata(array $data, ?User $actor): array
+    {
+        $metadata = $data['metadata'] ?? [];
+
+        if (($data['type'] ?? 'internal_note') === 'customer_reply') {
+            $intent = $data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE;
+            $metadata['reply_intent'] = $intent;
+            $metadata['reply_contact_id'] = $data['reply_contact_id'] ?? null;
+            $metadata['cc'] = $this->parseCc($data['cc'] ?? null);
+
+            if ($intent === TicketAction::SEND_SOLUTION) {
+                $metadata['is_solution'] = true;
+                $metadata['solution_marked_at'] = now()->toISOString();
+                $metadata['solution_marked_by'] = $actor?->id;
+            }
+        }
+
+        if (($data['type'] ?? 'internal_note') === 'internal_note' && ! empty($data['notify_user_id'])) {
+            $metadata['notify_user_id'] = (int) $data['notify_user_id'];
+        }
+
+        return $metadata;
+    }
+
+    private function parseCc(?string $cc): array
+    {
+        return collect(preg_split('/[,;\s]+/', (string) $cc))
+            ->map(fn ($email) => trim($email))
+            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function workflowActionFor(TicketMessage $message): string
+    {
+        if ($message->type !== 'customer_reply') {
+            return TicketAction::ADD_INTERNAL_NOTE;
+        }
+
+        return $message->metadata['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE;
     }
 }
