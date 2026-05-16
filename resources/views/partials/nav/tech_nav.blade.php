@@ -172,4 +172,20 @@
         <a class="nav-link {{ request()->routeIs('tech.storage.index') ? 'active' : '' }}" href="{{ route('tech.storage.index') }}">Storage</a>
     </li>
 
+    <!-- ------------------------------------------------- -->
+    <!-- Profile dropdown -->
+    <!-- ------------------------------------------------- -->
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name ?? 'User' }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ route('tech.profile.security') }}"><i class="bi bi-shield-lock me-2"></i>Security Settings</a></li>
+            <li><a class="dropdown-item" href="{{ route('tech.profile.notifications') }}"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+    </li>
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+
 </ul>

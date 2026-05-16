@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Notification\Notifications\TicketAssigned;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
@@ -97,6 +98,18 @@ class StoreTicket
 
             // Assignment is intentionally last so Ticket Rules can set queue/category/priority first.
             $this->ticketAssignmentEngine->assign($ticket);
+
+            // Send assignment notification if the ticket was assigned to someone
+            $ticket->refresh();
+            if ($ticket->owner_id && $ticket->owner_id !== $actor?->id) {
+                $owner = User::find($ticket->owner_id);
+                if ($owner) {
+                    $owner->notify(new TicketAssigned(
+                        ticket: $ticket,
+                        assignedBy: $actor?->name ?? 'System',
+                    ));
+                }
+            }
 
             return $ticket->fresh(['tags']);
         });
