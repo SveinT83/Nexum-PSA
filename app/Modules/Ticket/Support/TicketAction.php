@@ -15,6 +15,7 @@ class TicketAction
     public const CUSTOMER_REPLY_RECEIVED = 'customer_reply_received';
     public const CLOSE = 'close';
     public const MARK_READ = 'mark_read';
+    public const REOPEN = 'reopen';
     public const APPLY_SLA = 'apply_sla';
     public const REQUEST_KNOWLEDGE_UPDATE = 'request_knowledge_update';
 
@@ -35,6 +36,7 @@ class TicketAction
             self::CUSTOMER_REPLY_RECEIVED => ['label' => 'Customer reply received', 'type' => 'message', 'write' => false],
             self::CLOSE => ['label' => 'Close ticket', 'type' => 'workflow', 'write' => true],
             self::MARK_READ => ['label' => 'Mark read', 'type' => 'triage', 'write' => true],
+            self::REOPEN => ['label' => 'Reopen ticket', 'type' => 'workflow', 'write' => true],
             self::APPLY_SLA => ['label' => 'Apply SLA', 'type' => 'sla', 'write' => true],
             self::REQUEST_KNOWLEDGE_UPDATE => ['label' => 'Request Knowledge update', 'type' => 'documentation', 'write' => true],
         ];

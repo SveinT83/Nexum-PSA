@@ -13,6 +13,7 @@ use App\Modules\Knowledge\Queries\ArticleQuery;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
 use App\Modules\Ticket\Actions\CloseTicket;
+use App\Modules\Ticket\Actions\ReopenTicket;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
@@ -377,6 +378,22 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Ticket closed.');
+    }
+
+    public function reopen(Request $request, Ticket $ticket, ReopenTicket $reopenTicket, TicketActionGuard $actionGuard): RedirectResponse
+    {
+        if ($reason = $actionGuard->reason($ticket, TicketAction::REOPEN, $request->user())) {
+            return back()->withErrors(['ticket' => $reason]);
+        }
+
+        $data = $request->validate([
+            'reason' => 'nullable|string|max:1000',
+        ]);
+
+        $reopenTicket->handle($ticket, $request->user(), $data['reason'] ?? null);
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Ticket reopened.');
     }
 
     public function transition(Request $request, Ticket $ticket, TicketWorkflowTransition $transition, ChangeTicketStatus $changeTicketStatus, TicketWorkflowRuntime $workflowRuntime): RedirectResponse

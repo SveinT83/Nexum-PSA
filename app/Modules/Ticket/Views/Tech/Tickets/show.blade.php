@@ -41,6 +41,14 @@
                 @else
                     <button type="button" class="btn btn-outline-secondary" disabled title="{{ $closeDisabledReason }}">Close</button>
                 @endif
+            @else
+                {{-- Ticket is closed — show reopen button --}}
+                @if ($ticketActions['reopen'] ?? true)
+                    <form method="POST" action="{{ route('tech.tickets.reopen', $ticket) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-primary">Reopen</button>
+                    </form>
+                @endif
             @endif
             <a href="{{ route('tech.tickets.index') }}" class="btn btn-light">Back</a>
         </div>
@@ -473,6 +481,7 @@
                                 'Channel' => ucfirst($ticket->channel),
                                 'Resolved' => $ticket->resolved_at?->format('Y-m-d H:i'),
                                 'Closed' => $ticket->closed_at?->format('Y-m-d H:i'),
+                                'Reopened' => $ticket->reopened_at?->format('Y-m-d H:i'),
                                 'Created' => $ticket->created_at?->format('Y-m-d H:i'),
                                 'Updated' => $ticket->updated_at?->format('Y-m-d H:i'),
                             ];

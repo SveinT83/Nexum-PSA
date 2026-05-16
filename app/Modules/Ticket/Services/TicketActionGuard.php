@@ -42,6 +42,10 @@ class TicketActionGuard
             return 'The ticket is already closed.';
         }
 
+        if ($action === TicketAction::REOPEN && ! $this->isClosed($ticket)) {
+            return 'Only closed tickets can be reopened.';
+        }
+
         return null;
     }
 

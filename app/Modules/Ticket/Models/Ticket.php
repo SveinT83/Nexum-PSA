@@ -53,6 +53,8 @@ class Ticket extends Model
         'first_responded_at',
         'resolved_at',
         'closed_at',
+        'reopened_at',
+        'reopen_count',
         'metadata',
     ];
 
@@ -65,6 +67,7 @@ class Ticket extends Model
         'first_responded_at' => 'datetime',
         'resolved_at' => 'datetime',
         'closed_at' => 'datetime',
+        'reopened_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string

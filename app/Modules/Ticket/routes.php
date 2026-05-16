@@ -34,6 +34,9 @@ Route::patch('/tickets/{ticket}', [TicketController::class, 'update'])
 Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])
     ->name('tickets.close');
 
+Route::post('/tickets/{ticket}/reopen', [TicketController::class, 'reopen'])
+    ->name('tickets.reopen');
+
 Route::post('/tickets/{ticket}/workflow/{transition}', [TicketController::class, 'transition'])
     ->name('tickets.workflow.transition');
 
