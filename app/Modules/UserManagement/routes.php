@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\UserManagement\Controllers\AcceptInviteController;
 use App\Modules\UserManagement\Controllers\Admin\PermissionManagementController;
 use App\Modules\UserManagement\Controllers\Admin\RolesManagementController;
 use App\Modules\UserManagement\Controllers\Admin\UserManagementController;
@@ -16,6 +17,27 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+/*
+|--------------------------------------------------------------------------
+| Public Invite Routes (No Auth)
+|--------------------------------------------------------------------------
+|
+| These routes handle the invite acceptance flow — an unauthenticated user
+| clicks the invite link, sets a password, and gets activated.
+|
+*/
+
+Route::get('/invite/{token}', [AcceptInviteController::class, 'show'])
+    ->name('invite.accept');
+Route::post('/invite/{token}', [AcceptInviteController::class, 'store'])
+    ->name('invite.accept.post');
+
+/*
+|--------------------------------------------------------------------------
+| Admin User Management Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['admin'])->group(function () {
     Route::get('/admin/user_management', [UserManagementController::class, 'index'])
         ->name('admin.user_management.index');
@@ -25,6 +47,8 @@ Route::middleware(['admin'])->group(function () {
         ->name('admin.user_management.store');
     Route::post('/admin/user_management/{user}/status', [UserManagementController::class, 'updateStatus'])
         ->name('admin.user_management.status.update');
+    Route::post('/admin/user_management/{user}/invite', [UserManagementController::class, 'sendInvite'])
+        ->name('admin.user_management.invite.send');
 
     Route::get('/admin/user_management/roles', [RolesManagementController::class, 'rolesIndex'])
         ->name('admin.user_management.roles.index');

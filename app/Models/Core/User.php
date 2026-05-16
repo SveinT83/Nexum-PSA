@@ -100,4 +100,14 @@ class User extends Authenticatable
     {
         return $this->status === self::STATUS_DISABLED;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+    public function inviteTokens()
+    {
+        return $this->hasMany(\App\Modules\UserManagement\Models\InviteToken::class);
+    }
 }
