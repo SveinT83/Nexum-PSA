@@ -16,6 +16,7 @@ use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -298,6 +299,7 @@ class TicketSettingsController extends Controller
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'stateMap' => collect(),
             'transitions' => collect(),
+            'triggerActions' => TicketAction::definitions(),
         ]);
     }
 
@@ -325,6 +327,7 @@ class TicketSettingsController extends Controller
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'stateMap' => $workflow->states->keyBy('ticket_status_id'),
             'transitions' => $workflow->transitions,
+            'triggerActions' => TicketAction::definitions(),
         ]);
     }
 
@@ -381,6 +384,7 @@ class TicketSettingsController extends Controller
             'states.*.is_initial' => 'nullable|boolean',
             'states.*.is_terminal' => 'nullable|boolean',
             'states.*.requires_note' => 'nullable|boolean',
+            'states.*.requires_response' => 'nullable|boolean',
             'states.*.requires_resolution' => 'nullable|boolean',
             'states.*.requires_knowledge_update' => 'nullable|boolean',
             'states.*.sort_order' => 'nullable|integer|min:0|max:100000',
@@ -389,7 +393,11 @@ class TicketSettingsController extends Controller
             'transitions.*.from_status_id' => 'nullable|integer|exists:ticket_statuses,id',
             'transitions.*.to_status_id' => 'nullable|integer|exists:ticket_statuses,id',
             'transitions.*.label' => 'nullable|string|max:255',
+            'transitions.*.manual_enabled' => 'nullable|boolean',
+            'transitions.*.trigger_actions' => 'nullable|array',
+            'transitions.*.trigger_actions.*' => 'string|in:' . implode(',', array_keys(TicketAction::definitions())),
             'transitions.*.requires_note' => 'nullable|boolean',
+            'transitions.*.requires_response' => 'nullable|boolean',
             'transitions.*.requires_resolution' => 'nullable|boolean',
             'transitions.*.requires_knowledge_update' => 'nullable|boolean',
             'transitions.*.sort_order' => 'nullable|integer|min:0|max:100000',
@@ -407,6 +415,7 @@ class TicketSettingsController extends Controller
                     'is_initial' => (bool) ($state['is_initial'] ?? false),
                     'is_terminal' => (bool) ($state['is_terminal'] ?? false),
                     'requires_note' => (bool) ($state['requires_note'] ?? false),
+                    'requires_response' => (bool) ($state['requires_response'] ?? false),
                     'requires_resolution' => (bool) ($state['requires_resolution'] ?? false),
                     'requires_knowledge_update' => (bool) ($state['requires_knowledge_update'] ?? false),
                     'sort_order' => (int) ($state['sort_order'] ?? 10),
@@ -449,7 +458,10 @@ class TicketSettingsController extends Controller
                     'to_status_id' => $to,
                     'label' => $transition['label'] ?: 'Move to '.(TicketStatus::find($to)?->name ?? 'state'),
                     'is_active' => true,
+                    'manual_enabled' => (bool) ($transition['manual_enabled'] ?? true),
+                    'trigger_actions' => array_values($transition['trigger_actions'] ?? []),
                     'requires_note' => (bool) ($transition['requires_note'] ?? false),
+                    'requires_response' => (bool) ($transition['requires_response'] ?? false),
                     'requires_resolution' => (bool) ($transition['requires_resolution'] ?? false),
                     'requires_knowledge_update' => (bool) ($transition['requires_knowledge_update'] ?? false),
                     'sort_order' => (int) ($transition['sort_order'] ?? (($index + 1) * 10)),

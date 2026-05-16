@@ -26,6 +26,11 @@ Implemented now:
 - Basic lifecycle operations for status, queue, priority, category, owner, and close.
 - Ticket Actions v1 with named action definitions and a shared guard for mutable ticket operations.
 - Ticket Workflow v1 with workflow, state, and transition models plus runtime transition validation.
+- Workflow runtime requirements for internal notes, public technician responses, and selected solution responses.
+- Workflow transition controls for whether a transition is manually clickable and which ticket actions can trigger it automatically.
+- Customer reply intents for update, request customer input, and send solution.
+- Ticket reply recipient override, CC recipients, and internal note technician notifications.
+- Ticket conversation actions for marking a public technician reply as the ticket solution.
 - Dedicated ticket edit view for subject, description, and lifecycle fields.
 - Asset selection on create/edit, scoped by client/contact rules.
 - Explicit site selection and automatic site resolution from contact or asset.
@@ -81,6 +86,14 @@ Most recent completed work:
 - Unread tickets can now be marked as read from the ticket show page; the action also stamps existing unread messages with `read_at`.
 - Workflow v1 now validates status transitions and shows available workflow actions on Ticket show.
 - Workflow Editor v2 can create and edit workflows, states, and transitions from the admin UI.
+- Workflow Editor v3 uses a Livewire builder for adding states, assigning requirements, and adding next-status transitions from each state.
+- Workflow transitions now enforce configured requirements before status changes commit. Default "Mark as solved" transitions require a public technician response and a response marked as the solution.
+- The default workflow no longer allows quick close from open states; tickets must move through Resolved before Closed.
+- Workflow transitions now decide whether the Ticket show button is manually available. They can also list ticket actions, such as internal note or customer reply, that automatically advance the ticket when the action is completed.
+- Customer replies now capture intent so workflow can distinguish a normal update from a request for customer input or a solution reply.
+- Workflow can now auto-advance non-closing transitions when their requirements become satisfied, such as after marking a response as the solution. Closing remains a manual click.
+- The Ticket show message composer now keeps message type and reply intent on one row. Customer replies can target any active contact for the same client and include CC recipients. Internal notes can notify a selected technician by email.
+- Ticket show disables blocked workflow buttons and shows the requirement reason instead of allowing technicians to click through unfinished work.
 - Default statuses now include New, In Progress, Waiting Customer, Resolved, and Closed.
 - Ticket show keeps lifecycle details in the right-side Details card, while full edits happen on `tech.tickets.edit`.
 - Tests now cover missing contact email, missing outbound account, missing email template, and SMTP failure logging.
@@ -111,6 +124,7 @@ Current important files:
 - `app/Modules/Ticket/Actions/ChangeTicketStatus.php` - changes ticket status and owns resolved/closed timestamps.
 - `app/Modules/Ticket/Actions/CloseTicket.php` - convenience close operation using the same lifecycle status change.
 - `app/Modules/Ticket/Actions/MarkTicketRead.php` - clears the ticket unread flag and stamps unread messages as read.
+- `app/Modules/Ticket/Actions/MarkTicketMessageSolution.php` - marks one public technician response as the ticket solution for workflow requirements.
 - `app/Modules/Ticket/Actions/UpdateDefaultTicketEmailAccount.php` - updates the Email module's per-scope default for `tickets`.
 - `app/Modules/Ticket/Actions/UpdateTicketFields.php` - updates queue, priority, category, and owner with audit events.
 - `app/Modules/Ticket/Actions/LinkInboundEmailToTicket.php` - links an Email module inbound message to an existing ticket, inherits Email tags, and creates a public customer reply.
@@ -122,6 +136,7 @@ Current important files:
 - `app/Modules/Ticket/Queries/TicketIndexQuery.php` - filtering, sorting, and pagination for the ticket index.
 - `app/Modules/Ticket/Services/TicketRuleEngine.php` - evaluates active Ticket Rules for ticket creation context and applies field overrides.
 - `app/Modules/Ticket/Services/TicketAssignmentEngine.php` - assigns unowned tickets by assignment rules or technician profile scoring.
+- `app/Modules/Ticket/Livewire/Admin/WorkflowEditor.php` - interactive workflow builder for state selection, requirements, and transitions.
 - `app/Modules/Ticket/Models/*` - Ticket data model.
 - `app/Modules/Ticket/Tests/Feature/TicketModuleTest.php` - current module feature coverage.
 
@@ -135,6 +150,7 @@ Routes are loaded through the existing Tech route loader, so the current public 
 - `tech.tickets.show`
 - `tech.tickets.close`
 - `tech.tickets.messages.store`
+- `tech.tickets.messages.solution`
 - `tech.tickets.read`
 - `tech.tickets.assign`
 - `tech.tickets.profile.edit`

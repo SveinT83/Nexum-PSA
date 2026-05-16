@@ -4,6 +4,7 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketWorkflow;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Str;
 
 class EnsureTicketWorkflowDefaults
@@ -48,27 +49,39 @@ class EnsureTicketWorkflowDefaults
             );
         }
 
-        $this->ensureTransition($workflow, 'new', 'in-progress', 'Start work', 10);
-        $this->ensureTransition($workflow, 'in-progress', 'waiting-customer', 'Wait for customer', 20);
+        $this->ensureTransition($workflow, 'new', 'in-progress', 'Start work', 10, triggerActions: [
+            TicketAction::ADD_INTERNAL_NOTE,
+            TicketAction::CUSTOMER_UPDATE,
+            TicketAction::REQUEST_CUSTOMER_INPUT,
+            TicketAction::SEND_SOLUTION,
+        ]);
+        $this->ensureTransition($workflow, 'in-progress', 'waiting-customer', 'Request customer input', 20, triggerActions: [
+            TicketAction::REQUEST_CUSTOMER_INPUT,
+        ]);
         $this->ensureTransition($workflow, 'waiting-customer', 'in-progress', 'Resume work', 30);
-        $this->ensureTransition($workflow, 'in-progress', 'resolved', 'Resolve', 40, requiresResolution: true);
-        $this->ensureTransition($workflow, 'new', 'resolved', 'Resolve', 45, requiresResolution: true);
-        $this->ensureTransition($workflow, 'waiting-customer', 'resolved', 'Resolve', 46, requiresResolution: true);
+        $this->ensureTransition($workflow, 'in-progress', 'resolved', 'Mark as solved', 40, requiresResponse: true, requiresResolution: true);
+        $this->ensureTransition($workflow, 'new', 'resolved', 'Mark as solved', 45, requiresResponse: true, requiresResolution: true);
+        $this->ensureTransition($workflow, 'waiting-customer', 'resolved', 'Mark as solved', 46, requiresResponse: true, requiresResolution: true);
         $this->ensureTransition($workflow, 'resolved', 'closed', 'Close', 50);
         $this->ensureTransition($workflow, 'closed', 'in-progress', 'Reopen', 60);
 
-        // Preserve the existing quick-close behavior while workflows are introduced.
+        // Closing must flow through the solved state so workflow conditions cannot be bypassed.
         $closed = $statuses->firstWhere('is_closed', true);
         if ($closed) {
             foreach ($statuses->where('is_closed', false) as $status) {
-                $this->ensureTransitionByStatus($workflow, $status, $closed, 'Close', 900 + (int) $status->sort_order);
+                if ($status->state !== 'resolved') {
+                    $workflow->transitions()
+                        ->where('from_status_id', $status->id)
+                        ->where('to_status_id', $closed->id)
+                        ->update(['is_active' => false]);
+                }
             }
         }
 
         return $workflow->fresh(['states.status', 'transitions.fromStatus', 'transitions.toStatus']);
     }
 
-    private function ensureTransition(TicketWorkflow $workflow, string $fromSlug, string $toSlug, string $label, int $sortOrder, bool $requiresResolution = false): void
+    private function ensureTransition(TicketWorkflow $workflow, string $fromSlug, string $toSlug, string $label, int $sortOrder, bool $requiresResponse = false, bool $requiresResolution = false, bool $manualEnabled = true, array $triggerActions = []): void
     {
         $from = TicketStatus::query()->where('slug', $fromSlug)->first();
         $to = TicketStatus::query()->where('slug', $toSlug)->first();
@@ -77,22 +90,31 @@ class EnsureTicketWorkflowDefaults
             return;
         }
 
-        $this->ensureTransitionByStatus($workflow, $from, $to, $label, $sortOrder, $requiresResolution);
+        $this->ensureTransitionByStatus($workflow, $from, $to, $label, $sortOrder, $requiresResponse, $requiresResolution, $manualEnabled, $triggerActions);
     }
 
-    private function ensureTransitionByStatus(TicketWorkflow $workflow, TicketStatus $from, TicketStatus $to, string $label, int $sortOrder, bool $requiresResolution = false): void
+    private function ensureTransitionByStatus(TicketWorkflow $workflow, TicketStatus $from, TicketStatus $to, string $label, int $sortOrder, bool $requiresResponse = false, bool $requiresResolution = false, bool $manualEnabled = true, array $triggerActions = []): void
     {
-        $workflow->transitions()->updateOrCreate(
-            [
-                'from_status_id' => $from->id,
-                'to_status_id' => $to->id,
-            ],
-            [
-                'label' => $label ?: Str::headline($to->slug),
-                'is_active' => true,
+        $transition = $workflow->transitions()->firstOrNew([
+            'from_status_id' => $from->id,
+            'to_status_id' => $to->id,
+        ]);
+
+        $transition->fill([
+            'label' => $transition->exists ? $transition->label : ($label ?: Str::headline($to->slug)),
+            'is_active' => true,
+            'sort_order' => $transition->exists ? $transition->sort_order : $sortOrder,
+        ]);
+
+        if (! $transition->exists) {
+            $transition->fill([
+                'manual_enabled' => $manualEnabled,
+                'trigger_actions' => $triggerActions,
+                'requires_response' => $requiresResponse,
                 'requires_resolution' => $requiresResolution,
-                'sort_order' => $sortOrder,
-            ]
-        );
+            ]);
+        }
+
+        $transition->save();
     }
 }

@@ -7,6 +7,7 @@ use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Models\Clients\ClientUser;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -49,7 +50,7 @@ class SendTicketReplyEmail implements ShouldQueue
         }
 
         $ticket = $message->ticket;
-        $contact = $ticket?->contact;
+        $contact = $this->recipientContact($message);
 
         if (! $ticket || empty($contact?->email)) {
             $this->log(null, $message->id, 'error', 'TICKET_EMAIL_NO_CONTACT', 'Ticket reply has no contact email.');
@@ -90,13 +91,15 @@ class SendTicketReplyEmail implements ShouldQueue
                 $rendered['subject'],
                 $this->appendReplyBoundaryToHtml($rendered['html']),
                 $this->appendReplyBoundaryToText($rendered['text']),
-                $this->attachmentsForMailer($message)
+                $this->attachmentsForMailer($message),
+                $this->ccRecipients($message)
             );
 
             $this->log($account->id, $message->id, 'info', 'TICKET_EMAIL_SENT', 'Ticket reply email sent.', [
                 'ticket_id' => $ticket->id,
                 'ticket_key' => $ticket->ticket_key,
                 'to' => $contact->email,
+                'cc' => collect($this->ccRecipients($message))->pluck('email')->all(),
                 'rfc_message_id' => $messageId,
                 'attachments_count' => $message->fileAttachments->count(),
             ], $messageId);
@@ -110,10 +113,40 @@ class SendTicketReplyEmail implements ShouldQueue
                 'ticket_id' => $ticket->id,
                 'ticket_key' => $ticket->ticket_key,
                 'to' => $contact->email,
+                'cc' => collect($this->ccRecipients($message))->pluck('email')->all(),
             ]);
 
             throw $e;
         }
+    }
+
+    private function recipientContact(TicketMessage $message): ?ClientUser
+    {
+        $ticket = $message->ticket;
+        $replyContactId = $message->metadata['reply_contact_id'] ?? null;
+
+        if ($replyContactId && $ticket?->client_id) {
+            $contact = ClientUser::query()
+                ->whereKey($replyContactId)
+                ->whereHas('site', fn ($query) => $query->where('client_id', $ticket->client_id))
+                ->where('active', true)
+                ->first();
+
+            if ($contact) {
+                return $contact;
+            }
+        }
+
+        return $ticket?->contact;
+    }
+
+    private function ccRecipients(TicketMessage $message): array
+    {
+        return collect($message->metadata['cc'] ?? [])
+            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->map(fn ($email) => ['email' => $email, 'name' => ''])
+            ->values()
+            ->all();
     }
 
     private function appendReplyBoundaryToHtml(string $html): string

@@ -25,12 +25,22 @@
                     <button type="submit" class="btn btn-outline-primary">Mark as read</button>
                 </form>
             @endif
-            @if ($ticketActions['close'] ?? ! $ticket->status?->is_closed)
-                <!-- Convenience close action uses the same lifecycle action as manual status changes. -->
-                <form method="POST" action="{{ route('tech.tickets.close', $ticket) }}">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-secondary">Close</button>
-                </form>
+            @if (! $ticket->status?->is_closed)
+                @php
+                    $closeDisabledReason = $closeTransition
+                        ? $closeTransition->disabled_reason
+                        : 'Ticket must be marked as solved before it can be closed.';
+                    $canUseCloseAction = ($ticketActions['close'] ?? true) && $closeTransition && ! $closeDisabledReason;
+                @endphp
+                <!-- Close remains visible, but workflow requirements decide whether it can be used. -->
+                @if ($canUseCloseAction)
+                    <form method="POST" action="{{ route('tech.tickets.close', $ticket) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-secondary">Close</button>
+                    </form>
+                @else
+                    <button type="button" class="btn btn-outline-secondary" disabled title="{{ $closeDisabledReason }}">Close</button>
+                @endif
             @endif
             <a href="{{ route('tech.tickets.index') }}" class="btn btn-light">Back</a>
         </div>
@@ -52,6 +62,9 @@
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
         $selectedMessageType = old('type', $defaultMessageType);
+        $selectedReplyIntent = old('reply_intent', \App\Modules\Ticket\Support\TicketAction::CUSTOMER_UPDATE);
+        $selectedReplyContactId = old('reply_contact_id', $ticket->contact_id);
+        $selectedNotifyUserId = old('notify_user_id');
         $showAddMessage = $errors->any() || old('body') || old('type');
     @endphp
 
@@ -115,6 +128,11 @@
                                         : $senderName;
                                     $messageCollapseId = 'ticketMessageCollapse' . $message->id;
                                     $messageHeadingId = 'ticketMessageHeading' . $message->id;
+                                    $isSolution = (bool) ($message->metadata['is_solution'] ?? false);
+                                    $canMarkSolution = $message->author_type === 'user'
+                                        && $message->type === 'customer_reply'
+                                        && $message->visibility === 'public'
+                                        && ! $isSolution;
                                 @endphp
                                 <div class="accordion-item">
                                     <h2 class="accordion-header" id="{{ $messageHeadingId }}">
@@ -129,6 +147,9 @@
                                                 <span class="fw-semibold flex-shrink-0">{{ $messageTypeLabel }}</span>
                                                 @if ($isUnreadMessage)
                                                     <span class="text-primary small fw-semibold flex-shrink-0">Unread</span>
+                                                @endif
+                                                @if ($isSolution)
+                                                    <span class="text-success small fw-semibold flex-shrink-0">Solution</span>
                                                 @endif
                                                 <span class="small text-muted text-truncate flex-shrink-0" style="max-width: 14rem;">{{ $participantLine }}</span>
                                                 <span class="small text-body text-truncate min-w-0 flex-grow-1">
@@ -149,6 +170,15 @@
                                                     <form method="POST" action="{{ route('tech.tickets.messages.read', [$ticket, $message]) }}">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-outline-primary">Mark as read</button>
+                                                    </form>
+                                                </div>
+                                            @endif
+                                            @if ($canMarkSolution)
+                                                <!-- Public technician replies can become the workflow solution required by solved transitions. -->
+                                                <div class="d-flex justify-content-end mb-2">
+                                                    <form method="POST" action="{{ route('tech.tickets.messages.solution', [$ticket, $message]) }}">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline-success">Mark as solution</button>
                                                     </form>
                                                 </div>
                                             @endif
@@ -215,29 +245,57 @@
 
                                 <input id="visibility" name="visibility" type="hidden" value="{{ $selectedMessageType === 'internal_note' ? 'internal' : 'public' }}">
 
-                                <div class="mb-3">
-                                    <label for="type" class="form-label">Message type</label>
-                                    <select id="type" name="type" class="form-select @error('type') is-invalid @enderror">
-                                        @if ($canReplyToContact)
-                                            <option value="customer_reply" @selected($selectedMessageType === 'customer_reply')>Reply to contact</option>
-                                        @endif
-                                        @if($canAddInternalNote)
-                                            <option value="internal_note" @selected($selectedMessageType === 'internal_note')>Internal note</option>
-                                        @endif
-                                    </select>
-                                    @error('type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="type" class="form-label">Message type</label>
+                                        <select id="type" name="type" class="form-select @error('type') is-invalid @enderror">
+                                            @if ($canReplyToContact)
+                                                <option value="customer_reply" @selected($selectedMessageType === 'customer_reply')>Reply to contact</option>
+                                            @endif
+                                            @if($canAddInternalNote)
+                                                <option value="internal_note" @selected($selectedMessageType === 'internal_note')>Internal note</option>
+                                            @endif
+                                        </select>
+                                        @error('type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div id="reply_intent_group" class="col-md-6 @if ($selectedMessageType === 'internal_note') d-none @endif">
+                                        <label for="reply_intent" class="form-label">Reply intent</label>
+                                        <select id="reply_intent" name="reply_intent" class="form-select @error('reply_intent') is-invalid @enderror">
+                                            <option value="customer_update" @selected($selectedReplyIntent === 'customer_update')>Update customer</option>
+                                            <option value="request_customer_input" @selected($selectedReplyIntent === 'request_customer_input')>Request customer input</option>
+                                            <option value="send_solution" @selected($selectedReplyIntent === 'send_solution')>Send solution</option>
+                                        </select>
+                                        @error('reply_intent')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div id="notify_technician_group" class="col-md-6 @if ($selectedMessageType !== 'internal_note') d-none @endif">
+                                        <label for="notify_user_id" class="form-label">Notify technician</label>
+                                        <select id="notify_user_id" name="notify_user_id" class="form-select @error('notify_user_id') is-invalid @enderror">
+                                            <option value="">Do not notify</option>
+                                            @foreach($technicians as $technician)
+                                                <option value="{{ $technician->id }}" @selected((string) $selectedNotifyUserId === (string) $technician->id)>{{ $technician->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('notify_user_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
                                 </div>
 
-                                <div id="reply_to_contact" class="alert alert-light border @if ($selectedMessageType === 'internal_note') d-none @endif">
-                                    @if ($canReplyToContact)
-                                        <div class="small text-muted">Reply to</div>
-                                        <strong>{{ $ticket->contact->name }}</strong>
-                                        <div>{{ $ticket->contact->email }}</div>
-                                    @endif
-                                </div>
-
-                                <div id="internal_note_hint" class="alert alert-secondary @if ($selectedMessageType !== 'internal_note') d-none @endif">
-                                    Internal notes stay inside tdPSA and are not sent to the customer.
+                                <div id="reply_recipient_group" class="row g-2 mb-3 @if ($selectedMessageType === 'internal_note') d-none @endif">
+                                    <div class="col-md-6">
+                                        <label for="reply_contact_id" class="form-label">Contact</label>
+                                        <select id="reply_contact_id" name="reply_contact_id" class="form-select @error('reply_contact_id') is-invalid @enderror">
+                                            @foreach($replyContacts as $replyContact)
+                                                <option value="{{ $replyContact->id }}" @selected((string) $selectedReplyContactId === (string) $replyContact->id)>
+                                                    {{ $replyContact->name }} &lt;{{ $replyContact->email }}&gt;
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('reply_contact_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="cc" class="form-label">CC</label>
+                                        <input id="cc" name="cc" type="text" class="form-control @error('cc') is-invalid @enderror" value="{{ old('cc') }}" placeholder="thirdparty@example.com">
+                                        @error('cc')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
                                 </div>
 
                                 @if (! $canReplyToContact)
@@ -272,14 +330,15 @@
     document.addEventListener('DOMContentLoaded', function () {
         const type = document.getElementById('type');
         const visibility = document.getElementById('visibility');
-        const replyToContact = document.getElementById('reply_to_contact');
-        const internalNoteHint = document.getElementById('internal_note_hint');
+        const replyRecipientGroup = document.getElementById('reply_recipient_group');
+        const replyIntentGroup = document.getElementById('reply_intent_group');
+        const notifyTechnicianGroup = document.getElementById('notify_technician_group');
         const replyShortcut = document.getElementById('ticketReplyShortcut');
         const composer = document.getElementById('ticketComposerCollapse');
         const body = document.getElementById('body');
 
         const syncMessageType = function (value) {
-            if (! type || ! visibility || ! replyToContact || ! internalNoteHint) {
+            if (! type || ! visibility || ! replyRecipientGroup || ! replyIntentGroup || ! notifyTechnicianGroup) {
                 return;
             }
 
@@ -290,8 +349,9 @@
             const isInternal = type.value === 'internal_note';
 
             visibility.value = isInternal ? 'internal' : 'public';
-            replyToContact.classList.toggle('d-none', isInternal);
-            internalNoteHint.classList.toggle('d-none', ! isInternal);
+            replyRecipientGroup.classList.toggle('d-none', isInternal);
+            replyIntentGroup.classList.toggle('d-none', isInternal);
+            notifyTechnicianGroup.classList.toggle('d-none', ! isInternal);
         };
 
         type.addEventListener('change', function () {
@@ -353,13 +413,23 @@
 
                     <div class="d-grid gap-2">
                         @forelse($workflowTransitions as $transition)
+                            @php
+                                $disabledReason = $transition->disabled_reason;
+                            @endphp
                             <form method="POST" action="{{ route('tech.tickets.workflow.transition', [$ticket, $transition]) }}">
                                 @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-primary w-100 text-start">
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm {{ $disabledReason ? 'btn-outline-secondary' : 'btn-outline-primary' }} w-100 text-start"
+                                    @disabled($disabledReason)
+                                    @if($disabledReason) title="{{ $disabledReason }}" @endif>
                                     <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
                                     {{ $transition->label }}
                                     <span class="text-muted">to {{ $transition->toStatus?->name }}</span>
                                 </button>
+                                @if($disabledReason)
+                                    <div class="small text-muted mt-1">{{ $disabledReason }}</div>
+                                @endif
                             </form>
                         @empty
                             <p class="text-muted small mb-0">No workflow transitions available.</p>

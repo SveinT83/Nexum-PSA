@@ -13,7 +13,10 @@ class TicketWorkflowTransition extends Model
         'to_status_id',
         'label',
         'is_active',
+        'manual_enabled',
+        'trigger_actions',
         'requires_note',
+        'requires_response',
         'requires_resolution',
         'requires_knowledge_update',
         'sort_order',
@@ -21,7 +24,10 @@ class TicketWorkflowTransition extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'manual_enabled' => 'boolean',
+        'trigger_actions' => 'array',
         'requires_note' => 'boolean',
+        'requires_response' => 'boolean',
         'requires_resolution' => 'boolean',
         'requires_knowledge_update' => 'boolean',
         'sort_order' => 'integer',

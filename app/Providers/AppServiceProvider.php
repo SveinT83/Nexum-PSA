@@ -19,6 +19,7 @@ use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\TacticalRmmS
 use App\Modules\Integration\Livewire\Tech\Ai\ContextChat as IntegrationContextChat;
 use App\Modules\Knowledge\Livewire\ArticleForm as KnowledgeArticleForm;
 use App\Modules\Taxonomy\Livewire\TagManager as TaxonomyTagManager;
+use App\Modules\Ticket\Livewire\Admin\WorkflowEditor as TicketWorkflowEditor;
 use App\Modules\UserManagement\Livewire\Roles\RolePermissions as UserManagementRolePermissions;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
@@ -54,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('tech.cs.service-pricing', CommercialServicePricing::class);
         Livewire::component('knowledge.article-form', KnowledgeArticleForm::class);
         Livewire::component('system.tag-manager', TaxonomyTagManager::class);
+        Livewire::component('tech.admin.tickets.workflow-editor', TicketWorkflowEditor::class);
         Livewire::component('tech.admin.system.templates-management.doc.template-form', DocumentationTemplateForm::class);
         Livewire::component('tech.admin.user_management.roles.role-permissions', UserManagementRolePermissions::class);
         Livewire::component('tech.admin.system.integrations.n-able-rmm-sync', IntegrationNAbleRmmSync::class);

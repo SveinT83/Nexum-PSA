@@ -15,6 +15,7 @@ use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Models\Ticket;
@@ -29,7 +30,9 @@ use App\Modules\Ticket\Models\TicketTechnicianProfile;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
+use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
+use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -69,6 +72,7 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
+        $this->assertSame(TicketController::class . '@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
         $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
         $this->assertSame(TicketController::class . '@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
@@ -813,6 +817,15 @@ class TicketModuleTest extends TestCase
         ]);
         $newOwner = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $newOwner->assignRole('Tech');
+        $solution = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Use this answer to fix the issue.',
+            'metadata' => ['is_solution' => true],
+        ]);
 
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
@@ -866,7 +879,13 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function tech_user_can_close_ticket_with_lifecycle_timestamps(): void
     {
-        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999111']);
+        app(EnsureTicketDefaults::class)->handle();
+        $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999111',
+            'status_id' => $resolved->id,
+            'resolved_at' => now(),
+        ]);
 
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
@@ -967,6 +986,189 @@ class TicketModuleTest extends TestCase
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(\App\Modules\Ticket\Actions\ChangeTicketStatus::class)->handle($ticket, $waiting, $this->tech);
+    }
+
+    #[Test]
+    public function workflow_blocks_solved_transition_until_response_is_marked_as_solution(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999038',
+            'status_id' => $new->id,
+            'workflow_id' => $workflow->id,
+        ]);
+        $transition = TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $new->id)
+            ->where('to_status_id', $resolved->id)
+            ->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket, $transition]))
+            ->assertSessionHasErrors('status_id');
+
+        $response = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'This fixes the issue.',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket, $transition]))
+            ->assertSessionHasErrors('status_id');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.solution', [$ticket, $response]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($resolved->id, $ticket->fresh()->status_id);
+        $this->assertTrue((bool) $response->fresh()->metadata['is_solution']);
+    }
+
+    #[Test]
+    public function workflow_auto_advance_after_solution_does_not_close_ticket(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $resolved->id)
+            ->where('to_status_id', $closed->id)
+            ->firstOrFail()
+            ->forceFill(['requires_resolution' => true])
+            ->save();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999044',
+            'status_id' => $new->id,
+            'workflow_id' => $workflow->id,
+        ]);
+        $response = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'This fixes the issue.',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.solution', [$ticket, $response]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $ticket->refresh();
+
+        $this->assertSame($resolved->id, $ticket->status_id);
+        $this->assertNull($ticket->closed_at);
+    }
+
+    #[Test]
+    public function workflow_does_not_allow_closing_before_solved_state(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999039',
+            'status_id' => $new->id,
+            'workflow_id' => $workflow->id,
+        ]);
+
+        $this->assertFalse(TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $new->id)
+            ->where('to_status_id', $closed->id)
+            ->where('is_active', true)
+            ->exists());
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.close', $ticket))
+            ->assertSessionHasErrors('status_id');
+
+        $this->assertSame($new->id, $ticket->fresh()->status_id);
+    }
+
+    #[Test]
+    public function workflow_can_disable_manual_transition_and_allow_action_trigger(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $transition = TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $new->id)
+            ->where('to_status_id', $inProgress->id)
+            ->firstOrFail();
+        $transition->forceFill([
+            'manual_enabled' => false,
+            'trigger_actions' => [TicketAction::ADD_INTERNAL_NOTE],
+        ])->save();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999040',
+            'status_id' => $new->id,
+            'workflow_id' => $workflow->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertDontSee('Start work');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket, $transition]))
+            ->assertSessionHasErrors('status_id');
+
+        app(AddTicketMessage::class)->handle($ticket->fresh(), [
+            'type' => 'internal_note',
+            'visibility' => 'internal',
+            'body' => 'Started triage.',
+        ], $this->tech);
+
+        $this->assertSame($inProgress->id, $ticket->fresh()->status_id);
+    }
+
+    #[Test]
+    public function customer_reply_intent_controls_workflow_action_trigger(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
+        $waiting = TicketStatus::where('slug', 'waiting-customer')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $inProgress->id)
+            ->where('to_status_id', $waiting->id)
+            ->firstOrFail()
+            ->forceFill(['trigger_actions' => [TicketAction::REQUEST_CUSTOMER_INPUT]])
+            ->save();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999041',
+            'status_id' => $inProgress->id,
+            'workflow_id' => $workflow->id,
+        ]);
+
+        app(AddTicketMessage::class)->handle($ticket->fresh(), [
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'reply_intent' => TicketAction::CUSTOMER_UPDATE,
+            'body' => 'We are still working on this.',
+        ], $this->tech);
+
+        $this->assertSame($inProgress->id, $ticket->fresh()->status_id);
+
+        app(AddTicketMessage::class)->handle($ticket->fresh(), [
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'reply_intent' => TicketAction::REQUEST_CUSTOMER_INPUT,
+            'body' => 'Can you send the screenshot?',
+        ], $this->tech);
+
+        $this->assertSame($waiting->id, $ticket->fresh()->status_id);
     }
 
     #[Test]
@@ -1266,6 +1468,127 @@ class TicketModuleTest extends TestCase
             'level' => 'info',
             'code' => 'TICKET_EMAIL_SENT',
             'rfc_message_id' => '<attachment-message@example.com>',
+        ]);
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_uses_selected_reply_contact_and_cc(): void
+    {
+        $client = Client::factory()->create(['name' => 'Reply Routing Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $ticketContact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Wrong Contact',
+            'email' => 'wrong@example.com',
+        ]);
+        $replyContact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Correct Contact',
+            'email' => 'correct@example.com',
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support-routing@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create($this->ticketReplyTemplateData());
+        $ticket = $this->createTicket($ticketContact, [
+            'ticket_key' => 'TD-2026-999042',
+            'client_id' => $client->id,
+            'contact_id' => $ticketContact->id,
+            'subject' => 'Reply routing ticket',
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Routed reply.',
+            'metadata' => [
+                'reply_contact_id' => $replyContact->id,
+                'cc' => ['thirdparty@example.com'],
+            ],
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments, $ccRecipients) =>
+                    $resolvedAccount->is($account)
+                    && $toEmail === 'correct@example.com'
+                    && $toName === 'Correct Contact'
+                    && $ccRecipients === [['email' => 'thirdparty@example.com', 'name' => '']]
+                )
+                ->andReturn('<routed-message@example.com>');
+        });
+
+        app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_EMAIL_SENT',
+            'rfc_message_id' => '<routed-message@example.com>',
+        ]);
+    }
+
+    #[Test]
+    public function internal_note_can_notify_selected_technician_by_email(): void
+    {
+        $recipient = User::factory()->create([
+            'name' => 'Notify Tech',
+            'email' => 'notify-tech@example.com',
+            'status' => User::STATUS_ACTIVE,
+        ]);
+        $account = EmailAccount::create($this->emailAccountData([
+            'address' => 'support-internal@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999043',
+            'subject' => 'Internal notify ticket',
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'internal_note',
+            'visibility' => 'internal',
+            'body' => 'Please review this note.',
+            'metadata' => ['notify_user_id' => $recipient->id],
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text) =>
+                    $resolvedAccount->is($account)
+                    && $toEmail === 'notify-tech@example.com'
+                    && $toName === 'Notify Tech'
+                    && $subject === '[TD-2026-999043] Internal note notification'
+                    && str_contains($text, 'Please review this note.')
+                )
+                ->andReturn('<internal-notify@example.com>');
+        });
+
+        app(SendTicketInternalNotificationEmail::class, ['ticketMessageId' => $message->id])->handle(
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(SmtpAccountMailer::class)
+        );
+
+        $this->assertDatabaseHas('email_logs', [
+            'direction' => 'outbound',
+            'account_id' => $account->id,
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_INTERNAL_NOTIFY_SENT',
+            'rfc_message_id' => '<internal-notify@example.com>',
         ]);
     }
 

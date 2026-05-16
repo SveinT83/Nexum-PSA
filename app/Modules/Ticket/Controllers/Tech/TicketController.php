@@ -14,6 +14,7 @@ use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
 use App\Modules\Ticket\Actions\CloseTicket;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
@@ -213,10 +214,14 @@ class TicketController extends Controller
         $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events']);
         $messageIds = $ticket->messages->pluck('id')->all();
 
+        $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);
+        $closeTransition = $workflowTransitions->first(fn (TicketWorkflowTransition $transition) => (bool) $transition->toStatus?->is_closed);
+
         return view('ticket::Tech.Tickets.show', [
             'ticket' => $ticket,
             'ticketActions' => $actionGuard->map($ticket, request()->user()),
-            'workflowTransitions' => $workflowRuntime->availableTransitions($ticket),
+            'workflowTransitions' => $workflowTransitions,
+            'closeTransition' => $closeTransition,
             'latestAssignmentEvent' => $ticket->events
                 ->where('type', 'assigned')
                 ->sortByDesc('created_at')
@@ -227,6 +232,7 @@ class TicketController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'categories' => $this->ticketCategories(),
             'technicians' => $this->technicians(),
+            'replyContacts' => $this->replyContactOptions($ticket),
             'knowledgeSuggestions' => $articleQuery->relevantForTicket($ticket, 3),
             'emailLogsByMessageId' => EmailLog::query()
                 ->where('direction', 'outbound')
@@ -262,16 +268,37 @@ class TicketController extends Controller
         $data = $request->validate([
             'body' => 'required|string',
             'type' => 'required|string|in:internal_note,customer_reply',
+            'reply_intent' => 'nullable|string|in:customer_update,request_customer_input,send_solution',
+            'reply_contact_id' => 'nullable|integer|exists:client_users,id',
+            'cc' => 'nullable|string|max:1000',
+            'notify_user_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
             'visibility' => 'required|string|in:internal,public',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|max:20480',
         ]);
 
         $data['visibility'] = $data['type'] === 'internal_note' ? 'internal' : 'public';
+        $data['reply_intent'] = $data['type'] === 'customer_reply'
+            ? ($data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE)
+            : null;
         $action = $data['type'] === 'customer_reply' ? TicketAction::CUSTOMER_REPLY : TicketAction::ADD_INTERNAL_NOTE;
 
         if ($reason = $actionGuard->reason($ticket, $action, $request->user())) {
             return back()->withErrors(['type' => $reason])->withInput();
+        }
+
+        if ($data['type'] === 'customer_reply') {
+            $replyContactId = $data['reply_contact_id'] ?? $ticket->contact_id;
+            $replyContact = $this->replyContactOptions($ticket)->firstWhere('id', (int) $replyContactId);
+
+            if (! $replyContact || blank($replyContact->email)) {
+                return back()->withErrors(['reply_contact_id' => 'Select an active client contact with an email address.'])->withInput();
+            }
+
+            $data['reply_contact_id'] = $replyContact->id;
+        } else {
+            $data['reply_contact_id'] = null;
+            $data['cc'] = null;
         }
 
         $addTicketMessage->handle($ticket, $data, $request->user());
@@ -352,11 +379,15 @@ class TicketController extends Controller
             ->with('success', 'Ticket closed.');
     }
 
-    public function transition(Request $request, Ticket $ticket, TicketWorkflowTransition $transition, ChangeTicketStatus $changeTicketStatus): RedirectResponse
+    public function transition(Request $request, Ticket $ticket, TicketWorkflowTransition $transition, ChangeTicketStatus $changeTicketStatus, TicketWorkflowRuntime $workflowRuntime): RedirectResponse
     {
         abort_unless((int) $transition->from_status_id === (int) $ticket->status_id, 404);
 
         $transition->loadMissing('toStatus');
+
+        if ($reason = $workflowRuntime->manualBlockedReason($ticket, $transition)) {
+            return back()->withErrors(['status_id' => $reason]);
+        }
 
         $changeTicketStatus->handle($ticket, $transition->toStatus, $request->user());
 
@@ -412,6 +443,14 @@ class TicketController extends Controller
             ->with('success', 'Reply marked as read.');
     }
 
+    public function markMessageSolution(Request $request, Ticket $ticket, TicketMessage $message, MarkTicketMessageSolution $markSolution): RedirectResponse
+    {
+        $markSolution->handle($ticket, $message, $request->user());
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Response marked as solution.');
+    }
+
     public function assign(Request $request, Ticket $ticket, TicketAssignmentEngine $assignmentEngine, TicketActionGuard $actionGuard): RedirectResponse
     {
         if ($reason = $actionGuard->reason($ticket, TicketAction::ASSIGN_OWNER, $request->user())) {
@@ -455,6 +494,21 @@ class TicketController extends Controller
         }
 
         return $technicians->sortBy('name')->values();
+    }
+
+    private function replyContactOptions(Ticket $ticket): Collection
+    {
+        if (! $ticket->client_id) {
+            return $ticket->contact ? collect([$ticket->contact]) : collect();
+        }
+
+        return ClientUser::query()
+            ->whereHas('site', fn ($query) => $query->where('client_id', $ticket->client_id))
+            ->where('active', true)
+            ->whereNotNull('email')
+            ->orderByDesc('is_default_for_client')
+            ->orderBy('name')
+            ->get(['id', 'client_site_id', 'name', 'email']);
     }
 
     private function ticketCategories(): Collection

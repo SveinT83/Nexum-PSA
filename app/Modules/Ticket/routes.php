@@ -43,6 +43,9 @@ Route::post('/tickets/{ticket}/messages', [TicketController::class, 'addMessage'
 Route::post('/tickets/{ticket}/messages/{message}/read', [TicketController::class, 'markMessageRead'])
     ->name('tickets.messages.read');
 
+Route::post('/tickets/{ticket}/messages/{message}/solution', [TicketController::class, 'markMessageSolution'])
+    ->name('tickets.messages.solution');
+
 Route::get('/tickets/{ticket}/attachments/{attachment}/download', [TicketController::class, 'downloadAttachment'])
     ->name('tickets.attachments.download');
 
