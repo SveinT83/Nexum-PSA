@@ -13,6 +13,9 @@ use Spatie\Permission\Models\Role;
  * The current form does not ask for a password. This action creates a random
  * initial password and marks the user as pending invite, which matches the
  * User model's default status semantics.
+ *
+ * When the user is created with PENDING_INVITE status (the default), the
+ * invitation email is sent automatically.
  */
 class StoreUser
 {
@@ -28,6 +31,11 @@ class StoreUser
         if (! empty($data['role'])) {
             $role = Role::findOrFail($data['role']);
             $user->assignRole($role);
+        }
+
+        // Auto-send invite for pending users
+        if ($user->isPending()) {
+            app(SendUserInvite::class)->handle($user);
         }
 
         return $user;

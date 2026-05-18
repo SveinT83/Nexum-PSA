@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Notification\Notifications\TicketStatusChanged;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -81,6 +82,20 @@ class ChangeTicketStatus
                     'after' => $after,
                     'message' => 'Ticket status changed to ' . $status->name . '.',
                 ]);
+
+                // Notify the ticket owner if they didn't change the status themselves
+                if ($ticket->owner_id && $ticket->owner_id !== $actor?->id) {
+                    $owner = User::find($ticket->owner_id);
+                    if ($owner) {
+                        $oldStatusName = TicketStatus::find($before['status_id'])?->name ?? 'Unknown';
+                        $owner->notify(new TicketStatusChanged(
+                            ticket: $ticket,
+                            oldStatus: $oldStatusName,
+                            newStatus: $status->name,
+                            changedBy: $actor?->name,
+                        ));
+                    }
+                }
             }
 
             return $ticket;

@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tech' => \App\Http\Middleware\TechAccess::class,
             'admin' => \App\Http\Middleware\AdminAccess::class,
+            '2fa.required' => \App\Http\Middleware\RequireTwoFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

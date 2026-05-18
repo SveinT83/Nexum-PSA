@@ -27,6 +27,11 @@
 
                     <div class="col-8">
                         @include('partials.nav.tech_nav')
+
+                        {{-- Notification bell --}}
+                        <div class="float-end me-3 mt-2">
+                            <livewire:notification-bell />
+                        </div>
                     </div>
 
                 </div>

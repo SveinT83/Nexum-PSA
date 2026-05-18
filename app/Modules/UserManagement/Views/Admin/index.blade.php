@@ -52,7 +52,7 @@
                                 <th>Status</th>
                                 <th>Roles</th>
                                 <th>Created</th>
-                                <th class="text-end">Status Action</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -74,15 +74,36 @@
                                     </td>
                                     <td>{{ $user->created_at?->format('d.m.Y H:i') }}</td>
                                     <td class="text-end">
-                                        <form action="{{ route('tech.admin.user_management.status.update', $user) }}" method="POST" class="d-inline-flex gap-2 justify-content-end">
-                                            @csrf
-                                            <select name="status" class="form-select form-select-sm" style="width: 170px;">
-                                                <option value="{{ \App\Models\Core\User::STATUS_PENDING }}" {{ $user->status === \App\Models\Core\User::STATUS_PENDING ? 'selected' : '' }}>Pending Invite</option>
-                                                <option value="{{ \App\Models\Core\User::STATUS_ACTIVE }}" {{ $user->status === \App\Models\Core\User::STATUS_ACTIVE ? 'selected' : '' }}>Active</option>
-                                                <option value="{{ \App\Models\Core\User::STATUS_DISABLED }}" {{ $user->status === \App\Models\Core\User::STATUS_DISABLED ? 'selected' : '' }}>Disabled</option>
-                                            </select>
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
-                                        </form>
+                                        <div class="d-inline-flex gap-1 align-items-center">
+                                            {{-- Status select --}}
+                                            <form action="{{ route('tech.admin.user_management.status.update', $user) }}" method="POST" class="d-inline-flex gap-1">
+                                                @csrf
+                                                <select name="status" class="form-select form-select-sm" style="width: 170px;">
+                                                    <option value="{{ \App\Models\Core\User::STATUS_PENDING }}" {{ $user->status === \App\Models\Core\User::STATUS_PENDING ? 'selected' : '' }}>Pending Invite</option>
+                                                    <option value="{{ \App\Models\Core\User::STATUS_ACTIVE }}" {{ $user->status === \App\Models\Core\User::STATUS_ACTIVE ? 'selected' : '' }}>Active</option>
+                                                    <option value="{{ \App\Models\Core\User::STATUS_DISABLED }}" {{ $user->status === \App\Models\Core\User::STATUS_DISABLED ? 'selected' : '' }}>Disabled</option>
+                                                </select>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                            </form>
+
+                                            {{-- Send / Resend Invite button (only for pending users) --}}
+                                            @if($user->isPending())
+                                                <form action="{{ route('tech.admin.user_management.invite.send', $user) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @php
+                                                        $hasInvite = $user->inviteTokens()->whereNull('used_at')->where('expires_at', '>', now())->exists();
+                                                    @endphp
+                                                    <button type="submit" class="btn btn-sm btn-outline-{{ $hasInvite ? 'warning' : 'success' }}"
+                                                            title="{{ $hasInvite ? 'Resend invitation email' : 'Send invitation email' }}">
+                                                        @if($hasInvite)
+                                                            ⟳ Resend
+                                                        @else
+                                                            ✉ Invite
+                                                        @endif
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

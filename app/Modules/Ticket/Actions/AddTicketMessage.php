@@ -3,11 +3,13 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Notification\Notifications\TicketCommentAdded;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
+use App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger;
 use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
 
@@ -61,11 +63,24 @@ class AddTicketMessage
                 SendTicketInternalNotificationEmail::dispatch($message->id)->afterCommit();
             }
 
+            // Svein's workflow trigger (from Dev branch)
             app(ApplyTicketWorkflowActionTrigger::class)->handle(
                 $ticket->refresh(),
                 $this->workflowActionFor($message),
                 $actor
             );
+
+            // Notify the ticket owner (if not the comment author)
+            if ($ticket->owner_id && $ticket->owner_id !== $actor?->id) {
+                $owner = User::find($ticket->owner_id);
+                if ($owner) {
+                    $owner->notify(new TicketCommentAdded(
+                        ticket: $ticket,
+                        commentAuthor: $actor?->name ?? 'System',
+                        commentPreview: str($message->body)->limit(150),
+                    ));
+                }
+            }
 
             return $message;
         });
