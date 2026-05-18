@@ -12,8 +12,8 @@ use App\Modules\Calendar\Models\Calendar;
 use App\Modules\Calendar\Models\CalendarAccess;
 use App\Modules\Calendar\Models\CalendarAvailabilityRule;
 use App\Modules\Calendar\Models\CalendarEvent;
-use App\Modules\Calendar\Models\CalendarSetting;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
+use App\Modules\UserManagement\Models\UserPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
@@ -276,29 +276,26 @@ class CalendarModuleTest extends TestCase
     }
 
     #[Test]
-    public function technician_can_update_calendar_preferences_and_working_hours(): void
+    public function calendar_uses_user_preferences_for_defaults(): void
     {
-        $this->actingAs($this->tech)
-            ->patch(route('tech.calendar.preferences.update'), [
-                'timezone' => 'America/New_York',
-                'default_view' => 'month',
-                'workday_start' => '09:00',
-                'workday_end' => '17:00',
-            ])
-            ->assertRedirect();
+        UserPreference::query()->create([
+            'user_id' => $this->tech->id,
+            'timezone' => 'America/New_York',
+            'default_calendar_view' => 'month',
+            'workday_start' => '09:00',
+            'workday_end' => '17:00',
+        ]);
 
-        $calendar = Calendar::query()->where('owner_id', $this->tech->id)->firstOrFail();
-        $this->assertSame('America/New_York', $calendar->timezone);
-        $this->assertSame('month', CalendarSetting::query()
-            ->where('scope_type', 'user')
-            ->where('scope_id', $this->tech->id)
-            ->where('name', 'default_view')
-            ->value('value'));
-        $this->assertDatabaseHas('calendar_availability_rules', [
-            'calendar_id' => $calendar->id,
-            'weekday' => 1,
-            'starts_at_local' => '09:00',
-            'ends_at_local' => '17:00',
+        $this->actingAs($this->tech)
+            ->get(route('tech.calendar.index'))
+            ->assertOk()
+            ->assertSee('America/New_York')
+            ->assertSee('Month');
+
+        $this->assertDatabaseHas('user_preferences', [
+            'user_id' => $this->tech->id,
+            'timezone' => 'America/New_York',
+            'default_calendar_view' => 'month',
         ]);
     }
 

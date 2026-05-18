@@ -4,6 +4,7 @@ use App\Modules\UserManagement\Controllers\AcceptInviteController;
 use App\Modules\UserManagement\Controllers\Admin\PermissionManagementController;
 use App\Modules\UserManagement\Controllers\Admin\RolesManagementController;
 use App\Modules\UserManagement\Controllers\Admin\UserManagementController;
+use App\Modules\UserManagement\Controllers\ProfilePreferencesController;
 use App\Modules\UserManagement\Controllers\ProfileSecurityController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,11 @@ Route::post('/invite/{token}', [AcceptInviteController::class, 'store'])
 */
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/profile/preferences', [ProfilePreferencesController::class, 'show'])
+        ->name('profile.preferences');
+    Route::patch('/profile/preferences', [ProfilePreferencesController::class, 'update'])
+        ->name('profile.preferences.update');
+
     Route::get('/profile/security', [ProfileSecurityController::class, 'show'])
         ->name('profile.security');
     Route::post('/profile/security/2fa/enable', [ProfileSecurityController::class, 'enable'])

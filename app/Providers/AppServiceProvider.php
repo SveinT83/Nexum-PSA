@@ -41,6 +41,30 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register module view namespaces used by module-owned controllers and Livewire views.
+        foreach ([
+            'asset' => 'Asset',
+            'calendar' => 'Calendar',
+            'clients' => 'Clients',
+            'commercial' => 'Commercial',
+            'documentation' => 'Documentation',
+            'email' => 'Email',
+            'integration' => 'Integration',
+            'knowledge' => 'Knowledge',
+            'notification' => 'Notification',
+            'risk' => 'Risk',
+            'storage' => 'Storage',
+            'taxonomy' => 'Taxonomy',
+            'ticket' => 'Ticket',
+            'usermanagement' => 'UserManagement',
+        ] as $namespace => $module) {
+            $path = base_path("app/Modules/{$module}/Views");
+
+            if (is_dir($path)) {
+                View::addNamespace($namespace, $path);
+            }
+        }
+
         // Register module-local Livewire components with stable public aliases.
         // Blade templates may keep domain-specific aliases such as
         // "tech.assets.asset-form" even when the PHP class moves into a module.
@@ -61,3 +85,8 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('tech.admin.user_management.roles.role-permissions', UserManagementRolePermissions::class);
         Livewire::component('tech.admin.system.integrations.n-able-rmm-sync', IntegrationNAbleRmmSync::class);
         Livewire::component('tech.admin.system.integrations.tactical-rmm-sync', IntegrationTacticalRmmSync::class);
+        Livewire::component('tech.admin.system.integrations.ai-settings', IntegrationAiSettings::class);
+        Livewire::component('tech.ai.context-chat', IntegrationContextChat::class);
+        Livewire::component('notification-bell', NotificationBell::class);
+    }
+}

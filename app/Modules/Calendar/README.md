@@ -260,7 +260,11 @@ Useful for holiday, sickness, special workdays, and temporary schedule changes.
 
 ### calendar_settings
 
-Global and user calendar preferences.
+Global calendar defaults.
+
+User-specific timezone, default calendar view, and workday defaults are owned by the
+UserManagement module in `user_preferences`. Calendar reads those preferences and uses them when
+rendering calendar views and synchronizing personal availability defaults.
 
 Settings needed:
 

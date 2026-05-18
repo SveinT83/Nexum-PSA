@@ -25,7 +25,7 @@ The technician calendar supports these views:
 - List view for scanning upcoming events.
 
 The selected view can be changed from the calendar page. The user's preferred default view can be
-stored in My Settings.
+stored in User Preferences from the profile menu.
 
 ## Creating events
 
@@ -82,9 +82,9 @@ The Find Time panel searches available slots based on working availability and b
 
 Private busy events still block availability, even when the event details are hidden from the viewer.
 
-## Personal settings
+## Personal preferences
 
-My Settings lets each technician configure:
+User Preferences lets each technician configure:
 
 - Timezone.
 - Default calendar view.
@@ -93,6 +93,9 @@ My Settings lets each technician configure:
 
 Updating workday start and end updates the technician's weekday availability rules for the personal
 work calendar.
+
+Calendar does not own those user preference fields. They belong to User Management and are reused by
+Calendar when rendering dates, choosing the default view, and building availability defaults.
 
 ## Current boundaries
 

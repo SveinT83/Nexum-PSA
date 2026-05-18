@@ -152,19 +152,15 @@ class TwoFactorAuthenticationTest extends TestCase
         \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'superadmin']);
         \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'technician']);
 
-        // Ensure common_settings table exists
-        \DB::table('common_settings')->insertOrIgnore([
-            'key' => 'enforce_two_factor',
-            'value' => '0',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        \DB::table('common_settings')->insertOrIgnore([
-            'key' => 'enforce_two_factor_roles',
-            'value' => '[]',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // Ensure the settings exist with the shared common_settings schema.
+        \DB::table('common_settings')->updateOrInsert(
+            ['name' => 'enforce_two_factor'],
+            ['type' => 'security', 'value' => '0', 'json' => null]
+        );
+        \DB::table('common_settings')->updateOrInsert(
+            ['name' => 'enforce_two_factor_roles'],
+            ['type' => 'security', 'value' => null, 'json' => '[]']
+        );
 
         $response = $this->actingAs($admin)
             ->post(route('tech.admin.user_management.2fa-settings.update'), [
@@ -174,8 +170,8 @@ class TwoFactorAuthenticationTest extends TestCase
 
         $response->assertRedirect(route('tech.admin.user_management.2fa-settings'));
 
-        $this->assertEquals('1', \DB::table('common_settings')->where('key', 'enforce_two_factor')->value('value'));
-        $roles = json_decode(\DB::table('common_settings')->where('key', 'enforce_two_factor_roles')->value('value'), true);
+        $this->assertEquals('1', \DB::table('common_settings')->where('name', 'enforce_two_factor')->value('value'));
+        $roles = json_decode(\DB::table('common_settings')->where('name', 'enforce_two_factor_roles')->value('json'), true);
         $this->assertContains('superadmin', $roles);
         $this->assertContains('technician', $roles);
     }

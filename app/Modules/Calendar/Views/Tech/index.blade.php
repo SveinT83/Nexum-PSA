@@ -23,6 +23,8 @@
 @endsection
 
 @section('sidebar')
+    <x-nav.work-menu />
+
     <!-- Calendar filters -->
     <div class="card mb-3">
         <div class="card-header py-2">
@@ -56,38 +58,6 @@
         @endforeach
     </div>
 
-    <!-- Personal preferences -->
-    <details class="card mt-3 calendar-collapsible-card">
-        <summary class="card-header py-2 d-flex align-items-center justify-content-between">
-            <span class="h6 mb-0">My Settings</span>
-            <i class="bi bi-chevron-down calendar-collapsible-icon" aria-hidden="true"></i>
-        </summary>
-        <div class="card-body p-2">
-            <form method="POST" action="{{ route('tech.calendar.preferences.update') }}">
-                @csrf
-                @method('PATCH')
-                <label for="pref_timezone" class="form-label small">Timezone</label>
-                <input id="pref_timezone" name="timezone" value="{{ old('timezone', $userSettings['timezone'] ?? $timezone) }}" class="form-control form-control-sm mb-2" required>
-                <label for="pref_default_view" class="form-label small">Default view</label>
-                <select id="pref_default_view" name="default_view" class="form-select form-select-sm mb-2">
-                    @foreach(['day', 'week', 'month', 'list'] as $mode)
-                        <option value="{{ $mode }}" @selected(($userSettings['default_view'] ?? $viewMode) === $mode)>{{ ucfirst($mode) }}</option>
-                    @endforeach
-                </select>
-                <div class="row g-2">
-                    <div class="col-6">
-                        <label for="pref_workday_start" class="form-label small">Start</label>
-                        <input id="pref_workday_start" type="time" name="workday_start" value="{{ old('workday_start', substr($workdayStart, 0, 5)) }}" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-6">
-                        <label for="pref_workday_end" class="form-label small">End</label>
-                        <input id="pref_workday_end" type="time" name="workday_end" value="{{ old('workday_end', substr($workdayEnd, 0, 5)) }}" class="form-control form-control-sm">
-                    </div>
-                </div>
-                <button class="btn btn-sm btn-outline-primary w-100 mt-2" type="submit">Save</button>
-            </form>
-        </div>
-    </details>
 @endsection
 
 @section('content')

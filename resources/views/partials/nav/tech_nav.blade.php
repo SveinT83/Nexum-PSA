@@ -189,6 +189,7 @@
             <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name ?? 'User' }}
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ route('tech.profile.preferences') }}"><i class="bi bi-sliders me-2"></i>Preferences</a></li>
             <li><a class="dropdown-item" href="{{ route('tech.profile.security') }}"><i class="bi bi-shield-lock me-2"></i>Security Settings</a></li>
             <li><a class="dropdown-item" href="{{ route('tech.profile.notifications') }}"><i class="bi bi-bell me-2"></i>Notifications</a></li>
             <li><hr class="dropdown-divider"></li>

@@ -111,6 +111,11 @@ class User extends Authenticatable
         return $this->hasMany(\App\Modules\UserManagement\Models\InviteToken::class);
     }
 
+    public function preferences()
+    {
+        return $this->hasOne(\App\Modules\UserManagement\Models\UserPreference::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Two-Factor Helpers

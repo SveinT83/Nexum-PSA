@@ -49,9 +49,24 @@ The module routes are loaded inside the `/tech` group and add `admin` middleware
 
 - List application users with roles.
 - Create users and assign an initial role.
+- Store authenticated-user preferences such as timezone, default calendar view, and normal workday.
 - List, create, update, and delete roles.
 - List, create, update, and delete permissions.
 - Assign permissions to roles through the module-local Livewire component.
+
+## User Preferences
+
+Authenticated users manage personal defaults from `/tech/profile/preferences`.
+
+Current fields:
+
+- Timezone.
+- Default calendar view.
+- Workday start.
+- Workday end.
+
+Calendar uses these preferences for display defaults and personal availability setup, but the
+preference records themselves belong to User Management.
 
 ## Livewire
 

@@ -15,30 +15,38 @@ return new class extends Migration
     public function up(): void
     {
         // Add 2FA enforcement to the existing common_settings table,
-        // or create it if it doesn't exist yet.
+        // or create it with the project-wide common_settings schema if missing.
         if (! Schema::hasTable('common_settings')) {
             Schema::create('common_settings', function (Blueprint $table) {
                 $table->id();
-                $table->string('key')->unique();
-                $table->text('value')->nullable();
-                $table->timestamps();
+                $table->string('name');
+                $table->string('type');
+                $table->text('description')->nullable();
+                $table->string('value')->nullable();
+                $table->text('json')->nullable();
             });
         }
 
-        // Seed default 2FA enforcement setting
-        \DB::table('common_settings')->insertOrIgnore([
-            'key' => 'enforce_two_factor',
-            'value' => '0',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // Seed defaults using the existing common_settings columns.
+        \DB::table('common_settings')->updateOrInsert(
+            ['name' => 'enforce_two_factor'],
+            [
+                'type' => 'security',
+                'description' => 'Require two-factor authentication for selected roles.',
+                'value' => '0',
+                'json' => null,
+            ]
+        );
 
-        \DB::table('common_settings')->insertOrIgnore([
-            'key' => 'enforce_two_factor_roles',
-            'value' => json_encode(['superadmin', 'technician']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        \DB::table('common_settings')->updateOrInsert(
+            ['name' => 'enforce_two_factor_roles'],
+            [
+                'type' => 'security',
+                'description' => 'Role names that must use two-factor authentication when enforcement is enabled.',
+                'value' => null,
+                'json' => json_encode(['superadmin', 'technician']),
+            ]
+        );
     }
 
     /**
@@ -46,7 +54,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        \DB::table('common_settings')->where('key', 'enforce_two_factor')->delete();
-        \DB::table('common_settings')->where('key', 'enforce_two_factor_roles')->delete();
+        \DB::table('common_settings')->where('name', 'enforce_two_factor')->delete();
+        \DB::table('common_settings')->where('name', 'enforce_two_factor_roles')->delete();
     }
 };

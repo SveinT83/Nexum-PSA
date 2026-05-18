@@ -2,8 +2,8 @@
 
 namespace App\Modules\Notification\Livewire;
 
-use Illuminate\View\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 /**
  * Livewire component that renders the notification bell icon
@@ -53,6 +53,6 @@ class NotificationBell extends Component
 
     public function render()
     {
-        return view('notification::livewire.notification-bell');
+        return view('notification::Livewire.notification-bell');
     }
 }

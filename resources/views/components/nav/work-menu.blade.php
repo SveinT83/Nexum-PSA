@@ -31,6 +31,12 @@
             'pattern' => 'tech.assets*',
             'icon' => 'bi-pc-display',
         ],
+        [
+            'label' => 'Calendar',
+            'route' => 'tech.calendar.index',
+            'pattern' => 'tech.calendar*',
+            'icon' => 'bi-calendar-week',
+        ],
     ];
 @endphp
 

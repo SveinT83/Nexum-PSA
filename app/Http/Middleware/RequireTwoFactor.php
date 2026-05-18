@@ -58,7 +58,7 @@ class RequireTwoFactor
     protected function enforcementEnabled(): bool
     {
         $setting = \DB::table('common_settings')
-            ->where('key', 'enforce_two_factor')
+            ->where('name', 'enforce_two_factor')
             ->value('value');
 
         return $setting === '1' || $setting === 'true';
@@ -70,8 +70,8 @@ class RequireTwoFactor
     protected function userRequiresTwoFactor(User $user): bool
     {
         $rolesJson = \DB::table('common_settings')
-            ->where('key', 'enforce_two_factor_roles')
-            ->value('value');
+            ->where('name', 'enforce_two_factor_roles')
+            ->value('json');
 
         $requiredRoles = json_decode($rolesJson, true) ?? [];
 

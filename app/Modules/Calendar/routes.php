@@ -16,9 +16,6 @@ Route::patch('/calendar/events/{event}', [CalendarController::class, 'update'])
 Route::delete('/calendar/events/{event}', [CalendarController::class, 'destroy'])
     ->name('calendar.events.destroy');
 
-Route::patch('/calendar/preferences', [CalendarController::class, 'updatePreferences'])
-    ->name('calendar.preferences.update');
-
 Route::middleware('admin')->group(function () {
     Route::get('/admin/settings/calendar', [CalendarSettingsController::class, 'index'])
         ->name('admin.settings.calendar');

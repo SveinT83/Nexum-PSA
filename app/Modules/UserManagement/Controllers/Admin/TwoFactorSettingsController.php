@@ -18,12 +18,12 @@ class TwoFactorSettingsController extends Controller
     public function show(): View
     {
         $enforceTwoFactor = \DB::table('common_settings')
-            ->where('key', 'enforce_two_factor')
+            ->where('name', 'enforce_two_factor')
             ->value('value') ?? '0';
 
         $rolesJson = \DB::table('common_settings')
-            ->where('key', 'enforce_two_factor_roles')
-            ->value('value') ?? '[]';
+            ->where('name', 'enforce_two_factor_roles')
+            ->value('json') ?? '[]';
 
         $enforcedRoles = json_decode($rolesJson, true) ?? [];
 
@@ -48,13 +48,23 @@ class TwoFactorSettingsController extends Controller
         $enforce = isset($validated['enforce_two_factor']) && $validated['enforce_two_factor'];
 
         \DB::table('common_settings')->updateOrInsert(
-            ['key' => 'enforce_two_factor'],
-            ['value' => $enforce ? '1' : '0', 'updated_at' => now()]
+            ['name' => 'enforce_two_factor'],
+            [
+                'type' => 'security',
+                'description' => 'Require two-factor authentication for selected roles.',
+                'value' => $enforce ? '1' : '0',
+                'json' => null,
+            ]
         );
 
         \DB::table('common_settings')->updateOrInsert(
-            ['key' => 'enforce_two_factor_roles'],
-            ['value' => json_encode($validated['enforce_two_factor_roles'] ?? []), 'updated_at' => now()]
+            ['name' => 'enforce_two_factor_roles'],
+            [
+                'type' => 'security',
+                'description' => 'Role names that must use two-factor authentication when enforcement is enabled.',
+                'value' => null,
+                'json' => json_encode($validated['enforce_two_factor_roles'] ?? []),
+            ]
         );
 
         return redirect()->route('tech.admin.user_management.2fa-settings')

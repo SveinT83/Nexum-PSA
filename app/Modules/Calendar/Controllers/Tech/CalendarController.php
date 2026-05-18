@@ -9,12 +9,12 @@ use App\Modules\Calendar\Actions\FindAvailableSlots;
 use App\Modules\Calendar\Actions\StoreCalendarEvent;
 use App\Modules\Calendar\Actions\UpdateCalendarEvent;
 use App\Modules\Calendar\Models\Calendar;
-use App\Modules\Calendar\Models\CalendarAvailabilityRule;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Models\CalendarEventException;
 use App\Modules\Calendar\Models\CalendarSetting;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
 use App\Modules\Calendar\Services\CalendarVisibility;
+use App\Modules\UserManagement\Models\UserPreference;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -28,13 +28,9 @@ class CalendarController extends Controller
         $user = $request->user();
         $defaults->handle($user);
 
-        $timezone = $this->timezone($user);
-        $userSettings = CalendarSetting::query()
-            ->where('scope_type', 'user')
-            ->where('scope_id', $user->id)
-            ->pluck('value', 'name')
-            ->all();
-        $view = $request->string('view')->value() ?: ($userSettings['default_view'] ?? $this->setting('default_view', 'week'));
+        $preferences = $this->preferences($user);
+        $timezone = $preferences->timezone ?: $this->setting('default_timezone', 'Europe/Oslo');
+        $view = $request->string('view')->value() ?: ($preferences->default_calendar_view ?: $this->setting('default_view', 'week'));
         $anchor = Carbon::parse($request->input('date', now($timezone)->toDateString()), $timezone);
         [$startsAt, $endsAt, $title] = $this->rangeFor($view, $anchor, $timezone);
 
@@ -47,9 +43,6 @@ class CalendarController extends Controller
         $events = $query->eventsForRange($user, $startsAt, $endsAt, $calendarIds);
         [$previousDate, $nextDate] = $this->navigationDates($view, $anchor, $timezone);
         $defaultCalendar = $calendars->firstWhere('owner_id', $user->id) ?: $calendars->first();
-        $workdayRule = $defaultCalendar
-            ? CalendarAvailabilityRule::query()->where('calendar_id', $defaultCalendar->id)->where('weekday', 1)->first()
-            : null;
         $availabilityUser = User::query()->find($request->integer('availability_user_id')) ?: $user;
         $availabilityDuration = max(15, min(480, $request->integer('availability_duration', 60)));
         $availableSlots = $findAvailableSlots->handle(
@@ -77,9 +70,6 @@ class CalendarController extends Controller
             'availabilityUser' => $availabilityUser,
             'availabilityDuration' => $availabilityDuration,
             'availableSlots' => $availableSlots,
-            'userSettings' => $userSettings,
-            'workdayStart' => $workdayRule?->starts_at_local ?: '08:00',
-            'workdayEnd' => $workdayRule?->ends_at_local ?: '16:00',
         ]);
     }
 
@@ -136,40 +126,6 @@ class CalendarController extends Controller
         }
 
         return back()->with('success', 'Calendar event deleted.');
-    }
-
-    public function updatePreferences(Request $request, EnsureCalendarDefaults $defaults): RedirectResponse
-    {
-        $user = $request->user();
-        $data = $request->validate([
-            'timezone' => ['required', 'timezone'],
-            'default_view' => ['required', Rule::in(['day', 'week', 'month', 'list'])],
-            'workday_start' => ['required', 'date_format:H:i'],
-            'workday_end' => ['required', 'date_format:H:i', 'after:workday_start'],
-        ]);
-
-        foreach (['timezone', 'default_view'] as $name) {
-            CalendarSetting::query()->updateOrCreate(
-                ['scope_type' => 'user', 'scope_id' => $user->id, 'name' => $name],
-                ['value' => $data[$name]]
-            );
-        }
-
-        $calendar = $defaults->ensurePersonalCalendar($user);
-        $calendar->forceFill(['timezone' => $data['timezone']])->save();
-
-        foreach ([1, 2, 3, 4, 5] as $weekday) {
-            CalendarAvailabilityRule::query()->updateOrCreate(
-                ['calendar_id' => $calendar->id, 'user_id' => $user->id, 'weekday' => $weekday],
-                [
-                    'timezone' => $data['timezone'],
-                    'starts_at_local' => $data['workday_start'],
-                    'ends_at_local' => $data['workday_end'],
-                ]
-            );
-        }
-
-        return back()->with('success', 'Calendar preferences updated.');
     }
 
     private function validatedEvent(Request $request): array
@@ -231,14 +187,17 @@ class CalendarController extends Controller
         };
     }
 
-    private function timezone($user): string
+    private function preferences(User $user): UserPreference
     {
-        return CalendarSetting::query()
-            ->where('scope_type', 'user')
-            ->where('scope_id', $user->id)
-            ->where('name', 'timezone')
-            ->value('value')
-            ?: $this->setting('default_timezone', 'Europe/Oslo');
+        return UserPreference::query()->firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'timezone' => $this->setting('default_timezone', 'Europe/Oslo'),
+                'default_calendar_view' => $this->setting('default_view', 'week'),
+                'workday_start' => '08:00',
+                'workday_end' => '16:00',
+            ]
+        );
     }
 
     private function setting(string $name, string $fallback): string
