@@ -26,7 +26,7 @@
     <!-- Work dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.assets*');
+        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.assets*') || request()->routeIs('tech.calendar*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -67,6 +67,15 @@
             <li class="nav-item">
                 <a class="dropdown-item {{ request()->routeIs('tech.assets.index') ? 'active' : '' }}" href="{{ route('tech.assets.index') }}">Assets</a>
             </li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Calendar -->
+            <!-- ------------------------------------------------- -->
+            @if(Route::has('tech.calendar.index'))
+                <li class="nav-item">
+                    <a class="dropdown-item {{ request()->routeIs('tech.calendar*') ? 'active' : '' }}" href="{{ route('tech.calendar.index') }}">Calendar</a>
+                </li>
+            @endif
 
         </ul>
     </li>
