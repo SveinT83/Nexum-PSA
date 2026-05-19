@@ -3,6 +3,8 @@
 namespace App\Modules\Commercial\Models\Sla;
 
 use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Commercial\Models\Contracts\ContractItem;
+use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,6 +45,16 @@ class Sla extends Model
     public function contracts(): HasMany
     {
         return $this->hasMany(Contracts::class, 'sla_id');
+    }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(Services::class, 'sla_id');
+    }
+
+    public function contractItems(): HasMany
+    {
+        return $this->hasMany(ContractItem::class, 'sla_id');
     }
 
     public function tickets(): HasMany

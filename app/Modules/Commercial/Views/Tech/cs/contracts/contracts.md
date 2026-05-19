@@ -14,6 +14,16 @@ The contract system defines how service agreements are structured, managed, rene
 
 Contracts are created as **snapshots** of current service offerings, ensuring stability and predictable billing during their active period. The system must handle both fixed-term (binding) and open-ended (floating) contracts, support automated renewals, and provide optional price indexing linked to global and service-level rules.
 
+The contract system should also support a controlled term library that helps us shape customer agreements around information security expectations. We should strive to design contract templates and reusable clauses in line with ISO 27001 principles, while being explicit that the system itself does not make a contract automatically ISO 27001 compliant. Actual clause content must be reviewed and maintained as part of the legal/security documentation process.
+
+Current snapshot behavior:
+
+- Service prices and commercial values are copied into contract lines.
+- Service time rates are copied into `contract_item_time_rates`.
+- Service SLA defaults are copied into contract lines, or contract lines use the contract default SLA.
+- Service terms are grouped into contract snapshots for terms, DPA, legal/GDPR, SLA, and general content.
+- Existing edited contract snapshots are not overwritten unless the user refreshes from services.
+
 ---
 
 ## 2. Route & View Structure

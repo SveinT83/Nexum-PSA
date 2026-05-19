@@ -180,6 +180,25 @@
                     </div>
                 </div>
             </div>
+
+            @if(Route::has('tech.admin.nextcloud.connections.index'))
+                <div class="col-md-4 mt-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Nextcloud</h5>
+                            <span class="badge bg-light text-dark border">Domain</span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p class="card-text">Configure global, client, and site Nextcloud connections for calendars, files, users, groups, and future mappings.</p>
+                            <div class="mt-auto">
+                                <a href="{{ route('tech.admin.nextcloud.connections.index') }}" class="btn btn-primary">
+                                    <i class="bi bi-cloud"></i> Nextcloud Settings
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 @endsection

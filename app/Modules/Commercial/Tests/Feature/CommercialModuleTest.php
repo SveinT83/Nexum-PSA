@@ -8,11 +8,19 @@ use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Controllers\Admin\EconomyController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\PublicContractController;
+use App\Modules\Commercial\Controllers\Tech\Rates\TimeRateController;
 use App\Modules\Commercial\Controllers\Tech\Sla\SlaController;
 use App\Modules\Commercial\Controllers\Tech\Services\ServiceController;
+use App\Modules\Commercial\Livewire\Tech\Contracts\ContractItemsEditor;
+use App\Modules\Commercial\Livewire\Tech\ServiceLegal;
+use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Commercial\Models\Terms\terms as CommercialTerm;
+use App\Modules\Commercial\Models\TimeRate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -74,6 +82,281 @@ class CommercialModuleTest extends TestCase
             ->get(route('tech.admin.settings.economy'))
             ->assertOk()
             ->assertViewIs('commercial::Admin.economy.index');
+    }
+
+    #[Test]
+    public function tech_user_can_manage_time_rates_from_sales_workspace(): void
+    {
+        $this->assertSame(
+            TimeRateController::class . '@index',
+            Route::getRoutes()->getByName('tech.rates.index')->getActionName()
+        );
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.rates.index'))
+            ->assertOk()
+            ->assertViewIs('commercial::Tech.cs.rates.index')
+            ->assertSee('New Rate')
+            ->assertSee('Sales workspace')
+            ->assertSee('Time without contract')
+            ->assertSee('Time with contract')
+            ->assertSee('Driving');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.rates.store'), [
+                'name' => 'Emergency work',
+                'code' => 'EMERGENCY_WORK',
+                'rate_type' => 'labor',
+                'unit' => 'hour',
+                'amount_ex_vat' => 1800,
+                'currency' => 'NOK',
+                'applies_with_contract' => '1',
+                'is_active' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('time_rates', [
+            'code' => 'EMERGENCY_WORK',
+            'amount_ex_vat' => 1800,
+        ]);
+
+        $rate = TimeRate::query()->where('code', 'EMERGENCY_WORK')->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->put(route('tech.rates.update', $rate), [
+                'name' => 'Emergency work adjusted',
+                'code' => 'EMERGENCY_WORK',
+                'rate_type' => 'labor',
+                'unit' => 'hour',
+                'amount_ex_vat' => 1900,
+                'currency' => 'NOK',
+                'applies_with_contract' => '1',
+                'is_active' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('time_rates', [
+            'code' => 'EMERGENCY_WORK',
+            'name' => 'Emergency work adjusted',
+            'amount_ex_vat' => 1900,
+        ]);
+    }
+
+    #[Test]
+    public function service_can_define_default_time_rates(): void
+    {
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+        $sla = $this->createSla('Managed service SLA');
+        $contractRate = TimeRate::query()->where('code', 'TIME_WITH_CONTRACT')->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.services.store'), [
+                'sku' => 'MSP-BASE',
+                'name' => 'Managed service',
+                'unitId' => $unit->id,
+                'sla_id' => $sla->id,
+                'status' => 'published',
+                'orderable' => '1',
+                'taxable' => 25,
+                'billing_cycle' => 'monthly',
+                'price_ex_vat' => 1000,
+                'price_including_tax' => 1250,
+                'time_rates' => [
+                    $contractRate->id => [
+                        'enabled' => '1',
+                        'amount_ex_vat' => 600,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('tech.services.index'));
+
+        $service = Services::query()->where('sku', 'MSP-BASE')->firstOrFail();
+
+        $this->assertSame($sla->id, $service->sla_id);
+
+        $this->assertDatabaseHas('service_time_rates', [
+            'service_id' => $service->id,
+            'time_rate_id' => $contractRate->id,
+            'amount_ex_vat' => 600,
+            'is_active' => true,
+        ]);
+    }
+
+    #[Test]
+    public function service_legal_component_persists_terms_when_editing_service(): void
+    {
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+        $service = Services::query()->create([
+            'sku' => 'MSP-LEGAL',
+            'name' => 'Managed legal service',
+            'unitId' => $unit->id,
+            'status' => 'published',
+            'orderable' => true,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 1000,
+            'price_including_tax' => 1250,
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+        $term = CommercialTerm::query()->create([
+            'name' => 'Service DPA',
+            'type' => 'dpa',
+            'content' => 'Service data processing terms.',
+        ]);
+
+        Livewire::actingAs($this->tech)
+            ->test(ServiceLegal::class, ['service' => $service, 'enabled' => 'enabled'])
+            ->call('toggleTerm', $term->id);
+
+        $this->assertDatabaseHas('service_term_pivot', [
+            'service_id' => $service->id,
+            'term_id' => $term->id,
+        ]);
+
+        Livewire::actingAs($this->tech)
+            ->test(ServiceLegal::class, ['service' => $service->fresh(), 'enabled' => 'enabled'])
+            ->call('removeTerm', $term->id);
+
+        $this->assertDatabaseMissing('service_term_pivot', [
+            'service_id' => $service->id,
+            'term_id' => $term->id,
+        ]);
+    }
+
+    #[Test]
+    public function contract_item_snapshots_service_time_rates(): void
+    {
+        $client = Client::factory()->create();
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+        $contractSla = $this->createSla('Contract default SLA', true);
+        $serviceSla = $this->createSla('Third-party email SLA');
+        $service = Services::query()->create([
+            'sku' => 'MSP-SNAPSHOT',
+            'name' => 'Managed service',
+            'unitId' => $unit->id,
+            'sla_id' => $serviceSla->id,
+            'status' => 'published',
+            'orderable' => true,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 1000,
+            'price_including_tax' => 1250,
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+        $rate = TimeRate::query()->where('code', 'TIME_WITH_CONTRACT')->firstOrFail();
+        $service->serviceTimeRates()->create([
+            'time_rate_id' => $rate->id,
+            'amount_ex_vat' => 575,
+            'is_active' => true,
+        ]);
+        $terms = CommercialTerm::query()->create([
+            'name' => 'Managed terms',
+            'type' => 'terms',
+            'content' => 'General managed service terms.',
+        ]);
+        $dpa = CommercialTerm::query()->create([
+            'name' => 'Managed DPA',
+            'type' => 'dpa',
+            'content' => 'Data processing agreement content.',
+        ]);
+        $legal = CommercialTerm::query()->create([
+            'name' => 'Managed legal',
+            'type' => 'legal',
+            'content' => 'Legal and GDPR content.',
+        ]);
+        $service->serviceTerms()->attach([$terms->id, $dpa->id, $legal->id]);
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'sla_id' => $contractSla->id,
+            'description' => 'Contract with rates.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'draft',
+            'created_by' => $this->tech->id,
+        ]);
+
+        Livewire::actingAs($this->tech)
+            ->test(ContractItemsEditor::class, ['contract' => $contract])
+            ->call('addItem')
+            ->set('items.0.service_id', $service->id)
+            ->set('items.0.time_rates.0.amount_ex_vat', 550)
+            ->call('saveItem', 0);
+
+        $item = $contract->items()->firstOrFail();
+        $contract->refresh();
+
+        $this->assertFalse($item->uses_contract_default_sla);
+        $this->assertSame($serviceSla->id, $item->sla_id);
+        $this->assertSame('Third-party email SLA', $item->sla_snapshot['name']);
+        $this->assertSame("Managed terms\nGeneral managed service terms.", $contract->terms_snapshot);
+        $this->assertSame("Managed DPA\nData processing agreement content.", $contract->dpa_snapshot);
+        $this->assertSame("Managed legal\nLegal and GDPR content.", $contract->legal_snapshot);
+        $this->assertStringContainsString('Contract default SLA: Contract default SLA', $contract->sla_snapshot);
+        $this->assertStringContainsString('Service SLA: Third-party email SLA', $contract->sla_snapshot);
+
+        $this->assertDatabaseHas('contract_item_time_rates', [
+            'contract_item_id' => $item->id,
+            'time_rate_id' => $rate->id,
+            'amount_ex_vat' => 550,
+            'name' => 'Time with contract',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.contracts.show', $contract))
+            ->assertOk()
+            ->assertSee('Third-party email SLA')
+            ->assertSee('Time with contract')
+            ->assertSee('550,00');
+    }
+
+    #[Test]
+    public function contract_item_uses_contract_default_sla_when_service_has_no_sla(): void
+    {
+        $client = Client::factory()->create();
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+        $contractSla = $this->createSla('Contract fallback SLA', true);
+        $service = Services::query()->create([
+            'sku' => 'MSP-FALLBACK',
+            'name' => 'Fallback service',
+            'unitId' => $unit->id,
+            'status' => 'published',
+            'orderable' => true,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 1000,
+            'price_including_tax' => 1250,
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'sla_id' => $contractSla->id,
+            'description' => 'Contract with fallback SLA.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'draft',
+            'created_by' => $this->tech->id,
+        ]);
+
+        Livewire::actingAs($this->tech)
+            ->test(ContractItemsEditor::class, ['contract' => $contract])
+            ->call('addItem')
+            ->set('items.0.service_id', $service->id)
+            ->call('saveItem', 0);
+
+        $item = $contract->items()->firstOrFail();
+
+        $this->assertTrue($item->uses_contract_default_sla);
+        $this->assertNull($item->sla_id);
+        $this->assertNull($item->sla_snapshot);
     }
 
     #[Test]
@@ -150,6 +433,28 @@ class CommercialModuleTest extends TestCase
             ->assertOk()
             ->assertViewIs('commercial::Tech.cs.sla.form')
             ->assertSee('Edit SLA Policy');
+    }
+
+    private function createSla(string $name, bool $isDefault = false): Sla
+    {
+        return Sla::create([
+            'name' => $name,
+            'description' => 'SLA used by commercial tests.',
+            'is_default' => $isDefault,
+            'low_firstResponse' => 24,
+            'low_firstResponse_type' => 'Hours',
+            'low_onsite' => 48,
+            'low_onsite_type' => 'Hours',
+            'medium_firstResponse' => 12,
+            'medium_firstResponse_type' => 'Hours',
+            'medium_onsite' => 24,
+            'medium_onsite_type' => 'Hours',
+            'high_firstResponse' => 6,
+            'high_firstResponse_type' => 'Hours',
+            'high_onsite' => 12,
+            'high_onsite_type' => 'Hours',
+            'created_by_user_id' => $this->tech->id,
+        ]);
     }
 
     #[Test]

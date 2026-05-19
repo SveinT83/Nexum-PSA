@@ -13,6 +13,28 @@
 @endsection
 
 @section('content')
+    <style>
+        /* Contract terms tabs must stay visible against the white editor surface. */
+        #termsTabs .nav-link {
+            color: #495057;
+            background-color: #f8f9fa;
+            border-color: #dee2e6 #dee2e6 transparent;
+        }
+
+        #termsTabs .nav-link:hover,
+        #termsTabs .nav-link:focus {
+            color: #0d6efd;
+            background-color: #ffffff;
+        }
+
+        #termsTabs .nav-link.active {
+            color: #212529;
+            background-color: #ffffff;
+            border-color: #dee2e6 #dee2e6 #ffffff;
+            font-weight: 600;
+        }
+    </style>
+
     <form action="{{ route('tech.contracts.terms.update', $contract) }}" method="POST">
         @csrf
         <div class="row">

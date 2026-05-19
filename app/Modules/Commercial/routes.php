@@ -1,12 +1,14 @@
 <?php
 
 use App\Modules\Commercial\Controllers\Admin\EconomyController;
+use App\Modules\Commercial\Controllers\Admin\TimeRateController;
 use App\Modules\Commercial\Controllers\Admin\UnitsController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\PublicContractController;
 use App\Modules\Commercial\Controllers\Tech\Costs\CostController;
 use App\Modules\Commercial\Controllers\Tech\Legal\LegalController;
 use App\Modules\Commercial\Controllers\Tech\Package\PackageController;
+use App\Modules\Commercial\Controllers\Tech\Rates\TimeRateController as TechTimeRateController;
 use App\Modules\Commercial\Controllers\Tech\Services\ServiceController;
 use App\Modules\Commercial\Controllers\Tech\Sla\SlaController;
 use Illuminate\Support\Facades\Route;
@@ -92,6 +94,13 @@ Route::get('/services/edit/{service}', [ServiceController::class, 'edit'])
 Route::delete('/services/destroy/{service}', [ServiceController::class, 'destroy'])
     ->name('services.destroy');
 
+Route::get('/rates', [TechTimeRateController::class, 'index'])
+    ->name('rates.index');
+Route::post('/rates', [TechTimeRateController::class, 'store'])
+    ->name('rates.store');
+Route::put('/rates/{rate}', [TechTimeRateController::class, 'update'])
+    ->name('rates.update');
+
 Route::get('/costs', [CostController::class, 'index'])
     ->name('costs.index');
 Route::get('/costs/delete/{cost}', [CostController::class, 'delete'])
@@ -148,4 +157,10 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.economy.units.store');
     Route::post('/admin/settings/economy/units/update/{unit}', [UnitsController::class, 'update'])
         ->name('admin.settings.economy.units.update');
+    Route::get('/admin/settings/economy/rates', [TimeRateController::class, 'index'])
+        ->name('admin.settings.economy.rates');
+    Route::post('/admin/settings/economy/rates', [TimeRateController::class, 'store'])
+        ->name('admin.settings.economy.rates.store');
+    Route::put('/admin/settings/economy/rates/{rate}', [TimeRateController::class, 'update'])
+        ->name('admin.settings.economy.rates.update');
 });

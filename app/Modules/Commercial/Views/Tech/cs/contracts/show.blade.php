@@ -15,6 +15,28 @@
 @endsection
 
 @section('content')
+    <style>
+        /* Contract preview tabs need explicit contrast inside the operational card surface. */
+        #contractTabs .nav-link {
+            color: #495057;
+            background-color: #f8f9fa;
+            border-color: #dee2e6 #dee2e6 transparent;
+        }
+
+        #contractTabs .nav-link:hover,
+        #contractTabs .nav-link:focus {
+            color: #0d6efd;
+            background-color: #ffffff;
+        }
+
+        #contractTabs .nav-link.active {
+            color: #212529;
+            background-color: #ffffff;
+            border-color: #dee2e6 #dee2e6 #ffffff;
+            font-weight: 600;
+        }
+    </style>
+
     <div class="row">
         <div class="col-md-9">
             {{--
@@ -64,6 +86,8 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Service</th>
+                                <th>SLA</th>
+                                <th>Rates</th>
                                 <th>Quantity</th>
                                 <th>Interval</th>
                                 <th class="text-end">Unit Price</th>
@@ -77,6 +101,24 @@
                                         <div class="fw-bold">{{ $item->name }}</div>
                                         <small class="text-muted">{{ $item->sku }}</small>
                                     </td>
+                                    <td>
+                                        @if($item->uses_contract_default_sla)
+                                            <span class="badge text-bg-light border">Contract default</span>
+                                            <div class="small text-muted">{{ $contract->sla?->name ?? 'System default' }}</div>
+                                        @else
+                                            <span class="badge text-bg-primary">{{ $item->sla_snapshot['name'] ?? $item->slaPolicy?->name ?? 'Custom SLA' }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @forelse($item->timeRates->where('is_active', true) as $rate)
+                                            <div class="small">
+                                                <span class="fw-semibold">{{ $rate->name }}</span>
+                                                <span class="text-muted">{{ number_format((float) $rate->amount_ex_vat, 2, ',', ' ') }} {{ $rate->currency }}/{{ $rate->unit }}</span>
+                                            </div>
+                                        @empty
+                                            <span class="text-muted small">No rates</span>
+                                        @endforelse
+                                    </td>
                                     <td>{{ $item->quantity }} {{ $item->unit }}</td>
                                     <td><span class="badge bg-light text-dark">{{ ucfirst($item->billing_interval) }}</span></td>
                                     <td class="text-end">{{ number_format($item->unit_price, 2, ',', ' ') }} kr</td>
@@ -86,7 +128,7 @@
                         </tbody>
                         <tfoot class="table-light">
                             <tr>
-                                <th colspan="4" class="text-end">Monthly Total:</th>
+                                <th colspan="6" class="text-end">Monthly Total:</th>
                                 <th class="text-end">{{ number_format($contract->total_monthly_amount, 2, ',', ' ') }} kr</th>
                             </tr>
                         </tfoot>

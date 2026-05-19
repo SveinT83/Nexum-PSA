@@ -13,7 +13,9 @@ class PublicContractController extends Controller
      */
     public function view($token)
     {
-        $contract = Contracts::where('secure_token', $token)->firstOrFail();
+        $contract = Contracts::with(['client', 'sla', 'items.slaPolicy', 'items.timeRates'])
+            ->where('secure_token', $token)
+            ->firstOrFail();
 
         // Audit Logging for View
         $contract->update([

@@ -67,8 +67,37 @@ Core fields captured across create/edit:
 - **visibility & sorting**: `sort_order` (int) for manual ordering within the selected queue/category.
 - **default_discount** (optional): amount OR percent (stored as value + type) – used only as suggestion/prefill in contracts.
 - **taxable** (bool) – default from global settings.
+- **time_rates[]** (optional set of Commercial rate rules)
+  - A service can define default hourly rates such as support labor and driving.
+  - Contract lines copy these rates as editable snapshots so the signed contract keeps the negotiated terms even if the global service defaults change later.
 
 Audit: All create/edit/archive/publish actions are recorded in the **global audit system** (no per-service audit widget).
+
+### Time rates
+
+Commercial owns the global rate catalogue used by services, contracts, and later ticket cost/timebank consumption.
+
+- Global rates are managed from `tech.rates.index` in the Sales workspace.
+- Seeded defaults are:
+  - `TIME_WITHOUT_CONTRACT`: NOK 1200 per hour.
+  - `TIME_WITH_CONTRACT`: NOK 650 per hour.
+  - `DRIVING`: NOK 520 per hour.
+- Service rates are defaults only. They make contract creation faster and consistent.
+- Contract item rates are snapshots. They may be adjusted or disabled per contract line without changing the service default.
+- Ticket billing and timebank drawdown should read the active contract snapshot first. If no active contract rate is available, it should fall back to global rates that apply without a contract.
+- Future quantity discounts or tiered rates should be modeled as rules attached to services/contracts, not by overwriting historical contract snapshots.
+
+### SLA inheritance
+
+SLA follows the same template-to-contract pattern as rates.
+
+- Contracts have a default SLA through `contracts.sla_id`.
+- Services may define a default SLA through `services.sla_id`.
+- When a service is added to a contract, the contract line inherits the service SLA if one exists.
+- If the service has no SLA, the contract line uses the contract default SLA.
+- Contract lines can be edited to use either the contract default or a specific SLA.
+- Contract line SLA selections are stored with `contract_items.sla_id`, `contract_items.uses_contract_default_sla`, and `contract_items.sla_snapshot`.
+- Ticket SLA resolution should prefer the contract item SLA/snapshot first, then the contract default, then client/system defaults.
 
 ---
 

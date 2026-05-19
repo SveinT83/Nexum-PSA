@@ -23,6 +23,7 @@ class ServiceStoreRequest extends FormRequest
                 Rule::unique('services')->ignore($this->route('service'))
             ],
             'unitId' => ['required', 'numeric', 'max:255'],
+            'sla_id' => ['nullable', 'exists:sla,id'],
             'status' => ['nullable', 'in:draft,published,archived'],
             'icon' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer'],
@@ -50,6 +51,9 @@ class ServiceStoreRequest extends FormRequest
             'long_description' => ['nullable', 'string'],
             'terms' => ['nullable', 'array'],
             'terms.*' => ['exists:terms,id'],
+            'time_rates' => ['nullable', 'array'],
+            'time_rates.*.enabled' => ['nullable', 'boolean'],
+            'time_rates.*.amount_ex_vat' => ['nullable', 'numeric', 'min:0'],
             'published_at' => ['nullable', 'date'],
             'archived_at' => ['nullable', 'date'],
         ];

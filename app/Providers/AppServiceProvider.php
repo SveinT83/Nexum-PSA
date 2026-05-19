@@ -22,6 +22,7 @@ use App\Modules\Notification\Livewire\NotificationBell;
 use App\Modules\Taxonomy\Livewire\TagManager as TaxonomyTagManager;
 use App\Modules\Ticket\Livewire\Admin\WorkflowEditor as TicketWorkflowEditor;
 use App\Modules\UserManagement\Livewire\Roles\RolePermissions as UserManagementRolePermissions;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Livewire\Livewire;
@@ -51,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
             'email' => 'Email',
             'integration' => 'Integration',
             'knowledge' => 'Knowledge',
+            'nextcloud' => 'Nextcloud',
             'notification' => 'Notification',
             'risk' => 'Risk',
             'storage' => 'Storage',
@@ -62,6 +64,12 @@ class AppServiceProvider extends ServiceProvider
 
             if (is_dir($path)) {
                 View::addNamespace($namespace, $path);
+            }
+
+            $componentPath = $path.'/components';
+
+            if (is_dir($componentPath)) {
+                Blade::anonymousComponentPath($componentPath);
             }
         }
 

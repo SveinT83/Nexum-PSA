@@ -2,6 +2,7 @@
 
 namespace App\Modules\Commercial\Requests;
 
+use App\Models\Core\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ContractsRequest extends FormRequest
@@ -11,7 +12,7 @@ class ContractsRequest extends FormRequest
         return [
             'client_id' => ['required', 'exists:clients,id'],
             'sla_id' => ['nullable', 'exists:sla,id'],
-            'created_by' => ['required', 'exists:user_management,id'],
+            'created_by' => ['required', 'exists:' . (new User())->getTable() . ',id'],
 
             'description' => ['nullable', 'string'],
 

@@ -38,6 +38,12 @@
             'icon' => 'bi-shield-lock',
         ],
         [
+            'label' => 'Rates',
+            'route' => 'tech.rates.index',
+            'pattern' => 'tech.rates.*',
+            'icon' => 'bi-currency-exchange',
+        ],
+        [
             'label' => 'SLA',
             'route' => 'tech.sla.index',
             'pattern' => 'tech.sla.*',

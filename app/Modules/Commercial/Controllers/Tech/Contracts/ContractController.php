@@ -3,6 +3,7 @@
 namespace App\Modules\Commercial\Controllers\Tech\Contracts;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Commercial\Actions\BuildContractTermSnapshots;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Mail\ContractLinkSent;
 use App\Modules\Commercial\Models\Sla\Sla;
@@ -44,7 +45,14 @@ class ContractController extends Controller
      */
     public function show(Contracts $contract)
     {
-        $contract->load(['client', 'sla', 'items.service.serviceTerms', 'items.service.costRelations.cost']);
+        $contract->load([
+            'client',
+            'sla',
+            'items.slaPolicy',
+            'items.timeRates',
+            'items.service.serviceTerms',
+            'items.service.costRelations.cost',
+        ]);
 
         // Check for missing terms (services that have terms not in snapshot)
         // This ensures the legal base is synchronized with the actual service list.
@@ -297,51 +305,21 @@ class ContractController extends Controller
     public function terms(Contracts $contract, Request $request)
     {
         $contract->load(['client', 'items.service.serviceTerms']);
+        $isRefresh = $request->has('refresh');
+        $builder = app(BuildContractTermSnapshots::class);
+        $termsByType = $builder->groupTermsByType($contract);
+        $snapshots = $builder->handle($contract);
 
-        // Group terms by their functional type.
-        $termsByType = [
-            'terms' => collect(),
-            'dpa' => collect(),
-            'legal' => collect(),
-            'sla' => collect(),
-            'general' => collect(),
-        ];
-
-        foreach ($contract->items as $item) {
-            if ($item->service) {
-                foreach ($item->service->serviceTerms as $term) {
-                    $type = $term->type ?: 'terms';
-
-                    // Fallback to 'terms' if a custom/unknown type is found in the DB.
-                    if (!isset($termsByType[$type])) {
-                        $type = 'terms';
-                    }
-
-                    // Deduplicate by term ID.
-                    if (!$termsByType[$type]->has($term->id)) {
-                        $termsByType[$type]->put($term->id, $term);
-                    }
-                }
+        foreach ($snapshots as $field => $content) {
+            if (empty($contract->$field) || $isRefresh) {
+                $contract->$field = $content;
             }
         }
 
-        // Automatic Snapshot Initialization:
-        // If snapshots are empty, we concatenate all relevant terms into a single string.
-        $snapshots = [
-            'terms_snapshot' => 'terms',
-            'dpa_snapshot' => 'dpa',
-            'legal_snapshot' => 'legal',
-            'sla_snapshot' => 'sla',
-            'general_snapshot' => 'general',
-        ];
-
-        $isRefresh = $request->has('refresh');
-
-        foreach ($snapshots as $field => $type) {
-            if (empty($contract->$field) || $isRefresh) {
-                // Combine content with a visual separator.
-                $contract->$field = $termsByType[$type]->pluck('content')->filter()->unique()->implode("\n\n---\n\n");
-            }
+        // Persist generated snapshots so contract preview, public quote, and readiness checks
+        // all see the same legal content without requiring an extra manual save.
+        if ($contract->isDirty(['terms_snapshot', 'dpa_snapshot', 'legal_snapshot', 'sla_snapshot', 'general_snapshot'])) {
+            $contract->save();
         }
 
         return view('commercial::Tech.cs.contracts.terms.terms', [

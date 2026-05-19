@@ -93,6 +93,12 @@
             <p class="mb-0">{{ $contract->binding_end_date?->format('d.m.Y') ?? 'N/A' }}</p>
         </div>
 
+        <div class="mb-2 pt-2 border-top mt-2">
+            <span class="text-muted d-block small uppercase font-weight-bold mb-1">Default SLA:</span>
+            <p class="mb-0">{{ $contract->sla?->name ?? 'System default' }}</p>
+            <p class="mb-0 text-muted small">Service lines can use this default or a specific service SLA.</p>
+        </div>
+
         <div class="mb-0 pt-2 border-top mt-2">
             <span class="text-muted d-block small uppercase font-weight-bold mb-1">Auto-Renew:</span>
             <p class="mb-0">

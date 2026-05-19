@@ -3,6 +3,9 @@
 namespace App\Modules\Commercial\Models\Services;
 
 use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Commercial\Models\ServiceTimeRate;
+use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Commercial\Models\TimeRate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,6 +18,7 @@ class Services extends Model
     protected $fillable = [
         'name',
         'unitId',
+        'sla_id',
         'sku',
         'status',
         'icon',
@@ -82,8 +86,25 @@ class Services extends Model
         return $this->belongsTo(Units::class, 'unitId');
     }
 
+    public function sla()
+    {
+        return $this->belongsTo(Sla::class, 'sla_id');
+    }
+
     public function category()
     {
         return $this->belongsTo(\App\Modules\Taxonomy\Models\Category::class, 'category_id');
+    }
+
+    public function timeRates()
+    {
+        return $this->belongsToMany(TimeRate::class, 'service_time_rates', 'service_id', 'time_rate_id')
+            ->withPivot(['id', 'amount_ex_vat', 'is_active', 'metadata'])
+            ->withTimestamps();
+    }
+
+    public function serviceTimeRates()
+    {
+        return $this->hasMany(ServiceTimeRate::class, 'service_id');
     }
 }
