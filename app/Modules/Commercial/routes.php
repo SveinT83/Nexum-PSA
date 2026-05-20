@@ -1,6 +1,5 @@
 <?php
 
-use App\Modules\Commercial\Controllers\Admin\EconomyController;
 use App\Modules\Commercial\Controllers\Admin\TimeRateController;
 use App\Modules\Commercial\Controllers\Admin\UnitsController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
@@ -147,10 +146,6 @@ Route::delete('/sla/delete/{sla}', [SlaController::class, 'destroy'])
     ->name('sla.delete');
 
 Route::middleware('admin')->group(function () {
-    Route::get('/admin/settings/economy', [EconomyController::class, 'index'])
-        ->name('admin.settings.economy');
-    Route::post('/admin/settings/economy/update', [EconomyController::class, 'update'])
-        ->name('admin.settings.economy.update');
     Route::get('/admin/settings/economy/units', [UnitsController::class, 'index'])
         ->name('admin.settings.economy.units');
     Route::get('/admin/settings/economy/units/store', [UnitsController::class, 'store'])

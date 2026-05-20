@@ -8,6 +8,7 @@ use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Economy\Actions\GenerateOrders;
+use App\Modules\Economy\Controllers\Admin\EconomySettingsController;
 use App\Modules\Economy\Controllers\Tech\EconomyController;
 use App\Modules\Economy\Models\EconomyOrderLine;
 use App\Modules\Economy\Models\EconomyOrder;
@@ -36,6 +37,7 @@ class EconomyModuleTest extends TestCase
         parent::setUp();
 
         Role::create(['name' => 'Tech']);
+        Role::create(['name' => 'Admin']);
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
     }
@@ -45,11 +47,12 @@ class EconomyModuleTest extends TestCase
     {
         $this->assertSame(EconomyController::class . '@index', Route::getRoutes()->getByName('tech.economy.orders.index')->getActionName());
         $this->assertSame(EconomyController::class . '@show', Route::getRoutes()->getByName('tech.economy.orders.show')->getActionName());
-        $this->assertSame(EconomyController::class . '@settings', Route::getRoutes()->getByName('tech.economy.settings')->getActionName());
         $this->assertSame(EconomyController::class . '@generate', Route::getRoutes()->getByName('tech.economy.orders.generate')->getActionName());
         $this->assertSame(EconomyController::class . '@markReady', Route::getRoutes()->getByName('tech.economy.orders.ready')->getActionName());
         $this->assertSame(EconomyController::class . '@markDraft', Route::getRoutes()->getByName('tech.economy.orders.draft')->getActionName());
         $this->assertSame(EconomyController::class . '@destroyOrder', Route::getRoutes()->getByName('tech.economy.orders.destroy')->getActionName());
+        $this->assertSame(EconomySettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.economy')->getActionName());
+        $this->assertSame(EconomySettingsController::class . '@update', Route::getRoutes()->getByName('tech.admin.settings.economy.update')->getActionName());
     }
 
     #[Test]
@@ -65,6 +68,20 @@ class EconomyModuleTest extends TestCase
             'create_orders_from_closed_ticket_time' => true,
             'create_orders_from_picked_ticket_costs' => true,
         ]);
+    }
+
+    #[Test]
+    public function admin_can_open_economy_settings_from_admin_route(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $this->actingAs($admin)
+            ->get(route('tech.admin.settings.economy'))
+            ->assertOk()
+            ->assertViewIs('economy::Admin.settings')
+            ->assertViewHas('settings');
     }
 
     #[Test]

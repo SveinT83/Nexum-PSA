@@ -5,7 +5,7 @@ namespace App\Modules\Commercial\Tests\Feature;
 use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Modules\Commercial\Models\Contracts\Contracts;
-use App\Modules\Commercial\Controllers\Admin\EconomyController;
+use App\Modules\Commercial\Controllers\Admin\UnitsController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\PublicContractController;
 use App\Modules\Commercial\Controllers\Tech\Rates\TimeRateController;
@@ -71,17 +71,17 @@ class CommercialModuleTest extends TestCase
     }
 
     #[Test]
-    public function admin_commercial_settings_route_is_owned_by_commercial_module(): void
+    public function admin_commercial_units_route_is_owned_by_commercial_module(): void
     {
         $this->assertSame(
-            EconomyController::class . '@index',
-            Route::getRoutes()->getByName('tech.admin.settings.economy')->getActionName()
+            UnitsController::class . '@index',
+            Route::getRoutes()->getByName('tech.admin.settings.economy.units')->getActionName()
         );
 
         $this->actingAs($this->admin)
-            ->get(route('tech.admin.settings.economy'))
+            ->get(route('tech.admin.settings.economy.units'))
             ->assertOk()
-            ->assertViewIs('commercial::Admin.economy.index');
+            ->assertViewIs('commercial::Admin.economy.units.index');
     }
 
     #[Test]

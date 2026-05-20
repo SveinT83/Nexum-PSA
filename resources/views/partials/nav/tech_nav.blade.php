@@ -181,13 +181,6 @@
             @if(Route::has('tech.economy.orders.index'))
                 <li><a class="dropdown-item {{ request()->routeIs('tech.economy.orders.*') ? 'active' : '' }}" href="{{ route('tech.economy.orders.index') }}">Orders</a></li>
             @endif
-
-            <!-- ------------------------------------------------- -->
-            <!-- Settings -->
-            <!-- ------------------------------------------------- -->
-            @if(Route::has('tech.economy.settings'))
-                <li><a class="dropdown-item {{ request()->routeIs('tech.economy.settings') ? 'active' : '' }}" href="{{ route('tech.economy.settings') }}">Settings</a></li>
-            @endif
         </ul>
     </li>
 

@@ -7,12 +7,6 @@
             'pattern' => 'tech.economy.orders.*',
             'icon' => 'bi-receipt',
         ],
-        [
-            'label' => 'Settings',
-            'route' => 'tech.economy.settings',
-            'pattern' => 'tech.economy.settings',
-            'icon' => 'bi-sliders',
-        ],
     ];
 @endphp
 

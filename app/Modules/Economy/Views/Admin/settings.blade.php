@@ -10,14 +10,20 @@
 @endsection
 
 @section('sidebar')
-    <x-nav.economy-menu />
+    <x-nav.side-bar
+        title="Economy settings"
+        :items="[
+            ['name' => 'Economy', 'route' => 'tech.admin.settings.economy', 'pattern' => 'tech.admin.settings.economy', 'icon' => 'bi-sliders'],
+            ['name' => 'Admin', 'route' => 'tech.admin.index', 'pattern' => 'tech.admin.index', 'icon' => 'bi-grid'],
+        ]"
+    />
 @endsection
 
 @section('content')
     <!-- ------------------------------------------------- -->
-    <!-- Order Generation Settings -->
+    <!-- Economy Order Generation Settings -->
     <!-- ------------------------------------------------- -->
-    <form method="POST" action="{{ route('tech.economy.settings.update') }}" class="card">
+    <form method="POST" action="{{ route('tech.admin.settings.economy.update') }}" class="card">
         @csrf
         @method('PATCH')
         <div class="card-header py-2">

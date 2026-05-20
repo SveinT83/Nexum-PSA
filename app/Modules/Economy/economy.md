@@ -8,7 +8,7 @@ Current implementation:
 - `GenerateOrders` is the shared generation action used by the UI and ticket storage picking.
 - `ticket_time_entry_allocations` stores the timebank calculation per ticket time entry.
 - `/tech/economy` lists orders and exposes manual `Generate orders` for catch-up.
-- `/tech/economy/settings` controls trigger defaults, line text, order prefix, and default VAT.
+- `/tech/admin/settings/economy` controls trigger defaults, line text, order prefix, and default VAT.
 - Ready orders can be moved back to draft before approval/export.
 - Empty draft or ready orders can be deleted. Draft orders are automatically removed when their last line is deleted.
 
