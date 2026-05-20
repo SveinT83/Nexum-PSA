@@ -2,6 +2,7 @@
 
 namespace App\Modules\Storage\Tests\Feature;
 
+use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Modules\Storage\Controllers\Tech\BoxController;
 use App\Modules\Storage\Controllers\Tech\ItemController;
@@ -9,7 +10,11 @@ use App\Modules\Storage\Controllers\Tech\StorageController;
 use App\Modules\Storage\Models\Box;
 use App\Modules\Storage\Models\Item;
 use App\Modules\Storage\Models\Movement;
+use App\Modules\Storage\Models\Reservation;
 use App\Modules\Storage\Models\Warehouse;
+use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketCostEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
@@ -44,7 +49,10 @@ class StorageModuleTest extends TestCase
             ->assertOk()
             ->assertViewIs('storage::Tech.Storage.index')
             ->assertViewHas('items')
-            ->assertViewHas('warehouses');
+            ->assertViewHas('warehouses')
+            ->assertSee('data-bs-target="#storageAddWarehouseModal"', false)
+            ->assertSee('name="_warehouse_form"', false)
+            ->assertSee('Create Warehouse');
     }
 
     #[Test]
@@ -148,6 +156,8 @@ class StorageModuleTest extends TestCase
         $this->assertSame(ItemController::class . '@edit', Route::getRoutes()->getByName('tech.storage.items.edit')->getActionName());
         $this->assertSame(ItemController::class . '@update', Route::getRoutes()->getByName('tech.storage.items.update')->getActionName());
         $this->assertSame(BoxController::class . '@show', Route::getRoutes()->getByName('tech.storage.boxes.show')->getActionName());
+        $this->assertSame(StorageController::class . '@picking', Route::getRoutes()->getByName('tech.storage.picking')->getActionName());
+        $this->assertSame(StorageController::class . '@pick', Route::getRoutes()->getByName('tech.storage.picking.pick')->getActionName());
     }
 
     #[Test]
@@ -199,5 +209,114 @@ class StorageModuleTest extends TestCase
         $this->assertSame('Internal catalog notes.', $item->long_description);
         $this->assertSame('149.00', $item->sale_price);
         $this->assertTrue($item->has_serials);
+    }
+
+    #[Test]
+    public function tech_user_can_open_picking_list_and_pick_ready_ticket_reservation(): void
+    {
+        $client = Client::create(['name' => 'Picking Client AS', 'active' => true]);
+        $ticket = $this->createTicket([
+            'ticket_key' => 'TD-2026-999301',
+            'client_id' => $client->id,
+            'subject' => 'Needs cable',
+        ]);
+        $warehouse = Warehouse::create(['name' => 'Main Warehouse', 'code' => 'MAIN']);
+        $readyItem = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'READY-USB',
+            'name' => 'Ready USB Cable',
+            'qty_on_hand' => 5,
+            'qty_reserved' => 2,
+            'sale_price' => 100,
+            'status' => 'active',
+        ]);
+        $waitingItem = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'WAIT-DOCK',
+            'name' => 'Waiting Dock',
+            'qty_on_hand' => 0,
+            'qty_reserved' => 1,
+            'sale_price' => 500,
+            'status' => 'active',
+        ]);
+        $reservation = Reservation::create([
+            'item_id' => $readyItem->id,
+            'warehouse_id' => $warehouse->id,
+            'qty' => 2,
+            'source_type' => 'ticket',
+            'source_id' => (string) $ticket->id,
+            'strength' => 'hard',
+            'status' => 'active',
+            'created_by' => $this->tech->id,
+        ]);
+        $readyEntry = TicketCostEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'storage_item_id' => $readyItem->id,
+            'storage_reservation_id' => $reservation->id,
+            'quantity' => 2,
+            'item_name' => $readyItem->name,
+            'item_sku' => $readyItem->sku,
+            'unit_price_ex_vat' => 100,
+            'currency' => 'NOK',
+            'status' => 'reserved',
+            'billing_status' => 'pending',
+            'invoice_text' => 'Ready USB Cable',
+        ]);
+        TicketCostEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'storage_item_id' => $waitingItem->id,
+            'quantity' => 1,
+            'item_name' => $waitingItem->name,
+            'item_sku' => $waitingItem->sku,
+            'unit_price_ex_vat' => 500,
+            'currency' => 'NOK',
+            'status' => 'reserved',
+            'billing_status' => 'pending',
+            'invoice_text' => 'Waiting Dock',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.picking'))
+            ->assertOk()
+            ->assertViewIs('storage::Tech.Storage.picking')
+            ->assertSeeInOrder(['READY-USB', 'WAIT-DOCK'])
+            ->assertSee('Ready')
+            ->assertSee('Waiting for stock');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.storage.picking.pick', $readyEntry))
+            ->assertRedirect(route('tech.storage.picking'));
+
+        $this->assertSame(3, $readyItem->refresh()->qty_on_hand);
+        $this->assertSame(0, $readyItem->qty_reserved);
+        $this->assertSame('picked', $readyEntry->refresh()->status);
+        $this->assertSame('fulfilled', $reservation->refresh()->status);
+        $this->assertDatabaseHas('storage_movements', [
+            'item_id' => $readyItem->id,
+            'type' => 'ticket_pick',
+            'qty_delta' => -2,
+        ]);
+    }
+
+    private function createTicket(array $overrides = []): Ticket
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+
+        return Ticket::create(array_merge([
+            'ticket_key' => 'TD-2026-999300',
+            'queue_id' => $defaults['queue']->id,
+            'ticket_type_id' => $defaults['type']->id,
+            'type' => $defaults['type']->slug,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Storage picking helper subject',
+            'is_unread' => false,
+        ], $overrides));
     }
 }

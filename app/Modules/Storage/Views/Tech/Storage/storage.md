@@ -9,7 +9,7 @@
 
 ## Purpose & Scope
 
-Provide a modular inventory system for internal use first, later multi‑tenant. Focus on predictable stock control, reservations from Sales Orders, clear shortage visibility, audited movements, and simple receiving/put‑away. Picking is orchestrated by workflows outside this module.
+Provide a modular inventory system for internal use first, later multi‑tenant. Focus on predictable stock control, reservations from tickets and future Sales Orders, clear shortage visibility, audited movements, simple receiving/put‑away, and a focused picking queue.
 
 ---
 
@@ -23,6 +23,7 @@ resources/views/tech/storage/
  ├── items/
  │   ├── create.blade.php   ← used for both create & edit
  │   └── show.blade.php
+ ├── picking.blade.php      ← ticket reservation picking queue
  └── storage.md
 ```
 
@@ -53,6 +54,7 @@ Each view follows standard PSA layout: **Top header / Main content / Right slim 
 * **Reservation** → holds qty against an order/ticket without removing from total_stock.
 
   * Fields: item_id, qty, source_type (sales_order/ticket/manual), source_id, soft_or_hard (default hard), created_by, created_at.
+  * Ticket reservations are created from ticket cost rows and are picked from `tech.storage.picking`.
 * **Movement Log** (immutable) → every stock change.
 
   * Types: receive, relocate, reserve, unreserve, issue, ship, return, adjust, loan_out, loan_in, damage, audit_correction.
@@ -64,6 +66,38 @@ Each view follows standard PSA layout: **Top header / Main content / Right slim 
 
   * Header: vendor_id, **deliver_to_location_id** (from Admin locations), status (draft/sent/partial/received/closed/cancelled), vendor_ref, tracking_no, documents (order confirmation).
   * Lines: item_id, qty_ordered, unit_cost, tax, expected_date, qty_received.
+
+---
+
+## Future Purchase Ordering And Shipping Tracking
+
+This is planned, not active scope yet.
+
+Storage should later support a practical ordering flow for buying parts from vendor web shops:
+
+* Items can store one or more vendor purchase URLs, so technicians can open the correct product page when ordering.
+* A purchase order can be registered after the item is bought online.
+* Purchase orders should store vendor, external order number/reference, order date, expected delivery date, and status.
+* Purchase order lines should store item, vendor item number/SKU, quantity, unit cost, and received quantity.
+* Shipping tracking should store carrier, tracking number, tracking URL, shipment status, and delivery updates where available.
+* The receiving flow should connect the purchase order lines back to Storage stock movements when goods arrive.
+* The picking list can later surface whether waiting stock has an open purchase order and visible tracking status.
+
+---
+
+## Ticket Picking List
+
+Route: `tech.storage.picking`
+
+Purpose: one operational queue for ticket cost rows where a technician has reserved a storage item. The list is sorted with rows that can be picked now first, followed by rows waiting for stock.
+
+Rules:
+
+* Only ticket cost entries with `status = reserved` and a linked storage item are shown.
+* A row is **Ready** when `storage_items.qty_on_hand >= ticket_cost_entries.quantity`.
+* A row is **Waiting for stock** when the reserved quantity is higher than on-hand stock.
+* Clicking **Pick** calls the shared ticket picking action. That consumes stock, reduces reserved stock, marks the storage reservation as fulfilled, creates a `ticket_pick` movement, marks the ticket cost row as picked, and lets Economy generate the order basis.
+* The Picking List is exposed in the Storage top navigation dropdown and the Storage workspace sidebar.
 
 ---
 

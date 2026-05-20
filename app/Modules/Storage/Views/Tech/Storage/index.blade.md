@@ -89,6 +89,7 @@ A fast, predictable index of all inventory **items**, optimized for daily operat
 **Global actions:**
 
 * `+ New Item` (if scope allows creating items here)
+* `Picking List` (opens ticket reservation queue, sorted by ready/waiting stock)
 * `Export CSV` (permission `storage.export`)
 
 **Safety:** All stock mutations require note + reason; write to audit log.

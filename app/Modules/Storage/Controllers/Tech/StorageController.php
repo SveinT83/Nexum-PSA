@@ -7,7 +7,10 @@ use App\Modules\Storage\Actions\StoreWarehouse;
 use App\Modules\Storage\Models\Box;
 use App\Modules\Storage\Models\Item;
 use App\Modules\Storage\Models\Warehouse;
+use App\Modules\Storage\Queries\PickingListQuery;
 use App\Modules\Storage\Queries\StorageIndexQuery;
+use App\Modules\Ticket\Actions\PickTicketStorageReservation;
+use App\Modules\Ticket\Models\TicketCostEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -48,5 +51,30 @@ class StorageController extends Controller
 
         return redirect()->route('tech.storage.index')
             ->with('success', 'Warehouse ' . $warehouse->name . ' created.');
+    }
+
+    public function picking(Request $request, PickingListQuery $query): View
+    {
+        return view('storage::Tech.Storage.picking', [
+            'reservations' => $query->paginate($request),
+            'stats' => $query->stats(),
+            'filters' => $request->only(['status', 'q']),
+        ]);
+    }
+
+    public function pick(Request $request, TicketCostEntry $costEntry, PickTicketStorageReservation $pickReservation): RedirectResponse
+    {
+        $costEntry->loadMissing('ticket');
+
+        abort_unless($costEntry->ticket, 404);
+
+        try {
+            $pickReservation->handle($costEntry->ticket, $costEntry, $request->user());
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['pick' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('tech.storage.picking')
+            ->with('success', 'Reserved item picked.');
     }
 }

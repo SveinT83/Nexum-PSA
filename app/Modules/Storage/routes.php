@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/storage', [StorageController::class, 'index'])
     ->name('storage.index');
 
+Route::get('/storage/picking', [StorageController::class, 'picking'])
+    ->name('storage.picking');
+
+Route::post('/storage/picking/{costEntry}/pick', [StorageController::class, 'pick'])
+    ->name('storage.picking.pick');
+
 Route::post('/storage/warehouses', [StorageController::class, 'storeWarehouse'])
     ->name('storage.warehouses.store');
 

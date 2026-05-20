@@ -191,11 +191,25 @@
         <a class="nav-link {{ request()->routeIs('tech.reports.index') ? 'active' : '' }}" href="{{ route('tech.reports.index') }}">Reports</a>
     </li>
 
-    <!-- ------------------------------------------------- -->
-    <!-- Storage -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.storage.index') ? 'active' : '' }}" href="{{ route('tech.storage.index') }}">Storage</a>
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Storage dropdown menu -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    @php
+        $storageGroupActive = request()->routeIs('tech.storage*');
+    @endphp
+
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle {{ $storageGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Storage</a>
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item {{ request()->routeIs('tech.storage.index') ? 'active' : '' }}" href="{{ route('tech.storage.index') }}">Inventory</a>
+            </li>
+            @if(Route::has('tech.storage.picking'))
+                <li>
+                    <a class="dropdown-item {{ request()->routeIs('tech.storage.picking*') ? 'active' : '' }}" href="{{ route('tech.storage.picking') }}">Picking List</a>
+                </li>
+            @endif
+        </ul>
     </li>
 
     <!-- ------------------------------------------------- -->

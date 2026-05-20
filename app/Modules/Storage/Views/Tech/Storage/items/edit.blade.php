@@ -2,6 +2,10 @@
 
 @section('title', 'Edit ' . $item->sku)
 
+@section('sidebar')
+    <x-nav.storage-menu />
+@endsection
+
 @section('pageHeader')
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
