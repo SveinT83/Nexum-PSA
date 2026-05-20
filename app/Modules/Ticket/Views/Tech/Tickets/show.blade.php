@@ -71,6 +71,7 @@
         $activityItems = $ticket->messages
             ->map(fn ($message) => ['type' => 'message', 'date' => $message->created_at, 'record' => $message])
             ->concat($ticket->timeEntries->map(fn ($entry) => ['type' => 'time', 'date' => $entry->created_at, 'record' => $entry]))
+            ->concat($ticket->costEntries->map(fn ($entry) => ['type' => 'cost', 'date' => $entry->created_at, 'record' => $entry]))
             ->sortByDesc('date')
             ->values();
     @endphp
@@ -115,6 +116,14 @@
                         <i class="bi bi-clock" aria-hidden="true"></i>
                         Add time
                     </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#ticketAddCostModal">
+                        <i class="bi bi-box-seam" aria-hidden="true"></i>
+                        Add cost
+                    </button>
                 </div>
             </div>
 
@@ -127,7 +136,107 @@
                                 @php
                                     $message = $activityItem['type'] === 'message' ? $activityItem['record'] : null;
                                     $timeEntry = $activityItem['type'] === 'time' ? $activityItem['record'] : null;
+                                    $costEntry = $activityItem['type'] === 'cost' ? $activityItem['record'] : null;
                                 @endphp
+
+                                @if($costEntry)
+                                    @php
+                                        $costCollapseId = 'ticketCostEntryCollapse' . $costEntry->id;
+                                        $costHeadingId = 'ticketCostEntryHeading' . $costEntry->id;
+                                        $costText = $costEntry->invoice_text ?: $costEntry->item_name;
+                                    @endphp
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="{{ $costHeadingId }}">
+                                            <button
+                                                class="accordion-button collapsed py-2 px-0"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#{{ $costCollapseId }}"
+                                                aria-expanded="false"
+                                                aria-controls="{{ $costCollapseId }}">
+                                                <span class="d-flex align-items-center gap-2 w-100 pe-3 text-start min-w-0">
+                                                    <span class="fw-semibold flex-shrink-0">Cost</span>
+                                                    <span class="badge text-bg-light border flex-shrink-0">{{ $costEntry->quantity }} pcs</span>
+                                                    <span class="small text-muted text-truncate flex-shrink-0" style="max-width: 14rem;">{{ $costEntry->user?->name ?? 'Technician' }}</span>
+                                                    <span class="small text-body text-truncate min-w-0 flex-grow-1">
+                                                        {{ \Illuminate\Support\Str::limit($costText, 120) }}
+                                                    </span>
+                                                    <span class="text-muted small flex-shrink-0">{{ $costEntry->created_at?->diffForHumans() }}</span>
+                                                </span>
+                                            </button>
+                                        </h2>
+                                        <div
+                                            id="{{ $costCollapseId }}"
+                                            class="accordion-collapse collapse"
+                                            aria-labelledby="{{ $costHeadingId }}">
+                                            <div class="accordion-body px-0 pt-2 pb-3">
+                                                <!-- Cost rows reserve Storage stock for the ticket; billing decides invoicing later. -->
+                                                <div class="d-flex justify-content-end gap-2 mb-2">
+                                                    @if($costEntry->status === 'reserved')
+                                                        @php
+                                                            $canPickCostEntry = ($costEntry->storageItem?->qty_on_hand ?? 0) >= $costEntry->quantity;
+                                                        @endphp
+                                                        <form method="POST" action="{{ route('tech.tickets.cost-entries.pick', [$ticket, $costEntry]) }}">
+                                                            @csrf
+                                                            <button
+                                                                type="submit"
+                                                                class="btn btn-sm btn-outline-success"
+                                                                @disabled(! $canPickCostEntry)
+                                                                title="{{ $canPickCostEntry ? 'Pick item from stock and send it to Economy.' : 'Not enough on-hand stock to pick this item.' }}">
+                                                                Pick
+                                                            </button>
+                                                        </form>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm btn-outline-primary ticket-edit-cost"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#ticketEditCostModal"
+                                                            data-action="{{ route('tech.tickets.cost-entries.update', [$ticket, $costEntry]) }}"
+                                                            data-quantity="{{ $costEntry->quantity }}"
+                                                            data-invoice-text="{{ $costEntry->invoice_text }}"
+                                                            data-note="{{ $costEntry->note }}"
+                                                            data-item-label="{{ $costEntry->item_name }}{{ $costEntry->item_sku ? ' (' . $costEntry->item_sku . ')' : '' }}">
+                                                            Edit
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                                <div class="row g-2 small mb-2">
+                                                    <div class="col-md-4">
+                                                        <div class="border rounded bg-light px-2 py-1 h-100">
+                                                            <div class="text-muted text-uppercase" style="font-size: .68rem;">Item</div>
+                                                            <div class="fw-semibold text-truncate">{{ $costEntry->item_name }}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="border rounded bg-light px-2 py-1 h-100">
+                                                            <div class="text-muted text-uppercase" style="font-size: .68rem;">Quantity</div>
+                                                            <div class="fw-semibold">{{ $costEntry->quantity }}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="border rounded bg-light px-2 py-1 h-100">
+                                                            <div class="text-muted text-uppercase" style="font-size: .68rem;">Status</div>
+                                                            <div class="fw-semibold">{{ ucfirst($costEntry->status) }}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @if(filled($costEntry->invoice_text))
+                                                    <div class="small text-muted text-uppercase mb-1" style="font-size: .68rem;">Invoice text</div>
+                                                    <div style="white-space: pre-wrap;">{{ $costEntry->invoice_text }}</div>
+                                                @endif
+                                                @if(filled($costEntry->note))
+                                                    <div class="small text-muted text-uppercase mt-3 mb-1" style="font-size: .68rem;">Internal note</div>
+                                                    <div style="white-space: pre-wrap;">{{ $costEntry->note }}</div>
+                                                @endif
+                                                <div class="d-flex flex-wrap gap-1 mt-3">
+                                                    <span class="badge text-bg-light border">Reservation: {{ ucfirst($costEntry->status) }}</span>
+                                                    <span class="badge text-bg-light border">Billing: {{ ucfirst($costEntry->billing_status) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @continue
+                                @endif
 
                                 @if($timeEntry)
                                     @php
@@ -161,6 +270,21 @@
                                             aria-labelledby="{{ $timeHeadingId }}">
                                             <div class="accordion-body px-0 pt-2 pb-3">
                                                 <!-- Time activity rows show billing intent without settling billing or contract minutes. -->
+                                                <div class="d-flex justify-content-end mb-2">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-sm btn-outline-primary ticket-edit-time"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#ticketEditTimeModal"
+                                                        data-action="{{ route('tech.tickets.time-entries.update', [$ticket, $timeEntry]) }}"
+                                                        data-work-date="{{ $timeEntry->work_date?->toDateString() }}"
+                                                        data-minutes="{{ $timeEntry->minutes }}"
+                                                        data-rate-key="{{ $timeEntry->contract_item_time_rate_id ? 'contract:' . $timeEntry->contract_item_time_rate_id : ($timeEntry->time_rate_id ? 'global:' . $timeEntry->time_rate_id : '') }}"
+                                                        data-invoice-text="{{ $timeEntry->invoice_text }}"
+                                                        data-note="{{ $timeEntry->note }}">
+                                                        Edit
+                                                    </button>
+                                                </div>
                                                 <div class="row g-2 small mb-2">
                                                     <div class="col-md-3">
                                                         <div class="border rounded bg-light px-2 py-1 h-100">
@@ -489,6 +613,177 @@
     </div>
 </div>
 
+{{-- Time registration edit modal --}}
+<div class="modal fade" id="ticketEditTimeModal" tabindex="-1" aria-labelledby="ticketEditTimeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <form id="ticketEditTimeForm" method="POST" action="#">
+                @csrf
+                @method('PATCH')
+
+                <div class="modal-header">
+                    <h2 class="modal-title h6" id="ticketEditTimeModalLabel">Edit time</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label for="edit_time_work_date" class="form-label">Date</label>
+                            <input id="edit_time_work_date" name="work_date" type="date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_time_minutes" class="form-label">Minutes</label>
+                            <input id="edit_time_minutes" name="minutes" type="number" min="1" max="1440" step="1" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="edit_time_rate_key" class="form-label">Time rate</label>
+                            <select id="edit_time_rate_key" name="rate_key" class="form-select" required>
+                                <option value="">Select rate</option>
+                                @foreach($timeRateOptions as $rateOption)
+                                    <option value="{{ $rateOption['key'] }}">{{ $rateOption['label'] }} - {{ $rateOption['description'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="edit_time_invoice_text" class="form-label">Invoice text</label>
+                            <textarea id="edit_time_invoice_text" name="invoice_text" rows="4" class="form-control" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="edit_time_note" class="form-label">Internal note</label>
+                            <textarea id="edit_time_note" name="note" rows="2" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update time</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Storage cost reservation modal --}}
+<div class="modal fade" id="ticketAddCostModal" tabindex="-1" aria-labelledby="ticketAddCostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('tech.tickets.cost-entries.store', $ticket) }}">
+                @csrf
+
+                <div class="modal-header">
+                    <h2 class="modal-title h6" id="ticketAddCostModalLabel">Add cost</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label for="cost_storage_item_search" class="form-label">Storage item</label>
+                            <input id="cost_storage_item_id" name="storage_item_id" type="hidden" value="{{ old('storage_item_id') }}">
+                            <input
+                                id="cost_storage_item_search"
+                                type="search"
+                                class="form-control @error('storage_item_id') is-invalid @enderror"
+                                placeholder="Start typing item name, SKU, or location"
+                                autocomplete="off">
+                            @error('storage_item_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div id="cost_storage_item_suggestions" class="list-group mt-2" style="max-height: 14rem; overflow-y: auto;">
+                                @foreach($storageItems as $storageItem)
+                                    <button
+                                        type="button"
+                                        class="list-group-item list-group-item-action py-2 cost-storage-suggestion @if($storageItem['available'] < 1) disabled @endif"
+                                        data-id="{{ $storageItem['id'] }}"
+                                        data-label="{{ $storageItem['label'] }}"
+                                        data-price="{{ $storageItem['sale_price'] }}"
+                                        data-invoice-text="{{ $storageItem['short_description'] }}"
+                                        data-search="{{ \Illuminate\Support\Str::lower($storageItem['label'] . ' ' . $storageItem['location']) }}"
+                                        @disabled($storageItem['available'] < 1)>
+                                        <span class="d-flex justify-content-between gap-2">
+                                            <span class="fw-semibold text-truncate">{{ $storageItem['label'] }}</span>
+                                            <span class="small text-muted flex-shrink-0">Available: {{ $storageItem['available'] }}</span>
+                                        </span>
+                                        @if(filled($storageItem['location']))
+                                            <span class="small text-muted d-block text-truncate">{{ $storageItem['location'] }}</span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                            <div id="cost_storage_item_no_results" class="text-muted small mt-2 d-none">No matching storage items.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cost_unit_price" class="form-label">Unit price</label>
+                            <input id="cost_unit_price" type="text" class="form-control" value="-" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cost_quantity" class="form-label">Quantity</label>
+                            <input id="cost_quantity" name="quantity" type="number" min="1" step="1" class="form-control @error('quantity') is-invalid @enderror" value="{{ old('quantity', 1) }}" required>
+                            @error('quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cost_total_price" class="form-label">Total</label>
+                            <input id="cost_total_price" type="text" class="form-control" value="-" readonly>
+                        </div>
+                        <div class="col-12">
+                            <label for="cost_invoice_text" class="form-label">Invoice text</label>
+                            <textarea id="cost_invoice_text" name="invoice_text" rows="3" class="form-control @error('invoice_text') is-invalid @enderror">{{ old('invoice_text') }}</textarea>
+                            @error('invoice_text')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-12">
+                            <label for="cost_note" class="form-label">Internal note</label>
+                            <textarea id="cost_note" name="note" rows="2" class="form-control @error('note') is-invalid @enderror">{{ old('note') }}</textarea>
+                            @error('note')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" @disabled($storageItems->where('available', '>', 0)->isEmpty())>Reserve item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Storage cost edit modal --}}
+<div class="modal fade" id="ticketEditCostModal" tabindex="-1" aria-labelledby="ticketEditCostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <form id="ticketEditCostForm" method="POST" action="#">
+                @csrf
+                @method('PATCH')
+
+                <div class="modal-header">
+                    <h2 class="modal-title h6" id="ticketEditCostModalLabel">Edit cost</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <div class="small text-muted text-uppercase" style="font-size: .68rem;">Item</div>
+                        <div id="editCostItemLabel" class="fw-semibold"></div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label for="edit_cost_quantity" class="form-label">Quantity</label>
+                            <input id="edit_cost_quantity" name="quantity" type="number" min="1" step="1" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="edit_cost_invoice_text" class="form-label">Invoice text</label>
+                            <textarea id="edit_cost_invoice_text" name="invoice_text" rows="3" class="form-control"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="edit_cost_note" class="form-label">Internal note</label>
+                            <textarea id="edit_cost_note" name="note" rows="2" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update reservation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const type = document.getElementById('type');
@@ -507,6 +802,26 @@
         const timeAiDraftStatus = document.getElementById('ticketTimeAiDraftStatus');
         const timeMinutes = document.getElementById('time_minutes');
         const timeWorkDate = document.getElementById('time_work_date');
+        const editTimeForm = document.getElementById('ticketEditTimeForm');
+        const editTimeWorkDate = document.getElementById('edit_time_work_date');
+        const editTimeMinutes = document.getElementById('edit_time_minutes');
+        const editTimeRateKey = document.getElementById('edit_time_rate_key');
+        const editTimeInvoiceText = document.getElementById('edit_time_invoice_text');
+        const editTimeNote = document.getElementById('edit_time_note');
+        const editCostForm = document.getElementById('ticketEditCostForm');
+        const editCostItemLabel = document.getElementById('editCostItemLabel');
+        const editCostQuantity = document.getElementById('edit_cost_quantity');
+        const editCostInvoiceText = document.getElementById('edit_cost_invoice_text');
+        const editCostNote = document.getElementById('edit_cost_note');
+        const costItemSearch = document.getElementById('cost_storage_item_search');
+        const costItemId = document.getElementById('cost_storage_item_id');
+        const costItemSuggestions = document.getElementById('cost_storage_item_suggestions');
+        const costItemNoResults = document.getElementById('cost_storage_item_no_results');
+        const costQuantity = document.getElementById('cost_quantity');
+        const costUnitPrice = document.getElementById('cost_unit_price');
+        const costTotalPrice = document.getElementById('cost_total_price');
+        const costInvoiceText = document.getElementById('cost_invoice_text');
+        let selectedCostItem = null;
         const stopwatchDisplay = document.getElementById('ticketStopwatchDisplay');
         const stopwatchState = document.getElementById('ticketStopwatchState');
         const stopwatchStartGroup = document.getElementById('ticketStopwatchStartGroup');
@@ -724,6 +1039,172 @@
                 timeAiDraft.disabled = false;
                 timeAiDraft.innerHTML = originalText;
             }
+        });
+
+        const formatMoney = function (value) {
+            if (Number.isNaN(value)) {
+                return '-';
+            }
+
+            return new Intl.NumberFormat('nb-NO', {
+                style: 'currency',
+                currency: 'NOK',
+            }).format(value);
+        };
+
+        const setSelectedCostItem = function (button, fillInvoiceText = true) {
+            if (! button) {
+                selectedCostItem = null;
+                if (costItemId) {
+                    costItemId.value = '';
+                }
+                return;
+            }
+
+            selectedCostItem = {
+                id: button.dataset.id,
+                label: button.dataset.label,
+                price: button.dataset.price,
+                invoiceText: button.dataset.invoiceText || '',
+            };
+
+            if (costItemId) {
+                costItemId.value = selectedCostItem.id || '';
+            }
+
+            if (costItemSearch) {
+                costItemSearch.value = selectedCostItem.label || '';
+            }
+
+            document.querySelectorAll('.cost-storage-suggestion').forEach(function (suggestion) {
+                suggestion.classList.toggle('active', suggestion === button);
+            });
+
+            syncCostPreview(fillInvoiceText);
+        };
+
+        const syncCostPreview = function (fillInvoiceText = false) {
+            const price = Number(selectedCostItem?.price || NaN);
+            const quantity = Number(costQuantity?.value || 0);
+
+            if (costUnitPrice) {
+                costUnitPrice.value = formatMoney(price);
+            }
+
+            if (costTotalPrice) {
+                costTotalPrice.value = formatMoney(price * quantity);
+            }
+
+            if (fillInvoiceText && costInvoiceText && ! costInvoiceText.value.trim()) {
+                costInvoiceText.value = selectedCostItem?.invoiceText || '';
+            }
+        };
+
+        const filterCostSuggestions = function () {
+            const search = costItemSearch?.value.trim().toLowerCase() || '';
+            let visibleCount = 0;
+
+            document.querySelectorAll('.cost-storage-suggestion').forEach(function (button) {
+                const matches = search === '' || (button.dataset.search || '').includes(search);
+                button.classList.toggle('d-none', ! matches);
+
+                if (matches) {
+                    visibleCount++;
+                }
+            });
+
+            costItemNoResults?.classList.toggle('d-none', visibleCount > 0);
+        };
+
+        costItemSearch?.addEventListener('input', function () {
+            if (! selectedCostItem || costItemSearch.value !== selectedCostItem.label) {
+                selectedCostItem = null;
+
+                if (costItemId) {
+                    costItemId.value = '';
+                }
+
+                document.querySelectorAll('.cost-storage-suggestion.active').forEach(function (button) {
+                    button.classList.remove('active');
+                });
+            }
+
+            filterCostSuggestions();
+            syncCostPreview(false);
+        });
+
+        costQuantity?.addEventListener('input', function () {
+            syncCostPreview(false);
+        });
+
+        document.querySelectorAll('.cost-storage-suggestion').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (button.disabled || button.classList.contains('disabled')) {
+                    return;
+                }
+
+                setSelectedCostItem(button, true);
+                filterCostSuggestions();
+            });
+        });
+
+        if (costItemId?.value) {
+            setSelectedCostItem(document.querySelector(`.cost-storage-suggestion[data-id="${costItemId.value}"]`), false);
+        }
+
+        filterCostSuggestions();
+        syncCostPreview(false);
+
+        document.querySelectorAll('.ticket-edit-cost').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (editCostForm) {
+                    editCostForm.action = button.dataset.action || '#';
+                }
+
+                if (editCostItemLabel) {
+                    editCostItemLabel.textContent = button.dataset.itemLabel || '';
+                }
+
+                if (editCostQuantity) {
+                    editCostQuantity.value = button.dataset.quantity || 1;
+                }
+
+                if (editCostInvoiceText) {
+                    editCostInvoiceText.value = button.dataset.invoiceText || '';
+                }
+
+                if (editCostNote) {
+                    editCostNote.value = button.dataset.note || '';
+                }
+            });
+        });
+
+        document.querySelectorAll('.ticket-edit-time').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (editTimeForm) {
+                    editTimeForm.action = button.dataset.action || '#';
+                }
+
+                if (editTimeWorkDate) {
+                    editTimeWorkDate.value = button.dataset.workDate || new Date().toISOString().slice(0, 10);
+                }
+
+                if (editTimeMinutes) {
+                    editTimeMinutes.value = button.dataset.minutes || 1;
+                }
+
+                if (editTimeRateKey) {
+                    editTimeRateKey.value = button.dataset.rateKey || '';
+                }
+
+                if (editTimeInvoiceText) {
+                    editTimeInvoiceText.value = button.dataset.invoiceText || '';
+                }
+
+                if (editTimeNote) {
+                    editTimeNote.value = button.dataset.note || '';
+                }
+            });
         });
     });
 </script>

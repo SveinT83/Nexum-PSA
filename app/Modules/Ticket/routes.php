@@ -46,6 +46,18 @@ Route::post('/tickets/{ticket}/time-entries', [TicketController::class, 'storeTi
 Route::post('/tickets/{ticket}/time-entries/draft', [TicketController::class, 'draftTimeEntryInvoiceText'])
     ->name('tickets.time-entries.draft');
 
+Route::patch('/tickets/{ticket}/time-entries/{timeEntry}', [TicketController::class, 'updateTimeEntry'])
+    ->name('tickets.time-entries.update');
+
+Route::post('/tickets/{ticket}/cost-entries', [TicketController::class, 'storeCostEntry'])
+    ->name('tickets.cost-entries.store');
+
+Route::patch('/tickets/{ticket}/cost-entries/{costEntry}', [TicketController::class, 'updateCostEntry'])
+    ->name('tickets.cost-entries.update');
+
+Route::post('/tickets/{ticket}/cost-entries/{costEntry}/pick', [TicketController::class, 'pickCostEntry'])
+    ->name('tickets.cost-entries.pick');
+
 Route::post('/tickets/{ticket}/messages/{message}/read', [TicketController::class, 'markMessageRead'])
     ->name('tickets.messages.read');
 

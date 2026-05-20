@@ -16,6 +16,9 @@ use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\Storage\Models\Item as StorageItem;
+use App\Modules\Storage\Models\Reservation as StorageReservation;
+use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
@@ -75,6 +78,9 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
         $this->assertSame(TicketController::class . '@storeTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.store')->getActionName());
         $this->assertSame(TicketController::class . '@draftTimeEntryInvoiceText', Route::getRoutes()->getByName('tech.tickets.time-entries.draft')->getActionName());
+        $this->assertSame(TicketController::class . '@updateTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.update')->getActionName());
+        $this->assertSame(TicketController::class . '@storeCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.store')->getActionName());
+        $this->assertSame(TicketController::class . '@updateCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.update')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
         $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
@@ -344,6 +350,80 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function tech_user_can_update_registered_ticket_time(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999143',
+            'owner_id' => $this->tech->id,
+        ]);
+        $originalRate = TimeRate::create([
+            'name' => 'Time without contract',
+            'slug' => 'time-without-contract-update-test',
+            'code' => 'TIME_WITHOUT_CONTRACT_UPDATE_TEST',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 1200,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        $updatedRate = TimeRate::create([
+            'name' => 'Driving',
+            'slug' => 'driving-update-test',
+            'code' => 'DRIVING_UPDATE_TEST',
+            'rate_type' => 'driving',
+            'unit' => 'hour',
+            'amount_ex_vat' => 520,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => true,
+            'is_active' => true,
+            'sort_order' => 20,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.time-entries.store', $ticket), [
+                '_time_entry_form' => '1',
+                'work_date' => '2026-05-19',
+                'minutes' => 45,
+                'rate_key' => 'global:' . $originalRate->id,
+                'invoice_text' => 'Initial technical work.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $entry = $ticket->timeEntries()->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.time-entries.update', [$ticket, $entry]), [
+                'work_date' => '2026-05-20',
+                'minutes' => 30,
+                'rate_key' => 'global:' . $updatedRate->id,
+                'invoice_text' => 'Kjoring til kunde.',
+                'note' => 'Adjusted from timer.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertDatabaseHas('ticket_time_entries', [
+            'id' => $entry->id,
+            'work_date' => '2026-05-20 00:00:00',
+            'minutes' => 30,
+            'time_rate_id' => $updatedRate->id,
+            'rate_name' => 'Driving',
+            'rate_amount_ex_vat' => 520,
+            'invoice_text' => 'Kjoring til kunde.',
+            'note' => 'Adjusted from timer.',
+            'billing_status' => 'pending',
+            'timebank_status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'time_entry_updated',
+        ]);
+    }
+
+    #[Test]
     public function ticket_time_registration_can_use_accepted_contract_item_rates(): void
     {
         $client = Client::factory()->create(['name' => 'Contract Time Client']);
@@ -401,6 +481,73 @@ class TicketModuleTest extends TestCase
             'rate_name' => 'Contract support time',
             'rate_amount_ex_vat' => 650,
             'invoice_text' => 'Remote support according to active agreement.',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_reserve_storage_item_on_ticket_and_update_quantity(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999142',
+            'owner_id' => $this->tech->id,
+        ]);
+        $warehouse = StorageWarehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+        $item = StorageItem::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'USB-CABLE',
+            'name' => 'USB Cable',
+            'short_description' => 'USB cable for customer equipment.',
+            'sale_price' => 149,
+            'qty_on_hand' => 5,
+            'qty_reserved' => 0,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'storage_item_id' => $item->id,
+                'quantity' => 2,
+                'note' => 'Reserved from main shelf.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $reservation = StorageReservation::firstOrFail();
+        $this->assertSame(2, $item->refresh()->qty_reserved);
+        $this->assertDatabaseHas('ticket_cost_entries', [
+            'ticket_id' => $ticket->id,
+            'storage_item_id' => $item->id,
+            'storage_reservation_id' => $reservation->id,
+            'quantity' => 2,
+            'item_name' => 'USB Cable',
+            'item_sku' => 'USB-CABLE',
+            'status' => 'reserved',
+            'billing_status' => 'pending',
+            'invoice_text' => 'USB cable for customer equipment.',
+        ]);
+
+        $entry = $ticket->costEntries()->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.cost-entries.update', [$ticket, $entry]), [
+                'quantity' => 3,
+                'invoice_text' => 'USB cable and adapter for customer equipment.',
+                'note' => 'Adjusted after finding adapter.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame(3, $item->refresh()->qty_reserved);
+        $this->assertSame(3, $reservation->refresh()->qty);
+        $this->assertDatabaseHas('ticket_cost_entries', [
+            'id' => $entry->id,
+            'quantity' => 3,
+            'invoice_text' => 'USB cable and adapter for customer equipment.',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'storage_reservation_updated',
         ]);
     }
 

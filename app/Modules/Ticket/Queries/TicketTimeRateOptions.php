@@ -43,7 +43,10 @@ class TicketTimeRateOptions
         $today = now()->toDateString();
 
         return Contracts::query()
-            ->with(['items.timeRates' => fn ($query) => $query->where('is_active', true)])
+            ->with([
+                'items.service',
+                'items.timeRates' => fn ($query) => $query->where('is_active', true),
+            ])
             ->where('client_id', $ticket->client_id)
             ->where('approval_status', 'won')
             ->where(function ($query) use ($today) {
@@ -57,7 +60,7 @@ class TicketTimeRateOptions
             ->get()
             ->flatMap(function (Contracts $contract) {
                 return $contract->items->flatMap(function ($item) use ($contract) {
-                    return $item->timeRates->map(fn (ContractItemTimeRate $rate) => [
+                    $itemRates = $item->timeRates->map(fn (ContractItemTimeRate $rate) => [
                         'key' => 'contract:' . $rate->id,
                         'source' => 'contract',
                         'label' => trim($item->name . ' - ' . $rate->name),
@@ -74,6 +77,43 @@ class TicketTimeRateOptions
                         'rate_currency' => $rate->currency,
                         'billing_basis' => 'contract',
                     ]);
+
+                    if ($itemRates->isNotEmpty()) {
+                        return $itemRates;
+                    }
+
+                    // Some contract lines provide a timebank but have not yet
+                    // copied explicit contract item rates. In that case the
+                    // global with-contract rates still need to create a
+                    // contract-backed time entry so Economy can consume the
+                    // timebank before creating billable order lines.
+                    if (! $item->service?->timebank_enabled) {
+                        return collect();
+                    }
+
+                    return TimeRate::query()
+                        ->where('is_active', true)
+                        ->where('applies_with_contract', true)
+                        ->orderBy('sort_order')
+                        ->orderBy('name')
+                        ->get()
+                        ->map(fn (TimeRate $rate) => [
+                            'key' => 'contract-fallback:' . $item->id . ':' . $rate->id,
+                            'source' => 'contract',
+                            'label' => trim($item->name . ' - ' . $rate->name),
+                            'description' => 'Contract #' . $contract->id . ' / ' . number_format((float) $rate->amount_ex_vat, 2, '.', ' ') . ' ' . $rate->currency . ' per ' . $rate->unit,
+                            'contract_id' => $contract->id,
+                            'contract_item_id' => $item->id,
+                            'contract_item_time_rate_id' => null,
+                            'time_rate_id' => $rate->id,
+                            'rate_name' => $rate->name,
+                            'rate_code' => $rate->code,
+                            'rate_type' => $rate->rate_type,
+                            'rate_unit' => $rate->unit,
+                            'rate_amount_ex_vat' => $rate->amount_ex_vat,
+                            'rate_currency' => $rate->currency,
+                            'billing_basis' => 'contract',
+                        ]);
                 });
             })
             ->values();

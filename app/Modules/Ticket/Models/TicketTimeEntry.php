@@ -10,6 +10,7 @@ use App\Modules\Commercial\Models\TimeRate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TicketTimeEntry extends Model
 {
@@ -79,5 +80,10 @@ class TicketTimeEntry extends Model
     public function timeRate(): BelongsTo
     {
         return $this->belongsTo(TimeRate::class);
+    }
+
+    public function allocation(): HasOne
+    {
+        return $this->hasOne(TicketTimeEntryAllocation::class);
     }
 }

@@ -57,6 +57,7 @@ Implemented now:
 - Ticket time registration from the ticket show page, including work date, minutes, selected time rate, invoice text, and pending billing/timebank status.
 - Ticket show Activity timeline combines conversation messages and time records in the same accordion list.
 - Ticket show Time rightbar widget includes a local per-ticket stopwatch with pause/resume and stop-to-register flow.
+- Ticket cost registration can reserve active Storage items from a ticket, show the reservation as an editable Activity row, and leave billing decisions pending.
 - Feature tests for the current main flows.
 
 Most recent completed work:
@@ -84,6 +85,7 @@ Most recent completed work:
 - Ticket time registration now includes a local stopwatch in the rightbar. Stopping the timer opens the Add time modal with elapsed minutes prefilled, while saving still happens through the normal time entry form.
 - Ticket activity now shows saved time entries as rows alongside customer replies and internal notes.
 - Ticket index now shows the assigned technician or Unassigned and lightly highlights rows that have an active or paused local stopwatch for the current browser.
+- Ticket cost entries can now reserve Storage items directly from the ticket show page. Reserving creates a Storage reservation, increments the item's reserved quantity, snapshots item details on the ticket cost entry, and shows the entry in Activity with edit support for quantity and invoice text.
 - Inbound email can link an existing email message to an existing ticket when the subject contains a ticket key such as `TD-2026-000001`.
 - Customer reply email sending was connected and tested.
 - `AddTicketMessage` now queues `SendTicketReplyEmail` after commit for messages of type `customer_reply`.
@@ -130,6 +132,8 @@ Current important files:
 - `app/Modules/Ticket/Actions/AddTicketMessage.php` - creates ticket messages and events, and dispatches outbound reply email when relevant.
 - `app/Modules/Ticket/Actions/StoreTicketAttachment.php` - stores uploaded ticket files and copies inbound Email attachments into ticket-owned storage records.
 - `app/Modules/Ticket/Actions/RegisterTicketTimeEntry.php` - stores billable time intent, rate snapshots, and a ticket audit event without settling billing or contract minutes.
+- `app/Modules/Ticket/Actions/ReserveTicketStorageItem.php` - reserves active Storage stock for a ticket and creates the pending ticket cost entry.
+- `app/Modules/Ticket/Actions/UpdateTicketStorageReservation.php` - edits a ticket cost entry and keeps the linked Storage reservation and item reserved quantity in sync.
 - `app/Modules/Ticket/Actions/ChangeTicketStatus.php` - changes ticket status and owns resolved/closed timestamps.
 - `app/Modules/Ticket/Actions/CloseTicket.php` - convenience close operation using the same lifecycle status change.
 - `app/Modules/Ticket/Actions/MarkTicketRead.php` - clears the ticket unread flag and stamps unread messages as read.
@@ -210,6 +214,8 @@ Main tables:
 - `ticket_messages` - conversation messages and internal notes.
 - `ticket_events` - audit/history events for ticket activity.
 - `ticket_time_entries` - time registration records. Stores technician, work date, minutes, invoice text, internal note, pending billing/timebank status, and a snapshot of the selected Commercial time rate. Entries are not settled when saved.
+- `ticket_cost_entries` - pending item/cost records for tickets. Stores the selected Storage item, reservation link, quantity, item snapshot, invoice text, internal note, and pending billing status.
+- `ticket_time_entry_allocations` - Economy calculation records for ticket time. Stores covered versus billable minutes per ticket time entry so contract timebank decisions do not need to be recalculated repeatedly.
 - `ticket_watchers` - watcher model, currently not wired into the UI.
 - `ticket_attachments` - stored files linked to ticket messages, including uploaded files and copied inbound Email attachments.
 - `ticket_technician_profiles` - per-technician assignment profile records.

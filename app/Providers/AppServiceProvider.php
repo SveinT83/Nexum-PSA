@@ -50,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
             'commercial' => 'Commercial',
             'documentation' => 'Documentation',
             'email' => 'Email',
+            'economy' => 'Economy',
             'integration' => 'Integration',
             'knowledge' => 'Knowledge',
             'nextcloud' => 'Nextcloud',

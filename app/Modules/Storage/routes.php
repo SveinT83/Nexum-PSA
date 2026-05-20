@@ -17,6 +17,12 @@ Route::get('/storage/items/create', [ItemController::class, 'create'])
 Route::post('/storage/items', [ItemController::class, 'store'])
     ->name('storage.items.store');
 
+Route::get('/storage/items/{item}/edit', [ItemController::class, 'edit'])
+    ->name('storage.items.edit');
+
+Route::patch('/storage/items/{item}', [ItemController::class, 'update'])
+    ->name('storage.items.update');
+
 Route::get('/storage/items/{item}', [ItemController::class, 'show'])
     ->name('storage.items.show');
 

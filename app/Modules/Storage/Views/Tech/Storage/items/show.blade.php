@@ -19,11 +19,17 @@
                 @endif
             </div>
         </div>
-        @if($item->needs_reorder)
-            <span class="badge text-bg-warning">Should order</span>
-        @else
-            <span class="badge text-bg-success">Stock OK</span>
-        @endif
+        <div class="d-flex align-items-center gap-2">
+            @if($item->needs_reorder)
+                <span class="badge text-bg-warning">Should order</span>
+            @else
+                <span class="badge text-bg-success">Stock OK</span>
+            @endif
+            <a href="{{ route('tech.storage.items.edit', $item) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil" aria-hidden="true"></i>
+                Edit
+            </a>
+        </div>
     </div>
 @endsection
 

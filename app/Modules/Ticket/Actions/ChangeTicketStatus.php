@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
 use App\Modules\Notification\Notifications\TicketStatusChanged;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
@@ -95,6 +96,14 @@ class ChangeTicketStatus
                             changedBy: $actor?->name,
                         ));
                     }
+                }
+
+                if ($status->is_closed) {
+                    GenerateEconomyOrdersJob::dispatch(
+                        $ticket->closed_at?->copy()->startOfMonth()->toDateString(),
+                        $ticket->closed_at?->copy()->endOfMonth()->toDateString(),
+                        $actor?->id,
+                    )->onQueue('economy')->afterCommit();
                 }
             }
 

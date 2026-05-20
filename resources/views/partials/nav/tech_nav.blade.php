@@ -122,6 +122,7 @@
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
         $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*') || request()->routeIs('tech.packages.*') || request()->routeIs('tech.sales.*');
+        $economyGroupActive = request()->routeIs('tech.economy.*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -164,6 +165,29 @@
             <!-- SLA -->
             <!-- ------------------------------------------------- -->
             <li><a class="dropdown-item {{ request()->routeIs('tech.sla.index') ? 'active' : '' }}" href="{{ route('tech.sla.index') }}">SLA</a></li>
+        </ul>
+    </li>
+
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Economy dropdown menu -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle {{ $economyGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Economy</a>
+        <ul class="dropdown-menu">
+
+            <!-- ------------------------------------------------- -->
+            <!-- Orders -->
+            <!-- ------------------------------------------------- -->
+            @if(Route::has('tech.economy.orders.index'))
+                <li><a class="dropdown-item {{ request()->routeIs('tech.economy.orders.*') ? 'active' : '' }}" href="{{ route('tech.economy.orders.index') }}">Orders</a></li>
+            @endif
+
+            <!-- ------------------------------------------------- -->
+            <!-- Settings -->
+            <!-- ------------------------------------------------- -->
+            @if(Route::has('tech.economy.settings'))
+                <li><a class="dropdown-item {{ request()->routeIs('tech.economy.settings') ? 'active' : '' }}" href="{{ route('tech.economy.settings') }}">Settings</a></li>
+            @endif
         </ul>
     </li>
 

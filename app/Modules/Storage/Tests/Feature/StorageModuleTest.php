@@ -145,6 +145,59 @@ class StorageModuleTest extends TestCase
     public function storage_item_and_box_show_routes_are_module_owned(): void
     {
         $this->assertSame(ItemController::class . '@show', Route::getRoutes()->getByName('tech.storage.items.show')->getActionName());
+        $this->assertSame(ItemController::class . '@edit', Route::getRoutes()->getByName('tech.storage.items.edit')->getActionName());
+        $this->assertSame(ItemController::class . '@update', Route::getRoutes()->getByName('tech.storage.items.update')->getActionName());
         $this->assertSame(BoxController::class . '@show', Route::getRoutes()->getByName('tech.storage.boxes.show')->getActionName());
+    }
+
+    #[Test]
+    public function tech_user_can_edit_storage_item_short_description(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+        $item = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'USB-CABLE',
+            'name' => 'USB Cable',
+            'qty_on_hand' => 2,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.items.edit', $item))
+            ->assertOk()
+            ->assertSee('Short Description');
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.storage.items.update', $item), [
+                'warehouse_id' => $warehouse->id,
+                'box_id' => '',
+                'sku' => 'usb-cable',
+                'name' => 'USB Cable',
+                'short_description' => 'USB cable for ticket invoice text.',
+                'long_description' => 'Internal catalog notes.',
+                'ean_number' => '123',
+                'purchase_price' => 50,
+                'markup_percent' => 20,
+                'sale_price' => 149,
+                'vat_rate' => 25,
+                'reorder_point' => 1,
+                'target_level' => 5,
+                'lead_time_days' => 2,
+                'moq' => 1,
+                'has_serials' => '1',
+                'status' => 'active',
+            ])
+            ->assertRedirect(route('tech.storage.items.show', $item));
+
+        $item->refresh();
+
+        $this->assertSame('USB-CABLE', $item->sku);
+        $this->assertSame('USB cable for ticket invoice text.', $item->short_description);
+        $this->assertSame('Internal catalog notes.', $item->long_description);
+        $this->assertSame('149.00', $item->sale_price);
+        $this->assertTrue($item->has_serials);
     }
 }

@@ -19,16 +19,23 @@ use App\Modules\Ticket\Actions\CloseTicket;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
+use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
+use App\Modules\Ticket\Actions\ReserveTicketStorageItem;
+use App\Modules\Ticket\Actions\UpdateTicketStorageReservation;
+use App\Modules\Ticket\Actions\UpdateTicketTimeEntry;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
+use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
+use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
+use App\Modules\Ticket\Models\TicketTimeEntry;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Queries\TicketIndexQuery;
@@ -218,7 +225,7 @@ class TicketController extends Controller
     {
         app(EnsureTicketDefaults::class)->handle();
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem']);
         $messageIds = $ticket->messages->pluck('id')->all();
 
         $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);
@@ -241,6 +248,7 @@ class TicketController extends Controller
             'technicians' => $this->technicians(),
             'replyContacts' => $this->replyContactOptions($ticket),
             'timeRateOptions' => $timeRateOptions->forTicket($ticket),
+            'storageItems' => $this->storageItemOptions(),
             'knowledgeSuggestions' => $articleQuery->relevantForTicket($ticket, 3),
             'emailLogsByMessageId' => EmailLog::query()
                 ->where('direction', 'outbound')
@@ -337,6 +345,87 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Time entry added.');
+    }
+
+    public function storeCostEntry(Request $request, Ticket $ticket, ReserveTicketStorageItem $reserveItem): RedirectResponse
+    {
+        $data = $request->validate([
+            'storage_item_id' => 'required|integer|exists:storage_items,id',
+            'quantity' => 'required|integer|min:1|max:100000',
+            'invoice_text' => 'nullable|string|max:2000',
+            'note' => 'nullable|string|max:2000',
+        ]);
+        $item = StorageItem::where('status', 'active')->findOrFail($data['storage_item_id']);
+
+        try {
+            $reserveItem->handle($ticket, $item, $data, $request->user());
+        } catch (\InvalidArgumentException $exception) {
+            return back()
+                ->withErrors(['storage_item_id' => $exception->getMessage()])
+                ->withInput();
+        }
+
+        return redirect()->route('tech.tickets.show', $ticket)
+            ->with('success', 'Storage item reserved.');
+    }
+
+    public function updateTimeEntry(Request $request, Ticket $ticket, TicketTimeEntry $timeEntry, TicketTimeRateOptions $timeRateOptions, UpdateTicketTimeEntry $updateTimeEntry): RedirectResponse
+    {
+        abort_unless((int) $timeEntry->ticket_id === (int) $ticket->id, 404);
+
+        $data = $request->validate([
+            'work_date' => 'required|date',
+            'minutes' => 'required|integer|min:1|max:1440',
+            'rate_key' => 'required|string|max:100',
+            'invoice_text' => 'required|string|max:2000',
+            'note' => 'nullable|string|max:2000',
+        ]);
+        $rateOption = $timeRateOptions->findForTicket($ticket, $data['rate_key']);
+
+        if (! $rateOption) {
+            return back()
+                ->withErrors(['rate_key' => 'Select an available time rate for this ticket.'])
+                ->withInput();
+        }
+
+        $updateTimeEntry->handle($ticket, $timeEntry, $data, $rateOption, $request->user());
+
+        return redirect()->route('tech.tickets.show', $ticket)
+            ->with('success', 'Time entry updated.');
+    }
+
+    public function updateCostEntry(Request $request, Ticket $ticket, TicketCostEntry $costEntry, UpdateTicketStorageReservation $updateReservation): RedirectResponse
+    {
+        abort_unless((int) $costEntry->ticket_id === (int) $ticket->id, 404);
+
+        $data = $request->validate([
+            'quantity' => 'required|integer|min:1|max:100000',
+            'invoice_text' => 'nullable|string|max:2000',
+            'note' => 'nullable|string|max:2000',
+        ]);
+
+        try {
+            $updateReservation->handle($ticket, $costEntry, $data, $request->user());
+        } catch (\InvalidArgumentException $exception) {
+            return back()
+                ->withErrors(['cost_entry' => $exception->getMessage()])
+                ->withInput();
+        }
+
+        return redirect()->route('tech.tickets.show', $ticket)
+            ->with('success', 'Storage reservation updated.');
+    }
+
+    public function pickCostEntry(Request $request, Ticket $ticket, TicketCostEntry $costEntry, PickTicketStorageReservation $pickReservation): RedirectResponse
+    {
+        try {
+            $pickReservation->handle($ticket, $costEntry, $request->user());
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['cost_entry' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Storage item picked and sent to Economy.');
     }
 
     public function draftTimeEntryInvoiceText(Request $request, Ticket $ticket, AiAgentResolver $agentResolver, AiChatResponder $responder, TicketTimeRateOptions $timeRateOptions): JsonResponse
@@ -582,6 +671,23 @@ class TicketController extends Controller
         }
 
         return $technicians->sortBy('name')->values();
+    }
+
+    private function storageItemOptions(): Collection
+    {
+        return StorageItem::query()
+            ->with(['warehouse', 'box'])
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (StorageItem $item) => [
+                'id' => $item->id,
+                'label' => $item->name . ($item->sku ? ' (' . $item->sku . ')' : ''),
+                'available' => $item->qty_available,
+                'sale_price' => $item->sale_price,
+                'short_description' => $item->short_description,
+                'location' => trim(($item->warehouse?->name ?? 'No warehouse') . ($item->box ? ' / ' . $item->box->code_human : '')),
+            ]);
     }
 
     private function timeInvoiceDraftPrompt(Ticket $ticket, ?string $existingText = null, ?array $rateOption = null): string

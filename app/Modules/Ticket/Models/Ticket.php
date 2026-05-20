@@ -152,6 +152,11 @@ class Ticket extends Model
         return $this->hasMany(TicketTimeEntry::class);
     }
 
+    public function costEntries(): HasMany
+    {
+        return $this->hasMany(TicketCostEntry::class);
+    }
+
     public function tags(): MorphToMany
     {
         return $this->morphToMany(Tag::class, 'taggable', 'taggables')
