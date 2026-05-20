@@ -15,6 +15,14 @@
 
 @section('content')
 <div class="container-fluid px-0">
+    <style>
+        .ticket-row-active-timer > * {
+            --bs-table-bg: #eaf4ff;
+            --bs-table-striped-bg: #eaf4ff;
+            --bs-table-hover-bg: #dceeff;
+        }
+    </style>
+
     {{-- Main pane: keep the ticket index focused on the list; filters and stats live in the side rails. --}}
     <div class="card">
         <div class="table-responsive">
@@ -24,6 +32,7 @@
                         <th>Ticket</th>
                         <th>Subject</th>
                         <th>Client</th>
+                        <th>Technician</th>
                         <th>Queue</th>
                         <th>Priority</th>
                         <th>SLA</th>
@@ -34,10 +43,11 @@
                 <tbody>
                     @forelse ($tickets as $ticket)
                         <tr
-                            class="cursor-pointer"
+                            class="cursor-pointer ticket-index-row"
                             role="link"
                             tabindex="0"
                             data-href="{{ route('tech.tickets.show', $ticket) }}"
+                            data-ticket-key="{{ $ticket->ticket_key }}"
                             aria-label="Open ticket {{ $ticket->ticket_key }}"
                         >
                             <td>
@@ -48,6 +58,13 @@
                             </td>
                             <td>{{ $ticket->subject }}</td>
                             <td>{{ $ticket->client?->name ?? 'Unassigned' }}</td>
+                            <td>
+                                @if($ticket->owner)
+                                    {{ $ticket->owner->name }}
+                                @else
+                                    <span class="text-muted">Unassigned</span>
+                                @endif
+                            </td>
                             <td>{{ $ticket->queue?->name }}</td>
                             <td>P{{ $ticket->priority?->level }} {{ $ticket->priority?->name }}</td>
                             <td>
@@ -70,7 +87,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">No tickets found.</td>
+                            <td colspan="9" class="text-center text-muted py-4">No tickets found.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -86,6 +103,24 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const stopwatchPrefix = 'ticket-stopwatch-';
+
+        const hasActiveTimer = function (ticketKey) {
+            try {
+                const state = JSON.parse(localStorage.getItem(stopwatchPrefix + ticketKey) || 'null');
+
+                return !! state && (state.running || Number(state.elapsedMs || 0) > 0);
+            } catch (error) {
+                return false;
+            }
+        };
+
+        const syncTimerRows = function () {
+            document.querySelectorAll('tr[data-ticket-key]').forEach(function (row) {
+                row.classList.toggle('ticket-row-active-timer', hasActiveTimer(row.dataset.ticketKey));
+            });
+        };
+
         document.querySelectorAll('tr[data-href]').forEach(function (row) {
             row.addEventListener('click', function (event) {
                 // Keep normal link behavior for real links inside the row.
@@ -103,6 +138,10 @@
                 }
             });
         });
+
+        syncTimerRows();
+        window.setInterval(syncTimerRows, 15000);
+        window.addEventListener('storage', syncTimerRows);
     });
 </script>
 @endsection

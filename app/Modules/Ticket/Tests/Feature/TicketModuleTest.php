@@ -8,7 +8,9 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Knowledge\Article;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
@@ -71,6 +73,8 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
         $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
+        $this->assertSame(TicketController::class . '@storeTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.store')->getActionName());
+        $this->assertSame(TicketController::class . '@draftTimeEntryInvoiceText', Route::getRoutes()->getByName('tech.tickets.time-entries.draft')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
         $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
@@ -288,6 +292,116 @@ class TicketModuleTest extends TestCase
 
         $this->assertSame(2, TicketMessage::count());
         $this->assertSame(1, $ticket->events()->where('type', 'message_added')->count());
+    }
+
+    #[Test]
+    public function tech_user_can_register_ticket_time_with_without_contract_rate(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999140',
+            'owner_id' => $this->tech->id,
+        ]);
+        $rate = TimeRate::create([
+            'name' => 'Time without contract',
+            'slug' => 'time-without-contract-test',
+            'code' => 'TIME_WITHOUT_CONTRACT_TEST',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 1200,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.time-entries.store', $ticket), [
+                '_time_entry_form' => '1',
+                'work_date' => '2026-05-19',
+                'minutes' => 45,
+                'rate_key' => 'global:' . $rate->id,
+                'invoice_text' => 'Bluetooth troubleshooting and driver follow-up.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertDatabaseHas('ticket_time_entries', [
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'minutes' => 45,
+            'billing_basis' => 'without_contract',
+            'billing_status' => 'pending',
+            'timebank_status' => 'pending',
+            'time_rate_id' => $rate->id,
+            'rate_name' => 'Time without contract',
+            'rate_amount_ex_vat' => 1200,
+            'invoice_text' => 'Bluetooth troubleshooting and driver follow-up.',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'time_entry_added',
+        ]);
+    }
+
+    #[Test]
+    public function ticket_time_registration_can_use_accepted_contract_item_rates(): void
+    {
+        $client = Client::factory()->create(['name' => 'Contract Time Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999141',
+            'owner_id' => $this->tech->id,
+        ]);
+        $contract = Contracts::create([
+            'client_id' => $client->id,
+            'description' => 'Accepted test contract',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'approval_status' => 'won',
+            'created_by' => $this->tech->id,
+            'accepted_at' => now(),
+        ]);
+        $item = ContractItem::create([
+            'contract_id' => $contract->id,
+            'name' => 'Managed support',
+            'unit_price' => 0,
+            'quantity' => 1,
+            'unit' => 'month',
+            'billing_interval' => 'monthly',
+        ]);
+        $rate = $item->timeRates()->create([
+            'name' => 'Contract support time',
+            'code' => 'CONTRACT_SUPPORT_TIME',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 650,
+            'currency' => 'NOK',
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.time-entries.store', $ticket), [
+                '_time_entry_form' => '1',
+                'work_date' => '2026-05-19',
+                'minutes' => 30,
+                'rate_key' => 'contract:' . $rate->id,
+                'invoice_text' => 'Remote support according to active agreement.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertDatabaseHas('ticket_time_entries', [
+            'ticket_id' => $ticket->id,
+            'contract_id' => $contract->id,
+            'contract_item_id' => $item->id,
+            'contract_item_time_rate_id' => $rate->id,
+            'minutes' => 30,
+            'billing_basis' => 'contract',
+            'rate_name' => 'Contract support time',
+            'rate_amount_ex_vat' => 650,
+            'invoice_text' => 'Remote support according to active agreement.',
+        ]);
     }
 
     #[Test]

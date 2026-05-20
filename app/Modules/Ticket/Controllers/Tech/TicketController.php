@@ -8,6 +8,9 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Integration\Models\AiChat;
+use App\Modules\Integration\Services\AiAgentResolver;
+use App\Modules\Integration\Services\AiChatResponder;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Knowledge\Queries\ArticleQuery;
 use App\Modules\Ticket\Actions\AddTicketMessage;
@@ -17,6 +20,7 @@ use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\StoreTicket;
+use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
@@ -28,6 +32,7 @@ use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Queries\TicketIndexQuery;
+use App\Modules\Ticket\Queries\TicketTimeRateOptions;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Taxonomy\Models\Category;
@@ -35,10 +40,12 @@ use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 use Illuminate\View\View;
@@ -207,11 +214,11 @@ class TicketController extends Controller
             ->with('success', 'Ticket ' . $ticket->ticket_key . ' created.');
     }
 
-    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime): View
+    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions): View
     {
         app(EnsureTicketDefaults::class)->handle();
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user']);
         $messageIds = $ticket->messages->pluck('id')->all();
 
         $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);
@@ -233,6 +240,7 @@ class TicketController extends Controller
             'categories' => $this->ticketCategories(),
             'technicians' => $this->technicians(),
             'replyContacts' => $this->replyContactOptions($ticket),
+            'timeRateOptions' => $timeRateOptions->forTicket($ticket),
             'knowledgeSuggestions' => $articleQuery->relevantForTicket($ticket, 3),
             'emailLogsByMessageId' => EmailLog::query()
                 ->where('direction', 'outbound')
@@ -305,6 +313,86 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Message added.');
+    }
+
+    public function storeTimeEntry(Request $request, Ticket $ticket, TicketTimeRateOptions $timeRateOptions, RegisterTicketTimeEntry $registerTimeEntry): RedirectResponse
+    {
+        $data = $request->validate([
+            'work_date' => 'required|date',
+            'minutes' => 'required|integer|min:1|max:1440',
+            'rate_key' => 'required|string|max:100',
+            'invoice_text' => 'required|string|max:2000',
+            'note' => 'nullable|string|max:2000',
+        ]);
+
+        $rateOption = $timeRateOptions->findForTicket($ticket, $data['rate_key']);
+
+        if (! $rateOption) {
+            return back()
+                ->withErrors(['rate_key' => 'Select an available time rate for this ticket.'])
+                ->withInput();
+        }
+
+        $registerTimeEntry->handle($ticket, $data, $rateOption, $request->user());
+
+        return redirect()->route('tech.tickets.show', $ticket)
+            ->with('success', 'Time entry added.');
+    }
+
+    public function draftTimeEntryInvoiceText(Request $request, Ticket $ticket, AiAgentResolver $agentResolver, AiChatResponder $responder, TicketTimeRateOptions $timeRateOptions): JsonResponse
+    {
+        $data = $request->validate([
+            'existing_text' => 'nullable|string|max:2000',
+            'rate_key' => 'nullable|string|max:100',
+        ]);
+        $user = $request->user();
+        $agent = $user ? $agentResolver->defaultAgent($user, 'tickets') : null;
+
+        if (! $agent) {
+            return response()->json([
+                'message' => 'No active AI agent is available for tickets.',
+            ], 422);
+        }
+
+        $rateOption = filled($data['rate_key'] ?? null)
+            ? $timeRateOptions->findForTicket($ticket, $data['rate_key'])
+            : null;
+
+        $ticket->loadMissing(['status', 'client', 'contact', 'messages.author', 'timeEntries.user']);
+        $prompt = $this->timeInvoiceDraftPrompt($ticket, $data['existing_text'] ?? null, $rateOption);
+        $chat = AiChat::create([
+            'user_id' => $user->id,
+            'ai_agent_id' => $agent->id,
+            'title' => 'Ticket time invoice draft '.$ticket->ticket_key,
+            'status' => 'closed',
+            'metadata' => [
+                'source' => 'ticket_time_invoice_draft',
+                'ticket_id' => $ticket->id,
+            ],
+            'last_message_at' => now(),
+        ]);
+
+        $chat->messages()->create([
+            'user_id' => $user->id,
+            'role' => 'user',
+            'body' => $prompt,
+        ]);
+        $pending = $chat->messages()->create([
+            'role' => 'assistant',
+            'body' => 'AI is thinking...',
+            'metadata' => ['status' => 'pending'],
+        ]);
+
+        $responder->respond($chat, $pending->id);
+        $reply = trim((string) $pending->refresh()->body);
+
+        if (Str::startsWith($reply, 'AI provider error:')) {
+            return response()->json(['message' => $reply], 422);
+        }
+
+        return response()->json([
+            'text' => Str::limit($reply, 2000, ''),
+        ]);
     }
 
     public function downloadAttachment(Ticket $ticket, TicketAttachment $attachment): StreamedResponse
@@ -494,6 +582,60 @@ class TicketController extends Controller
         }
 
         return $technicians->sortBy('name')->values();
+    }
+
+    private function timeInvoiceDraftPrompt(Ticket $ticket, ?string $existingText = null, ?array $rateOption = null): string
+    {
+        $messages = $ticket->messages
+            ->sortByDesc('created_at')
+            ->take(10)
+            ->reverse()
+            ->map(function (TicketMessage $message) {
+                $author = $message->author_type === 'contact'
+                    ? 'Customer'
+                    : ($message->author?->name ?? 'Technician');
+
+                return '['.$message->type.' / '.$message->visibility.'] '.$author.': '.Str::limit(trim((string) $message->body), 1200);
+            })
+            ->implode("\n");
+        $previousTimeTexts = $ticket->timeEntries
+            ->sortByDesc('created_at')
+            ->take(8)
+            ->map(function ($entry) {
+                return '- '.$entry->minutes.' min / '.($entry->rate_name ?: 'unknown rate').': '.Str::limit(trim((string) ($entry->invoice_text ?: $entry->note)), 500);
+            })
+            ->filter(fn (string $line) => filled(trim($line, "- \t\n\r\0\x0B")))
+            ->implode("\n");
+
+        $rateText = strtolower(implode(' ', array_filter([
+            $rateOption['label'] ?? null,
+            $rateOption['rate_name'] ?? null,
+            $rateOption['rate_code'] ?? null,
+            $rateOption['rate_type'] ?? null,
+        ])));
+        $isTravelRate = Str::contains($rateText, ['driving', 'drive', 'travel', 'kjøring', 'kjoring', 'reise']);
+
+        return trim(implode("\n\n", array_filter([
+            'Write one short invoice/work description for registered ticket time.',
+            'Return only the concrete work performed. No greeting, no markdown, no bullet list.',
+            'Do not include ticket numbers, customer names, "billing", "invoice", or phrases like "registered time".',
+            'Prefer a compact noun phrase such as "oppdatering av skjermkortdriver og Steam-konfigurasjon".',
+            'Do not copy a previous time entry unless the selected rate and current draft clearly describe the same work.',
+            'If an existing draft is provided, improve or normalize that draft instead of ignoring it.',
+            $isTravelRate ? 'CRITICAL: The selected rate is driving/travel. Return a driving/travel description only. Do not mention technical work such as drivers, Steam, troubleshooting, repair, configuration, or updates.' : null,
+            $isTravelRate ? 'Good examples for this selected rate: "kjøring til og fra kunde", "reise i forbindelse med supportoppdrag", "kjøring til kunde".' : null,
+            ! $isTravelRate ? 'If the selected rate is technical labor, describe the technical work performed.' : null,
+            'Use the same language as the technician work when obvious.',
+            $rateOption ? 'Selected time rate: '.$rateOption['label'].' (type: '.($rateOption['rate_type'] ?? 'unknown').', unit: '.($rateOption['rate_unit'] ?? 'unknown').')' : null,
+            'Ticket: '.$ticket->ticket_key,
+            'Subject: '.$ticket->subject,
+            'Client: '.($ticket->client?->name ?? 'Unknown'),
+            'Contact: '.($ticket->contact?->name ?? 'Unknown'),
+            'Description: '.Str::limit(trim((string) $ticket->description), 1500),
+            filled($existingText) ? 'Existing draft: '.$existingText : null,
+            filled($previousTimeTexts) ? "Previous registered time texts on this ticket:\n".$previousTimeTexts : null,
+            filled($messages) ? "Recent replies and notes:\n".$messages : null,
+        ])));
     }
 
     private function replyContactOptions(Ticket $ticket): Collection

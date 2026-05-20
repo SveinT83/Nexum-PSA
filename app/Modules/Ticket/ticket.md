@@ -53,7 +53,10 @@ Implemented now:
 - Assignment Engine that runs after Ticket Rules and can fall back to technician profile scoring.
 - Ticket show assignment panel and manual re-run assignment action.
 - Ticket index filters for priority, category, unread, unassigned, and open/closed lifecycle.
-- Ticket index shows compact SLA risk badges and can sort by SLA risk.
+- Ticket index shows compact SLA risk badges, assigned technician, active local timer row highlighting, and can sort by SLA risk.
+- Ticket time registration from the ticket show page, including work date, minutes, selected time rate, invoice text, and pending billing/timebank status.
+- Ticket show Activity timeline combines conversation messages and time records in the same accordion list.
+- Ticket show Time rightbar widget includes a local per-ticket stopwatch with pause/resume and stop-to-register flow.
 - Feature tests for the current main flows.
 
 Most recent completed work:
@@ -77,6 +80,10 @@ Most recent completed work:
 - Ticket settings moved queue/type/status/priority create and edit forms into module-owned partials and modal flows.
 - Ticket settings prevent deleting statuses and priorities that are already used by tickets; priorities referenced by Ticket Rules are also protected.
 - Ticket index gained priority, category, lifecycle, unread, and unassigned filters.
+- Ticket time entries are now wired into the ticket show page. Entries snapshot the selected Commercial time rate and stay pending for later billing/timebank settlement instead of consuming contract minutes immediately.
+- Ticket time registration now includes a local stopwatch in the rightbar. Stopping the timer opens the Add time modal with elapsed minutes prefilled, while saving still happens through the normal time entry form.
+- Ticket activity now shows saved time entries as rows alongside customer replies and internal notes.
+- Ticket index now shows the assigned technician or Unassigned and lightly highlights rows that have an active or paused local stopwatch for the current browser.
 - Inbound email can link an existing email message to an existing ticket when the subject contains a ticket key such as `TD-2026-000001`.
 - Customer reply email sending was connected and tested.
 - `AddTicketMessage` now queues `SendTicketReplyEmail` after commit for messages of type `customer_reply`.
@@ -122,6 +129,7 @@ Current important files:
 - `app/Modules/Ticket/Actions/StoreTicket.php` - creates tickets, syncs ticket tags when provided, creates the initial message/event, and runs assignment.
 - `app/Modules/Ticket/Actions/AddTicketMessage.php` - creates ticket messages and events, and dispatches outbound reply email when relevant.
 - `app/Modules/Ticket/Actions/StoreTicketAttachment.php` - stores uploaded ticket files and copies inbound Email attachments into ticket-owned storage records.
+- `app/Modules/Ticket/Actions/RegisterTicketTimeEntry.php` - stores billable time intent, rate snapshots, and a ticket audit event without settling billing or contract minutes.
 - `app/Modules/Ticket/Actions/ChangeTicketStatus.php` - changes ticket status and owns resolved/closed timestamps.
 - `app/Modules/Ticket/Actions/CloseTicket.php` - convenience close operation using the same lifecycle status change.
 - `app/Modules/Ticket/Actions/MarkTicketRead.php` - clears the ticket unread flag and stamps unread messages as read.
@@ -135,6 +143,7 @@ Current important files:
 - `app/Modules/Ticket/Controllers/Admin/AssignmentRuleAdminController.php` - admin management for assignment rules.
 - `app/Modules/Ticket/Jobs/SendTicketReplyEmail.php` - queued SMTP send for customer replies, including ticket message attachments.
 - `app/Modules/Ticket/Queries/TicketIndexQuery.php` - filtering, sorting, and pagination for the ticket index.
+- `app/Modules/Ticket/Queries/TicketTimeRateOptions.php` - resolves selectable ticket time rates from accepted client contracts and no-contract global rates.
 - `app/Modules/Ticket/Services/TicketRuleEngine.php` - evaluates active Ticket Rules for ticket creation context and applies field overrides.
 - `app/Modules/Ticket/Services/TicketAssignmentEngine.php` - assigns unowned tickets by assignment rules or technician profile scoring.
 - `app/Modules/Ticket/Livewire/Admin/WorkflowEditor.php` - interactive workflow builder for state selection, requirements, and transitions.
@@ -200,7 +209,7 @@ Main tables:
 - `tickets` - core ticket record.
 - `ticket_messages` - conversation messages and internal notes.
 - `ticket_events` - audit/history events for ticket activity.
-- `ticket_time_entries` - time registration model, currently not wired into the UI.
+- `ticket_time_entries` - time registration records. Stores technician, work date, minutes, invoice text, internal note, pending billing/timebank status, and a snapshot of the selected Commercial time rate. Entries are not settled when saved.
 - `ticket_watchers` - watcher model, currently not wired into the UI.
 - `ticket_attachments` - stored files linked to ticket messages, including uploaded files and copied inbound Email attachments.
 - `ticket_technician_profiles` - per-technician assignment profile records.

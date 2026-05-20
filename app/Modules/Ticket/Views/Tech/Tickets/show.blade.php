@@ -65,7 +65,14 @@
         $selectedReplyIntent = old('reply_intent', \App\Modules\Ticket\Support\TicketAction::CUSTOMER_UPDATE);
         $selectedReplyContactId = old('reply_contact_id', $ticket->contact_id);
         $selectedNotifyUserId = old('notify_user_id');
-        $showAddMessage = $errors->any() || old('body') || old('type');
+        $showAddMessage = old('_message_form') || old('body') || old('type');
+        $showAddTimeModal = old('_time_entry_form');
+        // Activity combines conversation and time records into one technician-facing timeline.
+        $activityItems = $ticket->messages
+            ->map(fn ($message) => ['type' => 'message', 'date' => $message->created_at, 'record' => $message])
+            ->concat($ticket->timeEntries->map(fn ($entry) => ['type' => 'time', 'date' => $entry->created_at, 'record' => $entry]))
+            ->sortByDesc('date')
+            ->values();
     @endphp
 
     <div class="row">
@@ -100,15 +107,99 @@
                         <i class="bi bi-reply" aria-hidden="true"></i>
                         Reply
                     </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#ticketAddTimeModal">
+                        <i class="bi bi-clock" aria-hidden="true"></i>
+                        Add time
+                    </button>
                 </div>
             </div>
 
             <div class="card mb-3">
-                <div class="card-header">Conversation</div>
+                <div class="card-header">Activity</div>
                 <div class="card-body">
-                    @if($ticket->messages->isNotEmpty())
+                    @if($activityItems->isNotEmpty())
                         <div class="accordion accordion-flush" id="ticketConversationAccordion">
-                            @foreach ($ticket->messages->sortByDesc('created_at') as $message)
+                            @foreach ($activityItems as $activityItem)
+                                @php
+                                    $message = $activityItem['type'] === 'message' ? $activityItem['record'] : null;
+                                    $timeEntry = $activityItem['type'] === 'time' ? $activityItem['record'] : null;
+                                @endphp
+
+                                @if($timeEntry)
+                                    @php
+                                        $timeCollapseId = 'ticketTimeEntryCollapse' . $timeEntry->id;
+                                        $timeHeadingId = 'ticketTimeEntryHeading' . $timeEntry->id;
+                                        $timeText = $timeEntry->invoice_text ?: $timeEntry->note;
+                                    @endphp
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="{{ $timeHeadingId }}">
+                                            <button
+                                                class="accordion-button collapsed py-2 px-0"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#{{ $timeCollapseId }}"
+                                                aria-expanded="false"
+                                                aria-controls="{{ $timeCollapseId }}">
+                                                <span class="d-flex align-items-center gap-2 w-100 pe-3 text-start min-w-0">
+                                                    <span class="fw-semibold flex-shrink-0">Time</span>
+                                                    <span class="badge text-bg-light border flex-shrink-0">{{ $timeEntry->minutes }} min</span>
+                                                    <span class="small text-muted text-truncate flex-shrink-0" style="max-width: 14rem;">{{ $timeEntry->user?->name ?? 'Technician' }}</span>
+                                                    <span class="small text-body text-truncate min-w-0 flex-grow-1">
+                                                        {{ filled($timeText) ? \Illuminate\Support\Str::limit($timeText, 120) : ($timeEntry->rate_name ?? 'Time registered') }}
+                                                    </span>
+                                                    <span class="text-muted small flex-shrink-0">{{ $timeEntry->created_at?->diffForHumans() }}</span>
+                                                </span>
+                                            </button>
+                                        </h2>
+                                        <div
+                                            id="{{ $timeCollapseId }}"
+                                            class="accordion-collapse collapse"
+                                            aria-labelledby="{{ $timeHeadingId }}">
+                                            <div class="accordion-body px-0 pt-2 pb-3">
+                                                <!-- Time activity rows show billing intent without settling billing or contract minutes. -->
+                                                <div class="row g-2 small mb-2">
+                                                    <div class="col-md-3">
+                                                        <div class="border rounded bg-light px-2 py-1 h-100">
+                                                            <div class="text-muted text-uppercase" style="font-size: .68rem;">Date</div>
+                                                            <div class="fw-semibold">{{ $timeEntry->work_date?->format('Y-m-d') ?? '-' }}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="border rounded bg-light px-2 py-1 h-100">
+                                                            <div class="text-muted text-uppercase" style="font-size: .68rem;">Time</div>
+                                                            <div class="fw-semibold">{{ $timeEntry->minutes }} min</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="border rounded bg-light px-2 py-1 h-100">
+                                                            <div class="text-muted text-uppercase" style="font-size: .68rem;">Rate</div>
+                                                            <div class="fw-semibold text-truncate">{{ $timeEntry->rate_name ?? '-' }}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @if(filled($timeEntry->invoice_text))
+                                                    <div class="small text-muted text-uppercase mb-1" style="font-size: .68rem;">Invoice text</div>
+                                                    <div style="white-space: pre-wrap;">{{ $timeEntry->invoice_text }}</div>
+                                                @endif
+                                                @if(filled($timeEntry->note))
+                                                    <div class="small text-muted text-uppercase mt-3 mb-1" style="font-size: .68rem;">Internal note</div>
+                                                    <div style="white-space: pre-wrap;">{{ $timeEntry->note }}</div>
+                                                @endif
+                                                <div class="d-flex flex-wrap gap-1 mt-3">
+                                                    <span class="badge text-bg-light border">{{ ucfirst(str_replace('_', ' ', $timeEntry->billing_basis ?: 'manual')) }}</span>
+                                                    <span class="badge text-bg-light border">Billing: {{ ucfirst($timeEntry->billing_status) }}</span>
+                                                    <span class="badge text-bg-light border">Timebank: {{ ucfirst($timeEntry->timebank_status) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @continue
+                                @endif
+
                                 @php
                                     $latestEmailLog = $emailLogsByMessageId->get($message->id)?->first();
                                     // Only customer/contact authored messages are unread workflow items for technicians.
@@ -214,7 +305,7 @@
                             @endforeach
                         </div>
                     @else
-                        <p class="text-muted mb-0">No messages yet.</p>
+                        <p class="text-muted mb-0">No activity yet.</p>
                     @endif
                 </div>
             </div>
@@ -243,6 +334,7 @@
                             <form method="POST" action="{{ route('tech.tickets.messages.store', $ticket) }}" enctype="multipart/form-data">
                                 @csrf
 
+                                <input type="hidden" name="_message_form" value="1">
                                 <input id="visibility" name="visibility" type="hidden" value="{{ $selectedMessageType === 'internal_note' ? 'internal' : 'public' }}">
 
                                 <div class="row g-2 mb-3">
@@ -326,6 +418,77 @@
     </div>
 </div>
 
+{{-- Time registration modal --}}
+<div class="modal fade" id="ticketAddTimeModal" tabindex="-1" aria-labelledby="ticketAddTimeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('tech.tickets.time-entries.store', $ticket) }}">
+                @csrf
+                <input type="hidden" name="_time_entry_form" value="1">
+
+                <div class="modal-header">
+                    <h2 class="modal-title h6" id="ticketAddTimeModalLabel">Add time</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label for="time_work_date" class="form-label">Date</label>
+                            <input id="time_work_date" name="work_date" type="date" class="form-control @error('work_date') is-invalid @enderror" value="{{ old('work_date', now()->toDateString()) }}" required>
+                            @error('work_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label for="time_minutes" class="form-label">Minutes</label>
+                            <input id="time_minutes" name="minutes" type="number" min="1" max="1440" step="1" class="form-control @error('minutes') is-invalid @enderror" value="{{ old('minutes', 30) }}" required>
+                            @error('minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-12">
+                            <label for="time_rate_key" class="form-label">Time rate</label>
+                            <select id="time_rate_key" name="rate_key" class="form-select @error('rate_key') is-invalid @enderror" required>
+                                <option value="">Select rate</option>
+                                @foreach($timeRateOptions as $rateOption)
+                                    <option value="{{ $rateOption['key'] }}" @selected(old('rate_key') === $rateOption['key'])>
+                                        {{ $rateOption['label'] }} - {{ $rateOption['description'] }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('rate_key')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @if($timeRateOptions->isEmpty())
+                                <div class="form-text text-danger">No active time rates are available for this ticket.</div>
+                            @endif
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <label for="time_invoice_text" class="form-label mb-0">Invoice text</label>
+                                <button
+                                    id="ticketTimeAiDraft"
+                                    type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    data-draft-url="{{ route('tech.tickets.time-entries.draft', $ticket) }}">
+                                    <i class="bi bi-stars" aria-hidden="true"></i>
+                                    AI draft
+                                </button>
+                            </div>
+                            <textarea id="time_invoice_text" name="invoice_text" rows="4" class="form-control mt-1 @error('invoice_text') is-invalid @enderror" required>{{ old('invoice_text') }}</textarea>
+                            @error('invoice_text')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div id="ticketTimeAiDraftStatus" class="form-text"></div>
+                        </div>
+                        <div class="col-12">
+                            <label for="time_note" class="form-label">Internal note</label>
+                            <textarea id="time_note" name="note" rows="2" class="form-control @error('note') is-invalid @enderror">{{ old('note') }}</textarea>
+                            @error('note')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" @disabled($timeRateOptions->isEmpty())>Save time</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const type = document.getElementById('type');
@@ -336,6 +499,22 @@
         const replyShortcut = document.getElementById('ticketReplyShortcut');
         const composer = document.getElementById('ticketComposerCollapse');
         const body = document.getElementById('body');
+        const addTimeModal = document.getElementById('ticketAddTimeModal');
+        const shouldShowAddTimeModal = @json((bool) $showAddTimeModal);
+        const timeAiDraft = document.getElementById('ticketTimeAiDraft');
+        const timeInvoiceText = document.getElementById('time_invoice_text');
+        const timeRateSelect = document.getElementById('time_rate_key');
+        const timeAiDraftStatus = document.getElementById('ticketTimeAiDraftStatus');
+        const timeMinutes = document.getElementById('time_minutes');
+        const timeWorkDate = document.getElementById('time_work_date');
+        const stopwatchDisplay = document.getElementById('ticketStopwatchDisplay');
+        const stopwatchState = document.getElementById('ticketStopwatchState');
+        const stopwatchStartGroup = document.getElementById('ticketStopwatchStartGroup');
+        const stopwatchControls = document.getElementById('ticketStopwatchControls');
+        const stopwatchStart = document.getElementById('ticketStopwatchStart');
+        const stopwatchToggle = document.getElementById('ticketStopwatchToggle');
+        const stopwatchStop = document.getElementById('ticketStopwatchStop');
+        const stopwatchStorageKey = @json('ticket-stopwatch-' . $ticket->ticket_key);
 
         const syncMessageType = function (value) {
             if (! type || ! visibility || ! replyRecipientGroup || ! replyIntentGroup || ! notifyTechnicianGroup) {
@@ -372,6 +551,180 @@
                 body?.focus({ preventScroll: true });
             }, 150);
         });
+
+        if (shouldShowAddTimeModal && window.bootstrap && addTimeModal) {
+            window.bootstrap.Modal.getOrCreateInstance(addTimeModal).show();
+        }
+
+        const defaultStopwatchState = {
+            elapsedMs: 0,
+            startedAt: null,
+            running: false,
+        };
+        let stopwatch = { ...defaultStopwatchState };
+
+        const loadStopwatch = function () {
+            try {
+                stopwatch = { ...defaultStopwatchState, ...(JSON.parse(localStorage.getItem(stopwatchStorageKey)) || {}) };
+            } catch (error) {
+                stopwatch = { ...defaultStopwatchState };
+            }
+        };
+
+        const saveStopwatch = function () {
+            localStorage.setItem(stopwatchStorageKey, JSON.stringify(stopwatch));
+        };
+
+        const currentElapsedMs = function () {
+            if (! stopwatch.running || ! stopwatch.startedAt) {
+                return stopwatch.elapsedMs;
+            }
+
+            return stopwatch.elapsedMs + Math.max(0, Date.now() - stopwatch.startedAt);
+        };
+
+        const formatElapsed = function (milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+            return `${hours}:${minutes}:${seconds}`;
+        };
+
+        const syncStopwatchUi = function () {
+            if (! stopwatchDisplay || ! stopwatchState) {
+                return;
+            }
+
+            const elapsed = currentElapsedMs();
+            stopwatchDisplay.textContent = formatElapsed(elapsed);
+            stopwatchState.textContent = stopwatch.running
+                ? 'Running'
+                : (elapsed > 0 ? 'Paused' : 'Not running');
+
+            stopwatchStartGroup?.classList.toggle('d-none', elapsed > 0);
+            stopwatchControls?.classList.toggle('d-none', elapsed <= 0);
+
+            if (stopwatchStart) {
+                stopwatchStart.disabled = stopwatch.running;
+                stopwatchStart.innerHTML = '<i class="bi bi-play-fill" aria-hidden="true"></i> Start';
+            }
+
+            if (stopwatchToggle) {
+                stopwatchToggle.disabled = elapsed <= 0;
+                stopwatchToggle.innerHTML = stopwatch.running
+                    ? '<i class="bi bi-pause-fill" aria-hidden="true"></i> Pause'
+                    : '<i class="bi bi-play" aria-hidden="true"></i> Resume';
+            }
+
+            if (stopwatchStop) {
+                stopwatchStop.disabled = elapsed <= 0;
+            }
+        };
+
+        const openTimeModalFromStopwatch = function (elapsedMs) {
+            const minutes = Math.max(1, Math.ceil(elapsedMs / 60000));
+            const today = new Date().toISOString().slice(0, 10);
+
+            if (timeMinutes) {
+                timeMinutes.value = minutes;
+            }
+
+            if (timeWorkDate) {
+                timeWorkDate.value = today;
+            }
+
+            if (window.bootstrap && addTimeModal) {
+                window.bootstrap.Modal.getOrCreateInstance(addTimeModal).show();
+            }
+        };
+
+        loadStopwatch();
+        syncStopwatchUi();
+        window.setInterval(syncStopwatchUi, 1000);
+
+        stopwatchStart?.addEventListener('click', function () {
+            stopwatch = {
+                elapsedMs: 0,
+                startedAt: Date.now(),
+                running: true,
+            };
+            saveStopwatch();
+            syncStopwatchUi();
+        });
+
+        stopwatchToggle?.addEventListener('click', function () {
+            if (currentElapsedMs() <= 0) {
+                return;
+            }
+
+            if (stopwatch.running) {
+                stopwatch.elapsedMs = currentElapsedMs();
+                stopwatch.startedAt = null;
+                stopwatch.running = false;
+            } else {
+                stopwatch.startedAt = Date.now();
+                stopwatch.running = true;
+            }
+
+            saveStopwatch();
+            syncStopwatchUi();
+        });
+
+        stopwatchStop?.addEventListener('click', function () {
+            const elapsed = currentElapsedMs();
+
+            if (elapsed <= 0) {
+                return;
+            }
+
+            stopwatch = { ...defaultStopwatchState };
+            localStorage.removeItem(stopwatchStorageKey);
+            syncStopwatchUi();
+            openTimeModalFromStopwatch(elapsed);
+        });
+
+        timeAiDraft?.addEventListener('click', async function () {
+            const originalText = timeAiDraft.innerHTML;
+            timeAiDraft.disabled = true;
+            timeAiDraft.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Drafting';
+            timeAiDraftStatus.className = 'form-text text-muted';
+            timeAiDraftStatus.textContent = 'Using selected rate, previous time entries, replies, and notes as context.';
+
+            try {
+                const response = await fetch(timeAiDraft.dataset.draftUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': @json(csrf_token()),
+                    },
+                    body: JSON.stringify({
+                        existing_text: timeInvoiceText?.value || '',
+                        rate_key: timeRateSelect?.value || '',
+                    }),
+                });
+                const payload = await response.json();
+
+                if (! response.ok) {
+                    throw new Error(payload.message || 'AI draft failed.');
+                }
+
+                if (payload.text && timeInvoiceText) {
+                    timeInvoiceText.value = payload.text;
+                }
+
+                timeAiDraftStatus.className = 'form-text text-success';
+                timeAiDraftStatus.textContent = 'Draft inserted.';
+            } catch (error) {
+                timeAiDraftStatus.className = 'form-text text-danger';
+                timeAiDraftStatus.textContent = error.message || 'AI draft failed.';
+            } finally {
+                timeAiDraft.disabled = false;
+                timeAiDraft.innerHTML = originalText;
+            }
+        });
     });
 </script>
 @endsection
@@ -383,13 +736,67 @@
 @section('rightbar')
     <div class="accordion accordion-flush" id="ticketRightbarAccordion">
         <div class="accordion-item border rounded mb-2 overflow-hidden">
-            <h2 class="accordion-header" id="ticketWorkflowHeading">
+            <h2 class="accordion-header" id="ticketTimeHeading">
                 <button
                     class="accordion-button py-2 px-3"
                     type="button"
                     data-bs-toggle="collapse"
-                    data-bs-target="#ticketWorkflowCollapse"
+                    data-bs-target="#ticketTimeCollapse"
                     aria-expanded="true"
+                    aria-controls="ticketTimeCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
+                        <span>Time</span>
+                        <span class="badge text-bg-light border">{{ $ticket->timeEntries->sum('minutes') }} min</span>
+                    </span>
+                </button>
+            </h2>
+            <div
+                id="ticketTimeCollapse"
+                class="accordion-collapse collapse show"
+                aria-labelledby="ticketTimeHeading"
+                data-bs-parent="#ticketRightbarAccordion">
+                <div class="accordion-body p-3">
+                    <!-- The stopwatch is local draft state. Saving still happens through the Add time modal. -->
+                    <div class="text-center border rounded bg-light px-2 py-3">
+                        <div id="ticketStopwatchDisplay" class="fw-semibold font-monospace" style="font-size: 1.75rem;">00:00:00</div>
+                        <div id="ticketStopwatchState" class="small text-muted mt-1">Not running</div>
+                    </div>
+                    <div id="ticketStopwatchStartGroup" class="d-grid gap-2 mt-3">
+                        <button id="ticketStopwatchStart" type="button" class="btn btn-sm btn-primary">
+                            <i class="bi bi-play-fill" aria-hidden="true"></i>
+                            Start
+                        </button>
+                    </div>
+                    <div id="ticketStopwatchControls" class="row g-2 mt-3 d-none">
+                        <div class="col-6">
+                            <button id="ticketStopwatchToggle" type="button" class="btn btn-sm btn-outline-secondary w-100" disabled>
+                                <i class="bi bi-pause-fill" aria-hidden="true"></i>
+                                Pause
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button id="ticketStopwatchStop" type="button" class="btn btn-sm btn-outline-primary w-100" disabled>
+                                <i class="bi bi-stop-fill" aria-hidden="true"></i>
+                                Stop
+                            </button>
+                        </div>
+                    </div>
+                    <div class="small text-muted mt-2">
+                        Registered total: {{ $ticket->timeEntries->sum('minutes') }} min
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item border rounded mb-2 overflow-hidden">
+            <h2 class="accordion-header" id="ticketWorkflowHeading">
+                <button
+                    class="accordion-button collapsed py-2 px-3"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#ticketWorkflowCollapse"
+                    aria-expanded="false"
                     aria-controls="ticketWorkflowCollapse">
                     <span class="d-flex align-items-center gap-2">
                         <i class="bi bi-diagram-3" aria-hidden="true"></i>
@@ -402,7 +809,7 @@
             </h2>
             <div
                 id="ticketWorkflowCollapse"
-                class="accordion-collapse collapse show"
+                class="accordion-collapse collapse"
                 aria-labelledby="ticketWorkflowHeading"
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">

@@ -40,6 +40,12 @@ Route::post('/tickets/{ticket}/workflow/{transition}', [TicketController::class,
 Route::post('/tickets/{ticket}/messages', [TicketController::class, 'addMessage'])
     ->name('tickets.messages.store');
 
+Route::post('/tickets/{ticket}/time-entries', [TicketController::class, 'storeTimeEntry'])
+    ->name('tickets.time-entries.store');
+
+Route::post('/tickets/{ticket}/time-entries/draft', [TicketController::class, 'draftTimeEntryInvoiceText'])
+    ->name('tickets.time-entries.draft');
+
 Route::post('/tickets/{ticket}/messages/{message}/read', [TicketController::class, 'markMessageRead'])
     ->name('tickets.messages.read');
 
