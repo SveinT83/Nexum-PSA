@@ -152,6 +152,7 @@ Provide global configuration for **contract behavior, binding policies, indexing
 @endsection
 
 @section('sidebar')
+    <x-nav.admin-menu group="commercial" />
 @endsection
 
 @section('rightbar')

@@ -33,9 +33,17 @@ class EmailTemplateController extends Controller
         $defaultTemplates->handle();
 
         $scope = $request->get('scope');
+        $search = trim((string) $request->get('q', ''));
 
         $templates = EmailTemplate::query()
             ->when($scope, fn ($query) => $query->where('scope', $scope))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('key', 'like', "%{$search}%")
+                        ->orWhere('subject', 'like', "%{$search}%");
+                });
+            })
             ->orderBy('scope')
             ->orderBy('name')
             ->paginate(25)
@@ -45,6 +53,7 @@ class EmailTemplateController extends Controller
             'templates' => $templates,
             'scopes' => EmailTemplate::SCOPES,
             'selectedScope' => $scope,
+            'search' => $search,
             'sidebarMenuItems' => (new TemplatesMenu())->TemplatesMenu('email'),
         ]);
     }

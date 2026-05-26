@@ -4,12 +4,13 @@
 
 @section('pageHeader')
     <div class="d-flex align-items-center justify-content-between gap-3">
-        <div>
-            <h1 class="mb-0">Client Formats</h1>
-            <p class="text-muted mb-0">Manage the client format choices used when creating clients and sales opportunities.</p>
-        </div>
-        <a href="{{ route('tech.admin.index') }}" class="btn btn-outline-secondary">Admin</a>
+        <h1 class="h4 mb-0">Client Formats</h1>
+        <x-buttons.back url="{{ route('tech.admin.index') }}">Back</x-buttons.back>
     </div>
+@endsection
+
+@section('sidebar')
+    <x-nav.admin-menu group="clients" />
 @endsection
 
 @section('content')

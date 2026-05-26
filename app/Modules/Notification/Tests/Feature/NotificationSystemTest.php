@@ -3,6 +3,7 @@
 namespace App\Modules\Notification\Tests\Feature;
 
 use App\Models\Core\User;
+use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Notifications\TicketAssigned;
@@ -12,6 +13,7 @@ use App\Modules\Notification\Notifications\AssetAlertTriggered;
 use App\Modules\Notification\Notifications\TicketSlaWarning;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class NotificationSystemTest extends TestCase
@@ -26,13 +28,15 @@ class NotificationSystemTest extends TestCase
         $this->artisan('migrate', ['--path' => 'database/migrations/2026_05_16_140000_create_notifications_system.php']);
 
         // Seed the default notification channel
-        NotificationChannel::create([
-            'name' => 'nextcloud_talk',
-            'label' => 'Nextcloud Talk',
-            'driver' => 'nextcloud_talk',
-            'is_enabled' => false,
-            'config' => ['base_url' => '', 'default_webhook_url' => ''],
-        ]);
+        NotificationChannel::updateOrCreate(
+            ['name' => 'nextcloud_talk'],
+            [
+                'label' => 'Nextcloud Talk',
+                'driver' => 'nextcloud_talk',
+                'is_enabled' => false,
+                'config' => ['default_webhook_url' => ''],
+            ]
+        );
     }
 
     /** @test */
@@ -110,8 +114,8 @@ class NotificationSystemTest extends TestCase
     public function admin_can_view_notification_channels()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $admin->assignRole('superadmin');
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'superadmin']);
+        Role::firstOrCreate(['name' => 'Admin']);
+        $admin->assignRole('Admin');
 
         $response = $this->actingAs($admin)
             ->get(route('tech.admin.notification-channels.index'));
@@ -124,8 +128,17 @@ class NotificationSystemTest extends TestCase
     public function admin_can_enable_nextcloud_talk_channel()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $admin->assignRole('superadmin');
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'superadmin']);
+        Role::firstOrCreate(['name' => 'Admin']);
+        $admin->assignRole('Admin');
+
+        NextcloudConnection::create([
+            'name' => 'Internal Nextcloud',
+            'scope' => NextcloudConnection::SCOPE_GLOBAL,
+            'mode' => NextcloudConnection::MODE_SYNC,
+            'is_default' => true,
+            'is_active' => true,
+            'base_url' => 'https://cloud.example.com',
+        ]);
 
         $channel = NotificationChannel::where('driver', 'nextcloud_talk')->first();
 
@@ -133,8 +146,10 @@ class NotificationSystemTest extends TestCase
             ->put(route('tech.admin.notification-channels.update', $channel), [
                 'is_enabled' => '1',
                 'config' => [
-                    'base_url' => 'https://cloud.example.com',
                     'default_webhook_url' => 'https://cloud.example.com/apps/webhook/abc123',
+                ],
+                'secrets' => [
+                    'api_token' => 'unused-token',
                 ],
             ]);
 
@@ -142,7 +157,62 @@ class NotificationSystemTest extends TestCase
 
         $channel->refresh();
         $this->assertTrue($channel->is_enabled);
-        $this->assertEquals('https://cloud.example.com', $channel->config['base_url']);
+        $this->assertEquals('https://cloud.example.com/apps/webhook/abc123', $channel->config['default_webhook_url']);
+        $this->assertArrayNotHasKey('base_url', $channel->config);
+        $this->assertArrayNotHasKey('api_token', $channel->secrets ?? []);
+    }
+
+    /** @test */
+    public function nextcloud_talk_channel_cannot_be_enabled_without_nextcloud_integration()
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        Role::firstOrCreate(['name' => 'Admin']);
+        $admin->assignRole('Admin');
+
+        $channel = NotificationChannel::where('driver', 'nextcloud_talk')->first();
+
+        $response = $this->actingAs($admin)
+            ->put(route('tech.admin.notification-channels.update', $channel), [
+                'is_enabled' => '1',
+                'config' => [
+                    'default_webhook_url' => 'https://cloud.example.com/apps/webhook/abc123',
+                ],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('warning');
+
+        $channel->refresh();
+        $this->assertFalse($channel->is_enabled);
+        $this->assertEquals('https://cloud.example.com/apps/webhook/abc123', $channel->config['default_webhook_url']);
+    }
+
+    /** @test */
+    public function nextcloud_talk_edit_form_uses_nextcloud_integration_and_only_requests_webhook_url()
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        Role::firstOrCreate(['name' => 'Admin']);
+        $admin->assignRole('Admin');
+
+        NextcloudConnection::create([
+            'name' => 'Internal Nextcloud',
+            'scope' => NextcloudConnection::SCOPE_GLOBAL,
+            'mode' => NextcloudConnection::MODE_SYNC,
+            'is_default' => true,
+            'is_active' => true,
+            'base_url' => 'https://cloud.example.com',
+        ]);
+
+        $channel = NotificationChannel::where('driver', 'nextcloud_talk')->first();
+
+        $response = $this->actingAs($admin)
+            ->get(route('tech.admin.notification-channels.edit', $channel));
+
+        $response->assertOk();
+        $response->assertSee('Default Webhook URL');
+        $response->assertSee('https://cloud.example.com');
+        $response->assertDontSee('Nextcloud Base URL');
+        $response->assertDontSee('API Token');
     }
 
     /** @test */

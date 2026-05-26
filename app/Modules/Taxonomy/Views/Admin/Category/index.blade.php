@@ -5,15 +5,29 @@
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center">
         <h1>Admin - Category</h1>
-        <div class="d-flex gap-2">
-            <x-buttons.back url="{{ route('tech.admin.index') }}"> Back to Admin</x-buttons.back>
-
-            <button type="button" class="btn btn-sm btn-primary mb-3 bi bi-plus" data-bs-toggle="modal" data-bs-target="#createCategoryModal"> Add Category</button>
-        </div>
+        <x-buttons.back url="{{ route('tech.admin.index') }}">Back</x-buttons.back>
     </div>
 @endsection
 
 @section('content')
+    @php
+        $sortLink = function (string $column, string $defaultDirection = 'asc') use ($sort, $direction) {
+            $nextDirection = $sort === $column && $direction === 'asc' ? 'desc' : ($sort === $column ? 'asc' : $defaultDirection);
+
+            return request()->fullUrlWithQuery([
+                'sort' => $column,
+                'direction' => $nextDirection,
+            ]);
+        };
+        $sortIcon = function (string $column) use ($sort, $direction) {
+            if ($sort !== $column) {
+                return 'bi-arrow-down-up';
+            }
+
+            return $direction === 'asc' ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up';
+        };
+    @endphp
+
     <!-- -------------------------------------------------------------------------------------------------- -->
     <!-- Section: Alert Messages -->
     <!-- -------------------------------------------------------------------------------------------------- -->
@@ -28,16 +42,53 @@
     <!-- Section: Category List -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     <x-card.default title="System Categories">
+        <x-slot:headerActions>
+            <button type="button" class="btn btn-sm btn-primary bi bi-plus" data-bs-toggle="modal" data-bs-target="#createCategoryModal"> Add Category</button>
+        </x-slot:headerActions>
+
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Parent</th>
-                        <th>Slug</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Usage</th>
+                        <th>
+                            <a href="{{ $sortLink('name') }}" class="text-decoration-none text-body">
+                                Name <i class="bi {{ $sortIcon('name') }}"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ $sortLink('type') }}" class="text-decoration-none text-body">
+                                Type <i class="bi {{ $sortIcon('type') }}"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ $sortLink('parent') }}" class="text-decoration-none text-body">
+                                Parent <i class="bi {{ $sortIcon('parent') }}"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ $sortLink('slug') }}" class="text-decoration-none text-body">
+                                Slug <i class="bi {{ $sortIcon('slug') }}"></i>
+                            </a>
+                        </th>
+                        <th class="text-center">
+                            <a href="{{ $sortLink('status', 'desc') }}" class="text-decoration-none text-body">
+                                Status <i class="bi {{ $sortIcon('status') }}"></i>
+                            </a>
+                        </th>
+                        <th class="text-center">
+                            <span class="text-muted">Usage</span>
+                            <span class="ms-1">
+                                <a href="{{ $sortLink('templates', 'desc') }}" class="text-decoration-none text-body" title="Sort by documentation template usage">
+                                    <i class="bi bi-file-earmark-text {{ $sort === 'templates' ? 'text-primary' : '' }}"></i>
+                                </a>
+                                <a href="{{ $sortLink('services', 'desc') }}" class="text-decoration-none text-body" title="Sort by service usage">
+                                    <i class="bi bi-gear {{ $sort === 'services' ? 'text-primary' : '' }}"></i>
+                                </a>
+                                <a href="{{ $sortLink('children', 'desc') }}" class="text-decoration-none text-body" title="Sort by sub-category usage">
+                                    <i class="bi bi-diagram-3 {{ $sort === 'children' ? 'text-primary' : '' }}"></i>
+                                </a>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -235,7 +286,7 @@
 @endsection
 
 @section('sidebar')
-
+    <x-nav.admin-menu group="system" />
 @endsection
 
 @section('rightbar')

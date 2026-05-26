@@ -63,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
             'risk' => 'Risk',
             'sales' => 'Sales',
             'storage' => 'Storage',
+            'system' => 'System',
             'taxonomy' => 'Taxonomy',
             'task' => 'Task',
             'ticket' => 'Ticket',

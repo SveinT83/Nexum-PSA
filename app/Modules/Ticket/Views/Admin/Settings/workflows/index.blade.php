@@ -4,14 +4,8 @@
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="mb-0">Ticket Workflows</h1>
-            <p class="text-muted mb-0 small">Workflow v1 validates ticket status transitions and exposes available actions on Ticket show.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('tech.admin.settings.tickets.workflows.create') }}" class="btn btn-sm btn-primary">New workflow</a>
-            <a href="{{ route('tech.admin.settings.tickets') }}" class="btn btn-sm btn-outline-secondary">Ticket settings</a>
-        </div>
+        <h1 class="mb-0">Ticket Workflows</h1>
+        <x-buttons.back url="{{ route('tech.admin.settings.tickets') }}">Back</x-buttons.back>
     </div>
 @endsection
 
@@ -20,6 +14,10 @@
     <!-- Workflow Overview -->
     <!-- ------------------------------------------------- -->
     <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between gap-3">
+            <h2 class="h6 mb-0">Workflows</h2>
+            <x-buttons.addlink url="{{ route('tech.admin.settings.tickets.workflows.create') }}">New workflow</x-buttons.addlink>
+        </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead class="table-light">
@@ -71,7 +69,7 @@
 @endsection
 
 @section('sidebar')
-    <x-nav.work-menu />
+    <x-nav.admin-menu group="tickets" />
 @endsection
 
 @section('rightbar')

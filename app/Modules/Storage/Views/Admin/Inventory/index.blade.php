@@ -3,13 +3,13 @@
 @section('title', 'Inventory Settings')
 
 @section('sidebar')
-    <x-nav.storage-menu />
+    <x-nav.admin-menu group="storage" />
 @endsection
 
 @section('pageHeader')
     <div class="d-flex align-items-center justify-content-between gap-3">
         <h1 class="mb-0">Inventory Settings</h1>
-        <x-buttons.back :url="route('tech.storage.index')" class="mb-0">
+        <x-buttons.back :url="route('tech.admin.index')" class="mb-0">
             Back
         </x-buttons.back>
     </div>

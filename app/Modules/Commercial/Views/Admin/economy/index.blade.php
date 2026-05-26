@@ -31,8 +31,8 @@
 @endsection
 
 @section('sidebar')
+    <x-nav.admin-menu group="economy" />
 @endsection
 
 @section('rightbar')
 @endsection
-

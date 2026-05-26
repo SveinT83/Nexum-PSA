@@ -18,7 +18,7 @@
 @endsection
 
 @section('sidebar')
-    <x-nav.sales-menu />
+    <x-nav.admin-menu group="sales" />
 @endsection
 
 @section('rightbar')

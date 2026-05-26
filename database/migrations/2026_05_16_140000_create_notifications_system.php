@@ -75,7 +75,6 @@ return new class extends Migration
             'driver' => 'nextcloud_talk',
             'is_enabled' => false,
             'config' => json_encode([
-                'base_url' => '',
                 'default_webhook_url' => '',
             ]),
             'secrets' => null,

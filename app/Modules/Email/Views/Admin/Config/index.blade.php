@@ -10,6 +10,10 @@
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="email" />
+@endsection
+
 @section('content')
 <div class="container-fluid">
     <form id="config-form" action="{{ route('tech.admin.settings.email.config.update') }}" method="POST">

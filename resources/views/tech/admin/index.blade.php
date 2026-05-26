@@ -118,25 +118,25 @@
     <!-- ------------------------------------------------- -->
     <div class="row g-3">
         @foreach($adminSections as $section)
-            <div class="col-xl-4 col-lg-6">
-                <div class="card h-100 admin-hub-card">
-                    <div class="card-body d-flex flex-column">
-                        <div class="d-flex align-items-start gap-3 mb-3">
-                            <div class="admin-hub-icon flex-shrink-0">
-                                <i class="bi {{ $section['icon'] }}" aria-hidden="true"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <h2 class="h6 mb-1">{{ $section['title'] }}</h2>
-                                <p class="small text-muted mb-0">{{ $section['description'] }}</p>
-                            </div>
-                        </div>
+            <div class="col-xxl-3 col-xl-4 col-md-6">
+                <div class="card h-100 admin-hub-card shadow-sm">
+                    <div class="card-header bg-body d-flex align-items-center gap-2">
+                        <span class="admin-hub-icon flex-shrink-0">
+                            <i class="bi {{ $section['icon'] }}" aria-hidden="true"></i>
+                        </span>
+                        <h2 class="h6 mb-0">{{ $section['title'] }}</h2>
+                    </div>
 
-                        <div class="d-grid gap-2 mt-auto">
+                    <div class="card-body d-flex flex-column">
+                        <p class="small text-muted mb-3">{{ $section['description'] }}</p>
+
+                        <div class="row row-cols-2 g-2 mt-auto">
                             @foreach($section['links'] as $link)
-                                <a href="{{ $link['route'] }}" class="btn btn-sm btn-light border d-flex align-items-center justify-content-between gap-2 text-start">
-                                    <span>{{ $link['label'] }}</span>
-                                    <i class="bi bi-chevron-right text-muted" aria-hidden="true"></i>
-                                </a>
+                                <div class="col">
+                                    <a href="{{ $link['route'] }}" class="btn btn-sm btn-outline-secondary w-100 h-100 admin-hub-action">
+                                        {{ $link['label'] }}
+                                    </a>
+                                </div>
                             @endforeach
                         </div>
                     </div>
@@ -147,6 +147,7 @@
 @endsection
 
 @section('sidebar')
+    <x-nav.admin-menu />
 @endsection
 
 @section('rightbar')
@@ -159,16 +160,25 @@
         }
 
         .admin-hub-icon {
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 1.9rem;
+            height: 1.9rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid rgba(13, 110, 253, .2);
+            border: 1px solid var(--bs-border-color);
             border-radius: .5rem;
             color: var(--bs-primary);
-            background: rgba(13, 110, 253, .08);
-            font-size: 1.1rem;
+            background: var(--bs-tertiary-bg);
+            font-size: .95rem;
+        }
+
+        .admin-hub-action {
+            min-height: 2.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: normal;
+            line-height: 1.2;
         }
     </style>
 @endsection

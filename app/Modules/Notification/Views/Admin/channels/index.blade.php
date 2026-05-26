@@ -73,7 +73,5 @@
 @endsection
 
 @section('sidebar')
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
+    <x-nav.admin-menu group="system" />
 @endsection

@@ -1,14 +1,19 @@
 @extends('layouts.default_tech')
 
-@section('title', 'Configure {{ $channel->label }}')
+@section('title', "Configure {$channel->label}")
 
 @section('pageHeader')
-    <h1><i class="bi bi-gear me-2"></i>{{ $channel->label }} Settings</h1>
+    <div class="col">
+        <h1 class="h4 mb-0">{{ $channel->label }} Settings</h1>
+    </div>
+    <div class="col-auto">
+        <x-buttons.back url="{{ route('tech.admin.notification-channels.index') }}" class="mb-0">Back</x-buttons.back>
+    </div>
 @endsection
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-md-8">
+<div class="row">
+    <div class="col-lg-9 col-xl-8">
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
@@ -29,14 +34,24 @@
 
             {{-- Enable/disable --}}
             <div class="card shadow-sm mb-4">
-                <div class="card-header">
+                <div class="card-header py-2">
                     <h5 class="mb-0">General</h5>
                 </div>
                 <div class="card-body">
+                    @if($channel->driver === 'nextcloud_talk' && ! $nextcloudReady)
+                        <div class="alert alert-warning mb-3">
+                            Nextcloud Talk notifications need an active Nextcloud integration before this channel can be enabled.
+                            @if(Route::has('tech.admin.nextcloud.connections.index'))
+                                <a href="{{ route('tech.admin.nextcloud.connections.index') }}">Open Nextcloud settings</a>.
+                            @endif
+                        </div>
+                    @endif
+
                     <div class="form-check form-switch mb-3">
                         <input type="checkbox" name="is_enabled" value="1"
                                class="form-check-input" id="isEnabled"
-                               {{ $channel->is_enabled ? 'checked' : '' }}>
+                               {{ $channel->is_enabled && ($channel->driver !== 'nextcloud_talk' || $nextcloudReady) ? 'checked' : '' }}
+                               {{ $channel->driver === 'nextcloud_talk' && ! $nextcloudReady ? 'disabled' : '' }}>
                         <label class="form-check-label fw-bold" for="isEnabled">
                             Enable {{ $channel->label }}
                         </label>
@@ -57,44 +72,40 @@
             @if($channel->driver === 'nextcloud_talk')
                 {{-- Nextcloud Talk specific config --}}
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Nextcloud Talk Configuration</h5>
+                    <div class="card-header py-2">
+                        <h5 class="mb-0">Nextcloud Talk Configuration</h5>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label for="baseUrl" class="form-label">Nextcloud Base URL</label>
-                            <input type="url" name="config[base_url]" id="baseUrl"
-                                   class="form-control"
-                                   value="{{ $channel->config['base_url'] ?? '' }}"
-                                   placeholder="https://cloud.example.com">
-                            <div class="form-text">The base URL of your Nextcloud instance (used for building links in messages).</div>
-                        </div>
+                        @if($nextcloudConnection)
+                            <div class="border rounded p-3 mb-3 bg-light">
+                                <div class="small text-muted">Using Nextcloud integration</div>
+                                <div class="fw-semibold">{{ $nextcloudConnection->name }}</div>
+                                <div class="small text-muted text-break">{{ $nextcloudConnection->base_url }}</div>
+                                @if(Route::has('tech.admin.nextcloud.connections.show'))
+                                    <a class="small" href="{{ route('tech.admin.nextcloud.connections.show', $nextcloudConnection) }}">Open integration settings</a>
+                                @endif
+                            </div>
+                        @endif
 
                         <div class="mb-3">
                             <label for="defaultWebhookUrl" class="form-label">Default Webhook URL</label>
                             <input type="url" name="config[default_webhook_url]" id="defaultWebhookUrl"
-                                   class="form-control"
+                                   class="form-control @error('config.default_webhook_url') is-invalid @enderror"
                                    value="{{ $channel->config['default_webhook_url'] ?? '' }}"
                                    placeholder="https://cloud.example.com/apps/webhook/...">
+                            @error('config.default_webhook_url')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                             <div class="form-text">
-                                The default Nextcloud Talk webhook URL. Users can override this with their own per-user webhook URL.
+                                Default delivery target for system notifications. Users can still use their own per-user webhook URL in notification preferences.
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="apiToken" class="form-label">API Token <small class="text-muted">(optional, for future use)</small></label>
-                            <input type="password" name="secrets[api_token]" id="apiToken"
-                                   class="form-control"
-                                   placeholder="{{ $channel->getSecret('api_token') ? '••••••••' : 'Enter token' }}"
-                                   autocomplete="new-password">
-                            <div class="form-text">Leave blank to keep the existing token. Used for direct API calls (if needed).</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Setup Instructions</h5>
+                    <div class="card-header py-2">
+                        <h5 class="mb-0">Setup Instructions</h5>
                     </div>
                     <div class="card-body">
                         <ol>
@@ -112,23 +123,23 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg me-1"></i> Save Configuration
                 </button>
-                <a href="{{ route('tech.admin.notification-channels.test', $channel) }}"
-                   class="btn btn-outline-secondary"
-                   onclick="return confirm('Send a test notification?')">
+                <button type="submit" form="notification-channel-test-form" class="btn btn-outline-secondary" onclick="return confirm('Send a test notification?')">
                     <i class="bi bi-lightning me-1"></i> Test Connection
-                </a>
+                </button>
                 <a href="{{ route('tech.admin.notification-channels.index') }}"
                    class="btn btn-link">
                     Cancel
                 </a>
             </div>
         </form>
+
+        <form id="notification-channel-test-form" method="POST" action="{{ route('tech.admin.notification-channels.test', $channel) }}" class="d-none">
+            @csrf
+        </form>
     </div>
 </div>
 @endsection
 
 @section('sidebar')
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
+    <x-nav.admin-menu group="system" />
 @endsection

@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             CostServicePackageSeeder::class,
             SalesKnowledgeDocumentationSeeder::class,
             StorageKnowledgeDocumentationSeeder::class,
+            SystemKnowledgeDocumentationSeeder::class,
             TaskKnowledgeDocumentationSeeder::class,
         ]);
     }

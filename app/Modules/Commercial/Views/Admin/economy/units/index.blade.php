@@ -91,9 +91,9 @@
 @endsection
 
 @section('sidebar')
+    <x-nav.admin-menu group="commercial" />
 @endsection
 
 @section('rightbar')
 @endsection
-
 

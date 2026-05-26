@@ -93,6 +93,7 @@
 @endsection
 
 @section('sidebar')
+  <x-nav.admin-menu group="email" />
 @endsection
 
 @section('rightbar')

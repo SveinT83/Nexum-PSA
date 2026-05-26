@@ -11,17 +11,21 @@
 @section('pageHeader')
     <div class="d-flex align-items-center justify-content-between">
         <h1>{{ $isEdit ? 'Edit Ticket Rule' : 'Create Ticket Rule' }}</h1>
-        <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Back to rules</a>
+        <x-buttons.back url="{{ route('tech.admin.settings.tickets.rules') }}">Back</x-buttons.back>
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="tickets" />
+@endsection
+
 @section('content')
-    <div class="col-12 col-xl-9">
+    <div class="col-12">
         @if($errors->any())
             <div class="alert alert-danger">{{ $errors->first() }}</div>
         @endif
 
-        <form method="POST" action="{{ $isEdit ? route('tech.admin.settings.tickets.rules.update', $rule) : route('tech.admin.settings.tickets.rules.store') }}">
+        <form id="ticket-rule-form" method="POST" action="{{ $isEdit ? route('tech.admin.settings.tickets.rules.update', $rule) : route('tech.admin.settings.tickets.rules.store') }}">
             @csrf
             @if($isEdit)
                 @method('PUT')
@@ -125,11 +129,31 @@
                 </datalist>
             </x-card.default>
 
-            <div class="d-flex justify-content-end gap-2">
-                <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">{{ $isEdit ? 'Save rule' : 'Create rule' }}</button>
-            </div>
         </form>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
+                @if($isEdit)
+                    <form action="{{ route('tech.admin.settings.tickets.rules.toggle', $rule) }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-sm {{ $rule->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}">
+                            {{ $rule->is_active ? 'Disable' : 'Enable' }}
+                        </button>
+                    </form>
+
+                    <form action="{{ route('tech.admin.settings.tickets.rules.destroy', $rule) }}" method="POST" class="m-0" onsubmit="return confirm('Delete this ticket rule?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                @endif
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" form="ticket-rule-form" class="btn btn-primary">{{ $isEdit ? 'Save rule' : 'Create rule' }}</button>
+            </div>
+        </div>
     </div>
 @endsection
 

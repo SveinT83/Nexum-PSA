@@ -2,6 +2,7 @@
 
 namespace App\Modules\Notification\Channels;
 
+use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Notification\Models\NotificationChannel;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
@@ -31,6 +32,12 @@ class NextcloudTalkChannel
         $channelConfig = NotificationChannel::getByDriver('nextcloud_talk');
 
         if (!$channelConfig || !$channelConfig->is_enabled) {
+            return;
+        }
+
+        if (! $this->hasActiveNextcloudConnection()) {
+            Log::debug('NextcloudTalk: Channel is enabled, but no active Nextcloud integration exists.');
+
             return;
         }
 
@@ -105,5 +112,15 @@ class NextcloudTalkChannel
 
         // Fall back to system-wide default
         return $channelConfig->config['default_webhook_url'] ?? null;
+    }
+
+    /**
+     * Nextcloud owns connection details; notifications only use Talk webhooks.
+     */
+    private function hasActiveNextcloudConnection(): bool
+    {
+        return NextcloudConnection::query()
+            ->where('is_active', true)
+            ->exists();
     }
 }

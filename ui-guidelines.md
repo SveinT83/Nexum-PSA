@@ -130,6 +130,21 @@ Guidelines:
 - Use small icons with accessible labels/tooltips for dense header signals, but keep the text or tooltip clear enough that users do not have to open records just to understand the state.
 - Avoid headers that only repeat the card title if the body already makes the content obvious and no action or summary context is present.
 
+## Admin And Settings Hubs
+
+Admin landing pages should be calm settings hubs rather than action-heavy dashboards.
+
+Guidelines:
+
+- Use classic Bootstrap cards with a compact `card-header` for each settings group.
+- Put the group icon and title in the card header so the card itself remains the primary visual object.
+- Keep action buttons visually quieter than the card. Prefer neutral Bootstrap outline buttons over full-width filled action rows.
+- Use a responsive card grid, commonly four columns on wide screens and fewer columns on smaller screens.
+- Inside each card, prefer a compact two-column action grid for settings links instead of vertical `ul` / `li` lists or large row buttons.
+- Keep custom CSS minimal and limited to small alignment, sizing, and density refinements that Bootstrap does not cover cleanly.
+- Admin settings pages should use the shared Admin sidebar menu. The sidebar should include a common `Admin areas` section that navigates between the Admin landing-page card groups, followed by a local section for the current card group's own settings links.
+- Do not hand-roll per-view admin sidebars with raw `ul` / `li` markup. Add or adjust entries in the shared Admin menu component when Admin navigation changes.
+
 ## Read-Only Views
 
 Show/detail pages should not automatically reuse disabled edit forms.

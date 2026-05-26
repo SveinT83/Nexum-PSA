@@ -15,6 +15,10 @@
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="integrations" />
+@endsection
+
 @section('content')
     @foreach(['success' => 'success', 'warning' => 'warning', 'info' => 'info'] as $key => $type)
         @if(session($key))

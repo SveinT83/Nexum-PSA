@@ -78,12 +78,8 @@
 @endsection
 
 @section('sidebar')
-    <!-- Sidebar Menu Item -->
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
+    <x-nav.admin-menu group="users" />
 @endsection
 
 @section('rightbar')
 @endsection
-

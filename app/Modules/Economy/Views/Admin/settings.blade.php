@@ -3,20 +3,14 @@
 @section('title', 'Economy settings')
 
 @section('pageHeader')
-    <div>
-        <h1 class="mb-1">Economy settings</h1>
-        <p class="text-muted mb-0">Controls when ticket work becomes internal order lines.</p>
+    <div class="d-flex justify-content-between align-items-center w-100">
+        <h1 class="h4 mb-0">Economy settings</h1>
+        <x-buttons.back url="{{ route('tech.admin.index') }}">Back</x-buttons.back>
     </div>
 @endsection
 
 @section('sidebar')
-    <x-nav.side-bar
-        title="Economy settings"
-        :items="[
-            ['name' => 'Economy', 'route' => 'tech.admin.settings.economy', 'pattern' => 'tech.admin.settings.economy', 'icon' => 'bi-sliders'],
-            ['name' => 'Admin', 'route' => 'tech.admin.index', 'pattern' => 'tech.admin.index', 'icon' => 'bi-grid'],
-        ]"
-    />
+    <x-nav.admin-menu group="economy" />
 @endsection
 
 @section('content')

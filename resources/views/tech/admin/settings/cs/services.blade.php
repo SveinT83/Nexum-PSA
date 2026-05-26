@@ -153,6 +153,7 @@ System-wide configuration for the **Service Catalog** that feeds contracts. Cont
 @endsection
 
 @section('sidebar')
+    <x-nav.admin-menu group="commercial" />
 @endsection
 
 @section('rightbar')

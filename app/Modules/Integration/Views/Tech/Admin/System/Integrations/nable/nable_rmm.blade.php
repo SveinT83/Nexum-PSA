@@ -241,7 +241,7 @@
 @endsection
 
 @section('sidebar')
-
+    <x-nav.admin-menu group="integrations" />
 @endsection
 
 @section('rightbar')

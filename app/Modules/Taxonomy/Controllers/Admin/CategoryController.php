@@ -24,17 +24,35 @@ class CategoryController extends Controller
      *
      * @return \Illuminate\Contracts\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
+        $sort = $request->get('sort', 'name');
+        $direction = $request->get('direction') === 'desc' ? 'desc' : 'asc';
+        $allowedSorts = ['name', 'type', 'parent', 'slug', 'status', 'templates', 'services', 'children'];
+
+        if (! in_array($sort, $allowedSorts, true)) {
+            $sort = 'name';
+        }
+
         // Fetch all categories with their parent/child relationships
         $categories = Category::with(['parent', 'children'])
             ->withCount(['templates', 'services', 'children']) // Track usage in both modules and child categories
+            ->when($sort === 'parent', fn ($query) => $query->leftJoin('categories as parent_categories', 'categories.parent_id', '=', 'parent_categories.id')
+                ->orderBy('parent_categories.name', $direction)
+                ->select('categories.*'))
+            ->when($sort === 'name', fn ($query) => $query->orderBy('name', $direction))
+            ->when($sort === 'type', fn ($query) => $query->orderBy('type', $direction)->orderBy('name'))
+            ->when($sort === 'slug', fn ($query) => $query->orderBy('slug', $direction))
+            ->when($sort === 'status', fn ($query) => $query->orderBy('is_active', $direction)->orderBy('name'))
+            ->when($sort === 'templates', fn ($query) => $query->orderBy('templates_count', $direction)->orderBy('name'))
+            ->when($sort === 'services', fn ($query) => $query->orderBy('services_count', $direction)->orderBy('name'))
+            ->when($sort === 'children', fn ($query) => $query->orderBy('children_count', $direction)->orderBy('name'))
             ->get();
 
         // Get parent categories for selection in the form
         $parentCategories = Category::whereNull('parent_id')->get();
 
-        return view('taxonomy::Admin.Category.index', compact('categories', 'parentCategories'));
+        return view('taxonomy::Admin.Category.index', compact('categories', 'parentCategories', 'sort', 'direction'));
     }
 
     /**

@@ -115,10 +115,11 @@ class StorageModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Storage')
             ->assertSee('admin-hub-card', false)
+            ->assertSee('card-header bg-body', false)
             ->assertSee('bi bi-box-seam', false)
             ->assertSee(route('tech.admin.settings.storage.inventory'), false)
             ->assertSee('Inventory settings')
-            ->assertSee('btn btn-sm btn-light border', false);
+            ->assertSee('btn btn-sm btn-outline-secondary', false);
     }
 
     #[Test]
