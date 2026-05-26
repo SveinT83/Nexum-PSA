@@ -2,6 +2,7 @@
 
 use App\Modules\Documentation\Controllers\Admin\TemplateManagementController;
 use App\Modules\Documentation\Controllers\Tech\DocumentationController;
+use App\Modules\Documentation\Controllers\Tech\VendorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +25,39 @@ Route::get('/documentations', [DocumentationController::class, 'index'])
 
 Route::get('/documentations/create', [DocumentationController::class, 'create'])
     ->name('documentations.create');
+
+Route::get('/documentations/vendors', [VendorController::class, 'index'])
+    ->defaults('role', 'vendors')
+    ->name('documentations.vendors.index');
+
+Route::get('/documentations/vendors/create', [VendorController::class, 'create'])
+    ->defaults('role', 'vendors')
+    ->name('documentations.vendors.create');
+
+Route::post('/documentations/vendors', [VendorController::class, 'store'])
+    ->defaults('role', 'vendors')
+    ->name('documentations.vendors.store');
+
+Route::get('/documentations/vendors/{vendor}', [VendorController::class, 'show'])
+    ->name('documentations.vendors.show');
+
+Route::get('/documentations/vendors/{vendor}/edit', [VendorController::class, 'edit'])
+    ->name('documentations.vendors.edit');
+
+Route::patch('/documentations/vendors/{vendor}', [VendorController::class, 'update'])
+    ->name('documentations.vendors.update');
+
+Route::get('/documentations/suppliers/create', [VendorController::class, 'create'])
+    ->defaults('role', 'suppliers')
+    ->name('documentations.suppliers.create');
+
+Route::post('/documentations/suppliers', [VendorController::class, 'store'])
+    ->defaults('role', 'suppliers')
+    ->name('documentations.suppliers.store');
+
+Route::get('/documentations/suppliers', [VendorController::class, 'index'])
+    ->defaults('role', 'suppliers')
+    ->name('documentations.suppliers.index');
 
 Route::post('/documentations/create', [DocumentationController::class, 'store'])
     ->name('documentations.store');

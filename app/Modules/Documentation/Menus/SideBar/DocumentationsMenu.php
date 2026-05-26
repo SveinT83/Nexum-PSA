@@ -5,9 +5,8 @@ namespace App\Modules\Documentation\Menus\SideBar;
 use App\Modules\Taxonomy\Models\Category;
 
 /**
-     * This class generates the sidebar menu for documentation.
-     * It is "smart" in that it only displays categories that actually have documentation templatesManagement associated with them.
-     */
+ * Builds the Documentation workspace category menu.
+ */
 class DocumentationsMenu
 {
     /**
@@ -17,9 +16,15 @@ class DocumentationsMenu
      */
     public function DocumentationsMenu(): array
     {
-        // Get categories that have the 'templatesManagement' relation (DocumentationTemplate)
-        $categories = Category::has('templates')
+        // Template categories are dynamic, while vendors and suppliers are fixed
+        // Documentation-owned master data registers.
+        $categories = Category::query()
             ->where('is_active', true)
+            ->where(function ($query): void {
+                $query->whereHas('templates')
+                    ->orWhereIn('slug', ['vendors', 'suppliers']);
+            })
+            ->orderBy('name')
             ->get();
 
         // Default option to view all documentations
@@ -33,6 +38,18 @@ class DocumentationsMenu
                 'name' => $category->name,
                 'route' => 'tech.documentations.index',
                 'params' => ['cat' => $category->slug],
+            ];
+        }
+
+        foreach ([['Vendors', 'vendors'], ['Suppliers', 'suppliers']] as [$name, $slug]) {
+            if ($categories->contains('slug', $slug)) {
+                continue;
+            }
+
+            $menu[] = [
+                'name' => $name,
+                'route' => 'tech.documentations.index',
+                'params' => ['cat' => $slug],
             ];
         }
 

@@ -4,8 +4,8 @@ namespace App\Modules\Commercial\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Core\User;
-Use App\Models\Doc\Vendor;
-Use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Documentation\Models\Vendor;
+use App\Modules\Commercial\Models\Economy\Units;
 use Illuminate\Database\Eloquent\Model;
 
 

@@ -4,6 +4,7 @@ namespace App\Modules\Email\Controllers\Admin\Templates;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Menus\SideBar\TemplatesMenu;
+use App\Modules\Email\Actions\EnsureDefaultEmailTemplates;
 use App\Modules\Email\Models\EmailTemplate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,8 +28,10 @@ class EmailTemplateController extends Controller
     | languages, queues, or workflow conditions.
     |
     */
-    public function index(Request $request): View
+    public function index(Request $request, EnsureDefaultEmailTemplates $defaultTemplates): View
     {
+        $defaultTemplates->handle();
+
         $scope = $request->get('scope');
 
         $templates = EmailTemplate::query()

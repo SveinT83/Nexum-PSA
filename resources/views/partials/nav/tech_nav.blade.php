@@ -136,6 +136,12 @@
                 <a class="dropdown-item {{ request()->routeIs('tech.sales.index') ? 'active' : '' }}" href="{{ route('tech.sales.index') }}">Sales</a>
             </li>
 
+            @if(Route::has('tech.sales.leads.index'))
+                <li class="nav-item">
+                    <a class="dropdown-item {{ request()->routeIs('tech.sales.leads.*') ? 'active' : '' }}" href="{{ route('tech.sales.leads.index') }}">Leads</a>
+                </li>
+            @endif
+
             <!-- ------------------------------------------------- -->
             <!-- Contracts -->
             <!-- ------------------------------------------------- -->

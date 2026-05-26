@@ -3,11 +3,8 @@
 @section('title', $order->order_number ?? 'Order')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-start">
-        <div>
-            <h1 class="mb-1">{{ $order->order_number ?? ('Order #' . $order->id) }}</h1>
-            <p class="text-muted mb-0">{{ $order->client?->name }} · {{ $order->period_start?->format('Y-m-d') }} - {{ $order->period_end?->format('Y-m-d') }}</p>
-        </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>{{ $order->order_number ?? ('Order #' . $order->id) }}</h1>
         <div class="d-flex gap-2">
             @if($order->status === 'draft')
                 <form method="POST" action="{{ route('tech.economy.orders.ready', $order) }}">
@@ -31,7 +28,7 @@
                     </button>
                 </form>
             @endif
-            <a href="{{ route('tech.economy.orders.index') }}" class="btn btn-light btn-sm">Back</a>
+            <x-buttons.back url="{{ route('tech.economy.orders.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection

@@ -2,184 +2,142 @@
 
 @section('title', 'Sales')
 
-@section('pageHeader')
-    <h1>Sales</h1>
-@endsection
-
-@section('content')
-# tech.sales.index — View Specification
-
-**URL:** `tech.sales.index` → `/tech/sales`
-
-**Access & permissions:** `lead.view` (read), `lead.create` (New Order button), `sales.admin` (settings links hidden here)
-
-**Creation date:** 2025-10-28
-
-**Controller:** `App\Http\Controllers\Tech\Sales\OrdersController@index`
-
-**Status:** Not started
-
-**Difficulty:** Medium
-
-**Estimated time:** 3.0 hours
-
-**Layout template:** Top header / Main content / Right slim rail (Bootstrap)
-
----
-
-## Purpose
-
-List and operate on **sales orders lifecycle** (Quotes → Approved → Fulfillment → Invoiced → Archived). *Leads are not shown here* (handled in `tech.sales.leads.*`).
-
----
-
-## Navigation & Tabs
-
-* **Tabs (static):** Quotes (Draft/Sent), Approved, Fulfillment, Invoiced, Archived
-* **Saved filter toggle:** *Mine only* (remembered per user in local storage)
-* **Routing:** Row click opens `tech.sales.show:{id}` (full-page details)
-
----
-
-## Filters & Search (top bar)
-
-* **Search:** free text across *Order #, Title, Customer*
-* **Selectors:** Customer, Owner/Assigned, Date range (Created/Updated), Value range, Status (when in *All* context)
-* **Utilities:** Clear filters, Refresh, Auto-refresh indicator (“Updated X min ago”)
-
----
-
-## List (Main table)
-
-* **Columns (minimal set):** Order # · Customer · Title · Status · Value · Assigned To · Updated
-* **Row affordances:**
-
-  * Status **badge** with color coding (consistent with tickets)
-  * Hover reveals quick actions (icons): View, Edit, Assign
-  * Context menu (⋮): Send Quote, Approve, Move to Fulfillment, Mark as Invoiced, Archive, Delete
-* **No bulk actions**
-* **Row density:** compact, single-line (truncate long titles)
-
----
-
-## Right Slim Rail (aux)
-
-* **Widgets:**
-
-  * *Quick Filters* (Mine only, Customer quick-pick)
-  * *Shortcuts* (New Order, Go to Leads, Sales Settings)
-  * *Help* (keyboard tips, status legend)
-
----
-
-## Actions & Transitions (per row)
-
-* **Send Quote** → opens send modal (select template, preview, recipient list) → audit log entry
-* **Approve** → status → *Approved* (confirmation modal optional)
-* **Move to Fulfillment** → status → *Fulfillment*
-* **Mark as Invoiced** → status → *Invoiced*
-* **Archive** → status → *Archived*
-* **Assign** → choose user/team; show avatar chip in list
-* **Delete** → guarded by confirmation; audited
-
-> All actions are **single-item** only; no multi-select.
-
----
-
-## Status & Color Coding (shared tokens)
-
-* Quotes (Draft/Sent)
-* Approved
-* Fulfillment
-* Invoiced
-* Archived
-
-> Use shared badge styles from ticket module to keep consistency (no custom colors defined here).
-
----
-
-## Reusable Components (mark for library)
-
-* **TabsWithCounts** (badges show counts per tab)
-* **SavedFiltersToggle** (persist to local storage)
-* **SearchBar** (with clear/reset)
-* **StatusBadge** (shared with tickets)
-* **RowActionsMenu** (icon set + labels)
-* **AutoRefreshChip** (spinner + last-updated label)
-
----
-
-## Icons (suggested — Lucide)
-
-* Quotes: `file-text`
-* Approved: `check-circle`
-* Fulfillment: `truck` or `package`
-* Invoiced: `receipt`
-* Archived: `archive`
-* Assign: `user-plus`
-* Edit: `pencil`
-* Delete: `trash-2`
-* Refresh: `refresh-cw`
-
----
-
-## Empty & Error States
-
-* **Empty:** “No orders in this view.” Button: *New Order*
-* **Filtered empty:** show applied filters with *Clear filters*
-* **Error:** inline alert with retry; link to Sales Health (if available)
-
----
-
-## Performance & UX Notes
-
-* Paginate with infinite scroll or page controls (choose one; default: page controls)
-* Remember last tab and filters per user (local storage)
-* Real-time ready (optional WebSocket push → soft refresh)
-
----
-
-## Related Views
-
-* `tech.sales.leads.index` (leads pipeline)
-* `tech.sales.leads_create` (lead create)
-* `tech.sales.show` (order detail)
-* `tech.sales.create` (new order)
-
----
-
-## Security & Audit
-
-* Actions require per-item permission checks
-* All state changes (approve/fulfill/invoice/archive/delete) are logged in audit with actor, timestamp, and before/after status
-
----
-
-## Notes for Controller/Presenter
-
-* Provide tab-scoped datasets via query params: `?tab=quotes|approved|fulfillment|invoiced|archived`
-* Apply server-side sorting: default by `updated_at` desc
-* Support lightweight counts for tab badges (avoid N+1 by aggregate queries)
-* Accept filters via query: `customer_id, owner_id, date_from, date_to, value_min, value_max, q`
-
----
-
-## QA Checklist
-
-* Tabs switch without losing filters unless explicitly cleared
-* Actions enforce allowed transitions only
-* Color/status badges match shared design
-* Row click vs. action click do not conflict
-* Local storage persists *Mine only* and last tab
-@endsection
-
 @section('sidebar')
     <x-nav.sales-menu />
 @endsection
 
+@section('pageHeader')
+    <div class="d-flex align-items-center justify-content-between gap-3">
+        <h1>Sales</h1>
+    </div>
+@endsection
+
+@section('content')
+    <div class="container-fluid">
+        {{-- Sales filters keep active pipeline work scannable. --}}
+        <form method="GET" action="{{ route('tech.sales.index') }}" class="card mb-3">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="q" class="form-label">Search</label>
+                        <input type="search" id="q" name="q" class="form-control" value="{{ $filters['q'] ?? '' }}" placeholder="Opportunity, key, or client">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="status" class="form-label">Status</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="">All statuses</option>
+                            @foreach($statuses as $key => $status)
+                                <option value="{{ $key }}" @selected(($filters['status'] ?? '') === $key)>{{ $status['label'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="owner" class="form-label">Owner</label>
+                        <select id="owner" name="owner" class="form-select">
+                            <option value="">All owners</option>
+                            @foreach($owners as $owner)
+                                <option value="{{ $owner->id }}" @selected(($filters['owner'] ?? '') == $owner->id)>{{ $owner->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-grid">
+                        <button type="submit" class="btn btn-outline-primary">Apply</button>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <a href="{{ route('tech.sales.leads.index') }}" class="btn btn-outline-primary mb-0">
+                            <i class="bi bi-person-plus"></i> Leads
+                        </a>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <a href="{{ route('tech.sales.create') }}" class="btn btn-primary mb-0">
+                            <i class="bi bi-plus-lg"></i> New Opportunity
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {{-- Opportunity table is the primary working surface for sellers. --}}
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Opportunity</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Owner</th>
+                        <th>Follow-up</th>
+                        <th class="text-end">Value</th>
+                        <th class="text-end">Weighted</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($opportunities as $opportunity)
+                        <tr class="cursor-pointer {{ $opportunity->is_unread ? 'table-primary' : ($opportunity->next_follow_up_at && $opportunity->next_follow_up_at->isPast() && ! in_array($opportunity->status, ['won','lost'], true) ? 'table-warning' : '') }}" data-href="{{ route('tech.sales.show', $opportunity) }}" onclick="window.location.href = this.dataset.href">
+                            <td>
+                                <a href="{{ route('tech.sales.show', $opportunity) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">{{ $opportunity->opportunity_key }}</a>
+                                <div class="text-muted small">{{ $opportunity->title }}</div>
+                                @if($opportunity->is_unread)
+                                    <div class="text-primary small fw-semibold">Unread prospect activity</div>
+                                @endif
+                            </td>
+                            <td>{{ $opportunity->client?->name ?? '—' }}</td>
+                            <td>
+                                <span class="badge text-bg-light border">{{ $statuses[$opportunity->status]['label'] ?? $opportunity->status }}</span>
+                            </td>
+                            <td>{{ $opportunity->owner?->name ?? '—' }}</td>
+                            <td>
+                                @if($opportunity->next_follow_up_at)
+                                    {{ $opportunity->next_follow_up_at->format('d.m.Y H:i') }}
+                                    <div class="text-muted small">{{ $nextActions[$opportunity->next_follow_up_type] ?? $opportunity->next_follow_up_type }}</div>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-end">{{ number_format((float) $opportunity->estimated_value_ex_vat, 2, ',', ' ') }}</td>
+                            <td class="text-end">{{ number_format((float) $opportunity->weighted_value_ex_vat, 2, ',', ' ') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">No opportunities match this view.</td>
+                        </tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+            @if($opportunities->hasPages())
+                <div class="card-footer">{{ $opportunities->links() }}</div>
+            @endif
+        </div>
+    </div>
+@endsection
+
 @section('rightbar')
-    <h3>Right Sidebar</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
+    {{-- Sales summary keeps pipeline health visible beside the working list. --}}
+    <div class="accordion mb-3" id="salesIndexSummaryAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="salesIndexSummaryHeader">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#salesIndexSummaryCollapse" aria-expanded="false" aria-controls="salesIndexSummaryCollapse">
+                    Pipeline
+                </button>
+            </h2>
+            <div id="salesIndexSummaryCollapse" class="accordion-collapse collapse" aria-labelledby="salesIndexSummaryHeader" data-bs-parent="#salesIndexSummaryAccordion">
+                <div class="accordion-body">
+                    <dl class="row mb-0">
+                        <dt class="col-7">Open</dt>
+                        <dd class="col-5 text-end">{{ $stats['open'] }}</dd>
+                        <dt class="col-7">Won</dt>
+                        <dd class="col-5 text-end">{{ $stats['won'] }}</dd>
+                        <dt class="col-7">Unread</dt>
+                        <dd class="col-5 text-end">{{ $stats['unread'] }}</dd>
+                        <dt class="col-7">Due</dt>
+                        <dd class="col-5 text-end">{{ $stats['due'] }}</dd>
+                        <dt class="col-7">Weighted</dt>
+                        <dd class="col-5 text-end">{{ number_format((float) $stats['weighted'], 0, ',', ' ') }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection

@@ -20,6 +20,8 @@ use App\Modules\Integration\Livewire\Tech\Ai\ContextChat as IntegrationContextCh
 use App\Modules\Knowledge\Livewire\ArticleForm as KnowledgeArticleForm;
 use App\Modules\Notification\Livewire\NotificationBell;
 use App\Modules\Taxonomy\Livewire\TagManager as TaxonomyTagManager;
+use App\Modules\Task\Livewire\Tech\TaskChecklistEditor;
+use App\Modules\Task\Livewire\Tech\TaskFormContext;
 use App\Modules\Ticket\Livewire\Admin\WorkflowEditor as TicketWorkflowEditor;
 use App\Modules\UserManagement\Livewire\Roles\RolePermissions as UserManagementRolePermissions;
 use Illuminate\Support\Facades\Blade;
@@ -34,7 +36,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
+            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+            $this->app->register(TelescopeServiceProvider::class);
+        }
     }
 
     /**
@@ -56,8 +61,10 @@ class AppServiceProvider extends ServiceProvider
             'nextcloud' => 'Nextcloud',
             'notification' => 'Notification',
             'risk' => 'Risk',
+            'sales' => 'Sales',
             'storage' => 'Storage',
             'taxonomy' => 'Taxonomy',
+            'task' => 'Task',
             'ticket' => 'Ticket',
             'usermanagement' => 'UserManagement',
         ] as $namespace => $module) {
@@ -89,6 +96,8 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('tech.cs.service-pricing', CommercialServicePricing::class);
         Livewire::component('knowledge.article-form', KnowledgeArticleForm::class);
         Livewire::component('system.tag-manager', TaxonomyTagManager::class);
+        Livewire::component('tech.tasks.checklist-editor', TaskChecklistEditor::class);
+        Livewire::component('tech.tasks.form-context', TaskFormContext::class);
         Livewire::component('tech.admin.tickets.workflow-editor', TicketWorkflowEditor::class);
         Livewire::component('tech.admin.system.templates-management.doc.template-form', DocumentationTemplateForm::class);
         Livewire::component('tech.admin.user_management.roles.role-permissions', UserManagementRolePermissions::class);

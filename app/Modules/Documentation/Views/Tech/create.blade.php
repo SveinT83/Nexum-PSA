@@ -14,7 +14,7 @@
 @section('title', 'Documentations')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
         <!-- Header -->
         <h1 class="h4 mb-0">Create new doc</h1>
 
@@ -163,8 +163,4 @@
 @endsection
 
 @section('rightbar')
-    <h3>Right Sidebar</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
 @endsection

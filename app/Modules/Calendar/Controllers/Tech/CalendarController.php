@@ -41,6 +41,10 @@ class CalendarController extends Controller
             ->values()
             ->all();
         $events = $query->eventsForRange($user, $startsAt, $endsAt, $calendarIds);
+        $eventSearch = trim((string) $request->input('event_search', ''));
+        $eventSort = $request->input('event_sort', 'starts_at');
+        $eventDirection = $request->input('event_direction') === 'desc' ? 'desc' : 'asc';
+        $events = $this->filterAndSortEvents($events, $eventSearch, $eventSort, $eventDirection);
         [$previousDate, $nextDate] = $this->navigationDates($view, $anchor, $timezone);
         $defaultCalendar = $calendars->firstWhere('owner_id', $user->id) ?: $calendars->first();
         $availabilityUser = User::query()->find($request->integer('availability_user_id')) ?: $user;
@@ -70,6 +74,9 @@ class CalendarController extends Controller
             'availabilityUser' => $availabilityUser,
             'availabilityDuration' => $availabilityDuration,
             'availableSlots' => $availableSlots,
+            'eventSearch' => $eventSearch,
+            'eventSort' => $eventSort,
+            'eventDirection' => $eventDirection,
         ]);
     }
 
@@ -185,6 +192,36 @@ class CalendarController extends Controller
             'list' => [$anchor->copy()->subDays(30)->toDateString(), $anchor->copy()->addDays(30)->toDateString()],
             default => [$anchor->copy()->subWeek()->toDateString(), $anchor->copy()->addWeek()->toDateString()],
         };
+    }
+
+    private function filterAndSortEvents($events, string $search, string $sort, string $direction)
+    {
+        $sortable = ['starts_at', 'title', 'calendar', 'status'];
+        if (! in_array($sort, $sortable, true)) {
+            $sort = 'starts_at';
+        }
+
+        if ($search !== '') {
+            $needle = mb_strtolower($search);
+            $events = $events->filter(function (array $event) use ($needle): bool {
+                return str_contains(mb_strtolower((string) $event['title']), $needle)
+                    || str_contains(mb_strtolower((string) $event['calendar_name']), $needle)
+                    || str_contains(mb_strtolower((string) $event['status']), $needle)
+                    || str_contains(mb_strtolower((string) $event['location']), $needle)
+                    || str_contains(mb_strtolower((string) $event['description']), $needle);
+            });
+        }
+
+        $events = $events->sortBy(function (array $event) use ($sort) {
+            return match ($sort) {
+                'title' => mb_strtolower((string) $event['title']),
+                'calendar' => mb_strtolower((string) $event['calendar_name']),
+                'status' => mb_strtolower((string) $event['status']),
+                default => $event['starts_at']->getTimestamp(),
+            };
+        }, SORT_REGULAR, $direction === 'desc');
+
+        return $events->values();
     }
 
     private function preferences(User $user): UserPreference

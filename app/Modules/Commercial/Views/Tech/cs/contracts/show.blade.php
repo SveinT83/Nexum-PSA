@@ -3,9 +3,9 @@
 @section('title', 'Contracts')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h2 class="h4 mb-0">Contract #{{ $contract->id }} - Preview</h2>
+            <h1>Contract #{{ $contract->id }} - Preview</h1>
             <p class="text-muted mb-0 small">Client: <strong>{{ $client->name }}</strong> ({{ $client->client_number }})</p>
         </div>
         <div>

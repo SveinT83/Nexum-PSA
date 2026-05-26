@@ -141,6 +141,22 @@
             <dl class="row mb-0">
                 <dt class="col-6">EAN</dt>
                 <dd class="col-6 text-end">{{ $item->ean_number ?: '-' }}</dd>
+                <dt class="col-6">Vendor</dt>
+                <dd class="col-6 text-end">
+                    @if($item->manufacturerVendor)
+                        <a href="{{ route('tech.documentations.vendors.show', $item->manufacturerVendor) }}">{{ $item->manufacturerVendor->name }}</a>
+                    @else
+                        {{ $item->manufacturer ?: '—' }}
+                    @endif
+                </dd>
+                <dt class="col-6">Supplier</dt>
+                <dd class="col-6 text-end">
+                    @if($item->primaryVendor)
+                        <a href="{{ route('tech.documentations.vendors.show', $item->primaryVendor) }}">{{ $item->primaryVendor->name }}</a>
+                    @else
+                        <span class="text-muted">—</span>
+                    @endif
+                </dd>
                 <dt class="col-6">Reorder</dt>
                 <dd class="col-6 text-end">{{ $item->reorder_point }}</dd>
                 <dt class="col-6">Target</dt>

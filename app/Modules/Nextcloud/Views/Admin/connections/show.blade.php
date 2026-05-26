@@ -18,11 +18,10 @@
 
 @section('pageHeader')
     <div class="col">
-        <h1 class="h4 mb-1">{{ $connection->name }}</h1>
-        <div class="text-muted small">{{ $connection->base_url }} · {{ str_replace('_', ' ', ucfirst($connection->scope)) }} · {{ str_replace('_', ' ', ucfirst($connection->mode)) }}</div>
+        <h1>{{ $connection->name }}</h1>
     </div>
     <div class="col-auto d-flex gap-2">
-        <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.admin.nextcloud.connections.index') }}">Back</a>
+        <x-buttons.back url="{{ route('tech.admin.nextcloud.connections.index') }}" class="mb-0">Back</x-buttons.back>
         <form method="POST" action="{{ route('tech.admin.nextcloud.connections.check', $connection) }}">
             @csrf
             <button class="btn btn-sm btn-outline-secondary" type="submit">Check</button>

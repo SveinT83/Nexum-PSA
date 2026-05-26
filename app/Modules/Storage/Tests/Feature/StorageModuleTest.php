@@ -4,6 +4,9 @@ namespace App\Modules\Storage\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Modules\Documentation\Models\Vendor;
+use App\Modules\Economy\Models\EconomySetting;
+use App\Modules\Storage\Controllers\Admin\InventoryController;
 use App\Modules\Storage\Controllers\Tech\BoxController;
 use App\Modules\Storage\Controllers\Tech\ItemController;
 use App\Modules\Storage\Controllers\Tech\StorageController;
@@ -26,15 +29,20 @@ class StorageModuleTest extends TestCase
     use RefreshDatabase;
 
     private User $tech;
+    private User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         Role::create(['name' => 'Tech']);
+        Role::create(['name' => 'Admin']);
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+
+        $this->admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $this->admin->assignRole('Admin');
     }
 
     #[Test]
@@ -43,6 +51,7 @@ class StorageModuleTest extends TestCase
         $route = Route::getRoutes()->getByName('tech.storage.index');
 
         $this->assertSame(StorageController::class . '@index', $route->getActionName());
+        $this->assertSame(StorageController::class . '@docs', Route::getRoutes()->getByName('tech.storage.docs')->getActionName());
 
         $this->actingAs($this->tech)
             ->get(route('tech.storage.index'))
@@ -50,22 +59,75 @@ class StorageModuleTest extends TestCase
             ->assertViewIs('storage::Tech.Storage.index')
             ->assertViewHas('items')
             ->assertViewHas('warehouses')
-            ->assertSee('data-bs-target="#storageAddWarehouseModal"', false)
-            ->assertSee('name="_warehouse_form"', false)
-            ->assertSee('Create Warehouse');
+            ->assertSee('Inventory Items')
+            ->assertSee('data-bs-target="#storageFiltersCollapse"', false)
+            ->assertSee('bi bi-funnel')
+            ->assertSee('New Item')
+            ->assertSee('New Box')
+            ->assertSee('Documentation')
+            ->assertSee('Quick Stats')
+            ->assertSee('data-bs-target="#storageQuickStatsCollapse"', false)
+            ->assertDontSee('href="' . route('tech.admin.settings.storage.inventory') . '"', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.docs'))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/markdown; charset=UTF-8');
     }
 
     #[Test]
-    public function tech_user_can_create_warehouse_box_and_item_with_initial_stock(): void
+    public function admin_can_open_inventory_settings_and_create_warehouse(): void
     {
-        $this->actingAs($this->tech)
-            ->post(route('tech.storage.warehouses.store'), [
+        $route = Route::getRoutes()->getByName('tech.admin.settings.storage.inventory');
+
+        $this->assertSame(InventoryController::class . '@index', $route->getActionName());
+        $this->assertSame(
+            InventoryController::class . '@storeWarehouse',
+            Route::getRoutes()->getByName('tech.admin.settings.storage.inventory.warehouses.store')->getActionName()
+        );
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.storage.inventory'))
+            ->assertOk()
+            ->assertViewIs('storage::Admin.Inventory.index')
+            ->assertSee('Inventory Settings')
+            ->assertSee('Add Warehouse')
+            ->assertSee('Create Warehouse');
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.storage.inventory.warehouses.store'), [
                 'name' => 'Main Warehouse',
                 'code' => 'MAIN',
             ])
-            ->assertRedirect(route('tech.storage.index'));
+            ->assertRedirect(route('tech.admin.settings.storage.inventory'));
 
-        $warehouse = Warehouse::firstOrFail();
+        $this->assertDatabaseHas('storage_warehouses', [
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+    }
+
+    #[Test]
+    public function admin_dashboard_links_to_storage_inventory_settings(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.index'))
+            ->assertOk()
+            ->assertSee('Storage')
+            ->assertSee('admin-hub-card', false)
+            ->assertSee('bi bi-box-seam', false)
+            ->assertSee(route('tech.admin.settings.storage.inventory'), false)
+            ->assertSee('Inventory settings')
+            ->assertSee('btn btn-sm btn-light border', false);
+    }
+
+    #[Test]
+    public function tech_user_can_create_box_and_item_with_initial_stock(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
 
         $this->actingAs($this->tech)
             ->post(route('tech.storage.boxes.store'), [
@@ -79,6 +141,17 @@ class StorageModuleTest extends TestCase
             ->assertRedirect();
 
         $box = Box::firstOrFail();
+        $manufacturer = Vendor::create([
+            'name' => 'HP',
+            'is_vendor' => true,
+            'is_manufacturer' => true,
+            'is_active' => true,
+        ]);
+        $supplier = Vendor::create([
+            'name' => 'Dustin',
+            'is_supplier' => true,
+            'is_active' => true,
+        ]);
 
         $this->assertSame('BOX-ONE', $box->code_human);
         $this->assertSame((string) $box->id, $box->barcode_value);
@@ -90,6 +163,15 @@ class StorageModuleTest extends TestCase
                 'box_id' => $box->id,
                 'sku' => 'fw-100',
                 'name' => 'Firewall 100',
+                'manufacturer_vendor_id' => $manufacturer->id,
+                'manufacturer_part_number' => 'HP-FW-100',
+                'primary_vendor_id' => $supplier->id,
+                'supplier_sku' => 'DUS-100',
+                'supplier_purchase_url' => 'https://www.dustin.no/product/fw-100',
+                'supplier_lead_time_days' => 3,
+                'supplier_moq' => 1,
+                'supplier_pack_size' => 1,
+                'purchase_price' => 5000,
                 'initial_quantity' => 5,
                 'reorder_point' => 2,
                 'target_level' => 10,
@@ -101,6 +183,9 @@ class StorageModuleTest extends TestCase
         $item = Item::firstOrFail();
 
         $this->assertSame('FW-100', $item->sku);
+        $this->assertSame('HP', $item->manufacturer);
+        $this->assertSame('HP-FW-100', $item->manufacturer_part_number);
+        $this->assertSame('Dustin', $item->primaryVendor->name);
         $this->assertSame(5, $item->qty_on_hand);
         $this->assertSame(0, $item->qty_reserved);
         $this->assertSame(5, $item->qty_available);
@@ -110,6 +195,57 @@ class StorageModuleTest extends TestCase
         $this->assertSame('receive', $movement->type);
         $this->assertSame(5, $movement->qty_delta);
         $this->assertSame(5, $movement->qty_after);
+
+        $this->assertSame($manufacturer->id, $item->manufacturer_vendor_id);
+        $this->assertSame($supplier->id, $item->primary_vendor_id);
+        $this->assertDatabaseHas('storage_item_vendors', [
+            'item_id' => $item->id,
+            'vendor_id' => $item->primary_vendor_id,
+            'vendor_sku' => 'DUS-100',
+            'purchase_url' => 'https://www.dustin.no/product/fw-100',
+            'unit_cost' => '5000.00',
+            'is_primary' => true,
+        ]);
+    }
+
+    #[Test]
+    public function storage_item_forms_use_economy_default_vat_and_do_not_show_duplicate_supplier_cost(): void
+    {
+        EconomySetting::query()->create(['default_vat_rate' => 25]);
+
+        $warehouse = Warehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+        $item = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'VAT-ITEM',
+            'name' => 'VAT Item',
+            'qty_on_hand' => 0,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.items.create'))
+            ->assertOk()
+            ->assertSee('name="vat_rate"', false)
+            ->assertSee('value="25.00"', false)
+            ->assertSee('Documentation')
+            ->assertSee('Storage item field guide')
+            ->assertSee(route('tech.storage.docs'), false)
+            ->assertDontSee('Supplier Cost')
+            ->assertDontSee('<h5 class="mb-0">Rules</h5>', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.items.edit', $item))
+            ->assertOk()
+            ->assertSee('name="vat_rate"', false)
+            ->assertSee('value="25.00"', false)
+            ->assertSee('Documentation')
+            ->assertSee('Storage item field guide')
+            ->assertSee(route('tech.storage.docs'), false)
+            ->assertDontSee('Supplier Cost')
+            ->assertDontSee('<h5 class="mb-0">Rules</h5>', false);
     }
 
     #[Test]
@@ -157,6 +293,7 @@ class StorageModuleTest extends TestCase
         $this->assertSame(ItemController::class . '@update', Route::getRoutes()->getByName('tech.storage.items.update')->getActionName());
         $this->assertSame(BoxController::class . '@show', Route::getRoutes()->getByName('tech.storage.boxes.show')->getActionName());
         $this->assertSame(StorageController::class . '@picking', Route::getRoutes()->getByName('tech.storage.picking')->getActionName());
+        $this->assertSame(StorageController::class . '@pickingDocs', Route::getRoutes()->getByName('tech.storage.picking.docs')->getActionName());
         $this->assertSame(StorageController::class . '@pick', Route::getRoutes()->getByName('tech.storage.picking.pick')->getActionName());
     }
 
@@ -167,10 +304,24 @@ class StorageModuleTest extends TestCase
             'name' => 'Main Warehouse',
             'code' => 'MAIN',
         ]);
+        $manufacturer = Vendor::create([
+            'name' => 'Lenovo',
+            'vendor_code' => 'LENOVO',
+            'is_manufacturer' => true,
+            'is_supplier' => false,
+        ]);
+        $supplier = Vendor::create([
+            'name' => 'Komplett',
+            'vendor_code' => 'KOMPLETT',
+            'is_manufacturer' => false,
+            'is_supplier' => true,
+        ]);
         $item = Item::create([
             'warehouse_id' => $warehouse->id,
             'sku' => 'USB-CABLE',
             'name' => 'USB Cable',
+            'manufacturer_vendor_id' => $manufacturer->id,
+            'primary_vendor_id' => $supplier->id,
             'qty_on_hand' => 2,
             'status' => 'active',
         ]);
@@ -186,6 +337,15 @@ class StorageModuleTest extends TestCase
                 'box_id' => '',
                 'sku' => 'usb-cable',
                 'name' => 'USB Cable',
+                'manufacturer_vendor_id' => $manufacturer->id,
+                'manufacturer_part_number' => 'LEN-USB',
+                'primary_vendor_id' => $supplier->id,
+                'supplier_sku' => 'K-USB',
+                'supplier_purchase_url' => 'https://www.komplett.no/product/usb',
+                'supplier_currency' => 'NOK',
+                'supplier_lead_time_days' => 2,
+                'supplier_moq' => 2,
+                'supplier_pack_size' => 1,
                 'short_description' => 'USB cable for ticket invoice text.',
                 'long_description' => 'Internal catalog notes.',
                 'ean_number' => '123',
@@ -205,10 +365,22 @@ class StorageModuleTest extends TestCase
         $item->refresh();
 
         $this->assertSame('USB-CABLE', $item->sku);
+        $this->assertSame($manufacturer->id, $item->manufacturer_vendor_id);
+        $this->assertSame($supplier->id, $item->primary_vendor_id);
+        $this->assertSame('Lenovo', $item->manufacturer);
+        $this->assertSame('LEN-USB', $item->manufacturer_part_number);
         $this->assertSame('USB cable for ticket invoice text.', $item->short_description);
         $this->assertSame('Internal catalog notes.', $item->long_description);
         $this->assertSame('149.00', $item->sale_price);
         $this->assertTrue($item->has_serials);
+        $this->assertDatabaseHas('storage_item_vendors', [
+            'item_id' => $item->id,
+            'vendor_id' => $supplier->id,
+            'vendor_sku' => 'K-USB',
+            'purchase_url' => 'https://www.komplett.no/product/usb',
+            'unit_cost' => '50.00',
+            'is_primary' => true,
+        ]);
     }
 
     #[Test]
@@ -282,8 +454,18 @@ class StorageModuleTest extends TestCase
             ->assertOk()
             ->assertViewIs('storage::Tech.Storage.picking')
             ->assertSeeInOrder(['READY-USB', 'WAIT-DOCK'])
+            ->assertSee('data-bs-target="#pickingFiltersCollapse"', false)
+            ->assertSee('bi bi-funnel')
+            ->assertSee('How to use the Picking List')
+            ->assertSee(route('tech.storage.picking.docs'), false)
+            ->assertDontSee('Reserved ticket items, sorted by what can be picked now.')
             ->assertSee('Ready')
             ->assertSee('Waiting for stock');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.picking.docs'))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/markdown; charset=UTF-8');
 
         $this->actingAs($this->tech)
             ->post(route('tech.storage.picking.pick', $readyEntry))

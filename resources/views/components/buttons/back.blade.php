@@ -1,6 +1,6 @@
-@props(['url', 'class', 'slot'])
+@props(['url' => '#', 'class' => '', 'slot' => null])
 
-<a href="{{ $url ?? '#' }}"
-   class="{{ $class ?? 'btn btn-sm btn-outline-secondary mb-3 bi bi-arrow-left' }}">
+<a href="{{ $url }}"
+   class="btn btn-sm btn-outline-secondary bi bi-arrow-left {{ $class ?: 'mb-3' }}">
     {{ $slot ?? 'Back' }}
 </a>

@@ -3,23 +3,7 @@
 @section('title', 'Calendar')
 
 @section('pageHeader')
-    <div class="col">
-        <h1 class="h4 mb-1">Calendar</h1>
-        <div class="text-muted small">{{ $rangeTitle }} · {{ $timezone }}</div>
-    </div>
-    <div class="col-auto d-flex gap-2">
-        <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#calendarCreatePanel" aria-expanded="{{ $errors->any() ? 'true' : 'false' }}" aria-controls="calendarCreatePanel">
-            <i class="bi bi-calendar-plus" aria-hidden="true"></i>
-            New
-        </button>
-        <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => $previousDate, 'calendars' => $selectedCalendarIds]) }}">
-            <i class="bi bi-chevron-left" aria-hidden="true"></i>
-        </a>
-        <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => now($timezone)->toDateString(), 'calendars' => $selectedCalendarIds]) }}">Today</a>
-        <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => $nextDate, 'calendars' => $selectedCalendarIds]) }}">
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-        </a>
-    </div>
+    <h1>Calendar</h1>
 @endsection
 
 @section('sidebar')
@@ -34,6 +18,9 @@
             <form method="GET" action="{{ route('tech.calendar.index') }}">
                 <input type="hidden" name="view" value="{{ $viewMode }}">
                 <input type="hidden" name="date" value="{{ $anchor->toDateString() }}">
+                <input type="hidden" name="event_search" value="{{ $eventSearch }}">
+                <input type="hidden" name="event_sort" value="{{ $eventSort }}">
+                <input type="hidden" name="event_direction" value="{{ $eventDirection }}">
                 @foreach($calendars as $calendar)
                     <div class="form-check small mb-1">
                         <input class="form-check-input" type="checkbox" name="calendars[]" value="{{ $calendar->id }}" id="calendar_filter_{{ $calendar->id }}"
@@ -52,7 +39,7 @@
     <!-- View switcher -->
     <div class="list-group small">
         @foreach(['day' => 'Day', 'week' => 'Week', 'month' => 'Month', 'list' => 'List'] as $mode => $label)
-            <a class="list-group-item list-group-item-action {{ $viewMode === $mode ? 'active' : '' }}" href="{{ route('tech.calendar.index', ['view' => $mode, 'date' => $anchor->toDateString(), 'calendars' => $selectedCalendarIds]) }}">
+            <a class="list-group-item list-group-item-action {{ $viewMode === $mode ? 'active' : '' }}" href="{{ route('tech.calendar.index', ['view' => $mode, 'date' => $anchor->toDateString(), 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">
                 {{ $label }}
             </a>
         @endforeach
@@ -61,6 +48,45 @@
 @endsection
 
 @section('content')
+    <!-- ------------------------------------------------- -->
+    <!-- Event search and sorting controls -->
+    <!-- ------------------------------------------------- -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="GET" action="{{ route('tech.calendar.index') }}" class="row g-2 align-items-end">
+                <input type="hidden" name="view" value="{{ $viewMode }}">
+                <input type="hidden" name="date" value="{{ $anchor->toDateString() }}">
+                @foreach($selectedCalendarIds as $calendarId)
+                    <input type="hidden" name="calendars[]" value="{{ $calendarId }}">
+                @endforeach
+
+                <div class="col-md-6">
+                    <label for="event_search" class="form-label text-muted small fw-bold text-uppercase">Search events</label>
+                    <input id="event_search" type="search" name="event_search" value="{{ $eventSearch }}" class="form-control form-control-sm" placeholder="Title, calendar, status, location, or description">
+                </div>
+                <div class="col-md-3">
+                    <label for="event_sort" class="form-label text-muted small fw-bold text-uppercase">Sort by</label>
+                    <select id="event_sort" name="event_sort" class="form-select form-select-sm">
+                        <option value="starts_at" @selected($eventSort === 'starts_at')>Start time</option>
+                        <option value="title" @selected($eventSort === 'title')>Title</option>
+                        <option value="calendar" @selected($eventSort === 'calendar')>Calendar</option>
+                        <option value="status" @selected($eventSort === 'status')>Status</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="event_direction" class="form-label text-muted small fw-bold text-uppercase">Direction</label>
+                    <select id="event_direction" name="event_direction" class="form-select form-select-sm">
+                        <option value="asc" @selected($eventDirection === 'asc')>Ascending</option>
+                        <option value="desc" @selected($eventDirection === 'desc')>Descending</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-grid">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Event creation form -->
     <div id="calendarCreatePanel" class="card mb-3 collapse {{ $errors->any() ? 'show' : '' }}">
         <div class="card-header py-2 d-flex align-items-center justify-content-between">
@@ -162,16 +188,39 @@
     </div>
 
     <!-- Calendar surface -->
-    <div class="calendar-surface">
-        @if($viewMode === 'month')
-            @include('calendar::Tech.partials.month')
-        @elseif($viewMode === 'day')
-            @include('calendar::Tech.partials.day')
-        @elseif($viewMode === 'list')
-            @include('calendar::Tech.partials.list')
-        @else
-            @include('calendar::Tech.partials.week')
-        @endif
+    <div class="card">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h2 class="h5 mb-0">{{ $rangeTitle }}</h2>
+                <div class="text-muted small">{{ $timezone }}</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-primary mb-0" type="button" data-bs-toggle="collapse" data-bs-target="#calendarCreatePanel" aria-expanded="{{ $errors->any() ? 'true' : 'false' }}" aria-controls="calendarCreatePanel">
+                    <i class="bi bi-calendar-plus" aria-hidden="true"></i>
+                    New
+                </button>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => $previousDate, 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">
+                    <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => now($timezone)->toDateString(), 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">Today</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => $nextDate, 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="calendar-surface">
+                @if($viewMode === 'month')
+                    @include('calendar::Tech.partials.month')
+                @elseif($viewMode === 'day')
+                    @include('calendar::Tech.partials.day')
+                @elseif($viewMode === 'list')
+                    @include('calendar::Tech.partials.list')
+                @else
+                    @include('calendar::Tech.partials.week')
+                @endif
+            </div>
+        </div>
     </div>
 
     <style>

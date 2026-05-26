@@ -36,10 +36,18 @@ class DocumentationController extends Controller
         // Filter by category if specified. 'cat' can be an ID or a Slug for flexibility.
         $selectedCategory = null;
         if ($cat = $request->get('cat')) {
+            if (in_array($cat, ['vendors', 'suppliers'], true)) {
+                return app(VendorController::class)->index($request, $cat);
+            }
+
             if ($cat !== 'all') {
                 $selectedCategory = Category::where(function ($q) use ($cat) {
                     $q->where('id', $cat)->orWhere('slug', $cat);
                 })->first();
+
+                if ($selectedCategory && in_array($selectedCategory->slug, ['vendors', 'suppliers'], true)) {
+                    return app(VendorController::class)->index($request, $selectedCategory->slug);
+                }
 
                 if ($selectedCategory) {
                     $query->where('category_id', $selectedCategory->id);
@@ -67,9 +75,21 @@ class DocumentationController extends Controller
             $query->where('scope_type', '!=', 'internal');
         }
 
-        $documentations = $query->orderBy('updated_at', 'desc')->paginate(20);
+        $search = trim((string) $request->input('q', ''));
+        if ($search !== '') {
+            $query->where(function ($query) use ($search): void {
+                $query->where('title', 'like', "%{$search}%")
+                    ->orWhere('scope_type', 'like', "%{$search}%")
+                    ->orWhereHas('category', fn ($categoryQuery) => $categoryQuery->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('client', fn ($clientQuery) => $clientQuery->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('site', fn ($siteQuery) => $siteQuery->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('template', fn ($templateQuery) => $templateQuery->where('name', 'like', "%{$search}%"));
+            });
+        }
 
-        return view('documentation::Tech.index', compact('sidebarMenuItems', 'clients', 'documentations', 'selectedCategory'));
+        $documentations = $query->orderBy('updated_at', 'desc')->paginate(20)->withQueryString();
+
+        return view('documentation::Tech.index', compact('sidebarMenuItems', 'clients', 'documentations', 'selectedCategory', 'search'));
     }
 
     /**

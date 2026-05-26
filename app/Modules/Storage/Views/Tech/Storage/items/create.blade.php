@@ -72,6 +72,68 @@
             </div>
 
             <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Vendor & Supplier</h5></div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="manufacturer_vendor_id" class="form-label">Vendor / Manufacturer</label>
+                            <select id="manufacturer_vendor_id" name="manufacturer_vendor_id" class="form-select">
+                                <option value="">Select existing</option>
+                                @foreach($manufacturers as $manufacturer)
+                                    <option value="{{ $manufacturer->id }}" @selected(old('manufacturer_vendor_id') == $manufacturer->id)>{{ $manufacturer->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">
+                                <a href="{{ route('tech.documentations.vendors.create') }}" target="_blank" rel="noopener">New vendor</a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="manufacturer_part_number" class="form-label">Manufacturer Part No.</label>
+                            <input type="text" id="manufacturer_part_number" name="manufacturer_part_number" class="form-control" value="{{ old('manufacturer_part_number') }}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="primary_vendor_id" class="form-label">Supplier</label>
+                            <select id="primary_vendor_id" name="primary_vendor_id" class="form-select">
+                                <option value="">Select existing</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" @selected(old('primary_vendor_id') == $supplier->id)>{{ $supplier->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">
+                                <a href="{{ route('tech.documentations.suppliers.create') }}" target="_blank" rel="noopener">New supplier</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="supplier_sku" class="form-label">Supplier SKU</label>
+                            <input type="text" id="supplier_sku" name="supplier_sku" class="form-control" value="{{ old('supplier_sku') }}">
+                        </div>
+
+                        <div class="col-md-8">
+                            <label for="supplier_purchase_url" class="form-label">Purchase URL</label>
+                            <input type="url" id="supplier_purchase_url" name="supplier_purchase_url" class="form-control" value="{{ old('supplier_purchase_url') }}" placeholder="https://">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_currency" class="form-label">Currency</label>
+                            <input type="text" id="supplier_currency" name="supplier_currency" class="form-control" value="{{ old('supplier_currency', 'NOK') }}" maxlength="3">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_lead_time_days" class="form-label">Lead Time</label>
+                            <input type="number" id="supplier_lead_time_days" name="supplier_lead_time_days" class="form-control" value="{{ old('supplier_lead_time_days', 0) }}" min="0">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_moq" class="form-label">Supplier MOQ</label>
+                            <input type="number" id="supplier_moq" name="supplier_moq" class="form-control" value="{{ old('supplier_moq', 1) }}" min="1">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_pack_size" class="form-label">Pack Size</label>
+                            <input type="number" id="supplier_pack_size" name="supplier_pack_size" class="form-control" value="{{ old('supplier_pack_size', 1) }}" min="1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
                 <div class="card-header"><h5 class="mb-0">Stock & Pricing</h5></div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -103,6 +165,10 @@
                             <label for="sale_price" class="form-label">Sale Price</label>
                             <input type="number" step="0.01" id="sale_price" name="sale_price" class="form-control" value="{{ old('sale_price') }}" min="0">
                         </div>
+                        <div class="col-md-4">
+                            <label for="vat_rate" class="form-label">VAT Rate</label>
+                            <input type="number" step="0.01" id="vat_rate" name="vat_rate" class="form-control" value="{{ old('vat_rate', $defaultVatRate) }}" min="0">
+                        </div>
                         <div class="col-md-6">
                             <div class="form-check form-switch mt-4">
                                 <input class="form-check-input" type="checkbox" id="has_serials" name="has_serials" value="1" @checked(old('has_serials'))>
@@ -128,10 +194,5 @@
 @endsection
 
 @section('rightbar')
-    <div class="card">
-        <div class="card-header"><h5 class="mb-0">Rules</h5></div>
-        <div class="card-body small text-muted">
-            Initial quantity creates an immutable stock movement. Available stock is on-hand minus reserved, clamped to zero in the UI.
-        </div>
-    </div>
+    @include('storage::Tech.Storage.items.partials.documentation-card')
 @endsection

@@ -10,7 +10,7 @@
 @section('title', $article->exists ? 'Edit: ' . $article->title : 'Create Knowledge Page')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
         <h1 class="h4 mb-0">{{ $article->exists ? 'Edit Page' : 'Create Knowledge Page' }}</h1>
         <a href="{{ $article->exists ? route('tech.knowledge.show', $article) : (isset($book) ? route('tech.knowledge.book', $book) : route('tech.knowledge.index')) }}" class="btn btn-sm btn-outline-secondary">
             {{ $article->exists ? 'Cancel' : 'Back to List' }}

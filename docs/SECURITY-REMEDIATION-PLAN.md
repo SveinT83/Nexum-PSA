@@ -12,12 +12,12 @@
 
 | # | Finding | File/Config | Fix | Status |
 |---|---------|-------------|-----|--------|
-| 1 | Session cookies not secure | `.env` | `SESSION_SECURE_COOKIE=true`, `SESSION_ENCRYPT=true`, `SESSION_SAME_SITE=lax` | 🔲 |
+| 1 | Session cookies not secure | `.env`, `config/session.php` | Production forces secure and encrypted session cookies; `.env.example` documents secure attributes | ✅ 2026-05-25 |
 | 2 | APP_DEBUG may be true | `.env` | Verify `APP_DEBUG=false` in production | 🔲 |
-| 3 | Horizon gate empty | `HorizonServiceProvider.php` | Gate → `hasRole('Superuser')` | 🔲 |
-| 4 | Telescope gate open | `TelescopeServiceProvider.php` | Gate → `hasRole('Superuser')`, `TELESCOPE_ENABLED=false` in prod | 🔲 |
+| 3 | Horizon gate empty | `HorizonServiceProvider.php` | Horizon removed; app uses the database queue driver | ✅ 2026-05-25 |
+| 4 | Telescope gate open | `TelescopeServiceProvider.php` | Telescope package discovery disabled and providers registered only in `local` | ✅ 2026-05-25 |
 | 5 | No CORS config | `config/cors.php` missing | Create with strict origin policy | 🔲 |
-| 6 | No security headers | No middleware | Add CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy | 🔲 |
+| 6 | No security headers | `SecurityHeaders` middleware | Global middleware adds CSP, HSTS on HTTPS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy | ✅ 2026-05-25 |
 
 ### 🟡 P1 — Fix This Sprint
 
@@ -112,8 +112,8 @@
 |------|--------|----------|-----------|
 | **6.1** Debug mode check | Trigger 500 error, check response body | No stack trace, no env vars | 🔲 |
 | **6.2** Directory listing | Access /storage/, /app/ via browser | 403 Forbidden | 🔲 |
-| **6.3** Horizon access | https://portal.tronderdata.no/horizon | 403 or redirect (not publicly accessible) | 🔲 |
-| **6.4** Telescope access | https://portal.tronderdata.no/telescope | 403 or 404 (not publicly accessible) | 🔲 |
+| **6.3** Horizon access | https://portal.tronderdata.no/horizon | 404; Horizon is not installed or registered | 🔲 |
+| **6.4** Telescope access | https://portal.tronderdata.no/telescope | 404 in production; available only in local development | 🔲 |
 | **6.5** phpinfo exposure | Check for /phpinfo, /info.php | 404 | 🔲 |
 | **6.6** Default credentials | Try admin/admin, admin/password | Login rejected | 🔲 |
 
@@ -148,4 +148,4 @@
 
 ---
 
-*Last updated: 2026-05-16*
+*Last updated: 2026-05-25*

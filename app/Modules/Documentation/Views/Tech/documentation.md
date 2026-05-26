@@ -11,12 +11,14 @@
 
 A unified internal and customer-scoped documentation module for storing operational and technical documents. The system supports **internal**, **client**, and **site** scopes, with automatic data isolation per tenant.
 
-Each document is created from a **category template**, and the chosen template is **snapshotted into the document** at creation. This guarantees that documents remain consistent even if templates are updated later.
+Most documents are created from a **category template**, and the chosen template is **snapshotted into the document** at creation. This guarantees that documents remain consistent even if templates are updated later.
+
+Vendor and supplier records are the exception. They are Documentation-owned master data stored in the shared `vendors` table with fixed forms, because Assets, Storage, Commercial costs, and future purchasing workflows need one canonical partner register.
 
 Use cases include:
 
 * Internal procedures and configurations
-* Vendor and supplier information
+* Vendor and supplier master data
 * ISP and manufacturer references
 * Network documentation (LAN/WiFi/Firewall)
 * Client- or site-specific assets or virtual machines
@@ -32,6 +34,8 @@ Use cases include:
 * **Show:** `tech.documentations.show:{docId}` — read-only view of document
 * **Templates:** `tech.documentations.templates.*` — manage templates per category
 * **Categories:** `tech.documentations.categories.*` — manage available categories
+* **Vendors:** `tech.documentations.vendors.*` — fixed vendor/manufacturer master data
+* **Suppliers:** `tech.documentations.suppliers.*` — fixed supplier entry point using the shared vendor model
 
 **Access levels:**
 
@@ -40,7 +44,7 @@ Use cases include:
 * `documents.manage` — create or edit documents
 * `documents.delete` — delete documents
 
-**Controller root:** `App\Http\Controllers\Tech\Documentations`
+**Controller root:** `App\Modules\Documentation\Controllers\Tech`
 
 ---
 
@@ -109,6 +113,29 @@ Use cases include:
 * is_active (bool)
 * created_by / updated_by
 
+**vendors**
+
+* id
+* name
+* vendor_code
+* org_no
+* url
+* phone
+* email
+* default_lead_time_days
+* terms
+* note
+* is_vendor / is_supplier / is_manufacturer
+* is_active
+
+Vendor/supplier usage:
+
+* Assets link `vendor_id` to this register for hardware manufacturers and vendors.
+* Storage item forms select `Vendor / Manufacturer` and `Supplier` from this register.
+* Storage opens `New vendor` and `New supplier` in new tabs instead of creating partner records inline.
+* Commercial costs can reference the same vendor records.
+* Future purchase ordering should use this table for supplier and manufacturer identity.
+
 ---
 
 ## 5. Behaviors
@@ -126,6 +153,7 @@ Use cases include:
 
    * Each category may define one or multiple templates
    * If only one template → preselected and locked
+   * `Vendors` and `Suppliers` categories open fixed register screens instead of dynamic templates
 4. **Validation**
 
    * No drafts — all required fields must be filled before save

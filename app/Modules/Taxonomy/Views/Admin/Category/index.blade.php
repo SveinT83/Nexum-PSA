@@ -3,8 +3,8 @@
 @section('title', 'Category Management')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">Admin - Category</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Admin - Category</h1>
         <div class="d-flex gap-2">
             <x-buttons.back url="{{ route('tech.admin.index') }}"> Back to Admin</x-buttons.back>
 

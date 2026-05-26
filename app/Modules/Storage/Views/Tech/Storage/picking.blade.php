@@ -8,13 +8,8 @@
 
 @section('pageHeader')
     <div class="d-flex align-items-center justify-content-between gap-3">
-        <div>
-            <h1 class="mb-0">Picking List</h1>
-            <p class="text-muted mb-0">Reserved ticket items, sorted by what can be picked now.</p>
-        </div>
-        <a href="{{ route('tech.storage.index') }}" class="btn btn-outline-primary">
-            <i class="bi bi-box-seam"></i> Inventory
-        </a>
+        <h1 class="mb-0">Picking List</h1>
+        <x-buttons.back :url="route('tech.storage.index')" class="mb-0">Back</x-buttons.back>
     </div>
 @endsection
 
@@ -27,25 +22,49 @@
             </div>
         @endif
 
+        @php
+            $pickingActiveFilterCount = collect([
+                filled($filters['status'] ?? null),
+            ])->filter()->count();
+            $pickingFiltersOpen = $pickingActiveFilterCount > 0;
+        @endphp
+
         {{-- Picking filters keep the warehouse queue focused on available work. --}}
         <form method="GET" action="{{ route('tech.storage.picking') }}" class="card mb-4">
             <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-5">
-                        <label for="q" class="form-label">Search</label>
-                        <input type="search" id="q" name="q" class="form-control" value="{{ $filters['q'] ?? '' }}"
-                               placeholder="Ticket, subject, SKU, or item name">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="status" class="form-label">Pick status</label>
-                        <select id="status" name="status" class="form-select">
-                            <option value="" @selected(($filters['status'] ?? '') === '')>All reserved items</option>
-                            <option value="ready" @selected(($filters['status'] ?? '') === 'ready')>Ready to pick</option>
-                            <option value="waiting" @selected(($filters['status'] ?? '') === 'waiting')>Waiting for stock</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3 d-grid">
-                        <button type="submit" class="btn btn-outline-primary">Apply</button>
+                <label for="picking_search" class="form-label text-muted small fw-bold text-uppercase">Search</label>
+                <div class="input-group input-group-sm">
+                    <input type="search" id="picking_search" name="q" class="form-control" value="{{ $filters['q'] ?? '' }}"
+                           placeholder="Ticket, subject, SKU, or item name">
+                    <button type="submit" class="btn btn-outline-secondary">Search</button>
+                    <button
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#pickingFiltersCollapse"
+                        aria-expanded="{{ $pickingFiltersOpen ? 'true' : 'false' }}"
+                        aria-controls="pickingFiltersCollapse"
+                        title="Filters">
+                        <i class="bi bi-funnel" aria-hidden="true"></i>
+                        @if($pickingActiveFilterCount > 0)
+                            <span class="badge text-bg-secondary ms-1">{{ $pickingActiveFilterCount }}</span>
+                        @endif
+                    </button>
+                </div>
+
+                <div id="pickingFiltersCollapse" class="collapse {{ $pickingFiltersOpen ? 'show' : '' }} mt-3">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label for="status" class="form-label small text-muted mb-1">Pick status</label>
+                            <select id="status" name="status" class="form-select form-select-sm">
+                                <option value="" @selected(($filters['status'] ?? '') === '')>All reserved items</option>
+                                <option value="ready" @selected(($filters['status'] ?? '') === 'ready')>Ready to pick</option>
+                                <option value="waiting" @selected(($filters['status'] ?? '') === 'waiting')>Waiting for stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-sm btn-secondary">Apply filters</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,6 +163,8 @@
 @endsection
 
 @section('rightbar')
+    @include('storage::Tech.Storage.partials.picking-documentation-card')
+
     {{-- Picking summary shows the warehouse workload without opening Economy or Tickets. --}}
     <div class="card mb-4">
         <div class="card-header">

@@ -25,16 +25,9 @@ These are not theoretical — I confirmed each one live.
 **Evidence:** Page loads with full Telescope UI, CSRF token visible in HTML. API endpoints accessible (redirecting to login for data, but the tool itself is reachable).
 
 **Remediation for Svein:**
-1. Set `TELESCOPE_ENABLED=false` in production `.env`
-2. Gate access in `TelescopeServiceProvider.php`:
-```php
-protected function gate(): void
-{
-    Gate::define('viewTelescope', function ($user = null) {
-        return $user && $user->hasRole('Superuser');
-    });
-}
-```
+Resolved in code on 2026-05-25 by disabling Telescope package auto-discovery and registering
+Telescope providers only when `APP_ENV=local`. Production route registration must be verified
+after deployment with `APP_ENV=production php artisan route:list --path=telescope`.
 
 ---
 
@@ -60,17 +53,10 @@ protected function gate(): void
 ```
 
 **Remediation for Svein:**
-1. Gate access in `HorizonServiceProvider.php`:
-```php
-protected function gate(): void
-{
-    Gate::define('viewHorizon', function ($user = null) {
-        return $user && $user->hasRole('Superuser');
-    });
-}
-```
-2. Fix Redis connection (currently refusing — Horizon is broken as well as exposed)
-3. Set `APP_DEBUG=false` so stack traces don't leak in production
+Resolved in code on 2026-05-25 by removing Laravel Horizon and keeping the database queue driver.
+Production route registration must be verified after deployment with
+`php artisan route:list --path=horizon`. `APP_DEBUG=false` remains a separate production
+environment requirement.
 
 ---
 
@@ -92,10 +78,16 @@ This reveals:
 This also means **the app is running in development mode, not production build**. The Vite `build` step (`npm run build`) was never run or the built assets aren't being served.
 
 **Remediation for Svein:**
-1. Run `npm run build` to compile production assets
-2. Ensure `.env` has `APP_ENV=production`
-3. Remove Vite dev server from production entirely
-4. All asset URLs should be relative/secure (no `http://` references)
+Resolved locally on 2026-05-25 by removing `public/hot` from the working tree and rebuilding
+assets with `npm run build`. Deploy must repeat the production asset step because `public/build`
+and `public/hot` are intentionally ignored by git:
+
+1. Ensure `.env` has `APP_ENV=production`
+2. Ensure `public/hot` does not exist on production
+3. Run `npm ci` when dependencies change
+4. Run `npm run build` to compile `public/build`
+5. Clear Laravel caches after deployment
+6. Verify rendered HTML uses `/build/assets/...`, not `http://nexum-psa.local:5173/...`
 
 ---
 
@@ -127,10 +119,10 @@ set-cookie: nexumpsa-session=...; path=/; httponly; samesite=lax
 **Impact:** Cookies can be sent over unencrypted HTTP. If an attacker can force an HTTP connection (e.g., on internal network), session tokens can be intercepted.
 
 **Remediation for Svein:**
-```env
-SESSION_SECURE_COOKIE=true
-SESSION_SAME_SITE=lax
-```
+Resolved in code on 2026-05-25. Production now forces secure and encrypted session cookies
+when `APP_ENV=production`, and `.env.example` documents `SESSION_ENCRYPT=true`,
+`SESSION_HTTP_ONLY=true`, and `SESSION_SAME_SITE=lax`. Production `.env` should still set
+`SESSION_SECURE_COOKIE=true` explicitly for clarity during deployment.
 
 ---
 
@@ -146,14 +138,9 @@ SESSION_SAME_SITE=lax
 **Impact:** No clickjacking protection, no MIME sniffing protection, no HSTS enforcement, no CSP to mitigate XSS.
 
 **Remediation for Svein:**
-Add middleware or configure NPM to send:
-```
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-X-Frame-Options: DENY
-X-Content-Type-Options: nosniff
-Referrer-Policy: strict-origin-when-cross-origin
-Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net
-```
+Resolved in code on 2026-05-25 with global `SecurityHeaders` middleware. The app now sends
+`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP, and
+HSTS on HTTPS responses.
 
 ---
 

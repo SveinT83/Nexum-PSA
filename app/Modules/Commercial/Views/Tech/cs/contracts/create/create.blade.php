@@ -1,10 +1,10 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">{{ isset($contract) ? 'Edit Contract' : 'New Contract' }}</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>{{ isset($contract) ? 'Edit Contract' : 'New Contract' }}</h1>
         <div>
-            <a href="{{ route('tech.contracts.index') }}" class="btn btn-sm btn-secondary bi bi-arrow-left-short"> Back</a>
+            <x-buttons.back url="{{ route('tech.contracts.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection

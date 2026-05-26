@@ -12,8 +12,8 @@ class CostServicePackageSeeder extends Seeder
      */
     public function run(): void
     {
-        $ms = \App\Models\Doc\Vendor::where('name', 'Microsoft')->first();
-        $lenovo = \App\Models\Doc\Vendor::where('name', 'Lenovo')->first();
+        $ms = \App\Modules\Documentation\Models\Vendor::where('name', 'Microsoft')->first();
+        $lenovo = \App\Modules\Documentation\Models\Vendor::where('name', 'Lenovo')->first();
         $stk = \App\Modules\Commercial\Models\Economy\Units::where('name', 'Stykk')->first();
         $mnd = \App\Modules\Commercial\Models\Economy\Units::where('name', 'Måned')->first();
         $bruker = \App\Modules\Commercial\Models\Economy\Units::where('name', 'Bruker')->first();

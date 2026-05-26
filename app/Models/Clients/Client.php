@@ -4,9 +4,11 @@ namespace App\Models\Clients;
 
 use App\Models\Tech\Work\Assets\Asset;
 use App\Models\System\Integrations\ClientRmmLink;
+use App\Modules\Task\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Client extends Model
 {
@@ -21,6 +23,10 @@ class Client extends Model
         'name',
         'client_number',
         'org_no',
+        'client_format_id',
+        'website',
+        'sales_category_id',
+        'lead_temperature',
         'billing_email',
         'notes',
         'active',
@@ -30,6 +36,7 @@ class Client extends Model
     {
         return [
             'active' => 'boolean',
+            'lead_temperature' => 'integer',
         ];
     }
 
@@ -62,6 +69,28 @@ class Client extends Model
             'client_id',      // Foreign key on client_sites table...
             'client_site_id'  // Foreign key on client_users table...
         );
+    }
+
+    public function salesCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Taxonomy\Models\Category::class, 'sales_category_id');
+    }
+
+    public function clientFormat(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ClientFormat::class);
+    }
+
+    public function tags(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(\App\Modules\Taxonomy\Models\Tag::class, 'taggable', 'taggables')
+            ->withPivot('module')
+            ->withTimestamps();
+    }
+
+    public function tasks(): MorphMany
+    {
+        return $this->morphMany(Task::class, 'owner');
     }
 
     /**

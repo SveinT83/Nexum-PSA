@@ -1,8 +1,8 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">Email Configuration</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Email Configuration</h1>
         <div class="d-flex gap-2">
             <button type="submit" form="config-form" class="btn btn-primary">Save Changes</button>
             <button type="button" class="btn btn-outline-secondary">Run Health Test</button>

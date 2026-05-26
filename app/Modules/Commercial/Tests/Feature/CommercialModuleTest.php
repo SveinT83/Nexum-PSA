@@ -4,16 +4,21 @@ namespace App\Modules\Commercial\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Modules\Documentation\Models\Vendor;
+use App\Modules\Commercial\Models\Cost;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Controllers\Admin\UnitsController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\PublicContractController;
+use App\Modules\Commercial\Controllers\Tech\Costs\CostController;
+use App\Modules\Commercial\Controllers\Tech\Package\PackageController;
 use App\Modules\Commercial\Controllers\Tech\Rates\TimeRateController;
 use App\Modules\Commercial\Controllers\Tech\Sla\SlaController;
 use App\Modules\Commercial\Controllers\Tech\Services\ServiceController;
 use App\Modules\Commercial\Livewire\Tech\Contracts\ContractItemsEditor;
 use App\Modules\Commercial\Livewire\Tech\ServiceLegal;
 use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Commercial\Models\Packages\Package;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\Terms\terms as CommercialTerm;
@@ -59,15 +64,307 @@ class CommercialModuleTest extends TestCase
             Route::getRoutes()->getByName('tech.services.index')->getActionName()
         );
 
+        $this->assertSame(
+            PackageController::class . '@index',
+            Route::getRoutes()->getByName('tech.packages.index')->getActionName()
+        );
+
+        $this->assertSame(
+            CostController::class . '@index',
+            Route::getRoutes()->getByName('tech.costs.index')->getActionName()
+        );
+
         $this->actingAs($this->tech)
             ->get(route('tech.contracts.index'))
             ->assertOk()
-            ->assertViewIs('commercial::Tech.cs.contracts.index');
+            ->assertViewIs('commercial::Tech.cs.contracts.index')
+            ->assertSee('<h1>Contracts</h1>', false)
+            ->assertSee('bi-arrow-left')
+            ->assertSee('contract_search')
+            ->assertSee('contractFiltersCollapse')
+            ->assertSee('New Contract')
+            ->assertSee('sort=id', false)
+            ->assertSee('sort=client', false)
+            ->assertSee('sort=status', false)
+            ->assertSee('sort=start_date', false)
+            ->assertSee('sort=end_date', false)
+            ->assertSee('sort=monthly_price', false)
+            ->assertSee('sort=yearly_profit', false);
 
         $this->actingAs($this->tech)
             ->get(route('tech.services.index'))
             ->assertOk()
-            ->assertViewIs('commercial::Tech.cs.services.index');
+            ->assertViewIs('commercial::Tech.cs.services.index')
+            ->assertSee('<h1>Services</h1>', false)
+            ->assertSee('bi-arrow-left')
+            ->assertSee('service_search')
+            ->assertSee('serviceFiltersCollapse')
+            ->assertSee('New Service')
+            ->assertSee('sort=sku', false)
+            ->assertSee('sort=name', false)
+            ->assertSee('sort=price', false)
+            ->assertSee('sort=billing_cycle', false)
+            ->assertSee('sort=status', false)
+            ->assertSee('sort=updated_at', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.packages.index'))
+            ->assertOk()
+            ->assertViewIs('commercial::Tech.cs.packages.index')
+            ->assertSee('<h1>Packages</h1>', false)
+            ->assertSee('bi-arrow-left')
+            ->assertSee('package_search')
+            ->assertSee('packageFiltersCollapse')
+            ->assertSee('New Package')
+            ->assertSee('sort=name', false)
+            ->assertSee('sort=description', false)
+            ->assertSee('sort=services', false)
+            ->assertSee('sort=status', false)
+            ->assertSee('sort=updated_at', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.costs.index'))
+            ->assertOk()
+            ->assertViewIs('commercial::Tech.cs.costs.index')
+            ->assertSee('<h1>Costs</h1>', false)
+            ->assertSee('bi-arrow-left')
+            ->assertSee('cost_search')
+            ->assertSee('costFiltersCollapse')
+            ->assertSee('New Cost')
+            ->assertSee('sort=name', false)
+            ->assertSee('sort=cost', false)
+            ->assertSee('sort=recurrence', false)
+            ->assertSee('sort=vendor', false)
+            ->assertSee('sort=updated_at', false);
+    }
+
+    #[Test]
+    public function contract_index_can_search_filter_and_sort_contracts(): void
+    {
+        $acme = Client::factory()->create(['name' => 'Acme Managed Services']);
+        $zenith = Client::factory()->create(['name' => 'Zenith Operations']);
+
+        Contracts::query()->create([
+            'client_id' => $zenith->id,
+            'created_by' => $this->tech->id,
+            'description' => 'Zenith monthly agreement',
+            'approval_status' => 'draft',
+            'start_date' => now()->addDays(20)->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+        ]);
+
+        Contracts::query()->create([
+            'client_id' => $acme->id,
+            'created_by' => $this->tech->id,
+            'description' => 'Acme support agreement',
+            'approval_status' => 'sent_contract',
+            'start_date' => now()->addDays(10)->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.contracts.index', ['sort' => 'client', 'direction' => 'asc']))
+            ->assertOk()
+            ->assertSeeInOrder(['Acme Managed Services', 'Zenith Operations']);
+
+        $searchResponse = $this->actingAs($this->tech)
+            ->get(route('tech.contracts.index', ['q' => 'Acme']))
+            ->assertOk()
+            ->assertSee('Acme Managed Services');
+
+        $this->assertSame(
+            ['Acme Managed Services'],
+            $searchResponse->viewData('contracts')->getCollection()->pluck('client.name')->all()
+        );
+
+        $statusResponse = $this->actingAs($this->tech)
+            ->get(route('tech.contracts.index', ['status' => 'sent_contract']))
+            ->assertOk()
+            ->assertSee('Acme Managed Services');
+
+        $this->assertSame(
+            ['Acme Managed Services'],
+            $statusResponse->viewData('contracts')->getCollection()->pluck('client.name')->all()
+        );
+    }
+
+    #[Test]
+    public function package_index_can_search_filter_and_sort_packages(): void
+    {
+        Package::query()->create([
+            'name' => 'Endpoint Care',
+            'description' => 'Managed workstation bundle.',
+            'status' => 'active',
+            'created_by_user_id' => $this->tech->id,
+        ]);
+
+        Package::query()->create([
+            'name' => 'Legacy Monitoring',
+            'description' => 'Older monitoring package.',
+            'status' => 'inactive',
+            'created_by_user_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.packages.index', ['sort' => 'name', 'direction' => 'asc']))
+            ->assertOk()
+            ->assertSeeInOrder(['Endpoint Care', 'Legacy Monitoring']);
+
+        $searchResponse = $this->actingAs($this->tech)
+            ->get(route('tech.packages.index', ['q' => 'Endpoint']))
+            ->assertOk()
+            ->assertSee('Endpoint Care');
+
+        $this->assertSame(
+            ['Endpoint Care'],
+            $searchResponse->viewData('packages')->getCollection()->pluck('name')->all()
+        );
+
+        $statusResponse = $this->actingAs($this->tech)
+            ->get(route('tech.packages.index', ['status' => 'inactive']))
+            ->assertOk()
+            ->assertSee('Legacy Monitoring');
+
+        $this->assertSame(
+            ['Legacy Monitoring'],
+            $statusResponse->viewData('packages')->getCollection()->pluck('name')->all()
+        );
+    }
+
+    #[Test]
+    public function service_index_can_search_filter_and_sort_services(): void
+    {
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+
+        Services::query()->create([
+            'sku' => 'ENDPOINT-CARE',
+            'name' => 'Endpoint Care',
+            'unitId' => $unit->id,
+            'status' => 'Active',
+            'availability_audience' => 'business',
+            'orderable' => true,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 990,
+            'price_including_tax' => 1237.50,
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        Services::query()->create([
+            'sku' => 'LEGACY-MON',
+            'name' => 'Legacy Monitoring',
+            'unitId' => $unit->id,
+            'status' => 'Inactive',
+            'availability_audience' => 'all',
+            'orderable' => false,
+            'taxable' => 25,
+            'billing_cycle' => 'yearly',
+            'price_ex_vat' => 490,
+            'price_including_tax' => 612.50,
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.services.index', ['sort' => 'name', 'direction' => 'asc']))
+            ->assertOk()
+            ->assertSeeInOrder(['Endpoint Care', 'Legacy Monitoring']);
+
+        $searchResponse = $this->actingAs($this->tech)
+            ->get(route('tech.services.index', ['q' => 'Endpoint']))
+            ->assertOk()
+            ->assertSee('Endpoint Care');
+
+        $this->assertSame(
+            ['Endpoint Care'],
+            $searchResponse->viewData('services')->getCollection()->pluck('name')->all()
+        );
+
+        $statusResponse = $this->actingAs($this->tech)
+            ->get(route('tech.services.index', ['status' => 'Inactive']))
+            ->assertOk()
+            ->assertSee('Legacy Monitoring');
+
+        $this->assertSame(
+            ['Legacy Monitoring'],
+            $statusResponse->viewData('services')->getCollection()->pluck('name')->all()
+        );
+
+        $orderableResponse = $this->actingAs($this->tech)
+            ->get(route('tech.services.index', ['orderable' => 'yes']))
+            ->assertOk()
+            ->assertSee('Endpoint Care');
+
+        $this->assertSame(
+            ['Endpoint Care'],
+            $orderableResponse->viewData('services')->getCollection()->pluck('name')->all()
+        );
+    }
+
+    #[Test]
+    public function cost_index_can_search_filter_and_sort_costs(): void
+    {
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+        $acmeVendor = Vendor::query()->create(['name' => 'Acme Vendor']);
+        $zenithVendor = Vendor::query()->create(['name' => 'Zenith Vendor']);
+
+        Cost::query()->create([
+            'name' => 'Endpoint license',
+            'cost' => 120,
+            'unitId' => $unit->id,
+            'recurrence' => 'month',
+            'vendor_id' => $acmeVendor->id,
+            'note' => 'Monthly endpoint cost.',
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        Cost::query()->create([
+            'name' => 'Backup platform',
+            'cost' => 500,
+            'unitId' => $unit->id,
+            'recurrence' => 'year',
+            'vendor_id' => $zenithVendor->id,
+            'note' => 'Yearly backup platform cost.',
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.costs.index', ['sort' => 'name', 'direction' => 'asc']))
+            ->assertOk()
+            ->assertSeeInOrder(['Backup platform', 'Endpoint license']);
+
+        $searchResponse = $this->actingAs($this->tech)
+            ->get(route('tech.costs.index', ['q' => 'Endpoint']))
+            ->assertOk()
+            ->assertSee('Endpoint license');
+
+        $this->assertSame(
+            ['Endpoint license'],
+            $searchResponse->viewData('costs')->getCollection()->pluck('name')->all()
+        );
+
+        $vendorResponse = $this->actingAs($this->tech)
+            ->get(route('tech.costs.index', ['vendor_id' => $zenithVendor->id]))
+            ->assertOk()
+            ->assertSee('Backup platform');
+
+        $this->assertSame(
+            ['Backup platform'],
+            $vendorResponse->viewData('costs')->getCollection()->pluck('name')->all()
+        );
+
+        $recurrenceResponse = $this->actingAs($this->tech)
+            ->get(route('tech.costs.index', ['recurrence' => 'month']))
+            ->assertOk()
+            ->assertSee('Endpoint license');
+
+        $this->assertSame(
+            ['Endpoint license'],
+            $recurrenceResponse->viewData('costs')->getCollection()->pluck('name')->all()
+        );
     }
 
     #[Test]

@@ -19,6 +19,7 @@ use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Storage\Models\Reservation as StorageReservation;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
+use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
@@ -107,7 +108,14 @@ class TicketModuleTest extends TestCase
             ->assertViewIs('ticket::Tech.Tickets.index')
             ->assertViewHas('tickets')
             ->assertViewHas('queues')
-            ->assertViewHas('statuses');
+            ->assertViewHas('statuses')
+            ->assertSee('<h1 class="mb-0">Tickets</h1>', false)
+            ->assertSee('bi bi-arrow-left', false)
+            ->assertSee('Ticket Search')
+            ->assertSee('ticket_index_search')
+            ->assertSee('ticketIndexFiltersCollapse')
+            ->assertSee('ticket_index_status_id')
+            ->assertSee('New ticket');
 
         $this->assertDatabaseHas('ticket_queues', ['slug' => 'support', 'is_default' => true]);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'new', 'is_default' => true]);
@@ -116,6 +124,38 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'resolved', 'state' => 'resolved']);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'closed', 'is_closed' => true]);
         $this->assertDatabaseHas('ticket_priorities', ['slug' => 'normal', 'is_default' => true]);
+    }
+
+    #[Test]
+    public function ticket_index_can_sort_by_clickable_table_headers(): void
+    {
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999041',
+            'subject' => 'Zulu ticket subject',
+            'owner_id' => $this->tech->id,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999040',
+            'subject' => 'Alpha ticket subject',
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index', [
+                'sort' => 'subject',
+                'direction' => 'asc',
+            ]))
+            ->assertOk()
+            ->assertSee('sort=ticket', false)
+            ->assertSee('sort=subject', false)
+            ->assertSee('sort=client', false)
+            ->assertSee('sort=technician', false)
+            ->assertSee('sort=queue', false)
+            ->assertSee('sort=priority', false)
+            ->assertSee('sort=sla', false)
+            ->assertSee('sort=status', false)
+            ->assertSee('sort=updated', false)
+            ->assertSeeInOrder(['Alpha ticket subject', 'Zulu ticket subject']);
     }
 
     #[Test]
@@ -614,6 +654,51 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function ticket_show_displays_open_task_widget_and_quick_view_modal(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999021',
+        ]);
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Follow up supplier',
+            'checklist' => [
+                ['title' => 'Call warehouse'],
+            ],
+        ], $this->tech, $ticket);
+        TimeRate::create([
+            'name' => 'Task modal support',
+            'slug' => 'task-modal-support-test',
+            'code' => 'TASK_MODAL_SUPPORT_TEST',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 950,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        $item = $task->checklistItems()->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('ticketTasksCollapse', false)
+            ->assertSee('class="accordion-collapse collapse show"', false)
+            ->assertSee('id="ticketTaskQuickCreateModalAiAssist"', false)
+            ->assertSee('id="ticketTaskQuickCreateModalChecklistText"', false)
+            ->assertSee('id="ticketTaskQuickCreateModalEstimatedMinutes"', false)
+            ->assertSee('id="ticketTaskQuickCreateModalTicketRateKey"', false)
+            ->assertSee('data-bs-target="#ticketTaskQuickViewModal'.$task->id.'"', false)
+            ->assertSee(route('tech.tasks.checklist.toggle', [$task, $item]), false)
+            ->assertSee('data-task-checklist-toggle-form', false)
+            ->assertSee(route('tech.tasks.assign', $task), false)
+            ->assertSee('name="rate_key"', false)
+            ->assertSee('Task modal support')
+            ->assertSee('View in Task workspace');
+    }
+
+    #[Test]
     public function tech_user_can_upload_and_download_ticket_message_attachment(): void
     {
         Storage::fake('local');
@@ -659,6 +744,12 @@ class TicketModuleTest extends TestCase
             'type' => Category::TYPE_TICKET,
             'is_active' => true,
         ]);
+        $generalCategory = Category::create([
+            'name' => 'General Operations',
+            'slug' => 'general-operations',
+            'type' => null,
+            'is_active' => true,
+        ]);
         $documentationCategory = Category::create([
             'name' => 'Documentation Only',
             'slug' => 'documentation-only',
@@ -676,6 +767,7 @@ class TicketModuleTest extends TestCase
             ->get(route('tech.tickets.create'))
             ->assertOk()
             ->assertSee('Access')
+            ->assertSee('General Operations')
             ->assertDontSee('Documentation Only')
             ->assertDontSee('Inactive Ticket Category');
 
@@ -697,6 +789,58 @@ class TicketModuleTest extends TestCase
             'subject' => 'Right category type',
             'category_id' => $ticketCategory->id,
         ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'General category ticket',
+                'category_id' => $generalCategory->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'General category ticket',
+            'category_id' => $generalCategory->id,
+        ]);
+    }
+
+    #[Test]
+    public function ticket_forms_use_tag_chip_input_and_create_new_tags(): void
+    {
+        Tag::create([
+            'name' => 'Existing Tag',
+            'slug' => 'existing-tag',
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertSee('data-ticket-tag-input', false)
+            ->assertSee('list="ticketTagSuggestions"', false)
+            ->assertSee('<option value="Existing Tag"></option>', false)
+            ->assertDontSee('name="tag_ids[]"', false);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Tagged ticket',
+                'tag_names' => ['Existing Tag', 'New Ticket Tag'],
+            ])
+            ->assertRedirect();
+
+        $ticket = Ticket::query()->where('subject', 'Tagged ticket')->firstOrFail();
+
+        $this->assertSame(['Existing Tag', 'New Ticket Tag'], $ticket->tags()->orderBy('name')->pluck('name')->all());
+        $this->assertDatabaseHas('tags', [
+            'name' => 'New Ticket Tag',
+            'slug' => 'new-ticket-tag',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.edit', $ticket))
+            ->assertOk()
+            ->assertSee('data-ticket-tag-input', false)
+            ->assertSee('Existing Tag')
+            ->assertSee('New Ticket Tag');
     }
 
     #[Test]

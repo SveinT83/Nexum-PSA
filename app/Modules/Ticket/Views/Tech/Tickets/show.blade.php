@@ -1270,6 +1270,62 @@
             </div>
         </div>
 
+        @php
+            $ticketTasks = $ticket->tasks->sortByDesc('updated_at')->values();
+            $hasTicketTasks = $ticketTasks->isNotEmpty();
+        @endphp
+
+        <div class="accordion-item border rounded mb-2 overflow-hidden">
+            <h2 class="accordion-header" id="ticketTasksHeading">
+                <button
+                    class="accordion-button {{ $hasTicketTasks ? '' : 'collapsed' }} py-2 px-3"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#ticketTasksCollapse"
+                    aria-expanded="{{ $hasTicketTasks ? 'true' : 'false' }}"
+                    aria-controls="ticketTasksCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-list-task" aria-hidden="true"></i>
+                        <span>Tasks</span>
+                        <span class="badge text-bg-secondary">{{ $ticket->tasks->count() }}</span>
+                    </span>
+                </button>
+            </h2>
+            <div
+                id="ticketTasksCollapse"
+                class="accordion-collapse collapse {{ $hasTicketTasks ? 'show' : '' }}"
+                aria-labelledby="ticketTasksHeading"
+                data-bs-parent="#ticketRightbarAccordion">
+                <div class="accordion-body p-3">
+                    <div class="d-grid mb-3">
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#ticketTaskQuickCreateModal">
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                            New Task
+                        </button>
+                    </div>
+
+                    <div class="list-group list-group-flush">
+                        @forelse($ticketTasks->take(6) as $task)
+                            <button type="button" class="list-group-item list-group-item-action px-0 py-2 text-start" data-bs-toggle="modal" data-bs-target="#ticketTaskQuickViewModal{{ $task->id }}">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <span class="fw-semibold small text-truncate">{{ $task->title }}</span>
+                                    <span class="badge {{ $task->status?->is_done ? 'text-bg-success' : 'text-bg-light border' }}">{{ $task->status?->name ?? 'Open' }}</span>
+                                </div>
+                                <div class="small text-muted">
+                                    {{ $task->assignee?->name ?? 'Unassigned' }}
+                                    @if($task->due_at)
+                                        <span class="ms-1">Due {{ $task->due_at->format('Y-m-d') }}</span>
+                                    @endif
+                                </div>
+                            </button>
+                        @empty
+                            <p class="text-muted small mb-0">No tasks yet.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="accordion-item border rounded mb-2 overflow-hidden">
             <h2 class="accordion-header" id="ticketWorkflowHeading">
                 <button
@@ -1564,4 +1620,22 @@
             </div>
         </div>
     </div>
+
+    @include('task::components.quick-create-modal', [
+        'modalId' => 'ticketTaskQuickCreateModal',
+        'ownerModel' => $ticket,
+        'assignees' => $technicians,
+        'defaultAssigneeId' => $ticket->owner_id,
+        'returnTo' => route('tech.tickets.show', $ticket),
+        'timeRateOptions' => $timeRateOptions,
+    ])
+
+    @foreach($ticketTasks as $task)
+        @include('task::components.quick-view-modal', [
+            'modalId' => 'ticketTaskQuickViewModal'.$task->id,
+            'task' => $task,
+            'assignees' => $technicians,
+            'timeRateOptions' => $timeRateOptions,
+        ])
+    @endforeach
 @endsection

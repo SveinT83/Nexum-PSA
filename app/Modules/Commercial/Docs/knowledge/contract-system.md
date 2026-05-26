@@ -16,6 +16,20 @@ The contract must not depend directly on mutable service defaults after it has b
 6. The generated snapshots can be reviewed and edited before the contract is sent.
 7. The public contract view exposes the agreed services, SLA, rates, and legal content for acceptance.
 
+## Contract List Workflow
+
+The contracts index is an operational list for finding the next agreement to review or update.
+
+The page keeps navigation in the compact page header and places list actions next to the table itself. `New Contract` belongs in the contract list card header so the create action stays attached to the list it affects.
+
+The search card supports:
+
+- Free-text search across contract id, client name, status, and description.
+- Secondary filters behind the funnel button for status, client, and contract period.
+- Sortable table headings for id, client, status, start date, end date, monthly price, and yearly profit.
+
+Rows are clickable and open the contract detail view. The client name remains a direct link to the client record.
+
 ## Service Snapshots
 
 When a service is added to a contract, the contract line stores the negotiated service state instead of relying on the live service catalog.

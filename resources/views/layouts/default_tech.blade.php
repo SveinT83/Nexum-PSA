@@ -60,7 +60,7 @@
                     <div class="col-md-8 border-start border-end">
 
                         <!-- Page header -->
-                        <div class="row page-header pb-4 pt-4 align-items-center justify-content-between border-bottom border-primary">
+                        <div class="row page-header py-2 align-items-center justify-content-between border-bottom border-primary">
                             @yield('pageHeader')
 
                             {{--
@@ -73,7 +73,7 @@
 
                         <!-- Main content -->
                         <div class="row content p-1">
-                            <div class="container">
+                            <div class="container pt-3">
 
                                 @if(session('status'))
                                     <div class="alert alert-success alert-dismissible fade show" role="alert">

@@ -2,8 +2,13 @@
 
 namespace App\Modules\Ticket\Queries;
 
+use App\Models\Clients\Client;
+use App\Models\Core\User;
+use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketPriority;
+use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\Ticket\Models\TicketStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class TicketIndexQuery
@@ -37,10 +42,31 @@ class TicketIndexQuery
                 });
             });
 
-        match ($filters['sort'] ?? 'newest') {
+        $sort = $filters['sort'] ?? 'newest';
+        $direction = ($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+
+        match ($sort) {
+            'ticket' => $query->orderBy('ticket_key', $direction)->latest('updated_at'),
+            'subject' => $query->orderBy('subject', $direction)->latest('updated_at'),
+            'client' => $query
+                ->orderBy(Client::select('name')->whereColumn('clients.id', 'tickets.client_id'), $direction)
+                ->latest('updated_at'),
+            'technician' => $query
+                ->orderBy(User::select('name')->whereColumn((new User())->getTable().'.id', 'tickets.owner_id'), $direction)
+                ->latest('updated_at'),
+            'queue' => $query
+                ->orderBy(TicketQueue::select('name')->whereColumn('ticket_queues.id', 'tickets.queue_id'), $direction)
+                ->latest('updated_at'),
+            'status' => $query
+                ->orderBy(TicketStatus::select('name')->whereColumn('ticket_statuses.id', 'tickets.status_id'), $direction)
+                ->latest('updated_at'),
+            'updated' => $query->orderBy('updated_at', $direction)->orderBy('ticket_key'),
             'oldest' => $query->oldest('updated_at'),
             'priority' => $query
-                ->orderBy(TicketPriority::select('level')->whereColumn('ticket_priorities.id', 'tickets.priority_id'))
+                ->orderBy(TicketPriority::select('level')->whereColumn('ticket_priorities.id', 'tickets.priority_id'), $direction)
+                ->latest('updated_at'),
+            'sla_name' => $query
+                ->orderBy(Sla::select('name')->whereColumn((new Sla())->getTable().'.id', 'tickets.sla_id'), $direction)
                 ->latest('updated_at'),
             'sla' => $query
                 ->orderByRaw('CASE WHEN first_response_due_at IS NOT NULL AND first_response_due_at < ? AND first_responded_at IS NULL THEN 0 ELSE 1 END', [now()])

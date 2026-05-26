@@ -10,10 +10,7 @@
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center w-100">
-        <div>
-            <h1 class="h4 mb-0">Knowledge</h1>
-            <div class="small text-muted">Shelves, books, chapters, and pages</div>
-        </div>
+        <h1>Knowledge</h1>
         <a href="{{ route('tech.knowledge.shelves.create') }}" class="btn btn-primary">
             <i class="bi bi-plus"></i> New Shelf
         </a>

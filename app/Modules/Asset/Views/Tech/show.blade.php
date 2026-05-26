@@ -9,44 +9,18 @@
     including technical specifications, ownership, and network details.
 --}}
 
+@php
+    $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
+    $tacticalIntegration = \App\Models\System\Integrations\Integration::where('type', 'tactical_rmm')->where('status', 'active')->first();
+
+    $canSyncNable = $rmmIntegration && $asset->client && $asset->client->rmmLinks()->where('integration_id', $rmmIntegration->id)->exists();
+    $canSyncTactical = $tacticalIntegration && $asset->client && $asset->client->rmmLinks()->where('integration_id', $tacticalIntegration->id)->exists();
+@endphp
+
 @section('pageHeader')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('tech.assets.index') }}">Assets</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ $asset->name }}</li>
-        </ol>
-    </nav>
-    <div class="d-flex justify-content-between align-items-center">
+    <div class="d-flex justify-content-between align-items-center gap-2">
         <h1>{{ $asset->name }}</h1>
-        <div class="btn-group mb-3">
-            <x-buttons.back :url="route('tech.assets.index')" class="btn btn-sm btn-outline-secondary bi bi-arrow-left">Back to Assets</x-buttons.back>
-            @php
-                $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->where('status', 'active')->first();
-                $tacticalIntegration = \App\Models\System\Integrations\Integration::where('type', 'tactical_rmm')->where('status', 'active')->first();
-
-                $canSyncNable = $rmmIntegration && $asset->client && $asset->client->rmmLinks()->where('integration_id', $rmmIntegration->id)->exists();
-                $canSyncTactical = $tacticalIntegration && $asset->client && $asset->client->rmmLinks()->where('integration_id', $tacticalIntegration->id)->exists();
-            @endphp
-            @if($rmmIntegration)
-                <button type="button"
-                        class="btn btn-sm btn-outline-primary"
-                        @if(!$canSyncNable) disabled title="Client not linked to N-able RMM" @endif
-                        onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
-                    <i class="bi bi-arrow-repeat me-1"></i> Sync Assets (N-able)
-                </button>
-            @endif
-            @if($tacticalIntegration)
-                <button type="button"
-                        class="btn btn-sm btn-outline-info"
-                        @if(!$canSyncTactical) disabled title="Client not linked to Tactical RMM" @endif
-                        onclick="Livewire.dispatch('startTargetedTacticalSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
-                    <i class="bi bi-arrow-repeat me-1"></i> Sync Assets (Tactical)
-                </button>
-            @endif
-
-            <!-- Edit button -->
-            <x-buttons.editlink :url="route('tech.assets.edit', $asset->id)" class="btn btn-sm btn-outline-secondary bi bi-pencil">Edit</x-buttons.editlink>
-        </div>
+        <x-buttons.back :url="route('tech.assets.index')" class="mb-0">Back</x-buttons.back>
     </div>
 @endsection
 
@@ -83,8 +57,9 @@
                 <div class="card mt-2 mb-4">
 
                     <!-- Asset summary Card Header -->
-                    <div class="card-header">
+                    <div class="card-header d-flex align-items-center justify-content-between gap-2">
                         <h5 class="mb-0">Asset Details</h5>
+                        <x-buttons.editlink :url="route('tech.assets.edit', $asset->id)" class="btn btn-sm btn-outline-secondary bi bi-pencil">Edit</x-buttons.editlink>
                     </div>
 
                     <!-- Asset summary Card Body -->
@@ -276,80 +251,135 @@
         <livewire:tech.work.assets.asset-alerts :asset="$asset" />
 
         {{-- SECTION: Status & Lifecycle Sidebar --}}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Status & Lifecycle</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label d-block fw-bold">Current Status</label>
-                    @php
-                        $status = strtolower($asset->status ?? 'unknown');
-                        $badgeClass = 'bg-light text-dark';
-                        $statusLabel = ucfirst($status);
+        @php
+            $status = strtolower($asset->status ?? 'unknown');
+            $badgeClass = 'bg-light text-dark';
+            $statusLabel = ucfirst($status);
 
-                        if ($status === 'online' || $status === 'active') {
-                            $badgeClass = 'bg-success';
-                        } elseif ($status === 'offline' || $status === 'inactive') {
-                            $badgeClass = 'bg-danger';
-                        } elseif ($status === 'warning') {
-                            $badgeClass = 'bg-warning text-dark';
-                        }
+            if ($status === 'online' || $status === 'active') {
+                $badgeClass = 'bg-success';
+            } elseif ($status === 'offline' || $status === 'inactive') {
+                $badgeClass = 'bg-danger';
+            } elseif ($status === 'warning') {
+                $badgeClass = 'bg-warning text-dark';
+            }
 
-                        // Check if it's recently seen as a fallback or additional info
-                        $isRecentlySeen = $asset->last_seen_at && $asset->last_seen_at->diffInMinutes(now()) < 30;
-                        if ($status === 'unknown' && $isRecentlySeen) {
-                            $badgeClass = 'bg-success';
-                            $statusLabel = 'Recently Seen';
-                        }
-                    @endphp
-                    <span class="badge {{ $badgeClass }} border fs-6">
-                        {{ $statusLabel }}
-                    </span>
-                    @if($asset->is_managed)
-                        <div class="small text-muted mt-1">(Updated via RMM)</div>
-                    @endif
-                </div>
-                <div class="mb-3">
-                    <label class="form-label d-block fw-bold">Source</label>
-                    <span class="badge bg-light text-dark border">
-                        {{ ucfirst($asset->source) }}
-                    </span>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label d-block fw-bold">Managed</label>
-                    @if($asset->is_managed)
-                        <span class="text-success"><i class="bi bi-check-circle-fill"></i> Managed by RMM</span>
-                    @else
-                        <span class="text-muted"><i class="bi bi-circle"></i> Unmanaged / Manual</span>
-                    @endif
-                </div>
-                <hr>
-                <div class="small text-muted">
-                    <div><strong>Last seen:</strong> {{ $asset->last_seen_at ? $asset->last_seen_at->format('Y-m-d H:i') : 'Never' }}</div>
-                    <div><strong>Created:</strong> {{ $asset->created_at->format('Y-m-d H:i') }}</div>
-                    <div><strong>Updated:</strong> {{ $asset->updated_at->format('Y-m-d H:i') }}</div>
+            // Check if it's recently seen as a fallback or additional info.
+            $isRecentlySeen = $asset->last_seen_at && $asset->last_seen_at->diffInMinutes(now()) < 30;
+            if ($status === 'unknown' && $isRecentlySeen) {
+                $badgeClass = 'bg-success';
+                $statusLabel = 'Recently Seen';
+            }
+        @endphp
+        <div class="accordion mb-3" id="assetLifecycleAccordion{{ $asset->id }}">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#assetLifecycleCollapse{{ $asset->id }}" aria-expanded="false" aria-controls="assetLifecycleCollapse{{ $asset->id }}">
+                        <span class="d-flex align-items-center justify-content-between gap-2 w-100 me-2">
+                            <span>Status & Lifecycle</span>
+                            <span class="badge {{ $badgeClass }} border">{{ $statusLabel }}</span>
+                        </span>
+                    </button>
+                </h2>
+                <div id="assetLifecycleCollapse{{ $asset->id }}" class="accordion-collapse collapse" data-bs-parent="#assetLifecycleAccordion{{ $asset->id }}">
+                    <div class="accordion-body">
+                        <div class="mb-3">
+                            <label class="form-label d-block fw-bold">Current Status</label>
+                            <span class="badge {{ $badgeClass }} border fs-6">
+                                {{ $statusLabel }}
+                            </span>
+                            @if($asset->is_managed)
+                                <div class="small text-muted mt-1">(Updated via RMM)</div>
+                            @endif
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label d-block fw-bold">Source</label>
+                            <span class="badge bg-light text-dark border">
+                                {{ ucfirst($asset->source) }}
+                            </span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label d-block fw-bold">Managed</label>
+                            @if($asset->is_managed)
+                                <span class="text-success"><i class="bi bi-check-circle-fill"></i> Managed by RMM</span>
+                            @else
+                                <span class="text-muted"><i class="bi bi-circle"></i> Unmanaged / Manual</span>
+                            @endif
+                        </div>
+                        <hr>
+                        <div class="small text-muted">
+                            <div><strong>Last seen:</strong> {{ $asset->last_seen_at ? $asset->last_seen_at->format('Y-m-d H:i') : 'Never' }}</div>
+                            <div><strong>Created:</strong> {{ $asset->created_at->format('Y-m-d H:i') }}</div>
+                            <div><strong>Updated:</strong> {{ $asset->updated_at->format('Y-m-d H:i') }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        {{-- SECTION: Integration sync actions --}}
+        @if($rmmIntegration || $tacticalIntegration)
+            <div class="accordion mb-3" id="assetIntegrationsAccordion{{ $asset->id }}">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#assetIntegrationsCollapse{{ $asset->id }}" aria-expanded="false" aria-controls="assetIntegrationsCollapse{{ $asset->id }}">
+                            <span class="d-flex align-items-center justify-content-between gap-2 w-100 me-2">
+                                <span>Integrations</span>
+                                <span class="badge text-bg-light border">{{ collect([$rmmIntegration, $tacticalIntegration])->filter()->count() }} active</span>
+                            </span>
+                        </button>
+                    </h2>
+                    <div id="assetIntegrationsCollapse{{ $asset->id }}" class="accordion-collapse collapse" data-bs-parent="#assetIntegrationsAccordion{{ $asset->id }}">
+                        <div class="accordion-body">
+                            <div class="d-grid gap-2">
+                                @if($rmmIntegration)
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary"
+                                            @if(!$canSyncNable) disabled title="Client not linked to N-able RMM" @endif
+                                            onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Sync N-able
+                                    </button>
+                                @endif
+                                @if($tacticalIntegration)
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-info"
+                                            @if(!$canSyncTactical) disabled title="Client not linked to Tactical RMM" @endif
+                                            onclick="Livewire.dispatch('startTargetedTacticalSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Sync Tactical
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
 
     <!-- ======================================================================
          DOCUMENTATION CARD
          - Provides a summary of the module and a link to the full documentation
          ====================================================================== -->
-    <div class="card border-info mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center bg-info text-white">
-            <h5 class="mb-0">Documentation</h5>
-            <i class="bi bi-info-circle"></i>
-        </div>
-        <div class="card-body">
-            <p class="small text-muted">
-                Detailed user manual and technical documentation for the Asset Management module.
-            </p>
-            <div class="d-grid gap-2">
-                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#docModal">
-                    <i class="bi bi-book me-1"></i> View Full Documentation
+    <div class="accordion mb-3" id="assetDocumentationAccordion{{ $asset->id }}">
+        <div class="accordion-item border-info">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#assetDocumentationCollapse{{ $asset->id }}" aria-expanded="false" aria-controls="assetDocumentationCollapse{{ $asset->id }}">
+                    <span class="d-flex align-items-center justify-content-between gap-2 w-100 me-2">
+                        <span>Documentation</span>
+                        <i class="bi bi-info-circle text-info"></i>
+                    </span>
                 </button>
+            </h2>
+            <div id="assetDocumentationCollapse{{ $asset->id }}" class="accordion-collapse collapse" data-bs-parent="#assetDocumentationAccordion{{ $asset->id }}">
+                <div class="accordion-body">
+                    <p class="small text-muted">
+                        Detailed user manual and technical documentation for the Asset Management module.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#docModal">
+                            <i class="bi bi-book me-1"></i> View Full Documentation
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

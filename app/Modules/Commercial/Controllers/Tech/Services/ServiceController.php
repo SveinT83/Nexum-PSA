@@ -204,20 +204,44 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function index(Request $request)
     {
-        $query = Services::query();
+        $sort = $request->input('sort', 'name');
+        $direction = $request->input('direction') === 'desc' ? 'desc' : 'asc';
+        $sortableColumns = ['sku', 'name', 'price', 'billing_cycle', 'status', 'updated_at'];
 
-        if ($search = $request->get('search')) {
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%$search%");
-                $q->orWhere('sku', 'like', "%$search%");
-            });
+        if (! in_array($sort, $sortableColumns, true)) {
+            $sort = 'name';
         }
 
-        $services = $query->orderBy('name')->paginate(25)->withQueryString();
+        $query = Services::query()
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $search = '%'.$request->string('q')->trim()->toString().'%';
+
+                $query->where(function ($query) use ($search): void {
+                    $query->where('name', 'like', $search)
+                        ->orWhere('sku', 'like', $search)
+                        ->orWhere('short_description', 'like', $search)
+                        ->orWhere('status', 'like', $search);
+                });
+            })
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('billing_cycle'), fn ($query) => $query->where('billing_cycle', $request->input('billing_cycle')))
+            ->when($request->filled('audience'), fn ($query) => $query->where('availability_audience', $request->input('audience')))
+            ->when($request->filled('orderable'), fn ($query) => $query->where('orderable', $request->input('orderable') === 'yes'));
+
+        if ($sort === 'price') {
+            $query->orderBy('price_ex_vat', $direction)->orderBy('name');
+        } else {
+            $query->orderBy($sort, $direction)->orderBy('name');
+        }
+
+        $services = $query->paginate(25)->withQueryString();
 
         return view('commercial::Tech.cs.services.index', [
             'services' => $services,
-            'search' => $search,
+            'statuses' => Services::query()->distinct()->orderBy('status')->pluck('status')->filter()->values(),
+            'billingCycles' => Services::query()->distinct()->orderBy('billing_cycle')->pluck('billing_cycle')->filter()->values(),
+            'audiences' => Services::query()->distinct()->orderBy('availability_audience')->pluck('availability_audience')->filter()->values(),
+            'filters' => $request->only(['q', 'status', 'billing_cycle', 'audience', 'orderable', 'sort', 'direction']),
         ]);
     }
 

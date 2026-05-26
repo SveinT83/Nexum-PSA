@@ -62,7 +62,12 @@ class EconomyModuleTest extends TestCase
             ->get(route('tech.economy.orders.index'))
             ->assertOk()
             ->assertViewIs('economy::Tech.Orders.index')
-            ->assertViewHas('orders');
+            ->assertViewHas('orders')
+            ->assertSee('<h1>Economy</h1>', false)
+            ->assertSee('Orders')
+            ->assertSee('period_start')
+            ->assertSee('period_end')
+            ->assertSee('Generate orders');
 
         $this->assertDatabaseHas('economy_settings', [
             'create_orders_from_closed_ticket_time' => true,

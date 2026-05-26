@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Services\BodyNormalizer;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
@@ -88,42 +89,9 @@ class LinkInboundEmailToTicket
     {
         // The ticket message body is required even when the source email only had attachments or unreadable HTML.
         $body = $email->body_text ?: trim(strip_tags((string) $email->body_html_sanitized));
-        $body = $this->stripQuotedHistory($body);
+        $body = BodyNormalizer::stripQuotedHistory($body);
 
         return $body !== '' ? $body : '[Inbound email had no readable body.]';
-    }
-
-    private function stripQuotedHistory(string $body): string
-    {
-        $body = str_replace(["\r\n", "\r"], "\n", trim($body));
-
-        if ($body === '') {
-            return '';
-        }
-
-        $lines = explode("\n", $body);
-        $kept = [];
-
-        foreach ($lines as $line) {
-            $trimmed = trim($line);
-
-            // Common reply delimiters from Gmail, Outlook, Apple Mail, and Scandinavian-localized clients.
-            if (
-                $trimmed === '--- Please reply above this line ---'
-                || preg_match('/^On .+ wrote:$/iu', $trimmed)
-                || preg_match('/^(man|tir|ons|tor|fre|lør|lor|søn|son)\.?\s+.+\s+skrev\s+.+:$/iu', $trimmed)
-                || preg_match('/^Den .+ skrev .+:$/iu', $trimmed)
-                || preg_match('/^-{2,}\s*Original Message\s*-{2,}$/iu', $trimmed)
-                || preg_match('/^(From|Fra|Sent|Sendt|To|Til|Subject|Emne):\s+/iu', $trimmed)
-                || str_starts_with($trimmed, '>')
-            ) {
-                break;
-            }
-
-            $kept[] = $line;
-        }
-
-        return trim(implode("\n", $kept));
     }
 
     private function inheritEmailTags(EmailMessage $email, Ticket $ticket): void

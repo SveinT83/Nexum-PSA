@@ -11,7 +11,7 @@
 @section('title', $documentation->title)
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
         <div>
             <h1 class="h4 mb-0">{{ $documentation->title }}</h1>
             <nav aria-label="breadcrumb">

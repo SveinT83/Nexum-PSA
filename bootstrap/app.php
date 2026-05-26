@@ -33,6 +33,8 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         // Alias custom middleware
         $middleware->alias([
             'tech' => \App\Http\Middleware\TechAccess::class,
@@ -50,5 +52,4 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->create();
-
 

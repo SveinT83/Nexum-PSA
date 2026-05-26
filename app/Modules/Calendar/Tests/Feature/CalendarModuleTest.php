@@ -53,6 +53,11 @@ class CalendarModuleTest extends TestCase
             ->get(route('tech.calendar.index'))
             ->assertOk()
             ->assertSee('Calendar')
+            ->assertSee('Search events')
+            ->assertSee('Sort by')
+            ->assertSee('card-header', false)
+            ->assertSee('New')
+            ->assertSee('Today')
             ->assertSee('Ada Tech work calendar');
 
         $this->assertDatabaseHas('calendars', [
@@ -61,6 +66,57 @@ class CalendarModuleTest extends TestCase
             'owner_id' => $this->tech->id,
             'is_default' => true,
         ]);
+    }
+
+    #[Test]
+    public function technician_can_search_and_sort_calendar_events(): void
+    {
+        $calendar = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
+
+        CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $calendar->id,
+            'title' => 'Beta deployment',
+            'starts_at' => Carbon::parse('2026-05-18 09:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 10:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => 'public',
+            'created_by' => $this->tech->id,
+        ]);
+        CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $calendar->id,
+            'title' => 'Alpha planning',
+            'starts_at' => Carbon::parse('2026-05-18 11:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 12:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'tentative',
+            'transparency' => 'busy',
+            'visibility' => 'public',
+            'created_by' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.calendar.index', [
+                'view' => 'list',
+                'date' => '2026-05-18',
+                'event_sort' => 'title',
+                'event_direction' => 'asc',
+            ]))
+            ->assertOk()
+            ->assertSeeInOrder(['Alpha planning', 'Beta deployment']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.calendar.index', [
+                'view' => 'list',
+                'date' => '2026-05-18',
+                'event_search' => 'deployment',
+            ]))
+            ->assertOk()
+            ->assertSee('Beta deployment')
+            ->assertDontSee('Alpha planning');
     }
 
     #[Test]

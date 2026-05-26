@@ -64,6 +64,7 @@ class AiAgentResolver
             'commercial' => 'Commercial',
             'risk' => 'Risk',
             'storage' => 'Storage',
+            'tasks' => 'Tasks',
             'system' => 'System/Admin',
         ];
     }

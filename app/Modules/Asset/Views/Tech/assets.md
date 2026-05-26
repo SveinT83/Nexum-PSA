@@ -86,7 +86,7 @@ The module currently uses the existing database tables:
 Important `assets` fields:
 
 - `client_id`, `site_id`, `user_id`: link the asset into the client structure.
-- `vendor_id`: links the asset to the shared vendor register.
+- `vendor_id`: links the asset to the Documentation-owned vendor/manufacturer register in the shared `vendors` table.
 - `type`: one of `server`, `pc`, `laptop`, `switch`, `ap`, `firewall`, `mobile`, or `other`.
 - `serial_number`, `mac_address`, `hostname`: used for manual identification and RMM matching.
 - `source`: identifies whether the asset was created manually or by an integration.
@@ -110,6 +110,7 @@ The module is used by:
 - N-able RMM sync.
 - Tactical RMM sync.
 - Alert sync jobs.
+- Documentation-owned vendor/supplier master data.
 - Documentation/template dynamic fields.
 - Future Risk links through polymorphic relationship records.
 

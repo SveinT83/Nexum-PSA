@@ -77,6 +77,7 @@ class TicketController extends Controller
             'ownership',
             'client_id',
             'sort',
+            'direction',
         ]);
 
         return view('ticket::Tech.Tickets.index', [
@@ -165,8 +166,8 @@ class TicketController extends Controller
             'contact_id' => 'nullable|exists:client_users,id',
             'asset_id' => 'nullable|exists:assets,id',
             'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
-            'tag_ids' => 'nullable|array',
-            'tag_ids.*' => 'integer|exists:tags,id',
+            'tag_names' => 'nullable|array',
+            'tag_names.*' => 'nullable|string|max:80',
             'type' => 'nullable|string|max:50',
             'impact' => 'nullable|integer|min:1|max:5',
             'urgency' => 'nullable|integer|min:1|max:5',
@@ -198,10 +199,10 @@ class TicketController extends Controller
         );
 
         if (! empty($data['category_id'])) {
-            $data['category_id'] = Category::forTickets()->active()->findOrFail($data['category_id'])->id;
+            $data['category_id'] = $this->ticketCategoryId((int) $data['category_id']);
         }
 
-        $data['tag_ids'] = $this->activeTagIds($data['tag_ids'] ?? []);
+        $data['tag_ids'] = $this->resolveTagIds($data['tag_names'] ?? []);
 
         if (! empty($data['ticket_type_id'])) {
             $type = TicketType::where('is_active', true)->findOrFail($data['ticket_type_id']);
@@ -225,7 +226,7 @@ class TicketController extends Controller
     {
         app(EnsureTicketDefaults::class)->handle();
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries']);
         $messageIds = $ticket->messages->pluck('id')->all();
 
         $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);
@@ -511,8 +512,8 @@ class TicketController extends Controller
             'site_id' => 'nullable|exists:client_sites,id',
             'asset_id' => 'nullable|exists:assets,id',
             'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
-            'tag_ids' => 'nullable|array',
-            'tag_ids.*' => 'integer|exists:tags,id',
+            'tag_names' => 'nullable|array',
+            'tag_names.*' => 'nullable|string|max:80',
         ]);
 
         $queue = TicketQueue::where('is_active', true)->findOrFail($data['queue_id']);
@@ -520,7 +521,7 @@ class TicketController extends Controller
         $priority = TicketPriority::where('is_active', true)->findOrFail($data['priority_id']);
         $categoryId = empty($data['category_id'])
             ? null
-            : Category::forTickets()->active()->findOrFail($data['category_id'])->id;
+            : $this->ticketCategoryId((int) $data['category_id']);
         $siteId = $this->resolveSiteId($ticket->client_id, $data['site_id'] ?? null, $ticket->contact_id, $data['asset_id'] ?? null);
         $assetId = empty($data['asset_id'])
             ? null
@@ -538,7 +539,7 @@ class TicketController extends Controller
         ], $request->user());
 
         $changeTicketStatus->handle($ticket->refresh(), $status, $request->user());
-        $ticket->tags()->syncWithPivotValues($this->activeTagIds($data['tag_ids'] ?? []), ['module' => 'ticket']);
+        $ticket->tags()->syncWithPivotValues($this->resolveTagIds($data['tag_names'] ?? []), ['module' => 'ticket']);
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Ticket updated.');
@@ -761,7 +762,22 @@ class TicketController extends Controller
 
     private function ticketCategories(): Collection
     {
-        return Category::forTickets()->active()->orderBy('name')->get();
+        return Category::query()
+            ->active()
+            ->where(fn ($query) => $query
+                ->where('type', Category::TYPE_TICKET)
+                ->orWhereNull('type')
+            )
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function ticketCategoryId(int $categoryId): int
+    {
+        return $this->ticketCategories()
+            ->firstWhere('id', $categoryId)
+            ?->id
+            ?? abort(422, 'Invalid ticket category.');
     }
 
     private function activeTags(): Collection
@@ -769,19 +785,32 @@ class TicketController extends Controller
         return Tag::where('active', true)->orderBy('name')->get();
     }
 
-    private function activeTagIds(array $tagIds): array
+    private function resolveTagIds(array $tagNames): array
     {
-        return Tag::where('active', true)
-            ->whereIn('id', $tagIds)
-            ->pluck('id')
-            ->map(fn ($tagId) => (int) $tagId)
+        return collect($tagNames)
+            ->map(fn (?string $name) => trim((string) $name))
+            ->filter()
+            ->unique(fn (string $name) => Str::lower($name))
+            ->map(function (string $name) {
+                return Tag::query()->firstOrCreate(
+                    ['slug' => Str::slug($name)],
+                    [
+                        'name' => $name,
+                        'active' => true,
+                    ],
+                )->id;
+            })
+            ->values()
             ->all();
     }
 
     private function ticketCategoryRule(): Exists
     {
         return Rule::exists('categories', 'id')
-            ->where('type', Category::TYPE_TICKET)
+            ->where(fn ($query) => $query
+                ->where('type', Category::TYPE_TICKET)
+                ->orWhereNull('type')
+            )
             ->where('is_active', true);
     }
 

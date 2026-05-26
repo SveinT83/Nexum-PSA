@@ -26,10 +26,6 @@
 @endsection
 
 @section('rightbar')
-    <h3>Notifications</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
 @endsection
 
 

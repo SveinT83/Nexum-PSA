@@ -87,6 +87,77 @@
             </div>
 
             <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Vendor & Supplier</h5></div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="manufacturer_vendor_id" class="form-label">Vendor / Manufacturer</label>
+                            <select id="manufacturer_vendor_id" name="manufacturer_vendor_id" class="form-select @error('manufacturer_vendor_id') is-invalid @enderror">
+                                <option value="">Select existing</option>
+                                @foreach($manufacturers as $manufacturer)
+                                    <option value="{{ $manufacturer->id }}" @selected((string) old('manufacturer_vendor_id', $item->manufacturer_vendor_id) === (string) $manufacturer->id)>{{ $manufacturer->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('manufacturer_vendor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="form-text">
+                                <a href="{{ route('tech.documentations.vendors.create') }}" target="_blank" rel="noopener">New vendor</a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="manufacturer_part_number" class="form-label">Manufacturer Part No.</label>
+                            <input type="text" id="manufacturer_part_number" name="manufacturer_part_number" class="form-control @error('manufacturer_part_number') is-invalid @enderror" value="{{ old('manufacturer_part_number', $item->manufacturer_part_number) }}">
+                            @error('manufacturer_part_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="primary_vendor_id" class="form-label">Supplier</label>
+                            <select id="primary_vendor_id" name="primary_vendor_id" class="form-select @error('primary_vendor_id') is-invalid @enderror">
+                                <option value="">Select existing</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" @selected((string) old('primary_vendor_id', $item->primary_vendor_id) === (string) $supplier->id)>{{ $supplier->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('primary_vendor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="form-text">
+                                <a href="{{ route('tech.documentations.suppliers.create') }}" target="_blank" rel="noopener">New supplier</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="supplier_sku" class="form-label">Supplier SKU</label>
+                            <input type="text" id="supplier_sku" name="supplier_sku" class="form-control @error('supplier_sku') is-invalid @enderror" value="{{ old('supplier_sku', $primarySupplierLine?->vendor_sku) }}">
+                            @error('supplier_sku')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="col-md-8">
+                            <label for="supplier_purchase_url" class="form-label">Purchase URL</label>
+                            <input type="url" id="supplier_purchase_url" name="supplier_purchase_url" class="form-control @error('supplier_purchase_url') is-invalid @enderror" value="{{ old('supplier_purchase_url', $primarySupplierLine?->purchase_url) }}" placeholder="https://">
+                            @error('supplier_purchase_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_currency" class="form-label">Currency</label>
+                            <input type="text" id="supplier_currency" name="supplier_currency" class="form-control @error('supplier_currency') is-invalid @enderror" value="{{ old('supplier_currency', $primarySupplierLine?->currency ?? 'NOK') }}" maxlength="3">
+                            @error('supplier_currency')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_lead_time_days" class="form-label">Lead Time</label>
+                            <input type="number" id="supplier_lead_time_days" name="supplier_lead_time_days" class="form-control @error('supplier_lead_time_days') is-invalid @enderror" value="{{ old('supplier_lead_time_days', $primarySupplierLine?->lead_time_days ?? $item->lead_time_days) }}" min="0">
+                            @error('supplier_lead_time_days')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_moq" class="form-label">Supplier MOQ</label>
+                            <input type="number" id="supplier_moq" name="supplier_moq" class="form-control @error('supplier_moq') is-invalid @enderror" value="{{ old('supplier_moq', $primarySupplierLine?->moq ?? $item->moq) }}" min="1">
+                            @error('supplier_moq')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_pack_size" class="form-label">Pack Size</label>
+                            <input type="number" id="supplier_pack_size" name="supplier_pack_size" class="form-control @error('supplier_pack_size') is-invalid @enderror" value="{{ old('supplier_pack_size', $primarySupplierLine?->pack_size ?? 1) }}" min="1">
+                            @error('supplier_pack_size')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
                 <div class="card-header"><h5 class="mb-0">Stock & Pricing</h5></div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -127,7 +198,7 @@
                         </div>
                         <div class="col-md-3">
                             <label for="vat_rate" class="form-label">VAT Rate</label>
-                            <input type="number" step="0.01" id="vat_rate" name="vat_rate" class="form-control @error('vat_rate') is-invalid @enderror" value="{{ old('vat_rate', $item->vat_rate) }}" min="0">
+                            <input type="number" step="0.01" id="vat_rate" name="vat_rate" class="form-control @error('vat_rate') is-invalid @enderror" value="{{ old('vat_rate', $item->vat_rate ?? $defaultVatRate) }}" min="0">
                             @error('vat_rate')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6">
@@ -155,10 +226,5 @@
 @endsection
 
 @section('rightbar')
-    <div class="card">
-        <div class="card-header"><h5 class="mb-0">Ticket billing text</h5></div>
-        <div class="card-body small text-muted">
-            Short Description is used as the default invoice text when this item is reserved on a ticket.
-        </div>
-    </div>
+    @include('storage::Tech.Storage.items.partials.documentation-card')
 @endsection

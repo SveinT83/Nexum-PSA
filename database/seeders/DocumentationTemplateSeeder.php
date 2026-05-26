@@ -176,5 +176,11 @@ class DocumentationTemplateSeeder extends Seeder
                 );
             }
         }
+
+        // Vendors and suppliers are fixed Documentation-owned registers, not
+        // template-driven documents. Remove any rows left by early experiments.
+        Category::whereIn('slug', ['vendors', 'suppliers'])
+            ->pluck('id')
+            ->each(fn ($categoryId) => DocumentationTemplate::where('category_id', $categoryId)->delete());
     }
 }

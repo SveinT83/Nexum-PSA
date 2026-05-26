@@ -26,8 +26,9 @@ class AssetQuery
 
         $this->applyClientContext($query, $client);
         $this->applyRequestFilters($query, $request);
+        $this->applySorting($query, $request);
 
-        return $query->latest()->paginate(25);
+        return $query->paginate(25)->withQueryString();
     }
 
     private function baseDisplayQuery(): Builder
@@ -61,5 +62,30 @@ class AssetQuery
                 $alertQuery->where('status', 'active');
             });
         }
+    }
+
+    private function applySorting(Builder $query, Request $request): void
+    {
+        $sort = $request->get('sort', 'last_seen_at');
+        $direction = $request->get('direction') === 'asc' ? 'asc' : 'desc';
+        $sortableColumns = ['name', 'type', 'client_site', 'status', 'last_seen_at'];
+
+        if (! in_array($sort, $sortableColumns, true)) {
+            $sort = 'last_seen_at';
+        }
+
+        if ($sort === 'client_site') {
+            $query->leftJoin('clients', 'assets.client_id', '=', 'clients.id')
+                ->leftJoin('client_sites', 'assets.site_id', '=', 'client_sites.id')
+                ->select('assets.*')
+                ->orderBy('clients.name', $direction)
+                ->orderBy('client_sites.name', $direction)
+                ->orderBy('assets.name');
+
+            return;
+        }
+
+        $query->orderBy('assets.'.$sort, $direction)
+            ->orderBy('assets.name');
     }
 }

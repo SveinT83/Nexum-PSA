@@ -3,17 +3,10 @@
 @section('title', 'Edit Asset: ' . $asset->name)
 
 @section('pageHeader')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('tech.assets.index') }}">Assets</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('tech.assets.show', $asset->id) }}">{{ $asset->name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Edit</li>
-        </ol>
-    </nav>
     <div class="d-flex justify-content-between align-items-center">
         <h1>Edit: {{ $asset->name }}</h1>
         <div class="btn-group">
-            <x-buttons.back :url="route('tech.assets.show', $asset->id)">Back to Asset</x-buttons.back>
+            <x-buttons.back :url="route('tech.assets.show', $asset->id)" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection

@@ -60,11 +60,19 @@ The page header must adapt to the content it actually contains. It should not re
 
 Guidelines:
 
+- Page headers are compact work-surface labels, not banners.
+- The default shape is one low line: current page or object name on the left, and at most one or two primary navigation/actions on the right.
+- Do not put explanatory subtitle text in PageHeader. Text such as "Shelves, books, chapters, and pages" belongs in body content, cards, empty states, or documentation, never in the page header.
+- Use the centralized breadcrumb system in `config/breadcrumbs.php` and `resources/views/partials/breadcrumbs.blade.php`. Do not write per-view breadcrumb markup in Blade views.
+- Detail views should define dynamic breadcrumb labels through the shared breadcrumb resolver instead of rendering local breadcrumb HTML.
 - Keep page-header padding tight by default.
 - Reduce vertical padding further when the header has no buttons, tabs, or breadcrumbs.
 - Do not leave empty rows or placeholder space for actions that are not present.
 - Breadcrumbs should not force a tall header; when breadcrumbs are absent or short, the header should collapse naturally.
 - If a page only needs a title, the page header should feel like a compact label for the work surface, not a banner.
+- Put section-specific actions in the relevant card header or panel. For example, an asset `Edit` action belongs in `Asset Details`, and RMM sync actions belong in an integration/sync panel rather than the global page header.
+- Page-header navigation must use the shared button components, especially `resources/views/components/buttons/back.blade.php` for Back. Do not hand-roll Back links or override the component classes in a way that removes the standard icon/button treatment.
+- Avoid explanatory subtitles in the page header. If context is needed, place it in the first body card or a compact help surface.
 
 ## Density And Spacing
 
@@ -95,6 +103,12 @@ Guidelines:
 - Keep table controls close to the table they affect.
 - Avoid vague placeholders such as `N/A` for operational values. Use a clearer state like `Not assessed`, `No score`, `Unknown`, or a muted dash depending on what the data actually means.
 - Missing values should not look like real data. Use muted styling for absent, unknown, or not-yet-calculated values.
+- Operational index lists should sit in a card or similarly clear bounded list surface when that improves scanability. Put search and filters directly above the list, not inside the global page header.
+- For dense operational indexes, prefer a search card with the main search field visible and secondary filters hidden behind a compact funnel-icon toggle. Open the filter area automatically when secondary filters are active and show a small active-filter count badge on the funnel button.
+- When a create action belongs specifically to the list being searched or filtered, place that action on the same row as the search/filter controls. Keep only navigation-level actions such as `Back` in the page header.
+- Sortable table headers should be real links with compact sort indicators. Preserve current filters/search in sort links.
+- Detail/list rows may be clickable when the row has one natural destination. Keep the primary name/identifier as a real link for accessibility and stop row-click handling on nested links.
+- Use a muted dash (`—`) as the default display for absent short values such as address, city, phone, and email unless a more specific state is operationally useful.
 
 ## Cards And Panels
 
@@ -129,6 +143,20 @@ Guidelines:
 - Read-only pages should make important values easier to scan than they would be in an edit form.
 - Avoid single-column read-only summaries when they leave large unused horizontal space.
 
+## Form Layouts
+
+Operational create/edit forms should stay readable when they contain many fields.
+
+Guidelines:
+
+- Keep one HTML form for one save action, but split long forms into sibling cards with focused headers such as `Task`, `Context`, `Workflow & Schedule`, `Classification`, and `Checklist`.
+- Do not nest cards inside a form card. Use sibling cards inside the same `<form>` so the save action remains simple while the page is easier to scan.
+- Put the primary submit action at the bottom of the form, not in every card.
+- Use dynamic searchable inputs for large reference lists such as clients, sites, tickets, vendors, and suppliers. Avoid long static select boxes when users normally know what they are searching for.
+- Search suggestions should use standard Bootstrap dropdown/list styling such as `dropdown-menu` and `dropdown-item`. Keep suggestions hidden until the user types, then hide them again after selection so forms do not become noisy.
+- Dependent fields should narrow each other. Selecting a site may set the client; selecting a ticket may set client, site, estimated time, and ticket billing rate context.
+- Checklist-style form inputs should use add/remove row controls for normal users. Plain newline textareas are acceptable only for import/paste-heavy power-user workflows.
+
 ## Actions
 
 Actions must be consistent across modules.
@@ -138,6 +166,7 @@ Standard patterns:
 - Primary page action: one clear primary button near the page title or table header.
 - Create/add actions should use the shared add button/link components from `resources/views/components/buttons` unless the page has a specific reason not to.
 - Action buttons should include the established icon treatment when a shared component already provides one.
+- When passing spacing classes such as `mb-0` to shared button components, append to the standard component style rather than replacing it.
 - Secondary actions: neutral buttons or dropdown actions.
 - Row actions: icon buttons or one compact dropdown.
 - Destructive actions: visually distinct and preferably confirmed.
@@ -210,6 +239,16 @@ Useful left-panel content includes:
 - Category and priority filters.
 
 Avoid placeholder-only text such as "Overview" unless it is temporary during active development.
+
+Rightbar cards should be compact by default. Most rightbar sections should be implemented as accordions and collapsed by default, especially when they contain secondary details, raw metadata, documentation, sync tools, related records, or long operational context. Keep only the highest-signal, next-action content expanded by default, such as active SLA risk, unread/customer activity, critical warnings, or currently failing checks.
+
+Rightbar accordion headers should expose enough signal to scan without opening the section: title, count, status badge, warning icon, or last-updated timestamp where relevant. Avoid empty card headers that only repeat a title and force users to expand every section to know whether it matters.
+
+Documentation widgets in rightbars should open focused help content in a Bootstrap modal when the user is staying in the same workflow. External/new-tab links are acceptable only as secondary links to raw Markdown or full Knowledge pages.
+
+## Taxonomy Inputs
+
+Global tags should behave like a classic tag system on create/edit forms: users type into a text input, existing tags are suggested while typing, Enter/comma creates a chip, and unknown tag names are created on save. Avoid multi-select tag boxes for operational forms unless the list is intentionally small and fixed.
 
 ## Sidebar Navigation
 

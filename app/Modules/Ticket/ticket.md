@@ -561,6 +561,7 @@ Remaining assignment work:
   - Done: Ticket Rules can add tags and set category based on `email_tags`.
   - Done: Assignment Rules and Assignment Engine can use ticket tags and technician tag skills.
   - Done: ticket create/edit/show surfaces active tags.
+  - Done: ticket create/edit uses chip-style tag entry with suggestions and creates new shared tags on save.
   - Remaining: add tag filters to the ticket index when daily usage needs it.
 - Attachments:
   - Done: create dedicated `ticket_attachments` table/model.
@@ -582,6 +583,7 @@ Remaining assignment work:
 Skill model:
 
 - Categories represent broad domains such as Network, Printer, Email, or Server.
+- Ticket category selects show active categories marked as `ticket` plus active general categories with no type.
 - Tags represent specific tools, vendors, technologies, or customer traits such as Fortigate, Microsoft 365, UniFi, VIP, or onsite.
 - Assignment can use both category and tag skills once Ticket Rules set category/tags on the ticket.
 

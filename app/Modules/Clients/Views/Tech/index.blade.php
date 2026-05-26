@@ -8,99 +8,132 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-
-        <h1>Clients</h1>
-
-
+    <h1>Clients</h1>
 @endsection
 
 @section('content')
+    @php
+        $missing = fn ($value) => filled($value) ? $value : '—';
+        $sortLink = function (string $column) use ($sort, $direction) {
+            $nextDirection = $sort === $column && $direction === 'asc' ? 'desc' : 'asc';
+
+            return request()->fullUrlWithQuery([
+                'sort' => $column,
+                'direction' => $nextDirection,
+            ]);
+        };
+        $sortIcon = function (string $column) use ($sort, $direction) {
+            if ($sort !== $column) {
+                return 'bi-arrow-down-up';
+            }
+
+            return $direction === 'asc' ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up';
+        };
+    @endphp
+
+    <!-- ------------------------------------------------- -->
+    <!-- Search and list controls -->
+    <!-- ------------------------------------------------- -->
+    <form method="get" class="mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-10">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="Search name / org no / email" />
+                    <input type="hidden" name="sort" value="{{ $sort }}">
+                    <input type="hidden" name="direction" value="{{ $direction }}">
+                    <button class="btn btn-outline-secondary" type="submit">Search</button>
+                </div>
+            </div>
+            <div class="col-md-2 text-md-end">
+                <x-buttons.addlink url="{{ route('tech.clients.create') }}" class="mb-0">New Client</x-buttons.addlink>
+            </div>
+        </div>
+    </form>
 
     <!-- -------------------------------------------------------------------------------------------------- -->
-    <!-- Client Card whit Serarch form and new client button -->
+    <!-- Client list -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     <div class="card">
-
-        <!-- ------------------------------------------------- -->
-        <!-- Card Header -->
-        <!-- ------------------------------------------------- -->
-        <div class="card-header">
-
-            <div class="row">
-
-                <!-- Search Form -->
-                <form method="get" class="col-md-10">
-                    <div class="input-group">
-                        <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="Search name / org no / email" />
-                        <button class="btn btn-outline-secondary" type="submit">Search</button>
-                    </div>
-                </form>
-
-                <!-- Button: New Client -->
-                <div class="col-md-2 text-end">
-                    <x-buttons.addlink url="{{ route('tech.clients.create') }}"> New Client</x-buttons.addlink>
-                </div>
-
-            </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>
+                        <a href="{{ $sortLink('name') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
+                            Name <i class="bi {{ $sortIcon('name') }}"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ $sortLink('org_no') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
+                            Org No <i class="bi {{ $sortIcon('org_no') }}"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ $sortLink('format') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
+                            Format <i class="bi {{ $sortIcon('format') }}"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ $sortLink('billing_email') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
+                            Billing Email <i class="bi {{ $sortIcon('billing_email') }}"></i>
+                        </a>
+                    </th>
+                    <th>Risk Score</th>
+                    <th>
+                        <a href="{{ $sortLink('status') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
+                            Status <i class="bi {{ $sortIcon('status') }}"></i>
+                        </a>
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                @forelse($clients as $client)
+                    <tr class="cursor-pointer" data-href="{{ route('tech.clients.show', $client) }}" onclick="window.location.href = this.dataset.href">
+                        <td>
+                            <a href="{{ route('tech.clients.show', $client) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">
+                                {{ $client->name }}
+                            </a>
+                        </td>
+                        <td class="{{ blank($client->org_no) ? 'text-muted' : '' }}">{{ $missing($client->org_no) }}</td>
+                        <td class="{{ blank($client->clientFormat?->code) ? 'text-muted' : '' }}">{{ $missing($client->clientFormat?->code) }}</td>
+                        <td class="{{ blank($client->billing_email) ? 'text-muted' : '' }}">
+                            @if($client->billing_email)
+                                <a href="mailto:{{ $client->billing_email }}" onclick="event.stopPropagation()">{{ $client->billing_email }}</a>
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if($client->risk_score !== null)
+                                <span class="badge {{ $client->risk_score_badge_class }}">
+                                    {{ $client->risk_score }}
+                                </span>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($client->active)
+                                <span class="badge bg-success">Active</span>
+                            @else
+                                <span class="badge bg-secondary">Inactive</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No clients found.</td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
         </div>
 
-        <!-- ------------------------------------------------- -->
-        <!-- Card Body -->
-        <!-- ------------------------------------------------- -->
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead class="table-light">
-                    <tr>
-                        <th>Name</th>
-                        <th>Org No</th>
-                        <th>Billing Email</th>
-                        <th>Risk Score</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @forelse($clients as $client)
-                        <tr>
-                            <td>
-                                <a href="{{ route('tech.clients.show', $client) }}" class="text-decoration-none">{{ $client->name }}</a>
-                            </td>
-                            <td>{{ $client->org_no ?? '—' }}</td>
-                            <td>{{ $client->billing_email ?? '—' }}</td>
-                            <td>
-                                @if($client->risk_score !== null)
-                                    <span class="badge {{ $client->risk_score_badge_class }}">
-                                        {{ $client->risk_score }}
-                                    </span>
-                                @else
-                                    <span class="text-muted small">N/A</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($client->active)
-                                    <span class="badge bg-success">Active</span>
-                                @else
-                                    <span class="badge bg-secondary">Inactive</span>
-                                @endif
-                            </td>
-                            <td class="text-end">
-                                <a href="{{ route('tech.clients.show', $client) }}" class="btn btn-sm btn-outline-primary">Open</a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-4">No clients found.</td>
-                        </tr>
-                    @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-3">
+        @if($clients->hasPages())
+            <div class="card-footer">
                 {{ $clients->links() }}
             </div>
-        </div>
+        @endif
     </div>
 @endsection
 
@@ -111,5 +144,4 @@
 @endsection
 
 @section('rightbar')
-    <div class="p-3 small text-muted">Recent clients (MVP later)</div>
 @endsection

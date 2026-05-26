@@ -3,15 +3,11 @@
 @section('title', 'Rates')
 
 @section('pageHeader')
-    <div class="col">
-        <h1 class="h4 mb-1">Rates</h1>
-        <div class="text-muted small">Reusable hourly and travel rates used by services, contracts, tickets, and timebank billing.</div>
-    </div>
-    <div class="col-auto">
-        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createRateModal">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i>
-            New Rate
-        </button>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Rates</h1>
+        <div>
+            <x-buttons.back url="{{ route('tech.sales.index') }}" class="mb-0">Back</x-buttons.back>
+        </div>
     </div>
 @endsection
 
@@ -39,7 +35,13 @@
     <div class="card">
         <div class="card-header py-2 d-flex align-items-center justify-content-between">
             <h2 class="h6 mb-0">Rate Catalogue</h2>
-            <span class="badge text-bg-light border">{{ $rates->count() }} rates</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge text-bg-light border">{{ $rates->count() }} rates</span>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createRateModal">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    New Rate
+                </button>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0">

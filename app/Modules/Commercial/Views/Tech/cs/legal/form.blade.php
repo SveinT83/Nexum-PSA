@@ -8,17 +8,17 @@
 @endphp
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">New Term og /and Legal</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>{{ $isShow ? ($term->name ?? 'Legal & Term') : ($isEdit ? 'Edit Legal & Term' : 'New Legal & Term') }}</h1>
 
         <div>
             <!-- Edit button -->
             @if($isShow && isset($term))
-                <a href="{{ route('tech.legal.edit', $term) }}" class="btn btn-sm btn-outline-warning bi bi-pencil"> Edit</a>
+                <x-buttons.editlink url="{{ route('tech.legal.edit', $term) }}" class="mb-0">Edit</x-buttons.editlink>
             @endif
 
             <!-- Back button -->
-            <a href="{{ route('tech.legal.index') }}" class="btn btn-sm btn-secondary bi bi-backspace"> Back</a>
+            <x-buttons.back url="{{ route('tech.legal.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection
