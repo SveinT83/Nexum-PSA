@@ -35,6 +35,9 @@ Route::middleware('admin')->group(function () {
     Route::post('/admin/system/nextcloud/connections/{connection}/sync', [NextcloudConnectionController::class, 'sync'])
         ->name('admin.nextcloud.connections.sync');
 
+    Route::post('/admin/system/nextcloud/connections/{connection}/test-talk-bot', [NextcloudConnectionController::class, 'testTalkBot'])
+        ->name('admin.nextcloud.connections.test-talk-bot');
+
     Route::post('/admin/system/nextcloud/connections/{connection}/users', [NextcloudConnectionController::class, 'storeUserMapping'])
         ->name('admin.nextcloud.connections.users.store');
 

@@ -74,6 +74,13 @@ class AssetAlertTriggered extends Notification
         return [
             'title' => "⚠️ Alert: {$this->alertTitle}",
             'message' => "Asset **{$this->asset->hostname}** — {$this->alertMessage}",
+            'details' => array_filter([
+                'Type' => $this->asset->type,
+                'Source' => ucfirst(str_replace('_', ' ', $this->integrationType)),
+            ]),
+            'url' => route('tech.assets.show', $this->asset->id),
+            'urlLabel' => 'View Asset',
+            'referenceId' => 'asset-alert-' . $this->asset->id . '-' . time(),
         ];
     }
 }

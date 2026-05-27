@@ -359,6 +359,69 @@ Not implemented yet:
 - Ticket file picker.
 - Managed folder/group writes.
 - Provider-neutral SSO/identity provider domain integration.
+- Incoming Talk bot command processing (receiving and handling commands from Talk users).
+- Talk bot webhook endpoint for receiving incoming messages from Nextcloud Talk.
+
+## Talk Bot Integration
+
+The Nextcloud module includes a Talk Bot API integration that sends signed, rich-format
+notifications to Nextcloud Talk conversations. This replaces the simple webhook approach
+previously used by the Notification module's `NextcloudTalkChannel`.
+
+### Requirements
+
+- Nextcloud 27.1+ / Talk 17.1+ with the `bots-v1` capability.
+- A Talk bot installed on the Nextcloud server via `./occ talk:bot:install`.
+- The bot's shared secret and numeric ID stored in the Nextcloud connection settings.
+
+### Setup
+
+1. Install a bot on the Nextcloud server:
+   ```bash
+   ./occ talk:bot:install "Nexum Bot" <secret> <webhook-url> <nextcloud-url>
+   ```
+2. Enable the bot in one or more Talk conversations.
+3. In Nexum admin, go to the Nextcloud connection settings and expand the **Talk Bot Configuration** section.
+4. Enter the Bot ID (shown by `./occ talk:bot:list`), shared secret, and default conversation token.
+5. Click **Test Bot Message** to verify the integration.
+
+### How It Works
+
+The `NextcloudTalkClient` service sends HMAC-SHA256 signed messages to the Talk Bot API endpoint:
+
+```
+POST /ocs/v2.php/apps/spreed/api/v1/bot/{token}/message
+```
+
+Each request includes:
+- `X-Nextcloud-Talk-Random`: A random string for nonce.
+- `X-Nextcloud-Talk-Signature`: HMAC-SHA256 of `{random}{body}` using the bot secret.
+- `OCS-APIRequest: true` header.
+
+The `NextcloudTalkChannel` notification channel automatically selects the delivery mode:
+- **Bot API** (preferred): When the connection has `talk_bot_id` and `talk_bot_secret` configured.
+- **Webhook** (fallback): When only a webhook URL is configured (legacy mode, plain text only).
+
+### Rich Message Formatting
+
+Notifications sent via the Bot API support:
+- **Title** (bold header).
+- **Details** (key-value bullet list).
+- **Links** (Markdown link to the relevant Nexum object).
+- **Reference IDs** (deduplication for Bot API).
+- **Silent messages** (e.g., SLA warnings don't trigger push notifications).
+
+### Conversation Token Resolution
+
+The channel resolves the target conversation token in this order:
+1. Per-user `nextcloud_talk_webhook_url` setting (extracts token from URL).
+2. System-wide `default_conversation_token` in the notification channel config.
+3. Connection-level `talk_default_conversation_token`.
+
+### Incoming Commands (Planned)
+
+A future webhook controller will receive Talk bot messages (signed with the same shared secret)
+and process commands like `!status TK-42` or `!assign TK-42 @username`.
 
 ## Technical Direction
 

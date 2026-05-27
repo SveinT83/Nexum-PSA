@@ -19,6 +19,7 @@ use App\Modules\Nextcloud\Models\NextcloudFolderMapping;
 use App\Modules\Nextcloud\Models\NextcloudGroupMapping;
 use App\Modules\Nextcloud\Models\NextcloudUserMapping;
 use App\Modules\Nextcloud\Services\NextcloudReadClient;
+use App\Modules\Nextcloud\Services\NextcloudTalkClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -138,6 +139,36 @@ class NextcloudConnectionController extends Controller
         return redirect()
             ->back()
             ->with($result['success'] ? 'success' : 'warning', $result['success'] ? 'Nextcloud connection is healthy.' : 'Nextcloud health check failed: '.$result['message']);
+    }
+
+    /**
+     * Send a test message via the Talk Bot API.
+     */
+    public function testTalkBot(NextcloudConnection $connection)
+    {
+        if (! $connection->hasTalkBot()) {
+            return response()->json(['success' => false, 'error' => 'Talk bot is not configured for this connection.']);
+        }
+
+        $talkClient = app(NextcloudTalkClient::class);
+        $conversationToken = $connection->talk_default_conversation_token;
+
+        if (empty($conversationToken)) {
+            return response()->json(['success' => false, 'error' => 'No default conversation token set.']);
+        }
+
+        try {
+            $talkClient->sendBotMessage(
+                $connection,
+                $conversationToken,
+                '🔔 Test message from Nexum — Talk bot integration is working!',
+                ['referenceId' => 'nexum-test-' . time()]
+            );
+
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
 
     public function sync(NextcloudConnection $connection, Request $request, RequestNextcloudSync $sync): RedirectResponse
@@ -450,6 +481,11 @@ class NextcloudConnectionController extends Controller
             'calendar_sync_enabled' => ['nullable', 'boolean'],
             'file_browser_enabled' => ['nullable', 'boolean'],
             'users_groups_read_enabled' => ['nullable', 'boolean'],
+            'talk_bot_id' => ['nullable', 'integer'],
+            'talk_bot_secret' => ['nullable', 'string', 'max:500'],
+            'talk_default_conversation_token' => ['nullable', 'string', 'max:64'],
+            'talk_bot_features' => ['nullable', 'array'],
+            'talk_bot_features.*' => ['string', Rule::in(['reaction', 'no-setup'])],
         ]);
     }
 
