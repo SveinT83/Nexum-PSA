@@ -11,6 +11,7 @@ use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Task\Models\Task;
+use Database\Factories\Ticket\TicketFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -72,6 +73,11 @@ class Ticket extends Model
     public function getRouteKeyName(): string
     {
         return 'ticket_key';
+    }
+
+    protected static function newFactory(): TicketFactory
+    {
+        return TicketFactory::new();
     }
 
     public function queue(): BelongsTo

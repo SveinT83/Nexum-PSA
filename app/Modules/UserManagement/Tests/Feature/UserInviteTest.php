@@ -7,6 +7,8 @@ use App\Modules\UserManagement\Models\InviteToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class UserInviteTest extends TestCase
@@ -17,16 +19,15 @@ class UserInviteTest extends TestCase
     {
         parent::setUp();
         Notification::fake();
+
+        Role::firstOrCreate(['name' => 'Admin']);
     }
 
-    /** @test */
+    #[Test]
     public function creating_a_pending_user_sends_an_invite()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $admin->assignRole('superadmin');
-
-        // Seed roles so the select works
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'superadmin']);
+        $admin->assignRole('Admin');
 
         $this->actingAs($admin);
 
@@ -51,12 +52,11 @@ class UserInviteTest extends TestCase
         Notification::assertSentTo($user, \App\Modules\UserManagement\Notifications\UserInvited::class);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_resend_invite_to_pending_user()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $admin->assignRole('superadmin');
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'superadmin']);
+        $admin->assignRole('Admin');
 
         $pendingUser = User::factory()->create(['status' => User::STATUS_PENDING]);
 
@@ -69,12 +69,11 @@ class UserInviteTest extends TestCase
         Notification::assertSentTo($pendingUser, \App\Modules\UserManagement\Notifications\UserInvited::class);
     }
 
-    /** @test */
+    #[Test]
     public function admin_cannot_send_invite_to_active_user()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $admin->assignRole('superadmin');
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'superadmin']);
+        $admin->assignRole('Admin');
 
         $activeUser = User::factory()->create(['status' => User::STATUS_ACTIVE]);
 
@@ -88,7 +87,7 @@ class UserInviteTest extends TestCase
         Notification::assertNotSentTo($activeUser, \App\Modules\UserManagement\Notifications\UserInvited::class);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_accept_invite_and_set_password()
     {
         $pendingUser = User::factory()->create(['status' => User::STATUS_PENDING]);
@@ -118,7 +117,7 @@ class UserInviteTest extends TestCase
         $this->assertTrue(Hash::check('NewSecureP@ss1', $pendingUser->password));
     }
 
-    /** @test */
+    #[Test]
     public function expired_invite_token_shows_expired_view()
     {
         $pendingUser = User::factory()->create(['status' => User::STATUS_PENDING]);
@@ -133,7 +132,7 @@ class UserInviteTest extends TestCase
         $response->assertSee('Invitation Expired');
     }
 
-    /** @test */
+    #[Test]
     public function used_invite_token_is_rejected()
     {
         $pendingUser = User::factory()->create(['status' => User::STATUS_PENDING]);
@@ -149,7 +148,7 @@ class UserInviteTest extends TestCase
         $response->assertSee('Invitation Expired');
     }
 
-    /** @test */
+    #[Test]
     public function invite_token_is_invalidated_when_new_one_is_generated()
     {
         $pendingUser = User::factory()->create(['status' => User::STATUS_PENDING]);

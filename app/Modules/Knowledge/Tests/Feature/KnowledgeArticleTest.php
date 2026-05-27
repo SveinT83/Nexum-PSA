@@ -903,7 +903,8 @@ class KnowledgeArticleTest extends TestCase
 
         $this->get(route('tech.knowledge.show', $article))
             ->assertOk()
-            ->assertSee('Edit</a>', false);
+            ->assertSee(route('tech.knowledge.edit', $article), false)
+            ->assertSee('Edit');
 
         $this->put(route('tech.knowledge.update', $article), [
             'title' => 'VPN Setup Updated',

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Models\Core\User;
 
 return new class extends Migration
 {
@@ -29,7 +30,7 @@ return new class extends Migration
         // Per-user notification channel preferences
         Schema::create('notification_settings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained((new User())->getTable())->cascadeOnDelete();
             $table->string('notification_type'); // e.g. 'ticket_assigned', 'ticket_updated', 'asset_alert'
             $table->boolean('mail_enabled')->default(true);
             $table->boolean('database_enabled')->default(true);

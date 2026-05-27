@@ -4,8 +4,9 @@ namespace App\Modules\Nextcloud\Models;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
-use Illuminate\Database\Eloquent\Model;
+use Database\Factories\Nextcloud\NextcloudConnectionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -77,6 +78,11 @@ class NextcloudConnection extends Model
         static::creating(function (NextcloudConnection $connection): void {
             $connection->uuid ??= (string) Str::uuid();
         });
+    }
+
+    protected static function newFactory(): NextcloudConnectionFactory
+    {
+        return NextcloudConnectionFactory::new();
     }
 
     public function client(): BelongsTo

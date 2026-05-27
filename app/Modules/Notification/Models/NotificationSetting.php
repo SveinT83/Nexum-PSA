@@ -3,6 +3,7 @@
 namespace App\Modules\Notification\Models;
 
 use App\Models\Core\User;
+use Database\Factories\Notification\NotificationSettingFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -60,6 +61,11 @@ class NotificationSetting extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    protected static function newFactory(): NotificationSettingFactory
+    {
+        return NotificationSettingFactory::new();
     }
 
     /**

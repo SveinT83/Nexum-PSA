@@ -250,12 +250,12 @@ class NextcloudTalkChannel
     protected function extractTokenFromWebhookUrl(string $url): ?string
     {
         // Try to match the Talk webhook URL pattern
-        if (preg_match('#/room/([a-zA-Z0-9]+)/webhook#', $url, $matches)) {
+        if (preg_match('#/room/([a-zA-Z0-9_-]+)/webhook#', $url, $matches)) {
             return $matches[1];
         }
 
         // If it looks like just a token (no URL structure), return it directly
-        if (preg_match('/^[a-zA-Z0-9]{6,20}$/', $url)) {
+        if (preg_match('/^[a-zA-Z0-9_-]{6,64}$/', $url)) {
             return $url;
         }
 

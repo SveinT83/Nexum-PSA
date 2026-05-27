@@ -2,6 +2,7 @@
 
 namespace App\Modules\Notification\Models;
 
+use Database\Factories\Notification\NotificationChannelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -32,6 +33,11 @@ class NotificationChannel extends Model
         'secrets' => 'array', // Will be encrypted at rest
         'last_tested_at' => 'datetime',
     ];
+
+    protected static function newFactory(): NotificationChannelFactory
+    {
+        return NotificationChannelFactory::new();
+    }
 
     /**
      * Get a channel configuration by driver name.

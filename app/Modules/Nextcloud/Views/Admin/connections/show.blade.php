@@ -772,7 +772,7 @@
                 testTalkBotBtn.addEventListener('click', function () {
                     testTalkBotBtn.disabled = true;
                     testTalkBotBtn.textContent = 'Sending…';
-                    fetch('{{ route('admin.nextcloud.connections.test-talk-bot', $connection) }}', {
+                    fetch('{{ route('tech.admin.nextcloud.connections.test-talk-bot', $connection) }}', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                         body: 'action=test_talk_bot',

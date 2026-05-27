@@ -13,6 +13,7 @@ use App\Modules\Notification\Notifications\AssetAlertTriggered;
 use App\Modules\Notification\Notifications\TicketSlaWarning;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -39,10 +40,12 @@ class NotificationSystemTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function user_can_view_notification_settings_page()
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        Role::firstOrCreate(['name' => 'Tech']);
+        $user->assignRole('Tech');
 
         $response = $this->actingAs($user)
             ->get(route('tech.profile.notifications'));
@@ -51,10 +54,12 @@ class NotificationSystemTest extends TestCase
         $response->assertSee('Notification Preferences');
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_notification_preferences()
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        Role::firstOrCreate(['name' => 'Tech']);
+        $user->assignRole('Tech');
 
         $settings = [];
         foreach (NotificationSetting::TYPES as $type => $label) {
@@ -81,7 +86,7 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function notification_setting_returns_defaults_for_new_type()
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -93,7 +98,7 @@ class NotificationSystemTest extends TestCase
         $this->assertFalse($setting->nextcloud_talk_enabled);
     }
 
-    /** @test */
+    #[Test]
     public function ticket_assigned_notification_sends_via_mail_and_database()
     {
         Notification::fake();
@@ -110,7 +115,7 @@ class NotificationSystemTest extends TestCase
         Notification::assertSentTo($user, TicketAssigned::class);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_view_notification_channels()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -124,7 +129,7 @@ class NotificationSystemTest extends TestCase
         $response->assertSee('Notification Channels');
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_enable_nextcloud_talk_channel()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -164,7 +169,7 @@ class NotificationSystemTest extends TestCase
         $this->assertArrayNotHasKey('api_token', $channel->secrets ?? []);
     }
 
-    /** @test */
+    #[Test]
     public function nextcloud_talk_channel_cannot_be_enabled_without_nextcloud_integration()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -189,7 +194,7 @@ class NotificationSystemTest extends TestCase
         $this->assertEquals('https://cloud.example.com/apps/webhook/abc123', $channel->config['default_webhook_url']);
     }
 
-    /** @test */
+    #[Test]
     public function nextcloud_talk_channel_defaults_to_global_default_connection()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -231,7 +236,7 @@ class NotificationSystemTest extends TestCase
         $this->assertEquals($defaultConnection->id, $channel->config['nextcloud_connection_id']);
     }
 
-    /** @test */
+    #[Test]
     public function nextcloud_talk_edit_form_uses_nextcloud_integration_and_only_requests_webhook_url()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -260,7 +265,7 @@ class NotificationSystemTest extends TestCase
         $response->assertDontSee('API Token');
     }
 
-    /** @test */
+    #[Test]
     public function notification_uses_per_user_preferences()
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -287,7 +292,7 @@ class NotificationSystemTest extends TestCase
         $this->assertNotContains('mail', $via);
     }
 
-    /** @test */
+    #[Test]
     public function notification_channel_secrets_are_encrypted()
     {
         $channel = NotificationChannel::where('driver', 'nextcloud_talk')->first();

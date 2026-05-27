@@ -34,6 +34,10 @@ Route::get('/invite/{token}', [AcceptInviteController::class, 'show'])
 Route::post('/invite/{token}', [AcceptInviteController::class, 'store'])
     ->name('invite.accept.post');
 
+if (isset($userManagementPublicRoutes) && $userManagementPublicRoutes === true) {
+    return;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Profile / Security Routes (Authenticated users)

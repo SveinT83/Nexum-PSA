@@ -2,7 +2,9 @@
 
 ## Overview
 
-Nexum-PSA integrates with Nextcloud Talk for sending ticket notifications, SLA warnings, and asset alerts directly into Talk conversations. The integration supports two delivery modes, with automatic selection based on configuration.
+Nexum-PSA integrates with Nextcloud Talk for sending ticket notifications, SLA warnings, and asset alerts directly into Talk conversations. The intended production design supports two delivery modes, with automatic selection based on the configured Nextcloud connection and notification channel settings.
+
+This document is the technical reference. The go-live sequence and tdPSA standard checks are tracked in `docs/NEXTCLOUD-TALK-CHECKLIST.md`.
 
 ## Delivery Modes
 
@@ -57,13 +59,17 @@ Nexum constructs plain text message
 
 ### Mode Selection
 
-The `NextcloudTalkChannel` automatically selects the delivery mode:
+The `NextcloudTalkChannel` should select the delivery mode from the Nextcloud connection configured for the `nextcloud_talk` notification channel. If no explicit connection is configured, it may fall back to the active global default Nextcloud connection.
 
 | Condition | Mode |
 |-----------|------|
-| Connection has `talk_bot_id` + `talk_bot_secret` | Bot API |
-| Only webhook URL configured | Webhook |
-| Neither configured | Message skipped (logged) |
+| Selected connection has `talk_bot_id` + `talk_bot_secret` | Bot API |
+| Selected connection has no bot config but webhook URL is configured | Webhook |
+| Neither bot config nor webhook URL is configured | Message skipped and logged |
+
+Do not choose an arbitrary first active Nextcloud connection. Multi-tenant and customer-owned
+Nextcloud setups require the delivery connection to be explicit or resolved through the standard
+global-default fallback.
 
 ## Bot Setup on Nextcloud Server
 
@@ -128,6 +134,19 @@ Click **Test Bot Message** to verify the integration.
 
 ## Architecture
 
+The integration must follow the tdPSA module architecture:
+
+- Nextcloud-specific connection state, Talk Bot credentials, Talk API clients, and Talk setup UI
+  belong in `app/Modules/Nextcloud`.
+- Notification channel enablement, delivery-mode selection, and webhook fallback behavior belong in
+  `app/Modules/Notification`.
+- Domain routes must remain in module route files, such as `app/Modules/Nextcloud/routes.php`.
+  Do not add Talk routes to default Laravel route files.
+- Admin Blade views must use the route names created by the existing route loader. In the tech admin
+  shell this means Nextcloud admin route names include the `tech.` prefix.
+- Knowledge documentation must be updated under `app/Modules/Nextcloud/Docs/knowledge/` whenever
+  Talk Bot functionality is materially changed.
+
 ### Service: `NextcloudTalkClient`
 
 Located at `app/Modules/Nextcloud/Services/NextcloudTalkClient.php`.
@@ -151,15 +170,18 @@ Located at `app/Modules/Notification/Channels/NextcloudTalkChannel.php`.
 Resolves the delivery mode and target conversation:
 
 1. Checks if the `nextcloud_talk` notification channel is enabled system-wide
-2. Checks if an active Nextcloud connection exists
-3. If connection has bot config → sends via Bot API
-4. If webhook URL available → sends via webhook
+2. Resolves the configured Nextcloud connection, falling back to the active global default
+3. If the resolved connection has bot config → sends via Bot API
+4. If webhook URL is available → sends via webhook
 5. Otherwise → skips
 
 **Conversation token resolution order:**
 1. Per-user `nextcloud_talk_webhook_url` (extracts token from URL pattern `/room/{token}/webhook`)
 2. System-wide `default_conversation_token` in notification channel config
 3. Connection-level `talk_default_conversation_token`
+
+The webhook URL field remains the fallback delivery target. It must not be treated as a second
+Nextcloud credential store.
 
 ### Model: `NextcloudConnection`
 
@@ -176,6 +198,23 @@ Helper methods:
 - `hasTalkBot()` — True if bot ID and secret are configured
 - `hasTalkBotFeature($feature)` — Check a specific feature flag
 - `getTalkBotSecret()` — Get decrypted bot secret
+
+The bot shared secret is intentionally separate from the service account password. The service
+password authenticates Nexum as a Nextcloud user for OCS and DAV operations. The Talk bot secret is
+used only for HMAC signing of Bot API traffic.
+
+### Admin UI
+
+Talk Bot configuration belongs on the Nextcloud connection admin surface because the bot is tied to
+one Nextcloud server. The UI should be compact and consistent with other tdPSA settings pages:
+
+- Use a sibling card or accordion section in the Nextcloud connection detail view.
+- Show a concise status badge such as "Bot configured" or "No bot".
+- Use an empty password input for the secret and preserve the existing encrypted value when the
+  field is left blank.
+- Save Talk Bot settings through a route/controller path that validates only the Talk Bot payload,
+  or include the full required Nextcloud connection payload if reusing the general update action.
+- Test Bot Message must call the correctly prefixed module route.
 
 ### Notification Payload Format
 
@@ -221,7 +260,10 @@ The Talk Bot API supports receiving messages from users via the webhook URL regi
 - `!assign TK-42 @username` — Assign a ticket
 - `!close TK-42` — Close a ticket
 
-The `NextcloudTalkClient.verifyIncomingSignature()` and `parseIncomingMessage()` methods are already built for this. A controller route and command dispatcher would be needed to complete it.
+The `NextcloudTalkClient.verifyIncomingSignature()` and `parseIncomingMessage()` methods provide
+the service-level pieces for this. A controller route and command dispatcher are still needed before
+inbound commands are live. That route must follow the module architecture and be explicitly owned by
+the appropriate domain.
 
 ### Incoming message flow (planned)
 
@@ -278,9 +320,31 @@ Run with: `php artisan migrate`
 
 ## Testing
 
-Unit tests cover:
+Unit tests should cover:
 
 - `NextcloudTalkClientTest` (9 tests): Bot message sending, chat message, conversation listing, signature verification, incoming message parsing, capability checking, error handling, optional fields
 - `NextcloudTalkChannelTest` (6 tests): Bot API vs webhook delivery, disabled channel, no active connection, per-user conversation tokens, rich message formatting
 
-Run with: `php artisan test --filter=NextcloudTalk`
+Run with:
+
+```bash
+HOME=/tmp php artisan test \
+  tests/Unit/Modules/Nextcloud/Services/NextcloudTalkClientTest.php \
+  tests/Unit/Modules/Notification/Channels/NextcloudTalkChannelTest.php \
+  app/Modules/Nextcloud/Tests/Feature/NextcloudModuleTest.php
+```
+
+The integration is not ready for go-live while these tests fail. Factory namespaces, route names,
+and admin save/test workflows must be included in the readiness gate.
+
+## Documentation
+
+Keep this root document as the technical reference. Operator-facing Knowledge documentation must also
+be maintained under `app/Modules/Nextcloud/Docs/knowledge/` with focused pages for:
+
+- Talk Bot purpose and delivery-mode selection.
+- Admin setup and testing.
+- Operational behavior, common failures, and fallback to webhook delivery.
+
+Knowledge article bodies must not repeat the article title as the first Markdown heading when the
+Knowledge UI already renders the title.

@@ -41,7 +41,7 @@ class ProfileSecurityController extends Controller
      */
     public function enable(Request $request, EnableTwoFactorAuthentication $action): RedirectResponse
     {
-        $action->handle($request->user());
+        $action($request->user());
 
         return redirect()->route('tech.profile.security')
             ->with('status', 'two-factor-enabled');
@@ -76,7 +76,7 @@ class ProfileSecurityController extends Controller
      */
     public function disable(Request $request, DisableTwoFactorAuthentication $action): RedirectResponse
     {
-        $action->handle($request->user());
+        $action($request->user());
 
         return redirect()->route('tech.profile.security')
             ->with('status', 'two-factor-disabled');
@@ -87,7 +87,7 @@ class ProfileSecurityController extends Controller
      */
     public function regenerateRecoveryCodes(Request $request, GenerateNewRecoveryCodes $action): RedirectResponse
     {
-        $action->handle($request->user());
+        $action($request->user());
 
         return redirect()->route('tech.profile.security')
             ->with('status', 'recovery-codes-regenerated');

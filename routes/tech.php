@@ -21,10 +21,6 @@ Route::middleware(['auth','tech','2fa.required'])->group(function () {
         require $routeFile;
     }
 
-    Route::get('/dashboard', function () {
-        return view('tech.dashboard');
-    })->name('dashboard');
-
     // -----------------------------------------
     // Knowledge
     // -----------------------------------------

@@ -4,11 +4,15 @@ namespace Tests\Unit\Modules\Nextcloud\Services;
 
 use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Nextcloud\Services\NextcloudTalkClient;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class NextcloudTalkClientTest extends TestCase
 {
+    use RefreshDatabase;
+
     private NextcloudTalkClient $client;
 
     private NextcloudConnection $connection;
@@ -31,7 +35,7 @@ class NextcloudTalkClientTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_sends_signed_bot_message(): void
     {
         Http::fake([
@@ -61,7 +65,7 @@ class NextcloudTalkClientTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_sends_chat_message_with_user_auth(): void
     {
         Http::fake([
@@ -87,7 +91,7 @@ class NextcloudTalkClientTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_lists_conversations(): void
     {
         Http::fake([
@@ -111,7 +115,7 @@ class NextcloudTalkClientTest extends TestCase
         $this->assertEquals('group', $conversations[1]['typeLabel']);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_on_missing_bot_secret(): void
     {
         $this->connection->talk_bot_secret = null;
@@ -123,7 +127,7 @@ class NextcloudTalkClientTest extends TestCase
         $this->client->sendBotMessage($this->connection, 'abc123xyz', 'test');
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_on_missing_bot_id(): void
     {
         $this->connection->talk_bot_id = null;
@@ -135,7 +139,7 @@ class NextcloudTalkClientTest extends TestCase
         $this->client->sendBotMessage($this->connection, 'abc123xyz', 'test');
     }
 
-    /** @test */
+    #[Test]
     public function it_verifies_incoming_signatures(): void
     {
         $secret = 'my-bot-secret';
@@ -159,7 +163,7 @@ class NextcloudTalkClientTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_parses_incoming_messages(): void
     {
         $payload = [
@@ -190,7 +194,7 @@ class NextcloudTalkClientTest extends TestCase
         $this->assertEquals('abc123', $parsed['conversation']['token']);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_bot_capability_support(): void
     {
         $conn = $this->connection;
@@ -201,7 +205,7 @@ class NextcloudTalkClientTest extends TestCase
         $this->assertTrue($this->client->supportsBots($conn));
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_api_errors_gracefully(): void
     {
         Http::fake([
@@ -216,7 +220,7 @@ class NextcloudTalkClientTest extends TestCase
         $this->client->sendBotMessage($this->connection, 'abc123xyz', 'test');
     }
 
-    /** @test */
+    #[Test]
     public function it_includes_optional_bot_message_fields(): void
     {
         Http::fake([

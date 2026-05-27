@@ -5,16 +5,27 @@ namespace App\Modules\UserManagement\Tests\Feature;
 use App\Models\Core\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
+use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class TwoFactorAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Role::firstOrCreate(['name' => 'Tech']);
+        Role::firstOrCreate(['name' => 'Admin']);
+    }
+
+    #[Test]
     public function user_can_view_security_settings_page()
     {
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole('Tech');
 
         $response = $this->actingAs($user)
             ->get(route('tech.profile.security'));
@@ -23,13 +34,14 @@ class TwoFactorAuthenticationTest extends TestCase
         $response->assertSee('Two-Factor Authentication');
     }
 
-    /** @test */
+    #[Test]
     public function user_can_enable_two_factor_authentication()
     {
         $user = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
             'two_factor_secret' => null,
         ]);
+        $user->assignRole('Tech');
 
         $response = $this->actingAs($user)
             ->post(route('tech.profile.security.2fa.enable'));
@@ -42,15 +54,16 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->assertNull($user->two_factor_confirmed_at); // Not confirmed yet
     }
 
-    /** @test */
+    #[Test]
     public function user_can_disable_two_factor_authentication()
     {
         $user = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
         ]);
+        $user->assignRole('Tech');
 
         // Enable 2FA first
-        app(EnableTwoFactorAuthentication::class)->handle($user);
+        app(EnableTwoFactorAuthentication::class)($user);
         $user->refresh();
 
         $response = $this->actingAs($user)
@@ -63,14 +76,15 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->assertNull($user->two_factor_secret);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_regenerate_recovery_codes()
     {
         $user = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
         ]);
+        $user->assignRole('Tech');
 
-        app(EnableTwoFactorAuthentication::class)->handle($user);
+        app(EnableTwoFactorAuthentication::class)($user);
         $user->refresh();
         $oldCodes = $user->two_factor_recovery_codes;
 
@@ -84,13 +98,14 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->assertNotEquals($oldCodes, $user->two_factor_recovery_codes);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_password()
     {
         $user = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
             'password' => bcrypt('old-password'),
         ]);
+        $user->assignRole('Tech');
 
         $response = $this->actingAs($user)
             ->post(route('tech.profile.security.password'), [
@@ -104,13 +119,14 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->assertTrue(\Hash::check('new-secure-password', $user->fresh()->password));
     }
 
-    /** @test */
+    #[Test]
     public function password_update_fails_with_wrong_current_password()
     {
         $user = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
             'password' => bcrypt('correct-password'),
         ]);
+        $user->assignRole('Tech');
 
         $response = $this->actingAs($user)
             ->post(route('tech.profile.security.password'), [
@@ -123,19 +139,18 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->assertTrue(\Hash::check('correct-password', $user->fresh()->password));
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_access_security_settings()
     {
         $response = $this->get(route('tech.profile.security'));
         $response->assertRedirect(route('login'));
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_view_2fa_enforcement_settings()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $admin->assignRole('superadmin');
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'superadmin']);
+        $admin->assignRole('Admin');
 
         $response = $this->actingAs($admin)
             ->get(route('tech.admin.user_management.2fa-settings'));
@@ -144,13 +159,11 @@ class TwoFactorAuthenticationTest extends TestCase
         $response->assertSee('2FA Enforcement');
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_enable_2fa_enforcement_for_roles()
     {
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $admin->assignRole('superadmin');
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'superadmin']);
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'technician']);
+        $admin->assignRole('Admin');
 
         // Ensure the settings exist with the shared common_settings schema.
         \DB::table('common_settings')->updateOrInsert(
@@ -165,14 +178,14 @@ class TwoFactorAuthenticationTest extends TestCase
         $response = $this->actingAs($admin)
             ->post(route('tech.admin.user_management.2fa-settings.update'), [
                 'enforce_two_factor' => '1',
-                'enforce_two_factor_roles' => ['superadmin', 'technician'],
+                'enforce_two_factor_roles' => ['Admin', 'Tech'],
             ]);
 
         $response->assertRedirect(route('tech.admin.user_management.2fa-settings'));
 
         $this->assertEquals('1', \DB::table('common_settings')->where('name', 'enforce_two_factor')->value('value'));
         $roles = json_decode(\DB::table('common_settings')->where('name', 'enforce_two_factor_roles')->value('json'), true);
-        $this->assertContains('superadmin', $roles);
-        $this->assertContains('technician', $roles);
+        $this->assertContains('Admin', $roles);
+        $this->assertContains('Tech', $roles);
     }
 }

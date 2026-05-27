@@ -9,11 +9,15 @@ use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Notifications\TicketAssigned;
 use App\Modules\Ticket\Models\Ticket;
 use App\Models\Core\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class NextcloudTalkChannelTest extends TestCase
 {
+    use RefreshDatabase;
+
     private NextcloudTalkChannel $channel;
 
     private NextcloudConnection $connection;
@@ -37,14 +41,18 @@ class NextcloudTalkChannelTest extends TestCase
             'talk_bot_features' => [],
         ]);
 
-        $this->talkChannelConfig = NotificationChannel::factory()->create([
-            'driver' => 'nextcloud_talk',
-            'is_enabled' => true,
-            'config' => [],
-        ]);
+        $this->talkChannelConfig = NotificationChannel::query()->updateOrCreate(
+            ['name' => 'nextcloud_talk'],
+            [
+                'label' => 'Nextcloud Talk',
+                'driver' => 'nextcloud_talk',
+                'is_enabled' => true,
+                'config' => [],
+            ]
+        );
     }
 
-    /** @test */
+    #[Test]
     public function it_sends_via_bot_api_when_bot_is_configured(): void
     {
         Http::fake([
@@ -77,7 +85,7 @@ class NextcloudTalkChannelTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_falls_back_to_webhook_when_no_bot_configured(): void
     {
         // Remove bot config from connection
@@ -118,7 +126,7 @@ class NextcloudTalkChannelTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_skips_sending_when_channel_is_disabled(): void
     {
         $this->talkChannelConfig->update(['is_enabled' => false]);
@@ -132,7 +140,7 @@ class NextcloudTalkChannelTest extends TestCase
         Http::assertNothingSent();
     }
 
-    /** @test */
+    #[Test]
     public function it_skips_sending_when_no_active_connection(): void
     {
         $this->connection->update(['is_active' => false]);
@@ -146,7 +154,7 @@ class NextcloudTalkChannelTest extends TestCase
         Http::assertNothingSent();
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_per_user_conversation_token_when_set(): void
     {
         Http::fake([
@@ -174,7 +182,7 @@ class NextcloudTalkChannelTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_formats_rich_messages_for_bot_api(): void
     {
         Http::fake([
