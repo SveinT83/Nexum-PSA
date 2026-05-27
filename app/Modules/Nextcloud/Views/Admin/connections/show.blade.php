@@ -640,10 +640,10 @@
                         <div class="col-md-6">
                             <label class="form-label" for="talk_bot_secret">Bot Shared Secret</label>
                             <input type="password" id="talk_bot_secret" name="talk_bot_secret"
-                                class="form-control" placeholder="••••••••"
-                                value="{{ old('talk_bot_secret', $connection->talk_bot_secret ? '••••••••' : '') }}"
+                                class="form-control" placeholder="Leave blank to keep current secret"
+                                value=""
                                 autocomplete="new-password">
-                            <div class="form-text">HMAC-SHA256 shared secret from <code>talk:bot:install</code></div>
+                            <div class="form-text">HMAC-SHA256 shared secret from <code>talk:bot:install</code>. Leave blank to keep existing.</div>
                         </div>
 
                         <div class="col-md-6">

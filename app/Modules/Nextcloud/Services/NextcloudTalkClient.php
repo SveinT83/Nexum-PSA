@@ -39,12 +39,15 @@ class NextcloudTalkClient
      */
     public function sendBotMessage(NextcloudConnection $connection, string $conversationToken, string $message, array $options = []): array
     {
-        $secret = $connection->getSecret('talk_bot_secret')
-            ?? $connection->settings['talk_bot_secret']
+        $secret = $connection->getTalkBotSecret()
             ?? throw new RuntimeException('Talk bot secret is not configured for this connection.');
 
-        $botId = $connection->settings['talk_bot_id']
-            ?? throw new RuntimeException('Talk bot ID is not configured for this connection.');
+        // botId is kept for future reference but not sent in the API request;
+        // the bot is identified by the signed secret + conversation token.
+        $botId = $connection->talk_bot_id;
+        if (empty($botId)) {
+            throw new RuntimeException('Talk bot ID is not configured for this connection.');
+        }
 
         $baseUrl = rtrim($connection->base_url, '/');
         $endpoint = "/ocs/v2.php/apps/spreed/api/v1/bot/{$conversationToken}/message";
