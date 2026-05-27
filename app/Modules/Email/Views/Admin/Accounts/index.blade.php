@@ -93,21 +93,11 @@
 @endsection
 
 @section('sidebar')
-  <h3 class="h5 mt-3">Tech Sidebar</h3>
-  <ul class="list-unstyled small">
-    <li><a href="#">System Status</a></li>
-    <li><a href="#">Task Management</a></li>
-    <li><a href="#">Reports</a></li>
-  </ul>
+  <x-nav.admin-menu group="email" />
 @endsection
 
 @section('rightbar')
   <div class="mt-3">
-    <h3 class="h6">Notifications</h3>
-    <ul class="list-unstyled small">
-      <li>No new notifications.</li>
-    </ul>
-
     <!-- -------------------------------------------------------------------------------------------------- -->
     <!-- Email template shortcut -->
     <!-- Keeps outbound template management reachable from Email Settings as well as the Templates hub. -->

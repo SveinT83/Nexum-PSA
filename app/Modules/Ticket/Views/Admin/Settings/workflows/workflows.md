@@ -27,6 +27,8 @@
  **Difficulty:** Medium–High  
  **Estimated Time:** 6.0 hours
 
+**Implementation note, 2026-05-15:** Workflow v1 now enforces runtime transition requirements for internal notes, public technician responses, and selected solution responses. The Ticket show workflow panel renders blocked actions as disabled buttons with the reason shown. Transitions can be configured as manually clickable or action-triggered. The default workflow requires a technician response and a response marked as the solution before "Mark as solved", and only allows "Close" from the resolved state.
+
 **Layout (Bootstrap template):** Top header / Main content / Right slim rail.
 
 - Header: title, breadcrumbs, global actions.

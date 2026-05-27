@@ -11,19 +11,10 @@
 --}}
 
 @section('pageHeader')
-
-    {{-- Breadcrumb Navigation for user orientation --}}
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('tech.assets.index') }}">Assets</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Create</li>
-        </ol>
-    </nav>
-
     <div class="d-flex justify-content-between align-items-center">
         <h1>Create Asset</h1>
         <div class="btn-group">
-            <x-buttons.back :url="route('tech.assets.index')">Back to Assets</x-buttons.back>
+            <x-buttons.back :url="route('tech.assets.index')" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection
@@ -45,6 +36,10 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('sidebar')
+    <x-nav.work-menu />
 @endsection
 
 @section('rightbar')

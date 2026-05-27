@@ -8,15 +8,17 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-	<div class="d-flex justify-content-between align-items-center py-3">
-		<h2 class="h4 mb-0">Client: {{ $client->name }}</h2>
-		<div>
-            <x-buttons.back url="{{ route('tech.clients.index') }}"> Back to Clients</x-buttons.back>
-		</div>
-	</div>
+    <div class="d-flex justify-content-between align-items-center gap-2">
+        <h1>{{ $client->name }}</h1>
+        <x-buttons.back url="{{ route('tech.clients.index') }}" class="btn btn-sm btn-outline-secondary bi bi-arrow-left mb-0">Back</x-buttons.back>
+    </div>
 @endsection
 
 @section('content')
+    @php
+        $clientTasks = $clientTasks->sortByDesc('updated_at')->values();
+        $missing = fn ($value) => filled($value) ? $value : '—';
+    @endphp
 
     <div class="row">
 
@@ -35,6 +37,7 @@
                     <div class="row mb-0">
                         <dt class="col-sm-3">Name</dt><dd class="col-sm-9">{{ $client->name }}</dd>
                         <dt class="col-sm-3">Org No</dt><dd class="col-sm-9">{{ $client->org_no ?? '—' }}</dd>
+                        <dt class="col-sm-3">Format</dt><dd class="col-sm-9">{{ $client->clientFormat?->name ?? '—' }}</dd>
                         <dt class="col-sm-3">Billing Email</dt><dd class="col-sm-9">{{ $client->billing_email ?? '—' }}</dd>
                         <dt class="col-sm-3">Status</dt><dd class="col-sm-9">@if($client->active)<span class="badge bg-success">Active</span>@else<span class="badge bg-secondary">Inactive</span>@endif</dd>
                         @php
@@ -60,112 +63,183 @@
         </div>
 
         <!-- -------------------------------------------------------------------------------------------------- -->
-        <!-- Assets -->
+        <!-- Related Client Workspace Tabs -->
         <!-- -------------------------------------------------------------------------------------------------- -->
         <div class="col-12">
-            <x-tech.assets.list-card :client="$client" />
-        </div>
+            <ul class="nav nav-tabs border-bottom border-secondary-subtle" id="clientWorkspaceTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active text-body border border-bottom-0" id="client-assets-tab" data-bs-toggle="tab" data-bs-target="#client-assets-pane" type="button" role="tab" aria-controls="client-assets-pane" aria-selected="true">
+                        Assets
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-body border border-bottom-0" id="client-sites-tab" data-bs-toggle="tab" data-bs-target="#client-sites-pane" type="button" role="tab" aria-controls="client-sites-pane" aria-selected="false">
+                        Sites <span class="badge text-bg-light border ms-1">{{ $client->sites->count() }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-body border border-bottom-0" id="client-contracts-tab" data-bs-toggle="tab" data-bs-target="#client-contracts-pane" type="button" role="tab" aria-controls="client-contracts-pane" aria-selected="false">
+                        Contracts <span class="badge text-bg-light border ms-1">{{ $contracts->count() }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-body border border-bottom-0" id="client-tasks-tab" data-bs-toggle="tab" data-bs-target="#client-tasks-pane" type="button" role="tab" aria-controls="client-tasks-pane" aria-selected="false">
+                        Tasks <span class="badge text-bg-light border ms-1">{{ $clientTasks->count() }}</span>
+                    </button>
+                </li>
+            </ul>
 
-        <!-- -------------------------------------------------------------------------------------------------- -->
-        <!-- Client Contract(s) if exists -->
-        <!-- -------------------------------------------------------------------------------------------------- -->
-        @if(isset($contracts))
-            @foreach($contracts as $contract)
+            <div class="tab-content pt-3" id="clientWorkspaceTabsContent">
+                <div class="tab-pane fade show active" id="client-assets-pane" role="tabpanel" aria-labelledby="client-assets-tab" tabindex="0">
+                    <x-tech.assets.list-card :client="$client" />
+                </div>
 
-                <div class="col-12">
+                <div class="tab-pane fade" id="client-sites-pane" role="tabpanel" aria-labelledby="client-sites-tab" tabindex="0">
                     <div class="card mb-4">
-
-                        <!-- ------------------------------------------------- -->
-                        <!-- Card Header -->
-                        <!-- ------------------------------------------------- -->
-                        <div class="card-header">
-                            <div class="row justify-content-between">
-
-                                <span class="col-md-6">Contract</span>
-
-                                <div class="col-auto">
-                                    <div class="row fw-lighter">
-                                        <p class="col-auto">Status: {{$contract->approval_status}}</p>
-                                        <p class="col-auto">From: {{ $contract->start_date->format('Y-m-d') }}</p>
-                                        <p class="col-auto">To: {{ $contract->end_date->format('Y-m-d') }}</p>
-                                    </div>
-                                </div>
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold">Sites</span>
+                                <span class="badge text-bg-light border">{{ $client->sites->count() }}</span>
                             </div>
+                            <x-buttons.addlink url="{{ route('tech.clients.sites.create', $client->id) }}" class="mb-0">New Site</x-buttons.addlink>
                         </div>
-
-                        <!-- ------------------------------------------------- -->
-                        <!-- Card Body -->
-                        <!-- ------------------------------------------------- -->
-                        <div class="card-body">
-
-                            <!-- Contract description -->
-                            <div class="accordion" id="contractAccordion">
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                            Description:
-                                        </button>
-                                    </h2>
-                                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#contractAccordion">
-                                        <div class="accordion-body">
-                                            <p>{{ $contract->description }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Contract Service Items -->
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                                            Contract items:
-                                        </button>
-                                    </h2>
-                                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#contractAccordion">
-                                        <div class="accordion-body">
-
-                                            <!-- Check if relation has data -->
-                                            @if($contract->items->count() > 0)
-
-                                                <!-- Service item header -->
-                                                <div class="row justify-content-between">
-                                                    <p class="col-1">SKU:</p>
-                                                    <p class="col-4">Name:</p>
-                                                    <p class="col-2">Quantity:</p>
-                                                    <p class="col-2">Unit Price:</p>
-                                                </div>
-
-                                                <!-- Show the data one by one -->
-                                                @foreach($contract->items as $item)
-                                                    <div class="row justify-content-between">
-                                                        <p class="col-1">{{ $item->sku }}</p>
-                                                        <p class="col-4">{{ $item->name }}</p>
-                                                        <p class="col-2">{{ $item->quantity }} {{ $item->unit }}</p>
-                                                        <p class="col-2">{{ number_format($item->line_total, 2) }} {{ $item->billing_interval }}</p>
-                                                    </div>
-                                                @endforeach
-
-                                            @else
-                                                <p>No services is in this contract.</p>
-                                            @endif
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Address</th>
+                                        <th>City</th>
+                                        <th>Country</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($client->sites->sortBy('name') as $site)
+                                        <tr class="cursor-pointer" data-href="{{ route('tech.clients.sites.show', $site) }}" onclick="window.location.href = this.dataset.href">
+                                            <td>
+                                                <a href="{{ route('tech.clients.sites.show', $site) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">
+                                                    {{ $site->name }}
+                                                </a>
+                                            </td>
+                                            <td class="{{ blank($site->address) ? 'text-muted' : '' }}">{{ $missing($site->address) }}</td>
+                                            <td class="{{ blank($site->city) ? 'text-muted' : '' }}">{{ $missing($site->city) }}</td>
+                                            <td class="{{ blank($site->country) ? 'text-muted' : '' }}">{{ $missing($site->country) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">No sites registered for this client.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-            @endforeach
-        @endif
+                <div class="tab-pane fade" id="client-contracts-pane" role="tabpanel" aria-labelledby="client-contracts-tab" tabindex="0">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold">Contracts</span>
+                                <span class="badge text-bg-light border">{{ $contracts->count() }}</span>
+                            </div>
+                            <x-buttons.addlink url="{{ route('tech.contracts.create', ['client_id' => $client->id]) }}" class="mb-0">New Contract</x-buttons.addlink>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Contract</th>
+                                        <th>Status</th>
+                                        <th>Start</th>
+                                        <th>End</th>
+                                        <th>Items</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($contracts as $contract)
+                                        <tr class="cursor-pointer" data-href="{{ route('tech.contracts.show', $contract) }}" onclick="window.location.href = this.dataset.href">
+                                            <td>
+                                                <a href="{{ route('tech.contracts.show', $contract) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">
+                                                    Contract #{{ $contract->id }}
+                                                </a>
+                                                @if(filled($contract->description))
+                                                    <div class="small text-muted">{{ \Illuminate\Support\Str::limit($contract->description, 90) }}</div>
+                                                @endif
+                                            </td>
+                                            <td>{{ $contract->approval_status }}</td>
+                                            <td>{{ $contract->start_date?->format('Y-m-d') ?? '—' }}</td>
+                                            <td>{{ $contract->end_date?->format('Y-m-d') ?? '—' }}</td>
+                                            <td>{{ $contract->items->count() }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">No contracts registered for this client.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="client-tasks-pane" role="tabpanel" aria-labelledby="client-tasks-tab" tabindex="0">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold">Tasks</span>
+                                <span class="badge text-bg-light border">{{ $clientTasks->count() }}</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#clientTaskQuickCreateModal">
+                                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                                New Task
+                            </button>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            @forelse($clientTasks as $task)
+                                <button type="button" class="list-group-item list-group-item-action text-start" data-bs-toggle="modal" data-bs-target="#clientTaskQuickViewModal{{ $task->id }}">
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <span class="fw-semibold">{{ $task->title }}</span>
+                                        <span class="badge {{ $task->status?->is_done ? 'text-bg-success' : 'text-bg-light border' }}">{{ $task->status?->name ?? 'Open' }}</span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        {{ $task->assignee?->name ?? 'Unassigned' }}
+                                        @if($task->due_at)
+                                            <span class="ms-1">Due {{ $task->due_at->format('Y-m-d') }}</span>
+                                        @endif
+                                    </div>
+                                </button>
+                            @empty
+                                <div class="list-group-item text-center text-muted py-4">No tasks registered for this client.</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @include('task::components.quick-create-modal', [
+            'modalId' => 'clientTaskQuickCreateModal',
+            'ownerModel' => $client,
+            'assignees' => $technicians,
+            'defaultAssigneeId' => null,
+            'returnTo' => route('tech.clients.show', $client),
+        ])
+
+        @foreach($clientTasks as $task)
+            @include('task::components.quick-view-modal', [
+                'modalId' => 'clientTaskQuickViewModal'.$task->id,
+                'task' => $task,
+                'assignees' => $technicians,
+            ])
+        @endforeach
 
     </div>
 @endsection
 
 @section('sidebar')
     @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
+        <x-nav.side-bar :items="$sidebarMenuItems" title="Client workspace" />
     @endif
 @endsection
 
@@ -228,47 +302,4 @@
         @endif
     </div>
 
-    {{--
-        Client Sites Widget
-        This widget lists all sites belonging to the current client.
-        Sites are physical locations or logical groupings where services are provided.
-        Includes a direct action button to create new sites for this specific client.
-    --}}
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center bg-light">
-            <h6 class="mb-0 fw-bold text-uppercase small opacity-75">Client Sites</h6>
-            <span class="badge bg-primary rounded-pill">{{ $client->sites->count() }}</span>
-        </div>
-        <div class="card-body">
-            @if($client->sites->count() > 0)
-                <ul class="list-unstyled mb-3">
-                    @foreach($client->sites as $site)
-                        <li class="mb-2 pb-2 border-bottom border-light last-child-no-border">
-                            <a href="{{ route('tech.clients.sites.show', $site->id) }}" class="text-decoration-none d-flex align-items-center">
-                                <div class="bg-light rounded p-2 me-3">
-                                    <i class="fas fa-building text-muted"></i>
-                                </div>
-                                <div>
-                                    <span class="d-block text-dark fw-semibold small">{{ $site->name }}</span>
-                                    <small class="text-muted small">{{ $site->city ?? 'No city' }}</small>
-                                </div>
-                                <i class="fas fa-chevron-right ms-auto small text-muted opacity-50"></i>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            @else
-                <div class="text-center py-4 mb-3 border rounded border-dashed">
-                    <p class="text-muted small mb-0">No sites registered for this client.</p>
-                </div>
-            @endif
-
-            <div class="d-grid">
-                <a href="{{ route('tech.clients.sites.create', $client->id) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus-circle me-1"></i> Create New Site
-                </a>
-            </div>
-        </div>
-    </div>
 @endsection
-

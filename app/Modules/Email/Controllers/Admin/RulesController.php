@@ -4,11 +4,13 @@ namespace App\Modules\Email\Controllers\Admin;
 
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\Ticket\Models\TicketQueue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RulesController extends Controller
@@ -102,7 +104,7 @@ class RulesController extends Controller
             'conditions.*.operator' => 'required|string|in:contains,equals,not_equals,starts_with,ends_with,regex,present',
             'conditions.*.value' => 'nullable|string|max:1000',
             'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string|in:link_ticket_by_subject_token,archive,tag',
+            'actions.*.type' => 'required|string|in:link_ticket_by_subject_token,create_ticket,archive,tag',
             'actions.*.value' => 'nullable|string|max:255',
         ]);
 
@@ -114,7 +116,7 @@ class RulesController extends Controller
             ->values()
             ->all();
 
-        $this->ensureActionTagsExist($actions);
+        $this->ensureActionTargetsExist($actions);
 
         return [
             'name' => $data['name'],
@@ -134,19 +136,34 @@ class RulesController extends Controller
         ];
     }
 
-    private function ensureActionTagsExist(array $actions): void
+    private function ensureActionTargetsExist(array $actions): void
     {
         foreach ($actions as $action) {
-            if (($action['type'] ?? '') !== 'tag' || trim((string) ($action['value'] ?? '')) === '') {
+            $type = $action['type'] ?? '';
+            $value = trim((string) ($action['value'] ?? ''));
+
+            if ($type === 'create_ticket' && $value !== '') {
+                // Optional create-ticket values target a queue by id or slug before the rule is saved.
+                $queueExists = TicketQueue::query()
+                    ->whereKey($value)
+                    ->orWhere('slug', $value)
+                    ->exists();
+
+                if (! $queueExists) {
+                    throw ValidationException::withMessages([
+                        'actions' => 'Create ticket action queue target does not exist.',
+                    ]);
+                }
+            }
+
+            if ($type !== 'tag' || $value === '') {
                 continue;
             }
 
-            $name = trim((string) $action['value']);
-
             Tag::firstOrCreate(
-                ['name' => $name],
+                ['name' => $value],
                 [
-                    'slug' => Str::slug($name),
+                    'slug' => Str::slug($value),
                     'color' => '#6c757d',
                     'active' => true,
                 ]
@@ -170,6 +187,12 @@ class RulesController extends Controller
             'condition' => 'Subject contains ticket key like TD-2026-000004',
             'action' => 'Create public customer reply and mark ticket unread',
             'status' => 'Active',
+        ], [
+            'name' => 'Create ticket from routed inbound email',
+            'trigger' => EmailRule::TRIGGER_INBOUND,
+            'condition' => 'Custom rule matches mailbox, recipient, sender, or subject',
+            'action' => 'Create ticket, attach the email as the first public customer message, and mark it unread',
+            'status' => 'Configurable',
         ]];
     }
 }

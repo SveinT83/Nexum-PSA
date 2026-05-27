@@ -20,10 +20,14 @@ class QueueWorkerStatusQuery
     */
     public function get(): array
     {
+        $pendingJobs = $this->pendingJobs();
+        $configuredQueue = Config::get('queue.connections.' . Config::get('queue.default') . '.queue', 'default');
+
         return [
             'connection' => Config::get('queue.default', 'sync'),
-            'configured_queue' => Config::get('queue.connections.' . Config::get('queue.default') . '.queue', 'default'),
-            'pending_jobs' => $this->pendingJobs(),
+            'configured_queue' => $configuredQueue,
+            'worker_queues' => $this->workerQueues($configuredQueue, $pendingJobs),
+            'pending_jobs' => $pendingJobs,
             'failed_jobs' => $this->failedJobs(),
             'supports_database_counts' => Schema::hasTable('jobs'),
             'supports_failed_jobs' => Schema::hasTable('failed_jobs'),
@@ -36,17 +40,48 @@ class QueueWorkerStatusQuery
             return [];
         }
 
+        $now = time();
+
         return DB::table('jobs')
-            ->select('queue', DB::raw('count(*) as jobs_count'), DB::raw('min(available_at) as oldest_available_at'))
+            ->select(
+                'queue',
+                DB::raw('count(*) as jobs_count'),
+                DB::raw('sum(case when reserved_at is null and available_at <= ' . $now . ' then 1 else 0 end) as ready_count'),
+                DB::raw('sum(case when reserved_at is not null then 1 else 0 end) as reserved_count'),
+                DB::raw('sum(case when reserved_at is null and available_at > ' . $now . ' then 1 else 0 end) as delayed_count'),
+                DB::raw('min(available_at) as oldest_available_at')
+            )
             ->groupBy('queue')
             ->orderBy('queue')
             ->get()
             ->map(fn ($row) => [
                 'queue' => $row->queue,
                 'jobs_count' => (int) $row->jobs_count,
+                'ready_count' => (int) $row->ready_count,
+                'reserved_count' => (int) $row->reserved_count,
+                'delayed_count' => (int) $row->delayed_count,
                 'oldest_available_at' => $row->oldest_available_at ? date('Y-m-d H:i:s', (int) $row->oldest_available_at) : null,
             ])
             ->all();
+    }
+
+    private function workerQueues(string $configuredQueue, array $pendingJobs): string
+    {
+        $knownQueues = [
+            'default',
+            'economy',
+            'email',
+        ];
+
+        $queues = collect($pendingJobs)
+            ->pluck('queue')
+            ->prepend($configuredQueue)
+            ->merge($knownQueues)
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $queues->implode(',');
     }
 
     private function failedJobs(): array

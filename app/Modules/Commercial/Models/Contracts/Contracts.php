@@ -2,7 +2,9 @@
 
 namespace App\Modules\Commercial\Models\Contracts;
 
+use App\Modules\Commercial\Models\Sla\Sla;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contracts extends Model
@@ -11,6 +13,7 @@ class Contracts extends Model
 
     protected $fillable = [
         'client_id',
+        'sla_id',
         'description',
         'start_date',
         'end_date',
@@ -71,6 +74,11 @@ class Contracts extends Model
     public function client()
     {
         return $this->belongsTo(\App\Models\Clients\Client::class);
+    }
+
+    public function sla(): BelongsTo
+    {
+        return $this->belongsTo(Sla::class, 'sla_id');
     }
 
     public function items()

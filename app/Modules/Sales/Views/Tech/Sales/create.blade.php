@@ -1,185 +1,434 @@
-# tech.sales.create — View Specification
+@extends('layouts.default_tech')
 
-**URL:** `tech.sales.create` → `/tech/sales/create`
-**Access levels & permissions:**
+@section('title', 'New Sales Opportunity')
 
-* View/Create: `sales.create`
-* Send quote/confirmation: `sales.send`
-* Override prices/discounts/VAT: `sales.override`
-* Change queue (sales/order): `ticket.queue.change`
-* Read-only fallback: `tech.read`
+@section('sidebar')
+    <x-nav.sales-menu />
+@endsection
 
-**Creation date:** 2025-10-28
-**Controller:** `App\Http\Controllers\Tech\Sales\SalesController@create`
-**Store/Send actions:** `SalesController@store`, `SalesController@sendQuote`, `SalesController@sendConfirmation`
-**Status:** In progress
-**Difficulty:** Medium–High
-**Estimated time:** 6.0 hours
+@section('pageHeader')
+    <div>
+        <h1 class="mb-0">New Opportunity</h1>
+        <p class="text-muted mb-0">Create an active sales process for an existing client.</p>
+    </div>
+@endsection
 
----
+@section('content')
+    <div class="container-fluid">
+        <form method="POST" action="{{ route('tech.sales.store') }}" class="card">
+            @csrf
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- ------------------------------------------------- -->
+                    <!-- Client selection with inline quick-create modal trigger -->
+                    <!-- ------------------------------------------------- -->
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center justify-content-between gap-2">
+                            <label for="client_id" class="form-label mb-0">Client</label>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#quickClientModal">
+                                New client
+                            </button>
+                        </div>
+                        <select id="client_id" name="client_id" class="form-select" required>
+                            <option value="">Select client</option>
+                            @foreach($clients as $client)
+                                <option value="{{ $client->id }}" @selected(old('client_id') == $client->id)>
+                                    {{ $client->name }}@if($client->client_number) ({{ $client->client_number }})@endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Create the client here when the prospect is not already registered.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center justify-content-between gap-2">
+                            <label for="primary_contact_id" class="form-label mb-0">Sales contact</label>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="quickContactButton" data-bs-toggle="modal" data-bs-target="#quickContactModal" disabled>
+                                New contact
+                            </button>
+                        </div>
+                        <select id="primary_contact_id" name="primary_contact_id" class="form-select">
+                            <option value="">Select client first</option>
+                        </select>
+                        <div class="form-text">This contact receives quote email by default.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="owner_id" class="form-label">Owner</label>
+                        <select id="owner_id" name="owner_id" class="form-select">
+                            @foreach($owners as $owner)
+                                <option value="{{ $owner->id }}" @selected(old('owner_id', auth()->id()) == $owner->id)>{{ $owner->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" id="title" name="title" class="form-control" value="{{ old('title') }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="type" class="form-label">Type</label>
+                        <select id="type" name="type" class="form-select">
+                            @foreach($types as $key => $label)
+                                <option value="{{ $key }}" @selected(old('type') === $key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="expected_close_date" class="form-label">Expected close</label>
+                        <input type="date" id="expected_close_date" name="expected_close_date" class="form-control" value="{{ old('expected_close_date') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="next_follow_up_at" class="form-label">Next follow-up</label>
+                        <input type="datetime-local" id="next_follow_up_at" name="next_follow_up_at" class="form-control" value="{{ old('next_follow_up_at') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="next_follow_up_type" class="form-label">Next action</label>
+                        <select id="next_follow_up_type" name="next_follow_up_type" class="form-select">
+                            <option value="">No action selected</option>
+                            @foreach($nextActions as $key => $label)
+                                <option value="{{ $key }}" @selected(old('next_follow_up_type', 'call') === $key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="employee_count_estimate" class="form-label">Employees</label>
+                        <input type="number" id="employee_count_estimate" name="employee_count_estimate" class="form-control" min="0" value="{{ old('employee_count_estimate') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="user_count_estimate" class="form-label">Users</label>
+                        <input type="number" id="user_count_estimate" name="user_count_estimate" class="form-control" min="0" value="{{ old('user_count_estimate') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="workstation_count_estimate" class="form-label">Workstations</label>
+                        <input type="number" id="workstation_count_estimate" name="workstation_count_estimate" class="form-control" min="0" value="{{ old('workstation_count_estimate') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="server_count_estimate" class="form-label">Servers</label>
+                        <input type="number" id="server_count_estimate" name="server_count_estimate" class="form-control" min="0" value="{{ old('server_count_estimate') }}">
+                    </div>
+                    <div class="col-12">
+                        <label for="needs" class="form-label">Needs</label>
+                        <textarea id="needs" name="needs" class="form-control" rows="4">{{ old('needs') }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <label for="next_follow_up_note" class="form-label">Follow-up note</label>
+                        <textarea id="next_follow_up_note" name="next_follow_up_note" class="form-control" rows="2">{{ old('next_follow_up_note') }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-end gap-2">
+                <a href="{{ route('tech.sales.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create Opportunity</button>
+            </div>
+        </form>
 
-## Purpose
+        <!-- ------------------------------------------------- -->
+        <!-- Quick client modal -->
+        <!-- ------------------------------------------------- -->
+        <div class="modal fade" id="quickClientModal" tabindex="-1" aria-labelledby="quickClientModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <form class="modal-content" id="quickClientForm" data-store-url="{{ route('tech.sales.clients.quick-store') }}">
+                    @csrf
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="quickClientModalLabel">New Client</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger d-none" id="quickClientErrors"></div>
 
-Create a **ticket-backed order/sale**. Every record is a **Ticket** with items. Queue determines context:
+                        <!-- ------------------------------------------------- -->
+                        <!-- Company details -->
+                        <!-- ------------------------------------------------- -->
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="quick_client_number" class="form-label">Client number</label>
+                                <input type="text" id="quick_client_number" name="client_number" class="form-control" value="{{ $suggestedClientNumber }}" inputmode="numeric" pattern="\d{5}">
+                            </div>
+                            <div class="col-md-5">
+                                <label for="quick_client_name" class="form-label">Name</label>
+                                <input type="text" id="quick_client_name" name="name" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="quick_org_no" class="form-label">Org No</label>
+                                <input type="text" id="quick_org_no" name="org_no" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="quick_client_format_id" class="form-label">Format</label>
+                                <select id="quick_client_format_id" name="client_format_id" class="form-select">
+                                    <option value="">Select format</option>
+                                    @foreach($clientFormats as $format)
+                                        <option value="{{ $format->id }}">{{ $format->code }} - {{ $format->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="quick_billing_email" class="form-label">Billing email</label>
+                                <input type="email" id="quick_billing_email" name="billing_email" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="quick_site_name" class="form-label">Site name</label>
+                                <input type="text" id="quick_site_name" name="site_name" class="form-control" value="General sites" required>
+                            </div>
+                        </div>
 
-* **`sales` queue:** quotes, contracts, agreements.
-* **`order` queue:** physical goods/products.
+                        <!-- ------------------------------------------------- -->
+                        <!-- Primary contact -->
+                        <!-- ------------------------------------------------- -->
+                        <div class="border-top mt-3 pt-3">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="quick_user_name" class="form-label">Primary contact</label>
+                                    <input type="text" id="quick_user_name" name="user_name" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="quick_user_email" class="form-label">Contact email</label>
+                                    <input type="email" id="quick_user_email" name="user_email" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="quick_user_phone" class="form-label">Contact phone</label>
+                                    <input type="tel" id="quick_user_phone" name="user_phone" class="form-control">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="quick_user_role" class="form-label">Contact role</label>
+                                    <select id="quick_user_role" name="user_role" class="form-select">
+                                        <option value="">Select role</option>
+                                        @foreach($clientContactRoles as $role)
+                                            <option value="{{ $role }}">{{ $role }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <label for="quick_notes" class="form-label">Notes</label>
+                                    <input type="text" id="quick_notes" name="notes" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="quickClientSubmit">Create Client</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-PDF output and email sending originate **from the ticket thread** to preserve threading and audit.
+        <!-- ------------------------------------------------- -->
+        <!-- Quick contact modal -->
+        <!-- ------------------------------------------------- -->
+        <div class="modal fade" id="quickContactModal" tabindex="-1" aria-labelledby="quickContactModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <form class="modal-content" id="quickContactForm" data-store-url-template="{{ route('tech.sales.clients.contacts.quick-store', ['client' => '__CLIENT__']) }}">
+                    @csrf
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="quickContactModalLabel">New Contact</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger d-none" id="quickContactErrors"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="quick_contact_name" class="form-label">Name</label>
+                                <input type="text" id="quick_contact_name" name="name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="quick_contact_email" class="form-label">Email</label>
+                                <input type="email" id="quick_contact_email" name="email" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="quick_contact_phone" class="form-label">Phone</label>
+                                <input type="tel" id="quick_contact_phone" name="phone" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="quick_contact_role" class="form-label">Role</label>
+                                <select id="quick_contact_role" name="role" class="form-select">
+                                    <option value="">Select role</option>
+                                    @foreach($clientContactRoles as $role)
+                                        <option value="{{ $role }}">{{ $role }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="quick_contact_site_id" class="form-label">Site</label>
+                                <select id="quick_contact_site_id" name="client_site_id" class="form-select">
+                                    <option value="">Default site</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="quickContactSubmit">Create Contact</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endsection
 
----
+@section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const clientContactData = @json($clientContactData);
+            const form = document.getElementById('quickClientForm');
+            const contactForm = document.getElementById('quickContactForm');
+            const clientSelect = document.getElementById('client_id');
+            const contactSelect = document.getElementById('primary_contact_id');
+            const quickContactButton = document.getElementById('quickContactButton');
+            const contactSiteSelect = document.getElementById('quick_contact_site_id');
+            const errorBox = document.getElementById('quickClientErrors');
+            const contactErrorBox = document.getElementById('quickContactErrors');
+            const submitButton = document.getElementById('quickClientSubmit');
+            const contactSubmitButton = document.getElementById('quickContactSubmit');
+            const modalElement = document.getElementById('quickClientModal');
+            const contactModalElement = document.getElementById('quickContactModal');
+            const modal = window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(modalElement) : null;
+            const contactModal = window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(contactModalElement) : null;
 
-## Layout (Bootstrap)
+            if (!form || !clientSelect) {
+                return;
+            }
 
-**Template regions:** Top header / Main content / Right slim rail.
-**Design:** Static layout; dynamic content; real-time updates where applicable.
+            const showErrors = (messages) => {
+                errorBox.classList.remove('d-none');
+                errorBox.innerHTML = '';
+                messages.forEach((message) => {
+                    const line = document.createElement('div');
+                    line.textContent = message;
+                    errorBox.appendChild(line);
+                });
+            };
 
-**Suggested icons:** file-plus, shopping-cart, receipt, percent, edit, lock, unlock, mail, send, calculator, printer, download, shield-check, triangle-alert.
+            const showContactErrors = (messages) => {
+                contactErrorBox.classList.remove('d-none');
+                contactErrorBox.innerHTML = '';
+                messages.forEach((message) => {
+                    const line = document.createElement('div');
+                    line.textContent = message;
+                    contactErrorBox.appendChild(line);
+                });
+            };
 
----
+            const syncContactOptions = (selectedContactId = '') => {
+                const clientId = clientSelect.value;
+                const data = clientContactData[clientId] || { contacts: [], sites: [] };
 
-## Top Header
+                contactSelect.innerHTML = '';
+                contactSiteSelect.innerHTML = '<option value="">Default site</option>';
 
-* **Title:** "New Sale / Order"
-* **Breadcrumbs:** Sales → Create
-* **Primary actions (right-aligned):**
+                if (!clientId) {
+                    contactSelect.add(new Option('Select client first', ''));
+                    quickContactButton.disabled = true;
+                    return;
+                }
 
-  * `Save` (draft)
-  * `Save & Send Quote`
-  * `Save & Send Confirmation`
-  * `Cancel`
-* **Status pill (live):** `Draft` | `Quote Sent` | `Confirmed` | `Processing` | `Invoiced` | `Cancelled`
+                quickContactButton.disabled = false;
+                contactSelect.add(new Option(data.contacts.length ? 'Select sales contact' : 'No contacts yet', ''));
 
----
+                data.contacts.forEach((contact) => {
+                    contactSelect.add(new Option(contact.label, contact.id, false, String(selectedContactId) === String(contact.id)));
+                });
 
-## Main Content
+                data.sites.forEach((site) => {
+                    contactSiteSelect.add(new Option(site.name, site.id));
+                });
+            };
 
-### A) Context & Party Selection
+            clientSelect.addEventListener('change', () => syncContactOptions());
+            syncContactOptions(@json(old('primary_contact_id')));
 
-If navigated from another form, **Client, Site, User** are prefilled and locked; otherwise required selectors.
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                errorBox.classList.add('d-none');
+                errorBox.innerHTML = '';
+                submitButton.disabled = true;
+                submitButton.textContent = 'Creating...';
 
-* **Queue selector (guarded):** default from entry; values: `sales` or `order` (editable only with `ticket.queue.change`).
-* **Client** (searchable select)
-* **Site** (dependent select)
-* **User/Contact** (dependent select)
-* **Reference fields:** Customer PO, External Ref, Internal Ref (optional)
+                try {
+                    const response = await fetch(form.dataset.storeUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value,
+                        },
+                        body: new FormData(form),
+                    });
 
-### B) Order Meta
+                    const payload = await response.json();
 
-* **Subject/Title** (text)
-* **Custom order description** (rich textarea; shown on PDF)
-* **Dates:** Quote valid until (default +14 days), Delivery date (optional)
-* **Currency** (default system currency)
+                    if (!response.ok) {
+                        const messages = payload.errors
+                            ? Object.values(payload.errors).flat()
+                            : [payload.message || 'Client could not be created.'];
+                        showErrors(messages);
+                        return;
+                    }
 
-### C) Items Table (invoice-like)
+                    const option = new Option(payload.client.label, payload.client.id, true, true);
+                    clientSelect.add(option);
+                    clientContactData[payload.client.id] = {
+                        sites: payload.sites || [],
+                        contacts: payload.contacts || [],
+                    };
+                    syncContactOptions(payload.contacts?.[0]?.id || '');
+                    form.reset();
 
-Columns:
+                    const numberInput = document.getElementById('quick_client_number');
+                    if (numberInput && payload.client.client_number) {
+                        numberInput.value = String(Number(payload.client.client_number) + 1).padStart(5, '0');
+                    }
 
-1. **SKU / Item** (picker from inventory; free-text fallback if permitted)
-2. **Description** (editable)
-3. **Qty** (numeric)
-4. **Unit Price** (prefilled from inventory; **override** allowed with `sales.override`)
-5. **Discount** (%, value or both; per-line)
-6. **VAT** (from item; view-only by default; per-line override requires `sales.override`)
-7. **Line Total** (auto)
+                    if (modal) {
+                        modal.hide();
+                    }
+                } catch (error) {
+                    showErrors(['Client could not be created. Please try again.']);
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Create Client';
+                }
+            });
 
-Row actions: Add line, Duplicate, Remove, Drag to reorder.
-Bulk: Clear discounts, Recalculate from catalog.
-Validation: non-negative qty/price; discount ≤ 100%.
+            contactForm?.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                contactErrorBox.classList.add('d-none');
+                contactErrorBox.innerHTML = '';
+                contactSubmitButton.disabled = true;
+                contactSubmitButton.textContent = 'Creating...';
 
-### D) Totals & Taxes (sticky footer inside Main)
+                try {
+                    const clientId = clientSelect.value;
+                    const response = await fetch(contactForm.dataset.storeUrlTemplate.replace('__CLIENT__', clientId), {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': contactForm.querySelector('input[name="_token"]').value,
+                        },
+                        body: new FormData(contactForm),
+                    });
 
-* **Subtotal (excl. VAT)**
-* **VAT total** (sum of per-line VAT)
-* **Grand Total (incl. VAT)**
-* **Notes to customer** (optional; prints below totals)
-  Widgets: mini-calculator; rounding preview.
+                    const payload = await response.json();
 
----
+                    if (!response.ok) {
+                        const messages = payload.errors
+                            ? Object.values(payload.errors).flat()
+                            : [payload.message || 'Contact could not be created.'];
+                        showContactErrors(messages);
+                        return;
+                    }
 
-## Right Slim Rail
+                    clientContactData[clientId] ||= { sites: [], contacts: [] };
+                    clientContactData[clientId].contacts.push(payload.contact);
+                    syncContactOptions(payload.contact.id);
+                    contactForm.reset();
 
-* **Send options**
-
-  * Recipient(s): defaults to selected user + CC list
-  * Email account: default from settings (per system or global)
-  * PDF template: Quote / Order Confirmation
-  * Message template preview (editable subject/body)
-  * Checkbox: **Customer already confirmed** (skips quote; jumps to Confirmed)
-  * Checkbox: **Do not send order confirmation** (if already confirmed and policy allows)
-* **Policy hints (read-only):**
-
-  * "Require customer confirmation" (on/off; from settings)
-  * Allowed senders (accounts)
-* **Audit preview:** will log to ticket timeline.
-
----
-
-## Actions & State Transitions
-
-* **Save** → `Draft`. All fields editable. Triggers create Ticket with set queue. Ticket rules may run post-create (configurable).
-* **Save & Send Quote** → sets `Quote Sent`. Generates PDF (Quote), posts email from ticket, logs event. Editing after send creates **new version** on next send.
-* **Save & Send Confirmation** → sets `Confirmed`. Generates PDF (Order Confirmation), sends email (unless suppressed by checkbox), logs event. Locks **items/prices/discounts**; allows edits to delivery fields and internal notes only.
-* **Cancel** → if ticket not created: close modal/navigation; if created: set status `Cancelled`, lock send actions.
-* **Auto-advance (optional via rules/settings):**
-
-  * `Confirmed` → `Processing` when fulfillment starts
-  * `Processing` → `Invoiced` when invoice reference attached
-
-Locking rules:
-
-* `Draft`: unlocked
-* `Quote Sent`: soft-lock (warn on change; next send creates version n+1)
-* `Confirmed`/`Processing`/`Invoiced`: items/pricing locked; metadata limited
-* `Cancelled`: fully locked
-
----
-
-## Settings Dependencies
-
-* **Sales policy:** require customer confirmation (on/off)
-* **Send order confirmation automatically** (on/off)
-* **Default email accounts** per system and global fallback
-* **PDF templates** (Quote, Order Confirmation)
-* **Default quote validity days**
-
----
-
-## Controller Notes
-
-* Prefill context from route/query (client_id, site_id, user_id, queue) and lock if provided.
-* Inventory lookup for SKU, price, and VAT (authoritative source).
-* Totals calculation server-side; mirror client-side for UX.
-* Create ticket first (queue = `sales` or `order`), then attach order payload.
-* Email sending via ticket thread; persist message, attachments, and PDF artifact in ticket files.
-* Versioning for quotes after first send.
-* Full audit trail (who/when/what) + config change log entries.
-
----
-
-## Widgets & Reusable Components
-
-* **EntityPicker** (Client/Site/User)
-* **QueuePill** (sales/order)
-* **ItemRow** (SKU picker + fields)
-* **TotalsBar** (sticky)
-* **SendPanel** (right rail)
-* **StatusPill** (header)
-* **AuditToast** (post-action feedback)
-
----
-
-## Validation & Errors
-
-* Missing Client/Site/User → blocker with inline errors
-* Price/discount/VAT inconsistencies → inline row errors
-* Email send failure → non-blocking for Save; blocking for send actions with detailed error
-* Permission checks on overrides and queue change
-
----
-
-## Notes
-
-* Multi-language later; English for now.
-* PWA-friendly; keyboardable line entry.
-* Real-time updates: calculate totals as user types; autosave optional but default is manual save here.
+                    if (contactModal) {
+                        contactModal.hide();
+                    }
+                } catch (error) {
+                    showContactErrors(['Contact could not be created. Please try again.']);
+                } finally {
+                    contactSubmitButton.disabled = false;
+                    contactSubmitButton.textContent = 'Create Contact';
+                }
+            });
+        });
+    </script>
+@endsection

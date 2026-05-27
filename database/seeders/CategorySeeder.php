@@ -34,6 +34,7 @@ class CategorySeeder extends Seeder
             'Licensing',
             'Locations',
             'Vendors',
+            'Suppliers',
             'Files',
         ];
 

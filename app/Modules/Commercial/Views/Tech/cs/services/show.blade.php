@@ -4,16 +4,16 @@
 <!-- Page Header -->
 <!-- ------------------------------------------------- -->
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
 
-        <h2 class="h4 mb-0">Show service</h2>
+        <h1>{{ $service->name }}</h1>
         <div>
 
             <!-- Edit button -->
-            <a href="{{ route('tech.services.edit', $service) }}" class="btn btn-sm btn-primary">Edit</a>
+            <x-buttons.editlink url="{{ route('tech.services.edit', $service) }}" class="mb-0">Edit</x-buttons.editlink>
 
             <!-- Back button -->
-            <a href="{{ route('tech.services.index') }}" class="btn btn-sm btn-primary">Back</a>
+            <x-buttons.back url="{{ route('tech.services.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection
@@ -41,12 +41,11 @@
 <!-- Sidebar - Left -->
 <!-- ------------------------------------------------- -->
 @section('sidebar')
-    <div class="p-3 small text-muted">Service filters (later)</div>
+    <x-nav.sales-menu />
 @endsection
 
 <!-- ------------------------------------------------- -->
 <!-- Sidebar - Right -->
 <!-- ------------------------------------------------- -->
 @section('rightbar')
-    <div class="p-3 small text-muted">Recent services (MVP later)</div>
 @endsection

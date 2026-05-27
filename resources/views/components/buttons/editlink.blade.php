@@ -1,4 +1,4 @@
 <a href="{{$url ?? '#'}}"
-   class="{{$class ?? 'btn btn-sm btn-outline-secondary mb-3 bi bi-pencil'}}">
+   class="btn btn-sm btn-outline-secondary bi bi-pencil {{$class ?? 'mb-3'}}">
     {{$slot}}
 </a>

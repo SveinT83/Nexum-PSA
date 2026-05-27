@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TicketMessage extends Model
@@ -40,5 +41,10 @@ class TicketMessage extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function fileAttachments(): HasMany
+    {
+        return $this->hasMany(TicketAttachment::class);
     }
 }

@@ -164,30 +164,47 @@
                 </div>
             </div>
 
-            {{--
-                Future Integrations Placeholder
-                Additional integration cards can be added here following the same pattern.
-            --}}
             <div class="col-md-4">
-                <div class="card opacity-50">
+                <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">OpenAI</h5>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" disabled>
-                        </div>
+                        <h5 class="mb-0">AI Providers</h5>
+                        <span class="badge bg-light text-dark border">Config</span>
                     </div>
-                    <div class="card-body">
-                        <p class="card-text">AI integration for smart features (Coming soon).</p>
-                        <button class="btn btn-secondary" disabled>Settings</button>
+                    <div class="card-body d-flex flex-column">
+                        <p class="card-text">Configure AI providers, agent instructions, role access, data scopes, and future API action permissions.</p>
+                        <div class="mt-auto">
+                            <a href="{{ route('tech.admin.system.integrations.ai.index') }}" class="btn btn-primary">
+                                <i class="bi bi-cpu"></i> AI Settings
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            @if(Route::has('tech.admin.nextcloud.connections.index'))
+                <div class="col-md-4 mt-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Nextcloud</h5>
+                            <span class="badge bg-light text-dark border">Domain</span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p class="card-text">Configure global, client, and site Nextcloud connections for calendars, files, users, groups, and future mappings.</p>
+                            <div class="mt-auto">
+                                <a href="{{ route('tech.admin.nextcloud.connections.index') }}" class="btn btn-primary">
+                                    <i class="bi bi-cloud"></i> Nextcloud Settings
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 @endsection
 
 @section('sidebar')
-
+    <x-nav.admin-menu group="integrations" />
 @endsection
 
 @section('rightbar')

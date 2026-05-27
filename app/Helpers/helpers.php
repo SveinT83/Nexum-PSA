@@ -33,14 +33,14 @@ if (!function_exists('breadcrumbs')) {
 
         // 1. Direct match
         if (isset($allCrumbs[$route])) {
-            return $allCrumbs[$route];
+            return resolve_breadcrumb_labels($allCrumbs[$route]);
         }
 
         // 2. Fallback: If route has 'tech.' prefix, try without it
         if (strpos($route, 'tech.') === 0) {
             $fallback = substr($route, 5);
             if (isset($allCrumbs[$fallback])) {
-                return $allCrumbs[$fallback];
+                return resolve_breadcrumb_labels($allCrumbs[$fallback]);
             }
         }
 
@@ -48,10 +48,34 @@ if (!function_exists('breadcrumbs')) {
         if (strpos($route, 'tech.') !== 0) {
             $prefixed = "tech.$route";
             if (isset($allCrumbs[$prefixed])) {
-                return $allCrumbs[$prefixed];
+                return resolve_breadcrumb_labels($allCrumbs[$prefixed]);
             }
         }
 
         return [];
+    }
+}
+
+if (!function_exists('resolve_breadcrumb_labels')) {
+    /**
+     * Resolve dynamic breadcrumb labels from route-bound models.
+     *
+     * Config entries can use `label_from`, for example `asset.name`, to keep
+     * breadcrumbs centralized without writing per-view breadcrumb markup.
+     */
+    function resolve_breadcrumb_labels(array $crumbs): array
+    {
+        return collect($crumbs)
+            ->map(function (array $crumb): array {
+                if (isset($crumb['label_from'])) {
+                    [$routeParameter, $attribute] = array_pad(explode('.', $crumb['label_from'], 2), 2, null);
+                    $model = request()->route($crumb['label_from_param'] ?? $routeParameter);
+                    $crumb['label'] = ($attribute ? data_get($model, $attribute) : null) ?: ($crumb['label'] ?? 'Current');
+                    unset($crumb['label_from'], $crumb['label_from_param']);
+                }
+
+                return $crumb;
+            })
+            ->all();
     }
 }

@@ -14,7 +14,7 @@
 @section('title', 'Edit Documentation: ' . $documentation->title)
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
         <div>
             <h1 class="h4 mb-0">Edit: {{ $documentation->title }}</h1>
             <nav aria-label="breadcrumb">
@@ -156,5 +156,9 @@
 @endsection
 
 @section('sidebar')
-    <x-nav.side-bar :items="$sidebarMenuItems" />
+    <x-nav.knowledge-menu />
+
+    <hr class="my-3">
+
+    <x-nav.side-bar :items="$sidebarMenuItems" title="Documentation categories" />
 @endsection

@@ -50,13 +50,30 @@ class AssetModuleTest extends TestCase
             'ip_type' => 'fixed',
             'status' => 'online',
         ]);
+        Asset::create([
+            'client_id' => $client->id,
+            'name' => 'Accounting Laptop',
+            'type' => 'laptop',
+            'ip_type' => 'dhcp',
+            'status' => 'offline',
+        ]);
 
         $response = $this->actingAs($this->tech)
-            ->get(route('tech.assets.index'));
+            ->get(route('tech.assets.index', ['sort' => 'type', 'direction' => 'asc']));
 
         $response->assertOk();
         $response->assertViewIs('asset::Tech.index');
         $response->assertViewHas('assets');
+        $response->assertSee('sort=name', false);
+        $response->assertSee('sort=type', false);
+        $response->assertSee('sort=client_site', false);
+        $response->assertSee('sort=status', false);
+        $response->assertSee('sort=last_seen_at', false);
+        $response->assertSeeInOrder(['Main Firewall', 'Accounting Laptop']);
+        $response->assertSee('New Asset');
+        $response->assertSee('data-href="'.route('tech.assets.show', ['asset' => Asset::firstOrFail()->id, 'tab' => 'summary']).'"', false);
+        $response->assertSee('—');
+        $response->assertDontSee('View</a>', false);
     }
 
     #[Test]
@@ -70,6 +87,39 @@ class AssetModuleTest extends TestCase
         $response->assertOk();
         $response->assertViewIs('asset::Tech.index');
         $response->assertSee($client->name);
+        $response->assertSee('Back');
+        $response->assertSee('accordion-button collapsed', false);
+        $response->assertSee('Integrations');
+        $response->assertDontSee('Back to Client');
+    }
+
+    #[Test]
+    public function tech_user_can_view_asset_with_compact_header(): void
+    {
+        $client = Client::factory()->create();
+        $asset = Asset::create([
+            'client_id' => $client->id,
+            'name' => 'Compact Header Server',
+            'type' => 'server',
+            'ip_type' => 'fixed',
+            'status' => 'online',
+        ]);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.assets.show', ['asset' => $asset, 'tab' => 'summary']));
+
+        $response->assertOk();
+        $response->assertViewIs('asset::Tech.show');
+        $response->assertSee('Compact Header Server');
+        $response->assertSee('<h1>Compact Header Server</h1>', false);
+        $response->assertSee('Asset Details');
+        $response->assertSee('Edit');
+        $response->assertSee('Back');
+        $response->assertSee('accordion-button collapsed', false);
+        $response->assertSeeText('Status');
+        $response->assertSeeText('Lifecycle');
+        $response->assertSeeText('Documentation');
+        $response->assertDontSee('Back to Assets');
     }
 
     #[Test]

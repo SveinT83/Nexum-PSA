@@ -11,17 +11,21 @@
 @section('pageHeader')
     <div class="d-flex align-items-center justify-content-between">
         <h1>{{ $isEdit ? 'Edit Ticket Rule' : 'Create Ticket Rule' }}</h1>
-        <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Back to rules</a>
+        <x-buttons.back url="{{ route('tech.admin.settings.tickets.rules') }}">Back</x-buttons.back>
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="tickets" />
+@endsection
+
 @section('content')
-    <div class="col-12 col-xl-9">
+    <div class="col-12">
         @if($errors->any())
             <div class="alert alert-danger">{{ $errors->first() }}</div>
         @endif
 
-        <form method="POST" action="{{ $isEdit ? route('tech.admin.settings.tickets.rules.update', $rule) : route('tech.admin.settings.tickets.rules.store') }}">
+        <form id="ticket-rule-form" method="POST" action="{{ $isEdit ? route('tech.admin.settings.tickets.rules.update', $rule) : route('tech.admin.settings.tickets.rules.store') }}">
             @csrf
             @if($isEdit)
                 @method('PUT')
@@ -65,7 +69,7 @@
                         <div class="col-md-4">
                             <label class="form-label" for="condition_field_{{ $index }}">Field</label>
                             <select id="condition_field_{{ $index }}" name="conditions[{{ $index }}][field]" class="form-select">
-                                @foreach(['channel' => 'Channel', 'subject' => 'Subject', 'description' => 'Description/body', 'from_email' => 'From email', 'from_domain' => 'From domain', 'client_known' => 'Client known', 'client_has_active_contract' => 'Client has active contract'] as $value => $label)
+                                @foreach(['channel' => 'Channel', 'subject' => 'Subject', 'description' => 'Description/body', 'from_email' => 'From email', 'from_domain' => 'From domain', 'email_tags' => 'Email tags', 'client_known' => 'Client known', 'client_has_active_contract' => 'Client has active contract'] as $value => $label)
                                     <option value="{{ $value }}" @selected(($condition['field'] ?? '') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
@@ -92,7 +96,7 @@
                         <div class="col-md-5">
                             <label class="form-label" for="action_type_{{ $index }}">Action</label>
                             <select id="action_type_{{ $index }}" name="actions[{{ $index }}][type]" class="form-select">
-                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority'] as $value => $label)
+                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority', 'set_sla' => 'Set SLA', 'set_category' => 'Set category', 'add_tag' => 'Add tag'] as $value => $label)
                                     <option value="{{ $value }}" @selected(($action['type'] ?? '') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
@@ -113,14 +117,43 @@
                     @foreach($priorities as $priority)
                         <option value="{{ $priority->id }}">priority: {{ $priority->name }}</option>
                     @endforeach
+                    @foreach($slas as $sla)
+                        <option value="{{ $sla->id }}">sla: {{ $sla->name }}{{ $sla->is_default ? ' (default)' : '' }}</option>
+                    @endforeach
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}">category: {{ $category->name }}</option>
+                    @endforeach
+                    @foreach($tags as $tag)
+                        <option value="{{ $tag->id }}">tag: {{ $tag->name }}</option>
+                    @endforeach
                 </datalist>
             </x-card.default>
 
-            <div class="d-flex justify-content-end gap-2">
-                <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">{{ $isEdit ? 'Save rule' : 'Create rule' }}</button>
-            </div>
         </form>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
+                @if($isEdit)
+                    <form action="{{ route('tech.admin.settings.tickets.rules.toggle', $rule) }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-sm {{ $rule->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}">
+                            {{ $rule->is_active ? 'Disable' : 'Enable' }}
+                        </button>
+                    </form>
+
+                    <form action="{{ route('tech.admin.settings.tickets.rules.destroy', $rule) }}" method="POST" class="m-0" onsubmit="return confirm('Delete this ticket rule?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                @endif
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('tech.admin.settings.tickets.rules') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" form="ticket-rule-form" class="btn btn-primary">{{ $isEdit ? 'Save rule' : 'Create rule' }}</button>
+            </div>
+        </div>
     </div>
 @endsection
 

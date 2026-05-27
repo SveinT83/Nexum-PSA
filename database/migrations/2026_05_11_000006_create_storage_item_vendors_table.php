@@ -11,8 +11,9 @@ return new class extends Migration
         Schema::create('storage_item_vendors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('item_id')->constrained('storage_items')->cascadeOnDelete();
-            $table->foreignId('vendor_id')->constrained('storage_vendors')->cascadeOnDelete();
+            $table->foreignId('vendor_id')->constrained('vendors')->cascadeOnDelete();
             $table->string('vendor_sku')->nullable();
+            $table->string('purchase_url')->nullable();
             $table->string('currency', 3)->default('NOK');
             $table->decimal('unit_cost', 12, 2)->nullable();
             $table->unsignedInteger('moq')->default(1);

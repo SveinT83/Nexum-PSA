@@ -3,8 +3,10 @@
 namespace App\Modules\Commercial\Controllers\Tech\Contracts;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Commercial\Actions\BuildContractTermSnapshots;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Mail\ContractLinkSent;
+use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Email\Models\EmailAccount;
 use Illuminate\Http\Request;
 use App\Models\Clients\Client;
@@ -43,7 +45,14 @@ class ContractController extends Controller
      */
     public function show(Contracts $contract)
     {
-        $contract->load(['client', 'items.service.serviceTerms', 'items.service.costRelations.cost']);
+        $contract->load([
+            'client',
+            'sla',
+            'items.slaPolicy',
+            'items.timeRates',
+            'items.service.serviceTerms',
+            'items.service.costRelations.cost',
+        ]);
 
         // Check for missing terms (services that have terms not in snapshot)
         // This ensures the legal base is synchronized with the actual service list.
@@ -78,17 +87,142 @@ class ContractController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
-        $contracts = Contracts::with(['client', 'items.service.costRelations.cost'])->paginate(20);
+        $sort = $request->input('sort', 'id');
+        $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
+        $sortableColumns = ['id', 'client', 'status', 'start_date', 'end_date', 'monthly_price', 'yearly_profit'];
+
+        if (! in_array($sort, $sortableColumns, true)) {
+            $sort = 'id';
+        }
+
+        $contractsQuery = Contracts::query()
+            ->select('contracts.*')
+            ->selectRaw($this->monthlyPriceSortExpression().' as monthly_price_sort')
+            ->selectRaw($this->yearlyProfitSortExpression().' as yearly_profit_sort')
+            ->with(['client', 'items.service.costRelations.cost'])
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $search = '%'.$request->string('q')->trim()->toString().'%';
+                $query->where(function ($query) use ($search): void {
+                    $query->where('contracts.id', 'like', $search)
+                        ->orWhere('contracts.description', 'like', $search)
+                        ->orWhere('contracts.approval_status', 'like', $search)
+                        ->orWhereHas('client', fn ($clientQuery) => $clientQuery->where('name', 'like', $search));
+                });
+            })
+            ->when($request->filled('status'), fn ($query) => $query->where('approval_status', $request->input('status')))
+            ->when($request->filled('client_id'), fn ($query) => $query->where('client_id', $request->integer('client_id')))
+            ->when($request->filled('period'), function ($query) use ($request): void {
+                match ($request->input('period')) {
+                    'active' => $query
+                        ->whereDate('start_date', '<=', now()->toDateString())
+                        ->where(fn ($periodQuery) => $periodQuery->whereNull('end_date')->orWhereDate('end_date', '>=', now()->toDateString())),
+                    'future' => $query->whereDate('start_date', '>', now()->toDateString()),
+                    'expired' => $query->whereNotNull('end_date')->whereDate('end_date', '<', now()->toDateString()),
+                    default => null,
+                };
+            });
+
+        if ($sort === 'client') {
+            $contractsQuery->leftJoin('clients', 'contracts.client_id', '=', 'clients.id')
+                ->orderBy('clients.name', $direction)
+                ->orderBy('contracts.id', 'desc');
+        } elseif ($sort === 'status') {
+            $contractsQuery->orderBy('approval_status', $direction)->orderByDesc('id');
+        } elseif ($sort === 'monthly_price') {
+            $contractsQuery->orderBy('monthly_price_sort', $direction)->orderByDesc('id');
+        } elseif ($sort === 'yearly_profit') {
+            $contractsQuery->orderBy('yearly_profit_sort', $direction)->orderByDesc('id');
+        } else {
+            $contractsQuery->orderBy($sort, $direction)->orderByDesc('id');
+        }
+
+        $contracts = $contractsQuery->paginate(20)->withQueryString();
 
         // Calculate clients without contracts for administrative overview.
         $clientsWithoutContractsCount = Client::whereDoesntHave('contracts')->count();
 
         return view('commercial::Tech.cs.contracts.index', [
             'contracts' => $contracts,
-            'clientsWithoutContractsCount' => $clientsWithoutContractsCount
+            'clientsWithoutContractsCount' => $clientsWithoutContractsCount,
+            'clients' => Client::query()->where('active', true)->orderBy('name')->get(['id', 'name']),
+            'statuses' => Contracts::query()->distinct()->orderBy('approval_status')->pluck('approval_status')->filter()->values(),
+            'filters' => $request->only(['q', 'status', 'client_id', 'period', 'sort', 'direction']),
         ]);
+    }
+
+    /**
+     * Build the SQL expression used for sorting by the same monthly line totals shown in the index.
+     */
+    private function monthlyPriceSortExpression(): string
+    {
+        return <<<SQL
+            (
+                SELECT COALESCE(SUM(
+                    CASE WHEN contract_items.billing_interval = 'monthly' THEN
+                        {$this->contractItemLineTotalExpression('contract_items')}
+                    ELSE 0 END
+                ), 0)
+                FROM contract_items
+                WHERE contract_items.contract_id = contracts.id
+            )
+        SQL;
+    }
+
+    /**
+     * Build the SQL expression used for sorting by yearly profit without loading every contract first.
+     */
+    private function yearlyProfitSortExpression(): string
+    {
+        return <<<SQL
+            (
+                SELECT COALESCE(SUM(
+                    (
+                        {$this->contractItemLineTotalExpression('contract_items')}
+                        - (
+                            (
+                                SELECT COALESCE(SUM(costs.cost), 0)
+                                FROM cost_relations
+                                INNER JOIN costs ON costs.id = cost_relations.costId
+                                WHERE cost_relations.serviceId = contract_items.service_id
+                            ) * contract_items.quantity
+                        )
+                    )
+                    * CASE contract_items.billing_interval
+                        WHEN 'monthly' THEN 12
+                        WHEN 'quarterly' THEN 4
+                        WHEN 'yearly' THEN 1
+                        ELSE 0
+                    END
+                ), 0)
+                FROM contract_items
+                WHERE contract_items.contract_id = contracts.id
+            )
+        SQL;
+    }
+
+    /**
+     * Mirror ContractItem::line_total in SQL so financial sort links match the displayed values.
+     */
+    private function contractItemLineTotalExpression(string $table): string
+    {
+        return <<<SQL
+            (
+                ({$table}.unit_price * {$table}.quantity)
+                - CASE
+                    WHEN {$table}.discount_value IS NOT NULL AND {$table}.discount_type = 'percent'
+                        THEN ({$table}.unit_price * {$table}.quantity) * ({$table}.discount_value / 100)
+                    WHEN {$table}.discount_value IS NOT NULL AND {$table}.discount_type = 'amount'
+                        THEN CASE
+                            WHEN {$table}.discount_value > ({$table}.unit_price * {$table}.quantity)
+                                THEN ({$table}.unit_price * {$table}.quantity)
+                            ELSE {$table}.discount_value
+                        END
+                    ELSE 0
+                END
+            )
+        SQL;
     }
 
     /**
@@ -136,6 +270,7 @@ class ContractController extends Controller
             'activeClient' => $activeClient,
             'clients' => $clients,
             'technicians' => $technicians,
+            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'startDate' => $startDate->toDateString(),
             'endDate' => $endDate->toDateString(),
             'bindingEndDate' => $bindingEndDate->toDateString(),
@@ -210,6 +345,7 @@ class ContractController extends Controller
             'activeClient' => $activeClient,
             'clients' => $clients,
             'technicians' => $technicians,
+            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'startDate' => $contract->start_date ? $contract->start_date->toDateString() : null,
             'endDate' => $contract->end_date ? $contract->end_date->toDateString() : null,
             'bindingEndDate' => $contract->binding_end_date ? $contract->binding_end_date->toDateString() : null,
@@ -294,51 +430,21 @@ class ContractController extends Controller
     public function terms(Contracts $contract, Request $request)
     {
         $contract->load(['client', 'items.service.serviceTerms']);
+        $isRefresh = $request->has('refresh');
+        $builder = app(BuildContractTermSnapshots::class);
+        $termsByType = $builder->groupTermsByType($contract);
+        $snapshots = $builder->handle($contract);
 
-        // Group terms by their functional type.
-        $termsByType = [
-            'terms' => collect(),
-            'dpa' => collect(),
-            'legal' => collect(),
-            'sla' => collect(),
-            'general' => collect(),
-        ];
-
-        foreach ($contract->items as $item) {
-            if ($item->service) {
-                foreach ($item->service->serviceTerms as $term) {
-                    $type = $term->type ?: 'terms';
-
-                    // Fallback to 'terms' if a custom/unknown type is found in the DB.
-                    if (!isset($termsByType[$type])) {
-                        $type = 'terms';
-                    }
-
-                    // Deduplicate by term ID.
-                    if (!$termsByType[$type]->has($term->id)) {
-                        $termsByType[$type]->put($term->id, $term);
-                    }
-                }
+        foreach ($snapshots as $field => $content) {
+            if (empty($contract->$field) || $isRefresh) {
+                $contract->$field = $content;
             }
         }
 
-        // Automatic Snapshot Initialization:
-        // If snapshots are empty, we concatenate all relevant terms into a single string.
-        $snapshots = [
-            'terms_snapshot' => 'terms',
-            'dpa_snapshot' => 'dpa',
-            'legal_snapshot' => 'legal',
-            'sla_snapshot' => 'sla',
-            'general_snapshot' => 'general',
-        ];
-
-        $isRefresh = $request->has('refresh');
-
-        foreach ($snapshots as $field => $type) {
-            if (empty($contract->$field) || $isRefresh) {
-                // Combine content with a visual separator.
-                $contract->$field = $termsByType[$type]->pluck('content')->filter()->unique()->implode("\n\n---\n\n");
-            }
+        // Persist generated snapshots so contract preview, public quote, and readiness checks
+        // all see the same legal content without requiring an extra manual save.
+        if ($contract->isDirty(['terms_snapshot', 'dpa_snapshot', 'legal_snapshot', 'sla_snapshot', 'general_snapshot'])) {
+            $contract->save();
         }
 
         return view('commercial::Tech.cs.contracts.terms.terms', [

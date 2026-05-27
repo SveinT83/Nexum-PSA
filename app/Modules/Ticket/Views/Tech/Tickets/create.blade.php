@@ -215,7 +215,7 @@
                         </select>
                     </div>
 
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label for="category_id" class="form-label">Category</label>
                         <select id="category_id" name="category_id" class="form-select @error('category_id') is-invalid @enderror">
                             <option value="">No category</option>
@@ -224,6 +224,27 @@
                             @endforeach
                         </select>
                         @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label">Tags</label>
+                        <div class="ticket-tag-input form-control d-flex flex-wrap align-items-center gap-1 p-1" data-ticket-tag-input>
+                            @foreach(old('tag_names', []) as $tagName)
+                                @continue(blank($tagName))
+                                <span class="badge text-bg-secondary d-inline-flex align-items-center gap-1" data-tag-chip="{{ $tagName }}">
+                                    {{ $tagName }}
+                                    <button type="button" class="btn-close btn-close-white" data-remove-tag aria-label="Remove {{ $tagName }}"></button>
+                                    <input type="hidden" name="tag_names[]" value="{{ $tagName }}">
+                                </span>
+                            @endforeach
+                            <input type="text" class="ticket-tag-input__field border-0 flex-grow-1 px-1" list="ticketTagSuggestions" placeholder="Add tag">
+                        </div>
+                        <datalist id="ticketTagSuggestions">
+                            @foreach($tags as $tag)
+                                <option value="{{ $tag->name }}"></option>
+                            @endforeach
+                        </datalist>
+                        @error('tag_names')<div class="text-danger small">{{ $message }}</div>@enderror
                     </div>
                 </x-card.default>
             </div>
@@ -353,8 +374,75 @@
 
             window.location.href = url.toString();
         });
+
+        const normalizeTag = (value) => value.trim().replace(/\s+/g, ' ');
+
+        document.querySelectorAll('[data-ticket-tag-input]').forEach((container) => {
+            const input = container.querySelector('.ticket-tag-input__field');
+
+            const existingNames = () => Array.from(container.querySelectorAll('input[name="tag_names[]"]'))
+                .map((hidden) => hidden.value.toLowerCase());
+
+            const addTag = (rawName) => {
+                const name = normalizeTag(rawName);
+
+                if (!name || existingNames().includes(name.toLowerCase())) {
+                    input.value = '';
+                    return;
+                }
+
+                const chip = document.createElement('span');
+                chip.className = 'badge text-bg-secondary d-inline-flex align-items-center gap-1';
+                chip.dataset.tagChip = name;
+                chip.append(document.createTextNode(name));
+
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'btn-close btn-close-white';
+                removeButton.dataset.removeTag = '';
+                removeButton.setAttribute('aria-label', `Remove ${name}`);
+
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'tag_names[]';
+                hidden.value = name;
+
+                chip.append(removeButton, hidden);
+                container.insertBefore(chip, input);
+                input.value = '';
+            };
+
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ',') {
+                    event.preventDefault();
+                    addTag(input.value);
+                }
+
+                if (event.key === 'Backspace' && input.value === '') {
+                    const chips = container.querySelectorAll('[data-tag-chip]');
+                    chips[chips.length - 1]?.remove();
+                }
+            });
+
+            input.addEventListener('change', () => addTag(input.value));
+            input.closest('form')?.addEventListener('submit', () => addTag(input.value));
+
+            container.addEventListener('click', (event) => {
+                if (event.target.matches('[data-remove-tag]')) {
+                    event.preventDefault();
+                    event.target.closest('[data-tag-chip]')?.remove();
+                    return;
+                }
+
+                input.focus();
+            });
+        });
     });
 </script>
+@endsection
+
+@section('sidebar')
+    <x-nav.work-menu />
 @endsection
 
 <!-- -------------------------------------------------------------------------------------------------- -->

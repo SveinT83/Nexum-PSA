@@ -3,6 +3,7 @@
 namespace App\Modules\Storage\Models;
 
 use App\Models\Core\User;
+use App\Modules\Documentation\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;

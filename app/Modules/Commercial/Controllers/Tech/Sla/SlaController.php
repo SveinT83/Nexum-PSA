@@ -60,9 +60,10 @@ class SlaController extends Controller
         // Validate request via FormRequest
         $data = $request->validated();
 
-        Sla::create([
+        $sla = Sla::create([
             'name' => $data['name'],
             'description' => $data['description'],
+            'is_default' => (bool) ($data['is_default'] ?? false),
 
             'low_firstResponse' => $data['low_firstResponse'],
             'low_firstResponse_type' => $data['low_firstResponse_type'],
@@ -83,6 +84,8 @@ class SlaController extends Controller
             'updated_by_user_id' => auth()->id(),
         ]);
 
+        $this->ensureSingleDefault($sla);
+
         return redirect()->route('tech.sla.index')->with('success', 'Sla created successfully');
     }
 
@@ -96,6 +99,7 @@ class SlaController extends Controller
         $sla->update([
             'name' => $data['name'],
             'description' => $data['description'],
+            'is_default' => (bool) ($data['is_default'] ?? false),
 
             'low_firstResponse' => $data['low_firstResponse'],
             'low_firstResponse_type' => $data['low_firstResponse_type'],
@@ -115,8 +119,25 @@ class SlaController extends Controller
             'updated_by_user_id' => auth()->id(),
         ]);
 
+        $this->ensureSingleDefault($sla);
+
         return redirect()
             ->route('tech.sla.index')
             ->with('success', 'SLA updated successfully');
+    }
+
+    private function ensureSingleDefault(Sla $sla): void
+    {
+        if (! $sla->is_default) {
+            if (! Sla::query()->where('is_default', true)->exists()) {
+                $sla->forceFill(['is_default' => true])->save();
+            }
+
+            return;
+        }
+
+        Sla::query()
+            ->whereKeyNot($sla->id)
+            ->update(['is_default' => false]);
     }
 }

@@ -2,6 +2,9 @@
 
 namespace App\Modules\Clients\Menus\SideBar;
 
+use App\Models\Clients\Client;
+use App\Modules\Taxonomy\Models\Category;
+
 class ClientsMenu
 {
     /**
@@ -16,21 +19,27 @@ class ClientsMenu
         // Initialize an empty array to hold the menu items
         $sidebarMenuItems = [];
 
-        // Add the main navigation items for clients, sites, and user_management
-        $sidebarMenuItems[] = ['name' => 'Clients', 'route' => 'tech.clients.index'];
+        // Add the primary client workspace areas before the documentation shortcuts.
+        $sidebarMenuItems[] = [
+            'name' => 'Clients',
+            'route' => 'tech.clients.index',
+            'icon' => 'bi-building',
+        ];
 
-        $clientParam = $clients instanceof \App\Models\Clients\Client ? ['client' => $clients->id] : ($clients ? ['client' => $clients] : []);
+        $clientParam = $clients instanceof Client ? ['client' => $clients->id] : ($clients ? ['client' => $clients] : []);
 
         $sidebarMenuItems[] = [
             'name' => 'Sites',
             'route' => 'tech.clients.sites.index',
-            'params' => $clientParam
+            'params' => $clientParam,
+            'icon' => 'bi-diagram-3',
         ];
 
         $sidebarMenuItems[] = [
             'name' => 'Users',
             'route' => 'tech.clients.users.index',
-            'params' => $clientParam
+            'params' => $clientParam,
+            'icon' => 'bi-people',
         ];
 
         $sidebarMenuItems[] = [
@@ -39,24 +48,31 @@ class ClientsMenu
             // sidebar must link to the global asset list; the client-scoped
             // route requires a `{client}` parameter.
             'route' => $clientParam ? 'tech.clients.assets.index' : 'tech.assets.index',
-            'params' => $clientParam
+            'params' => $clientParam,
+            'icon' => 'bi-pc-display',
         ];
 
         // --- Documentation Section ---
-        // This section mirrors the documentation sidebar but within the client context.
-        // It provides quick access to documentation categories for the active client.
-        $sidebarMenuItems[] = ['name' => 'Dokumentations', 'is_header' => true];
+        // This mirrors a Passportal-style client documentation vault inside the client context.
+        $sidebarMenuItems[] = [
+            'name' => 'Documentation',
+            'is_header' => true,
+            'icon' => 'bi-folder2-open',
+            'help' => 'Client documentation shortcuts grouped by template category, similar to Passportal.',
+        ];
 
         // Retrieve all categories that have at least one documentation template associated
-        $categories = \App\Modules\Taxonomy\Models\Category::has('templates')
+        $categories = Category::has('templates')
             ->where('is_active', true)
+            ->orderBy('name')
             ->get();
 
         // Add "All" option to view all client-related documentations
         $sidebarMenuItems[] = [
-            'name' => 'All',
+            'name' => 'All Documentation',
             'route' => 'tech.documentations.index',
-            'params' => ['cat' => 'all', 'exclude_internal' => 1]
+            'params' => ['cat' => 'all', 'exclude_internal' => 1],
+            'icon' => 'bi-question-circle',
         ];
 
         // Add each valid category to the sidebar
@@ -64,6 +80,7 @@ class ClientsMenu
             $sidebarMenuItems[] = [
                 'name' => $category->name,
                 'route' => 'tech.documentations.index',
+                'icon' => 'bi-file-earmark-text',
                 'params' => [
                     'cat' => $category->slug,
                     'exclude_internal' => 1 // Ensures internal documents are hidden in client context

@@ -84,6 +84,8 @@
                 <thead class="bg-light">
                     <tr>
                         <th>Description</th>
+                        <th>SLA</th>
+                        <th>Rates</th>
                         <th class="text-center">Qty</th>
                         <th class="text-end">Unit Price</th>
                         <th class="text-end">Total</th>
@@ -96,6 +98,24 @@
                             <div class="fw-bold">{{ $item->name }}</div>
                             <small class="text-muted">{{ $item->sku }}</small>
                         </td>
+                        <td>
+                            @if($item->uses_contract_default_sla)
+                                <span class="badge text-bg-light border">Contract default</span>
+                                <div class="small text-muted">{{ $contract->sla?->name ?? 'System default' }}</div>
+                            @else
+                                <span class="badge text-bg-primary">{{ $item->sla_snapshot['name'] ?? $item->slaPolicy?->name ?? 'Custom SLA' }}</span>
+                            @endif
+                        </td>
+                        <td>
+                            @forelse($item->timeRates->where('is_active', true) as $rate)
+                                <div class="small">
+                                    <span class="fw-semibold">{{ $rate->name }}</span>
+                                    <span class="text-muted">{{ number_format((float) $rate->amount_ex_vat, 2, ',', ' ') }} {{ $rate->currency }}/{{ $rate->unit }}</span>
+                                </div>
+                            @empty
+                                <span class="text-muted small">No rates</span>
+                            @endforelse
+                        </td>
                         <td class="text-center">{{ (int)$item->quantity }} {{ $item->unit }}</td>
                         <td class="text-end">{{ number_format($item->unit_price, 2, ',', ' ') }} kr</td>
                         <td class="text-end fw-bold">{{ number_format($item->line_total, 2, ',', ' ') }} kr</td>
@@ -104,7 +124,7 @@
                 </tbody>
                 <tfoot class="bg-light">
                     <tr>
-                        <th colspan="3" class="text-end">Recurring Monthly Amount (ex VAT):</th>
+                        <th colspan="5" class="text-end">Recurring Monthly Amount (ex VAT):</th>
                         <th class="text-end h5 mb-0">{{ number_format($contract->total_monthly_amount, 2, ',', ' ') }} kr</th>
                     </tr>
                 </tfoot>

@@ -3,6 +3,7 @@
 namespace App\Modules\Storage\Models;
 
 use App\Models\Core\User;
+use App\Modules\Documentation\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -19,6 +20,7 @@ class Item extends Model
         'room_id',
         'box_id',
         'primary_vendor_id',
+        'manufacturer_vendor_id',
         'sku',
         'name',
         'short_description',
@@ -83,6 +85,11 @@ class Item extends Model
     public function primaryVendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class, 'primary_vendor_id');
+    }
+
+    public function manufacturerVendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class, 'manufacturer_vendor_id');
     }
 
     public function movements(): HasMany

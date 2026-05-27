@@ -9,35 +9,43 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">New Client</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>New Client</h1>
         <div>
-            <x-buttons.back url="{{ route('tech.clients.index') }}"> Back to Clients</x-buttons.back>
+            <x-buttons.back url="{{ route('tech.clients.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection
 
 @section('content')
-    <form class="container-fluid" method="post" action="{{ route('tech.clients.store') }}" class="col-12 col-lg-10">
-        @csrf
+    <!-- ------------------------------------------------- -->
+    <!-- Client creation form -->
+    <!-- ------------------------------------------------- -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="h5 mb-0">Create Client</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ route('tech.clients.store') }}">
+                @csrf
 
-        <!-- ------------------------------------------------- -->
-        <!-- Top Row: Client number, Name, Org No -->
-        <!-- ------------------------------------------------- -->
-        <div class="row border-bottom mb-3 pb-3">
+                <!-- ------------------------------------------------- -->
+                <!-- Top Row: Client number, Name, Org No, Format -->
+                <!-- ------------------------------------------------- -->
+                <div class="row border-bottom mb-3 pb-3">
 
-            <!-- Client number, 5 digits required. Default ID from database row -->
-            <div class="col-md-2 mb-3">
-                <label class="form-label fw-bold">Client number</label>
-                <input type="number" name="client_number" placeholder="00000"
-                       value="{{ old('client_number') ?? $suggestedClientNumber }}" required
-                       class="form-control @error('client_number') is-invalid @enderror">
-                @error('client_number')
-                <div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
+                    <!-- Client number, 5 digits required. Default ID from database row -->
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-bold">Client number</label>
+                        <input type="number" name="client_number" placeholder="00000"
+                               value="{{ old('client_number') ?? $suggestedClientNumber }}" required
+                               class="form-control @error('client_number') is-invalid @enderror">
+                        @error('client_number')
+                        <div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
 
             <!-- Name, Required -->
-            <div class="col-md-7 mb-3">
+            <div class="col-md-5 mb-3">
                 <label class="form-label fw-bold">Name *</label>
                 <input type="text" name="name" value="{{ old('name') }}" required
                        class="form-control @error('name') is-invalid @enderror">
@@ -48,9 +56,22 @@
             <!-- Org No 11 Numbers, Not Required -->
             <div class="col-md-3 mb-3">
                 <label class="form-label fw-bold">Org No</label>
-                <input type="text" name="org_no" placeholder="11 siffer" value="{{ old('org_no')}}"
+                <input type="text" name="org_no" placeholder="Organization number" value="{{ old('org_no')}}"
                        class="form-control @error('org_no') is-invalid @enderror">
                 @error('org_no')
+                <div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+
+            <!-- Client format, configured in Admin > Sales settings -->
+            <div class="col-md-2 mb-3">
+                <label class="form-label fw-bold">Format</label>
+                <select name="client_format_id" class="form-select @error('client_format_id') is-invalid @enderror">
+                    <option value="">Select format</option>
+                    @foreach(($clientFormats ?? []) as $format)
+                        <option value="{{ $format->id }}" @selected(old('client_format_id') == $format->id)>{{ $format->code }}</option>
+                    @endforeach
+                </select>
+                @error('client_format_id')
                 <div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
         </div>
@@ -144,16 +165,19 @@
             </div>
         @endif
 
-        <div class="mb-3">
-            <button type="submit" class="btn btn-primary">Create Client</button>
+                <div class="mb-0">
+                    <button type="submit" class="btn btn-primary">Create Client</button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 @endsection
 
 @section('sidebar')
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" title="Client workspace" />
+    @endif
 @endsection
 
 @section('rightbar')
-    <div class="p-3 small text-muted">Widgets (later)</div>
 @endsection
-

@@ -112,4 +112,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Invite Expiration
+    |--------------------------------------------------------------------------
+    |
+    | The number of hours after which an invitation token expires.
+    | Defaults to 72 hours (3 days).
+    |
+    */
+
+    'invite_expire_hours' => env('AUTH_INVITE_EXPIRE_HOURS', 72),
+
 ];

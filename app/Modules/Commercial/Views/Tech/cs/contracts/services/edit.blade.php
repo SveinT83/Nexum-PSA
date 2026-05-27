@@ -1,13 +1,10 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Contract #{{ $contract->id }} Services</h1>
         <div>
-            <h2 class="h4 mb-0">Contract #{{ $contract->id }} - Add Services</h2>
-            <p class="text-muted mb-0 small">Client: <strong>{{ $client->name }}</strong> ({{ $client->client_number }})</p>
-        </div>
-        <div>
-            <a href="{{ route('tech.contracts.index') }}" class="btn btn-sm btn-secondary bi bi-arrow-left-short"> Back</a>
+            <x-buttons.back url="{{ route('tech.contracts.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection
@@ -31,7 +28,7 @@
 @endsection
 
 @section('sidebar')
-    <div class="p-3 small text-muted">Service filters (later)</div>
+    <x-nav.sales-menu />
 @endsection
 
 @section('rightbar')
@@ -91,6 +88,12 @@
         <div class="mb-2">
             <span class="text-muted d-block small uppercase font-weight-bold mb-1">Binding End:</span>
             <p class="mb-0">{{ $contract->binding_end_date?->format('d.m.Y') ?? 'N/A' }}</p>
+        </div>
+
+        <div class="mb-2 pt-2 border-top mt-2">
+            <span class="text-muted d-block small uppercase font-weight-bold mb-1">Default SLA:</span>
+            <p class="mb-0">{{ $contract->sla?->name ?? 'System default' }}</p>
+            <p class="mb-0 text-muted small">Service lines can use this default or a specific service SLA.</p>
         </div>
 
         <div class="mb-0 pt-2 border-top mt-2">

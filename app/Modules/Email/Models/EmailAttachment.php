@@ -9,6 +9,8 @@ class EmailAttachment extends Model
 {
     protected $table = 'email_attachments';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'message_id', 'filename', 'content_type', 'size_bytes', 'disk', 'path',
         'is_inline', 'cid', 'checksum_sha1',

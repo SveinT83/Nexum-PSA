@@ -1,14 +1,10 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">{{$site->name}}
-            <a href="{{ route('tech.clients.show', $client->id) }}">{{$client->name}}</a></h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>{{ $site->name }}</h1>
         <div>
-            <x-buttons.back url="{{ route('tech.clients.show', $client->id) }}">Back to Client</x-buttons.back>
-            <x-buttons.addlink url="{{ route('tech.clients.user.create', $client) }}">Add User</x-buttons.addlink>
-            <x-buttons.addlink url="{{ route('tech.clients.sites.create', $client) }}">New Site</x-buttons.addlink>
-            <x-buttons.editlink url="{{ route('tech.clients.sites.edit', [$site, $client]) }}">Edit</x-buttons.editlink>
+            <x-buttons.back url="{{ route('tech.clients.show', $client->id) }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection
@@ -18,40 +14,51 @@
     <!-- ------------------------------------------------- -->
     <!-- Sites Info -->
     <!-- ------------------------------------------------- -->
-    <x-card.default title="site info">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Site Profile</h2>
+            <x-buttons.editlink url="{{ route('tech.clients.sites.edit', [$site, $client]) }}" class="mb-0">Edit Site</x-buttons.editlink>
+        </div>
 
-        <div class="row">
-            <div class="col-md-2">
-                <b>Street:</b>
-                <p>{{$site->address ?? '-'}}</p>
-            </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="text-muted small">Client</div>
+                    <a href="{{ route('tech.clients.show', $client->id) }}">{{ $client->name }}</a>
+                </div>
 
-            <div class="col-md-2">
-                <b>CO Street:</b>
-                <p>{{$site->co_address ?? '-'}}</p>
-            </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Street</div>
+                    <div>{{ $site->address ?: '—' }}</div>
+                </div>
 
-            <div class="col-md-1">
-                <b>Zip:</b>
-                <p>{{$site->zip ?? '-'}}</p>
-            </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">CO Street</div>
+                    <div>{{ $site->co_address ?: '—' }}</div>
+                </div>
 
-            <div class="col-md-2">
-                <b>City:</b>
-                <p>{{$site->city ?? '-'}}</p>
-            </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Zip</div>
+                    <div>{{ $site->zip ?: '—' }}</div>
+                </div>
 
-            <div class="col-md-2">
-                <b>County:</b>
-                <p>{{$site->county ?? '-'}}</p>
-            </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">City</div>
+                    <div>{{ $site->city ?: '—' }}</div>
+                </div>
 
-            <div class="col-md-2">
-                <b>Country:</b>
-                <p>{{$site->country ?? '-'}}</p>
+                <div class="col-md-3">
+                    <div class="text-muted small">County</div>
+                    <div>{{ $site->county ?: '—' }}</div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="text-muted small">Country</div>
+                    <div>{{ $site->country ?: '—' }}</div>
+                </div>
             </div>
         </div>
-    </x-card.default>
+    </div>
 
     <!-- ------------------------------------------------- -->
     <!-- ASSETS -->
@@ -61,17 +68,23 @@
     <!-- ------------------------------------------------- -->
     <!-- USERS - Shows user_management of the site in an table -->
     <!-- ------------------------------------------------- -->
-    <x-card.default title="Users">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <h2 class="h5 mb-0">Users</h2>
+                <span class="badge text-bg-secondary">{{ $users->count() }}</span>
+            </div>
+            <x-buttons.addlink url="{{ route('tech.clients.user.create', $client) }}" class="mb-0">New User</x-buttons.addlink>
+        </div>
 
         <div class="table-responsive">
-            <table class="table table-sm align-middle">
+            <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light">
                 <tr>
                     <th>Name</th>
                     <th>Role</th>
                     <th>E-mail</th>
                     <th>Phone</th>
-                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -79,29 +92,43 @@
                 <!-- ------------------------------------------------- -->
                 <!-- For each user_management -->
                 <!-- ------------------------------------------------- -->
-                @foreach($users as $user)
-                    <tr>
+                @forelse($users as $user)
+                    <tr class="cursor-pointer" data-href="{{ route('tech.clients.user.show', $user) }}" onclick="window.location.href = this.dataset.href">
+                        <td>{{ $user->name }}</td>
+                        <td>{{ $user->role ?: '—' }}</td>
                         <td>
-                            <a href="{{route ('tech.clients.user.show', $user)}}">{{$user->name}}</a>
+                            @if($user->email)
+                                <a href="mailto:{{ $user->email }}" onclick="event.stopPropagation()">{{ $user->email }}</a>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
                         </td>
-                        <td>{{$user->role}}</td>
-                        <td>{{$user->email}}</td>
-                        <td>{{$user->phone}}</td>
-                        <td></td>
+                        <td>
+                            @if($user->phone)
+                                <a href="tel:{{ $user->phone }}" onclick="event.stopPropagation()">{{ $user->phone }}</a>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="4" class="text-muted">No users found.</td>
+                    </tr>
+                @endforelse
 
                 </tbody>
             </table>
         </div>
-    </x-card.default>
+    </div>
 
 @endsection
 
 @section('sidebar')
+    @if(isset($sidebarMenuItems))
+        <x-nav.side-bar :items="$sidebarMenuItems" title="Client workspace" />
+    @endif
 @endsection
 
 @section('rightbar')
-    <div class="p-3 small text-muted">Recent clients (MVP later)</div>
 @endsection
-

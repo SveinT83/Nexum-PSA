@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('storage_purchase_orders', function (Blueprint $table) {
             $table->id();
             $table->string('po_number')->unique();
-            $table->foreignId('vendor_id')->constrained('storage_vendors');
+            $table->foreignId('vendor_id')->constrained('vendors');
             $table->foreignId('deliver_to_warehouse_id')->constrained('storage_warehouses');
             $table->string('status')->default('draft');
             $table->string('vendor_ref')->nullable();

@@ -98,9 +98,7 @@
 @endsection
 
 @section('sidebar')
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
+    <x-nav.admin-menu group="email" />
 @endsection
 
 @section('rightbar')
@@ -111,9 +109,14 @@
         <ul class="small text-muted mb-0">
             <li><code>ticket_key</code></li>
             <li><code>ticket_subject</code></li>
+            <li><code>opportunity_key</code></li>
+            <li><code>opportunity_title</code></li>
+            <li><code>quote_url</code></li>
+            <li><code>quote_key</code></li>
             <li><code>contact_name</code></li>
             <li><code>message_body</code></li>
             <li><code>technician_name</code></li>
+            <li><code>seller_name</code></li>
         </ul>
     </x-card.default>
 @endsection

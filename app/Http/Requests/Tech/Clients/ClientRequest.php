@@ -18,6 +18,7 @@ class ClientRequest extends FormRequest
             'name' => ['required','string','max:255'],
             'client_number' => ['required','string','regex:/^\d{5}$/','unique:clients,client_number'],
             'org_no' => ['nullable','string','max:50'],
+            'client_format_id' => ['nullable','exists:client_formats,id'],
             'billing_email' => ['nullable','email','max:255'],
             'notes' => ['nullable','string'],
             'active' => ['sometimes','boolean'],

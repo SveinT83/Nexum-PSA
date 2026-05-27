@@ -21,7 +21,7 @@ class SmtpAccountMailer
     | sending uses the same account settings admins already validated.
     |
     */
-    public function send(EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text): string
+    public function send(EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = []): string
     {
         [$sslFlag, $encryption] = $this->mapSmtpEncryption($account->smtp_encryption);
 
@@ -40,6 +40,21 @@ class SmtpAccountMailer
             ->subject($subject)
             ->text($text ?: strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $html)))
             ->html($html ?: nl2br(e($text)));
+
+        foreach ($ccRecipients as $recipient) {
+            $email->cc(new Address($recipient['email'], $recipient['name'] ?? ''));
+        }
+
+        foreach ($attachments as $attachment) {
+            if (! empty($attachment['path']) && is_file($attachment['path'])) {
+                $email->attachFromPath($attachment['path'], $attachment['filename'] ?? null, $attachment['content_type'] ?? null);
+                continue;
+            }
+
+            if (array_key_exists('data', $attachment)) {
+                $email->attach($attachment['data'], $attachment['filename'] ?? 'attachment', $attachment['content_type'] ?? null);
+            }
+        }
 
         $mailer = new Mailer($transport);
         $mailer->send($email);

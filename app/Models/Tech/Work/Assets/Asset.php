@@ -66,7 +66,7 @@ class Asset extends Model
 
     public function vendorRelation(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Doc\Vendor::class, 'vendor_id');
+        return $this->belongsTo(\App\Modules\Documentation\Models\Vendor::class, 'vendor_id');
     }
 
     /**

@@ -1,8 +1,11 @@
 <?php
 
+use App\Modules\UserManagement\Controllers\AcceptInviteController;
 use App\Modules\UserManagement\Controllers\Admin\PermissionManagementController;
 use App\Modules\UserManagement\Controllers\Admin\RolesManagementController;
 use App\Modules\UserManagement\Controllers\Admin\UserManagementController;
+use App\Modules\UserManagement\Controllers\ProfilePreferencesController;
+use App\Modules\UserManagement\Controllers\ProfileSecurityController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +19,58 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+/*
+|--------------------------------------------------------------------------
+| Public Invite Routes (No Auth)
+|--------------------------------------------------------------------------
+|
+| These routes handle the invite acceptance flow — an unauthenticated user
+| clicks the invite link, sets a password, and gets activated.
+|
+*/
+
+Route::get('/invite/{token}', [AcceptInviteController::class, 'show'])
+    ->name('invite.accept');
+Route::post('/invite/{token}', [AcceptInviteController::class, 'store'])
+    ->name('invite.accept.post');
+
+/*
+|--------------------------------------------------------------------------
+| Profile / Security Routes (Authenticated users)
+|--------------------------------------------------------------------------
+|
+| These routes handle the authenticated user's own security settings —
+| enabling/disabling 2FA, confirming setup, regenerating recovery codes,
+| and changing password.
+|
+*/
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile/preferences', [ProfilePreferencesController::class, 'show'])
+        ->name('profile.preferences');
+    Route::patch('/profile/preferences', [ProfilePreferencesController::class, 'update'])
+        ->name('profile.preferences.update');
+
+    Route::get('/profile/security', [ProfileSecurityController::class, 'show'])
+        ->name('profile.security');
+    Route::post('/profile/security/2fa/enable', [ProfileSecurityController::class, 'enable'])
+        ->name('profile.security.2fa.enable');
+    Route::post('/profile/security/2fa/confirm', [ProfileSecurityController::class, 'confirm'])
+        ->name('profile.security.2fa.confirm');
+    Route::post('/profile/security/2fa/disable', [ProfileSecurityController::class, 'disable'])
+        ->name('profile.security.2fa.disable');
+    Route::post('/profile/security/recovery-codes', [ProfileSecurityController::class, 'regenerateRecoveryCodes'])
+        ->name('profile.security.recovery-codes');
+    Route::post('/profile/security/password', [ProfileSecurityController::class, 'updatePassword'])
+        ->name('profile.security.password');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Admin User Management Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['admin'])->group(function () {
     Route::get('/admin/user_management', [UserManagementController::class, 'index'])
         ->name('admin.user_management.index');
@@ -25,6 +80,14 @@ Route::middleware(['admin'])->group(function () {
         ->name('admin.user_management.store');
     Route::post('/admin/user_management/{user}/status', [UserManagementController::class, 'updateStatus'])
         ->name('admin.user_management.status.update');
+    Route::post('/admin/user_management/{user}/invite', [UserManagementController::class, 'sendInvite'])
+        ->name('admin.user_management.invite.send');
+
+    // 2FA enforcement settings
+    Route::get('/admin/user_management/2fa-settings', [\App\Modules\UserManagement\Controllers\Admin\TwoFactorSettingsController::class, 'show'])
+        ->name('admin.user_management.2fa-settings');
+    Route::post('/admin/user_management/2fa-settings', [\App\Modules\UserManagement\Controllers\Admin\TwoFactorSettingsController::class, 'update'])
+        ->name('admin.user_management.2fa-settings.update');
 
     Route::get('/admin/user_management/roles', [RolesManagementController::class, 'rolesIndex'])
         ->name('admin.user_management.roles.index');

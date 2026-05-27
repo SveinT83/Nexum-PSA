@@ -75,6 +75,10 @@ class ServiceLegal extends Component
      */
     public function toggleTerm($termId): void
     {
+        if ($this->enabled === 'disabled') {
+            return;
+        }
+
         $termId = (string) $termId;
         if (in_array($termId, $this->selectedTermIds)) {
             // Hvis ID-en finnes, fjern den ved å filtrere arrayen.
@@ -83,6 +87,8 @@ class ServiceLegal extends Component
             // Hvis ID-en ikke finnes, legg den til i slutten av listen.
             $this->selectedTermIds[] = $termId;
         }
+
+        $this->syncServiceTerms();
     }
 
     /**
@@ -90,7 +96,27 @@ class ServiceLegal extends Component
      */
     public function removeTerm($termId): void
     {
+        if ($this->enabled === 'disabled') {
+            return;
+        }
+
         $this->selectedTermIds = array_values(array_diff($this->selectedTermIds, [(string) $termId]));
+        $this->syncServiceTerms();
+    }
+
+    /**
+     * Persist term changes immediately when editing an existing service.
+     *
+     * The service form still renders hidden terms[] inputs for create flows, but edit
+     * should not depend on Livewire-managed inputs surviving a classic form submit.
+     */
+    private function syncServiceTerms(): void
+    {
+        if (! $this->service || ! $this->service->exists) {
+            return;
+        }
+
+        $this->service->serviceTerms()->sync($this->selectedTermIds);
     }
 
     /**

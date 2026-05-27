@@ -3,12 +3,12 @@
 namespace App\Modules\Clients\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Tech\Clients\View;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 //Users
 
@@ -55,23 +55,54 @@ class ClientUsersController extends Controller
         // 3. Add search if it exists
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                    ->orWhere('email', 'like', "%$search%");
+                $q->where('client_users.name', 'like', "%$search%")
+                    ->orWhere('client_users.email', 'like', "%$search%")
+                    ->orWhere('client_users.phone', 'like', "%$search%")
+                    ->orWhere('client_users.role', 'like', "%$search%")
+                    ->orWhereHas('site', fn ($query) => $query->where('name', 'like', "%$search%"))
+                    ->orWhereHas('site.client', fn ($query) => $query->where('name', 'like', "%$search%"));
             });
         }
 
+        $sort = $request->string('sort', 'name')->toString();
+        $direction = $request->string('direction', 'asc')->toString() === 'desc' ? 'desc' : 'asc';
+        $sortableColumns = ['name', 'client', 'site', 'role', 'email', 'phone'];
+
+        if (! in_array($sort, $sortableColumns, true)) {
+            $sort = 'name';
+        }
+
+        $query->with(['site.client', 'user']);
+
+        if ($sort === 'client') {
+            $query->leftJoin('client_sites', 'client_users.client_site_id', '=', 'client_sites.id')
+                ->leftJoin('clients', 'client_sites.client_id', '=', 'clients.id')
+                ->select('client_users.*')
+                ->orderBy('clients.name', $direction)
+                ->orderBy('client_users.name');
+        } elseif ($sort === 'site') {
+            $query->leftJoin('client_sites', 'client_users.client_site_id', '=', 'client_sites.id')
+                ->select('client_users.*')
+                ->orderBy('client_sites.name', $direction)
+                ->orderBy('client_users.name');
+        } else {
+            $query->orderBy('client_users.'.$sort, $direction)
+                ->orderBy('client_users.name');
+        }
+
         // 4. Get results (Run paginate only ONCE)
-        $users = $query->with(['site.client', 'user'])
-            ->orderBy('name')
-            ->paginate(25)
-            ->withQueryString();
+        $users = $query->paginate(25)->withQueryString();
 
         // 5. Return view
         return view('clients::Tech.Users.index', [
+            // Keep the view contract explicit: the Blade template iterates over $users.
+            'users' => $users,
             'user_management' => $users,
             'site' => $targetSite,
             'client' => $targetClient ?? ($targetSite ? $targetSite->client : null),
             'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient ?? ($targetSite ? $targetSite->client : null)),
         ]);
     }

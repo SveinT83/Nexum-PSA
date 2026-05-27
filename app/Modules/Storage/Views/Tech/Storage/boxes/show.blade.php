@@ -2,6 +2,10 @@
 
 @section('title', 'Storage Box #' . $box->id)
 
+@section('sidebar')
+    <x-nav.storage-menu />
+@endsection
+
 @section('pageHeader')
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">

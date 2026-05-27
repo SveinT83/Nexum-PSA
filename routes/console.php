@@ -10,6 +10,10 @@ use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\ProcessInboundRules;
+use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
+use App\Modules\Integration\Jobs\CleanupAiChats;
+use App\Modules\Integration\Services\AiChatCleanup;
+use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
 use App\Jobs\Integrations\NAbleRmmSyncJob;
 
 Artisan::command('inspire', function () {
@@ -56,6 +60,40 @@ Schedule::command('integrations:tactical-rmm-sync')
     ->hourly()
     ->name('integrations.tactical_rmm.sync')
     ->withoutOverlapping();
+
+// BookStack Knowledge pull. The job checks the configured interval itself,
+// defaulting to one pull per hour.
+Schedule::job(new PullBookStackToKnowledge())
+    ->everyMinute()
+    ->name('integrations.book_stack.pull')
+    ->withoutOverlapping();
+
+// AI chat retention cleanup. Settings determine whether the job performs work.
+Schedule::job(new CleanupAiChats())
+    ->weeklyOn(1, '03:30')
+    ->name('ai.chats.cleanup')
+    ->withoutOverlapping();
+
+// Economy order generation catch-up. Manual Generate orders uses the same
+// action, while this keeps picked costs and closed-ticket time from piling up.
+Schedule::job(new GenerateEconomyOrdersJob())
+    ->dailyAt('02:15')
+    ->name('economy.orders.generate')
+    ->withoutOverlapping();
+
+Artisan::command('ai:cleanup-chats {--queue : Dispatch cleanup to the queue instead of running now}', function () {
+    if ($this->option('queue')) {
+        CleanupAiChats::dispatch();
+        $this->info('AI chat cleanup queued.');
+
+        return 0;
+    }
+
+    $summary = app(AiChatCleanup::class)->run();
+    $this->info('AI chat cleanup completed: '.json_encode($summary));
+
+    return 0;
+})->purpose('Clean up AI chat sessions based on retention settings');
 
 // Manual polling via CLI: php artisan email:poll [--account=ID] [--async]
 Artisan::command('email:poll {--account=} {--async}', function () {

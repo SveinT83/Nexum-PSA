@@ -7,11 +7,16 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\Task\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ticket extends Model
@@ -26,6 +31,11 @@ class Ticket extends Model
         'queue_id',
         'status_id',
         'priority_id',
+        'sla_id',
+        'sla_source',
+        'sla_source_id',
+        'sla_snapshot',
+        'workflow_id',
         'category_id',
         'client_id',
         'site_id',
@@ -51,6 +61,7 @@ class Ticket extends Model
     protected $casts = [
         'is_unread' => 'boolean',
         'metadata' => 'array',
+        'sla_snapshot' => 'array',
         'first_response_due_at' => 'datetime',
         'resolve_due_at' => 'datetime',
         'first_responded_at' => 'datetime',
@@ -81,6 +92,16 @@ class Ticket extends Model
     public function priority(): BelongsTo
     {
         return $this->belongsTo(TicketPriority::class, 'priority_id');
+    }
+
+    public function sla(): BelongsTo
+    {
+        return $this->belongsTo(Sla::class, 'sla_id');
+    }
+
+    public function workflow(): BelongsTo
+    {
+        return $this->belongsTo(TicketWorkflow::class, 'workflow_id');
     }
 
     public function category(): BelongsTo
@@ -121,5 +142,32 @@ class Ticket extends Model
     public function events(): HasMany
     {
         return $this->hasMany(TicketEvent::class);
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TicketAttachment::class);
+    }
+
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TicketTimeEntry::class);
+    }
+
+    public function costEntries(): HasMany
+    {
+        return $this->hasMany(TicketCostEntry::class);
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(Tag::class, 'taggable', 'taggables')
+            ->withPivot('module')
+            ->withTimestamps();
+    }
+
+    public function tasks(): MorphMany
+    {
+        return $this->morphMany(Task::class, 'owner');
     }
 }

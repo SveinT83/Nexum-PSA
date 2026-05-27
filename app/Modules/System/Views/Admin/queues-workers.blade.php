@@ -28,6 +28,9 @@
                     <dt class="col-sm-5">Default queue</dt>
                     <dd class="col-sm-7">{{ $status['configured_queue'] }}</dd>
 
+                    <dt class="col-sm-5">Worker queues</dt>
+                    <dd class="col-sm-7"><code>{{ $status['worker_queues'] }}</code></dd>
+
                     <dt class="col-sm-5">Failed jobs</dt>
                     <dd class="col-sm-7">{{ $status['failed_jobs']['count'] }}</dd>
                 </dl>
@@ -74,20 +77,26 @@
                     <thead>
                         <tr>
                             <th>Queue</th>
-                            <th class="text-end">Jobs</th>
+                            <th class="text-end">Ready</th>
+                            <th class="text-end">Delayed</th>
+                            <th class="text-end">Reserved</th>
+                            <th class="text-end">Total</th>
                             <th>Oldest available at</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($status['pending_jobs'] as $queue)
                             <tr>
-                                <td>{{ $queue['queue'] }}</td>
+                                <td><code>{{ $queue['queue'] }}</code></td>
+                                <td class="text-end">{{ $queue['ready_count'] }}</td>
+                                <td class="text-end">{{ $queue['delayed_count'] }}</td>
+                                <td class="text-end">{{ $queue['reserved_count'] }}</td>
                                 <td class="text-end">{{ $queue['jobs_count'] }}</td>
                                 <td>{{ $queue['oldest_available_at'] ?? 'N/A' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="text-muted">No pending jobs found in the database queue table.</td>
+                                <td colspan="6" class="text-muted">No pending jobs found in the database queue table.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -158,12 +167,7 @@
 @endsection
 
 @section('sidebar')
-    <h3>System</h3>
-    <ul>
-        <li><a href="{{ route('tech.admin.system.queues-workers.index') }}">Queues and Workers</a></li>
-        <li><a href="{{ route('tech.admin.system.category.index') }}">Categories</a></li>
-        <li><a href="{{ route('tech.admin.system.tag.index') }}">Tags</a></li>
-    </ul>
+    <x-nav.admin-menu group="system" />
 @endsection
 
 @section('rightbar')
@@ -218,13 +222,13 @@
                     <h5>Manual worker command</h5>
                     <p class="text-muted">Useful while developing or debugging. Stop with Ctrl+C.</p>
                     <pre><code>cd /var/Projects/tdPSA
-php artisan queue:work --queue=default --sleep=3 --tries=3 --timeout=120</code></pre>
+php artisan queue:work --queue={{ $status['worker_queues'] }} --sleep=3 --tries=3 --timeout=120</code></pre>
 
                     <h5>Supervisor example</h5>
                     <p class="text-muted">Recommended for long-running workers on a traditional Linux server.</p>
                     <pre><code>[program:tdpsa-worker]
 process_name=%(program_name)s_%(process_num)02d
-command=php /var/Projects/tdPSA/artisan queue:work --queue=default --sleep=3 --tries=3 --timeout=120
+command=php /var/Projects/tdPSA/artisan queue:work --queue={{ $status['worker_queues'] }} --sleep=3 --tries=3 --timeout=120
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -243,7 +247,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/var/Projects/tdPSA
-ExecStart=/usr/bin/php artisan queue:work --queue=default --sleep=3 --tries=3 --timeout=120
+ExecStart=/usr/bin/php artisan queue:work --queue={{ $status['worker_queues'] }} --sleep=3 --tries=3 --timeout=120
 Restart=always
 RestartSec=5
 User=www-data
@@ -256,7 +260,7 @@ WantedBy=multi-user.target</code></pre>
 php artisan queue:failed
 php artisan queue:retry all
 php artisan queue:flush
-php artisan queue:clear --queue=default</code></pre>
+php artisan queue:clear --queue={{ $status['configured_queue'] }}</code></pre>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

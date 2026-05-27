@@ -20,16 +20,9 @@
 @endsection
 
 @section('sidebar')
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
+    <x-nav.admin-menu group="templates" />
 @endsection
 
 @section('rightbar')
-    <h3>Notifications</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
 @endsection
-
 

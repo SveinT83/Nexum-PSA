@@ -11,16 +11,41 @@
 @section('title', $article->title)
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h1 class="h4 mb-0">{{ $article->title }}</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ route('tech.knowledge.index') }}">Knowledge</a></li>
+                    @if($article->knowledgeShelf)
+                        <li class="breadcrumb-item"><a href="{{ route('tech.knowledge.shelf', $article->knowledgeShelf) }}">{{ $article->knowledgeShelf->name }}</a></li>
+                    @endif
+                    @if($article->knowledgeBook)
+                        <li class="breadcrumb-item"><a href="{{ route('tech.knowledge.book', $article->knowledgeBook) }}">{{ $article->knowledgeBook->name }}</a></li>
+                    @endif
+                    @if($article->knowledgeChapter)
+                        <li class="breadcrumb-item">{{ $article->knowledgeChapter->name }}</li>
+                    @endif
+                    <li class="breadcrumb-item active" aria-current="page">{{ $article->title }}</li>
+                </ol>
+            </nav>
+            <h1 class="h4 mb-0">{{ $article->title }}</h1>
+        </div>
         <div class="btn-group">
-            <a href="{{ route('tech.knowledge.index') }}" class="btn btn-sm btn-outline-secondary">Back</a>
-            <a href="{{ route('tech.knowledge.edit', $article) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-            <x-buttons.delete
-                :url="route('tech.knowledge.destroy', $article)"
-                :name="$article->title"
-                class="btn btn-sm btn-outline-danger"
-            />
+            <x-buttons.back url="{{ route('tech.knowledge.index') }}" class="mb-0">Back</x-buttons.back>
+            @if($canEditArticle)
+                <x-buttons.editlink url="{{ route('tech.knowledge.edit', $article) }}" class="mb-0">Edit</x-buttons.editlink>
+            @endif
+            @if(blank($article->source_system))
+                <x-buttons.delete
+                    :url="route('tech.knowledge.destroy', $article)"
+                    :name="$article->title"
+                    class="btn btn-sm btn-outline-danger"
+                />
+            @elseif($article->source_url)
+                <a href="{{ $article->source_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-box-arrow-up-right"></i> Open in BookStack
+                </a>
+            @endif
         </div>
     </div>
 @endsection
@@ -38,6 +63,11 @@
         </div>
 
     </div>
+@endsection
+
+@section('sidebar')
+    <x-nav.knowledge-menu />
+    <x-nav.knowledge-tree />
 @endsection
 
 @section('rightbar')
@@ -62,11 +92,29 @@
             @if($article->clientScope)
                 <p class="mb-1"><strong>Client:</strong> {{ $article->clientScope->name }}</p>
             @endif
+            @if($article->knowledgeBook)
+                <p class="mb-1"><strong>Book:</strong> {{ $article->knowledgeBook->name }}</p>
+            @endif
+            @if($article->knowledgeChapter)
+                <p class="mb-1"><strong>Chapter:</strong> {{ $article->knowledgeChapter->name }}</p>
+            @endif
             <hr>
             <p class="mb-1 text-muted">Created: {{ $article->created_at->format('d.m.Y H:i') }}</p>
             <p class="mb-1 text-muted">Updated: {{ $article->updated_at->format('d.m.Y H:i') }}</p>
+            @if($article->source_system)
+                <p class="mb-1 text-muted">Source: {{ ucfirst(str_replace('_', ' ', $article->source_system)) }}</p>
+            @else
+                <p class="mb-1 text-muted">Source: Local tdPSA</p>
+            @endif
             @if($article->next_review_at)
                 <p class="mb-1 text-muted">Next Review: {{ $article->next_review_at->format('d.m.Y') }}</p>
+            @endif
+            @if($article->source_url)
+                <a href="{{ $article->source_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary mt-2">
+                    <i class="bi bi-box-arrow-up-right"></i> Open in BookStack
+                </a>
+            @elseif($article->source_system)
+                <div class="text-muted small mt-2">This synced page does not have a BookStack URL stored.</div>
             @endif
         </div>
     </div>

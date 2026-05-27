@@ -7,16 +7,20 @@ use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Models\Clients\ClientUser;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class SendTicketReplyEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    private const REPLY_ABOVE_LINE = '--- Please reply above this line ---';
 
     public int $timeout = 120;
 
@@ -39,14 +43,14 @@ class SendTicketReplyEmail implements ShouldQueue
         EmailTemplateRenderer $renderer,
         SmtpAccountMailer $mailer
     ): void {
-        $message = TicketMessage::with(['ticket.contact', 'ticket.priority', 'ticket.status'])->find($this->ticketMessageId);
+        $message = TicketMessage::with(['ticket.contact', 'ticket.priority', 'ticket.status', 'fileAttachments'])->find($this->ticketMessageId);
 
         if (! $message || $message->type !== 'customer_reply') {
             return;
         }
 
         $ticket = $message->ticket;
-        $contact = $ticket?->contact;
+        $contact = $this->recipientContact($message);
 
         if (! $ticket || empty($contact?->email)) {
             $this->log(null, $message->id, 'error', 'TICKET_EMAIL_NO_CONTACT', 'Ticket reply has no contact email.');
@@ -85,15 +89,19 @@ class SendTicketReplyEmail implements ShouldQueue
                 $contact->email,
                 $contact->name,
                 $rendered['subject'],
-                $rendered['html'],
-                $rendered['text']
+                $this->appendReplyBoundaryToHtml($rendered['html']),
+                $this->appendReplyBoundaryToText($rendered['text']),
+                $this->attachmentsForMailer($message),
+                $this->ccRecipients($message)
             );
 
             $this->log($account->id, $message->id, 'info', 'TICKET_EMAIL_SENT', 'Ticket reply email sent.', [
                 'ticket_id' => $ticket->id,
                 'ticket_key' => $ticket->ticket_key,
                 'to' => $contact->email,
+                'cc' => collect($this->ccRecipients($message))->pluck('email')->all(),
                 'rfc_message_id' => $messageId,
+                'attachments_count' => $message->fileAttachments->count(),
             ], $messageId);
         } catch (\Throwable $e) {
             $account->forceFill([
@@ -105,10 +113,84 @@ class SendTicketReplyEmail implements ShouldQueue
                 'ticket_id' => $ticket->id,
                 'ticket_key' => $ticket->ticket_key,
                 'to' => $contact->email,
+                'cc' => collect($this->ccRecipients($message))->pluck('email')->all(),
             ]);
 
             throw $e;
         }
+    }
+
+    private function recipientContact(TicketMessage $message): ?ClientUser
+    {
+        $ticket = $message->ticket;
+        $replyContactId = $message->metadata['reply_contact_id'] ?? null;
+
+        if ($replyContactId && $ticket?->client_id) {
+            $contact = ClientUser::query()
+                ->whereKey($replyContactId)
+                ->whereHas('site', fn ($query) => $query->where('client_id', $ticket->client_id))
+                ->where('active', true)
+                ->first();
+
+            if ($contact) {
+                return $contact;
+            }
+        }
+
+        return $ticket?->contact;
+    }
+
+    private function ccRecipients(TicketMessage $message): array
+    {
+        return collect($message->metadata['cc'] ?? [])
+            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->map(fn ($email) => ['email' => $email, 'name' => ''])
+            ->values()
+            ->all();
+    }
+
+    private function appendReplyBoundaryToHtml(string $html): string
+    {
+        $boundary = '<p style="margin-top:24px;color:#6c757d;font-size:12px;">' . e(self::REPLY_ABOVE_LINE) . '</p>';
+
+        return str_contains($html, self::REPLY_ABOVE_LINE) ? $html : rtrim($html) . $boundary;
+    }
+
+    private function appendReplyBoundaryToText(string $text): string
+    {
+        return str_contains($text, self::REPLY_ABOVE_LINE)
+            ? $text
+            : rtrim($text) . "\n\n" . self::REPLY_ABOVE_LINE;
+    }
+
+    private function attachmentsForMailer(TicketMessage $message): array
+    {
+        return $message->fileAttachments
+            ->map(function ($attachment) {
+                $disk = $attachment->disk ?: 'local';
+
+                if (! $attachment->path || ! Storage::disk($disk)->exists($attachment->path)) {
+                    return null;
+                }
+
+                // Local disks can stream from a filesystem path; other disks fall back to in-memory content.
+                if ($disk === 'local' && method_exists(Storage::disk($disk), 'path')) {
+                    return [
+                        'path' => Storage::disk($disk)->path($attachment->path),
+                        'filename' => $attachment->filename,
+                        'content_type' => $attachment->content_type,
+                    ];
+                }
+
+                return [
+                    'data' => Storage::disk($disk)->get($attachment->path),
+                    'filename' => $attachment->filename,
+                    'content_type' => $attachment->content_type,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 
     private function log(?int $accountId, int $messageId, string $level, string $code, string $message, array $context = [], ?string $rfcMessageId = null): void

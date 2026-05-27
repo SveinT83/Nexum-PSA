@@ -4,9 +4,14 @@ namespace App\Modules\Knowledge\Livewire;
 
 use App\Models\Clients\Client;
 use App\Models\Knowledge\Article;
-use App\Modules\Taxonomy\Models\Category;
+use App\Models\Knowledge\Book;
+use App\Models\Knowledge\Chapter;
+use App\Models\Knowledge\Shelf;
+use App\Models\System\Integrations\Integration;
+use App\Modules\Integration\Jobs\PushPendingKnowledgeToBookStack;
 use App\Modules\Knowledge\Actions\StoreArticle;
 use App\Modules\Knowledge\Actions\UpdateArticle;
+use App\Modules\Taxonomy\Models\Category;
 use Livewire\Component;
 
 /**
@@ -27,12 +32,33 @@ class ArticleForm extends Component
     /** Client options used when visibility is client-wide. */
     public $clients;
 
+    /** Knowledge structure options used to place pages in a BookStack-style library. */
+    public $shelves;
+
+    public $books;
+
+    public $chapters;
+
     public ?string $title = null;
+
     public ?string $body_markdown = null;
+
     public $category_id = null;
+
+    public $knowledge_shelf_id = null;
+
+    public $knowledge_book_id = null;
+
+    public $knowledge_chapter_id = null;
+
+    public int $priority = 0;
+
     public string $visibility = 'internal';
+
     public string $status = 'published';
+
     public $client_scope_id = null;
+
     public ?string $next_review_at = null;
 
     /**
@@ -43,11 +69,18 @@ class ArticleForm extends Component
         $this->article = $article;
         $this->categories = Category::orderBy('name')->get();
         $this->clients = Client::where('active', true)->orderBy('name')->get();
+        $this->shelves = Shelf::query()->orderBy('name')->get();
+        $this->books = Book::query()->orderBy('name')->get();
+        $this->chapters = Chapter::query()->with('book')->orderBy('name')->get();
 
         if ($article->exists) {
             $this->title = $article->title;
             $this->body_markdown = $article->body_markdown;
             $this->category_id = $article->category_id;
+            $this->knowledge_shelf_id = $article->knowledge_shelf_id;
+            $this->knowledge_book_id = $article->knowledge_book_id;
+            $this->knowledge_chapter_id = $article->knowledge_chapter_id;
+            $this->priority = $article->priority;
             $this->visibility = $article->visibility;
             $this->status = $article->status;
             $this->client_scope_id = $article->client_scope_id;
@@ -58,6 +91,9 @@ class ArticleForm extends Component
 
         $this->status = 'published';
         $this->visibility = 'internal';
+        $this->knowledge_shelf_id = $article->knowledge_shelf_id;
+        $this->knowledge_book_id = $article->knowledge_book_id;
+        $this->knowledge_chapter_id = $article->knowledge_chapter_id;
         $this->next_review_at = now()->addYear()->format('Y-m-d');
     }
 
@@ -73,9 +109,11 @@ class ArticleForm extends Component
 
         if ($this->article->exists) {
             app(UpdateArticle::class)->handle($this->article, $validated);
+            $this->markArticleForBookStackPushWhenNeeded();
             $message = 'Article updated successfully.';
         } else {
             $this->article = app(StoreArticle::class)->handle($validated);
+            $this->markArticleForBookStackPushWhenNeeded();
             $message = 'Article created successfully.';
         }
 
@@ -95,6 +133,10 @@ class ArticleForm extends Component
             'visibility' => 'required|string|in:internal,client-wide,public',
             'status' => 'required|string|in:draft,published,archived,needs_review',
             'category_id' => 'nullable|exists:categories,id',
+            'knowledge_shelf_id' => 'nullable|exists:knowledge_shelves,id',
+            'knowledge_book_id' => 'nullable|exists:knowledge_books,id',
+            'knowledge_chapter_id' => 'nullable|exists:knowledge_chapters,id',
+            'priority' => 'nullable|integer|min:0',
             'client_scope_id' => 'nullable|exists:clients,id',
             'next_review_at' => 'nullable|date',
         ];
@@ -106,5 +148,40 @@ class ArticleForm extends Component
     public function render()
     {
         return view('knowledge::Livewire.article-form');
+    }
+
+    /**
+     * Pages placed under BookStack-owned hierarchy must be pushed back.
+     */
+    private function markArticleForBookStackPushWhenNeeded(): void
+    {
+        if (! $this->bookStackTwoWaySyncEnabled()) {
+            return;
+        }
+
+        $this->article->loadMissing(['knowledgeBook', 'knowledgeChapter']);
+
+        $shouldPush = $this->article->source_system === 'book_stack'
+            || $this->article->knowledgeChapter?->source_system === 'book_stack'
+            || $this->article->knowledgeBook?->source_system === 'book_stack';
+
+        if (! $shouldPush) {
+            return;
+        }
+
+        $this->article->forceFill(['sync_status' => 'pending_push'])->save();
+        PushPendingKnowledgeToBookStack::dispatch();
+    }
+
+    private function bookStackTwoWaySyncEnabled(): bool
+    {
+        $integration = Integration::where('type', 'book_stack')->first();
+        $config = $integration?->config ?? [];
+
+        return (bool) (
+            $integration?->status === 'active'
+            && $integration->server
+            && ($config['two_way_sync_enabled'] ?? false)
+        );
     }
 }

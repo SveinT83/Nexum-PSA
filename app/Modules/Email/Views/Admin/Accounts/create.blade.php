@@ -15,6 +15,10 @@
   </div>
 @endsection
 
+@section('sidebar')
+  <x-nav.admin-menu group="email" />
+@endsection
+
 @section('content')
   <div class="col-12">
     @if ($errors->any())

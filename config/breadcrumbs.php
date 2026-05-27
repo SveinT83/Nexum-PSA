@@ -125,4 +125,138 @@ return [
         ['label' => 'Form'],
     ],
 
+    // Assets
+    'tech.assets.index' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Assets', 'route' => 'tech.assets.index'],
+    ],
+
+    'tech.assets.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Assets', 'route' => 'tech.assets.index'],
+        ['label' => 'New Asset'],
+    ],
+
+    'tech.assets.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Assets', 'route' => 'tech.assets.index'],
+        ['label' => 'Edit Asset'],
+    ],
+
+    'tech.assets.show' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Assets', 'route' => 'tech.assets.index'],
+        ['label' => 'Asset', 'label_from' => 'asset.name'],
+    ],
+
+    // Knowledge
+    'tech.knowledge.index' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+    ],
+
+    'tech.knowledge.shelves.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'New Shelf'],
+    ],
+
+    'tech.knowledge.shelf' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Shelf', 'label_from' => 'shelf.name'],
+    ],
+
+    'tech.knowledge.shelves.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Shelf', 'label_from' => 'shelf.name'],
+        ['label' => 'Edit Shelf'],
+    ],
+
+    'tech.knowledge.books.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Shelf', 'label_from' => 'shelf.name'],
+        ['label' => 'New Book'],
+    ],
+
+    'tech.knowledge.book' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Book', 'label_from' => 'book.name'],
+    ],
+
+    'tech.knowledge.books.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Book', 'label_from' => 'book.name'],
+        ['label' => 'Edit Book'],
+    ],
+
+    'tech.knowledge.chapters.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Book', 'label_from' => 'book.name'],
+        ['label' => 'New Chapter'],
+    ],
+
+    'tech.knowledge.chapters.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Chapter', 'label_from' => 'chapter.name'],
+        ['label' => 'Edit Chapter'],
+    ],
+
+    'tech.knowledge.books.pages.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Book', 'label_from' => 'book.name'],
+        ['label' => 'New Page'],
+    ],
+
+    'tech.knowledge.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'New Page'],
+    ],
+
+    'tech.knowledge.show' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Page', 'label_from' => 'article.title'],
+    ],
+
+    'tech.knowledge.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Knowledge', 'route' => 'tech.knowledge.index'],
+        ['label' => 'Page', 'label_from' => 'article.title'],
+        ['label' => 'Edit Page'],
+    ],
+
+    // Tasks
+    'tech.tasks.index' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Tasks', 'route' => 'tech.tasks.index'],
+    ],
+
+    'tech.tasks.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Tasks', 'route' => 'tech.tasks.index'],
+        ['label' => 'New Task'],
+    ],
+
+    'tech.tasks.show' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Tasks', 'route' => 'tech.tasks.index'],
+        ['label' => 'Task', 'label_from' => 'task.title'],
+    ],
+
+    'tech.tasks.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Tasks', 'route' => 'tech.tasks.index'],
+        ['label' => 'Task', 'label_from' => 'task.title'],
+        ['label' => 'Edit Task'],
+    ],
+
 ];
