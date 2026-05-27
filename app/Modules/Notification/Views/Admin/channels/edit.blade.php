@@ -13,7 +13,7 @@
 
 @section('content')
 <div class="row">
-    <div class="col-lg-9 col-xl-8">
+    <div class="col-12">
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
@@ -77,13 +77,40 @@
                     </div>
                     <div class="card-body">
                         @if($nextcloudConnection)
-                            <div class="border rounded p-3 mb-3 bg-light">
-                                <div class="small text-muted">Using Nextcloud integration</div>
-                                <div class="fw-semibold">{{ $nextcloudConnection->name }}</div>
-                                <div class="small text-muted text-break">{{ $nextcloudConnection->base_url }}</div>
-                                @if(Route::has('tech.admin.nextcloud.connections.show'))
-                                    <a class="small" href="{{ route('tech.admin.nextcloud.connections.show', $nextcloudConnection) }}">Open integration settings</a>
-                                @endif
+                            <div class="row g-3 mb-3">
+                                <div class="col-lg-6">
+                                    <label for="nextcloudConnectionId" class="form-label">Nextcloud Integration</label>
+                                    <select name="config[nextcloud_connection_id]" id="nextcloudConnectionId" class="form-select @error('config.nextcloud_connection_id') is-invalid @enderror">
+                                        @foreach($nextcloudConnections as $connection)
+                                            <option value="{{ $connection->id }}"
+                                                    data-name="{{ $connection->name }}"
+                                                    data-base-url="{{ $connection->base_url }}"
+                                                    data-settings-url="{{ Route::has('tech.admin.nextcloud.connections.show') ? route('tech.admin.nextcloud.connections.show', $connection) : '' }}"
+                                                    {{ $nextcloudConnection->id === $connection->id ? 'selected' : '' }}>
+                                                {{ $connection->name }}
+                                                @if($connection->scope === 'global' && $connection->is_default)
+                                                    (global default)
+                                                @elseif($connection->is_default)
+                                                    (default)
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('config.nextcloud_connection_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div class="form-text">Defaults to the active global default Nextcloud integration.</div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="border rounded p-3 bg-light h-100">
+                                        <div class="small text-muted">Selected integration</div>
+                                        <div class="fw-semibold" id="selectedNextcloudName">{{ $nextcloudConnection->name }}</div>
+                                        <div class="small text-muted text-break" id="selectedNextcloudBaseUrl">{{ $nextcloudConnection->base_url }}</div>
+                                        @if(Route::has('tech.admin.nextcloud.connections.show'))
+                                            <a class="small" id="selectedNextcloudSettingsUrl" href="{{ route('tech.admin.nextcloud.connections.show', $nextcloudConnection) }}">Open integration settings</a>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         @endif
 
@@ -119,17 +146,13 @@
                 </div>
             @endif
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg me-1"></i> Save Configuration
-                </button>
+            <div class="d-flex justify-content-between gap-2">
                 <button type="submit" form="notification-channel-test-form" class="btn btn-outline-secondary" onclick="return confirm('Send a test notification?')">
                     <i class="bi bi-lightning me-1"></i> Test Connection
                 </button>
-                <a href="{{ route('tech.admin.notification-channels.index') }}"
-                   class="btn btn-link">
-                    Cancel
-                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Save Configuration
+                </button>
             </div>
         </form>
 
@@ -142,4 +165,30 @@
 
 @section('sidebar')
     <x-nav.admin-menu group="system" />
+@endsection
+
+@section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const connectionSelect = document.getElementById('nextcloudConnectionId');
+            const selectedName = document.getElementById('selectedNextcloudName');
+            const selectedBaseUrl = document.getElementById('selectedNextcloudBaseUrl');
+            const selectedSettingsUrl = document.getElementById('selectedNextcloudSettingsUrl');
+
+            if (!connectionSelect || !selectedName || !selectedBaseUrl) {
+                return;
+            }
+
+            connectionSelect.addEventListener('change', function () {
+                const option = connectionSelect.selectedOptions[0];
+
+                selectedName.textContent = option?.dataset.name || '';
+                selectedBaseUrl.textContent = option?.dataset.baseUrl || '';
+
+                if (selectedSettingsUrl) {
+                    selectedSettingsUrl.href = option?.dataset.settingsUrl || '#';
+                }
+            });
+        });
+    </script>
 @endsection

@@ -6,9 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Notification\Models\NotificationChannel;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -36,12 +37,16 @@ class NotificationChannelController extends Controller
      */
     public function edit(NotificationChannel $channel): View
     {
+        $nextcloudConnections = $channel->driver === 'nextcloud_talk'
+            ? $this->activeNextcloudConnections()
+            : collect();
         $nextcloudConnection = $channel->driver === 'nextcloud_talk'
-            ? $this->activeNextcloudConnection()
+            ? $this->selectedNextcloudConnection($channel)
             : null;
 
         return view('notification::Admin.channels.edit', [
             'channel' => $channel,
+            'nextcloudConnections' => $nextcloudConnections,
             'nextcloudConnection' => $nextcloudConnection,
             'nextcloudReady' => (bool) $nextcloudConnection,
         ]);
@@ -86,17 +91,30 @@ class NotificationChannelController extends Controller
      */
     private function updateNextcloudTalkChannel(Request $request, NotificationChannel $channel): RedirectResponse
     {
-        $nextcloudConnection = $this->activeNextcloudConnection();
+        $fallbackConnection = $this->defaultNextcloudConnection();
         $wantsEnabled = $request->boolean('is_enabled');
 
         $validated = $request->validate([
             'is_enabled' => 'nullable|boolean',
             'config' => 'nullable|array',
-            'config.default_webhook_url' => [$wantsEnabled && $nextcloudConnection ? 'required' : 'nullable', 'url', 'max:500'],
+            'config.nextcloud_connection_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('nextcloud_connections', 'id')->where('is_active', true),
+            ],
+            'config.default_webhook_url' => [$wantsEnabled && $fallbackConnection ? 'required' : 'nullable', 'url', 'max:500'],
         ]);
 
         $config = $channel->config ?? [];
         unset($config['base_url']);
+
+        $selectedConnectionId = $validated['config']['nextcloud_connection_id'] ?? $fallbackConnection?->id;
+
+        if ($selectedConnectionId) {
+            $config['nextcloud_connection_id'] = (int) $selectedConnectionId;
+        } else {
+            unset($config['nextcloud_connection_id']);
+        }
 
         if (array_key_exists('default_webhook_url', $validated['config'] ?? [])) {
             $config['default_webhook_url'] = $validated['config']['default_webhook_url'];
@@ -107,10 +125,10 @@ class NotificationChannelController extends Controller
 
         $channel->config = $config;
         $channel->secrets = $secrets ?: null;
-        $channel->is_enabled = $nextcloudConnection ? $wantsEnabled : false;
+        $channel->is_enabled = $selectedConnectionId ? $wantsEnabled : false;
         $channel->save();
 
-        if (! $nextcloudConnection) {
+        if (! $selectedConnectionId) {
             return redirect()->route('tech.admin.notification-channels.edit', $channel)
                 ->with('warning', 'Nextcloud Talk was saved, but the channel is disabled until a Nextcloud integration is configured.');
         }
@@ -145,7 +163,7 @@ class NotificationChannelController extends Controller
     protected function testChannelConnection(NotificationChannel $channel): array
     {
         if ($channel->driver === 'nextcloud_talk') {
-            if (! $this->activeNextcloudConnection()) {
+            if (! $this->selectedNextcloudConnection($channel)) {
                 return ['success' => false, 'message' => 'Nextcloud integration is not configured.'];
             }
 
@@ -174,13 +192,48 @@ class NotificationChannelController extends Controller
     }
 
     /**
-     * Resolve the active Nextcloud connection used by notification delivery setup.
+     * List active Nextcloud connections that can be used by notification delivery.
      */
-    private function activeNextcloudConnection(): ?NextcloudConnection
+    private function activeNextcloudConnections()
     {
         return NextcloudConnection::query()
             ->where('is_active', true)
             ->orderByDesc('is_default')
+            ->orderByRaw("case when scope = 'global' then 1 else 0 end desc")
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Resolve the configured Nextcloud connection, falling back to global default.
+     */
+    private function selectedNextcloudConnection(NotificationChannel $channel): ?NextcloudConnection
+    {
+        $connectionId = $channel->config['nextcloud_connection_id'] ?? null;
+
+        if ($connectionId) {
+            $connection = NextcloudConnection::query()
+                ->where('is_active', true)
+                ->find($connectionId);
+
+            if ($connection) {
+                return $connection;
+            }
+        }
+
+        return $this->defaultNextcloudConnection();
+    }
+
+    /**
+     * Prefer the active global default Nextcloud connection when no explicit choice exists.
+     */
+    private function defaultNextcloudConnection(): ?NextcloudConnection
+    {
+        return NextcloudConnection::query()
+            ->where('is_active', true)
+            ->orderByRaw("case when scope = 'global' and is_default = 1 then 1 else 0 end desc")
+            ->orderByDesc('is_default')
+            ->orderByRaw("case when scope = 'global' then 1 else 0 end desc")
             ->orderBy('name')
             ->first();
     }

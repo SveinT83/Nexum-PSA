@@ -35,7 +35,7 @@ class NextcloudTalkChannel
             return;
         }
 
-        if (! $this->hasActiveNextcloudConnection()) {
+        if (! $this->hasConfiguredNextcloudConnection($channelConfig)) {
             Log::debug('NextcloudTalk: Channel is enabled, but no active Nextcloud integration exists.');
 
             return;
@@ -117,10 +117,22 @@ class NextcloudTalkChannel
     /**
      * Nextcloud owns connection details; notifications only use Talk webhooks.
      */
-    private function hasActiveNextcloudConnection(): bool
+    private function hasConfiguredNextcloudConnection(NotificationChannel $channelConfig): bool
     {
+        $connectionId = $channelConfig->config['nextcloud_connection_id'] ?? null;
+
+        if ($connectionId) {
+            return NextcloudConnection::query()
+                ->where('is_active', true)
+                ->whereKey($connectionId)
+                ->exists();
+        }
+
         return NextcloudConnection::query()
             ->where('is_active', true)
+            ->orderByRaw("case when scope = 'global' and is_default = 1 then 1 else 0 end desc")
+            ->orderByDesc('is_default')
+            ->orderByRaw("case when scope = 'global' then 1 else 0 end desc")
             ->exists();
     }
 }
