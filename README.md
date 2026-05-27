@@ -1,162 +1,241 @@
 # Nexum PSA
 
-**Nexum PSA** is a modular, open, and modern **Professional Services Automation** platform built with **Laravel**, **Bootstrap**, and a clear mission — to bring structure, automation, and profitability to IT service providers without locking them into expensive ecosystems.
+Nexum PSA is a self-hosted Professional Services Automation platform for IT
+service providers. The product goal is to connect clients, tickets, assets,
+contracts, time, stock, billing, documentation, notifications, and integrations
+in one operational system without forcing the business into a closed PSA
+ecosystem.
 
-> **Meaning:** “Nexum” is Latin for *connection* or *contract* — reflecting how the platform ties together clients, tickets, assets, and billing into one cohesive flow.
+The project is built for Tronder Data first, but the architecture is intended to
+support other MSPs and service businesses later. The codebase is currently being
+prepared for the first beta release.
 
----
+## What It Does
 
-## 🧭 Purpose
+Nexum PSA gives technicians and administrators one place to run daily service
+operations:
 
-Nexum PSA is designed to replace heavy, complex PSA suites with a **lightweight, flexible, and modular architecture**.
-It automates repetitive service operations while remaining fully transparent and self-hostable.
+- Track tickets from email, manual creation, client context, workflow state, SLA
+  policy, time registration, tasks, attachments, internal notes, and outbound
+  customer replies.
+- Manage clients, sites, contacts, assets, suppliers, documentation, and
+  operational risk.
+- Build services, contracts, contract items, SLA defaults, time rates, stock
+  reservations, ticket costs, and economy order drafts for billing.
+- Sync and use integrations such as Nextcloud, Nextcloud Talk notifications,
+  BookStack knowledge sync, IMAP/SMTP email, AI providers, queues, and health
+  tooling.
+- Give technicians a Warroom dashboard for a fast cross-module overview.
 
-Built initially for **Trønder Data**, Nexum PSA will evolve into an open platform adaptable for any MSP, IT consultant, or service-based business.
+The system is intentionally modular. Each business domain owns its controllers,
+views, routes, tests, actions, queries, and workflow code under `app/Modules`.
 
-### 🍞 Breadcrumbs
+## Current Beta Scope
 
-The application uses a centralized breadcrumb system.
+The current beta contains working foundations for:
 
-*   **Configuration:** All breadcrumbs are defined in `config/breadcrumbs.php`.
-*   **Helper:** The `breadcrumbs()` helper function (found in `app/Helpers/helpers.php`) automatically resolves the current route to its configured breadcrumb trail.
-*   **Layout Integration:** Breadcrumbs are automatically rendered in `resources/views/layouts/default_tech.blade.php` via the `resources/views/partials/breadcrumbs.blade.php` partial.
-*   **Future Development:** When adding new routes/views, always ensure a corresponding entry is added to `config/breadcrumbs.php` to maintain consistent navigation.
+- Warroom dashboard
+- Ticket lifecycle, workflow transitions, SLA handling, assignment rules, email
+  replies, time registration, storage reservations, tasks, and knowledge hints
+- Client, site, contact, asset, vendor, documentation, risk, and taxonomy
+  management
+- Commercial service catalog, contracts, SLA policies, time rates, timebank
+  handling, and economy order generation
+- Storage inventory with warehouses, rooms, boxes, items, reservations, purchase
+  orders, stock movements, and ticket picking
+- Email ingestion and outbound email templates
+- Notifications with mail, database, and Nextcloud Talk delivery
+- Nextcloud connections, folder/user/group/calendar mapping, and sync logs
+- BookStack knowledge synchronization
+- AI provider/agent setup and right-side contextual AI chat
+- User management, roles, permissions, invites, preferences, and 2FA enforcement
+- Queue worker operations and security headers
 
----
+Beta status means the application is functional enough to test as a complete
+workflow, but schema history, deployment routines, and production hardening are
+still being finalized.
 
-## ⚙️ Core Principles
+## Technology
 
-* **Speed & predictability:** every technician action must be traceable and fast.
-* **Automation-first:** intelligent routing, workflows, and rules reduce manual handling.
-* **Transparency:** full audit logs on all actions and configuration changes.
-* **Isolation:** each customer instance runs in its own VM for data and security separation.
-* **Extensibility:** modular components with replaceable integrations (RMM, billing, portals).
-* **Bootstrap simplicity:** no bloat, just clean UI and fast UX.
+- PHP 8.2+
+- Laravel 12
+- Livewire 3
+- Bootstrap 5
+- Alpine.js
+- Vite
+- MySQL or MariaDB
+- Spatie Laravel Permission
+- Laravel Fortify
+- Laravel Sanctum
+- Laravel Boost for development assistance
+- PHPUnit for automated tests
 
----
+Redis is recommended for production queues and cache, but local development can
+start with the database queue driver.
 
-## 🧹 Architecture Overview
+## Architecture Rules
 
-**Framework:** Laravel 11 + Livewire + Alpine.js  
-**Architecture:** **STRICT Domain-Driven Modular Structure** (See `module-architecture.md`)  
-**Frontend:** Bootstrap 5 (standardized layout and components)  
-**Database:** MySQL / MariaDB  
-**Authentication:** Laravel Breeze (customized for multi-role + tenant separation)  
-**Queue / Jobs:** Redis / Horizon  
-**Email handling:** IMAP + SMTP ingestion pipeline with rule engine  
-**Audit & Logging:** native database audit trail, action history, and system logs  
+This project does not use standard Laravel folders for domain work.
 
-Each module lives independently under `app/Modules/{Domain}` and MUST contain its own Controllers, Views, and Routes. Standard Laravel directories for these assets are NOT used for domain logic.
+- Domain routes live in `app/Modules/{Domain}/routes.php`.
+- Domain controllers live in `app/Modules/{Domain}/Controllers`.
+- Domain views live in `app/Modules/{Domain}/Views`.
+- Domain tests live in `app/Modules/{Domain}/Tests`.
+- `routes/web.php` and `routes/api.php` may load module routes, but must not
+  contain domain routes.
+- Shared Blade components live in `resources/views/components`.
 
----
+Read `AGENTS.md` before making code changes. It points to the detailed module
+architecture and UI standards in `docs/`.
 
-## 🧱 Core Modules
+## Main Modules
 
-| Module              | Purpose                                                                           |
-| ------------------- | --------------------------------------------------------------------------------- |
-| **Tickets**         | Central work hub for all client issues — one-screen workflow, SLA, AI assist.     |
-| **Email Hub**       | Global inbound/outbound email parsing, routing, and triage (with Fallback Inbox). |
-| **Clients & Sites** | Structured hierarchy of customers, sites, and users.                              |
-| **Billing**         | Aggregates billable items from tickets, contracts, and timebanks.                 |
-| **Workflows**       | Configurable state machines controlling status, rules, and automation.            |
-| **Documents**       | Fast inline documentation system (internal and customer-scoped).                  |
-| **Templates**       | Shared form and document blueprints for reuse across modules.                     |
-| **Integrations**    | RMM (N-Able, TacticalRMM), CTI (Telia), SMS (Twilio), and WordPress plugin.       |
-| **Audit & Reports** | System-wide logging, metrics, SLA, and productivity reports.                      |
+| Module | Purpose |
+| --- | --- |
+| `Warroom` | Cross-module dashboard for technicians and admins. |
+| `Ticket` | Tickets, workflow, SLA, time, assignment, replies, and rules. |
+| `Task` | Standalone and ticket/client-owned tasks with checklists and estimates. |
+| `Clients` | Clients, sites, contacts, client formats, and client context. |
+| `Asset` | Assets and client/site asset visibility. |
+| `Commercial` | Services, contracts, packages, costs, SLA policies, and time rates. |
+| `Economy` | Draft billing/order generation from tickets, contracts, stock, and time. |
+| `Storage` | Inventory, stock units, locations, reservations, picking, and purchase orders. |
+| `Email` | IMAP ingestion, outbound SMTP, templates, health checks, and email rules. |
+| `Knowledge` | Internal knowledge base, shelves, books, chapters, articles, and tags. |
+| `Integration` | API, AI, BookStack, and integration settings. |
+| `Nextcloud` | Nextcloud connections, mappings, sync, and Talk bot configuration. |
+| `Notification` | User notification settings and channel delivery. |
+| `Sales` | Leads, opportunities, activity timeline, quotes, and sales settings. |
+| `Risk` | Risk items, assessments, updates, links, and operational risk tracking. |
+| `Taxonomy` | Shared categories and tags. |
+| `UserManagement` | Users, roles, permissions, invites, preferences, and 2FA settings. |
+| `System` | System operations such as queue worker administration and security tooling. |
 
----
+## Local Installation
 
-## 🧪 Tech Stack
-
-* **Backend:** Laravel 11 (PHP 8.3+)
-* **Frontend:** Bootstrap 5 + Livewire
-* **Database:** MySQL or MariaDB
-* **Queue / Cache:** Redis
-* **Mail:** IMAP/SMTP with rule-driven ingestion
-* **Auth:** Laravel Breeze + Spatie Permissions (multi-role)
-* **PWA:** Full mobile/desktop Progressive Web App support
-* **Containerization:** Docker-ready structure (per-tenant deployment)
-
----
-
-## 🦖 Design Philosophy
-
-Nexum PSA aims to be:
-
-* **Understandable** — predictable file structure, clean controllers, simple Blade components.
-* **Modular** — every module (Tickets, Billing, Email, etc.) can evolve independently.
-* **Efficient** — one screen for work, minimal clicks, no reloads.
-* **Scalable** — supports multiple environments with tenant-level isolation.
-
-The UI is divided into **Top Header**, **Main Section**, and **Right-side Panel** for consistent layout.
-Dynamic widgets are reusable and Bootstrap-based.
-
----
-
-## 🔐 Access & Permissions
-
-Role and permission handling use **Spatie Laravel Permission** and policy-first access control.
-
-| Role         | Scope  | Typical Permissions                      |
-| ------------ | ------ | ---------------------------------------- |
-| Superadmin   | System | Full access, all modules and settings    |
-| Technician   | System | Tickets, clients, documentation, reports |
-| Client Owner | Client | Manage own users, sites, and tickets     |
-| Site Owner   | Site   | Local admin for one site                 |
-| User         | Site   | Basic ticket creation and tracking       |
-
----
-
-## 🌐 Future Roadmap
-
-* SLA and timebank automation
-* Cross-tenant reports
-* Advanced RMM integration
-* BookStack synchronization into the internal Knowledge system
-* Provider-neutral AI integrations with Laravel AI SDK agents
-* Page-context and global AI chat grounded in tdPSA and Knowledge context
-* REST and GraphQL APIs
-* Full open-source community release under MIT license
-
----
-
-## 🚀 Getting Started (developer)
-
-### Shared Development Backlog
-
-Use `TODO.md` as the shared delegation list for active development. Pick one task, add an owner, keep status current, and update Knowledge/BookStack documentation when domain work is completed or materially changed.
-
-**Requirements:**
-
-* PHP 8.3+
-* Composer 2.x
-* Node.js 20+
-* MySQL or MariaDB
-* Redis (for queues)
-
-**Setup:**
+Clone the project and install PHP and Node dependencies:
 
 ```bash
-git clone https://github.com/yourorg/nexumpsa.git
-cd nexumpsa
-cp .env.example .env
+git clone https://github.com/SveinT83/Nexum-PSA.git
+cd Nexum-PSA
 composer install
-npm install && npm run dev
+npm install
+cp .env.example .env
 php artisan key:generate
+```
+
+Configure `.env` for your database, mail, queue, cache, and integrations. For a
+local MySQL/MariaDB setup, create an empty database first, then run:
+
+```bash
 php artisan migrate --seed
+npm run dev
 php artisan serve
 ```
 
-Access via `http://localhost:8000`
+The application is then available at:
 
-Default seed users:
+```text
+http://127.0.0.1:8000
+```
 
-* [superadmin@example.com](mailto:superadmin@example.com) / password
-* [technician@example.com](mailto:technician@example.com) / password
+The local seed creates an initial admin user and prints the credentials in the
+seeder output. Change that password immediately on any shared or internet-facing
+environment.
 
----
+## Useful Development Commands
 
-## 🗳 License
+Run the full test suite:
 
-**Nexum PSA** © 2025 Trønder Data
-Released under the **MIT License** – free to use, modify, and self-host.
+```bash
+php artisan test
+```
+
+Run the project convenience script with server, queue listener, logs, and Vite:
+
+```bash
+composer run dev
+```
+
+Build frontend assets for deployment:
+
+```bash
+npm run build
+```
+
+Clear Laravel caches after configuration or deployment changes:
+
+```bash
+php artisan optimize:clear
+```
+
+Run pending migrations:
+
+```bash
+php artisan migrate
+```
+
+## Production Notes
+
+For beta and production-like installs:
+
+- Use a clean database schema when testing the beta migration set.
+- Set `APP_ENV=production`, `APP_DEBUG=false`, and a trusted `APP_URL`.
+- Use HTTPS and secure session cookies.
+- Configure a real queue worker instead of relying on synchronous jobs.
+- Configure mail accounts before enabling inbound/outbound ticket email flows.
+- Configure Nextcloud and BookStack integrations only after the base install and
+  migrations are complete.
+- Run `npm run build` before serving the app without the Vite dev server.
+- Change seeded credentials and review roles, permissions, 2FA enforcement, and
+  notification channel secrets before exposing the system.
+
+## Testing Standard
+
+Every module should include tests for the workflows it owns. Existing module
+tests use Laravel's standard PHPUnit runner and should pass before merging:
+
+```bash
+php artisan test
+```
+
+For risky changes, especially migrations, billing logic, ticket workflows,
+notifications, integrations, or shared UI components, run the full suite rather
+than only a single module test.
+
+## Documentation
+
+Project documentation lives in `docs/`.
+
+- `AGENTS.md` is the mandatory AI/developer instruction entry point.
+- `docs/module-architecture.md` defines module ownership and Laravel structure.
+- `docs/ui-guidelines.md` defines Bootstrap UI and Blade layout standards.
+- Integration notes and historical planning documents are kept in focused files
+  under `docs/`.
+
+Knowledge documentation for completed or materially changed domains should be
+updated so it can be synced to BookStack.
+
+## License
+
+Nexum PSA is developed by Tronder Data.
+
+The code is shared under a Tronder Data limited-source license.
+
+Allowed:
+
+- Self-host Nexum PSA for your own organization.
+- Read, modify, and run the code for internal use.
+- Contribute code, fixes, documentation, and improvements back to the project.
+
+Not allowed without a separate written agreement from Tronder Data:
+
+- Sell Nexum PSA hosting, managed hosting, SaaS access, support subscriptions,
+  AI token resale, integration services, or other commercial services built
+  around running Nexum PSA for third parties.
+- Offer Nexum PSA as a competing hosted or managed commercial product.
+- Re-license, package, or distribute Nexum PSA in a way that removes these
+  restrictions.
+
+Tronder Data reserves the commercial right to offer hosted Nexum PSA, support,
+managed services, AI token services, and related paid platform services.
