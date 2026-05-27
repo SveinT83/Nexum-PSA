@@ -4,6 +4,7 @@ namespace App\Modules\Email\Controllers\Admin\Templates;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Menus\SideBar\TemplatesMenu;
+use App\Modules\Email\Actions\EnsureDefaultEmailTemplates;
 use App\Modules\Email\Models\EmailTemplate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,12 +28,22 @@ class EmailTemplateController extends Controller
     | languages, queues, or workflow conditions.
     |
     */
-    public function index(Request $request): View
+    public function index(Request $request, EnsureDefaultEmailTemplates $defaultTemplates): View
     {
+        $defaultTemplates->handle();
+
         $scope = $request->get('scope');
+        $search = trim((string) $request->get('q', ''));
 
         $templates = EmailTemplate::query()
             ->when($scope, fn ($query) => $query->where('scope', $scope))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('key', 'like', "%{$search}%")
+                        ->orWhere('subject', 'like', "%{$search}%");
+                });
+            })
             ->orderBy('scope')
             ->orderBy('name')
             ->paginate(25)
@@ -42,6 +53,7 @@ class EmailTemplateController extends Controller
             'templates' => $templates,
             'scopes' => EmailTemplate::SCOPES,
             'selectedScope' => $scope,
+            'search' => $search,
             'sidebarMenuItems' => (new TemplatesMenu())->TemplatesMenu('email'),
         ]);
     }

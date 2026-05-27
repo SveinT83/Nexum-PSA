@@ -13,7 +13,8 @@ return new class extends Migration
             $table->foreignId('warehouse_id')->constrained('storage_warehouses');
             $table->foreignId('room_id')->nullable()->constrained('storage_rooms')->nullOnDelete();
             $table->foreignId('box_id')->nullable()->constrained('storage_boxes')->nullOnDelete();
-            $table->foreignId('primary_vendor_id')->nullable()->constrained('storage_vendors')->nullOnDelete();
+            $table->foreignId('primary_vendor_id')->nullable()->constrained('vendors')->nullOnDelete();
+            $table->foreignId('manufacturer_vendor_id')->nullable()->constrained('vendors')->nullOnDelete();
             $table->string('sku')->unique();
             $table->string('name');
             $table->text('short_description')->nullable();

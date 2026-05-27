@@ -4,11 +4,8 @@
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="mb-0">{{ $mode === 'edit' ? 'Edit Ticket Workflow' : 'Create Ticket Workflow' }}</h1>
-            <p class="text-muted mb-0 small">Configure states and allowed transitions using existing ticket statuses.</p>
-        </div>
-        <a href="{{ route('tech.admin.settings.tickets.workflows') }}" class="btn btn-sm btn-outline-secondary">Back to workflows</a>
+        <h1 class="mb-0">{{ $mode === 'edit' ? 'Edit Ticket Workflow' : 'Create Ticket Workflow' }}</h1>
+        <x-buttons.back url="{{ route('tech.admin.settings.tickets.workflows') }}">Back</x-buttons.back>
     </div>
 @endsection
 
@@ -81,7 +78,7 @@
 @endsection
 
 @section('sidebar')
-    <x-nav.work-menu />
+    <x-nav.admin-menu group="tickets" />
 @endsection
 
 @section('rightbar')

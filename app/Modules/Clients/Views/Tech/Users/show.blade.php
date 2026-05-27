@@ -1,73 +1,105 @@
 @extends('layouts.default_tech')
 
+@php
+    $backUrl = route('tech.clients.user_management.index');
+    if (isset($user->site->client_id)) {
+        $backUrl = route('tech.clients.show', $user->site->client_id);
+    }
+
+    $missing = fn ($value) => filled($value) ? $value : '—';
+@endphp
+
 @section('pageHeader')
-    {{--
-        Client User Detail Header
-        Provides a clear overview of the user and actions to navigate or edit.
-    --}}
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h1 class="mb-0">{{$user->name ?? 'Unknown'}}</h1>
-        <div>
-            @php
-                /**
-                 * Navigation Logic:
-                 * Default back URL is the user_management index.
-                 * If the user is linked to a site (which belongs to a client), we prioritize returning to the client profile.
-                 */
-                $backUrl = route('tech.clients.user_management.index');
-                if (isset($user->site->client_id)) {
-                    $backUrl = route('tech.clients.show', $user->site->client_id);
-                }
-            @endphp
-
-            {{-- Navigation and Action Buttons --}}
-            <x-buttons.back url="{{ $backUrl }}">Back to Client</x-buttons.back>
-
-            @if(isset($user->client_site_id))
-                {{-- Link to the specific Sites this user belongs to --}}
-                <a href="{{ route('tech.clients.sites.show', $user->client_site_id) }}" class="btn btn-sm btn-outline-secondary mb-3 bi bi-building">
-                    Go to Site: {{ $user->site->name ?? 'Sites Detail' }}
-                </a>
-            @endif
-
-            <x-buttons.editlink url="{{ route('tech.clients.user.edit', $user) }}">Edit User</x-buttons.editlink>
-        </div>
+    <div class="d-flex justify-content-between align-items-center gap-2">
+        <h1>{{ $user->name ?? 'Unknown' }}</h1>
+        <x-buttons.back url="{{ $backUrl }}" class="btn btn-sm btn-outline-secondary bi bi-arrow-left mb-0">Back</x-buttons.back>
     </div>
 @endsection
 
 @section('content')
     {{--
         Client User Details
-        Organizes contact information and address data for the specific user.
+        Organizes contact information, site context, and address data for the
+        selected client contact.
     --}}
-    <div class="row">
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between gap-2">
+            <h2 class="h5 mb-0">User Profile</h2>
+            <x-buttons.editlink url="{{ route('tech.clients.user.edit', $user) }}" class="btn btn-sm btn-outline-secondary bi bi-pencil mb-0">Edit User</x-buttons.editlink>
+        </div>
+        <div class="card-body">
+            <!-- ------------------------------------------------- -->
+            <!-- Contact and relationship profile -->
+            <!-- ------------------------------------------------- -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8">{{ $missing($user->name) }}</dd>
 
-        <!-- ------------------------------------------------- -->
-        <!-- Contact info -->
-        <!-- ------------------------------------------------- -->
-        <div class="col-md-6">
-            <div class="row mt-3">
-                <div class="col-md-auto">
-                    {{-- Quick contact buttons (Phone/Email) --}}
-                    <x-buttons.tel tel="{{$user->phone}}"></x-buttons.tel>
+                        <dt class="col-sm-4">Role</dt>
+                        <dd class="col-sm-8 {{ blank($user->role) ? 'text-muted' : '' }}">{{ $missing($user->role) }}</dd>
+
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8 {{ blank($user->email) ? 'text-muted' : '' }}">
+                            @if(filled($user->email))
+                                <a href="mailto:{{ $user->email }}">{{ $user->email }}</a>
+                            @else
+                                —
+                            @endif
+                        </dd>
+
+                        <dt class="col-sm-4">Phone</dt>
+                        <dd class="col-sm-8 {{ blank($user->phone) ? 'text-muted' : '' }}">
+                            @if(filled($user->phone))
+                                <a href="tel:{{ $user->phone }}">{{ $user->phone }}</a>
+                            @else
+                                —
+                            @endif
+                        </dd>
+
+                        <dt class="col-sm-4">Site</dt>
+                        <dd class="col-sm-8 {{ blank($user->site?->name) ? 'text-muted' : '' }}">
+                            @if($user->site)
+                                <a href="{{ route('tech.clients.sites.show', $user->site) }}">{{ $user->site->name }}</a>
+                            @else
+                                —
+                            @endif
+                        </dd>
+                    </dl>
                 </div>
-                <div class="col-md-auto">
-                    <x-buttons.mailto email="{{$user->email}}"></x-buttons.mailto>
+                <div class="col-md-6">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Address</dt>
+                        <dd class="col-sm-8 {{ blank($user->address) ? 'text-muted' : '' }}">{{ $missing($user->address) }}</dd>
+
+                        <dt class="col-sm-4">CO Address</dt>
+                        <dd class="col-sm-8 {{ blank($user->co_address) ? 'text-muted' : '' }}">{{ $missing($user->co_address) }}</dd>
+
+                        <dt class="col-sm-4">Zip / City</dt>
+                        <dd class="col-sm-8 {{ blank($user->zip) && blank($user->city) ? 'text-muted' : '' }}">
+                            @if(filled($user->zip) || filled($user->city))
+                                {{ trim(($user->zip ?? '').' '.($user->city ?? '')) }}
+                            @else
+                                —
+                            @endif
+                        </dd>
+
+                        <dt class="col-sm-4">County / Country</dt>
+                        <dd class="col-sm-8 {{ blank($user->county) && blank($user->country) ? 'text-muted' : '' }}">
+                            @if(filled($user->county) || filled($user->country))
+                                {{ trim(($user->county ?? '').' '.($user->country ?? '')) }}
+                            @else
+                                —
+                            @endif
+                        </dd>
+
+                        <dt class="col-sm-4">Language</dt>
+                        <dd class="col-sm-8">{{ strtoupper($user->language ?? 'NO') }}</dd>
+                    </dl>
                 </div>
             </div>
         </div>
-
-        <!-- ------------------------------------------------- -->
-        <!-- Address info -->
-        <!-- ------------------------------------------------- -->
-        <div class="col-md-6">
-            <p><b>Address:</b> {{$user->address ?? '-'}}</p>
-            <p><b>CO Address:</b> {{$user->co_address ?? '-'}}</p>
-            <p>{{$user->zip ?? '-'}} {{$user->city ?? '-'}}</p>
-            <p>{{$user->county ?? '-'}} {{$user->country ?? '-'}}</p>
-            <p><b>Language:</b> {{ strtoupper($user->language ?? 'NO') }}</p>
-        </div>
-
     </div>
 @endsection
 
@@ -75,9 +107,4 @@
     @if(isset($sidebarMenuItems))
         <x-nav.side-bar :items="$sidebarMenuItems" title="Client workspace" />
     @endif
-@endsection
-
-@section('rightbar')
-    {{-- Right bar for contextual widgets, currently placeholder --}}
-    <div class="p-3 small text-muted">Recent activities (MVP later)</div>
 @endsection

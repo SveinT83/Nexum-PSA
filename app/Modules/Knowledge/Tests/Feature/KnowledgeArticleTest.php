@@ -98,12 +98,15 @@ class KnowledgeArticleTest extends TestCase
 
         $this->get(route('tech.knowledge.index'))
             ->assertOk()
+            ->assertSee('<h1>Knowledge</h1>', false)
+            ->assertSee('Dashboard')
             ->assertSee('Operations')
             ->assertSee('New Shelf')
             ->assertSee('Runbooks')
             ->assertSee('Library Status')
             ->assertSee('Shelves')
             ->assertSee('Books')
+            ->assertDontSee('Shelves, books, chapters, and pages')
             ->assertDontSee('Sync Now');
 
         $integration = Integration::create([
@@ -900,7 +903,8 @@ class KnowledgeArticleTest extends TestCase
 
         $this->get(route('tech.knowledge.show', $article))
             ->assertOk()
-            ->assertSee('Edit</a>', false);
+            ->assertSee(route('tech.knowledge.edit', $article), false)
+            ->assertSee('Edit');
 
         $this->put(route('tech.knowledge.update', $article), [
             'title' => 'VPN Setup Updated',

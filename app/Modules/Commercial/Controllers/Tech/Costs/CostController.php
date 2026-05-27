@@ -5,8 +5,9 @@ namespace App\Modules\Commercial\Controllers\Tech\Costs;
 use App\Http\Controllers\Controller;
 use App\Modules\Commercial\Requests\StoreCostRequest;
 use App\Modules\Commercial\Models\Cost;
-use App\Models\Doc\Vendor;
+use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Commercial\Models\Economy\Units;
+use Illuminate\Http\Request;
 
 class CostController extends Controller
 {
@@ -14,32 +15,48 @@ class CostController extends Controller
     // -----------------------------------------
     // INDEX - Show a list of all costs
     // -----------------------------------------
-    public function index()
+    public function index(Request $request)
     {
-        $sort = request('sort', 'name');
-        $dir  = request('dir', 'asc');
+        $sort = $request->input('sort', 'name');
+        $direction = $request->input('direction') === 'desc' ? 'desc' : 'asc';
 
         $allowed = [
             'name' => 'costs.name',
             'cost' => 'costs.cost',
             'recurrence' => 'costs.recurrence',
             'vendor' => 'vendors.name',
+            'updated_at' => 'costs.updated_at',
         ];
         $sortColumn = $allowed[$sort] ?? $allowed['name'];
-        $dir = $dir === 'desc' ? 'desc' : 'asc';
 
         $costs = Cost::query()
             ->leftJoin('vendors', 'vendors.id', '=', 'costs.vendor_id')
             ->select('costs.*')
-            ->with(['creator', 'updater', 'vendor'])
-            ->orderBy($sortColumn, $dir)
-            ->orderBy('costs.id') // stabil sortering
-            ->get();
+            ->with(['creator', 'updater', 'vendor', 'unit'])
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $search = '%'.$request->string('q')->trim()->toString().'%';
+
+                $query->where(function ($query) use ($search): void {
+                    $query->where('costs.name', 'like', $search)
+                        ->orWhere('costs.note', 'like', $search)
+                        ->orWhere('costs.recurrence', 'like', $search)
+                        ->orWhere('vendors.name', 'like', $search);
+                });
+            })
+            ->when($request->filled('vendor_id'), fn ($query) => $query->where('costs.vendor_id', $request->integer('vendor_id')))
+            ->when($request->filled('recurrence'), fn ($query) => $query->where('costs.recurrence', $request->input('recurrence')))
+            ->orderBy($sortColumn, $direction)
+            ->orderBy('costs.id')
+            ->paginate(25)
+            ->withQueryString();
 
         return view('commercial::Tech.cs.costs.index', [
             'costs' => $costs,
+            'vendors' => Vendor::query()->orderBy('name')->get(['id', 'name']),
+            'recurrences' => Cost::query()->distinct()->orderBy('recurrence')->pluck('recurrence')->filter()->values(),
             'sort' => $sort,
-            'dir' => $dir,
+            'direction' => $direction,
+            'filters' => $request->only(['q', 'vendor_id', 'recurrence', 'sort', 'direction']),
         ]);
     }
 

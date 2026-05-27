@@ -4,6 +4,7 @@ namespace App\Modules\UserManagement\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\UserManagement\Actions\SendUserInvite;
 use App\Modules\UserManagement\Actions\StoreUser;
 use App\Modules\UserManagement\Actions\UpdateUserStatus;
 use App\Modules\UserManagement\Menus\SideBar\UserManagementMenu;
@@ -61,5 +62,21 @@ class UserManagementController extends Controller
 
         return redirect()->route('tech.admin.user_management.index')
             ->with('success', 'User status updated successfully.');
+    }
+
+    /**
+     * Send (or re-send) an invitation email to a pending user.
+     */
+    public function sendInvite(User $user, SendUserInvite $action): RedirectResponse
+    {
+        if (! $user->isPending()) {
+            return redirect()->route('tech.admin.user_management.index')
+                ->with('error', 'Only pending users can receive invitations.');
+        }
+
+        $action->handle($user);
+
+        return redirect()->route('tech.admin.user_management.index')
+            ->with('success', "Invitation sent to {$user->email}.");
     }
 }

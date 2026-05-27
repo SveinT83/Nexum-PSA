@@ -3,7 +3,10 @@
 @section('title', 'Users Management')
 
 @section('pageHeader')
-    <h1>Users Management</h1>
+    <div class="d-flex align-items-center justify-content-between">
+        <h1>Users Management</h1>
+        <x-buttons.back url="{{ route('tech.admin.user_management.index') }}">Back</x-buttons.back>
+    </div>
 @endsection
 
 @section('content')
@@ -71,15 +74,8 @@
 @endsection
 
 @section('sidebar')
-    <!-- Sidebar Menu Item -->
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
+    <x-nav.admin-menu group="users" />
 @endsection
 
 @section('rightbar')
-    <h3>Notifications</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
 @endsection

@@ -53,6 +53,14 @@ class AiChatResponder
     /**
      * Send a non-streaming chat request to the configured provider.
      */
+    public function complete(AiAgent $agent, array $messages): string
+    {
+        return $this->send($agent, $messages);
+    }
+
+    /**
+     * Send a non-streaming chat request to the configured provider.
+     */
     private function send(AiAgent $agent, array $messages): string
     {
         $provider = $agent->provider;

@@ -80,6 +80,12 @@ Route::get('/logout', function (Request $request) {
 $commercialPublicRoutes = true;
 require app_path('Modules/Commercial/routes.php');
 
+$salesPublicRoutes = true;
+require app_path('Modules/Sales/routes.php');
+
+$userManagementPublicRoutes = true;
+require app_path('Modules/UserManagement/routes.php');
+
 // Dashboard (etter innlogging)
 /*
 Route::middleware('auth')->get('/dashboard', function () {

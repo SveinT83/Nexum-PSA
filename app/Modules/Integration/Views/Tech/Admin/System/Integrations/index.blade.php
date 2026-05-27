@@ -3,189 +3,163 @@
 @section('title', 'Integrations')
 
 @section('pageHeader')
-    <h1>Integrations</h1>
+    <h1 class="h4 mb-0">Integrations</h1>
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="row">
-            {{--
-                N-able RMM Integration Card
-                This card allows administrators to enable/disable the N-able RMM integration
-                and provides access to its specific settings if activated.
-            --}}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">N-able RMM</h5>
-                        @php
-                            // Check if the integration record exists and is active
-                            $nable = $integrations->get('rmm');
-                            $isActive = $nable && $nable->status === 'active';
-                        @endphp
+    @php
+        /*
+         * Keep the integration hub cards driven by one array so headers, actions,
+         * and status treatment stay uniform as new integrations are added.
+         */
+        $integrationCards = [
+            [
+                'title' => 'N-able RMM',
+                'icon' => 'bi-hdd-network',
+                'description' => 'Sync clients, sites, and assets from N-able RMM.',
+                'type' => 'rmm',
+                'name' => 'N-able RMM',
+                'settingsRoute' => 'tech.admin.system.integrations.nable_rmm.settings',
+                'disabledHelp' => 'Enable the integration to configure settings and API key.',
+            ],
+            [
+                'title' => 'BookStack',
+                'icon' => 'bi-book',
+                'description' => 'Use BookStack as the read-only source of truth for knowledge content.',
+                'type' => 'book_stack',
+                'name' => 'BookStack',
+                'settingsRoute' => 'tech.admin.system.integrations.book_stack.settings',
+                'disabledHelp' => 'Enable the integration to configure BookStack API credentials.',
+            ],
+            [
+                'title' => 'Tactical RMM',
+                'icon' => 'bi-router',
+                'description' => 'Sync clients, sites, and assets from Tactical RMM.',
+                'type' => 'tactical_rmm',
+                'name' => 'Tactical RMM',
+                'settingsRoute' => 'tech.admin.system.integrations.tactical_rmm.settings',
+                'disabledHelp' => 'Enable the integration to configure settings and API key.',
+            ],
+            [
+                'title' => 'System API',
+                'icon' => 'bi-shield-lock',
+                'description' => 'Manage API keys and access system documentation.',
+                'badge' => ['label' => 'Active', 'class' => 'text-bg-success'],
+                'actions' => [
+                    ['label' => 'API Management', 'icon' => 'bi-shield-lock', 'route' => 'tech.admin.system.integrations.api.index'],
+                    ['label' => 'Docs', 'icon' => 'bi-file-earmark-code', 'route' => 'tech.admin.system.integrations.api.docs', 'target' => '_blank'],
+                ],
+            ],
+            [
+                'title' => 'AI Providers',
+                'icon' => 'bi-cpu',
+                'description' => 'Configure AI providers, agent instructions, role access, data scopes, and future API action permissions.',
+                'badge' => ['label' => 'Config', 'class' => 'text-bg-light border'],
+                'actions' => [
+                    ['label' => 'AI Settings', 'icon' => 'bi-cpu', 'route' => 'tech.admin.system.integrations.ai.index'],
+                ],
+            ],
+        ];
 
-                        {{-- Toggle Switch for Integration Status --}}
-                        <form action="{{ route('tech.admin.system.integrations.toggle') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="type" value="rmm">
-                            <input type="hidden" name="name" value="N-able RMM">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch"
-                                       id="toggleNable" onchange="this.form.submit()"
-                                       {{ $isActive ? 'checked' : '' }}>
-                                <label class="form-check-label" for="toggleNable">
-                                    {{ $isActive ? 'Enabled' : 'Disabled' }}
-                                </label>
-                            </div>
-                        </form>
+        if (Route::has('tech.admin.nextcloud.connections.index')) {
+            $integrationCards[] = [
+                'title' => 'Nextcloud',
+                'icon' => 'bi-cloud',
+                'description' => 'Configure global, client, and site Nextcloud connections for calendars, files, users, groups, and mappings.',
+                'badge' => ['label' => 'Domain', 'class' => 'text-bg-light border'],
+                'actions' => [
+                    ['label' => 'Nextcloud Settings', 'icon' => 'bi-cloud', 'route' => 'tech.admin.nextcloud.connections.index'],
+                ],
+            ];
+        }
+    @endphp
+
+    <div class="row g-3">
+        @foreach($integrationCards as $card)
+            @php
+                $record = isset($card['type']) ? $integrations->get($card['type']) : null;
+                $isToggleable = isset($card['type']);
+                $isActive = $isToggleable && $record?->status === 'active';
+                $healthLabel = $record?->is_healthy === true ? 'Healthy' : ($record?->is_healthy === false ? 'Needs check' : null);
+                $healthClass = $record?->is_healthy === true ? 'text-bg-success' : 'text-bg-warning';
+            @endphp
+
+            <!-- Integration card -->
+            <div class="col-sm-6 col-xl-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header py-2 d-flex align-items-center justify-content-between gap-2">
+                        <h2 class="h6 mb-0 d-flex align-items-center gap-2">
+                            <i class="bi {{ $card['icon'] }}" aria-hidden="true"></i>
+                            <span>{{ $card['title'] }}</span>
+                        </h2>
+
+                        @if($isToggleable)
+                            <form action="{{ route('tech.admin.system.integrations.toggle') }}" method="POST" class="m-0">
+                                @csrf
+                                <input type="hidden" name="type" value="{{ $card['type'] }}">
+                                <input type="hidden" name="name" value="{{ $card['name'] }}">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           id="toggleIntegration{{ $loop->index }}" onchange="this.form.submit()"
+                                           {{ $isActive ? 'checked' : '' }}>
+                                    <label class="form-check-label small" for="toggleIntegration{{ $loop->index }}">
+                                        {{ $isActive ? 'Enabled' : 'Disabled' }}
+                                    </label>
+                                </div>
+                            </form>
+                        @else
+                            <span class="badge {{ $card['badge']['class'] }}">{{ $card['badge']['label'] }}</span>
+                        @endif
                     </div>
-                    <div class="card-body d-flex flex-column">
-                        <p class="card-text">Integrate with N-able RMM to sync clients, sites, and assets.</p>
 
-                        <div class="mt-auto">
-                            @if($isActive)
-                                {{-- Settings are only accessible when the integration is enabled --}}
-                                <a href="{{ route('tech.admin.system.integrations.nable_rmm.settings') }}" class="btn btn-primary">
-                                    <i class="bi bi-gear"></i> Settings
-                                </a>
+                    <div class="card-body d-flex flex-column">
+                        <p class="card-text mb-3">{{ $card['description'] }}</p>
+
+                        <div class="small text-muted mb-3">
+                            @if($isToggleable)
+                                <span class="badge {{ $isActive ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $isActive ? 'Enabled' : 'Disabled' }}</span>
+                                @if($healthLabel)
+                                    <span class="badge {{ $healthClass }}">{{ $healthLabel }}</span>
+                                @endif
                             @else
-                                {{-- Disabled settings button with a helpful hint --}}
-                                <button class="btn btn-secondary" disabled>
-                                    <i class="bi bi-gear"></i> Settings
-                                </button>
-                                <p class="text-muted small mt-2 mb-0">Enable the integration to configure settings and API key.</p>
+                                <span class="badge {{ $card['badge']['class'] }}">{{ $card['badge']['label'] }}</span>
+                            @endif
+                        </div>
+
+                        <div class="mt-auto d-grid gap-2">
+                            @if($isToggleable)
+                                @if($isActive)
+                                    <a href="{{ route($card['settingsRoute']) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-gear" aria-hidden="true"></i>
+                                        Settings
+                                    </a>
+                                @else
+                                    <button class="btn btn-sm btn-outline-secondary" disabled>
+                                        <i class="bi bi-gear" aria-hidden="true"></i>
+                                        Settings
+                                    </button>
+                                    <div class="small text-muted">{{ $card['disabledHelp'] }}</div>
+                                @endif
+                            @else
+                                @foreach($card['actions'] as $action)
+                                    <a href="{{ route($action['route']) }}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       @if(($action['target'] ?? null) === '_blank') target="_blank" rel="noopener" @endif>
+                                        <i class="bi {{ $action['icon'] }}" aria-hidden="true"></i>
+                                        {{ $action['label'] }}
+                                    </a>
+                                @endforeach
                             @endif
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">BookStack</h5>
-                        @php
-                            $bookStack = $integrations->get('book_stack');
-                            $isBookStackActive = $bookStack && $bookStack->status === 'active';
-                        @endphp
-
-                        <form action="{{ route('tech.admin.system.integrations.toggle') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="type" value="book_stack">
-                            <input type="hidden" name="name" value="BookStack">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch"
-                                       id="toggleBookStack" onchange="this.form.submit()"
-                                       {{ $isBookStackActive ? 'checked' : '' }}>
-                                <label class="form-check-label" for="toggleBookStack">
-                                    {{ $isBookStackActive ? 'Enabled' : 'Disabled' }}
-                                </label>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="card-body d-flex flex-column">
-                        <p class="card-text">Use BookStack as the read-only source of truth for knowledge content.</p>
-
-                        <div class="mt-auto">
-                            @if($isBookStackActive)
-                                <a href="{{ route('tech.admin.system.integrations.book_stack.settings') }}" class="btn btn-primary">
-                                    <i class="bi bi-gear"></i> Settings
-                                </a>
-                            @else
-                                <button class="btn btn-secondary" disabled>
-                                    <i class="bi bi-gear"></i> Settings
-                                </button>
-                                <p class="text-muted small mt-2 mb-0">Enable the integration to configure BookStack API credentials.</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Tactical RMM</h5>
-                        @php
-                            $tactical = $integrations->get('tactical_rmm');
-                            $isTacticalActive = $tactical && $tactical->status === 'active';
-                        @endphp
-
-                        <form action="{{ route('tech.admin.system.integrations.toggle') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="type" value="tactical_rmm">
-                            <input type="hidden" name="name" value="Tactical RMM">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch"
-                                       id="toggleTactical" onchange="this.form.submit()"
-                                       {{ $isTacticalActive ? 'checked' : '' }}>
-                                <label class="form-check-label" for="toggleTactical">
-                                    {{ $isTacticalActive ? 'Enabled' : 'Disabled' }}
-                                </label>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="card-body d-flex flex-column">
-                        <p class="card-text">Integrate with Tactical RMM to sync clients, sites, and assets.</p>
-
-                        <div class="mt-auto">
-                            @if($isTacticalActive)
-                                <a href="{{ route('tech.admin.system.integrations.tactical_rmm.settings') }}" class="btn btn-primary">
-                                    <i class="bi bi-gear"></i> Settings
-                                </a>
-                            @else
-                                <button class="btn btn-secondary" disabled>
-                                    <i class="bi bi-gear"></i> Settings
-                                </button>
-                                <p class="text-muted small mt-2 mb-0">Enable the integration to configure settings and API key.</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">System API</h5>
-                        <span class="badge bg-success">Active</span>
-                    </div>
-                    <div class="card-body d-flex flex-column">
-                        <p class="card-text">Manage API keys and access system documentation.</p>
-                        <div class="mt-auto">
-                            <a href="{{ route('tech.admin.system.integrations.api.index') }}" class="btn btn-primary">
-                                <i class="bi bi-shield-lock"></i> API Management
-                            </a>
-                            <a href="{{ route('tech.admin.system.integrations.api.docs') }}" class="btn btn-outline-primary ms-2" target="_blank">
-                                <i class="bi bi-file-earmark-code"></i> Docs
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">AI Providers</h5>
-                        <span class="badge bg-light text-dark border">Config</span>
-                    </div>
-                    <div class="card-body d-flex flex-column">
-                        <p class="card-text">Configure AI providers, agent instructions, role access, data scopes, and future API action permissions.</p>
-                        <div class="mt-auto">
-                            <a href="{{ route('tech.admin.system.integrations.ai.index') }}" class="btn btn-primary">
-                                <i class="bi bi-cpu"></i> AI Settings
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @endforeach
     </div>
 @endsection
 
 @section('sidebar')
-
+    <x-nav.admin-menu group="integrations" />
 @endsection
 
 @section('rightbar')

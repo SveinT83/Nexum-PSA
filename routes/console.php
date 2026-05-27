@@ -13,6 +13,7 @@ use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
 use App\Modules\Integration\Jobs\CleanupAiChats;
 use App\Modules\Integration\Services\AiChatCleanup;
+use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
 use App\Jobs\Integrations\NAbleRmmSyncJob;
 
 Artisan::command('inspire', function () {
@@ -71,6 +72,13 @@ Schedule::job(new PullBookStackToKnowledge())
 Schedule::job(new CleanupAiChats())
     ->weeklyOn(1, '03:30')
     ->name('ai.chats.cleanup')
+    ->withoutOverlapping();
+
+// Economy order generation catch-up. Manual Generate orders uses the same
+// action, while this keeps picked costs and closed-ticket time from piling up.
+Schedule::job(new GenerateEconomyOrdersJob())
+    ->dailyAt('02:15')
+    ->name('economy.orders.generate')
     ->withoutOverlapping();
 
 Artisan::command('ai:cleanup-chats {--queue : Dispatch cleanup to the queue instead of running now}', function () {

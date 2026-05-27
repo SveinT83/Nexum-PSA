@@ -4,8 +4,22 @@
         [
             'label' => 'Sales',
             'route' => 'tech.sales.index',
-            'pattern' => 'tech.sales.*',
+            'pattern' => [
+                'tech.sales.index',
+                'tech.sales.create',
+                'tech.sales.show',
+                'tech.sales.update',
+                'tech.sales.activities.*',
+                'tech.sales.stakeholders.*',
+                'tech.sales.quote.*',
+            ],
             'icon' => 'bi-kanban',
+        ],
+        [
+            'label' => 'Leads',
+            'route' => 'tech.sales.leads.index',
+            'pattern' => 'tech.sales.leads.*',
+            'icon' => 'bi-person-plus',
         ],
         [
             'label' => 'Contracts',
@@ -38,6 +52,12 @@
             'icon' => 'bi-shield-lock',
         ],
         [
+            'label' => 'Rates',
+            'route' => 'tech.rates.index',
+            'pattern' => 'tech.rates.*',
+            'icon' => 'bi-currency-exchange',
+        ],
+        [
             'label' => 'SLA',
             'route' => 'tech.sla.index',
             'pattern' => 'tech.sla.*',
@@ -59,7 +79,7 @@
             @continue(!Route::has($item['route']))
 
             @php
-                $isActive = request()->routeIs($item['pattern']);
+                $isActive = request()->routeIs(...(array) $item['pattern']);
             @endphp
 
             <a

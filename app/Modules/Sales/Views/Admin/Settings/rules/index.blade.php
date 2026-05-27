@@ -3,25 +3,23 @@
 @section('title', 'Tech Admin Settings Sales Rules')
 
 @section('pageHeader')
-    <h1>Tech Admin Settings Sales Rules</h1>
+    <h1>Sales Rules</h1>
 @endsection
 
 @section('content')
-
+    <div class="card">
+        <div class="card-header">
+            <h2 class="h5 mb-0">Rule Settings</h2>
+        </div>
+        <div class="card-body text-muted">
+            Rule settings will be available here.
+        </div>
+    </div>
 @endsection
 
 @section('sidebar')
-    <h3>Tech Sidebar</h3>
-    <ul>
-        <li><a href="#">System Status</a></li>
-        <li><a href="#">Task Management</a></li>
-        <li><a href="#">Reports</a></li>
-    </ul>
+    <x-nav.admin-menu group="sales" />
 @endsection
 
 @section('rightbar')
-    <h3>Notifications</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
 @endsection

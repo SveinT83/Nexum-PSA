@@ -8,10 +8,10 @@
 @endphp
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">{{ $isShow ? 'Package details' : ($isEdit ? 'Edit package' : 'New package') }}</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>{{ $isShow ? 'Package details' : ($isEdit ? 'Edit package' : 'New package') }}</h1>
         <div>
-            <a href="{{ route('tech.packages.index') }}" class="btn btn-sm btn-primary bi bi-backspace"> Back</a>
+            <x-buttons.back url="{{ route('tech.packages.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection
@@ -85,5 +85,4 @@
 @endsection
 
 @section('rightbar')
-    <div class="p-3 small text-muted">Recent Packages (MVP later)</div>
 @endsection

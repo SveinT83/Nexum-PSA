@@ -59,7 +59,8 @@
             <!-- Generate the href URL: if route name exists and is valid, generate the route URL with optional params, otherwise use '#' -->
 
             @php
-                $isActive = request()->routeIs($item['pattern'] ?? $item['route']);
+                $patterns = (array) ($item['pattern'] ?? $item['route']);
+                $isActive = request()->routeIs(...$patterns);
 
                 // If the route matches, also check if all provided parameters match the current request
                 if ($isActive && !empty($item['params']) && is_array($item['params'])) {
@@ -99,11 +100,4 @@
         {{$slot}}
     @endif
 
-    @if(session('active_client_id'))
-        <p>Du jobber nå med klient ID: {{ session('active_client_id') }}</p>
-    @endif
-
-    @if(session('active_site_id'))
-        <p>Du jobber nå med site ID: {{ session('active_site_id') }}</p>
-    @endif
 </nav>

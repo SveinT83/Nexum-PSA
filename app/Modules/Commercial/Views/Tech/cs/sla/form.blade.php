@@ -8,33 +8,17 @@
 @endphp
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-2">
-        <div>
-            <h2 class="h5 mb-0">
-                {{ $isShow ? ($sla->name ?? 'SLA Policy') : ($isEdit ? 'Edit SLA Policy' : 'Create SLA Policy') }}
-            </h2>
-            @if($isShow)
-                <div class="small text-muted">Service level response policy</div>
-            @endif
-        </div>
-
-
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>{{ $isShow ? ($sla->name ?? 'SLA Policy') : ($isEdit ? 'Edit SLA Policy' : 'Create SLA Policy') }}</h1>
         <div class="d-flex align-items-center gap-2">
             <!-- Edit button -->
             @if($isShow && isset($sla))
-                <a href="{{ route('tech.sla.edit', $sla) }}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                    Edit
-                </a>
+                <x-buttons.editlink url="{{ route('tech.sla.edit', $sla) }}" class="mb-0">Edit</x-buttons.editlink>
             @endif
 
             <!-- Back button -->
-            <a href="{{ route('tech.sla.index') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back
-            </a>
+            <x-buttons.back url="{{ route('tech.sla.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
-
     </div>
 @endsection
 
@@ -194,5 +178,4 @@
 @endsection
 
 @section('rightbar')
-    <div class="p-3 small text-muted">Recent SLA (MVP later)</div>
 @endsection

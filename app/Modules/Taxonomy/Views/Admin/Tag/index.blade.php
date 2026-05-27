@@ -5,23 +5,63 @@
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center">
         <h1>Tag Management</h1>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTagModal">
-            <i class="fas fa-plus"></i> New Tag
-        </button>
+        <x-buttons.back url="{{ route('tech.admin.index') }}">Back</x-buttons.back>
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="system" />
+@endsection
+
 @section('content')
+    @php
+        $sortLink = function (string $column, string $defaultDirection = 'asc') use ($sort, $direction) {
+            $nextDirection = $sort === $column && $direction === 'asc' ? 'desc' : ($sort === $column ? 'asc' : $defaultDirection);
+
+            return request()->fullUrlWithQuery([
+                'sort' => $column,
+                'direction' => $nextDirection,
+            ]);
+        };
+        $sortIcon = function (string $column) use ($sort, $direction) {
+            if ($sort !== $column) {
+                return 'bi-arrow-down-up';
+            }
+
+            return $direction === 'asc' ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up';
+        };
+    @endphp
+
     <div class="row">
         <div class="col-md-12">
             <x-card.default title="Existing Tags">
+                <x-slot:headerActions>
+                    <button type="button" class="btn btn-sm btn-primary bi bi-plus" data-bs-toggle="modal" data-bs-target="#createTagModal"> New Tag</button>
+                </x-slot:headerActions>
+
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Color</th>
-                            <th>Usages</th>
-                            <th>Status</th>
+                            <th>
+                                <a href="{{ $sortLink('name') }}" class="text-decoration-none text-body">
+                                    Name <i class="bi {{ $sortIcon('name') }}"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ $sortLink('color') }}" class="text-decoration-none text-body">
+                                    Color <i class="bi {{ $sortIcon('color') }}"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ $sortLink('usages', 'desc') }}" class="text-decoration-none text-body">
+                                    Usages <i class="bi {{ $sortIcon('usages') }}"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ $sortLink('status', 'desc') }}" class="text-decoration-none text-body">
+                                    Status <i class="bi {{ $sortIcon('status') }}"></i>
+                                </a>
+                            </th>
                             <th>Actions</th>
                         </tr>
                     </thead>

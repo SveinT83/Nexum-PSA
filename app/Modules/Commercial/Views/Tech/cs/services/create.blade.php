@@ -1,10 +1,10 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">New service</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>New service</h1>
         <div>
-            <a href="{{ route('tech.services.index') }}" class="btn btn-sm btn-primary">Back</a>
+            <x-buttons.back url="{{ route('tech.services.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection
@@ -27,5 +27,4 @@
 @endsection
 
 @section('rightbar')
-    <div class="p-3 small text-muted">Recent services (MVP later)</div>
 @endsection

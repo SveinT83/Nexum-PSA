@@ -124,6 +124,35 @@ class EmailModuleTest extends TestCase
     }
 
     #[Test]
+    public function template_management_creates_missing_default_sales_templates_without_overwriting_custom_templates(): void
+    {
+        EmailTemplate::create([
+            'scope' => 'tickets',
+            'key' => 'ticket_reply',
+            'name' => 'Custom ticket reply',
+            'subject' => 'Custom subject',
+            'body_html' => '<p>Custom</p>',
+            'body_text' => 'Custom',
+            'variables' => ['custom'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.templatesManagement.email.index', ['scope' => 'sales']))
+            ->assertOk()
+            ->assertSee('Sales activity email')
+            ->assertSee('Sales quote send');
+
+        $this->assertDatabaseHas('email_templates', [
+            'scope' => 'sales',
+            'key' => 'sales_quote_send',
+            'is_active' => true,
+        ]);
+        $this->assertSame('Custom subject', EmailTemplate::where('scope', 'tickets')->where('key', 'ticket_reply')->value('subject'));
+    }
+
+    #[Test]
     public function admin_can_create_and_update_email_template(): void
     {
         $this->actingAs($this->admin)
@@ -181,6 +210,15 @@ class EmailModuleTest extends TestCase
             'key' => 'system_notification',
             'is_default' => true,
         ]);
+
+        foreach (['sales_activity_email', 'sales_internal_note', 'sales_quote_send'] as $key) {
+            $this->assertDatabaseHas('email_templates', [
+                'scope' => 'sales',
+                'key' => $key,
+                'is_default' => true,
+                'is_active' => true,
+            ]);
+        }
     }
 
     #[Test]

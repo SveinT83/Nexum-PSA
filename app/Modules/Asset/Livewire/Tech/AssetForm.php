@@ -5,7 +5,7 @@ namespace App\Modules\Asset\Livewire\Tech;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
-use App\Models\Doc\Vendor;
+use App\Modules\Documentation\Models\Vendor;
 use App\Models\Tech\Work\Assets\Asset;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;

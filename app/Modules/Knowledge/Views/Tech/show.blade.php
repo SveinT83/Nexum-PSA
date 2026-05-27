@@ -11,7 +11,7 @@
 @section('title', $article->title)
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-1">
@@ -31,9 +31,9 @@
             <h1 class="h4 mb-0">{{ $article->title }}</h1>
         </div>
         <div class="btn-group">
-            <a href="{{ route('tech.knowledge.index') }}" class="btn btn-sm btn-outline-secondary">Back</a>
+            <x-buttons.back url="{{ route('tech.knowledge.index') }}" class="mb-0">Back</x-buttons.back>
             @if($canEditArticle)
-                <a href="{{ route('tech.knowledge.edit', $article) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                <x-buttons.editlink url="{{ route('tech.knowledge.edit', $article) }}" class="mb-0">Edit</x-buttons.editlink>
             @endif
             @if(blank($article->source_system))
                 <x-buttons.delete

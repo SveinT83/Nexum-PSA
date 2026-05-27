@@ -12,6 +12,41 @@
 }
 
 /*
+ * Global tech page headers are compact work-surface labels. Breadcrumbs and
+ * titles must not turn every operational view into a tall banner.
+ */
+.page-header {
+    min-height: auto;
+}
+
+.page-header h1,
+.page-header .h1 {
+    margin-bottom: 0;
+    font-size: 1.25rem;
+    line-height: 1.3;
+}
+
+.page-header p {
+    margin-bottom: 0;
+}
+
+.page-breadcrumbs {
+    margin-bottom: .125rem;
+    line-height: 1.2;
+}
+
+.page-breadcrumbs .breadcrumb-item {
+    max-width: 18rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/*
  * Knowledge shelf cards use a bounded compact body so the library grid stays
  * scannable while detailed book lists remain available through accordions.
  */

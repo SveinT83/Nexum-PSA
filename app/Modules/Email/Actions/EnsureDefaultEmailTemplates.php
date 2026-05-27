@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Modules\Email\Actions;
+
+use App\Modules\Email\Models\EmailTemplate;
+
+class EnsureDefaultEmailTemplates
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Default outbound templates
+    |--------------------------------------------------------------------------
+    |
+    | Missing defaults are created when the template admin page opens or the
+    | database seeder runs. Existing rows are never overwritten here because
+    | admins may have customized subjects, bodies, variables, or active flags.
+    |
+    */
+    public function handle(): void
+    {
+        foreach ($this->templates() as $template) {
+            EmailTemplate::query()->firstOrCreate(
+                ['scope' => $template['scope'], 'key' => $template['key']],
+                $template
+            );
+        }
+    }
+
+    public function templates(): array
+    {
+        return [
+            [
+                'scope' => 'tickets',
+                'key' => 'ticket_reply',
+                'name' => 'Ticket reply',
+                'subject' => '[{{ ticket_key }}] {{ ticket_subject }}',
+                'body_html' => '<p>Hello {{ contact_name }},</p><p>{{ message_body }}</p><p>Regards,<br>{{ technician_name }}</p><p style="margin-top:24px;color:#6c757d;font-size:12px;">--- Please reply above this line ---</p>',
+                'body_text' => "Hello {{ contact_name }},\n\n{{ message_body }}\n\nRegards,\n{{ technician_name }}\n\n--- Please reply above this line ---",
+                'variables' => ['ticket_key', 'ticket_subject', 'contact_name', 'message_body', 'technician_name'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            [
+                'scope' => 'tickets',
+                'key' => 'ticket_created',
+                'name' => 'Ticket created confirmation',
+                'subject' => '[{{ ticket_key }}] Ticket created: {{ ticket_subject }}',
+                'body_html' => '<p>Hello {{ contact_name }},</p><p>Your ticket has been created.</p><p><strong>{{ ticket_subject }}</strong></p>',
+                'body_text' => "Hello {{ contact_name }},\n\nYour ticket has been created.\n\n{{ ticket_subject }}",
+                'variables' => ['ticket_key', 'ticket_subject', 'contact_name'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            [
+                'scope' => 'system',
+                'key' => 'system_notification',
+                'name' => 'System notification',
+                'subject' => '{{ notification_subject }}',
+                'body_html' => '<p>{{ notification_body }}</p>',
+                'body_text' => '{{ notification_body }}',
+                'variables' => ['notification_subject', 'notification_body'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            [
+                'scope' => 'sales',
+                'key' => 'sales_activity_email',
+                'name' => 'Sales activity email',
+                'subject' => '[{{ opportunity_key }}] {{ message_subject }}',
+                'body_html' => '<p>Hello {{ contact_name }},</p><p>{{ message_body }}</p><p>Regards,<br>{{ seller_name }}</p>',
+                'body_text' => "Hello {{ contact_name }},\n\n{{ message_body }}\n\nRegards,\n{{ seller_name }}",
+                'variables' => ['opportunity_key', 'opportunity_title', 'client_name', 'contact_name', 'message_subject', 'message_body', 'seller_name'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            [
+                'scope' => 'sales',
+                'key' => 'sales_internal_note',
+                'name' => 'Sales internal note notification',
+                'subject' => '[{{ opportunity_key }}] Internal sales note',
+                'body_html' => '<p>{{ author_name }} added an internal note on <strong>{{ opportunity_title }}</strong>.</p><div style="white-space:pre-wrap;">{{ note_body }}</div>',
+                'body_text' => "{{ author_name }} added an internal note on {{ opportunity_title }}.\n\n{{ note_body }}",
+                'variables' => ['opportunity_key', 'opportunity_title', 'client_name', 'author_name', 'note_body'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            [
+                'scope' => 'sales',
+                'key' => 'sales_quote_send',
+                'name' => 'Sales quote send',
+                'subject' => '[{{ opportunity_key }}] Quote {{ quote_key }} for {{ client_name }}',
+                'body_html' => '<p>Hello {{ contact_name }},</p><p>Your quote is ready:</p><p><a href="{{ quote_url }}">View quote</a></p><p>Total ex VAT: {{ total_ex_vat }}<br>Total inc VAT: {{ total_inc_vat }}<br>Expires: {{ expires_at }}</p><p>Regards,<br>{{ seller_name }}</p>',
+                'body_text' => "Hello {{ contact_name }},\n\nYour quote is ready:\n{{ quote_url }}\n\nTotal ex VAT: {{ total_ex_vat }}\nTotal inc VAT: {{ total_inc_vat }}\nExpires: {{ expires_at }}\n\nRegards,\n{{ seller_name }}",
+                'variables' => ['opportunity_key', 'opportunity_title', 'client_name', 'contact_name', 'quote_key', 'quote_url', 'total_ex_vat', 'total_inc_vat', 'expires_at', 'seller_name'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+        ];
+    }
+}

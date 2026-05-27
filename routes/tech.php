@@ -15,15 +15,11 @@ use Illuminate\Support\Facades\Route;
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
 // ------------------------------------------------------------------------------------------
-Route::middleware(['auth','tech'])->group(function () {
+Route::middleware(['auth','tech','2fa.required'])->group(function () {
 
     foreach (glob(app_path('Modules/*/routes.php')) as $routeFile) {
         require $routeFile;
     }
-
-    Route::get('/dashboard', function () {
-        return view('tech.dashboard');
-    })->name('dashboard');
 
     // -----------------------------------------
     // Knowledge
@@ -34,12 +30,5 @@ Route::middleware(['auth','tech'])->group(function () {
     Route::get('/reports', function () {
         return view('tech.reports.index');
     })->name('reports.index');
-
-    // -----------------------------------------
-    // Tasks
-    // -----------------------------------------
-    Route::get('/tasks', function () {
-        return view('tech.tasks.index');
-    })->name('tasks.index');
 
 });

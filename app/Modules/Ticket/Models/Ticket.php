@@ -10,11 +10,14 @@ use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\Task\Models\Task;
+use Database\Factories\Ticket\TicketFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ticket extends Model
@@ -70,6 +73,11 @@ class Ticket extends Model
     public function getRouteKeyName(): string
     {
         return 'ticket_key';
+    }
+
+    protected static function newFactory(): TicketFactory
+    {
+        return TicketFactory::new();
     }
 
     public function queue(): BelongsTo
@@ -147,10 +155,25 @@ class Ticket extends Model
         return $this->hasMany(TicketAttachment::class);
     }
 
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TicketTimeEntry::class);
+    }
+
+    public function costEntries(): HasMany
+    {
+        return $this->hasMany(TicketCostEntry::class);
+    }
+
     public function tags(): MorphToMany
     {
         return $this->morphToMany(Tag::class, 'taggable', 'taggables')
             ->withPivot('module')
             ->withTimestamps();
+    }
+
+    public function tasks(): MorphMany
+    {
+        return $this->morphMany(Task::class, 'owner');
     }
 }

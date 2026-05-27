@@ -26,7 +26,7 @@
     <!-- Work dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.assets*');
+        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.assets*') || request()->routeIs('tech.calendar*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -67,6 +67,15 @@
             <li class="nav-item">
                 <a class="dropdown-item {{ request()->routeIs('tech.assets.index') ? 'active' : '' }}" href="{{ route('tech.assets.index') }}">Assets</a>
             </li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Calendar -->
+            <!-- ------------------------------------------------- -->
+            @if(Route::has('tech.calendar.index'))
+                <li class="nav-item">
+                    <a class="dropdown-item {{ request()->routeIs('tech.calendar*') ? 'active' : '' }}" href="{{ route('tech.calendar.index') }}">Calendar</a>
+                </li>
+            @endif
 
         </ul>
     </li>
@@ -113,6 +122,7 @@
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
         $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*') || request()->routeIs('tech.packages.*') || request()->routeIs('tech.sales.*');
+        $economyGroupActive = request()->routeIs('tech.economy.*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -125,6 +135,12 @@
             <li class="nav-item">
                 <a class="dropdown-item {{ request()->routeIs('tech.sales.index') ? 'active' : '' }}" href="{{ route('tech.sales.index') }}">Sales</a>
             </li>
+
+            @if(Route::has('tech.sales.leads.index'))
+                <li class="nav-item">
+                    <a class="dropdown-item {{ request()->routeIs('tech.sales.leads.*') ? 'active' : '' }}" href="{{ route('tech.sales.leads.index') }}">Leads</a>
+                </li>
+            @endif
 
             <!-- ------------------------------------------------- -->
             <!-- Contracts -->
@@ -158,6 +174,22 @@
         </ul>
     </li>
 
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Economy dropdown menu -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle {{ $economyGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Economy</a>
+        <ul class="dropdown-menu">
+
+            <!-- ------------------------------------------------- -->
+            <!-- Orders -->
+            <!-- ------------------------------------------------- -->
+            @if(Route::has('tech.economy.orders.index'))
+                <li><a class="dropdown-item {{ request()->routeIs('tech.economy.orders.*') ? 'active' : '' }}" href="{{ route('tech.economy.orders.index') }}">Orders</a></li>
+            @endif
+        </ul>
+    </li>
+
     <!-- ------------------------------------------------- -->
     <!-- Reports -->
     <!-- ------------------------------------------------- -->
@@ -165,11 +197,42 @@
         <a class="nav-link {{ request()->routeIs('tech.reports.index') ? 'active' : '' }}" href="{{ route('tech.reports.index') }}">Reports</a>
     </li>
 
-    <!-- ------------------------------------------------- -->
-    <!-- Storage -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.storage.index') ? 'active' : '' }}" href="{{ route('tech.storage.index') }}">Storage</a>
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Storage dropdown menu -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    @php
+        $storageGroupActive = request()->routeIs('tech.storage*');
+    @endphp
+
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle {{ $storageGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Storage</a>
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item {{ request()->routeIs('tech.storage.index') ? 'active' : '' }}" href="{{ route('tech.storage.index') }}">Inventory</a>
+            </li>
+            @if(Route::has('tech.storage.picking'))
+                <li>
+                    <a class="dropdown-item {{ request()->routeIs('tech.storage.picking*') ? 'active' : '' }}" href="{{ route('tech.storage.picking') }}">Picking List</a>
+                </li>
+            @endif
+        </ul>
     </li>
+
+    <!-- ------------------------------------------------- -->
+    <!-- Profile dropdown -->
+    <!-- ------------------------------------------------- -->
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name ?? 'User' }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ route('tech.profile.preferences') }}"><i class="bi bi-sliders me-2"></i>Preferences</a></li>
+            <li><a class="dropdown-item" href="{{ route('tech.profile.security') }}"><i class="bi bi-shield-lock me-2"></i>Security Settings</a></li>
+            <li><a class="dropdown-item" href="{{ route('tech.profile.notifications') }}"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+    </li>
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
 
 </ul>

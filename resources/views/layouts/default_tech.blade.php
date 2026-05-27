@@ -27,6 +27,11 @@
 
                     <div class="col-8">
                         @include('partials.nav.tech_nav')
+
+                        {{-- Notification bell --}}
+                        <div class="float-end me-3 mt-2">
+                            <livewire:notification-bell />
+                        </div>
                     </div>
 
                 </div>
@@ -55,7 +60,7 @@
                     <div class="col-md-8 border-start border-end">
 
                         <!-- Page header -->
-                        <div class="row page-header pb-4 pt-4 align-items-center justify-content-between border-bottom border-primary">
+                        <div class="row page-header py-2 align-items-center justify-content-between border-bottom border-primary">
                             @yield('pageHeader')
 
                             {{--
@@ -68,7 +73,7 @@
 
                         <!-- Main content -->
                         <div class="row content p-1">
-                            <div class="container">
+                            <div class="container pt-3">
 
                                 @if(session('status'))
                                     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -133,5 +138,6 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
 
         @livewireScripts
+        @yield('scripts')
     </body>
 </html>

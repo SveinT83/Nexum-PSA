@@ -2,6 +2,7 @@
 
 namespace App\Modules\Storage\Models;
 
+use App\Modules\Documentation\Models\Vendor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,6 +14,7 @@ class ItemVendor extends Model
         'item_id',
         'vendor_id',
         'vendor_sku',
+        'purchase_url',
         'currency',
         'unit_cost',
         'moq',

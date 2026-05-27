@@ -20,8 +20,4 @@
 @endsection
 
 @section('rightbar')
-    <h3>Right Sidebar</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
 @endsection

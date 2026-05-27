@@ -3,8 +3,6 @@
 namespace App\Modules\Clients\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Tech\Clients\RedirectResponse;
-use App\Http\Controllers\Tech\Clients\View;
 use App\Http\Requests\Tech\Clients\SiteRequest;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
@@ -12,8 +10,10 @@ use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class ClientSiteController extends Controller
 {
@@ -44,20 +44,45 @@ class ClientSiteController extends Controller
             session(['active_client_id' => $targetClient->id]);
         }
 
-        // 3. Bygg spørring (viser alt hvis $targetClient er null)
-        $query = $targetClient ? $targetClient->sites() : ClientSite::query();
+        // 3. Build query. If no client is selected, show all sites.
+        $query = ($targetClient ? $targetClient->sites() : ClientSite::query())->with('client');
 
-        // 4. Legg til søk hvis det finnes
+        // 4. Apply search across the fields technicians scan in the list.
         if ($search = $request->get('search')) {
-            $query->where('name', 'like', "%$search%");
+            $query->where(function ($query) use ($search): void {
+                $query->where('client_sites.name', 'like', "%$search%")
+                    ->orWhere('client_sites.address', 'like', "%$search%")
+                    ->orWhere('client_sites.zip', 'like', "%$search%")
+                    ->orWhere('client_sites.city', 'like', "%$search%")
+                    ->orWhereHas('client', fn ($query) => $query->where('name', 'like', "%$search%"));
+            });
         }
 
-        $sites = $query->orderBy('name')->paginate(25)->withQueryString();
+        $sort = $request->string('sort', 'name')->toString();
+        $direction = $request->string('direction', 'asc')->toString() === 'desc' ? 'desc' : 'asc';
+        $sortableColumns = ['name', 'address', 'zip', 'city', 'client'];
+
+        if (! in_array($sort, $sortableColumns, true)) {
+            $sort = 'name';
+        }
+
+        if ($sort === 'client') {
+            $query->leftJoin('clients', 'client_sites.client_id', '=', 'clients.id')
+                ->select('client_sites.*')
+                ->orderBy('clients.name', $direction)
+                ->orderBy('client_sites.name');
+        } else {
+            $query->orderBy('client_sites.'.$sort, $direction)->orderBy('client_sites.name');
+        }
+
+        $sites = $query->paginate(25)->withQueryString();
 
         return view('clients::Tech.Sites.index', [
             'sites' => $sites,
             'client' => $targetClient, // Dette er nå enten Client-objektet eller null
             'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($targetClient)
         ]);
     }

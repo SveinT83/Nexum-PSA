@@ -32,7 +32,7 @@ Provide technicians with a fast, scoped view of **all customers (clients)** in t
 **Layout (Bootstrap):**
 
 * **Top section:** page title (Clients), global search (name, org no, domain), filter dropdown (status: active/inactive), optional queue/tag filter later.
-* **Main section (left/wide):** table/list of clients (Name, Org no, Default contact, Ticket count badge (optional), Last activity). No contract/timebank columns here (must click client to see it).
+* **Main section (left/wide):** table/list of clients (Name, org no, client format, Default contact, Ticket count badge (optional), Last activity). No contract/timebank columns here (must click client to see it).
 * **Right-side panel (narrow):** quick help, recent clients (MRU), possibly a widget for "clients with open tickets".
 
 **Behavior:**
@@ -61,7 +61,7 @@ Provide technicians with a fast, scoped view of **all customers (clients)** in t
 
 **Layout (Bootstrap, standard for tech views):**
 
-* **Top section:** client name, org no, status badge (active/inactive), small badge for default timezone/language.
+* **Top section:** client name, org no, client format, status badge (active/inactive), small badge for default timezone/language.
 * **Action bar (under top):**
 
   * `New site` → `tech.clients.sites.create` (or same form as edit)
@@ -112,6 +112,7 @@ All of these inherit the **client scope** from `tech.clients.show` and should va
 * When a ticket is opened from client view, return/back should preserve the client filter (i.e. user lands back on the same client, not on global ticket list).
 * Right panel widgets should be lazy-loaded to keep show-view fast.
 * In `index`, remember last search per user (localStorage) so technicians can keep their client list filtered.
+* New client forms include `Org No` and `Format`. Format values are configured in Admin > Clients Settings > Client Formats, with default English choices for Limited Company (`AS`), Sole Proprietorship (`ENK`), and Private Individual (`PRIVATE`).
 
 ## 6. Reusable layout components
 

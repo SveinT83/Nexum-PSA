@@ -75,12 +75,5 @@
 @endsection
 
 @section('sidebar')
-    <h3>Ticket Settings</h3>
-    <ul>
-        <li><a href="{{ route('tech.admin.settings.tickets') }}">Tickets</a></li>
-        <li><a href="{{ route('tech.admin.settings.tickets.technicians') }}">Technicians</a></li>
-        <li><a href="{{ route('tech.admin.settings.tickets.assignment-rules') }}">Assignment Rules</a></li>
-        <li><a href="{{ route('tech.admin.settings.tickets.rules') }}">Rules</a></li>
-        <li><a href="{{ route('tech.admin.settings.tickets.workflows') }}">Workflows</a></li>
-    </ul>
+    <x-nav.admin-menu group="tickets" />
 @endsection

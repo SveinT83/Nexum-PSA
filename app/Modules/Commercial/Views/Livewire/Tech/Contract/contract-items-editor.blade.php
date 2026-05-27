@@ -96,7 +96,68 @@
                             <label class="form-label fw-light">Setup fee (one-time)</label>
                             <input type="number" step="0.01" wire:model.blur="items.{{ $index }}.setup_fee" placeholder="setup fee" class="form-control" @if(!$isEditable) disabled @endif>
                         </div>
+
+                        <!-- ------------------------------------------------- -->
+                        <!-- Contract item SLA -->
+                        <!-- ------------------------------------------------- -->
+                        <div class="col-md-3">
+                            <label class="form-label fw-light">SLA</label>
+                            <select wire:model.live="items.{{ $index }}.uses_contract_default_sla" class="form-select text-sm" @if(!$isEditable) disabled @endif>
+                                <option value="1">Use contract default</option>
+                                <option value="0">Use service/custom SLA</option>
+                            </select>
+                        </div>
+                        @if(empty($items[$index]['uses_contract_default_sla']))
+                            <div class="col-md-4 mt-2">
+                                <select wire:model.live="items.{{ $index }}.sla_id" class="form-select text-sm" @if(!$isEditable) disabled @endif>
+                                    <option value="">Select SLA</option>
+                                    @foreach($availableSlas as $sla)
+                                        <option value="{{ $sla->id }}">{{ $sla->name }}{{ $sla->is_default ? ' (default)' : '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @else
+                            <div class="col-md-4 mt-2 small text-muted">
+                                {{ $items[$index]['sla_label'] ?? 'Contract default' }}
+                            </div>
+                        @endif
                     </div>
+
+                    @if(!empty($items[$index]['time_rates']))
+                        <!-- ------------------------------------------------- -->
+                        <!-- Contract item time rates -->
+                        <!-- ------------------------------------------------- -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="small fw-bold text-muted mb-2">Time rates included in this contract line</div>
+                                <div class="row g-2">
+                                    @foreach($items[$index]['time_rates'] as $rateIndex => $rate)
+                                        <div class="col-md-4">
+                                            <div class="border rounded p-2 h-100">
+                                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                                    <label class="form-check-label small fw-semibold">
+                                                        <input type="checkbox" class="form-check-input me-1" wire:model.live="items.{{ $index }}.time_rates.{{ $rateIndex }}.is_active" @if(!$isEditable) disabled @endif>
+                                                        {{ $rate['name'] ?? 'Rate' }}
+                                                    </label>
+                                                    <span class="badge text-bg-light border">{{ $rate['unit'] ?? 'hour' }}</span>
+                                                </div>
+                                                <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.id">
+                                                <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.time_rate_id">
+                                                <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.service_time_rate_id">
+                                                <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.name">
+                                                <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.code">
+                                                <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.rate_type">
+                                                <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.unit">
+                                                <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.currency">
+                                                <label class="form-label small mt-2 mb-1">Rate ex VAT</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" wire:model.blur="items.{{ $index }}.time_rates.{{ $rateIndex }}.amount_ex_vat" @if(!$isEditable) disabled @endif>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- ------------------------------------------------- -->

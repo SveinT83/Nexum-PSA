@@ -2,6 +2,10 @@
 
 @section('title', $item->sku . ' - Storage Item')
 
+@section('sidebar')
+    <x-nav.storage-menu />
+@endsection
+
 @section('pageHeader')
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -19,11 +23,17 @@
                 @endif
             </div>
         </div>
-        @if($item->needs_reorder)
-            <span class="badge text-bg-warning">Should order</span>
-        @else
-            <span class="badge text-bg-success">Stock OK</span>
-        @endif
+        <div class="d-flex align-items-center gap-2">
+            @if($item->needs_reorder)
+                <span class="badge text-bg-warning">Should order</span>
+            @else
+                <span class="badge text-bg-success">Stock OK</span>
+            @endif
+            <a href="{{ route('tech.storage.items.edit', $item) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil" aria-hidden="true"></i>
+                Edit
+            </a>
+        </div>
     </div>
 @endsection
 
@@ -131,6 +141,22 @@
             <dl class="row mb-0">
                 <dt class="col-6">EAN</dt>
                 <dd class="col-6 text-end">{{ $item->ean_number ?: '-' }}</dd>
+                <dt class="col-6">Vendor</dt>
+                <dd class="col-6 text-end">
+                    @if($item->manufacturerVendor)
+                        <a href="{{ route('tech.documentations.vendors.show', $item->manufacturerVendor) }}">{{ $item->manufacturerVendor->name }}</a>
+                    @else
+                        {{ $item->manufacturer ?: '—' }}
+                    @endif
+                </dd>
+                <dt class="col-6">Supplier</dt>
+                <dd class="col-6 text-end">
+                    @if($item->primaryVendor)
+                        <a href="{{ route('tech.documentations.vendors.show', $item->primaryVendor) }}">{{ $item->primaryVendor->name }}</a>
+                    @else
+                        <span class="text-muted">—</span>
+                    @endif
+                </dd>
                 <dt class="col-6">Reorder</dt>
                 <dd class="col-6 text-end">{{ $item->reorder_point }}</dd>
                 <dt class="col-6">Target</dt>

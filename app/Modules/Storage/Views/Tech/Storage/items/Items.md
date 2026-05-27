@@ -3,8 +3,8 @@
 **Creation date:** 2025-10-29  
  **URL:** `tech.storage.items.*`  
  **Access levels:** `inventory.view`, `inventory.manage`, `tech.view`  
- **Controller path:** `App\Http\Controllers\Tech\Storage\Items\*`  
- **Status:** Not started  
+ **Controller path:** `App\Modules\Storage\Controllers\Tech\ItemController`
+ **Status:** In progress
  **Difficulty:** Medium  
  **Estimated time:** 6.0 hours
 
@@ -18,7 +18,7 @@ This module enables:
 
 - Centralized product and stock management.
 - Tracking of reserved vs. available quantities.
-- Vendor association and pricing calculation with markup and VAT handling.
+- Documentation-owned vendor/supplier association and pricing fields with markup and VAT handling.
 - Visual indicators for items below reorder level or over-reserved.
 
 ---
@@ -32,13 +32,17 @@ This module enables:
 - short_description
 - long_description
 - category_id
-- vendor (manufacturer)
-- vendor_item_number
+- manufacturer_vendor_id (Documentation vendor/manufacturer)
+- primary_vendor_id (Documentation supplier)
+- manufacturer_part_number
+- supplier_sku
+- supplier_purchase_url
+- supplier lead time / MOQ / pack size
 - ean_number
 - purchase_price
 - markup_percent
 - sale_price (auto-calculated)
-- vat_rate (from system settings)
+- vat_rate (defaults from Economy settings and can be overridden per item)
 - has_serials (boolean — triggers serial input modal during sale)
 - reorder_point (minimum stock level)
 - target_level (desired stock level)
@@ -64,7 +68,7 @@ This module enables:
 - The main list view supports filtering and sorting by:
   - Low stock / below reorder point
   - Over-reserved items
-  - Vendor / category
+- Supplier / category
   - Active vs. inactive
 
 ---
@@ -90,6 +94,14 @@ In the main view, all items show reorder indicators:
 - **MOQ** (rounds up to nearest package size)
 
 A special view filter highlights all items that meet reorder criteria, forming the **procurement list**.
+
+Vendor and supplier records are not created inside the item form. Use `New vendor` or `New supplier`
+to open the Documentation master-data form in a new tab, then select the saved record on the item.
+This keeps Assets, Storage, Commercial costs, and future purchase ordering on the same partner register.
+
+`Lead Time` means expected delivery time in days. `Supplier MOQ` means the supplier's minimum order
+quantity. `Purchase Price` is entered once under Stock & Pricing and is copied to the primary supplier
+line as unit cost.
 
 ---
 

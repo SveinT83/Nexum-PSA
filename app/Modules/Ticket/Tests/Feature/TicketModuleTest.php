@@ -8,12 +8,18 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Knowledge\Article;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\Storage\Models\Item as StorageItem;
+use App\Modules\Storage\Models\Reservation as StorageReservation;
+use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
+use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
@@ -71,6 +77,11 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
         $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
+        $this->assertSame(TicketController::class . '@storeTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.store')->getActionName());
+        $this->assertSame(TicketController::class . '@draftTimeEntryInvoiceText', Route::getRoutes()->getByName('tech.tickets.time-entries.draft')->getActionName());
+        $this->assertSame(TicketController::class . '@updateTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.update')->getActionName());
+        $this->assertSame(TicketController::class . '@storeCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.store')->getActionName());
+        $this->assertSame(TicketController::class . '@updateCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.update')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
         $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
@@ -97,7 +108,14 @@ class TicketModuleTest extends TestCase
             ->assertViewIs('ticket::Tech.Tickets.index')
             ->assertViewHas('tickets')
             ->assertViewHas('queues')
-            ->assertViewHas('statuses');
+            ->assertViewHas('statuses')
+            ->assertSee('<h1 class="mb-0">Tickets</h1>', false)
+            ->assertSee('bi bi-arrow-left', false)
+            ->assertSee('Ticket Search')
+            ->assertSee('ticket_index_search')
+            ->assertSee('ticketIndexFiltersCollapse')
+            ->assertSee('ticket_index_status_id')
+            ->assertSee('New ticket');
 
         $this->assertDatabaseHas('ticket_queues', ['slug' => 'support', 'is_default' => true]);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'new', 'is_default' => true]);
@@ -106,6 +124,38 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'resolved', 'state' => 'resolved']);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'closed', 'is_closed' => true]);
         $this->assertDatabaseHas('ticket_priorities', ['slug' => 'normal', 'is_default' => true]);
+    }
+
+    #[Test]
+    public function ticket_index_can_sort_by_clickable_table_headers(): void
+    {
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999041',
+            'subject' => 'Zulu ticket subject',
+            'owner_id' => $this->tech->id,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999040',
+            'subject' => 'Alpha ticket subject',
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index', [
+                'sort' => 'subject',
+                'direction' => 'asc',
+            ]))
+            ->assertOk()
+            ->assertSee('sort=ticket', false)
+            ->assertSee('sort=subject', false)
+            ->assertSee('sort=client', false)
+            ->assertSee('sort=technician', false)
+            ->assertSee('sort=queue', false)
+            ->assertSee('sort=priority', false)
+            ->assertSee('sort=sla', false)
+            ->assertSee('sort=status', false)
+            ->assertSee('sort=updated', false)
+            ->assertSeeInOrder(['Alpha ticket subject', 'Zulu ticket subject']);
     }
 
     #[Test]
@@ -291,6 +341,257 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function tech_user_can_register_ticket_time_with_without_contract_rate(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999140',
+            'owner_id' => $this->tech->id,
+        ]);
+        $rate = TimeRate::create([
+            'name' => 'Time without contract',
+            'slug' => 'time-without-contract-test',
+            'code' => 'TIME_WITHOUT_CONTRACT_TEST',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 1200,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.time-entries.store', $ticket), [
+                '_time_entry_form' => '1',
+                'work_date' => '2026-05-19',
+                'minutes' => 45,
+                'rate_key' => 'global:' . $rate->id,
+                'invoice_text' => 'Bluetooth troubleshooting and driver follow-up.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertDatabaseHas('ticket_time_entries', [
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'minutes' => 45,
+            'billing_basis' => 'without_contract',
+            'billing_status' => 'pending',
+            'timebank_status' => 'pending',
+            'time_rate_id' => $rate->id,
+            'rate_name' => 'Time without contract',
+            'rate_amount_ex_vat' => 1200,
+            'invoice_text' => 'Bluetooth troubleshooting and driver follow-up.',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'time_entry_added',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_update_registered_ticket_time(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999143',
+            'owner_id' => $this->tech->id,
+        ]);
+        $originalRate = TimeRate::create([
+            'name' => 'Time without contract',
+            'slug' => 'time-without-contract-update-test',
+            'code' => 'TIME_WITHOUT_CONTRACT_UPDATE_TEST',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 1200,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        $updatedRate = TimeRate::create([
+            'name' => 'Driving',
+            'slug' => 'driving-update-test',
+            'code' => 'DRIVING_UPDATE_TEST',
+            'rate_type' => 'driving',
+            'unit' => 'hour',
+            'amount_ex_vat' => 520,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => true,
+            'is_active' => true,
+            'sort_order' => 20,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.time-entries.store', $ticket), [
+                '_time_entry_form' => '1',
+                'work_date' => '2026-05-19',
+                'minutes' => 45,
+                'rate_key' => 'global:' . $originalRate->id,
+                'invoice_text' => 'Initial technical work.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $entry = $ticket->timeEntries()->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.time-entries.update', [$ticket, $entry]), [
+                'work_date' => '2026-05-20',
+                'minutes' => 30,
+                'rate_key' => 'global:' . $updatedRate->id,
+                'invoice_text' => 'Kjoring til kunde.',
+                'note' => 'Adjusted from timer.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertDatabaseHas('ticket_time_entries', [
+            'id' => $entry->id,
+            'work_date' => '2026-05-20 00:00:00',
+            'minutes' => 30,
+            'time_rate_id' => $updatedRate->id,
+            'rate_name' => 'Driving',
+            'rate_amount_ex_vat' => 520,
+            'invoice_text' => 'Kjoring til kunde.',
+            'note' => 'Adjusted from timer.',
+            'billing_status' => 'pending',
+            'timebank_status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'time_entry_updated',
+        ]);
+    }
+
+    #[Test]
+    public function ticket_time_registration_can_use_accepted_contract_item_rates(): void
+    {
+        $client = Client::factory()->create(['name' => 'Contract Time Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999141',
+            'owner_id' => $this->tech->id,
+        ]);
+        $contract = Contracts::create([
+            'client_id' => $client->id,
+            'description' => 'Accepted test contract',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'approval_status' => 'won',
+            'created_by' => $this->tech->id,
+            'accepted_at' => now(),
+        ]);
+        $item = ContractItem::create([
+            'contract_id' => $contract->id,
+            'name' => 'Managed support',
+            'unit_price' => 0,
+            'quantity' => 1,
+            'unit' => 'month',
+            'billing_interval' => 'monthly',
+        ]);
+        $rate = $item->timeRates()->create([
+            'name' => 'Contract support time',
+            'code' => 'CONTRACT_SUPPORT_TIME',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 650,
+            'currency' => 'NOK',
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.time-entries.store', $ticket), [
+                '_time_entry_form' => '1',
+                'work_date' => '2026-05-19',
+                'minutes' => 30,
+                'rate_key' => 'contract:' . $rate->id,
+                'invoice_text' => 'Remote support according to active agreement.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertDatabaseHas('ticket_time_entries', [
+            'ticket_id' => $ticket->id,
+            'contract_id' => $contract->id,
+            'contract_item_id' => $item->id,
+            'contract_item_time_rate_id' => $rate->id,
+            'minutes' => 30,
+            'billing_basis' => 'contract',
+            'rate_name' => 'Contract support time',
+            'rate_amount_ex_vat' => 650,
+            'invoice_text' => 'Remote support according to active agreement.',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_reserve_storage_item_on_ticket_and_update_quantity(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999142',
+            'owner_id' => $this->tech->id,
+        ]);
+        $warehouse = StorageWarehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+        $item = StorageItem::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'USB-CABLE',
+            'name' => 'USB Cable',
+            'short_description' => 'USB cable for customer equipment.',
+            'sale_price' => 149,
+            'qty_on_hand' => 5,
+            'qty_reserved' => 0,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'storage_item_id' => $item->id,
+                'quantity' => 2,
+                'note' => 'Reserved from main shelf.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $reservation = StorageReservation::firstOrFail();
+        $this->assertSame(2, $item->refresh()->qty_reserved);
+        $this->assertDatabaseHas('ticket_cost_entries', [
+            'ticket_id' => $ticket->id,
+            'storage_item_id' => $item->id,
+            'storage_reservation_id' => $reservation->id,
+            'quantity' => 2,
+            'item_name' => 'USB Cable',
+            'item_sku' => 'USB-CABLE',
+            'status' => 'reserved',
+            'billing_status' => 'pending',
+            'invoice_text' => 'USB cable for customer equipment.',
+        ]);
+
+        $entry = $ticket->costEntries()->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.cost-entries.update', [$ticket, $entry]), [
+                'quantity' => 3,
+                'invoice_text' => 'USB cable and adapter for customer equipment.',
+                'note' => 'Adjusted after finding adapter.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame(3, $item->refresh()->qty_reserved);
+        $this->assertSame(3, $reservation->refresh()->qty);
+        $this->assertDatabaseHas('ticket_cost_entries', [
+            'id' => $entry->id,
+            'quantity' => 3,
+            'invoice_text' => 'USB cable and adapter for customer equipment.',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'storage_reservation_updated',
+        ]);
+    }
+
+    #[Test]
     public function ticket_show_displays_top_three_relevant_knowledge_articles(): void
     {
         $ticket = $this->createTicket(null, [
@@ -353,6 +654,51 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function ticket_show_displays_open_task_widget_and_quick_view_modal(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999021',
+        ]);
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Follow up supplier',
+            'checklist' => [
+                ['title' => 'Call warehouse'],
+            ],
+        ], $this->tech, $ticket);
+        TimeRate::create([
+            'name' => 'Task modal support',
+            'slug' => 'task-modal-support-test',
+            'code' => 'TASK_MODAL_SUPPORT_TEST',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 950,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        $item = $task->checklistItems()->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('ticketTasksCollapse', false)
+            ->assertSee('class="accordion-collapse collapse show"', false)
+            ->assertSee('id="ticketTaskQuickCreateModalAiAssist"', false)
+            ->assertSee('id="ticketTaskQuickCreateModalChecklistText"', false)
+            ->assertSee('id="ticketTaskQuickCreateModalEstimatedMinutes"', false)
+            ->assertSee('id="ticketTaskQuickCreateModalTicketRateKey"', false)
+            ->assertSee('data-bs-target="#ticketTaskQuickViewModal'.$task->id.'"', false)
+            ->assertSee(route('tech.tasks.checklist.toggle', [$task, $item]), false)
+            ->assertSee('data-task-checklist-toggle-form', false)
+            ->assertSee(route('tech.tasks.assign', $task), false)
+            ->assertSee('name="rate_key"', false)
+            ->assertSee('Task modal support')
+            ->assertSee('View in Task workspace');
+    }
+
+    #[Test]
     public function tech_user_can_upload_and_download_ticket_message_attachment(): void
     {
         Storage::fake('local');
@@ -398,6 +744,12 @@ class TicketModuleTest extends TestCase
             'type' => Category::TYPE_TICKET,
             'is_active' => true,
         ]);
+        $generalCategory = Category::create([
+            'name' => 'General Operations',
+            'slug' => 'general-operations',
+            'type' => null,
+            'is_active' => true,
+        ]);
         $documentationCategory = Category::create([
             'name' => 'Documentation Only',
             'slug' => 'documentation-only',
@@ -415,6 +767,7 @@ class TicketModuleTest extends TestCase
             ->get(route('tech.tickets.create'))
             ->assertOk()
             ->assertSee('Access')
+            ->assertSee('General Operations')
             ->assertDontSee('Documentation Only')
             ->assertDontSee('Inactive Ticket Category');
 
@@ -436,6 +789,58 @@ class TicketModuleTest extends TestCase
             'subject' => 'Right category type',
             'category_id' => $ticketCategory->id,
         ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'General category ticket',
+                'category_id' => $generalCategory->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', [
+            'subject' => 'General category ticket',
+            'category_id' => $generalCategory->id,
+        ]);
+    }
+
+    #[Test]
+    public function ticket_forms_use_tag_chip_input_and_create_new_tags(): void
+    {
+        Tag::create([
+            'name' => 'Existing Tag',
+            'slug' => 'existing-tag',
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertSee('data-ticket-tag-input', false)
+            ->assertSee('list="ticketTagSuggestions"', false)
+            ->assertSee('<option value="Existing Tag"></option>', false)
+            ->assertDontSee('name="tag_ids[]"', false);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Tagged ticket',
+                'tag_names' => ['Existing Tag', 'New Ticket Tag'],
+            ])
+            ->assertRedirect();
+
+        $ticket = Ticket::query()->where('subject', 'Tagged ticket')->firstOrFail();
+
+        $this->assertSame(['Existing Tag', 'New Ticket Tag'], $ticket->tags()->orderBy('name')->pluck('name')->all());
+        $this->assertDatabaseHas('tags', [
+            'name' => 'New Ticket Tag',
+            'slug' => 'new-ticket-tag',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.edit', $ticket))
+            ->assertOk()
+            ->assertSee('data-ticket-tag-input', false)
+            ->assertSee('Existing Tag')
+            ->assertSee('New Ticket Tag');
     }
 
     #[Test]

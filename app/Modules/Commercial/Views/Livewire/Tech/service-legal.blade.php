@@ -11,15 +11,10 @@
                                     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ in_array((string)$term->id, $selectedTermIds) ? 'active' : '' }}">
                                 <span>
                                     <strong>{{ $term->name }}</strong><br>
-                                    @if($term->term)
+                                    @if($term->content)
                                         <small class="{{ in_array((string)$term->id, $selectedTermIds) ? 'text-white-50' : 'text-muted' }}">
-                                            <strong>Term:</strong> {{ Str::limit($term->term, 50) }}
+                                            <strong>{{ ucfirst($term->type) }}:</strong> {{ Str::limit($term->content, 50) }}
                                         </small><br>
-                                    @endif
-                                    @if($term->legal)
-                                        <small class="{{ in_array((string)$term->id, $selectedTermIds) ? 'text-white-50' : 'text-muted' }}">
-                                            <strong>Legal:</strong> {{ Str::limit($term->legal, 50) }}
-                                        </small>
                                     @endif
                                 </span>
                                 @if(in_array((string)$term->id, $selectedTermIds))
@@ -42,11 +37,8 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <span>
                                 <strong>{{ $term->name }}</strong><br>
-                                @if($term->term)
-                                    <small class="text-muted"><strong>Term:</strong> {{ $enabled === 'disabled' ? $term->term : Str::limit($term->term, 50) }}</small>@if($term->legal)<br>@endif
-                                @endif
-                                @if($term->legal)
-                                    <small class="text-muted"><strong>Legal:</strong> {{ $enabled === 'disabled' ? $term->legal : Str::limit($term->legal, 50) }}</small>
+                                @if($term->content)
+                                    <small class="text-muted"><strong>{{ ucfirst($term->type) }}:</strong> {{ $enabled === 'disabled' ? $term->content : Str::limit($term->content, 50) }}</small>
                                 @endif
                             </span>
                             <div class="d-flex align-items-center">
@@ -68,4 +60,3 @@
         </div>
     </div>
 </div>
-

@@ -7,6 +7,9 @@ use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailRuleLog;
+use App\Modules\Email\Services\BodyNormalizer;
+use App\Modules\Sales\Models\SalesActivity;
+use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\CreateTicketFromInboundEmail;
 use App\Modules\Ticket\Actions\LinkInboundEmailToTicket;
@@ -31,8 +34,16 @@ class InboundEmailRuleEngine
         }
 
         if (! Schema::hasTable('email_rules')) {
+            if ($this->linkBySalesHeaderReferences($message) || $this->linkBySalesKey($message->fresh())) {
+                return;
+            }
+
             $this->linkByHeaderReferences($message);
             $this->linkByTicketKey($message->fresh());
+            return;
+        }
+
+        if ($this->linkBySalesHeaderReferences($message) || $this->linkBySalesKey($message->fresh())) {
             return;
         }
 
@@ -92,6 +103,17 @@ class InboundEmailRuleEngine
         return isset($matches[0]) ? strtoupper($matches[0]) : null;
     }
 
+    public function salesKeyFromSubject(?string $subject): ?string
+    {
+        if (! $subject) {
+            return null;
+        }
+
+        preg_match('/\bSO-\d{4}-[A-Z0-9]{6}\b/i', $subject, $matches);
+
+        return isset($matches[0]) ? strtoupper($matches[0]) : null;
+    }
+
     private function matches(EmailMessage $message, array $conditions): bool
     {
         foreach ($conditions as $condition) {
@@ -137,6 +159,7 @@ class InboundEmailRuleEngine
             'message_id' => (string) $message->message_id,
             'is_reply' => $message->in_reply_to || $message->references || str_starts_with(strtolower((string) $message->subject), 're:') ? '1' : '',
             'has_ticket_key' => $this->ticketKeyFromSubject($message->subject) ?? '',
+            'has_sales_key' => $this->salesKeyFromSubject($message->subject) ?? '',
             default => '',
         };
     }
@@ -149,6 +172,7 @@ class InboundEmailRuleEngine
 
             match ($type) {
                 'link_ticket_by_subject_token' => $this->linkByTicketKey($message),
+                'link_sales_by_subject_token' => $this->linkBySalesKey($message),
                 'create_ticket' => $this->createTicket($message, (string) $value),
                 'archive' => $message->forceFill(['state' => 'archived'])->save(),
                 'tag' => $this->tag($message, (string) $value),
@@ -215,6 +239,25 @@ class InboundEmailRuleEngine
         $this->linkInboundEmailToTicket->handle($message->fresh(), $ticket);
     }
 
+    private function linkBySalesKey(EmailMessage $message): bool
+    {
+        $salesKey = $this->salesKeyFromSubject($message->subject);
+
+        if (! $salesKey) {
+            return false;
+        }
+
+        $opportunity = SalesOpportunity::query()->where('opportunity_key', $salesKey)->first();
+
+        if (! $opportunity) {
+            return false;
+        }
+
+        $this->createSalesInboundActivity($message->fresh(), $opportunity);
+
+        return true;
+    }
+
     private function linkByHeaderReferences(EmailMessage $message): void
     {
         $messageIds = $this->referencedMessageIds($message);
@@ -246,6 +289,78 @@ class InboundEmailRuleEngine
             $this->linkInboundEmailToTicket->handle($message->fresh(), $ticketMessage->ticket);
             return;
         }
+    }
+
+    private function linkBySalesHeaderReferences(EmailMessage $message): bool
+    {
+        $messageIds = $this->referencedMessageIds($message);
+
+        if (empty($messageIds)) {
+            return false;
+        }
+
+        $logs = EmailLog::query()
+            ->where('direction', 'outbound')
+            ->where('scope', 'sales')
+            ->whereIn('rfc_message_id', $messageIds)
+            ->latest('id')
+            ->get();
+
+        foreach ($logs as $log) {
+            $activityId = (int) ($log->context_json['sales_activity_id'] ?? 0);
+
+            if (! $activityId) {
+                continue;
+            }
+
+            $activity = SalesActivity::with('opportunity')->find($activityId);
+
+            if (! $activity?->opportunity) {
+                continue;
+            }
+
+            $this->createSalesInboundActivity($message->fresh(), $activity->opportunity);
+            return true;
+        }
+
+        return false;
+    }
+
+    private function createSalesInboundActivity(EmailMessage $message, SalesOpportunity $opportunity): void
+    {
+        if (SalesActivity::query()->where('metadata->email_message_id', $message->id)->exists()) {
+            return;
+        }
+
+        SalesActivity::query()->create([
+            'opportunity_id' => $opportunity->id,
+            'actor_id' => null,
+            'type' => 'email_in',
+            'direction' => 'inbound',
+            'subject' => $message->subject,
+            'body' => $this->salesInboundBody($message),
+            'is_unread' => true,
+            'read_at' => null,
+            'metadata' => [
+                'email_message_id' => $message->id,
+                'from_email' => $message->from_email,
+                'from_name' => $message->from_name,
+                'message_id' => $message->message_id,
+                'in_reply_to' => $message->in_reply_to,
+                'references' => $message->references,
+            ],
+        ]);
+
+        $opportunity->forceFill(['is_unread' => true])->save();
+        $message->forceFill(['state' => 'archived'])->save();
+    }
+
+    private function salesInboundBody(EmailMessage $message): string
+    {
+        $body = $message->body_text ?: trim(strip_tags((string) $message->body_html_sanitized));
+        $body = BodyNormalizer::stripQuotedHistory($body);
+
+        return $body !== '' ? $body : '[Inbound email had no readable body.]';
     }
 
     private function referencedMessageIds(EmailMessage $message): array

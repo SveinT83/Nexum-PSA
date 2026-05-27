@@ -5,6 +5,8 @@ namespace App\Modules\Documentation\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Menus\SideBar\TemplatesMenu;
 use App\Modules\Documentation\Models\DocumentationTemplate;
+use App\Modules\Taxonomy\Models\Category;
+use Illuminate\Http\Request;
 
 /**
  * Controller for managing system templates.
@@ -27,14 +29,25 @@ class TemplateManagementController extends Controller
     // -----------------------------------------
     // DOC INDEX - Show a list of all documentations templates
     // -----------------------------------------
-    public function docIndex()
+    public function docIndex(Request $request)
     {
-        //Get all dokumentations templates
-        $templates = DocumentationTemplate::all();
+        $search = trim((string) $request->get('q', ''));
+        $categoryId = $request->get('category_id');
 
-        //Reurn View: Sidebar menu and all Documentatins templates
+        // Get all documentation templates with simple admin search and category filtering.
+        $templates = DocumentationTemplate::query()
+            ->with('category')
+            ->when($search !== '', fn ($query) => $query->where('name', 'like', "%{$search}%"))
+            ->when($categoryId, fn ($query) => $query->where('category_id', $categoryId))
+            ->orderBy('name')
+            ->paginate(25)
+            ->withQueryString();
+
         return view('documentation::Admin.TemplateManagement.Doc.index', [
             'templates' => $templates,
+            'categories' => Category::query()->orderBy('name')->get(['id', 'name']),
+            'search' => $search,
+            'selectedCategoryId' => $categoryId,
             'sidebarMenuItems' => (new TemplatesMenu())->TemplatesMenu(null),
         ]);
     }

@@ -39,6 +39,18 @@
                 </x-forms.select>
             </div>
 
+            <!-- SLA -->
+            <div class="col-md-4 mb-3">
+                <x-forms.select name="sla_id" labelName="Default SLA" enabled="{{$enabled}}">
+                    <option value="" @selected(old('sla_id', $service->sla_id ?? '') == '')>Use contract default</option>
+                    @foreach(($slas ?? collect()) as $sla)
+                        <option value="{{ $sla->id }}" @selected((int) old('sla_id', $service->sla_id ?? 0) === $sla->id)>
+                            {{ $sla->name }}{{ $sla->is_default ? ' (default)' : '' }}
+                        </option>
+                    @endforeach
+                </x-forms.select>
+            </div>
+
         </div>
 
         <!-- ------------------------------------------------- -->
@@ -91,6 +103,113 @@
                     <option value="amount" @selected(old('default_discount_type', $service->default_discount_type ?? '') == 'amount')>Amount (currency)</option>
                     <option value="percent" @selected(old('default_discount_type', $service->default_discount_type ?? '') == 'percent')>Percent (%)</option>
                 </x-forms.select>
+            </div>
+        </div>
+    </x-card.default>
+
+    <!-- ------------------------------------------------- -->
+    <!-- Card for Time rate defaults -->
+    <!-- ------------------------------------------------- -->
+    <x-card.default title="Time Rates">
+        @php
+            // The service stores only selected rates. Removing a row removes it from the posted payload.
+            $availableTimeRates = ($timeRates ?? collect())->values();
+            $oldTimeRates = old('time_rates');
+            $selectedTimeRates = collect();
+
+            if (is_array($oldTimeRates)) {
+                $selectedTimeRates = collect($oldTimeRates)
+                    ->filter(fn ($data) => ! empty($data['enabled']))
+                    ->map(function ($data, $timeRateId) use ($availableTimeRates) {
+                        $rate = $availableTimeRates->firstWhere('id', (int) $timeRateId);
+
+                        return $rate ? [
+                            'rate' => $rate,
+                            'amount_ex_vat' => $data['amount_ex_vat'] ?? null,
+                        ] : null;
+                    })
+                    ->filter()
+                    ->values();
+            } else {
+                $selectedTimeRates = ($service->serviceTimeRates ?? collect())
+                    ->where('is_active', true)
+                    ->filter(fn ($serviceRate) => $serviceRate->timeRate)
+                    ->map(fn ($serviceRate) => [
+                        'rate' => $serviceRate->timeRate,
+                        'amount_ex_vat' => $serviceRate->amount_ex_vat,
+                    ])
+                    ->values();
+            }
+        @endphp
+
+        <div
+            class="mt-3"
+            data-service-rates-manager
+            data-disabled="{{ str_contains((string) $enabled, 'disabled') ? '1' : '0' }}">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label small" for="service_rate_select">Rate</label>
+                    <select id="service_rate_select" class="form-select form-select-sm" data-rate-select {{ $enabled }}>
+                        <option value="">Select a rate</option>
+                        @foreach($availableTimeRates as $rate)
+                            <option
+                                value="{{ $rate->id }}"
+                                data-name="{{ $rate->name }}"
+                                data-code="{{ $rate->code }}"
+                                data-type="{{ ucfirst($rate->rate_type) }}"
+                                data-unit="{{ $rate->unit }}"
+                                data-amount="{{ $rate->amount_ex_vat }}"
+                                data-currency="{{ $rate->currency }}">
+                                {{ $rate->name }} - {{ number_format((float) $rate->amount_ex_vat, 2, ',', ' ') }} {{ $rate->currency }} / {{ $rate->unit }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-sm btn-outline-primary w-100" data-add-rate {{ $enabled }}>
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                        Add rate
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive mt-3">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Rate</th>
+                            <th>Default</th>
+                            <th>Service override ex VAT</th>
+                            <th class="text-end">Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody data-selected-rates>
+                        @forelse($selectedTimeRates as $selectedRate)
+                            @php($rate = $selectedRate['rate'])
+                            <tr data-rate-row data-rate-id="{{ $rate->id }}">
+                                <td>
+                                    <input type="hidden" name="time_rates[{{ $rate->id }}][enabled]" value="1">
+                                    <div class="fw-semibold">{{ $rate->name }}</div>
+                                    <div class="small text-muted">{{ $rate->code }} · {{ ucfirst($rate->rate_type) }} · per {{ $rate->unit }}</div>
+                                </td>
+                                <td>{{ number_format((float) $rate->amount_ex_vat, 2, ',', ' ') }} {{ $rate->currency }}</td>
+                                <td>
+                                    <input type="number" step="0.01" min="0" name="time_rates[{{ $rate->id }}][amount_ex_vat]" value="{{ $selectedRate['amount_ex_vat'] }}" class="form-control form-control-sm" placeholder="{{ $rate->amount_ex_vat }}" {{ $enabled }}>
+                                </td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-remove-rate {{ $enabled }}>
+                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr data-empty-rates>
+                                <td colspan="4" class="text-muted text-center py-3">No rates selected for this service.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </x-card.default>
@@ -198,3 +317,96 @@
         </div>
     </x-card.default>
 </x-forms.form-default>
+
+@section('scripts')
+    @parent
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-service-rates-manager]').forEach((manager) => {
+                const disabled = manager.dataset.disabled === '1';
+                const select = manager.querySelector('[data-rate-select]');
+                const addButton = manager.querySelector('[data-add-rate]');
+                const tbody = manager.querySelector('[data-selected-rates]');
+
+                if (!select || !addButton || !tbody || disabled) {
+                    return;
+                }
+
+                const escapeHtml = (value) => String(value)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+
+                const refreshEmptyState = () => {
+                    const hasRows = tbody.querySelector('[data-rate-row]') !== null;
+                    const emptyRow = tbody.querySelector('[data-empty-rates]');
+
+                    if (!hasRows && !emptyRow) {
+                        tbody.insertAdjacentHTML('beforeend', '<tr data-empty-rates><td colspan="4" class="text-muted text-center py-3">No rates selected for this service.</td></tr>');
+                    }
+
+                    if (hasRows && emptyRow) {
+                        emptyRow.remove();
+                    }
+                };
+
+                const selectedIds = () => Array.from(tbody.querySelectorAll('[data-rate-row]'))
+                    .map((row) => row.dataset.rateId);
+
+                addButton.addEventListener('click', () => {
+                    const option = select.selectedOptions[0];
+
+                    if (!option || !option.value || selectedIds().includes(option.value)) {
+                        return;
+                    }
+
+                    const rateId = option.value;
+                    const name = option.dataset.name || option.textContent.trim();
+                    const code = option.dataset.code || '';
+                    const type = option.dataset.type || '';
+                    const unit = option.dataset.unit || 'hour';
+                    const amount = option.dataset.amount || '';
+                    const currency = option.dataset.currency || 'NOK';
+
+                    tbody.insertAdjacentHTML('beforeend', `
+                        <tr data-rate-row data-rate-id="${rateId}">
+                            <td>
+                                <input type="hidden" name="time_rates[${rateId}][enabled]" value="1">
+                                <div class="fw-semibold">${escapeHtml(name)}</div>
+                                <div class="small text-muted">${escapeHtml(code)} · ${escapeHtml(type)} · per ${escapeHtml(unit)}</div>
+                            </td>
+                            <td>${escapeHtml(amount)} ${escapeHtml(currency)}</td>
+                            <td>
+                                <input type="number" step="0.01" min="0" name="time_rates[${rateId}][amount_ex_vat]" class="form-control form-control-sm" placeholder="${escapeHtml(amount)}">
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-remove-rate>
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+
+                    select.value = '';
+                    refreshEmptyState();
+                });
+
+                tbody.addEventListener('click', (event) => {
+                    const removeButton = event.target.closest('[data-remove-rate]');
+
+                    if (!removeButton) {
+                        return;
+                    }
+
+                    removeButton.closest('[data-rate-row]')?.remove();
+                    refreshEmptyState();
+                });
+
+                refreshEmptyState();
+            });
+        });
+    </script>
+@endsection

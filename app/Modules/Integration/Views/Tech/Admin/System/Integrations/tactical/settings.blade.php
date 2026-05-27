@@ -12,6 +12,10 @@
     <h1>Tactical RMM Settings</h1>
 @endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="integrations" />
+@endsection
+
 @section('content')
     <div class="container-fluid">
         <div class="row">

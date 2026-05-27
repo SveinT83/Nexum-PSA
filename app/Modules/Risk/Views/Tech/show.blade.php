@@ -22,7 +22,7 @@
 @section('title', 'Risk Assessment: ' . $risk->title)
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
+    <div class="d-flex justify-content-between align-items-center">
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-1">
@@ -33,13 +33,11 @@
             <h1 class="h4 mb-0">{{ $risk->title }}</h1>
         </div>
         <div>
-            <a href="{{ route('tech.risk.edit', $risk) }}" class="btn btn-sm btn-outline-primary me-2">
-                <i class="bi bi-pencil me-1"></i> Edit
-            </a>
+            <x-buttons.editlink url="{{ route('tech.risk.edit', $risk) }}" class="mb-0 me-2">Edit</x-buttons.editlink>
             <a href="{{ route('tech.risk.pdf', $risk) }}" target="_blank" class="btn btn-sm btn-outline-danger me-2">
                 <i class="bi bi-file-earmark-pdf me-1"></i> Print PDF
             </a>
-            <a href="{{ route('tech.risk.index') }}" class="btn btn-sm btn-outline-secondary">Back to list</a>
+            <x-buttons.back url="{{ route('tech.risk.index') }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection

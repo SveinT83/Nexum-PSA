@@ -5,15 +5,15 @@ namespace App\Modules\Clients\Controllers\Tech;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tech\Clients\ClientRequest;
 use App\Models\Clients\Client;
-use App\Models\Clients\ClientSite;
-use App\Models\Clients\ClientUser;
-use App\Models\System\Integrations\ClientRmmLink;
+use App\Models\Clients\ClientFormat;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Clients\Actions\CreateClientWithDefaults;
+use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
-use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
+use App\Models\Core\User;
+use App\Modules\Task\Models\Task;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ClientController extends Controller
@@ -27,32 +27,50 @@ class ClientController extends Controller
      * @param Request $request
      * @return View
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         // -----------------------------------------
         // Reset active client ID in session
         // -----------------------------------------
         session()->forget(['active_client_id', 'active_site_id']);
 
-        $query = Client::query()->with(['riskAssessments.items']);
+        $query = Client::query()->with(['clientFormat', 'riskAssessments.items']);
 
         if ($search = $request->get('search')) {
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%$search%");
-                $q->orWhere('org_no', 'like', "%$search%");
-                $q->orWhere('billing_email', 'like', "%$search%");
+                $q->where('clients.name', 'like', "%$search%");
+                $q->orWhere('clients.org_no', 'like', "%$search%");
+                $q->orWhere('clients.billing_email', 'like', "%$search%");
             });
         }
 
-        // -----------------------------------------
-        // Sidebar Menu Items
-        // -----------------------------------------
-        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu(null);
+        $sort = $request->get('sort', 'name');
+        $direction = $request->get('direction', 'asc') === 'desc' ? 'desc' : 'asc';
+        $sortableColumns = [
+            'name' => 'clients.name',
+            'org_no' => 'clients.org_no',
+            'format' => 'client_formats.code',
+            'billing_email' => 'clients.billing_email',
+            'status' => 'clients.active',
+        ];
+
+        if (! array_key_exists($sort, $sortableColumns)) {
+            $sort = 'name';
+        }
+
+        if ($sort === 'format') {
+            $query->leftJoin('client_formats', 'client_formats.id', '=', 'clients.client_format_id')
+                ->select('clients.*');
+        }
 
         // -----------------------------------------
         // Get Clients
         // -----------------------------------------
-        $clients = $query->orderBy('name')->paginate(25)->withQueryString();
+        $clients = $query
+            ->orderBy($sortableColumns[$sort], $direction)
+            ->orderBy('clients.name')
+            ->paginate(25)
+            ->withQueryString();
 
         // -----------------------------------------
         // Retun View:
@@ -60,6 +78,8 @@ class ClientController extends Controller
         return view('clients::Tech.index', [
             'clients' => $clients,
             'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu(null),
         ]);
     }
@@ -84,13 +104,44 @@ class ClientController extends Controller
         // -----------------------------------------
         // Client Contract (s)
         // -----------------------------------------
-        $contracts = $client->contracts()->paginate(25);
+        $contracts = $client->contracts()->with('items')->latest('updated_at')->get();
 
         // -----------------------------------------
         // Eager load risk assessments and items
         // to avoid N+1 queries in the rightbar widget.
         // -----------------------------------------
-        $client->load(['riskAssessments.items']);
+        $client->load(['clientFormat', 'sites', 'riskAssessments.items', 'tasks.status', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries']);
+
+        $clientTaskOwners = [
+            [$client->getMorphClass(), [$client->id]],
+        ];
+
+        $ticketIds = \App\Modules\Ticket\Models\Ticket::query()
+            ->where('client_id', $client->id)
+            ->pluck('id');
+
+        if ($ticketIds->isNotEmpty()) {
+            $ticket = new \App\Modules\Ticket\Models\Ticket();
+            $clientTaskOwners[] = [$ticket->getMorphClass(), $ticketIds->all()];
+        }
+
+        $clientTasks = Task::query()
+            ->with(['status', 'assignee', 'checklistItems', 'timeEntries'])
+            ->where(function ($query) use ($clientTaskOwners) {
+                foreach ($clientTaskOwners as [$ownerType, $ownerIds]) {
+                    $query->orWhere(fn ($ownerQuery) => $ownerQuery
+                        ->where('owner_type', $ownerType)
+                        ->whereIn('owner_id', $ownerIds));
+                }
+            })
+            ->where(function ($query) {
+                $query->whereNull('completed_at')
+                    ->whereDoesntHave('status', fn ($status) => $status
+                        ->where('is_done', true)
+                        ->orWhere('is_cancelled', true));
+            })
+            ->latest('updated_at')
+            ->get();
 
         // -----------------------------------------
         // Array of sidebar menu items
@@ -101,6 +152,8 @@ class ClientController extends Controller
             'client' => $client,
             'sidebarMenuItems' => $sidebarMenuItems,
             'contracts' => $contracts,
+            'technicians' => User::query()->where('status', User::STATUS_ACTIVE)->orderBy('name')->get(),
+            'clientTasks' => $clientTasks,
 
         ]);
     }
@@ -112,12 +165,8 @@ class ClientController extends Controller
      *
      * @return View
      */
-    public function create(): View
+    public function create(SuggestClientNumber $suggestClientNumber): View
     {
-        // Suggest the next client number (5 digits)
-        $maxNumber = Client::query()->max('client_number');
-        $suggestedClientNumber = str_pad((string) (((int) $maxNumber) + 1), 5, '0', STR_PAD_LEFT);
-
         // Simple lookup lists (can be moved to config or DB later)
         $roles = ['Daglig leder', 'Innehaver', 'IT-kontakt', 'Økonomi', 'Annet'];
         $countries = ['NO' => 'Norway', 'SE' => 'Sweden', 'DK' => 'Denmark'];
@@ -127,7 +176,8 @@ class ClientController extends Controller
         $nableActive = $rmmIntegration !== null;
 
         return view('clients::Tech.create', [
-            'suggestedClientNumber' => $suggestedClientNumber,
+            'suggestedClientNumber' => $suggestClientNumber->handle(),
+            'clientFormats' => ClientFormat::activeOptions(),
             'roles' => $roles,
             'countries' => $countries,
             'nableActive' => $nableActive,
@@ -144,69 +194,13 @@ class ClientController extends Controller
      * @param ClientRequest $request
      * @return RedirectResponse
      */
-    public function store(ClientRequest $request): RedirectResponse
+    public function store(ClientRequest $request, CreateClientWithDefaults $createClient): RedirectResponse
     {
-        $data = $request->validated();
-        $warning = null;
-
-        DB::transaction(function () use ($data, &$warning): void {
-            // Create client
-            $client = Client::query()->create([
-                'name' => $data['name'],
-                'client_number' => $data['client_number'],
-                'org_no' => $data['org_no'] ?? null,
-                'billing_email' => $data['billing_email'] ?? null,
-                'notes' => $data['notes'] ?? null,
-                'active' => $data['active'] ?? true,
-            ]);
-
-            // Create default sites
-            $site = ClientSite::query()->create([
-                'client_id' => $client->id,
-                'name' => $data['site_name'],
-                'is_default' => true,
-            ]);
-
-            // Create default sites user
-            ClientUser::query()->create([
-                'client_site_id' => $site->id,
-                'user_id' => null,
-                'role' => $data['user_role'] ?? null,
-                'name' => $data['user_name'],
-                'email' => $data['user_email'] ?? null,
-                'phone' => $data['user_phone'] ?? null,
-                'is_default_for_site' => true,
-                'is_default_for_client' => true,
-                'active' => true,
-            ]);
-
-            // Handle N-able RMM creation if requested
-            if (!empty($data['create_in_rmm'])) {
-                $integration = Integration::where('type', 'rmm')->where('status', 'active')->first();
-                if ($integration) {
-                    $rmmClient = new NAbleRmmClient($integration);
-                    $rmmName = $client->client_number . ' - ' . $client->name;
-                    $result = $rmmClient->addClient($rmmName);
-                    $status = $result['success'] ? 'success' : 'error';
-
-                    if ($status === 'success' && !empty($result['clientid'])) {
-                        // Create RMM Link
-                        ClientRmmLink::create([
-                            'integration_id' => $integration->id,
-                            'external_id' => $result['clientid'],
-                            'linkable_type' => Client::class,
-                            'linkable_id' => $client->id,
-                        ]);
-                    } else {
-                        $warning = "Client created locally, but failed to create in N-able RMM: " . ($result['error'] ?? 'Unknown error');
-                    }
-                }
-            }
-        });
+        $result = $createClient->handle($request->validated());
 
         $response = redirect()->route('tech.clients.index')->with('status', 'Client created');
-        if ($warning) {
-            $response->with('warning', $warning);
+        if ($result['warning']) {
+            $response->with('warning', $result['warning']);
         }
 
         return $response;

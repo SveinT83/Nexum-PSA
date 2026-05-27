@@ -7,6 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Modules\Commercial\Models\CostRelations;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Commercial\Models\ServiceTimeRate;
+use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Commercial\Models\TimeRate;
 use Illuminate\Http\Request;
 use App\Modules\Commercial\Requests\ServiceStoreRequest;
 
@@ -24,6 +27,8 @@ class ServiceController extends Controller
         return view('commercial::Tech.cs.services.show', [
             'service' => $service,
             'units' => $units,
+            'slas' => $this->availableSlas(),
+            'timeRates' => TimeRate::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 
@@ -39,6 +44,8 @@ class ServiceController extends Controller
         return view('commercial::Tech.cs.services.create', [
             'service' => new Services(),
             'units' => $units,
+            'slas' => $this->availableSlas(),
+            'timeRates' => TimeRate::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 
@@ -54,6 +61,8 @@ class ServiceController extends Controller
         return view('commercial::Tech.cs.services.edit', [
             'service' => $service,
             'units' => $units,
+            'slas' => $this->availableSlas(),
+            'timeRates' => TimeRate::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 
@@ -70,6 +79,7 @@ class ServiceController extends Controller
             'sku' => $data['sku'],
             'name' => $data['name'],
             'unitId' => $data['unitId'],
+            'sla_id' => $data['sla_id'] ?? null,
             'status' => $data['status'] ?? 'Active',
             'icon' => $data['icon'] ?? null,
             // DB does not have sort_order or queue_default_id currently
@@ -108,6 +118,7 @@ class ServiceController extends Controller
 
         // Save terms (Legal)
         $service->serviceTerms()->attach($data['terms'] ?? []);
+        $this->syncTimeRates($service, $data['time_rates'] ?? []);
 
         // Redirect back with success message
         return redirect()->route('tech.services.index')->with('success', 'Service created successfully.');
@@ -127,6 +138,7 @@ class ServiceController extends Controller
             'sku' => $data['sku'],
             'name' => $data['name'],
             'unitId' => $data['unitId'],
+            'sla_id' => $data['sla_id'] ?? null,
             'status' => $data['status'] ?? 'Active',
             'icon' => $data['icon'] ?? null,
             // DB does not have sort_order or queue_default_id currently
@@ -178,6 +190,7 @@ class ServiceController extends Controller
 
         // Sync terms (Legal)
         $service->serviceTerms()->sync($data['terms'] ?? []);
+        $this->syncTimeRates($service, $data['time_rates'] ?? []);
 
         // Redirect back with success message
         return redirect()
@@ -191,20 +204,44 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function index(Request $request)
     {
-        $query = Services::query();
+        $sort = $request->input('sort', 'name');
+        $direction = $request->input('direction') === 'desc' ? 'desc' : 'asc';
+        $sortableColumns = ['sku', 'name', 'price', 'billing_cycle', 'status', 'updated_at'];
 
-        if ($search = $request->get('search')) {
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%$search%");
-                $q->orWhere('sku', 'like', "%$search%");
-            });
+        if (! in_array($sort, $sortableColumns, true)) {
+            $sort = 'name';
         }
 
-        $services = $query->orderBy('name')->paginate(25)->withQueryString();
+        $query = Services::query()
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $search = '%'.$request->string('q')->trim()->toString().'%';
+
+                $query->where(function ($query) use ($search): void {
+                    $query->where('name', 'like', $search)
+                        ->orWhere('sku', 'like', $search)
+                        ->orWhere('short_description', 'like', $search)
+                        ->orWhere('status', 'like', $search);
+                });
+            })
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('billing_cycle'), fn ($query) => $query->where('billing_cycle', $request->input('billing_cycle')))
+            ->when($request->filled('audience'), fn ($query) => $query->where('availability_audience', $request->input('audience')))
+            ->when($request->filled('orderable'), fn ($query) => $query->where('orderable', $request->input('orderable') === 'yes'));
+
+        if ($sort === 'price') {
+            $query->orderBy('price_ex_vat', $direction)->orderBy('name');
+        } else {
+            $query->orderBy($sort, $direction)->orderBy('name');
+        }
+
+        $services = $query->paginate(25)->withQueryString();
 
         return view('commercial::Tech.cs.services.index', [
             'services' => $services,
-            'search' => $search,
+            'statuses' => Services::query()->distinct()->orderBy('status')->pluck('status')->filter()->values(),
+            'billingCycles' => Services::query()->distinct()->orderBy('billing_cycle')->pluck('billing_cycle')->filter()->values(),
+            'audiences' => Services::query()->distinct()->orderBy('availability_audience')->pluck('availability_audience')->filter()->values(),
+            'filters' => $request->only(['q', 'status', 'billing_cycle', 'audience', 'orderable', 'sort', 'direction']),
         ]);
     }
 
@@ -221,5 +258,40 @@ class ServiceController extends Controller
         return redirect()
             ->route('tech.services.index')
             ->with('success', 'Service deleted successfully.');
+    }
+
+    private function syncTimeRates(Services $service, array $rates): void
+    {
+        $keep = [];
+
+        foreach ($rates as $timeRateId => $data) {
+            if (empty($data['enabled'])) {
+                continue;
+            }
+
+            $keep[] = (int) $timeRateId;
+
+            ServiceTimeRate::query()->updateOrCreate(
+                [
+                    'service_id' => $service->id,
+                    'time_rate_id' => (int) $timeRateId,
+                ],
+                [
+                    'amount_ex_vat' => $data['amount_ex_vat'] !== '' ? $data['amount_ex_vat'] : null,
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        ServiceTimeRate::query()
+            ->where('service_id', $service->id)
+            ->when($keep !== [], fn ($query) => $query->whereNotIn('time_rate_id', $keep))
+            ->when($keep === [], fn ($query) => $query)
+            ->update(['is_active' => false]);
+    }
+
+    private function availableSlas()
+    {
+        return Sla::query()->orderByDesc('is_default')->orderBy('name')->get();
     }
 }

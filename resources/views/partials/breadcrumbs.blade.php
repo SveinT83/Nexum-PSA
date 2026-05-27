@@ -8,8 +8,8 @@
 @php $crumbs = breadcrumbs(); @endphp
 
 @if(count($crumbs))
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
+    <nav aria-label="breadcrumb" class="page-breadcrumbs">
+        <ol class="breadcrumb mb-0 small">
             @foreach($crumbs as $crumb)
                 @if($loop->last)
                     <li class="breadcrumb-item active" aria-current="page">{{ $crumb['label'] }}</li>

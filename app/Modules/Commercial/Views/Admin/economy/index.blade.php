@@ -5,8 +5,8 @@
 @extends('layouts.default_tech')
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">Economy</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Economy</h1>
     </div>
 @endsection
 
@@ -31,9 +31,8 @@
 @endsection
 
 @section('sidebar')
+    <x-nav.admin-menu group="economy" />
 @endsection
 
 @section('rightbar')
-    <div class="p-3 small text-muted">Recent Packages (MVP later)</div>
 @endsection
-

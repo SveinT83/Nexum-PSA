@@ -147,8 +147,4 @@ Fast, predictable list of tasks across all sources (tickets, orders, templates, 
 @endsection
 
 @section('rightbar')
-    <h3>Right Sidebar</h3>
-    <ul>
-        <li>No new notifications.</li>
-    </ul>
 @endsection

@@ -10,7 +10,7 @@ class StorageIndexQuery
     public function paginate(array $filters = [], int $perPage = 25): LengthAwarePaginator
     {
         return Item::query()
-            ->with(['warehouse', 'box'])
+            ->with(['warehouse', 'box', 'primaryVendor'])
             ->when(($filters['availability'] ?? 'should_order') === 'should_order', function ($query) {
                 $query->where(function ($nested) {
                     $nested->where('should_order', true)
@@ -30,6 +30,7 @@ class StorageIndexQuery
                 });
             })
             ->when($filters['warehouse_id'] ?? null, fn ($query, $warehouseId) => $query->where('warehouse_id', $warehouseId))
+            ->when($filters['supplier_id'] ?? null, fn ($query, $supplierId) => $query->where('primary_vendor_id', $supplierId))
             ->latest('updated_at')
             ->paginate($perPage)
             ->withQueryString();

@@ -17,6 +17,10 @@
     </div>
 @endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="integrations" />
+@endsection
+
 @section('content')
     <div class="container-fluid">
         <div class="row">
