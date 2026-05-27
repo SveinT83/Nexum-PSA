@@ -73,7 +73,16 @@ class TicketStatusChanged extends Notification
     {
         return [
             'title' => "Ticket {$this->ticket->ticket_key}: {$this->oldStatus} → {$this->newStatus}",
-            'message' => "**{$this->ticket->subject}** — status changed by {$this->changedBy}",
+            'message' => "**{$this->ticket->subject}**",
+            'details' => array_filter([
+                'Status' => "{$this->oldStatus} → {$this->newStatus}",
+                'Changed by' => $this->changedBy,
+                'Priority' => $this->ticket->priority?->name,
+                'Client' => $this->ticket->client?->name,
+            ]),
+            'url' => route('tech.tickets.show', $this->ticket->ticket_key),
+            'urlLabel' => 'View Ticket',
+            'referenceId' => 'ticket-status-' . $this->ticket->ticket_key . '-' . $this->newStatus . '-' . time(),
         ];
     }
 }

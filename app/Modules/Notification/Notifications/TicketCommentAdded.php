@@ -70,7 +70,13 @@ class TicketCommentAdded extends Notification
     {
         return [
             'title' => "Comment on {$this->ticket->ticket_key}",
-            'message' => "{$this->commentAuthor}: \"{$this->commentPreview}\"",
+            'message' => "{$this->commentAuthor}: \"" . str($this->commentPreview)->limit(200) . '\"',
+            'details' => array_filter([
+                'Subject' => $this->ticket->subject,
+            ]),
+            'url' => route('tech.tickets.show', $this->ticket->ticket_key),
+            'urlLabel' => 'View Ticket',
+            'referenceId' => 'ticket-comment-' . $this->ticket->ticket_key . '-' . time(),
         ];
     }
 }

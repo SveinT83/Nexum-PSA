@@ -5,12 +5,14 @@ namespace App\Modules\Nextcloud\Models;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class NextcloudConnection extends Model
 {
+    use HasFactory;
     public const SCOPE_GLOBAL = 'global';
     public const SCOPE_CLIENT = 'client';
     public const SCOPE_SITE = 'site';
@@ -44,6 +46,10 @@ class NextcloudConnection extends Model
         'last_error',
         'capabilities',
         'settings',
+        'talk_bot_id',
+        'talk_bot_secret',
+        'talk_default_conversation_token',
+        'talk_bot_features',
     ];
 
     protected function casts(): array
@@ -59,6 +65,10 @@ class NextcloudConnection extends Model
             'last_sync_requested_at' => 'datetime',
             'capabilities' => 'array',
             'settings' => 'array',
+            'talk_bot_id' => 'integer',
+            'talk_bot_secret' => 'encrypted',
+            'talk_default_conversation_token' => 'string',
+            'talk_bot_features' => 'array',
         ];
     }
 
@@ -122,5 +132,30 @@ class NextcloudConnection extends Model
     public function canManageRemote(): bool
     {
         return $this->mode === self::MODE_MANAGED;
+    }
+
+    /**
+     * Check if this connection has a Talk bot configured.
+     */
+    public function hasTalkBot(): bool
+    {
+        return filled($this->talk_bot_id) && filled($this->talk_bot_secret);
+    }
+
+    /**
+     * Check if Talk bot supports the given feature.
+     * Features: 'reaction', 'no-setup', etc.
+     */
+    public function hasTalkBotFeature(string $feature): bool
+    {
+        return in_array($feature, $this->talk_bot_features ?? [], true);
+    }
+
+    /**
+     * Get the Talk bot secret (decrypted from encrypted storage).
+     */
+    public function getTalkBotSecret(): ?string
+    {
+        return $this->talk_bot_secret;
     }
 }

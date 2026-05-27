@@ -74,10 +74,19 @@ class TicketSlaWarning extends Notification
     public function toNextcloudTalk(object $notifiable): array
     {
         $icon = $this->severity === 'breached' ? '🚨' : '⚠️';
+        $slaLabel = $this->slaType === 'response' ? 'First Response' : 'Resolution';
 
         return [
             'title' => "{$icon} SLA {$this->severity}: {$this->ticketKey}",
-            'message' => "**{$this->ticketSubject}** — {$this->slaType} SLA {$this->severity}",
+            'message' => "**{$this->ticketSubject}** — {$slaLabel} SLA {$this->severity}",
+            'details' => array_filter([
+                'SLA type' => $slaLabel,
+                'Due' => $this->dueAt,
+            ]),
+            'url' => route('tech.tickets.show', $this->ticketKey),
+            'urlLabel' => 'View Ticket',
+            'referenceId' => 'sla-' . $this->ticketKey . '-' . $this->slaType . '-' . $this->severity,
+            'silent' => $this->severity === 'warning', // warning = silent, breached = loud
         ];
     }
 }

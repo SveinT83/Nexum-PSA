@@ -53,6 +53,27 @@ class StoreNextcloudConnection
             $payload['service_password'] = null;
         }
 
+        // Talk bot configuration
+        $payload['talk_bot_id'] = isset($data['talk_bot_id']) && $data['talk_bot_id'] !== ''
+            ? (int) $data['talk_bot_id']
+            : null;
+
+        // Only update the secret if a new value was provided;
+        // the password field sends a placeholder when unchanged.
+        if (! empty($data['talk_bot_secret']) && $data['talk_bot_secret'] !== str_repeat('•', 8)) {
+            $payload['talk_bot_secret'] = $data['talk_bot_secret'];
+        } elseif (! $existing) {
+            // New connection — set to null if not provided
+            $payload['talk_bot_secret'] = null;
+        }
+        // If updating and no new secret was provided, we simply
+        // don't include it in the payload, preserving the existing value.
+
+        $payload['talk_default_conversation_token'] = ($data['talk_default_conversation_token'] ?? '') !== ''
+            ? $data['talk_default_conversation_token']
+            : null;
+        $payload['talk_bot_features'] = $data['talk_bot_features'] ?? [];
+
         return $payload;
     }
 
