@@ -15,6 +15,10 @@ return new class extends Migration
             $table->foreignId('queue_id')->constrained('ticket_queues');
             $table->foreignId('status_id')->constrained('ticket_statuses');
             $table->foreignId('priority_id')->constrained('ticket_priorities');
+            $table->foreignId('sla_id')->nullable()->constrained('sla')->nullOnDelete();
+            $table->string('sla_source')->nullable()->index();
+            $table->unsignedBigInteger('sla_source_id')->nullable()->index();
+            $table->json('sla_snapshot')->nullable();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->unsignedBigInteger('client_id')->nullable()->index();
             $table->unsignedBigInteger('site_id')->nullable()->index();

@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('description');
+            $table->boolean('is_default')->default(false)->index();
             $table->integer('low_firstResponse');
             $table->string('low_firstResponse_type');
             $table->integer('low_onsite');
@@ -27,10 +28,26 @@ return new class extends Migration {
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Schema::table('contracts', function (Blueprint $table): void {
+            $table->foreign('sla_id')->references('id')->on('sla')->nullOnDelete();
+        });
+
+        Schema::table('services', function (Blueprint $table): void {
+            $table->foreign('sla_id')->references('id')->on('sla')->nullOnDelete();
+        });
     }
 
     public function down(): void
     {
+        Schema::table('services', function (Blueprint $table): void {
+            $table->dropForeign(['sla_id']);
+        });
+
+        Schema::table('contracts', function (Blueprint $table): void {
+            $table->dropForeign(['sla_id']);
+        });
+
         Schema::dropIfExists('sla');
     }
 };

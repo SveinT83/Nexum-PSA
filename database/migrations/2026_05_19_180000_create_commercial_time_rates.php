@@ -68,11 +68,28 @@ return new class extends Migration
             });
         }
 
+        Schema::table('ticket_time_entries', function (Blueprint $table): void {
+            $table->foreign('contract_item_time_rate_id', 'ticket_time_entries_contract_item_time_rate_fk')
+                ->references('id')
+                ->on('contract_item_time_rates')
+                ->nullOnDelete();
+
+            $table->foreign('time_rate_id', 'ticket_time_entries_time_rate_fk')
+                ->references('id')
+                ->on('time_rates')
+                ->nullOnDelete();
+        });
+
         $this->seedDefaults();
     }
 
     public function down(): void
     {
+        Schema::table('ticket_time_entries', function (Blueprint $table): void {
+            $table->dropForeign('ticket_time_entries_contract_item_time_rate_fk');
+            $table->dropForeign('ticket_time_entries_time_rate_fk');
+        });
+
         Schema::dropIfExists('contract_item_time_rates');
         Schema::dropIfExists('service_time_rates');
         Schema::dropIfExists('time_rates');

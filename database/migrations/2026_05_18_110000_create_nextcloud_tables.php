@@ -38,6 +38,10 @@ return new class extends Migration
                 $table->text('last_error')->nullable();
                 $table->json('capabilities')->nullable();
                 $table->json('settings')->nullable();
+                $table->unsignedBigInteger('talk_bot_id')->nullable();
+                $table->text('talk_bot_secret')->nullable();
+                $table->string('talk_default_conversation_token', 64)->nullable();
+                $table->json('talk_bot_features')->nullable();
                 $table->timestamps();
 
                 $table->index(['scope', 'is_active']);

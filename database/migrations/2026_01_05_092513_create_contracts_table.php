@@ -12,6 +12,7 @@ return new class extends Migration {
 
             // Relations
             $table->unsignedBigInteger('client_id');
+            $table->unsignedBigInteger('sla_id')->nullable()->index();
             $table->string('secure_token', 64)->unique()->nullable();
             $table->unsignedBigInteger('created_by');
 

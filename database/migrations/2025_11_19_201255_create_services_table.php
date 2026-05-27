@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('services', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('category_id')->nullable();
+            $table->unsignedBigInteger('sla_id')->nullable()->index();
             // sku (string unique)
             $table->string('sku')->unique();
 
