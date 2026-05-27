@@ -76,7 +76,15 @@ class TicketAssigned extends Notification
     {
         return [
             'title' => "Ticket {$this->ticket->ticket_key} assigned to you",
-            'message' => "**{$this->ticket->subject}** ({$this->ticket->priority?->name}) — assigned by {$this->assignedBy}",
+            'message' => "**{$this->ticket->subject}**",
+            'details' => array_filter([
+                'Assigned by' => $this->assignedBy,
+                'Priority' => $this->ticket->priority?->name,
+                'Client' => $this->ticket->client?->name,
+            ]),
+            'url' => route('tech.tickets.show', $this->ticket->ticket_key),
+            'urlLabel' => 'View Ticket',
+            'referenceId' => 'ticket-assigned-' . $this->ticket->ticket_key . '-' . time(),
         ];
     }
 }

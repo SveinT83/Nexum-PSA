@@ -599,6 +599,87 @@
         </div>
         </div>
     </div>
+
+    <!-- Talk Bot Configuration -->
+    <div class="card mb-3">
+        <div class="card-header py-2 d-flex align-items-center justify-content-between">
+            <button class="btn btn-sm btn-link link-dark text-decoration-none p-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#talkBotConfigCollapse" aria-expanded="false" aria-controls="talkBotConfigCollapse">
+                <i class="bi bi-chevron-right me-1" aria-hidden="true"></i>
+                Talk Bot Configuration
+            </button>
+            <div class="d-flex align-items-center gap-2">
+                @if($connection->hasTalkBot())
+                    <span class="badge text-bg-success"><i class="bi bi-robot me-1"></i>Bot configured</span>
+                @else
+                    <span class="badge text-bg-secondary">No bot</span>
+                @endif
+            </div>
+        </div>
+        <div id="talkBotConfigCollapse" class="collapse">
+            <div class="card-body">
+                <div class="alert alert-info py-2 small mb-3">
+                    <strong>Talk Bot API</strong> enables signed, rich-message notifications to Nextcloud Talk conversations.
+                    Requires NC 27.1+ / Talk 17.1+ with the <code>bots-v1</code> capability.
+                    Install a bot on the Nextcloud server first:
+                    <code>./occ talk:bot:install "Nexum Bot" &lt;secret&gt; &lt;webhook-url&gt; &lt;nextcloud-url&gt;</code>
+                </div>
+
+                <form method="POST" action="{{ route('tech.admin.nextcloud.connections.update', $connection) }}">
+                    @csrf
+                    @method('PATCH')
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="talk_bot_id">Bot ID</label>
+                            <input type="number" id="talk_bot_id" name="talk_bot_id"
+                                class="form-control" placeholder="e.g. 1"
+                                value="{{ old('talk_bot_id', $connection->talk_bot_id) }}">
+                            <div class="form-text">The numeric ID shown by <code>./occ talk:bot:list</code></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="talk_bot_secret">Bot Shared Secret</label>
+                            <input type="password" id="talk_bot_secret" name="talk_bot_secret"
+                                class="form-control" placeholder="Leave blank to keep current secret"
+                                value=""
+                                autocomplete="new-password">
+                            <div class="form-text">HMAC-SHA256 shared secret from <code>talk:bot:install</code>. Leave blank to keep existing.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="talk_default_conversation_token">Default Conversation Token</label>
+                            <input type="text" id="talk_default_conversation_token" name="talk_default_conversation_token"
+                                class="form-control" placeholder="e.g. n3xtc10ud"
+                                value="{{ old('talk_default_conversation_token', $connection->talk_default_conversation_token) }}">
+                            <div class="form-text">The Talk conversation token where notifications are sent by default</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Bot Features</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="talk_bot_features[]" value="reaction" id="talkBotFeatureReaction"
+                                    @checked(in_array('reaction', $connection->talk_bot_features ?? []))>
+                                <label class="form-check-label" for="talkBotFeatureReaction">Reaction support</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="talk_bot_features[]" value="no-setup" id="talkBotFeatureNoSetup"
+                                    @checked(in_array('no-setup', $connection->talk_bot_features ?? []))>
+                                <label class="form-check-label" for="talkBotFeatureNoSetup">No-setup (one-way bot)</label>
+                            </div>
+                            <div class="form-text">Enable features matching your Talk server's bot configuration</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm">Save Talk Bot Settings</button>
+                        @if($connection->hasTalkBot())
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="testTalkBotBtn">Test Bot Message</button>
+                        @endif
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
@@ -684,6 +765,30 @@
                     window.bootstrap.Modal.getOrCreateInstance(folderBrowserModal).show();
                 }
             @endif
+
+            // Talk Bot test message
+            const testTalkBotBtn = document.getElementById('testTalkBotBtn');
+            if (testTalkBotBtn) {
+                testTalkBotBtn.addEventListener('click', function () {
+                    testTalkBotBtn.disabled = true;
+                    testTalkBotBtn.textContent = 'Sending…';
+                    fetch('{{ route('admin.nextcloud.connections.test-talk-bot', $connection) }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                        body: 'action=test_talk_bot',
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        const msg = data.success ? '✅ Test message sent!' : ('❌ ' + (data.error || 'Unknown error'));
+                        alert(msg);
+                    })
+                    .catch(() => alert('❌ Request failed'))
+                    .finally(() => {
+                        testTalkBotBtn.disabled = false;
+                        testTalkBotBtn.textContent = 'Test Bot Message';
+                    });
+                });
+            }
         });
     </script>
 @endsection
