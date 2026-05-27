@@ -22,6 +22,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Schema::table('clients', function (Blueprint $table): void {
+            $table->foreign('sales_category_id')->references('id')->on('categories')->nullOnDelete();
+        });
     }
 
     /**
@@ -29,6 +33,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('clients', function (Blueprint $table): void {
+            $table->dropForeign(['sales_category_id']);
+        });
+
         Schema::dropIfExists('categories');
     }
 };

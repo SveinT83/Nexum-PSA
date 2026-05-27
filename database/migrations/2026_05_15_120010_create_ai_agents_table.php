@@ -23,6 +23,7 @@ return new class extends Migration
             $table->json('allowed_api_scopes')->nullable();
             $table->boolean('can_execute_actions')->default(false);
             $table->boolean('is_default')->default(false);
+            $table->json('default_domains')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

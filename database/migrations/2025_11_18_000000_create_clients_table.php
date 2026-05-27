@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->string('name');
             $table->string('org_no')->nullable();
             $table->string('website')->nullable();
+            $table->unsignedBigInteger('sales_category_id')->nullable()->index();
             $table->unsignedTinyInteger('lead_temperature')->default(3);
             $table->string('billing_email')->nullable();
             $table->boolean('active')->default(true);

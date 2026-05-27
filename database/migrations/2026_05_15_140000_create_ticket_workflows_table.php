@@ -28,6 +28,7 @@ return new class extends Migration
             $table->boolean('is_initial')->default(false);
             $table->boolean('is_terminal')->default(false);
             $table->boolean('requires_note')->default(false);
+            $table->boolean('requires_response')->default(false);
             $table->boolean('requires_resolution')->default(false);
             $table->boolean('requires_knowledge_update')->default(false);
             $table->unsignedInteger('sort_order')->default(10);
@@ -43,7 +44,10 @@ return new class extends Migration
             $table->foreignId('to_status_id')->constrained('ticket_statuses')->cascadeOnDelete();
             $table->string('label');
             $table->boolean('is_active')->default(true)->index();
+            $table->boolean('manual_enabled')->default(true);
+            $table->json('trigger_actions')->nullable();
             $table->boolean('requires_note')->default(false);
+            $table->boolean('requires_response')->default(false);
             $table->boolean('requires_resolution')->default(false);
             $table->boolean('requires_knowledge_update')->default(false);
             $table->unsignedInteger('sort_order')->default(10);

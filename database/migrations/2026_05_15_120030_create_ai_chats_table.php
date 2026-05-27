@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('ai_agent_id')->nullable()->constrained('ai_agents')->nullOnDelete();
             $table->string('title');
             $table->string('status')->default('open');
+            $table->json('metadata')->nullable();
             $table->timestamp('last_message_at')->nullable();
             $table->timestamps();
 

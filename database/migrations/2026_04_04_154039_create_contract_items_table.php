@@ -32,6 +32,9 @@ return new class extends Migration {
 
             // Fees
             $table->decimal('setup_fee', 12, 2)->nullable();
+            $table->foreignId('sla_id')->nullable()->constrained('sla')->nullOnDelete();
+            $table->boolean('uses_contract_default_sla')->default(true);
+            $table->json('sla_snapshot')->nullable();
 
             // Optional advanced fields (can be expanded later)
             $table->string('sla')->nullable();
