@@ -3,6 +3,7 @@
 namespace App\Modules\UserManagement\Actions;
 
 use App\Models\Core\User;
+use App\Modules\UserManagement\Jobs\SendUserInviteEmail;
 use App\Modules\UserManagement\Models\InviteToken;
 
 /**
@@ -22,7 +23,9 @@ class SendUserInvite
 
         $token = InviteToken::generateFor($user);
 
+        // Keep an in-app audit trail immediately, then send the actual email via the queue.
         $user->notify(new \App\Modules\UserManagement\Notifications\UserInvited($token));
+        SendUserInviteEmail::dispatch($token->id)->afterCommit();
 
         return $token;
     }
