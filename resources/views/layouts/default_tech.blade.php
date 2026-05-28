@@ -125,8 +125,24 @@
         <!-- ------------------------------------------------- -->
         <footer class="mt-auto py-3">
             <div class="container-fluid text-center">
-                <div class="row">
-                    <p>&copy; 2024 Tech Dashboard. All rights reserved.</p>
+                <div class="row gy-2">
+                    <p class="mb-0">&copy; {{ date('Y') }} Nexum PSA. All rights reserved.</p>
+                    <div class="small d-flex flex-wrap justify-content-center gap-3">
+                        <a href="https://github.com/SveinT83/Nexum-PSA/issues"
+                           class="link-secondary text-decoration-none"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            <i class="bi bi-bug me-1" aria-hidden="true"></i>
+                            Report issue
+                        </a>
+                        <a href="https://github.com/SveinT83/Nexum-PSA/discussions"
+                           class="link-secondary text-decoration-none"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>
+                            Share ideas
+                        </a>
+                    </div>
                 </div>
             </div>
         </footer>
