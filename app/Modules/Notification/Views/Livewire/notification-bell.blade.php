@@ -55,7 +55,7 @@
                 @endphp
 
                 <a href="{{ $url }}" class="dropdown-item px-3 py-2 {{ $loop->last ? '' : 'border-bottom' }}"
-                   wire:click="markAsRead('{{ $notification->id }}')"
+                   wire:click.prevent="openNotification('{{ $notification->id }}')"
                    style="white-space: normal;">
 
                     <div class="d-flex align-items-start gap-2">

@@ -20,12 +20,6 @@
 @endsection
 
 @section('content')
-    @foreach(['success' => 'success', 'warning' => 'warning', 'info' => 'info'] as $key => $type)
-        @if(session($key))
-            <div class="alert alert-{{ $type }}">{{ session($key) }}</div>
-        @endif
-    @endforeach
-
     <!-- Connections inventory -->
     <div class="card">
         <div class="card-header py-2 d-flex align-items-center justify-content-between">

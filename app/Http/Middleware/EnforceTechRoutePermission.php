@@ -123,6 +123,8 @@ class EnforceTechRoutePermission
         'tech.tickets.store' => 'ticket.create',
         'tech.tickets.edit' => 'ticket.update',
         'tech.tickets.update' => 'ticket.update',
+        'tech.tickets.spam' => 'ticket.delete',
+        'tech.tickets.destroy' => 'ticket.delete',
         'tech.tickets.workflow.*' => 'ticket.update',
         'tech.tickets.cost-entries.*' => 'ticket.update',
         'tech.tickets.*' => 'ticket.view',

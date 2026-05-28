@@ -3,6 +3,7 @@
 namespace App\Modules\Notification\Tests\Feature;
 
 use App\Models\Core\User;
+use App\Modules\Notification\Livewire\NotificationBell;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
@@ -12,7 +13,10 @@ use App\Modules\Notification\Notifications\TicketCommentAdded;
 use App\Modules\Notification\Notifications\AssetAlertTriggered;
 use App\Modules\Notification\Notifications\TicketSlaWarning;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -290,6 +294,38 @@ class NotificationSystemTest extends TestCase
 
         $this->assertContains('database', $via);
         $this->assertNotContains('mail', $via);
+    }
+
+    #[Test]
+    public function notification_bell_item_redirects_to_notification_url_when_opened()
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        Role::firstOrCreate(['name' => 'Tech']);
+        $user->assignRole('Tech');
+        $notificationId = (string) Str::uuid();
+        $url = route('tech.tickets.index');
+
+        DB::table('notifications')->insert([
+            'id' => $notificationId,
+            'type' => 'database',
+            'notifiable_type' => User::class,
+            'notifiable_id' => $user->id,
+            'data' => json_encode([
+                'type' => 'ticket_assigned',
+                'ticket_subject' => 'Clickable notification',
+                'url' => $url,
+            ]),
+            'read_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(NotificationBell::class)
+            ->call('openNotification', $notificationId)
+            ->assertRedirect($url);
+
+        $this->assertNotNull(DB::table('notifications')->where('id', $notificationId)->value('read_at'));
     }
 
     #[Test]

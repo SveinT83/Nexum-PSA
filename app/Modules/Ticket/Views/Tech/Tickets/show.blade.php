@@ -49,14 +49,6 @@
 
 @section('content')
 <div class="container-fluid">
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
-    @endif
-
     @php
         $canReplyToContact = filled($ticket->contact?->email) && ($ticketActions['customer_reply'] ?? true);
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;

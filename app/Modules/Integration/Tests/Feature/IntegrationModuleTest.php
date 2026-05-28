@@ -975,6 +975,43 @@ class IntegrationModuleTest extends TestCase
     }
 
     #[Test]
+    public function book_stack_sync_failure_returns_warning_instead_of_500(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/shelves*' => Http::response([
+                'message' => 'BookStack API is unavailable',
+            ], 503),
+        ]);
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'sync_interval_minutes' => 10,
+                'read_only' => true,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.integrations.book_stack.sync'))
+            ->assertRedirect()
+            ->assertSessionHas('warning', 'BookStack sync failed: BookStack API is unavailable');
+
+        $integration->refresh();
+
+        $this->assertFalse($integration->is_healthy);
+        $this->assertSame('BookStack API is unavailable', $integration->last_error);
+        $this->assertSame(1, $integration->config['last_sync_summary']['failed']);
+        $this->assertNotNull($integration->last_sync_at);
+    }
+
+    #[Test]
     public function scheduled_book_stack_pull_runs_only_when_interval_is_due(): void
     {
         Carbon::setTestNow('2026-05-15 10:00:00');

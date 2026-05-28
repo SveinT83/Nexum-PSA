@@ -76,6 +76,7 @@ class TicketController extends Controller
             'unassigned',
             'ownership',
             'client_id',
+            'spam',
             'sort',
             'direction',
         ]);
@@ -89,9 +90,10 @@ class TicketController extends Controller
             'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
             'filters' => $filters,
             'stats' => [
-                'open' => Ticket::whereHas('status', fn ($query) => $query->where('is_closed', false))->count(),
-                'mine' => Ticket::where('owner_id', $request->user()?->id)->count(),
-                'unread' => Ticket::where('is_unread', true)->count(),
+                'open' => Ticket::where('is_spam', false)->whereHas('status', fn ($query) => $query->where('is_closed', false))->count(),
+                'mine' => Ticket::where('owner_id', $request->user()?->id)->where('is_spam', false)->count(),
+                'unread' => Ticket::where('is_unread', true)->where('is_spam', false)->count(),
+                'spam' => Ticket::where('is_spam', true)->count(),
             ],
         ]);
     }
@@ -649,6 +651,62 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', $message);
+    }
+
+    public function markSpam(Request $request, Ticket $ticket): RedirectResponse
+    {
+        if ($ticket->is_spam) {
+            return redirect()->route('tech.tickets.index')
+                ->with('success', 'Ticket '.$ticket->ticket_key.' is already marked as spam.');
+        }
+
+        DB::transaction(function () use ($ticket, $request) {
+            $ticket->forceFill([
+                'is_spam' => true,
+                'is_unread' => false,
+                'updated_by' => $request->user()?->id,
+            ])->save();
+
+            TicketEvent::create([
+                'ticket_id' => $ticket->id,
+                'actor_id' => $request->user()?->id,
+                'type' => 'marked_spam',
+                'message' => 'Ticket marked as spam from the ticket list.',
+                'after' => [
+                    'is_spam' => true,
+                    'is_unread' => false,
+                ],
+            ]);
+        });
+
+        return redirect()->route('tech.tickets.index')
+            ->with('success', 'Ticket '.$ticket->ticket_key.' marked as spam.');
+    }
+
+    public function destroy(Request $request, Ticket $ticket): RedirectResponse
+    {
+        DB::transaction(function () use ($ticket, $request) {
+            TicketEvent::create([
+                'ticket_id' => $ticket->id,
+                'actor_id' => $request->user()?->id,
+                'type' => 'deleted',
+                'message' => 'Ticket deleted from the ticket list.',
+                'before' => [
+                    'ticket_key' => $ticket->ticket_key,
+                    'subject' => $ticket->subject,
+                    'is_spam' => $ticket->is_spam,
+                ],
+            ]);
+
+            $ticket->forceFill([
+                'updated_by' => $request->user()?->id,
+            ])->save();
+
+            $ticket->delete();
+        });
+
+        return redirect()->route('tech.tickets.index')
+            ->with('success', 'Ticket '.$ticket->ticket_key.' deleted.');
     }
 
     private function technicians()

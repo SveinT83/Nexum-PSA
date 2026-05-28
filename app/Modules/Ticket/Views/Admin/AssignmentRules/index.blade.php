@@ -8,14 +8,6 @@
 @endsection
 
 @section('content')
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
-    @endif
-
     <!-- Rule creation: MVP supports one or more exact-match conditions and one assign-user action. -->
     <x-card.default title="Create assignment rule">
         <form method="POST" action="{{ route('tech.admin.settings.tickets.assignment-rules.store') }}">

@@ -159,6 +159,11 @@ class UserManagementAdminTest extends TestCase
 
         $this->assertSame(Permission::count(), $superuser->permissions()->count());
 
+        $defaultAdmin = User::where('email', 'admin@tdpsa.com')->firstOrFail();
+
+        $this->assertSame(User::STATUS_ACTIVE, $defaultAdmin->status);
+        $this->assertNotNull($defaultAdmin->email_verified_at);
+
         foreach (['Admin', 'Tech', 'Sales', 'Economy', 'Storage', 'Viewer'] as $role) {
             $this->assertDatabaseHas('roles', ['name' => $role]);
         }

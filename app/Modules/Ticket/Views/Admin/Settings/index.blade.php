@@ -8,15 +8,6 @@
 @endsection
 
 @section('content')
-    <!-- Flash messages: settings actions redirect back here after saving or blocking protected records. -->
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
-    @endif
-
     <!-- Email settings: ticket replies use the Email module account marked with the tickets default scope. -->
     <x-card.default title="Email">
         <form method="POST" action="{{ route('tech.admin.settings.tickets.default-email-account.update') }}">

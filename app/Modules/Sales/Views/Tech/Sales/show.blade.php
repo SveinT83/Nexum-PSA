@@ -23,10 +23,6 @@
 
 @section('content')
     <div class="container-fluid">
-        @if($errors->any())
-            <div class="alert alert-warning">{{ $errors->first() }}</div>
-        @endif
-
         {{-- Opportunity details and forecast are editable while the sales process is active. --}}
         <div class="card mb-4">
             <div class="card-header d-flex align-items-center justify-content-between gap-3">

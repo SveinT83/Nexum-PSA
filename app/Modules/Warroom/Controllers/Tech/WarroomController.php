@@ -4,6 +4,7 @@ namespace App\Modules\Warroom\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -115,7 +116,11 @@ class WarroomController extends Controller
             ],
             'latest_tickets' => $this->latest('tickets', ['id', 'ticket_key', 'subject', 'client_id', 'owner_id', 'is_unread', 'resolve_due_at', 'updated_at'], 6, fn (Builder $query) => $query->whereNull('closed_at')),
             'latest_alerts' => $this->latest('asset_alerts', ['id', 'title', 'status', 'last_seen_at', 'resolved_at'], 5, fn (Builder $query) => $query->whereNull('resolved_at')),
-            'today_events' => $this->latest('calendar_events', ['id', 'title', 'starts_at', 'ends_at', 'status'], 5, fn (Builder $query) => $query->whereBetween('starts_at', [now()->startOfDay(), now()->endOfDay()])),
+            'calendar_events' => $calendarEvents = $this->calendarEvents(),
+            'calendar_events_label' => $calendarEvents->isNotEmpty()
+                && $calendarEvents->every(fn ($event) => $event->starts_at && Carbon::parse($event->starts_at)->isToday())
+                    ? 'Today'
+                    : 'Next event',
             'recent_integrations' => $this->latest('integrations', ['id', 'name', 'type', 'status', 'is_healthy', 'last_sync_at', 'last_error'], 5),
         ];
 
@@ -165,6 +170,48 @@ class WarroomController extends Controller
         $orderColumn = Schema::hasColumn($table, 'updated_at') ? 'updated_at' : 'id';
 
         return $query->orderByDesc($orderColumn)->limit($limit)->get();
+    }
+
+    /**
+     * Show today's calendar events, or the next upcoming event when today is empty.
+     */
+    private function calendarEvents()
+    {
+        $todayEvents = $this->calendarEventQuery()
+            ->whereBetween('starts_at', [now()->startOfDay(), now()->endOfDay()])
+            ->orderBy('starts_at')
+            ->limit(5)
+            ->get();
+
+        if ($todayEvents->isNotEmpty()) {
+            return $todayEvents;
+        }
+
+        return $this->calendarEventQuery()
+            ->where('starts_at', '>', now())
+            ->orderBy('starts_at')
+            ->limit(1)
+            ->get();
+    }
+
+    /**
+     * Build the common calendar query only when the calendar table exists.
+     */
+    private function calendarEventQuery(): Builder
+    {
+        if (! Schema::hasTable('calendar_events')) {
+            return DB::query()->whereRaw('1 = 0');
+        }
+
+        $columns = collect(['id', 'title', 'starts_at', 'ends_at', 'status'])
+            ->filter(fn (string $column) => Schema::hasColumn('calendar_events', $column))
+            ->values()
+            ->all();
+
+        $query = DB::table('calendar_events')->select($columns ?: ['*']);
+        $this->withoutDeleted('calendar_events', $query);
+
+        return $query;
     }
 
     /**

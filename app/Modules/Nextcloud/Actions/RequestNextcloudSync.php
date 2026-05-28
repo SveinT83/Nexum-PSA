@@ -18,6 +18,8 @@ use Throwable;
 
 class RequestNextcloudSync
 {
+    private const PREVIEW_LIMIT = 500;
+
     public function __construct(private readonly NextcloudReadClient $client)
     {
     }
@@ -84,13 +86,13 @@ class RequestNextcloudSync
                     'calendar_event_conflicts' => $eventSummary['conflicts'],
                 ],
                 'preview' => [
-                    'users' => array_slice($users, 0, 25),
-                    'groups' => array_slice($groups, 0, 25),
+                    'users' => array_slice($users, 0, self::PREVIEW_LIMIT),
+                    'groups' => array_slice($groups, 0, self::PREVIEW_LIMIT),
                     'group_members' => collect($groupMembers)
-                        ->map(fn (array $members) => array_slice($members, 0, 50))
+                        ->map(fn (array $members) => array_slice($members, 0, self::PREVIEW_LIMIT))
                         ->all(),
-                    'calendars' => array_slice($calendars, 0, 25),
-                    'files' => array_slice($files, 0, 25),
+                    'calendars' => array_slice($calendars, 0, self::PREVIEW_LIMIT),
+                    'files' => array_slice($files, 0, self::PREVIEW_LIMIT),
                 ],
             ];
 

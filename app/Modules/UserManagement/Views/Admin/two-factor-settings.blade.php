@@ -9,10 +9,6 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-md-8">
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
         <div class="card shadow-sm">
             <div class="card-header">
                 <h4 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Two-Factor Authentication Enforcement</h4>

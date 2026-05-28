@@ -10,10 +10,6 @@
 @endsection
 
 @section('content')
-    @if($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
-    @endif
-
     <form method="POST" action="{{ $mode === 'edit' ? route('tech.admin.settings.tickets.workflows.update', $workflow) : route('tech.admin.settings.tickets.workflows.store') }}">
         @csrf
         @if($mode === 'edit')

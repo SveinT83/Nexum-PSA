@@ -60,6 +60,7 @@
                     filled($filters['queue_id'] ?? null),
                     ($filters['lifecycle'] ?? 'open') !== 'open',
                     ($filters['ownership'] ?? 'mine_unassigned') !== 'mine_unassigned',
+                    ($filters['spam'] ?? 'hide') !== 'hide',
                     ! empty($filters['unread']),
                     ! empty($filters['unassigned']),
                 ])->filter()->count();
@@ -159,6 +160,14 @@
                             </select>
                         </div>
 
+                        <div class="col-md-2">
+                            <label for="ticket_index_spam" class="form-label small text-muted mb-1">Spam</label>
+                            <select id="ticket_index_spam" name="spam" class="form-select form-select-sm">
+                                <option value="hide" @selected(($filters['spam'] ?? 'hide') === 'hide')>Hide spam</option>
+                                <option value="only" @selected(($filters['spam'] ?? 'hide') === 'only')>Spam only</option>
+                            </select>
+                        </div>
+
                         <div class="col-md-4">
                             <div class="d-flex flex-wrap gap-3 pt-md-4">
                                 <div class="form-check">
@@ -231,6 +240,7 @@
                                 Updated <i class="bi {{ $sortIcon('updated') }}"></i>
                             </a>
                         </th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -277,10 +287,31 @@
                             </td>
                             <td>{{ $ticket->status?->name }}</td>
                             <td>{{ $ticket->updated_at?->diffForHumans() }}</td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    @unless($ticket->is_spam)
+                                        <form method="POST" action="{{ route('tech.tickets.spam', $ticket) }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as spam">
+                                                <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Mark {{ $ticket->ticket_key }} as spam</span>
+                                            </button>
+                                        </form>
+                                    @endunless
+                                    <form method="POST" action="{{ route('tech.tickets.destroy', $ticket) }}" onsubmit="return confirm('Delete {{ $ticket->ticket_key }}? This hides the ticket from normal views.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete ticket">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete {{ $ticket->ticket_key }}</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-4">No tickets found.</td>
+                            <td colspan="10" class="text-center text-muted py-4">No tickets found.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -390,6 +421,7 @@
                                     'unread' => $filters['unread'] ?? null,
                                     'unassigned' => $filters['unassigned'] ?? null,
                                     'ownership' => $filters['ownership'] ?? null,
+                                    'spam' => $filters['spam'] ?? null,
                                 ])) }}">Clear</a>
                             @endif
                         </div>
@@ -410,6 +442,7 @@
                                         'unread' => $filters['unread'] ?? null,
                                         'unassigned' => $filters['unassigned'] ?? null,
                                         'ownership' => $filters['ownership'] ?? null,
+                                        'spam' => $filters['spam'] ?? null,
                                         'client_id' => $client->id,
                                     ])) }}"
                                     class="list-group-item list-group-item-action px-0 py-2 border-0 @if (($filters['client_id'] ?? '') == $client->id) active px-2 rounded @endif"
@@ -432,22 +465,28 @@
     {{-- Right rail: lightweight operational counters, intentionally separate from the main list. --}}
     <x-card.default title="Ticket stats">
         <div class="row g-2 text-center">
-            <div class="col-4">
+            <div class="col-3">
                 <div class="border rounded bg-light py-2 px-1">
                     <div class="small text-muted text-uppercase">Open</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['open'] }}</div>
                 </div>
             </div>
-            <div class="col-4">
+            <div class="col-3">
                 <div class="border rounded bg-light py-2 px-1">
                     <div class="small text-muted text-uppercase">Mine</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['mine'] }}</div>
                 </div>
             </div>
-            <div class="col-4">
+            <div class="col-3">
                 <div class="border rounded bg-light py-2 px-1">
                     <div class="small text-muted text-uppercase">Unread</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['unread'] }}</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="border rounded bg-light py-2 px-1">
+                    <div class="small text-muted text-uppercase">Spam</div>
+                    <div class="fw-bold fs-5 lh-1">{{ $stats['spam'] }}</div>
                 </div>
             </div>
         </div>

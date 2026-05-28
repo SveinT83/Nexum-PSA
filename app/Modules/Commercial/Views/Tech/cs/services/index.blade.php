@@ -40,13 +40,6 @@
     @endphp
 
     <!-- ------------------------------------------------- -->
-    <!-- Alert message -->
-    <!-- ------------------------------------------------- -->
-    @if(session('status'))
-        <div class="alert alert-success">{{ session('status') }}</div>
-    @endif
-
-    <!-- ------------------------------------------------- -->
     <!-- Search and filter controls -->
     <!-- ------------------------------------------------- -->
     <form method="GET" action="{{ route('tech.services.index') }}" class="card mb-3">

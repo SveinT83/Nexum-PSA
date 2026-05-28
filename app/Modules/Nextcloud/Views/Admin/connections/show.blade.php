@@ -38,12 +38,6 @@
 @endsection
 
 @section('content')
-    @foreach(['success' => 'success', 'warning' => 'warning', 'info' => 'info'] as $key => $type)
-        @if(session($key))
-            <div class="alert alert-{{ $type }}">{{ session($key) }}</div>
-        @endif
-    @endforeach
-
     @if($hasPushCalendarMappings && ! $connection->canWrite())
         <div class="alert alert-warning">
             This connection is read-only. Nextcloud events can be pulled into Nexum, but Nexum events will not be pushed to Nextcloud until the connection mode is changed to Sync or Managed.
@@ -301,7 +295,12 @@
                 <i class="bi bi-chevron-right me-1" aria-hidden="true"></i>
                 Users
             </button>
-            <span class="badge text-bg-light border">{{ $connection->userMappings->count() }} mapped</span>
+            <div class="d-flex align-items-center gap-2">
+                @if(($latestSyncLog?->context['summary']['users'] ?? 0) > count($syncPreview['users'] ?? []))
+                    <span class="small text-muted">Showing {{ count($syncPreview['users'] ?? []) }} of {{ $latestSyncLog->context['summary']['users'] }}</span>
+                @endif
+                <span class="badge text-bg-light border">{{ $connection->userMappings->count() }} mapped</span>
+            </div>
         </div>
         <div id="nextcloudUsersCollapse" class="collapse">
         <div class="table-responsive">
@@ -333,7 +332,7 @@
                             $selectedClientRole = $mapping?->metadata['client_role'] ?? $suggestedClientRole ?? 'contact';
                             $selectedClientMappingAction = $mapping?->metadata['mapping_action'] ?? ($selectedClientContactId ? 'map_existing' : ($suggestedClientRole ? 'import' : 'skip'));
                         @endphp
-                        <tr>
+                        <tr data-nextcloud-user-row>
                             <td>
                                 <div>{{ $remoteUser }}</div>
                                 @if($isClientScoped && $remoteUserGroups->isNotEmpty())
@@ -341,7 +340,7 @@
                                 @endif
                             </td>
                             <td colspan="2">
-                                <form method="POST" action="{{ route('tech.admin.nextcloud.connections.users.store', $connection) }}" class="row g-2 align-items-center">
+                                <form method="POST" action="{{ route('tech.admin.nextcloud.connections.users.store', $connection) }}" class="row g-2 align-items-center" data-nextcloud-user-mapping-form>
                                     @csrf
                                     <input type="hidden" name="remote_user_id" value="{{ $remoteUser }}">
                                     <input type="hidden" name="remote_username" value="{{ $remoteUser }}">
@@ -400,6 +399,7 @@
                                     @endif
                                     <div class="col-md-2 text-end">
                                         <button class="btn btn-sm btn-outline-primary" type="submit">{{ $isClientScoped ? 'Save' : 'Map' }}</button>
+                                        <div class="small mt-1" data-nextcloud-user-mapping-status></div>
                                     </div>
                                 </form>
                             </td>
@@ -765,6 +765,64 @@
                     window.bootstrap.Modal.getOrCreateInstance(folderBrowserModal).show();
                 }
             @endif
+
+            document.querySelectorAll('[data-nextcloud-user-mapping-form]').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    const button = form.querySelector('button[type="submit"]');
+                    const status = form.querySelector('[data-nextcloud-user-mapping-status]');
+                    const originalText = button ? button.textContent : '';
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || form.querySelector('input[name="_token"]')?.value;
+
+                    if (button) {
+                        button.disabled = true;
+                        button.textContent = 'Saving...';
+                    }
+
+                    if (status) {
+                        status.className = 'small mt-1 text-muted';
+                        status.textContent = 'Saving';
+                    }
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: new FormData(form),
+                    })
+                        .then(async function (response) {
+                            const data = await response.json().catch(function () {
+                                return {};
+                            });
+
+                            if (! response.ok || data.success === false) {
+                                const message = data.message || Object.values(data.errors || {})[0]?.[0] || 'Could not save mapping.';
+                                throw new Error(message);
+                            }
+
+                            if (status) {
+                                status.className = 'small mt-1 text-success';
+                                status.textContent = data.message || 'Saved';
+                            }
+                        })
+                        .catch(function (error) {
+                            if (status) {
+                                status.className = 'small mt-1 text-danger';
+                                status.textContent = error.message || 'Could not save';
+                            }
+                        })
+                        .finally(function () {
+                            if (button) {
+                                button.disabled = false;
+                                button.textContent = originalText;
+                            }
+                        });
+                });
+            });
 
             // Talk Bot test message
             const testTalkBotBtn = document.getElementById('testTalkBotBtn');
