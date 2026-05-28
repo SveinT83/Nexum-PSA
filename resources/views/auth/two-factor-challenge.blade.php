@@ -14,6 +14,14 @@
                         Please enter the authentication code from your authenticator app to continue.
                     </p>
 
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            @foreach ($errors->all() as $error)
+                                <div>{{ $error }}</div>
+                            @endforeach
+                        </div>
+                    @endif
+
                     <form method="POST" action="{{ route('two-factor.login') }}">
                         @csrf
 

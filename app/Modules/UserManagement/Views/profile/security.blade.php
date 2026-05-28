@@ -109,42 +109,19 @@
                         </div>
                     </div>
 
-                    {{-- Manual setup key for users who cannot scan the QR code. --}}
+                    {{-- Manual TOTP setup key for users who cannot scan the QR code. --}}
                     @if($twoFactorSetupKey)
-                        <div class="card border mb-3">
-                            <div class="card-header">
-                                <h5 class="mb-0">Manual TOTP setup</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label">Type</label>
-                                        <input type="text" class="form-control" value="TOTP" readonly>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Issuer</label>
-                                        <input type="text" class="form-control" value="{{ $twoFactorIssuer }}" readonly>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Account</label>
-                                        <input type="text" class="form-control" value="{{ $twoFactorAccountName }}" readonly>
-                                    </div>
-                                    <div class="col-12">
-                                        <label for="two_factor_setup_key" class="form-label">TOTP secret key</label>
-                                        <div class="input-group">
-                                            <input type="text"
-                                                   id="two_factor_setup_key"
-                                                   class="form-control font-monospace"
-                                                   value="{{ $twoFactorSetupKey }}"
-                                                   readonly>
-                                            <button type="button"
-                                                    class="btn btn-outline-secondary"
-                                                    onclick="navigator.clipboard?.writeText(document.getElementById('two_factor_setup_key').value)">
-                                                Copy
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="text-center mb-3">
+                            <button class="btn btn-link btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#totpSetupKey">
+                                Show TOTP code
+                            </button>
+                            <div class="collapse mt-2" id="totpSetupKey">
+                                <code id="two_factor_setup_key" class="d-block mb-2 fs-6">{{ $twoFactorSetupKey }}</code>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        onclick="navigator.clipboard?.writeText(document.getElementById('two_factor_setup_key').textContent.trim())">
+                                    Copy
+                                </button>
                             </div>
                         </div>
                     @endif

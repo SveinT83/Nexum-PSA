@@ -5,6 +5,7 @@ namespace App\Modules\UserManagement\Tests\Feature;
 use App\Models\Core\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -71,11 +72,56 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->actingAs($user)
             ->get(route('tech.profile.security'))
             ->assertOk()
-            ->assertSee('Manual TOTP setup')
-            ->assertSee('TOTP secret key')
-            ->assertSee('TOTP')
-            ->assertSee($user->email)
+            ->assertSee('Show TOTP code')
             ->assertSee($setupKey);
+    }
+
+    #[Test]
+    public function invalid_two_factor_login_code_returns_visible_error()
+    {
+        Log::spy();
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole('Tech');
+
+        app(EnableTwoFactorAuthentication::class)($user);
+        $user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+        $response = $this
+            ->withSession(['login.id' => $user->id, 'login.remember' => false])
+            ->post(route('two-factor.login.store'), [
+                'code' => '000000',
+            ]);
+
+        $response->assertRedirect(route('two-factor.login'));
+        $response->assertSessionHasErrors('code');
+
+        $this->followRedirects($response)
+            ->assertOk()
+            ->assertSee('The provided TOTP code was invalid.');
+
+        Log::shouldHaveReceived('warning')
+            ->with('Two-factor login failed because the submitted code was invalid.', \Mockery::type('array'));
+    }
+
+    #[Test]
+    public function expired_two_factor_login_session_redirects_to_login_with_error()
+    {
+        Log::spy();
+
+        $response = $this->post(route('two-factor.login.store'), [
+            'code' => '000000',
+        ]);
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors('email');
+
+        $this->followRedirects($response)
+            ->assertOk()
+            ->assertSee('Your two-factor login session expired.');
+
+        Log::shouldHaveReceived('warning')
+            ->with('Two-factor login failed because the challenge session was missing.', \Mockery::type('array'));
     }
 
     #[Test]
