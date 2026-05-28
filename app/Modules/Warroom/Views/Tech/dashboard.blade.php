@@ -136,7 +136,7 @@
                 <div class="col-12 col-lg-6">
                     <div class="card h-100">
                         <div class="card-header py-2 d-flex align-items-center justify-content-between">
-                            <h2 class="h6 mb-0">Today</h2>
+                            <h2 class="h6 mb-0">{{ $warroom['calendar_events_label'] }}</h2>
                             @if(Route::has('tech.calendar.index'))
                                 <a href="{{ route('tech.calendar.index') }}" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-calendar3" aria-hidden="true"></i>
@@ -144,7 +144,7 @@
                             @endif
                         </div>
                         <div class="list-group list-group-flush">
-                            @forelse($warroom['today_events'] as $event)
+                            @forelse($warroom['calendar_events'] as $event)
                                 @php
                                     $startsAt = $event->starts_at ? \Illuminate\Support\Carbon::parse($event->starts_at) : null;
                                 @endphp
@@ -153,10 +153,12 @@
                                         <div class="fw-semibold text-truncate">{{ $event->title ?? 'Calendar event' }}</div>
                                         <span class="small text-muted">{{ $startsAt?->format('H:i') ?? '-' }}</span>
                                     </div>
-                                    <div class="small text-muted">{{ $event->status ?? 'scheduled' }}</div>
+                                    <div class="small text-muted">
+                                        {{ $startsAt?->isToday() ? ($event->status ?? 'scheduled') : $startsAt?->format('M j') }}
+                                    </div>
                                 </div>
                             @empty
-                                <div class="list-group-item text-muted py-4 text-center">No calendar events today.</div>
+                                <div class="list-group-item text-muted py-4 text-center">No upcoming calendar events.</div>
                             @endforelse
                         </div>
                     </div>

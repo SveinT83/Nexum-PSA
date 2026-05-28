@@ -9,13 +9,6 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-md-10">
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
         <p class="text-muted mb-4">
             Choose how you want to receive notifications for each event type.
             In-app notifications appear in the bell icon at the top of the page.

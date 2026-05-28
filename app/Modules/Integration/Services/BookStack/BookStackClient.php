@@ -275,6 +275,11 @@ class BookStackClient
             $this->ensureSuccessful($response, $failureMessage);
 
             $data = $response->json('data') ?? [];
+
+            if (! is_array($data)) {
+                throw new RuntimeException($failureMessage.': BookStack returned an invalid list response.');
+            }
+
             $total = (int) ($response->json('total') ?? count($data));
             $pages = array_merge($pages, $data);
             $offset += self::PAGE_SIZE;

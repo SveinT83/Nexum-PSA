@@ -29,16 +29,6 @@
     @endphp
 
     <!-- -------------------------------------------------------------------------------------------------- -->
-    <!-- Section: Alert Messages -->
-    <!-- -------------------------------------------------------------------------------------------------- -->
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    <!-- -------------------------------------------------------------------------------------------------- -->
     <!-- Section: Category List -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     <x-card.default title="System Categories">

@@ -13,10 +13,6 @@
     <!-- User preference form -->
     <div class="row">
         <div class="col-xl-8">
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
-
             <div class="card">
                 <div class="card-header py-2">
                     <h2 class="h6 mb-0">Workspace Defaults</h2>

@@ -8,6 +8,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'Nexum PSA') }}</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
@@ -75,23 +76,22 @@
                         <div class="row content p-1">
                             <div class="container pt-3">
 
-                                @if(session('status'))
-                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                        {{ session('status') }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                    </div>
-                                @endif
+                                @foreach(['status' => 'success', 'success' => 'success', 'warning' => 'warning', 'info' => 'info', 'error' => 'danger'] as $flashKey => $flashType)
+                                    @if($flashKey === 'status' && in_array(session('status'), ['two-factor-enabled', 'two-factor-confirmed', 'two-factor-disabled', 'recovery-codes-regenerated', 'password-updated'], true))
+                                        @continue
+                                    @endif
 
-                                @if(session('success'))
-                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                        {!! session('success') !!}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                    </div>
-                                @endif
+                                    @if(session($flashKey))
+                                        <div class="alert alert-{{ $flashType }} alert-dismissible fade show" role="alert">
+                                            {!! session($flashKey) !!}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    @endif
+                                @endforeach
 
-                                @if(session('warning'))
-                                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                                        {!! session('warning') !!}
+                                @if($errors->any())
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        {{ $errors->first() }}
                                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                     </div>
                                 @endif

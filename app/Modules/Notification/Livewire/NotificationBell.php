@@ -45,6 +45,21 @@ class NotificationBell extends Component
         $this->loadNotifications();
     }
 
+    public function openNotification(string $notificationId)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($notificationId);
+        $url = $notification->data['url'] ?? null;
+
+        $notification->markAsRead();
+        $this->loadNotifications();
+
+        if (filled($url) && $url !== '#') {
+            return redirect()->to($url);
+        }
+
+        return null;
+    }
+
     public function markAllAsRead()
     {
         Auth::user()->unreadNotifications->markAsRead();

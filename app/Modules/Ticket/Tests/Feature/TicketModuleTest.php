@@ -85,6 +85,8 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
         $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
+        $this->assertSame(TicketController::class . '@markSpam', Route::getRoutes()->getByName('tech.tickets.spam')->getActionName());
+        $this->assertSame(TicketController::class . '@destroy', Route::getRoutes()->getByName('tech.tickets.destroy')->getActionName());
         $this->assertSame(TicketController::class . '@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
@@ -241,6 +243,84 @@ class TicketModuleTest extends TestCase
             ->assertSee($unassigned->ticket_key)
             ->assertDontSee('Open other owner hidden')
             ->assertDontSee('Closed mine hidden');
+    }
+
+    #[Test]
+    public function ticket_index_hides_spam_tickets_and_can_filter_to_spam(): void
+    {
+        $visible = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999024',
+            'subject' => 'Visible operational ticket',
+            'owner_id' => $this->tech->id,
+        ]);
+        $spam = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999025',
+            'subject' => 'Spam ticket hidden by default',
+            'owner_id' => $this->tech->id,
+            'is_spam' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee($visible->ticket_key)
+            ->assertDontSee($spam->ticket_key);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index', [
+                'ownership' => 'all',
+                'lifecycle' => 'all',
+                'spam' => 'only',
+            ]))
+            ->assertOk()
+            ->assertSee($spam->ticket_key)
+            ->assertDontSee($visible->ticket_key);
+    }
+
+    #[Test]
+    public function tech_user_can_mark_ticket_as_spam_from_ticket_list(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999026',
+            'subject' => 'Spam action target',
+            'owner_id' => $this->tech->id,
+            'is_unread' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.spam', $ticket))
+            ->assertRedirect(route('tech.tickets.index'))
+            ->assertSessionHas('success', 'Ticket '.$ticket->ticket_key.' marked as spam.');
+
+        $ticket->refresh();
+
+        $this->assertTrue($ticket->is_spam);
+        $this->assertFalse($ticket->is_unread);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'marked_spam',
+        ]);
+    }
+
+    #[Test]
+    public function tech_user_can_soft_delete_ticket_from_ticket_list(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999027',
+            'subject' => 'Delete action target',
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.tickets.destroy', $ticket))
+            ->assertRedirect(route('tech.tickets.index'))
+            ->assertSessionHas('success', 'Ticket '.$ticket->ticket_key.' deleted.');
+
+        $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'deleted',
+        ]);
     }
 
     #[Test]

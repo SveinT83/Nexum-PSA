@@ -10,10 +10,6 @@
 
 @section('content')
     <div class="col-12">
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between gap-3">
                 <h2 class="h6 mb-0">Rules</h2>

@@ -8,14 +8,6 @@
 @endsection
 
 @section('content')
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
-    @endif
-
     <!-- Profile creation: admins can opt active users into future assignment without leaving Ticket settings. -->
     <x-card.default title="Create profile">
         <form method="POST" action="{{ route('tech.admin.settings.tickets.technicians.store') }}" class="row g-2 align-items-end">

@@ -73,6 +73,12 @@ Route::post('/tickets/{ticket}/read', [TicketController::class, 'markRead'])
 Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])
     ->name('tickets.assign');
 
+Route::post('/tickets/{ticket}/spam', [TicketController::class, 'markSpam'])
+    ->name('tickets.spam');
+
+Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])
+    ->name('tickets.destroy');
+
 Route::middleware('admin')->group(function () {
     Route::get('/admin/settings/tickets', [TicketSettingsController::class, 'index'])
         ->name('admin.settings.tickets');

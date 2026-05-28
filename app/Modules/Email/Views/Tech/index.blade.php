@@ -18,11 +18,6 @@
             <button type="submit" class="btn btn-outline-success">Check now</button>
         </form>
 
-        @if(session('status'))
-            <div class="flex-grow-1 w-100">
-                <div class="alert alert-success mb-0 mt-2">{{ session('status') }}</div>
-            </div>
-        @endif
     </div>
 
     <div class="card">

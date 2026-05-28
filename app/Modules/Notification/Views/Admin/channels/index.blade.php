@@ -9,20 +9,6 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-md-8">
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {!! session('success') !!}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        @if(session('warning'))
-            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                {!! session('warning') !!}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
         <p class="text-muted mb-4">
             Configure system-wide notification channels. Users can then choose which channels
             to use for each notification type in their personal preferences.

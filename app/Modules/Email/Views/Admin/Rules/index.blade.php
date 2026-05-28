@@ -18,10 +18,6 @@
 
 @section('content')
   <div class="col-12">
-    @if(session('success'))
-      <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
     @if($missingTable)
       <div class="alert alert-warning">Email rules table not found. Run migrations before creating rules.</div>
     @endif

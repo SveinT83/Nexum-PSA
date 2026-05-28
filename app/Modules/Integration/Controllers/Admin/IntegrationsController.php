@@ -10,6 +10,7 @@ use App\Modules\Integration\Services\BookStack\BookStackClient;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use App\Services\Integrations\TacticalRmm\TacticalRmmClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class IntegrationsController extends Controller
@@ -309,7 +310,37 @@ class IntegrationsController extends Controller
         }
 
         $client = new BookStackClient($integration->server, $tokenId, $tokenSecret);
-        $summary = (new SyncBookStackToKnowledge($integration, $client, $request->user()))->execute();
+
+        try {
+            $summary = (new SyncBookStackToKnowledge($integration, $client, $request->user()))->execute();
+        } catch (\Throwable $exception) {
+            $message = 'BookStack sync failed: '.$exception->getMessage();
+
+            Log::error($message, [
+                'integration_id' => $integration->id,
+                'exception' => $exception,
+            ]);
+
+            $config = $integration->config ?? [];
+            $config['last_sync_summary'] = [
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'failed' => 1,
+                'total' => 0,
+                'errors' => [$exception->getMessage()],
+            ];
+            $config['last_pull_at'] = now()->toIso8601String();
+
+            $integration->forceFill([
+                'config' => $config,
+                'last_sync_at' => now(),
+                'is_healthy' => false,
+                'last_error' => $exception->getMessage(),
+            ])->save();
+
+            return back()->with('warning', $message);
+        }
 
         $message = sprintf(
             'BookStack sync finished. Created: %d. Updated: %d. Skipped: %d. Failed: %d.',

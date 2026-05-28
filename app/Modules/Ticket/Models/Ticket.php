@@ -51,6 +51,7 @@ class Ticket extends Model
         'impact',
         'urgency',
         'is_unread',
+        'is_spam',
         'first_response_due_at',
         'resolve_due_at',
         'first_responded_at',
@@ -61,6 +62,7 @@ class Ticket extends Model
 
     protected $casts = [
         'is_unread' => 'boolean',
+        'is_spam' => 'boolean',
         'metadata' => 'array',
         'sla_snapshot' => 'array',
         'first_response_due_at' => 'datetime',

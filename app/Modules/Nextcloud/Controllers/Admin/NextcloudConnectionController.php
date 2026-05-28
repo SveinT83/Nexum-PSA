@@ -224,6 +224,13 @@ class NextcloudConnectionController extends Controller
             ]
         );
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Nextcloud user mapping saved.',
+            ]);
+        }
+
         return back()->with('success', 'Nextcloud user mapping saved.');
     }
 
@@ -290,6 +297,13 @@ class NextcloudConnectionController extends Controller
                 ]
             );
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Nextcloud user left unmapped.',
+                ]);
+            }
+
             return back()->with('success', 'Nextcloud user left unmapped.');
         }
 
@@ -347,6 +361,13 @@ class NextcloudConnectionController extends Controller
                 ],
             ]
         );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Nextcloud client user mapping saved.',
+            ]);
+        }
 
         return back()->with('success', 'Nextcloud client user mapping saved.');
     }

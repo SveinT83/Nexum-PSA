@@ -21,10 +21,6 @@
 
 @section('content')
     <div class="col-12">
-        @if($errors->any())
-            <div class="alert alert-danger">{{ $errors->first() }}</div>
-        @endif
-
         <form id="ticket-rule-form" method="POST" action="{{ $isEdit ? route('tech.admin.settings.tickets.rules.update', $rule) : route('tech.admin.settings.tickets.rules.store') }}">
             @csrf
             @if($isEdit)
