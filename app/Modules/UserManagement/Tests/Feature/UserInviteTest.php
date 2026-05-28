@@ -3,10 +3,15 @@
 namespace App\Modules\UserManagement\Tests\Feature;
 
 use App\Models\Core\User;
+use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\UserManagement\Jobs\SendUserInviteEmail;
 use App\Modules\UserManagement\Models\InviteToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -19,6 +24,7 @@ class UserInviteTest extends TestCase
     {
         parent::setUp();
         Notification::fake();
+        Queue::fake();
 
         Role::firstOrCreate(['name' => 'Admin']);
     }
@@ -50,6 +56,7 @@ class UserInviteTest extends TestCase
 
         // Notification should have been sent
         Notification::assertSentTo($user, \App\Modules\UserManagement\Notifications\UserInvited::class);
+        Queue::assertPushed(SendUserInviteEmail::class, fn (SendUserInviteEmail $job) => $job->inviteTokenId === $user->inviteTokens()->first()->id);
     }
 
     #[Test]
@@ -67,6 +74,7 @@ class UserInviteTest extends TestCase
         $response->assertRedirect(route('tech.admin.user_management.index'));
 
         Notification::assertSentTo($pendingUser, \App\Modules\UserManagement\Notifications\UserInvited::class);
+        Queue::assertPushed(SendUserInviteEmail::class);
     }
 
     #[Test]
@@ -85,6 +93,67 @@ class UserInviteTest extends TestCase
         $response->assertSessionHas('error');
 
         Notification::assertNotSentTo($activeUser, \App\Modules\UserManagement\Notifications\UserInvited::class);
+        Queue::assertNotPushed(SendUserInviteEmail::class);
+    }
+
+    #[Test]
+    public function queued_invite_email_uses_system_template()
+    {
+        $pendingUser = User::factory()->create([
+            'name' => 'Jane Template',
+            'email' => 'jane-template@example.com',
+            'status' => User::STATUS_PENDING,
+        ]);
+        $inviteToken = InviteToken::generateFor($pendingUser);
+
+        EmailTemplate::create([
+            'scope' => 'system',
+            'key' => 'user_invite',
+            'name' => 'User invitation',
+            'subject' => 'Invite to {{ app_name }}',
+            'body_html' => '<p>Hello {{ user_name }}</p><p>{{ invite_url }}</p>',
+            'body_text' => "Hello {{ user_name }}\n{{ invite_url }}",
+            'variables' => ['app_name', 'user_name', 'invite_url'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        EmailAccount::create([
+            'address' => 'system@example.test',
+            'from_name' => 'System',
+            'is_active' => true,
+            'is_global_default' => false,
+            'defaults_for' => ['system'],
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'system@example.test',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'system@example.test',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+
+        app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer {
+            public function send(\App\Modules\Email\Models\EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = []): string
+            {
+                app()->instance('user_invite_email_payload', compact('toEmail', 'toName', 'subject', 'html', 'text'));
+
+                return '<user-invite@example.test>';
+            }
+        });
+
+        app()->call([new SendUserInviteEmail($inviteToken->id), 'handle']);
+
+        $payload = app('user_invite_email_payload');
+        $this->assertSame('jane-template@example.com', $payload['toEmail']);
+        $this->assertSame('Invite to '.config('app.name'), $payload['subject']);
+        $this->assertStringContainsString('Jane Template', $payload['html']);
+        $this->assertStringContainsString(route('invite.accept', ['token' => $inviteToken->token]), $payload['text']);
     }
 
     #[Test]

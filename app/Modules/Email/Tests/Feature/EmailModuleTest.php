@@ -211,6 +211,13 @@ class EmailModuleTest extends TestCase
             'is_default' => true,
         ]);
 
+        $this->assertDatabaseHas('email_templates', [
+            'scope' => 'system',
+            'key' => 'user_invite',
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
         foreach (['sales_activity_email', 'sales_internal_note', 'sales_quote_send'] as $key) {
             $this->assertDatabaseHas('email_templates', [
                 'scope' => 'sales',

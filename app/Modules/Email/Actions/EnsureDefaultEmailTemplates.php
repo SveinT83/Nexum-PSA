@@ -63,6 +63,17 @@ class EnsureDefaultEmailTemplates
                 'is_active' => true,
             ],
             [
+                'scope' => 'system',
+                'key' => 'user_invite',
+                'name' => 'User invitation',
+                'subject' => 'You have been invited to {{ app_name }}',
+                'body_html' => '<p>Hello {{ user_name }},</p><p>You have been invited to join <strong>{{ app_name }}</strong>.</p><p>Click the link below to set up your account and choose a password:</p><p><a href="{{ invite_url }}">Accept invitation</a></p><p>This invitation link expires in {{ expires_hours }} hours.</p><p>If you did not expect this invitation, you can safely ignore this email.</p>',
+                'body_text' => "Hello {{ user_name }},\n\nYou have been invited to join {{ app_name }}.\n\nOpen this link to set up your account and choose a password:\n{{ invite_url }}\n\nThis invitation link expires in {{ expires_hours }} hours.\n\nIf you did not expect this invitation, you can safely ignore this email.",
+                'variables' => ['app_name', 'user_name', 'user_email', 'invite_url', 'expires_hours'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            [
                 'scope' => 'sales',
                 'key' => 'sales_activity_email',
                 'name' => 'Sales activity email',
