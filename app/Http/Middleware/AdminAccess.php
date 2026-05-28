@@ -28,7 +28,9 @@ class AdminAccess
                 ->withErrors(['email' => 'Your user account is not active. Contact an administrator.']);
         }
 
-        if (! $user->hasRole('Superuser') && ! $user->hasRole('Admin')) {
+        // Admin URLs are protected by route permissions. This middleware keeps
+        // the active-account guardrail without hard-coding Admin/Superuser only.
+        if (! $user->roles()->exists() && ! $user->permissions()->exists()) {
             abort(403, 'No access');
         }
 

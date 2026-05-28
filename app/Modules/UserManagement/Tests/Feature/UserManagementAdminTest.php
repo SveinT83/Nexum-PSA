@@ -62,8 +62,10 @@ class UserManagementAdminTest extends TestCase
     public function admin_can_list_roles_as_rows_with_counts(): void
     {
         Permission::findOrCreate('ticket.view');
+        Permission::findOrCreate('user.manage_roles');
         $techRole = Role::where('name', 'Tech')->firstOrFail();
         $techRole->givePermissionTo('ticket.view');
+        $this->admin->givePermissionTo('user.manage_roles');
 
         $techUser = User::factory()->create([
             'name' => 'Role Count User',
@@ -83,6 +85,38 @@ class UserManagementAdminTest extends TestCase
             ->assertDontSee('Actions')
             ->assertDontSee('Edit')
             ->assertDontSee('ticket.view');
+    }
+
+    #[Test]
+    public function admin_route_is_blocked_without_required_permission(): void
+    {
+        Permission::findOrCreate('user.view');
+
+        $role = Role::create(['name' => 'No User Access']);
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole($role);
+
+        $this->actingAs($user)
+            ->get(route('tech.admin.user_management.index'))
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function custom_role_can_open_admin_route_with_required_permission(): void
+    {
+        Permission::findOrCreate('user.view');
+
+        $role = Role::create(['name' => 'Custom User Manager']);
+        $role->givePermissionTo('user.view');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole($role);
+
+        $this->actingAs($user)
+            ->get(route('tech.admin.user_management.index'))
+            ->assertOk()
+            ->assertViewIs('usermanagement::Admin.index');
     }
 
     #[Test]

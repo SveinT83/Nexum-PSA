@@ -39,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tech' => \App\Http\Middleware\TechAccess::class,
             'admin' => \App\Http\Middleware\AdminAccess::class,
+            'tech.permission' => \App\Http\Middleware\EnforceTechRoutePermission::class,
             '2fa.required' => \App\Http\Middleware\RequireTwoFactor::class,
         ]);
     })
@@ -52,4 +53,3 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->create();
-

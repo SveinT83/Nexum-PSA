@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech-Admin/Superuser routes
 // ------------------------------------------------------------------------------------------
-Route::middleware(['auth', 'tech', 'admin'])->group(function () {
+Route::middleware(['auth', 'tech', 'admin', 'tech.permission'])->group(function () {
 
         // ------------------------------------------------------------------------------------------
         // Admin Settings routes

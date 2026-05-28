@@ -5,6 +5,7 @@ namespace App\Modules\UserManagement\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
@@ -25,11 +26,18 @@ class ProfileSecurityController extends Controller
     public function show(): View
     {
         $user = auth()->user();
+        $twoFactorEnabled = ! is_null($user->two_factor_secret);
+        $twoFactorConfirmed = ! is_null($user->two_factor_confirmed_at);
 
         return view('usermanagement::profile.security', [
             'user' => $user,
-            'twoFactorEnabled' => ! is_null($user->two_factor_secret),
-            'twoFactorConfirmed' => ! is_null($user->two_factor_confirmed_at),
+            'twoFactorEnabled' => $twoFactorEnabled,
+            'twoFactorConfirmed' => $twoFactorConfirmed,
+            'twoFactorSetupKey' => $twoFactorEnabled && ! $twoFactorConfirmed
+                ? Crypt::decryptString($user->two_factor_secret)
+                : null,
+            'twoFactorIssuer' => config('app.name', 'Nexum PSA'),
+            'twoFactorAccountName' => $user->email,
         ]);
     }
 

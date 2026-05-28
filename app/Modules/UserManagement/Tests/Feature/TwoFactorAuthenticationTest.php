@@ -4,6 +4,7 @@ namespace App\Modules\UserManagement\Tests\Feature;
 
 use App\Models\Core\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -52,6 +53,29 @@ class TwoFactorAuthenticationTest extends TestCase
         $user->refresh();
         $this->assertNotNull($user->two_factor_secret);
         $this->assertNull($user->two_factor_confirmed_at); // Not confirmed yet
+    }
+
+    #[Test]
+    public function pending_two_factor_setup_shows_manual_setup_key()
+    {
+        $user = User::factory()->create([
+            'status' => User::STATUS_ACTIVE,
+        ]);
+        $user->assignRole('Tech');
+
+        app(EnableTwoFactorAuthentication::class)($user);
+        $user->refresh();
+
+        $setupKey = Crypt::decryptString($user->two_factor_secret);
+
+        $this->actingAs($user)
+            ->get(route('tech.profile.security'))
+            ->assertOk()
+            ->assertSee('Manual TOTP setup')
+            ->assertSee('TOTP secret key')
+            ->assertSee('TOTP')
+            ->assertSee($user->email)
+            ->assertSee($setupKey);
     }
 
     #[Test]
