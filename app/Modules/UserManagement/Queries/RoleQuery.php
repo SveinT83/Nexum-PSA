@@ -9,6 +9,9 @@ class RoleQuery
 {
     public function allWithPermissions(): Collection
     {
-        return Role::with('permissions')->orderBy('name')->get();
+        return Role::query()
+            ->withCount(['permissions', 'users'])
+            ->orderBy('name')
+            ->get();
     }
 }

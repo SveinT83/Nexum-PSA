@@ -6,7 +6,6 @@ use Illuminate\Database\Seeder;
 use App\Models\Core\User;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
 {
@@ -36,6 +35,8 @@ class AdminUserSeeder extends Seeder
         if (!$adminUser->hasRole($superuserRole)) {
             $adminUser->assignRole($superuserRole);
         }
+
+        $superuserRole->givePermissionTo(Permission::all());
 
         $this->command->info('Admin bruker opprettet eller oppdatert:');
         $this->command->info('E-post: admin@tdpsa.com');

@@ -9,7 +9,7 @@
 @section('content')
 
     <!-- -------------------------------------------------------------------------------------------------- -->
-    <!-- Roles Card -->
+    <!-- Roles table -->
     <!-- -------------------------------------------------------------------------------------------------- -->
 
     <div class="card">
@@ -32,46 +32,41 @@
         </div>
 
         <!-- --------------------------------------------- -->
-        <!-- For each role an row whit role name and -->
-        <!-- permissions and a edit button -->
+        <!-- Role rows with permission and user counts -->
         <!-- --------------------------------------------- -->
-        <div class="card-body">
-            @foreach($roles as $role)
-                <div class="row mt-2">
-
-                    <!-- Role Name -->
-                    <b class="col-md-10">{{ $role->name }}</b>
-
-                    <!-- Edit button -->
-                    <div class="col-md-2 text-end">
-                        @if($role->name != 'Superuser')
-                            <x-buttons.editlink url="{{ route('tech.admin.user_management.roles.edit', $role->id) }}"> Edit</x-buttons.editlink>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="row mb-2 border-bottom">
-                    <!-- --------------------------------------------- -->
-                    <!-- If no permissions -->
-                    <!-- --------------------------------------------- -->
-                    @if($role->permissions->isEmpty())
-                        <div class="col-12">
-                            <p class="text-muted">This role has no permissions</p>
-                        </div>
-                    @else
-
-                        <!-- --------------------------------------------- -->
-                        <!-- For each permission an col whit permission name -->
-                        <!-- --------------------------------------------- -->
-                        @foreach($role->permissions as $permission)
-                            <div class="col-auto">
-                                <p>{{ $permission->name }}</p>
-                            </div>
-                        @endforeach
-                    @endif
-
-                </div>
-            @endforeach
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Role</th>
+                        <th scope="col" class="text-end">Permissions</th>
+                        <th scope="col" class="text-end">Users</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($roles as $role)
+                        <tr class="cursor-pointer"
+                            style="cursor: pointer;"
+                            data-href="{{ route('tech.admin.user_management.roles.edit', $role->id) }}"
+                            title="Open role"
+                            onclick="window.location.href = this.dataset.href">
+                            <td>
+                                <span class="fw-semibold">{{ $role->name }}</span>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge text-bg-light">{{ $role->permissions_count }}</span>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge text-bg-light">{{ $role->users_count }}</span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">No roles found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 
