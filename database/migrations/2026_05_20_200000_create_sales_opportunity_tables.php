@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('opportunity_key')->unique();
             $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();
             $table->foreignId('primary_contact_id')->nullable()->constrained('client_users')->nullOnDelete();
-            $table->foreignId('owner_id')->nullable()->constrained(env('AUTH_USER_TABLE', 'users'))->nullOnDelete();
+            $table->foreignId('owner_id')->nullable()->constrained('user_management')->nullOnDelete();
             $table->string('title');
             $table->string('type')->default('service_agreement');
             $table->string('status')->default('new_lead')->index();
@@ -46,8 +46,8 @@ return new class extends Migration
             $table->timestamp('lost_at')->nullable();
             $table->text('lost_reason')->nullable();
             $table->json('metadata')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained(env('AUTH_USER_TABLE', 'users'))->nullOnDelete();
-            $table->foreignId('updated_by')->nullable()->constrained(env('AUTH_USER_TABLE', 'users'))->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('user_management')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('user_management')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
 
@@ -71,7 +71,7 @@ return new class extends Migration
         Schema::create('sales_activities', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('opportunity_id')->constrained('sales_opportunities')->cascadeOnDelete();
-            $table->foreignId('actor_id')->nullable()->constrained(env('AUTH_USER_TABLE', 'users'))->nullOnDelete();
+            $table->foreignId('actor_id')->nullable()->constrained('user_management')->nullOnDelete();
             $table->string('type')->default('journal');
             $table->string('direction')->nullable();
             $table->string('subject')->nullable();
@@ -124,8 +124,8 @@ return new class extends Migration
             $table->string('accepted_ip')->nullable();
             $table->text('accepted_ua')->nullable();
             $table->timestamp('rejected_at')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained(env('AUTH_USER_TABLE', 'users'))->nullOnDelete();
-            $table->foreignId('updated_by')->nullable()->constrained(env('AUTH_USER_TABLE', 'users'))->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('user_management')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('user_management')->nullOnDelete();
             $table->timestamps();
 
             $table->unique(['quote_id', 'version_number']);

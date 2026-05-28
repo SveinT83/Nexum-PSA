@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Core\User;
 
 return new class extends Migration
 {
@@ -24,13 +23,13 @@ return new class extends Migration
             $table->timestamp('read_at')->nullable();
             $table->nullableTimestamps();
 
-            $table->index('notifiable_type', 'notifiable_id', 'read_at');
+            $table->index(['notifiable_type', 'notifiable_id', 'read_at'], 'notifications_notifiable_read_index');
         });
 
         // Per-user notification channel preferences
         Schema::create('notification_settings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained((new User())->getTable())->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('user_management')->cascadeOnDelete();
             $table->string('notification_type'); // e.g. 'ticket_assigned', 'ticket_updated', 'asset_alert'
             $table->boolean('mail_enabled')->default(true);
             $table->boolean('database_enabled')->default(true);

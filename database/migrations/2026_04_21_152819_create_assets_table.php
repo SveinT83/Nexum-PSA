@@ -27,9 +27,9 @@ return new class extends Migration
             $table->string('rmm_id')->nullable()->index();
             $table->boolean('is_managed')->default(false);
             $table->string('status')->default('unknown'); // online, offline, unknown, in_service
-            $table->foreignId('user_id')->nullable()->after('site_id')->constrained('client_users')->onDelete('set null');
-            $table->enum('ip_type', ['dhcp', 'fixed'])->default('dhcp')->after('ip_address');
-            $table->foreignId('vendor_id')->nullable()->after('vendor')->constrained('vendors')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained('client_users')->onDelete('set null');
+            $table->enum('ip_type', ['dhcp', 'fixed'])->default('dhcp');
+            $table->foreignId('vendor_id')->nullable()->constrained('vendors')->onDelete('set null');
             $table->timestamp('last_seen_at')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();

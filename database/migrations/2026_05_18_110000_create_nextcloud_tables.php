@@ -54,7 +54,7 @@ return new class extends Migration
             Schema::create('nextcloud_user_credentials', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('connection_id')->constrained('nextcloud_connections')->cascadeOnDelete();
-                $table->foreignIdFor(User::class)->constrained((new User())->getTable())->cascadeOnDelete();
+                $table->foreignIdFor(User::class)->constrained('user_management')->cascadeOnDelete();
                 $table->string('remote_username');
                 $table->text('app_password')->nullable();
                 $table->boolean('is_active')->default(true);
@@ -92,7 +92,7 @@ return new class extends Migration
                 $table->id();
                 $table->foreignId('connection_id')->constrained('nextcloud_connections')->cascadeOnDelete();
                 $table->foreignId('calendar_id')->nullable()->constrained('calendars')->nullOnDelete();
-                $table->foreignIdFor(User::class)->nullable()->constrained((new User())->getTable())->nullOnDelete();
+                $table->foreignIdFor(User::class)->nullable()->constrained('user_management')->nullOnDelete();
                 $table->string('remote_calendar_id');
                 $table->string('remote_display_name')->nullable();
                 $table->string('sync_direction')->default('two_way');
@@ -110,7 +110,7 @@ return new class extends Migration
             Schema::create('nextcloud_user_mappings', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('connection_id')->constrained('nextcloud_connections')->cascadeOnDelete();
-                $table->foreignIdFor(User::class)->nullable()->constrained((new User())->getTable())->nullOnDelete();
+                $table->foreignIdFor(User::class)->nullable()->constrained('user_management')->nullOnDelete();
                 $table->string('remote_user_id');
                 $table->string('remote_username')->nullable();
                 $table->string('remote_email')->nullable();
@@ -152,7 +152,7 @@ return new class extends Migration
                 $table->string('operation');
                 $table->string('status')->default('queued');
                 $table->string('credential_source')->nullable();
-                $table->foreignIdFor(User::class)->nullable()->constrained((new User())->getTable())->nullOnDelete();
+                $table->foreignIdFor(User::class)->nullable()->constrained('user_management')->nullOnDelete();
                 $table->unsignedInteger('records_seen')->default(0);
                 $table->unsignedInteger('records_changed')->default(0);
                 $table->unsignedInteger('records_failed')->default(0);
@@ -179,8 +179,8 @@ return new class extends Migration
                 $table->json('local_snapshot')->nullable();
                 $table->json('remote_snapshot')->nullable();
                 $table->text('message')->nullable();
-                $table->foreignIdFor(User::class, 'assigned_user_id')->nullable()->constrained((new User())->getTable())->nullOnDelete();
-                $table->foreignIdFor(User::class, 'resolved_by')->nullable()->constrained((new User())->getTable())->nullOnDelete();
+                $table->foreignIdFor(User::class, 'assigned_user_id')->nullable()->constrained('user_management')->nullOnDelete();
+                $table->foreignIdFor(User::class, 'resolved_by')->nullable()->constrained('user_management')->nullOnDelete();
                 $table->timestamp('resolved_at')->nullable();
                 $table->timestamps();
 

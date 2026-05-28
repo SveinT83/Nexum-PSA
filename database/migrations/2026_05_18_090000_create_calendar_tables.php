@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $userTable = (new \App\Models\Core\User())->getTable();
+        $userTable = 'user_management';
 
         if (! Schema::hasTable('calendars')) {
             Schema::create('calendars', function (Blueprint $table) {

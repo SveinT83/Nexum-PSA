@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Core\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +14,7 @@ return new class extends Migration
 
         Schema::create('user_preferences', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(User::class)->unique()->constrained((new User())->getTable())->cascadeOnDelete();
+            $table->foreignId('user_id')->unique()->constrained('user_management')->cascadeOnDelete();
             $table->string('timezone')->default('Europe/Oslo');
             $table->string('default_calendar_view')->default('week');
             $table->time('workday_start')->default('08:00:00');
