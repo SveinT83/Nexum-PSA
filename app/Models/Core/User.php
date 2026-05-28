@@ -78,7 +78,7 @@ class User extends Authenticatable
 
     public function getTable()
     {
-        return env('AUTH_USER_TABLE', 'users');
+        return env('AUTH_USER_TABLE', 'user_management');
     }
 
     /*

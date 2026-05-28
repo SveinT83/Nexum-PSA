@@ -33,6 +33,23 @@ return new class extends Migration
             $table->index(['book_id', 'priority']);
             $table->index(['source_system', 'sync_status'], 'knowledge_chapters_source_status_index');
         });
+
+        Schema::table('articles', function (Blueprint $table): void {
+            $table->foreign('knowledge_shelf_id')
+                ->references('id')
+                ->on('knowledge_shelves')
+                ->nullOnDelete();
+
+            $table->foreign('knowledge_book_id')
+                ->references('id')
+                ->on('knowledge_books')
+                ->nullOnDelete();
+
+            $table->foreign('knowledge_chapter_id')
+                ->references('id')
+                ->on('knowledge_chapters')
+                ->nullOnDelete();
+        });
     }
 
     /**
@@ -40,6 +57,12 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('articles', function (Blueprint $table): void {
+            $table->dropForeign(['knowledge_shelf_id']);
+            $table->dropForeign(['knowledge_book_id']);
+            $table->dropForeign(['knowledge_chapter_id']);
+        });
+
         Schema::dropIfExists('knowledge_chapters');
     }
 };
