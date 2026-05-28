@@ -11,6 +11,14 @@ use App\Models\Core\User;
 use Illuminate\Support\Facades\Log;
 
 Route::get('/', function (Request $request) {
+    if (Auth::check()) {
+        $user = $request->user();
+
+        if ($user?->isActive() && ($user->roles()->exists() || $user->permissions()->exists())) {
+            return redirect()->route('tech.dashboard');
+        }
+    }
+
     $email = $request->query('email');
     $ts = $request->query('ts');
     $sig = $request->query('sig');

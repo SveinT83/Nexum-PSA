@@ -134,6 +134,17 @@ class UserManagementAdminTest extends TestCase
     }
 
     #[Test]
+    public function active_internal_user_opening_root_is_redirected_to_dashboard(): void
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole('Tech');
+
+        $this->actingAs($user)
+            ->get('/')
+            ->assertRedirect(route('tech.dashboard'));
+    }
+
+    #[Test]
     public function permission_seeders_create_catalog_and_sync_superuser(): void
     {
         $this->seed(\Database\Seeders\PermissionSeeder::class);
