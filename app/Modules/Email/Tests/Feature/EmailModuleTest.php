@@ -8,6 +8,7 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Modules\Email\Controllers\Admin\AccountsController;
 use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
+use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAttachment;
@@ -29,6 +30,7 @@ use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Database\Seeders\EmailTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
@@ -68,6 +70,62 @@ class EmailModuleTest extends TestCase
             ->assertOk()
             ->assertViewIs('email::Tech.index')
             ->assertViewHas('messages');
+    }
+
+    #[Test]
+    public function check_now_queues_email_polling_jobs_without_running_imap_in_request(): void
+    {
+        Queue::fake();
+
+        EmailAccount::create([
+            'address' => 'support@example.test',
+            'from_name' => 'Support',
+            'is_active' => true,
+            'is_global_default' => false,
+            'defaults_for' => [],
+            'delete_policy' => 'local_only',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.test',
+            'imap_secret' => 'secret',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.test',
+            'smtp_secret' => 'secret',
+            'smtp_auth_type' => 'password',
+        ]);
+
+        EmailAccount::create([
+            'address' => 'disabled@example.test',
+            'from_name' => 'Disabled',
+            'is_active' => false,
+            'is_global_default' => false,
+            'defaults_for' => [],
+            'delete_policy' => 'local_only',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'disabled@example.test',
+            'imap_secret' => 'secret',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'disabled@example.test',
+            'smtp_secret' => 'secret',
+            'smtp_auth_type' => 'password',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.inbox.poll'))
+            ->assertRedirect(route('tech.inbox.index'))
+            ->assertSessionHas('status', 'Inbox check queued for 1 account.');
+
+        Queue::assertPushed(FetchImapAccount::class, 1);
+        Queue::assertPushed(FetchImapAccount::class, fn (FetchImapAccount $job) => $job->batchSize === 20 && $job->syncStore === false);
     }
 
     #[Test]

@@ -8,6 +8,7 @@ use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Services\ImapClient;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -44,25 +45,35 @@ class InboxController extends Controller
 
     /**
      * Manually trigger immediate polling for all active email accounts.
-     * Dispatches FetchImapAccount jobs; returns back to inbox with a flash.
+     * Dispatches FetchImapAccount jobs asynchronously; returns back to inbox with a flash.
      */
     public function poll(Request $request)
     {
-        $settings = \App\Models\Settings\CommonSetting::where('type', 'emailhub')
-            ->get()->pluck('value', 'name')->toArray();
-        $batchSize = (int)($settings['batch_size'] ?? 20);
+        try {
+            $settings = \App\Models\Settings\CommonSetting::where('type', 'emailhub')
+                ->get()->pluck('value', 'name')->toArray();
+            $batchSize = (int)($settings['batch_size'] ?? 20);
 
-        $accounts = EmailAccount::query()->where('is_active', true)->get();
+            $accounts = EmailAccount::query()->where('is_active', true)->get();
 
-        $dispatched = 0;
-        foreach ($accounts as $account) {
-            // Force synchronous fetch AND synchronous storage now
-            FetchImapAccount::dispatchSync($account->id, $batchSize, true);
-            $dispatched++;
+            $dispatched = 0;
+            foreach ($accounts as $account) {
+                FetchImapAccount::dispatch($account->id, $batchSize);
+                $dispatched++;
+            }
+        } catch (\Throwable $exception) {
+            Log::error('Manual inbox polling could not be queued.', [
+                'user_id' => $request->user()?->id,
+                'error' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
+
+            return redirect()->route('tech.inbox.index')
+                ->with('warning', 'Inbox check could not be queued. Check the email settings and queue worker.');
         }
 
         return redirect()->route('tech.inbox.index')
-            ->with('status', $dispatched ? ("Checked now for {$dispatched} account" . ($dispatched>1?'s':'')) : 'No active accounts to poll');
+            ->with('status', $dispatched ? ("Inbox check queued for {$dispatched} account" . ($dispatched > 1 ? 's' : '') . '.') : 'No active accounts to poll.');
     }
 
     public function show(EmailMessage $message)
