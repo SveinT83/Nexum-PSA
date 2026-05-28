@@ -8,15 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('tickets') || ! Schema::hasColumn('tickets', 'is_spam')) {
+            return;
+        }
+
         Schema::table('tickets', function (Blueprint $table) {
-            $table->boolean('is_spam')->default(false)->after('is_unread')->index();
+            $table->dropColumn('is_spam');
         });
     }
 
     public function down(): void
     {
+        if (! Schema::hasTable('tickets') || Schema::hasColumn('tickets', 'is_spam')) {
+            return;
+        }
+
         Schema::table('tickets', function (Blueprint $table) {
-            $table->dropColumn('is_spam');
+            $table->boolean('is_spam')->default(false)->after('is_unread')->index();
         });
     }
 };

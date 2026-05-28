@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Controllers\Admin\AccountsController;
 use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
 use App\Modules\Email\Jobs\FetchImapAccount;
@@ -837,6 +838,73 @@ class EmailModuleTest extends TestCase
     }
 
     #[Test]
+    public function exact_duplicate_inbound_email_links_to_existing_ticket_when_auto_merge_is_enabled(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        CommonSetting::create([
+            'type' => 'ticket_merge',
+            'name' => 'auto_merge_enabled',
+            'value' => '1',
+        ]);
+        $client = Client::factory()->create(['name' => 'Merge Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Merge Contact',
+            'email' => 'merge-contact@example.test',
+        ]);
+        $existing = Ticket::create([
+            'ticket_key' => 'TD-2026-999501',
+            'queue_id' => TicketQueue::where('is_default', true)->firstOrFail()->id,
+            'ticket_type_id' => TicketType::where('slug', 'support')->firstOrFail()->id,
+            'type' => 'support',
+            'status_id' => TicketStatus::where('slug', 'new')->firstOrFail()->id,
+            'priority_id' => \App\Modules\Ticket\Models\TicketPriority::where('slug', 'normal')->firstOrFail()->id,
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'channel' => 'email',
+            'subject' => 'Duplicate printer problem',
+            'description' => 'Printer is offline.',
+            'is_unread' => false,
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'post@tronderdata.no',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'post@tronderdata.no',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'post@tronderdata.no',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 147,
+            'message_id' => '<duplicate-ticket@example.test>',
+            'subject' => 'Duplicate printer problem',
+            'from_name' => $contact->name,
+            'from_email' => $contact->email,
+            'to_json' => [['name' => 'Support', 'email' => 'post@tronderdata.no']],
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Printer is offline.',
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $this->assertSame($existing->id, $email->fresh()->ticket_id);
+        $this->assertSame(1, Ticket::where('subject', 'Duplicate printer problem')->count());
+        $this->assertSame(1, TicketMessage::where('ticket_id', $existing->id)->count());
+    }
+
+    #[Test]
     public function unmatched_inbound_email_from_unknown_sender_creates_lead_ticket_by_default(): void
     {
         app(EnsureTicketDefaults::class)->handle();
@@ -934,6 +1002,60 @@ class EmailModuleTest extends TestCase
         $this->assertSame('untriaged', $email->fresh()->state);
         $this->assertTrue($email->fresh()->tags()->where('tags.slug', 'spam')->exists());
         $this->assertSame(0, Ticket::where('subject', 'Cheap nonsense')->count());
+    }
+
+    #[Test]
+    public function not_ticket_tagged_inbound_email_stays_in_inbox_without_creating_ticket(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $account = EmailAccount::create([
+            'address' => 'post@tronderdata.no',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'post@tronderdata.no',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'post@tronderdata.no',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 51,
+            'message_id' => '<unknown-not-ticket@example.test>',
+            'subject' => 'Newsletter status',
+            'from_name' => 'Newsletter Sender',
+            'from_email' => 'newsletter@example.test',
+            'to_json' => [['name' => 'Post', 'email' => 'post@tronderdata.no']],
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'This should not become a support ticket.',
+        ]);
+        EmailRule::create([
+            'name' => 'Keep newsletter in inbox',
+            'trigger' => EmailRule::TRIGGER_INBOUND,
+            'weight' => 1,
+            'is_active' => true,
+            'stop_processing' => false,
+            'conditions_json' => [
+                ['field' => 'from', 'operator' => 'equals', 'value' => 'newsletter@example.test'],
+            ],
+            'actions_json' => [
+                ['type' => 'tag', 'value' => 'not-ticket'],
+            ],
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $this->assertNull($email->fresh()->ticket_id);
+        $this->assertSame('untriaged', $email->fresh()->state);
+        $this->assertTrue($email->fresh()->tags()->where('tags.slug', 'not-ticket')->exists());
+        $this->assertSame(0, Ticket::where('subject', 'Newsletter status')->count());
     }
 
     #[Test]

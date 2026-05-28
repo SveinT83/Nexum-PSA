@@ -197,14 +197,14 @@ class InboundEmailRuleEngine
         $this->linkByHeaderReferences($message);
         $message = $message->fresh();
 
-        if ($message->ticket_id !== null || $message->state === 'archived') {
+        if ($message->ticket_id !== null || $message->state === 'archived' || $this->isTicketSuppressedTagged($message)) {
             return;
         }
 
         $this->linkByTicketKey($message);
         $message = $message->fresh();
 
-        if ($message->ticket_id !== null || $message->state === 'archived') {
+        if ($message->ticket_id !== null || $message->state === 'archived' || $this->isTicketSuppressedTagged($message)) {
             return;
         }
 
@@ -395,7 +395,7 @@ class InboundEmailRuleEngine
 
         $message = $message->fresh();
 
-        if ($message->ticket_id !== null || $message->state === 'archived' || $this->isSpamTagged($message)) {
+        if ($message->ticket_id !== null || $message->state === 'archived' || $this->isTicketSuppressedTagged($message)) {
             return;
         }
 
@@ -415,11 +415,11 @@ class InboundEmailRuleEngine
             ->exists();
     }
 
-    private function isSpamTagged(EmailMessage $message): bool
+    private function isTicketSuppressedTagged(EmailMessage $message): bool
     {
         $message->loadMissing('tags');
 
-        return $message->tags->contains(fn (Tag $tag) => in_array(strtolower($tag->slug ?: $tag->name), ['spam', 'junk'], true));
+        return $message->tags->contains(fn (Tag $tag) => in_array(strtolower($tag->slug ?: $tag->name), ['not-ticket', 'spam', 'junk'], true));
     }
 
     private function tag(EmailMessage $message, string $tag): void

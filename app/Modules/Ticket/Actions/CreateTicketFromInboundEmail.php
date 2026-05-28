@@ -3,7 +3,9 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Clients\ClientUser;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Services\BodyNormalizer;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketType;
@@ -35,6 +37,14 @@ class CreateTicketFromInboundEmail
 
             $email->loadMissing('tags');
             $contact = $this->contactFromSender($email);
+            $duplicate = $this->exactDuplicateTicket($email, $contact);
+
+            if ($duplicate) {
+                $this->linkInboundEmailToTicket->handle($email->fresh(), $duplicate);
+
+                return $duplicate->fresh();
+            }
+
             $emailTagNames = $email->tags->pluck('name')->filter()->implode(' ');
 
             // StoreTicket keeps default selection and Ticket Rules in one place for every ticket entry path.
@@ -107,8 +117,55 @@ class CreateTicketFromInboundEmail
         return Ticket::where('ticket_key', strtoupper($matches[0]))->first();
     }
 
+    private function exactDuplicateTicket(EmailMessage $email, ?ClientUser $contact): ?Ticket
+    {
+        if (! $this->ticketMergeSettingEnabled('auto_merge_enabled')) {
+            return null;
+        }
+
+        $subject = mb_strtolower($this->subject($email));
+        $body = $this->normalizedBody($email);
+
+        if ($subject === '' || $body === '') {
+            return null;
+        }
+
+        return Ticket::query()
+            ->whereNull('merged_into_ticket_id')
+            ->where('client_id', $contact?->site?->client_id)
+            ->where('contact_id', $contact?->id)
+            ->whereHas('status', fn ($query) => $query->where('is_closed', false))
+            ->latest('updated_at')
+            ->get()
+            ->first(fn (Ticket $ticket) => mb_strtolower(trim($ticket->subject)) === $subject
+                && $this->normalizedTicketBody($ticket) === $body);
+    }
+
+    private function ticketMergeSettingEnabled(string $name): bool
+    {
+        return CommonSetting::query()
+            ->where('type', 'ticket_merge')
+            ->where('name', $name)
+            ->value('value') === '1';
+    }
+
+    private function normalizedTicketBody(Ticket $ticket): string
+    {
+        return $this->normalizeComparableText((string) $ticket->description);
+    }
+
     private function body(EmailMessage $email): string
     {
         return $email->body_text ?: trim(strip_tags((string) $email->body_html_sanitized));
+    }
+
+    private function normalizedBody(EmailMessage $email): string
+    {
+        return $this->normalizeComparableText(BodyNormalizer::stripQuotedHistory($this->body($email)));
+    }
+
+    private function normalizeComparableText(string $text): string
+    {
+        return trim(preg_replace('/\s+/', ' ', mb_strtolower($text)) ?? '');
     }
 }

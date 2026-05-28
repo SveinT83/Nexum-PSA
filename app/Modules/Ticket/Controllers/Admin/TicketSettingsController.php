@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Taxonomy\Models\Category;
@@ -37,6 +38,7 @@ class TicketSettingsController extends Controller
             'defaultTicketEmailAccount' => $emailAccounts->first(
                 fn (EmailAccount $account) => in_array('tickets', (array) $account->defaults_for, true)
             ),
+            'mergeSettings' => $this->ticketMergeSettings(),
             'queues' => TicketQueue::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'types' => TicketType::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
@@ -180,6 +182,33 @@ class TicketSettingsController extends Controller
         $updateDefaultTicketEmailAccount->handle($selectedAccount);
 
         return back()->with('success', 'Default ticket email account updated.');
+    }
+
+    public function updateMergeSettings(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'auto_merge_enabled' => 'nullable|boolean',
+            'ai_merge_enabled' => 'nullable|boolean',
+            'ai_similarity_threshold' => 'required|integer|min:70|max:100',
+        ]);
+
+        $settings = [
+            'auto_merge_enabled' => (bool) ($data['auto_merge_enabled'] ?? false),
+            'ai_merge_enabled' => (bool) ($data['ai_merge_enabled'] ?? false),
+            'ai_similarity_threshold' => (int) $data['ai_similarity_threshold'],
+        ];
+
+        foreach ($settings as $name => $value) {
+            CommonSetting::updateOrCreate(
+                ['type' => 'ticket_merge', 'name' => $name],
+                [
+                    'description' => 'Ticket merge automation setting.',
+                    'value' => is_bool($value) ? ($value ? '1' : '0') : (string) $value,
+                ],
+            );
+        }
+
+        return back()->with('success', 'Ticket merge settings updated.');
     }
 
     public function rules(): View
@@ -364,6 +393,19 @@ class TicketSettingsController extends Controller
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
 
         return $data;
+    }
+
+    private function ticketMergeSettings(): array
+    {
+        $settings = CommonSetting::query()
+            ->where('type', 'ticket_merge')
+            ->pluck('value', 'name');
+
+        return [
+            'auto_merge_enabled' => $settings->get('auto_merge_enabled', '0') === '1',
+            'ai_merge_enabled' => $settings->get('ai_merge_enabled', '0') === '1',
+            'ai_similarity_threshold' => (int) $settings->get('ai_similarity_threshold', 90),
+        ];
     }
 
     /**

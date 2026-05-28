@@ -532,6 +532,7 @@
             </div>
         </div>
     </div>
+
 </div>
 
 {{-- Time registration modal --}}

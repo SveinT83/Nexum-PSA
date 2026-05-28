@@ -33,6 +33,36 @@
         </form>
     </x-card.default>
 
+    <!-- Ticket merge settings: manual merge is always available; automation remains explicitly controlled. -->
+    <x-card.default title="Ticket Merging">
+        <form method="POST" action="{{ route('tech.admin.settings.tickets.merge-settings.update') }}">
+            @csrf
+
+            <input type="hidden" name="auto_merge_enabled" value="0">
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="auto_merge_enabled" name="auto_merge_enabled" value="1" @checked($mergeSettings['auto_merge_enabled'])>
+                <label class="form-check-label" for="auto_merge_enabled">Automatically merge exact duplicate inbound tickets</label>
+            </div>
+
+            <input type="hidden" name="ai_merge_enabled" value="0">
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="ai_merge_enabled" name="ai_merge_enabled" value="1" @checked($mergeSettings['ai_merge_enabled'])>
+                <label class="form-check-label" for="ai_merge_enabled">Allow AI-assisted merge suggestions</label>
+            </div>
+
+            <div class="mb-3">
+                <label for="ai_similarity_threshold" class="form-label">AI similarity threshold</label>
+                <div class="input-group" style="max-width: 220px;">
+                    <input id="ai_similarity_threshold" name="ai_similarity_threshold" type="number" min="70" max="100" class="form-control" value="{{ old('ai_similarity_threshold', $mergeSettings['ai_similarity_threshold']) }}" required>
+                    <span class="input-group-text">%</span>
+                </div>
+                <div class="form-text">AI-assisted merging only prepares suggestions. Manual confirmation is still required.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save merge settings</button>
+        </form>
+    </x-card.default>
+
     <!-- Ticket types: high-level classification used by manual creation and Ticket Rules. -->
     <x-card.default title="Ticket Types">
         <x-slot name="headerActions">

@@ -45,7 +45,7 @@ Implemented now:
 - Inbound email linking to existing tickets by `In-Reply-To`/`References` matching prior outbound ticket reply `Message-ID` logs.
 - Inbound email rule action for creating a new ticket from an unmatched email.
 - Default inbound email policy that creates tickets automatically when the sender matches an active client contact.
-- Default inbound email policy that creates Lead tickets for unknown senders unless the Email filter archived or spam-tagged the message first.
+- Default inbound email policy that creates Lead tickets for unknown senders unless the Email filter archived or tagged the message as not-ticket/noise first.
 - Ticket tags using the shared `taggables` table, including manual ticket edit support and inbound Email tag inheritance.
 - Ticket attachments with dedicated storage records, upload on ticket messages, download links, inbound Email attachment copying, and outbound customer reply sending.
 - Technician Profiles for future assignment, including capacity, working hours, and category/tag skills.
@@ -58,6 +58,8 @@ Implemented now:
 - Ticket show Activity timeline combines conversation messages and time records in the same accordion list.
 - Ticket show Time rightbar widget includes a local per-ticket stopwatch with pause/resume and stop-to-register flow.
 - Ticket cost registration can reserve active Storage items from a ticket, show the reservation as an editable Activity row, and leave billing decisions pending.
+- Manual bulk ticket merging from the Ticket list. Technicians select two or more tickets, choose the primary ticket in a Bootstrap modal, and merge the rest into that primary ticket. Merging moves conversation messages, time, costs, attachments, linked email records, tasks, tags, and relevant allocation records onto the target ticket, records an audit event, soft-deletes the source ticket, and redirects old source-ticket links to the target.
+- Ticket merge settings under Ticket Settings for exact duplicate auto-merge and AI-assisted merge suggestions. Exact duplicate inbound emails can link to an existing open ticket when global auto-merge is enabled; AI-assisted merging remains controlled by settings and does not auto-merge without confirmation.
 - Feature tests for the current main flows.
 
 Most recent completed work:
@@ -70,7 +72,7 @@ Most recent completed work:
 - Ticket Assignment scoring now includes tag skill matches in addition to category, working hours, and capacity.
 - Ticket messages can now store uploaded attachments in `ticket_attachments`; inbound Email attachments are copied to ticket-owned attachment records when the email is linked, and customer reply attachments are sent with outbound SMTP.
 - Inbound replies can now match existing tickets from email headers even when the customer changes the subject.
-- Unknown inbound senders now become Lead tickets by default, while spam-tagged or archived messages stay out of Ticket.
+- Unknown inbound senders now become Lead tickets by default, while archived or not-ticket/noise-tagged messages stay out of Ticket.
 - Technician Profiles now exist under Ticket, with a self-service technician profile page and admin management under Ticket Settings.
 - Technician profile skills can be tied to ticket categories and tags, preparing assignment scoring without hardcoding client-by-client rules.
 - Assignment Rules now exist under Ticket Settings for explicit owner routing, such as customer/contact/queue/category to technician.
@@ -138,6 +140,7 @@ Current important files:
 - `app/Modules/Ticket/Actions/CloseTicket.php` - convenience close operation using the same lifecycle status change.
 - `app/Modules/Ticket/Actions/MarkTicketRead.php` - clears the ticket unread flag and stamps unread messages as read.
 - `app/Modules/Ticket/Actions/MarkTicketMessageSolution.php` - marks one public technician response as the ticket solution for workflow requirements.
+- `app/Modules/Ticket/Actions/MergeTickets.php` - consolidates a source ticket into a target ticket, transfers related records, writes merge history, and soft-deletes the source.
 - `app/Modules/Ticket/Actions/UpdateDefaultTicketEmailAccount.php` - updates the Email module's per-scope default for `tickets`.
 - `app/Modules/Ticket/Actions/UpdateTicketFields.php` - updates queue, priority, category, and owner with audit events.
 - `app/Modules/Ticket/Actions/LinkInboundEmailToTicket.php` - links an Email module inbound message to an existing ticket, inherits Email tags, and creates a public customer reply.
@@ -167,10 +170,12 @@ Routes are loaded through the existing Tech route loader, so the current public 
 - `tech.tickets.messages.solution`
 - `tech.tickets.read`
 - `tech.tickets.assign`
+- `tech.tickets.merge`
 - `tech.tickets.profile.edit`
 - `tech.tickets.profile.update`
 - `tech.admin.settings.tickets`
 - `tech.admin.settings.tickets.default-email-account.update`
+- `tech.admin.settings.tickets.merge-settings.update`
 - `tech.admin.settings.tickets.queues.store`
 - `tech.admin.settings.tickets.queues.update`
 - `tech.admin.settings.tickets.queues.destroy`
@@ -575,7 +580,7 @@ Remaining assignment work:
   - Remaining: add recipient-address/thread fallback for cases without outbound logs.
 - Unknown senders:
   - Done: route unknown senders to the default Lead ticket type.
-  - Done: skip default Lead creation when Email Rules have archived or spam-tagged the message.
+  - Done: skip default Lead creation when Email Rules have archived or not-ticket/noise-tagged the message.
   - Remaining: add settings for lead queue/type overrides if the default Lead type is not enough.
 - Permissions:
   - Add ticket-specific permissions for settings, assignment, reply, edit, close, and run assignment.

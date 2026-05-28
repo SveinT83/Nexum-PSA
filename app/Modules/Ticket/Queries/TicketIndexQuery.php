@@ -30,7 +30,6 @@ class TicketIndexQuery
             ->when($filters['priority_id'] ?? null, fn ($query, $priorityId) => $query->where('priority_id', $priorityId))
             ->when($filters['category_id'] ?? null, fn ($query, $categoryId) => $query->where('category_id', $categoryId))
             ->when($filters['client_id'] ?? null, fn ($query, $clientId) => $query->where('client_id', $clientId))
-            ->when(($filters['spam'] ?? 'hide') === 'only', fn ($query) => $query->where('is_spam', true), fn ($query) => $query->where('is_spam', false))
             ->when(($filters['lifecycle'] ?? 'open') === 'open', fn ($query) => $query->whereHas('status', fn ($statusQuery) => $statusQuery->where('is_closed', false)))
             ->when(($filters['lifecycle'] ?? 'open') === 'closed', fn ($query) => $query->whereHas('status', fn ($statusQuery) => $statusQuery->where('is_closed', true)))
             ->when($filters['unread'] ?? null, fn ($query) => $query->where('is_unread', true))

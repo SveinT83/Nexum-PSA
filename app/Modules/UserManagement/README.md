@@ -40,6 +40,8 @@ Routes live in `app/Modules/UserManagement/routes.php` and keep the existing rou
 - `tech.admin.user_management.index`
 - `tech.admin.user_management.create`
 - `tech.admin.user_management.store`
+- `tech.admin.user_management.show`
+- `tech.admin.user_management.roles.update-user`
 - `tech.admin.user_management.roles.*`
 - `tech.admin.user_management.permissions.*`
 
@@ -48,7 +50,9 @@ The module routes are loaded inside the `/tech` group and add `admin` middleware
 ## Responsibilities
 
 - List application users with roles.
+- Open an admin employee profile from the user list.
 - Create users and assign an initial role.
+- Update a user's role assignments from the employee profile.
 - Store authenticated-user preferences such as timezone, default calendar view, and normal workday.
 - List, create, update, and delete roles.
 - List, create, update, and delete permissions.

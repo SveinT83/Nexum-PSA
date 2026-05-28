@@ -3,6 +3,9 @@
 namespace App\Modules\UserManagement\Tests\Feature;
 
 use App\Models\Core\User;
+use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\Ticket\Models\TicketTechnicianProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
@@ -39,7 +42,113 @@ class UserManagementAdminTest extends TestCase
             ->get(route('tech.admin.user_management.index'))
             ->assertOk()
             ->assertViewIs('usermanagement::Admin.index')
-            ->assertSee('Listed User');
+            ->assertSee('Listed User')
+            ->assertSee(route('tech.admin.user_management.show', $user), false);
+    }
+
+    #[Test]
+    public function admin_can_open_user_employee_profile(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Employee Profile User',
+            'status' => User::STATUS_ACTIVE,
+        ]);
+        $user->assignRole('Tech');
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.user_management.show', $user))
+            ->assertOk()
+            ->assertViewIs('usermanagement::Admin.show')
+            ->assertSee('Employee Profile')
+            ->assertSee('Employee Profile User')
+            ->assertSee('Roles')
+            ->assertSee('Tech');
+    }
+
+    #[Test]
+    public function admin_can_update_user_contact_details_from_employee_profile(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Old Employee Name',
+            'email' => 'old.employee@example.test',
+            'status' => User::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.user_management.profile.update', $user), [
+                'name' => 'New Employee Name',
+                'email' => 'new.employee@example.test',
+                'phone_work' => '+47 73500000',
+                'phone_private' => '+47 40000000',
+            ])
+            ->assertRedirect(route('tech.admin.user_management.show', $user))
+            ->assertSessionHas('success', 'User profile updated successfully.');
+
+        $user->refresh();
+
+        $this->assertSame('New Employee Name', $user->name);
+        $this->assertSame('new.employee@example.test', $user->email);
+        $this->assertSame('+47 73500000', $user->phone_work);
+        $this->assertSame('+47 40000000', $user->phone_private);
+    }
+
+    #[Test]
+    public function employee_profile_shows_ticket_technician_skills_when_profile_exists(): void
+    {
+        $category = Category::create([
+            'name' => 'Network',
+            'slug' => 'network',
+            'type' => Category::TYPE_TICKET,
+            'is_active' => true,
+        ]);
+        $tag = Tag::create([
+            'name' => 'Fiber',
+            'slug' => 'fiber',
+            'active' => true,
+        ]);
+        $user = User::factory()->create([
+            'name' => 'Skilled Technician',
+            'status' => User::STATUS_ACTIVE,
+        ]);
+        $profile = TicketTechnicianProfile::create([
+            'user_id' => $user->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 7,
+            'timezone' => 'Europe/Oslo',
+            'working_hours' => [],
+        ]);
+        $profile->categories()->attach($category->id);
+        $profile->tags()->attach($tag->id);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.user_management.show', $user))
+            ->assertOk()
+            ->assertSee('Ticket Technician Profile')
+            ->assertSee('Network')
+            ->assertSee('Fiber')
+            ->assertSee(route('tech.admin.settings.tickets.technicians.edit', $profile), false);
+    }
+
+    #[Test]
+    public function admin_can_update_roles_from_user_employee_profile(): void
+    {
+        $salesRole = Role::create(['name' => 'Sales']);
+        $techRole = Role::where('name', 'Tech')->firstOrFail();
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole($techRole);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.user_management.roles.update-user', $user), [
+                'roles' => [$salesRole->id],
+            ])
+            ->assertRedirect(route('tech.admin.user_management.show', $user))
+            ->assertSessionHas('success', 'User roles updated successfully.');
+
+        $user->refresh();
+
+        $this->assertTrue($user->hasRole('Sales'));
+        $this->assertFalse($user->hasRole('Tech'));
     }
 
     #[Test]

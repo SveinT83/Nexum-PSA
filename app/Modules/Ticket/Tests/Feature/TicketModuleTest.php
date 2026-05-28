@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
 use App\Models\Knowledge\Article;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
@@ -14,6 +15,8 @@ use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
+use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Storage\Models\Item as StorageItem;
@@ -85,10 +88,12 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
         $this->assertSame(TicketController::class . '@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
         $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
-        $this->assertSame(TicketController::class . '@markSpam', Route::getRoutes()->getByName('tech.tickets.spam')->getActionName());
+        $this->assertSame(TicketController::class . '@mergeSelected', Route::getRoutes()->getByName('tech.tickets.merge')->getActionName());
+        $this->assertSame(TicketController::class . '@markNotTicket', Route::getRoutes()->getByName('tech.tickets.not-ticket')->getActionName());
         $this->assertSame(TicketController::class . '@destroy', Route::getRoutes()->getByName('tech.tickets.destroy')->getActionName());
         $this->assertSame(TicketController::class . '@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
+        $this->assertSame(TicketSettingsController::class . '@updateMergeSettings', Route::getRoutes()->getByName('tech.admin.settings.tickets.merge-settings.update')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storePriority', Route::getRoutes()->getByName('tech.admin.settings.tickets.priorities.store')->getActionName());
         $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TechnicianProfileController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
@@ -246,60 +251,67 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
-    public function ticket_index_hides_spam_tickets_and_can_filter_to_spam(): void
-    {
-        $visible = $this->createTicket(null, [
-            'ticket_key' => 'TD-2026-999024',
-            'subject' => 'Visible operational ticket',
-            'owner_id' => $this->tech->id,
-        ]);
-        $spam = $this->createTicket(null, [
-            'ticket_key' => 'TD-2026-999025',
-            'subject' => 'Spam ticket hidden by default',
-            'owner_id' => $this->tech->id,
-            'is_spam' => true,
-        ]);
-
-        $this->actingAs($this->tech)
-            ->get(route('tech.tickets.index'))
-            ->assertOk()
-            ->assertSee($visible->ticket_key)
-            ->assertDontSee($spam->ticket_key);
-
-        $this->actingAs($this->tech)
-            ->get(route('tech.tickets.index', [
-                'ownership' => 'all',
-                'lifecycle' => 'all',
-                'spam' => 'only',
-            ]))
-            ->assertOk()
-            ->assertSee($spam->ticket_key)
-            ->assertDontSee($visible->ticket_key);
-    }
-
-    #[Test]
-    public function tech_user_can_mark_ticket_as_spam_from_ticket_list(): void
+    public function tech_user_can_mark_ticket_as_not_ticket_from_ticket_list(): void
     {
         $ticket = $this->createTicket(null, [
             'ticket_key' => 'TD-2026-999026',
-            'subject' => 'Spam action target',
+            'subject' => 'Not ticket action target',
             'owner_id' => $this->tech->id,
-            'is_unread' => true,
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'support@example.test',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.test',
+            'imap_secret' => 'secret',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.test',
+            'smtp_secret' => 'secret',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 990026,
+            'message_id' => '<not-ticket@example.test>',
+            'subject' => 'Newsletter status',
+            'from_email' => 'sender@example.test',
+            'received_at' => now(),
+            'state' => 'linked',
+            'body_text' => 'This is not a support request.',
+            'ticket_id' => $ticket->id,
         ]);
 
         $this->actingAs($this->tech)
-            ->post(route('tech.tickets.spam', $ticket))
+            ->post(route('tech.tickets.not-ticket', $ticket))
             ->assertRedirect(route('tech.tickets.index'))
-            ->assertSessionHas('success', 'Ticket '.$ticket->ticket_key.' marked as spam.');
+            ->assertSessionHas('success', 'Ticket '.$ticket->ticket_key.' returned to Inbox. 1 email(s) tagged as not-ticket.');
 
-        $ticket->refresh();
+        $email->refresh();
 
-        $this->assertTrue($ticket->is_spam);
-        $this->assertFalse($ticket->is_unread);
+        $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+        $this->assertNull($email->ticket_id);
+        $this->assertSame('untriaged', $email->state);
+        $this->assertTrue($email->tags()->where('tags.slug', 'not-ticket')->exists());
         $this->assertDatabaseHas('ticket_events', [
             'ticket_id' => $ticket->id,
-            'type' => 'marked_spam',
+            'type' => 'marked_not_ticket',
         ]);
+
+        $rule = EmailRule::query()->where('name', 'like', 'Not ticket:%')->first();
+
+        $this->assertNotNull($rule);
+        $this->assertTrue($rule->is_active);
+        $this->assertTrue($rule->stop_processing);
+        $this->assertSame([
+            ['field' => 'from', 'operator' => 'equals', 'value' => 'sender@example.test'],
+            ['field' => 'subject', 'operator' => 'equals', 'value' => 'Newsletter status'],
+        ], $rule->conditions_json);
+        $this->assertSame([
+            ['type' => 'tag', 'value' => 'not-ticket'],
+        ], $rule->actions_json);
     }
 
     #[Test]
@@ -321,6 +333,99 @@ class TicketModuleTest extends TestCase
             'ticket_id' => $ticket->id,
             'type' => 'deleted',
         ]);
+    }
+
+    #[Test]
+    public function ticket_index_exposes_bulk_merge_controls(): void
+    {
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999028',
+            'subject' => 'Merge candidate one',
+            'owner_id' => $this->tech->id,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999029',
+            'subject' => 'Merge candidate two',
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee('ticket_bulk_select_all')
+            ->assertSee('ticketBulkMergeButton')
+            ->assertSee('Merge selected');
+    }
+
+    #[Test]
+    public function tech_user_can_bulk_merge_selected_tickets_into_a_primary_ticket(): void
+    {
+        $target = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999030',
+            'subject' => 'Primary outage ticket',
+            'owner_id' => $this->tech->id,
+        ]);
+        $source = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999031',
+            'subject' => 'Duplicate outage ticket',
+            'owner_id' => $this->tech->id,
+            'is_unread' => true,
+        ]);
+        $message = TicketMessage::create([
+            'ticket_id' => $source->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'internal_note',
+            'visibility' => 'internal',
+            'body' => 'Duplicate ticket context.',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.merge'), [
+                'ticket_ids' => [$target->id, $source->id],
+                'target_ticket_id' => $target->id,
+                'reason' => 'Same customer issue.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $target))
+            ->assertSessionHas('success', 'Merged 1 ticket(s) into '.$target->ticket_key.'.');
+
+        $source->refresh();
+        $target->refresh();
+
+        $this->assertSoftDeleted('tickets', ['id' => $source->id]);
+        $this->assertSame($target->id, $source->merged_into_ticket_id);
+        $this->assertTrue($target->is_unread);
+        $this->assertSame($target->id, $message->fresh()->ticket_id);
+        $this->assertDatabaseHas('ticket_messages', [
+            'ticket_id' => $target->id,
+            'subject' => 'Ticket merged',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $target->id,
+            'type' => 'merged_ticket',
+        ]);
+    }
+
+    #[Test]
+    public function merged_ticket_show_redirects_to_target_ticket(): void
+    {
+        $target = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999037',
+            'owner_id' => $this->tech->id,
+        ]);
+        $source = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999038',
+            'owner_id' => $this->tech->id,
+            'merged_into_ticket_id' => $target->id,
+            'merged_by' => $this->tech->id,
+            'merged_at' => now(),
+        ]);
+        $source->delete();
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $source))
+            ->assertRedirect(route('tech.tickets.show', $target))
+            ->assertSessionHas('warning');
     }
 
     #[Test]
@@ -2231,7 +2336,29 @@ class TicketModuleTest extends TestCase
         $this->actingAs($admin)
             ->get(route('tech.admin.settings.tickets'))
             ->assertOk()
-            ->assertViewIs('ticket::Admin.Settings.index');
+            ->assertViewIs('ticket::Admin.Settings.index')
+            ->assertSee('Ticket Merging');
+    }
+
+    #[Test]
+    public function admin_can_update_ticket_merge_settings(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.merge-settings.update'), [
+                'auto_merge_enabled' => '1',
+                'ai_merge_enabled' => '1',
+                'ai_similarity_threshold' => 90,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Ticket merge settings updated.');
+
+        $this->assertSame('1', CommonSetting::where('type', 'ticket_merge')->where('name', 'auto_merge_enabled')->value('value'));
+        $this->assertSame('1', CommonSetting::where('type', 'ticket_merge')->where('name', 'ai_merge_enabled')->value('value'));
+        $this->assertSame('90', CommonSetting::where('type', 'ticket_merge')->where('name', 'ai_similarity_threshold')->value('value'));
     }
 
     #[Test]
