@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 // ------------------------------------------------------------------------------------------
 // Authenticated Tech/Superuser routes
 // ------------------------------------------------------------------------------------------
-Route::middleware(['auth','tech','2fa.required'])->group(function () {
+Route::middleware(['auth','tech','2fa.required','tech.permission'])->group(function () {
 
     foreach (glob(app_path('Modules/*/routes.php')) as $routeFile) {
         require $routeFile;

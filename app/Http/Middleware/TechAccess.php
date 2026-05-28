@@ -28,8 +28,8 @@ class TechAccess
                 ->withErrors(['email' => 'Your user account is not active. Contact an administrator.']);
         }
 
-        // Require Superuser, Tech or Admin role
-        if (! $user->hasRole('Superuser') && ! $user->hasRole('Tech') && ! $user->hasRole('Admin')) {
+        // Require an internal role or direct permissions; domain access is enforced per route.
+        if (! $user->roles()->exists() && ! $user->permissions()->exists()) {
             abort(403, 'Ingen tilgang');
         }
 
