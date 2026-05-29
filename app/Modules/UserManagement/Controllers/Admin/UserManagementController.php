@@ -10,9 +10,13 @@ use App\Modules\UserManagement\Actions\UpdateUserStatus;
 use App\Modules\UserManagement\Menus\SideBar\UserManagementMenu;
 use App\Modules\UserManagement\Queries\RoleQuery;
 use App\Modules\UserManagement\Queries\UserQuery;
+use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketTechnicianProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 /**
  * Admin controller for application users.
@@ -39,6 +43,25 @@ class UserManagementController extends Controller
         ]);
     }
 
+    public function show(User $user, RoleQuery $roles, UserManagementMenu $menu): View
+    {
+        $user->load(['roles', 'permissions', 'inviteTokens' => fn ($query) => $query->latest()]);
+        $technicianProfile = TicketTechnicianProfile::with(['categories', 'tags'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        return view('usermanagement::Admin.show', [
+            'sidebarMenuItems' => $menu->items(),
+            'user' => $user,
+            'roles' => $roles->allWithPermissions(),
+            'technicianProfile' => $technicianProfile,
+            'openTicketCount' => Ticket::query()
+                ->where('owner_id', $user->id)
+                ->whereHas('status', fn ($query) => $query->where('is_closed', false))
+                ->count(),
+        ]);
+    }
+
     public function store(Request $request, StoreUser $action): RedirectResponse
     {
         $action->handle($request->validate([
@@ -52,6 +75,26 @@ class UserManagementController extends Controller
             ->with('success', 'User created successfully.');
     }
 
+    public function updateProfile(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique((new User())->getTable(), 'email')->ignore($user->id),
+            ],
+            'phone_work' => 'nullable|string|max:50',
+            'phone_private' => 'nullable|string|max:50',
+        ]);
+
+        $user->forceFill($validated)->save();
+
+        return redirect()->route('tech.admin.user_management.show', $user)
+            ->with('success', 'User profile updated successfully.');
+    }
+
     public function updateStatus(Request $request, User $user, UpdateUserStatus $action): RedirectResponse
     {
         $validated = $request->validate([
@@ -60,8 +103,25 @@ class UserManagementController extends Controller
 
         $action->handle($user, $validated['status']);
 
-        return redirect()->route('tech.admin.user_management.index')
+        return redirect()->back(302, [], route('tech.admin.user_management.index'))
             ->with('success', 'User status updated successfully.');
+    }
+
+    public function updateRoles(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'roles' => 'nullable|array',
+            'roles.*' => 'integer|exists:roles,id',
+        ]);
+
+        $roles = Role::query()
+            ->whereIn('id', $validated['roles'] ?? [])
+            ->get();
+
+        $user->syncRoles($roles);
+
+        return redirect()->route('tech.admin.user_management.show', $user)
+            ->with('success', 'User roles updated successfully.');
     }
 
     /**
@@ -70,13 +130,13 @@ class UserManagementController extends Controller
     public function sendInvite(User $user, SendUserInvite $action): RedirectResponse
     {
         if (! $user->isPending()) {
-            return redirect()->route('tech.admin.user_management.index')
+            return redirect()->back(302, [], route('tech.admin.user_management.index'))
                 ->with('error', 'Only pending users can receive invitations.');
         }
 
         $action->handle($user);
 
-        return redirect()->route('tech.admin.user_management.index')
+        return redirect()->back(302, [], route('tech.admin.user_management.index'))
             ->with('success', "Invitation sent to {$user->email}.");
     }
 }

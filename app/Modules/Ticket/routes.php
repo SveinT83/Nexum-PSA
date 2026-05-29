@@ -22,10 +22,14 @@ Route::patch('/tickets/profile', [TechnicianProfileController::class, 'update'])
 Route::post('/tickets', [TicketController::class, 'store'])
     ->name('tickets.store');
 
+Route::post('/tickets/merge', [TicketController::class, 'mergeSelected'])
+    ->name('tickets.merge');
+
 Route::get('/tickets/{ticket}/edit', [TicketController::class, 'edit'])
     ->name('tickets.edit');
 
 Route::get('/tickets/{ticket}', [TicketController::class, 'show'])
+    ->withTrashed()
     ->name('tickets.show');
 
 Route::patch('/tickets/{ticket}', [TicketController::class, 'update'])
@@ -73,8 +77,8 @@ Route::post('/tickets/{ticket}/read', [TicketController::class, 'markRead'])
 Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])
     ->name('tickets.assign');
 
-Route::post('/tickets/{ticket}/spam', [TicketController::class, 'markSpam'])
-    ->name('tickets.spam');
+Route::post('/tickets/{ticket}/not-ticket', [TicketController::class, 'markNotTicket'])
+    ->name('tickets.not-ticket');
 
 Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])
     ->name('tickets.destroy');
@@ -84,6 +88,8 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.tickets');
     Route::post('/admin/settings/tickets/default-email-account', [TicketSettingsController::class, 'updateDefaultEmailAccount'])
         ->name('admin.settings.tickets.default-email-account.update');
+    Route::post('/admin/settings/tickets/merge-settings', [TicketSettingsController::class, 'updateMergeSettings'])
+        ->name('admin.settings.tickets.merge-settings.update');
     Route::post('/admin/settings/tickets/queues', [TicketSettingsController::class, 'storeQueue'])
         ->name('admin.settings.tickets.queues.store');
     Route::put('/admin/settings/tickets/queues/{queue}', [TicketSettingsController::class, 'updateQueue'])

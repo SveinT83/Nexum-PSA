@@ -52,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
             'asset' => 'Asset',
             'calendar' => 'Calendar',
             'clients' => 'Clients',
+            'contact' => 'Contact',
             'commercial' => 'Commercial',
             'documentation' => 'Documentation',
             'email' => 'Email',

@@ -3,6 +3,7 @@
 namespace App\Models\Clients;
 
 use App\Models\Core\User;
+use App\Modules\Contact\Models\Contact;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ class ClientUser extends Model
     use HasFactory;
 
     protected $fillable = [
+        'contact_id',
         'client_site_id',
         'user_id',
         'role',
@@ -38,5 +40,10 @@ class ClientUser extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
     }
 }

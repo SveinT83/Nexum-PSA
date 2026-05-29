@@ -82,6 +82,12 @@ Route::middleware(['admin'])->group(function () {
         ->name('admin.user_management.create');
     Route::post('/admin/user_management/store', [UserManagementController::class, 'store'])
         ->name('admin.user_management.store');
+    Route::get('/admin/user_management/users/{user}', [UserManagementController::class, 'show'])
+        ->name('admin.user_management.show');
+    Route::post('/admin/user_management/users/{user}/profile', [UserManagementController::class, 'updateProfile'])
+        ->name('admin.user_management.profile.update');
+    Route::post('/admin/user_management/users/{user}/roles', [UserManagementController::class, 'updateRoles'])
+        ->name('admin.user_management.roles.update-user');
     Route::post('/admin/user_management/{user}/status', [UserManagementController::class, 'updateStatus'])
         ->name('admin.user_management.status.update');
     Route::post('/admin/user_management/{user}/invite', [UserManagementController::class, 'sendInvite'])

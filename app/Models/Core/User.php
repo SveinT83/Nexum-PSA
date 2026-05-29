@@ -31,8 +31,11 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
     protected $fillable = [
+        'contact_id',
         'name',
         'email',
+        'phone_work',
+        'phone_private',
         'password',
         'status',
     ];
@@ -114,6 +117,11 @@ class User extends Authenticatable
     public function preferences()
     {
         return $this->hasOne(\App\Modules\UserManagement\Models\UserPreference::class);
+    }
+
+    public function contact()
+    {
+        return $this->belongsTo(\App\Modules\Contact\Models\Contact::class);
     }
 
     /*

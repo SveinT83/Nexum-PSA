@@ -15,11 +15,28 @@
     </li>
 
 
-    <!-- ------------------------------------------------- -->
-    <!-- Clients -->
-    <!-- ------------------------------------------------- -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.clients.index') ? 'active' : '' }}" href="{{ route('tech.clients.index') }}">Clients</a>
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    <!-- Clients dropdown menu -->
+    <!-- -------------------------------------------------------------------------------------------------- -->
+    @php
+        $clientsGroupActive = request()->routeIs('tech.clients*') || request()->routeIs('tech.client*') || request()->routeIs('tech.contacts*');
+    @endphp
+
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle {{ $clientsGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Clients</a>
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item {{ request()->routeIs('tech.clients.index') ? 'active' : '' }}" href="{{ route('tech.clients.index') }}">Clients</a>
+            </li>
+            <li>
+                <a class="dropdown-item {{ request()->routeIs('tech.clients.sites.*') ? 'active' : '' }}" href="{{ route('tech.clients.sites.index') }}">Sites</a>
+            </li>
+            @if(Route::has('tech.contacts.index'))
+                <li>
+                    <a class="dropdown-item {{ request()->routeIs('tech.contacts*') ? 'active' : '' }}" href="{{ route('tech.contacts.index') }}">Contacts</a>
+                </li>
+            @endif
+        </ul>
     </li>
 
     <!-- -------------------------------------------------------------------------------------------------- -->

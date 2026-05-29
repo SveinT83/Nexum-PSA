@@ -57,8 +57,18 @@
                         </thead>
                         <tbody>
                             @foreach($users as $user)
-                                <tr>
-                                    <td class="fw-bold">{{ $user->name }}</td>
+                                <tr
+                                    role="link"
+                                    tabindex="0"
+                                    data-href="{{ route('tech.admin.user_management.show', $user) }}"
+                                    aria-label="Open user profile for {{ $user->name }}"
+                                    style="cursor: pointer;"
+                                >
+                                    <td class="fw-bold">
+                                        <a href="{{ route('tech.admin.user_management.show', $user) }}" class="text-decoration-none">
+                                            {{ $user->name }}
+                                        </a>
+                                    </td>
                                     <td>{{ $user->email }}</td>
                                     <td>
                                         <span class="badge bg-{{ $user->isActive() ? 'success' : ($user->isDisabled() ? 'danger' : 'warning') }}">
@@ -96,9 +106,9 @@
                                                     <button type="submit" class="btn btn-sm btn-outline-{{ $hasInvite ? 'warning' : 'success' }}"
                                                             title="{{ $hasInvite ? 'Resend invitation email' : 'Send invitation email' }}">
                                                         @if($hasInvite)
-                                                            ⟳ Resend
+                                                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Resend
                                                         @else
-                                                            ✉ Invite
+                                                            <i class="bi bi-envelope" aria-hidden="true"></i> Invite
                                                         @endif
                                                     </button>
                                                 </form>
@@ -115,6 +125,27 @@
             @endif
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('tr[data-href]').forEach(function (row) {
+                row.addEventListener('click', function (event) {
+                    if (event.target.closest('a, button, input, select, textarea, form')) {
+                        return;
+                    }
+
+                    window.location.href = row.dataset.href;
+                });
+
+                row.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        window.location.href = row.dataset.href;
+                    }
+                });
+            });
+        });
+    </script>
 @endsection
 
 @section('sidebar')

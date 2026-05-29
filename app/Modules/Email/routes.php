@@ -24,6 +24,8 @@ Route::post('/inbox/poll', [InboxController::class, 'poll'])
     ->name('inbox.poll');
 Route::get('/inbox/show/{message}', [InboxController::class, 'show'])
     ->name('inbox.show');
+Route::post('/inbox/{message}/spam', [InboxController::class, 'markSpam'])
+    ->name('inbox.spam');
 Route::delete('/inbox/{message}', [InboxController::class, 'destroy'])
     ->name('inbox.delete');
 Route::get('/inbox/attachments/{attachment}/download', [InboxController::class, 'download'])

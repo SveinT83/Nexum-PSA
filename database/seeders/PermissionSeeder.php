@@ -33,6 +33,13 @@ class PermissionSeeder extends Seeder
             'client.delete',
             'client.manage_settings',
 
+            'contact.view',
+            'contact.create',
+            'contact.update',
+            'contact.delete',
+            'contact.merge',
+            'contact.manage_settings',
+
             'asset.view',
             'asset.create',
             'asset.update',

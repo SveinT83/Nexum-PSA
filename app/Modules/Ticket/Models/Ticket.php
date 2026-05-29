@@ -51,18 +51,19 @@ class Ticket extends Model
         'impact',
         'urgency',
         'is_unread',
-        'is_spam',
         'first_response_due_at',
         'resolve_due_at',
         'first_responded_at',
         'resolved_at',
         'closed_at',
+        'merged_into_ticket_id',
+        'merged_by',
+        'merged_at',
         'metadata',
     ];
 
     protected $casts = [
         'is_unread' => 'boolean',
-        'is_spam' => 'boolean',
         'metadata' => 'array',
         'sla_snapshot' => 'array',
         'first_response_due_at' => 'datetime',
@@ -70,6 +71,7 @@ class Ticket extends Model
         'first_responded_at' => 'datetime',
         'resolved_at' => 'datetime',
         'closed_at' => 'datetime',
+        'merged_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string
@@ -135,6 +137,11 @@ class Ticket extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function mergedInto(): BelongsTo
+    {
+        return $this->belongsTo(Ticket::class, 'merged_into_ticket_id')->withTrashed();
     }
 
     public function asset(): BelongsTo

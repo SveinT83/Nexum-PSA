@@ -19,6 +19,8 @@ use App\Modules\Ticket\Actions\CloseTicket;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
+use App\Modules\Ticket\Actions\MarkTicketAsNotTicket;
+use App\Modules\Ticket\Actions\MergeTickets;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
@@ -76,7 +78,6 @@ class TicketController extends Controller
             'unassigned',
             'ownership',
             'client_id',
-            'spam',
             'sort',
             'direction',
         ]);
@@ -90,10 +91,10 @@ class TicketController extends Controller
             'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
             'filters' => $filters,
             'stats' => [
-                'open' => Ticket::where('is_spam', false)->whereHas('status', fn ($query) => $query->where('is_closed', false))->count(),
-                'mine' => Ticket::where('owner_id', $request->user()?->id)->where('is_spam', false)->count(),
-                'unread' => Ticket::where('is_unread', true)->where('is_spam', false)->count(),
-                'spam' => Ticket::where('is_spam', true)->count(),
+                'open' => Ticket::whereHas('status', fn ($query) => $query->where('is_closed', false))->count(),
+                'mine' => Ticket::where('owner_id', $request->user()?->id)->count(),
+                'unread' => Ticket::where('is_unread', true)->count(),
+                'unassigned' => Ticket::whereNull('owner_id')->count(),
             ],
         ]);
     }
@@ -224,9 +225,16 @@ class TicketController extends Controller
             ->with('success', 'Ticket ' . $ticket->ticket_key . ' created.');
     }
 
-    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions): View
+    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions): View|RedirectResponse
     {
         app(EnsureTicketDefaults::class)->handle();
+
+        if ($ticket->trashed() && $ticket->merged_into_ticket_id) {
+            return redirect()->route('tech.tickets.show', $ticket->mergedInto)
+                ->with('warning', 'Ticket '.$ticket->ticket_key.' was merged into '.$ticket->mergedInto?->ticket_key.'.');
+        }
+
+        abort_if($ticket->trashed(), 404);
 
         $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries']);
         $messageIds = $ticket->messages->pluck('id')->all();
@@ -653,34 +661,68 @@ class TicketController extends Controller
             ->with('success', $message);
     }
 
-    public function markSpam(Request $request, Ticket $ticket): RedirectResponse
+    public function mergeSelected(Request $request, MergeTickets $mergeTickets): RedirectResponse
     {
-        if ($ticket->is_spam) {
-            return redirect()->route('tech.tickets.index')
-                ->with('success', 'Ticket '.$ticket->ticket_key.' is already marked as spam.');
+        $data = $request->validate([
+            'ticket_ids' => 'required|array|min:2',
+            'ticket_ids.*' => 'integer|exists:tickets,id',
+            'target_ticket_id' => 'required|integer|exists:tickets,id',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+
+        $ticketIds = collect($data['ticket_ids'])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+        $targetId = (int) $data['target_ticket_id'];
+
+        if (! $ticketIds->contains($targetId)) {
+            return back()->withErrors(['target_ticket_id' => 'The primary ticket must be one of the selected tickets.']);
         }
 
-        DB::transaction(function () use ($ticket, $request) {
-            $ticket->forceFill([
-                'is_spam' => true,
-                'is_unread' => false,
-                'updated_by' => $request->user()?->id,
-            ])->save();
+        if ($ticketIds->count() < 2) {
+            return back()->withErrors(['ticket_ids' => 'Select at least two tickets to merge.']);
+        }
 
-            TicketEvent::create([
-                'ticket_id' => $ticket->id,
-                'actor_id' => $request->user()?->id,
-                'type' => 'marked_spam',
-                'message' => 'Ticket marked as spam from the ticket list.',
-                'after' => [
-                    'is_spam' => true,
-                    'is_unread' => false,
-                ],
-            ]);
-        });
+        $tickets = Ticket::query()
+            ->whereIn('id', $ticketIds)
+            ->whereNull('merged_into_ticket_id')
+            ->get()
+            ->keyBy('id');
+
+        if ($tickets->count() !== $ticketIds->count()) {
+            return back()->withErrors(['ticket_ids' => 'One or more selected tickets are no longer available for merging.']);
+        }
+
+        $target = $tickets->get($targetId);
+
+        if (! $target) {
+            return back()->withErrors(['target_ticket_id' => 'The primary ticket was not found.']);
+        }
+
+        try {
+            foreach ($tickets->except($target->id) as $source) {
+                $target = $mergeTickets->handle($source, $target, $request->user(), $data['reason'] ?? null);
+            }
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['ticket_ids' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('tech.tickets.show', $target)
+            ->with('success', 'Merged '.($tickets->count() - 1).' ticket(s) into '.$target->ticket_key.'.');
+    }
+
+    public function markNotTicket(Request $request, Ticket $ticket, MarkTicketAsNotTicket $markTicketAsNotTicket): RedirectResponse
+    {
+        try {
+            $emailCount = $markTicketAsNotTicket->handle($ticket, $request->user());
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->route('tech.tickets.show', $ticket)
+                ->withErrors(['not_ticket' => $exception->getMessage()]);
+        }
 
         return redirect()->route('tech.tickets.index')
-            ->with('success', 'Ticket '.$ticket->ticket_key.' marked as spam.');
+            ->with('success', 'Ticket '.$ticket->ticket_key.' returned to Inbox. '.$emailCount.' email(s) tagged as not-ticket.');
     }
 
     public function destroy(Request $request, Ticket $ticket): RedirectResponse
@@ -694,7 +736,6 @@ class TicketController extends Controller
                 'before' => [
                     'ticket_key' => $ticket->ticket_key,
                     'subject' => $ticket->subject,
-                    'is_spam' => $ticket->is_spam,
                 ],
             ]);
 

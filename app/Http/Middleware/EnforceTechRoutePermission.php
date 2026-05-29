@@ -36,6 +36,9 @@ class EnforceTechRoutePermission
         'tech.admin.user_management.create' => 'user.create',
         'tech.admin.user_management.store' => 'user.create',
         'tech.admin.user_management.status.*' => 'user.update',
+        'tech.admin.user_management.profile.update' => 'user.update',
+        'tech.admin.user_management.roles.update-user' => 'user.manage_roles',
+        'tech.admin.user_management.show' => 'user.view',
         'tech.admin.user_management.*' => 'user.view',
 
         'tech.admin.settings.clients.*' => 'client.manage_settings',
@@ -100,6 +103,12 @@ class EnforceTechRoutePermission
         'tech.clients.*.update' => 'client.update',
         'tech.clients.*' => 'client.view',
         'tech.client.*' => 'client.view',
+        'tech.contacts.create' => 'contact.create',
+        'tech.contacts.store' => 'contact.create',
+        'tech.contacts.edit' => 'contact.update',
+        'tech.contacts.update' => 'contact.update',
+        'tech.contacts.destroy' => 'contact.delete',
+        'tech.contacts.*' => 'contact.view',
 
         'tech.assets.create' => 'asset.create',
         'tech.assets.store' => 'asset.create',
@@ -123,7 +132,8 @@ class EnforceTechRoutePermission
         'tech.tickets.store' => 'ticket.create',
         'tech.tickets.edit' => 'ticket.update',
         'tech.tickets.update' => 'ticket.update',
-        'tech.tickets.spam' => 'ticket.delete',
+        'tech.tickets.merge' => 'ticket.update',
+        'tech.tickets.not-ticket' => 'ticket.delete',
         'tech.tickets.destroy' => 'ticket.delete',
         'tech.tickets.workflow.*' => 'ticket.update',
         'tech.tickets.cost-entries.*' => 'ticket.update',
@@ -183,6 +193,7 @@ class EnforceTechRoutePermission
         'tech.economy.orders.*' => 'economy.order_manage',
 
         'tech.inbox.delete' => 'email.inbox_manage',
+        'tech.inbox.spam' => 'email.inbox_manage',
         'tech.inbox.poll' => 'email.inbox_manage',
         'tech.inbox.*' => 'email.inbox_view',
 

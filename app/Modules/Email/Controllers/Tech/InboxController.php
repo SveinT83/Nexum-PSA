@@ -1,6 +1,7 @@
 <?php
 namespace App\Modules\Email\Controllers\Tech;
 
+use App\Modules\Email\Actions\MarkEmailAsSpam;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAttachment;
@@ -88,6 +89,18 @@ class InboxController extends Controller
             'message' => $message,
             'search' => request('q')
         ]);
+    }
+
+    public function markSpam(Request $request, EmailMessage $message, MarkEmailAsSpam $markEmailAsSpam): RedirectResponse
+    {
+        if ($message->ticket_id !== null) {
+            abort(404);
+        }
+
+        $rule = $markEmailAsSpam->handle($message, $request->user());
+
+        return redirect()->route('tech.inbox.index')
+            ->with('status', 'Email marked as spam and rule "'.$rule->name.'" updated.');
     }
 
     /**

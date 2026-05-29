@@ -60,7 +60,6 @@
                     filled($filters['queue_id'] ?? null),
                     ($filters['lifecycle'] ?? 'open') !== 'open',
                     ($filters['ownership'] ?? 'mine_unassigned') !== 'mine_unassigned',
-                    ($filters['spam'] ?? 'hide') !== 'hide',
                     ! empty($filters['unread']),
                     ! empty($filters['unassigned']),
                 ])->filter()->count();
@@ -160,14 +159,6 @@
                             </select>
                         </div>
 
-                        <div class="col-md-2">
-                            <label for="ticket_index_spam" class="form-label small text-muted mb-1">Spam</label>
-                            <select id="ticket_index_spam" name="spam" class="form-select form-select-sm">
-                                <option value="hide" @selected(($filters['spam'] ?? 'hide') === 'hide')>Hide spam</option>
-                                <option value="only" @selected(($filters['spam'] ?? 'hide') === 'only')>Spam only</option>
-                            </select>
-                        </div>
-
                         <div class="col-md-4">
                             <div class="d-flex flex-wrap gap-3 pt-md-4">
                                 <div class="form-check">
@@ -191,10 +182,32 @@
     </div>
 
     <div class="card">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="small text-muted">
+                <span id="ticketBulkCount">0</span> selected
+            </div>
+            <button
+                id="ticketBulkMergeButton"
+                type="button"
+                class="btn btn-sm btn-outline-warning"
+                data-bs-toggle="modal"
+                data-bs-target="#ticketBulkMergeModal"
+                disabled>
+                <i class="bi bi-intersect" aria-hidden="true"></i>
+                Merge selected
+            </button>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
+                        <th class="text-center" style="width: 2.75rem;">
+                            <input
+                                id="ticket_bulk_select_all"
+                                class="form-check-input"
+                                type="checkbox"
+                                aria-label="Select all tickets on this page">
+                        </th>
                         <th>
                             <a href="{{ $sortLink('ticket') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
                                 Ticket <i class="bi {{ $sortIcon('ticket') }}"></i>
@@ -253,6 +266,15 @@
                             data-ticket-key="{{ $ticket->ticket_key }}"
                             aria-label="Open ticket {{ $ticket->ticket_key }}"
                         >
+                            <td class="text-center">
+                                <input
+                                    class="form-check-input ticket-bulk-checkbox"
+                                    type="checkbox"
+                                    value="{{ $ticket->id }}"
+                                    data-ticket-key="{{ $ticket->ticket_key }}"
+                                    data-ticket-subject="{{ $ticket->subject }}"
+                                    aria-label="Select ticket {{ $ticket->ticket_key }}">
+                            </td>
                             <td>
                                 <a href="{{ route('tech.tickets.show', $ticket) }}">{{ $ticket->ticket_key }}</a>
                                 @if ($ticket->is_unread)
@@ -289,15 +311,13 @@
                             <td>{{ $ticket->updated_at?->diffForHumans() }}</td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
-                                    @unless($ticket->is_spam)
-                                        <form method="POST" action="{{ route('tech.tickets.spam', $ticket) }}">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as spam">
-                                                <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-                                                <span class="visually-hidden">Mark {{ $ticket->ticket_key }} as spam</span>
-                                            </button>
-                                        </form>
-                                    @endunless
+                                    <form method="POST" action="{{ route('tech.tickets.not-ticket', $ticket) }}" onsubmit="return confirm('Return {{ $ticket->ticket_key }} to Inbox and prevent matching emails from becoming tickets automatically?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as not ticket">
+                                            <i class="bi bi-inbox" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Mark {{ $ticket->ticket_key }} as not ticket</span>
+                                        </button>
+                                    </form>
                                     <form method="POST" action="{{ route('tech.tickets.destroy', $ticket) }}" onsubmit="return confirm('Delete {{ $ticket->ticket_key }}? This hides the ticket from normal views.');">
                                         @csrf
                                         @method('DELETE')
@@ -311,7 +331,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted py-4">No tickets found.</td>
+                            <td colspan="11" class="text-center text-muted py-4">No tickets found.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -323,11 +343,48 @@
             </div>
         @endif
     </div>
+
+    <!-- Bulk merge modal: the primary ticket is chosen from the tickets already selected in the list. -->
+    <div class="modal fade" id="ticketBulkMergeModal" tabindex="-1" aria-labelledby="ticketBulkMergeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="{{ route('tech.tickets.merge') }}" class="modal-content" onsubmit="return confirm('Merge the selected tickets into the chosen primary ticket?');">
+                @csrf
+                <div id="ticketBulkHiddenInputs"></div>
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="ticketBulkMergeModalLabel">Merge Selected Tickets</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Primary ticket</label>
+                        <div id="ticketBulkPrimaryOptions" class="list-group small"></div>
+                        @error('target_ticket_id')<div class="text-danger small mt-2">{{ $message }}</div>@enderror
+                        @error('ticket_ids')<div class="text-danger small mt-2">{{ $message }}</div>@enderror
+                        <div class="form-text">All other selected tickets are merged into this ticket and hidden from normal ticket lists.</div>
+                    </div>
+                    <div class="mb-0">
+                        <label for="bulk_merge_reason" class="form-label">Reason</label>
+                        <textarea id="bulk_merge_reason" name="reason" class="form-control" rows="3">{{ old('reason') }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Merge tickets</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const stopwatchPrefix = 'ticket-stopwatch-';
+        const bulkCheckboxes = Array.from(document.querySelectorAll('.ticket-bulk-checkbox'));
+        const bulkSelectAll = document.getElementById('ticket_bulk_select_all');
+        const bulkCount = document.getElementById('ticketBulkCount');
+        const bulkMergeButton = document.getElementById('ticketBulkMergeButton');
+        const bulkHiddenInputs = document.getElementById('ticketBulkHiddenInputs');
+        const bulkPrimaryOptions = document.getElementById('ticketBulkPrimaryOptions');
 
         const hasActiveTimer = function (ticketKey) {
             try {
@@ -337,6 +394,66 @@
             } catch (error) {
                 return false;
             }
+        };
+
+        const selectedTickets = function () {
+            return bulkCheckboxes
+                .filter(function (checkbox) {
+                    return checkbox.checked;
+                })
+                .map(function (checkbox) {
+                    return {
+                        id: checkbox.value,
+                        key: checkbox.dataset.ticketKey,
+                        subject: checkbox.dataset.ticketSubject,
+                    };
+                });
+        };
+
+        const syncBulkState = function () {
+            const selected = selectedTickets();
+            bulkCount.textContent = selected.length;
+            bulkMergeButton.disabled = selected.length < 2;
+
+            if (bulkSelectAll) {
+                bulkSelectAll.checked = selected.length > 0 && selected.length === bulkCheckboxes.length;
+                bulkSelectAll.indeterminate = selected.length > 0 && selected.length < bulkCheckboxes.length;
+            }
+        };
+
+        const buildBulkMergeModal = function () {
+            const selected = selectedTickets();
+            bulkHiddenInputs.innerHTML = '';
+            bulkPrimaryOptions.innerHTML = '';
+
+            selected.forEach(function (ticket, index) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'ticket_ids[]';
+                hiddenInput.value = ticket.id;
+                bulkHiddenInputs.appendChild(hiddenInput);
+
+                const option = document.createElement('label');
+                option.className = 'list-group-item d-flex gap-2 align-items-start';
+
+                const radio = document.createElement('input');
+                radio.className = 'form-check-input mt-1';
+                radio.type = 'radio';
+                radio.name = 'target_ticket_id';
+                radio.value = ticket.id;
+                radio.required = true;
+                radio.checked = index === 0;
+
+                const text = document.createElement('span');
+                text.className = 'min-w-0';
+                text.innerHTML = '<span class="fw-semibold"></span><span class="d-block text-muted text-truncate"></span>';
+                text.querySelector('.fw-semibold').textContent = ticket.key;
+                text.querySelector('.text-muted').textContent = ticket.subject || 'No subject';
+
+                option.appendChild(radio);
+                option.appendChild(text);
+                bulkPrimaryOptions.appendChild(option);
+            });
         };
 
         const syncTimerRows = function () {
@@ -363,6 +480,25 @@
             });
         });
 
+        bulkCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', syncBulkState);
+        });
+
+        if (bulkSelectAll) {
+            bulkSelectAll.addEventListener('change', function () {
+                bulkCheckboxes.forEach(function (checkbox) {
+                    checkbox.checked = bulkSelectAll.checked;
+                });
+
+                syncBulkState();
+            });
+        }
+
+        if (bulkMergeButton) {
+            bulkMergeButton.addEventListener('click', buildBulkMergeModal);
+        }
+
+        syncBulkState();
         syncTimerRows();
         window.setInterval(syncTimerRows, 15000);
         window.addEventListener('storage', syncTimerRows);
@@ -421,7 +557,6 @@
                                     'unread' => $filters['unread'] ?? null,
                                     'unassigned' => $filters['unassigned'] ?? null,
                                     'ownership' => $filters['ownership'] ?? null,
-                                    'spam' => $filters['spam'] ?? null,
                                 ])) }}">Clear</a>
                             @endif
                         </div>
@@ -442,7 +577,6 @@
                                         'unread' => $filters['unread'] ?? null,
                                         'unassigned' => $filters['unassigned'] ?? null,
                                         'ownership' => $filters['ownership'] ?? null,
-                                        'spam' => $filters['spam'] ?? null,
                                         'client_id' => $client->id,
                                     ])) }}"
                                     class="list-group-item list-group-item-action px-0 py-2 border-0 @if (($filters['client_id'] ?? '') == $client->id) active px-2 rounded @endif"
@@ -464,29 +598,29 @@
 @section('rightbar')
     {{-- Right rail: lightweight operational counters, intentionally separate from the main list. --}}
     <x-card.default title="Ticket stats">
-        <div class="row g-2 text-center">
-            <div class="col-3">
+        <div class="row row-cols-2 g-2 text-center">
+            <div class="col">
                 <div class="border rounded bg-light py-2 px-1">
                     <div class="small text-muted text-uppercase">Open</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['open'] }}</div>
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col">
                 <div class="border rounded bg-light py-2 px-1">
                     <div class="small text-muted text-uppercase">Mine</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['mine'] }}</div>
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col">
                 <div class="border rounded bg-light py-2 px-1">
                     <div class="small text-muted text-uppercase">Unread</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['unread'] }}</div>
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col">
                 <div class="border rounded bg-light py-2 px-1">
-                    <div class="small text-muted text-uppercase">Spam</div>
-                    <div class="fw-bold fs-5 lh-1">{{ $stats['spam'] }}</div>
+                    <div class="small text-muted text-uppercase">Unassigned</div>
+                    <div class="fw-bold fs-5 lh-1">{{ $stats['unassigned'] }}</div>
                 </div>
             </div>
         </div>
