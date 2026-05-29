@@ -14,6 +14,7 @@ use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
 use App\Modules\Integration\Jobs\CleanupAiChats;
 use App\Modules\Integration\Services\AiChatCleanup;
 use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
+use App\Modules\Contact\Actions\MigrateClientUsersToContacts;
 use App\Jobs\Integrations\NAbleRmmSyncJob;
 
 Artisan::command('inspire', function () {
@@ -159,3 +160,13 @@ Artisan::command('email:process-inbound-rules {--message=} {--limit=100} {--asyn
     $this->info(($async ? 'Queued rules for ' : 'Processed rules for ') . $messageIds->count() . ' message' . ($messageIds->count() > 1 ? 's' : '') . '.');
     return 0;
 })->purpose('Process stored inbound email messages through routing rules');
+
+Artisan::command('contacts:migrate-client-users', function (MigrateClientUsersToContacts $migration) {
+    $summary = $migration->handle();
+
+    foreach ($summary as $key => $value) {
+        $this->line(str_replace('_', ' ', $key).': '.$value);
+    }
+
+    return 0;
+})->purpose('Create Contact records from legacy client_users and link compatibility records');

@@ -36,13 +36,6 @@ class ClientsMenu
         ];
 
         $sidebarMenuItems[] = [
-            'name' => 'Users',
-            'route' => 'tech.clients.users.index',
-            'params' => $clientParam,
-            'icon' => 'bi-people',
-        ];
-
-        $sidebarMenuItems[] = [
             'name' => 'Assets',
             // The Asset module owns asset routes. Without a client context the
             // sidebar must link to the global asset list; the client-scoped
@@ -87,6 +80,12 @@ class ClientsMenu
                 ],
             ];
         }
+
+        $sidebarMenuItems[] = [
+            'name' => 'Contacts',
+            'route' => 'tech.contacts.index',
+            'icon' => 'bi-person-lines-fill',
+        ];
 
         // Return the complete array of sidebar menu items
         return $sidebarMenuItems;

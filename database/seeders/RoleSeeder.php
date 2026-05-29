@@ -51,6 +51,11 @@ class RoleSeeder extends Seeder
                 'client.update',
                 'client.delete',
                 'client.manage_settings',
+                'contact.create',
+                'contact.update',
+                'contact.delete',
+                'contact.merge',
+                'contact.manage_settings',
                 'asset.manage_settings',
                 'ticket.manage_rules',
                 'ticket.manage_workflows',
@@ -109,6 +114,9 @@ class RoleSeeder extends Seeder
         return [
             'warroom.view',
             'client.view',
+            'contact.view',
+            'contact.create',
+            'contact.update',
             'client.create',
             'client.update',
             'asset.view',
@@ -159,6 +167,9 @@ class RoleSeeder extends Seeder
         return [
             'warroom.view',
             'client.view',
+            'contact.view',
+            'contact.create',
+            'contact.update',
             'client.create',
             'client.update',
             'calendar.view',
@@ -181,6 +192,7 @@ class RoleSeeder extends Seeder
         return [
             'warroom.view',
             'client.view',
+            'contact.view',
             'ticket.view',
             'ticket.register_time',
             'commercial.view',
@@ -206,6 +218,7 @@ class RoleSeeder extends Seeder
         return [
             'warroom.view',
             'client.view',
+            'contact.view',
             'asset.view',
             'ticket.view',
             'storage.view',
@@ -225,6 +238,7 @@ class RoleSeeder extends Seeder
         return [
             'warroom.view',
             'client.view',
+            'contact.view',
             'asset.view',
             'ticket.view',
             'task.view',
