@@ -65,12 +65,97 @@ class EmailModuleTest extends TestCase
         $route = Route::getRoutes()->getByName('tech.inbox.index');
 
         $this->assertSame(InboxController::class . '@index', $route->getActionName());
+        $this->assertSame(InboxController::class . '@markSpam', Route::getRoutes()->getByName('tech.inbox.spam')->getActionName());
+        $account = EmailAccount::create([
+            'address' => 'support@example.test',
+            'from_name' => 'Support',
+            'is_active' => true,
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.test',
+            'imap_secret' => 'secret',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.test',
+            'smtp_secret' => 'secret',
+        ]);
+        EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 63,
+            'message_id' => '<inbox-list@example.test>',
+            'subject' => 'Inbox list item',
+            'from_email' => 'sender@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Inbox list body.',
+        ]);
 
         $this->actingAs($this->tech)
             ->get(route('tech.inbox.index'))
             ->assertOk()
             ->assertViewIs('email::Tech.index')
-            ->assertViewHas('messages');
+            ->assertViewHas('messages')
+            ->assertSee('inbox-index-row')
+            ->assertSee('Mark as spam');
+    }
+
+    #[Test]
+    public function tech_user_can_mark_inbox_email_as_spam_and_create_rule(): void
+    {
+        $account = EmailAccount::create([
+            'address' => 'support@example.test',
+            'from_name' => 'Support',
+            'is_active' => true,
+            'is_global_default' => false,
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.test',
+            'imap_secret' => 'secret',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.test',
+            'smtp_secret' => 'secret',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 9001,
+            'message_id' => '<spam-inbox@example.test>',
+            'subject' => 'Unwanted promo',
+            'from_name' => 'Promo Sender',
+            'from_email' => 'promo@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Buy this now.',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.inbox.spam', $email))
+            ->assertRedirect(route('tech.inbox.index'))
+            ->assertSessionHas('status', 'Email marked as spam and rule "Spam: promo@example.test" updated.');
+
+        $email->refresh();
+
+        $this->assertSame('archived', $email->state);
+        $this->assertTrue($email->tags()->where('tags.slug', 'spam')->exists());
+
+        $rule = EmailRule::query()->where('name', 'Spam: promo@example.test')->first();
+
+        $this->assertNotNull($rule);
+        $this->assertTrue($rule->is_active);
+        $this->assertTrue($rule->stop_processing);
+        $this->assertSame([
+            ['field' => 'from', 'operator' => 'equals', 'value' => 'promo@example.test'],
+        ], $rule->conditions_json);
+        $this->assertSame([
+            ['type' => 'tag', 'value' => 'spam'],
+            ['type' => 'archive', 'value' => ''],
+        ], $rule->actions_json);
     }
 
     #[Test]

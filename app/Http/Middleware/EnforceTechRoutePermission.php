@@ -187,6 +187,7 @@ class EnforceTechRoutePermission
         'tech.economy.orders.*' => 'economy.order_manage',
 
         'tech.inbox.delete' => 'email.inbox_manage',
+        'tech.inbox.spam' => 'email.inbox_manage',
         'tech.inbox.poll' => 'email.inbox_manage',
         'tech.inbox.*' => 'email.inbox_view',
 
