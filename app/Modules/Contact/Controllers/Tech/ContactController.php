@@ -82,18 +82,26 @@ class ContactController extends Controller
         ]);
     }
 
+    public function clearContext(Request $request): RedirectResponse
+    {
+        $request->session()->forget(['active_client_id', 'active_site_id']);
+
+        return redirect()->route('tech.contacts.index');
+    }
+
     public function store(Request $request, StoreContact $storeContact): RedirectResponse
     {
         $context = $this->contactContext($request);
 
         $validated = $request->validate([
+            'existing_contact_id' => ['nullable', Rule::exists('contacts', 'id')],
             'display_name' => ['required', 'string', 'max:255'],
             'organization_name' => ['nullable', 'string', 'max:255'],
             'job_title' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:100'],
             'preferred_language' => ['nullable', 'string', 'max:10'],
-            'relation_type' => ['nullable', 'string', 'max:100'],
+            'relation_type' => ['nullable', Rule::in(['contact', 'primary_contact', 'technical_contact', 'billing_contact', 'site_contact', 'decision_maker', 'emergency_contact', 'manager', 'ceo'])],
             'client_id' => ['nullable', Rule::exists('clients', 'id')],
             'site_id' => ['nullable', Rule::exists('client_sites', 'id')],
         ]);
@@ -133,6 +141,17 @@ class ContactController extends Controller
 
         return view('contact::Tech.show', [
             'contact' => $contact,
+        ]);
+    }
+
+    public function edit(Request $request, Contact $contact): View
+    {
+        $context = $this->contactContext($request);
+
+        return view('contact::Tech.edit', [
+            'contact' => $contact,
+            'activeClient' => $context['activeClient'],
+            'activeSite' => $context['activeSite'],
         ]);
     }
 

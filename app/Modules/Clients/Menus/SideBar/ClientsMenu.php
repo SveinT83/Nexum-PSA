@@ -45,6 +45,12 @@ class ClientsMenu
             'icon' => 'bi-pc-display',
         ];
 
+        $sidebarMenuItems[] = [
+            'name' => 'Contacts',
+            'route' => 'tech.contacts.index',
+            'icon' => 'bi-person-lines-fill',
+        ];
+
         // --- Documentation Section ---
         // This mirrors a Passportal-style client documentation vault inside the client context.
         $sidebarMenuItems[] = [
@@ -80,12 +86,6 @@ class ClientsMenu
                 ],
             ];
         }
-
-        $sidebarMenuItems[] = [
-            'name' => 'Contacts',
-            'route' => 'tech.contacts.index',
-            'icon' => 'bi-person-lines-fill',
-        ];
 
         // Return the complete array of sidebar menu items
         return $sidebarMenuItems;

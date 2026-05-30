@@ -12,6 +12,7 @@ use App\Modules\Commercial\Livewire\Tech\PackagePricing as CommercialPackagePric
 use App\Modules\Commercial\Livewire\Tech\ServiceLegal as CommercialServiceLegal;
 use App\Modules\Commercial\Livewire\Tech\ServicePicker as CommercialServicePicker;
 use App\Modules\Commercial\Livewire\Tech\ServicePricing as CommercialServicePricing;
+use App\Modules\Contact\Livewire\Tech\ContactForm as ContactContactForm;
 use App\Modules\Documentation\Livewire\Admin\TemplateForm as DocumentationTemplateForm;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\NAbleRmmSync as IntegrationNAbleRmmSync;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\AiSettings as IntegrationAiSettings;
@@ -97,6 +98,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('tech.cs.service-legal', CommercialServiceLegal::class);
         Livewire::component('tech.cs.service-picker', CommercialServicePicker::class);
         Livewire::component('tech.cs.service-pricing', CommercialServicePricing::class);
+        Livewire::component('tech.contacts.contact-form', ContactContactForm::class);
         Livewire::component('knowledge.article-form', KnowledgeArticleForm::class);
         Livewire::component('system.tag-manager', TaxonomyTagManager::class);
         Livewire::component('tech.tasks.checklist-editor', TaskChecklistEditor::class);

@@ -177,6 +177,10 @@ class PushKnowledgeToBookStack
                         $query->where('source_system', 'book_stack')
                             ->where('source_type', 'chapter')
                             ->whereNotNull('source_id');
+                    })
+                    ->orWhere(function ($query): void {
+                        $query->where('source_system', 'nexum')
+                            ->whereNotNull('source_id');
                     });
             })
             ->orderBy('priority')
@@ -243,6 +247,10 @@ class PushKnowledgeToBookStack
                     ->orWhere(function ($query): void {
                         $query->where('source_system', 'book_stack')
                             ->where('source_type', 'page')
+                            ->whereNotNull('source_id');
+                    })
+                    ->orWhere(function ($query): void {
+                        $query->where('source_system', 'nexum')
                             ->whereNotNull('source_id');
                     });
             })

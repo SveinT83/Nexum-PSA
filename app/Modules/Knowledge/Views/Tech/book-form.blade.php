@@ -19,13 +19,6 @@
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center w-100">
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1">
-                    <li class="breadcrumb-item"><a href="{{ route('tech.knowledge.index') }}">Knowledge</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('tech.knowledge.shelf', $shelf) }}">{{ $shelf->name }}</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ $isEditing ? 'Edit Book' : 'Create Book' }}</li>
-                </ol>
-            </nav>
             <h1 class="h4 mb-0">{{ $isEditing ? 'Edit Book' : 'Create Book' }}</h1>
         </div>
         <a href="{{ $isEditing ? route('tech.knowledge.book', $book) : route('tech.knowledge.shelf', $shelf) }}" class="btn btn-sm btn-outline-secondary">Cancel</a>

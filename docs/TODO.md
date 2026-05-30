@@ -28,6 +28,8 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Ticket Knowledge loop | Ready |  | Better article matching and documentation follow-up flow. |
 | AI write tools | Blocked |  | Wait until Ticket Workflow/Action guards are stable enough. |
 | Contract SLA UI polish | Ready |  | Structured SLA select exists; needs UX polish and show/list signals. |
+| Shared Send Email Component | Ready |  | Reusable email composer UI for Ticket, Inbox, Contact cards, and future modules. |
+| System Language Defaults | Ready |  | Add system language/default locale settings and wire them into Contact language later. |
 
 ## Ready To Pick Up
 
@@ -115,6 +117,45 @@ Initial future scope:
 - Add write tools only for explicitly allowed Ticket Actions.
 - Log every AI tool execution.
 - Require agent and role permission for write tools.
+
+### 6. Shared Send Email Component
+
+**Status:** Ready  
+**Owner:**  
+**Domain:** Email / Ticket / Contact  
+**Goal:** Create a reusable Send Email component that can be used consistently across Ticket, Inbox, Contact cards, and other modules.
+
+Initial discussion points:
+
+- One shared email composer UI instead of separate ad hoc forms per module.
+- Must support Ticket replies, Inbox replies/forwards/new messages, and Contact-driven email.
+- Should handle recipients, CC/BCC, subject, body, attachments, templates, sender account, and queue visibility.
+- Must fit existing Bootstrap UI standards and module architecture.
+- Needs discussion before implementation so domain ownership, persistence, queue behavior, and template integration are clear.
+
+Out of scope until discussed:
+
+- Replacing all current email forms in one pass.
+- AI-assisted drafting.
+- Full campaign/marketing email behavior.
+
+### 7. System Language Defaults
+
+**Status:** Ready  
+**Owner:**  
+**Domain:** Contact / System  
+**Goal:** Add a system language/default locale setting and use it as the default Contact language once language choices are controlled centrally.
+
+Initial discussion points:
+
+- Replace free-text language with configured language choices.
+- Add a System language/default locale setting and use it as the default Contact language.
+- Update the Contact form after System language/default locale exists.
+
+Open questions:
+
+- Which languages should be enabled by default for the first beta.
+- Whether the setting should live under System settings or Localization settings once that area exists.
 
 ## Recently Completed
 

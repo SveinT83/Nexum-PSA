@@ -187,73 +187,73 @@ class SyncBookStackToKnowledge
 
     private function upsertDefaultShelf(): Shelf
     {
-        return Shelf::query()->updateOrCreate(
-            [
-                'source_system' => 'book_stack',
-                'source_type' => 'virtual_shelf',
-                'source_id' => 'default',
-            ],
-            [
-                'name' => 'BookStack',
-                'slug' => 'bookstack',
-                'description' => 'Imported BookStack books that are not assigned to a shelf.',
-                'source_url' => rtrim((string) $this->integration->server, '/'),
-                'source_checksum' => hash('sha256', 'bookstack-default-shelf'),
-                'source_synced_at' => now(),
-                'sync_status' => 'synced',
-                'source_payload' => ['virtual' => true],
-            ],
-        );
+        $shelf = $this->findShelfBySourceOrSlug('virtual_shelf', 'default', 'bookstack') ?? new Shelf;
+
+        $shelf->forceFill([
+            'name' => 'BookStack',
+            'slug' => 'bookstack',
+            'description' => 'Imported BookStack books that are not assigned to a shelf.',
+            'source_system' => 'book_stack',
+            'source_type' => 'virtual_shelf',
+            'source_id' => 'default',
+            'source_url' => rtrim((string) $this->integration->server, '/'),
+            'source_checksum' => hash('sha256', 'bookstack-default-shelf'),
+            'source_synced_at' => now(),
+            'sync_status' => 'synced',
+            'source_payload' => ['virtual' => true],
+        ])->save();
+
+        return $shelf;
     }
 
     private function upsertShelf(array $payload): Shelf
     {
         $sourceId = (string) Arr::get($payload, 'id');
+        $slug = $this->sourceSlug('bookstack-shelf', $payload);
+        $shelf = $this->findShelfBySourceOrSlug('shelf', $sourceId, $slug) ?? new Shelf;
 
-        return Shelf::query()->updateOrCreate(
-            [
-                'source_system' => 'book_stack',
-                'source_type' => 'shelf',
-                'source_id' => $sourceId,
-            ],
-            [
-                'name' => (string) Arr::get($payload, 'name', 'BookStack shelf '.$sourceId),
-                'slug' => $this->sourceSlug('bookstack-shelf', $payload),
-                'description' => $this->descriptionFromPayload($payload),
-                'source_url' => $this->shelfUrl($payload),
-                'source_checksum' => $this->payloadChecksum($payload),
-                'source_synced_at' => now(),
-                'source_updated_at' => $this->sourceUpdatedAt($payload),
-                'sync_status' => 'synced',
-                'source_payload' => Arr::only($payload, ['id', 'name', 'slug', 'description', 'description_html', 'books']),
-            ],
-        );
+        $shelf->forceFill([
+            'name' => (string) Arr::get($payload, 'name', 'BookStack shelf '.$sourceId),
+            'slug' => $slug,
+            'description' => $this->descriptionFromPayload($payload),
+            'source_system' => 'book_stack',
+            'source_type' => 'shelf',
+            'source_id' => $sourceId,
+            'source_url' => $this->shelfUrl($payload),
+            'source_checksum' => $this->payloadChecksum($payload),
+            'source_synced_at' => now(),
+            'source_updated_at' => $this->sourceUpdatedAt($payload),
+            'sync_status' => 'synced',
+            'source_payload' => Arr::only($payload, ['id', 'name', 'slug', 'description', 'description_html', 'books']),
+        ])->save();
+
+        return $shelf;
     }
 
     private function upsertBook(array $payload, Shelf $shelf): Book
     {
         $sourceId = (string) Arr::get($payload, 'id');
+        $slug = $this->sourceSlug('bookstack-book', $payload);
+        $book = $this->findBookBySourceOrSlug('book', $sourceId, $slug) ?? new Book;
 
-        return Book::query()->updateOrCreate(
-            [
-                'source_system' => 'book_stack',
-                'source_type' => 'book',
-                'source_id' => $sourceId,
-            ],
-            [
-                'shelf_id' => $shelf->id,
-                'name' => (string) Arr::get($payload, 'name', 'BookStack book '.$sourceId),
-                'slug' => $this->sourceSlug('bookstack-book', $payload),
-                'description' => $this->descriptionFromPayload($payload),
-                'priority' => (int) Arr::get($payload, 'priority', 0),
-                'source_url' => $this->bookUrl($payload),
-                'source_checksum' => $this->payloadChecksum($payload),
-                'source_synced_at' => now(),
-                'source_updated_at' => $this->sourceUpdatedAt($payload),
-                'sync_status' => 'synced',
-                'source_payload' => Arr::only($payload, ['id', 'name', 'slug', 'description', 'description_html', 'created_at', 'updated_at']),
-            ],
-        );
+        $book->forceFill([
+            'shelf_id' => $shelf->id,
+            'name' => (string) Arr::get($payload, 'name', 'BookStack book '.$sourceId),
+            'slug' => $slug,
+            'description' => $this->descriptionFromPayload($payload),
+            'priority' => (int) Arr::get($payload, 'priority', 0),
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => $sourceId,
+            'source_url' => $this->bookUrl($payload),
+            'source_checksum' => $this->payloadChecksum($payload),
+            'source_synced_at' => now(),
+            'source_updated_at' => $this->sourceUpdatedAt($payload),
+            'sync_status' => 'synced',
+            'source_payload' => Arr::only($payload, ['id', 'name', 'slug', 'description', 'description_html', 'created_at', 'updated_at']),
+        ])->save();
+
+        return $book;
     }
 
     private function bookForPage(array $page, array $hierarchy): ?Book
@@ -320,27 +320,58 @@ class SyncBookStackToKnowledge
     private function upsertChapter(array $chapterPayload, Book $book): Chapter
     {
         $chapterId = (string) Arr::get($chapterPayload, 'id');
+        $slug = $this->sourceSlug('bookstack-chapter', $chapterPayload);
+        $chapter = $this->findChapterBySourceOrSlug('chapter', $chapterId, $slug) ?? new Chapter;
 
-        return Chapter::query()->updateOrCreate(
-            [
-                'source_system' => 'book_stack',
-                'source_type' => 'chapter',
-                'source_id' => $chapterId,
-            ],
-            [
-                'book_id' => $book->id,
-                'name' => (string) Arr::get($chapterPayload, 'name', 'Chapter '.$chapterId),
-                'slug' => $this->sourceSlug('bookstack-chapter', $chapterPayload),
-                'description' => $this->descriptionFromPayload($chapterPayload),
-                'priority' => (int) Arr::get($chapterPayload, 'priority', 0),
-                'source_url' => $this->chapterUrl($chapterPayload, $book),
-                'source_checksum' => $this->payloadChecksum($chapterPayload),
-                'source_synced_at' => now(),
-                'source_updated_at' => $this->sourceUpdatedAt($chapterPayload),
-                'sync_status' => 'synced',
-                'source_payload' => Arr::only($chapterPayload, ['id', 'name', 'slug', 'description', 'description_html', 'priority']),
-            ],
-        );
+        $chapter->forceFill([
+            'book_id' => $book->id,
+            'name' => (string) Arr::get($chapterPayload, 'name', 'Chapter '.$chapterId),
+            'slug' => $slug,
+            'description' => $this->descriptionFromPayload($chapterPayload),
+            'priority' => (int) Arr::get($chapterPayload, 'priority', 0),
+            'source_system' => 'book_stack',
+            'source_type' => 'chapter',
+            'source_id' => $chapterId,
+            'source_url' => $this->chapterUrl($chapterPayload, $book),
+            'source_checksum' => $this->payloadChecksum($chapterPayload),
+            'source_synced_at' => now(),
+            'source_updated_at' => $this->sourceUpdatedAt($chapterPayload),
+            'sync_status' => 'synced',
+            'source_payload' => Arr::only($chapterPayload, ['id', 'name', 'slug', 'description', 'description_html', 'priority']),
+        ])->save();
+
+        return $chapter;
+    }
+
+    private function findShelfBySourceOrSlug(string $sourceType, string $sourceId, string $slug): ?Shelf
+    {
+        // Source metadata is authoritative, but slug fallback repairs older partial imports.
+        return Shelf::query()
+            ->where('source_system', 'book_stack')
+            ->where('source_type', $sourceType)
+            ->where('source_id', $sourceId)
+            ->first()
+            ?? Shelf::query()->where('slug', $slug)->first();
+    }
+
+    private function findBookBySourceOrSlug(string $sourceType, string $sourceId, string $slug): ?Book
+    {
+        return Book::query()
+            ->where('source_system', 'book_stack')
+            ->where('source_type', $sourceType)
+            ->where('source_id', $sourceId)
+            ->first()
+            ?? Book::query()->where('slug', $slug)->first();
+    }
+
+    private function findChapterBySourceOrSlug(string $sourceType, string $sourceId, string $slug): ?Chapter
+    {
+        return Chapter::query()
+            ->where('source_system', 'book_stack')
+            ->where('source_type', $sourceType)
+            ->where('source_id', $sourceId)
+            ->first()
+            ?? Chapter::query()->where('slug', $slug)->first();
     }
 
     private function checksum(array $page): string
