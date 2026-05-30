@@ -25,6 +25,9 @@ Route::post('/tickets', [TicketController::class, 'store'])
 Route::post('/tickets/merge', [TicketController::class, 'mergeSelected'])
     ->name('tickets.merge');
 
+Route::post('/tickets/merge-suggestions/dismiss', [TicketController::class, 'dismissMergeSuggestion'])
+    ->name('tickets.merge-suggestions.dismiss');
+
 Route::get('/tickets/{ticket}/edit', [TicketController::class, 'edit'])
     ->name('tickets.edit');
 

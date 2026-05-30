@@ -59,7 +59,7 @@ Implemented now:
 - Ticket show Time rightbar widget includes a local per-ticket stopwatch with pause/resume and stop-to-register flow.
 - Ticket cost registration can reserve active Storage items from a ticket, show the reservation as an editable Activity row, and leave billing decisions pending.
 - Manual bulk ticket merging from the Ticket list. Technicians select two or more tickets, choose the primary ticket in a Bootstrap modal, and merge the rest into that primary ticket. Merging moves conversation messages, time, costs, attachments, linked email records, tasks, tags, and relevant allocation records onto the target ticket, records an audit event, soft-deletes the source ticket, and redirects old source-ticket links to the target.
-- Ticket merge settings under Ticket Settings for exact duplicate auto-merge and AI-assisted merge suggestions. Exact duplicate inbound emails can link to an existing open ticket when global auto-merge is enabled; AI-assisted merging remains controlled by settings and does not auto-merge without confirmation.
+- Ticket merge settings under Ticket Settings for exact duplicate inbound email auto-merge and AI-assisted merge suggestions. Exact duplicate inbound emails can link to an existing open ticket when global auto-merge is enabled. Merge suggestions use local subject/body similarity, shared reference or asset-like tokens in the subject, reply-prefix/internal-ticket-reference subject normalization, and client/contact context to show candidate merges in the Ticket list. Suggestions can group multiple related tickets into one primary ticket. A technician must confirm every suggested merge, and dismissed suggestion pairs are remembered.
 - Feature tests for the current main flows.
 
 Most recent completed work:
@@ -141,6 +141,8 @@ Current important files:
 - `app/Modules/Ticket/Actions/MarkTicketRead.php` - clears the ticket unread flag and stamps unread messages as read.
 - `app/Modules/Ticket/Actions/MarkTicketMessageSolution.php` - marks one public technician response as the ticket solution for workflow requirements.
 - `app/Modules/Ticket/Actions/MergeTickets.php` - consolidates a source ticket into a target ticket, transfers related records, writes merge history, and soft-deletes the source.
+- `app/Modules/Ticket/Services/TicketMergeSuggestionService.php` - builds manual merge suggestions from open tickets when merge suggestions are enabled in Ticket Settings.
+- `app/Modules/Ticket/Models/TicketMergeSuggestionDismissal.php` - stores dismissed merge suggestion pairs so noisy suggestions stay hidden.
 - `app/Modules/Ticket/Actions/UpdateDefaultTicketEmailAccount.php` - updates the Email module's per-scope default for `tickets`.
 - `app/Modules/Ticket/Actions/UpdateTicketFields.php` - updates queue, priority, category, and owner with audit events.
 - `app/Modules/Ticket/Actions/LinkInboundEmailToTicket.php` - links an Email module inbound message to an existing ticket, inherits Email tags, and creates a public customer reply.

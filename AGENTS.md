@@ -15,9 +15,12 @@ Most project-wide supporting documents live in `docs/`.
 5. Check `docs/` for task-relevant plans, assessments, integration notes, and release documents
    before changing an affected domain. Examples include security notes, integration plans, beta
    checklists, and module-specific design notes.
-6. Treat `docs/nexum-psa-v1.md` as historical MVP planning unless the task explicitly references
+6. Check `docs/TODO.md` before planning or implementing work. If the current change touches an
+   area with related future work, account for that future direction in the design so new code does
+   not create avoidable rework or conflict with known planned capabilities.
+7. Treat `docs/nexum-psa-v1.md` as historical MVP planning unless the task explicitly references
    the original phase 1 scope.
-7. Treat `docs/CLAUDE.md` and `docs/juneGuidelines.md` as legacy assistant notes. They must not
+8. Treat `docs/CLAUDE.md` and `docs/juneGuidelines.md` as legacy assistant notes. They must not
    override this file, `docs/module-architecture.md`, or `docs/ui-guidelines.md`.
 
 ## Mandatory Architecture Rules
@@ -48,6 +51,9 @@ Most project-wide supporting documents live in `docs/`.
   and repeated layout patterns to reduce maintenance.
 - Blade views should use visible section/block comments for major layout areas, matching the
   existing project style.
+- Do not expose UI controls for unfinished or stubbed functionality. If a button, toggle, setting,
+  route, or menu item is visible, the underlying behavior must be implemented, tested, and honest
+  about what it does. Future ideas belong in docs/TODO/Knowledge, not active UI.
 
 ## Comment And Documentation Rules
 

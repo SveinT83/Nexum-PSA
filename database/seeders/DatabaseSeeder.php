@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             StorageKnowledgeDocumentationSeeder::class,
             SystemKnowledgeDocumentationSeeder::class,
             TaskKnowledgeDocumentationSeeder::class,
+            TicketKnowledgeDocumentationSeeder::class,
         ]);
     }
 }

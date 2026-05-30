@@ -596,6 +596,67 @@
 @endsection
 
 @section('rightbar')
+    @if(($mergeSuggestionSettings['ai_merge_enabled'] ?? false) && $mergeSuggestions->isNotEmpty())
+        {{-- Merge suggestions: local similarity produces candidates; technicians still approve the actual merge. --}}
+        <x-card.default title="Merge suggestions">
+            @foreach($mergeSuggestions as $suggestion)
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div class="small">
+                            @foreach($suggestion['sources'] as $sourceTicket)
+                                <a href="{{ route('tech.tickets.show', $sourceTicket) }}" class="fw-semibold">{{ $sourceTicket->ticket_key }}</a>@if(! $loop->last), @endif
+                            @endforeach
+                            <span class="text-muted">into</span>
+                            <a href="{{ route('tech.tickets.show', $suggestion['target']) }}" class="fw-semibold">{{ $suggestion['target']->ticket_key }}</a>
+                        </div>
+                        <span class="badge text-bg-warning">{{ $suggestion['confidence'] }}%</span>
+                    </div>
+                    <div class="small text-muted mb-2">
+                        @foreach($suggestion['sources'] as $sourceTicket)
+                            <div class="text-truncate">{{ $sourceTicket->subject }}</div>
+                        @endforeach
+                        <div class="text-truncate">{{ $suggestion['target']->subject }}</div>
+                        @if($suggestion['target']->client)
+                            <div>{{ $suggestion['target']->client->name }}</div>
+                        @endif
+                        <div class="mt-2">
+                            <span class="fw-semibold text-body">Why:</span>
+                            {{ $suggestion['details'] }}
+                            <span class="d-block">{{ $suggestion['reason'] }}</span>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <form method="POST" action="{{ route('tech.tickets.merge') }}" onsubmit="return confirm('Merge {{ $suggestion['sources']->count() }} ticket(s) into {{ $suggestion['target']->ticket_key }}?');">
+                            @csrf
+                            <input type="hidden" name="ticket_ids[]" value="{{ $suggestion['target']->id }}">
+                            @foreach($suggestion['sources'] as $sourceTicket)
+                                <input type="hidden" name="ticket_ids[]" value="{{ $sourceTicket->id }}">
+                            @endforeach
+                            <input type="hidden" name="target_ticket_id" value="{{ $suggestion['target']->id }}">
+                            <input type="hidden" name="reason" value="Merge suggestion: {{ $suggestion['reason'] }}">
+                            <button type="submit" class="btn btn-sm btn-outline-warning w-100">
+                                <i class="bi bi-intersect" aria-hidden="true"></i>
+                                Merge suggestion
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ route('tech.tickets.merge-suggestions.dismiss') }}">
+                            @csrf
+                            <input type="hidden" name="ticket_ids[]" value="{{ $suggestion['target']->id }}">
+                            @foreach($suggestion['sources'] as $sourceTicket)
+                                <input type="hidden" name="ticket_ids[]" value="{{ $sourceTicket->id }}">
+                            @endforeach
+                            <input type="hidden" name="reason" value="Dismissed from ticket list.">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                                Dismiss suggestion
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endforeach
+        </x-card.default>
+    @endif
+
     {{-- Right rail: lightweight operational counters, intentionally separate from the main list. --}}
     <x-card.default title="Ticket stats">
         <div class="row row-cols-2 g-2 text-center">
