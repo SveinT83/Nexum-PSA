@@ -47,6 +47,24 @@
 }
 
 /*
+ * The notification bell lives inside the dense top header. Keep its click
+ * target and dropdown above nav tabs, page headers, and Livewire surfaces.
+ */
+.notification-bell {
+    position: relative;
+    z-index: 1080;
+}
+
+.notification-bell-toggle {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+}
+
+.notification-bell .dropdown-menu {
+    z-index: 1085;
+}
+
+/*
  * Knowledge shelf cards use a bounded compact body so the library grid stays
  * scannable while detailed book lists remain available through accordions.
  */

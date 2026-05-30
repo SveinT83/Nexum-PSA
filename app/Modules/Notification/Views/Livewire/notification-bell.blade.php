@@ -1,6 +1,10 @@
-<div class="dropdown" x-data="{ open: false }" x-on:click.away="open = false">
-    <button class="btn btn-link position-relative text-dark" x-on:click="open = !open"
-            aria-expanded="false" aria-haspopup="true">
+<div class="dropdown notification-bell">
+    <button type="button"
+            class="btn btn-link position-relative text-light notification-bell-toggle"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false"
+            aria-label="Open notifications">
         <i class="bi bi-bell fs-5"></i>
         @if($unreadCount > 0)
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
@@ -11,7 +15,7 @@
     </button>
 
     <div class="dropdown-menu dropdown-menu-end shadow" style="width: 360px; max-height: 480px; overflow-y: auto;"
-         x-show="open" x-transition>
+         aria-label="Notifications">
 
         <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
             <h6 class="mb-0">Notifications</h6>
