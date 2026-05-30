@@ -27,6 +27,10 @@
             <div class="alert alert-info">
                 New recovery codes have been generated. Save them in a safe place — the old codes are no longer valid.
             </div>
+        @elseif(session('status') === 'password-updated')
+            <div class="alert alert-success">
+                Password updated successfully.
+            </div>
         @endif
 
         {{-- Two-Factor Authentication Card --}}
