@@ -1,6 +1,6 @@
 # Feature Slice: Technician Profile Shell And Side Menu
 
-Status: Draft
+Status: Implemented
 Date: 2026-05-31
 Parent: `docs/rfc/2026-05-31-technician-profile-consolidation.md`
 Owner: Svein / Codex
@@ -74,3 +74,21 @@ experience.
 - No Ticket-owned data is moved in this slice.
 - Tests pass for User Management, Notification profile preferences, and Ticket profile route
   compatibility where touched.
+
+## Implementation Notes
+
+Implemented 2026-05-31.
+
+- Added `tech.profile.index`, `tech.profile.integrations`, and `tech.profile.view` routes in
+  User Management.
+- Added a UserManagement-owned profile side menu shared by Preferences, Security, Notifications,
+  and the current Ticket Technician Profile page.
+- Replaced the main navigation user dropdown with one Profile entry plus Logout.
+- Kept existing Preferences, Security, Notification, and Ticket profile routes compatible.
+- Added UserManagement documentation for the profile shell and ownership boundary.
+
+Validated with:
+
+- `HOME=/tmp php artisan test app/Modules/UserManagement/Tests/Feature`
+- `HOME=/tmp php artisan test app/Modules/Notification/Tests/Feature/NotificationSystemTest.php`
+- `HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketModuleTest.php --filter=Technician`

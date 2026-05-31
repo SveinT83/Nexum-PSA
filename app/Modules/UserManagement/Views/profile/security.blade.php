@@ -2,6 +2,10 @@
 
 @section('title', 'Security Settings')
 
+@section('sidebar')
+    @include('usermanagement::profile.partials.sidebar')
+@endsection
+
 @section('pageHeader')
     <h1>Security Settings</h1>
 @endsection
@@ -222,12 +226,6 @@
 
     </div>
 </div>
-@endsection
-
-@section('sidebar')
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
 @endsection
 
 @section('rightbar')

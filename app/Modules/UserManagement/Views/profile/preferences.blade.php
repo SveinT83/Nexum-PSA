@@ -2,6 +2,10 @@
 
 @section('title', 'User Preferences')
 
+@section('sidebar')
+    @include('usermanagement::profile.partials.sidebar')
+@endsection
+
 @section('pageHeader')
     <div class="col">
         <h1 class="h4 mb-1">User Preferences</h1>

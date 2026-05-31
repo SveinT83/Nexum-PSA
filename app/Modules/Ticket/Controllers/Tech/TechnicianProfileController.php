@@ -7,6 +7,7 @@ use App\Models\Core\User;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketTechnicianProfile;
+use App\Modules\UserManagement\Models\UserProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -35,8 +36,8 @@ class TechnicianProfileController extends Controller
             [
                 'is_assignable' => true,
                 'max_open_tickets' => 10,
-                'timezone' => config('app.timezone', 'UTC'),
-                'working_hours' => $this->defaultWorkingHours(),
+                'timezone' => $user->profile?->timezone ?? config('app.timezone', 'UTC'),
+                'working_hours' => $user->profile?->working_hours ?? $this->defaultWorkingHours(),
             ]
         )->load(['categories', 'tags', 'user']);
     }
@@ -69,6 +70,19 @@ class TechnicianProfileController extends Controller
         // Skills are stored as explicit pivots so assignment scoring can query them efficiently later.
         $profile->categories()->sync($data['category_ids'] ?? []);
         $profile->tags()->sync($data['tag_ids'] ?? []);
+
+        // During profile consolidation, the old Ticket route remains editable
+        // but platform-wide timezone and work hours are mirrored to User Management.
+        UserProfile::query()->updateOrCreate(
+            ['user_id' => $profile->user_id],
+            [
+                'timezone' => $profile->timezone,
+                'working_hours' => $profile->working_hours,
+                'profile_notes' => $profile->notes,
+                'migrated_from_ticket_technician_profile_id' => $profile->id,
+                'migrated_at' => now(),
+            ]
+        );
     }
 
     protected function viewData(TicketTechnicianProfile $profile): array

@@ -28,6 +28,7 @@ app/Modules/UserManagement/
         Admin/
             Roles/
             Permissions/
+        profile/
         Livewire/
             Roles/
     routes.php
@@ -44,6 +45,9 @@ Routes live in `app/Modules/UserManagement/routes.php` and keep the existing rou
 - `tech.admin.user_management.roles.update-user`
 - `tech.admin.user_management.roles.*`
 - `tech.admin.user_management.permissions.*`
+- `tech.profile.index`
+- `tech.profile.preferences`
+- `tech.profile.security`
 
 The module routes are loaded inside the `/tech` group and add `admin` middleware locally.
 
@@ -57,8 +61,26 @@ The module routes are loaded inside the `/tech` group and add `admin` middleware
 - List, create, update, and delete roles.
 - List, create, update, and delete permissions.
 - Assign permissions to roles through the module-local Livewire component.
+- Own the authenticated-user profile shell and side menu.
+- Keep account, preferences, security, notifications, and technician-facing settings in one
+  coherent profile workspace.
 
 ## User Preferences
+
+Authenticated users open the unified profile workspace from `/tech/profile`.
+
+The main navigation user menu should link to this single profile entry instead of linking directly
+to Preferences, Security, Notifications, or Ticket-owned assignment settings.
+
+Existing profile routes remain available:
+
+- `/tech/profile/preferences`
+- `/tech/profile/security`
+- `/tech/profile/notifications`
+- `/tech/tickets/profile`
+
+The profile side menu is owned by User Management and is reused by those existing pages while the
+profile consolidation work is completed.
 
 Authenticated users manage personal defaults from `/tech/profile/preferences`.
 
@@ -71,6 +93,39 @@ Current fields:
 
 Calendar uses these preferences for display defaults and personal availability setup, but the
 preference records themselves belong to User Management.
+
+## Technician Profile Consolidation
+
+User Management is the canonical owner for the real technician/user profile.
+
+Canonical profile records are stored in `user_profiles`.
+
+Current fields include:
+
+- Avatar path.
+- Work phone.
+- Private phone.
+- Timezone.
+- Working hours.
+- Availability notes.
+- Profile notes.
+
+The Ticket module may still own temporary assignment data, such as ticket assignability, ticket
+capacity, ticket category skills, ticket tags, and working hours, until the migration slices move
+shared technician profile data to the canonical profile model.
+
+Do not add new general technician profile features to Ticket. Add them to User Management unless
+the feature is strictly ticket-assignment-specific.
+
+Production upgrades should run:
+
+```bash
+php artisan migrate
+php artisan user-profiles:backfill
+```
+
+The backfill command is idempotent. It creates missing `user_profiles` rows and copies existing
+phone fields plus timezone, work hours, and notes from `ticket_technician_profiles` when available.
 
 ## Livewire
 

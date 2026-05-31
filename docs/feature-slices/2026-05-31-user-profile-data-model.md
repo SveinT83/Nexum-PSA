@@ -1,6 +1,6 @@
 # Feature Slice: User Profile Data Model
 
-Status: Draft
+Status: Implemented
 Date: 2026-05-31
 Parent: `docs/rfc/2026-05-31-technician-profile-consolidation.md`
 Owner: Svein / Codex
@@ -78,3 +78,26 @@ This slice gives Nexum one real profile owner for platform-wide user/technician 
 - Existing internal users can be associated with one profile row.
 - No duplicate profile ownership is introduced.
 - Tests prove relationship, authorization, and profile persistence.
+
+## Implementation Notes
+
+Implemented 2026-05-31.
+
+- Added `user_profiles` migration and UserManagement-owned `UserProfile` model.
+- Added `User::profile()` relationship.
+- Added idempotent `user-profiles:backfill` artisan command.
+- Migration and command copy existing user phone fields and Ticket technician timezone, work hours,
+  and notes into `user_profiles` when available.
+- `/tech/profile` now saves account/profile fields into `user_profiles` while keeping user fields in
+  sync for compatibility.
+- Admin User Management profile updates the canonical profile row.
+- Existing Ticket technician profile updates mirror timezone, working hours, and notes into
+  `user_profiles` during the transition.
+- Ticket assignment scoring reads UserManagement profile work hours/timezone first, with fallback to
+  the existing Ticket technician profile.
+
+Validated with:
+
+- `HOME=/tmp php artisan test app/Modules/UserManagement/Tests/Feature`
+- `HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketModuleTest.php --filter=Technician`
+- `HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketModuleTest.php --filter=assignment`

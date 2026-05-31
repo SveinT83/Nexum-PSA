@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketTechnicianProfile;
+use App\Modules\UserManagement\Models\UserProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
@@ -80,6 +81,9 @@ class UserManagementAdminTest extends TestCase
                 'email' => 'new.employee@example.test',
                 'phone_work' => '+47 73500000',
                 'phone_private' => '+47 40000000',
+                'timezone' => 'Europe/Oslo',
+                'availability_notes' => 'Available after 09:00.',
+                'profile_notes' => 'Admin-maintained profile note.',
             ])
             ->assertRedirect(route('tech.admin.user_management.show', $user))
             ->assertSessionHas('success', 'User profile updated successfully.');
@@ -90,6 +94,13 @@ class UserManagementAdminTest extends TestCase
         $this->assertSame('new.employee@example.test', $user->email);
         $this->assertSame('+47 73500000', $user->phone_work);
         $this->assertSame('+47 40000000', $user->phone_private);
+
+        $profile = UserProfile::where('user_id', $user->id)->firstOrFail();
+        $this->assertSame('+47 73500000', $profile->work_phone);
+        $this->assertSame('+47 40000000', $profile->private_phone);
+        $this->assertSame('Europe/Oslo', $profile->timezone);
+        $this->assertSame('Available after 09:00.', $profile->availability_notes);
+        $this->assertSame('Admin-maintained profile note.', $profile->profile_notes);
     }
 
     #[Test]

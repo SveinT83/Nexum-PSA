@@ -2,6 +2,10 @@
 
 @section('title', 'Notification Preferences')
 
+@section('sidebar')
+    @include('usermanagement::profile.partials.sidebar')
+@endsection
+
 @section('pageHeader')
     <h1><i class="bi bi-bell me-2"></i>Notification Preferences</h1>
 @endsection
@@ -88,12 +92,6 @@
         </form>
     </div>
 </div>
-@endsection
-
-@section('sidebar')
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
 @endsection
 
 @section('rightbar')

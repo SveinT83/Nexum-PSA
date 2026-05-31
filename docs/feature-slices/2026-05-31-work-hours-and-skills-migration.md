@@ -1,6 +1,6 @@
 # Feature Slice: Work Hours And Skills Migration
 
-Status: Draft
+Status: Partially Implemented
 Date: 2026-05-31
 Parent: `docs/rfc/2026-05-31-technician-profile-consolidation.md`
 Owner: Svein / Codex
@@ -75,3 +75,23 @@ Ticket can use those values for assignment, but Ticket must not own them as the 
 - Ticket assignment still works.
 - User and admin profile UIs expose work hours and skills clearly.
 - Tests cover migration, editing, permissions, and assignment usage.
+
+## Progress Notes
+
+Partially implemented 2026-05-31.
+
+- `user_profiles` now stores migrated work hours and timezone.
+- The production-safe `user-profiles:backfill` command copies existing Ticket technician profile
+  work hours and timezone into User Management profile records.
+- Existing Ticket technician profile updates mirror timezone, work hours, and notes into
+  `user_profiles` to prevent data divergence during the transition.
+- Ticket assignment scoring reads UserManagement profile work hours/timezone first and falls back to
+  Ticket technician profile values.
+
+Remaining:
+
+- Move the visible Work Hours editor out of the Ticket view and into a UserManagement-owned profile
+  section.
+- Decide whether category/tag skills are ticket-specific assignment signals or general technician
+  competencies.
+- Move general skills to UserManagement if approved.

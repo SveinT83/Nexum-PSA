@@ -5,7 +5,9 @@ namespace App\Modules\UserManagement\Tests\Feature;
 use App\Models\Core\User;
 use App\Modules\Calendar\Actions\EnsureCalendarDefaults;
 use App\Modules\Calendar\Models\Calendar;
+use App\Modules\UserManagement\Controllers\ProfileController;
 use App\Modules\UserManagement\Controllers\ProfilePreferencesController;
+use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\UserManagement\Models\UserPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -32,8 +34,53 @@ class UserPreferencesTest extends TestCase
     #[Test]
     public function profile_preference_routes_are_owned_by_user_management(): void
     {
+        $this->assertSame(ProfileController::class.'@index', Route::getRoutes()->getByName('tech.profile.index')->getActionName());
         $this->assertSame(ProfilePreferencesController::class.'@show', Route::getRoutes()->getByName('tech.profile.preferences')->getActionName());
         $this->assertSame(ProfilePreferencesController::class.'@update', Route::getRoutes()->getByName('tech.profile.preferences.update')->getActionName());
+    }
+
+    #[Test]
+    public function technician_can_view_profile_shell(): void
+    {
+        $this->actingAs($this->tech)
+            ->get(route('tech.profile.index'))
+            ->assertOk()
+            ->assertSee('Profile')
+            ->assertSee('Account')
+            ->assertSee('Preferences')
+            ->assertSee('Security / 2FA')
+            ->assertSee('Work hours &amp; skills', false);
+    }
+
+    #[Test]
+    public function technician_can_update_canonical_profile_details(): void
+    {
+        $this->actingAs($this->tech)
+            ->patch(route('tech.profile.update'), [
+                'name' => 'Updated Technician',
+                'email' => 'updated.technician@example.test',
+                'work_phone' => '+47 73501010',
+                'private_phone' => '+47 40001010',
+                'timezone' => 'Europe/Oslo',
+                'availability_notes' => 'Usually available after 08:30.',
+                'profile_notes' => 'Prefers onsite work on Tuesdays.',
+            ])
+            ->assertRedirect(route('tech.profile.index'))
+            ->assertSessionHas('success', 'Profile updated.');
+
+        $this->tech->refresh();
+
+        $this->assertSame('Updated Technician', $this->tech->name);
+        $this->assertSame('updated.technician@example.test', $this->tech->email);
+        $this->assertSame('+47 73501010', $this->tech->phone_work);
+        $this->assertSame('+47 40001010', $this->tech->phone_private);
+
+        $profile = UserProfile::query()->where('user_id', $this->tech->id)->firstOrFail();
+        $this->assertSame('+47 73501010', $profile->work_phone);
+        $this->assertSame('+47 40001010', $profile->private_phone);
+        $this->assertSame('Europe/Oslo', $profile->timezone);
+        $this->assertSame('Usually available after 08:30.', $profile->availability_notes);
+        $this->assertSame('Prefers onsite work on Tuesdays.', $profile->profile_notes);
     }
 
     #[Test]

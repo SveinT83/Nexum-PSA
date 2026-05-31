@@ -43,6 +43,7 @@ use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -2654,6 +2655,11 @@ class TicketModuleTest extends TestCase
         $this->assertFalse($profile->working_hours['tuesday']['enabled']);
         $this->assertTrue($profile->categories()->whereKey($category->id)->exists());
         $this->assertTrue($profile->tags()->whereKey($tag->id)->exists());
+
+        $userProfile = UserProfile::where('user_id', $this->tech->id)->firstOrFail();
+        $this->assertSame('Europe/Oslo', $userProfile->timezone);
+        $this->assertSame('09:00', $userProfile->working_hours['monday']['start']);
+        $this->assertSame('Prefers firewall tickets.', $userProfile->profile_notes);
     }
 
     #[Test]
