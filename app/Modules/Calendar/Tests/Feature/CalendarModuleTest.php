@@ -13,7 +13,7 @@ use App\Modules\Calendar\Models\CalendarAccess;
 use App\Modules\Calendar\Models\CalendarAvailabilityRule;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
-use App\Modules\UserManagement\Models\UserPreference;
+use App\Modules\UserManagement\Livewire\UserManagement\Models\UserPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;

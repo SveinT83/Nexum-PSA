@@ -1,151 +1,270 @@
-# Nexum-PSA — Security Remediation & Pen-Test Plan
+# Nexum PSA Security Remediation And Pentest Plan
 
-**Created:** 2026-05-16  
-**Demo site:** https://portal.tronderdata.no  
-**Hosting:** In-house server (projects server, 192.168.10.78)
+Updated: 2026-05-31  
+Scope: current codebase, local/dev verification, and future dedicated Linux copy pentest.
 
----
+## Current Remediation Status
 
-## Part 1: Remediation Plan (from Security Audit)
+| Priority | Finding | Current Status | Dev-Testable |
+| --- | --- | --- | --- |
+| P0 | Session cookies not secure/encrypted | Fixed in code for `APP_ENV=production` | Yes |
+| P0 | APP_DEBUG may be true in production | Environment/deploy verification required | Linux copy |
+| P0 | Horizon exposed | Fixed in code, no route registered | Yes |
+| P0 | Telescope exposed | Fixed for production mode; local-only registration | Yes |
+| P0 | Vite dev server URLs in production | Fixed in current tree; deployment must build assets | Partial |
+| P0 | Boost browser logs exposed | Still open if dev dependencies installed in production | Yes |
+| P1 | Missing CORS config | Open | Yes |
+| P1 | Missing security headers | Fixed in code and tested | Yes |
+| P1 | QR code raw SVG | Open | Yes |
+| P1 | Knowledge HTML output trusts stored HTML | Open | Yes |
+| P1 | Email HTML sanitizer is placeholder | Open | Yes |
+| P1 | Ticket attachment upload validation | Open | Yes |
+| P2 | Invite tokens stored as raw tokens | Open | Yes |
+| P2 | Account lockout beyond rate limiting | Open | Yes |
+| P2 | Password breach detection | Open | Yes |
+| P3 | Audit log UI | Open | Yes |
 
-### 🔴 P0 — Must Fix Before Any External Exposure
+## Immediate Dev Remediation Tasks
 
-| # | Finding | File/Config | Fix | Status |
-|---|---------|-------------|-----|--------|
-| 1 | Session cookies not secure | `.env`, `config/session.php` | Production forces secure and encrypted session cookies; `.env.example` documents secure attributes | ✅ 2026-05-25 |
-| 2 | APP_DEBUG may be true | `.env` | Verify `APP_DEBUG=false` in production | 🔲 |
-| 3 | Horizon gate empty | `HorizonServiceProvider.php` | Horizon removed; app uses the database queue driver | ✅ 2026-05-25 |
-| 4 | Telescope gate open | `TelescopeServiceProvider.php` | Telescope package discovery disabled and providers registered only in `local` | ✅ 2026-05-25 |
-| 5 | No CORS config | `config/cors.php` missing | Create with strict origin policy | 🔲 |
-| 6 | No security headers | `SecurityHeaders` middleware | Global middleware adds CSP, HSTS on HTTPS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and Permissions-Policy | ✅ 2026-05-25 |
+These can be fixed and tested in the dev environment before preparing the separate Linux copy.
 
-### 🟡 P1 — Fix This Sprint
+### 1. Harden Laravel Boost Production Exposure
 
-| # | Finding | File/Config | Fix | Status |
-|---|---------|-------------|-----|--------|
-| 7 | XSS: QR code raw SVG | `security.blade.php:108` | Base64-encode into `<img>` tag | 🔲 |
-| 8 | XSS: Knowledge base HTML | `Knowledge/show.blade.php:34` | Add `mews/purifier`, sanitize on output | 🔲 |
-| 9 | XSS: Email HTML body | `Email/view.blade.php:37` | Sandboxed iframe or HTML purifier | 🔲 |
-| 10 | File upload: no MIME/size validation | `StoreTicketAttachment.php` | Whitelist MIME types + 10MB limit + real MIME check | 🔲 |
+Problem:
 
-### 🟢 P2 — Next Sprint
+- `_boost/browser-logs` is registered under `APP_ENV=production` when dev dependencies are installed locally.
 
-| # | Finding | File/Config | Fix | Status |
-|---|---------|-------------|-----|--------|
-| 11 | Invite token timing attack | `AcceptInviteController.php` | Hash tokens with SHA-256 before storage/lookup | 🔲 |
-| 12 | No account lockout | N/A | Add `login_attempts` + `locked_until` columns | 🔲 |
-| 13 | No password breach detection | `PasswordValidationRules.php` | Add `Password::uncompromised()` | 🔲 |
-| 14 | Audit log no UI | `spatie/laravel-activitylog` installed | Build audit log viewer in admin | 🔲 |
+Fix:
 
----
+- Add `laravel/boost` to `composer.json` `extra.laravel.dont-discover`.
+- Register Boost only in local development if the project still needs it.
+- Ensure production deployment uses `composer install --no-dev`.
 
-## Part 2: Pen-Test Plan — portal.tronderdata.no
+Verification:
 
-**Scope:** The publicly accessible demo instance of Nexum-PSA at https://portal.tronderdata.no  
-**Hosted on:** Projects server (192.168.10.78) — our infrastructure  
-**Authorization:** Joe (boss) has approved testing against this instance  
-**Rule:** This is our own server. We test to find weaknesses before attackers do. No external tools that could cause service disruption.
+```bash
+APP_ENV=production HOME=/tmp php artisan route:list --path=_boost
+```
 
-### Phase 1: Reconnaissance (Passive)
+Expected:
 
-| Test | Method | Expected | Pass/Fail |
-|------|--------|----------|-----------|
-| **1.1** TLS configuration | Check SSL Labs grade (ssllabs.com/ssltest) | A or A+ | 🔲 |
-| **1.2** HTTP → HTTPS redirect | `curl -I http://portal.tronderdata.no` | 301/302 to HTTPS | 🔲 |
-| **1.3** Security headers present | `curl -sI https://portal.tronderdata.no` | HSTS, X-Frame-Options, CSP, X-Content-Type-Options, Referrer-Policy | 🔲 |
-| **1.4** Server info leakage | Check response headers for `Server`, `X-Powered-By` | Should be absent or generic | 🔲 |
-| **1.5** Cookie flags | Inspect `Set-Cookie` headers | `Secure`, `HttpOnly`, `SameSite` flags present | 🔲 |
-| **1.6**robots.txt | `curl https://portal.tronderdata.no/robots.txt` | Disallows /tech, /admin, /horizon, /telescope, /api | 🔲 |
-| **1.7** Well-known paths | Probe /.env, /.git, /storage/logs/laravel.log, /telescope, /horizon, /_debugbar | All should 404 or 403 | 🔲 |
-| **1.8** API endpoint exposure | `curl https://portal.tronderdata.no/api/v1/...` | 401 Unauthorized (no public API) | 🔲 |
+- No matching routes.
 
-### Phase 2: Authentication Testing
+### 2. Add Explicit CORS Config
 
-| Test | Method | Expected | Pass/Fail |
-|------|--------|----------|-----------|
-| **2.1** Brute force protection | 10 rapid login attempts with wrong password | Rate limited (429) after 5 attempts | 🔲 |
-| **2.2** Account enumeration | Login with nonexistent email vs wrong password | Same error message (no "user not found" vs "wrong password") | 🔲 |
-| **2.3** Session fixation | Set custom session cookie before login, check if it changes after | Session ID regenerates on login | 🔲 |
-| **2.4** Session timeout | Idle for >120 min, then request authenticated page | Redirected to login (session expired) | 🔲 |
-| **2.5** Remember me token security | Login with "remember me", inspect cookie | Token is long random, HttpOnly, Secure | 🔲 |
-| **2.6** Concurrent session handling | Login from two browsers, change password in one | Other session invalidated | 🔲 |
-| **2.7** Logout completeness | Logout, then use back button / request authenticated page | Session invalidated, CSRF token regenerated | 🔲 |
+Problem:
 
-### Phase 3: Authorization Testing
+- `config/cors.php` is missing.
 
-| Test | Method | Expected | Pass/Fail |
-|------|--------|----------|-----------|
-| **3.1** Vertical privilege escalation | Regular tech user accesses /tech/admin/* | 403 Forbidden | 🔲 |
-| **3.2** Horizontal privilege escalation | Tech A accesses Tech B's profile/security page | 403 or redirect to own profile | 🔲 |
-| **3.3** Force browsing | Unauthenticated user directly accesses /tech/tickets | 302 → login | 🔲 |
-| **3.4** API auth bypass | Call API endpoints without Sanctum token | 401 Unauthorized | 🔲 |
-| **3.5** IDOR on tickets | Tech accesses ticket belonging to different client (if RBAC per client exists) | 403 or filtered results | 🔲 |
-| **3.6** Admin API protection | Call admin API endpoints with tech-level token | 403 Forbidden | 🔲 |
+Fix:
 
-### Phase 4: Input Validation & Injection
+- Add `config/cors.php`.
+- Restrict paths to `api/*` unless other paths are explicitly needed.
+- Restrict origins through `CORS_ALLOWED_ORIGINS`.
+- Keep credentials behavior explicit.
 
-| Test | Method | Expected | Pass/Fail |
-|------|--------|----------|-----------|
-| **4.1** Reflected XSS in search | `<script>alert(1)</script>` in ticket search, client search | Sanitized, no execution | 🔲 |
-| **4.2** Stored XSS in ticket description | `<img src=x onerror=alert(1)>` in ticket body | Sanitized on display | 🔲 |
-| **4.3** Stored XSS in client name | `<script>` in client name field | Sanitized in all views | 🔲 |
-| **4.4** SQL injection in search | `' OR 1=1 --` in search fields | Parameterized query, no injection | 🔲 |
-| **4.5** File upload — malicious extension | Upload `.php` file as ticket attachment | Rejected or stored as non-executable | 🔲 |
-| **4.6** File upload — oversized file | Upload 100MB file as attachment | Rejected with size limit error | 🔲 |
-| **4.7** Mass assignment | POST extra fields (e.g., `role=superadmin`) to user creation | Only `$fillable` fields accepted | 🔲 |
-| **4.8** CSRF on state changes | Submit POST without CSRF token | 419 CSRF token mismatch | 🔲 |
+Verification:
+
+- Add a feature test for allowed and disallowed CORS preflight requests.
+
+### 3. Fix QR Code Raw SVG Output
+
+Problem:
+
+- `app/Modules/UserManagement/Views/profile/security.blade.php` renders raw QR SVG.
+
+Fix:
+
+- Render the QR code as an image data URI or sanitize SVG output.
+
+Verification:
+
+- Feature/view test asserts raw `<svg` is not emitted directly.
+- Manual 2FA setup still works and manual TOTP code remains available.
+
+### 4. Sanitize Knowledge HTML
+
+Problem:
+
+- `app/Modules/Knowledge/Views/Tech/show.blade.php` trusts `body_html`.
+
+Fix:
+
+- Centralize HTML sanitization using HTMLPurifier or an equivalent robust sanitizer.
+- Sanitize on save and/or output.
+
+Verification:
+
+- Feature test creates an article with malicious HTML and asserts script/event handlers are removed.
+
+### 5. Harden Email HTML Rendering
+
+Problem:
+
+- `HtmlSanitizer` is a regex placeholder and email body is rendered raw after sanitization.
+
+Fix options:
+
+- Replace sanitizer with HTMLPurifier.
+- Or render email HTML in a sandboxed iframe with carefully controlled `srcdoc`.
+- Block external resources or plan proxy behavior deliberately.
+
+Verification:
+
+- Feature/unit tests for script tags, event handlers, `javascript:` URLs, and hostile HTML payloads.
+
+### 6. Add Ticket Attachment Validation
+
+Problem:
+
+- Ticket upload action lacks explicit max size, extension, and real MIME validation.
+
+Fix:
+
+- Add validation in request/controller/action path.
+- Enforce max size.
+- Enforce extension/MIME allow-list.
+- Use server-detected MIME for validation.
+- Keep `local` disk storage.
+
+Verification:
+
+- `.php` upload rejected.
+- Oversized upload rejected.
+- Allowed text/PDF/image upload accepted.
+- Stored path remains on non-public disk.
+
+### 7. Add Dev Security Regression Tests
+
+Create/extend tests for:
+
+- Production route absence: Telescope/Horizon/Boost.
+- Production session config.
+- Security headers.
+- CORS.
+- QR output.
+- Knowledge sanitizer.
+- Email sanitizer.
+- Ticket attachment validation.
+
+## Future Linux Copy Pentest Plan
+
+Use a separate Linux server copy for external-style pentesting. Do not use active production as the primary test target.
+
+### Deployment Baseline
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan migrate --force
+php artisan optimize:clear
+```
+
+Environment:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+SESSION_SECURE_COOKIE=true
+SESSION_ENCRYPT=true
+SESSION_HTTP_ONLY=true
+SESSION_SAME_SITE=lax
+QUEUE_CONNECTION=database
+```
+
+### Phase 1: Passive Recon
+
+| Test | Expected |
+| --- | --- |
+| HTTP redirects to HTTPS | 301/302 to HTTPS |
+| Security headers present | CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy |
+| Cookie flags | Secure, HttpOnly, SameSite |
+| `.env` blocked | 403 or 404 |
+| `.git` blocked | 403 or 404 |
+| `storage/logs` blocked | 403 or 404 |
+| `/telescope` unavailable | 404 or protected non-success |
+| `/horizon` unavailable | 404 |
+| `/_boost/browser-logs` unavailable | 404 or non-success |
+| Login HTML has no Vite dev URLs | No `5173`, `@vite/client`, or local hostname |
+
+### Phase 2: Authentication
+
+| Test | Expected |
+| --- | --- |
+| Login brute force | Rate limited |
+| Account enumeration | Same generic login error |
+| Session fixation | Session changes after login |
+| Logout | Session invalidated |
+| 2FA bypass attempt | Redirect/challenge enforced |
+| 2FA setup enforcement | Required roles redirected to setup |
+
+### Phase 3: Authorization
+
+| Test | Expected |
+| --- | --- |
+| Tech accesses admin route | 403 |
+| Unauthenticated tech route access | Redirect to login |
+| API without token | 401 |
+| Admin route with tech user | 403 |
+| Cross-user profile/security access | 403 or own-profile redirect |
+
+### Phase 4: Input And Content
+
+| Test | Expected |
+| --- | --- |
+| Reflected XSS in search fields | Escaped/no execution |
+| Stored XSS in ticket/client/contact fields | Escaped/no execution |
+| Knowledge malicious HTML | Sanitized |
+| Email malicious HTML | Sanitized or sandboxed |
+| SQL injection strings in search | No SQL error or broad bypass |
+| `.php` ticket attachment | Rejected |
+| Oversized attachment | Rejected |
+| CSRF-less POST | 419 |
 
 ### Phase 5: Business Logic
 
-| Test | Method | Expected | Pass/Fail |
-|------|--------|----------|-----------|
-| **5.1** Invite token reuse | Use same invite link twice | Token marked as used, second attempt fails | 🔲 |
-| **5.2** Invite token tampering | Modify token characters in URL | "Invalid or expired" message | 🔲 |
-| **5.3** 2FA bypass attempt | Login with 2FA user, skip 2FA challenge URL | Redirected back to 2FA challenge | 🔲 |
-| **5.4** 2FA enforcement bypass | 2FA-required role, user hasn't set up 2FA, try accessing other pages | Redirected to security settings | 🔲 |
-| **5.5** Password reset for other user | Request password reset for another user's email | Only sends to that user's email (no account takeover) | 🔲 |
-| **5.6** Ticket SLA manipulation | Manually set `first_response_due_at` to far future | Server validates, doesn't allow gaming SLA | 🔲 |
+| Test | Expected |
+| --- | --- |
+| Invite token reuse | Rejected |
+| Invite token tampering | Rejected |
+| Password reset for other user | No account takeover |
+| Ticket merge authorization | Only authenticated tech actions |
+| Ticket workflow bypass | Blocked by runtime checks |
 
 ### Phase 6: Infrastructure
 
-| Test | Method | Expected | Pass/Fail |
-|------|--------|----------|-----------|
-| **6.1** Debug mode check | Trigger 500 error, check response body | No stack trace, no env vars | 🔲 |
-| **6.2** Directory listing | Access /storage/, /app/ via browser | 403 Forbidden | 🔲 |
-| **6.3** Horizon access | https://portal.tronderdata.no/horizon | 404; Horizon is not installed or registered | 🔲 |
-| **6.4** Telescope access | https://portal.tronderdata.no/telescope | 404 in production; available only in local development | 🔲 |
-| **6.5** phpinfo exposure | Check for /phpinfo, /info.php | 404 | 🔲 |
-| **6.6** Default credentials | Try admin/admin, admin/password | Login rejected | 🔲 |
+| Test | Expected |
+| --- | --- |
+| Triggered 500 in production mode | No stack trace/env |
+| Directory listing | Disabled |
+| phpinfo paths | 404 |
+| Default credentials | Rejected |
+| Queue worker | Processes queued mail/jobs |
 
----
+## Reporting
 
-## Execution Plan
+For the Linux copy, write a dated report:
 
-1. **Apply P0 fixes first** (items 1-6) — 30 min of config changes
-2. **Run Phase 1 (Recon)** against the demo site — establish baseline
-3. **Apply P1 fixes** (items 7-10)
-4. **Run Phases 2-6** systematically — document all findings
-5. **Fix any new findings** discovered during pen-test
-6. **Re-test** to confirm fixes
-7. **Write final report** with before/after for each test
+```text
+docs/SECURITY-ASSESSMENT-LINUX-COPY-YYYY-MM-DD.md
+```
 
-### Tools
+Each finding should include:
 
-- `curl` / `httpie` — header inspection, request crafting
-- Browser DevTools — cookie inspection, XSS testing
-- `nikto` (optional) — automated web server scanner
-- Manual testing — most important, this is where logic bugs hide
+- Severity.
+- Endpoint/file.
+- Reproduction steps.
+- Evidence.
+- Impact.
+- Fix.
+- Re-test result.
 
-### Rules of Engagement
+## Rules Of Engagement
 
-- ✅ Test against portal.tronderdata.no (our server, approved)
-- ✅ Test during business hours (notify Joe before starting)
-- ✅ Document every test and result
-- ❌ No denial-of-service testing (it's a shared server)
-- ❌ No automated vulnerability scanners at high speed
-- ❌ No testing of other services on the same host (Grafana, War Room, etc.)
-- ❌ No data exfiltration even if found — report and fix only
-
----
-
-*Last updated: 2026-05-25*
+- Test only the approved Linux copy.
+- No denial-of-service testing.
+- No high-speed scanners without explicit approval.
+- No testing unrelated services on the same host.
+- No data exfiltration.
+- Document and fix, then re-test.

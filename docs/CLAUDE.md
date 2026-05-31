@@ -1,7 +1,7 @@
-> Legacy note: `AGENTS.md` is the authoritative instruction file for tdPSA. This file is retained
-> for Claude/Laravel Boost context only and must not override `AGENTS.md`,
-> `docs/module-architecture.md`, or `docs/ui-guidelines.md`. Claude-based tools should start from
-> the root `CLAUDE.md`, which points back to `AGENTS.md`.
+> Legacy note: `AGENTS.md` is the authoritative instruction file for Nexum PSA / tdPSA. This file
+> is retained for Claude/Laravel Boost context only and must not override `AGENTS.md`,
+> `docs/development/ai-team-process.md`, `docs/module-architecture.md`, or `docs/ui-guidelines.md`.
+> Claude-based tools should start from the root `CLAUDE.md`, which points back to `AGENTS.md`.
 
 <laravel-boost-guidelines>
 === foundation rules ===

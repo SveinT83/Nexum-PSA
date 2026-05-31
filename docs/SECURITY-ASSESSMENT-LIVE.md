@@ -1,197 +1,140 @@
-# Nexum-PSA — Live Security Assessment: portal.tronderdata.no
+# Nexum PSA Live Security Assessment Notes
 
-**Date:** 2026-05-16 18:50 CET  
-**Assessor:** Commander Cobra 🐍  
-**Target:** https://portal.tronderdata.no  
-**Hosting:** In-house projects server (192.168.10.78)  
-**Status:** 🔴 **3 Critical, 3 High, 2 Medium findings**
+Original live assessment: 2026-05-16 against `https://portal.tronderdata.no`  
+Updated: 2026-05-31  
+Status: historical findings retained for context; new live verification should be performed on a dedicated Linux copy.
 
----
+This document is no longer the source of truth for current codebase status. Use `docs/SECURITY-AUDIT.md` for current code review status and `docs/SECURITY-REMEDIATION-PLAN.md` for the active remediation and pentest plan.
 
-## Executive Summary
+## Historical Live Findings
 
-The demo site has **serious exposure issues** that need Svein's immediate attention. The most critical: **Telescope and Horizon are fully accessible without authentication**, leaking application internals, file paths, stack traces, and Redis connection errors. Additionally, **Vite dev server URLs are leaking into production HTML**, and a **browser logging endpoint accepts arbitrary unauthenticated input**.
+The 2026-05-16 live assessment reported:
 
-These are not theoretical — I confirmed each one live.
+- Telescope exposed at `/telescope`.
+- Horizon exposed at `/horizon`.
+- Vite dev server URLs leaking in production HTML.
+- `_boost/browser-logs` accepting unauthenticated input.
+- Session cookies missing `Secure`.
+- Missing security headers.
+- Missing explicit CORS configuration.
+- Redis/Horizon queue errors exposing internals.
 
----
+These findings were valid for the tested live state at that time.
 
-## 🔴 Critical Findings
+## Current Codebase Status
 
-### CRIT-1: Laravel Telescope Exposed Without Authentication
-**URL:** `https://portal.tronderdata.no/telescope` → **200 OK**  
-**Impact:** Telescope shows all HTTP requests, queries, logs, exceptions, cache operations, scheduled jobs, and **environment variables**. An attacker can see every database query, every API call, every error with full stack trace. This includes session tokens, API keys, and internal routing.
+As of the current repository state:
 
-**Evidence:** Page loads with full Telescope UI, CSRF token visible in HTML. API endpoints accessible (redirecting to login for data, but the tool itself is reachable).
+- Horizon is not registered.
+- Telescope package discovery is disabled and Telescope is only registered in local environment.
+- Production session cookies are forced secure and encrypted by `config/session.php`.
+- Global security headers middleware exists.
+- `public/hot` is not present in the working tree and `public/build` exists.
+- `_boost/browser-logs` still appears when `APP_ENV=production` if dev dependencies are installed locally.
+- `config/cors.php` is still missing.
+- Several P1 XSS/upload hardening items remain open.
 
-**Remediation for Svein:**
-Resolved in code on 2026-05-25 by disabling Telescope package auto-discovery and registering
-Telescope providers only when `APP_ENV=local`. Production route registration must be verified
-after deployment with `APP_ENV=production php artisan route:list --path=telescope`.
+## Live Verification Not Completed In This Review
 
----
+The current review could not verify `portal.tronderdata.no` live headers or endpoints from this shell because outbound name resolution/network access failed.
 
-### CRIT-2: Laravel Horizon Exposed Without Authentication
-**URL:** `https://portal.tronderdata.no/horizon` → **200 OK`  
-**API:** `https://portal.tronderdata.no/horizon/api/jobs/recent` → Returns JSON with **full stack traces and file paths**
+Do not assume production is fixed only because code is fixed. Production must be verified after deployment.
 
-**Impact:** Horizon is leaking:
-- **Full server file path:** `/var/www/vhosts/tronderdata.no/portal.tronderdata.no/`
-- **Full stack traces** for every Redis error (class names, file paths, line numbers)
-- **Redis connection details** (host/port exposed in error messages)
-- Queue job data (if Redis was running)
+## New Pentest Target
 
-**Evidence:**
-```json
-{
-  "message": "Connection refused",
-  "exception": "RedisException",
-  "file": "/var/www/vhosts/tronderdata.no/portal.tronderdata.no/vendor/laravel/framework/src/Illuminate/Redis/Connectors/PhpRedisConnector.php",
-  "line": 181,
-  "trace": [...]
-}
+The next proper live assessment should be performed against a separate Linux server copy of Nexum.
+
+Purpose:
+
+- Verify deployment hardening.
+- Verify public routes.
+- Verify headers and cookies.
+- Verify built assets.
+- Test login, 2FA, authorization, uploads, XSS handling, and API behavior.
+- Avoid disrupting the active/live portal.
+
+## Pre-Pentest Deployment Requirements
+
+The Linux copy should be deployed like production:
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan migrate --force
+php artisan optimize:clear
 ```
 
-**Remediation for Svein:**
-Resolved in code on 2026-05-25 by removing Laravel Horizon and keeping the database queue driver.
-Production route registration must be verified after deployment with
-`php artisan route:list --path=horizon`. `APP_DEBUG=false` remains a separate production
-environment requirement.
+Environment:
 
----
-
-### CRIT-3: Vite Dev Server URLs Leaking in Production HTML
-**URL:** Login page source at `https://portal.tronderdata.no/login`  
-**Impact:** Three critical information leaks in the HTML:
-
-```html
-<script type="module" src="http://nexum-psa.local:5173/@vite/client" ...>
-<link rel="stylesheet" href="http://nexum-psa.local:5173/resources/css/app.css" ...>
-<script type="module" src="http://nexum-psa.local:5173/resources/js/app.js" ...>
+```env
+APP_ENV=production
+APP_DEBUG=false
+SESSION_SECURE_COOKIE=true
+SESSION_ENCRYPT=true
+SESSION_HTTP_ONLY=true
+SESSION_SAME_SITE=lax
+QUEUE_CONNECTION=database
 ```
 
-This reveals:
-1. **Internal hostname:** `nexum-psa.local` — attacker now knows the internal server name
-2. **Dev port:** 5173 — confirms Vite dev server setup
-3. **Mixed content:** HTTP URLs on an HTTPS page — browsers may block these, breaking the app's JS/CSS entirely
+Ensure:
 
-This also means **the app is running in development mode, not production build**. The Vite `build` step (`npm run build`) was never run or the built assets aren't being served.
+- `public/hot` does not exist.
+- `public/build/manifest.json` exists.
+- Web server document root points to `public`.
+- Storage directories are not public.
+- HTTPS is enabled if the test includes cookie/HSTS validation.
 
-**Remediation for Svein:**
-Resolved locally on 2026-05-25 by removing `public/hot` from the working tree and rebuilding
-assets with `npm run build`. Deploy must repeat the production asset step because `public/build`
-and `public/hot` are intentionally ignored by git:
+## Quick Live Checks For The Linux Copy
 
-1. Ensure `.env` has `APP_ENV=production`
-2. Ensure `public/hot` does not exist on production
-3. Run `npm ci` when dependencies change
-4. Run `npm run build` to compile `public/build`
-5. Clear Laravel caches after deployment
-6. Verify rendered HTML uses `/build/assets/...`, not `http://nexum-psa.local:5173/...`
+Run after deployment:
 
----
-
-## 🟠 High Findings
-
-### HIGH-1: Browser Logging Endpoint Accepts Unauthenticated Input
-**URL:** `POST https://portal.tronderdata.no/_boost/browser-logs` → **200 OK, `{"status":"logged"}`**  
-**Impact:** Anyone can POST arbitrary content to this endpoint, including potential XSS payloads. If logs are viewed in an admin dashboard without sanitization, stored XSS is possible. Also enables log flooding / disk exhaustion attacks.
-
-**Evidence:** Sent `{"level":"error","message":"<script>alert(1)</script>","stack":"test"}` — accepted and logged.
-
-**Remediation for Svein:**
-1. Add authentication middleware to `_boost/browser-logs` route
-2. Add rate limiting (e.g., 10 requests/minute per IP)
-3. Sanitize all log input (strip HTML tags)
-4. Consider removing this endpoint from production entirely
-
----
-
-### HIGH-2: Session Cookies Missing Secure Flag
-**Evidence from response headers:**
-```
-set-cookie: XSRF-TOKEN=...; path=/; samesite=lax
-set-cookie: nexumpsa-session=...; path=/; httponly; samesite=lax
+```bash
+curl -sI https://test-host.example/login
+curl -sI https://test-host.example/telescope
+curl -sI https://test-host.example/horizon
+curl -sI https://test-host.example/_debugbar
+curl -sI https://test-host.example/.env
+curl -sI https://test-host.example/.git/config
+curl -s https://test-host.example/login | grep -i "5173\\|@vite\\|nexum-psa.local"
 ```
 
-**Missing:** `Secure` flag on both cookies. `httponly` is present on session cookie but **not on XSRF-TOKEN** (this is Laravel's default, but worth noting).
+Expected:
 
-**Impact:** Cookies can be sent over unencrypted HTTP. If an attacker can force an HTTP connection (e.g., on internal network), session tokens can be intercepted.
+- Security headers present.
+- `/telescope`, `/horizon`, and `/_debugbar` not available.
+- `.env` and `.git` blocked or not found.
+- Login HTML does not contain Vite dev server URLs.
 
-**Remediation for Svein:**
-Resolved in code on 2026-05-25. Production now forces secure and encrypted session cookies
-when `APP_ENV=production`, and `.env.example` documents `SESSION_ENCRYPT=true`,
-`SESSION_HTTP_ONLY=true`, and `SESSION_SAME_SITE=lax`. Production `.env` should still set
-`SESSION_SECURE_COOKIE=true` explicitly for clarity during deployment.
+Check Boost:
 
----
+```bash
+curl -s -o /tmp/boost-check.txt -w '%{http_code}\n' \
+  -X POST https://test-host.example/_boost/browser-logs \
+  -H 'Content-Type: application/json' \
+  --data '{"level":"error","message":"security-check","stack":"none"}'
+```
 
-### HIGH-3: No Security Headers
-**Evidence:** Response headers contain **none** of the following:
-- `Strict-Transport-Security` (HSTS)
-- `Content-Security-Policy` (CSP)
-- `X-Frame-Options`
-- `X-Content-Type-Options`
-- `Referrer-Policy`
-- `Permissions-Policy`
+Expected after Boost hardening:
 
-**Impact:** No clickjacking protection, no MIME sniffing protection, no HSTS enforcement, no CSP to mitigate XSS.
+- 404 or another non-success response.
 
-**Remediation for Svein:**
-Resolved in code on 2026-05-25 with global `SecurityHeaders` middleware. The app now sends
-`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP, and
-HSTS on HTTPS responses.
+## Rules Of Engagement For Future Pentest
 
----
+- Use the separate Linux copy, not the active production portal.
+- Notify stakeholders before starting.
+- Avoid denial-of-service testing.
+- Avoid high-speed scanners unless explicitly approved.
+- Do not exfiltrate data.
+- Document every test, request, result, and fix.
+- Re-test after remediation.
 
-## 🟡 Medium Findings
+## Result Recording
 
-### MED-1: No CORS Configuration
-**Evidence:** No `cors.php` config file exists in the repo. API returns 401 correctly, but without explicit CORS rules, Laravel's default may be too permissive for future API consumers.
+Create a new dated report when the Linux copy is tested, for example:
 
-**Remediation for Svein:** Create `config/cors.php` with strict origin policy.
+```text
+docs/SECURITY-ASSESSMENT-LINUX-COPY-YYYY-MM-DD.md
+```
 
----
-
-### MED-2: Redis Not Running on Server
-**Evidence:** Horizon API returns `RedisException: Connection refused`.  
-**Impact:** Queue system is non-functional. Emails, notifications, and background jobs are not processing. This is both an operational issue and a security issue (the error leaks server internals — see CRIT-2).
-
-**Remediation for Svein:** Start Redis service, configure Laravel queue driver.
-
----
-
-## What's Working ✅
-
-| Check | Result |
-|-------|--------|
-| HTTP → HTTPS redirect | ✅ 301 to HTTPS |
-| `.env` file blocked | ✅ 403 (NPM blocking) |
-| `.git/` blocked | ✅ 403 |
-| `storage/logs/` blocked | ✅ 403 |
-| API auth required | ✅ `/api/v1/*` returns 401 |
-| `phpinfo` not present | ✅ 404 |
-| Debugbar not present | ✅ 404 |
-| CSRF on form POST | ✅ 419 Page Expired (no stack trace) |
-| Session `httponly` flag | ✅ Present on session cookie |
-| Session `SameSite=lax` | ✅ Present on both cookies |
-
----
-
-## Priority Action Items for Svein
-
-| Priority | Item | Effort |
-|----------|------|--------|
-| 🔴 **NOW** | Disable Telescope in production (`TELESCOPE_ENABLED=false`) | 1 min |
-| 🔴 **NOW** | Gate Horizon access (add `hasRole('Superuser')` check) | 5 min |
-| 🔴 **NOW** | Set `APP_DEBUG=false` in production `.env` | 1 min |
-| 🔴 **NOW** | Run `npm run build` and serve production assets | 15 min |
-| 🟠 This week | Authenticate `_boost/browser-logs` endpoint or remove it | 30 min |
-| 🟠 This week | Set `SESSION_SECURE_COOKIE=true` in `.env` | 1 min |
-| 🟠 This week | Add security headers (NPM or Laravel middleware) | 1 hour |
-| 🟡 Next sprint | Configure CORS properly | 15 min |
-| 🟡 Next sprint | Start Redis + configure queue driver | 30 min |
-
----
-
-*This is a live assessment. Joe, as infrastructure admin, you have full visibility into what's exposed on your server. Svein needs to act on the critical items before this demo faces real traffic.*
+Keep this file as historical context only.
