@@ -14,7 +14,7 @@ use App\Modules\Calendar\Models\CalendarEventException;
 use App\Modules\Calendar\Models\CalendarSetting;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
 use App\Modules\Calendar\Services\CalendarVisibility;
-use App\Modules\UserManagement\Models\UserPreference;
+use App\Modules\UserManagement\Livewire\UserManagement\Models\UserPreference;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;

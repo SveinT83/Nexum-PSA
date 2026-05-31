@@ -3,6 +3,7 @@
 namespace App\Modules\UserManagement\Actions;
 
 use App\Models\Core\User;
+use App\Modules\UserManagement\Models\UserProfile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -33,11 +34,30 @@ class StoreUser
             $user->assignRole($role);
         }
 
+        UserProfile::query()->firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'timezone' => config('app.timezone', 'UTC'),
+                'working_hours' => $this->defaultWorkingHours(),
+            ]
+        );
+
         // Auto-send invite for pending users
         if ($user->isPending()) {
             app(SendUserInvite::class)->handle($user);
         }
 
         return $user;
+    }
+
+    private function defaultWorkingHours(): array
+    {
+        return collect(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
+            ->mapWithKeys(fn (string $day) => [$day => [
+                'enabled' => in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], true),
+                'start' => '08:00',
+                'end' => '16:00',
+            ]])
+            ->all();
     }
 }

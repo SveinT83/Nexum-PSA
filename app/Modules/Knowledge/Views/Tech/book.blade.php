@@ -11,15 +11,6 @@
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center w-100">
         <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1">
-                    <li class="breadcrumb-item"><a href="{{ route('tech.knowledge.index') }}">Knowledge</a></li>
-                    @if($book->shelf)
-                        <li class="breadcrumb-item"><a href="{{ route('tech.knowledge.shelf', $book->shelf) }}">{{ $book->shelf->name }}</a></li>
-                    @endif
-                    <li class="breadcrumb-item active" aria-current="page">{{ $book->name }}</li>
-                </ol>
-            </nav>
             <h1 class="h4 mb-0">{{ $book->name }}</h1>
         </div>
         <div class="d-flex gap-2">

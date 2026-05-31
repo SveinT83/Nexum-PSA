@@ -2,6 +2,10 @@
 
 @section('title', 'Security Settings')
 
+@section('sidebar')
+    @include('usermanagement::profile.partials.sidebar')
+@endsection
+
 @section('pageHeader')
     <h1>Security Settings</h1>
 @endsection
@@ -26,6 +30,10 @@
         @elseif(session('status') === 'recovery-codes-regenerated')
             <div class="alert alert-info">
                 New recovery codes have been generated. Save them in a safe place — the old codes are no longer valid.
+            </div>
+        @elseif(session('status') === 'password-updated')
+            <div class="alert alert-success">
+                Password updated successfully.
             </div>
         @endif
 
@@ -218,12 +226,6 @@
 
     </div>
 </div>
-@endsection
-
-@section('sidebar')
-    @if(isset($sidebarMenuItems))
-        <x-nav.side-bar :items="$sidebarMenuItems" />
-    @endif
 @endsection
 
 @section('rightbar')

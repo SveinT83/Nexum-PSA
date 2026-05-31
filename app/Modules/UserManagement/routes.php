@@ -4,6 +4,7 @@ use App\Modules\UserManagement\Controllers\AcceptInviteController;
 use App\Modules\UserManagement\Controllers\Admin\PermissionManagementController;
 use App\Modules\UserManagement\Controllers\Admin\RolesManagementController;
 use App\Modules\UserManagement\Controllers\Admin\UserManagementController;
+use App\Modules\UserManagement\Controllers\ProfileController;
 use App\Modules\UserManagement\Controllers\ProfilePreferencesController;
 use App\Modules\UserManagement\Controllers\ProfileSecurityController;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +51,15 @@ if (isset($userManagementPublicRoutes) && $userManagementPublicRoutes === true) 
 */
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'index'])
+        ->name('profile.index');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+    Route::get('/profile/integrations', [ProfileController::class, 'integrations'])
+        ->name('profile.integrations');
+    Route::get('/profile/view', [ProfileController::class, 'viewPreferences'])
+        ->name('profile.view');
+
     Route::get('/profile/preferences', [ProfilePreferencesController::class, 'show'])
         ->name('profile.preferences');
     Route::patch('/profile/preferences', [ProfilePreferencesController::class, 'update'])

@@ -185,8 +185,24 @@ class TwoFactorAuthenticationTest extends TestCase
             ]);
 
         $response->assertRedirect(route('tech.profile.security'));
+        $response->assertSessionHas('status', 'password-updated');
 
         $this->assertTrue(\Hash::check('new-secure-password', $user->fresh()->password));
+    }
+
+    #[Test]
+    public function password_update_confirmation_is_visible_on_security_page()
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole('Tech');
+
+        $response = $this
+            ->actingAs($user)
+            ->withSession(['status' => 'password-updated'])
+            ->get(route('tech.profile.security'));
+
+        $response->assertOk();
+        $response->assertSee('Password updated successfully.');
     }
 
     #[Test]

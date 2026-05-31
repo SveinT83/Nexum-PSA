@@ -404,7 +404,7 @@ class TicketSettingsController extends Controller
         return [
             'auto_merge_enabled' => $settings->get('auto_merge_enabled', '0') === '1',
             'ai_merge_enabled' => $settings->get('ai_merge_enabled', '0') === '1',
-            'ai_similarity_threshold' => (int) $settings->get('ai_similarity_threshold', 90),
+            'ai_similarity_threshold' => (int) ($settings->get('ai_similarity_threshold', '90') ?: 90),
         ];
     }
 

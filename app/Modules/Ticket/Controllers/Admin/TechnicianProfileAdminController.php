@@ -8,6 +8,7 @@ use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketTechnicianProfile;
+use App\Modules\UserManagement\Models\UserProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -51,13 +52,17 @@ class TechnicianProfileAdminController extends Controller
             'user_id' => 'required|integer|exists:' . (new User())->getTable() . ',id|unique:ticket_technician_profiles,user_id',
         ]);
 
-        TicketTechnicianProfile::create([
+        $userProfile = UserProfile::query()->where('user_id', $data['user_id'])->first();
+
+        $profile = TicketTechnicianProfile::create([
             'user_id' => $data['user_id'],
             'is_assignable' => true,
             'max_open_tickets' => 10,
-            'timezone' => config('app.timezone', 'UTC'),
-            'working_hours' => $this->defaultWorkingHours(),
+            'timezone' => $userProfile?->timezone ?? config('app.timezone', 'UTC'),
+            'working_hours' => $userProfile?->working_hours ?? $this->defaultWorkingHours(),
         ]);
+
+        $this->mirrorToUserProfile($profile);
 
         return back()->with('success', 'Technician profile created.');
     }
@@ -89,6 +94,8 @@ class TechnicianProfileAdminController extends Controller
 
         $profile->categories()->sync($data['category_ids'] ?? []);
         $profile->tags()->sync($data['tag_ids'] ?? []);
+
+        $this->mirrorToUserProfile($profile);
     }
 
     private function viewData(TicketTechnicianProfile $profile): array
@@ -136,5 +143,19 @@ class TechnicianProfileAdminController extends Controller
             ->whereNotIn('id', $profileUserIds)
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
+    }
+
+    private function mirrorToUserProfile(TicketTechnicianProfile $profile): void
+    {
+        UserProfile::query()->updateOrCreate(
+            ['user_id' => $profile->user_id],
+            [
+                'timezone' => $profile->timezone,
+                'working_hours' => $profile->working_hours,
+                'profile_notes' => $profile->notes,
+                'migrated_from_ticket_technician_profile_id' => $profile->id,
+                'migrated_at' => now(),
+            ]
+        );
     }
 }

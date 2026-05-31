@@ -26,11 +26,16 @@ class DatabaseSeeder extends Seeder
             VendorSeeder::class,
             UnitSeeder::class,
             CostServicePackageSeeder::class,
+            CommercialKnowledgeDocumentationSeeder::class,
             ContactKnowledgeDocumentationSeeder::class,
+            EconomyKnowledgeDocumentationSeeder::class,
+            NextcloudKnowledgeDocumentationSeeder::class,
+            NotificationKnowledgeDocumentationSeeder::class,
             SalesKnowledgeDocumentationSeeder::class,
             StorageKnowledgeDocumentationSeeder::class,
             SystemKnowledgeDocumentationSeeder::class,
             TaskKnowledgeDocumentationSeeder::class,
+            TicketKnowledgeDocumentationSeeder::class,
         ]);
     }
 }

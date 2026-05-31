@@ -34,6 +34,7 @@ use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketMergeSuggestionDismissal;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -44,6 +45,7 @@ use App\Modules\Ticket\Queries\TicketIndexQuery;
 use App\Modules\Ticket\Queries\TicketTimeRateOptions;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketActionGuard;
+use App\Modules\Ticket\Services\TicketMergeSuggestionService;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
@@ -63,7 +65,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TicketController extends Controller
 {
-    public function index(Request $request, TicketIndexQuery $query, EnsureTicketDefaults $defaults): View
+    public function index(
+        Request $request,
+        TicketIndexQuery $query,
+        EnsureTicketDefaults $defaults,
+        TicketMergeSuggestionService $mergeSuggestionService
+    ): View
     {
         $defaults->handle();
 
@@ -90,6 +97,8 @@ class TicketController extends Controller
             'categories' => $this->ticketCategories(),
             'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
             'filters' => $filters,
+            'mergeSuggestionSettings' => $mergeSuggestionService->settings(),
+            'mergeSuggestions' => $mergeSuggestionService->suggestionsForIndex(),
             'stats' => [
                 'open' => Ticket::whereHas('status', fn ($query) => $query->where('is_closed', false))->count(),
                 'mine' => Ticket::where('owner_id', $request->user()?->id)->count(),
@@ -710,6 +719,42 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $target)
             ->with('success', 'Merged '.($tickets->count() - 1).' ticket(s) into '.$target->ticket_key.'.');
+    }
+
+    public function dismissMergeSuggestion(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ticket_ids' => 'required|array|min:2',
+            'ticket_ids.*' => 'integer|exists:tickets,id',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $ticketIds = collect($data['ticket_ids'])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $tickets = Ticket::query()
+            ->whereIn('id', $ticketIds)
+            ->get();
+
+        if ($tickets->count() !== $ticketIds->count()) {
+            return back()->withErrors(['ticket_ids' => 'One or more tickets could not be found.']);
+        }
+
+        for ($left = 0; $left < $tickets->count(); $left++) {
+            for ($right = $left + 1; $right < $tickets->count(); $right++) {
+                TicketMergeSuggestionDismissal::updateOrCreate(
+                    TicketMergeSuggestionDismissal::pairIds($tickets[$left], $tickets[$right]),
+                    [
+                        'dismissed_by' => $request->user()?->id,
+                        'reason' => $data['reason'] ?? 'Dismissed from ticket list.',
+                    ]
+                );
+            }
+        }
+
+        return back()->with('success', 'Merge suggestion dismissed.');
     }
 
     public function markNotTicket(Request $request, Ticket $ticket, MarkTicketAsNotTicket $markTicketAsNotTicket): RedirectResponse

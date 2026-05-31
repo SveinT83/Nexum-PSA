@@ -23,17 +23,23 @@
     <!-- Section: Search controls for the Contact workspace. -->
     <div class="card mb-3">
         <div class="card-body">
+            @if($hasContext)
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                    @if($activeClient)
+                        <span class="badge text-bg-light border">{{ $activeClient->name }}</span>
+                    @endif
+                    @if($activeSite)
+                        <span class="badge text-bg-light border">{{ $activeSite->name }}</span>
+                    @endif
+                    <form method="POST" action="{{ route('tech.contacts.context.clear') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-link text-muted p-0 lh-1" title="Clear client context" aria-label="Clear client context">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </form>
+                </div>
+            @endif
             <form method="GET" action="{{ route('tech.contacts.index') }}" class="mb-0">
-                @if($hasContext)
-                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                        @if($activeClient)
-                            <span class="badge text-bg-light border">{{ $activeClient->name }}</span>
-                        @endif
-                        @if($activeSite)
-                            <span class="badge text-bg-light border">{{ $activeSite->name }}</span>
-                        @endif
-                    </div>
-                @endif
                 <div class="input-group input-group-sm">
                     <input id="contact_index_search" name="q" type="search" class="form-control" value="{{ $search }}" placeholder="Name, email, phone, title, or organization">
                     <button class="btn btn-outline-secondary" type="submit">Search</button>

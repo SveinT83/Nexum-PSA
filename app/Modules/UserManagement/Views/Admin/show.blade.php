@@ -39,11 +39,15 @@
                 </div>
                 <div class="col-md-4">
                     <div class="small text-muted text-uppercase">Work Phone</div>
-                    <div class="fw-semibold">{{ $user->phone_work ?: '—' }}</div>
+                    <div class="fw-semibold">{{ $profile->work_phone ?: $user->phone_work ?: '—' }}</div>
                 </div>
                 <div class="col-md-4">
                     <div class="small text-muted text-uppercase">Private Phone</div>
-                    <div class="fw-semibold">{{ $user->phone_private ?: '—' }}</div>
+                    <div class="fw-semibold">{{ $profile->private_phone ?: $user->phone_private ?: '—' }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="small text-muted text-uppercase">Timezone</div>
+                    <div class="fw-semibold">{{ $profile->timezone }}</div>
                 </div>
                 <div class="col-md-4">
                     <div class="small text-muted text-uppercase">Created</div>
@@ -89,11 +93,23 @@
                 </div>
                 <div class="col-md-6">
                     <label for="phone_work" class="form-label">Work phone</label>
-                    <input id="phone_work" name="phone_work" class="form-control" value="{{ old('phone_work', $user->phone_work) }}" autocomplete="tel">
+                    <input id="phone_work" name="phone_work" class="form-control" value="{{ old('phone_work', $profile->work_phone ?? $user->phone_work) }}" autocomplete="tel">
                 </div>
                 <div class="col-md-6">
                     <label for="phone_private" class="form-label">Private phone</label>
-                    <input id="phone_private" name="phone_private" class="form-control" value="{{ old('phone_private', $user->phone_private) }}" autocomplete="tel">
+                    <input id="phone_private" name="phone_private" class="form-control" value="{{ old('phone_private', $profile->private_phone ?? $user->phone_private) }}" autocomplete="tel">
+                </div>
+                <div class="col-md-6">
+                    <label for="timezone" class="form-label">Timezone</label>
+                    <input id="timezone" name="timezone" class="form-control" value="{{ old('timezone', $profile->timezone) }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="availability_notes" class="form-label">Availability notes</label>
+                    <textarea id="availability_notes" name="availability_notes" class="form-control" rows="3">{{ old('availability_notes', $profile->availability_notes) }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label for="profile_notes" class="form-label">Profile notes</label>
+                    <textarea id="profile_notes" name="profile_notes" class="form-control" rows="3">{{ old('profile_notes', $profile->profile_notes) }}</textarea>
                 </div>
             </div>
         </div>

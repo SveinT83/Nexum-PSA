@@ -65,7 +65,7 @@ class TicketAssignmentEngine
         $ticket->loadMissing('tags');
 
         $profiles = TicketTechnicianProfile::query()
-            ->with(['categories', 'tags'])
+            ->with(['categories', 'tags', 'user.profile'])
             ->where('is_assignable', true)
             ->get()
             ->map(function (TicketTechnicianProfile $profile) use ($ticket) {
@@ -174,9 +174,13 @@ class TicketAssignmentEngine
 
     private function isWorkingNow(TicketTechnicianProfile $profile): bool
     {
-        $now = now($profile->timezone ?: config('app.timezone'));
+        $userProfile = $profile->user?->profile;
+        $timezone = $userProfile?->timezone ?: $profile->timezone ?: config('app.timezone');
+        $workingHours = $userProfile?->working_hours ?: $profile->working_hours ?: [];
+
+        $now = now($timezone);
         $day = strtolower($now->format('l'));
-        $hours = ($profile->working_hours ?? [])[$day] ?? null;
+        $hours = $workingHours[$day] ?? null;
 
         if (! $hours || ! ($hours['enabled'] ?? false)) {
             return false;

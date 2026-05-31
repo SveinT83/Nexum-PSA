@@ -67,6 +67,11 @@ The existing `BookStackClient` verifies connectivity through the BookStack books
 visible pages through the BookStack pages API. Manual sync stores pages as Knowledge articles with
 BookStack source metadata and checksums so unchanged pages can be skipped on later runs.
 
+BookStack hierarchy sync must be idempotent. Shelves, books, and chapters are reconciled by
+BookStack source metadata first and by the deterministic imported slug second. This lets the sync
+repair earlier partial imports where a Knowledge record exists with the correct slug but missing
+or stale BookStack source metadata.
+
 ## Suggested Build Order
 
 1. Finish BookStack read sync into Knowledge-compatible records.

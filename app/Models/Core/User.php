@@ -119,6 +119,11 @@ class User extends Authenticatable
         return $this->hasOne(\App\Modules\UserManagement\Models\UserPreference::class);
     }
 
+    public function profile()
+    {
+        return $this->hasOne(\App\Modules\UserManagement\Models\UserProfile::class);
+    }
+
     public function contact()
     {
         return $this->belongsTo(\App\Modules\Contact\Models\Contact::class);

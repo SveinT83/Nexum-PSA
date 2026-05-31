@@ -103,6 +103,7 @@ class EnforceTechRoutePermission
         'tech.clients.*.update' => 'client.update',
         'tech.clients.*' => 'client.view',
         'tech.client.*' => 'client.view',
+        'tech.contacts.context.clear' => 'contact.view',
         'tech.contacts.create' => 'contact.create',
         'tech.contacts.store' => 'contact.create',
         'tech.contacts.edit' => 'contact.update',

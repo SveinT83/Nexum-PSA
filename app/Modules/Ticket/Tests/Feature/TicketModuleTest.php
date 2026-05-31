@@ -31,6 +31,7 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketAssignmentRule;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketMergeSuggestionDismissal;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketRule;
@@ -42,6 +43,7 @@ use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
 use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -89,6 +91,7 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
         $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
         $this->assertSame(TicketController::class . '@mergeSelected', Route::getRoutes()->getByName('tech.tickets.merge')->getActionName());
+        $this->assertSame(TicketController::class . '@dismissMergeSuggestion', Route::getRoutes()->getByName('tech.tickets.merge-suggestions.dismiss')->getActionName());
         $this->assertSame(TicketController::class . '@markNotTicket', Route::getRoutes()->getByName('tech.tickets.not-ticket')->getActionName());
         $this->assertSame(TicketController::class . '@destroy', Route::getRoutes()->getByName('tech.tickets.destroy')->getActionName());
         $this->assertSame(TicketController::class . '@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
@@ -131,6 +134,223 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'resolved', 'state' => 'resolved']);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'closed', 'is_closed' => true]);
         $this->assertDatabaseHas('ticket_priorities', ['slug' => 'normal', 'is_default' => true]);
+    }
+
+    #[Test]
+    public function ticket_index_shows_merge_suggestions_when_enabled(): void
+    {
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_merge_enabled'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '1']
+        );
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_similarity_threshold'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '80']
+        );
+
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'email' => 'merge-suggestion@example.com',
+        ]);
+
+        $target = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999201',
+            'subject' => 'Laptop battery fails after login',
+            'description' => 'The laptop battery drains fast and the device shuts down shortly after login.',
+            'created_at' => now()->subDay(),
+            'updated_at' => now()->subDay(),
+        ]);
+        $source = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999202',
+            'subject' => 'Laptop battery fails after login',
+            'description' => 'The laptop battery drains fast and the device shuts down shortly after login.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee('Merge suggestions')
+            ->assertSee($source->ticket_key)
+            ->assertSee($target->ticket_key)
+            ->assertSee('Merge suggestion')
+            ->assertSee('100%');
+    }
+
+    #[Test]
+    public function ticket_index_suggests_same_client_tickets_with_same_external_reference(): void
+    {
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_merge_enabled'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '1']
+        );
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_similarity_threshold'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '90']
+        );
+
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $firstContact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $secondContact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+
+        $target = $this->createTicket($firstContact, [
+            'ticket_key' => 'TD-2026-999203',
+            'subject' => 'MSP-558812 Backup warning from server',
+            'description' => 'Backup job failed on the accounting server.',
+            'created_at' => now()->subDay(),
+            'updated_at' => now()->subDay(),
+        ]);
+        $source = $this->createTicket($secondContact, [
+            'ticket_key' => 'TD-2026-999204',
+            'subject' => 'MSP-558812 Backup warning from server',
+            'description' => 'Customer called about the same backup warning.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee('Merge suggestions')
+            ->assertSee($source->ticket_key)
+            ->assertSee($target->ticket_key)
+            ->assertSee('100%');
+    }
+
+    #[Test]
+    public function ticket_index_suggests_reply_subjects_after_internal_ticket_reference_is_removed(): void
+    {
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_merge_enabled'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '1']
+        );
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_similarity_threshold'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '90']
+        );
+
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+
+        $target = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999205',
+            'subject' => 'Hjelp med Windows',
+            'description' => 'Original Windows support request.',
+            'created_at' => now()->subDay(),
+            'updated_at' => now()->subDay(),
+        ]);
+        $source = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999206',
+            'subject' => 'Re: [TD-2026-000009] Hjelp med Windows',
+            'description' => 'Reply created as a separate ticket.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee('Merge suggestions')
+            ->assertSee($source->ticket_key)
+            ->assertSee($target->ticket_key)
+            ->assertSee('Subject matches after removing reply prefixes and internal ticket references.')
+            ->assertSee('100%');
+    }
+
+    #[Test]
+    public function tech_user_can_dismiss_merge_suggestion(): void
+    {
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_merge_enabled'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '1']
+        );
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_similarity_threshold'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '90']
+        );
+
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $first = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999207',
+            'subject' => 'Duplicate printer case',
+        ]);
+        $second = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999208',
+            'subject' => 'Duplicate printer case',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.merge-suggestions.dismiss'), [
+                'ticket_ids' => [$first->id, $second->id],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Merge suggestion dismissed.');
+
+        $this->assertDatabaseHas('ticket_merge_suggestion_dismissals', array_merge(
+            TicketMergeSuggestionDismissal::pairIds($first, $second),
+            ['dismissed_by' => $this->tech->id]
+        ));
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertDontSee('Merge suggestions');
+    }
+
+    #[Test]
+    public function ticket_index_groups_multiple_related_tickets_into_one_merge_suggestion(): void
+    {
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_merge_enabled'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '1']
+        );
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket_merge', 'name' => 'ai_similarity_threshold'],
+            ['description' => 'Ticket merge automation setting.', 'value' => '80']
+        );
+
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+
+        $target = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999209',
+            'subject' => '[Info] [App Center] Notification from your device: NAS99D3C6',
+            'description' => 'Notification from NAS99D3C6.',
+            'created_at' => now()->subDays(3),
+            'updated_at' => now()->subDays(3),
+        ]);
+        $firstSource = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999210',
+            'subject' => '[Info] [Power] Notification from your device: NAS99D3C6',
+            'description' => 'Power notification from NAS99D3C6.',
+            'created_at' => now()->subDays(2),
+            'updated_at' => now()->subDays(2),
+        ]);
+        $secondSource = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999211',
+            'subject' => '[Warning] [Storage] Notification from your device: NAS99D3C6',
+            'description' => 'Storage warning from NAS99D3C6.',
+            'created_at' => now()->subDay(),
+            'updated_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee('Merge suggestions')
+            ->assertSee($target->ticket_key)
+            ->assertSee($firstSource->ticket_key)
+            ->assertSee($secondSource->ticket_key)
+            ->assertSee('3 tickets appear related.')
+            ->assertSee('NAS99D3C6');
     }
 
     #[Test]
@@ -2337,7 +2557,10 @@ class TicketModuleTest extends TestCase
             ->get(route('tech.admin.settings.tickets'))
             ->assertOk()
             ->assertViewIs('ticket::Admin.Settings.index')
-            ->assertSee('Ticket Merging');
+            ->assertSee('Ticket Merging')
+            ->assertSee('Automatically merge exact duplicate inbound tickets')
+            ->assertSee('Allow AI-assisted merge suggestions')
+            ->assertSee('AI similarity threshold');
     }
 
     #[Test]
@@ -2351,7 +2574,7 @@ class TicketModuleTest extends TestCase
             ->post(route('tech.admin.settings.tickets.merge-settings.update'), [
                 'auto_merge_enabled' => '1',
                 'ai_merge_enabled' => '1',
-                'ai_similarity_threshold' => 90,
+                'ai_similarity_threshold' => '90',
             ])
             ->assertRedirect()
             ->assertSessionHas('success', 'Ticket merge settings updated.');
@@ -2432,6 +2655,11 @@ class TicketModuleTest extends TestCase
         $this->assertFalse($profile->working_hours['tuesday']['enabled']);
         $this->assertTrue($profile->categories()->whereKey($category->id)->exists());
         $this->assertTrue($profile->tags()->whereKey($tag->id)->exists());
+
+        $userProfile = UserProfile::where('user_id', $this->tech->id)->firstOrFail();
+        $this->assertSame('Europe/Oslo', $userProfile->timezone);
+        $this->assertSame('09:00', $userProfile->working_hours['monday']['start']);
+        $this->assertSame('Prefers firewall tickets.', $userProfile->profile_notes);
     }
 
     #[Test]

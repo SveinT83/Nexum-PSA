@@ -33,7 +33,7 @@
         </form>
     </x-card.default>
 
-    <!-- Ticket merge settings: manual merge is always available; automation remains explicitly controlled. -->
+    <!-- Ticket merge settings: manual merge is always available; automation and suggestions are explicitly controlled. -->
     <x-card.default title="Ticket Merging">
         <form method="POST" action="{{ route('tech.admin.settings.tickets.merge-settings.update') }}">
             @csrf
@@ -42,21 +42,32 @@
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" type="checkbox" id="auto_merge_enabled" name="auto_merge_enabled" value="1" @checked($mergeSettings['auto_merge_enabled'])>
                 <label class="form-check-label" for="auto_merge_enabled">Automatically merge exact duplicate inbound tickets</label>
+                <div class="form-text">
+                    Applies only during inbound email intake when customer, contact, subject, and body match an existing open ticket.
+                </div>
             </div>
 
             <input type="hidden" name="ai_merge_enabled" value="0">
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" type="checkbox" id="ai_merge_enabled" name="ai_merge_enabled" value="1" @checked($mergeSettings['ai_merge_enabled'])>
                 <label class="form-check-label" for="ai_merge_enabled">Allow AI-assisted merge suggestions</label>
+                <div class="form-text">
+                    Shows similarity-based suggestions in the Ticket list. Suggestions do not merge anything until a technician confirms.
+                </div>
             </div>
 
             <div class="mb-3">
                 <label for="ai_similarity_threshold" class="form-label">AI similarity threshold</label>
-                <div class="input-group" style="max-width: 220px;">
-                    <input id="ai_similarity_threshold" name="ai_similarity_threshold" type="number" min="70" max="100" class="form-control" value="{{ old('ai_similarity_threshold', $mergeSettings['ai_similarity_threshold']) }}" required>
-                    <span class="input-group-text">%</span>
-                </div>
-                <div class="form-text">AI-assisted merging only prepares suggestions. Manual confirmation is still required.</div>
+                <input
+                    id="ai_similarity_threshold"
+                    name="ai_similarity_threshold"
+                    type="number"
+                    min="70"
+                    max="100"
+                    class="form-control @error('ai_similarity_threshold') is-invalid @enderror"
+                    value="{{ old('ai_similarity_threshold', $mergeSettings['ai_similarity_threshold']) }}">
+                @error('ai_similarity_threshold')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <div class="form-text">Higher values reduce false positives. Default is 90.</div>
             </div>
 
             <button type="submit" class="btn btn-primary">Save merge settings</button>

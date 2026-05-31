@@ -9,11 +9,21 @@
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center">
         <h1 class="mb-0">{{ $contact->display_name }}</h1>
-        <x-buttons.back url="{{ route('tech.contacts.index') }}" class="mb-0">Back</x-buttons.back>
+        <div class="d-flex gap-2">
+            <x-buttons.editlink url="{{ route('tech.contacts.edit', $contact) }}" class="mb-0">Edit</x-buttons.editlink>
+            <x-buttons.back url="{{ route('tech.contacts.index') }}" class="mb-0">Back</x-buttons.back>
+        </div>
     </div>
 @endsection
 
 @section('content')
+@php
+    $clientRelation = $contact->relations->first(fn ($relation) => $relation->related instanceof \App\Models\Clients\Client);
+    $siteRelation = $contact->relations->first(fn ($relation) => $relation->related instanceof \App\Models\Clients\ClientSite);
+    $site = $siteRelation?->related ?: $contact->clientUser?->site;
+    $client = $clientRelation?->related ?: $site?->client ?: $contact->clientUser?->site?->client;
+    $organizationLabel = $client?->name ?: $contact->organization_name;
+@endphp
 <div class="container-fluid px-0">
     <!-- Section: Canonical contact identity. -->
     <div class="card mb-3">
@@ -23,15 +33,23 @@
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="small text-muted text-uppercase">Type</div>
                     <div class="fw-semibold">{{ ucfirst(str_replace('_', ' ', $contact->type)) }}</div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="small text-muted text-uppercase">Title</div>
                     <div class="fw-semibold">{{ $contact->job_title ?: '—' }}</div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <div class="small text-muted text-uppercase">Organization / Client</div>
+                    <div class="fw-semibold">{{ $organizationLabel ?: '—' }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small text-muted text-uppercase">Site</div>
+                    <div class="fw-semibold">{{ $site?->name ?: '—' }}</div>
+                </div>
+                <div class="col-md-3">
                     <div class="small text-muted text-uppercase">Language</div>
                     <div class="fw-semibold">{{ $contact->communication_language ?: $contact->preferred_language ?: '—' }}</div>
                 </div>

@@ -975,6 +975,76 @@ class IntegrationModuleTest extends TestCase
     }
 
     #[Test]
+    public function book_stack_sync_reuses_existing_book_when_source_slug_already_exists(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/shelves*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+            'https://docs.example.test/api/books*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 339,
+                        'name' => 'Nexum PSA',
+                        'slug' => 'nexum-psa',
+                        'description' => 'Dokumentasjon for utvikling av Nexum PSA',
+                        'updated_at' => '2026-05-14T21:26:45.000000Z',
+                    ],
+                ],
+                'total' => 1,
+            ], 200),
+            'https://docs.example.test/api/chapters*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+            'https://docs.example.test/api/pages*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+        ]);
+
+        $shelf = Shelf::create([
+            'name' => 'Existing Shelf',
+            'slug' => 'existing-shelf',
+        ]);
+        $existingBook = Book::create([
+            'shelf_id' => $shelf->id,
+            'name' => 'Old Nexum PSA',
+            'slug' => 'bookstack-book-nexum-psa-339',
+        ]);
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'sync_interval_minutes' => 10,
+                'read_only' => true,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.integrations.book_stack.sync'))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $book = $existingBook->fresh();
+
+        $this->assertSame(1, Book::where('slug', 'bookstack-book-nexum-psa-339')->count());
+        $this->assertSame('Nexum PSA', $book->name);
+        $this->assertSame('book_stack', $book->source_system);
+        $this->assertSame('book', $book->source_type);
+        $this->assertSame('339', $book->source_id);
+        $this->assertSame('synced', $book->sync_status);
+        $this->assertSame('https://docs.example.test/books/nexum-psa', $book->source_url);
+    }
+
+    #[Test]
     public function book_stack_sync_failure_returns_warning_instead_of_500(): void
     {
         Http::fake([
@@ -1414,6 +1484,122 @@ class IntegrationModuleTest extends TestCase
         Http::assertSent(fn ($request) => $request->method() === 'PUT'
             && $request->url() === 'https://docs.example.test/api/shelves/101'
             && $request['books'] === [202]
+        );
+    }
+
+    #[Test]
+    public function admin_can_push_nexum_generated_knowledge_docs_into_book_stack(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/chapters' => Http::response([
+                'id' => 730,
+                'book_id' => 339,
+                'name' => 'Contacts',
+                'slug' => 'contacts',
+                'description' => 'Canonical contact identity and migration strategy.',
+                'priority' => 320,
+                'updated_at' => '2026-05-30T12:00:00.000000Z',
+                'book' => [
+                    'id' => 339,
+                    'slug' => 'nexum-psa',
+                ],
+            ], 200),
+            'https://docs.example.test/api/pages' => Http::response([
+                'id' => 731,
+                'book_id' => 339,
+                'chapter_id' => 730,
+                'name' => 'Contact Domain Overview',
+                'slug' => 'contact-domain-overview',
+                'html' => '<h1>Contact Domain Overview</h1>',
+                'markdown' => 'Contact docs.',
+                'priority' => 10,
+                'updated_at' => '2026-05-30T12:01:00.000000Z',
+                'book' => [
+                    'id' => 339,
+                    'slug' => 'nexum-psa',
+                ],
+            ], 200),
+        ]);
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'sync_interval_minutes' => 10,
+                'read_only' => false,
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $book = Book::create([
+            'name' => 'Nexum PSA',
+            'slug' => 'bookstack-book-nexum-psa-339',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '339',
+            'sync_status' => 'synced',
+            'source_payload' => ['slug' => 'nexum-psa'],
+        ]);
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Contacts',
+            'slug' => 'contacts',
+            'description' => 'Canonical contact identity and migration strategy.',
+            'priority' => 320,
+            'source_system' => 'nexum',
+            'source_type' => 'contact-docs',
+            'source_id' => 'contacts',
+            'sync_status' => 'pending_push',
+        ]);
+        $article = Article::create([
+            'title' => 'Contact Domain Overview',
+            'slug' => 'contact-domain-overview',
+            'body_markdown' => 'Contact docs.',
+            'body_html' => '<p>Contact docs.</p>',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'priority' => 10,
+            'owner_id' => $this->admin->id,
+            'created_by' => $this->admin->id,
+            'knowledge_book_id' => $book->id,
+            'knowledge_chapter_id' => $chapter->id,
+            'source_system' => 'nexum',
+            'source_type' => 'contact-docs',
+            'source_id' => 'contact-domain-overview',
+            'sync_status' => 'pending_push',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.integrations.book_stack.push'))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $chapter->refresh();
+        $article->refresh();
+
+        $this->assertSame('book_stack', $chapter->source_system);
+        $this->assertSame('730', $chapter->source_id);
+        $this->assertSame('book_stack', $article->source_system);
+        $this->assertSame('731', $article->source_id);
+        $this->assertSame('synced', $article->sync_status);
+
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
+            && $request->url() === 'https://docs.example.test/api/chapters'
+            && $request['book_id'] === '339'
+            && $request['name'] === 'Contacts'
+        );
+
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
+            && $request->url() === 'https://docs.example.test/api/pages'
+            && $request['chapter_id'] === 730
+            && $request['name'] === 'Contact Domain Overview'
         );
     }
 

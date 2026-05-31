@@ -2,6 +2,10 @@
 
 @section('title', 'Ticket Technician Profile')
 
+@section('sidebar')
+    @include('usermanagement::profile.partials.sidebar')
+@endsection
+
 <!-- Page header: technicians maintain their own assignment profile from the Ticket module. -->
 @section('pageHeader')
     <h1>Ticket Technician Profile</h1>

@@ -329,6 +329,18 @@ class NotificationSystemTest extends TestCase
     }
 
     #[Test]
+    public function notification_bell_uses_bootstrap_dropdown_click_target()
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+
+        Livewire::actingAs($user)
+            ->test(NotificationBell::class)
+            ->assertSeeHtml('class="dropdown notification-bell"')
+            ->assertSeeHtml('data-bs-toggle="dropdown"')
+            ->assertSeeHtml('aria-label="Open notifications"');
+    }
+
+    #[Test]
     public function notification_channel_secrets_are_encrypted()
     {
         $channel = NotificationChannel::where('driver', 'nextcloud_talk')->first();
