@@ -59,12 +59,22 @@ Thumbs.db
 Homestead.json
 Homestead.yaml
 
-# Assistant and local planning scratch files. Keep shared docs in /docs tracked;
-# use the folders below for private drafts that should not ship.
+# Local documentation and assistant planning files
+/docs/
+/AGENTS.md
+/CLAUDE.md
+/.agents/
+/.ai/
 /.aiassistant/
-/docs/tmp/
-/docs/drafts/
-/docs/local/
+/.cursor/
+/.windsurf/
+/.github/copilot-instructions.md
+/.junie/
+/.kiro/
+/.roo/
+/.aider*
+/.cursorrules
+/.windsurfrules
 /**/*.blade.md
 /app/Modules/**/Controllers/**/*.md
 /app/Modules/**/Views/**/*.md
