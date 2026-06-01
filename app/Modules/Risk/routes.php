@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Risk\Controllers\Admin\RiskSettingsController;
 use App\Modules\Risk\Controllers\Tech\RiskController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 | auth middleware, and tech access middleware.
 |
 */
+
+Route::get('/admin/settings/risk', [RiskSettingsController::class, 'edit'])->name('admin.settings.risk');
+Route::put('/admin/settings/risk', [RiskSettingsController::class, 'update'])->name('admin.settings.risk.update');
 
 // Assessment lifecycle: list, create, read, update, and soft-delete.
 Route::get('/risk', [RiskController::class, 'index'])->name('risk.index');

@@ -5,6 +5,7 @@ namespace App\Modules\Risk\Actions;
 use App\Models\Risk\RiskAssessment;
 use App\Models\Risk\RiskItem;
 use App\Models\Risk\RiskItemUpdate;
+use App\Modules\Risk\Support\RiskSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\DB;
  */
 class StoreRiskItem
 {
+    public function __construct(private readonly RiskSettings $settings)
+    {
+    }
+
     /**
      * Create the item under the given assessment.
      *
@@ -26,6 +31,8 @@ class StoreRiskItem
      */
     public function handle(RiskAssessment $assessment, array $data): RiskItem
     {
+        $data = $this->settings->itemDefaults($data);
+
         $item = DB::transaction(function () use ($assessment, $data) {
             $item = new RiskItem($data);
             $item->risk_assessment_id = $assessment->id;

@@ -3,6 +3,7 @@
 namespace App\Modules\Risk\Actions;
 
 use App\Models\Risk\RiskAssessment;
+use App\Modules\Risk\Support\RiskSettings;
 
 /**
  * Creates a new risk assessment from validated controller input.
@@ -13,6 +14,10 @@ use App\Models\Risk\RiskAssessment;
  */
 class StoreRiskAssessment
 {
+    public function __construct(private readonly RiskSettings $settings)
+    {
+    }
+
     /**
      * Persist the assessment and return the created model.
      *
@@ -21,10 +26,12 @@ class StoreRiskAssessment
      */
     public function handle(array $data): RiskAssessment
     {
+        $data = $this->settings->assessmentDefaults($data);
+
         return RiskAssessment::create([
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
-            'status' => 'new',
+            'status' => $data['status'],
             'client_id' => $data['scope'] === 'internal' ? null : ($data['client_id'] ?? null),
         ]);
     }

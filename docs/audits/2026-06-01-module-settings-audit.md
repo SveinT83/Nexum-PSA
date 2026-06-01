@@ -51,7 +51,7 @@ These modules need settings ownership decisions before beta is considered clean:
 - Asset: manual registration defaults, enabled system asset types, default IP mode, and default manual status are now configurable. RMM sync defaults, alert handling, and related-ticket behavior still need later slices.
 - Contact: default contact type/status and relation type choices are now configurable. Duplicate protection remains mandatory. Communication/language preference defaults still need a later slice.
 - Knowledge: default visibility, status, review interval, and sort priority are now configurable. BookStack behavior remains Integration-owned.
-- Risk: assessment defaults, scoring defaults, review cadence, settings route.
+- Risk: assessment defaults, scoring defaults, review cadence, and settings route are now configurable.
 - Task: default status, default priority, and default estimate are now configurable. Task templates, checklist defaults, and assignment defaults still need later slices.
 - Warroom: dashboard widget visibility, time windows, and list limits are now configurable.
 - Report: future report export/saved-view settings after more reports exist.
@@ -92,6 +92,7 @@ Progress:
 - Task Settings slice completed on 2026-06-01.
 - Warroom Settings slice completed on 2026-06-01.
 - Knowledge Settings slice completed on 2026-06-01.
+- Risk Settings slice completed on 2026-06-01.
 
 ## Not In Scope For This Audit
 

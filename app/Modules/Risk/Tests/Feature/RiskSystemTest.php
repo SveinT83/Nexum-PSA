@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Models\Risk\RiskAssessment;
 use App\Models\Risk\RiskItem;
 use App\Models\Risk\RiskItemUpdate;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -59,6 +60,72 @@ class RiskSystemTest extends TestCase
             'title' => 'Test Assessment',
             'status' => 'open',
         ]);
+    }
+
+    #[Test]
+    public function superuser_can_update_risk_settings()
+    {
+        $this->actingAs($this->superuser);
+
+        $this->get(route('tech.admin.settings.risk'))
+            ->assertOk()
+            ->assertViewIs('risk::Admin.Settings.edit')
+            ->assertSee('Risk Settings')
+            ->assertSee('Assessment Defaults');
+
+        $this->put(route('tech.admin.settings.risk.update'), [
+            'default_assessment_scope' => 'client',
+            'default_assessment_status' => 'open',
+            'default_item_likelihood' => 4,
+            'default_item_impact' => 5,
+            'default_item_status' => 'accepted',
+            'default_item_review_days' => 45,
+        ])->assertRedirect(route('tech.admin.settings.risk'));
+
+        $settings = json_decode(CommonSetting::query()->where('type', 'risk')->where('name', 'defaults')->value('json'), true);
+
+        $this->assertSame('client', $settings['default_assessment_scope']);
+        $this->assertSame('open', $settings['default_assessment_status']);
+        $this->assertSame(4, $settings['default_item_likelihood']);
+        $this->assertSame(5, $settings['default_item_impact']);
+        $this->assertSame('accepted', $settings['default_item_status']);
+        $this->assertSame(45, $settings['default_item_review_days']);
+    }
+
+    #[Test]
+    public function risk_creation_uses_configured_defaults()
+    {
+        $this->actingAs($this->superuser);
+
+        $this->put(route('tech.admin.settings.risk.update'), [
+            'default_assessment_scope' => 'internal',
+            'default_assessment_status' => 'open',
+            'default_item_likelihood' => 4,
+            'default_item_impact' => 5,
+            'default_item_status' => 'accepted',
+            'default_item_review_days' => 45,
+        ])->assertRedirect(route('tech.admin.settings.risk'));
+
+        $this->post(route('tech.risk.store'), [
+            'title' => 'Defaulted assessment',
+        ])->assertRedirect();
+
+        $assessment = RiskAssessment::query()->where('title', 'Defaulted assessment')->firstOrFail();
+
+        $this->assertSame('open', $assessment->status);
+        $this->assertNull($assessment->client_id);
+
+        $this->post(route('tech.risk.items.store', $assessment), [
+            'title' => 'Defaulted item',
+        ])->assertRedirect();
+
+        $item = RiskItem::query()->where('title', 'Defaulted item')->firstOrFail();
+
+        $this->assertSame(4, $item->likelihood);
+        $this->assertSame(5, $item->impact);
+        $this->assertSame(20, $item->score);
+        $this->assertSame('accepted', $item->status);
+        $this->assertTrue($item->next_review_at->isSameDay(now()->addDays(45)));
     }
 
     #[Test]

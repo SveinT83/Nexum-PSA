@@ -32,6 +32,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\PersonalAccessToken;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -78,7 +79,34 @@ class IntegrationModuleTest extends TestCase
             ->get(route('tech.admin.system.integrations.api.index'))
             ->assertOk()
             ->assertViewIs('integration::Tech.Admin.System.Integrations.api.index')
-            ->assertViewHas('apiKeys');
+            ->assertViewHas('apiKeys')
+            ->assertSee('Read clients')
+            ->assertSee('Create clients')
+            ->assertSee('Update clients')
+            ->assertSee('Read assets')
+            ->assertSee('Create assets')
+            ->assertSee('Update assets')
+            ->assertSee('Read contacts')
+            ->assertSee('Create contacts')
+            ->assertSee('Update contacts')
+            ->assertDontSee('Coming Soon');
+    }
+
+    #[Test]
+    public function admin_can_create_scoped_api_key(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.integrations.api.store'), [
+                'name' => 'n8n client sync',
+                'abilities' => ['clients.read'],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $token = PersonalAccessToken::query()->firstOrFail();
+
+        $this->assertSame('n8n client sync', $token->name);
+        $this->assertSame(['clients.read'], $token->abilities);
     }
 
     #[Test]

@@ -42,8 +42,9 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Task Settings Slice | Done | Codex | Task module now owns manual task defaults for status, priority, and estimate. |
 | Warroom Settings Slice | Done | Codex | Warroom now owns dashboard windows, list limits, and visible panels. |
 | Knowledge Settings Slice | Done | Codex | Knowledge now owns manual article defaults for visibility, status, review, and priority. |
-| Missing Settings Ownership RFC | In Progress | Codex | RFC approved; implement remaining module settings as slices. |
-| Domain API Foundation | Ready |  | Post-audit platform item. Define and implement consistent APIs for domains that should expose integration surfaces. |
+| Risk Settings Slice | Done | Codex | Risk now owns defaults for assessments, item scoring, item status, and review interval. |
+| Missing Settings Ownership RFC | Done | Codex | RFC approved; Asset, Contact, Task, Warroom, Knowledge, and Risk settings slices completed. |
+| Domain API Foundation | In Progress | Codex | Scoped Sanctum API keys now enforce Client read/create/update, Client Site management, Asset read/create/update, and Contact read/create/update upsert scopes. |
 | Report Builder And Scheduled Client Reporting | Post-Beta |  | Version 2 item. Build custom report builder, saved report templates, and automatic client report delivery. |
 | Email Branding And HTML Template Editor | Post-Beta |  | Version 1 item. Email templates need branding variables, shared HTML wrapper, editor, and live preview. |
 | Storage Barcode Scanning | Post-Beta |  | Version 1 item. Storage must support barcode scanners from PC and mobile workflows. |
@@ -246,7 +247,7 @@ Completed:
 
 ### 11. Missing Settings Ownership RFC
 
-**Status:** In Progress
+**Status:** Done
 **Owner:** Codex
 **Domain:** Platform / Existing Domains
 **Goal:** Decide settings ownership for active modules that do not yet have clear settings surfaces.
@@ -267,11 +268,12 @@ Progress:
 - Task Settings slice completed.
 - Warroom Settings slice completed.
 - Knowledge Settings slice completed.
+- Risk Settings slice completed.
 
 ### 12. Domain API Foundation
 
-**Status:** Ready
-**Owner:**
+**Status:** In Progress
+**Owner:** Codex
 **Domain:** API / Platform / All Existing Domains
 **Goal:** Define and implement consistent API surfaces for domains that need external integration access.
 
@@ -282,13 +284,21 @@ Why this is needed:
 
 Initial scope:
 
+- Define API ability naming and ownership.
+- Replace visible "Scopes coming soon" UI with working Sanctum abilities.
+- Enforce abilities on existing Clients and Assets read APIs.
+- Add Client create/update API and Client Site management API.
+- Add Asset create/update API with Client/Site validation.
+- Enforce Contact read/create/update abilities and expose Contact upsert for automation.
+- Document current API routes and follow-up domain slices.
+
 - Create an RFC before implementation.
 - Define API versioning and route ownership rules.
 - Define authentication strategy for human tokens, service tokens, and future integration tokens.
 - Define permission mapping between UI permissions and API abilities.
 - Define response format, validation error format, pagination, filtering, sorting, and includes.
 - Decide which beta domains need first API coverage.
-- Start with read-safe APIs before write APIs.
+- Start with read-safe APIs before write APIs; Contact write API is the first approved write slice for n8n and AI agents.
 - Add OpenAPI or equivalent documentation plan.
 - Add tests for auth, permissions, validation, and representative endpoints.
 

@@ -29,6 +29,7 @@ class Asset extends Model
         'user_id',
         'name',
         'type',
+        'vendor',
         'vendor_id',
         'model',
         'serial_number',

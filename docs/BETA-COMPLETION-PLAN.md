@@ -217,7 +217,7 @@ Several modules appear to have no clear admin/settings surface yet, or only part
 - Assets: manual registration defaults are now configurable.
 - Contacts: contact defaults and relation type choices are now configurable.
 - Knowledge.
-- Risk.
+- Risk: assessment and risk item defaults are now configurable.
 - Tasks: manual task defaults are now configurable.
 - Warroom: dashboard windows, list limits, and visible panels are now configurable.
 
@@ -322,7 +322,7 @@ Recommended order:
 7. Visible Unfinished UI Cleanup.
 8. Legacy Planning Files Cleanup.
 9. Missing Settings Ownership RFC.
-10. Domain API Foundation planning and first implementation.
+10. Domain API Foundation planning and first implementation. Current slice covers scoped API keys, Client read/create/update with Site management, Asset read/create/update, and Contact read/create/update upsert scopes.
 11. Ticket, Email, Inbox, Contact, and Client workflow hardening found by the audit.
 12. Notification, Nextcloud, Calendar, and Knowledge hardening found by the audit.
 13. Commercial, Sales, Economy, Storage, Assets, and Tasks hardening found by the audit.

@@ -71,6 +71,8 @@ class EnforceTechRoutePermission
         'tech.admin.settings.tasks.*' => 'task.manage_settings',
         'tech.admin.settings.knowledge' => 'knowledge.manage_settings',
         'tech.admin.settings.knowledge.*' => 'knowledge.manage_settings',
+        'tech.admin.settings.risk' => 'risk.manage_settings',
+        'tech.admin.settings.risk.*' => 'risk.manage_settings',
         'tech.admin.settings.cs.*' => 'commercial.view',
 
         'tech.admin.system.category.*' => 'taxonomy.manage_categories',
