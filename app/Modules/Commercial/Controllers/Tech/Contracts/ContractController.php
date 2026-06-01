@@ -76,7 +76,8 @@ class ContractController extends Controller
         return view('commercial::Tech.cs.contracts.show', [
             'contract' => $contract,
             'client' => $contract->client,
-            'validation' => $validation
+            'validation' => $validation,
+            'defaultSla' => Sla::query()->where('is_default', true)->orderBy('name')->first(),
         ]);
     }
 
@@ -101,7 +102,7 @@ class ContractController extends Controller
             ->select('contracts.*')
             ->selectRaw($this->monthlyPriceSortExpression().' as monthly_price_sort')
             ->selectRaw($this->yearlyProfitSortExpression().' as yearly_profit_sort')
-            ->with(['client', 'items.service.costRelations.cost'])
+            ->with(['client', 'sla', 'items.service.costRelations.cost'])
             ->when($request->filled('q'), function ($query) use ($request): void {
                 $search = '%'.$request->string('q')->trim()->toString().'%';
                 $query->where(function ($query) use ($search): void {
@@ -149,6 +150,7 @@ class ContractController extends Controller
             'clients' => Client::query()->where('active', true)->orderBy('name')->get(['id', 'name']),
             'statuses' => Contracts::query()->distinct()->orderBy('approval_status')->pluck('approval_status')->filter()->values(),
             'filters' => $request->only(['q', 'status', 'client_id', 'period', 'sort', 'direction']),
+            'defaultSla' => Sla::query()->where('is_default', true)->orderBy('name')->first(),
         ]);
     }
 

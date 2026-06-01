@@ -4,12 +4,14 @@ namespace App\Modules\Task\Tests\Feature;
 
 use App\Models\Core\User;
 use App\Models\Clients\Client;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Task\Actions\CompleteTask;
 use App\Modules\Task\Actions\EnsureTaskDefaults;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Task\Controllers\Tech\TaskController;
 use App\Modules\Task\Models\Task;
 use App\Modules\Task\Models\TaskDependency;
+use App\Modules\Task\Models\TaskStatus;
 use App\Modules\Task\Models\TaskTimeEntry;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
@@ -139,6 +141,82 @@ class TaskModuleTest extends TestCase
             ->assertSee('Schedule')
             ->assertSee('Add item')
             ->assertDontSee('name="tags[]"', false);
+    }
+
+    #[Test]
+    public function admin_can_update_task_creation_defaults(): void
+    {
+        app(EnsureTaskDefaults::class)->handle();
+
+        $status = TaskStatus::query()->where('slug', 'in-progress')->firstOrFail();
+        $priority = TicketPriority::query()->create([
+            'name' => 'Default task priority',
+            'slug' => 'default-task-priority-test',
+            'level' => 2,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.admin.settings.tasks'))
+            ->assertOk()
+            ->assertViewIs('task::Admin.Settings.edit')
+            ->assertSee('Task Settings')
+            ->assertSee('Manual Task Defaults');
+
+        $this->actingAs($this->tech)
+            ->put(route('tech.admin.settings.tasks.update'), [
+                'default_status_id' => $status->id,
+                'default_priority_id' => $priority->id,
+                'default_estimated_minutes' => 25,
+            ])
+            ->assertRedirect(route('tech.admin.settings.tasks'));
+
+        $this->assertTrue($status->fresh()->is_default);
+        $this->assertDatabaseHas('common_settings', [
+            'type' => 'task',
+            'name' => 'defaults',
+        ]);
+
+        $settings = json_decode(CommonSetting::query()->where('type', 'task')->where('name', 'defaults')->value('json'), true);
+
+        $this->assertSame($priority->id, $settings['default_priority_id']);
+        $this->assertSame(25, $settings['default_estimated_minutes']);
+    }
+
+    #[Test]
+    public function standalone_task_creation_uses_configured_defaults(): void
+    {
+        app(EnsureTaskDefaults::class)->handle();
+
+        $status = TaskStatus::query()->where('slug', 'blocked')->firstOrFail();
+        $priority = TicketPriority::query()->create([
+            'name' => 'Task default high',
+            'slug' => 'task-default-high-test',
+            'level' => 1,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->put(route('tech.admin.settings.tasks.update'), [
+                'default_status_id' => $status->id,
+                'default_priority_id' => $priority->id,
+                'default_estimated_minutes' => 35,
+            ])
+            ->assertRedirect(route('tech.admin.settings.tasks'));
+
+        app(EnsureTaskDefaults::class)->handle();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tasks.store'), [
+                'title' => 'Task with configured defaults',
+            ])
+            ->assertRedirect();
+
+        $task = Task::query()->where('title', 'Task with configured defaults')->firstOrFail();
+
+        $this->assertSame($status->id, $task->status_id);
+        $this->assertSame($priority->id, $task->priority_id);
+        $this->assertSame(35, $task->estimated_minutes);
     }
 
     #[Test]

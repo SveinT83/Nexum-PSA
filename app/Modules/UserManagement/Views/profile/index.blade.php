@@ -22,9 +22,30 @@
                     <h2 class="h6 mb-0">Account</h2>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('tech.profile.update') }}">
+                    <form method="POST" action="{{ route('tech.profile.update') }}" enctype="multipart/form-data">
                         @csrf
                         @method('PATCH')
+
+                        <!-- Avatar belongs to the canonical profile and is reused in admin profile surfaces. -->
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            @if($profile->avatarUrl())
+                                <img src="{{ $profile->avatarUrl() }}" alt="{{ $user->name }} avatar" class="profile-avatar-preview">
+                            @else
+                                <span class="profile-avatar-fallback" aria-hidden="true">
+                                    {{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}
+                                </span>
+                            @endif
+                            <div class="flex-grow-1">
+                                <label for="profile_avatar" class="form-label">Profile image</label>
+                                <input id="profile_avatar" name="avatar" type="file" class="form-control" accept="image/*">
+                                @if($profile->avatarUrl())
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="remove_avatar" name="remove_avatar" value="1">
+                                        <label class="form-check-label" for="remove_avatar">Remove current image</label>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
 
                         <div class="mb-3">
                             <label for="profile_name" class="form-label">Name</label>
@@ -122,4 +143,31 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+    <style>
+        .profile-avatar-preview,
+        .profile-avatar-fallback {
+            width: 4.5rem;
+            height: 4.5rem;
+            border-radius: 50%;
+            flex: 0 0 auto;
+        }
+
+        .profile-avatar-preview {
+            object-fit: cover;
+            border: 1px solid var(--bs-border-color);
+        }
+
+        .profile-avatar-fallback {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--nexum-brand-primary, var(--bs-primary));
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+    </style>
 @endsection

@@ -199,7 +199,7 @@
                         <hr>
                         <div class="row mt-4">
                             {{-- Import Assets Row --}}
-                            <div class="col-md-6 text-center border-end">
+                            <div class="col-md-12 text-center">
                                 <h6>Sync assets from RMM</h6>
                                 <p class="text-muted small">Fetch computers and servers from N-able RMM.</p>
                                 <button type="button" class="btn btn-outline-info" onclick="Livewire.dispatch('startSync', { params: { type: 'assets_from' } })">
@@ -207,17 +207,6 @@
                                 </button>
                                 <div class="mt-2 small text-muted">
                                     Endpoint: <code>/api/?service=list_devices_at_client</code>
-                                </div>
-                            </div>
-                            {{-- Import Network Assets Row (Coming Soon) --}}
-                            <div class="col-md-6 text-center">
-                                <h6>Sync network devices from RMM</h6>
-                                <p class="text-muted small">Fetch network equipment from N-able RMM (Coming soon).</p>
-                                <button type="button" class="btn btn-outline-secondary" disabled>
-                                    <i class="fas fa-network-wired"></i> Sync Network from RMM
-                                </button>
-                                <div class="mt-2 small text-muted">
-                                    <i>API endpoint pending documentation</i>
                                 </div>
                             </div>
                         </div>
@@ -328,7 +317,7 @@
                     <div class="markdown-body">
                         @php
                             // Path to the Markdown documentation file
-                            $docPath = app_path('Modules/Integration/Views/Tech/Admin/System/Integrations/nable/nable_rmm_doc.md');
+                            $docPath = app_path('Modules/Integration/Docs/legacy-view-specs/Tech/Admin/System/Integrations/nable/nable_rmm_doc.md');
                             if (file_exists($docPath)) {
                                 // Attempt to parse Markdown using Parsedown
                                 if (class_exists('\Parsedown')) {

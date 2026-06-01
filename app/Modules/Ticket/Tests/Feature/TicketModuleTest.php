@@ -27,6 +27,7 @@ use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
+use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketAssignmentSetting;
@@ -77,10 +78,12 @@ class TicketModuleTest extends TestCase
     public function ticket_routes_are_owned_by_ticket_module(): void
     {
         $this->assertSame(TicketController::class . '@index', Route::getRoutes()->getByName('tech.tickets.index')->getActionName());
+        $this->assertSame(TicketSlaReportController::class . '@index', Route::getRoutes()->getByName('tech.reports.tickets.sla')->getActionName());
         $this->assertSame(TicketController::class . '@show', Route::getRoutes()->getByName('tech.tickets.show')->getActionName());
         $this->assertSame(TicketController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.edit')->getActionName());
         $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
         $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
+        $this->assertSame(TicketController::class . '@requestDocumentation', Route::getRoutes()->getByName('tech.tickets.documentation-request')->getActionName());
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
         $this->assertSame(TicketController::class . '@storeTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.store')->getActionName());
         $this->assertSame(TicketController::class . '@draftTimeEntryInvoiceText', Route::getRoutes()->getByName('tech.tickets.time-entries.draft')->getActionName());
@@ -695,6 +698,64 @@ class TicketModuleTest extends TestCase
                 $resolveOverdue->ticket_key,
                 $futureSla->ticket_key,
             ]);
+
+        Carbon::setTestNow();
+    }
+
+    #[Test]
+    public function ticket_sla_report_shows_operational_counts_and_current_risk(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-15 10:00:00'));
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999033',
+            'subject' => 'Report response overdue',
+            'first_response_due_at' => now()->subHour(),
+            'resolve_due_at' => now()->addHours(4),
+            'first_responded_at' => null,
+        ]);
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999034',
+            'subject' => 'Report resolve overdue',
+            'first_response_due_at' => now()->subHour(),
+            'resolve_due_at' => now()->subMinutes(30),
+            'first_responded_at' => now()->subHours(2),
+            'resolved_at' => null,
+        ]);
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999035',
+            'subject' => 'Report responded within SLA',
+            'first_response_due_at' => now()->subHour(),
+            'first_responded_at' => now()->subHours(2),
+        ]);
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999036',
+            'subject' => 'Report resolved within SLA',
+            'resolve_due_at' => now()->subHour(),
+            'resolved_at' => now()->subHours(2),
+        ]);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.reports.tickets.sla', ['period' => 'all']))
+            ->assertOk()
+            ->assertViewIs('ticket::Tech.Reports.sla')
+            ->assertSee('Ticket SLA Report')
+            ->assertSee('Response overdue')
+            ->assertSee('Resolve overdue')
+            ->assertSee('Responded within SLA')
+            ->assertSee('Resolved within SLA')
+            ->assertSee('TD-2026-999033')
+            ->assertSee('TD-2026-999034');
+
+        $summary = $response->viewData('summary');
+
+        $this->assertSame(1, $summary['response_overdue']);
+        $this->assertSame(1, $summary['resolve_overdue']);
+        $this->assertSame(2, $summary['responded_within_sla']);
+        $this->assertSame(1, $summary['resolved_within_sla']);
 
         Carbon::setTestNow();
     }
@@ -1879,6 +1940,49 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function workflow_blocks_knowledge_required_transition_until_documentation_follow_up_exists(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $progress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999045',
+            'status_id' => $new->id,
+            'workflow_id' => $workflow->id,
+        ]);
+        $transition = TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $new->id)
+            ->where('to_status_id', $progress->id)
+            ->firstOrFail();
+        $transition->forceFill(['requires_knowledge_update' => true])->save();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket, $transition]))
+            ->assertSessionHasErrors('status_id');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.documentation-request', $ticket), [
+                'reason' => 'Document the known fix for this category.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket))
+            ->assertSessionHas('success', 'Documentation follow-up was created.');
+
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'documentation_requested',
+            'message' => 'Document the known fix for this category.',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket->fresh(), $transition]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($progress->id, $ticket->fresh()->status_id);
+    }
+
+    #[Test]
     public function workflow_does_not_allow_closing_before_solved_state(): void
     {
         app(EnsureTicketDefaults::class)->handle();
@@ -2552,12 +2656,21 @@ class TicketModuleTest extends TestCase
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $admin->assignRole('Tech');
         $admin->assignRole('Admin');
+        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999046']);
+        $ticket->events()->create([
+            'actor_id' => $this->tech->id,
+            'type' => 'documentation_requested',
+            'message' => 'Write an article for this recurring issue.',
+        ]);
 
         $this->actingAs($admin)
             ->get(route('tech.admin.settings.tickets'))
             ->assertOk()
             ->assertViewIs('ticket::Admin.Settings.index')
             ->assertSee('Ticket Merging')
+            ->assertSee('Documentation Follow-Ups')
+            ->assertSee('TD-2026-999046')
+            ->assertSee('Write an article for this recurring issue.')
             ->assertSee('Automatically merge exact duplicate inbound tickets')
             ->assertSee('Allow AI-assisted merge suggestions')
             ->assertSee('AI similarity threshold');

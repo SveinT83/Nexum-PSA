@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Modules\Contact\Actions\StoreContact;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Support\ContactSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -45,6 +46,7 @@ class ContactForm extends Component
         $this->contactId = $contactId;
         $this->activeClientId = $activeClientId;
         $this->activeSiteId = $activeSiteId;
+        $this->relation_type = app(ContactSettings::class)->get()['default_relation_type'];
 
         if ($contactId) {
             $this->hydrateFromContact($contactId);
@@ -90,7 +92,7 @@ class ContactForm extends Component
         $this->selected_organization_client_id = $client?->id;
         $this->selected_organization_client_name = $client?->name;
         $this->site_id = $site?->id;
-        $this->relation_type = $siteRelation?->relation_type ?: $clientRelation?->relation_type ?: 'contact';
+        $this->relation_type = $siteRelation?->relation_type ?: $clientRelation?->relation_type ?: app(ContactSettings::class)->get()['default_relation_type'];
     }
 
     public function updatedOrganizationName(): void
@@ -299,17 +301,7 @@ class ContactForm extends Component
 
     public function relationOptions(): array
     {
-        return [
-            'contact' => 'Contact',
-            'primary_contact' => 'Primary contact',
-            'technical_contact' => 'Technical contact',
-            'billing_contact' => 'Billing contact',
-            'site_contact' => 'Site contact',
-            'decision_maker' => 'Decision maker',
-            'emergency_contact' => 'Emergency contact',
-            'manager' => 'Manager',
-            'ceo' => 'CEO',
-        ];
+        return app(ContactSettings::class)->relationOptions($this->relation_type);
     }
 
     public function render()

@@ -1,7 +1,11 @@
 <?php
 
+use App\Modules\Task\Controllers\Admin\TaskSettingsController;
 use App\Modules\Task\Controllers\Tech\TaskController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/admin/settings/tasks', [TaskSettingsController::class, 'edit'])->name('admin.settings.tasks');
+Route::put('/admin/settings/tasks', [TaskSettingsController::class, 'update'])->name('admin.settings.tasks.update');
 
 Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
 Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');

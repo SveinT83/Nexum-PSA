@@ -333,6 +333,20 @@ class BookStackClient
         return $response->json() ?? [];
     }
 
+    /**
+     * Delete an existing page in BookStack.
+     */
+    public function deletePage(int|string $pageId): void
+    {
+        $response = $this->request()->delete($this->endpoint('/api/pages/'.$pageId));
+
+        if ($response->status() === 404) {
+            return;
+        }
+
+        $this->ensureSuccessful($response, 'Unable to delete BookStack page '.$pageId);
+    }
+
     private function request()
     {
         return Http::acceptJson()

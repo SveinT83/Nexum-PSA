@@ -34,6 +34,14 @@ When a specific SLA is selected, a snapshot is stored on the contract line. This
 
 When ticket-to-contract matching is implemented, ticket SLA resolution should use the contract item first. This allows different services under the same client contract to have different response policies.
 
+## Contract UI Signals
+
+The contract index shows the contract SLA policy directly in the list so technicians can see whether a contract is locked to a specific SLA or follows the current system default.
+
+The contract create and edit form uses the wording `Use current system default SLA` for blank SLA selections. This means the contract is not locked to a specific policy and will follow the active default SLA.
+
+The contract show page displays an SLA summary card with the effective policy and low, medium, and high response/onsite targets.
+
 Examples:
 
 - Email service through a third-party provider can use a third-party email SLA.

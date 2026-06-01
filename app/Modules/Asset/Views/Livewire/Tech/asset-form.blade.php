@@ -56,13 +56,9 @@
                     <div class="col-md-6">
                         <label for="type" class="form-label">Asset Type *</label>
                         <select wire:model="type" id="type" class="form-select @error('type') is-invalid @enderror" required>
-                            <option value="other">Other</option>
-                            <option value="server">Server</option>
-                            <option value="pc">PC</option>
-                            <option value="laptop">Laptop</option>
-                            <option value="switch">Switch</option>
-                            <option value="ap">Access Point</option>
-                            <option value="firewall">Firewall</option>
+                            @foreach($assetTypes as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
                         </select>
                         @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>

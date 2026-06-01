@@ -3,7 +3,8 @@
 User Management owns application users, roles, permissions, user preferences, security settings, and
 the authenticated technician profile shell.
 
-Canonical profile data is stored in `user_profiles`.
+Canonical profile data is stored in `user_profiles`. Personal workspace preferences are stored in
+`user_preferences`.
 
 ## Profile Workspace
 
@@ -22,7 +23,8 @@ The profile workspace uses a shared side menu with these sections:
 - Preferences
 - Security / 2FA
 - Notifications
-- Work hours & skills
+- Work hours
+- Ticket assignment
 - Integrations
 - View
 
@@ -59,14 +61,35 @@ Settings and then dropped by the cleanup migration.
 ## Current Profile Pages
 
 - `/tech/profile` shows the profile shell and account summary.
-- `/tech/profile` also lets the signed-in user update name, email, phone numbers, timezone,
-  availability notes, and profile notes.
-- `/tech/profile/preferences` manages timezone, default calendar view, and normal workday defaults.
+- `/tech/profile` also lets the signed-in user update profile image, name, email, phone numbers,
+  timezone, working hours, availability notes, and profile notes.
+- `/tech/profile/preferences` manages timezone, default calendar view, normal workday defaults, and
+  personal theme preference.
 - `/tech/profile/security` manages password and two-factor authentication.
 - `/tech/profile/notifications` manages notification delivery preferences.
 - `/tech/tickets/profile` manages ticket assignment settings.
 - `/tech/profile/integrations` is reserved for personal integration settings.
-- `/tech/profile/view` is reserved for personal display preferences after branding is implemented.
+- `/tech/profile/view` is reserved for future deeper personal display preferences.
+
+## Avatar And Theme
+
+Profile images are uploaded to the public storage disk under `user-avatars/`.
+
+Production servers must have Laravel public storage linked:
+
+```bash
+php artisan storage:link
+```
+
+The tech layout reads the personal theme setting from `user_preferences.settings.theme`.
+Supported values:
+
+- `system`
+- `light`
+- `dark`
+
+`system` leaves Bootstrap in its default mode. `light` and `dark` write `data-bs-theme` on the
+HTML element.
 
 ## Development Rules
 

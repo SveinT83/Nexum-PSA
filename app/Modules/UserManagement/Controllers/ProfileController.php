@@ -3,7 +3,9 @@
 namespace App\Modules\UserManagement\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\UserManagement\Actions\UpdateUserProfile;
 use App\Modules\UserManagement\Models\UserProfile;
+use App\Modules\UserManagement\Support\UserProfileData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -28,7 +30,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request, UpdateUserProfile $updateProfile): RedirectResponse
     {
         $user = $request->user();
         $validated = $request->validate([
@@ -48,26 +50,12 @@ class ProfileController extends Controller
             'working_hours.*.end' => ['nullable', 'date_format:H:i'],
             'availability_notes' => ['nullable', 'string', 'max:5000'],
             'profile_notes' => ['nullable', 'string', 'max:5000'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ]);
 
-        $user->forceFill([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone_work' => $validated['work_phone'] ?? null,
-            'phone_private' => $validated['private_phone'] ?? null,
-        ])->save();
-
-        UserProfile::query()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'work_phone' => $validated['work_phone'] ?? null,
-                'private_phone' => $validated['private_phone'] ?? null,
-                'timezone' => $validated['timezone'],
-                'working_hours' => $this->normalizedWorkingHours($validated['working_hours'] ?? []),
-                'availability_notes' => $validated['availability_notes'] ?? null,
-                'profile_notes' => $validated['profile_notes'] ?? null,
-            ]
-        );
+        $validated['remove_avatar'] = $request->boolean('remove_avatar');
+        $updateProfile->handle($user, $validated, $request->file('avatar'));
 
         return redirect()
             ->route('tech.profile.index')
@@ -92,40 +80,14 @@ class ProfileController extends Controller
                 'work_phone' => $user->phone_work,
                 'private_phone' => $user->phone_private,
                 'timezone' => config('app.timezone', 'UTC'),
-                'working_hours' => $this->defaultWorkingHours(),
+                'working_hours' => UserProfileData::defaultWorkingHours(),
             ]
         );
 
         if (empty($profile->working_hours)) {
-            $profile->forceFill(['working_hours' => $this->defaultWorkingHours()])->save();
+            $profile->forceFill(['working_hours' => UserProfileData::defaultWorkingHours()])->save();
         }
 
         return $profile;
-    }
-
-    private function normalizedWorkingHours(array $workingHours): array
-    {
-        return collect($this->defaultWorkingHours())
-            ->mapWithKeys(function (array $defaults, string $day) use ($workingHours) {
-                $submitted = $workingHours[$day] ?? [];
-
-                return [$day => [
-                    'enabled' => (bool) ($submitted['enabled'] ?? false),
-                    'start' => $submitted['start'] ?? $defaults['start'],
-                    'end' => $submitted['end'] ?? $defaults['end'],
-                ]];
-            })
-            ->all();
-    }
-
-    private function defaultWorkingHours(): array
-    {
-        return collect(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
-            ->mapWithKeys(fn (string $day) => [$day => [
-                'enabled' => in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], true),
-                'start' => '08:00',
-                'end' => '16:00',
-            ]])
-            ->all();
     }
 }

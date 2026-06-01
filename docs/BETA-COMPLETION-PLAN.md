@@ -214,11 +214,11 @@ should be hidden or marked as unavailable honestly.
 
 Several modules appear to have no clear admin/settings surface yet, or only partial settings:
 
-- Assets.
-- Contacts.
+- Assets: manual registration defaults are now configurable.
+- Contacts: contact defaults and relation type choices are now configurable.
 - Knowledge.
 - Risk.
-- Tasks.
+- Tasks: manual task defaults are now configurable.
 - Warroom.
 
 Each module needs an ownership review:
@@ -233,20 +233,20 @@ Each module needs an ownership review:
 
 Visible beta UI must not expose unfinished promises.
 
-Known examples to verify:
+Verified cleanup:
 
-- Asset detail currently shows a `Related Tickets` card with `Feature coming soon`.
-- Some legacy `resources/views/tech/tasks/*` files contain markdown-style specification text inside
-  Blade paths and appear to be old planning artifacts rather than production views.
-- Integration cards include disabled/coming-soon behavior that should be reviewed against the
-  "no unfinished UI controls" rule.
+- Asset detail related-ticket empty state has been cleaned and no longer advertises unfinished behavior.
+- Legacy Markdown specs were moved out of production view paths.
+- N-able network-device coming-soon control has been removed from the integration settings screen.
 
 For each case, either implement the feature, hide the UI, move the planning text into docs, or make
 the limitation honest and useful.
 
 ### Knowledge Documentation Coverage
 
-Knowledge seeders now exist for many modules, but several active modules still need coverage review.
+Repository-owned Knowledge documentation is published with `php artisan knowledge:sync-docs`, which
+updates Knowledge records and marks them for the existing BookStack push worker. Seeders may exist
+for compatibility, but they are not the normal documentation publishing workflow.
 
 Modules that should be checked for Knowledge documentation:
 
@@ -274,26 +274,23 @@ Known examples to verify:
 
 - The main tech layout has an empty logo image source.
 - The footer hardcodes `Nexum PSA`.
-- The login page says `tdPSA` and uses Tailwind-style classes instead of the Bootstrap/project UI
-  standard.
+- The login page now uses Bootstrap, current company branding defaults, and a neutral email placeholder.
 - Public contract output uses `tdPSA` in the footer.
 - Some UI, docs, and messages mix `tdPSA`, `NexumPSA`, `Nexum-PSA`, and `Nexum PSA`.
-- Default login placeholder still uses `admin@tdpsa.com`.
 
 Company Profile and System Branding should resolve this with real settings, consistent naming,
 fallbacks, and Bootstrap-compatible theme variables.
 
 ### Legacy Planning Files In View Paths
 
-Some old planning/specification files still live under `resources/views` or module view folders.
-These can confuse contributors and AI agents because they look like executable Blade views.
+Old planning/specification files were moved out of `resources/views` and module view folders.
+Historical copies now live under `docs/legacy/view-specs` or `app/Modules/{Domain}/Docs/legacy-view-specs`.
 
-Known examples to verify:
+Verified cleanup:
 
-- `resources/views/tech/tasks/*.blade.php` files containing markdown-style planning text.
-- `resources/views/tech/tasks/*.md` and task template planning files that may now be superseded by
-  `app/Modules/Task`.
-- Integration planning markdown under view folders.
+- `resources/views` no longer contains `.md` or `.blade.md` files.
+- Module `Views` folders no longer contain `.md` or `.blade.md` files.
+- Runtime documentation cards now read from module `Docs/legacy-view-specs` paths where needed.
 
 Planning documents should live under `docs/` or module `Docs/`, not in production view paths.
 Production view paths should contain renderable views only.
@@ -319,10 +316,17 @@ Recommended order:
 1. Security hardening and production safety.
 2. User management, roles, permissions, and technician profile.
 3. Branding and global system settings.
-4. Ticket, Email, Inbox, Contact, and Client workflows.
-5. Notification, Nextcloud, Calendar, and Knowledge.
-6. Commercial, Sales, Economy, Storage, Assets, and Tasks.
-7. Future ideas and new domains.
+4. Reporting Domain Foundation.
+5. Module Settings Audit across existing domains.
+6. Admin Settings Discoverability Cleanup.
+7. Visible Unfinished UI Cleanup.
+8. Legacy Planning Files Cleanup.
+9. Missing Settings Ownership RFC.
+10. Domain API Foundation planning and first implementation.
+11. Ticket, Email, Inbox, Contact, and Client workflow hardening found by the audit.
+12. Notification, Nextcloud, Calendar, and Knowledge hardening found by the audit.
+13. Commercial, Sales, Economy, Storage, Assets, and Tasks hardening found by the audit.
+14. Future ideas and new domains.
 
 This order can change when a production beta issue is discovered.
 
@@ -337,6 +341,8 @@ These ideas remain important, but should not distract from beta completion unles
 - Large AI automation features.
 - New major integrations.
 - Advanced custom dashboards.
+- Email Branding And HTML Template Editor.
+- Storage Barcode Scanning.
 
 ## Documentation Expectations
 

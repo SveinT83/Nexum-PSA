@@ -16,3 +16,8 @@ Before making code changes, read and follow:
 5. `docs/TODO.md` before planning or implementing work
 
 This file must not override `AGENTS.md`.
+
+Operational note: if Artisan commands need the external development MySQL
+server and fail with socket/connection errors from an AI tool sandbox, follow
+the local tooling rules in `AGENTS.md` before changing `.env` or database
+configuration.

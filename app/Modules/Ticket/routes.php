@@ -5,7 +5,11 @@ use App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
+use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/reports/tickets/sla', [TicketSlaReportController::class, 'index'])
+    ->name('reports.tickets.sla');
 
 Route::get('/tickets', [TicketController::class, 'index'])
     ->name('tickets.index');
@@ -43,6 +47,9 @@ Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])
 
 Route::post('/tickets/{ticket}/workflow/{transition}', [TicketController::class, 'transition'])
     ->name('tickets.workflow.transition');
+
+Route::post('/tickets/{ticket}/documentation-request', [TicketController::class, 'requestDocumentation'])
+    ->name('tickets.documentation-request');
 
 Route::post('/tickets/{ticket}/messages', [TicketController::class, 'addMessage'])
     ->name('tickets.messages.store');

@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\UserManagement\Actions\SendUserInvite;
 use App\Modules\UserManagement\Actions\StoreUser;
+use App\Modules\UserManagement\Actions\UpdateUserProfile;
 use App\Modules\UserManagement\Actions\UpdateUserStatus;
 use App\Modules\UserManagement\Menus\SideBar\UserManagementMenu;
 use App\Modules\UserManagement\Models\UserProfile;
+use App\Modules\UserManagement\Support\UserProfileData;
 use App\Modules\UserManagement\Queries\RoleQuery;
 use App\Modules\UserManagement\Queries\UserQuery;
 use App\Modules\Ticket\Models\Ticket;
@@ -77,7 +79,7 @@ class UserManagementController extends Controller
             ->with('success', 'User created successfully.');
     }
 
-    public function updateProfile(Request $request, User $user): RedirectResponse
+    public function updateProfile(Request $request, User $user, UpdateUserProfile $updateProfile): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -96,26 +98,12 @@ class UserManagementController extends Controller
             'working_hours.*.end' => ['nullable', 'date_format:H:i'],
             'availability_notes' => ['nullable', 'string', 'max:5000'],
             'profile_notes' => ['nullable', 'string', 'max:5000'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ]);
 
-        $user->forceFill([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone_work' => $validated['phone_work'] ?? null,
-            'phone_private' => $validated['phone_private'] ?? null,
-        ])->save();
-
-        UserProfile::query()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'work_phone' => $validated['phone_work'] ?? null,
-                'private_phone' => $validated['phone_private'] ?? null,
-                'timezone' => $validated['timezone'],
-                'working_hours' => $this->normalizedWorkingHours($validated['working_hours'] ?? []),
-                'availability_notes' => $validated['availability_notes'] ?? null,
-                'profile_notes' => $validated['profile_notes'] ?? null,
-            ]
-        );
+        $validated['remove_avatar'] = $request->boolean('remove_avatar');
+        $updateProfile->handle($user, $validated, $request->file('avatar'));
 
         return redirect()->route('tech.admin.user_management.show', $user)
             ->with('success', 'User profile updated successfully.');
@@ -174,40 +162,14 @@ class UserManagementController extends Controller
                 'work_phone' => $user->phone_work,
                 'private_phone' => $user->phone_private,
                 'timezone' => config('app.timezone', 'UTC'),
-                'working_hours' => $this->defaultWorkingHours(),
+                'working_hours' => UserProfileData::defaultWorkingHours(),
             ]
         );
 
         if (empty($profile->working_hours)) {
-            $profile->forceFill(['working_hours' => $this->defaultWorkingHours()])->save();
+            $profile->forceFill(['working_hours' => UserProfileData::defaultWorkingHours()])->save();
         }
 
         return $profile;
-    }
-
-    private function normalizedWorkingHours(array $workingHours): array
-    {
-        return collect($this->defaultWorkingHours())
-            ->mapWithKeys(function (array $defaults, string $day) use ($workingHours) {
-                $submitted = $workingHours[$day] ?? [];
-
-                return [$day => [
-                    'enabled' => (bool) ($submitted['enabled'] ?? false),
-                    'start' => $submitted['start'] ?? $defaults['start'],
-                    'end' => $submitted['end'] ?? $defaults['end'],
-                ]];
-            })
-            ->all();
-    }
-
-    private function defaultWorkingHours(): array
-    {
-        return collect(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
-            ->mapWithKeys(fn (string $day) => [$day => [
-                'enabled' => in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], true),
-                'start' => '08:00',
-                'end' => '16:00',
-            ]])
-            ->all();
     }
 }

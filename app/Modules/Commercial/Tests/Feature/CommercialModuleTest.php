@@ -83,6 +83,7 @@ class CommercialModuleTest extends TestCase
             ->assertSee('contract_search')
             ->assertSee('contractFiltersCollapse')
             ->assertSee('New Contract')
+            ->assertSee('SLA')
             ->assertSee('sort=id', false)
             ->assertSee('sort=client', false)
             ->assertSee('sort=status', false)
@@ -143,6 +144,7 @@ class CommercialModuleTest extends TestCase
     {
         $acme = Client::factory()->create(['name' => 'Acme Managed Services']);
         $zenith = Client::factory()->create(['name' => 'Zenith Operations']);
+        $sla = $this->createSla('Managed Contract SLA');
 
         Contracts::query()->create([
             'client_id' => $zenith->id,
@@ -158,6 +160,7 @@ class CommercialModuleTest extends TestCase
             'created_by' => $this->tech->id,
             'description' => 'Acme support agreement',
             'approval_status' => 'sent_contract',
+            'sla_id' => $sla->id,
             'start_date' => now()->addDays(10)->toDateString(),
             'end_date' => now()->addYear()->toDateString(),
         ]);
@@ -180,7 +183,8 @@ class CommercialModuleTest extends TestCase
         $statusResponse = $this->actingAs($this->tech)
             ->get(route('tech.contracts.index', ['status' => 'sent_contract']))
             ->assertOk()
-            ->assertSee('Acme Managed Services');
+            ->assertSee('Acme Managed Services')
+            ->assertSee('Managed Contract SLA');
 
         $this->assertSame(
             ['Acme Managed Services'],
@@ -781,6 +785,7 @@ class CommercialModuleTest extends TestCase
             ->get(route('tech.contracts.create'))
             ->assertOk()
             ->assertSee('SLA Policy')
+            ->assertSee('Use current system default SLA')
             ->assertSee('Contract support');
 
         $this->actingAs($this->tech)
@@ -812,6 +817,8 @@ class CommercialModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.contracts.show', $contract))
             ->assertOk()
-            ->assertSee('Contract support');
+            ->assertSee('Contract support')
+            ->assertSee('SLA Summary')
+            ->assertSee('First response 24 hours');
     }
 }

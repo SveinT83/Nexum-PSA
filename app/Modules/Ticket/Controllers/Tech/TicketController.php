@@ -592,6 +592,29 @@ class TicketController extends Controller
             ->with('success', 'Workflow transition completed.');
     }
 
+    public function requestDocumentation(Request $request, Ticket $ticket): RedirectResponse
+    {
+        $data = $request->validate([
+            'reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        TicketEvent::query()->create([
+            'ticket_id' => $ticket->id,
+            'actor_id' => $request->user()?->id,
+            'type' => 'documentation_requested',
+            'message' => $data['reason'] ?? 'Documentation follow-up requested from ticket.',
+            'metadata' => [
+                'ticket_key' => $ticket->ticket_key,
+                'category_id' => $ticket->category_id,
+                'client_id' => $ticket->client_id,
+                'source' => 'ticket_show',
+            ],
+        ]);
+
+        return redirect()->route('tech.tickets.show', $ticket)
+            ->with('success', 'Documentation follow-up was created.');
+    }
+
     public function markRead(Request $request, Ticket $ticket, MarkTicketRead $markTicketRead): RedirectResponse
     {
         $markTicketRead->handle($ticket, $request->user());

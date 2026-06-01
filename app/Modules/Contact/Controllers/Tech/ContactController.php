@@ -7,6 +7,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Modules\Contact\Actions\StoreContact;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Support\ContactSettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
@@ -92,6 +93,7 @@ class ContactController extends Controller
     public function store(Request $request, StoreContact $storeContact): RedirectResponse
     {
         $context = $this->contactContext($request);
+        $settings = app(ContactSettings::class);
 
         $validated = $request->validate([
             'existing_contact_id' => ['nullable', Rule::exists('contacts', 'id')],
@@ -101,7 +103,7 @@ class ContactController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:100'],
             'preferred_language' => ['nullable', 'string', 'max:10'],
-            'relation_type' => ['nullable', Rule::in(['contact', 'primary_contact', 'technical_contact', 'billing_contact', 'site_contact', 'decision_maker', 'emergency_contact', 'manager', 'ceo'])],
+            'relation_type' => ['nullable', Rule::in($settings->enabledRelationValues($request->string('relation_type')->toString()))],
             'client_id' => ['nullable', Rule::exists('clients', 'id')],
             'site_id' => ['nullable', Rule::exists('client_sites', 'id')],
         ]);

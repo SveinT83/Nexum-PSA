@@ -168,6 +168,34 @@ Rules:
 * NO duplication per role (Tech/Admin/Client)
 * ONE source of truth per module
 
+### Reporting Ownership
+
+Reports MUST use the `Report` module as the shared discovery and navigation
+surface.
+
+The `Report` module owns:
+
+* `/tech/reports`
+* Report registry entries
+* Report hub layout
+* Shared report navigation
+* Shared report permission conventions
+
+Domain modules own:
+
+* Report calculations
+* Report queries
+* Report detail controllers and views when the report is domain-specific
+* Domain-specific report filters
+
+Example:
+
+* `Ticket` owns the Ticket SLA report query and detail page.
+* `Report` registers and lists the Ticket SLA report in the shared hub.
+
+Do not create report routes in `routes/tech.php`. Do not create production
+report views in `resources/views/tech/reports`.
+
 ---
 
 ## 5. LARAVEL INTEGRATION

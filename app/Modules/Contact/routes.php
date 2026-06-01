@@ -1,7 +1,16 @@
 <?php
 
+use App\Modules\Contact\Controllers\Admin\ContactSettingsController;
 use App\Modules\Contact\Controllers\Tech\ContactController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware('admin')->group(function () {
+    Route::get('/admin/settings/contacts', [ContactSettingsController::class, 'edit'])
+        ->name('admin.settings.contacts');
+
+    Route::put('/admin/settings/contacts', [ContactSettingsController::class, 'update'])
+        ->name('admin.settings.contacts.update');
+});
 
 Route::get('/contacts', [ContactController::class, 'index'])
     ->name('contacts.index');

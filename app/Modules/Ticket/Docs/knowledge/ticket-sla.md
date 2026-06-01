@@ -72,12 +72,19 @@ This is useful for future workflow actions, AI tools, or admin operations, but v
 
 ## Reporting
 
-Current SLA fields are enough to build basic reporting for:
+Ticket SLA reporting is available from Reports -> Ticket SLA.
+
+The first report uses stored ticket timestamps only. It intentionally does not recalculate business hours or historical SLA policy rules, because the goal is to report the operational state that technicians already see on ticket list and ticket show.
+
+The report shows:
 
 - Response overdue.
 - Resolve overdue.
 - Responded within SLA.
 - Resolved within SLA.
+- Responded late.
+- Resolved late.
+- Current tickets with active SLA risk.
 
 Business-hours calculations are not part of the first reporting foundation unless explicitly added later.
 
@@ -90,3 +97,5 @@ Important files:
 - `app/Modules/Ticket/Actions/StoreTicket.php`
 - `app/Modules/Ticket/Actions/AddTicketMessage.php`
 - `app/Modules/Ticket/Queries/TicketIndexQuery.php`
+- `app/Modules/Ticket/Queries/TicketSlaReportQuery.php`
+- `app/Modules/Ticket/Controllers/Tech/TicketSlaReportController.php`

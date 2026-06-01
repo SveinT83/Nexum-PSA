@@ -36,4 +36,16 @@ class SecurityHeadersTest extends TestCase
         $this->assertStringContainsString('httponly', $setCookie);
         $this->assertStringContainsString('samesite=lax', $setCookie);
     }
+
+    #[Test]
+    public function login_page_uses_current_nexum_branding_copy(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Nexum PSA')
+            ->assertSee('name@example.com')
+            ->assertDontSee('Welcome to tdPSA')
+            ->assertDontSee('admin@tdpsa.com')
+            ->assertDontSee('bg-gray-50');
+    }
 }

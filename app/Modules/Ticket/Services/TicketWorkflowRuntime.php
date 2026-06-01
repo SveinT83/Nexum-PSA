@@ -105,6 +105,7 @@ class TicketWorkflowRuntime
         $requiresNote = (bool) $transition->requires_note || (bool) $state?->requires_note;
         $requiresResponse = (bool) $transition->requires_response || (bool) $state?->requires_response;
         $requiresResolution = (bool) $transition->requires_resolution || (bool) $state?->requires_resolution;
+        $requiresKnowledgeUpdate = (bool) $transition->requires_knowledge_update || (bool) $state?->requires_knowledge_update;
 
         if ($requiresNote && ! $this->hasInternalNote($ticket)) {
             return 'Add an internal note before using this workflow action.';
@@ -116,6 +117,10 @@ class TicketWorkflowRuntime
 
         if ($requiresResolution && ! $this->hasSolutionMessage($ticket)) {
             return 'Mark a response as the solution before using this workflow action.';
+        }
+
+        if ($requiresKnowledgeUpdate && ! $this->hasDocumentationRequest($ticket)) {
+            return 'Create a documentation follow-up before using this workflow action.';
         }
 
         return null;
@@ -172,6 +177,13 @@ class TicketWorkflowRuntime
     {
         return $ticket->messages()
             ->where('type', 'internal_note')
+            ->exists();
+    }
+
+    private function hasDocumentationRequest(Ticket $ticket): bool
+    {
+        return $ticket->events()
+            ->where('type', 'documentation_requested')
             ->exists();
     }
 }

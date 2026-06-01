@@ -17,6 +17,7 @@ use App\Modules\Task\Models\TaskActivity;
 use App\Modules\Task\Models\TaskChecklistItem;
 use App\Modules\Task\Models\TaskStatus;
 use App\Modules\Task\Queries\TaskIndexQuery;
+use App\Modules\Task\Support\TaskSettings;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketPriority;
@@ -49,7 +50,7 @@ class TaskController extends Controller
         ]);
     }
 
-    public function create(Request $request, EnsureTaskDefaults $defaults): View
+    public function create(Request $request, EnsureTaskDefaults $defaults, TaskSettings $settings): View
     {
         $defaults->handle();
 
@@ -57,7 +58,7 @@ class TaskController extends Controller
 
         return view('task::Tech.Tasks.form', $this->formData([
             'ownerContext' => $owner,
-            'prefill' => array_merge($this->ownerPrefill($owner), $this->requestPrefill($request)),
+            'prefill' => $settings->taskCreateDefaults(array_merge($this->ownerPrefill($owner), $this->requestPrefill($request))),
         ]));
     }
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Asset\Controllers\Api\V1\AssetController as ApiAssetController;
+use App\Modules\Asset\Controllers\Admin\AssetSettingsController;
 use App\Modules\Asset\Controllers\Tech\AssetController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,14 @@ if (isset($tdpsaLoadingApiRoutes) && $tdpsaLoadingApiRoutes === true) {
 
     return;
 }
+
+Route::middleware('admin')->group(function () {
+    Route::get('/admin/settings/assets', [AssetSettingsController::class, 'edit'])
+        ->name('admin.settings.assets');
+
+    Route::put('/admin/settings/assets', [AssetSettingsController::class, 'update'])
+        ->name('admin.settings.assets.update');
+});
 
 Route::get('/assets/docs', [AssetController::class, 'docs'])
     ->name('assets.docs');

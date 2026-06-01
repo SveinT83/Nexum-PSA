@@ -52,6 +52,19 @@ model that synced data lands in. Future Knowledge records should be able to dist
 authored content from externally synced content by storing source system, external ID, source URL,
 checksum, sync status, and last synced timestamp.
 
+## Repository Documentation Sync
+
+Module documentation stored under `app/Modules/*/Docs/knowledge` is synchronized into Knowledge with:
+
+```bash
+php artisan knowledge:sync-docs
+```
+
+Use `--module=Ticket` to limit the sync to one module. Use `--push` to queue the existing BookStack
+push worker after the Knowledge records are updated. This is the normal publishing flow for
+code-owned Knowledge pages; database seeders are not the day-to-day documentation publishing
+mechanism.
+
 AI chat will depend on Knowledge as one of its primary context sources:
 
 - Page-context chat should retrieve relevant Knowledge articles for the current route, record,

@@ -61,6 +61,7 @@ class RoleSeeder extends Seeder
                 'ticket.manage_workflows',
                 'ticket.manage_settings',
                 'task.manage_templates',
+                'task.manage_settings',
                 'calendar.manage_settings',
                 'knowledge.manage_structure',
                 'documentation.manage_templates',

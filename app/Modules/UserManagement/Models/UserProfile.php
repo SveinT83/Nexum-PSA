@@ -5,6 +5,7 @@ namespace App\Modules\UserManagement\Models;
 use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Canonical profile record for platform-wide user and technician data.
@@ -35,5 +36,12 @@ class UserProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function avatarUrl(): ?string
+    {
+        return filled($this->avatar_path)
+            ? Storage::disk('public')->url($this->avatar_path)
+            : null;
     }
 }

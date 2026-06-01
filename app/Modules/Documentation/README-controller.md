@@ -401,13 +401,13 @@ Known views from current controller and repository search:
 - `app/Modules/Documentation/Views/Tech/create.blade.php`
 - `app/Modules/Documentation/Views/Tech/edit.blade.php`
 - `app/Modules/Documentation/Views/Tech/show.blade.php`
-- `app/Modules/Documentation/Views/Tech/show.blade.md`
-- `app/Modules/Documentation/Views/Tech/docs.md`
-- `app/Modules/Documentation/Views/Tech/documentation.md`
+- `app/Modules/Documentation/Docs/legacy-view-specs/Tech/show.blade.md`
+- `app/Modules/Documentation/Docs/legacy-view-specs/Tech/docs.md`
+- `app/Modules/Documentation/Docs/legacy-view-specs/Tech/documentation.md`
 
 TODO:
 
-- Verify that every Blade file has matching `.md` documentation.
+- Replace legacy view specs with current Knowledge documentation where the information is still relevant.
 - Update view docs so they mention template snapshot behavior.
 - Ensure create/edit docs match current controller flow.
 - Ensure future Livewire category/template forms do not duplicate controller logic accidentally.

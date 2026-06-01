@@ -7,14 +7,17 @@ use App\Modules\Task\Models\Task;
 use App\Modules\Task\Models\TaskActivity;
 use App\Modules\Task\Models\TaskChecklistItem;
 use App\Modules\Task\Models\TaskStatus;
+use App\Modules\Task\Support\TaskSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class StoreTask
 {
-    public function __construct(private readonly EnsureTaskDefaults $ensureDefaults)
-    {
+    public function __construct(
+        private readonly EnsureTaskDefaults $ensureDefaults,
+        private readonly TaskSettings $settings,
+    ) {
     }
 
     /**
@@ -23,6 +26,7 @@ class StoreTask
     public function handle(array $data, User $creator, ?Model $owner = null): Task
     {
         $this->ensureDefaults->handle();
+        $data = $this->settings->taskCreateDefaults($data);
 
         return DB::transaction(function () use ($data, $creator, $owner) {
             $statusId = $data['status_id']

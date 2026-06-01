@@ -28,17 +28,31 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Ticket Actions v1 | Done | Codex | Shared action names, guard, apply SLA action, UI gating, Knowledge docs. |
 | Ticket Workflow v1 | Done | Codex | Default workflow, states, transitions, runtime validation, Ticket show actions, Knowledge docs. |
 | Ticket Workflow Editor v2 | Done | Codex | Admin create/edit workflow metadata, states, transitions, and stored requirements. |
-| Ticket Knowledge loop | Ready |  | Better article matching and documentation follow-up flow. |
+| Ticket Knowledge loop | Done | Codex | Ticket show creates documentation follow-up events and Ticket settings lists the latest requests. |
 | AI write tools | Blocked |  | Wait until Ticket Workflow/Action guards are stable enough. |
-| Contract SLA UI polish | Ready |  | Structured SLA select exists; needs UX polish and show/list signals. |
+| Contract SLA UI polish | Done | Codex | Contract index, form wording, show summary, tests, and Knowledge docs updated. |
+| Company Theme System | Done | Codex | Branding view now manages light/dark logos, shell surfaces, card headers, and button colors. |
+| Reporting Domain Foundation | Done | Codex | Report module owns the hub and registry; Ticket registers the SLA report while keeping its query/detail view. |
+| Module Settings Audit | Done | Codex | Audit captured settings ownership gaps, admin discoverability gaps, visible unfinished UI, and legacy planning files. |
+| Admin Settings Discoverability Cleanup | Done | Codex | Existing beta-ready settings surfaces are reachable from Admin hub/sidebar and documented. |
+| Visible Unfinished UI Cleanup | Done | Codex | Removed beta-visible coming-soon text from Asset/N-able and replaced old login copy/placeholders. |
+| Asset Settings Slice | Done | Codex | Asset module now owns manual registration defaults and admin settings. |
+| Contact Settings Slice | Done | Codex | Contact module now owns defaults and relation type settings. |
+| Legacy Planning Files Cleanup | Done | Codex | Moved Markdown planning/spec files out of production view paths and updated runtime doc references. |
+| Task Settings Slice | Done | Codex | Task module now owns manual task defaults for status, priority, and estimate. |
+| Missing Settings Ownership RFC | In Progress | Codex | RFC approved; implement remaining module settings as slices. |
+| Domain API Foundation | Ready |  | Post-audit platform item. Define and implement consistent APIs for domains that should expose integration surfaces. |
+| Report Builder And Scheduled Client Reporting | Post-Beta |  | Version 2 item. Build custom report builder, saved report templates, and automatic client report delivery. |
+| Email Branding And HTML Template Editor | Post-Beta |  | Version 1 item. Email templates need branding variables, shared HTML wrapper, editor, and live preview. |
+| Storage Barcode Scanning | Post-Beta |  | Version 1 item. Storage must support barcode scanners from PC and mobile workflows. |
 
 ## Ready To Pick Up
 
 ### 1. Technician Profile Completion
 
-**Status:** In Progress  
-**Owner:** Codex  
-**Domain:** UserManagement / Ticket  
+**Status:** Done
+**Owner:** Codex
+**Domain:** UserManagement / Ticket
 **Goal:** Finish the unified profile cleanup and remove remaining ambiguity.
 
 Initial scope:
@@ -51,12 +65,11 @@ Initial scope:
   - `php artisan migrate --force`
   - `php artisan user-profiles:backfill`
 - Update Knowledge documentation after final UI polish.
+- Profile image/avatar upload.
+- Personal light/dark/system theme preference after branding.
 
 Future scope:
 
-- Profile image/avatar upload.
-- Personal view settings after branding is in place.
-- Admin side menu/tabs for user profile sections.
 - Decide whether category/tag matching is ticket-only or should become general skills.
 
 ### 2. Company Profile And Branding
@@ -74,11 +87,254 @@ Initial scope:
 - Bootstrap-compatible theme variables.
 - Prepare personal light/dark mode after global branding exists.
 
-### 3. Ticket Workflow Requirements Enforcement
+### 3. Company Theme System
 
-**Status:** Ready  
-**Owner:**  
-**Domain:** Ticket  
+**Status:** Done
+**Owner:** Codex
+**Domain:** System / UI
+**Goal:** Finish branding as a proper theme system.
+
+Initial scope:
+
+- Keep Branding as its own admin view under System.
+- Keep brand/action colors separate from layout surface colors.
+- Add configurable header background/text, page header background/text, footer background/text, body background, content background, sidebar background/text, card background, and border color.
+- Add light theme and dark theme surface sets.
+- Let company default theme be `light`, `dark`, or `system`.
+- Let technician preference choose `company default`, `light`, `dark`, or `system`.
+- Update CSS variables so shell layout never depends on hardcoded brand colors.
+- Add tests and Knowledge documentation.
+
+Future scope:
+
+- Full Bootstrap component theming beyond the current shell, card header, and primary/secondary buttons.
+
+### 4. Reporting Domain Foundation
+
+**Status:** Done
+**Owner:** Codex
+**Domain:** Report / Platform
+**Goal:** Create a proper reporting system for cross-domain reports.
+
+Why this is needed:
+
+- `/tech/reports` started as a global placeholder, not a real report module.
+- Ticket SLA reporting is currently owned by the Ticket module as a pragmatic beta step.
+- Future reports need consistent navigation, permissions, filters, exports, saved views, and ownership.
+
+Initial scope:
+
+- Use `Report` as the domain name unless an RFC decides otherwise.
+- Create a report registry where modules can register report entries.
+- Let domain modules own their report data/query logic while the Report domain owns the hub, shell, navigation, permissions, filters, and export behavior.
+- Move or register the Ticket SLA report through the Report domain.
+- Document report ownership rules in architecture docs and Knowledge.
+
+### 5. Module Settings Audit
+
+**Status:** Done
+**Owner:** Codex
+**Domain:** Platform / All Existing Domains
+**Goal:** Audit existing modules for beta-critical settings and hardcoded behavior.
+
+Initial scope:
+
+- Check System, User Management, Clients, Contacts, Tickets, Email, Inbox, Calendar, Notification, Knowledge, Nextcloud, Commercial, Sales, Economy, Storage, Assets, and Tasks.
+- Identify behavior that is currently hardcoded but should be configurable.
+- Verify settings live in the correct domain and are reachable from Admin or Profile where appropriate.
+- Verify defaults exist for clean installs.
+- Verify permissions protect settings routes.
+- Update `docs/TODO.md` with scoped follow-up items instead of starting large unrelated fixes.
+- Update Knowledge documentation when the audit changes documented behavior.
+
+Audit output:
+
+- `docs/audits/2026-06-01-module-settings-audit.md`
+
+### 6. Admin Settings Discoverability Cleanup
+
+**Status:** Done
+**Owner:** Codex
+**Domain:** System / Admin Navigation
+**Goal:** Make existing beta-ready settings surfaces discoverable from the Admin hub and sidebar.
+
+Initial scope:
+
+- Add Calendar settings to Admin landing page and admin side navigation.
+- Add Notification channels to Admin landing page.
+- Add Nextcloud settings to Admin landing page.
+- Add integration-specific links for N-able RMM, Tactical RMM, and BookStack to Admin landing page.
+- Add User roles, permissions, and two-factor settings to Admin landing page.
+- Add Ticket assignment rules and technician assignment settings to Admin landing page.
+- Do not add links to unfinished settings surfaces.
+- Add/adjust tests for Admin hub visibility.
+
+### 7. Visible Unfinished UI Cleanup
+
+**Status:** Done
+**Owner:** Codex
+**Domain:** Platform / Existing Domains
+**Goal:** Remove or implement visible beta UI that advertises unfinished behavior.
+
+Initial scope:
+
+- Remove or replace Asset detail "Feature coming soon" related-ticket text.
+- Review N-able RMM "Fetch network equipment (Coming soon)" card and either hide it or implement useful disabled/help behavior.
+- Review integration cards for buttons/toggles that expose unfinished functionality.
+- Review login branding and old `tdPSA` placeholder under branding/naming cleanup.
+- Add tests where behavior changes.
+
+Completed:
+
+- Asset detail now shows a neutral related-ticket empty state without promising unfinished behavior.
+- N-able manual sync no longer exposes the network-device coming-soon action.
+- Login views now use Bootstrap, current company branding defaults, and neutral email placeholder text.
+
+### 8. Asset Settings Slice
+
+**Status:** Done
+**Owner:** Codex
+**Domain:** Asset
+**Goal:** Add beta-ready Asset settings for behavior that works immediately.
+
+Completed:
+
+- Asset settings route: `/tech/admin/settings/assets`.
+- Settings storage in `common_settings` with `type=asset` and `name=defaults`.
+- Admin can configure enabled asset types, default asset type, default IP mode, and default manual status.
+- Manual Asset form and HTTP fallback create/update paths use the settings.
+- Asset Knowledge documentation added.
+
+### 9. Contact Settings Slice
+
+**Status:** Done
+**Owner:** Codex
+**Domain:** Contact
+**Goal:** Add beta-ready Contact settings for defaults and relation choices.
+
+Completed:
+
+- Contact settings route: `/tech/admin/settings/contacts`.
+- Settings storage in `common_settings` with `type=contact` and `name=defaults`.
+- Admin can configure default contact type, default status, default relation type, and enabled relation types.
+- Contact form and StoreContact action use the settings.
+- Duplicate protection remains mandatory.
+
+### 10. Legacy Planning Files Cleanup
+
+**Status:** Done
+**Owner:** Codex
+**Domain:** Platform / Documentation
+**Goal:** Move planning/specification Markdown out of production view paths.
+
+Initial scope:
+
+- Move `resources/views/tech/tasks/*` planning files into `docs/` or module `Docs/`.
+- Move `resources/views/tech/admin/billing/*` planning files into `docs/` or module `Docs/`.
+- Move or delete obsolete `app/Modules/*/Views/**/*.md` and `*.blade.md` files.
+- Keep production view paths limited to renderable Blade/PHP views.
+- Verify route rendering and tests after cleanup.
+
+Completed:
+
+- Moved resource view specs to `docs/legacy/view-specs/resources/views`.
+- Moved module view specs to `app/Modules/{Domain}/Docs/legacy-view-specs`.
+- Updated runtime documentation file references in Asset, Storage, and Integration views/controllers.
+- Verified no `.md` or `.blade.md` files remain under `resources/views` or module `Views` folders.
+
+### 11. Missing Settings Ownership RFC
+
+**Status:** In Progress
+**Owner:** Codex
+**Domain:** Platform / Existing Domains
+**Goal:** Decide settings ownership for active modules that do not yet have clear settings surfaces.
+
+Initial scope:
+
+- Create one RFC covering Asset, Contact, Knowledge, Risk, Task, Warroom, and Report settings ownership.
+- Define which settings are beta-critical versus post-beta.
+- Decide admin route placement and permission names.
+- Define default seed behavior for clean installs.
+- Define Knowledge documentation requirements.
+
+Progress:
+
+- RFC created and approved: `docs/rfc/2026-06-01-module-settings-ownership.md`.
+- Asset Settings slice completed.
+- Contact Settings slice completed.
+- Task Settings slice completed.
+
+### 12. Domain API Foundation
+
+**Status:** Ready
+**Owner:**
+**Domain:** API / Platform / All Existing Domains
+**Goal:** Define and implement consistent API surfaces for domains that need external integration access.
+
+Why this is needed:
+
+- Nexum PSA has focused heavily on UI workflows, but external integrations, automation, mobile clients, and future AI tooling need stable APIs.
+- API ownership, authentication, permissions, versioning, validation, rate limiting, and documentation must be consistent before each domain invents its own API style.
+
+Initial scope:
+
+- Create an RFC before implementation.
+- Define API versioning and route ownership rules.
+- Define authentication strategy for human tokens, service tokens, and future integration tokens.
+- Define permission mapping between UI permissions and API abilities.
+- Define response format, validation error format, pagination, filtering, sorting, and includes.
+- Decide which beta domains need first API coverage.
+- Start with read-safe APIs before write APIs.
+- Add OpenAPI or equivalent documentation plan.
+- Add tests for auth, permissions, validation, and representative endpoints.
+
+### 11. Report Builder And Scheduled Client Reporting
+
+**Status:** Post-Beta
+**Owner:**
+**Domain:** Report / Client / Notification / Email
+**Goal:** Let admins build reusable reports and schedule automatic delivery to clients.
+
+Initial future scope:
+
+- Custom report builder with selectable data sources, filters, grouping, and columns.
+- Saved report templates.
+- Client-specific scheduled reporting.
+- Delivery through email and, later, customer portal surfaces.
+- Per-client report preferences and recipient lists.
+- Report preview before sending.
+- Delivery history and failure tracking.
+- Permissions for creating, editing, scheduling, and sending reports.
+
+### 12. Email Branding And HTML Template Editor
+
+**Status:** Post-Beta
+**Owner:**
+**Domain:** Email / System / Branding
+**Goal:** Make outbound email templates brand-aware and easier to edit safely.
+
+Initial scope:
+
+- Add global branding variables to `EmailTemplateRenderer`, such as `company_name`, `company_logo_url`, `brand_primary`, `brand_secondary`, `brand_accent`, `support_email`, and `website`.
+- Add a shared HTML email wrapper/layout so seeded templates do not each duplicate branding chrome.
+- Keep plain text output clean and readable without HTML styling.
+- Build an HTML email template editor with live preview.
+- Preview should render with sample variables and current company branding.
+- Update seeded templates to use the shared brand-aware structure.
+- Document supported template variables per scope.
+- Add tests for rendering, branding fallback, and preview behavior.
+
+Future scope:
+
+- Dedicated email-specific branding fields if web theme colors are not suitable for email clients.
+- Per-client, per-language, per-queue, or per-workflow template selection.
+- Safer variable validation and missing-variable warnings.
+
+### 13. Ticket Workflow Requirements Enforcement
+
+**Status:** Done
+**Owner:** Codex
+**Domain:** Ticket
 **Goal:** Enforce the requirements already stored on workflow transitions.
 
 Initial scope:
@@ -96,11 +352,11 @@ Out of scope for first pass:
 - Complex timers.
 - AI write-tool execution.
 
-### 4. Ticket Knowledge Follow-Up
+### 14. Ticket Knowledge Follow-Up
 
-**Status:** Ready  
-**Owner:**  
-**Domain:** Ticket / Knowledge  
+**Status:** Done
+**Owner:** Codex
+**Domain:** Ticket / Knowledge
 **Goal:** Make missing documentation visible from ticket work.
 
 Initial scope:
@@ -116,10 +372,10 @@ Future scope:
 - KI-assisted article draft from ticket context.
 - Workflow requirement: cannot close some categories without documentation update.
 
-### 5. Contract SLA UI Polish
+### 15. Contract SLA UI Polish
 
-**Status:** Ready  
-**Owner:**  
+**Status:** Done
+**Owner:** Codex
 **Domain:** Commercial  
 **Goal:** Make structured SLA binding clearer in contract screens.
 
@@ -131,10 +387,10 @@ Initial scope:
 - Ensure active contract SLA behavior is documented.
 - Add tests if views or validation change.
 
-### 6. SLA Reporting Foundation
+### 16. SLA Reporting Foundation
 
-**Status:** Ready  
-**Owner:**  
+**Status:** Done
+**Owner:** Codex
 **Domain:** Ticket / Reports  
 **Goal:** Start basic operational reporting for SLA.
 
@@ -144,8 +400,24 @@ Initial scope:
 - Start with a simple tech/admin report page or rightbar summary.
 - Use ticket timestamps already available.
 - Keep business-hours calculations out of first pass unless explicitly needed.
+- Added `/tech/reports/tickets/sla` and linked it from the Reports hub.
 
-### 7. AI Tool Hardening For Tickets
+### 17. Storage Barcode Scanning
+
+**Status:** Post-Beta
+**Owner:**
+**Domain:** Storage
+**Goal:** Support barcode-driven storage workflows from both desktop and mobile.
+
+Initial scope:
+
+- PC barcode scanners that behave like keyboard input.
+- Mobile camera scanning for warehouse and technician workflows.
+- Barcode lookup for storage items, boxes, reservations, picking, and stock adjustments.
+- Settings for barcode formats and duplicate handling.
+- Manual search fallback when barcode scanning is not available.
+
+### 18. AI Tool Hardening For Tickets
 
 **Status:** Blocked  
 **Owner:**  

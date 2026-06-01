@@ -307,7 +307,7 @@
                             // Keeping this path module-local means the in-page
                             // docs preview and the `/assets/docs` response read
                             // from the same source file.
-                            $docPath = app_path('Modules/Asset/Views/Tech/assets.md');
+                            $docPath = app_path('Modules/Asset/Docs/legacy-view-specs/Tech/assets.md');
                             if (file_exists($docPath)) {
                                 if (class_exists('\Parsedown')) {
                                     $parsedown = new \Parsedown();

@@ -71,7 +71,7 @@ class StorageController extends Controller
      */
     public function docs()
     {
-        $path = app_path('Modules/Storage/Views/Tech/Storage/storage.md');
+        $path = app_path('Modules/Storage/Docs/legacy-view-specs/Tech/Storage/storage.md');
 
         if (! file_exists($path)) {
             abort(404);

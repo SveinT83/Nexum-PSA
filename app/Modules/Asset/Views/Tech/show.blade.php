@@ -219,9 +219,9 @@
                 <div class="card-header">
                     <h5 class="mb-0">Related Tickets</h5>
                 </div>
-                {{-- SECTION: Related Tickets (Placeholder) --}}
+                {{-- SECTION: Related Tickets Empty State --}}
                 <div class="card-body py-4 text-center text-muted">
-                    <p class="mb-0">No related tickets found. (Feature coming soon)</p>
+                    <p class="mb-0">No related tickets found for this asset.</p>
                 </div>
             </div>
 
@@ -401,7 +401,7 @@
                             // Keep the detail-page documentation preview tied
                             // to the module copy instead of the old
                             // resources/views location.
-                            $docPath = app_path('Modules/Asset/Views/Tech/assets.md');
+                            $docPath = app_path('Modules/Asset/Docs/legacy-view-specs/Tech/assets.md');
                             if (file_exists($docPath)) {
                                 if (class_exists('\Parsedown')) {
                                     $parsedown = new \Parsedown();

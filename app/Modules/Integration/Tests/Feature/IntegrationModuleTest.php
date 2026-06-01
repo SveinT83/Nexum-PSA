@@ -82,6 +82,36 @@ class IntegrationModuleTest extends TestCase
     }
 
     #[Test]
+    public function nable_rmm_settings_only_shows_available_manual_sync_actions(): void
+    {
+        Integration::create([
+            'name' => 'N-able RMM',
+            'type' => 'rmm',
+            'status' => 'active',
+            'server' => 'https://rmm.example.test',
+            'is_healthy' => true,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.integrations.nable_rmm.settings'))
+            ->assertOk()
+            ->assertSee('Sync Assets from RMM')
+            ->assertDontSee('Coming soon')
+            ->assertDontSee('Sync Network from RMM');
+    }
+
+    #[Test]
+    public function admin_can_open_tactical_rmm_settings_with_local_documentation(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.integrations.tactical_rmm.settings'))
+            ->assertOk()
+            ->assertViewIs('integration::Tech.Admin.System.Integrations.tactical.settings')
+            ->assertSee('Tactical RMM Settings')
+            ->assertSee('Tactical RMM Integration');
+    }
+
+    #[Test]
     public function admin_can_configure_ai_provider_and_default_agent(): void
     {
         $techRole = Role::create(['name' => 'Tech']);

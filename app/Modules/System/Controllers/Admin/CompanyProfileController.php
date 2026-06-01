@@ -41,17 +41,88 @@ class CompanyProfileController extends Controller
             'support_email' => ['nullable', 'email', 'max:160'],
             'phone' => ['nullable', 'string', 'max:60'],
             'website' => ['nullable', 'url', 'max:200'],
+        ]);
+
+        $settings->update($data);
+
+        return back()->with('success', 'Company profile was updated.');
+    }
+
+    public function editBranding(CompanyProfileSettings $settings): View
+    {
+        return view('system::Admin.Branding.edit', [
+            'companyProfile' => $settings->get(),
+        ]);
+    }
+
+    public function updateBranding(Request $request, CompanyProfileSettings $settings): RedirectResponse
+    {
+        $data = $request->validate([
             'primary_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'secondary_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'accent_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_footer_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_footer_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_left_sidebar_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_left_sidebar_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_main_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_right_sidebar_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_right_sidebar_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_page_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_page_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_card_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_card_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_content_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_primary_button_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_primary_button_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_secondary_button_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'light_secondary_button_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_footer_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_footer_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_left_sidebar_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_left_sidebar_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_main_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_right_sidebar_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_right_sidebar_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_page_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_page_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_card_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_card_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_content_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_primary_button_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_primary_button_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_secondary_button_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'dark_secondary_button_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'logo' => ['nullable', 'image', 'max:2048'],
+            'logo_light' => ['nullable', 'image', 'max:2048'],
+            'logo_dark' => ['nullable', 'image', 'max:2048'],
             'remove_logo' => ['nullable', 'boolean'],
+            'remove_light_logo' => ['nullable', 'boolean'],
+            'remove_dark_logo' => ['nullable', 'boolean'],
         ]);
 
         $data['remove_logo'] = $request->boolean('remove_logo');
+        $data['remove_light_logo'] = $request->boolean('remove_light_logo');
+        $data['remove_dark_logo'] = $request->boolean('remove_dark_logo');
 
-        $settings->update($data, $request->file('logo'));
+        $settings->update(
+            $data,
+            $request->file('logo'),
+            $request->file('logo_light'),
+            $request->file('logo_dark'),
+        );
 
-        return back()->with('success', 'Company profile and branding were updated.');
+        return back()->with('success', 'Branding was updated.');
+    }
+
+    public function resetBranding(CompanyProfileSettings $settings): RedirectResponse
+    {
+        $settings->resetBranding();
+
+        return back()->with('success', 'Branding was reset to defaults.');
     }
 }

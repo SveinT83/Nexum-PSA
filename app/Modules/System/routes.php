@@ -24,6 +24,15 @@ Route::middleware('admin')->group(function () {
     Route::put('/admin/system/company-profile', [CompanyProfileController::class, 'update'])
         ->name('admin.system.company-profile.update');
 
+    Route::get('/admin/system/branding', [CompanyProfileController::class, 'editBranding'])
+        ->name('admin.system.branding.edit');
+
+    Route::put('/admin/system/branding', [CompanyProfileController::class, 'updateBranding'])
+        ->name('admin.system.branding.update');
+
+    Route::put('/admin/system/branding/reset', [CompanyProfileController::class, 'resetBranding'])
+        ->name('admin.system.branding.reset');
+
     // -------------------------------------------------
     // Queue and worker operations
     // -------------------------------------------------
