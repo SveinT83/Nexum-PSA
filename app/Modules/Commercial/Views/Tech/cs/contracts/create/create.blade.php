@@ -69,13 +69,16 @@
                 <!-- ------------------------------------------------- -->
                 <div class="col-md-6 mt-3">
                     <x-forms.select name="sla_id" labelName="SLA Policy">
-                        <option value="">Use system default SLA</option>
+                        <option value="">Use current system default SLA</option>
                         @foreach($slas as $sla)
                             <option value="{{ $sla->id }}" {{ (int) old('sla_id', $contract->sla_id ?? 0) === $sla->id ? 'selected' : '' }}>
                                 {{ $sla->name }}{{ $sla->is_default ? ' (default)' : '' }}
                             </option>
                         @endforeach
                     </x-forms.select>
+                    <div class="form-text">
+                        Leave blank when this contract should follow the active default SLA policy. Select a policy to lock this contract to that SLA.
+                    </div>
                 </div>
 
             </div>

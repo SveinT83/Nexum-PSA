@@ -44,6 +44,9 @@ Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])
 Route::post('/tickets/{ticket}/workflow/{transition}', [TicketController::class, 'transition'])
     ->name('tickets.workflow.transition');
 
+Route::post('/tickets/{ticket}/documentation-request', [TicketController::class, 'requestDocumentation'])
+    ->name('tickets.documentation-request');
+
 Route::post('/tickets/{ticket}/messages', [TicketController::class, 'addMessage'])
     ->name('tickets.messages.store');
 

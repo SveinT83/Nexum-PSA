@@ -1454,6 +1454,11 @@
         </div>
 
         <div class="accordion-item border rounded mb-2 overflow-hidden">
+            @php
+                $documentationRequests = $ticket->events
+                    ->where('type', 'documentation_requested')
+                    ->sortByDesc('created_at');
+            @endphp
             <h2 class="accordion-header" id="ticketKnowledgeHeading">
                 <button
                     class="accordion-button collapsed py-2 px-3"
@@ -1466,6 +1471,9 @@
                         <i class="bi bi-journal-text" aria-hidden="true"></i>
                         <span>Knowledge</span>
                         <span class="badge text-bg-secondary">{{ $knowledgeSuggestions->count() }}</span>
+                        @if($documentationRequests->isNotEmpty())
+                            <span class="badge text-bg-warning">{{ $documentationRequests->count() }} follow-up</span>
+                        @endif
                     </span>
                 </button>
             </h2>
@@ -1475,6 +1483,29 @@
                 aria-labelledby="ticketKnowledgeHeading"
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">
+                    <!-- Documentation follow-up is a lightweight workflow marker until Knowledge drafts are implemented. -->
+                    <form method="POST" action="{{ route('tech.tickets.documentation-request', $ticket) }}" class="border rounded bg-light p-2 mb-3">
+                        @csrf
+                        <label for="documentation_reason" class="form-label small fw-semibold">Documentation follow-up</label>
+                        <textarea id="documentation_reason" name="reason" rows="2" class="form-control form-control-sm mb-2" placeholder="What should be documented?"></textarea>
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-journal-plus" aria-hidden="true"></i>
+                            Request documentation
+                        </button>
+                    </form>
+
+                    @if($documentationRequests->isNotEmpty())
+                        <div class="mb-3">
+                            <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Follow-ups</div>
+                            @foreach($documentationRequests->take(3) as $event)
+                                <div class="border rounded px-2 py-1 mb-1 small">
+                                    <div class="fw-semibold">{{ $event->created_at?->format('Y-m-d H:i') }}</div>
+                                    <div class="text-muted">{{ $event->message }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
                     @forelse ($knowledgeSuggestions as $article)
                         <!-- Suggested articles are ranked from ticket context and opened separately so the ticket workflow stays in place. -->
                         <a

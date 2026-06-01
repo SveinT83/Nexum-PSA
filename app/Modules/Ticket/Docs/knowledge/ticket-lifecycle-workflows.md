@@ -26,10 +26,22 @@ A transition may define:
 - Required internal note.
 - Required public technician response.
 - Required selected solution response.
-- Required knowledge update placeholder.
+- Required documentation follow-up.
 - Ticket actions that can trigger the transition automatically.
 
 The workflow runtime validates transitions before status changes are committed. If a transition is blocked, the UI should show the reason instead of allowing technicians to click through invalid work.
+
+## Documentation Follow-Up Requirement
+
+Transitions can require a documentation follow-up before the ticket can move forward.
+
+Technicians create the follow-up from the Knowledge panel on the ticket show page. This writes a
+`documentation_requested` event to `ticket_events` with the ticket key, category, client, actor, and
+reason.
+
+This is intentionally lightweight. It makes missing documentation visible and gives workflow rules a
+real marker to enforce now, while future Knowledge work can turn these requests into article drafts,
+queues, or approval workflows.
 
 ## Manual Transitions
 

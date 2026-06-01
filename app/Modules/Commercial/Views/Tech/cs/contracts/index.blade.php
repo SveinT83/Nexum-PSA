@@ -129,6 +129,7 @@
                                 Status <i class="bi {{ $sortIcon('status') }}"></i>
                             </a>
                         </th>
+                        <th>SLA</th>
                         <th>
                             <a href="{{ $sortLink('start_date', 'desc') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
                                 Start Date <i class="bi {{ $sortIcon('start_date') }}"></i>
@@ -186,6 +187,14 @@
                                 </span>
                             </td>
                             <td>
+                                @if($contract->sla)
+                                    <span class="badge text-bg-primary">{{ $contract->sla->name }}</span>
+                                @else
+                                    <span class="badge text-bg-light border">System default</span>
+                                    <div class="small text-muted">{{ $defaultSla?->name ?? 'No default SLA' }}</div>
+                                @endif
+                            </td>
+                            <td>
                                 @if($contract->start_date)
                                     {{ $contract->start_date->format('d.m.Y') }}
                                 @else
@@ -208,7 +217,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4">
+                            <td colspan="8" class="text-center py-4">
                                 No contracts found.
                             </td>
                         </tr>

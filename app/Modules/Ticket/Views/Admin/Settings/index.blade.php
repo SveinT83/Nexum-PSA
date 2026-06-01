@@ -74,6 +74,42 @@
         </form>
     </x-card.default>
 
+    <!-- Documentation follow-ups: workflow requirements can create traceable requests from ticket work. -->
+    <x-card.default title="Documentation Follow-Ups">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Client</th>
+                        <th>Reason</th>
+                        <th>Requested</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($documentationRequests as $event)
+                        <tr>
+                            <td>
+                                @if($event->ticket)
+                                    <a href="{{ route('tech.tickets.show', $event->ticket) }}">{{ $event->ticket->ticket_key }}</a>
+                                @else
+                                    <span class="text-muted">Deleted ticket</span>
+                                @endif
+                            </td>
+                            <td>{{ $event->ticket?->client?->name ?? '—' }}</td>
+                            <td>{{ \Illuminate\Support\Str::limit($event->message, 100) }}</td>
+                            <td>{{ $event->created_at?->format('Y-m-d H:i') ?? '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-muted">No documentation follow-ups have been requested yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-card.default>
+
     <!-- Ticket types: high-level classification used by manual creation and Ticket Rules. -->
     <x-card.default title="Ticket Types">
         <x-slot name="headerActions">

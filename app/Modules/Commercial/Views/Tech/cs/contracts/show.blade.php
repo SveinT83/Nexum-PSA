@@ -289,9 +289,54 @@
                     </div>
                     <div class="mb-2">
                         <span class="text-muted d-block small uppercase font-weight-bold mb-1">SLA Policy:</span>
-                        <span class="fw-semibold">{{ $contract->sla?->name ?? 'System default' }}</span>
+                        @if($contract->sla)
+                            <span class="badge text-bg-primary">{{ $contract->sla->name }}</span>
+                        @else
+                            <span class="badge text-bg-light border">System default</span>
+                            <div class="text-muted mt-1">{{ $defaultSla?->name ?? 'No default SLA configured' }}</div>
+                        @endif
                     </div>
                 </div>
+            </x-card.default>
+
+            @php
+                $effectiveSla = $contract->sla ?? $defaultSla;
+                $formatSlaTime = fn ($value, $type) => filled($value) ? $value.' '.$type : '—';
+            @endphp
+
+            <!-- SLA summary: shows the effective policy without requiring admins to open the full SLA module. -->
+            <x-card.default title="SLA Summary">
+                @if($effectiveSla)
+                    <div class="small mb-2">
+                        <span class="text-muted d-block small uppercase font-weight-bold mb-1">Effective policy:</span>
+                        <span class="fw-semibold">{{ $effectiveSla->name }}</span>
+                    </div>
+                    <div class="row g-2 small">
+                        <div class="col-12">
+                            <div class="border rounded bg-light px-2 py-1">
+                                <div class="text-muted text-uppercase" style="font-size: .68rem;">Low priority</div>
+                                <div>First response {{ $formatSlaTime($effectiveSla->low_firstResponse, $effectiveSla->low_firstResponse_type) }}</div>
+                                <div>Onsite {{ $formatSlaTime($effectiveSla->low_onsite, $effectiveSla->low_onsite_type) }}</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded bg-light px-2 py-1">
+                                <div class="text-muted text-uppercase" style="font-size: .68rem;">Medium priority</div>
+                                <div>First response {{ $formatSlaTime($effectiveSla->medium_firstResponse, $effectiveSla->medium_firstResponse_type) }}</div>
+                                <div>Onsite {{ $formatSlaTime($effectiveSla->medium_onsite, $effectiveSla->medium_onsite_type) }}</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded bg-light px-2 py-1">
+                                <div class="text-muted text-uppercase" style="font-size: .68rem;">High priority</div>
+                                <div>First response {{ $formatSlaTime($effectiveSla->high_firstResponse, $effectiveSla->high_firstResponse_type) }}</div>
+                                <div>Onsite {{ $formatSlaTime($effectiveSla->high_onsite, $effectiveSla->high_onsite_type) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <p class="text-muted small mb-0">No contract SLA or system default SLA is configured.</p>
+                @endif
             </x-card.default>
         </div>
     </div>

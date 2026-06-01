@@ -81,6 +81,7 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.edit')->getActionName());
         $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
         $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
+        $this->assertSame(TicketController::class . '@requestDocumentation', Route::getRoutes()->getByName('tech.tickets.documentation-request')->getActionName());
         $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
         $this->assertSame(TicketController::class . '@storeTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.store')->getActionName());
         $this->assertSame(TicketController::class . '@draftTimeEntryInvoiceText', Route::getRoutes()->getByName('tech.tickets.time-entries.draft')->getActionName());
@@ -1879,6 +1880,49 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function workflow_blocks_knowledge_required_transition_until_documentation_follow_up_exists(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $progress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999045',
+            'status_id' => $new->id,
+            'workflow_id' => $workflow->id,
+        ]);
+        $transition = TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $new->id)
+            ->where('to_status_id', $progress->id)
+            ->firstOrFail();
+        $transition->forceFill(['requires_knowledge_update' => true])->save();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket, $transition]))
+            ->assertSessionHasErrors('status_id');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.documentation-request', $ticket), [
+                'reason' => 'Document the known fix for this category.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket))
+            ->assertSessionHas('success', 'Documentation follow-up was created.');
+
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'documentation_requested',
+            'message' => 'Document the known fix for this category.',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket->fresh(), $transition]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($progress->id, $ticket->fresh()->status_id);
+    }
+
+    #[Test]
     public function workflow_does_not_allow_closing_before_solved_state(): void
     {
         app(EnsureTicketDefaults::class)->handle();
@@ -2552,12 +2596,21 @@ class TicketModuleTest extends TestCase
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $admin->assignRole('Tech');
         $admin->assignRole('Admin');
+        $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999046']);
+        $ticket->events()->create([
+            'actor_id' => $this->tech->id,
+            'type' => 'documentation_requested',
+            'message' => 'Write an article for this recurring issue.',
+        ]);
 
         $this->actingAs($admin)
             ->get(route('tech.admin.settings.tickets'))
             ->assertOk()
             ->assertViewIs('ticket::Admin.Settings.index')
             ->assertSee('Ticket Merging')
+            ->assertSee('Documentation Follow-Ups')
+            ->assertSee('TD-2026-999046')
+            ->assertSee('Write an article for this recurring issue.')
             ->assertSee('Automatically merge exact duplicate inbound tickets')
             ->assertSee('Allow AI-assisted merge suggestions')
             ->assertSee('AI similarity threshold');

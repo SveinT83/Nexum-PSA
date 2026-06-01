@@ -28,17 +28,18 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Ticket Actions v1 | Done | Codex | Shared action names, guard, apply SLA action, UI gating, Knowledge docs. |
 | Ticket Workflow v1 | Done | Codex | Default workflow, states, transitions, runtime validation, Ticket show actions, Knowledge docs. |
 | Ticket Workflow Editor v2 | Done | Codex | Admin create/edit workflow metadata, states, transitions, and stored requirements. |
-| Ticket Knowledge loop | Ready |  | Better article matching and documentation follow-up flow. |
+| Ticket Knowledge loop | Done | Codex | Ticket show creates documentation follow-up events and Ticket settings lists the latest requests. |
 | AI write tools | Blocked |  | Wait until Ticket Workflow/Action guards are stable enough. |
-| Contract SLA UI polish | Ready |  | Structured SLA select exists; needs UX polish and show/list signals. |
+| Contract SLA UI polish | Done | Codex | Contract index, form wording, show summary, tests, and Knowledge docs updated. |
+| Storage barcode scanning | Ready |  | Storage must support barcode scanners from PC and mobile workflows. |
 
 ## Ready To Pick Up
 
 ### 1. Technician Profile Completion
 
-**Status:** In Progress  
-**Owner:** Codex  
-**Domain:** UserManagement / Ticket  
+**Status:** Done
+**Owner:** Codex
+**Domain:** UserManagement / Ticket
 **Goal:** Finish the unified profile cleanup and remove remaining ambiguity.
 
 Initial scope:
@@ -75,9 +76,9 @@ Initial scope:
 
 ### 3. Ticket Workflow Requirements Enforcement
 
-**Status:** Ready  
-**Owner:**  
-**Domain:** Ticket  
+**Status:** Done
+**Owner:** Codex
+**Domain:** Ticket
 **Goal:** Enforce the requirements already stored on workflow transitions.
 
 Initial scope:
@@ -97,9 +98,9 @@ Out of scope for first pass:
 
 ### 4. Ticket Knowledge Follow-Up
 
-**Status:** Ready  
-**Owner:**  
-**Domain:** Ticket / Knowledge  
+**Status:** Done
+**Owner:** Codex
+**Domain:** Ticket / Knowledge
 **Goal:** Make missing documentation visible from ticket work.
 
 Initial scope:
@@ -117,8 +118,8 @@ Future scope:
 
 ### 5. Contract SLA UI Polish
 
-**Status:** Ready  
-**Owner:**  
+**Status:** Done
+**Owner:** Codex
 **Domain:** Commercial  
 **Goal:** Make structured SLA binding clearer in contract screens.
 
@@ -144,7 +145,22 @@ Initial scope:
 - Use ticket timestamps already available.
 - Keep business-hours calculations out of first pass unless explicitly needed.
 
-### 7. AI Tool Hardening For Tickets
+### 7. Storage Barcode Scanning
+
+**Status:** Ready
+**Owner:**
+**Domain:** Storage
+**Goal:** Support barcode-driven storage workflows from both desktop and mobile.
+
+Initial scope:
+
+- PC barcode scanners that behave like keyboard input.
+- Mobile camera scanning for warehouse and technician workflows.
+- Barcode lookup for storage items, boxes, reservations, picking, and stock adjustments.
+- Settings for barcode formats and duplicate handling.
+- Manual search fallback when barcode scanning is not available.
+
+### 8. AI Tool Hardening For Tickets
 
 **Status:** Blocked  
 **Owner:**  

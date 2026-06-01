@@ -135,6 +135,7 @@ class EnforceTechRoutePermission
         'tech.tickets.edit' => 'ticket.update',
         'tech.tickets.update' => 'ticket.update',
         'tech.tickets.merge' => 'ticket.update',
+        'tech.tickets.documentation-request' => 'ticket.update',
         'tech.tickets.not-ticket' => 'ticket.delete',
         'tech.tickets.destroy' => 'ticket.delete',
         'tech.tickets.workflow.*' => 'ticket.update',

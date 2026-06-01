@@ -10,6 +10,7 @@ use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\UpdateDefaultTicketEmailAccount;
 use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketRule;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -44,6 +45,12 @@ class TicketSettingsController extends Controller
             'statuses' => TicketStatus::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::withCount('tickets')->orderBy('level')->orderBy('sort_order')->orderBy('name')->get(),
             'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
+            'documentationRequests' => TicketEvent::query()
+                ->with(['ticket.client'])
+                ->where('type', 'documentation_requested')
+                ->latest()
+                ->limit(10)
+                ->get(),
         ]);
     }
 
