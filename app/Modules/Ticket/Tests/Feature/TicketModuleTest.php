@@ -99,8 +99,8 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketSettingsController::class . '@updateMergeSettings', Route::getRoutes()->getByName('tech.admin.settings.tickets.merge-settings.update')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storePriority', Route::getRoutes()->getByName('tech.admin.settings.tickets.priorities.store')->getActionName());
-        $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TechnicianProfileController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
-        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\TechnicianProfileAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.technicians')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\TicketAssignmentSettingsAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.technicians')->getActionName());
         $this->assertSame(\App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.assignment-rules')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@workflows', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@createWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.create')->getActionName());
@@ -2628,7 +2628,7 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.profile.edit'))
             ->assertOk()
-            ->assertViewIs('ticket::Tech.TechnicianProfile.edit')
+            ->assertViewIs('ticket::Tech.TicketAssignmentSettings.edit')
             ->assertSee('Ticket Assignment Settings');
 
         $this->actingAs($this->tech)
@@ -2669,7 +2669,7 @@ class TicketModuleTest extends TestCase
         $this->actingAs($admin)
             ->get(route('tech.admin.settings.tickets.technicians'))
             ->assertOk()
-            ->assertViewIs('ticket::Admin.TechnicianProfiles.index')
+            ->assertViewIs('ticket::Admin.TicketAssignmentSettings.index')
             ->assertSee('Assignment Tech');
 
         $this->actingAs($admin)
@@ -2780,7 +2780,7 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_events', [
             'ticket_id' => $ticket->id,
             'type' => 'assigned',
-            'message' => 'Ticket assigned by technician profile scoring.',
+            'message' => 'Ticket assigned by assignment settings scoring.',
         ]);
     }
 

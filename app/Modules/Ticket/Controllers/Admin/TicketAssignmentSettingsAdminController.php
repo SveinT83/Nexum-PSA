@@ -12,7 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class TechnicianProfileAdminController extends Controller
+class TicketAssignmentSettingsAdminController extends Controller
 {
     public function index(): View
     {
@@ -20,7 +20,7 @@ class TechnicianProfileAdminController extends Controller
             ->orderBy('user_id')
             ->get();
 
-        return view('ticket::Admin.TechnicianProfiles.index', [
+        return view('ticket::Admin.TicketAssignmentSettings.index', [
             'profiles' => $profiles,
             'techniciansWithoutProfiles' => $this->techniciansWithoutProfiles(),
             'openTicketCounts' => Ticket::query()
@@ -34,7 +34,7 @@ class TechnicianProfileAdminController extends Controller
 
     public function edit(TicketAssignmentSetting $profile): View
     {
-        return view('ticket::Admin.TechnicianProfiles.edit', $this->viewData($profile->load(['user', 'categories', 'tags'])));
+        return view('ticket::Admin.TicketAssignmentSettings.edit', $this->viewData($profile->load(['user', 'categories', 'tags'])));
     }
 
     public function update(Request $request, TicketAssignmentSetting $profile): RedirectResponse

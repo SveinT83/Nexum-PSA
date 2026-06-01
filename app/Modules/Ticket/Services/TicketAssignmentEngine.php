@@ -103,7 +103,7 @@ class TicketAssignmentEngine
         }
 
         $ownerId = $winner['profile']->user_id;
-        $this->applyOwner($ticket, $ownerId, 'Ticket assigned by technician profile scoring.', [
+        $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment settings scoring.', [
             'score' => $winner['score'],
             'open_tickets' => $winner['open_tickets'],
         ]);

@@ -61,7 +61,7 @@ Example:
 
 When no explicit Assignment Rule assigns the ticket, the Assignment Engine can score assignable technicians.
 
-Scoring uses technician profile data such as:
+Scoring uses Ticket Assignment Settings and User Management profile data such as:
 
 - Assignable state.
 - Working hours.
@@ -71,16 +71,16 @@ Scoring uses technician profile data such as:
 
 This gives the system a reasonable fallback without hardcoding every customer or queue.
 
-## Technician Profiles
+## Ticket Assignment Settings
 
-Technician Profiles support assignment scoring.
+Ticket Assignment Settings support assignment scoring.
 
-Technicians can manage their own profile, and admins can manage profiles under Ticket Settings.
+Technicians can manage their own ticket assignment settings, and admins can manage settings under Ticket Settings.
 
-Profiles can include:
+Settings can include:
 
 - Capacity.
-- Working hours.
+- User Management profile working hours.
 - Category skills.
 - Tag skills.
 - Assignable state.
@@ -115,5 +115,5 @@ Important files:
 - `app/Modules/Ticket/Models/TicketAssignmentRule.php`
 - `app/Modules/Ticket/Models/TicketAssignmentSetting.php`
 - `app/Modules/Ticket/Controllers/Admin/AssignmentRuleAdminController.php`
-- `app/Modules/Ticket/Controllers/Admin/TechnicianProfileAdminController.php`
-- `app/Modules/Ticket/Controllers/Tech/TechnicianProfileController.php`
+- `app/Modules/Ticket/Controllers/Admin/TicketAssignmentSettingsAdminController.php`
+- `app/Modules/Ticket/Controllers/Tech/TicketAssignmentSettingsController.php`

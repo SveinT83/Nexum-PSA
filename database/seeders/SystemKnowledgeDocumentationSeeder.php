@@ -45,37 +45,58 @@ class SystemKnowledgeDocumentationSeeder extends Seeder
         );
 
         $userId = User::query()->value('id');
-        $path = app_path('Modules/System/Docs/knowledge/queues-and-workers.md');
-        $markdown = trim(file_get_contents($path));
 
-        Article::query()->updateOrCreate(
-            [
-                'source_system' => 'nexum',
-                'source_type' => 'system-docs',
-                'source_id' => 'queues-and-workers',
-            ],
-            [
-                'title' => 'Queues And Workers',
-                'slug' => Str::slug('Queues And Workers'),
-                'body_markdown' => $markdown,
-                'body_html' => $renderer->handle($markdown),
-                'visibility' => 'internal',
-                'status' => 'published',
-                'owner_id' => $userId,
-                'knowledge_book_id' => $book->id,
-                'knowledge_chapter_id' => $chapter->id,
-                'priority' => 10,
-                'created_by' => $userId,
-                'updated_by' => $userId,
-                'source_checksum' => sha1($markdown),
-                'source_updated_at' => now(),
-                'sync_status' => 'pending',
-                'source_payload' => [
-                    'module' => 'System',
-                    'generated_from' => static::class,
-                    'source_file' => $path,
+        foreach ($this->articles() as $article) {
+            $path = app_path('Modules/System/Docs/knowledge/'.$article['file']);
+            $markdown = trim(file_get_contents($path));
+
+            Article::query()->updateOrCreate(
+                [
+                    'source_system' => 'nexum',
+                    'source_type' => 'system-docs',
+                    'source_id' => $article['source_id'],
                 ],
+                [
+                    'title' => $article['title'],
+                    'slug' => Str::slug($article['title']),
+                    'body_markdown' => $markdown,
+                    'body_html' => $renderer->handle($markdown),
+                    'visibility' => 'internal',
+                    'status' => 'published',
+                    'owner_id' => $userId,
+                    'knowledge_book_id' => $book->id,
+                    'knowledge_chapter_id' => $chapter->id,
+                    'priority' => $article['priority'],
+                    'created_by' => $userId,
+                    'updated_by' => $userId,
+                    'source_checksum' => sha1($markdown),
+                    'source_updated_at' => now(),
+                    'sync_status' => 'pending',
+                    'source_payload' => [
+                        'module' => 'System',
+                        'generated_from' => static::class,
+                        'source_file' => $path,
+                    ],
+                ],
+            );
+        }
+    }
+
+    private function articles(): array
+    {
+        return [
+            [
+                'source_id' => 'queues-and-workers',
+                'title' => 'Queues And Workers',
+                'file' => 'queues-and-workers.md',
+                'priority' => 10,
             ],
-        );
+            [
+                'source_id' => 'company-profile-and-branding',
+                'title' => 'Company Profile And Branding',
+                'file' => 'company-profile-and-branding.md',
+                'priority' => 20,
+            ],
+        ];
     }
 }

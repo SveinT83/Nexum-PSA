@@ -59,16 +59,21 @@ Thumbs.db
 Homestead.json
 Homestead.yaml
 
-# Local documentation and assistant planning files
-/docs/
-/AGENTS.md
-/CLAUDE.md
+# Local assistant scratch/state files
+#
+# Project documentation and agent entry files are intentionally tracked:
+# - /AGENTS.md
+# - /AGENT.md
+# - /CLAUDE.md
+# - /docs/
+# - /.github/copilot-instructions.md
+#
+# Do not ignore those files here; they are part of the multi-agent process.
 /.agents/
 /.ai/
 /.aiassistant/
 /.cursor/
 /.windsurf/
-/.github/copilot-instructions.md
 /.junie/
 /.kiro/
 /.roo/

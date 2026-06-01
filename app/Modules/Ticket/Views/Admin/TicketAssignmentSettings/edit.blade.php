@@ -15,7 +15,7 @@
 @endsection
 
 @section('content')
-    @include('ticket::Shared.TechnicianProfiles.form', [
+    @include('ticket::Shared.TicketAssignmentSettings.form', [
         'action' => route('tech.admin.settings.tickets.technicians.update', $profile),
         'method' => 'PATCH',
         'submitLabel' => 'Save settings',

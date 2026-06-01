@@ -11,11 +11,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class TechnicianProfileController extends Controller
+class TicketAssignmentSettingsController extends Controller
 {
     public function edit(Request $request): View
     {
-        return view('ticket::Tech.TechnicianProfile.edit', $this->viewData(
+        return view('ticket::Tech.TicketAssignmentSettings.edit', $this->viewData(
             $this->profileFor($request->user())
         ));
     }
@@ -25,7 +25,7 @@ class TechnicianProfileController extends Controller
         $profile = $this->profileFor($request->user());
         $this->updateProfile($request, $profile);
 
-        return back()->with('success', 'Ticket technician profile updated.');
+        return back()->with('success', 'Ticket assignment settings updated.');
     }
 
     protected function profileFor(User $user): TicketAssignmentSetting
@@ -57,7 +57,7 @@ class TechnicianProfileController extends Controller
             'notes' => $data['notes'] ?? null,
         ]);
 
-        // Skills are stored as explicit pivots so assignment scoring can query them efficiently later.
+        // Matching signals are stored as explicit pivots so assignment scoring can query them efficiently.
         $profile->categories()->sync($data['category_ids'] ?? []);
         $profile->tags()->sync($data['tag_ids'] ?? []);
 

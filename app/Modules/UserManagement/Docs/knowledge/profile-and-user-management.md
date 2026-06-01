@@ -49,8 +49,9 @@ php artisan user-profiles:backfill
 ```
 
 The migration creates the `user_profiles` table and performs an initial backfill. The command is
-safe to run again after deploy. It repairs missing profile rows and copies existing phone fields,
-timezone, working hours, and notes from the legacy Ticket technician profile where available.
+safe to run again after deploy. It repairs missing profile rows and copies existing phone fields.
+When legacy Ticket technician profile tables are still present, it can also copy timezone, working
+hours, and notes from those legacy rows.
 
 The legacy `ticket_technician_profiles` tables are migrated into explicit Ticket Assignment
 Settings and then dropped by the cleanup migration.
@@ -63,7 +64,7 @@ Settings and then dropped by the cleanup migration.
 - `/tech/profile/preferences` manages timezone, default calendar view, and normal workday defaults.
 - `/tech/profile/security` manages password and two-factor authentication.
 - `/tech/profile/notifications` manages notification delivery preferences.
-- `/tech/tickets/profile` manages temporary ticket assignment profile settings.
+- `/tech/tickets/profile` manages ticket assignment settings.
 - `/tech/profile/integrations` is reserved for personal integration settings.
 - `/tech/profile/view` is reserved for personal display preferences after branding is implemented.
 

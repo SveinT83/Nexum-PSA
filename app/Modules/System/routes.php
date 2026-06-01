@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\System\Controllers\Admin\CompanyProfileController;
 use App\Modules\System\Controllers\Admin\QueueWorkerController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,15 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('admin')->group(function () {
+    // -------------------------------------------------
+    // Company profile and app branding
+    // -------------------------------------------------
+    Route::get('/admin/system/company-profile', [CompanyProfileController::class, 'edit'])
+        ->name('admin.system.company-profile.edit');
+
+    Route::put('/admin/system/company-profile', [CompanyProfileController::class, 'update'])
+        ->name('admin.system.company-profile.update');
+
     // -------------------------------------------------
     // Queue and worker operations
     // -------------------------------------------------

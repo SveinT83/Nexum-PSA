@@ -12,7 +12,7 @@
 @endsection
 
 @section('content')
-    @include('ticket::Shared.TechnicianProfiles.form', [
+    @include('ticket::Shared.TicketAssignmentSettings.form', [
         'action' => route('tech.tickets.profile.update'),
         'method' => 'PATCH',
         'submitLabel' => 'Save settings',

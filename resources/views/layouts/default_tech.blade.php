@@ -3,17 +3,64 @@
     This layout provides the standard shell for all tech admin pages,
     including header, navigation, sidebar, and breadcrumbs.
 --}}
+@php
+    $companyProfile = $companyProfile ?? app(\App\Modules\System\Support\CompanyProfileSettings::class)->get();
+@endphp
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ config('app.name', 'Nexum PSA') }}</title>
+        <title>{{ $companyProfile['company_name'] ?? config('app.name', 'Nexum PSA') }}</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <style>
+            :root {
+                --nexum-brand-primary: {{ $companyProfile['primary_color'] }};
+                --nexum-brand-secondary: {{ $companyProfile['secondary_color'] }};
+                --nexum-brand-accent: {{ $companyProfile['accent_color'] }};
+                --bs-primary: {{ $companyProfile['primary_color'] }};
+                --bs-secondary: {{ $companyProfile['secondary_color'] }};
+                --bs-link-color: {{ $companyProfile['primary_color'] }};
+                --bs-link-hover-color: {{ $companyProfile['accent_color'] }};
+            }
+
+            .tech-shell-brand {
+                color: var(--bs-body-color);
+                min-height: 2.5rem;
+            }
+
+            .tech-shell-brand:hover,
+            .tech-shell-brand:focus {
+                color: var(--nexum-brand-primary);
+            }
+
+            .tech-shell-brand-logo {
+                max-height: 2.25rem;
+                max-width: 10rem;
+                object-fit: contain;
+            }
+
+            .tech-shell-brand-mark {
+                width: 2.25rem;
+                height: 2.25rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--bs-border-color);
+                border-radius: .5rem;
+                color: var(--nexum-brand-primary);
+                background: var(--bs-tertiary-bg);
+            }
+
+            .page-header {
+                border-bottom-color: var(--nexum-brand-primary) !important;
+            }
+        </style>
         @livewireStyles
     </head>
     <body class="d-flex flex-column min-vh-100">
@@ -23,10 +70,21 @@
         <!-- ------------------------------------------------- -->
         <header class="sticky-top">
             <div class="container-fluid pb-3">
-                <div class="row">
-                    <img class="col-1" src="" alt="Tech Dashboard Logo" class="my-3 mx-auto d-block" style="max-height: 80px;">
+                <div class="row align-items-center g-2">
+                    <div class="col-auto">
+                        <a href="{{ route('tech.dashboard') }}" class="tech-shell-brand d-inline-flex align-items-center gap-2 text-decoration-none py-2">
+                            @if($companyProfile['logo_url'])
+                                <img src="{{ $companyProfile['logo_url'] }}" alt="{{ $companyProfile['company_name'] }} logo" class="tech-shell-brand-logo">
+                            @else
+                                <span class="tech-shell-brand-mark" aria-hidden="true">
+                                    <i class="bi bi-buildings"></i>
+                                </span>
+                            @endif
+                            <span class="fw-semibold">{{ $companyProfile['company_name'] }}</span>
+                        </a>
+                    </div>
 
-                    <div class="col-8">
+                    <div class="col">
                         @include('partials.nav.tech_nav')
 
                         {{-- Notification bell --}}

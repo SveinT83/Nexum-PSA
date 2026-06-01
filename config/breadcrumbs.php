@@ -21,6 +21,13 @@ return [
         ['label' => 'Admin', 'route' => 'tech.admin.index'],
     ],
 
+    'admin.system.company-profile.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'System'],
+        ['label' => 'Company Profile'],
+    ],
+
     // Templates Management - Main Hub
     'admin.system.templatesManagement.index' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],

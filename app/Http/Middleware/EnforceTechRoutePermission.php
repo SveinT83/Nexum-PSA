@@ -71,6 +71,7 @@ class EnforceTechRoutePermission
         'tech.admin.system.integrations.nable-rmm.*' => 'integration.rmm_manage',
         'tech.admin.system.integrations.tactical-rmm.*' => 'integration.rmm_manage',
         'tech.admin.system.integrations.*' => 'integration.view',
+        'tech.admin.system.company-profile.*' => 'system.settings_manage',
         'tech.admin.nextcloud.connections.sync' => 'nextcloud.sync',
         'tech.admin.nextcloud.connections.test-talk-bot' => 'nextcloud.talk_manage',
         'tech.admin.nextcloud.connections.users' => 'nextcloud.user_mapping_manage',
