@@ -5,7 +5,11 @@ use App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
+use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/reports/tickets/sla', [TicketSlaReportController::class, 'index'])
+    ->name('reports.tickets.sla');
 
 Route::get('/tickets', [TicketController::class, 'index'])
     ->name('tickets.index');

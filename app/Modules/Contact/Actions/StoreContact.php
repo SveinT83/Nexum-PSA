@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Support\ContactSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,6 +19,7 @@ class StoreContact
     public function handle(array $data): Contact
     {
         return DB::transaction(function () use ($data): Contact {
+            $settings = app(ContactSettings::class)->get();
             $site = $this->siteFromData($data);
             $client = $this->clientFromData($data, $site);
             $site ??= $client ? $this->defaultSiteForClient($client) : null;
@@ -28,8 +30,8 @@ class StoreContact
                 $this->syncContactFields($contact, $data, $updateExisting);
             } else {
                 $contact = Contact::query()->create([
-                    'type' => 'person',
-                    'status' => 'active',
+                    'type' => $data['type'] ?? $settings['default_contact_type'],
+                    'status' => $data['status'] ?? $settings['default_status'],
                     'display_name' => $data['display_name'],
                     'organization_name' => $data['organization_name'] ?? null,
                     'job_title' => $data['job_title'] ?? null,
@@ -47,11 +49,11 @@ class StoreContact
             }
 
             if ($client) {
-                $this->syncRelation($contact, $client, $data['relation_type'] ?? 'contact', true);
+                $this->syncRelation($contact, $client, $data['relation_type'] ?? $settings['default_relation_type'], true);
             }
 
             if ($site) {
-                $this->syncRelation($contact, $site, $data['relation_type'] ?? 'site_contact', true);
+                $this->syncRelation($contact, $site, $data['relation_type'] ?? $settings['default_relation_type'], true);
                 $this->syncClientUserBridge($contact, $site, $data, $updateExisting);
             }
 

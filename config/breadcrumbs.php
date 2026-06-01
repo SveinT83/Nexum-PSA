@@ -28,6 +28,13 @@ return [
         ['label' => 'Company Profile'],
     ],
 
+    'admin.system.branding.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'System'],
+        ['label' => 'Branding'],
+    ],
+
     // Templates Management - Main Hub
     'admin.system.templatesManagement.index' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],

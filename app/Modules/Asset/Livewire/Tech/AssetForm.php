@@ -7,7 +7,9 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Modules\Documentation\Models\Vendor;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Asset\Support\AssetSettings;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /**
@@ -74,6 +76,7 @@ class AssetForm extends Component
     public $sites = [];
     public $users = [];
     public $vendors = [];
+    public $assetTypes = [];
 
     /** @var Asset|null The asset model instance being edited */
     public $asset;
@@ -92,6 +95,9 @@ class AssetForm extends Component
     public function mount(Asset $asset = null, $client_id = null, $site_id = null)
     {
         $this->asset = $asset;
+        $settings = app(AssetSettings::class);
+        $configuredSettings = $settings->get();
+        $this->assetTypes = $settings->typeOptions($asset?->type);
 
         try {
             // Load base collections for the initial form state. These lists are
@@ -111,6 +117,9 @@ class AssetForm extends Component
             // Trigger dependency update for sites and users.
             $this->updatedClientId($this->client_id);
         } else {
+            $this->type = $configuredSettings['default_type'];
+            $this->ip_type = $configuredSettings['default_ip_type'];
+
             // Pre-fill if provided from request context
             if ($client_id) {
                 $this->client_id = $client_id;
@@ -173,14 +182,14 @@ class AssetForm extends Component
             'site_id' => 'nullable|exists:client_sites,id',
             'user_id' => 'nullable|exists:client_users,id',
             'name' => 'required|string|max:255',
-            'type' => 'required|in:server,pc,laptop,switch,ap,firewall,mobile,other',
+            'type' => ['required', Rule::in(array_keys($this->assetTypes))],
             'vendor_id' => 'nullable|exists:vendors,id',
             'vendor' => 'nullable|string|max:255',
             'model' => 'nullable|string|max:255',
             'serial_number' => 'nullable|string|max:255',
             'hostname' => 'nullable|string|max:255',
             'ip_address' => 'nullable|ip',
-            'ip_type' => 'required|in:dhcp,fixed',
+            'ip_type' => ['required', Rule::in(array_keys(AssetSettings::IP_TYPE_OPTIONS))],
             'mac_address' => 'nullable|string|max:255',
         ]);
 
@@ -191,6 +200,7 @@ class AssetForm extends Component
             return redirect()->route('tech.assets.show', $this->asset->id);
         } else {
             // Create new record
+            $validated['status'] = app(AssetSettings::class)->get()['default_status'];
             $asset = Asset::create($validated);
             session()->flash('success', 'Asset created successfully.');
             return redirect()->route('tech.assets.show', $asset->id);

@@ -4,9 +4,13 @@ namespace App\Modules\Asset\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Asset\Controllers\Admin\AssetSettingsController;
+use App\Modules\Asset\Support\AssetSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -94,6 +98,70 @@ class AssetModuleTest extends TestCase
     }
 
     #[Test]
+    public function admin_can_manage_asset_settings(): void
+    {
+        $route = Route::getRoutes()->getByName('tech.admin.settings.assets');
+
+        $this->assertSame(AssetSettingsController::class.'@edit', $route->getActionName());
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.admin.settings.assets'))
+            ->assertOk()
+            ->assertViewIs('asset::Admin.Settings.edit')
+            ->assertSee('Asset Settings')
+            ->assertSee('Manual Asset Defaults')
+            ->assertSee('Enabled Asset Types');
+
+        $this->actingAs($this->tech)
+            ->put(route('tech.admin.settings.assets.update'), [
+                'enabled_types' => ['server', 'laptop', 'other'],
+                'default_type' => 'laptop',
+                'default_ip_type' => 'fixed',
+                'default_status' => 'in_service',
+            ])
+            ->assertRedirect(route('tech.admin.settings.assets'))
+            ->assertSessionHas('success');
+
+        $setting = CommonSetting::query()
+            ->where('type', 'asset')
+            ->where('name', 'defaults')
+            ->firstOrFail();
+
+        $payload = json_decode($setting->json, true);
+
+        $this->assertSame(['server', 'laptop', 'other'], $payload['enabled_types']);
+        $this->assertSame('laptop', $payload['default_type']);
+        $this->assertSame('fixed', $payload['default_ip_type']);
+        $this->assertSame('in_service', $payload['default_status']);
+    }
+
+    #[Test]
+    public function asset_create_uses_configured_manual_defaults(): void
+    {
+        app(AssetSettings::class)->update([
+            'enabled_types' => ['laptop', 'other'],
+            'default_type' => 'laptop',
+            'default_ip_type' => 'fixed',
+            'default_status' => 'in_service',
+        ]);
+
+        $client = Client::factory()->create();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.assets.store'), [
+                'client_id' => $client->id,
+                'name' => 'Defaulted Laptop',
+            ])
+            ->assertRedirect();
+
+        $asset = Asset::firstOrFail();
+
+        $this->assertSame('laptop', $asset->type);
+        $this->assertSame('fixed', $asset->ip_type);
+        $this->assertSame('in_service', $asset->status);
+    }
+
+    #[Test]
     public function tech_user_can_view_asset_with_compact_header(): void
     {
         $client = Client::factory()->create();
@@ -119,6 +187,8 @@ class AssetModuleTest extends TestCase
         $response->assertSeeText('Status');
         $response->assertSeeText('Lifecycle');
         $response->assertSeeText('Documentation');
+        $response->assertSeeText('No related tickets found for this asset.');
+        $response->assertDontSee('Feature coming soon');
         $response->assertDontSee('Back to Assets');
     }
 

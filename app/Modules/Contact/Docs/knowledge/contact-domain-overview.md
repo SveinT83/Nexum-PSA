@@ -44,6 +44,20 @@ technicians can quickly confirm that they are working with the right person or e
 The Contact detail page shows the selected Contact's communication details, Organization or Client,
 Site, relations, external references, and compatibility links.
 
+## Contact Settings
+
+Contact Settings is available from `Admin -> Clients -> Contact settings` at
+`/tech/admin/settings/contacts`.
+
+Access requires the `contact.manage_settings` permission.
+
+Admins can configure the default contact type, default contact status, default relation type, and
+which relation types are shown in the Contact form.
+
+Duplicate protection by email and normalized phone remains mandatory and cannot be disabled from
+settings. This protects the Contact Domain from accidental duplicate records while still allowing
+technicians to select and update an existing match from the Contact form.
+
 ## Create And Edit Workflow
 
 The create form is a Livewire form so it can check context while the technician types. It supports

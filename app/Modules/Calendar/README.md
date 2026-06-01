@@ -28,9 +28,9 @@ Integration modules such as Nextcloud and Proton will later own provider-specifi
 
 Operational Knowledge pages live with the module so they can be synced to BookStack:
 
-- `app/Modules/Calendar/Views/Tech/calendar.md`
-- `app/Modules/Calendar/Views/Tech/availability-and-privacy.md`
-- `app/Modules/Calendar/Views/Admin/calendar-settings.md`
+- `app/Modules/Calendar/Docs/legacy-view-specs/Tech/calendar.md`
+- `app/Modules/Calendar/Docs/legacy-view-specs/Tech/availability-and-privacy.md`
+- `app/Modules/Calendar/Docs/legacy-view-specs/Admin/calendar-settings.md`
 
 ## Main Use Cases
 

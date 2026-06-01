@@ -185,6 +185,21 @@ affected code and tests.
 - If tests are not run, the final response must state that clearly with the
   reason.
 
+## Local Tooling And Networked Services
+
+- The Codex command sandbox may block raw sockets and outbound network access
+  even when the web application can reach the same service normally.
+- If a Laravel CLI command fails with a connection-level error against an
+  external service that the running web app can use, verify whether the failure
+  is caused by sandbox networking before changing application configuration.
+- For this project, the development database may run on a Plesk/MySQL server on
+  the local subnet. DB-dependent Artisan commands that need that external MySQL
+  connection may need to be run outside the sandbox after confirming the target
+  host and port are reachable.
+- Do not use commands that print secrets, such as full database configuration
+  dumps, unless there is no safer alternative. Prefer targeted checks that show
+  host, port, connection status, and sanitized metadata only.
+
 ## Multi-Agent Handover
 
 - When finishing work, report files changed, behavior changed, tests run,

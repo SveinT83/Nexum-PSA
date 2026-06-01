@@ -3,7 +3,9 @@
 namespace App\Modules\Asset\Actions;
 
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Asset\Support\AssetSettings;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * Plain HTTP fallback for updating an asset.
@@ -16,21 +18,23 @@ class UpdateAsset
 {
     public function handle(Request $request, Asset $asset): Asset
     {
+        $settings = app(AssetSettings::class);
+
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'site_id' => 'nullable|exists:client_sites,id',
             'user_id' => 'nullable|exists:client_users,id',
             'vendor_id' => 'nullable|exists:vendors,id',
             'name' => 'required|string|max:255',
-            'type' => 'required|in:server,pc,laptop,switch,ap,firewall,mobile,other',
+            'type' => ['required', Rule::in($settings->enabledTypeValues($asset->type))],
             'vendor' => 'nullable|string|max:255',
             'model' => 'nullable|string|max:255',
             'serial_number' => 'nullable|string|max:255',
             'mac_address' => 'nullable|string|max:255',
             'ip_address' => 'nullable|ip',
-            'ip_type' => 'required|in:dhcp,fixed',
+            'ip_type' => ['required', Rule::in(array_keys(AssetSettings::IP_TYPE_OPTIONS))],
             'hostname' => 'nullable|string|max:255',
-            'status' => 'nullable|string|max:255',
+            'status' => ['nullable', Rule::in($settings->statusValues($asset->status))],
         ]);
 
         $asset->update($validated);

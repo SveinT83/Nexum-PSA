@@ -5,10 +5,22 @@
 --}}
 @php
     $companyProfile = $companyProfile ?? app(\App\Modules\System\Support\CompanyProfileSettings::class)->get();
+    $hexToRgb = static function (?string $hex, string $fallback): string {
+        $hex = is_string($hex) && preg_match('/^#[0-9A-Fa-f]{6}$/', $hex) ? $hex : $fallback;
+
+        return implode(', ', [
+            hexdec(substr($hex, 1, 2)),
+            hexdec(substr($hex, 3, 2)),
+            hexdec(substr($hex, 5, 2)),
+        ]);
+    };
     $themePreference = auth()->check()
         ? data_get(auth()->user()->preferences()->first()?->settings, 'theme', 'system')
         : 'system';
     $themeAttribute = in_array($themePreference, ['light', 'dark'], true) ? $themePreference : null;
+    $brandLogoUrl = $themeAttribute === 'dark'
+        ? ($companyProfile['logo_dark_url'] ?? $companyProfile['logo_url'])
+        : ($companyProfile['logo_light_url'] ?? $companyProfile['logo_url']);
 @endphp
 
 <!DOCTYPE html>
@@ -27,10 +39,51 @@
                 --nexum-brand-primary: {{ $companyProfile['primary_color'] }};
                 --nexum-brand-secondary: {{ $companyProfile['secondary_color'] }};
                 --nexum-brand-accent: {{ $companyProfile['accent_color'] }};
+                --nexum-header-bg: {{ $companyProfile['light_header_background'] }};
+                --nexum-header-color: {{ $companyProfile['light_header_color'] }};
+                --nexum-footer-bg: {{ $companyProfile['light_footer_background'] }};
+                --nexum-footer-color: {{ $companyProfile['light_footer_color'] }};
+                --nexum-left-sidebar-bg: {{ $companyProfile['light_left_sidebar_background'] }};
+                --nexum-left-sidebar-color: {{ $companyProfile['light_left_sidebar_color'] }};
+                --nexum-main-bg: {{ $companyProfile['light_main_background'] }};
+                --nexum-right-sidebar-bg: {{ $companyProfile['light_right_sidebar_background'] }};
+                --nexum-right-sidebar-color: {{ $companyProfile['light_right_sidebar_color'] }};
+                --nexum-page-header-bg: {{ $companyProfile['light_page_header_background'] }};
+                --nexum-page-header-color: {{ $companyProfile['light_page_header_color'] }};
+                --nexum-card-header-bg: {{ $companyProfile['light_card_header_background'] }};
+                --nexum-card-header-color: {{ $companyProfile['light_card_header_color'] }};
+                --nexum-content-bg: {{ $companyProfile['light_content_background'] }};
+                --nexum-primary-button-bg: {{ $companyProfile['light_primary_button_background'] }};
+                --nexum-primary-button-color: {{ $companyProfile['light_primary_button_color'] }};
+                --nexum-secondary-button-bg: {{ $companyProfile['light_secondary_button_background'] }};
+                --nexum-secondary-button-color: {{ $companyProfile['light_secondary_button_color'] }};
                 --bs-primary: {{ $companyProfile['primary_color'] }};
                 --bs-secondary: {{ $companyProfile['secondary_color'] }};
+                --bs-primary-rgb: {{ $hexToRgb($companyProfile['primary_color'], '#FF6D1F') }};
+                --bs-secondary-rgb: {{ $hexToRgb($companyProfile['secondary_color'], '#fc7730') }};
                 --bs-link-color: {{ $companyProfile['primary_color'] }};
                 --bs-link-hover-color: {{ $companyProfile['accent_color'] }};
+            }
+
+            [data-bs-theme="dark"] {
+                --nexum-header-bg: {{ $companyProfile['dark_header_background'] }};
+                --nexum-header-color: {{ $companyProfile['dark_header_color'] }};
+                --nexum-footer-bg: {{ $companyProfile['dark_footer_background'] }};
+                --nexum-footer-color: {{ $companyProfile['dark_footer_color'] }};
+                --nexum-left-sidebar-bg: {{ $companyProfile['dark_left_sidebar_background'] }};
+                --nexum-left-sidebar-color: {{ $companyProfile['dark_left_sidebar_color'] }};
+                --nexum-main-bg: {{ $companyProfile['dark_main_background'] }};
+                --nexum-right-sidebar-bg: {{ $companyProfile['dark_right_sidebar_background'] }};
+                --nexum-right-sidebar-color: {{ $companyProfile['dark_right_sidebar_color'] }};
+                --nexum-page-header-bg: {{ $companyProfile['dark_page_header_background'] }};
+                --nexum-page-header-color: {{ $companyProfile['dark_page_header_color'] }};
+                --nexum-card-header-bg: {{ $companyProfile['dark_card_header_background'] }};
+                --nexum-card-header-color: {{ $companyProfile['dark_card_header_color'] }};
+                --nexum-content-bg: {{ $companyProfile['dark_content_background'] }};
+                --nexum-primary-button-bg: {{ $companyProfile['dark_primary_button_background'] }};
+                --nexum-primary-button-color: {{ $companyProfile['dark_primary_button_color'] }};
+                --nexum-secondary-button-bg: {{ $companyProfile['dark_secondary_button_background'] }};
+                --nexum-secondary-button-color: {{ $companyProfile['dark_secondary_button_color'] }};
             }
 
             .tech-shell-brand {
@@ -77,14 +130,15 @@
                 <div class="row align-items-center g-2">
                     <div class="col-auto">
                         <a href="{{ route('tech.dashboard') }}" class="tech-shell-brand d-inline-flex align-items-center gap-2 text-decoration-none py-2">
-                            @if($companyProfile['logo_url'])
-                                <img src="{{ $companyProfile['logo_url'] }}" alt="{{ $companyProfile['company_name'] }} logo" class="tech-shell-brand-logo">
+                            @if($brandLogoUrl)
+                                <img src="{{ $brandLogoUrl }}" alt="" class="tech-shell-brand-logo">
+                                <span class="visually-hidden">{{ $companyProfile['company_name'] }}</span>
                             @else
                                 <span class="tech-shell-brand-mark" aria-hidden="true">
                                     <i class="bi bi-buildings"></i>
                                 </span>
+                                <span class="fw-semibold">{{ $companyProfile['company_name'] }}</span>
                             @endif
-                            <span class="fw-semibold">{{ $companyProfile['company_name'] }}</span>
                         </a>
                     </div>
 
@@ -165,7 +219,7 @@
                     </div>
 
                     <!-- Right sidebar (right) -->
-                    <div class="col-md-2 mt-3 sidebar">
+                    <div class="col-md-2 sidebar">
                         @yield('rightbar')
 
                         @auth

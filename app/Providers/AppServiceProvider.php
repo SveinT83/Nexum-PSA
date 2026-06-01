@@ -62,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
             'knowledge' => 'Knowledge',
             'nextcloud' => 'Nextcloud',
             'notification' => 'Notification',
+            'report' => 'Report',
             'risk' => 'Risk',
             'sales' => 'Sales',
             'storage' => 'Storage',

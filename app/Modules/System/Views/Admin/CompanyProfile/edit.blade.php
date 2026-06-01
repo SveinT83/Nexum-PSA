@@ -4,7 +4,7 @@
 
 <!-- -------------------------------------------------------------------------------------------------- -->
 <!-- Page header -->
-<!-- Central branding and organization details used by the Nexum PSA shell. -->
+<!-- Central organization details used by the Nexum PSA shell. -->
 <!-- -------------------------------------------------------------------------------------------------- -->
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center">
@@ -16,9 +16,9 @@
 @section('content')
     <!-- -------------------------------------------------------------------------------------------------- -->
     <!-- Company profile form -->
-    <!-- The form stores app-wide settings in common_settings and updates the live header branding. -->
+    <!-- The form stores app-wide organization settings in common_settings. -->
     <!-- -------------------------------------------------------------------------------------------------- -->
-    <form method="POST" action="{{ route('tech.admin.system.company-profile.update') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('tech.admin.system.company-profile.update') }}">
         @csrf
         @method('PUT')
 
@@ -92,56 +92,19 @@
             <div class="col-xl-5">
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="h5 mb-0">Branding</h2>
+                        <h2 class="h5 mb-0">Company Identity</h2>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label for="logo" class="form-label">Header logo</label>
-                            @if($companyProfile['logo_url'])
-                                <div class="d-flex align-items-center gap-3 mb-2">
-                                    <img src="{{ $companyProfile['logo_url'] }}" alt="{{ $companyProfile['company_name'] }} logo" class="company-profile-logo-preview">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="remove_logo" name="remove_logo" value="1">
-                                        <label class="form-check-label" for="remove_logo">Remove current logo</label>
-                                    </div>
-                                </div>
-                            @endif
-                            <input id="logo" name="logo" type="file" class="form-control" accept="image/*">
-                            <div class="form-text">PNG, JPG, GIF, or WebP up to 2 MB.</div>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label for="primary_color" class="form-label">Primary</label>
-                                <input id="primary_color" name="primary_color" type="color" class="form-control form-control-color w-100" value="{{ old('primary_color', $companyProfile['primary_color']) }}">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="secondary_color" class="form-label">Secondary</label>
-                                <input id="secondary_color" name="secondary_color" type="color" class="form-control form-control-color w-100" value="{{ old('secondary_color', $companyProfile['secondary_color']) }}">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="accent_color" class="form-label">Accent</label>
-                                <input id="accent_color" name="accent_color" type="color" class="form-control form-control-color w-100" value="{{ old('accent_color', $companyProfile['accent_color']) }}">
-                            </div>
-                        </div>
-
-                        <div class="company-brand-preview mt-4 p-3 rounded border">
-                            <div class="d-flex align-items-center gap-2 mb-3">
-                                @if($companyProfile['logo_url'])
-                                    <img src="{{ $companyProfile['logo_url'] }}" alt="" class="company-brand-preview-logo">
-                                @else
-                                    <span class="company-brand-preview-mark">
-                                        <i class="bi bi-buildings" aria-hidden="true"></i>
-                                    </span>
-                                @endif
-                                <strong>{{ old('company_name', $companyProfile['company_name']) }}</strong>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2">
-                                <span class="badge" style="background: {{ old('primary_color', $companyProfile['primary_color']) }};">Primary</span>
-                                <span class="badge" style="background: {{ old('secondary_color', $companyProfile['secondary_color']) }};">Secondary</span>
-                                <span class="badge text-dark" style="background: {{ old('accent_color', $companyProfile['accent_color']) }};">Accent</span>
-                            </div>
-                        </div>
+                        <dl class="row small mb-0">
+                            <dt class="col-sm-5">Display name</dt>
+                            <dd class="col-sm-7">{{ $companyProfile['company_name'] }}</dd>
+                            <dt class="col-sm-5">Legal name</dt>
+                            <dd class="col-sm-7">{{ $companyProfile['legal_name'] ?? 'Not set' }}</dd>
+                            <dt class="col-sm-5">Support email</dt>
+                            <dd class="col-sm-7">{{ $companyProfile['support_email'] ?? 'Not set' }}</dd>
+                            <dt class="col-sm-5">Website</dt>
+                            <dd class="col-sm-7">{{ $companyProfile['website'] ?? 'Not set' }}</dd>
+                        </dl>
                     </div>
                 </div>
 
@@ -149,7 +112,7 @@
                     <x-buttons.back url="{{ route('tech.admin.index') }}">Cancel</x-buttons.back>
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-save me-1" aria-hidden="true"></i>
-                        Save branding
+                        Save profile
                     </button>
                 </div>
             </div>
@@ -162,41 +125,10 @@
 @endsection
 
 @section('rightbar')
-    <x-card.default title="Branding behavior">
+    <x-card.default title="Branding">
         <p class="small text-muted mb-0">
-            The header uses this logo, company name, and color palette. Empty fields fall back to safe Nexum PSA defaults.
+            Logo, colors, and theme surfaces are managed from the dedicated Branding page.
         </p>
+        <a href="{{ route('tech.admin.system.branding.edit') }}" class="btn btn-outline-primary btn-sm mt-3">Open branding</a>
     </x-card.default>
-@endsection
-
-@section('scripts')
-    <style>
-        .company-profile-logo-preview {
-            max-height: 3rem;
-            max-width: 12rem;
-            object-fit: contain;
-        }
-
-        .company-brand-preview {
-            background: var(--bs-tertiary-bg);
-        }
-
-        .company-brand-preview-logo {
-            max-height: 2rem;
-            max-width: 10rem;
-            object-fit: contain;
-        }
-
-        .company-brand-preview-mark {
-            width: 2rem;
-            height: 2rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--bs-border-color);
-            border-radius: .5rem;
-            color: var(--nexum-brand-primary, var(--bs-primary));
-            background: var(--bs-body-bg);
-        }
-    </style>
 @endsection

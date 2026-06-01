@@ -40,7 +40,7 @@
                     @php
                         // Keep the in-page preview and `/storage/docs` route on
                         // the same module-local source file.
-                        $docPath = app_path('Modules/Storage/Views/Tech/Storage/storage.md');
+                        $docPath = app_path('Modules/Storage/Docs/legacy-view-specs/Tech/Storage/storage.md');
                         if (file_exists($docPath)) {
                             if (class_exists('\Parsedown')) {
                                 $parsedown = new \Parsedown();

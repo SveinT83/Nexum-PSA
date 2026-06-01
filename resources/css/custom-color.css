@@ -2,30 +2,42 @@
 /* ------------ Bootstrap overides ----------- */
 /* ------------------------------------------- */
 :root{
-    --bs-border-color: #faba98 !important;
+    --nexum-shell-surface-hover: #f1f1f1;
+    --nexum-brand-primary-hover: color-mix(in srgb, var(--nexum-brand-primary, #FF6D1F) 82%, #000000);
+    --nexum-primary-button-hover-bg: color-mix(in srgb, var(--nexum-primary-button-bg, #FF6D1F) 82%, #000000);
+    --nexum-secondary-button-hover-bg: color-mix(in srgb, var(--nexum-secondary-button-bg, #fc7730) 82%, #000000);
+    --nexum-brand-accent-soft: color-mix(in srgb, var(--nexum-brand-accent, #faba98) 16%, #ffffff);
+    --nexum-brand-border-soft: color-mix(in srgb, var(--nexum-brand-primary, #FF6D1F) 45%, #ffffff);
+    --bs-border-color: var(--nexum-brand-border-soft) !important;
 }
 
 /* ------------------------------------------- */
 /* -------------- Main Elements -------------- */
 /* ------------------------------------------- */
 body {
-    background-color: #d1d1d1 !important;
+    background-color: var(--nexum-main-bg) !important;
 }
 
 header {
-    background-color: #333 !important;
-    color: #FF6D1F;
-    border-color: #FF6D1F !important;
+    background-color: var(--nexum-header-bg) !important;
+    color: var(--nexum-header-color);
+    border-color: var(--nexum-brand-primary) !important;
 }
 
 footer {
-    background-color: #333 !important;
-    color: #FF6D1F;
+    background-color: var(--nexum-footer-bg) !important;
+    color: var(--nexum-footer-color);
 }
 
 /* Sidebar */
 .sidebar {
+    background-color: var(--nexum-left-sidebar-bg);
+    color: var(--nexum-left-sidebar-color);
+}
 
+.row > .sidebar:last-child {
+    background-color: var(--nexum-right-sidebar-bg);
+    color: var(--nexum-right-sidebar-color);
 }
 
 .sidebar .nav-pills .nav-link.link-dark {
@@ -38,23 +50,28 @@ footer {
 }
 
 .sidebar h1, .sidebar h2, .sidebar h3 {
-    color: #333;
+    color: inherit;
 }
 
 /* Page Header */
 .page-header {
-    background-color: #5c5c5c !important;
-    color: #FF6D1F;
+    background-color: var(--nexum-page-header-bg) !important;
+    color: var(--nexum-page-header-color);
 }
 
 .page-header h1, .page-header h2, .page-header h3 {
-    color: white;
+    color: var(--nexum-page-header-color);
 }
 
 /*Content */
 .content {
-    background-color: white;
-    border-color: #FF6D1F !important;
+    background-color: var(--nexum-content-bg);
+    border-color: var(--nexum-brand-primary) !important;
+}
+
+.card-header {
+    background-color: var(--nexum-card-header-bg) !important;
+    color: var(--nexum-card-header-color) !important;
 }
 
 .content tr[data-href] {
@@ -62,7 +79,7 @@ footer {
 }
 
 .content tr[data-href]:focus {
-    outline: 2px solid #FF6D1F;
+    outline: 2px solid var(--nexum-brand-primary);
     outline-offset: -2px;
 }
 
@@ -70,18 +87,18 @@ footer {
 /* --------------- HTML Element -------------- */
 /* ------------------------------------------- */
 a {
-    color: #FF6D1F;
+    color: var(--nexum-brand-primary);
 }
 a:hover {
-    color: #fc7730;
+    color: var(--nexum-brand-accent);
 }
 
 a.row {
-    color: #333;
+    color: var(--nexum-left-sidebar-color);
     background-color: #faf7f7;
     border-style: solid;
     border-width: 1px;
-    border-color: #fc7730;
+    border-color: var(--nexum-brand-primary);
     border-radius: 5px;
     margin: 5px;
     padding: 5px;
@@ -101,7 +118,7 @@ a.row {
 }
 
 .nav-link {
-    color: white;
+    color: var(--nexum-header-color);
 }
 
 .nav-link .black{
@@ -109,12 +126,12 @@ a.row {
 }
 
 .nav-link:hover {
-    background-color: #f1f1f1;
-    color: #FF6D1F;
+    background-color: var(--nexum-shell-surface-hover);
+    color: var(--nexum-brand-primary);
 }
 
 .nav-link.active{
-    background-color: #FF6D1F !important;
+    background-color: var(--nexum-brand-primary) !important;
     color: white !important;
 }
 
@@ -123,7 +140,7 @@ a.row {
 }
 
 .dropdown-item.active{
-    background-color: #fc7730 !important;
+    background-color: var(--nexum-brand-primary) !important;
     color: white;
 }
 
@@ -138,49 +155,53 @@ a.row {
 
 /* Primary */
 .btn-primary {
-    background-color: #FF6D1F !important;
-    border-color: #fc7730 !important;
+    background-color: var(--nexum-primary-button-bg) !important;
+    border-color: var(--nexum-primary-button-bg) !important;
+    color: var(--nexum-primary-button-color) !important;
 }
 
 .btn-primary:hover {
-    background-color: #ba4304 !important;
-    border-color: #fc7730 !important;
+    background-color: var(--nexum-primary-button-hover-bg) !important;
+    border-color: var(--nexum-primary-button-hover-bg) !important;
+    color: var(--nexum-primary-button-color) !important;
 }
 
 /* Outline Primary */
 .btn-outline-primary {
     background-color: transparent !important;
-    border-color: #FF6D1F !important;
-    color: #FF6D1F !important;
+    border-color: var(--nexum-brand-primary) !important;
+    color: var(--nexum-brand-primary) !important;
 }
 
 .btn-outline-primary:hover {
-    background-color: #FF6D1F !important;
-    border-color: #fc7730 !important;
+    background-color: var(--nexum-brand-primary) !important;
+    border-color: var(--nexum-brand-primary) !important;
     color: black !important;
 }
 
 /* Secondary */
 .btn-secondary {
-    background-color: #fc7730 !important;
-    border-color: #fc7730 !important;
+    background-color: var(--nexum-secondary-button-bg) !important;
+    border-color: var(--nexum-secondary-button-bg) !important;
+    color: var(--nexum-secondary-button-color) !important;
 }
 
 .btn-secondary:hover {
-    background-color: #ba4304 !important;
-    border-color: #fc7730 !important;
+    background-color: var(--nexum-secondary-button-hover-bg) !important;
+    border-color: var(--nexum-secondary-button-hover-bg) !important;
+    color: var(--nexum-secondary-button-color) !important;
 }
 
 /* Outline Secondary */
 .btn-outline-secondary {
     background-color: transparent !important;
-    border-color: #FF6D1F !important;
-    color: #FF6D1F !important;
+    border-color: var(--nexum-brand-secondary) !important;
+    color: var(--nexum-brand-secondary) !important;
 }
 
 .btn-outline-secondary:hover {
-    background-color: #FF6D1F !important;
-    border-color: #fc7730 !important;
+    background-color: var(--nexum-brand-secondary) !important;
+    border-color: var(--nexum-brand-secondary) !important;
     color: black !important;
 }
 
@@ -189,5 +210,5 @@ a.row {
 /* ------------------------------------------- */
 
 .border-primary {
-    border-color: #FF6D1F !important;
+    border-color: var(--nexum-brand-primary) !important;
 }

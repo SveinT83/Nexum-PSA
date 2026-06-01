@@ -105,13 +105,17 @@ When the Ticket domain is materially updated, update the Markdown files under:
 app/Modules/Ticket/Docs/knowledge
 ```
 
-Then run the Ticket Knowledge seeder to publish the content into the Nexum PSA book under the Tickets chapter:
+Then sync repository documentation into Knowledge:
 
 ```bash
-php artisan db:seed --class=TicketKnowledgeDocumentationSeeder
+php artisan knowledge:sync-docs --module=Ticket
 ```
 
-After seeding, use the Knowledge/BookStack sync flow to push pending Knowledge changes to BookStack.
+The sync marks changed Knowledge pages as `pending_push`. Use the BookStack push action in the Integration settings, or queue it directly:
+
+```bash
+php artisan knowledge:sync-docs --module=Ticket --push
+```
 
 ## Related Future Work
 

@@ -27,6 +27,7 @@ use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
+use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketAssignmentSetting;
@@ -77,6 +78,7 @@ class TicketModuleTest extends TestCase
     public function ticket_routes_are_owned_by_ticket_module(): void
     {
         $this->assertSame(TicketController::class . '@index', Route::getRoutes()->getByName('tech.tickets.index')->getActionName());
+        $this->assertSame(TicketSlaReportController::class . '@index', Route::getRoutes()->getByName('tech.reports.tickets.sla')->getActionName());
         $this->assertSame(TicketController::class . '@show', Route::getRoutes()->getByName('tech.tickets.show')->getActionName());
         $this->assertSame(TicketController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.edit')->getActionName());
         $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
@@ -696,6 +698,64 @@ class TicketModuleTest extends TestCase
                 $resolveOverdue->ticket_key,
                 $futureSla->ticket_key,
             ]);
+
+        Carbon::setTestNow();
+    }
+
+    #[Test]
+    public function ticket_sla_report_shows_operational_counts_and_current_risk(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-15 10:00:00'));
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999033',
+            'subject' => 'Report response overdue',
+            'first_response_due_at' => now()->subHour(),
+            'resolve_due_at' => now()->addHours(4),
+            'first_responded_at' => null,
+        ]);
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999034',
+            'subject' => 'Report resolve overdue',
+            'first_response_due_at' => now()->subHour(),
+            'resolve_due_at' => now()->subMinutes(30),
+            'first_responded_at' => now()->subHours(2),
+            'resolved_at' => null,
+        ]);
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999035',
+            'subject' => 'Report responded within SLA',
+            'first_response_due_at' => now()->subHour(),
+            'first_responded_at' => now()->subHours(2),
+        ]);
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999036',
+            'subject' => 'Report resolved within SLA',
+            'resolve_due_at' => now()->subHour(),
+            'resolved_at' => now()->subHours(2),
+        ]);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.reports.tickets.sla', ['period' => 'all']))
+            ->assertOk()
+            ->assertViewIs('ticket::Tech.Reports.sla')
+            ->assertSee('Ticket SLA Report')
+            ->assertSee('Response overdue')
+            ->assertSee('Resolve overdue')
+            ->assertSee('Responded within SLA')
+            ->assertSee('Resolved within SLA')
+            ->assertSee('TD-2026-999033')
+            ->assertSee('TD-2026-999034');
+
+        $summary = $response->viewData('summary');
+
+        $this->assertSame(1, $summary['response_overdue']);
+        $this->assertSame(1, $summary['resolve_overdue']);
+        $this->assertSame(2, $summary['responded_within_sla']);
+        $this->assertSame(1, $summary['resolved_within_sla']);
 
         Carbon::setTestNow();
     }

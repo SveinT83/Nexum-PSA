@@ -46,14 +46,32 @@
         'clients' => [
             'name' => 'Clients',
             'route' => 'tech.admin.settings.clients.client-formats',
-            'pattern' => 'tech.admin.settings.clients.*',
+            'pattern' => ['tech.admin.settings.clients.*', 'tech.admin.settings.contacts*'],
             'icon' => 'bi-buildings',
+        ],
+        'contacts' => [
+            'name' => 'Contacts',
+            'route' => 'tech.admin.settings.contacts',
+            'pattern' => 'tech.admin.settings.contacts*',
+            'icon' => 'bi-person-lines-fill',
+        ],
+        'calendar' => [
+            'name' => 'Calendar',
+            'route' => 'tech.admin.settings.calendar',
+            'pattern' => 'tech.admin.settings.calendar*',
+            'icon' => 'bi-calendar-week',
         ],
         'storage' => [
             'name' => 'Storage',
             'route' => 'tech.admin.settings.storage.inventory',
             'pattern' => 'tech.admin.settings.storage.*',
             'icon' => 'bi-box-seam',
+        ],
+        'assets' => [
+            'name' => 'Assets',
+            'route' => 'tech.admin.settings.assets',
+            'pattern' => 'tech.admin.settings.assets*',
+            'icon' => 'bi-hdd-network',
         ],
         'tickets' => [
             'name' => 'Tickets',
@@ -80,6 +98,7 @@
                 'tech.admin.system.category.*',
                 'tech.admin.system.tag.*',
                 'tech.admin.system.company-profile.*',
+                'tech.admin.system.branding.*',
                 'tech.admin.system.queues-workers.*',
                 'tech.admin.notification-channels.*',
             ],
@@ -114,9 +133,19 @@
         ],
         'clients' => [
             ['name' => 'Client formats', 'route' => 'tech.admin.settings.clients.client-formats', 'pattern' => 'tech.admin.settings.clients.client-formats*'],
+            ['name' => 'Contact settings', 'route' => 'tech.admin.settings.contacts', 'pattern' => 'tech.admin.settings.contacts*'],
+        ],
+        'contacts' => [
+            ['name' => 'Contact settings', 'route' => 'tech.admin.settings.contacts', 'pattern' => 'tech.admin.settings.contacts*'],
+        ],
+        'calendar' => [
+            ['name' => 'Calendar settings', 'route' => 'tech.admin.settings.calendar', 'pattern' => 'tech.admin.settings.calendar*'],
         ],
         'storage' => [
             ['name' => 'Inventory settings', 'route' => 'tech.admin.settings.storage.inventory', 'pattern' => 'tech.admin.settings.storage.inventory*'],
+        ],
+        'assets' => [
+            ['name' => 'Asset settings', 'route' => 'tech.admin.settings.assets', 'pattern' => 'tech.admin.settings.assets*'],
         ],
         'tickets' => [
             ['name' => 'Ticket settings', 'route' => 'tech.admin.settings.tickets', 'pattern' => 'tech.admin.settings.tickets'],
@@ -138,6 +167,7 @@
         ],
         'system' => [
             ['name' => 'Company profile', 'route' => 'tech.admin.system.company-profile.edit', 'pattern' => 'tech.admin.system.company-profile.*'],
+            ['name' => 'Branding', 'route' => 'tech.admin.system.branding.edit', 'pattern' => 'tech.admin.system.branding.*'],
             ['name' => 'Categories', 'route' => 'tech.admin.system.category.index', 'pattern' => 'tech.admin.system.category.*'],
             ['name' => 'Tags', 'route' => 'tech.admin.system.tag.index', 'pattern' => 'tech.admin.system.tag.*'],
             ['name' => 'Queues and workers', 'route' => 'tech.admin.system.queues-workers.index', 'pattern' => 'tech.admin.system.queues-workers.*'],

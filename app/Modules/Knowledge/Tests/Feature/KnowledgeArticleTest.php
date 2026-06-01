@@ -312,6 +312,79 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function repository_documentation_sync_updates_knowledge_and_can_queue_book_stack_push(): void
+    {
+        Queue::fake();
+
+        $this->artisan('knowledge:sync-docs', ['--module' => ['System'], '--push' => true])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 2')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'system/company-profile-and-branding')
+            ->firstOrFail();
+
+        $this->assertSame('Company Profile And Branding', $article->title);
+        $this->assertSame('pending_push', $article->sync_status);
+        $this->assertSame('System', $article->source_payload['module']);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+    }
+
+    #[Test]
+    public function repository_documentation_sync_preserves_book_stack_backed_pages(): void
+    {
+        $book = Book::create([
+            'name' => 'Nexum PSA',
+            'slug' => 'bookstack-book-nexum-psa-339',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '339',
+            'sync_status' => 'synced',
+        ]);
+
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'System',
+            'slug' => 'system',
+            'source_system' => 'book_stack',
+            'source_type' => 'chapter',
+            'source_id' => '55',
+            'sync_status' => 'synced',
+        ]);
+
+        $article = Article::create([
+            'title' => 'Old Branding Page',
+            'slug' => 'company-profile-and-branding',
+            'body_markdown' => 'Old body',
+            'body_html' => '<p>Old body</p>',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'knowledge_book_id' => $book->id,
+            'knowledge_chapter_id' => $chapter->id,
+            'source_system' => 'book_stack',
+            'source_type' => 'page',
+            'source_id' => '99',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->artisan('knowledge:sync-docs', ['--module' => ['System']])
+            ->assertSuccessful();
+
+        $article->refresh();
+
+        $this->assertSame('Company Profile And Branding', $article->title);
+        $this->assertSame('book_stack', $article->source_system);
+        $this->assertSame('page', $article->source_type);
+        $this->assertSame('99', $article->source_id);
+        $this->assertSame('pending_push', $article->sync_status);
+        $this->assertSame('system/company-profile-and-branding', $article->source_payload['repository_source_id']);
+    }
+
+    #[Test]
     public function tech_user_can_create_chapter_inside_book(): void
     {
         $this->actingAs($this->tech);

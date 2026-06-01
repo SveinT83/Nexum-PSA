@@ -24,11 +24,4 @@ Route::middleware(['auth','tech','2fa.required','tech.permission'])->group(funct
     // -----------------------------------------
     // Knowledge
     // -----------------------------------------
-    // -----------------------------------------
-    // Reports
-    // -----------------------------------------
-    Route::get('/reports', function () {
-        return view('tech.reports.index');
-    })->name('reports.index');
-
 });

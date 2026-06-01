@@ -45,9 +45,18 @@
         [
             'title' => 'Clients',
             'icon' => 'bi-buildings',
-            'description' => 'Client domain settings and reusable customer classifications.',
+            'description' => 'Client and contact domain settings and reusable customer classifications.',
             'links' => [
                 ['label' => 'Client formats', 'route' => route('tech.admin.settings.clients.client-formats')],
+                ['label' => 'Contact settings', 'route' => route('tech.admin.settings.contacts')],
+            ],
+        ],
+        [
+            'title' => 'Calendar',
+            'icon' => 'bi-calendar-week',
+            'description' => 'Shared calendars, default calendar behavior, access, privacy, and scheduling rules.',
+            'links' => [
+                ['label' => 'Calendar settings', 'route' => route('tech.admin.settings.calendar')],
             ],
         ],
         [
@@ -59,11 +68,21 @@
             ],
         ],
         [
+            'title' => 'Assets',
+            'icon' => 'bi-hdd-network',
+            'description' => 'Configure manual asset registration defaults and available asset types.',
+            'links' => [
+                ['label' => 'Asset settings', 'route' => route('tech.admin.settings.assets')],
+            ],
+        ],
+        [
             'title' => 'Tickets',
             'icon' => 'bi-ticket-detailed',
             'description' => 'Queues, priorities, workflows, assignment logic, and ticket rules.',
             'links' => [
                 ['label' => 'Ticket settings', 'route' => route('tech.admin.settings.tickets')],
+                ['label' => 'Technicians', 'route' => route('tech.admin.settings.tickets.technicians')],
+                ['label' => 'Assignment rules', 'route' => route('tech.admin.settings.tickets.assignment-rules')],
                 ['label' => 'Rules', 'route' => route('tech.admin.settings.tickets.rules')],
                 ['label' => 'Workflows', 'route' => route('tech.admin.settings.tickets.workflows')],
             ],
@@ -82,17 +101,22 @@
             'description' => 'Users, roles, permissions, and account-level access settings.',
             'links' => [
                 ['label' => 'User management', 'route' => route('tech.admin.user_management.index')],
+                ['label' => 'Roles', 'route' => route('tech.admin.user_management.roles.index')],
+                ['label' => 'Permissions', 'route' => route('tech.admin.user_management.permissions.index')],
+                ['label' => 'Two-factor auth', 'route' => route('tech.admin.user_management.2fa-settings')],
             ],
         ],
         [
             'title' => 'System',
             'icon' => 'bi-sliders',
-            'description' => 'Company profile, shared taxonomy, background workers, and platform settings.',
+            'description' => 'Company profile, branding, shared taxonomy, background workers, and platform settings.',
             'links' => [
                 ['label' => 'Company profile', 'route' => route('tech.admin.system.company-profile.edit')],
+                ['label' => 'Branding', 'route' => route('tech.admin.system.branding.edit')],
                 ['label' => 'Categories', 'route' => route('tech.admin.system.category.index')],
                 ['label' => 'Tags', 'route' => route('tech.admin.system.tag.index')],
                 ['label' => 'Queues and workers', 'route' => route('tech.admin.system.queues-workers.index')],
+                ['label' => 'Notification channels', 'route' => route('tech.admin.notification-channels.index')],
             ],
         ],
         [
@@ -101,7 +125,12 @@
             'description' => 'External systems, API access, AI providers, and sync connections.',
             'links' => [
                 ['label' => 'All integrations', 'route' => route('tech.admin.system.integrations.index')],
+                ['label' => 'N-able RMM', 'route' => route('tech.admin.system.integrations.nable_rmm.settings')],
+                ['label' => 'Tactical RMM', 'route' => route('tech.admin.system.integrations.tactical_rmm.settings')],
+                ['label' => 'BookStack', 'route' => route('tech.admin.system.integrations.book_stack.settings')],
+                ['label' => 'Nextcloud', 'route' => route('tech.admin.nextcloud.connections.index')],
                 ['label' => 'API management', 'route' => route('tech.admin.system.integrations.api.index')],
+                ['label' => 'AI settings', 'route' => route('tech.admin.system.integrations.ai.index')],
             ],
         ],
     ];

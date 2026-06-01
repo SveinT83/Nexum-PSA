@@ -5,9 +5,12 @@ namespace App\Modules\Contact\Tests\Feature;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
+use App\Modules\Contact\Controllers\Admin\ContactSettingsController;
 use App\Modules\Contact\Controllers\Tech\ContactController;
 use App\Modules\Contact\Livewire\Tech\ContactForm;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Support\ContactSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
@@ -42,6 +45,75 @@ class ContactModuleTest extends TestCase
         $this->assertSame(ContactController::class.'@store', Route::getRoutes()->getByName('tech.contacts.store')->getActionName());
         $this->assertSame(ContactController::class.'@edit', Route::getRoutes()->getByName('tech.contacts.edit')->getActionName());
         $this->assertSame(ContactController::class.'@show', Route::getRoutes()->getByName('tech.contacts.show')->getActionName());
+        $this->assertSame(ContactSettingsController::class.'@edit', Route::getRoutes()->getByName('tech.admin.settings.contacts')->getActionName());
+    }
+
+    #[Test]
+    public function admin_can_manage_contact_settings(): void
+    {
+        $this->actingAs($this->techUser)
+            ->get(route('tech.admin.settings.contacts'))
+            ->assertOk()
+            ->assertViewIs('contact::Admin.Settings.edit')
+            ->assertSee('Contact Settings')
+            ->assertSee('Contact Defaults')
+            ->assertSee('Relation Types');
+
+        $this->actingAs($this->techUser)
+            ->put(route('tech.admin.settings.contacts.update'), [
+                'default_contact_type' => 'shared_mailbox',
+                'default_status' => 'inactive',
+                'enabled_relation_types' => ['contact', 'billing_contact'],
+                'default_relation_type' => 'billing_contact',
+            ])
+            ->assertRedirect(route('tech.admin.settings.contacts'))
+            ->assertSessionHas('success');
+
+        $setting = CommonSetting::query()
+            ->where('type', 'contact')
+            ->where('name', 'defaults')
+            ->firstOrFail();
+
+        $payload = json_decode($setting->json, true);
+
+        $this->assertSame('shared_mailbox', $payload['default_contact_type']);
+        $this->assertSame('inactive', $payload['default_status']);
+        $this->assertSame(['contact', 'billing_contact'], $payload['enabled_relation_types']);
+        $this->assertSame('billing_contact', $payload['default_relation_type']);
+    }
+
+    #[Test]
+    public function contact_create_uses_configured_defaults_and_relation_options(): void
+    {
+        app(ContactSettings::class)->update([
+            'default_contact_type' => 'shared_mailbox',
+            'default_status' => 'inactive',
+            'enabled_relation_types' => ['contact', 'billing_contact'],
+            'default_relation_type' => 'billing_contact',
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Settings Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Settings Site']);
+
+        Livewire::actingAs($this->techUser)
+            ->test(ContactForm::class, ['activeClientId' => $client->id, 'activeSiteId' => $site->id])
+            ->assertSet('relation_type', 'billing_contact')
+            ->assertSee('Billing contact')
+            ->assertDontSee('Technical contact')
+            ->set('display_name', 'Billing Shared Mailbox')
+            ->set('email', 'billing-shared@example.test')
+            ->call('save');
+
+        $contact = Contact::query()->where('display_name', 'Billing Shared Mailbox')->firstOrFail();
+
+        $this->assertSame('shared_mailbox', $contact->type);
+        $this->assertSame('inactive', $contact->status);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+            'relation_type' => 'billing_contact',
+        ]);
     }
 
     #[Test]

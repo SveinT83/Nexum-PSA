@@ -196,7 +196,7 @@
                 <div class="modal-body">
                     <div class="markdown-body">
                         @php
-                            $docPath = app_path('Modules/Integration/Views/Tech/Admin/System/Integrations/tactical/tactical_rmm_doc.md');
+                            $docPath = app_path('Modules/Integration/Docs/legacy-view-specs/Tech/Admin/System/Integrations/tactical/tactical_rmm_doc.md');
                             if (file_exists($docPath)) {
                                 if (class_exists('\Parsedown')) {
                                     $parsedown = new \Parsedown();

@@ -102,7 +102,7 @@ class AssetController extends Controller
      */
     public function docs()
     {
-        $path = app_path('Modules/Asset/Views/Tech/assets.md');
+        $path = app_path('Modules/Asset/Docs/legacy-view-specs/Tech/assets.md');
 
         if (!file_exists($path)) {
             abort(404);
