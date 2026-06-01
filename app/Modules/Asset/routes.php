@@ -28,7 +28,21 @@ if (isset($tdpsaLoadingApiRoutes) && $tdpsaLoadingApiRoutes === true) {
     | `routes.php` file while still registering API endpoints under `/api/v1`.
     |
     */
-    Route::apiResource('assets', ApiAssetController::class)->only(['index', 'show']);
+    Route::get('assets', [ApiAssetController::class, 'index'])
+        ->name('assets.index')
+        ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read');
+
+    Route::post('assets', [ApiAssetController::class, 'store'])
+        ->name('assets.store')
+        ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.create');
+
+    Route::get('assets/{asset}', [ApiAssetController::class, 'show'])
+        ->name('assets.show')
+        ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.read');
+
+    Route::match(['put', 'patch'], 'assets/{asset}', [ApiAssetController::class, 'update'])
+        ->name('assets.update')
+        ->middleware(\Laravel\Sanctum\Http\Middleware\CheckAbilities::class.':assets.update');
 
     return;
 }

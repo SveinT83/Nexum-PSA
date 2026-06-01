@@ -16,6 +16,7 @@ use App\Modules\Risk\Actions\StoreRiskItemUpdate;
 use App\Modules\Risk\Actions\UpdateRiskAssessment;
 use App\Modules\Risk\Actions\UpdateRiskItem;
 use App\Modules\Risk\Queries\RiskAssessmentQuery;
+use App\Modules\Risk\Support\RiskSettings;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\JsonResponse;
@@ -61,11 +62,12 @@ class RiskController extends Controller
      * unsaved RiskAssessment lets the view decide whether it is in create or
      * edit mode without duplicating markup.
      */
-    public function create(): View
+    public function create(RiskSettings $settings): View
     {
         return view('risk::Tech.form', [
             'clients' => $this->activeClients(),
-            'risk' => new RiskAssessment(),
+            'risk' => new RiskAssessment($settings->assessmentDefaults()),
+            'riskSettings' => $settings->get(),
         ]);
     }
 
@@ -75,8 +77,10 @@ class RiskController extends Controller
      * StoreRiskAssessment owns the mapping between UI scope values
      * ("internal" / "client") and the persisted client_id value.
      */
-    public function store(Request $request, StoreRiskAssessment $action): RedirectResponse
+    public function store(Request $request, StoreRiskAssessment $action, RiskSettings $settings): RedirectResponse
     {
+        $request->merge($settings->assessmentDefaults($request->all()));
+
         $assessment = $action->handle($this->validateAssessment($request));
 
         return redirect()->route('tech.risk.show', $assessment)
@@ -93,22 +97,25 @@ class RiskController extends Controller
     public function show(RiskAssessment $risk): View
     {
         $risk->load(['items.category', 'client', 'approver']);
+        $settings = app(RiskSettings::class);
 
         return view('risk::Tech.show', [
             'risk' => $risk,
             'groupedItems' => $risk->items->groupBy(fn (RiskItem $item) => $item->category?->name ?? 'Uncategorized'),
             'categories' => $this->riskCategories(),
+            'riskItemDefaults' => $settings->itemDefaults(),
         ]);
     }
 
     /**
      * Show the edit form for an existing assessment.
      */
-    public function edit(RiskAssessment $risk): View
+    public function edit(RiskAssessment $risk, RiskSettings $settings): View
     {
         return view('risk::Tech.form', [
             'clients' => $this->activeClients(),
             'risk' => $risk,
+            'riskSettings' => $settings->get(),
         ]);
     }
 
@@ -155,6 +162,9 @@ class RiskController extends Controller
      */
     public function storeItem(Request $request, RiskAssessment $risk, StoreRiskItem $action): JsonResponse|RedirectResponse
     {
+        $defaults = app(RiskSettings::class)->itemDefaults($request->all());
+        $request->merge($defaults);
+
         $item = $action->handle($risk, $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',

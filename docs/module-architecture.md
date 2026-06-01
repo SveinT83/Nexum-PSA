@@ -196,6 +196,29 @@ Example:
 Do not create report routes in `routes/tech.php`. Do not create production
 report views in `resources/views/tech/reports`.
 
+### API Ownership
+
+Versioned API routes are loaded from `routes/api.php`, but domain endpoints
+must still be owned by modules.
+
+The `Integration` module owns:
+
+* API key management.
+* The API ability catalog.
+* Shared API documentation entry points.
+
+Domain modules own:
+
+* API controllers.
+* API resources.
+* API route registration.
+* Domain-specific validation and query behavior.
+* Tests for route behavior and token abilities.
+
+Current API routes use Laravel Sanctum. Every protected domain API route must
+declare an explicit token ability. Do not add ability names before the matching
+route and tests exist.
+
 ---
 
 ## 5. LARAVEL INTEGRATION

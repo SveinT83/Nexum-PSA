@@ -24,3 +24,32 @@ a ticket.
 
 Tasks are internal in the beta version. They are not sent to customers and do not
 replace ticket replies.
+
+## API
+
+Task API routes are available under `/api/v1/tasks`.
+
+Scopes:
+
+- `tasks.read`
+- `tasks.create`
+- `tasks.update`
+
+Routes:
+
+- `GET /api/v1/tasks`
+- `GET /api/v1/tasks/{task}`
+- `POST /api/v1/tasks`
+- `PUT /api/v1/tasks/{task}`
+- `PATCH /api/v1/tasks/{task}`
+
+`POST /api/v1/tasks` uses `StoreTask`, so task defaults, owner context, checklist items, and
+creation activity remain consistent with the Tech UI.
+
+Supported API owner context:
+
+- `owner_type: client` with `owner_id`.
+- `owner_type: ticket` with `owner_id`.
+
+When a task is created for a Ticket, the API inherits queue, priority, category, client, site, and
+assignee context from the Ticket unless the payload overrides those fields.

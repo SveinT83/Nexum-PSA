@@ -112,10 +112,17 @@
                 'tech.admin.system.company-profile.*',
                 'tech.admin.system.branding.*',
                 'tech.admin.settings.warroom*',
+                'tech.admin.settings.risk*',
                 'tech.admin.system.queues-workers.*',
                 'tech.admin.notification-channels.*',
             ],
             'icon' => 'bi-sliders',
+        ],
+        'risk' => [
+            'name' => 'Risk',
+            'route' => 'tech.admin.settings.risk',
+            'pattern' => 'tech.admin.settings.risk*',
+            'icon' => 'bi-shield-check',
         ],
         'warroom' => [
             'name' => 'Warroom',

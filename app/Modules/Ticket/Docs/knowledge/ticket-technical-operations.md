@@ -97,6 +97,31 @@ Feature tests are preferred for:
 
 Unit tests may be added for isolated services where feature tests would be too broad.
 
+## API
+
+Ticket API routes are available under `/api/v1/tickets`.
+
+Scopes:
+
+- `tickets.read`
+- `tickets.create`
+- `tickets.update`
+
+Routes:
+
+- `GET /api/v1/tickets`
+- `GET /api/v1/tickets/{ticket}`
+- `POST /api/v1/tickets`
+- `PUT /api/v1/tickets/{ticket}`
+- `PATCH /api/v1/tickets/{ticket}`
+
+The `{ticket}` route parameter uses the public ticket key, such as `TD-2026-000001`, because the
+Ticket model route key is `ticket_key`.
+
+API creation must use `StoreTicket`. API field updates must use `UpdateTicketFields`, and status
+changes must use `ChangeTicketStatus`. Do not bypass these actions from API controllers, because
+they create events and enforce ticket workflow behavior.
+
 ## Knowledge Documentation
 
 When the Ticket domain is materially updated, update the Markdown files under:

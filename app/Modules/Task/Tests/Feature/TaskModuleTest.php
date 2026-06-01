@@ -25,6 +25,7 @@ use App\Modules\Ticket\Models\TicketQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
@@ -69,6 +70,68 @@ class TaskModuleTest extends TestCase
             'slug' => 'open',
             'is_default' => true,
         ]);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_create_list_show_and_update_tasks(): void
+    {
+        app(EnsureTaskDefaults::class)->handle();
+        app(EnsureTicketDefaults::class)->handle();
+
+        $client = Client::factory()->create(['name' => 'API Task Client']);
+        $status = TaskStatus::query()->where('slug', 'in-progress')->firstOrFail();
+        $assignee = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+
+        Sanctum::actingAs($this->tech, ['tasks.read', 'tasks.create', 'tasks.update']);
+
+        $this->postJson(route('api.v1.tasks.store'), [
+            'title' => 'API Created Task',
+            'description' => 'Created from API.',
+            'owner_type' => 'client',
+            'owner_id' => $client->id,
+            'assigned_to' => $assignee->id,
+            'estimated_minutes' => 30,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.title', 'API Created Task')
+            ->assertJsonPath('data.client_id', $client->id)
+            ->assertJsonPath('data.assigned_to', $assignee->id);
+
+        $task = Task::query()->where('title', 'API Created Task')->firstOrFail();
+
+        $this->getJson(route('api.v1.tasks.index', ['q' => 'API Created']))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $task->id);
+
+        $this->getJson(route('api.v1.tasks.show', $task))
+            ->assertOk()
+            ->assertJsonPath('data.title', 'API Created Task');
+
+        $this->patchJson(route('api.v1.tasks.update', $task), [
+            'title' => 'API Updated Task',
+            'status_id' => $status->id,
+            'estimated_minutes' => 45,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'API Updated Task')
+            ->assertJsonPath('data.status_id', $status->id)
+            ->assertJsonPath('data.estimated_minutes', 45);
+
+        $this->assertDatabaseHas('task_activities', [
+            'task_id' => $task->id,
+            'type' => 'updated',
+            'body' => 'Task updated through API.',
+        ]);
+    }
+
+    #[Test]
+    public function task_read_api_token_cannot_create_tasks(): void
+    {
+        Sanctum::actingAs($this->tech, ['tasks.read']);
+
+        $this->postJson(route('api.v1.tasks.store'), [
+            'title' => 'Blocked API Task',
+        ])->assertForbidden();
     }
 
     #[Test]

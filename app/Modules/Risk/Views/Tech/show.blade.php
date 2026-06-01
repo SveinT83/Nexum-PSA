@@ -222,20 +222,16 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <x-forms.select name="likelihood" labelName="Likelihood">
-                                    <option value="1">1 - Very Low</option>
-                                    <option value="2">2 - Low</option>
-                                    <option value="3" selected>3 - Medium</option>
-                                    <option value="4">4 - High</option>
-                                    <option value="5">5 - Very High</option>
+                                    @foreach([1 => 'Very Low', 2 => 'Low', 3 => 'Medium', 4 => 'High', 5 => 'Very High'] as $value => $label)
+                                        <option value="{{ $value }}" @selected((int) old('likelihood', $riskItemDefaults['likelihood'] ?? 3) === $value)>{{ $value }} - {{ $label }}</option>
+                                    @endforeach
                                 </x-forms.select>
                             </div>
                             <div class="col-md-6">
                                 <x-forms.select name="impact" labelName="Impact">
-                                    <option value="1">1 - Very Low</option>
-                                    <option value="2">2 - Low</option>
-                                    <option value="3" selected>3 - Medium</option>
-                                    <option value="4">4 - High</option>
-                                    <option value="5">5 - Very High</option>
+                                    @foreach([1 => 'Very Low', 2 => 'Low', 3 => 'Medium', 4 => 'High', 5 => 'Very High'] as $value => $label)
+                                        <option value="{{ $value }}" @selected((int) old('impact', $riskItemDefaults['impact'] ?? 3) === $value)>{{ $value }} - {{ $label }}</option>
+                                    @endforeach
                                 </x-forms.select>
                             </div>
                         </div>
@@ -257,15 +253,15 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <x-forms.select name="status" labelName="Status">
-                                    <option value="open" selected>Open</option>
-                                    <option value="mitigated">Mitigated</option>
-                                    <option value="accepted">Accepted</option>
+                                    <option value="open" @selected(old('status', $riskItemDefaults['status'] ?? 'open') === 'open')>Open</option>
+                                    <option value="mitigated" @selected(old('status', $riskItemDefaults['status'] ?? 'open') === 'mitigated')>Mitigated</option>
+                                    <option value="accepted" @selected(old('status', $riskItemDefaults['status'] ?? 'open') === 'accepted')>Accepted</option>
                                 </x-forms.select>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-12">
-                                <x-forms.input_text name="next_review_at" labelName="Next Review" type="date" />
+                                <x-forms.input_text name="next_review_at" labelName="Next Review" type="date" value="{{ old('next_review_at', $riskItemDefaults['next_review_at'] ?? null) }}" />
                             </div>
                         </div>
                     </div>

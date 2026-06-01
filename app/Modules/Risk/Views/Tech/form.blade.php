@@ -15,7 +15,7 @@
 
 @php
     $isEdit = $risk->exists;
-    $scope = old('scope', $risk->client_id ? 'client' : 'internal');
+    $scope = old('scope', $risk->client_id ? 'client' : ($risk->scope ?? ($riskSettings['default_assessment_scope'] ?? 'internal')));
 @endphp
 
 @section('title', $isEdit ? 'Edit Risk Assessment' : 'Risk Assessment')

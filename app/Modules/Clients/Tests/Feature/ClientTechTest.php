@@ -13,6 +13,7 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Clients\Controllers\Admin\ClientFormatSettingsController;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -66,6 +67,124 @@ class ClientTechTest extends TestCase
         $response->assertSee('—');
         $response->assertDontSee('Recent clients');
         $response->assertDontSee('Open</a>', false);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_list_clients_with_client_read_scope(): void
+    {
+        Client::factory()->create([
+            'name' => 'API Client AS',
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['clients.read']);
+
+        $this->getJson(route('api.v1.clients.index'))
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'API Client AS');
+    }
+
+    #[Test]
+    public function client_read_api_token_cannot_read_assets(): void
+    {
+        Sanctum::actingAs($this->techUser, ['clients.read']);
+
+        $this->getJson(route('api.v1.assets.index'))
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_create_client_with_default_site(): void
+    {
+        Sanctum::actingAs($this->techUser, ['clients.create']);
+
+        $this->postJson(route('api.v1.clients.store'), [
+            'name' => 'API Created Client AS',
+            'org_no' => '999888777',
+            'billing_email' => 'billing@api-client.test',
+            'site' => [
+                'name' => 'API Main Office',
+                'city' => 'Trondheim',
+                'country' => 'Norway',
+            ],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API Created Client AS')
+            ->assertJsonPath('data.sites.0.name', 'API Main Office')
+            ->assertJsonPath('data.sites.0.is_default', true);
+
+        $client = Client::query()->where('name', 'API Created Client AS')->firstOrFail();
+
+        $this->assertDatabaseHas('clients', [
+            'id' => $client->id,
+            'org_no' => '999888777',
+            'billing_email' => 'billing@api-client.test',
+        ]);
+        $this->assertDatabaseHas('client_sites', [
+            'client_id' => $client->id,
+            'name' => 'API Main Office',
+            'city' => 'Trondheim',
+            'is_default' => true,
+        ]);
+    }
+
+    #[Test]
+    public function client_read_api_token_cannot_create_clients(): void
+    {
+        Sanctum::actingAs($this->techUser, ['clients.read']);
+
+        $this->postJson(route('api.v1.clients.store'), [
+            'name' => 'Blocked Client AS',
+        ])->assertForbidden();
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_update_client_and_manage_sites(): void
+    {
+        $client = Client::factory()->create([
+            'name' => 'API Editable Client AS',
+            'billing_email' => 'old@example.test',
+        ]);
+        $oldDefaultSite = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Old Default',
+            'is_default' => true,
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['clients.read', 'clients.update']);
+
+        $this->patchJson(route('api.v1.clients.update', $client), [
+            'billing_email' => 'new@example.test',
+            'active' => false,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.billing_email', 'new@example.test')
+            ->assertJsonPath('data.active', false);
+
+        $this->postJson(route('api.v1.clients.sites.store', $client), [
+            'name' => 'New Default',
+            'city' => 'Oslo',
+            'is_default' => true,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'New Default')
+            ->assertJsonPath('data.is_default', true);
+
+        $newDefaultSite = ClientSite::query()->where('client_id', $client->id)->where('name', 'New Default')->firstOrFail();
+
+        $this->assertFalse((bool) $oldDefaultSite->refresh()->is_default);
+        $this->assertTrue((bool) $newDefaultSite->refresh()->is_default);
+
+        $this->patchJson(route('api.v1.client-sites.update', $newDefaultSite), [
+            'address' => 'Updated Street 1',
+            'zip' => '0150',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.address', 'Updated Street 1')
+            ->assertJsonPath('data.zip', '0150');
+
+        $this->getJson(route('api.v1.clients.sites.index', $client))
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'New Default');
     }
 
     #[Test]

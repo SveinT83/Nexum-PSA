@@ -97,6 +97,39 @@ The Role or title field suggests values that already exist on Contacts. The rela
 controlled values such as Contact, Primary contact, Technical contact, Billing contact, Site
 contact, Decision maker, Emergency contact, Manager, and CEO.
 
+## API Usage
+
+The Contact Domain exposes read and write API routes under `/api/v1/contacts`.
+
+`GET /api/v1/contacts` can be used for lookup before creating or updating records.
+
+Useful lookup filters:
+
+- `q`: broad search across name, organization, email, and phone.
+- `email`: exact email address lookup.
+- `phone`: normalized phone lookup.
+- `status`: status filter.
+
+Example:
+
+```text
+GET /api/v1/contacts?email=ola@example.test
+```
+
+`POST /api/v1/contacts` is the primary automation endpoint for n8n, AI agents, and other trusted
+integrations. It behaves as an upsert:
+
+- If the submitted email or normalized phone matches an existing Contact, that Contact is updated.
+- If no match exists, a new Contact is created.
+- If `client_id` is supplied and `site_id` is omitted, Nexum uses the Client's default Site when one
+  exists.
+- When a Site relation exists, the `client_users` compatibility bridge is created or updated.
+
+The upsert endpoint requires an API token with both `contacts.create` and `contacts.update`.
+
+`PATCH` and `PUT /api/v1/contacts/{contact}` update a known Contact by ID and require
+`contacts.update`.
+
 ## Migration Command
 
 The migration command is:

@@ -3,6 +3,7 @@
 namespace App\Modules\Asset\Tests\Feature;
 
 use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Models\Tech\Work\Assets\Asset;
@@ -225,11 +226,62 @@ class AssetModuleTest extends TestCase
             'status' => 'online',
         ]);
 
-        Sanctum::actingAs($this->tech);
+        Sanctum::actingAs($this->tech, ['assets.read']);
 
         $response = $this->getJson(route('api.v1.assets.index'));
 
         $response->assertOk();
         $response->assertJsonPath('data.0.name', 'API Server');
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_create_and_update_asset(): void
+    {
+        $client = Client::factory()->create();
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Asset Site']);
+
+        Sanctum::actingAs($this->tech, ['assets.create', 'assets.update']);
+
+        $this->postJson(route('api.v1.assets.store'), [
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'name' => 'API Created Laptop',
+            'type' => 'laptop',
+            'ip_type' => 'dhcp',
+            'status' => 'in_service',
+            'serial_number' => 'SN-API-001',
+            'hostname' => 'api-laptop',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API Created Laptop')
+            ->assertJsonPath('data.site_id', $site->id)
+            ->assertJsonPath('data.serial_number', 'SN-API-001');
+
+        $asset = Asset::query()->where('serial_number', 'SN-API-001')->firstOrFail();
+
+        $this->patchJson(route('api.v1.assets.update', $asset), [
+            'name' => 'API Updated Laptop',
+            'ip_address' => '10.0.0.25',
+            'is_managed' => true,
+            'metadata' => ['source_note' => 'n8n'],
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'API Updated Laptop')
+            ->assertJsonPath('data.ip_address', '10.0.0.25')
+            ->assertJsonPath('data.is_managed', true)
+            ->assertJsonPath('data.metadata.source_note', 'n8n');
+    }
+
+    #[Test]
+    public function asset_read_api_token_cannot_create_assets(): void
+    {
+        $client = Client::factory()->create();
+
+        Sanctum::actingAs($this->tech, ['assets.read']);
+
+        $this->postJson(route('api.v1.assets.store'), [
+            'client_id' => $client->id,
+            'name' => 'Blocked Asset',
+        ])->assertForbidden();
     }
 }

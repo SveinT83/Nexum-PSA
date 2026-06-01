@@ -35,6 +35,7 @@
                                 <thead>
                                     <tr>
                                         <th>Name</th>
+                                        <th>Scopes</th>
                                         <th>Last Used</th>
                                         <th>Created At</th>
                                         <th class="text-end">Actions</th>
@@ -45,6 +46,11 @@
                                         <tr>
                                             <td>
                                                 <strong>{{ $key->name }}</strong>
+                                            </td>
+                                            <td>
+                                                @foreach($key->abilities ?? [] as $ability)
+                                                    <span class="badge text-bg-light text-dark">{{ $abilityCatalog->labelFor($ability) }}</span>
+                                                @endforeach
                                             </td>
                                             <td>{{ $key->last_used_at ? $key->last_used_at->diffForHumans() : 'Never' }}</td>
                                             <td>{{ $key->created_at->format('Y-m-d H:i') }}</td>
@@ -60,7 +66,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="text-center py-4 text-muted">
+                                            <td colspan="5" class="text-center py-4 text-muted">
                                                 No API keys found. Create one to get started.
                                             </td>
                                         </tr>
@@ -92,10 +98,22 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Scopes (Coming Soon)</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" checked disabled>
-                                <label class="form-check-label text-muted">Full Access (Default)</label>
+                            <label class="form-label">Scopes</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="full_access" name="full_access" value="1">
+                                <label class="form-check-label" for="full_access">Full access</label>
+                            </div>
+
+                            <div class="border rounded p-2">
+                                @foreach($abilities as $ability => $details)
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="ability_{{ str_replace('.', '_', $ability) }}" name="abilities[]" value="{{ $ability }}" checked>
+                                        <label class="form-check-label" for="ability_{{ str_replace('.', '_', $ability) }}">
+                                            <span class="fw-semibold">{{ $details['label'] }}</span>
+                                            <span class="text-muted small d-block">{{ $details['description'] }}</span>
+                                        </label>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -119,7 +137,7 @@
                 <i class="bi bi-info-circle"></i> API keys provide full access to the system based on their permissions. Never share them.
             </p>
             <div class="alert alert-warning py-2 small mb-0">
-                <strong>Note:</strong> IP restrictions are currently being implemented.
+                API scopes are enforced by Sanctum token abilities on protected API routes.
             </div>
         </div>
     </div>

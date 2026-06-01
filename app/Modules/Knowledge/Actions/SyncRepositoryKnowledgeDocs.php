@@ -105,6 +105,7 @@ class SyncRepositoryKnowledgeDocs
     {
         return [
             'Asset' => $this->definition('assets', 'Assets', 180),
+            'Clients' => $this->definition('clients', 'Clients', 190),
             'Commercial' => $this->definition('commercial', 'Commercial', 700),
             'Contact' => $this->definition('contacts', 'Contacts', 200),
             'Economy' => $this->definition('economy', 'Economy', 800),
@@ -113,6 +114,7 @@ class SyncRepositoryKnowledgeDocs
             'Nextcloud' => $this->definition('nextcloud', 'Nextcloud', 870),
             'Notification' => $this->definition('notifications', 'Notifications', 880),
             'Report' => $this->definition('reports', 'Reports', 890),
+            'Risk' => $this->definition('risk', 'Risk', 550),
             'Storage' => $this->definition('storage', 'Storage', 600),
             'System' => $this->definition('system', 'System', 900),
             'Task' => $this->definition('tasks', 'Tasks', 500),
@@ -139,6 +141,7 @@ class SyncRepositoryKnowledgeDocs
     private function moduleDirectory(string $name): string
     {
         return match ($name) {
+            'Clients' => 'Clients',
             'User Management' => 'UserManagement',
             default => str_replace(' ', '', Str::singular($name)),
         };

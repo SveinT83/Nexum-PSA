@@ -13,6 +13,7 @@ use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Support\ContactSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -148,6 +149,221 @@ class ContactModuleTest extends TestCase
             ->assertSee('Ada Contact')
             ->assertSee('ada@example.test')
             ->assertSee('+4712345678');
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_list_contacts_with_contact_read_scope(): void
+    {
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'API Contact',
+            'job_title' => 'API Tester',
+        ]);
+        $contact->emails()->create([
+            'label' => 'work',
+            'email' => 'api.contact@example.test',
+            'is_primary' => true,
+        ]);
+        $contact->phones()->create([
+            'label' => 'mobile',
+            'phone' => '+4711223344',
+            'is_primary' => true,
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['contacts.read']);
+
+        $this->getJson(route('api.v1.contacts.index'))
+            ->assertOk()
+            ->assertJsonPath('data.0.display_name', 'API Contact')
+            ->assertJsonPath('data.0.primary_email', 'api.contact@example.test')
+            ->assertJsonPath('data.0.primary_phone', '+4711223344');
+
+        $this->getJson(route('api.v1.contacts.show', $contact))
+            ->assertOk()
+            ->assertJsonPath('data.display_name', 'API Contact')
+            ->assertJsonPath('data.emails.0.email', 'api.contact@example.test');
+    }
+
+    #[Test]
+    public function asset_read_api_token_cannot_read_contacts(): void
+    {
+        Sanctum::actingAs($this->techUser, ['assets.read']);
+
+        $this->getJson(route('api.v1.contacts.index'))
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_find_contact_by_exact_email_or_phone(): void
+    {
+        $match = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Lookup Contact',
+        ]);
+        $match->emails()->create([
+            'label' => 'work',
+            'email' => 'lookup@example.test',
+            'is_primary' => true,
+        ]);
+        $match->phones()->create([
+            'label' => 'mobile',
+            'phone' => '+47 99 88 77 66',
+            'is_primary' => true,
+        ]);
+
+        Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Other Lookup Contact',
+        ])->emails()->create([
+            'label' => 'work',
+            'email' => 'other.lookup@example.test',
+            'is_primary' => true,
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['contacts.read']);
+
+        $this->getJson(route('api.v1.contacts.index', ['email' => 'lookup@example.test']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $match->id);
+
+        $this->getJson(route('api.v1.contacts.index', ['phone' => '004799887766']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $match->id);
+    }
+
+    #[Test]
+    public function api_user_can_upsert_contact_and_link_client_context(): void
+    {
+        $client = Client::factory()->create(['name' => 'API Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'API Default Site', 'is_default' => true]);
+
+        Sanctum::actingAs($this->techUser, ['contacts.create', 'contacts.update']);
+
+        $this->postJson(route('api.v1.contacts.store'), [
+            'display_name' => 'N8N Contact',
+            'organization_name' => 'API Client',
+            'job_title' => 'Operations',
+            'email' => 'n8n.contact@example.test',
+            'phone' => '+47 11 22 33 44',
+            'client_id' => $client->id,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.display_name', 'N8N Contact')
+            ->assertJsonPath('data.primary_email', 'n8n.contact@example.test')
+            ->assertJsonPath('meta.created', true);
+
+        $contact = Contact::query()->where('display_name', 'N8N Contact')->firstOrFail();
+
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+            'relation_type' => 'contact',
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $site->getMorphClass(),
+            'related_id' => $site->id,
+            'relation_type' => 'contact',
+        ]);
+        $this->assertDatabaseHas('client_users', [
+            'contact_id' => $contact->id,
+            'client_site_id' => $site->id,
+            'email' => 'n8n.contact@example.test',
+        ]);
+
+        $this->postJson(route('api.v1.contacts.store'), [
+            'display_name' => 'N8N Contact Updated',
+            'organization_name' => 'API Client',
+            'job_title' => 'Service Desk',
+            'email' => 'n8n.contact@example.test',
+            'phone' => '+47 22 33 44 55',
+            'client_id' => $client->id,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.id', $contact->id)
+            ->assertJsonPath('data.display_name', 'N8N Contact Updated')
+            ->assertJsonPath('data.primary_phone', '+47 22 33 44 55')
+            ->assertJsonPath('meta.upserted', true);
+
+        $this->assertSame(1, Contact::query()->whereHas('emails', fn ($query) => $query->where('email', 'n8n.contact@example.test'))->count());
+    }
+
+    #[Test]
+    public function contact_read_api_token_cannot_create_contacts(): void
+    {
+        Sanctum::actingAs($this->techUser, ['contacts.read']);
+
+        $this->postJson(route('api.v1.contacts.store'), [
+            'display_name' => 'Blocked API Contact',
+            'email' => 'blocked@example.test',
+        ])->assertForbidden();
+    }
+
+    #[Test]
+    public function api_user_can_update_contact_and_change_client_context(): void
+    {
+        $oldClient = Client::factory()->create(['name' => 'Old Client']);
+        $oldSite = ClientSite::factory()->create(['client_id' => $oldClient->id, 'name' => 'Old Site']);
+        $newClient = Client::factory()->create(['name' => 'New Client']);
+        $newSite = ClientSite::factory()->create(['client_id' => $newClient->id, 'name' => 'New Site']);
+
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Patch Contact',
+        ]);
+        $contact->emails()->create([
+            'label' => 'work',
+            'email' => 'patch@example.test',
+            'is_primary' => true,
+        ]);
+        $contact->relations()->create([
+            'related_type' => $oldClient->getMorphClass(),
+            'related_id' => $oldClient->id,
+            'relation_type' => 'contact',
+            'is_primary' => true,
+        ]);
+        $contact->relations()->create([
+            'related_type' => $oldSite->getMorphClass(),
+            'related_id' => $oldSite->id,
+            'relation_type' => 'contact',
+            'is_primary' => true,
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['contacts.update']);
+
+        $this->patchJson(route('api.v1.contacts.update', $contact), [
+            'display_name' => 'Patch Contact Updated',
+            'client_id' => $newClient->id,
+            'site_id' => $newSite->id,
+            'relation_type' => 'technical_contact',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.display_name', 'Patch Contact Updated');
+
+        $this->assertDatabaseMissing('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $oldClient->getMorphClass(),
+            'related_id' => $oldClient->id,
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $newClient->getMorphClass(),
+            'related_id' => $newClient->id,
+            'relation_type' => 'technical_contact',
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $newSite->getMorphClass(),
+            'related_id' => $newSite->id,
+            'relation_type' => 'technical_contact',
+        ]);
     }
 
     #[Test]

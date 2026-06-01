@@ -6,6 +6,7 @@ use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Asset\Support\AssetSettings;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Validates and creates manually registered assets.
@@ -38,6 +39,26 @@ class StoreAsset
             'status' => ['nullable', Rule::in($settings->statusValues($request->string('status')->toString()))],
         ]);
 
+        $this->ensureSiteBelongsToClient($validated);
+
         return Asset::create($validated);
+    }
+
+    private function ensureSiteBelongsToClient(array $data): void
+    {
+        if (empty($data['site_id'])) {
+            return;
+        }
+
+        $siteBelongsToClient = \App\Models\Clients\ClientSite::query()
+            ->whereKey($data['site_id'])
+            ->where('client_id', $data['client_id'])
+            ->exists();
+
+        if (! $siteBelongsToClient) {
+            throw ValidationException::withMessages([
+                'site_id' => 'The selected site does not belong to the selected client.',
+            ]);
+        }
     }
 }

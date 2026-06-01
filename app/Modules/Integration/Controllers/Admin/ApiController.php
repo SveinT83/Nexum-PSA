@@ -3,6 +3,7 @@
 namespace App\Modules\Integration\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Integration\Support\ApiAbilityCatalog;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\PersonalAccessToken;
 use L5Swagger\ConfigFactory;
@@ -13,14 +14,15 @@ class ApiController extends Controller
     /**
      * Display the API management dashboard.
      */
-    public function index()
+    public function index(ApiAbilityCatalog $abilityCatalog)
     {
-        // For now, we fetch Sanctum tokens.
-        // In a more advanced implementation, we might want to filter or use a custom model
-        // if we add IP restrictions and more metadata as per api_management.md
         $apiKeys = PersonalAccessToken::all();
 
-        return view('integration::Tech.Admin.System.Integrations.api.index', compact('apiKeys'));
+        return view('integration::Tech.Admin.System.Integrations.api.index', [
+            'apiKeys' => $apiKeys,
+            'abilityCatalog' => $abilityCatalog,
+            'abilities' => $abilityCatalog->all(),
+        ]);
     }
 
     /**
@@ -52,16 +54,21 @@ class ApiController extends Controller
     /**
      * Create a new API Key (Sanctum Token).
      */
-    public function store(Request $request)
+    public function store(Request $request, ApiAbilityCatalog $abilityCatalog)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            // Scopes and other fields from api_management.md will be added here
+            'abilities' => 'nullable|array',
+            'abilities.*' => 'string|in:'.implode(',', $abilityCatalog->values()),
+            'full_access' => 'nullable|boolean',
         ]);
 
-        // Mocking user for token creation - ideally this should be a system user or the current admin
         $user = auth()->user();
-        $token = $user->createToken($request->name);
+        $abilities = $abilityCatalog->normalize(
+            (array) $request->input('abilities', []),
+            $request->boolean('full_access'),
+        );
+        $token = $user->createToken($request->name, $abilities);
 
         return back()->with('success', 'API Key created: ' . $token->plainTextToken . '. Please save it now, as it will not be shown again.');
     }
