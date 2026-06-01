@@ -44,7 +44,7 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Knowledge Settings Slice | Done | Codex | Knowledge now owns manual article defaults for visibility, status, review, and priority. |
 | Risk Settings Slice | Done | Codex | Risk now owns defaults for assessments, item scoring, item status, and review interval. |
 | Missing Settings Ownership RFC | Done | Codex | RFC approved; Asset, Contact, Task, Warroom, Knowledge, and Risk settings slices completed. |
-| Domain API Foundation | In Progress | Codex | Scoped Sanctum API keys now enforce Client read/create/update, Client Site management, Asset read/create/update, and Contact read/create/update upsert scopes. |
+| Domain API Foundation | In Progress | Codex | Scoped Sanctum API keys now enforce Client/Site, Asset, Contact, Ticket, and Task read/create/update scopes. |
 | Report Builder And Scheduled Client Reporting | Post-Beta |  | Version 2 item. Build custom report builder, saved report templates, and automatic client report delivery. |
 | Email Branding And HTML Template Editor | Post-Beta |  | Version 1 item. Email templates need branding variables, shared HTML wrapper, editor, and live preview. |
 | Storage Barcode Scanning | Post-Beta |  | Version 1 item. Storage must support barcode scanners from PC and mobile workflows. |
@@ -290,6 +290,8 @@ Initial scope:
 - Add Client create/update API and Client Site management API.
 - Add Asset create/update API with Client/Site validation.
 - Enforce Contact read/create/update abilities and expose Contact upsert for automation.
+- Add Ticket read/create/update API through the ticket engine.
+- Add Task read/create/update API through task defaults and activity tracking.
 - Document current API routes and follow-up domain slices.
 
 - Create an RFC before implementation.

@@ -24,6 +24,12 @@ Implemented scopes:
 - `contacts.read`: list and view contacts.
 - `contacts.create`: create contacts through the Contact upsert endpoint.
 - `contacts.update`: update contacts, including client and site relations.
+- `tickets.read`: list and view tickets.
+- `tickets.create`: create tickets through the ticket engine.
+- `tickets.update`: update ticket fields and status.
+- `tasks.read`: list and view tasks.
+- `tasks.create`: create tasks.
+- `tasks.update`: update task fields and status.
 
 Full access can be selected by an admin when a trusted integration needs every implemented API scope.
 
@@ -53,6 +59,16 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/contacts`
 - `PUT /api/v1/contacts/{contact}`
 - `PATCH /api/v1/contacts/{contact}`
+- `GET /api/v1/tickets`
+- `GET /api/v1/tickets/{ticket}`
+- `POST /api/v1/tickets`
+- `PUT /api/v1/tickets/{ticket}`
+- `PATCH /api/v1/tickets/{ticket}`
+- `GET /api/v1/tasks`
+- `GET /api/v1/tasks/{task}`
+- `POST /api/v1/tasks`
+- `PUT /api/v1/tasks/{task}`
+- `PATCH /api/v1/tasks/{task}`
 
 ## Contact Write API
 
@@ -81,6 +97,62 @@ ticket and client workflows continue to work while the Contact Domain transition
 
 `PUT` and `PATCH /api/v1/contacts/{contact}` update a known Contact by ID and require
 `contacts.update`.
+
+## Ticket API
+
+Ticket API routes use the same ticket engine as the Tech UI.
+
+`POST /api/v1/tickets` creates tickets through `StoreTicket`, so ticket defaults, ticket rules, SLA
+resolution, assignment, initial events, and description messages are applied.
+
+`PUT` and `PATCH /api/v1/tickets/{ticket}` update fields through `UpdateTicketFields` and change
+status through `ChangeTicketStatus`. Workflow and action guards are still enforced.
+
+Common create fields:
+
+- `subject`
+- `description`
+- `client_id`
+- `site_id`
+- `contact_id`
+- `asset_id`
+- `owner_id`
+- `queue_id`
+- `priority_id`
+- `ticket_type_id`
+- `impact`
+- `urgency`
+
+The `{ticket}` route parameter is the public ticket key, for example `TD-2026-000001`.
+
+## Task API
+
+Task API routes expose the core task workflow for trusted automation and future AI agents.
+
+`POST /api/v1/tasks` creates tasks through `StoreTask`, so task defaults, owner context, checklist
+items, and creation activity are handled consistently with the Tech UI.
+
+Supported owner context:
+
+- `owner_type: client` with `owner_id`.
+- `owner_type: ticket` with `owner_id`.
+
+Common create fields:
+
+- `title`
+- `description`
+- `owner_type`
+- `owner_id`
+- `client_id`
+- `site_id`
+- `assigned_to`
+- `status_id`
+- `queue_id`
+- `priority_id`
+- `due_at`
+- `estimated_minutes`
+
+`PUT` and `PATCH /api/v1/tasks/{task}` update task fields and create an API update activity.
 
 The API foundation is intentionally incremental. Each domain must own its API controllers, resources,
 route registration, validation, and tests.

@@ -53,6 +53,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -137,6 +138,78 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'resolved', 'state' => 'resolved']);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'closed', 'is_closed' => true]);
         $this->assertDatabaseHas('ticket_priorities', ['slug' => 'normal', 'is_default' => true]);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_create_list_show_and_update_tickets(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $client = Client::factory()->create(['name' => 'API Ticket Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'API Ticket Site']);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id, 'name' => 'API Ticket Contact']);
+        $asset = Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'name' => 'API Ticket Asset',
+            'type' => 'laptop',
+            'ip_type' => 'dhcp',
+            'status' => 'online',
+        ]);
+        $inProgress = TicketStatus::query()->where('slug', 'in-progress')->firstOrFail();
+
+        Sanctum::actingAs($this->tech, ['tickets.read', 'tickets.create', 'tickets.update']);
+
+        $this->postJson(route('api.v1.tickets.store'), [
+            'subject' => 'API Created Ticket',
+            'description' => 'Created from API test.',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'asset_id' => $asset->id,
+            'priority_id' => $defaults['priority']->id,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.subject', 'API Created Ticket')
+            ->assertJsonPath('data.client_id', $client->id)
+            ->assertJsonPath('data.site_id', $site->id)
+            ->assertJsonPath('data.asset_id', $asset->id);
+
+        $ticket = Ticket::query()->where('subject', 'API Created Ticket')->firstOrFail();
+
+        $this->getJson(route('api.v1.tickets.index', ['q' => $ticket->ticket_key]))
+            ->assertOk()
+            ->assertJsonPath('data.0.ticket_key', $ticket->ticket_key);
+
+        $this->getJson(route('api.v1.tickets.show', $ticket))
+            ->assertOk()
+            ->assertJsonPath('data.ticket_key', $ticket->ticket_key);
+
+        $this->patchJson(route('api.v1.tickets.update', $ticket), [
+            'subject' => 'API Updated Ticket',
+            'status_id' => $inProgress->id,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.subject', 'API Updated Ticket')
+            ->assertJsonPath('data.status_id', $inProgress->id);
+
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'fields_updated',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'status_changed',
+        ]);
+    }
+
+    #[Test]
+    public function ticket_read_api_token_cannot_create_tickets(): void
+    {
+        Sanctum::actingAs($this->tech, ['tickets.read']);
+
+        $this->postJson(route('api.v1.tickets.store'), [
+            'subject' => 'Blocked API Ticket',
+        ])->assertForbidden();
     }
 
     #[Test]

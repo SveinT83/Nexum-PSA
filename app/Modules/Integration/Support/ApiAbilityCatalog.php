@@ -52,6 +52,36 @@ class ApiAbilityCatalog
             'description' => 'Update contacts, including client and site relations.',
             'domain' => 'Contacts',
         ],
+        'tickets.read' => [
+            'label' => 'Read tickets',
+            'description' => 'List and view ticket records.',
+            'domain' => 'Tickets',
+        ],
+        'tickets.create' => [
+            'label' => 'Create tickets',
+            'description' => 'Create tickets through the ticket engine.',
+            'domain' => 'Tickets',
+        ],
+        'tickets.update' => [
+            'label' => 'Update tickets',
+            'description' => 'Update ticket fields and status.',
+            'domain' => 'Tickets',
+        ],
+        'tasks.read' => [
+            'label' => 'Read tasks',
+            'description' => 'List and view task records.',
+            'domain' => 'Tasks',
+        ],
+        'tasks.create' => [
+            'label' => 'Create tasks',
+            'description' => 'Create task records.',
+            'domain' => 'Tasks',
+        ],
+        'tasks.update' => [
+            'label' => 'Update tasks',
+            'description' => 'Update task fields and status.',
+            'domain' => 'Tasks',
+        ],
     ];
 
     public function all(): array
