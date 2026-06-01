@@ -5,7 +5,7 @@ namespace App\Modules\UserManagement\Tests\Feature;
 use App\Models\Core\User;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
-use App\Modules\Ticket\Models\TicketTechnicianProfile;
+use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\UserManagement\Models\UserProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -82,6 +82,9 @@ class UserManagementAdminTest extends TestCase
                 'phone_work' => '+47 73500000',
                 'phone_private' => '+47 40000000',
                 'timezone' => 'Europe/Oslo',
+                'working_hours' => [
+                    'monday' => ['enabled' => '1', 'start' => '09:00', 'end' => '17:00'],
+                ],
                 'availability_notes' => 'Available after 09:00.',
                 'profile_notes' => 'Admin-maintained profile note.',
             ])
@@ -99,6 +102,7 @@ class UserManagementAdminTest extends TestCase
         $this->assertSame('+47 73500000', $profile->work_phone);
         $this->assertSame('+47 40000000', $profile->private_phone);
         $this->assertSame('Europe/Oslo', $profile->timezone);
+        $this->assertSame('09:00', $profile->working_hours['monday']['start']);
         $this->assertSame('Available after 09:00.', $profile->availability_notes);
         $this->assertSame('Admin-maintained profile note.', $profile->profile_notes);
     }
@@ -121,12 +125,10 @@ class UserManagementAdminTest extends TestCase
             'name' => 'Skilled Technician',
             'status' => User::STATUS_ACTIVE,
         ]);
-        $profile = TicketTechnicianProfile::create([
+        $profile = TicketAssignmentSetting::create([
             'user_id' => $user->id,
             'is_assignable' => true,
             'max_open_tickets' => 7,
-            'timezone' => 'Europe/Oslo',
-            'working_hours' => [],
         ]);
         $profile->categories()->attach($category->id);
         $profile->tags()->attach($tag->id);
@@ -134,7 +136,7 @@ class UserManagementAdminTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('tech.admin.user_management.show', $user))
             ->assertOk()
-            ->assertSee('Ticket Technician Profile')
+            ->assertSee('Ticket Assignment Settings')
             ->assertSee('Network')
             ->assertSee('Fiber')
             ->assertSee(route('tech.admin.settings.tickets.technicians.edit', $profile), false);

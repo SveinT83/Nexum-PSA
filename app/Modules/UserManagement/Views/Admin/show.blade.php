@@ -103,6 +103,26 @@
                     <label for="timezone" class="form-label">Timezone</label>
                     <input id="timezone" name="timezone" class="form-control" value="{{ old('timezone', $profile->timezone) }}" required>
                 </div>
+                <div class="col-12">
+                    <div class="form-label">Working hours</div>
+                    <div class="row g-2">
+                        @foreach(($profile->working_hours ?? []) as $day => $hours)
+                            <div class="col-md-6 col-xl-4">
+                                <div class="border rounded p-2 h-100">
+                                    <input type="hidden" name="working_hours[{{ $day }}][enabled]" value="0">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="admin_working_{{ $day }}" name="working_hours[{{ $day }}][enabled]" value="1" @checked(old("working_hours.$day.enabled", $hours['enabled'] ?? false))>
+                                        <label class="form-check-label text-capitalize" for="admin_working_{{ $day }}">{{ $day }}</label>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <input name="working_hours[{{ $day }}][start]" type="time" class="form-control form-control-sm" value="{{ old("working_hours.$day.start", $hours['start'] ?? '08:00') }}">
+                                        <input name="working_hours[{{ $day }}][end]" type="time" class="form-control form-control-sm" value="{{ old("working_hours.$day.end", $hours['end'] ?? '16:00') }}">
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
                 <div class="col-md-6">
                     <label for="availability_notes" class="form-label">Availability notes</label>
                     <textarea id="availability_notes" name="availability_notes" class="form-control" rows="3">{{ old('availability_notes', $profile->availability_notes) }}</textarea>
@@ -116,41 +136,37 @@
     </form>
 
     <!-- -------------------------------------------------------------------------------------------------- -->
-    <!-- Section: Ticket technician profile -->
+    <!-- Section: Ticket assignment settings -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     <div class="card mb-3">
         <div class="card-header d-flex align-items-center justify-content-between gap-3">
-            <h2 class="h6 mb-0">Ticket Technician Profile</h2>
-            @if($technicianProfile)
-                <a href="{{ route('tech.admin.settings.tickets.technicians.edit', $technicianProfile) }}" class="btn btn-sm btn-outline-primary">
+            <h2 class="h6 mb-0">Ticket Assignment Settings</h2>
+            @if($assignmentSetting)
+                <a href="{{ route('tech.admin.settings.tickets.technicians.edit', $assignmentSetting) }}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-pencil" aria-hidden="true"></i>
-                    Edit skills
+                    Edit settings
                 </a>
             @endif
         </div>
         <div class="card-body">
-            @if($technicianProfile)
+            @if($assignmentSetting)
                 <div class="row g-3">
                     <div class="col-md-3">
                         <div class="small text-muted text-uppercase">Assignable</div>
-                        <div class="fw-semibold">{{ $technicianProfile->is_assignable ? 'Yes' : 'No' }}</div>
+                        <div class="fw-semibold">{{ $assignmentSetting->is_assignable ? 'Yes' : 'No' }}</div>
                     </div>
                     <div class="col-md-3">
                         <div class="small text-muted text-uppercase">Capacity</div>
-                        <div class="fw-semibold">{{ $openTicketCount }} / {{ $technicianProfile->max_open_tickets }}</div>
+                        <div class="fw-semibold">{{ $openTicketCount }} / {{ $assignmentSetting->max_open_tickets }}</div>
                     </div>
                     <div class="col-md-3">
-                        <div class="small text-muted text-uppercase">Timezone</div>
-                        <div class="fw-semibold">{{ $technicianProfile->timezone }}</div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="small text-muted text-uppercase">Skill Count</div>
-                        <div class="fw-semibold">{{ $technicianProfile->categories->count() + $technicianProfile->tags->count() }}</div>
+                        <div class="small text-muted text-uppercase">Matching Signals</div>
+                        <div class="fw-semibold">{{ $assignmentSetting->categories->count() + $assignmentSetting->tags->count() }}</div>
                     </div>
                     <div class="col-12">
-                        <div class="small text-muted text-uppercase mb-1">Skills</div>
+                        <div class="small text-muted text-uppercase mb-1">Ticket matching</div>
                         @php
-                            $skills = $technicianProfile->categories->pluck('name')->merge($technicianProfile->tags->pluck('name'));
+                            $skills = $assignmentSetting->categories->pluck('name')->merge($assignmentSetting->tags->pluck('name'));
                         @endphp
                         @forelse($skills as $skill)
                             <span class="badge text-bg-light border me-1 mb-1">{{ $skill }}</span>
@@ -163,14 +179,14 @@
                 <form method="POST" action="{{ route('tech.admin.settings.tickets.technicians.store') }}" class="d-flex flex-wrap align-items-center gap-2">
                     @csrf
                     <input type="hidden" name="user_id" value="{{ $user->id }}">
-                    <span class="text-muted">This active user does not have a ticket technician profile yet.</span>
+                    <span class="text-muted">This active user does not have ticket assignment settings yet.</span>
                     <button type="submit" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-person-gear" aria-hidden="true"></i>
-                        Create technician profile
+                        Create assignment settings
                     </button>
                 </form>
             @else
-                <div class="text-muted small">Activate the user before creating a ticket technician profile.</div>
+                <div class="text-muted small">Activate the user before creating ticket assignment settings.</div>
             @endif
         </div>
     </div>

@@ -110,9 +110,8 @@ Current fields include:
 - Availability notes.
 - Profile notes.
 
-The Ticket module may still own temporary assignment data, such as ticket assignability, ticket
-capacity, ticket category skills, ticket tags, and working hours, until the migration slices move
-shared technician profile data to the canonical profile model.
+The Ticket module owns only assignment-specific data, such as ticket assignability, ticket capacity,
+ticket category matching, ticket tag matching, and ticket assignment notes.
 
 Do not add new general technician profile features to Ticket. Add them to User Management unless
 the feature is strictly ticket-assignment-specific.
@@ -125,7 +124,8 @@ php artisan user-profiles:backfill
 ```
 
 The backfill command is idempotent. It creates missing `user_profiles` rows and copies existing
-phone fields plus timezone, work hours, and notes from `ticket_technician_profiles` when available.
+phone fields plus timezone, work hours, and notes from legacy `ticket_technician_profiles` when
+that table is still present.
 
 ## Livewire
 

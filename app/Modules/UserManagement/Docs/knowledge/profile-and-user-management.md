@@ -14,7 +14,7 @@ Technicians open their own profile from:
 ```
 
 The main user menu should expose one Profile entry. Individual links for Preferences, Security,
-Notifications, or Ticket Technician Profile should not be duplicated in the main menu.
+Notifications, or Ticket Assignment Settings should not be duplicated in the main menu.
 
 The profile workspace uses a shared side menu with these sections:
 
@@ -33,10 +33,9 @@ the unified profile shell.
 
 User Management is the canonical owner for user and technician profile structure.
 
-The Ticket module currently stores ticket assignment profile data, including assignability, capacity,
-working hours, ticket category skills, ticket tags, and notes. This is a transitional state. Ticket
-may keep ticket-assignment-specific settings, but shared technician profile data should move to User
-Management through approved feature slices.
+The Ticket module stores ticket assignment settings, including assignability, capacity, ticket
+category matching, ticket tag matching, and assignment notes. User Management owns timezone, work
+hours, availability, and general profile notes.
 
 ## Data Migration
 
@@ -50,11 +49,12 @@ php artisan user-profiles:backfill
 ```
 
 The migration creates the `user_profiles` table and performs an initial backfill. The command is
-safe to run again after deploy. It repairs missing profile rows and copies existing phone fields,
-timezone, working hours, and notes from the legacy Ticket technician profile where available.
+safe to run again after deploy. It repairs missing profile rows and copies existing phone fields.
+When legacy Ticket technician profile tables are still present, it can also copy timezone, working
+hours, and notes from those legacy rows.
 
-Ticket profile updates currently mirror timezone, working hours, and notes back to `user_profiles`
-so data stays consistent during the transition period.
+The legacy `ticket_technician_profiles` tables are migrated into explicit Ticket Assignment
+Settings and then dropped by the cleanup migration.
 
 ## Current Profile Pages
 
@@ -64,7 +64,7 @@ so data stays consistent during the transition period.
 - `/tech/profile/preferences` manages timezone, default calendar view, and normal workday defaults.
 - `/tech/profile/security` manages password and two-factor authentication.
 - `/tech/profile/notifications` manages notification delivery preferences.
-- `/tech/tickets/profile` manages temporary ticket assignment profile settings.
+- `/tech/tickets/profile` manages ticket assignment settings.
 - `/tech/profile/integrations` is reserved for personal integration settings.
 - `/tech/profile/view` is reserved for personal display preferences after branding is implemented.
 

@@ -1,21 +1,21 @@
 @extends('layouts.default_tech')
 
-@section('title', 'Ticket Technician Profile')
+@section('title', 'Ticket Assignment Settings')
 
 @section('sidebar')
     @include('usermanagement::profile.partials.sidebar')
 @endsection
 
-<!-- Page header: technicians maintain their own assignment profile from the Ticket module. -->
+<!-- Page header: technicians maintain ticket-specific assignment settings from the Ticket module. -->
 @section('pageHeader')
-    <h1>Ticket Technician Profile</h1>
+    <h1>Ticket Assignment Settings</h1>
 @endsection
 
 @section('content')
-    @include('ticket::Shared.TechnicianProfiles.form', [
+    @include('ticket::Shared.TicketAssignmentSettings.form', [
         'action' => route('tech.tickets.profile.update'),
         'method' => 'PATCH',
-        'submitLabel' => 'Save profile',
+        'submitLabel' => 'Save settings',
         'showUser' => false,
     ])
 @endsection
@@ -23,7 +23,8 @@
 @section('rightbar')
     <x-card.default title="Assignment note">
         <p class="small text-muted mb-0">
-            These skills and hours will be used by future ticket assignment scoring. Admins can still override profiles from Ticket Settings.
+            These ticket-specific capacity and matching settings are used by assignment scoring.
+            Work hours and timezone are managed from the main profile.
         </p>
     </x-card.default>
 @endsection

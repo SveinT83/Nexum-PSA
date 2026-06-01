@@ -87,8 +87,9 @@
         [
             'title' => 'System',
             'icon' => 'bi-sliders',
-            'description' => 'Shared taxonomy, background workers, and platform settings.',
+            'description' => 'Company profile, shared taxonomy, background workers, and platform settings.',
             'links' => [
+                ['label' => 'Company profile', 'route' => route('tech.admin.system.company-profile.edit')],
                 ['label' => 'Categories', 'route' => route('tech.admin.system.category.index')],
                 ['label' => 'Tags', 'route' => route('tech.admin.system.tag.index')],
                 ['label' => 'Queues and workers', 'route' => route('tech.admin.system.queues-workers.index')],

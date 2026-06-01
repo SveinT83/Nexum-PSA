@@ -91,10 +91,8 @@ Implemented 2026-05-31.
 - `/tech/profile` now saves account/profile fields into `user_profiles` while keeping user fields in
   sync for compatibility.
 - Admin User Management profile updates the canonical profile row.
-- Existing Ticket technician profile updates mirror timezone, working hours, and notes into
-  `user_profiles` during the transition.
-- Ticket assignment scoring reads UserManagement profile work hours/timezone first, with fallback to
-  the existing Ticket technician profile.
+- Ticket Assignment Settings no longer owns timezone or work hours.
+- Ticket assignment scoring reads UserManagement profile work hours/timezone.
 
 Validated with:
 

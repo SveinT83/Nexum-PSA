@@ -8,7 +8,7 @@ The Ticket domain is module-owned and lives under `app/Modules/Ticket`. Routes a
 
 Technicians work from the Ticket list, open a ticket, read activity, reply to customers, add internal notes, register time, reserve stock items, change workflow state, update assignment, and close the ticket when resolution requirements are met.
 
-Administrators configure the ticket system from Ticket Settings. The current settings area controls queues, types, statuses, priorities, ticket rules, workflows, assignment rules, technician profiles, outbound email account selection, and merge behavior.
+Administrators configure the ticket system from Ticket Settings. The current settings area controls queues, types, statuses, priorities, ticket rules, workflows, assignment rules, ticket assignment settings, outbound email account selection, and merge behavior.
 
 Inbound email can create new tickets or link messages to existing tickets. Ticket Rules and Assignment Rules then classify, route, and assign the work.
 
@@ -32,7 +32,7 @@ Urgency signal used by technicians, sorting, SLA risk visibility, and Ticket Rul
 
 Category:
 
-Shared Taxonomy category used to classify the ticket. Categories are also used by assignment scoring and technician skills.
+Shared Taxonomy category used to classify the ticket. Categories are also used by assignment scoring and ticket assignment matching.
 
 Tags:
 
@@ -48,7 +48,7 @@ Service policy applied to the ticket. SLA can come from a Ticket Rule, active co
 
 Assignment:
 
-Ownership can be set explicitly by assignment rules or scored from technician profile skills, capacity, and availability.
+Ownership can be set explicitly by assignment rules or scored from ticket assignment settings plus User Management profile availability.
 
 Activity:
 
@@ -72,7 +72,7 @@ The main `tickets` table stores:
 - Merge metadata.
 - Metadata JSON.
 
-Related tables store messages, attachments, events, time entries, cost entries, assignment rules, technician profiles, rules, workflow configuration, merge suggestion dismissals, and time allocation records.
+Related tables store messages, attachments, events, time entries, cost entries, assignment rules, ticket assignment settings, rules, workflow configuration, merge suggestion dismissals, and time allocation records.
 
 ## User-Facing Surfaces
 
@@ -90,7 +90,7 @@ Create and edit forms handle manual ticket creation, client/contact/site/asset s
 
 Ticket settings:
 
-Admin surface for queues, types, statuses, priorities, rules, workflows, assignment rules, technician profiles, email defaults, and merge settings.
+Admin surface for queues, types, statuses, priorities, rules, workflows, assignment rules, ticket assignment settings, email defaults, and merge settings.
 
 ## Important Design Rules
 

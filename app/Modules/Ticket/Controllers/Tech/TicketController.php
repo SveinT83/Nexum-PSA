@@ -659,7 +659,7 @@ class TicketController extends Controller
 
         if (! $ownerId) {
             return redirect()->route('tech.tickets.show', $ticket->refresh())
-                ->withErrors(['assignment' => 'No matching assignment rule or available technician profile was found.']);
+                ->withErrors(['assignment' => 'No matching assignment rule or available ticket assignment setting was found.']);
         }
 
         $message = $previousOwnerId === $ownerId

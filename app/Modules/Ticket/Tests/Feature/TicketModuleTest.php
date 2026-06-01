@@ -29,6 +29,7 @@ use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
+use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\Ticket\Models\TicketAssignmentRule;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketMergeSuggestionDismissal;
@@ -36,7 +37,6 @@ use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketRule;
 use App\Modules\Ticket\Models\TicketStatus;
-use App\Modules\Ticket\Models\TicketTechnicianProfile;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
@@ -99,8 +99,8 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketSettingsController::class . '@updateMergeSettings', Route::getRoutes()->getByName('tech.admin.settings.tickets.merge-settings.update')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storePriority', Route::getRoutes()->getByName('tech.admin.settings.tickets.priorities.store')->getActionName());
-        $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TechnicianProfileController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
-        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\TechnicianProfileAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.technicians')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\TicketAssignmentSettingsAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.technicians')->getActionName());
         $this->assertSame(\App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.assignment-rules')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@workflows', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@createWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.create')->getActionName());
@@ -2628,38 +2628,25 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.profile.edit'))
             ->assertOk()
-            ->assertViewIs('ticket::Tech.TechnicianProfile.edit')
-            ->assertSee('Ticket Technician Profile');
+            ->assertViewIs('ticket::Tech.TicketAssignmentSettings.edit')
+            ->assertSee('Ticket Assignment Settings');
 
         $this->actingAs($this->tech)
             ->patch(route('tech.tickets.profile.update'), [
                 'is_assignable' => '1',
                 'max_open_tickets' => 7,
-                'timezone' => 'Europe/Oslo',
-                'working_hours' => [
-                    'monday' => ['enabled' => '1', 'start' => '09:00', 'end' => '17:00'],
-                    'tuesday' => ['enabled' => '0', 'start' => '08:00', 'end' => '16:00'],
-                ],
                 'category_ids' => [$category->id],
                 'tag_ids' => [$tag->id],
                 'notes' => 'Prefers firewall tickets.',
             ])
             ->assertRedirect();
 
-        $profile = TicketTechnicianProfile::where('user_id', $this->tech->id)->firstOrFail();
+        $profile = TicketAssignmentSetting::where('user_id', $this->tech->id)->firstOrFail();
 
         $this->assertTrue($profile->is_assignable);
         $this->assertSame(7, $profile->max_open_tickets);
-        $this->assertSame('Europe/Oslo', $profile->timezone);
-        $this->assertSame('09:00', $profile->working_hours['monday']['start']);
-        $this->assertFalse($profile->working_hours['tuesday']['enabled']);
         $this->assertTrue($profile->categories()->whereKey($category->id)->exists());
         $this->assertTrue($profile->tags()->whereKey($tag->id)->exists());
-
-        $userProfile = UserProfile::where('user_id', $this->tech->id)->firstOrFail();
-        $this->assertSame('Europe/Oslo', $userProfile->timezone);
-        $this->assertSame('09:00', $userProfile->working_hours['monday']['start']);
-        $this->assertSame('Prefers firewall tickets.', $userProfile->profile_notes);
     }
 
     #[Test]
@@ -2682,7 +2669,7 @@ class TicketModuleTest extends TestCase
         $this->actingAs($admin)
             ->get(route('tech.admin.settings.tickets.technicians'))
             ->assertOk()
-            ->assertViewIs('ticket::Admin.TechnicianProfiles.index')
+            ->assertViewIs('ticket::Admin.TicketAssignmentSettings.index')
             ->assertSee('Assignment Tech');
 
         $this->actingAs($admin)
@@ -2691,16 +2678,12 @@ class TicketModuleTest extends TestCase
             ])
             ->assertRedirect();
 
-        $profile = TicketTechnicianProfile::where('user_id', $technician->id)->firstOrFail();
+        $profile = TicketAssignmentSetting::where('user_id', $technician->id)->firstOrFail();
 
         $this->actingAs($admin)
             ->patch(route('tech.admin.settings.tickets.technicians.update', $profile), [
                 'is_assignable' => '0',
                 'max_open_tickets' => 4,
-                'timezone' => 'Europe/Oslo',
-                'working_hours' => [
-                    'monday' => ['enabled' => '1', 'start' => '10:00', 'end' => '15:00'],
-                ],
                 'category_ids' => [$category->id],
             ])
             ->assertRedirect(route('tech.admin.settings.tickets.technicians'));
@@ -2761,23 +2744,29 @@ class TicketModuleTest extends TestCase
         ]);
         $skilled = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $generalist = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $skilledProfile = TicketTechnicianProfile::create([
+        UserProfile::create([
             'user_id' => $skilled->id,
-            'is_assignable' => true,
-            'max_open_tickets' => 10,
             'timezone' => config('app.timezone'),
             'working_hours' => [
                 strtolower(now()->format('l')) => ['enabled' => true, 'start' => '00:00', 'end' => '23:59'],
             ],
         ]);
-        TicketTechnicianProfile::create([
+        UserProfile::create([
             'user_id' => $generalist->id,
-            'is_assignable' => true,
-            'max_open_tickets' => 10,
             'timezone' => config('app.timezone'),
             'working_hours' => [
                 strtolower(now()->format('l')) => ['enabled' => true, 'start' => '00:00', 'end' => '23:59'],
             ],
+        ]);
+        $skilledProfile = TicketAssignmentSetting::create([
+            'user_id' => $skilled->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 10,
+        ]);
+        TicketAssignmentSetting::create([
+            'user_id' => $generalist->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 10,
         ]);
         $skilledProfile->categories()->attach($category->id);
 
@@ -2791,7 +2780,7 @@ class TicketModuleTest extends TestCase
         $this->assertDatabaseHas('ticket_events', [
             'ticket_id' => $ticket->id,
             'type' => 'assigned',
-            'message' => 'Ticket assigned by technician profile scoring.',
+            'message' => 'Ticket assigned by assignment settings scoring.',
         ]);
     }
 
@@ -2805,23 +2794,29 @@ class TicketModuleTest extends TestCase
         ]);
         $skilled = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $generalist = User::factory()->create(['status' => User::STATUS_ACTIVE]);
-        $skilledProfile = TicketTechnicianProfile::create([
+        UserProfile::create([
             'user_id' => $skilled->id,
-            'is_assignable' => true,
-            'max_open_tickets' => 10,
             'timezone' => config('app.timezone'),
             'working_hours' => [
                 strtolower(now()->format('l')) => ['enabled' => true, 'start' => '00:00', 'end' => '23:59'],
             ],
         ]);
-        TicketTechnicianProfile::create([
+        UserProfile::create([
             'user_id' => $generalist->id,
-            'is_assignable' => true,
-            'max_open_tickets' => 10,
             'timezone' => config('app.timezone'),
             'working_hours' => [
                 strtolower(now()->format('l')) => ['enabled' => true, 'start' => '00:00', 'end' => '23:59'],
             ],
+        ]);
+        $skilledProfile = TicketAssignmentSetting::create([
+            'user_id' => $skilled->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 10,
+        ]);
+        TicketAssignmentSetting::create([
+            'user_id' => $generalist->id,
+            'is_assignable' => true,
+            'max_open_tickets' => 10,
         ]);
         $skilledProfile->tags()->attach($tag->id);
 

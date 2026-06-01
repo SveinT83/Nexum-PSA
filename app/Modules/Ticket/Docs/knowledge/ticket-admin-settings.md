@@ -57,13 +57,13 @@ Assignment Rules explicitly assign tickets to technicians based on configured cr
 
 Use Assignment Rules when ownership must be deterministic.
 
-## Technician Profiles
+## Ticket Assignment Settings
 
-Technician Profiles control assignment engine scoring.
+Ticket Assignment Settings control assignment engine scoring.
 
-Profiles support assignable state, capacity, working hours, category skills, and tag skills.
+Settings support assignable state, capacity, category matching, and tag matching.
 
-Technicians can maintain their own profiles where allowed. Admins can manage all technician profiles.
+Technicians can maintain their own assignment settings where allowed. Admins can manage all ticket assignment settings.
 
 ## Workflows
 
@@ -93,8 +93,8 @@ Important files:
 
 - `app/Modules/Ticket/Controllers/Admin/TicketSettingsController.php`
 - `app/Modules/Ticket/Controllers/Admin/AssignmentRuleAdminController.php`
-- `app/Modules/Ticket/Controllers/Admin/TechnicianProfileAdminController.php`
+- `app/Modules/Ticket/Controllers/Admin/TicketAssignmentSettingsAdminController.php`
 - `app/Modules/Ticket/Livewire/Admin/WorkflowEditor.php`
 - `app/Modules/Ticket/Views/Admin/Settings/index.blade.php`
 - `app/Modules/Ticket/Views/Admin/AssignmentRules/index.blade.php`
-- `app/Modules/Ticket/Views/Admin/TechnicianProfiles/index.blade.php`
+- `app/Modules/Ticket/Views/Admin/TicketAssignmentSettings/index.blade.php`

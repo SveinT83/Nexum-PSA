@@ -79,6 +79,7 @@
             'pattern' => [
                 'tech.admin.system.category.*',
                 'tech.admin.system.tag.*',
+                'tech.admin.system.company-profile.*',
                 'tech.admin.system.queues-workers.*',
                 'tech.admin.notification-channels.*',
             ],
@@ -136,6 +137,7 @@
             ['name' => 'Two-factor auth', 'route' => 'tech.admin.user_management.2fa-settings', 'pattern' => 'tech.admin.user_management.2fa-settings*'],
         ],
         'system' => [
+            ['name' => 'Company profile', 'route' => 'tech.admin.system.company-profile.edit', 'pattern' => 'tech.admin.system.company-profile.*'],
             ['name' => 'Categories', 'route' => 'tech.admin.system.category.index', 'pattern' => 'tech.admin.system.category.*'],
             ['name' => 'Tags', 'route' => 'tech.admin.system.tag.index', 'pattern' => 'tech.admin.system.tag.*'],
             ['name' => 'Queues and workers', 'route' => 'tech.admin.system.queues-workers.index', 'pattern' => 'tech.admin.system.queues-workers.*'],

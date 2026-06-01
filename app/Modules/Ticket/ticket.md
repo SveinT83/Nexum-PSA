@@ -48,9 +48,9 @@ Implemented now:
 - Default inbound email policy that creates Lead tickets for unknown senders unless the Email filter archived or tagged the message as not-ticket/noise first.
 - Ticket tags using the shared `taggables` table, including manual ticket edit support and inbound Email tag inheritance.
 - Ticket attachments with dedicated storage records, upload on ticket messages, download links, inbound Email attachment copying, and outbound customer reply sending.
-- Technician Profiles for future assignment, including capacity, working hours, and category/tag skills.
+- Ticket Assignment Settings for future assignment, including capacity and category/tag matching.
 - Assignment Rules for explicit owner assignment by client, contact, queue, category, priority, ticket type, or channel.
-- Assignment Engine that runs after Ticket Rules and can fall back to technician profile scoring.
+- Assignment Engine that runs after Ticket Rules and can fall back to assignment settings scoring.
 - Ticket show assignment panel and manual re-run assignment action.
 - Ticket index filters for priority, category, unread, unassigned, and open/closed lifecycle.
 - Ticket index shows compact SLA risk badges, assigned technician, active local timer row highlighting, and can sort by SLA risk.
@@ -73,8 +73,8 @@ Most recent completed work:
 - Ticket messages can now store uploaded attachments in `ticket_attachments`; inbound Email attachments are copied to ticket-owned attachment records when the email is linked, and customer reply attachments are sent with outbound SMTP.
 - Inbound replies can now match existing tickets from email headers even when the customer changes the subject.
 - Unknown inbound senders now become Lead tickets by default, while archived or not-ticket/noise-tagged messages stay out of Ticket.
-- Technician Profiles now exist under Ticket, with a self-service technician profile page and admin management under Ticket Settings.
-- Technician profile skills can be tied to ticket categories and tags, preparing assignment scoring without hardcoding client-by-client rules.
+- Ticket Assignment Settings now exist under Ticket, with self-service settings and admin management under Ticket Settings.
+- Ticket assignment matching can be tied to ticket categories and tags, preparing assignment scoring without hardcoding client-by-client rules.
 - Assignment Rules now exist under Ticket Settings for explicit owner routing, such as customer/contact/queue/category to technician.
 - `StoreTicket` now runs assignment after Ticket Rules so queue/category/priority are finalized before ownership is selected.
 - Assignment fallback scoring can assign unowned tickets to assignable technicians based on working hours, capacity, and category skill match.
@@ -147,14 +147,14 @@ Current important files:
 - `app/Modules/Ticket/Actions/UpdateTicketFields.php` - updates queue, priority, category, and owner with audit events.
 - `app/Modules/Ticket/Actions/LinkInboundEmailToTicket.php` - links an Email module inbound message to an existing ticket, inherits Email tags, and creates a public customer reply.
 - `app/Modules/Ticket/Actions/CreateTicketFromInboundEmail.php` - creates a new ticket from an unmatched inbound Email module message, passes Email tags into Ticket Rules, and then links the email to the ticket.
-- `app/Modules/Ticket/Controllers/Tech/TechnicianProfileController.php` - technician-owned assignment profile page.
-- `app/Modules/Ticket/Controllers/Admin/TechnicianProfileAdminController.php` - admin management for technician profiles.
+- `app/Modules/Ticket/Controllers/Tech/TicketAssignmentSettingsController.php` - technician-owned assignment settings page.
+- `app/Modules/Ticket/Controllers/Admin/TicketAssignmentSettingsAdminController.php` - admin management for ticket assignment settings.
 - `app/Modules/Ticket/Controllers/Admin/AssignmentRuleAdminController.php` - admin management for assignment rules.
 - `app/Modules/Ticket/Jobs/SendTicketReplyEmail.php` - queued SMTP send for customer replies, including ticket message attachments.
 - `app/Modules/Ticket/Queries/TicketIndexQuery.php` - filtering, sorting, and pagination for the ticket index.
 - `app/Modules/Ticket/Queries/TicketTimeRateOptions.php` - resolves selectable ticket time rates from accepted client contracts and no-contract global rates.
 - `app/Modules/Ticket/Services/TicketRuleEngine.php` - evaluates active Ticket Rules for ticket creation context and applies field overrides.
-- `app/Modules/Ticket/Services/TicketAssignmentEngine.php` - assigns unowned tickets by assignment rules or technician profile scoring.
+- `app/Modules/Ticket/Services/TicketAssignmentEngine.php` - assigns unowned tickets by assignment rules or assignment settings scoring.
 - `app/Modules/Ticket/Livewire/Admin/WorkflowEditor.php` - interactive workflow builder for state selection, requirements, and transitions.
 - `app/Modules/Ticket/Models/*` - Ticket data model.
 - `app/Modules/Ticket/Tests/Feature/TicketModuleTest.php` - current module feature coverage.
@@ -225,9 +225,9 @@ Main tables:
 - `ticket_time_entry_allocations` - Economy calculation records for ticket time. Stores covered versus billable minutes per ticket time entry so contract timebank decisions do not need to be recalculated repeatedly.
 - `ticket_watchers` - watcher model, currently not wired into the UI.
 - `ticket_attachments` - stored files linked to ticket messages, including uploaded files and copied inbound Email attachments.
-- `ticket_technician_profiles` - per-technician assignment profile records.
-- `ticket_technician_profile_categories` - technician skill links to ticket categories.
-- `ticket_technician_profile_tags` - technician skill links to tags.
+- `ticket_assignment_settings` - per-technician ticket assignment settings, capacity, and notes.
+- `ticket_assignment_setting_categories` - assignment matching links to ticket categories.
+- `ticket_assignment_setting_tags` - assignment matching links to tags.
 - `ticket_assignment_rules` - explicit owner assignment rules evaluated after Ticket Rules.
 - `taggables` - shared polymorphic table used by Email tags and Ticket tags.
 
@@ -533,13 +533,12 @@ Assignment should be a separate layer after Ticket Rules. Ticket Rules classify 
 
 Planned order:
 
-- Technician Profiles are implemented:
-  - One profile per user.
+- Ticket Assignment Settings are implemented:
+  - One setting record per assignable user.
   - Active/inactive for ticket assignment.
   - Capacity fields such as max open tickets.
-  - Timezone and weekly working hours.
-  - Skills tied to ticket categories and tags.
-  - A technician-owned profile page where each technician can maintain their own availability and skills.
+  - Matching signals tied to ticket categories and tags.
+  - A technician-owned settings page where each technician can maintain ticket assignment preferences.
   - Admin management where admins can maintain profiles for any technician.
 - Assignment Rules are implemented:
   - Client/contact/customer-specific owner rules.

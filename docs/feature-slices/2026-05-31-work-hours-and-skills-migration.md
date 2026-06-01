@@ -83,15 +83,14 @@ Partially implemented 2026-05-31.
 - `user_profiles` now stores migrated work hours and timezone.
 - The production-safe `user-profiles:backfill` command copies existing Ticket technician profile
   work hours and timezone into User Management profile records.
-- Existing Ticket technician profile updates mirror timezone, work hours, and notes into
-  `user_profiles` to prevent data divergence during the transition.
-- Ticket assignment scoring reads UserManagement profile work hours/timezone first and falls back to
-  Ticket technician profile values.
+- Ticket Assignment Settings no longer owns or updates timezone, work hours, or general profile
+  notes.
+- Ticket assignment scoring reads UserManagement profile work hours/timezone.
+- Work hours are now editable from the UserManagement-owned profile shell.
+- Ticket Assignment Settings no longer exposes timezone or working hours.
 
 Remaining:
 
-- Move the visible Work Hours editor out of the Ticket view and into a UserManagement-owned profile
-  section.
 - Decide whether category/tag skills are ticket-specific assignment signals or general technician
   competencies.
 - Move general skills to UserManagement if approved.

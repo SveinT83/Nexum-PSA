@@ -3,8 +3,8 @@
 namespace App\Modules\UserManagement\Actions;
 
 use App\Models\Core\User;
-use App\Modules\Ticket\Models\TicketTechnicianProfile;
 use App\Modules\UserManagement\Models\UserProfile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -35,7 +35,7 @@ class BackfillUserProfiles
                     $summary['users_seen']++;
 
                     $ticketProfile = Schema::hasTable('ticket_technician_profiles')
-                        ? TicketTechnicianProfile::query()->where('user_id', $user->id)->first()
+                        ? DB::table('ticket_technician_profiles')->where('user_id', $user->id)->first()
                         : null;
 
                     $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
@@ -68,7 +68,7 @@ class BackfillUserProfiles
         return $summary;
     }
 
-    private function profileValues(User $user, ?TicketTechnicianProfile $ticketProfile): array
+    private function profileValues(User $user, ?object $ticketProfile): array
     {
         return [
             'work_phone' => $user->phone_work,

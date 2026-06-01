@@ -1,6 +1,6 @@
 # Feature Slice: Ticket Assignment Settings Split
 
-Status: Draft
+Status: Implemented
 Date: 2026-05-31
 Parent: `docs/rfc/2026-05-31-technician-profile-consolidation.md`
 Owner: Svein / Codex
@@ -77,3 +77,25 @@ Assignment-only fields likely include:
 - Ticket owns only assignment-specific settings.
 - Assignment engine behavior remains stable.
 - Tests cover migration and assignment behavior.
+
+## Implementation Notes
+
+Implemented 2026-05-31.
+
+- Added `ticket_assignment_settings`.
+- Added `ticket_assignment_setting_categories`.
+- Added `ticket_assignment_setting_tags`.
+- Migrates legacy `ticket_technician_profiles` rows and pivots into the new assignment settings
+  tables.
+- Drops the legacy `ticket_technician_profiles` tables after migration.
+- Replaced `TicketTechnicianProfile` with `TicketAssignmentSetting`.
+- Renamed user-facing labels from Ticket Technician Profile to Ticket Assignment Settings.
+- Ticket assignment scoring now uses `ticket_assignment_settings` for assignment controls and
+  `user_profiles` for timezone and work hours.
+- Work hours and timezone are edited from the User Management profile, not from Ticket.
+
+Validated with:
+
+- `HOME=/tmp php artisan test app/Modules/UserManagement/Tests/Feature`
+- `HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketModuleTest.php --filter=Technician`
+- `HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketModuleTest.php --filter=assignment`
