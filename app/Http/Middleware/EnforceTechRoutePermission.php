@@ -65,6 +65,8 @@ class EnforceTechRoutePermission
         'tech.admin.settings.tickets.workflows.*' => 'ticket.manage_workflows',
         'tech.admin.settings.tickets.assignment-rules.*' => 'ticket.manage_rules',
         'tech.admin.settings.tickets.*' => 'ticket.manage_settings',
+        'tech.admin.settings.tasks' => 'task.manage_settings',
+        'tech.admin.settings.tasks.*' => 'task.manage_settings',
         'tech.admin.settings.cs.*' => 'commercial.view',
 
         'tech.admin.system.category.*' => 'taxonomy.manage_categories',

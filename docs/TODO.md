@@ -39,6 +39,7 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Asset Settings Slice | Done | Codex | Asset module now owns manual registration defaults and admin settings. |
 | Contact Settings Slice | Done | Codex | Contact module now owns defaults and relation type settings. |
 | Legacy Planning Files Cleanup | Done | Codex | Moved Markdown planning/spec files out of production view paths and updated runtime doc references. |
+| Task Settings Slice | Done | Codex | Task module now owns manual task defaults for status, priority, and estimate. |
 | Missing Settings Ownership RFC | In Progress | Codex | RFC approved; implement remaining module settings as slices. |
 | Domain API Foundation | Ready |  | Post-audit platform item. Define and implement consistent APIs for domains that should expose integration surfaces. |
 | Report Builder And Scheduled Client Reporting | Post-Beta |  | Version 2 item. Build custom report builder, saved report templates, and automatic client report delivery. |
@@ -261,6 +262,7 @@ Progress:
 - RFC created and approved: `docs/rfc/2026-06-01-module-settings-ownership.md`.
 - Asset Settings slice completed.
 - Contact Settings slice completed.
+- Task Settings slice completed.
 
 ### 12. Domain API Foundation
 

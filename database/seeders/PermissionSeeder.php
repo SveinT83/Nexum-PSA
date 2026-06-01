@@ -68,6 +68,7 @@ class PermissionSeeder extends Seeder
             'task.assign',
             'task.complete',
             'task.manage_templates',
+            'task.manage_settings',
 
             'calendar.view',
             'calendar.create',

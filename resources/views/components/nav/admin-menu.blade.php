@@ -76,8 +76,14 @@
         'tickets' => [
             'name' => 'Tickets',
             'route' => 'tech.admin.settings.tickets',
-            'pattern' => 'tech.admin.settings.tickets*',
+            'pattern' => ['tech.admin.settings.tickets*', 'tech.admin.settings.tasks*'],
             'icon' => 'bi-ticket-detailed',
+        ],
+        'tasks' => [
+            'name' => 'Tasks',
+            'route' => 'tech.admin.settings.tasks',
+            'pattern' => 'tech.admin.settings.tasks*',
+            'icon' => 'bi-list-task',
         ],
         'templates' => [
             'name' => 'Templates',

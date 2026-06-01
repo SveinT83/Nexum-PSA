@@ -214,11 +214,11 @@ should be hidden or marked as unavailable honestly.
 
 Several modules appear to have no clear admin/settings surface yet, or only partial settings:
 
-- Assets.
-- Contacts.
+- Assets: manual registration defaults are now configurable.
+- Contacts: contact defaults and relation type choices are now configurable.
 - Knowledge.
 - Risk.
-- Tasks.
+- Tasks: manual task defaults are now configurable.
 - Warroom.
 
 Each module needs an ownership review:

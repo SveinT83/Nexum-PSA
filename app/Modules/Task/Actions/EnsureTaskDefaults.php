@@ -12,10 +12,24 @@ class EnsureTaskDefaults
     public function handle(): void
     {
         foreach ($this->statuses() as $status) {
-            TaskStatus::query()->updateOrCreate(
-                ['slug' => $status['slug']],
-                $status,
-            );
+            $existing = TaskStatus::query()->where('slug', $status['slug'])->first();
+
+            if ($existing) {
+                $existing->forceFill(collect($status)->except('is_default')->all())->save();
+                continue;
+            }
+
+            TaskStatus::query()->create($status);
+        }
+
+        if (! TaskStatus::query()->default()->exists()) {
+            $openStatus = TaskStatus::query()
+                ->where('slug', 'open')
+                ->first();
+
+            if ($openStatus) {
+                $openStatus->forceFill(['is_default' => true])->save();
+            }
         }
     }
 

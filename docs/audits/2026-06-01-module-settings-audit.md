@@ -52,7 +52,7 @@ These modules need settings ownership decisions before beta is considered clean:
 - Contact: default contact type/status and relation type choices are now configurable. Duplicate protection remains mandatory. Communication/language preference defaults still need a later slice.
 - Knowledge: structure permissions, default visibility/status, review defaults, BookStack behavior shortcuts.
 - Risk: assessment defaults, scoring defaults, review cadence, settings route.
-- Task: task statuses, priorities, templates, checklist defaults, assignment defaults.
+- Task: default status, default priority, and default estimate are now configurable. Task templates, checklist defaults, and assignment defaults still need later slices.
 - Warroom: dashboard widget visibility, time windows, and module summary defaults.
 - Report: future report export/saved-view settings after more reports exist.
 
@@ -89,6 +89,7 @@ Progress:
 - Asset Settings slice completed on 2026-06-01.
 - Contact Settings slice completed on 2026-06-01.
 - Legacy Planning Files Cleanup completed on 2026-06-01.
+- Task Settings slice completed on 2026-06-01.
 
 ## Not In Scope For This Audit
 

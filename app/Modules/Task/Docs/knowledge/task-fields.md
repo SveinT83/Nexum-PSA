@@ -26,6 +26,7 @@ calendar-style planning.
 
 Estimated minutes is used when completing a task quickly. If no actual time has
 been registered, completing the task creates a time entry from the estimate.
+Admin Task Settings may provide a default estimate for manually created tasks.
 
 Block owner completion means the owning record should not be treated as complete
 while the task is still open.

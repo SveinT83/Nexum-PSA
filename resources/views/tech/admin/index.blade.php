@@ -78,9 +78,10 @@
         [
             'title' => 'Tickets',
             'icon' => 'bi-ticket-detailed',
-            'description' => 'Queues, priorities, workflows, assignment logic, and ticket rules.',
+            'description' => 'Queues, priorities, workflows, assignment logic, task defaults, and ticket rules.',
             'links' => [
                 ['label' => 'Ticket settings', 'route' => route('tech.admin.settings.tickets')],
+                ['label' => 'Task settings', 'route' => route('tech.admin.settings.tasks')],
                 ['label' => 'Technicians', 'route' => route('tech.admin.settings.tickets.technicians')],
                 ['label' => 'Assignment rules', 'route' => route('tech.admin.settings.tickets.assignment-rules')],
                 ['label' => 'Rules', 'route' => route('tech.admin.settings.tickets.rules')],

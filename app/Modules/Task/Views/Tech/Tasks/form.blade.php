@@ -103,9 +103,10 @@
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label" for="status_id">Status</label>
+                    @php($selectedStatusId = old('status_id', $task?->status_id ?? ($prefill['status_id'] ?? null)))
                     <select class="form-select" id="status_id" name="status_id">
                         @foreach($statuses as $status)
-                            <option value="{{ $status->id }}" @selected((string) old('status_id', $task?->status_id) === (string) $status->id || (! $isEdit && $status->is_default && ! old('status_id')))>{{ $status->name }}</option>
+                            <option value="{{ $status->id }}" @selected((string) $selectedStatusId === (string) $status->id || (! $selectedStatusId && ! $isEdit && $status->is_default))>{{ $status->name }}</option>
                         @endforeach
                     </select>
                 </div>
