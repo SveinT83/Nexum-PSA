@@ -36,7 +36,7 @@
 
     if (Route::has('tech.tickets.profile.edit')) {
         $profileSidebarItems[] = [
-            'name' => 'Work hours & skills',
+            'name' => 'Ticket assignment',
             'route' => 'tech.tickets.profile.edit',
             'pattern' => ['tech.tickets.profile*'],
             'icon' => 'bi-calendar-check',

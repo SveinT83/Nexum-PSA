@@ -42,6 +42,10 @@ class ProfileController extends Controller
             'work_phone' => ['nullable', 'string', 'max:50'],
             'private_phone' => ['nullable', 'string', 'max:50'],
             'timezone' => ['required', 'timezone'],
+            'working_hours' => ['nullable', 'array'],
+            'working_hours.*.enabled' => ['nullable', 'boolean'],
+            'working_hours.*.start' => ['nullable', 'date_format:H:i'],
+            'working_hours.*.end' => ['nullable', 'date_format:H:i'],
             'availability_notes' => ['nullable', 'string', 'max:5000'],
             'profile_notes' => ['nullable', 'string', 'max:5000'],
         ]);
@@ -59,6 +63,7 @@ class ProfileController extends Controller
                 'work_phone' => $validated['work_phone'] ?? null,
                 'private_phone' => $validated['private_phone'] ?? null,
                 'timezone' => $validated['timezone'],
+                'working_hours' => $this->normalizedWorkingHours($validated['working_hours'] ?? []),
                 'availability_notes' => $validated['availability_notes'] ?? null,
                 'profile_notes' => $validated['profile_notes'] ?? null,
             ]
@@ -81,13 +86,46 @@ class ProfileController extends Controller
 
     private function profileFor($user): UserProfile
     {
-        return UserProfile::query()->firstOrCreate(
+        $profile = UserProfile::query()->firstOrCreate(
             ['user_id' => $user->id],
             [
                 'work_phone' => $user->phone_work,
                 'private_phone' => $user->phone_private,
                 'timezone' => config('app.timezone', 'UTC'),
+                'working_hours' => $this->defaultWorkingHours(),
             ]
         );
+
+        if (empty($profile->working_hours)) {
+            $profile->forceFill(['working_hours' => $this->defaultWorkingHours()])->save();
+        }
+
+        return $profile;
+    }
+
+    private function normalizedWorkingHours(array $workingHours): array
+    {
+        return collect($this->defaultWorkingHours())
+            ->mapWithKeys(function (array $defaults, string $day) use ($workingHours) {
+                $submitted = $workingHours[$day] ?? [];
+
+                return [$day => [
+                    'enabled' => (bool) ($submitted['enabled'] ?? false),
+                    'start' => $submitted['start'] ?? $defaults['start'],
+                    'end' => $submitted['end'] ?? $defaults['end'],
+                ]];
+            })
+            ->all();
+    }
+
+    private function defaultWorkingHours(): array
+    {
+        return collect(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
+            ->mapWithKeys(fn (string $day) => [$day => [
+                'enabled' => in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], true),
+                'start' => '08:00',
+                'end' => '16:00',
+            ]])
+            ->all();
     }
 }

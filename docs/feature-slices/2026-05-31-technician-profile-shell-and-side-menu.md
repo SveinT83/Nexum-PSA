@@ -82,7 +82,7 @@ Implemented 2026-05-31.
 - Added `tech.profile.index`, `tech.profile.integrations`, and `tech.profile.view` routes in
   User Management.
 - Added a UserManagement-owned profile side menu shared by Preferences, Security, Notifications,
-  and the current Ticket Technician Profile page.
+  and the current Ticket Assignment Settings page.
 - Replaced the main navigation user dropdown with one Profile entry plus Logout.
 - Kept existing Preferences, Security, Notification, and Ticket profile routes compatible.
 - Added UserManagement documentation for the profile shell and ownership boundary.

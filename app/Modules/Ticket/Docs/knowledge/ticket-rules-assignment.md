@@ -113,7 +113,7 @@ Important files:
 - `app/Modules/Ticket/Services/TicketAssignmentEngine.php`
 - `app/Modules/Ticket/Models/TicketRule.php`
 - `app/Modules/Ticket/Models/TicketAssignmentRule.php`
-- `app/Modules/Ticket/Models/TicketTechnicianProfile.php`
+- `app/Modules/Ticket/Models/TicketAssignmentSetting.php`
 - `app/Modules/Ticket/Controllers/Admin/AssignmentRuleAdminController.php`
 - `app/Modules/Ticket/Controllers/Admin/TechnicianProfileAdminController.php`
 - `app/Modules/Ticket/Controllers/Tech/TechnicianProfileController.php`

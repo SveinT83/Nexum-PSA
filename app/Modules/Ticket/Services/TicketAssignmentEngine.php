@@ -3,9 +3,9 @@
 namespace App\Modules\Ticket\Services;
 
 use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\Ticket\Models\TicketAssignmentRule;
 use App\Modules\Ticket\Models\TicketEvent;
-use App\Modules\Ticket\Models\TicketTechnicianProfile;
 use Illuminate\Support\Facades\Schema;
 
 class TicketAssignmentEngine
@@ -58,17 +58,17 @@ class TicketAssignmentEngine
 
     private function assignByProfileScore(Ticket $ticket): ?int
     {
-        if (! Schema::hasTable('ticket_technician_profiles')) {
+        if (! Schema::hasTable('ticket_assignment_settings')) {
             return null;
         }
 
         $ticket->loadMissing('tags');
 
-        $profiles = TicketTechnicianProfile::query()
+        $profiles = TicketAssignmentSetting::query()
             ->with(['categories', 'tags', 'user.profile'])
             ->where('is_assignable', true)
             ->get()
-            ->map(function (TicketTechnicianProfile $profile) use ($ticket) {
+            ->map(function (TicketAssignmentSetting $profile) use ($ticket) {
                 $openTickets = Ticket::query()
                     ->where('owner_id', $profile->user_id)
                     ->whereHas('status', fn ($query) => $query->where('is_closed', false))
@@ -172,11 +172,11 @@ class TicketAssignmentEngine
         };
     }
 
-    private function isWorkingNow(TicketTechnicianProfile $profile): bool
+    private function isWorkingNow(TicketAssignmentSetting $profile): bool
     {
         $userProfile = $profile->user?->profile;
-        $timezone = $userProfile?->timezone ?: $profile->timezone ?: config('app.timezone');
-        $workingHours = $userProfile?->working_hours ?: $profile->working_hours ?: [];
+        $timezone = $userProfile?->timezone ?: config('app.timezone');
+        $workingHours = $userProfile?->working_hours ?: [];
 
         $now = now($timezone);
         $day = strtolower($now->format('l'));

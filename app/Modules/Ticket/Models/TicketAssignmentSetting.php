@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class TicketTechnicianProfile extends Model
+class TicketAssignmentSetting extends Model
 {
     use SoftDeletes;
 
@@ -18,8 +18,6 @@ class TicketTechnicianProfile extends Model
         'user_id',
         'is_assignable',
         'max_open_tickets',
-        'timezone',
-        'working_hours',
         'assignment_preferences',
         'notes',
     ];
@@ -27,7 +25,6 @@ class TicketTechnicianProfile extends Model
     protected $casts = [
         'is_assignable' => 'boolean',
         'max_open_tickets' => 'integer',
-        'working_hours' => 'array',
         'assignment_preferences' => 'array',
     ];
 
@@ -38,13 +35,13 @@ class TicketTechnicianProfile extends Model
 
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'ticket_technician_profile_categories')
+        return $this->belongsToMany(Category::class, 'ticket_assignment_setting_categories')
             ->withTimestamps();
     }
 
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class, 'ticket_technician_profile_tags', 'ticket_technician_profile_id', 'tag_id')
+        return $this->belongsToMany(Tag::class, 'ticket_assignment_setting_tags', 'ticket_assignment_setting_id', 'tag_id')
             ->withTimestamps();
     }
 }

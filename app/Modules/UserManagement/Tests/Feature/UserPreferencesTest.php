@@ -49,7 +49,8 @@ class UserPreferencesTest extends TestCase
             ->assertSee('Account')
             ->assertSee('Preferences')
             ->assertSee('Security / 2FA')
-            ->assertSee('Work hours &amp; skills', false);
+            ->assertSee('Working hours')
+            ->assertSee('Ticket assignment');
     }
 
     #[Test]
@@ -62,6 +63,10 @@ class UserPreferencesTest extends TestCase
                 'work_phone' => '+47 73501010',
                 'private_phone' => '+47 40001010',
                 'timezone' => 'Europe/Oslo',
+                'working_hours' => [
+                    'monday' => ['enabled' => '1', 'start' => '10:00', 'end' => '18:00'],
+                    'tuesday' => ['enabled' => '0', 'start' => '08:00', 'end' => '16:00'],
+                ],
                 'availability_notes' => 'Usually available after 08:30.',
                 'profile_notes' => 'Prefers onsite work on Tuesdays.',
             ])
@@ -79,6 +84,8 @@ class UserPreferencesTest extends TestCase
         $this->assertSame('+47 73501010', $profile->work_phone);
         $this->assertSame('+47 40001010', $profile->private_phone);
         $this->assertSame('Europe/Oslo', $profile->timezone);
+        $this->assertSame('10:00', $profile->working_hours['monday']['start']);
+        $this->assertFalse($profile->working_hours['tuesday']['enabled']);
         $this->assertSame('Usually available after 08:30.', $profile->availability_notes);
         $this->assertSame('Prefers onsite work on Tuesdays.', $profile->profile_notes);
     }

@@ -225,9 +225,9 @@ Main tables:
 - `ticket_time_entry_allocations` - Economy calculation records for ticket time. Stores covered versus billable minutes per ticket time entry so contract timebank decisions do not need to be recalculated repeatedly.
 - `ticket_watchers` - watcher model, currently not wired into the UI.
 - `ticket_attachments` - stored files linked to ticket messages, including uploaded files and copied inbound Email attachments.
-- `ticket_technician_profiles` - per-technician assignment profile records.
-- `ticket_technician_profile_categories` - technician skill links to ticket categories.
-- `ticket_technician_profile_tags` - technician skill links to tags.
+- `ticket_assignment_settings` - per-technician ticket assignment settings, capacity, and notes.
+- `ticket_assignment_setting_categories` - assignment matching links to ticket categories.
+- `ticket_assignment_setting_tags` - assignment matching links to tags.
 - `ticket_assignment_rules` - explicit owner assignment rules evaluated after Ticket Rules.
 - `taggables` - shared polymorphic table used by Email tags and Ticket tags.
 

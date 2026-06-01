@@ -2,7 +2,7 @@
     @csrf
     @method($method)
 
-    <!-- Assignment settings: these are the stable fields the future assignment engine can score. -->
+    <!-- Assignment settings: these are the stable Ticket-owned fields the assignment engine can score. -->
     <x-card.default title="Assignment">
         @if($showUser)
             <div class="mb-3">
@@ -18,35 +18,10 @@
         </div>
 
         <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <label for="max_open_tickets" class="form-label">Max open tickets</label>
                 <input id="max_open_tickets" name="max_open_tickets" type="number" min="1" max="500" class="form-control" value="{{ old('max_open_tickets', $profile->max_open_tickets) }}" required>
             </div>
-            <div class="col-md-6">
-                <label for="timezone" class="form-label">Timezone</label>
-                <input id="timezone" name="timezone" class="form-control" value="{{ old('timezone', $profile->timezone) }}" required>
-            </div>
-        </div>
-    </x-card.default>
-
-    <!-- Working hours: simple weekly schedule for the first assignment scoring pass. -->
-    <x-card.default title="Working Hours">
-        <div class="row g-2">
-            @foreach($workingHours as $day => $hours)
-                <div class="col-md-6 col-xl-4">
-                    <div class="border rounded p-2 h-100">
-                        <input type="hidden" name="working_hours[{{ $day }}][enabled]" value="0">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="working_{{ $day }}" name="working_hours[{{ $day }}][enabled]" value="1" @checked(old("working_hours.$day.enabled", $hours['enabled']))>
-                            <label class="form-check-label text-capitalize" for="working_{{ $day }}">{{ $day }}</label>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <input name="working_hours[{{ $day }}][start]" type="time" class="form-control form-control-sm" value="{{ old("working_hours.$day.start", $hours['start']) }}">
-                            <input name="working_hours[{{ $day }}][end]" type="time" class="form-control form-control-sm" value="{{ old("working_hours.$day.end", $hours['end']) }}">
-                        </div>
-                    </div>
-                </div>
-            @endforeach
         </div>
     </x-card.default>
 
