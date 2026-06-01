@@ -62,6 +62,18 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            <div class="col-md-6">
+                                <label for="theme" class="form-label">Theme</label>
+                                <select id="theme" name="theme" class="form-select @error('theme') is-invalid @enderror">
+                                    @foreach(['system' => 'System default', 'light' => 'Light', 'dark' => 'Dark'] as $theme => $label)
+                                        <option value="{{ $theme }}" @selected(old('theme', data_get($preferences->settings, 'theme', 'system')) === $theme)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('theme')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
 
                         <div class="mt-3">

@@ -10,7 +10,9 @@ use App\Modules\UserManagement\Controllers\ProfilePreferencesController;
 use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\UserManagement\Models\UserPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -56,6 +58,8 @@ class UserPreferencesTest extends TestCase
     #[Test]
     public function technician_can_update_canonical_profile_details(): void
     {
+        Storage::fake('public');
+
         $this->actingAs($this->tech)
             ->patch(route('tech.profile.update'), [
                 'name' => 'Updated Technician',
@@ -69,6 +73,7 @@ class UserPreferencesTest extends TestCase
                 ],
                 'availability_notes' => 'Usually available after 08:30.',
                 'profile_notes' => 'Prefers onsite work on Tuesdays.',
+                'avatar' => UploadedFile::fake()->image('avatar.png', 200, 200),
             ])
             ->assertRedirect(route('tech.profile.index'))
             ->assertSessionHas('success', 'Profile updated.');
@@ -88,6 +93,8 @@ class UserPreferencesTest extends TestCase
         $this->assertFalse($profile->working_hours['tuesday']['enabled']);
         $this->assertSame('Usually available after 08:30.', $profile->availability_notes);
         $this->assertSame('Prefers onsite work on Tuesdays.', $profile->profile_notes);
+        $this->assertStringStartsWith('user-avatars/', $profile->avatar_path);
+        Storage::disk('public')->assertExists($profile->avatar_path);
     }
 
     #[Test]
@@ -116,12 +123,14 @@ class UserPreferencesTest extends TestCase
                 'default_calendar_view' => 'month',
                 'workday_start' => '09:00',
                 'workday_end' => '17:00',
+                'theme' => 'dark',
             ])
             ->assertRedirect(route('tech.profile.preferences'));
 
         $preferences = UserPreference::query()->where('user_id', $this->tech->id)->firstOrFail();
         $this->assertSame('America/New_York', $preferences->timezone);
         $this->assertSame('month', $preferences->default_calendar_view);
+        $this->assertSame('dark', $preferences->settings['theme']);
 
         $calendar = Calendar::query()
             ->where('owner_type', User::class)

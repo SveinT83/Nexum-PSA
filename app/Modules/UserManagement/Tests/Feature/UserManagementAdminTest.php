@@ -8,6 +8,8 @@ use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\UserManagement\Models\UserProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -69,6 +71,8 @@ class UserManagementAdminTest extends TestCase
     #[Test]
     public function admin_can_update_user_contact_details_from_employee_profile(): void
     {
+        Storage::fake('public');
+
         $user = User::factory()->create([
             'name' => 'Old Employee Name',
             'email' => 'old.employee@example.test',
@@ -87,6 +91,7 @@ class UserManagementAdminTest extends TestCase
                 ],
                 'availability_notes' => 'Available after 09:00.',
                 'profile_notes' => 'Admin-maintained profile note.',
+                'avatar' => UploadedFile::fake()->image('employee-avatar.png', 200, 200),
             ])
             ->assertRedirect(route('tech.admin.user_management.show', $user))
             ->assertSessionHas('success', 'User profile updated successfully.');
@@ -105,6 +110,8 @@ class UserManagementAdminTest extends TestCase
         $this->assertSame('09:00', $profile->working_hours['monday']['start']);
         $this->assertSame('Available after 09:00.', $profile->availability_notes);
         $this->assertSame('Admin-maintained profile note.', $profile->profile_notes);
+        $this->assertStringStartsWith('user-avatars/', $profile->avatar_path);
+        Storage::disk('public')->assertExists($profile->avatar_path);
     }
 
     #[Test]

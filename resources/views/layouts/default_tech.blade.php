@@ -5,10 +5,14 @@
 --}}
 @php
     $companyProfile = $companyProfile ?? app(\App\Modules\System\Support\CompanyProfileSettings::class)->get();
+    $themePreference = auth()->check()
+        ? data_get(auth()->user()->preferences()->first()?->settings, 'theme', 'system')
+        : 'system';
+    $themeAttribute = in_array($themePreference, ['light', 'dark'], true) ? $themePreference : null;
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @if($themeAttribute) data-bs-theme="{{ $themeAttribute }}" @endif>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

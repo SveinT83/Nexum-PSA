@@ -30,6 +30,16 @@
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-4">
+                    <div class="small text-muted text-uppercase">Profile Image</div>
+                    @if($profile->avatarUrl())
+                        <img src="{{ $profile->avatarUrl() }}" alt="{{ $user->name }} avatar" class="admin-profile-avatar mt-1">
+                    @else
+                        <span class="admin-profile-avatar-fallback mt-1" aria-hidden="true">
+                            {{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}
+                        </span>
+                    @endif
+                </div>
+                <div class="col-md-4">
                     <div class="small text-muted text-uppercase">Name</div>
                     <div class="fw-semibold">{{ $user->name }}</div>
                 </div>
@@ -72,7 +82,7 @@
     <!-- -------------------------------------------------------------------------------------------------- -->
     <!-- Section: Editable contact information -->
     <!-- -------------------------------------------------------------------------------------------------- -->
-    <form method="POST" action="{{ route('tech.admin.user_management.profile.update', $user) }}" class="card mb-3">
+    <form method="POST" action="{{ route('tech.admin.user_management.profile.update', $user) }}" enctype="multipart/form-data" class="card mb-3">
         @csrf
         <div class="card-header d-flex align-items-center justify-content-between gap-3">
             <h2 class="h6 mb-0">Contact Details</h2>
@@ -102,6 +112,16 @@
                 <div class="col-md-6">
                     <label for="timezone" class="form-label">Timezone</label>
                     <input id="timezone" name="timezone" class="form-control" value="{{ old('timezone', $profile->timezone) }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="avatar" class="form-label">Profile image</label>
+                    <input id="avatar" name="avatar" type="file" class="form-control" accept="image/*">
+                    @if($profile->avatarUrl())
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="remove_avatar" name="remove_avatar" value="1">
+                            <label class="form-check-label" for="remove_avatar">Remove current image</label>
+                        </div>
+                    @endif
                 </div>
                 <div class="col-12">
                     <div class="form-label">Working hours</div>
@@ -277,4 +297,30 @@
 @endsection
 
 @section('rightbar')
+@endsection
+
+@section('scripts')
+    <style>
+        .admin-profile-avatar,
+        .admin-profile-avatar-fallback {
+            width: 3.75rem;
+            height: 3.75rem;
+            border-radius: 50%;
+        }
+
+        .admin-profile-avatar {
+            object-fit: cover;
+            border: 1px solid var(--bs-border-color);
+        }
+
+        .admin-profile-avatar-fallback {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--nexum-brand-primary, var(--bs-primary));
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+    </style>
 @endsection

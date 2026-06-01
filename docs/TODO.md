@@ -51,12 +51,11 @@ Initial scope:
   - `php artisan migrate --force`
   - `php artisan user-profiles:backfill`
 - Update Knowledge documentation after final UI polish.
+- Profile image/avatar upload.
+- Personal light/dark/system theme preference after branding.
 
 Future scope:
 
-- Profile image/avatar upload.
-- Personal view settings after branding is in place.
-- Admin side menu/tabs for user profile sections.
 - Decide whether category/tag matching is ticket-only or should become general skills.
 
 ### 2. Company Profile And Branding

@@ -22,6 +22,7 @@ class ProfilePreferencesController extends Controller
                 'default_calendar_view' => 'week',
                 'workday_start' => '08:00',
                 'workday_end' => '16:00',
+                'settings' => ['theme' => 'system'],
             ]
         );
 
@@ -37,6 +38,7 @@ class ProfilePreferencesController extends Controller
             'default_calendar_view' => ['required', Rule::in(['day', 'week', 'month', 'list'])],
             'workday_start' => ['required', 'date_format:H:i'],
             'workday_end' => ['required', 'date_format:H:i', 'after:workday_start'],
+            'theme' => ['required', Rule::in(['system', 'light', 'dark'])],
         ]);
 
         $updatePreferences->handle($request->user(), $data);
