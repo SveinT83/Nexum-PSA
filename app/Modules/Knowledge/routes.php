@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Knowledge\Controllers\Admin\KnowledgeSettingsController;
 use App\Modules\Knowledge\Controllers\Tech\KnowledgeController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\Route;
 | Laravel's default route files.
 |
 */
+
+Route::get('/admin/settings/knowledge', [KnowledgeSettingsController::class, 'edit'])->name('admin.settings.knowledge');
+Route::put('/admin/settings/knowledge', [KnowledgeSettingsController::class, 'update'])->name('admin.settings.knowledge.update');
 
 Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('knowledge.index');
 Route::get('/knowledge/shelves/create', [KnowledgeController::class, 'createShelf'])->name('knowledge.shelves.create');

@@ -26,6 +26,7 @@ class PermissionSeeder extends Seeder
     {
         return [
             'warroom.view',
+            'warroom.manage_settings',
 
             'client.view',
             'client.create',
@@ -85,6 +86,7 @@ class PermissionSeeder extends Seeder
             'knowledge.publish',
             'knowledge.sync_bookstack',
             'knowledge.manage_structure',
+            'knowledge.manage_settings',
 
             'documentation.view',
             'documentation.create',

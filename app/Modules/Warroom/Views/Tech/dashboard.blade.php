@@ -16,96 +16,101 @@
 
 @section('content')
     <!-- Warroom pulse -->
-    <div class="row g-2 mb-3">
-        @foreach($warroom['pulse'] as $metric)
-            <div class="col-12 col-md-6 col-xl-3">
-                <a href="{{ $metric['href'] ?? '#' }}" class="text-decoration-none">
-                    <div class="card border-{{ $metric['tone'] }} h-100">
-                        <div class="card-body py-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <div class="small text-uppercase text-muted fw-semibold">{{ $metric['label'] }}</div>
-                                    <div class="display-6 fw-semibold text-dark">{{ $metric['value'] }}</div>
+    @if($settings->sectionEnabled($warroom['settings'], 'pulse'))
+        <div class="row g-2 mb-3">
+            @foreach($warroom['pulse'] as $metric)
+                <div class="col-12 col-md-6 col-xl-3">
+                    <a href="{{ $metric['href'] ?? '#' }}" class="text-decoration-none">
+                        <div class="card border-{{ $metric['tone'] }} h-100">
+                            <div class="card-body py-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="small text-uppercase text-muted fw-semibold">{{ $metric['label'] }}</div>
+                                        <div class="display-6 fw-semibold text-dark">{{ $metric['value'] }}</div>
+                                    </div>
+                                    <span class="badge text-bg-{{ $metric['tone'] }} rounded-pill">
+                                        <i class="bi {{ $metric['icon'] }}" aria-hidden="true"></i>
+                                    </span>
                                 </div>
-                                <span class="badge text-bg-{{ $metric['tone'] }} rounded-pill">
-                                    <i class="bi {{ $metric['icon'] }}" aria-hidden="true"></i>
-                                </span>
+                                <div class="small text-muted mt-2">{{ $metric['meta'] }}</div>
                             </div>
-                            <div class="small text-muted mt-2">{{ $metric['meta'] }}</div>
                         </div>
-                    </div>
-                </a>
-            </div>
-        @endforeach
-    </div>
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    @endif
 
     <!-- Main operations grid -->
     <div class="row g-3">
         <div class="col-12 col-xl-8">
-            <div class="card mb-3">
-                <div class="card-header py-2 d-flex align-items-center justify-content-between">
-                    <h2 class="h6 mb-0">Ticket Fireline</h2>
-                    @if(Route::has('tech.tickets.index'))
-                        <a href="{{ route('tech.tickets.index') }}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-arrow-right-short" aria-hidden="true"></i> Tickets
-                        </a>
-                    @endif
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Ticket</th>
-                                <th>Subject</th>
-                                <th>Signal</th>
-                                <th class="text-end">SLA</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($warroom['latest_tickets'] as $ticket)
-                                @php
-                                    $due = $ticket->resolve_due_at ? \Illuminate\Support\Carbon::parse($ticket->resolve_due_at) : null;
-                                    $isOverdue = $due && $due->isPast();
-                                @endphp
+            @if($settings->sectionEnabled($warroom['settings'], 'tickets'))
+                <div class="card mb-3">
+                    <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                        <h2 class="h6 mb-0">Ticket Fireline</h2>
+                        @if(Route::has('tech.tickets.index'))
+                            <a href="{{ route('tech.tickets.index') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-arrow-right-short" aria-hidden="true"></i> Tickets
+                            </a>
+                        @endif
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <td class="fw-semibold">
-                                        @if(Route::has('tech.tickets.show') && $ticket->ticket_key)
-                                            <a href="{{ route('tech.tickets.show', $ticket->ticket_key) }}" class="text-decoration-none">{{ $ticket->ticket_key }}</a>
-                                        @else
-                                            {{ $ticket->ticket_key ?? '#'.$ticket->id }}
-                                        @endif
-                                    </td>
-                                    <td class="text-truncate">{{ $ticket->subject ?? 'Untitled ticket' }}</td>
-                                    <td>
-                                        @if($ticket->is_unread)
-                                            <span class="badge text-bg-warning">Unread</span>
-                                        @endif
-                                        @if(!$ticket->owner_id)
-                                            <span class="badge text-bg-secondary">Unassigned</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-end">
-                                        @if($due)
-                                            <span class="badge text-bg-{{ $isOverdue ? 'danger' : 'light' }} {{ $isOverdue ? '' : 'text-dark' }}">
-                                                {{ $isOverdue ? 'Overdue' : $due->format('H:i') }}
-                                            </span>
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
+                                    <th>Ticket</th>
+                                    <th>Subject</th>
+                                    <th>Signal</th>
+                                    <th class="text-end">SLA</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-muted py-4 text-center">No open ticket pressure right now.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @forelse($warroom['latest_tickets'] as $ticket)
+                                    @php
+                                        $due = $ticket->resolve_due_at ? \Illuminate\Support\Carbon::parse($ticket->resolve_due_at) : null;
+                                        $isOverdue = $due && $due->isPast();
+                                    @endphp
+                                    <tr>
+                                        <td class="fw-semibold">
+                                            @if(Route::has('tech.tickets.show') && $ticket->ticket_key)
+                                                <a href="{{ route('tech.tickets.show', $ticket->ticket_key) }}" class="text-decoration-none">{{ $ticket->ticket_key }}</a>
+                                            @else
+                                                {{ $ticket->ticket_key ?? '#'.$ticket->id }}
+                                            @endif
+                                        </td>
+                                        <td class="text-truncate">{{ $ticket->subject ?? 'Untitled ticket' }}</td>
+                                        <td>
+                                            @if($ticket->is_unread)
+                                                <span class="badge text-bg-warning">Unread</span>
+                                            @endif
+                                            @if(!$ticket->owner_id)
+                                                <span class="badge text-bg-secondary">Unassigned</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-end">
+                                            @if($due)
+                                                <span class="badge text-bg-{{ $isOverdue ? 'danger' : 'light' }} {{ $isOverdue ? '' : 'text-dark' }}">
+                                                    {{ $isOverdue ? 'Overdue' : $due->format('H:i') }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-muted py-4 text-center">No open ticket pressure right now.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             <div class="row g-3">
-                <div class="col-12 col-lg-6">
+                @if($settings->sectionEnabled($warroom['settings'], 'asset_alerts'))
+                    <div class="col-12 col-lg-6">
                     <div class="card h-100">
                         <div class="card-header py-2 d-flex align-items-center justify-content-between">
                             <h2 class="h6 mb-0">Asset Alerts</h2>
@@ -131,9 +136,11 @@
                             @endforelse
                         </div>
                     </div>
-                </div>
+                    </div>
+                @endif
 
-                <div class="col-12 col-lg-6">
+                @if($settings->sectionEnabled($warroom['settings'], 'calendar'))
+                    <div class="col-12 col-lg-6">
                     <div class="card h-100">
                         <div class="card-header py-2 d-flex align-items-center justify-content-between">
                             <h2 class="h6 mb-0">{{ $warroom['calendar_events_label'] }}</h2>
@@ -162,31 +169,35 @@
                             @endforelse
                         </div>
                     </div>
-                </div>
+                    </div>
+                @endif
             </div>
         </div>
 
         <div class="col-12 col-xl-4">
-            <div class="card mb-3">
-                <div class="card-header py-2">
-                    <h2 class="h6 mb-0">Domain Radar</h2>
-                </div>
-                <div class="list-group list-group-flush">
-                    @foreach($warroom['operations'] as $operation)
-                        <a href="{{ $operation['href'] ?? '#' }}" class="list-group-item list-group-item-action py-2">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="text-primary"><i class="bi {{ $operation['icon'] }}" aria-hidden="true"></i></span>
-                                    <span>{{ $operation['label'] }}</span>
+            @if($settings->sectionEnabled($warroom['settings'], 'domain_radar'))
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h2 class="h6 mb-0">Domain Radar</h2>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @foreach($warroom['operations'] as $operation)
+                            <a href="{{ $operation['href'] ?? '#' }}" class="list-group-item list-group-item-action py-2">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="text-primary"><i class="bi {{ $operation['icon'] }}" aria-hidden="true"></i></span>
+                                        <span>{{ $operation['label'] }}</span>
+                                    </div>
+                                    <span class="badge text-bg-light text-dark">{{ $operation['value'] }}</span>
                                 </div>
-                                <span class="badge text-bg-light text-dark">{{ $operation['value'] }}</span>
-                            </div>
-                        </a>
-                    @endforeach
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
-            </div>
+            @endif
 
-            <div class="card">
+            @if($settings->sectionEnabled($warroom['settings'], 'integrations'))
+                <div class="card">
                 <div class="card-header py-2 d-flex align-items-center justify-content-between">
                     <h2 class="h6 mb-0">Integration Health</h2>
                     @if(Route::has('tech.admin.system.integrations.index'))
@@ -213,13 +224,15 @@
                     @endforelse
                 </div>
             </div>
+            @endif
         </div>
     </div>
 @endsection
 
 @section('sidebar')
     <!-- Warroom lanes -->
-    <div class="card mb-3">
+    @if($settings->sectionEnabled($warroom['settings'], 'lanes'))
+        <div class="card mb-3">
         <div class="card-header py-2">
             <h2 class="h6 mb-0">Warroom Lanes</h2>
         </div>
@@ -241,6 +254,7 @@
             @endforeach
         </div>
     </div>
+    @endif
 
     <div class="card">
         <div class="card-header py-2">
@@ -265,7 +279,8 @@
 
 @section('rightbar')
     <!-- System health -->
-    <div class="card mb-3">
+    @if($settings->sectionEnabled($warroom['settings'], 'system_health'))
+        <div class="card mb-3">
         <div class="card-header py-2">
             <h2 class="h6 mb-0">System Health</h2>
         </div>
@@ -298,8 +313,10 @@
             </div>
         </div>
     </div>
+    @endif
 
-    <div class="card">
+    @if($settings->sectionEnabled($warroom['settings'], 'next_actions'))
+        <div class="card">
         <div class="card-header py-2">
             <h2 class="h6 mb-0">Next Actions</h2>
         </div>
@@ -318,4 +335,5 @@
             </div>
         </div>
     </div>
+    @endif
 @endsection

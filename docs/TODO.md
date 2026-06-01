@@ -40,6 +40,8 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Contact Settings Slice | Done | Codex | Contact module now owns defaults and relation type settings. |
 | Legacy Planning Files Cleanup | Done | Codex | Moved Markdown planning/spec files out of production view paths and updated runtime doc references. |
 | Task Settings Slice | Done | Codex | Task module now owns manual task defaults for status, priority, and estimate. |
+| Warroom Settings Slice | Done | Codex | Warroom now owns dashboard windows, list limits, and visible panels. |
+| Knowledge Settings Slice | Done | Codex | Knowledge now owns manual article defaults for visibility, status, review, and priority. |
 | Missing Settings Ownership RFC | In Progress | Codex | RFC approved; implement remaining module settings as slices. |
 | Domain API Foundation | Ready |  | Post-audit platform item. Define and implement consistent APIs for domains that should expose integration surfaces. |
 | Report Builder And Scheduled Client Reporting | Post-Beta |  | Version 2 item. Build custom report builder, saved report templates, and automatic client report delivery. |
@@ -263,6 +265,8 @@ Progress:
 - Asset Settings slice completed.
 - Contact Settings slice completed.
 - Task Settings slice completed.
+- Warroom Settings slice completed.
+- Knowledge Settings slice completed.
 
 ### 12. Domain API Foundation
 

@@ -88,8 +88,14 @@
         'templates' => [
             'name' => 'Templates',
             'route' => 'tech.admin.system.templatesManagement.index',
-            'pattern' => 'tech.admin.system.templatesManagement.*',
+            'pattern' => ['tech.admin.system.templatesManagement.*', 'tech.admin.settings.knowledge*'],
             'icon' => 'bi-layout-text-window-reverse',
+        ],
+        'knowledge' => [
+            'name' => 'Knowledge',
+            'route' => 'tech.admin.settings.knowledge',
+            'pattern' => 'tech.admin.settings.knowledge*',
+            'icon' => 'bi-journal-text',
         ],
         'users' => [
             'name' => 'Users',
@@ -105,10 +111,17 @@
                 'tech.admin.system.tag.*',
                 'tech.admin.system.company-profile.*',
                 'tech.admin.system.branding.*',
+                'tech.admin.settings.warroom*',
                 'tech.admin.system.queues-workers.*',
                 'tech.admin.notification-channels.*',
             ],
             'icon' => 'bi-sliders',
+        ],
+        'warroom' => [
+            'name' => 'Warroom',
+            'route' => 'tech.admin.settings.warroom',
+            'pattern' => 'tech.admin.settings.warroom*',
+            'icon' => 'bi-speedometer2',
         ],
         'integrations' => [
             'name' => 'Integrations',

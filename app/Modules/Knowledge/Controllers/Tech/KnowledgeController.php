@@ -18,6 +18,7 @@ use App\Modules\Knowledge\Actions\StoreChapter;
 use App\Modules\Knowledge\Actions\StoreShelf;
 use App\Modules\Knowledge\Actions\UpdateArticle;
 use App\Modules\Knowledge\Queries\ArticleQuery;
+use App\Modules\Knowledge\Support\KnowledgeSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -527,10 +528,10 @@ class KnowledgeController extends Controller
      * The module uses the same Blade page and Livewire component for create and
      * edit. An unsaved Article instance tells the form it is creating a record.
      */
-    public function create(): View
+    public function create(KnowledgeSettings $settings): View
     {
         return view('knowledge::Tech.form', [
-            'article' => new Article,
+            'article' => new Article($settings->articleDefaults()),
         ]);
     }
 
@@ -540,8 +541,10 @@ class KnowledgeController extends Controller
      * The current UI primarily uses the Livewire form, but this route remains
      * useful for progressive enhancement, tests, and future API-like form posts.
      */
-    public function store(Request $request, StoreArticle $action): RedirectResponse
+    public function store(Request $request, StoreArticle $action, KnowledgeSettings $settings): RedirectResponse
     {
+        $request->merge($settings->articleDefaults($request->all()));
+
         $article = $action->handle($this->validatedArticle($request));
         $this->markArticleForBookStackPushWhenNeeded($article);
 
