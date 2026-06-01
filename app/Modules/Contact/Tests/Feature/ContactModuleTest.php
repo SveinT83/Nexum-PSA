@@ -195,6 +195,48 @@ class ContactModuleTest extends TestCase
     }
 
     #[Test]
+    public function authenticated_api_user_can_find_contact_by_exact_email_or_phone(): void
+    {
+        $match = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Lookup Contact',
+        ]);
+        $match->emails()->create([
+            'label' => 'work',
+            'email' => 'lookup@example.test',
+            'is_primary' => true,
+        ]);
+        $match->phones()->create([
+            'label' => 'mobile',
+            'phone' => '+47 99 88 77 66',
+            'is_primary' => true,
+        ]);
+
+        Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Other Lookup Contact',
+        ])->emails()->create([
+            'label' => 'work',
+            'email' => 'other.lookup@example.test',
+            'is_primary' => true,
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['contacts.read']);
+
+        $this->getJson(route('api.v1.contacts.index', ['email' => 'lookup@example.test']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $match->id);
+
+        $this->getJson(route('api.v1.contacts.index', ['phone' => '004799887766']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $match->id);
+    }
+
+    #[Test]
     public function api_user_can_upsert_contact_and_link_client_context(): void
     {
         $client = Client::factory()->create(['name' => 'API Client']);

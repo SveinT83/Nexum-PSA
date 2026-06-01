@@ -101,6 +101,21 @@ contact, Decision maker, Emergency contact, Manager, and CEO.
 
 The Contact Domain exposes read and write API routes under `/api/v1/contacts`.
 
+`GET /api/v1/contacts` can be used for lookup before creating or updating records.
+
+Useful lookup filters:
+
+- `q`: broad search across name, organization, email, and phone.
+- `email`: exact email address lookup.
+- `phone`: normalized phone lookup.
+- `status`: status filter.
+
+Example:
+
+```text
+GET /api/v1/contacts?email=ola@example.test
+```
+
 `POST /api/v1/contacts` is the primary automation endpoint for n8n, AI agents, and other trusted
 integrations. It behaves as an upsert:
 

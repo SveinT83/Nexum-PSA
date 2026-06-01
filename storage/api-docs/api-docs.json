@@ -706,11 +706,28 @@
                     "Contacts"
                 ],
                 "summary": "Get list of contacts",
-                "description": "Returns a paginated list of contacts. Supports q and status filters.",
+                "description": "Returns a paginated list of contacts. Supports q, email, phone, and status filters.",
                 "operationId": "getContactList",
                 "parameters": [
                     {
                         "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "email"
+                        }
+                    },
+                    {
+                        "name": "phone",
                         "in": "query",
                         "required": false,
                         "schema": {

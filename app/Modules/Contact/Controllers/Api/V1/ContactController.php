@@ -23,12 +23,14 @@ class ContactController extends Controller
     #[OA\Get(
         path: '/api/v1/contacts',
         operationId: 'getContactList',
-        description: 'Returns a paginated list of contacts. Supports q and status filters.',
+        description: 'Returns a paginated list of contacts. Supports q, email, phone, and status filters.',
         summary: 'Get list of contacts',
         security: [['bearerAuth' => []]],
         tags: ['Contacts'],
         parameters: [
             new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'email', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'email')),
+            new OA\Parameter(name: 'phone', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
         ],
@@ -51,6 +53,21 @@ class ContactController extends Controller
                     ->orWhere('organization_name', 'like', '%'.$needle.'%')
                     ->orWhereHas('emails', fn ($emailQuery) => $emailQuery->where('email', 'like', '%'.$needle.'%'))
                     ->orWhereHas('phones', fn ($phoneQuery) => $phoneQuery->where('phone', 'like', '%'.$needle.'%'));
+            });
+        }
+
+        if ($request->filled('email')) {
+            $email = trim((string) $request->input('email'));
+            $query->whereHas('emails', fn ($emailQuery) => $emailQuery->where('email', $email));
+        }
+
+        if ($request->filled('phone')) {
+            $phone = $this->normalizePhone($request->input('phone'));
+            $query->whereHas('phones', function ($phoneQuery) use ($phone): void {
+                $phoneQuery->whereRaw(
+                    "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '+', ''), '-', ''), '(', ''), ')', '') LIKE ?",
+                    ['%'.$phone]
+                );
             });
         }
 
@@ -266,5 +283,20 @@ class ContactController extends Controller
     private function loadContactResourceRelations(Contact $contact): Contact
     {
         return $contact->load(['emails', 'phones', 'addresses', 'relations']);
+    }
+
+    private function normalizePhone(?string $phone): string
+    {
+        $normalized = preg_replace('/\D+/', '', (string) $phone) ?? '';
+
+        if (str_starts_with($normalized, '0047') && strlen($normalized) === 12) {
+            return substr($normalized, 4);
+        }
+
+        if (str_starts_with($normalized, '47') && strlen($normalized) === 10) {
+            return substr($normalized, 2);
+        }
+
+        return $normalized;
     }
 }

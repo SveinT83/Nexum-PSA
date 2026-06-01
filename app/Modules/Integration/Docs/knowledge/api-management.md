@@ -72,6 +72,19 @@ Current API routes are under `/api/v1`:
 
 ## Contact Write API
 
+`GET /api/v1/contacts` supports lookup filters before an integration creates or updates a Contact:
+
+- `q`: broad search across name, organization, email, and phone.
+- `email`: exact email address lookup.
+- `phone`: normalized phone lookup.
+- `status`: status filter.
+
+Example:
+
+```text
+GET /api/v1/contacts?email=ola@example.test
+```
+
 `POST /api/v1/contacts` is an upsert endpoint. It creates a Contact when no matching Contact exists,
 and updates the existing Contact when the submitted email address or normalized phone number already
 belongs to a Contact.
