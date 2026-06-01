@@ -120,7 +120,7 @@ Modules to audit first:
 - Email and Inbox.
 - Calendar.
 - Notification.
-- Knowledge.
+- Knowledge: manual article defaults are now configurable.
 - Nextcloud.
 - Commercial.
 - Sales.
@@ -219,7 +219,7 @@ Several modules appear to have no clear admin/settings surface yet, or only part
 - Knowledge.
 - Risk.
 - Tasks: manual task defaults are now configurable.
-- Warroom.
+- Warroom: dashboard windows, list limits, and visible panels are now configurable.
 
 Each module needs an ownership review:
 

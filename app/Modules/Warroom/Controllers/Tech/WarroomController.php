@@ -3,6 +3,7 @@
 namespace App\Modules\Warroom\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Warroom\Support\WarroomSettings;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +16,9 @@ class WarroomController extends Controller
     /**
      * Show the fixed v1 operations dashboard.
      */
-    public function __invoke(): View
+    public function __invoke(WarroomSettings $settings): View
     {
+        $dashboardSettings = $settings->get();
         $openTickets = $this->count('tickets', fn (Builder $query) => $query->whereNull('closed_at'));
         $overdueTickets = $this->count('tickets', fn (Builder $query) => $query
             ->whereNull('closed_at')
@@ -25,10 +27,11 @@ class WarroomController extends Controller
         $dueSoonTickets = $this->count('tickets', fn (Builder $query) => $query
             ->whereNull('closed_at')
             ->whereNotNull('resolve_due_at')
-            ->whereBetween('resolve_due_at', [now(), now()->addHours(8)]));
+            ->whereBetween('resolve_due_at', [now(), now()->addHours($dashboardSettings['due_soon_hours'])]));
 
         $warroom = [
             'generated_at' => now(),
+            'settings' => $dashboardSettings,
             'pulse' => [
                 [
                     'label' => 'Open tickets',
@@ -36,7 +39,7 @@ class WarroomController extends Controller
                     'tone' => $overdueTickets > 0 ? 'danger' : 'primary',
                     'icon' => 'bi-ticket-detailed',
                     'href' => $this->routeUrl('tech.tickets.index'),
-                    'meta' => "{$overdueTickets} overdue / {$dueSoonTickets} due today",
+                    'meta' => "{$overdueTickets} overdue / {$dueSoonTickets} due soon",
                 ],
                 [
                     'label' => 'Unread queue',
@@ -60,7 +63,7 @@ class WarroomController extends Controller
                     'tone' => 'info',
                     'icon' => 'bi-inbox',
                     'href' => $this->routeUrl('tech.inbox.index'),
-                    'meta' => $this->count('email_messages', fn (Builder $query) => $query->where('received_at', '>=', now()->subDay())).' last 24h',
+                    'meta' => $this->count('email_messages', fn (Builder $query) => $query->where('received_at', '>=', now()->subHours($dashboardSettings['inbox_recent_hours']))).' last '.$dashboardSettings['inbox_recent_hours'].'h',
                 ],
             ],
             'operations' => [
@@ -114,17 +117,20 @@ class WarroomController extends Controller
                     ->whereNotIn('health_status', ['healthy', 'ok'])),
                 'notification_channels' => $this->count('notification_channels', fn (Builder $query) => $query->where('is_enabled', true)),
             ],
-            'latest_tickets' => $this->latest('tickets', ['id', 'ticket_key', 'subject', 'client_id', 'owner_id', 'is_unread', 'resolve_due_at', 'updated_at'], 6, fn (Builder $query) => $query->whereNull('closed_at')),
-            'latest_alerts' => $this->latest('asset_alerts', ['id', 'title', 'status', 'last_seen_at', 'resolved_at'], 5, fn (Builder $query) => $query->whereNull('resolved_at')),
-            'calendar_events' => $calendarEvents = $this->calendarEvents(),
+            'latest_tickets' => $this->latest('tickets', ['id', 'ticket_key', 'subject', 'client_id', 'owner_id', 'is_unread', 'resolve_due_at', 'updated_at'], $dashboardSettings['latest_tickets_limit'], fn (Builder $query) => $query->whereNull('closed_at')),
+            'latest_alerts' => $this->latest('asset_alerts', ['id', 'title', 'status', 'last_seen_at', 'resolved_at'], $dashboardSettings['latest_alerts_limit'], fn (Builder $query) => $query->whereNull('resolved_at')),
+            'calendar_events' => $calendarEvents = $this->calendarEvents($dashboardSettings['calendar_today_limit']),
             'calendar_events_label' => $calendarEvents->isNotEmpty()
                 && $calendarEvents->every(fn ($event) => $event->starts_at && Carbon::parse($event->starts_at)->isToday())
                     ? 'Today'
                     : 'Next event',
-            'recent_integrations' => $this->latest('integrations', ['id', 'name', 'type', 'status', 'is_healthy', 'last_sync_at', 'last_error'], 5),
+            'recent_integrations' => $this->latest('integrations', ['id', 'name', 'type', 'status', 'is_healthy', 'last_sync_at', 'last_error'], $dashboardSettings['recent_integrations_limit']),
         ];
 
-        return view('warroom::Tech.dashboard', compact('warroom'));
+        return view('warroom::Tech.dashboard', [
+            'warroom' => $warroom,
+            'settings' => $settings,
+        ]);
     }
 
     /**
@@ -175,12 +181,12 @@ class WarroomController extends Controller
     /**
      * Show today's calendar events, or the next upcoming event when today is empty.
      */
-    private function calendarEvents()
+    private function calendarEvents(int $todayLimit)
     {
         $todayEvents = $this->calendarEventQuery()
             ->whereBetween('starts_at', [now()->startOfDay(), now()->endOfDay()])
             ->orderBy('starts_at')
-            ->limit(5)
+            ->limit($todayLimit)
             ->get();
 
         if ($todayEvents->isNotEmpty()) {

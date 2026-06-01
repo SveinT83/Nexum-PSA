@@ -58,6 +58,8 @@ class EnforceTechRoutePermission
         'tech.admin.settings.assets.*' => 'asset.manage_settings',
         'tech.admin.settings.contacts' => 'contact.manage_settings',
         'tech.admin.settings.contacts.*' => 'contact.manage_settings',
+        'tech.admin.settings.warroom' => 'warroom.manage_settings',
+        'tech.admin.settings.warroom.*' => 'warroom.manage_settings',
         'tech.admin.settings.sales.*' => 'sales.manage_settings',
         'tech.admin.settings.storage.*' => 'storage.manage_settings',
         'tech.admin.settings.tickets' => 'ticket.manage_settings',
@@ -67,6 +69,8 @@ class EnforceTechRoutePermission
         'tech.admin.settings.tickets.*' => 'ticket.manage_settings',
         'tech.admin.settings.tasks' => 'task.manage_settings',
         'tech.admin.settings.tasks.*' => 'task.manage_settings',
+        'tech.admin.settings.knowledge' => 'knowledge.manage_settings',
+        'tech.admin.settings.knowledge.*' => 'knowledge.manage_settings',
         'tech.admin.settings.cs.*' => 'commercial.view',
 
         'tech.admin.system.category.*' => 'taxonomy.manage_categories',

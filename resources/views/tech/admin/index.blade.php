@@ -91,8 +91,9 @@
         [
             'title' => 'Templates',
             'icon' => 'bi-layout-text-window-reverse',
-            'description' => 'Reusable document and email templates used across modules.',
+            'description' => 'Reusable document, email, and Knowledge defaults used across modules.',
             'links' => [
+                ['label' => 'Knowledge settings', 'route' => route('tech.admin.settings.knowledge')],
                 ['label' => 'Template management', 'route' => route('tech.admin.system.templatesManagement.index')],
             ],
         ],
@@ -114,6 +115,7 @@
             'links' => [
                 ['label' => 'Company profile', 'route' => route('tech.admin.system.company-profile.edit')],
                 ['label' => 'Branding', 'route' => route('tech.admin.system.branding.edit')],
+                ['label' => 'Warroom', 'route' => route('tech.admin.settings.warroom')],
                 ['label' => 'Categories', 'route' => route('tech.admin.system.category.index')],
                 ['label' => 'Tags', 'route' => route('tech.admin.system.tag.index')],
                 ['label' => 'Queues and workers', 'route' => route('tech.admin.system.queues-workers.index')],

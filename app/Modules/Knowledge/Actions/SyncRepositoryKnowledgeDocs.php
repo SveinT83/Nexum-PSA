@@ -118,6 +118,7 @@ class SyncRepositoryKnowledgeDocs
             'Task' => $this->definition('tasks', 'Tasks', 500),
             'Ticket' => $this->definition('tickets', 'Tickets', 400),
             'UserManagement' => $this->definition('user-management', 'User Management', 300),
+            'Warroom' => $this->definition('warroom', 'Warroom', 100),
         ];
     }
 

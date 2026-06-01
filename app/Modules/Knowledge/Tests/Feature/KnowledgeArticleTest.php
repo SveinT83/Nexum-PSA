@@ -7,6 +7,7 @@ use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
 use App\Models\Knowledge\Shelf;
+use App\Models\Settings\CommonSetting;
 use App\Models\System\Integrations\Integration;
 use App\Modules\Integration\Jobs\PushPendingKnowledgeToBookStack;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -65,6 +66,58 @@ class KnowledgeArticleTest extends TestCase
         $this->assertSame($this->tech->id, $article->created_by);
         $this->assertNotEmpty($article->slug);
         $this->assertNotEmpty($article->body_html);
+    }
+
+    #[Test]
+    public function admin_can_update_knowledge_article_defaults(): void
+    {
+        $this->actingAs($this->tech)
+            ->get(route('tech.admin.settings.knowledge'))
+            ->assertOk()
+            ->assertViewIs('knowledge::Admin.Settings.edit')
+            ->assertSee('Knowledge Settings')
+            ->assertSee('Article Defaults');
+
+        $this->actingAs($this->tech)
+            ->put(route('tech.admin.settings.knowledge.update'), [
+                'default_visibility' => 'client-wide',
+                'default_status' => 'draft',
+                'default_review_days' => 90,
+                'default_priority' => 25,
+            ])
+            ->assertRedirect(route('tech.admin.settings.knowledge'));
+
+        $settings = json_decode(CommonSetting::query()->where('type', 'knowledge')->where('name', 'defaults')->value('json'), true);
+
+        $this->assertSame('client-wide', $settings['default_visibility']);
+        $this->assertSame('draft', $settings['default_status']);
+        $this->assertSame(90, $settings['default_review_days']);
+        $this->assertSame(25, $settings['default_priority']);
+    }
+
+    #[Test]
+    public function article_creation_uses_configured_defaults(): void
+    {
+        $this->actingAs($this->tech);
+
+        $this->put(route('tech.admin.settings.knowledge.update'), [
+            'default_visibility' => 'public',
+            'default_status' => 'needs_review',
+            'default_review_days' => 30,
+            'default_priority' => 15,
+        ])->assertRedirect(route('tech.admin.settings.knowledge'));
+
+        $this->post(route('tech.knowledge.store'), [
+            'title' => 'Defaulted Knowledge Page',
+            'body_markdown' => 'Uses configured defaults.',
+        ])->assertRedirect();
+
+        $article = Article::query()->where('title', 'Defaulted Knowledge Page')->firstOrFail();
+
+        $this->assertSame('public', $article->visibility);
+        $this->assertSame('needs_review', $article->status);
+        $this->assertSame(15, $article->priority);
+        $this->assertTrue($article->next_review_at->isSameDay(now()->addDays(30)));
     }
 
     #[Test]
@@ -318,7 +371,7 @@ class KnowledgeArticleTest extends TestCase
 
         $this->artisan('knowledge:sync-docs', ['--module' => ['System'], '--push' => true])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 2')
+            ->expectsOutput('articles: 3')
             ->assertSuccessful();
 
         $article = Article::where('source_system', 'nexum')

@@ -5,6 +5,7 @@ namespace App\Modules\Knowledge\Actions;
 use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
+use App\Modules\Knowledge\Support\KnowledgeSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -17,13 +18,18 @@ use Illuminate\Support\Str;
  */
 class StoreArticle
 {
-    public function __construct(private readonly RenderArticleBody $renderer) {}
+    public function __construct(
+        private readonly RenderArticleBody $renderer,
+        private readonly KnowledgeSettings $settings,
+    ) {}
 
     /**
      * Persist a new article and return it.
      */
     public function handle(array $data): Article
     {
+        $data = $this->settings->articleDefaults($data);
+
         if (($data['visibility'] ?? null) !== 'client-wide') {
             $data['client_scope_id'] = null;
         }

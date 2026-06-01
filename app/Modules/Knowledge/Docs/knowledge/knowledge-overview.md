@@ -2,6 +2,8 @@ The Knowledge domain is the internal documentation and knowledge base layer in N
 
 It provides the local content model used by technicians and by the BookStack integration.
 
+Manual article defaults are controlled from Admin -> Knowledge Settings.
+
 ## Structure
 
 Knowledge uses a BookStack-compatible hierarchy:

@@ -64,6 +64,7 @@ class RoleSeeder extends Seeder
                 'task.manage_settings',
                 'calendar.manage_settings',
                 'knowledge.manage_structure',
+                'knowledge.manage_settings',
                 'documentation.manage_templates',
                 'commercial.service_manage',
                 'commercial.contract_manage',
@@ -105,6 +106,7 @@ class RoleSeeder extends Seeder
                 'system.security_manage',
                 'system.backup_manage',
                 'system.settings_manage',
+                'warroom.manage_settings',
                 'report.export',
             ]
         )));

@@ -11,6 +11,7 @@ use App\Models\System\Integrations\Integration;
 use App\Modules\Integration\Jobs\PushPendingKnowledgeToBookStack;
 use App\Modules\Knowledge\Actions\StoreArticle;
 use App\Modules\Knowledge\Actions\UpdateArticle;
+use App\Modules\Knowledge\Support\KnowledgeSettings;
 use App\Modules\Taxonomy\Models\Category;
 use Livewire\Component;
 
@@ -89,12 +90,15 @@ class ArticleForm extends Component
             return;
         }
 
-        $this->status = 'published';
-        $this->visibility = 'internal';
+        $defaults = app(KnowledgeSettings::class)->articleDefaults();
+
+        $this->status = $defaults['status'];
+        $this->visibility = $defaults['visibility'];
+        $this->priority = $defaults['priority'];
         $this->knowledge_shelf_id = $article->knowledge_shelf_id;
         $this->knowledge_book_id = $article->knowledge_book_id;
         $this->knowledge_chapter_id = $article->knowledge_chapter_id;
-        $this->next_review_at = now()->addYear()->format('Y-m-d');
+        $this->next_review_at = $defaults['next_review_at'];
     }
 
     /**
