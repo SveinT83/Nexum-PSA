@@ -64,6 +64,11 @@ Update routes require `clients.update`:
 - `PUT /api/v1/client-sites/{site}`
 - `PATCH /api/v1/client-sites/{site}`
 
+Client Site lookup routes require `clients.read`:
+
+- `GET /api/v1/client-sites`
+- `GET /api/v1/clients/{client}/sites`
+
 `POST /api/v1/clients` creates the Client and a default Site. If no site name is supplied, the Site
 is named `Default`.
 
@@ -100,7 +105,7 @@ only to the abilities the integration actually needs.
 
 ## Custom Fields
 
-Clients support platform Custom Fields.
+Clients and Client Sites support platform Custom Fields.
 
 Admins configure field definitions from `Admin -> System -> Custom fields`.
 
@@ -111,7 +116,8 @@ This does not edit the custom field definition itself.
 Editable fields also appear on the Client settings page as part of the broader client settings form.
 
 The Client API accepts `custom_fields` on create and update requests and exposes values in the
-`custom_fields` response payload.
+`custom_fields` response payload. Client Site create and update requests support the same
+`custom_fields` payload for site-specific values.
 
 Searchable fields can be used as API filters:
 
@@ -119,4 +125,13 @@ Searchable fields can be used as API filters:
 GET /api/v1/clients?custom_field[msp_manager_id]=12345
 ```
 
-This is intended for lightweight integration scenarios such as n8n syncing Clients from MSP Manager.
+Client Sites can also be looked up by custom field values:
+
+```text
+GET /api/v1/client-sites?custom_field[msp_manager_site_id]=SITE-12345
+GET /api/v1/clients/{client}/sites?custom_field[msp_manager_site_id]=SITE-12345
+```
+
+This is intended for lightweight integration scenarios such as n8n syncing Clients and Sites from
+MSP Manager. External IDs should be sent inside the JSON `custom_fields` object, not as HTTP
+headers.

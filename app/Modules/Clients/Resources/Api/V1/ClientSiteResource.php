@@ -2,6 +2,7 @@
 
 namespace App\Modules\Clients\Resources\Api\V1;
 
+use App\Modules\CustomField\Support\CustomFieldPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,6 +24,12 @@ class ClientSiteResource extends JsonResource
             'county' => $this->county,
             'country' => $this->country,
             'is_default' => (bool) $this->is_default,
+            'client' => $this->whenLoaded('client', fn () => [
+                'id' => $this->client?->id,
+                'name' => $this->client?->name,
+                'client_number' => $this->client?->client_number,
+            ]),
+            'custom_fields' => app(CustomFieldPresenter::class)->apiFor($this->resource, $request->user()),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -3,6 +3,7 @@
 namespace App\Modules\CustomField\Support;
 
 use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
 
 class CustomFieldModelRegistry
 {
@@ -12,11 +13,12 @@ class CustomFieldModelRegistry
     |--------------------------------------------------------------------------
     |
     | Add domains here one at a time after their UI, API, validation, tests, and
-    | documentation are implemented. The first beta consumer is Client.
+    | documentation are implemented.
     |
     */
     public const MODELS = [
         'client' => Client::class,
+        'client_site' => ClientSite::class,
     ];
 
     public function all(): array

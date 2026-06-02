@@ -31,6 +31,10 @@ Route::post('clients/{client}/sites', [ClientController::class, 'storeSite'])
     ->middleware(CheckAbilities::class.':clients.update')
     ->name('clients.sites.store');
 
+Route::get('client-sites', [ClientController::class, 'siteIndex'])
+    ->middleware(CheckAbilities::class.':clients.read')
+    ->name('client-sites.index');
+
 Route::match(['put', 'patch'], 'client-sites/{site}', [ClientController::class, 'updateSite'])
     ->middleware(CheckAbilities::class.':clients.update')
     ->name('client-sites.update');
