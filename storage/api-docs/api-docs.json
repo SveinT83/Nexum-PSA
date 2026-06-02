@@ -255,6 +255,205 @@
                 ]
             }
         },
+        "/api/v1/calendars": {
+            "get": {
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Get visible calendars",
+                "operationId": "getCalendarList",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing calendar.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/calendar/events": {
+            "get": {
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Get calendar events",
+                "operationId": "getCalendarEventList",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "calendar_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing calendar.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Create calendar event",
+                "operationId": "createCalendarEvent",
+                "responses": {
+                    "201": {
+                        "description": "Event created"
+                    },
+                    "403": {
+                        "description": "Missing calendar.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/calendar/events/{event}": {
+            "get": {
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Get calendar event",
+                "operationId": "getCalendarEventById",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing calendar.read scope"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Delete calendar event",
+                "operationId": "deleteCalendarEvent",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Event deleted"
+                    },
+                    "403": {
+                        "description": "Missing calendar.delete scope"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Update calendar event",
+                "operationId": "updateCalendarEvent",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event updated"
+                    },
+                    "403": {
+                        "description": "Missing calendar.update scope"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/clients": {
             "get": {
                 "tags": [
@@ -263,6 +462,35 @@
                 "summary": "Get list of clients",
                 "description": "Returns list of clients with pagination",
                 "operationId": "getClientList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search by client name, organization number, client number, or billing email.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "active",
+                        "in": "query",
+                        "description": "Filter by active status.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of clients per page.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful operation"
@@ -965,6 +1193,1428 @@
                 ]
             }
         },
+        "/api/v1/email/inbox/messages": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Get inbox messages",
+                "description": "Returns paginated unrouted inbox messages. Messages already linked to tickets are excluded.",
+                "operationId": "getInboxMessageList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from_email",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing email.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/inbox/messages/{message}": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Get inbox message",
+                "operationId": "getInboxMessageById",
+                "parameters": [
+                    {
+                        "name": "message",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing email.read scope"
+                    },
+                    "404": {
+                        "description": "Inbox message not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/inbox/messages/{message}/spam": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Mark inbox message as spam",
+                "operationId": "markInboxMessageSpam",
+                "parameters": [
+                    {
+                        "name": "message",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message marked as spam"
+                    },
+                    "403": {
+                        "description": "Missing email.update scope"
+                    },
+                    "404": {
+                        "description": "Inbox message not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/inbox/poll": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Queue inbox polling",
+                "operationId": "queueInboxPoll",
+                "responses": {
+                    "202": {
+                        "description": "Inbox polling queued"
+                    },
+                    "403": {
+                        "description": "Missing email.update scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/knowledge/articles": {
+            "get": {
+                "tags": [
+                    "Knowledge"
+                ],
+                "summary": "Get list of knowledge articles",
+                "description": "Returns a paginated list of knowledge articles.",
+                "operationId": "getKnowledgeArticleList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "visibility",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "book_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing knowledge.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Knowledge"
+                ],
+                "summary": "Create knowledge article",
+                "description": "Creates a knowledge article and renders Markdown to HTML.",
+                "operationId": "createKnowledgeArticle",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "body_markdown"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "body_markdown": {
+                                        "type": "string"
+                                    },
+                                    "visibility": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "knowledge_book_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "knowledge_chapter_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "priority": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Article created"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing knowledge.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/knowledge/articles/{article}": {
+            "get": {
+                "tags": [
+                    "Knowledge"
+                ],
+                "summary": "Get knowledge article",
+                "description": "Returns one knowledge article.",
+                "operationId": "getKnowledgeArticleById",
+                "parameters": [
+                    {
+                        "name": "article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing knowledge.read scope"
+                    },
+                    "404": {
+                        "description": "Article not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Knowledge"
+                ],
+                "summary": "Update knowledge article",
+                "description": "Updates a knowledge article and re-renders Markdown to HTML.",
+                "operationId": "replaceKnowledgeArticle",
+                "parameters": [
+                    {
+                        "name": "article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Article updated"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing knowledge.update scope"
+                    },
+                    "404": {
+                        "description": "Article not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Knowledge"
+                ],
+                "summary": "Partially update knowledge article",
+                "description": "Partially updates a knowledge article. Missing required edit fields are inherited from the current article.",
+                "operationId": "patchKnowledgeArticle",
+                "parameters": [
+                    {
+                        "name": "article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Article updated"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing knowledge.update scope"
+                    },
+                    "404": {
+                        "description": "Article not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get user notifications",
+                "operationId": "getNotificationList",
+                "parameters": [
+                    {
+                        "name": "unread",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing notifications.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/notifications/{notification}/read": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark one notification as read",
+                "operationId": "markNotificationRead",
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification marked as read"
+                    },
+                    "403": {
+                        "description": "Missing notifications.update scope"
+                    },
+                    "404": {
+                        "description": "Notification not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark all user notifications as read",
+                "operationId": "markAllNotificationsRead",
+                "responses": {
+                    "200": {
+                        "description": "Notifications marked as read"
+                    },
+                    "403": {
+                        "description": "Missing notifications.update scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/assessments": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "Get list of risk assessments",
+                "operationId": "getRiskAssessmentList",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing risk.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "Create risk assessment",
+                "operationId": "createRiskAssessment",
+                "responses": {
+                    "201": {
+                        "description": "Assessment created"
+                    },
+                    "403": {
+                        "description": "Missing risk.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/assessments/{assessment}": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "Get risk assessment",
+                "operationId": "getRiskAssessmentById",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing risk.read scope"
+                    },
+                    "404": {
+                        "description": "Assessment not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "Update risk assessment",
+                "operationId": "updateRiskAssessment",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assessment updated"
+                    },
+                    "403": {
+                        "description": "Missing risk.update scope"
+                    },
+                    "404": {
+                        "description": "Assessment not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/assessments/{assessment}/items": {
+            "post": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "Create risk item",
+                "operationId": "createRiskItem",
+                "parameters": [
+                    {
+                        "name": "assessment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Risk item created"
+                    },
+                    "403": {
+                        "description": "Missing risk.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/items/{item}": {
+            "get": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "Get risk item",
+                "operationId": "getRiskItemById",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing risk.read scope"
+                    },
+                    "404": {
+                        "description": "Risk item not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "Update risk item details",
+                "operationId": "updateRiskItem",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Risk item updated"
+                    },
+                    "403": {
+                        "description": "Missing risk.update scope"
+                    },
+                    "404": {
+                        "description": "Risk item not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/risk/items/{item}/updates": {
+            "post": {
+                "tags": [
+                    "Risk"
+                ],
+                "summary": "Create risk item update",
+                "operationId": "createRiskItemUpdate",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Risk item update created"
+                    },
+                    "403": {
+                        "description": "Missing risk.update scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/sales/opportunities": {
+            "get": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Get sales opportunities",
+                "operationId": "getSalesOpportunityList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "owner_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing sales.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Create sales opportunity",
+                "operationId": "createSalesOpportunity",
+                "responses": {
+                    "201": {
+                        "description": "Opportunity created"
+                    },
+                    "403": {
+                        "description": "Missing sales.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/sales/opportunities/{opportunity}": {
+            "get": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Get sales opportunity",
+                "operationId": "getSalesOpportunityByKey",
+                "parameters": [
+                    {
+                        "name": "opportunity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing sales.read scope"
+                    },
+                    "404": {
+                        "description": "Opportunity not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Update sales opportunity",
+                "operationId": "updateSalesOpportunity",
+                "parameters": [
+                    {
+                        "name": "opportunity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opportunity updated"
+                    },
+                    "403": {
+                        "description": "Missing sales.update scope"
+                    },
+                    "404": {
+                        "description": "Opportunity not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/sales/opportunities/{opportunity}/activities": {
+            "post": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Create sales activity",
+                "operationId": "createSalesActivity",
+                "parameters": [
+                    {
+                        "name": "opportunity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Activity created"
+                    },
+                    "403": {
+                        "description": "Missing sales.update scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/sales/opportunities/{opportunity}/read": {
+            "post": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Mark sales opportunity activities read",
+                "operationId": "markSalesOpportunityRead",
+                "parameters": [
+                    {
+                        "name": "opportunity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opportunity marked read"
+                    },
+                    "403": {
+                        "description": "Missing sales.update scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/items": {
+            "get": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get list of storage items",
+                "description": "Returns a paginated list of storage items. Use q, sku, ean_number, warehouse_id, box_id, and status to narrow results.",
+                "operationId": "getStorageItemList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sku",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ean_number",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "warehouse_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "box_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing storage.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Create storage item",
+                "operationId": "createStorageItem",
+                "responses": {
+                    "201": {
+                        "description": "Item created"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing storage.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/items/{item}": {
+            "get": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get storage item",
+                "operationId": "getStorageItemById",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing storage.read scope"
+                    },
+                    "404": {
+                        "description": "Item not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Update storage item",
+                "operationId": "replaceStorageItem",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item updated"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing storage.update scope"
+                    },
+                    "404": {
+                        "description": "Item not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Partially update storage item",
+                "operationId": "patchStorageItem",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item updated"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing storage.update scope"
+                    },
+                    "404": {
+                        "description": "Item not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/items/{item}/adjust": {
+            "post": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Adjust storage item stock",
+                "operationId": "adjustStorageItemStock",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stock adjusted"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing storage.update scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/warehouses": {
+            "get": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get list of storage warehouses",
+                "operationId": "getStorageWarehouseList",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing storage.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Create storage warehouse",
+                "operationId": "createStorageWarehouse",
+                "responses": {
+                    "201": {
+                        "description": "Warehouse created"
+                    },
+                    "403": {
+                        "description": "Missing storage.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/warehouses/{warehouse}": {
+            "patch": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Update storage warehouse",
+                "operationId": "updateStorageWarehouse",
+                "parameters": [
+                    {
+                        "name": "warehouse",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Warehouse updated"
+                    },
+                    "403": {
+                        "description": "Missing storage.update scope"
+                    },
+                    "404": {
+                        "description": "Warehouse not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/boxes": {
+            "get": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get list of storage boxes",
+                "operationId": "getStorageBoxList",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing storage.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Create storage box",
+                "operationId": "createStorageBox",
+                "responses": {
+                    "201": {
+                        "description": "Box created"
+                    },
+                    "403": {
+                        "description": "Missing storage.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/boxes/{box}": {
+            "patch": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Update storage box",
+                "operationId": "updateStorageBox",
+                "parameters": [
+                    {
+                        "name": "box",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Box updated"
+                    },
+                    "403": {
+                        "description": "Missing storage.update scope"
+                    },
+                    "404": {
+                        "description": "Box not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tasks": {
             "get": {
                 "tags": [
@@ -1509,12 +3159,40 @@
             "description": "API Endpoints for Assets"
         },
         {
+            "name": "Calendar",
+            "description": "API endpoints for calendars and calendar events."
+        },
+        {
             "name": "Clients",
             "description": "API Endpoints for Clients"
         },
         {
             "name": "Contacts",
             "description": "API endpoints for contacts and contact automation."
+        },
+        {
+            "name": "Email",
+            "description": "API endpoints for inbox messages and email operations."
+        },
+        {
+            "name": "Knowledge",
+            "description": "API endpoints for knowledge articles."
+        },
+        {
+            "name": "Notifications",
+            "description": "API endpoints for user notifications."
+        },
+        {
+            "name": "Risk",
+            "description": "API endpoints for risk assessments, risk items, and risk item updates."
+        },
+        {
+            "name": "Sales",
+            "description": "API endpoints for sales opportunities and sales activities."
+        },
+        {
+            "name": "Storage",
+            "description": "API endpoints for storage inventory, warehouses, boxes, and stock adjustments."
         },
         {
             "name": "Tasks",

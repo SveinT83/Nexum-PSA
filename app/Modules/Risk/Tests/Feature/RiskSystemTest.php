@@ -9,6 +9,7 @@ use App\Models\Risk\RiskItemUpdate;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -126,6 +127,89 @@ class RiskSystemTest extends TestCase
         $this->assertSame(20, $item->score);
         $this->assertSame('accepted', $item->status);
         $this->assertTrue($item->next_review_at->isSameDay(now()->addDays(45)));
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_manage_risk_assessments_and_items(): void
+    {
+        Sanctum::actingAs($this->superuser, ['risk.read', 'risk.create', 'risk.update']);
+
+        $assessmentResponse = $this->postJson(route('api.v1.risk.assessments.store'), [
+            'title' => 'API Assessment',
+            'description' => 'Created through API.',
+            'scope' => 'internal',
+            'status' => 'open',
+        ]);
+
+        $assessmentResponse->assertCreated()
+            ->assertJsonPath('data.title', 'API Assessment')
+            ->assertJsonPath('data.status', 'open');
+
+        $assessmentId = $assessmentResponse->json('data.id');
+
+        $itemResponse = $this->postJson(route('api.v1.risk.assessments.items.store', $assessmentId), [
+            'title' => 'API Risk Item',
+            'description' => 'Risk created through API.',
+            'recommended_actions' => 'Mitigate through controls.',
+            'category_id' => $this->category->id,
+            'likelihood' => 3,
+            'impact' => 4,
+            'status' => 'open',
+        ]);
+
+        $itemResponse->assertCreated()
+            ->assertJsonPath('data.title', 'API Risk Item')
+            ->assertJsonPath('data.score', 12)
+            ->assertJsonPath('data.updates.0.note', 'Initial risk identified');
+
+        $itemId = $itemResponse->json('data.id');
+
+        $this->getJson(route('api.v1.risk.assessments.index', ['q' => 'API']))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $assessmentId);
+
+        $this->patchJson(route('api.v1.risk.items.update', $itemId), [
+            'title' => 'API Risk Item Updated',
+            'likelihood' => 5,
+            'impact' => 5,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'API Risk Item Updated')
+            ->assertJsonPath('data.score', 12);
+
+        $this->postJson(route('api.v1.risk.items.updates.store', $itemId), [
+            'note' => 'Risk accepted after review.',
+            'status' => 'accepted',
+            'likelihood' => 2,
+            'impact' => 2,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'accepted')
+            ->assertJsonPath('data.score', 4);
+
+        $this->assertDatabaseHas('risk_items', [
+            'id' => $itemId,
+            'status' => 'accepted',
+            'score' => 4,
+        ]);
+    }
+
+    #[Test]
+    public function risk_read_api_token_cannot_create_or_update_risk_records(): void
+    {
+        Sanctum::actingAs($this->superuser, ['risk.read']);
+
+        $this->getJson(route('api.v1.risk.assessments.show', $this->assessment))
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Test Assessment');
+
+        $this->postJson(route('api.v1.risk.assessments.store'), [
+            'title' => 'Denied Assessment',
+        ])->assertForbidden();
+
+        $this->patchJson(route('api.v1.risk.assessments.update', $this->assessment), [
+            'title' => 'Denied Update',
+        ])->assertForbidden();
     }
 
     #[Test]

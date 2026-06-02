@@ -20,6 +20,7 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -207,6 +208,119 @@ class StorageModuleTest extends TestCase
             'unit_cost' => '5000.00',
             'is_primary' => true,
         ]);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_manage_storage_inventory(): void
+    {
+        Sanctum::actingAs($this->tech, ['storage.read', 'storage.create', 'storage.update']);
+
+        $warehouseResponse = $this->postJson(route('api.v1.storage.warehouses.store'), [
+            'name' => 'API Warehouse',
+            'code' => 'api main',
+            'address' => 'Main street 1',
+        ]);
+
+        $warehouseResponse->assertCreated()
+            ->assertJsonPath('data.name', 'API Warehouse')
+            ->assertJsonPath('data.code', 'API-MAIN');
+
+        $warehouseId = $warehouseResponse->json('data.id');
+
+        $boxResponse = $this->postJson(route('api.v1.storage.boxes.store'), [
+            'warehouse_id' => $warehouseId,
+            'code_human' => 'api box',
+            'name' => 'API Box',
+            'barcode_value' => 'BOX-API-001',
+            'barcode_type' => 'CODE128',
+            'status' => 'in_stock',
+        ]);
+
+        $boxResponse->assertCreated()
+            ->assertJsonPath('data.code_human', 'API-BOX')
+            ->assertJsonPath('data.barcode_value', 'BOX-API-001');
+
+        $boxId = $boxResponse->json('data.id');
+
+        $itemResponse = $this->postJson(route('api.v1.storage.items.store'), [
+            'warehouse_id' => $warehouseId,
+            'box_id' => $boxId,
+            'sku' => 'api-router',
+            'name' => 'API Router',
+            'ean_number' => '7090000000012',
+            'sale_price' => 1299,
+            'initial_quantity' => 4,
+            'reorder_point' => 2,
+            'target_level' => 8,
+            'status' => 'active',
+        ]);
+
+        $itemResponse->assertCreated()
+            ->assertJsonPath('data.sku', 'API-ROUTER')
+            ->assertJsonPath('data.qty_on_hand', 4)
+            ->assertJsonPath('data.box.id', $boxId);
+
+        $itemId = $itemResponse->json('data.id');
+
+        $this->getJson(route('api.v1.storage.items.index', ['q' => 'router']))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $itemId);
+
+        $this->patchJson(route('api.v1.storage.items.update', $itemId), [
+            'name' => 'API Router Updated',
+            'should_order' => true,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'API Router Updated')
+            ->assertJsonPath('data.should_order', true);
+
+        $this->postJson(route('api.v1.storage.items.adjust', $itemId), [
+            'delta' => -1,
+            'reason' => 'api_test',
+            'note' => 'Picked by API test.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.qty_on_hand', 3);
+
+        $this->assertDatabaseHas('storage_movements', [
+            'item_id' => $itemId,
+            'type' => 'adjust',
+            'qty_delta' => -1,
+            'reason' => 'api_test',
+        ]);
+    }
+
+    #[Test]
+    public function storage_read_api_token_cannot_create_or_adjust_inventory(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'Read Only Warehouse',
+            'code' => 'READ',
+        ]);
+        $item = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'READ-ITEM',
+            'name' => 'Read Item',
+            'qty_on_hand' => 1,
+            'status' => 'active',
+        ]);
+
+        Sanctum::actingAs($this->tech, ['storage.read']);
+
+        $this->getJson(route('api.v1.storage.items.show', $item))
+            ->assertOk()
+            ->assertJsonPath('data.sku', 'READ-ITEM');
+
+        $this->postJson(route('api.v1.storage.items.store'), [
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'DENIED',
+            'name' => 'Denied Item',
+        ])->assertForbidden();
+
+        $this->postJson(route('api.v1.storage.items.adjust', $item), [
+            'delta' => 1,
+            'reason' => 'denied',
+        ])->assertForbidden();
     }
 
     #[Test]

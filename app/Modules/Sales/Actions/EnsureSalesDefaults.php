@@ -101,7 +101,7 @@ class EnsureSalesDefaults
         }
 
         foreach (self::PERMISSIONS as $permission) {
-            Permission::findOrCreate($permission);
+            Permission::findOrCreate($permission, 'web');
         }
 
         foreach (Role::query()->whereIn('name', ['Admin', 'Superuser'])->get() as $role) {

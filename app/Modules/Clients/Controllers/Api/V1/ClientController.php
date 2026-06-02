@@ -44,6 +44,29 @@ class ClientController extends Controller
         summary: "Get list of clients",
         security: [["bearerAuth" => []]],
         tags: ["Clients"],
+        parameters: [
+            new OA\Parameter(
+                name: "q",
+                in: "query",
+                description: "Search by client name, organization number, client number, or billing email.",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
+            new OA\Parameter(
+                name: "active",
+                in: "query",
+                description: "Filter by active status.",
+                required: false,
+                schema: new OA\Schema(type: "boolean")
+            ),
+            new OA\Parameter(
+                name: "per_page",
+                in: "query",
+                description: "Number of clients per page.",
+                required: false,
+                schema: new OA\Schema(type: "integer")
+            ),
+        ],
         responses: [
             new OA\Response(response: 200, description: "Successful operation"),
             new OA\Response(response: 401, description: "Unauthenticated")

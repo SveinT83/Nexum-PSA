@@ -84,6 +84,27 @@ class ClientTechTest extends TestCase
     }
 
     #[Test]
+    public function authenticated_api_user_can_search_clients_by_name(): void
+    {
+        Client::factory()->create([
+            'name' => 'Ellrun Thun Saur',
+            'client_number' => '00018',
+            'billing_email' => 'billing@ellrun.test',
+        ]);
+        Client::factory()->create([
+            'name' => 'Unrelated Client AS',
+            'client_number' => '00019',
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['clients.read']);
+
+        $this->getJson(route('api.v1.clients.index', ['q' => 'ellrun']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Ellrun Thun Saur');
+    }
+
+    #[Test]
     public function client_read_api_token_cannot_read_assets(): void
     {
         Sanctum::actingAs($this->techUser, ['clients.read']);

@@ -102,7 +102,7 @@ class EnsureCalendarDefaults
         }
 
         foreach (CalendarPermission::all() as $permission) {
-            Permission::findOrCreate($permission);
+            Permission::findOrCreate($permission, 'web');
         }
 
         $admin = Role::query()->whereIn('name', ['Admin', 'Superuser'])->get();

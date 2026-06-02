@@ -14,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -66,6 +67,56 @@ class KnowledgeArticleTest extends TestCase
         $this->assertSame($this->tech->id, $article->created_by);
         $this->assertNotEmpty($article->slug);
         $this->assertNotEmpty($article->body_html);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_create_list_show_and_update_articles(): void
+    {
+        Sanctum::actingAs($this->tech, ['knowledge.read', 'knowledge.create', 'knowledge.update']);
+
+        $this->postJson(route('api.v1.knowledge.articles.store'), [
+            'title' => 'API Knowledge Article',
+            'body_markdown' => '# API Knowledge Article',
+            'visibility' => 'internal',
+            'status' => 'published',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.title', 'API Knowledge Article')
+            ->assertJsonPath('data.owner_id', $this->tech->id)
+            ->assertJsonPath('data.status', 'published');
+
+        $article = Article::query()->where('title', 'API Knowledge Article')->firstOrFail();
+
+        $this->assertNotEmpty($article->body_html);
+
+        $this->getJson(route('api.v1.knowledge.articles.index', ['q' => 'API Knowledge']))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $article->id);
+
+        $this->getJson(route('api.v1.knowledge.articles.show', $article))
+            ->assertOk()
+            ->assertJsonPath('data.id', $article->id);
+
+        $this->patchJson(route('api.v1.knowledge.articles.update', $article), [
+            'title' => 'API Knowledge Article Updated',
+            'body_markdown' => 'Updated body.',
+            'status' => 'needs_review',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'API Knowledge Article Updated')
+            ->assertJsonPath('data.status', 'needs_review')
+            ->assertJsonPath('data.body_html', "<p>Updated body.</p>\n");
+    }
+
+    #[Test]
+    public function knowledge_read_api_token_cannot_create_articles(): void
+    {
+        Sanctum::actingAs($this->tech, ['knowledge.read']);
+
+        $this->postJson(route('api.v1.knowledge.articles.store'), [
+            'title' => 'Blocked Knowledge Article',
+            'body_markdown' => 'Blocked.',
+        ])->assertForbidden();
     }
 
     #[Test]

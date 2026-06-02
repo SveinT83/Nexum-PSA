@@ -82,6 +82,106 @@ class ApiAbilityCatalog
             'description' => 'Update task fields and status.',
             'domain' => 'Tasks',
         ],
+        'knowledge.read' => [
+            'label' => 'Read knowledge',
+            'description' => 'List and view knowledge articles.',
+            'domain' => 'Knowledge',
+        ],
+        'knowledge.create' => [
+            'label' => 'Create knowledge',
+            'description' => 'Create knowledge articles.',
+            'domain' => 'Knowledge',
+        ],
+        'knowledge.update' => [
+            'label' => 'Update knowledge',
+            'description' => 'Update knowledge articles.',
+            'domain' => 'Knowledge',
+        ],
+        'storage.read' => [
+            'label' => 'Read storage',
+            'description' => 'List and view storage items, warehouses, and boxes.',
+            'domain' => 'Storage',
+        ],
+        'storage.create' => [
+            'label' => 'Create storage',
+            'description' => 'Create storage items, warehouses, and boxes.',
+            'domain' => 'Storage',
+        ],
+        'storage.update' => [
+            'label' => 'Update storage',
+            'description' => 'Update storage records and adjust item stock.',
+            'domain' => 'Storage',
+        ],
+        'calendar.read' => [
+            'label' => 'Read calendar',
+            'description' => 'List calendars and view calendar events.',
+            'domain' => 'Calendar',
+        ],
+        'calendar.create' => [
+            'label' => 'Create calendar events',
+            'description' => 'Create calendar events.',
+            'domain' => 'Calendar',
+        ],
+        'calendar.update' => [
+            'label' => 'Update calendar events',
+            'description' => 'Update calendar events.',
+            'domain' => 'Calendar',
+        ],
+        'calendar.delete' => [
+            'label' => 'Delete calendar events',
+            'description' => 'Delete calendar events.',
+            'domain' => 'Calendar',
+        ],
+        'risk.read' => [
+            'label' => 'Read risk',
+            'description' => 'List and view risk assessments and risk items.',
+            'domain' => 'Risk',
+        ],
+        'risk.create' => [
+            'label' => 'Create risk',
+            'description' => 'Create risk assessments and risk items.',
+            'domain' => 'Risk',
+        ],
+        'risk.update' => [
+            'label' => 'Update risk',
+            'description' => 'Update risk assessments, risk items, and risk item history.',
+            'domain' => 'Risk',
+        ],
+        'email.read' => [
+            'label' => 'Read email inbox',
+            'description' => 'List and view unrouted inbox messages.',
+            'domain' => 'Email',
+        ],
+        'email.update' => [
+            'label' => 'Update email inbox',
+            'description' => 'Mark inbox messages as spam and queue inbox polling.',
+            'domain' => 'Email',
+        ],
+        'notifications.read' => [
+            'label' => 'Read notifications',
+            'description' => 'List and view the authenticated user notifications.',
+            'domain' => 'Notifications',
+        ],
+        'notifications.update' => [
+            'label' => 'Update notifications',
+            'description' => 'Mark the authenticated user notifications as read.',
+            'domain' => 'Notifications',
+        ],
+        'sales.read' => [
+            'label' => 'Read sales',
+            'description' => 'List and view sales opportunities and activities.',
+            'domain' => 'Sales',
+        ],
+        'sales.create' => [
+            'label' => 'Create sales',
+            'description' => 'Create sales opportunities through the sales engine.',
+            'domain' => 'Sales',
+        ],
+        'sales.update' => [
+            'label' => 'Update sales',
+            'description' => 'Update sales opportunities and add sales activities.',
+            'domain' => 'Sales',
+        ],
     ];
 
     public function all(): array

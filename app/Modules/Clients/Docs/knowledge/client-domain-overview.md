@@ -40,6 +40,18 @@ Read routes require `clients.read`:
 - `GET /api/v1/clients/{client}`
 - `GET /api/v1/clients/{client}/sites`
 
+`GET /api/v1/clients` supports:
+
+- `q`: search by client name, organization number, client number, or billing email.
+- `active`: filter by active status.
+- `per_page`: page size.
+
+Example:
+
+```text
+GET /api/v1/clients?q=ellrun
+```
+
 Create routes require `clients.create`:
 
 - `POST /api/v1/clients`
