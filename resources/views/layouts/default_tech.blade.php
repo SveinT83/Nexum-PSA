@@ -15,9 +15,16 @@
         ]);
     };
     $themePreference = auth()->check()
-        ? data_get(auth()->user()->preferences()->first()?->settings, 'theme', 'system')
-        : 'system';
-    $themeAttribute = in_array($themePreference, ['light', 'dark'], true) ? $themePreference : null;
+        ? data_get(auth()->user()->preferences()->first()?->settings, 'theme', 'company')
+        : 'company';
+    $themePreference = in_array($themePreference, ['company', 'light', 'dark', 'system'], true)
+        ? $themePreference
+        : 'company';
+    $companyDefaultTheme = in_array($companyProfile['default_theme'] ?? 'light', ['light', 'dark', 'system'], true)
+        ? $companyProfile['default_theme']
+        : 'light';
+    $resolvedTheme = $themePreference === 'company' ? $companyDefaultTheme : $themePreference;
+    $themeAttribute = in_array($resolvedTheme, ['light', 'dark'], true) ? $resolvedTheme : null;
     $brandLogoUrl = $themeAttribute === 'dark'
         ? ($companyProfile['logo_dark_url'] ?? $companyProfile['logo_url'])
         : ($companyProfile['logo_light_url'] ?? $companyProfile['logo_url']);
@@ -242,7 +249,7 @@
         <footer class="mt-auto py-3">
             <div class="container-fluid text-center">
                 <div class="row gy-2">
-                    <p class="mb-0">&copy; {{ date('Y') }} Nexum PSA. All rights reserved.</p>
+                    <p class="mb-0">&copy; {{ date('Y') }} {{ $companyProfile['company_name'] ?? config('app.name', 'Nexum PSA') }}. All rights reserved.</p>
                     <div class="small d-flex flex-wrap justify-content-center gap-3">
                         <a href="https://github.com/SveinT83/Nexum-PSA/issues"
                            class="link-secondary text-decoration-none"

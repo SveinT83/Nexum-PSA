@@ -302,7 +302,7 @@ XML;
         $lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//Nexum tdPSA//Calendar//EN',
+            'PRODID:-//Nexum PSA//Calendar//EN',
             'CALSCALE:GREGORIAN',
             'BEGIN:VEVENT',
             'UID:'.$this->escapeIcs($uid),

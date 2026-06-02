@@ -9,14 +9,19 @@ use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Controllers\Admin\AccountsController;
 use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
+use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAttachment;
+use App\Modules\Email\Models\EmailHealthCheck;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Email\Services\EmailTestResult;
+use App\Modules\Email\Services\EmailTestService;
+use App\Modules\Email\Services\HtmlSanitizer;
 use App\Modules\Email\Controllers\Tech\InboxController;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
@@ -362,6 +367,130 @@ class EmailModuleTest extends TestCase
             $this->assertTrue(class_exists($legacyClass));
             $this->assertTrue(is_subclass_of($legacyClass, $moduleClass));
         }
+    }
+
+    #[Test]
+    public function inbound_email_html_sanitizer_removes_active_content(): void
+    {
+        $html = <<<'HTML'
+            <p onclick="alert(1)">Hello <strong>support</strong></p>
+            <img src="javascript:alert(1)" onerror="alert(1)" alt="bad">
+            <a href="javascript:alert(1)">unsafe link</a>
+            <a href="https://example.test/help">safe link</a>
+            <script>alert(1)</script>
+            <iframe src="https://example.test"></iframe>
+        HTML;
+
+        $clean = HtmlSanitizer::sanitize($html);
+
+        $this->assertStringContainsString('<strong>support</strong>', $clean);
+        $this->assertStringContainsString('https://example.test/help', $clean);
+        $this->assertStringNotContainsString('<script', $clean);
+        $this->assertStringNotContainsString('<iframe', $clean);
+        $this->assertStringNotContainsString('onclick', $clean);
+        $this->assertStringNotContainsString('onerror', $clean);
+        $this->assertStringNotContainsString('javascript:', $clean);
+    }
+
+    #[Test]
+    public function legacy_stored_email_html_is_sanitized_when_read_by_ui_and_api(): void
+    {
+        $account = EmailAccount::create([
+            'address' => 'legacy-html@example.test',
+            'from_name' => 'Legacy HTML',
+            'is_active' => true,
+            'is_global_default' => false,
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'legacy-html@example.test',
+            'imap_secret' => 'secret',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'legacy-html@example.test',
+            'smtp_secret' => 'secret',
+        ]);
+        $message = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 9301,
+            'message_id' => '<legacy-html@example.test>',
+            'subject' => 'Legacy unsafe HTML',
+            'from_name' => 'Legacy Sender',
+            'from_email' => 'legacy@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_html_sanitized' => '<p onclick="alert(1)">Safe text</p><a href="javascript:alert(1)">bad</a><a href="https://example.test">good</a><script>alert(1)</script>',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.inbox.show', $message))
+            ->assertOk()
+            ->assertSee('Safe text')
+            ->assertSee('https://example.test', false)
+            ->assertDontSee('alert(1)', false)
+            ->assertDontSee('javascript:', false);
+
+        Sanctum::actingAs($this->tech, ['email.read']);
+
+        $this->getJson(route('api.v1.email.inbox.messages.show', [$message, 'include_html' => true]))
+            ->assertOk()
+            ->assertJsonPath('data.body_html_sanitized', fn (?string $html) => $html !== null
+                && str_contains($html, 'Safe text')
+                && str_contains($html, 'https://example.test')
+                && ! str_contains($html, 'onclick')
+                && ! str_contains($html, 'javascript:')
+                && ! str_contains($html, '<script'));
+    }
+
+    #[Test]
+    public function email_account_health_check_job_persists_real_test_result(): void
+    {
+        $account = EmailAccount::create([
+            'address' => 'health@example.test',
+            'from_name' => 'Health',
+            'is_active' => true,
+            'is_global_default' => false,
+            'defaults_for' => [],
+            'delete_policy' => 'local_only',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'health@example.test',
+            'imap_secret' => 'secret',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'health@example.test',
+            'smtp_secret' => 'secret',
+            'smtp_auth_type' => 'password',
+        ]);
+        $result = new EmailTestResult();
+        $result->imap_ok = true;
+        $result->smtp_ok = false;
+        $result->imap_ms = 12.4;
+        $result->smtp_ms = 25.8;
+        $result->smtp_error_code = 'SMTP_AUTH';
+        $result->smtp_error_message = 'Authentication failed';
+
+        $this->mock(EmailTestService::class)
+            ->shouldReceive('run')
+            ->once()
+            ->withArgs(fn (EmailAccount $testedAccount) => $testedAccount->is($account))
+            ->andReturn($result);
+
+        app()->call([new EmailAccountHealthCheckJob($account->id), 'handle']);
+
+        $check = EmailHealthCheck::query()->where('account_id', $account->id)->firstOrFail();
+
+        $this->assertSame('OK', $check->imap_status);
+        $this->assertSame('Error', $check->smtp_status);
+        $this->assertSame('SMTP_AUTH', $check->error_code);
+        $this->assertSame('SMTP: Authentication failed', $check->error_message);
+        $this->assertSame(12.4, $check->durations_json['imap_ms']);
+        $this->assertSame(25.8, $check->durations_json['smtp_ms']);
     }
 
     #[Test]

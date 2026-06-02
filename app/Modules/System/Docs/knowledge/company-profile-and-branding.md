@@ -11,6 +11,7 @@ Visual identity is managed from `Admin -> System -> Branding`.
 - Address, support email, phone, and website.
 - Header logo, managed from Branding.
 - Primary, secondary, and accent brand/action colors, managed from Branding.
+- Default workspace theme used by technicians who inherit company defaults.
 
 ## Storage
 
@@ -43,6 +44,7 @@ Branding owns visual identity:
 - Primary action color.
 - Secondary action color.
 - Accent color.
+- Default workspace theme.
 - Light and dark shell surface colors.
 - Primary and secondary button colors.
 - Preview of common branded UI elements.
@@ -76,6 +78,15 @@ keeps buttons, links, active navigation, borders, page header accents, and shell
 with the colors configured in Company Profile.
 
 Brand/action colors and surface colors must remain separate concepts.
+
+Branding also stores the company default workspace theme:
+
+- `light`
+- `dark`
+- `system`
+
+Technicians can inherit this with the `company` profile preference, or override it with their own
+`light`, `dark`, or `system` preference.
 
 Future Branding work should add dedicated settings for:
 

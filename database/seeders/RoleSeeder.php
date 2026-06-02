@@ -10,7 +10,7 @@ use Spatie\Permission\PermissionRegistrar;
 class RoleSeeder extends Seeder
 {
     /**
-     * Seed standard tdPSA roles and their default permission sets.
+     * Seed standard Nexum PSA roles and their default permission sets.
      */
     public function run(): void
     {

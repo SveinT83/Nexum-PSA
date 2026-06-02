@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 /**
  * Creates a local Knowledge shelf.
  *
- * Shelves are the top-level BookStack-compatible containers in tdPSA. Local
+ * Shelves are the top-level BookStack-compatible containers in Nexum PSA. Local
  * shelves stay source-neutral so they can later participate in two-way sync.
  */
 class StoreShelf

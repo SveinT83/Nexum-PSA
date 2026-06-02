@@ -299,7 +299,7 @@
     @endforelse
 
     <div style="margin-top: 40px; text-align: center; font-size: 9px; color: #999; border-top: 1px solid #eee; padding-top: 10px;">
-        Denne rapporten er generert automatisk av tdPSA Risiko Modul.<br>
+        Denne rapporten er generert automatisk av Nexum PSA Risiko Modul.<br>
         &copy; {{ date('Y') }} {{ config('app.name') }}
     </div>
 </body>

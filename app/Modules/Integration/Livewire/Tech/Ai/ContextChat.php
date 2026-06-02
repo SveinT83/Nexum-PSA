@@ -296,6 +296,6 @@ class ContextChat extends Component
 
     private function contextTitle(): string
     {
-        return Str::limit('Page: '.($this->pageTitle ?: $this->routeName ?: $this->pageUrl ?: 'tdPSA'), 120, '');
+        return Str::limit('Page: '.($this->pageTitle ?: $this->routeName ?: $this->pageUrl ?: 'Nexum PSA'), 120, '');
     }
 }

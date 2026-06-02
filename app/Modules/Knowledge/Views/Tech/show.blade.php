@@ -89,7 +89,7 @@
             @if($article->source_system)
                 <p class="mb-1 text-muted">Source: {{ ucfirst(str_replace('_', ' ', $article->source_system)) }}</p>
             @else
-                <p class="mb-1 text-muted">Source: Local tdPSA</p>
+                <p class="mb-1 text-muted">Source: Local Nexum PSA</p>
             @endif
             @if($article->next_review_at)
                 <p class="mb-1 text-muted">Next Review: {{ $article->next_review_at->format('d.m.Y') }}</p>

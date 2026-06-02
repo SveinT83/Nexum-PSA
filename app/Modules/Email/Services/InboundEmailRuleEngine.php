@@ -399,7 +399,7 @@ class InboundEmailRuleEngine
             return;
         }
 
-        // tdPSA is ticket-first: known contacts become support tickets, unknown senders become lead tickets.
+        // Nexum PSA is ticket-first: known contacts become support tickets, unknown senders become lead tickets.
         $this->createTicket($message, '', $this->senderIsKnownClientContact($message) ? null : 'lead');
     }
 

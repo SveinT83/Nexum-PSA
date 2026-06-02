@@ -45,6 +45,8 @@ class QueueWorkerAdminTest extends TestCase
             ->assertViewIs('system::Admin.queues-workers')
             ->assertSee('Queues and Workers')
             ->assertSee('Scheduler cron')
-            ->assertSee('Supervisor example');
+            ->assertSee('Supervisor example')
+            ->assertSee('cd '.base_path(), false)
+            ->assertSee('command=php '.base_path().'/artisan', false);
     }
 }

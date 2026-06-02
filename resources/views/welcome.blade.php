@@ -60,7 +60,7 @@
                                 <div class="h4 mb-3">{{ $companyName }}</div>
                             @endif
                             <h1 class="h4 mb-1">Logg inn</h1>
-                            <p class="text-muted mb-0">Nexum PSA</p>
+                            <p class="text-muted mb-0">PSA workspace</p>
                         </div>
 
                         @if ($errors->any())

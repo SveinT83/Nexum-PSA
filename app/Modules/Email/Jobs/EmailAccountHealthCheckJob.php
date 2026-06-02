@@ -4,6 +4,7 @@ namespace App\Modules\Email\Jobs;
 
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailHealthCheck;
+use App\Modules\Email\Services\EmailTestService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,20 +19,24 @@ class EmailAccountHealthCheckJob implements ShouldQueue
 
     public function __construct(public int $accountId) {}
 
-    public function handle(): void
+    public function handle(EmailTestService $tester): void
     {
         $account = EmailAccount::find($this->accountId);
         if (!$account) {
             return;
         }
 
-        $imapStatus = 'OK'; // TODO: real check
-        $smtpStatus = 'OK'; // TODO: real check
-        $errorCode = null;
-        $errorMessage = null;
+        $result = $tester->run($account);
+        $imapStatus = $result->imap_ok ? 'OK' : 'Error';
+        $smtpStatus = $result->smtp_ok ? 'OK' : 'Error';
+        $errorCode = $result->imap_error_code ?: $result->smtp_error_code;
+        $errorMessage = collect([
+            $result->imap_error_message ? 'IMAP: '.$result->imap_error_message : null,
+            $result->smtp_error_message ? 'SMTP: '.$result->smtp_error_message : null,
+        ])->filter()->implode(' | ') ?: null;
         $durations = [
-            'imap_ms' => null,
-            'smtp_ms' => null,
+            'imap_ms' => $result->imap_ms,
+            'smtp_ms' => $result->smtp_ms,
         ];
 
         EmailHealthCheck::create([
@@ -44,12 +49,5 @@ class EmailAccountHealthCheckJob implements ShouldQueue
             'durations_json' => $durations,
         ]);
 
-        $account->last_test_at = now();
-        $account->last_test_result = ($imapStatus === 'OK' && $smtpStatus === 'OK') ? 'OK' : 'Error';
-        if ($errorMessage) {
-            $account->last_error_message = $errorMessage;
-            $account->last_error_code = $errorCode;
-        }
-        $account->save();
     }
 }

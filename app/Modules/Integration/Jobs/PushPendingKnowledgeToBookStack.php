@@ -33,6 +33,10 @@ class PushPendingKnowledgeToBookStack implements ShouldQueue
         $tokenSecret = $integration->getSecret('token_secret');
 
         if (! $integration->server || ! $tokenId || ! $tokenSecret) {
+            $integration->forceFill([
+                'is_healthy' => false,
+                'last_error' => 'BookStack scheduled push is missing server, token id, or token secret.',
+            ])->save();
             return;
         }
 

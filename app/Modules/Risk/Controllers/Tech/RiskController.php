@@ -41,7 +41,7 @@ use Illuminate\View\View;
 class RiskController extends Controller
 {
     /**
-     * List risk assessments for the currently selected tdPSA context.
+     * List risk assessments for the currently selected Nexum PSA context.
      *
      * The context filtering itself lives in RiskAssessmentQuery. The controller
      * only supplies the client list needed by the global context selector and

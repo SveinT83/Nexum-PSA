@@ -29,6 +29,7 @@ class CompanyProfileSettings
         'logo_path' => null,
         'logo_light_path' => null,
         'logo_dark_path' => null,
+        'default_theme' => 'light',
         'primary_color' => '#FF6D1F',
         'secondary_color' => '#fc7730',
         'accent_color' => '#faba98',
@@ -207,6 +208,9 @@ class CompanyProfileSettings
 
         $payload['company_name'] = $payload['company_name'] ?: self::DEFAULTS['company_name'];
         $payload['country'] = $payload['country'] ?: self::DEFAULTS['country'];
+        $payload['default_theme'] = in_array($payload['default_theme'], ['light', 'dark', 'system'], true)
+            ? $payload['default_theme']
+            : self::DEFAULTS['default_theme'];
 
         foreach ($this->colorKeys() as $key) {
             if (! is_string($payload[$key]) || ! preg_match('/^#[0-9A-Fa-f]{6}$/', $payload[$key])) {
@@ -247,6 +251,7 @@ class CompanyProfileSettings
             'logo_path',
             'logo_light_path',
             'logo_dark_path',
+            'default_theme',
             'primary_color',
             'secondary_color',
             'accent_color',

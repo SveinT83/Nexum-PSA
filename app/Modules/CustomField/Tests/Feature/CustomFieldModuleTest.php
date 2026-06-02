@@ -7,6 +7,7 @@ use App\Models\Core\User;
 use App\Modules\Clients\Controllers\Tech\ClientCustomFieldValueController;
 use App\Modules\Clients\Controllers\Api\V1\ClientController as ApiClientController;
 use App\Modules\Clients\Controllers\Tech\ClientSettingsController;
+use App\Modules\CustomField\Controllers\Api\V1\CustomFieldDefinitionController as ApiCustomFieldDefinitionController;
 use App\Modules\CustomField\Controllers\Admin\CustomFieldDefinitionController;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
 use App\Modules\CustomField\Models\CustomFieldValue;
@@ -53,6 +54,10 @@ class CustomFieldModuleTest extends TestCase
         $this->assertSame(
             ApiClientController::class.'@index',
             Route::getRoutes()->getByName('api.v1.clients.index')->getActionName(),
+        );
+        $this->assertSame(
+            ApiCustomFieldDefinitionController::class.'@index',
+            Route::getRoutes()->getByName('api.v1.custom-fields.index')->getActionName(),
         );
     }
 
@@ -210,6 +215,46 @@ class CustomFieldModuleTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.custom_fields.msp_manager_id', '340');
+    }
+
+    #[Test]
+    public function custom_field_definition_api_lists_definitions_for_integrations(): void
+    {
+        $definition = CustomFieldDefinition::create([
+            'model_type' => Client::class,
+            'key' => 'msp_manager_id',
+            'label' => 'MSP Manager ID',
+            'field_type' => 'text',
+            'visible_in_ui' => true,
+            'editable_in_ui' => true,
+            'editable_via_api' => true,
+            'searchable' => true,
+            'unique_per_model' => true,
+            'active' => true,
+        ]);
+
+        Sanctum::actingAs($this->admin, ['custom-fields.read']);
+
+        $this->getJson('/api/v1/custom-fields?model=client&editable_via_api=1&searchable=1')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $definition->id)
+            ->assertJsonPath('data.0.model', 'client')
+            ->assertJsonPath('data.0.key', 'msp_manager_id')
+            ->assertJsonPath('data.0.editable_via_api', true)
+            ->assertJsonPath('data.0.searchable', true);
+
+        $this->getJson("/api/v1/custom-fields/{$definition->id}")
+            ->assertOk()
+            ->assertJsonPath('data.key', 'msp_manager_id');
+    }
+
+    #[Test]
+    public function custom_field_definition_api_requires_read_ability(): void
+    {
+        Sanctum::actingAs($this->admin, ['clients.read']);
+
+        $this->getJson('/api/v1/custom-fields')
+            ->assertForbidden();
     }
 
     #[Test]

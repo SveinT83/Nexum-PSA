@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Create configurable AI agents that wrap provider models with tdPSA policy.
+     * Create configurable AI agents that wrap provider models with Nexum PSA policy.
      */
     public function up(): void
     {

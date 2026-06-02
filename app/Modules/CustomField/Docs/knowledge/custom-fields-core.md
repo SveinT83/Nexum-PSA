@@ -77,6 +77,26 @@ The Client API supports searchable custom fields:
 GET /api/v1/clients?custom_field[msp_manager_id]=12345
 ```
 
+## Definition API
+
+Custom field definitions are exposed through a read-only API so trusted automations and future AI
+agents can discover configured fields before writing values through domain APIs.
+
+```text
+GET /api/v1/custom-fields
+GET /api/v1/custom-fields/{id}
+```
+
+The API requires:
+
+```text
+custom-fields.read
+```
+
+The API supports filters such as `model=client`, `editable_via_api=1`, and `searchable=1`.
+
+This API returns field definitions only. Field values remain owned by each supported domain API.
+
 ## Storage
 
 Custom field definitions live in `custom_field_definitions`.

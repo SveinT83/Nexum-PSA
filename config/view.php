@@ -6,7 +6,7 @@ return [
     | View Storage Paths
     |--------------------------------------------------------------------------
     |
-    | Most tdPSA domain views now live under app/Modules and are registered in
+    | Most Nexum PSA domain views now live under app/Modules and are registered in
     | AppServiceProvider. The default resource path is kept for layouts,
     | components, auth screens, and legacy non-domain views.
     |

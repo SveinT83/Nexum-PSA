@@ -1,160 +1,80 @@
 @extends('layouts.default_tech')
 
-@section('title', 'Service Settings')
+@section('title', 'Commercial Service Settings')
 
 @section('pageHeader')
-    <h1>Service Settings</h1>
+    <div class="col">
+        <h1 class="h4 mb-1">Commercial Service Settings</h1>
+        <div class="text-muted small">Service catalogue, pricing, packages, costs, and reusable commercial defaults.</div>
+    </div>
 @endsection
 
 @section('content')
-# tech.admin.settings.cs.services – View Specification
+    <!-- Commercial service settings hub -->
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Service Catalogue</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{{ route('tech.services.index') }}" class="btn btn-outline-primary w-100 h-100 text-start p-3">
+                                <span class="d-flex align-items-center gap-2 fw-semibold">
+                                    <i class="bi bi-layers" aria-hidden="true"></i>
+                                    Services
+                                </span>
+                                <span class="d-block small text-muted mt-1">Maintain the service catalogue used by contracts and packages.</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ route('tech.packages.index') }}" class="btn btn-outline-primary w-100 h-100 text-start p-3">
+                                <span class="d-flex align-items-center gap-2 fw-semibold">
+                                    <i class="bi bi-boxes" aria-hidden="true"></i>
+                                    Packages
+                                </span>
+                                <span class="d-block small text-muted mt-1">Bundle services, legal terms, and pricing into reusable offers.</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ route('tech.rates.index') }}" class="btn btn-outline-primary w-100 h-100 text-start p-3">
+                                <span class="d-flex align-items-center gap-2 fw-semibold">
+                                    <i class="bi bi-cash-coin" aria-hidden="true"></i>
+                                    Time Rates
+                                </span>
+                                <span class="d-block small text-muted mt-1">Manage hourly rates used by ticket time and commercial work.</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ route('tech.costs.index') }}" class="btn btn-outline-primary w-100 h-100 text-start p-3">
+                                <span class="d-flex align-items-center gap-2 fw-semibold">
+                                    <i class="bi bi-cart-check" aria-hidden="true"></i>
+                                    Costs
+                                </span>
+                                <span class="d-block small text-muted mt-1">Maintain reusable costs, vendor lines, and billable commercial items.</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-**Date:** 2025-10-17
-**URL:** `tech.admin.settings.cs.services` → `/tech/admin/settings/cs/services`
-**Access levels:** `service.settings.manage`, `tech.admin`, `superuser`
-**Controller:** `App\\Http\\Controllers\\Tech\\Admin\\Settings\\CS\\ServicesController@index`
-**Status:** Not completed
-**Difficulty:** Medium
-**Estimated time:** 3.5 hours
-
----
-
-## Purpose
-
-System-wide configuration for the **Service Catalog** that feeds contracts. Controls SKU generation, category taxonomy, default billing models, binding rules, indexing defaults, and deprecation/visibility policies. Ensures catalog consistency and safe reuse across clients and contracts.
-
----
-
-## Design & Layout (Bootstrap)
-
-**Template regions:** Top header / Main content / Right slim rail.
-**Icons (suggested):** settings, layers, tag, barcode, calendar, percent, shield, toggle-right, bell, save, refresh-cw, alert-triangle.
-
-* **Top header**
-
-  * Title: “Service Settings”
-  * Buttons: `Save`, `Revert to Defaults`
-
-* **Main content (fieldsets)**
-
-  1. **SKU Policy**
-
-     * SKU format hint (read-only help)
-     * Auto-generation: prefix (text), numeric start (e.g., 10000), padding (digits)
-     * Collision handling: block save / warn only (radio)
-     * Manual override allowed (checkbox; default ON)
-  2. **Categories & Taxonomy**
-
-     * Manage categories (add, rename, deactivate)
-     * Default category for new services
-     * Enforce category selection (checkbox)
-  3. **Defaults for New Services**
-
-     * Default billing model: Per user / Per asset / Fixed / Tiered
-     * Default billing interval: Monthly / Quarterly / Yearly
-     * Default currency (from global settings; read-only link)
-     * Default SLA profile (select)
-     * Default visibility: Active / Hidden
-  4. **Binding & Downgrade Rules**
-
-     * Allow binding by default (checkbox)
-     * Default binding duration (months)
-     * Downgrade allowed during binding (checkbox; default OFF)
-     * Respect service-level binding in contracts (info: enforced via contract settings)
-  5. **Indexing Defaults**
-
-     * Suggest allow price indexing (checkbox)
-     * Suggested max indexing % (numeric)
-     * Suggested allow decreases (checkbox)
-     * Note: contracts can restrict these further
-  6. **Deprecation & Visibility**
-
-     * Deprecation policy: allow deprecate when linked to active contracts (block/warn/allow)
-     * Hide deprecated from search by default (checkbox)
-     * Require reason for deprecate (checkbox)
-  7. **Notifications**
-
-     * Notify admins when a service is created/edited/deprecated (toggles)
-     * Recipients: service.editors, tech.admin, superuser (checkboxes)
-
----
-
-## Components (Livewire)
-
-* **`ServiceSettingsPanel`** – master controller for all panels and save logic.
-* **`SkuFormatEditor`** – handles prefix, start, padding; shows live example (read-only preview).
-* **`CategoryManager`** – CRUD for categories with usage counts and deactivate flow.
-* **`DefaultsPanel`** – billing/SLA/visibility defaults.
-* **`BindingRulesPanel`** – binding and downgrade defaults.
-* **`IndexingDefaultsPanel`** – suggested indexing/decrease options.
-* **`DeprecationVisibilityPanel`** – controls for deprecate/hide behavior.
-* **`NotificationsPanel`** – toggles and recipients.
-* **`CronStatusWidget`** (rail, optional) – links to indexing cron status page.
-
----
-
-## Right Slim Rail
-
-* **Catalog Health**: total services, active/deprecated/hidden counts (cached KPI)
-* **SKU Health**: duplicates detected, next generated SKU preview
-* **Recent Changes**: last 5 setting edits (audit snapshot)
-* **Quick Links**: `Services`, `Contracts`, `Global SLA Profiles`, `Contract Settings`
-
----
-
-## Behaviors & Validation
-
-* Validate numeric ranges (start, padding, percentages, months).
-* Changing SKU generator updates the next SKU preview immediately.
-* If collision policy is set to block, saving a service with duplicate SKU is refused.
-* Category deactivation warns if services still use it; offers bulk remap flow (link to services index with prefilter).
-* Defaults apply to `tech.cs.services.create` as initial values.
-* All changes are audited with before/after values.
-
----
-
-## Permissions
-
-* View: `tech.admin`
-* Edit/Save: `service.settings.manage`
-* Revert to defaults: `superuser`
-
----
-
-## Telemetry & Audit
-
-* Logs for every change with user, timestamp, and field diffs.
-* Notification logs when admin alerts are sent on service events.
-
----
-
-## Edge Cases
-
-* Reducing padding or changing prefix might collide with existing SKUs → show computed conflict count and require confirmation.
-* Disallowing manual SKU override may block current drafts that rely on it → warn before saving.
-* Deactivating a heavily used category prompts bulk-remap guidance.
-
----
-
-## QA Scenarios (high level)
-
-* Change SKU start to 20000, create a new service, verify SKU matches preview.
-* Set deprecate=block when linked; attempt to deprecate a service in use; action refused with policy message.
-* Toggle default billing model and see it reflected as default in `tech.cs.services.create`.
-* Deactivate a category and verify services index prefilters to impacted rows via quick link.
-
----
-
-## Notes
-
-* No HTML or code; this is a behavioral/UX spec for developers and GitHub Copilot.
-* Follows top/main/rail layout; content updates live via Livewire.
-* Settings here influence both `tech.cs.services.*` and `tech.cs.contracts.*` flows.
+        <div class="col-xl-4">
+            <x-card.default title="How this works">
+                <p class="small text-muted mb-2">
+                    Service defaults are currently managed on services, packages, rates, costs, and
+                    taxonomy records directly.
+                </p>
+                <p class="small text-muted mb-0">
+                    Dedicated global service policy settings should only be exposed when the matching
+                    behavior exists and has tests.
+                </p>
+            </x-card.default>
+        </div>
+    </div>
 @endsection
 
 @section('sidebar')
     <x-nav.admin-menu group="commercial" />
-@endsection
-
-@section('rightbar')
 @endsection

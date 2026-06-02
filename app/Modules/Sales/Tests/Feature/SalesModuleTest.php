@@ -352,6 +352,33 @@ class SalesModuleTest extends TestCase
     }
 
     #[Test]
+    public function tech_user_can_open_sales_lead_detail_without_legacy_view_spec(): void
+    {
+        $lead = Client::create([
+            'name' => 'Detail Lead AS',
+            'active' => true,
+            'billing_email' => 'sales@example.test',
+            'website' => 'https://detail.example.test',
+            'lead_temperature' => 4,
+        ]);
+
+        $route = Route::getRoutes()->getByName('tech.sales.leads.show');
+
+        $this->assertSame(LeadsController::class . '@show', $route->getActionName());
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.sales.leads.show', $lead))
+            ->assertOk()
+            ->assertViewIs('sales::Tech.Sales.leads.show')
+            ->assertSee('Detail Lead AS')
+            ->assertSee('Lead Summary')
+            ->assertSee('Start Sales Process')
+            ->assertSee('Open client')
+            ->assertDontSee('View Specification')
+            ->assertDontSee('Status: Not started');
+    }
+
+    #[Test]
     public function sales_leads_can_be_classified_filtered_and_grouped(): void
     {
         $category = Category::create([

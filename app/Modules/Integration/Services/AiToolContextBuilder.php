@@ -42,7 +42,7 @@ class AiToolContextBuilder
 
         $lines = [
             'Tool: knowledge.search',
-            'Instruction: Use these tdPSA Knowledge results when answering. If the user asks whether a book or article exists, answer from these results and name the matching records. If the user asks for a link, return the provided URL as a markdown link.',
+            'Instruction: Use these Nexum PSA Knowledge results when answering. If the user asks whether a book or article exists, answer from these results and name the matching records. If the user asks for a link, return the provided URL as a markdown link.',
         ];
 
         if ($knowledge['books']->isNotEmpty()) {
@@ -115,7 +115,7 @@ class AiToolContextBuilder
 
         $lines = [
             'Tool: tickets.read',
-            'Instruction: Use these live tdPSA ticket results to answer ticket count and prioritization questions. Prioritize unread tickets, overdue SLA, lower priority level values, and recent updates.',
+            'Instruction: Use these live Nexum PSA ticket results to answer ticket count and prioritization questions. Prioritize unread tickets, overdue SLA, lower priority level values, and recent updates.',
             'Summary:',
             '- Open tickets assigned to current user: '.$assignedOpenCount,
             '- Unread assigned tickets: '.$unreadCount,

@@ -62,7 +62,8 @@ Known visible unfinished or confusing surfaces:
 
 - Asset detail "Feature coming soon" related-ticket copy was replaced with a neutral empty state.
 - Integration N-able network equipment "Coming soon" control was removed until the behavior is implemented.
-- Several production view directories contain Markdown planning/specification files with "Not completed" text.
+- Legacy planning/specification files with "Not completed" text have been moved out of production
+  view directories, including the Email Livewire Inbox `.php` planning files.
 - Login now uses Bootstrap and company branding defaults instead of old `tdPSA` placeholder/style.
 
 ## Legacy Planning Files In View Paths
@@ -73,8 +74,12 @@ Completed cleanup moved these files into legacy documentation folders:
 
 - Resource view specs: `docs/legacy/view-specs/resources/views`
 - Module view specs: `app/Modules/{Domain}/Docs/legacy-view-specs`
+- Email Livewire Inbox specs: `app/Modules/Email/Docs/legacy-view-specs/Livewire/Client/Inbox`
+- Controller planning specs: `app/Modules/{Domain}/Docs/legacy-view-specs/Controllers`
 
 No `.md` or `.blade.md` files should remain under production `resources/views` or module `Views` folders.
+No planning-only `.php` files should remain under module `Views` folders.
+No planning-only `.md` files should remain under module `Controllers` folders.
 
 ## Recommended Beta Follow-Up Order
 

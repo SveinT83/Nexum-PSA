@@ -19,14 +19,14 @@ use OpenApi\Attributes as OA;
 
 #[OA\Info(
     version: "1.0.0",
-    description: "API documentation for tdPSA Clients module",
-    title: "tdPSA API Documentation",
+    description: "API documentation for the Nexum PSA Clients module",
+    title: "Nexum PSA API Documentation",
     contact: new OA\Contact(email: "support@example.com"),
     license: new OA\License(name: "Apache 2.0", url: "http://www.apache.org/licenses/LICENSE-2.0.html")
 )]
 #[OA\Server(
     url: "/",
-    description: "tdPSA API Server"
+    description: "Nexum PSA API Server"
 )]
 #[OA\SecurityScheme(
     securityScheme: "bearerAuth",

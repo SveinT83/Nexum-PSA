@@ -119,7 +119,7 @@ class KnowledgeController extends Controller
     {
         if ($shelf->source_system && ! $this->bookStackTwoWaySyncEnabled()) {
             return redirect()->route('tech.knowledge.shelf', $shelf)
-                ->with('warning', 'Enable two-way sync before editing BookStack-owned shelves in NexumPSA.');
+                ->with('warning', 'Enable two-way sync before editing BookStack-owned shelves in Nexum PSA.');
         }
 
         return view('knowledge::Tech.shelf-form', [
@@ -135,7 +135,7 @@ class KnowledgeController extends Controller
     {
         if ($shelf->source_system && ! $this->bookStackTwoWaySyncEnabled()) {
             return redirect()->route('tech.knowledge.shelf', $shelf)
-                ->with('warning', 'Enable two-way sync before editing BookStack-owned shelves in NexumPSA.');
+                ->with('warning', 'Enable two-way sync before editing BookStack-owned shelves in Nexum PSA.');
         }
 
         $validated = $request->validate([
@@ -170,7 +170,7 @@ class KnowledgeController extends Controller
 
     /**
      * Delete an empty shelf. BookStack-owned shelves are deleted in BookStack
-     * first so NexumPSA does not orphan an external record locally.
+     * first so Nexum PSA does not orphan an external record locally.
      */
     public function destroyShelf(Shelf $shelf): RedirectResponse
     {
@@ -182,7 +182,7 @@ class KnowledgeController extends Controller
         if ($shelf->source_system === 'book_stack') {
             if (! $this->bookStackTwoWaySyncEnabled()) {
                 return redirect()->route('tech.knowledge.shelf', $shelf)
-                    ->with('warning', 'Enable two-way sync before deleting BookStack-owned shelves in NexumPSA.');
+                    ->with('warning', 'Enable two-way sync before deleting BookStack-owned shelves in Nexum PSA.');
             }
 
             $client = $this->bookStackClient();
@@ -261,7 +261,7 @@ class KnowledgeController extends Controller
 
         if ($book->source_system && ! $this->bookStackTwoWaySyncEnabled()) {
             return redirect()->route('tech.knowledge.book', $book)
-                ->with('warning', 'Enable two-way sync before editing BookStack-owned books in NexumPSA.');
+                ->with('warning', 'Enable two-way sync before editing BookStack-owned books in Nexum PSA.');
         }
 
         return view('knowledge::Tech.book-form', [
@@ -281,7 +281,7 @@ class KnowledgeController extends Controller
 
         if ($book->source_system && ! $this->bookStackTwoWaySyncEnabled()) {
             return redirect()->route('tech.knowledge.book', $book)
-                ->with('warning', 'Enable two-way sync before editing BookStack-owned books in NexumPSA.');
+                ->with('warning', 'Enable two-way sync before editing BookStack-owned books in Nexum PSA.');
         }
 
         $validated = $request->validate([
@@ -319,7 +319,7 @@ class KnowledgeController extends Controller
 
     /**
      * Delete an empty book. BookStack-owned books are deleted in BookStack
-     * first so NexumPSA does not orphan external content locally.
+     * first so Nexum PSA does not orphan external content locally.
      */
     public function destroyBook(Book $book): RedirectResponse
     {
@@ -333,7 +333,7 @@ class KnowledgeController extends Controller
         if ($book->source_system === 'book_stack') {
             if (! $this->bookStackTwoWaySyncEnabled()) {
                 return redirect()->route('tech.knowledge.book', $book)
-                    ->with('warning', 'Enable two-way sync before deleting BookStack-owned books in NexumPSA.');
+                    ->with('warning', 'Enable two-way sync before deleting BookStack-owned books in Nexum PSA.');
             }
 
             $client = $this->bookStackClient();
@@ -417,7 +417,7 @@ class KnowledgeController extends Controller
 
         if ($chapter->source_system && ! $this->bookStackTwoWaySyncEnabled()) {
             return redirect()->route('tech.knowledge.book', $chapter->book)
-                ->with('warning', 'Enable two-way sync before editing BookStack-owned chapters in NexumPSA.');
+                ->with('warning', 'Enable two-way sync before editing BookStack-owned chapters in Nexum PSA.');
         }
 
         return view('knowledge::Tech.chapter-form', [
@@ -436,7 +436,7 @@ class KnowledgeController extends Controller
 
         if ($chapter->source_system && ! $this->bookStackTwoWaySyncEnabled()) {
             return redirect()->route('tech.knowledge.book', $chapter->book)
-                ->with('warning', 'Enable two-way sync before editing BookStack-owned chapters in NexumPSA.');
+                ->with('warning', 'Enable two-way sync before editing BookStack-owned chapters in Nexum PSA.');
         }
 
         $validated = $request->validate([
@@ -467,7 +467,7 @@ class KnowledgeController extends Controller
 
     /**
      * Delete an empty chapter. BookStack-owned chapters are deleted in
-     * BookStack first so NexumPSA does not orphan external content locally.
+     * BookStack first so Nexum PSA does not orphan external content locally.
      */
     public function destroyChapter(Chapter $chapter): RedirectResponse
     {
@@ -482,7 +482,7 @@ class KnowledgeController extends Controller
         if ($chapter->source_system === 'book_stack') {
             if (! $this->bookStackTwoWaySyncEnabled()) {
                 return redirect()->route('tech.knowledge.book', $book)
-                    ->with('warning', 'Enable two-way sync before deleting BookStack-owned chapters in NexumPSA.');
+                    ->with('warning', 'Enable two-way sync before deleting BookStack-owned chapters in Nexum PSA.');
             }
 
             $client = $this->bookStackClient();
@@ -573,7 +573,7 @@ class KnowledgeController extends Controller
     {
         if ($article->source_system && ! $this->bookStackTwoWaySyncEnabled()) {
             return redirect()->route('tech.knowledge.show', $article)
-                ->with('warning', 'Enable two-way sync before editing BookStack-owned pages in NexumPSA.');
+                ->with('warning', 'Enable two-way sync before editing BookStack-owned pages in Nexum PSA.');
         }
 
         return view('knowledge::Tech.form', compact('article'));

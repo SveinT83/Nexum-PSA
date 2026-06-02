@@ -52,6 +52,9 @@ class PullBookStackToKnowledge implements ShouldQueue
         $actor = $this->syncActor();
 
         if (! $integration->server || ! $tokenId || ! $tokenSecret || ! $actor) {
+            $this->markMisconfigured($integration, ! $actor
+                ? 'BookStack scheduled pull could not find an active sync actor.'
+                : 'BookStack scheduled pull is missing server, token id, or token secret.');
             return;
         }
 
@@ -94,5 +97,13 @@ class PullBookStackToKnowledge implements ShouldQueue
                 ->where('status', User::STATUS_ACTIVE)
                 ->orderBy('id')
                 ->first();
+    }
+
+    private function markMisconfigured(Integration $integration, string $message): void
+    {
+        $integration->forceFill([
+            'is_healthy' => false,
+            'last_error' => $message,
+        ])->save();
     }
 }

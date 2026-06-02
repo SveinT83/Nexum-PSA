@@ -2,6 +2,7 @@
 
 namespace App\Modules\Email\Models;
 
+use App\Modules\Email\Services\HtmlSanitizer;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,15 @@ class EmailMessage extends Model
         'is_oversize' => 'boolean',
         'attachments_count' => 'integer',
     ];
+
+    /**
+     * Stored inbound HTML may have been written by older sanitizer versions.
+     * Re-sanitize on read so UI/API consumers never receive active email HTML.
+     */
+    public function getBodyHtmlSanitizedAttribute(?string $value): ?string
+    {
+        return HtmlSanitizer::sanitize($value);
+    }
 
     public function account(): BelongsTo
     {

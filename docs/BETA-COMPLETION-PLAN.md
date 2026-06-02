@@ -129,7 +129,26 @@ Modules to audit first:
 - Assets.
 - Tasks.
 
-### 4. Beta UX And Functionality Gap Sweep
+### 4. Custom Fields Core
+
+Custom Fields are now part of the beta-ready platform surface.
+
+Expected capabilities:
+
+- Admins can define reusable metadata fields for supported domains.
+- Supported field definitions have visibility, UI editability, API editability, searchability,
+  uniqueness, required state, and optional permission controls.
+- Client is the first supported domain.
+- Visible client fields appear in the Client workspace `Custom Fields` tab.
+- Editable client field values can be updated from the Client workspace without editing the field
+  definition itself.
+- Client create/update API accepts `custom_fields` for API-editable fields.
+- Client list API supports searching by searchable custom fields.
+- Custom field definitions are discoverable through a read-only API so n8n and future AI agents can
+  inspect configured fields before writing values.
+- Knowledge documentation must explain the distinction between field definitions and field values.
+
+### 5. Beta UX And Functionality Gap Sweep
 
 Review beta screens systematically.
 
@@ -146,7 +165,7 @@ Look for:
 - Missing clickable-row behavior where the rest of Nexum already uses it.
 - Pages that do not follow Bootstrap and project UI guidelines.
 
-### 5. Existing Module Test And Regression Sweep
+### 6. Existing Module Test And Regression Sweep
 
 Before large new systems, existing modules need stronger regression coverage.
 
@@ -238,6 +257,21 @@ Verified cleanup:
 - Asset detail related-ticket empty state has been cleaned and no longer advertises unfinished behavior.
 - Legacy Markdown specs were moved out of production view paths.
 - N-able network-device coming-soon control has been removed from the integration settings screen.
+- Commercial Contract/Service settings routes now show working hub pages with links to implemented
+  commercial surfaces instead of rendering old view specifications.
+- Contract create no longer appends old specification text beneath the real form.
+- Sales lead detail now renders a working beta detail page instead of a "not started" specification.
+- Queued email account health checks now reuse the real IMAP/SMTP test service instead of writing
+  unconditional OK results.
+- Scheduled BookStack pull/push jobs now mark active but misconfigured integrations unhealthy instead
+  of returning silently.
+- Commercial Contract settings route now uses `/tech/admin/settings/cs/contracts`; the old
+  `/contacts` typo redirects for compatibility.
+- Commercial Units creation now uses POST with CSRF instead of a GET route that created database
+  rows.
+- Commercial Cost deletion now uses DELETE instead of a GET route.
+- Queue and Worker setup examples now render the current Laravel `base_path()` in the UI instead of
+  a hardcoded development path.
 
 For each case, either implement the feature, hide the UI, move the planning text into docs, or make
 the limitation honest and useful.
@@ -272,10 +306,14 @@ Branding is currently hardcoded or inconsistent in several places.
 
 Known examples to verify:
 
-- The main tech layout has an empty logo image source.
-- The footer hardcodes `Nexum PSA`.
+- The main tech layout now uses company profile logo/name fallbacks.
+- The tech footer now uses company profile name instead of hardcoded `Nexum PSA`.
 - The login page now uses Bootstrap, current company branding defaults, and a neutral email placeholder.
-- Public contract output uses `tdPSA` in the footer.
+- Login and welcome copy no longer hardcode `Nexum PSA` as the visible subtitle.
+- Public contract output now uses company profile name instead of hardcoded `tdPSA`.
+- OpenAPI metadata now uses `Nexum PSA API Documentation` instead of `tdPSA API Documentation`.
+- User-facing Knowledge, Integration, Risk PDF, Preferences, Notification test, and queue worker
+  example text has been normalized away from old `tdPSA`, `NexumPSA`, or `Nexum-PSA` branding.
 - Some UI, docs, and messages mix `tdPSA`, `NexumPSA`, `Nexum-PSA`, and `Nexum PSA`.
 
 Company Profile and System Branding should resolve this with real settings, consistent naming,
@@ -290,7 +328,19 @@ Verified cleanup:
 
 - `resources/views` no longer contains `.md` or `.blade.md` files.
 - Module `Views` folders no longer contain `.md` or `.blade.md` files.
+- Legacy Email Livewire Inbox planning `.php` files were moved out of module `Views` and into
+  `app/Modules/Email/Docs/legacy-view-specs/Livewire/Client/Inbox`.
+- Legacy controller planning `.md` files were moved out of module `Controllers` folders and into
+  each module's `Docs/legacy-view-specs/Controllers` folder.
+- The legacy Ticket module status/planning document was moved from the module root to
+  `app/Modules/Ticket/Docs/legacy-view-specs/ticket-module-status.md`.
 - Runtime documentation cards now read from module `Docs/legacy-view-specs` paths where needed.
+- Remaining resource-level task, task-template, and billing view specifications were moved to
+  `docs/legacy/view-specs/resources/views`.
+- Remaining Commercial contract and Sales lead module view specifications were moved to module
+  `Docs/legacy-view-specs` folders.
+- Empty unused runtime Blade files were removed from Clients, Commercial, Sales, Ticket, and global
+  admin settings paths.
 
 Planning documents should live under `docs/` or module `Docs/`, not in production view paths.
 Production view paths should contain renderable views only.
@@ -322,11 +372,12 @@ Recommended order:
 7. Visible Unfinished UI Cleanup.
 8. Legacy Planning Files Cleanup.
 9. Missing Settings Ownership RFC.
-10. Domain API Foundation planning and first implementation. Current slice covers scoped API keys, Client/Site, Asset, Contact, Ticket, Task, Knowledge, Storage, Calendar, Risk, Email Inbox, Notification, Sales, Taxonomy, Commercial, Economy, Report, and User Management API scopes.
-11. Ticket, Email, Inbox, Contact, and Client workflow hardening found by the audit.
-12. Notification, Nextcloud, Calendar, and Knowledge hardening found by the audit.
-13. Commercial, Sales, Economy, Storage, Assets, and Tasks hardening found by the audit.
-14. Future ideas and new domains.
+10. Domain API Foundation is beta-ready for the current module set. Current slice covers scoped API keys, Client/Site, Custom Fields, Asset, Contact, Ticket, Task, Knowledge, Storage, Calendar, Risk, Email Inbox, Notification, Sales, Taxonomy, Commercial, Economy, Report, and User Management API scopes.
+11. Custom Fields Core hardening and first supported domain rollout.
+12. Ticket, Email, Inbox, Contact, and Client workflow hardening found by the audit.
+13. Notification, Nextcloud, Calendar, and Knowledge hardening found by the audit.
+14. Commercial, Sales, Economy, Storage, Assets, and Tasks hardening found by the audit.
+15. Future ideas and new domains.
 
 This order can change when a production beta issue is discovered.
 

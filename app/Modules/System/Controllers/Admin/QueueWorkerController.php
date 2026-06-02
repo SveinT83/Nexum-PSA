@@ -25,6 +25,7 @@ class QueueWorkerController extends Controller
     {
         return view('system::Admin.queues-workers', [
             'status' => $status->get(),
+            'basePath' => base_path(),
         ]);
     }
 

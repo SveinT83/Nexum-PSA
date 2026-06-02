@@ -1,8 +1,8 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "tdPSA API Documentation",
-        "description": "API documentation for tdPSA Clients module",
+        "title": "Nexum PSA API Documentation",
+        "description": "API documentation for the Nexum PSA Clients module",
         "contact": {
             "email": "support@example.com"
         },
@@ -15,7 +15,7 @@
     "servers": [
         {
             "url": "/",
-            "description": "tdPSA API Server"
+            "description": "Nexum PSA API Server"
         }
     ],
     "paths": {
@@ -1589,6 +1589,96 @@
                     },
                     "422": {
                         "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/custom-fields": {
+            "get": {
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "List custom field definitions",
+                "operationId": "getCustomFields",
+                "parameters": [
+                    {
+                        "name": "model",
+                        "in": "query",
+                        "description": "Filter by model alias, for example client.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search by key, label, help text, or model type.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "editable_via_api",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "searchable",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Custom field definitions"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/custom-fields/{definition}": {
+            "get": {
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "View custom field definition",
+                "operationId": "getCustomField",
+                "parameters": [
+                    {
+                        "name": "definition",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Custom field definition"
+                    },
+                    "404": {
+                        "description": "Custom field definition not found"
                     }
                 },
                 "security": [
@@ -4512,6 +4602,10 @@
         {
             "name": "Contacts",
             "description": "API endpoints for contacts and contact automation."
+        },
+        {
+            "name": "Custom Fields",
+            "description": "API endpoints for discovering configurable custom field definitions."
         },
         {
             "name": "Economy",

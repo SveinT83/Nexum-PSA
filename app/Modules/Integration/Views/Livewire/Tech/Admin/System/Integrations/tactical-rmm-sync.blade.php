@@ -87,7 +87,7 @@
                                 <button type="button" class="btn btn-success btn-lg px-5 shadow-sm fw-bold" wire:click="startSync">
                                     <i class="bi bi-cloud-download me-2"></i> Start Synchronization
                                 </button>
-                                <div class="mt-2 text-muted small">This will import new and update existing items in tdPSA.</div>
+                                <div class="mt-2 text-muted small">This will import new and update existing items in Nexum PSA.</div>
                             </div>
                         @endif
 

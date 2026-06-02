@@ -175,7 +175,7 @@ class NotificationChannelController extends Controller
 
             try {
                 $response = Http::timeout(10)->post($webhookUrl, [
-                    'message' => 'Test notification from Nexum-PSA - ' . now()->toDateTimeString(),
+                    'message' => 'Test notification from '.config('app.name', 'Nexum PSA').' - '.now()->toDateTimeString(),
                 ]);
 
                 if ($response->successful()) {

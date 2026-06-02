@@ -104,12 +104,16 @@ class UserPreferencesTest extends TestCase
             ->get(route('tech.profile.preferences'))
             ->assertOk()
             ->assertSee('User Preferences')
-            ->assertSee('Default calendar view');
+            ->assertSee('Default calendar view')
+            ->assertSee('Company default');
 
         $this->assertDatabaseHas('user_preferences', [
             'user_id' => $this->tech->id,
             'default_calendar_view' => 'week',
         ]);
+
+        $preferences = UserPreference::query()->where('user_id', $this->tech->id)->firstOrFail();
+        $this->assertSame('company', $preferences->settings['theme']);
     }
 
     #[Test]
@@ -144,5 +148,23 @@ class UserPreferencesTest extends TestCase
             'starts_at_local' => '09:00',
             'ends_at_local' => '17:00',
         ]);
+    }
+
+    #[Test]
+    public function technician_can_choose_company_default_theme(): void
+    {
+        $this->actingAs($this->tech)
+            ->patch(route('tech.profile.preferences.update'), [
+                'timezone' => 'Europe/Oslo',
+                'default_calendar_view' => 'week',
+                'workday_start' => '08:00',
+                'workday_end' => '16:00',
+                'theme' => 'company',
+            ])
+            ->assertRedirect(route('tech.profile.preferences'));
+
+        $preferences = UserPreference::query()->where('user_id', $this->tech->id)->firstOrFail();
+
+        $this->assertSame('company', $preferences->settings['theme']);
     }
 }

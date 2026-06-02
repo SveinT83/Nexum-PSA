@@ -9,7 +9,7 @@ use Spatie\Permission\PermissionRegistrar;
 class PermissionSeeder extends Seeder
 {
     /**
-     * Seed the complete tdPSA permission catalog.
+     * Seed the complete Nexum PSA permission catalog.
      */
     public function run(): void
     {

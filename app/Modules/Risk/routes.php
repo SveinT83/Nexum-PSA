@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | These routes are loaded from the authenticated /tech route group. Keep every
-| Risk domain route in this file to satisfy tdPSA module architecture rules.
+| Risk domain route in this file to satisfy Nexum PSA module architecture rules.
 | The surrounding group adds the "tech." route name prefix, web middleware,
 | auth middleware, and tech access middleware.
 |

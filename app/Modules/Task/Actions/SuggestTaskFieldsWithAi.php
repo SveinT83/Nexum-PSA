@@ -59,7 +59,7 @@ class SuggestTaskFieldsWithAi
     private function systemPrompt(): string
     {
         return implode("\n", [
-            'You are assisting with a tdPSA internal task create/edit form.',
+            'You are assisting with a Nexum PSA internal task create/edit form.',
             'Return ONLY compact JSON. No Markdown, no explanation.',
             'Only suggest values that are present in allowed_options by ID/key/name.',
             'Do not invent IDs. Do not create database records.',

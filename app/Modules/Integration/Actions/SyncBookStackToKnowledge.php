@@ -22,7 +22,7 @@ class SyncBookStackToKnowledge
     ) {}
 
     /**
-     * Pull BookStack pages into Knowledge while keeping tdPSA as the local
+     * Pull BookStack pages into Knowledge while keeping Nexum PSA as the local
      * ownership and review system for synchronized content.
      *
      * @return array{created: int, updated: int, skipped: int, failed: int, total: int, errors: array<int, string>}

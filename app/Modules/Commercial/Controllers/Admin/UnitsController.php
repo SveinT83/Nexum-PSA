@@ -56,7 +56,7 @@ class UnitsController extends Controller
         if ($request->input('action') === 'delete') {
             $unit->delete();
         } else {
-            $unit->update($request->only(['name', 'short', 'code']));
+            $unit->update($request->only(['name', 'short', 'common_code']));
         }
 
         return redirect()->route('tech.admin.settings.economy.units');
