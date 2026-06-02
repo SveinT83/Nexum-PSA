@@ -108,7 +108,9 @@ class CompanyProfileAdminTest extends TestCase
             ->assertSee('Nextcloud')
             ->assertSee(route('tech.admin.nextcloud.connections.index'), false)
             ->assertSee('AI settings')
-            ->assertSee(route('tech.admin.system.integrations.ai.index'), false);
+            ->assertSee(route('tech.admin.system.integrations.ai.index'), false)
+            ->assertSee('Custom fields')
+            ->assertSee(route('tech.admin.settings.custom-fields.index'), false);
     }
 
     #[Test]

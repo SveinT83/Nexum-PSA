@@ -18,6 +18,22 @@
     @php
         $clientTasks = $clientTasks->sortByDesc('updated_at')->values();
         $missing = fn ($value) => filled($value) ? $value : '—';
+        $availableTabs = ['assets', 'sites', 'contracts', 'tasks', 'custom-fields'];
+        $activeClientTab = in_array(request('tab'), $availableTabs, true) ? request('tab') : 'assets';
+        if ($activeClientTab === 'custom-fields' && ($customFields ?? collect())->isEmpty()) {
+            $activeClientTab = 'assets';
+        }
+        $formatCustomFieldValue = function ($value) {
+            if (is_array($value)) {
+                return $value === [] ? '—' : implode(', ', $value);
+            }
+
+            if (is_bool($value)) {
+                return $value ? 'Yes' : 'No';
+            }
+
+            return filled($value) ? $value : '—';
+        };
     @endphp
 
     <div class="row">
@@ -68,33 +84,40 @@
         <div class="col-12">
             <ul class="nav nav-tabs border-bottom border-secondary-subtle" id="clientWorkspaceTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active text-body border border-bottom-0" id="client-assets-tab" data-bs-toggle="tab" data-bs-target="#client-assets-pane" type="button" role="tab" aria-controls="client-assets-pane" aria-selected="true">
+                    <button class="nav-link {{ $activeClientTab === 'assets' ? 'active ' : '' }}text-body border border-bottom-0" id="client-assets-tab" data-bs-toggle="tab" data-bs-target="#client-assets-pane" type="button" role="tab" aria-controls="client-assets-pane" aria-selected="{{ $activeClientTab === 'assets' ? 'true' : 'false' }}">
                         Assets
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link text-body border border-bottom-0" id="client-sites-tab" data-bs-toggle="tab" data-bs-target="#client-sites-pane" type="button" role="tab" aria-controls="client-sites-pane" aria-selected="false">
+                    <button class="nav-link {{ $activeClientTab === 'sites' ? 'active ' : '' }}text-body border border-bottom-0" id="client-sites-tab" data-bs-toggle="tab" data-bs-target="#client-sites-pane" type="button" role="tab" aria-controls="client-sites-pane" aria-selected="{{ $activeClientTab === 'sites' ? 'true' : 'false' }}">
                         Sites <span class="badge text-bg-light border ms-1">{{ $client->sites->count() }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link text-body border border-bottom-0" id="client-contracts-tab" data-bs-toggle="tab" data-bs-target="#client-contracts-pane" type="button" role="tab" aria-controls="client-contracts-pane" aria-selected="false">
+                    <button class="nav-link {{ $activeClientTab === 'contracts' ? 'active ' : '' }}text-body border border-bottom-0" id="client-contracts-tab" data-bs-toggle="tab" data-bs-target="#client-contracts-pane" type="button" role="tab" aria-controls="client-contracts-pane" aria-selected="{{ $activeClientTab === 'contracts' ? 'true' : 'false' }}">
                         Contracts <span class="badge text-bg-light border ms-1">{{ $contracts->count() }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link text-body border border-bottom-0" id="client-tasks-tab" data-bs-toggle="tab" data-bs-target="#client-tasks-pane" type="button" role="tab" aria-controls="client-tasks-pane" aria-selected="false">
+                    <button class="nav-link {{ $activeClientTab === 'tasks' ? 'active ' : '' }}text-body border border-bottom-0" id="client-tasks-tab" data-bs-toggle="tab" data-bs-target="#client-tasks-pane" type="button" role="tab" aria-controls="client-tasks-pane" aria-selected="{{ $activeClientTab === 'tasks' ? 'true' : 'false' }}">
                         Tasks <span class="badge text-bg-light border ms-1">{{ $clientTasks->count() }}</span>
                     </button>
                 </li>
+                @if(($customFields ?? collect())->isNotEmpty())
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {{ $activeClientTab === 'custom-fields' ? 'active ' : '' }}text-body border border-bottom-0" id="client-custom-fields-tab" data-bs-toggle="tab" data-bs-target="#client-custom-fields-pane" type="button" role="tab" aria-controls="client-custom-fields-pane" aria-selected="{{ $activeClientTab === 'custom-fields' ? 'true' : 'false' }}">
+                            Custom Fields <span class="badge text-bg-light border ms-1">{{ $customFields->count() }}</span>
+                        </button>
+                    </li>
+                @endif
             </ul>
 
             <div class="tab-content pt-3" id="clientWorkspaceTabsContent">
-                <div class="tab-pane fade show active" id="client-assets-pane" role="tabpanel" aria-labelledby="client-assets-tab" tabindex="0">
+                <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'assets']) id="client-assets-pane" role="tabpanel" aria-labelledby="client-assets-tab" tabindex="0">
                     <x-tech.assets.list-card :client="$client" />
                 </div>
 
-                <div class="tab-pane fade" id="client-sites-pane" role="tabpanel" aria-labelledby="client-sites-tab" tabindex="0">
+                <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'sites']) id="client-sites-pane" role="tabpanel" aria-labelledby="client-sites-tab" tabindex="0">
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-2">
@@ -136,7 +159,7 @@
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="client-contracts-pane" role="tabpanel" aria-labelledby="client-contracts-tab" tabindex="0">
+                <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'contracts']) id="client-contracts-pane" role="tabpanel" aria-labelledby="client-contracts-tab" tabindex="0">
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-2">
@@ -183,7 +206,7 @@
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="client-tasks-pane" role="tabpanel" aria-labelledby="client-tasks-tab" tabindex="0">
+                <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'tasks']) id="client-tasks-pane" role="tabpanel" aria-labelledby="client-tasks-tab" tabindex="0">
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-2">
@@ -215,8 +238,80 @@
                         </div>
                     </div>
                 </div>
+
+                @if(($customFields ?? collect())->isNotEmpty())
+                    <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'custom-fields']) id="client-custom-fields-pane" role="tabpanel" aria-labelledby="client-custom-fields-tab" tabindex="0">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold">Custom Fields</span>
+                                    <span class="badge text-bg-light border">{{ $customFields->count() }}</span>
+                                </div>
+                                <span class="small text-muted">Visible client fields</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Field</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($customFields as $field)
+                                            @php
+                                                $modalId = 'clientCustomFieldValueModal'.$field['definition']->id;
+                                                $canEditCustomField = (bool) $field['can_edit'];
+                                            @endphp
+                                            <tr @class(['cursor-pointer' => $canEditCustomField]) @if($canEditCustomField) data-bs-toggle="modal" data-bs-target="#{{ $modalId }}" @endif>
+                                                <td>
+                                                    <div class="fw-semibold">{{ $field['label'] }}</div>
+                                                    @if(filled($field['help_text']))
+                                                        <div class="small text-muted">{{ $field['help_text'] }}</div>
+                                                    @endif
+                                                </td>
+                                                <td @class(['text-muted' => blank($field['value']) && $field['value'] !== false])>
+                                                    {{ $formatCustomFieldValue($field['value']) }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
+
+        @foreach(($customFields ?? collect()) as $field)
+            @continue(! $field['can_edit'])
+            @php $modalId = 'clientCustomFieldValueModal'.$field['definition']->id; @endphp
+            <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-labelledby="{{ $modalId }}Label" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form method="POST" action="{{ route('tech.clients.custom-fields.update', [$client, $field['definition']]) }}" class="modal-content">
+                        @csrf
+                        @method('PATCH')
+                        <div class="modal-header">
+                            <h2 class="modal-title fs-5" id="{{ $modalId }}Label">{{ $field['label'] }}</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <label class="form-label" for="{{ $modalId }}Value">Value</label>
+                            @include('customfield::components.value-input', [
+                                'field' => $field,
+                                'inputName' => 'value',
+                                'inputId' => $modalId.'Value',
+                            ])
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save value</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endforeach
 
         @include('task::components.quick-create-modal', [
             'modalId' => 'clientTaskQuickCreateModal',

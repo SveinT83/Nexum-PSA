@@ -11,6 +11,7 @@ use App\Modules\Clients\Actions\CreateClientWithDefaults;
 use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use App\Models\Core\User;
+use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Modules\Task\Models\Task;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -94,7 +95,7 @@ class ClientController extends Controller
      * @param Client $client
      * @return View
      */
-    public function show(Client $client)
+    public function show(Client $client, Request $request, CustomFieldPresenter $customFields)
     {
         // -----------------------------------------
         // Set the active client ID in session
@@ -154,6 +155,7 @@ class ClientController extends Controller
             'contracts' => $contracts,
             'technicians' => User::query()->where('status', User::STATUS_ACTIVE)->orderBy('name')->get(),
             'clientTasks' => $clientTasks,
+            'customFields' => $customFields->visibleFor($client, $request->user()),
 
         ]);
     }

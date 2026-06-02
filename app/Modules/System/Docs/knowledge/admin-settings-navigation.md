@@ -40,6 +40,7 @@ Existing settings surfaces include:
 - BookStack.
 - API management.
 - AI settings.
+- Custom fields.
 - User roles.
 - User permissions.
 - Two-factor auth.

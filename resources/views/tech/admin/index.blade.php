@@ -117,6 +117,7 @@
                 ['label' => 'Branding', 'route' => route('tech.admin.system.branding.edit')],
                 ['label' => 'Warroom', 'route' => route('tech.admin.settings.warroom')],
                 ['label' => 'Risk settings', 'route' => route('tech.admin.settings.risk')],
+                ['label' => 'Custom fields', 'route' => route('tech.admin.settings.custom-fields.index')],
                 ['label' => 'Categories', 'route' => route('tech.admin.system.category.index')],
                 ['label' => 'Tags', 'route' => route('tech.admin.system.tag.index')],
                 ['label' => 'Queues and workers', 'route' => route('tech.admin.system.queues-workers.index')],
