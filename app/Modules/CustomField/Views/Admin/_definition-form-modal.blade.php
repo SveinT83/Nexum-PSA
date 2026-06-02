@@ -29,7 +29,7 @@
                         <label class="form-label">Applies to</label>
                         <select name="model_type" class="form-select @error('model_type') is-invalid @enderror" @disabled($isEdit) required>
                             @foreach($models as $alias => $class)
-                                <option value="{{ $alias }}" @selected($currentModel === $alias)>{{ ucfirst($alias) }}</option>
+                                <option value="{{ $alias }}" @selected($currentModel === $alias)>{{ $modelRegistry->displayLabelFor($alias) }}</option>
                             @endforeach
                         </select>
                         @error('model_type')<div class="invalid-feedback">{{ $message }}</div>@enderror

@@ -21,6 +21,11 @@ class CustomFieldModelRegistry
         'client_site' => ClientSite::class,
     ];
 
+    public const LABELS = [
+        'client' => 'Client',
+        'client_site' => 'Client site',
+    ];
+
     public function all(): array
     {
         return self::MODELS;
@@ -29,6 +34,17 @@ class CustomFieldModelRegistry
     public function labelFor(string $modelType): string
     {
         return array_search($modelType, self::MODELS, true) ?: class_basename($modelType);
+    }
+
+    public function displayLabelFor(string $aliasOrClass): string
+    {
+        if (array_key_exists($aliasOrClass, self::MODELS)) {
+            $alias = $aliasOrClass;
+        } else {
+            $alias = array_search($aliasOrClass, self::MODELS, true) ?: $aliasOrClass;
+        }
+
+        return self::LABELS[$alias] ?? class_basename($aliasOrClass);
     }
 
     public function classFor(string $aliasOrClass): ?string

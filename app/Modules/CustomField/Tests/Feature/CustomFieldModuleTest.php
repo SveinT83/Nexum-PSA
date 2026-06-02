@@ -95,6 +95,7 @@ class CustomFieldModuleTest extends TestCase
             ->assertOk()
             ->assertSee('MSP Manager ID')
             ->assertSee('msp_manager_id')
+            ->assertSee('Client site')
             ->assertSee('customFieldCreateModal')
             ->assertSee('customFieldEdit'.$definition->id);
 
