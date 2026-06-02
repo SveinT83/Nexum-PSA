@@ -3,6 +3,7 @@
 namespace App\Modules\CustomField\Support;
 
 use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
 
 class CustomFieldModelRegistry
 {
@@ -12,11 +13,17 @@ class CustomFieldModelRegistry
     |--------------------------------------------------------------------------
     |
     | Add domains here one at a time after their UI, API, validation, tests, and
-    | documentation are implemented. The first beta consumer is Client.
+    | documentation are implemented.
     |
     */
     public const MODELS = [
         'client' => Client::class,
+        'client_site' => ClientSite::class,
+    ];
+
+    public const LABELS = [
+        'client' => 'Client',
+        'client_site' => 'Client site',
     ];
 
     public function all(): array
@@ -27,6 +34,17 @@ class CustomFieldModelRegistry
     public function labelFor(string $modelType): string
     {
         return array_search($modelType, self::MODELS, true) ?: class_basename($modelType);
+    }
+
+    public function displayLabelFor(string $aliasOrClass): string
+    {
+        if (array_key_exists($aliasOrClass, self::MODELS)) {
+            $alias = $aliasOrClass;
+        } else {
+            $alias = array_search($aliasOrClass, self::MODELS, true) ?: $aliasOrClass;
+        }
+
+        return self::LABELS[$alias] ?? class_basename($aliasOrClass);
     }
 
     public function classFor(string $aliasOrClass): ?string

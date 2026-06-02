@@ -493,9 +493,9 @@ User deletion is not exposed. Account lifecycle uses `PENDING_INVITE`, `ACTIVE`,
 The API never returns password hashes, remember tokens, invite token values, two-factor secrets, or
 two-factor recovery codes.
 
-## Client Custom Fields
+## Client And Site Custom Fields
 
-The Client API supports platform Custom Fields.
+The Client and Client Site APIs support platform Custom Fields.
 
 Client create and update requests may include:
 
@@ -513,8 +513,26 @@ Searchable custom fields can be used for lookup:
 GET /api/v1/clients?custom_field[msp_manager_id]=12345
 ```
 
-Custom fields are only accepted when the field is active, applies to Client, and is editable through
-API. Unique fields reject duplicate values for the same model type.
+Client Site create and update requests may include site-specific custom fields:
+
+```json
+{
+  "custom_fields": {
+    "msp_manager_site_id": "SITE-12345"
+  }
+}
+```
+
+Searchable Client Site custom fields can be used for direct lookup:
+
+```text
+GET /api/v1/client-sites?custom_field[msp_manager_site_id]=SITE-12345
+GET /api/v1/clients/{client}/sites?custom_field[msp_manager_site_id]=SITE-12345
+```
+
+Custom fields are only accepted when the field is active, applies to the target model, and is
+editable through API. Unique fields reject duplicate values for the same model type. Integration
+values must be sent in the JSON `custom_fields` object, not as HTTP headers.
 
 ## Custom Field Definition API
 

@@ -745,6 +745,67 @@
                 ]
             }
         },
+        "/api/v1/client-sites": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Get list of client sites",
+                "description": "Returns all client sites with pagination. Supports direct custom field lookup for imports.",
+                "operationId": "getClientSiteList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "custom_field[key]",
+                        "in": "query",
+                        "description": "Search by a searchable site custom field key/value pair.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing clients.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/clients/{client}/sites": {
             "get": {
                 "tags": [
@@ -758,6 +819,23 @@
                         "name": "client",
                         "in": "path",
                         "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "custom_field[key]",
+                        "in": "query",
+                        "description": "Search by a searchable site custom field key/value pair.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
                         "schema": {
                             "type": "integer"
                         }
@@ -830,6 +908,10 @@
                                     },
                                     "is_default": {
                                         "type": "boolean",
+                                        "nullable": true
+                                    },
+                                    "custom_fields": {
+                                        "type": "object",
                                         "nullable": true
                                     }
                                 },

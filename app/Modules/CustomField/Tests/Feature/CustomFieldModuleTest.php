@@ -3,6 +3,7 @@
 namespace App\Modules\CustomField\Tests\Feature;
 
 use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
 use App\Modules\Clients\Controllers\Tech\ClientCustomFieldValueController;
 use App\Modules\Clients\Controllers\Api\V1\ClientController as ApiClientController;
@@ -56,6 +57,10 @@ class CustomFieldModuleTest extends TestCase
             Route::getRoutes()->getByName('api.v1.clients.index')->getActionName(),
         );
         $this->assertSame(
+            ApiClientController::class.'@siteIndex',
+            Route::getRoutes()->getByName('api.v1.client-sites.index')->getActionName(),
+        );
+        $this->assertSame(
             ApiCustomFieldDefinitionController::class.'@index',
             Route::getRoutes()->getByName('api.v1.custom-fields.index')->getActionName(),
         );
@@ -90,6 +95,7 @@ class CustomFieldModuleTest extends TestCase
             ->assertOk()
             ->assertSee('MSP Manager ID')
             ->assertSee('msp_manager_id')
+            ->assertSee('Client site')
             ->assertSee('customFieldCreateModal')
             ->assertSee('customFieldEdit'.$definition->id);
 
@@ -215,6 +221,67 @@ class CustomFieldModuleTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.custom_fields.msp_manager_id', '340');
+    }
+
+    #[Test]
+    public function site_api_can_write_and_search_custom_fields(): void
+    {
+        $client = Client::create(['name' => 'MSP Synced Client', 'active' => true]);
+        CustomFieldDefinition::create([
+            'model_type' => ClientSite::class,
+            'key' => 'msp_manager_site_id',
+            'label' => 'MSP Manager Site ID',
+            'field_type' => 'text',
+            'visible_in_ui' => true,
+            'editable_in_ui' => true,
+            'editable_via_api' => true,
+            'searchable' => true,
+            'unique_per_model' => true,
+            'active' => true,
+        ]);
+
+        Sanctum::actingAs($this->admin, ['clients.read', 'clients.update']);
+
+        $response = $this->postJson("/api/v1/clients/{$client->id}/sites", [
+            'name' => 'MSP Synced Site',
+            'custom_fields' => [
+                'msp_manager_site_id' => 'SITE-339',
+            ],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.client.id', $client->id)
+            ->assertJsonPath('data.custom_fields.msp_manager_site_id', 'SITE-339');
+
+        $siteId = $response->json('data.id');
+
+        $this->getJson('/api/v1/client-sites?custom_field[msp_manager_site_id]=SITE-339')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $siteId)
+            ->assertJsonPath('data.0.client.id', $client->id)
+            ->assertJsonPath('data.0.custom_fields.msp_manager_site_id', 'SITE-339');
+
+        $this->getJson("/api/v1/clients/{$client->id}/sites?custom_field[msp_manager_site_id]=SITE-339")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $siteId);
+
+        $this->patchJson("/api/v1/client-sites/{$siteId}", [
+            'custom_fields' => [
+                'msp_manager_site_id' => 'SITE-340',
+            ],
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.custom_fields.msp_manager_site_id', 'SITE-340');
+
+        $this->getJson('/api/v1/client-sites?custom_field[msp_manager_site_id]=SITE-339')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->getJson('/api/v1/client-sites?custom_field[msp_manager_site_id]=SITE-340')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $siteId);
     }
 
     #[Test]

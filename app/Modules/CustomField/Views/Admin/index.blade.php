@@ -23,7 +23,7 @@
                     <select name="model" class="form-select">
                         <option value="">All models</option>
                         @foreach($models as $alias => $class)
-                            <option value="{{ $alias }}" @selected($activeModel === $alias)>{{ ucfirst($alias) }}</option>
+                            <option value="{{ $alias }}" @selected($activeModel === $alias)>{{ $modelRegistry->displayLabelFor($alias) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -56,7 +56,7 @@
                                 <div class="fw-semibold">{{ $definition->label }}</div>
                                 <div class="small text-muted">{{ $definition->key }}</div>
                             </td>
-                            <td>{{ ucfirst($modelRegistry->labelFor($definition->model_type)) }}</td>
+                            <td>{{ $modelRegistry->displayLabelFor($definition->model_type) }}</td>
                             <td>{{ $definition->field_type }}</td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">

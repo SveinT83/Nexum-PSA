@@ -4,11 +4,15 @@ Custom Fields are a platform capability for configurable metadata and human-faci
 
 Custom Fields let admins add structured fields to supported records without adding hardcoded columns.
 
-The first supported record type is `Client`.
+Supported record types:
+
+- `client`
+- `client_site`
 
 Common uses:
 
 - MSP Manager client ID.
+- MSP Manager site ID.
 - Legacy system ID.
 - Customer-specific metadata.
 - Searchable integration keys.
@@ -60,7 +64,7 @@ When a permission is set, the user must have that permission to view or edit the
 
 `admin_only` restricts the field to Admin and Superuser roles.
 
-## Client Integration
+## Client And Site Integration
 
 Client show pages display visible custom fields in the client workspace `Custom Fields` tab.
 
@@ -75,6 +79,34 @@ The Client API supports searchable custom fields:
 
 ```text
 GET /api/v1/clients?custom_field[msp_manager_id]=12345
+```
+
+Client Site custom fields are stored on the `client_site` model type. They are intended for site
+external IDs, import keys, location-specific metadata, and other structured data that belongs to a
+specific site rather than the client as a whole.
+
+Client Site API responses include custom field values in `custom_fields`.
+
+Client Site create and update requests accept:
+
+```json
+{
+  "custom_fields": {
+    "msp_manager_site_id": "SITE-12345"
+  }
+}
+```
+
+Client Sites can be looked up globally by searchable custom fields:
+
+```text
+GET /api/v1/client-sites?custom_field[msp_manager_site_id]=SITE-12345
+```
+
+They can also be filtered within a known client:
+
+```text
+GET /api/v1/clients/{client}/sites?custom_field[msp_manager_site_id]=SITE-12345
 ```
 
 ## Definition API
@@ -93,7 +125,8 @@ The API requires:
 custom-fields.read
 ```
 
-The API supports filters such as `model=client`, `editable_via_api=1`, and `searchable=1`.
+The API supports filters such as `model=client`, `model=client_site`, `editable_via_api=1`, and
+`searchable=1`.
 
 This API returns field definitions only. Field values remain owned by each supported domain API.
 

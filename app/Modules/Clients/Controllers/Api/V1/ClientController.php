@@ -11,7 +11,7 @@ use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Clients\Resources\Api\V1\ClientSiteResource;
 use App\Modules\CustomField\Actions\SyncCustomFieldValues;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
-use App\Modules\CustomField\Models\CustomFieldValue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -102,27 +102,7 @@ class ClientController extends Controller
             $query->where('active', $request->boolean('active'));
         }
 
-        foreach ((array) $request->input('custom_field', []) as $key => $value) {
-            $definition = CustomFieldDefinition::query()
-                ->where('model_type', (new Client())->getMorphClass())
-                ->where('key', $key)
-                ->where('active', true)
-                ->where('searchable', true)
-                ->first();
-
-            if (! $definition) {
-                continue;
-            }
-
-            $query->whereExists(function ($exists) use ($definition, $value): void {
-                $exists->selectRaw('1')
-                    ->from('custom_field_values')
-                    ->whereColumn('custom_field_values.model_id', 'clients.id')
-                    ->where('custom_field_values.model_type', (new Client())->getMorphClass())
-                    ->where('custom_field_values.custom_field_definition_id', $definition->id)
-                    ->where('custom_field_values.value_text', (string) $value);
-            });
-        }
+        $this->applyCustomFieldFilters($query, $request, Client::class, 'clients');
 
         return ClientResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
@@ -292,6 +272,37 @@ class ClientController extends Controller
     }
 
     #[OA\Get(
+        path: "/api/v1/client-sites",
+        operationId: "getClientSiteList",
+        description: "Returns all client sites with pagination. Supports direct custom field lookup for imports.",
+        summary: "Get list of client sites",
+        security: [["bearerAuth" => []]],
+        tags: ["Clients"],
+        parameters: [
+            new OA\Parameter(name: "q", in: "query", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "client_id", in: "query", required: false, schema: new OA\Schema(type: "integer")),
+            new OA\Parameter(name: "custom_field[key]", in: "query", description: "Search by a searchable site custom field key/value pair.", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer")),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Successful operation"),
+            new OA\Response(response: 401, description: "Unauthenticated"),
+            new OA\Response(response: 403, description: "Missing clients.read scope")
+        ]
+    )]
+    public function siteIndex(Request $request)
+    {
+        $query = ClientSite::query()
+            ->with('client')
+            ->orderBy('name');
+
+        $this->applySiteFilters($query, $request);
+        $this->applyCustomFieldFilters($query, $request, ClientSite::class, 'client_sites');
+
+        return ClientSiteResource::collection($query->paginate($request->integer('per_page') ?: 15));
+    }
+
+    #[OA\Get(
         path: "/api/v1/clients/{client}/sites",
         operationId: "getClientSites",
         description: "Returns sites for a client.",
@@ -299,7 +310,9 @@ class ClientController extends Controller
         security: [["bearerAuth" => []]],
         tags: ["Clients"],
         parameters: [
-            new OA\Parameter(name: "client", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+            new OA\Parameter(name: "client", in: "path", required: true, schema: new OA\Schema(type: "integer")),
+            new OA\Parameter(name: "custom_field[key]", in: "query", description: "Search by a searchable site custom field key/value pair.", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer"))
         ],
         responses: [
             new OA\Response(response: 200, description: "Successful operation"),
@@ -310,12 +323,15 @@ class ClientController extends Controller
     )]
     public function sites(Request $request, Client $client)
     {
-        return ClientSiteResource::collection(
-            $client->sites()
-                ->orderByDesc('is_default')
-                ->orderBy('name')
-                ->paginate($request->integer('per_page') ?: 15)
-        );
+        $query = $client->sites()
+            ->with('client')
+            ->orderByDesc('is_default')
+            ->orderBy('name');
+
+        $this->applySiteFilters($query, $request);
+        $this->applyCustomFieldFilters($query, $request, ClientSite::class, 'client_sites');
+
+        return ClientSiteResource::collection($query->paginate($request->integer('per_page') ?: 15));
     }
 
     #[OA\Post(
@@ -338,7 +354,8 @@ class ClientController extends Controller
                     new OA\Property(property: "zip", type: "string", nullable: true),
                     new OA\Property(property: "city", type: "string", nullable: true),
                     new OA\Property(property: "country", type: "string", nullable: true),
-                    new OA\Property(property: "is_default", type: "boolean", nullable: true)
+                    new OA\Property(property: "is_default", type: "boolean", nullable: true),
+                    new OA\Property(property: "custom_fields", type: "object", nullable: true)
                 ],
                 type: "object"
             )
@@ -350,19 +367,21 @@ class ClientController extends Controller
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
-    public function storeSite(Request $request, Client $client)
+    public function storeSite(Request $request, Client $client, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateSitePayload($request, $client);
-        $validated['is_default'] ??= ! $client->sites()->where('is_default', true)->exists();
+        $siteAttributes = $this->siteAttributes($validated);
+        $siteAttributes['is_default'] ??= ! $client->sites()->where('is_default', true)->exists();
 
-        $site = DB::transaction(function () use ($client, $validated): ClientSite {
-            $site = $client->sites()->create($validated);
+        $site = DB::transaction(function () use ($request, $client, $siteAttributes, $customFields): ClientSite {
+            $site = $client->sites()->create($siteAttributes);
             $this->syncDefaultSite($site);
+            $customFields->handle($site, (array) $request->input('custom_fields', []), $request->user(), 'api');
 
             return $site;
         });
 
-        return (new ClientSiteResource($site))
+        return (new ClientSiteResource($site->load('client')))
             ->response()
             ->setStatusCode(201);
     }
@@ -403,16 +422,17 @@ class ClientController extends Controller
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
-    public function updateSite(Request $request, ClientSite $site)
+    public function updateSite(Request $request, ClientSite $site, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateSitePayload($request, $site->client, $site);
 
-        DB::transaction(function () use ($site, $validated): void {
-            $site->forceFill($validated)->save();
+        DB::transaction(function () use ($request, $site, $validated, $customFields): void {
+            $site->forceFill($this->siteAttributes($validated))->save();
             $this->syncDefaultSite($site);
+            $customFields->handle($site, (array) $request->input('custom_fields', []), $request->user(), 'api');
         });
 
-        return new ClientSiteResource($site->refresh());
+        return new ClientSiteResource($site->refresh()->load('client'));
     }
 
     private function validateClientPayload(Request $request, bool $creating, ?Client $client = null): array
@@ -473,7 +493,53 @@ class ClientController extends Controller
             'county' => ['sometimes', 'nullable', 'string', 'max:100'],
             'country' => ['sometimes', 'nullable', 'string', 'max:100'],
             'is_default' => ['sometimes', 'boolean'],
+            'custom_fields' => ['sometimes', 'array'],
         ]);
+    }
+
+    private function applySiteFilters($query, Request $request): void
+    {
+        if ($request->filled('q')) {
+            $needle = trim((string) $request->input('q'));
+            $query->where(function (Builder $inner) use ($needle): void {
+                $inner->where('name', 'like', '%'.$needle.'%')
+                    ->orWhere('address', 'like', '%'.$needle.'%')
+                    ->orWhere('zip', 'like', '%'.$needle.'%')
+                    ->orWhere('city', 'like', '%'.$needle.'%')
+                    ->orWhere('country', 'like', '%'.$needle.'%');
+            });
+        }
+
+        if ($request->filled('client_id')) {
+            $query->where('client_id', $request->integer('client_id'));
+        }
+    }
+
+    private function applyCustomFieldFilters($query, Request $request, string $modelClass, string $table): void
+    {
+        $model = new $modelClass();
+
+        foreach ((array) $request->input('custom_field', []) as $key => $value) {
+            $definition = CustomFieldDefinition::query()
+                ->where('model_type', $model->getMorphClass())
+                ->where('key', $key)
+                ->where('active', true)
+                ->where('searchable', true)
+                ->first();
+
+            if (! $definition) {
+                continue;
+            }
+
+            $query->whereExists(function ($exists) use ($definition, $model, $table, $value): void {
+                $exists->selectRaw('1')
+                    ->from('custom_field_values')
+                    ->whereColumn('custom_field_values.model_id', $table.'.id')
+                    ->where('custom_field_values.model_type', $model->getMorphClass())
+                    ->where('custom_field_values.custom_field_definition_id', $definition->id)
+                    ->where('custom_field_values.value_text', (string) $value);
+            });
+        }
     }
 
     private function sitePayloadFromRequest(Request $request, string $defaultName): array
@@ -504,6 +570,20 @@ class ClientController extends Controller
             'billing_email',
             'notes',
             'active',
+        ]));
+    }
+
+    private function siteAttributes(array $validated): array
+    {
+        return array_intersect_key($validated, array_flip([
+            'name',
+            'address',
+            'co_address',
+            'zip',
+            'city',
+            'county',
+            'country',
+            'is_default',
         ]));
     }
 
