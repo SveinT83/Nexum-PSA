@@ -489,6 +489,15 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "custom_field[key]",
+                        "in": "query",
+                        "description": "Search by a searchable custom field key/value pair, for example custom_field[msp_manager_id]=12345.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -543,6 +552,10 @@
                                     },
                                     "site_name": {
                                         "type": "string",
+                                        "nullable": true
+                                    },
+                                    "custom_fields": {
+                                        "type": "object",
                                         "nullable": true
                                     }
                                 },
@@ -2348,6 +2361,73 @@
                     },
                     "403": {
                         "description": "Missing notifications.update scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/reports": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "List available reports",
+                "operationId": "getReports",
+                "parameters": [
+                    {
+                        "name": "domain",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/reports/{reportKey}": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "View report metadata",
+                "operationId": "getReport",
+                "parameters": [
+                    {
+                        "name": "reportKey",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Report metadata"
+                    },
+                    "404": {
+                        "description": "Report not found"
                     }
                 },
                 "security": [
@@ -4165,6 +4245,242 @@
                     }
                 ]
             }
+        },
+        "/api/v1/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List users",
+                "operationId": "getUsers",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated user list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create a user",
+                "operationId": "createUser",
+                "responses": {
+                    "201": {
+                        "description": "User created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/roles": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List roles for user assignment",
+                "operationId": "getUserRoles",
+                "responses": {
+                    "200": {
+                        "description": "Role list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "View a user",
+                "operationId": "getUser",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update a user profile",
+                "operationId": "updateUser",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}/status": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user status",
+                "operationId": "updateUserStatus",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User status updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}/roles": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Replace user roles",
+                "operationId": "updateUserRoles",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User roles updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}/invite": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Send or resend a user invite",
+                "operationId": "sendUserInvite",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invite queued"
+                    },
+                    "422": {
+                        "description": "Only pending users can receive invites"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -4214,6 +4530,10 @@
             "description": "API endpoints for user notifications."
         },
         {
+            "name": "Reports",
+            "description": "API endpoints for report discovery."
+        },
+        {
             "name": "Risk",
             "description": "API endpoints for risk assessments, risk items, and risk item updates."
         },
@@ -4236,6 +4556,10 @@
         {
             "name": "Tickets",
             "description": "API endpoints for ticket automation."
+        },
+        {
+            "name": "Users",
+            "description": "API endpoints for user lifecycle, profiles, invites, and role assignment."
         }
     ]
 }

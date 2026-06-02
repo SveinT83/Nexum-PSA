@@ -97,3 +97,26 @@ Default Site can be supplied as a nested `site` object or through flat `site_*` 
 
 This API is intended for trusted automation such as n8n and future AI agents. Tokens must be scoped
 only to the abilities the integration actually needs.
+
+## Custom Fields
+
+Clients support platform Custom Fields.
+
+Admins configure field definitions from `Admin -> System -> Custom fields`.
+
+Visible fields appear on the Client show page in the client workspace `Custom Fields` tab.
+Technicians with edit permission can click a field row to update that client's value in a modal.
+This does not edit the custom field definition itself.
+
+Editable fields also appear on the Client settings page as part of the broader client settings form.
+
+The Client API accepts `custom_fields` on create and update requests and exposes values in the
+`custom_fields` response payload.
+
+Searchable fields can be used as API filters:
+
+```text
+GET /api/v1/clients?custom_field[msp_manager_id]=12345
+```
+
+This is intended for lightweight integration scenarios such as n8n syncing Clients from MSP Manager.

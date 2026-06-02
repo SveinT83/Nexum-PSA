@@ -129,6 +129,10 @@ class IntegrationModuleTest extends TestCase
             ->assertSee('Create economy')
             ->assertSee('Update economy')
             ->assertSee('Delete economy')
+            ->assertSee('Read reports')
+            ->assertSee('Read users')
+            ->assertSee('Create users')
+            ->assertSee('Update users')
             ->assertDontSee('Coming Soon');
     }
 

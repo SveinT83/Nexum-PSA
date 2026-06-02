@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1\Clients;
 
 use App\Modules\Clients\Resources\Api\V1\ClientSiteResource;
+use App\Modules\CustomField\Support\CustomFieldPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,6 +24,7 @@ class ClientResource extends JsonResource
             'billing_email' => $this->billing_email,
             'active' => (bool) $this->active,
             'risk_score' => $this->risk_score,
+            'custom_fields' => app(CustomFieldPresenter::class)->apiFor($this->resource, $request->user()),
             'sites' => ClientSiteResource::collection($this->whenLoaded('sites')),
             'links' => [
                 'self' => route('api.v1.clients.show', $this->id),

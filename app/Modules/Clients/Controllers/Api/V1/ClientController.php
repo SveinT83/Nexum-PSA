@@ -9,6 +9,9 @@ use App\Models\Clients\ClientSite;
 use App\Modules\Asset\Resources\Api\V1\AssetResource;
 use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Clients\Resources\Api\V1\ClientSiteResource;
+use App\Modules\CustomField\Actions\SyncCustomFieldValues;
+use App\Modules\CustomField\Models\CustomFieldDefinition;
+use App\Modules\CustomField\Models\CustomFieldValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -66,6 +69,13 @@ class ClientController extends Controller
                 required: false,
                 schema: new OA\Schema(type: "integer")
             ),
+            new OA\Parameter(
+                name: "custom_field[key]",
+                in: "query",
+                description: "Search by a searchable custom field key/value pair, for example custom_field[msp_manager_id]=12345.",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            ),
         ],
         responses: [
             new OA\Response(response: 200, description: "Successful operation"),
@@ -90,6 +100,28 @@ class ClientController extends Controller
 
         if ($request->has('active')) {
             $query->where('active', $request->boolean('active'));
+        }
+
+        foreach ((array) $request->input('custom_field', []) as $key => $value) {
+            $definition = CustomFieldDefinition::query()
+                ->where('model_type', (new Client())->getMorphClass())
+                ->where('key', $key)
+                ->where('active', true)
+                ->where('searchable', true)
+                ->first();
+
+            if (! $definition) {
+                continue;
+            }
+
+            $query->whereExists(function ($exists) use ($definition, $value): void {
+                $exists->selectRaw('1')
+                    ->from('custom_field_values')
+                    ->whereColumn('custom_field_values.model_id', 'clients.id')
+                    ->where('custom_field_values.model_type', (new Client())->getMorphClass())
+                    ->where('custom_field_values.custom_field_definition_id', $definition->id)
+                    ->where('custom_field_values.value_text', (string) $value);
+            });
         }
 
         return ClientResource::collection($query->paginate($request->integer('per_page') ?: 15));
@@ -141,6 +173,7 @@ class ClientController extends Controller
                     new OA\Property(property: "billing_email", type: "string", format: "email", nullable: true),
                     new OA\Property(property: "active", type: "boolean", nullable: true),
                     new OA\Property(property: "site_name", type: "string", nullable: true),
+                    new OA\Property(property: "custom_fields", type: "object", nullable: true),
                 ],
                 type: "object"
             )
@@ -152,11 +185,11 @@ class ClientController extends Controller
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
-    public function store(Request $request, SuggestClientNumber $suggestClientNumber)
+    public function store(Request $request, SuggestClientNumber $suggestClientNumber, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateClientPayload($request, creating: true);
 
-        $client = DB::transaction(function () use ($request, $validated, $suggestClientNumber): Client {
+        $client = DB::transaction(function () use ($request, $validated, $suggestClientNumber, $customFields): Client {
             $client = Client::query()->create([
                 'name' => $validated['name'],
                 'client_number' => $validated['client_number'] ?? $suggestClientNumber->handle(),
@@ -173,6 +206,7 @@ class ClientController extends Controller
             $sitePayload = $this->sitePayloadFromRequest($request, 'Default');
             $sitePayload['is_default'] = true;
             $client->sites()->create($sitePayload);
+            $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'api');
 
             return $client;
         });
@@ -218,11 +252,14 @@ class ClientController extends Controller
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
-    public function update(Request $request, Client $client)
+    public function update(Request $request, Client $client, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateClientPayload($request, creating: false, client: $client);
 
-        $client->forceFill($this->clientAttributes($validated))->save();
+        DB::transaction(function () use ($request, $client, $validated, $customFields): void {
+            $client->forceFill($this->clientAttributes($validated))->save();
+            $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'api');
+        });
 
         return new ClientResource($client->load('sites'));
     }
@@ -399,6 +436,7 @@ class ClientController extends Controller
             'billing_email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'notes' => ['sometimes', 'nullable', 'string'],
             'active' => ['sometimes', 'boolean'],
+            'custom_fields' => ['sometimes', 'array'],
             'site' => ['sometimes', 'array'],
             'site.name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'site.address' => ['sometimes', 'nullable', 'string', 'max:255'],

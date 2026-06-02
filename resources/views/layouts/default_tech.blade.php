@@ -165,7 +165,7 @@
                 <div class="row">
 
                     <!-- Sidebar (left) -->
-                    <div class="col-md-2 sidebar">
+                    <div class="col-md-2 pt-3 sidebar">
 
                         <!-- ------------------------------------------------- -->
                         <!-- More sidebar content from page file -->
@@ -219,7 +219,7 @@
                     </div>
 
                     <!-- Right sidebar (right) -->
-                    <div class="col-md-2 sidebar">
+                    <div class="col-md-2 pt-3 sidebar">
                         @yield('rightbar')
 
                         @auth

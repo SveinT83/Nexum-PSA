@@ -55,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
             'clients' => 'Clients',
             'contact' => 'Contact',
             'commercial' => 'Commercial',
+            'customfield' => 'CustomField',
             'documentation' => 'Documentation',
             'email' => 'Email',
             'economy' => 'Economy',

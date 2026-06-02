@@ -194,6 +194,7 @@
         'system' => [
             ['name' => 'Company profile', 'route' => 'tech.admin.system.company-profile.edit', 'pattern' => 'tech.admin.system.company-profile.*'],
             ['name' => 'Branding', 'route' => 'tech.admin.system.branding.edit', 'pattern' => 'tech.admin.system.branding.*'],
+            ['name' => 'Custom fields', 'route' => 'tech.admin.settings.custom-fields.index', 'pattern' => 'tech.admin.settings.custom-fields.*'],
             ['name' => 'Categories', 'route' => 'tech.admin.system.category.index', 'pattern' => 'tech.admin.system.category.*'],
             ['name' => 'Tags', 'route' => 'tech.admin.system.tag.index', 'pattern' => 'tech.admin.system.tag.*'],
             ['name' => 'Queues and workers', 'route' => 'tech.admin.system.queues-workers.index', 'pattern' => 'tech.admin.system.queues-workers.*'],

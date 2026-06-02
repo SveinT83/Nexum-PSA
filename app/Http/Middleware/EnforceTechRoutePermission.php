@@ -42,6 +42,7 @@ class EnforceTechRoutePermission
         'tech.admin.user_management.*' => 'user.view',
 
         'tech.admin.settings.clients.*' => 'client.manage_settings',
+        'tech.admin.settings.custom-fields.*' => 'customfield.manage_settings',
         'tech.admin.settings.calendar' => 'calendar.manage_settings',
         'tech.admin.settings.calendar.*' => 'calendar.manage_settings',
         'tech.admin.settings.economy' => 'economy.manage_settings',

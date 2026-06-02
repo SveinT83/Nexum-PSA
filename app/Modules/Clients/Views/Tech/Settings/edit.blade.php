@@ -57,6 +57,67 @@
         </div>
     @endif
 
+    {{-- Custom Fields --}}
+    @if(($customFields ?? collect())->isNotEmpty())
+        <form action="{{ route('tech.clients.settings.update', $client->id) }}" method="POST" class="card mb-3">
+            @csrf
+            @method('PUT')
+            <div class="card-header">
+                <h2 class="h5 mb-0">Custom Fields</h2>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @foreach($customFields as $field)
+                        @php($definition = $field['definition'])
+                        <div class="col-md-6">
+                            <label class="form-label" for="customField{{ $definition->id }}">
+                                {{ $field['label'] }}
+                                @if($field['required'])
+                                    <span class="text-danger">*</span>
+                                @endif
+                            </label>
+
+                            @if(in_array($field['type'], ['textarea'], true))
+                                <textarea id="customField{{ $definition->id }}" name="custom_fields[{{ $field['key'] }}]" rows="3" class="form-control @error('custom_fields.'.$field['key']) is-invalid @enderror">{{ old('custom_fields.'.$field['key'], $field['value']) }}</textarea>
+                            @elseif($field['type'] === 'select')
+                                <select id="customField{{ $definition->id }}" name="custom_fields[{{ $field['key'] }}]" class="form-select @error('custom_fields.'.$field['key']) is-invalid @enderror">
+                                    <option value="">—</option>
+                                    @foreach($field['options'] as $option)
+                                        <option value="{{ $option }}" @selected(old('custom_fields.'.$field['key'], $field['value']) === $option)>{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            @elseif($field['type'] === 'multiselect')
+                                <select id="customField{{ $definition->id }}" name="custom_fields[{{ $field['key'] }}][]" class="form-select @error('custom_fields.'.$field['key']) is-invalid @enderror" multiple>
+                                    @foreach($field['options'] as $option)
+                                        <option value="{{ $option }}" @selected(in_array($option, old('custom_fields.'.$field['key'], $field['value'] ?? []), true))>{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            @elseif($field['type'] === 'checkbox')
+                                <input type="hidden" name="custom_fields[{{ $field['key'] }}]" value="0">
+                                <div class="form-check">
+                                    <input id="customField{{ $definition->id }}" type="checkbox" name="custom_fields[{{ $field['key'] }}]" value="1" class="form-check-input @error('custom_fields.'.$field['key']) is-invalid @enderror" @checked(old('custom_fields.'.$field['key'], $field['value']))>
+                                    <label class="form-check-label" for="customField{{ $definition->id }}">Enabled</label>
+                                </div>
+                            @else
+                                <input id="customField{{ $definition->id }}" type="{{ match($field['type']) { 'number' => 'number', 'date' => 'date', 'datetime' => 'datetime-local', 'email' => 'email', 'url' => 'url', default => 'text' } }}" name="custom_fields[{{ $field['key'] }}]" value="{{ old('custom_fields.'.$field['key'], $field['value']) }}" class="form-control @error('custom_fields.'.$field['key']) is-invalid @enderror">
+                            @endif
+
+                            @error('custom_fields.'.$field['key'])
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                            @if($field['help_text'])
+                                <div class="form-text">{{ $field['help_text'] }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">Save Custom Fields</button>
+            </div>
+        </form>
+    @endif
+
     {{-- Other settings cards can be added here later --}}
     <div class="accordion" id="clientSettingsAccordion">
         <div class="accordion-item">

@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Clients\Controllers\Admin\ClientFormatSettingsController;
+use App\Modules\Clients\Controllers\Tech\ClientCustomFieldValueController;
 use App\Modules\Clients\Controllers\Tech\ClientController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,7 @@ Route::delete('/clients/user/delete/{ClientUser}', [\App\Modules\Clients\Control
 // Settings
 Route::get('/clients/{client}/settings', [\App\Modules\Clients\Controllers\Tech\ClientSettingsController::class, 'edit'])->name('clients.settings.edit');
 Route::put('/clients/{client}/settings', [\App\Modules\Clients\Controllers\Tech\ClientSettingsController::class, 'update'])->name('clients.settings.update');
+Route::patch('/clients/{client}/custom-fields/{definition}', [ClientCustomFieldValueController::class, 'update'])->name('clients.custom-fields.update');
 
 Route::middleware('admin')->group(function (): void {
     Route::get('/admin/settings/clients/client-formats', [ClientFormatSettingsController::class, 'index'])

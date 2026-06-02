@@ -33,6 +33,10 @@ class PermissionSeeder extends Seeder
             'client.update',
             'client.delete',
             'client.manage_settings',
+            'client.custom_fields.view_integrations',
+            'client.custom_fields.edit_integrations',
+
+            'customfield.manage_settings',
 
             'contact.view',
             'contact.create',

@@ -61,6 +61,10 @@ Implemented scopes:
 - `economy.create`: generate economy orders from billable ticket time and picked ticket costs.
 - `economy.update`: move economy orders between draft and ready states.
 - `economy.delete`: delete empty economy orders and draft order lines.
+- `report.read`: list and view available report definitions.
+- `users.read`: list and view users, roles, and user profile metadata.
+- `users.create`: create users and queue invitations for pending users.
+- `users.update`: update user profiles, statuses, roles, and resend invitations.
 
 Full access can be selected by an admin when a trusted integration needs every implemented API scope.
 
@@ -189,6 +193,17 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/economy/orders/{order}/draft`
 - `DELETE /api/v1/economy/orders/{order}`
 - `DELETE /api/v1/economy/orders/{order}/lines/{line}`
+- `GET /api/v1/reports`
+- `GET /api/v1/reports/{reportKey}`
+- `GET /api/v1/users`
+- `GET /api/v1/users/roles`
+- `POST /api/v1/users`
+- `GET /api/v1/users/{user}`
+- `PUT /api/v1/users/{user}`
+- `PATCH /api/v1/users/{user}`
+- `POST /api/v1/users/{user}/status`
+- `POST /api/v1/users/{user}/roles`
+- `POST /api/v1/users/{user}/invite`
 
 ## Contact Write API
 
@@ -448,6 +463,58 @@ Draft orders can be marked ready. Ready orders can be moved back to draft.
 
 Empty draft or ready orders can be deleted. Draft order lines can be deleted, and deleting generated
 lines unlocks their ticket time or ticket cost source records for recalculation.
+
+## Report API
+
+Report API routes expose the shared report registry.
+
+`GET /api/v1/reports` supports `domain` and `q`. It returns only reports visible to the authenticated
+API user.
+
+`GET /api/v1/reports/{reportKey}` returns metadata for one visible report.
+
+The Report API does not calculate report results yet. Report-specific result APIs should be added
+through the owning domain or through a future shared runnable report contract.
+
+## User Management API
+
+User Management API routes expose beta-ready user lifecycle operations:
+
+- user discovery
+- role discovery
+- user creation
+- canonical profile updates
+- status changes
+- role assignment
+- pending invite resend
+
+User deletion is not exposed. Account lifecycle uses `PENDING_INVITE`, `ACTIVE`, and `DISABLED`.
+
+The API never returns password hashes, remember tokens, invite token values, two-factor secrets, or
+two-factor recovery codes.
+
+## Client Custom Fields
+
+The Client API supports platform Custom Fields.
+
+Client create and update requests may include:
+
+```json
+{
+  "custom_fields": {
+    "msp_manager_id": "12345"
+  }
+}
+```
+
+Searchable custom fields can be used for lookup:
+
+```text
+GET /api/v1/clients?custom_field[msp_manager_id]=12345
+```
+
+Custom fields are only accepted when the field is active, applies to Client, and is editable through
+API. Unique fields reject duplicate values for the same model type.
 
 ## Calendar API
 

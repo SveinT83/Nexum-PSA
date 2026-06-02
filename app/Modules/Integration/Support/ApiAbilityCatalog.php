@@ -237,6 +237,26 @@ class ApiAbilityCatalog
             'description' => 'Delete empty economy orders and draft order lines.',
             'domain' => 'Economy',
         ],
+        'report.read' => [
+            'label' => 'Read reports',
+            'description' => 'List and view available report definitions.',
+            'domain' => 'Reports',
+        ],
+        'users.read' => [
+            'label' => 'Read users',
+            'description' => 'List and view users, roles, and user profile metadata.',
+            'domain' => 'User Management',
+        ],
+        'users.create' => [
+            'label' => 'Create users',
+            'description' => 'Create users and queue invitations for pending users.',
+            'domain' => 'User Management',
+        ],
+        'users.update' => [
+            'label' => 'Update users',
+            'description' => 'Update user profiles, statuses, roles, and resend invitations.',
+            'domain' => 'User Management',
+        ],
     ];
 
     public function all(): array
