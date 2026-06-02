@@ -25,6 +25,7 @@ use App\Modules\Commercial\Models\Terms\terms as CommercialTerm;
 use App\Modules\Commercial\Models\TimeRate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -49,6 +50,146 @@ class CommercialModuleTest extends TestCase
 
         $this->admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->admin->assignRole('Admin');
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_manage_commercial_catalogue_records(): void
+    {
+        $client = Client::factory()->create(['name' => 'API Commercial Client']);
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+
+        Sanctum::actingAs($this->tech, ['commercial.read', 'commercial.create', 'commercial.update']);
+
+        $sla = $this->postJson(route('api.v1.commercial.slas.store'), [
+            'name' => 'API Standard SLA',
+            'description' => 'Standard API SLA.',
+            'is_default' => true,
+            'low_firstResponse' => 8,
+            'low_firstResponse_type' => 'hours',
+            'low_onsite' => 2,
+            'low_onsite_type' => 'days',
+            'medium_firstResponse' => 4,
+            'medium_firstResponse_type' => 'hours',
+            'medium_onsite' => 1,
+            'medium_onsite_type' => 'days',
+            'high_firstResponse' => 1,
+            'high_firstResponse_type' => 'hours',
+            'high_onsite' => 4,
+            'high_onsite_type' => 'hours',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API Standard SLA')
+            ->assertJsonPath('data.is_default', true);
+
+        $slaId = $sla->json('data.id');
+
+        $service = $this->postJson(route('api.v1.commercial.services.store'), [
+            'sku' => 'API-MONITORING',
+            'name' => 'API Monitoring',
+            'unitId' => $unit->id,
+            'sla_id' => $slaId,
+            'status' => 'Active',
+            'availability_audience' => 'business',
+            'orderable' => true,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 990,
+            'price_including_tax' => 1237.50,
+            'short_description' => 'Managed monitoring.',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.sku', 'API-MONITORING')
+            ->assertJsonPath('data.sla.id', $slaId)
+            ->assertJsonPath('data.orderable', true);
+
+        $serviceId = $service->json('data.id');
+
+        $this->patchJson(route('api.v1.commercial.services.update', $serviceId), [
+            'name' => 'API Monitoring Plus',
+            'price_ex_vat' => 1290,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'API Monitoring Plus');
+
+        $contract = $this->postJson(route('api.v1.commercial.contracts.store'), [
+            'client_id' => $client->id,
+            'sla_id' => $slaId,
+            'description' => 'API managed contract draft.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.client.id', $client->id)
+            ->assertJsonPath('data.approval_status', 'draft')
+            ->assertJsonPath('data.auto_renew', true);
+
+        $contractId = $contract->json('data.id');
+
+        $this->patchJson(route('api.v1.commercial.contracts.update', $contractId), [
+            'description' => 'Updated API contract draft.',
+            'renewal_months' => 24,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.description', 'Updated API contract draft.')
+            ->assertJsonPath('data.renewal_months', 24);
+
+        $rate = $this->postJson(route('api.v1.commercial.time-rates.store'), [
+            'name' => 'API Hour',
+            'code' => 'API-HOUR',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 1250,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => true,
+            'is_active' => true,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.code', 'API-HOUR')
+            ->assertJsonPath('data.slug', 'api-hour');
+
+        $this->patchJson(route('api.v1.commercial.time-rates.update', $rate->json('data.id')), [
+            'amount_ex_vat' => 1350,
+            'sort_order' => 10,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.sort_order', 10);
+
+        $this->getJson(route('api.v1.commercial.services.index', ['q' => 'Monitoring Plus']))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $serviceId);
+    }
+
+    #[Test]
+    public function commercial_read_api_token_cannot_write_commercial_records(): void
+    {
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+        Services::query()->create([
+            'sku' => 'READONLY',
+            'name' => 'Read Only Service',
+            'unitId' => $unit->id,
+            'status' => 'Active',
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 100,
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        Sanctum::actingAs($this->tech, ['commercial.read']);
+
+        $this->getJson(route('api.v1.commercial.services.index'))
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Read Only Service');
+
+        $this->postJson(route('api.v1.commercial.services.store'), [
+            'sku' => 'BLOCKED',
+            'name' => 'Blocked Service',
+            'unitId' => $unit->id,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 100,
+        ])->assertForbidden();
     }
 
     #[Test]

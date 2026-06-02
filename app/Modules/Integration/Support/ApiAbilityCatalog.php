@@ -182,6 +182,41 @@ class ApiAbilityCatalog
             'description' => 'Update sales opportunities and add sales activities.',
             'domain' => 'Sales',
         ],
+        'taxonomy.read' => [
+            'label' => 'Read taxonomy',
+            'description' => 'List and view shared categories and tags.',
+            'domain' => 'Taxonomy',
+        ],
+        'taxonomy.create' => [
+            'label' => 'Create taxonomy',
+            'description' => 'Create shared categories and tags.',
+            'domain' => 'Taxonomy',
+        ],
+        'taxonomy.update' => [
+            'label' => 'Update taxonomy',
+            'description' => 'Update shared categories and tags.',
+            'domain' => 'Taxonomy',
+        ],
+        'taxonomy.delete' => [
+            'label' => 'Delete taxonomy',
+            'description' => 'Soft-delete shared categories and tags.',
+            'domain' => 'Taxonomy',
+        ],
+        'commercial.read' => [
+            'label' => 'Read commercial',
+            'description' => 'List and view commercial services, contracts, SLA policies, and time rates.',
+            'domain' => 'Commercial',
+        ],
+        'commercial.create' => [
+            'label' => 'Create commercial',
+            'description' => 'Create commercial services, contracts, SLA policies, and time rates.',
+            'domain' => 'Commercial',
+        ],
+        'commercial.update' => [
+            'label' => 'Update commercial',
+            'description' => 'Update commercial services, contracts, SLA policies, and time rates.',
+            'domain' => 'Commercial',
+        ],
     ];
 
     public function all(): array

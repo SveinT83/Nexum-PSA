@@ -44,7 +44,7 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Knowledge Settings Slice | Done | Codex | Knowledge now owns manual article defaults for visibility, status, review, and priority. |
 | Risk Settings Slice | Done | Codex | Risk now owns defaults for assessments, item scoring, item status, and review interval. |
 | Missing Settings Ownership RFC | Done | Codex | RFC approved; Asset, Contact, Task, Warroom, Knowledge, and Risk settings slices completed. |
-| Domain API Foundation | In Progress | Codex | Scoped Sanctum API keys now enforce Client/Site, Asset, Contact, Ticket, Task, Knowledge, Storage, Calendar, Risk, Email Inbox, Notification, and Sales API scopes. |
+| Domain API Foundation | In Progress | Codex | Scoped Sanctum API keys now enforce Client/Site, Asset, Contact, Ticket, Task, Knowledge, Storage, Calendar, Risk, Email Inbox, Notification, Sales, Taxonomy, and Commercial API scopes. |
 | Report Builder And Scheduled Client Reporting | Post-Beta |  | Version 2 item. Build custom report builder, saved report templates, and automatic client report delivery. |
 | Email Branding And HTML Template Editor | Post-Beta |  | Version 1 item. Email templates need branding variables, shared HTML wrapper, editor, and live preview. |
 | Storage Barcode Scanning | Post-Beta |  | Version 1 item. Storage must support barcode scanners from PC and mobile workflows. |
@@ -299,6 +299,8 @@ Initial scope:
 - Add Email Inbox read/update API for unrouted message search, spam rules, and queued polling.
 - Add Notification read/update API for authenticated user notifications.
 - Add Sales opportunity read/create/update API and Sales activity API through the Sales engine.
+- Add Taxonomy category/tag read/create/update/delete API for shared classification data.
+- Add Commercial service, contract, SLA, and time rate read/create/update API for commercial data.
 - Document current API routes and follow-up domain slices.
 
 - Create an RFC before implementation.

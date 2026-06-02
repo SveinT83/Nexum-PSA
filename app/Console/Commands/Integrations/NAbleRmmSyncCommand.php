@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Integrations;
 
 use App\Models\System\Integrations\Integration;
+use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Tech\Work\Assets\Asset;
@@ -193,13 +194,9 @@ class NAbleRmmSyncCommand extends Command
                     if (isset($rmmDevice['error']) || !isset($rmmDevice['deviceid'])) continue;
                     if (empty($rmmDevice['siteid'])) continue;
 
-                    $siteLink = \App\Models\System\Integrations\ClientRmmLink::where('integration_id', $integration->id)
-                        ->where('linkable_type', ClientSite::class)
-                        ->where('external_id', (string)$rmmDevice['siteid'])
-                        ->first();
+                    $localSite = $this->resolveLocalSiteForDevice($integration, $localClient, $rmmDevice);
 
-                    if (!$siteLink) continue;
-                    $localSite = $siteLink->linkable;
+                    if (!$localSite) continue;
 
                     $asset = Asset::whereHas('rmmLinks', function($query) use ($integration, $rmmDevice) {
                         $query->where('integration_id', $integration->id)
@@ -260,6 +257,50 @@ class NAbleRmmSyncCommand extends Command
                 }
             }
         }
+    }
+
+    protected function resolveLocalSiteForDevice(Integration $integration, Client $localClient, array $rmmDevice): ?ClientSite
+    {
+        $rmmSiteId = (string)($rmmDevice['siteid'] ?? '');
+
+        if ($rmmSiteId === '') {
+            return null;
+        }
+
+        $siteLink = ClientRmmLink::where('integration_id', $integration->id)
+            ->where('linkable_type', ClientSite::class)
+            ->where('external_id', $rmmSiteId)
+            ->first();
+
+        if ($siteLink && $siteLink->linkable instanceof ClientSite) {
+            return $siteLink->linkable;
+        }
+
+        $localSite = ClientSite::firstOrCreate(
+            [
+                'client_id' => $localClient->id,
+                'name' => 'RMM Site '.$rmmSiteId,
+            ],
+            [
+                'is_default' => ! ClientSite::where('client_id', $localClient->id)->exists(),
+            ],
+        );
+
+        ClientRmmLink::updateOrCreate(
+            [
+                'integration_id' => $integration->id,
+                'external_id' => $rmmSiteId,
+                'linkable_type' => ClientSite::class,
+            ],
+            [
+                'linkable_id' => $localSite->id,
+                'metadata' => [
+                    'source' => 'asset_sync_placeholder',
+                ],
+            ],
+        );
+
+        return $localSite;
     }
 
     protected function generateClientNumber()

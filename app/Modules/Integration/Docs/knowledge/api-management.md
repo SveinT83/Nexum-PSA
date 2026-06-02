@@ -50,6 +50,13 @@ Implemented scopes:
 - `sales.read`: list and view sales opportunities and activities.
 - `sales.create`: create sales opportunities through the sales engine.
 - `sales.update`: update sales opportunities and add sales activities.
+- `taxonomy.read`: list and view shared categories and tags.
+- `taxonomy.create`: create shared categories and tags.
+- `taxonomy.update`: update shared categories and tags.
+- `taxonomy.delete`: soft-delete shared categories and tags.
+- `commercial.read`: list and view commercial services, contracts, SLA policies, and time rates.
+- `commercial.create`: create commercial services, contracts, SLA policies, and time rates.
+- `commercial.update`: update commercial services, contracts, SLA policies, and time rates.
 
 Full access can be selected by an admin when a trusted integration needs every implemented API scope.
 
@@ -139,6 +146,38 @@ Current API routes are under `/api/v1`:
 - `PATCH /api/v1/sales/opportunities/{opportunity}`
 - `POST /api/v1/sales/opportunities/{opportunity}/activities`
 - `POST /api/v1/sales/opportunities/{opportunity}/read`
+- `GET /api/v1/taxonomy/categories`
+- `GET /api/v1/taxonomy/categories/{category}`
+- `POST /api/v1/taxonomy/categories`
+- `PUT /api/v1/taxonomy/categories/{category}`
+- `PATCH /api/v1/taxonomy/categories/{category}`
+- `DELETE /api/v1/taxonomy/categories/{category}`
+- `GET /api/v1/taxonomy/tags`
+- `GET /api/v1/taxonomy/tags/{tag}`
+- `POST /api/v1/taxonomy/tags`
+- `PUT /api/v1/taxonomy/tags/{tag}`
+- `PATCH /api/v1/taxonomy/tags/{tag}`
+- `DELETE /api/v1/taxonomy/tags/{tag}`
+- `GET /api/v1/commercial/services`
+- `GET /api/v1/commercial/services/{service}`
+- `POST /api/v1/commercial/services`
+- `PUT /api/v1/commercial/services/{service}`
+- `PATCH /api/v1/commercial/services/{service}`
+- `GET /api/v1/commercial/contracts`
+- `GET /api/v1/commercial/contracts/{contract}`
+- `POST /api/v1/commercial/contracts`
+- `PUT /api/v1/commercial/contracts/{contract}`
+- `PATCH /api/v1/commercial/contracts/{contract}`
+- `GET /api/v1/commercial/slas`
+- `GET /api/v1/commercial/slas/{sla}`
+- `POST /api/v1/commercial/slas`
+- `PUT /api/v1/commercial/slas/{sla}`
+- `PATCH /api/v1/commercial/slas/{sla}`
+- `GET /api/v1/commercial/time-rates`
+- `GET /api/v1/commercial/time-rates/{rate}`
+- `POST /api/v1/commercial/time-rates`
+- `PUT /api/v1/commercial/time-rates/{rate}`
+- `PATCH /api/v1/commercial/time-rates/{rate}`
 
 ## Contact Write API
 
@@ -329,6 +368,57 @@ parameter is the public opportunity key.
 
 Outbound sales email and quote sending are not exposed by this API slice. Those workflows remain in
 the Sales UI and queued mail jobs until a dedicated email composition API is designed.
+
+## Taxonomy API
+
+Taxonomy API routes expose shared categories and tags for trusted automation and classification
+workflows.
+
+`GET /api/v1/taxonomy/categories` supports:
+
+- `q`: search by category name, slug, and description.
+- `type`: restrict to one category type.
+- `parent_id`: restrict to one parent category, or pass an empty value for root categories.
+- `is_active`: filter active or inactive categories.
+
+`POST /api/v1/taxonomy/categories` creates a category and generates the slug from the name. `PUT` and
+`PATCH /api/v1/taxonomy/categories/{category}` update an existing category. Category deletion is
+blocked when the category has child categories, linked services, or linked documentation templates.
+
+`GET /api/v1/taxonomy/tags` supports:
+
+- `q`: search by tag name, slug, and description.
+- `active`: filter active or inactive tags.
+
+`POST /api/v1/taxonomy/tags` creates a tag and generates the slug from the name. `PUT` and
+`PATCH /api/v1/taxonomy/tags/{tag}` update an existing tag. Tags are soft-deleted.
+
+Record-specific tag attachment is not part of this Taxonomy API slice. Each domain API should own tag
+attachment for its own records because each domain has its own validation and workflow rules.
+
+## Commercial API
+
+Commercial API routes expose the first stable commercial data surfaces:
+
+- Services.
+- Contracts.
+- SLA policies.
+- Time rates.
+
+`GET /api/v1/commercial/services` supports `q`, `status`, `billing_cycle`,
+`availability_audience`, and `orderable`.
+
+`POST /api/v1/commercial/services` creates a service catalogue record. `PUT` and `PATCH` update the
+service record.
+
+`GET /api/v1/commercial/contracts` supports `q`, `client_id`, and `status`.
+
+`POST /api/v1/commercial/contracts` creates a draft contract only. Public contract sending, approval,
+and line-item editing are not exposed by this API slice.
+
+SLA create/update keeps the same single-default behavior as the Tech UI.
+
+Time rate create/update generates `slug` from `code`.
 
 ## Calendar API
 

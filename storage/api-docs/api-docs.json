@@ -928,6 +928,398 @@
                 ]
             }
         },
+        "/api/v1/commercial/services": {
+            "get": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Get commercial services",
+                "operationId": "getCommercialServices",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Create commercial service",
+                "operationId": "createCommercialService",
+                "responses": {
+                    "201": {
+                        "description": "Service created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/commercial/services/{service}": {
+            "get": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Get commercial service",
+                "operationId": "getCommercialService",
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Update commercial service",
+                "operationId": "updateCommercialService",
+                "parameters": [
+                    {
+                        "name": "service",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/commercial/contracts": {
+            "get": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Get commercial contracts",
+                "operationId": "getCommercialContracts",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Create commercial contract draft",
+                "operationId": "createCommercialContract",
+                "responses": {
+                    "201": {
+                        "description": "Contract created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/commercial/contracts/{contract}": {
+            "get": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Get commercial contract",
+                "operationId": "getCommercialContract",
+                "parameters": [
+                    {
+                        "name": "contract",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Update commercial contract draft metadata",
+                "operationId": "updateCommercialContract",
+                "parameters": [
+                    {
+                        "name": "contract",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contract updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/commercial/slas": {
+            "get": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Get commercial SLA policies",
+                "operationId": "getCommercialSlas",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Create commercial SLA policy",
+                "operationId": "createCommercialSla",
+                "responses": {
+                    "201": {
+                        "description": "SLA created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/commercial/slas/{sla}": {
+            "get": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Get commercial SLA policy",
+                "operationId": "getCommercialSla",
+                "parameters": [
+                    {
+                        "name": "sla",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Update commercial SLA policy",
+                "operationId": "updateCommercialSla",
+                "parameters": [
+                    {
+                        "name": "sla",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SLA updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/commercial/time-rates": {
+            "get": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Get commercial time rates",
+                "operationId": "getCommercialTimeRates",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Create commercial time rate",
+                "operationId": "createCommercialTimeRate",
+                "responses": {
+                    "201": {
+                        "description": "Time rate created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/commercial/time-rates/{rate}": {
+            "get": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Get commercial time rate",
+                "operationId": "getCommercialTimeRate",
+                "parameters": [
+                    {
+                        "name": "rate",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Commercial"
+                ],
+                "summary": "Update commercial time rate",
+                "operationId": "updateCommercialTimeRate",
+                "parameters": [
+                    {
+                        "name": "rate",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Time rate updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/contacts": {
             "get": {
                 "tags": [
@@ -2879,6 +3271,375 @@
                 ]
             }
         },
+        "/api/v1/taxonomy/categories": {
+            "get": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Get taxonomy categories",
+                "operationId": "getTaxonomyCategoryList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "parent_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Create taxonomy category",
+                "operationId": "createTaxonomyCategory",
+                "responses": {
+                    "201": {
+                        "description": "Category created"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/taxonomy/categories/{category}": {
+            "get": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Get taxonomy category",
+                "operationId": "getTaxonomyCategoryById",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.read scope"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Delete taxonomy category",
+                "operationId": "deleteTaxonomyCategory",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Category deleted"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.delete scope"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "422": {
+                        "description": "Category is in use"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Update taxonomy category",
+                "operationId": "updateTaxonomyCategory",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category updated"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.update scope"
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/taxonomy/tags": {
+            "get": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Get taxonomy tags",
+                "operationId": "getTaxonomyTagList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.read scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Create taxonomy tag",
+                "operationId": "createTaxonomyTag",
+                "responses": {
+                    "201": {
+                        "description": "Tag created"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.create scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/taxonomy/tags/{tag}": {
+            "get": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Get taxonomy tag",
+                "operationId": "getTaxonomyTagById",
+                "parameters": [
+                    {
+                        "name": "tag",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.read scope"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Delete taxonomy tag",
+                "operationId": "deleteTaxonomyTag",
+                "parameters": [
+                    {
+                        "name": "tag",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Tag deleted"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.delete scope"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Taxonomy"
+                ],
+                "summary": "Update taxonomy tag",
+                "operationId": "updateTaxonomyTag",
+                "parameters": [
+                    {
+                        "name": "tag",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag updated"
+                    },
+                    "403": {
+                        "description": "Missing taxonomy.update scope"
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/tickets": {
             "get": {
                 "tags": [
@@ -3167,6 +3928,10 @@
             "description": "API Endpoints for Clients"
         },
         {
+            "name": "Commercial",
+            "description": "API endpoints for commercial services, contracts, SLA policies, and time rates."
+        },
+        {
             "name": "Contacts",
             "description": "API endpoints for contacts and contact automation."
         },
@@ -3197,6 +3962,10 @@
         {
             "name": "Tasks",
             "description": "API endpoints for tasks."
+        },
+        {
+            "name": "Taxonomy",
+            "description": "API endpoints for shared categories and tags."
         },
         {
             "name": "Tickets",

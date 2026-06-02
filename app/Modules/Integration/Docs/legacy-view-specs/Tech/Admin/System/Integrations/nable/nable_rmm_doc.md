@@ -6,8 +6,9 @@ This system handles the synchronization of clients, sites, and assets between td
 *   **Client Synchronization**: Imports new clients from RMM or exports local clients to RMM.
 *   **Site Synchronization**: Synchronizes sites for all linked clients.
 *   **Asset Synchronization**:
-    *   Imports servers, workstations, and mobile devices from RMM.
+    *   Imports servers and workstations from RMM.
     *   Links assets to clients and sites based on RMM IDs using the central `client_rmm_links` table.
+    *   Creates a local placeholder site named `RMM Site {siteid}` when a device arrives before the corresponding RMM site has been imported. A later site sync can update the site name through the same RMM link.
     *   Supports multiple RMM integrations (e.g., both N-able and Tactical) for the same client.
     *   Uses `updateOrCreate` logic keyed by RMM Device ID to prevent duplicates and keep data current (updates Name, IP, OS, etc.).
     *   **Targeted Sync**: Can be triggered from a Client or Site profile to sync only relevant assets.
@@ -35,5 +36,5 @@ The settings are split into two sections:
 #### Troubleshooting
 *   **Connection Errors**: Verify that the API key is valid and the correct server region is selected.
 *   **Unknown Status Error**: Ensure the API endpoint is reachable and returns valid XML. The system handles variations in XML structure but requires basic data integrity.
-*   **Missing Assets**: Assets are only synchronized if their RMM Site ID matches a local Site that has been linked with that specific RMM Site ID.
+*   **Missing Assets**: Confirm the client is linked to N-able RMM and that the API returns a device ID and site ID. If the site has not been imported yet, Nexum creates a placeholder local site and links it to the RMM Site ID during asset sync.
 *   **Logs**: Check `storage/logs/laravel.log` for detailed error messages during automatic synchronization.

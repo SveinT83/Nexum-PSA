@@ -121,6 +121,7 @@ class SyncRepositoryKnowledgeDocs
             'Storage' => $this->definition('storage', 'Storage', 600),
             'System' => $this->definition('system', 'System', 900),
             'Task' => $this->definition('tasks', 'Tasks', 500),
+            'Taxonomy' => $this->definition('taxonomy', 'Taxonomy', 520),
             'Ticket' => $this->definition('tickets', 'Tickets', 400),
             'UserManagement' => $this->definition('user-management', 'User Management', 300),
             'Warroom' => $this->definition('warroom', 'Warroom', 100),
