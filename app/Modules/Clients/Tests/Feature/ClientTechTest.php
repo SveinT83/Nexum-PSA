@@ -7,6 +7,7 @@ use App\Models\Clients\ClientFormat;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Modules\CustomField\Models\CustomFieldDefinition;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
@@ -425,6 +426,9 @@ class ClientTechTest extends TestCase
         $response->assertSee('Site Profile');
         $response->assertSee('Edit Site');
         $response->assertSee(route('tech.clients.show', $client), false);
+        $response->assertSee('siteWorkspaceTabs', false);
+        $response->assertSee('data-bs-target="#site-assets-pane"', false);
+        $response->assertSee('data-bs-target="#site-users-pane"', false);
         $response->assertSee('Assets');
         $response->assertSee('New Asset');
         $response->assertSee('asset_sort=type', false);
@@ -437,6 +441,51 @@ class ClientTechTest extends TestCase
         $response->assertDontSee('Recent clients');
         $response->assertDontSee('title="View"', false);
         $response->assertDontSee('title="Edit"', false);
+    }
+
+    #[Test]
+    public function site_show_displays_and_edits_visible_custom_fields_in_tabs(): void
+    {
+        $client = Client::factory()->create(['name' => 'Site Custom Field Client AS']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Integration Site']);
+        $definition = CustomFieldDefinition::create([
+            'model_type' => ClientSite::class,
+            'key' => 'msp_manager_site_id',
+            'label' => 'MSP Manager Site ID',
+            'field_type' => 'text',
+            'visible_in_ui' => true,
+            'editable_in_ui' => true,
+            'editable_via_api' => true,
+            'searchable' => true,
+            'unique_per_model' => true,
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.sites.show', ['site' => $site, 'tab' => 'custom-fields']))
+            ->assertOk()
+            ->assertSee('data-bs-target="#site-custom-fields-pane"', false)
+            ->assertSee('MSP Manager Site ID')
+            ->assertSee('siteCustomFieldValueModal'.$definition->id, false)
+            ->assertSee(route('tech.clients.sites.custom-fields.update', [$site, $definition]), false);
+
+        $this->actingAs($this->techUser)
+            ->patch(route('tech.clients.sites.custom-fields.update', [$site, $definition]), [
+                'value' => 'SITE-777',
+            ])
+            ->assertRedirect(route('tech.clients.sites.show', ['site' => $site, 'tab' => 'custom-fields']));
+
+        $this->assertDatabaseHas('custom_field_values', [
+            'custom_field_definition_id' => $definition->id,
+            'model_type' => ClientSite::class,
+            'model_id' => $site->id,
+            'value_text' => 'SITE-777',
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.sites.show', ['site' => $site, 'tab' => 'custom-fields']))
+            ->assertOk()
+            ->assertSee('SITE-777');
     }
 
     #[Test]

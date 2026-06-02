@@ -19,6 +19,7 @@ Route::put('/clients/sites/update/{site}/{client?}', [\App\Modules\Clients\Contr
 Route::delete('/clients/sites/destroy/{site}', [\App\Modules\Clients\Controllers\Tech\ClientSiteController::class, 'destroy'])->name('clients.sites.destroy');
 Route::get('/clients/sites/create/{client?}', [\App\Modules\Clients\Controllers\Tech\ClientSiteController::class, 'create'])->name('clients.sites.create');
 Route::post('/clients/sites/store/{client?}', [\App\Modules\Clients\Controllers\Tech\ClientSiteController::class, 'store'])->name('clients.sites.store');
+Route::patch('/clients/sites/{site}/custom-fields/{definition}', [ClientCustomFieldValueController::class, 'updateSite'])->name('clients.sites.custom-fields.update');
 
 // Users
 Route::get('/clients/users/{client?}', [\App\Modules\Clients\Controllers\Tech\ClientUsersController::class, 'index'])->name('clients.users.index');
