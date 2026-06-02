@@ -9,6 +9,7 @@ use App\Models\Clients\ClientSite;
 use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
+use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -99,7 +100,7 @@ class ClientSiteController extends Controller
      * @param ClientSite $site
      * @return View
      */
-    public function show(ClientSite $site) {
+    public function show(ClientSite $site, Request $request, CustomFieldPresenter $customFieldPresenter) {
 
         // -----------------------------------------
         // Set the active site ID in session
@@ -114,6 +115,7 @@ class ClientSiteController extends Controller
             'site' => $site,
             'client' => $site->client,
             'users' => $site->contacts,
+            'customFields' => $customFieldPresenter->visibleFor($site, $request->user()),
             'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu($site->client),
         ]);
     }
