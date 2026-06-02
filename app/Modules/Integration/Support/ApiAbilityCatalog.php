@@ -82,6 +82,161 @@ class ApiAbilityCatalog
             'description' => 'Update task fields and status.',
             'domain' => 'Tasks',
         ],
+        'knowledge.read' => [
+            'label' => 'Read knowledge',
+            'description' => 'List and view knowledge articles.',
+            'domain' => 'Knowledge',
+        ],
+        'knowledge.create' => [
+            'label' => 'Create knowledge',
+            'description' => 'Create knowledge articles.',
+            'domain' => 'Knowledge',
+        ],
+        'knowledge.update' => [
+            'label' => 'Update knowledge',
+            'description' => 'Update knowledge articles.',
+            'domain' => 'Knowledge',
+        ],
+        'storage.read' => [
+            'label' => 'Read storage',
+            'description' => 'List and view storage items, warehouses, and boxes.',
+            'domain' => 'Storage',
+        ],
+        'storage.create' => [
+            'label' => 'Create storage',
+            'description' => 'Create storage items, warehouses, and boxes.',
+            'domain' => 'Storage',
+        ],
+        'storage.update' => [
+            'label' => 'Update storage',
+            'description' => 'Update storage records and adjust item stock.',
+            'domain' => 'Storage',
+        ],
+        'calendar.read' => [
+            'label' => 'Read calendar',
+            'description' => 'List calendars and view calendar events.',
+            'domain' => 'Calendar',
+        ],
+        'calendar.create' => [
+            'label' => 'Create calendar events',
+            'description' => 'Create calendar events.',
+            'domain' => 'Calendar',
+        ],
+        'calendar.update' => [
+            'label' => 'Update calendar events',
+            'description' => 'Update calendar events.',
+            'domain' => 'Calendar',
+        ],
+        'calendar.delete' => [
+            'label' => 'Delete calendar events',
+            'description' => 'Delete calendar events.',
+            'domain' => 'Calendar',
+        ],
+        'risk.read' => [
+            'label' => 'Read risk',
+            'description' => 'List and view risk assessments and risk items.',
+            'domain' => 'Risk',
+        ],
+        'risk.create' => [
+            'label' => 'Create risk',
+            'description' => 'Create risk assessments and risk items.',
+            'domain' => 'Risk',
+        ],
+        'risk.update' => [
+            'label' => 'Update risk',
+            'description' => 'Update risk assessments, risk items, and risk item history.',
+            'domain' => 'Risk',
+        ],
+        'email.read' => [
+            'label' => 'Read email inbox',
+            'description' => 'List and view unrouted inbox messages.',
+            'domain' => 'Email',
+        ],
+        'email.update' => [
+            'label' => 'Update email inbox',
+            'description' => 'Mark inbox messages as spam and queue inbox polling.',
+            'domain' => 'Email',
+        ],
+        'notifications.read' => [
+            'label' => 'Read notifications',
+            'description' => 'List and view the authenticated user notifications.',
+            'domain' => 'Notifications',
+        ],
+        'notifications.update' => [
+            'label' => 'Update notifications',
+            'description' => 'Mark the authenticated user notifications as read.',
+            'domain' => 'Notifications',
+        ],
+        'sales.read' => [
+            'label' => 'Read sales',
+            'description' => 'List and view sales opportunities and activities.',
+            'domain' => 'Sales',
+        ],
+        'sales.create' => [
+            'label' => 'Create sales',
+            'description' => 'Create sales opportunities through the sales engine.',
+            'domain' => 'Sales',
+        ],
+        'sales.update' => [
+            'label' => 'Update sales',
+            'description' => 'Update sales opportunities and add sales activities.',
+            'domain' => 'Sales',
+        ],
+        'taxonomy.read' => [
+            'label' => 'Read taxonomy',
+            'description' => 'List and view shared categories and tags.',
+            'domain' => 'Taxonomy',
+        ],
+        'taxonomy.create' => [
+            'label' => 'Create taxonomy',
+            'description' => 'Create shared categories and tags.',
+            'domain' => 'Taxonomy',
+        ],
+        'taxonomy.update' => [
+            'label' => 'Update taxonomy',
+            'description' => 'Update shared categories and tags.',
+            'domain' => 'Taxonomy',
+        ],
+        'taxonomy.delete' => [
+            'label' => 'Delete taxonomy',
+            'description' => 'Soft-delete shared categories and tags.',
+            'domain' => 'Taxonomy',
+        ],
+        'commercial.read' => [
+            'label' => 'Read commercial',
+            'description' => 'List and view commercial services, contracts, SLA policies, and time rates.',
+            'domain' => 'Commercial',
+        ],
+        'commercial.create' => [
+            'label' => 'Create commercial',
+            'description' => 'Create commercial services, contracts, SLA policies, and time rates.',
+            'domain' => 'Commercial',
+        ],
+        'commercial.update' => [
+            'label' => 'Update commercial',
+            'description' => 'Update commercial services, contracts, SLA policies, and time rates.',
+            'domain' => 'Commercial',
+        ],
+        'economy.read' => [
+            'label' => 'Read economy',
+            'description' => 'List and view economy orders and generated order lines.',
+            'domain' => 'Economy',
+        ],
+        'economy.create' => [
+            'label' => 'Create economy',
+            'description' => 'Generate economy orders from billable ticket time and picked ticket costs.',
+            'domain' => 'Economy',
+        ],
+        'economy.update' => [
+            'label' => 'Update economy',
+            'description' => 'Move economy orders between draft and ready states.',
+            'domain' => 'Economy',
+        ],
+        'economy.delete' => [
+            'label' => 'Delete economy',
+            'description' => 'Delete empty economy orders and draft order lines.',
+            'domain' => 'Economy',
+        ],
     ];
 
     public function all(): array

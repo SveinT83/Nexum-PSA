@@ -13,10 +13,11 @@ use App\Modules\Calendar\Models\CalendarAccess;
 use App\Modules\Calendar\Models\CalendarAvailabilityRule;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
-use App\Modules\UserManagement\Livewire\UserManagement\Models\UserPreference;
+use App\Modules\UserManagement\Models\UserPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -66,6 +67,74 @@ class CalendarModuleTest extends TestCase
             'owner_id' => $this->tech->id,
             'is_default' => true,
         ]);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_manage_calendar_events(): void
+    {
+        Sanctum::actingAs($this->tech, ['calendar.read', 'calendar.create', 'calendar.update', 'calendar.delete']);
+
+        $calendar = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
+
+        $this->getJson(route('api.v1.calendars.index'))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $calendar->id);
+
+        $createResponse = $this->postJson(route('api.v1.calendar.events.store'), [
+            'calendar_id' => $calendar->id,
+            'title' => 'API planning',
+            'description' => 'Created by API test.',
+            'starts_at' => '2026-06-02 09:00:00',
+            'ends_at' => '2026-06-02 10:00:00',
+            'timezone' => 'Europe/Oslo',
+            'participants' => [
+                ['name' => 'Client Contact', 'email' => 'client@example.test'],
+            ],
+        ]);
+
+        $createResponse->assertCreated()
+            ->assertJsonPath('data.title', 'API planning')
+            ->assertJsonPath('data.calendar.id', $calendar->id)
+            ->assertJsonPath('data.participants.0.email', 'client@example.test');
+
+        $eventId = $createResponse->json('data.id');
+
+        $this->getJson(route('api.v1.calendar.events.index', [
+            'from' => '2026-06-02 00:00:00',
+            'to' => '2026-06-03 00:00:00',
+            'calendar_id' => $calendar->id,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $eventId)
+            ->assertJsonPath('data.0.title', 'API planning');
+
+        $this->patchJson(route('api.v1.calendar.events.update', $eventId), [
+            'title' => 'API planning updated',
+            'visibility' => 'public',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'API planning updated')
+            ->assertJsonPath('data.visibility', 'public');
+
+        $this->deleteJson(route('api.v1.calendar.events.destroy', $eventId))
+            ->assertNoContent();
+
+        $this->assertSoftDeleted('calendar_events', ['id' => $eventId]);
+    }
+
+    #[Test]
+    public function calendar_read_api_token_cannot_create_events(): void
+    {
+        Sanctum::actingAs($this->tech, ['calendar.read']);
+
+        $this->getJson(route('api.v1.calendars.index'))
+            ->assertOk();
+
+        $this->postJson(route('api.v1.calendar.events.store'), [
+            'title' => 'Denied API event',
+            'starts_at' => '2026-06-02 09:00:00',
+            'ends_at' => '2026-06-02 10:00:00',
+        ])->assertForbidden();
     }
 
     #[Test]

@@ -10,7 +10,10 @@ use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
 use App\Models\Knowledge\Shelf;
+use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
+use App\Models\Tech\Work\Assets\Asset;
+use App\Jobs\Integrations\NAbleRmmSyncJob;
 use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
 use App\Modules\Integration\Controllers\Admin\IntegrationsController;
@@ -95,6 +98,37 @@ class IntegrationModuleTest extends TestCase
             ->assertSee('Read tasks')
             ->assertSee('Create tasks')
             ->assertSee('Update tasks')
+            ->assertSee('Read knowledge')
+            ->assertSee('Create knowledge')
+            ->assertSee('Update knowledge')
+            ->assertSee('Read storage')
+            ->assertSee('Create storage')
+            ->assertSee('Update storage')
+            ->assertSee('Read calendar')
+            ->assertSee('Create calendar events')
+            ->assertSee('Update calendar events')
+            ->assertSee('Delete calendar events')
+            ->assertSee('Read risk')
+            ->assertSee('Create risk')
+            ->assertSee('Update risk')
+            ->assertSee('Read email inbox')
+            ->assertSee('Update email inbox')
+            ->assertSee('Read notifications')
+            ->assertSee('Update notifications')
+            ->assertSee('Read sales')
+            ->assertSee('Create sales')
+            ->assertSee('Update sales')
+            ->assertSee('Read taxonomy')
+            ->assertSee('Create taxonomy')
+            ->assertSee('Update taxonomy')
+            ->assertSee('Delete taxonomy')
+            ->assertSee('Read commercial')
+            ->assertSee('Create commercial')
+            ->assertSee('Update commercial')
+            ->assertSee('Read economy')
+            ->assertSee('Create economy')
+            ->assertSee('Update economy')
+            ->assertSee('Delete economy')
             ->assertDontSee('Coming Soon');
     }
 
@@ -132,6 +166,77 @@ class IntegrationModuleTest extends TestCase
             ->assertSee('Sync Assets from RMM')
             ->assertDontSee('Coming soon')
             ->assertDontSee('Sync Network from RMM');
+    }
+
+    #[Test]
+    public function nable_rmm_asset_sync_imports_assets_when_site_link_is_missing(): void
+    {
+        Http::fake(function ($request) {
+            parse_str(parse_url($request->url(), PHP_URL_QUERY) ?: '', $query);
+
+            if (($query['service'] ?? null) === 'list_devices_at_client' && ($query['devicetype'] ?? null) === 'server') {
+                return Http::response(
+                    '<result status="OK"><items><client><site><siteid>200</siteid><server><deviceid>9001</deviceid><name>NAS01</name><os>Linux</os><ip_address>10.0.0.10</ip_address><serial_number>SN-NAS01</serial_number><manufacturer>QNAP</manufacturer><model>TS-873A</model></server></site></client></items></result>',
+                    200,
+                    ['Content-Type' => 'application/xml'],
+                );
+            }
+
+            if (($query['service'] ?? null) === 'list_devices_at_client') {
+                return Http::response('<result status="OK"><items></items></result>', 200, ['Content-Type' => 'application/xml']);
+            }
+
+            return Http::response('<result status="OK"><items></items></result>', 200, ['Content-Type' => 'application/xml']);
+        });
+
+        $integration = Integration::create([
+            'name' => 'N-able RMM',
+            'type' => 'rmm',
+            'status' => 'active',
+            'server' => 'https://rmm.example.test',
+            'config' => [
+                'asset_sync_from' => true,
+            ],
+            'is_healthy' => true,
+        ]);
+        $integration->setSecret('api_key', 'secret-key');
+        $integration->save();
+
+        $client = Client::factory()->create(['name' => 'Linked Client', 'active' => true]);
+        ClientRmmLink::create([
+            'integration_id' => $integration->id,
+            'external_id' => '100',
+            'linkable_type' => Client::class,
+            'linkable_id' => $client->id,
+        ]);
+
+        (new NAbleRmmSyncJob())->handle();
+
+        $site = ClientSite::where('client_id', $client->id)
+            ->where('name', 'RMM Site 200')
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('client_rmm_links', [
+            'integration_id' => $integration->id,
+            'external_id' => '200',
+            'linkable_type' => ClientSite::class,
+            'linkable_id' => $site->id,
+        ]);
+
+        $asset = Asset::where('serial_number', 'SN-NAS01')->firstOrFail();
+
+        $this->assertSame($client->id, $asset->client_id);
+        $this->assertSame($site->id, $asset->site_id);
+        $this->assertSame('NAS01', $asset->name);
+        $this->assertSame('server', $asset->type);
+        $this->assertSame('QNAP', $asset->vendor);
+
+        $this->assertDatabaseHas('client_rmm_links', [
+            'integration_id' => $integration->id,
+            'external_id' => '9001',
+            'linkable_type' => Asset::class,
+            'linkable_id' => $asset->id,
+        ]);
     }
 
     #[Test]

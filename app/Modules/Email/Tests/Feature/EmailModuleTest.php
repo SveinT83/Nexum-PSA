@@ -34,6 +34,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -156,6 +157,120 @@ class EmailModuleTest extends TestCase
             ['type' => 'tag', 'value' => 'spam'],
             ['type' => 'archive', 'value' => ''],
         ], $rule->actions_json);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_search_show_mark_spam_and_poll_inbox(): void
+    {
+        Queue::fake();
+
+        $account = EmailAccount::create([
+            'address' => 'support@example.test',
+            'from_name' => 'Support',
+            'is_active' => true,
+            'is_global_default' => false,
+            'defaults_for' => [],
+            'delete_policy' => 'local_only',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.test',
+            'imap_secret' => 'secret',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.test',
+            'smtp_secret' => 'secret',
+            'smtp_auth_type' => 'password',
+        ]);
+        $message = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 9101,
+            'message_id' => '<api-inbox@example.test>',
+            'subject' => 'API inbox lookup',
+            'from_name' => 'API Sender',
+            'from_email' => 'api-sender@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'This message should be searchable.',
+        ]);
+        EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 9102,
+            'message_id' => '<linked@example.test>',
+            'subject' => 'Linked ticket message',
+            'from_email' => 'linked@example.test',
+            'received_at' => now(),
+            'state' => 'linked',
+            'ticket_id' => 123,
+        ]);
+
+        Sanctum::actingAs($this->tech, ['email.read', 'email.update']);
+
+        $this->getJson(route('api.v1.email.inbox.messages.index', ['q' => 'lookup']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $message->id)
+            ->assertJsonPath('data.0.account.address', 'support@example.test');
+
+        $this->getJson(route('api.v1.email.inbox.messages.show', $message))
+            ->assertOk()
+            ->assertJsonPath('data.subject', 'API inbox lookup');
+
+        $this->postJson(route('api.v1.email.inbox.messages.spam', $message))
+            ->assertOk()
+            ->assertJsonPath('data.message.state', 'archived')
+            ->assertJsonPath('data.rule.name', 'Spam: api-sender@example.test');
+
+        $this->postJson(route('api.v1.email.inbox.poll'))
+            ->assertAccepted()
+            ->assertJsonPath('data.queued_accounts', 1);
+
+        Queue::assertPushed(FetchImapAccount::class, 1);
+    }
+
+    #[Test]
+    public function email_read_api_token_cannot_mark_spam_or_poll(): void
+    {
+        $account = EmailAccount::create([
+            'address' => 'readonly@example.test',
+            'from_name' => 'Read Only',
+            'is_active' => true,
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'readonly@example.test',
+            'imap_secret' => 'secret',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'readonly@example.test',
+            'smtp_secret' => 'secret',
+        ]);
+        $message = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 9103,
+            'message_id' => '<readonly@example.test>',
+            'subject' => 'Read only',
+            'from_email' => 'readonly@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+        ]);
+
+        Sanctum::actingAs($this->tech, ['email.read']);
+
+        $this->getJson(route('api.v1.email.inbox.messages.show', $message))
+            ->assertOk();
+
+        $this->postJson(route('api.v1.email.inbox.messages.spam', $message))
+            ->assertForbidden();
+
+        $this->postJson(route('api.v1.email.inbox.poll'))
+            ->assertForbidden();
     }
 
     #[Test]

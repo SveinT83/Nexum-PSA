@@ -618,17 +618,8 @@ class NAbleRmmSync extends Component
 
                 // Try to find corresponding local site
                 // Check Links first
-                $siteLink = ClientRmmLink::where('integration_id', $integration->id)
-                    ->where('linkable_type', ClientSite::class)
-                    ->where('external_id', (string)$rmmDevice['siteid'])
-                    ->first();
+                $localSite = $this->resolveLocalSiteForDevice($integration, $localClient, $rmmDevice);
 
-                $localSite = null;
-                if ($siteLink) {
-                    $localSite = $siteLink->linkable;
-                }
-
-                // Skip if site is not found (as per user request)
                 if (!$localSite) {
                     continue;
                 }
@@ -693,6 +684,54 @@ class NAbleRmmSync extends Component
                 );
             }
         }
+    }
+
+    /**
+     * Resolve the local Site for a device. When the Site has not been imported
+     * yet, create a placeholder so asset import can still complete.
+     */
+    protected function resolveLocalSiteForDevice(Integration $integration, Client $localClient, array $rmmDevice): ?ClientSite
+    {
+        $rmmSiteId = (string)($rmmDevice['siteid'] ?? '');
+
+        if ($rmmSiteId === '') {
+            return null;
+        }
+
+        $siteLink = ClientRmmLink::where('integration_id', $integration->id)
+            ->where('linkable_type', ClientSite::class)
+            ->where('external_id', $rmmSiteId)
+            ->first();
+
+        if ($siteLink && $siteLink->linkable instanceof ClientSite) {
+            return $siteLink->linkable;
+        }
+
+        $localSite = ClientSite::firstOrCreate(
+            [
+                'client_id' => $localClient->id,
+                'name' => 'RMM Site '.$rmmSiteId,
+            ],
+            [
+                'is_default' => ! ClientSite::where('client_id', $localClient->id)->exists(),
+            ],
+        );
+
+        ClientRmmLink::updateOrCreate(
+            [
+                'integration_id' => $integration->id,
+                'external_id' => $rmmSiteId,
+                'linkable_type' => ClientSite::class,
+            ],
+            [
+                'linkable_id' => $localSite->id,
+                'metadata' => [
+                    'source' => 'asset_sync_placeholder',
+                ],
+            ],
+        );
+
+        return $localSite;
     }
 
     /**

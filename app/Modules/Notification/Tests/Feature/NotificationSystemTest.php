@@ -16,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -100,6 +101,80 @@ class NotificationSystemTest extends TestCase
         $this->assertTrue($setting->mail_enabled);
         $this->assertTrue($setting->database_enabled);
         $this->assertFalse($setting->nextcloud_talk_enabled);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_list_and_mark_notifications_read()
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $other = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+
+        $notificationId = (string) Str::uuid();
+        DB::table('notifications')->insert([
+            'id' => $notificationId,
+            'type' => 'test.notification',
+            'notifiable_type' => $user::class,
+            'notifiable_id' => $user->id,
+            'data' => json_encode(['title' => 'API notification', 'url' => '/tech']),
+            'read_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('notifications')->insert([
+            'id' => (string) Str::uuid(),
+            'type' => 'test.notification',
+            'notifiable_type' => $other::class,
+            'notifiable_id' => $other->id,
+            'data' => json_encode(['title' => 'Other notification']),
+            'read_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Sanctum::actingAs($user, ['notifications.read', 'notifications.update']);
+
+        $this->getJson(route('api.v1.notifications.index', ['unread' => true]))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $notificationId)
+            ->assertJsonPath('data.0.data.title', 'API notification');
+
+        $this->postJson(route('api.v1.notifications.read', $notificationId))
+            ->assertOk()
+            ->assertJsonPath('data.id', $notificationId);
+
+        $this->assertNotNull(DB::table('notifications')->where('id', $notificationId)->value('read_at'));
+
+        DB::table('notifications')->where('id', $notificationId)->update(['read_at' => null]);
+
+        $this->postJson(route('api.v1.notifications.read-all'))
+            ->assertOk()
+            ->assertJsonPath('data.updated', 1);
+    }
+
+    #[Test]
+    public function notification_read_api_token_cannot_mark_notifications_read()
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $notificationId = (string) Str::uuid();
+        DB::table('notifications')->insert([
+            'id' => $notificationId,
+            'type' => 'test.notification',
+            'notifiable_type' => $user::class,
+            'notifiable_id' => $user->id,
+            'data' => json_encode(['title' => 'Read only notification']),
+            'read_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Sanctum::actingAs($user, ['notifications.read']);
+
+        $this->getJson(route('api.v1.notifications.index'))
+            ->assertOk();
+
+        $this->postJson(route('api.v1.notifications.read', $notificationId))
+            ->assertForbidden();
     }
 
     #[Test]

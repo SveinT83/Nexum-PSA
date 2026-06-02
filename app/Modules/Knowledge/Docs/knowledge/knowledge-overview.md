@@ -29,6 +29,30 @@ Articles store:
 
 Articles edited inside Nexum are saved locally first. If they belong to a BookStack-backed hierarchy and two-way sync is enabled, the page is marked for push.
 
+## API
+
+Knowledge article API routes are available under `/api/v1/knowledge/articles`.
+
+Scopes:
+
+- `knowledge.read`
+- `knowledge.create`
+- `knowledge.update`
+
+Routes:
+
+- `GET /api/v1/knowledge/articles`
+- `GET /api/v1/knowledge/articles/{article}`
+- `POST /api/v1/knowledge/articles`
+- `PUT /api/v1/knowledge/articles/{article}`
+- `PATCH /api/v1/knowledge/articles/{article}`
+
+`POST /api/v1/knowledge/articles` uses `StoreArticle`, so article defaults, owner/creator metadata,
+slug generation, and Markdown rendering stay aligned with the Tech UI.
+
+`PUT` and `PATCH /api/v1/knowledge/articles/{article}` use `UpdateArticle`, which re-renders
+Markdown and updates the slug when the title changes.
+
 ## Repository Documentation
 
 Code-owned documentation lives under:

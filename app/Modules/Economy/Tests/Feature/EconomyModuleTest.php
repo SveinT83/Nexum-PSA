@@ -22,6 +22,7 @@ use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketTimeEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -440,5 +441,134 @@ class EconomyModuleTest extends TestCase
             ->assertRedirect(route('tech.economy.orders.index'));
 
         $this->assertDatabaseMissing('economy_orders', ['id' => $order->id]);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_manage_economy_orders(): void
+    {
+        $client = Client::create(['name' => 'API Economy Client AS', 'active' => true]);
+        $order = EconomyOrder::create([
+            'client_id' => $client->id,
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'status' => 'draft',
+            'subtotal_ex_vat' => 100,
+            'vat_amount' => 25,
+            'total_inc_vat' => 125,
+        ]);
+        $line = EconomyOrderLine::create([
+            'economy_order_id' => $order->id,
+            'client_id' => $client->id,
+            'line_type' => 'manual',
+            'description' => 'API test line',
+            'quantity' => 1,
+            'unit' => 'pcs',
+            'unit_price_ex_vat' => 100,
+            'line_total_ex_vat' => 100,
+            'vat_rate' => 25,
+            'vat_amount' => 25,
+            'total_inc_vat' => 125,
+            'currency' => 'NOK',
+            'status' => 'active',
+        ]);
+
+        Sanctum::actingAs($this->tech, ['economy.read', 'economy.update', 'economy.delete']);
+
+        $this->getJson('/api/v1/economy/orders?q=API%20Economy&status=draft')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $order->id)
+            ->assertJsonPath('data.0.lines_count', 1)
+            ->assertJsonPath('data.0.client.name', 'API Economy Client AS');
+
+        $this->getJson("/api/v1/economy/orders/{$order->id}")
+            ->assertOk()
+            ->assertJsonPath('data.id', $order->id)
+            ->assertJsonPath('data.lines.0.id', $line->id);
+
+        $this->postJson("/api/v1/economy/orders/{$order->id}/ready")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'ready');
+
+        $this->postJson("/api/v1/economy/orders/{$order->id}/draft")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'draft');
+
+        $this->deleteJson("/api/v1/economy/orders/{$order->id}/lines/{$line->id}")
+            ->assertOk()
+            ->assertJsonPath('data.deleted_order', true)
+            ->assertJsonPath('data.order_id', $order->id);
+
+        $this->assertDatabaseMissing('economy_order_lines', ['id' => $line->id]);
+        $this->assertDatabaseMissing('economy_orders', ['id' => $order->id]);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_generate_economy_orders(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+        $client = Client::create(['name' => 'API Generated Client AS', 'active' => true]);
+        $ticket = Ticket::create([
+            'ticket_key' => 'TD-2026-999905',
+            'subject' => 'API billable work',
+            'description' => 'Test',
+            'client_id' => $client->id,
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $closed->id,
+            'priority_id' => $defaults['priority']->id,
+            'channel' => 'manual',
+        ]);
+        $entry = TicketTimeEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'work_date' => now()->toDateString(),
+            'minutes' => 60,
+            'billable' => true,
+            'billing_status' => 'pending',
+            'timebank_status' => 'pending',
+            'billing_basis' => 'without_contract',
+            'invoice_text' => 'API generated work',
+            'rate_name' => 'Without contract',
+            'rate_amount_ex_vat' => 1000,
+            'rate_currency' => 'NOK',
+        ]);
+
+        Sanctum::actingAs($this->tech, ['economy.create']);
+
+        $this->postJson('/api/v1/economy/orders/generate', [
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.summary.lines_created', 1)
+            ->assertJsonPath('data.summary.time_entries_ordered', 1);
+
+        $this->assertDatabaseHas('economy_order_lines', [
+            'source_type' => $entry->getMorphClass(),
+            'source_id' => $entry->id,
+            'line_type' => 'ticket_time',
+            'quantity' => 60,
+            'line_total_ex_vat' => 1000,
+        ]);
+        $this->assertSame('queued', $entry->refresh()->billing_status);
+    }
+
+    #[Test]
+    public function economy_read_api_token_cannot_mutate_orders(): void
+    {
+        $client = Client::create(['name' => 'Read Only Economy AS', 'active' => true]);
+        $order = EconomyOrder::create([
+            'client_id' => $client->id,
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'status' => 'draft',
+        ]);
+
+        Sanctum::actingAs($this->tech, ['economy.read']);
+
+        $this->postJson("/api/v1/economy/orders/{$order->id}/ready")
+            ->assertForbidden();
+
+        $this->assertSame('draft', $order->refresh()->status);
     }
 }

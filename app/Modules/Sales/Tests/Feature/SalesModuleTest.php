@@ -29,6 +29,7 @@ use Database\Seeders\EmailTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -52,6 +53,110 @@ class SalesModuleTest extends TestCase
 
         $this->admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->admin->assignRole('Admin');
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_manage_sales_opportunities_and_activities(): void
+    {
+        $client = Client::create(['name' => 'API Prospect AS', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'API Buyer',
+            'email' => 'buyer@example.test',
+            'active' => true,
+        ]);
+
+        Sanctum::actingAs($this->tech, ['sales.read', 'sales.create', 'sales.update']);
+
+        $created = $this->postJson(route('api.v1.sales.opportunities.store'), [
+            'client_id' => $client->id,
+            'primary_contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'title' => 'API managed sales opportunity',
+            'type' => 'service_agreement',
+            'status' => 'new_lead',
+            'summary' => 'Created from API test.',
+            'estimated_value_ex_vat' => 10000,
+            'probability_percent' => 25,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.title', 'API managed sales opportunity')
+            ->assertJsonPath('data.client.id', $client->id)
+            ->assertJsonPath('data.primary_contact.id', $contact->id);
+
+        $opportunityKey = $created->json('data.opportunity_key');
+
+        $this->getJson(route('api.v1.sales.opportunities.index', ['q' => 'API managed']))
+            ->assertOk()
+            ->assertJsonPath('data.0.opportunity_key', $opportunityKey);
+
+        $this->patchJson(route('api.v1.sales.opportunities.update', $opportunityKey), [
+            'status' => 'contacted',
+            'estimated_value_ex_vat' => 20000,
+            'probability_percent' => 50,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'contacted')
+            ->assertJsonPath('data.probability_percent', 50);
+
+        $activity = $this->postJson(route('api.v1.sales.opportunities.activities.store', $opportunityKey), [
+            'type' => 'email_in',
+            'subject' => 'Customer replied',
+            'body' => 'Can we schedule a call?',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.type', 'email_in')
+            ->assertJsonPath('data.is_unread', true);
+
+        $this->assertDatabaseHas('sales_activities', [
+            'id' => $activity->json('data.id'),
+            'subject' => 'Customer replied',
+            'is_unread' => true,
+        ]);
+        $this->assertTrue(SalesOpportunity::where('opportunity_key', $opportunityKey)->firstOrFail()->is_unread);
+
+        $this->postJson(route('api.v1.sales.opportunities.read', $opportunityKey))
+            ->assertOk()
+            ->assertJsonPath('data.is_unread', false);
+
+        $this->assertDatabaseHas('sales_activities', [
+            'id' => $activity->json('data.id'),
+            'is_unread' => false,
+        ]);
+    }
+
+    #[Test]
+    public function sales_read_api_token_cannot_write_sales_opportunities(): void
+    {
+        $client = Client::create(['name' => 'Read Only Prospect AS', 'active' => true]);
+        $opportunity = SalesOpportunity::create([
+            'opportunity_key' => 'SO-2026-READ01',
+            'client_id' => $client->id,
+            'owner_id' => $this->tech->id,
+            'title' => 'Read only opportunity',
+            'type' => 'service_agreement',
+            'status' => 'new_lead',
+            'probability_percent' => 10,
+            'estimated_value_ex_vat' => 1000,
+            'weighted_value_ex_vat' => 100,
+        ]);
+
+        Sanctum::actingAs($this->tech, ['sales.read']);
+
+        $this->getJson(route('api.v1.sales.opportunities.show', $opportunity))
+            ->assertOk()
+            ->assertJsonPath('data.opportunity_key', 'SO-2026-READ01');
+
+        $this->postJson(route('api.v1.sales.opportunities.store'), [
+            'client_id' => $client->id,
+            'title' => 'Forbidden opportunity',
+            'type' => 'service_agreement',
+        ])->assertForbidden();
+
+        $this->patchJson(route('api.v1.sales.opportunities.update', $opportunity), [
+            'status' => 'contacted',
+        ])->assertForbidden();
     }
 
     #[Test]

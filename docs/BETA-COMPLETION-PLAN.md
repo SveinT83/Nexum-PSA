@@ -322,7 +322,7 @@ Recommended order:
 7. Visible Unfinished UI Cleanup.
 8. Legacy Planning Files Cleanup.
 9. Missing Settings Ownership RFC.
-10. Domain API Foundation planning and first implementation. Current slice covers scoped API keys, Client/Site, Asset, Contact, Ticket, and Task read/create/update scopes.
+10. Domain API Foundation planning and first implementation. Current slice covers scoped API keys, Client/Site, Asset, Contact, Ticket, Task, Knowledge, Storage, Calendar, Risk, Email Inbox, Notification, Sales, Taxonomy, Commercial, and Economy API scopes.
 11. Ticket, Email, Inbox, Contact, and Client workflow hardening found by the audit.
 12. Notification, Nextcloud, Calendar, and Knowledge hardening found by the audit.
 13. Commercial, Sales, Economy, Storage, Assets, and Tasks hardening found by the audit.
