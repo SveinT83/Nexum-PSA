@@ -217,6 +217,26 @@ class ApiAbilityCatalog
             'description' => 'Update commercial services, contracts, SLA policies, and time rates.',
             'domain' => 'Commercial',
         ],
+        'economy.read' => [
+            'label' => 'Read economy',
+            'description' => 'List and view economy orders and generated order lines.',
+            'domain' => 'Economy',
+        ],
+        'economy.create' => [
+            'label' => 'Create economy',
+            'description' => 'Generate economy orders from billable ticket time and picked ticket costs.',
+            'domain' => 'Economy',
+        ],
+        'economy.update' => [
+            'label' => 'Update economy',
+            'description' => 'Move economy orders between draft and ready states.',
+            'domain' => 'Economy',
+        ],
+        'economy.delete' => [
+            'label' => 'Delete economy',
+            'description' => 'Delete empty economy orders and draft order lines.',
+            'domain' => 'Economy',
+        ],
     ];
 
     public function all(): array

@@ -1585,6 +1585,268 @@
                 ]
             }
         },
+        "/api/v1/economy/orders": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "List economy orders",
+                "operationId": "getEconomyOrders",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "period_start",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "period_end",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated order list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/generate": {
+            "post": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "Generate economy orders from billable ticket data",
+                "operationId": "generateEconomyOrders",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "period_start": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "period_end": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Generation summary"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/{order}": {
+            "get": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "View an economy order",
+                "operationId": "getEconomyOrder",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "Delete an empty draft or ready economy order",
+                "operationId": "deleteEconomyOrder",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted"
+                    },
+                    "422": {
+                        "description": "Invalid order state"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/{order}/ready": {
+            "post": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "Mark an economy order ready",
+                "operationId": "markEconomyOrderReady",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated order"
+                    },
+                    "422": {
+                        "description": "Invalid order state"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/{order}/draft": {
+            "post": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "Move a ready economy order back to draft",
+                "operationId": "markEconomyOrderDraft",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated order"
+                    },
+                    "422": {
+                        "description": "Invalid order state"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/economy/orders/{order}/lines/{line}": {
+            "delete": {
+                "tags": [
+                    "Economy"
+                ],
+                "summary": "Delete an economy order line and unlock the source record",
+                "operationId": "deleteEconomyOrderLine",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "line",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated order or order deletion result"
+                    },
+                    "422": {
+                        "description": "Invalid order state"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/email/inbox/messages": {
             "get": {
                 "tags": [
@@ -3934,6 +4196,10 @@
         {
             "name": "Contacts",
             "description": "API endpoints for contacts and contact automation."
+        },
+        {
+            "name": "Economy",
+            "description": "API endpoints for internal economy order preparation."
         },
         {
             "name": "Email",

@@ -57,6 +57,10 @@ Implemented scopes:
 - `commercial.read`: list and view commercial services, contracts, SLA policies, and time rates.
 - `commercial.create`: create commercial services, contracts, SLA policies, and time rates.
 - `commercial.update`: update commercial services, contracts, SLA policies, and time rates.
+- `economy.read`: list and view economy orders and generated order lines.
+- `economy.create`: generate economy orders from billable ticket time and picked ticket costs.
+- `economy.update`: move economy orders between draft and ready states.
+- `economy.delete`: delete empty economy orders and draft order lines.
 
 Full access can be selected by an admin when a trusted integration needs every implemented API scope.
 
@@ -178,6 +182,13 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/commercial/time-rates`
 - `PUT /api/v1/commercial/time-rates/{rate}`
 - `PATCH /api/v1/commercial/time-rates/{rate}`
+- `GET /api/v1/economy/orders`
+- `POST /api/v1/economy/orders/generate`
+- `GET /api/v1/economy/orders/{order}`
+- `POST /api/v1/economy/orders/{order}/ready`
+- `POST /api/v1/economy/orders/{order}/draft`
+- `DELETE /api/v1/economy/orders/{order}`
+- `DELETE /api/v1/economy/orders/{order}/lines/{line}`
 
 ## Contact Write API
 
@@ -419,6 +430,24 @@ and line-item editing are not exposed by this API slice.
 SLA create/update keeps the same single-default behavior as the Tech UI.
 
 Time rate create/update generates `slug` from `code`.
+
+## Economy API
+
+Economy API routes expose internal order preparation for trusted automation and AI agents.
+
+The API does not create accounting invoices, send invoices, or export to external accounting
+systems. It manages the same draft economy orders that the technician Economy UI uses.
+
+`GET /api/v1/economy/orders` supports `q`, `status`, `client_id`, `period_start`, `period_end`, and
+`per_page`.
+
+`POST /api/v1/economy/orders/generate` runs the shared Economy order generation action for an
+optional date period and returns the generation summary.
+
+Draft orders can be marked ready. Ready orders can be moved back to draft.
+
+Empty draft or ready orders can be deleted. Draft order lines can be deleted, and deleting generated
+lines unlocks their ticket time or ticket cost source records for recalculation.
 
 ## Calendar API
 
