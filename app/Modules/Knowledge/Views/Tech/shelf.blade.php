@@ -4,7 +4,7 @@
     Knowledge Shelf View
 
     Shows the books assigned to one shelf. This keeps the Knowledge navigation
-    aligned with BookStack while still using tdPSA-owned local records.
+    aligned with BookStack while still using Nexum PSA-owned local records.
 --}}
 
 @section('title', $shelf->name)
@@ -72,7 +72,7 @@
                 $isLocalShelf = blank($shelf->source_system);
                 $isEmptyShelf = $shelf->books->isEmpty();
             @endphp
-            <div class="mb-2"><span class="text-muted">Source:</span> {{ $isLocalShelf ? 'Local tdPSA' : ucfirst(str_replace('_', ' ', $shelf->source_system)) }}</div>
+            <div class="mb-2"><span class="text-muted">Source:</span> {{ $isLocalShelf ? 'Local Nexum PSA' : ucfirst(str_replace('_', ' ', $shelf->source_system)) }}</div>
             <div class="mb-2"><span class="text-muted">Books:</span> {{ $shelf->books->count() }}</div>
             @if($shelf->source_url)
                 <a href="{{ $shelf->source_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary mb-2">

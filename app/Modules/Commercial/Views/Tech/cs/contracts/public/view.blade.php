@@ -178,7 +178,7 @@
         </div>
 
         <div class="mt-5 text-center small text-muted">
-            <p>© {{ date('Y') }} tdPSA - Generated on {{ now()->format('d.m.Y H:i') }}</p>
+            <p>© {{ date('Y') }} {{ $companyProfile['company_name'] ?? config('app.name', 'Nexum PSA') }} - Generated on {{ now()->format('d.m.Y H:i') }}</p>
             <button onclick="window.print()" class="btn btn-sm btn-link no-print"><i class="bi bi-printer me-1"></i> Print / Save as PDF</button>
         </div>
     </div>

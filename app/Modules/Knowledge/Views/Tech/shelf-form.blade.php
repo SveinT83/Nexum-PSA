@@ -79,7 +79,7 @@
             </div>
             <div class="card-body">
                 <p class="small text-muted mb-3">
-                    This shelf has no books. Deleting it will remove the shelf from NexumPSA{{ $shelf->source_system === 'book_stack' ? ' and BookStack' : '' }}.
+                    This shelf has no books. Deleting it will remove the shelf from Nexum PSA{{ $shelf->source_system === 'book_stack' ? ' and BookStack' : '' }}.
                 </p>
                 <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteShelfModal">
                     <i class="bi bi-trash"></i> Delete Shelf

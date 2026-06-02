@@ -103,7 +103,7 @@
             </div>
             <div class="card-body">
                 <p class="small text-muted mb-3">
-                    This book has no chapters or pages. Deleting it will remove the book from NexumPSA{{ $book->source_system === 'book_stack' ? ' and BookStack' : '' }}.
+                    This book has no chapters or pages. Deleting it will remove the book from Nexum PSA{{ $book->source_system === 'book_stack' ? ' and BookStack' : '' }}.
                 </p>
                 <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteBookModal">
                     <i class="bi bi-trash"></i> Delete Book

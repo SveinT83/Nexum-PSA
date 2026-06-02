@@ -516,6 +516,32 @@ GET /api/v1/clients?custom_field[msp_manager_id]=12345
 Custom fields are only accepted when the field is active, applies to Client, and is editable through
 API. Unique fields reject duplicate values for the same model type.
 
+## Custom Field Definition API
+
+Custom field definitions are available through a read-only discovery API:
+
+```text
+GET /api/v1/custom-fields
+GET /api/v1/custom-fields/{id}
+```
+
+Required ability:
+
+```text
+custom-fields.read
+```
+
+Useful filters:
+
+- `model`: model alias, for example `client`
+- `q`: search key, label, help text, or model type
+- `active`: boolean
+- `editable_via_api`: boolean
+- `searchable`: boolean
+
+This API returns definitions, not values. Values are still read and written through the owning
+domain API, for example the Client API `custom_fields` payload.
+
 ## Calendar API
 
 Calendar API routes expose visible calendars and calendar events for trusted automation and future AI

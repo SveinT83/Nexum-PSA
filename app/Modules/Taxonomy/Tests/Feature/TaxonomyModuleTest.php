@@ -37,11 +37,20 @@ class TaxonomyModuleTest extends TestCase
 
         $this->assertSame(CategoryController::class . '@index', $route->getActionName());
 
+        Category::create([
+            'name' => 'Hardware',
+            'slug' => 'hardware',
+            'type' => 'asset',
+            'is_active' => true,
+        ]);
+
         $this->actingAs($this->admin)
             ->get(route('tech.admin.system.category.index'))
             ->assertOk()
             ->assertViewIs('taxonomy::Admin.Category.index')
-            ->assertViewHas('categories');
+            ->assertViewHas('categories')
+            ->assertSee('data-bs-target="#editCategoryModal', false)
+            ->assertSee('class="btn btn-link fw-bold text-decoration-none p-0 align-baseline"', false);
     }
 
     #[Test]

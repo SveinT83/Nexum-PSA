@@ -287,7 +287,7 @@
         </div>
         <div class="card-body">
             <p class="small text-muted">
-                This integration synchronizes clients and sites between tdPSA and N-able RMM.
+                This integration synchronizes clients and sites between Nexum PSA and N-able RMM.
             </p>
             <h6 class="small fw-bold">Automation Setup:</h6>
             <p class="x-small text-muted mb-2">

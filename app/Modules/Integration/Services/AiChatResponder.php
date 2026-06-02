@@ -197,7 +197,7 @@ class AiChatResponder
         }
 
         $lines = collect([
-            'Current tdPSA page context:',
+            'Current Nexum PSA page context:',
             '- Domain: '.(data_get($context, 'domain') ?: 'unknown'),
             '- Route: '.(data_get($context, 'route_name') ?: 'unknown'),
             '- Title: '.(data_get($context, 'title') ?: 'unknown'),
@@ -283,7 +283,7 @@ class AiChatResponder
         $hasKnowledgeSearch = in_array('knowledge.search', $tools, true) || in_array('search', $tools, true);
 
         $instructions = [
-            'Use available tdPSA tools before saying you do not have access.',
+            'Use available Nexum PSA tools before saying you do not have access.',
             'When tool results are provided as system context, answer from those results instead of telling the user to open the same page.',
             'If the user asks for operational counts, priorities, or recommendations, use read tools first and name the records behind the recommendation.',
             'If a needed read or write tool is not available for this agent, say which tool or scope is missing.',

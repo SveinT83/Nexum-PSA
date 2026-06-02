@@ -102,7 +102,7 @@ Route::put('/rates/{rate}', [TechTimeRateController::class, 'update'])
 
 Route::get('/costs', [CostController::class, 'index'])
     ->name('costs.index');
-Route::get('/costs/delete/{cost}', [CostController::class, 'delete'])
+Route::delete('/costs/delete/{cost}', [CostController::class, 'delete'])
     ->name('costs.delete');
 Route::post('/costs/update/{cost}', [CostController::class, 'update'])
     ->name('costs.update');
@@ -148,7 +148,7 @@ Route::delete('/sla/delete/{sla}', [SlaController::class, 'destroy'])
 Route::middleware('admin')->group(function () {
     Route::get('/admin/settings/economy/units', [UnitsController::class, 'index'])
         ->name('admin.settings.economy.units');
-    Route::get('/admin/settings/economy/units/store', [UnitsController::class, 'store'])
+    Route::post('/admin/settings/economy/units', [UnitsController::class, 'store'])
         ->name('admin.settings.economy.units.store');
     Route::post('/admin/settings/economy/units/update/{unit}', [UnitsController::class, 'update'])
         ->name('admin.settings.economy.units.update');

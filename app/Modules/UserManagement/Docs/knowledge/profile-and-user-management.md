@@ -84,12 +84,13 @@ php artisan storage:link
 The tech layout reads the personal theme setting from `user_preferences.settings.theme`.
 Supported values:
 
+- `company`
 - `system`
 - `light`
 - `dark`
 
-`system` leaves Bootstrap in its default mode. `light` and `dark` write `data-bs-theme` on the
-HTML element.
+`company` inherits the default theme configured in System -> Branding. `system` leaves Bootstrap in
+browser/system mode. `light` and `dark` write `data-bs-theme` on the HTML element.
 
 ## Development Rules
 

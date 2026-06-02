@@ -21,7 +21,7 @@ class UpdateUserPreferences
                 'workday_start' => $data['workday_start'],
                 'workday_end' => $data['workday_end'],
                 'settings' => array_merge($existing?->settings ?? [], [
-                    'theme' => $data['theme'] ?? data_get($existing?->settings, 'theme', 'system'),
+                    'theme' => $data['theme'] ?? data_get($existing?->settings, 'theme', 'company'),
                 ]),
             ]
         );

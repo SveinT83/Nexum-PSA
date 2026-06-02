@@ -22,6 +22,11 @@ class ApiAbilityCatalog
             'description' => 'Update client records and manage client sites.',
             'domain' => 'Clients',
         ],
+        'custom-fields.read' => [
+            'label' => 'Read custom fields',
+            'description' => 'List and view custom field definitions for supported domains.',
+            'domain' => 'Custom Fields',
+        ],
         'assets.read' => [
             'label' => 'Read assets',
             'description' => 'List and view asset records.',

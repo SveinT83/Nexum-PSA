@@ -17,6 +17,17 @@ Technicians can mark an inbox message as spam. This:
 - Archives the message locally.
 - Creates or updates an inbound email rule so future matching messages are tagged and archived.
 
+## Inbound HTML Safety
+
+Inbound email HTML is untrusted content.
+
+When a message is stored, Nexum sanitizes the HTML body before it is saved in
+`body_html_sanitized`. The sanitizer keeps common readable email markup such as paragraphs, links,
+tables, emphasis, and images, but removes active content such as scripts, iframes, event handlers,
+forms, embedded objects, and unsafe URL schemes.
+
+Inbox views and API responses must use the sanitized body, never raw email HTML.
+
 ## API
 
 Email exposes first-slice Inbox API routes under `/api/v1/email/inbox`.

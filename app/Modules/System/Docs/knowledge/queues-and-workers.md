@@ -2,6 +2,10 @@ Queues and workers keep background work running without making technicians wait 
 
 Production should run workers through Supervisor, systemd, Docker, or another process manager. Do not rely on manual terminal sessions, because a closed SSH session or reboot will stop the worker.
 
+The Admin Queue and Worker page renders setup examples with the current Laravel `base_path()`.
+Use the path shown in the UI for the target server instead of copying a development path from another
+environment.
+
 Recommended production worker for the current beta:
 
 ```bash
@@ -34,7 +38,7 @@ Example Supervisor program:
 ```ini
 [program:tdpsa-worker]
 process_name=%(program_name)s_%(process_num)02d
-command=php /var/Projects/tdPSA/artisan queue:work --queue=default,economy,email --sleep=3 --tries=3 --timeout=120
+command=php /path/to/nexum-psa/artisan queue:work --queue=default,economy,email --sleep=3 --tries=3 --timeout=120
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -42,7 +46,7 @@ killasgroup=true
 user=www-data
 numprocs=2
 redirect_stderr=true
-stdout_logfile=/var/Projects/tdPSA/storage/logs/worker.log
+stdout_logfile=/path/to/nexum-psa/storage/logs/worker.log
 stopwaitsecs=3600
 ```
 
@@ -50,11 +54,11 @@ Example systemd service:
 
 ```ini
 [Unit]
-Description=tdPSA Laravel queue worker
+Description=Nexum PSA Laravel queue worker
 After=network.target
 
 [Service]
-WorkingDirectory=/var/Projects/tdPSA
+WorkingDirectory=/path/to/nexum-psa
 ExecStart=/usr/bin/php artisan queue:work --queue=default,economy,email --sleep=3 --tries=3 --timeout=120
 Restart=always
 RestartSec=5
@@ -67,7 +71,7 @@ WantedBy=multi-user.target
 The scheduler is separate from workers. It should run every minute:
 
 ```cron
-* * * * * cd /var/Projects/tdPSA && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /path/to/nexum-psa && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 Useful operations:

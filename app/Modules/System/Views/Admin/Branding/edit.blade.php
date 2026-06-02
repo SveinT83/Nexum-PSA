@@ -128,6 +128,19 @@
                 <div class="form-text mt-3">
                     These colors drive links, active navigation, focus states, and brand accents. Button colors can be tuned per mode below.
                 </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <label for="default_theme" class="form-label">Default workspace theme</label>
+                        <select id="default_theme" name="default_theme" class="form-select">
+                            @foreach(['light' => 'Light', 'dark' => 'Dark', 'system' => 'Browser system'] as $theme => $label)
+                                <option value="{{ $theme }}" @selected(old('default_theme', $companyProfile['default_theme']) === $theme)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">
+                            Used when a technician chooses company default in their profile.
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -36,6 +36,10 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Module Settings Audit | Done | Codex | Audit captured settings ownership gaps, admin discoverability gaps, visible unfinished UI, and legacy planning files. |
 | Admin Settings Discoverability Cleanup | Done | Codex | Existing beta-ready settings surfaces are reachable from Admin hub/sidebar and documented. |
 | Visible Unfinished UI Cleanup | Done | Codex | Removed beta-visible coming-soon text from Asset/N-able and replaced old login copy/placeholders. |
+| Email Health Check Honesty | Done | Codex | Queued email health checks now reuse the real IMAP/SMTP test service instead of writing unconditional OK results. |
+| BookStack Scheduled Sync Honesty | Done | Codex | Scheduled BookStack pull/push jobs now mark active misconfigured integrations unhealthy instead of returning silently. |
+| Commercial Settings Route Cleanup | Done | Codex | Contract settings URL now uses `/contracts`; legacy `/contacts` typo redirects to the canonical route. |
+| Beta Release Hardening Sweep | Done | Codex | Removed mutating GET routes found in Commercial, made Queue/Worker setup paths environment-aware, and ran all module feature suites. |
 | Asset Settings Slice | Done | Codex | Asset module now owns manual registration defaults and admin settings. |
 | Contact Settings Slice | Done | Codex | Contact module now owns defaults and relation type settings. |
 | Legacy Planning Files Cleanup | Done | Codex | Moved Markdown planning/spec files out of production view paths and updated runtime doc references. |
@@ -44,8 +48,8 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Knowledge Settings Slice | Done | Codex | Knowledge now owns manual article defaults for visibility, status, review, and priority. |
 | Risk Settings Slice | Done | Codex | Risk now owns defaults for assessments, item scoring, item status, and review interval. |
 | Missing Settings Ownership RFC | Done | Codex | RFC approved; Asset, Contact, Task, Warroom, Knowledge, and Risk settings slices completed. |
-| Domain API Foundation | In Progress | Codex | Scoped Sanctum API keys now enforce Client/Site, Asset, Contact, Ticket, Task, Knowledge, Storage, Calendar, Risk, Email Inbox, Notification, Sales, Taxonomy, Commercial, Economy, Report, and User Management API scopes. |
-| Custom Fields Core | Done | Codex | First slice adds generic definitions/values with Client UI/API support for MSP Manager/n8n sync identifiers. |
+| Domain API Foundation | Done | Codex | Scoped Sanctum API keys now enforce Client/Site, Custom Fields, Asset, Contact, Ticket, Task, Knowledge, Storage, Calendar, Risk, Email Inbox, Notification, Sales, Taxonomy, Commercial, Economy, Report, and User Management API scopes. |
+| Custom Fields Core | Done | Codex | Adds generic definitions/values with Client UI/API value support, Client workspace tab, and read-only definition discovery API for MSP Manager/n8n sync identifiers. |
 | Report Builder And Scheduled Client Reporting | Post-Beta |  | Version 2 item. Build custom report builder, saved report templates, and automatic client report delivery. |
 | Email Branding And HTML Template Editor | Post-Beta |  | Version 1 item. Email templates need branding variables, shared HTML wrapper, editor, and live preview. |
 | Storage Barcode Scanning | Post-Beta |  | Version 1 item. Storage must support barcode scanners from PC and mobile workflows. |
@@ -70,7 +74,7 @@ Initial scope:
   - `php artisan user-profiles:backfill`
 - Update Knowledge documentation after final UI polish.
 - Profile image/avatar upload.
-- Personal light/dark/system theme preference after branding.
+- Personal company default/light/dark/system theme preference after branding.
 
 Future scope:
 
@@ -104,8 +108,8 @@ Initial scope:
 - Keep brand/action colors separate from layout surface colors.
 - Add configurable header background/text, page header background/text, footer background/text, body background, content background, sidebar background/text, card background, and border color.
 - Add light theme and dark theme surface sets.
-- Let company default theme be `light`, `dark`, or `system`.
-- Let technician preference choose `company default`, `light`, `dark`, or `system`.
+- Let company default theme be `light`, `dark`, or `system`. Done.
+- Let technician preference choose `company default`, `light`, `dark`, or `system`. Done.
 - Update CSS variables so shell layout never depends on hardcoded brand colors.
 - Add tests and Knowledge documentation.
 
@@ -193,6 +197,15 @@ Completed:
 - Asset detail now shows a neutral related-ticket empty state without promising unfinished behavior.
 - N-able manual sync no longer exposes the network-device coming-soon action.
 - Login views now use Bootstrap, current company branding defaults, and neutral email placeholder text.
+- Commercial Contract/Service settings routes now render working admin hub pages instead of legacy view specifications.
+- Contract create no longer renders appended legacy specification text.
+- Sales lead detail now renders a working beta detail page instead of a legacy "not started" specification.
+- Email account health check jobs now persist real IMAP/SMTP test results instead of unconditional OK placeholders.
+- Scheduled BookStack pull/push jobs now surface missing server/token/actor configuration in integration health.
+- Commercial Contract settings route now uses `/tech/admin/settings/cs/contracts`; the old `/contacts` typo redirects.
+- Commercial Units creation now uses POST with CSRF instead of a GET route that created database rows.
+- Commercial Cost deletion now uses DELETE instead of a GET route.
+- Queue and Worker setup examples now render the current Laravel `base_path()` in the UI instead of a hardcoded development path.
 
 ### 8. Asset Settings Slice
 
@@ -245,6 +258,9 @@ Completed:
 - Moved module view specs to `app/Modules/{Domain}/Docs/legacy-view-specs`.
 - Updated runtime documentation file references in Asset, Storage, and Integration views/controllers.
 - Verified no `.md` or `.blade.md` files remain under `resources/views` or module `Views` folders.
+- Moved remaining task, task-template, and billing view specifications out of `resources/views`.
+- Moved remaining Commercial contract and Sales lead module view specifications into module legacy docs.
+- Removed empty unused runtime Blade files from Clients, Commercial, Sales, Ticket, and global admin settings paths.
 
 ### 11. Missing Settings Ownership RFC
 
@@ -273,7 +289,7 @@ Progress:
 
 ### 12. Domain API Foundation
 
-**Status:** In Progress
+**Status:** Done
 **Owner:** Codex
 **Domain:** API / Platform / All Existing Domains
 **Goal:** Define and implement consistent API surfaces for domains that need external integration access.
@@ -285,36 +301,24 @@ Why this is needed:
 
 Initial scope:
 
-- Define API ability naming and ownership.
-- Replace visible "Scopes coming soon" UI with working Sanctum abilities.
-- Enforce abilities on existing Clients and Assets read APIs.
-- Add Client create/update API and Client Site management API.
-- Add Asset create/update API with Client/Site validation.
-- Enforce Contact read/create/update abilities and expose Contact upsert for automation.
-- Add Ticket read/create/update API through the ticket engine.
-- Add Task read/create/update API through task defaults and activity tracking.
-- Add Knowledge article read/create/update API through article actions.
-- Add Storage item, warehouse, box, and stock adjustment API through Storage actions.
-- Add Calendar read/create/update/delete event API through Calendar actions and visibility rules.
-- Add Risk assessment, item, and item update API through Risk actions.
-- Add Email Inbox read/update API for unrouted message search, spam rules, and queued polling.
-- Add Notification read/update API for authenticated user notifications.
-- Add Sales opportunity read/create/update API and Sales activity API through the Sales engine.
-- Add Taxonomy category/tag read/create/update/delete API for shared classification data.
-- Add Commercial service, contract, SLA, and time rate read/create/update API for commercial data.
-- Document current API routes and follow-up domain slices.
+- API ability naming and ownership is defined in the Integration module.
+- Visible "Scopes coming soon" UI was replaced with working Sanctum abilities.
+- Client/Site, Asset, Contact, Ticket, Task, Knowledge, Storage, Calendar, Risk, Email Inbox,
+  Notification, Sales, Taxonomy, Commercial, Economy, Report, User Management, and Custom Fields
+  API scopes are implemented.
+- Client create/update API supports `custom_fields`.
+- Custom field definitions are exposed through a read-only discovery API.
+- Current API routes are documented in Integration Knowledge documentation.
+- OpenAPI documentation is generated for the current beta API surface.
+- Representative auth, ability, validation, and route tests exist across the domain modules.
 
-- Create an RFC before implementation.
-- Define API versioning and route ownership rules.
-- Define authentication strategy for human tokens, service tokens, and future integration tokens.
-- Define permission mapping between UI permissions and API abilities.
-- Define response format, validation error format, pagination, filtering, sorting, and includes.
-- Decide which beta domains need first API coverage.
-- Start with read-safe APIs before write APIs; Contact write API is the first approved write slice for n8n and AI agents.
-- Add OpenAPI or equivalent documentation plan.
-- Add tests for auth, permissions, validation, and representative endpoints.
+Future scope:
 
-### 11. Report Builder And Scheduled Client Reporting
+- Add domain APIs for future modules as they become beta-ready.
+- Add richer filtering, includes, bulk operations, and webhooks when there is a concrete workflow.
+- Add stricter service-token governance if external automation grows beyond scoped Sanctum tokens.
+
+### 13. Report Builder And Scheduled Client Reporting
 
 **Status:** Post-Beta
 **Owner:**
@@ -332,7 +336,7 @@ Initial future scope:
 - Delivery history and failure tracking.
 - Permissions for creating, editing, scheduling, and sending reports.
 
-### 12. Email Branding And HTML Template Editor
+### 14. Email Branding And HTML Template Editor
 
 **Status:** Post-Beta
 **Owner:**
@@ -356,7 +360,7 @@ Future scope:
 - Per-client, per-language, per-queue, or per-workflow template selection.
 - Safer variable validation and missing-variable warnings.
 
-### 13. Ticket Workflow Requirements Enforcement
+### 15. Ticket Workflow Requirements Enforcement
 
 **Status:** Done
 **Owner:** Codex

@@ -8,7 +8,10 @@
     <div class="d-flex justify-content-between align-items-center">
         <h1>Units</h1>
         <div>
-            <a href="{{ route('tech.admin.settings.economy.units.store') }}" class="btn btn-sm btn-primary bi bi-plus"> New</a>
+            <form method="post" action="{{ route('tech.admin.settings.economy.units.store') }}">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-primary bi bi-plus"> New</button>
+            </form>
         </div>
     </div>
 @endsection
@@ -58,7 +61,7 @@
 
                                 <!-- CODE -->
                                 <td class="align-bottom">
-                                    <x-forms.input_text name="common_code" labelName="" value="{{ $unit->code }}"></x-forms.input_text>
+                                    <x-forms.input_text name="common_code" labelName="" value="{{ $unit->common_code }}"></x-forms.input_text>
                                 </td>
 
                                 <!-- BUTTONS -->
@@ -84,7 +87,10 @@
         <!-- ------------------------------------------------- -->
     @else
         <div class="alert alert-warning">No units exists yet.
-            <a href="{{ route('tech.admin.settings.economy.units.store') }}" class="btn btn-sm btn-secondary">New unit</a>
+            <form method="post" action="{{ route('tech.admin.settings.economy.units.store') }}" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-secondary">New unit</button>
+            </form>
         </div>
     @endif
 
@@ -96,4 +102,3 @@
 
 @section('rightbar')
 @endsection
-

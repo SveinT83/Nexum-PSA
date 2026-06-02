@@ -1,167 +1,156 @@
-# tech.sales.leads.show — View Specification (Lead)
+@extends('layouts.default_tech')
 
-**Creation date:** 2025-10-29
-**URL:** `tech.sales.leads.show:{leadId}`
-**Access levels:** Read: `sales.view` • Write (edit notes/priority, create contract/order): `sales.manage`
-**Controller:** `App\Http\Controllers\Tech\Sales\Leads\ShowController@show`
-**Livewire/Components:** `App\Livewire\Tech\Sales\Leads\Show\*`
-**Status:** Not started
-**Difficulty:** Medium
-**Estimated time:** 5.0 hours
+@section('title', 'Sales Lead')
 
----
+@section('sidebar')
+    <x-nav.sales-menu />
+@endsection
 
-## Purpose
+@section('pageHeader')
+    <div class="d-flex align-items-center justify-content-between gap-3">
+        <div>
+            <h1 class="mb-0">{{ $lead->name }}</h1>
+            <div class="text-muted small">Sales lead candidate</div>
+        </div>
+        <x-buttons.back url="{{ route('tech.sales.leads.index') }}" class="mb-0">Back</x-buttons.back>
+    </div>
+@endsection
 
-A sales-focused lead detail view centered on a **client without an active contract**. Sellers can review context (notes, history, footprint), estimate priority, and jump to contract creation or a one-off sales order.
+@section('content')
+    @php
+        $lead->loadMissing(['salesCategory', 'tags']);
+        $contactsCount = $lead->contacts()->count();
+        $sitesCount = $lead->sites()->count();
+        $assetsCount = $lead->assets()->count();
+        $contractsCount = $lead->contracts()->count();
+    @endphp
 
----
+    <!-- Sales lead detail -->
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <div class="card mb-3">
+                <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                    <h2 class="h5 mb-0">Lead Summary</h2>
+                    <span class="badge text-bg-light border">Heat {{ $lead->lead_temperature ?? 1 }}/5</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="text-muted small text-uppercase fw-semibold">Organization number</div>
+                            <div>{{ $lead->org_no ?: '-' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small text-uppercase fw-semibold">Billing email</div>
+                            <div>{{ $lead->billing_email ?: '-' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small text-uppercase fw-semibold">Website</div>
+                            <div>
+                                @if($lead->website)
+                                    <a href="{{ $lead->website }}" target="_blank" rel="noopener">{{ $lead->website }}</a>
+                                @else
+                                    -
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small text-uppercase fw-semibold">Category</div>
+                            <div>{{ $lead->salesCategory?->name ?? 'Uncategorized' }}</div>
+                        </div>
+                    </div>
 
-## Layout (Bootstrap)
+                    @if($lead->tags->isNotEmpty())
+                        <div class="d-flex flex-wrap gap-1 mt-3">
+                            @foreach($lead->tags as $tag)
+                                <span class="badge text-bg-secondary">{{ $tag->name }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
 
-**Template:** Top header / Main content / Right slim rail (static layout, dynamic content).
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Start Sales Process</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('tech.sales.leads.start', $lead) }}" class="row g-3">
+                        @csrf
+                        <div class="col-md-8">
+                            <label class="form-label">Title</label>
+                            <input type="text" name="title" class="form-control" value="{{ old('title', $lead->name.' service opportunity') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Type</label>
+                            <select name="type" class="form-select">
+                                @foreach(\App\Modules\Sales\Actions\EnsureSalesDefaults::TYPES as $key => $label)
+                                    <option value="{{ $key }}" @selected(old('type') === $key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Next follow-up</label>
+                            <input type="datetime-local" name="next_follow_up_at" class="form-control" value="{{ old('next_follow_up_at') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Next action</label>
+                            <select name="next_follow_up_type" class="form-select">
+                                <option value="">No action selected</option>
+                                @foreach(\App\Modules\Sales\Actions\EnsureSalesDefaults::NEXT_ACTIONS as $key => $label)
+                                    <option value="{{ $key }}" @selected(old('next_follow_up_type') === $key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Need / summary</label>
+                            <textarea name="needs" class="form-control" rows="3">{{ old('needs') }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-play-circle me-1" aria-hidden="true"></i>
+                                Start sales process
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-### Top header
+        <div class="col-xl-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Footprint</h2>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Contacts</span>
+                        <span class="badge text-bg-light border">{{ $contactsCount }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Sites</span>
+                        <span class="badge text-bg-light border">{{ $sitesCount }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Assets</span>
+                        <span class="badge text-bg-light border">{{ $assetsCount }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Contracts</span>
+                        <span class="badge text-bg-light border">{{ $contractsCount }}</span>
+                    </div>
+                </div>
+            </div>
 
-* **Title:** Client name (lead) + badge “Lead”
-* **Subline:** Industry • Size (users/assets) • Last outreach timestamp
-* **Buttons:**
-
-  * `Open Client` → navigates to `tech/clients/show.blade.php` (perm: `sales.view`)
-  * `Create Contract` → route `tech.contracts.create` (perm: `sales.manage`)
-  * `Create Order` → route `tech.sales.create` (perm: `sales.manage`)
-* **Breadcrumbs:** Sales / Leads / {Client}
-
-### Main content (left)
-
-**A. Client Summary (widget: `LeadClientSummaryCard`)**
-
-* Client basics: legal name, org no., primary site, primary contact
-* Tags/Industry • Region • Account owner (sales rep)
-* Quick chips: “No contract”, “Past customer” (if applicable)
-
-**B. Footprint Metrics (widget: `FootprintStatRow`)**
-
-* Cards: Sites • Users • Assets • Tickets (12m) • Orders (12m)
-* Each card links to filtered list in respective modules
-
-**C. Activity & History (widget: `LeadActivityTimeline`)**
-
-* Timeline of prior touches: calls, emails, meetings, failed attempts
-* Highlights: “Agreed to revisit” notes with target date badges
-* Filter: All / Notes / Emails / Meetings / Tasks
-
-**D. Notes (widget: `SalesNotesEditor`)**
-
-* Rich text notes with @mention and file refs
-* Inline add/edit, autosave, versioning
-* Permissions: view (`sales.view`), edit (`sales.manage`)
-
-**E. Priority & Fit (widget: `LeadPriorityPanel`)**
-
-* Manual priority (0–100) slider + textual label (Low/Med/High)
-* Fields: Estimated seats, potential MRR, pain points
-* Optional computed helper (non-blocking): score suggestion from footprint (read-only)
-* Action chips: `Mark Blocked` / `Ready to pitch` (stateful flags)
-
-**F. Previous Contracts (widget: `ContractHistoryList`)**
-
-* If the client had contracts before: show last status, end date, reason
-* Quick link: open historical contract
-
-**G. Related Tickets & Orders (widget: `RelatedWorkfeed`)**
-
-* Recent tickets (last 6 months) and sales orders (last 12 months)
-* Use badges for status; click opens the item in new view
-
-### Right slim rail
-
-**1. Lead Quick Facts**
-
-* First seen, source, owner, last activity, next suggested action
-
-**2. Upcoming touchpoints**
-
-* Mini list of scheduled follow-ups (from tasks/calendar integration when available)
-
-**3. Attachments**
-
-* Uploaded files (proposals, discovery docs)
-
-**4. Audit (read-only)**
-
-* Created by, last modified by, key field changes
-
----
-
-## Components & Reuse
-
-* `LeadClientSummaryCard` (reusable across sales views)
-* `FootprintStatRow` (stat tiles: count + link)
-* `LeadActivityTimeline` (shared model with tickets’ timeline; filtered for sales)
-* `SalesNotesEditor` (same surface as ticket internal notes)
-* `LeadPriorityPanel` (slider + helper score)
-* `ContractHistoryList` (compact history renderer)
-* `RelatedWorkfeed` (mixed list of tickets & orders)
-
-> Mark these in the design system as reusable widgets.
-
----
-
-## Smart UX Suggestions
-
-* **Autosave** for notes/priority with inline toasts
-* **Keyboard actions:** “N” to add note, “C” create contract, “O” create order
-* **Deep links**: each metric card opens filtered lists
-* **State flags** shown as chips at top and editable via dropdown
-* **Empty states** with guidance (e.g., “No history yet — add first note”)
-
----
-
-## Data & Interactions
-
-* **Read model:** Client core data, counts (sites/users/assets), recent tickets & orders, prior contracts, notes, activity log
-* **Write actions (require `sales.manage`):**
-
-  * Edit notes (create/update/delete)
-  * Set manual priority & state flags
-  * Navigate to create Contract/Order (no write here, only redirect)
-* **Logging:** All edits produce entries in the audit trail (who/when/what)
-* **Real-time:** Live updates for notes and timeline via websockets
-
----
-
-## Buttons & Icons (suggested)
-
-* Open Client (external-link)
-* Create Contract (file-plus)
-* Create Order (shopping-cart)
-* Add Note (sticky-note)
-* Filter (funnel) • Edit (pen) • Save (check) • Priority (gauge)
-
----
-
-## Empty/Error States
-
-* Lead not found → return to `tech.sales.leads.index` with alert
-* Metrics unavailable → show placeholders with retry
-* No prior contracts → informational helper text
-
----
-
-## Controller Notes
-
-* Resolve `{leadId}` → client entity (must be contractless)
-* Eager-load: sites, users count, assets count, recent tickets/orders, prior contracts, notes, timeline
-* Authorize: `sales.view` for show; gate mutations with `sales.manage`
-* Provide lightweight endpoints for: notes CRUD, priority update, flag toggle (Livewire actions)
-
----
-
-## Testing Checklist
-
-* Permissions gating for view vs. manage actions
-* Counts correct and links apply filters
-* Notes autosave + audit entries
-* Buttons navigate to correct create routes with client preselected
-* Real-time updates reflect changes across sessions
+            <div class="d-grid gap-2">
+                <a href="{{ route('tech.clients.show', $lead) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-building me-1" aria-hidden="true"></i>
+                    Open client
+                </a>
+                <a href="{{ route('tech.contracts.create') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-file-earmark-plus me-1" aria-hidden="true"></i>
+                    Create contract
+                </a>
+            </div>
+        </div>
+    </div>
+@endsection

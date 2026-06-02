@@ -19,6 +19,7 @@ use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
 use App\Modules\Integration\Controllers\Admin\IntegrationsController;
 use App\Modules\Integration\Controllers\Tech\AiChatController;
 use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
+use App\Modules\Integration\Jobs\PushPendingKnowledgeToBookStack;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Models\AiChatMessage;
@@ -86,6 +87,7 @@ class IntegrationModuleTest extends TestCase
             ->assertSee('Read clients')
             ->assertSee('Create clients')
             ->assertSee('Update clients')
+            ->assertSee('Read custom fields')
             ->assertSee('Read assets')
             ->assertSee('Create assets')
             ->assertSee('Update assets')
@@ -440,7 +442,7 @@ class IntegrationModuleTest extends TestCase
 
         Http::assertSent(fn ($request) => str_contains(
             collect($request['messages'])->pluck('content')->implode("\n"),
-            'Current tdPSA page context:'
+            'Current Nexum PSA page context:'
         ) && str_contains(
             collect($request['messages'])->pluck('content')->implode("\n"),
             'tech.tickets.index'
@@ -1312,6 +1314,57 @@ class IntegrationModuleTest extends TestCase
         $this->assertSame(now()->toIso8601String(), $integration->fresh()->config['last_pull_at']);
 
         Carbon::setTestNow();
+    }
+
+    #[Test]
+    public function scheduled_book_stack_pull_marks_active_integration_unhealthy_when_credentials_are_missing(): void
+    {
+        Http::fake();
+
+        Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'sync_interval_minutes' => 10,
+                'last_pull_at' => now()->subHour()->toIso8601String(),
+            ],
+        ]);
+
+        (new PullBookStackToKnowledge())->handle();
+
+        $integration = Integration::where('type', 'book_stack')->firstOrFail();
+
+        $this->assertFalse($integration->is_healthy);
+        $this->assertSame('BookStack scheduled pull is missing server, token id, or token secret.', $integration->last_error);
+        Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function scheduled_book_stack_push_marks_active_integration_unhealthy_when_credentials_are_missing(): void
+    {
+        Http::fake();
+
+        Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'two_way_sync_enabled' => true,
+            ],
+        ]);
+
+        (new PushPendingKnowledgeToBookStack())->handle();
+
+        $integration = Integration::where('type', 'book_stack')->firstOrFail();
+
+        $this->assertFalse($integration->is_healthy);
+        $this->assertSame('BookStack scheduled push is missing server, token id, or token secret.', $integration->last_error);
+        Http::assertNothingSent();
     }
 
     #[Test]

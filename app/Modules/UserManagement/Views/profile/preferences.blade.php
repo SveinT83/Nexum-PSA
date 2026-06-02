@@ -9,7 +9,7 @@
 @section('pageHeader')
     <div class="col">
         <h1 class="h4 mb-1">User Preferences</h1>
-        <div class="text-muted small">Personal defaults used across tdPSA.</div>
+        <div class="text-muted small">Personal defaults used across the Nexum PSA workspace.</div>
     </div>
 @endsection
 
@@ -66,8 +66,8 @@
                             <div class="col-md-6">
                                 <label for="theme" class="form-label">Theme</label>
                                 <select id="theme" name="theme" class="form-select @error('theme') is-invalid @enderror">
-                                    @foreach(['system' => 'System default', 'light' => 'Light', 'dark' => 'Dark'] as $theme => $label)
-                                        <option value="{{ $theme }}" @selected(old('theme', data_get($preferences->settings, 'theme', 'system')) === $theme)>{{ $label }}</option>
+                                    @foreach(['company' => 'Company default', 'light' => 'Light', 'dark' => 'Dark', 'system' => 'Browser system'] as $theme => $label)
+                                        <option value="{{ $theme }}" @selected(old('theme', data_get($preferences->settings, 'theme', 'company')) === $theme)>{{ $label }}</option>
                                     @endforeach
                                 </select>
                                 @error('theme')

@@ -14,7 +14,7 @@ use Illuminate\Support\Arr;
  * Pushes locally-owned Knowledge content into BookStack.
  *
  * This is the first two-way sync path: local shelves, books, and pages are
- * created in BookStack, then marked as BookStack-backed records in tdPSA.
+ * created in BookStack, then marked as BookStack-backed records in Nexum PSA.
  */
 class PushKnowledgeToBookStack
 {

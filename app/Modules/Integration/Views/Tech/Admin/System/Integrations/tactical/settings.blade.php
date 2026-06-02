@@ -177,7 +177,7 @@
         </div>
 
         <div class="card-body text-center">
-            <p>This system handles the synchronization of clients, sites, and assets between tdPSA and Tactical RMM.</p>
+            <p>This system handles the synchronization of clients, sites, and assets between Nexum PSA and Tactical RMM.</p>
 
             <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#docModal">
                 <i class="bi bi-info-circle"></i> View Documentation

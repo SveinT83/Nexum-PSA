@@ -85,12 +85,12 @@
                     @forelse($categories as $category)
                         <tr>
                             <td>
-                                <a href="#"
-                                   class="fw-bold text-decoration-none"
-                                   data-bs-toggle="modal"
-                                   data-bs-target="#editCategoryModal{{ $category->id }}">
+                                <button type="button"
+                                        class="btn btn-link fw-bold text-decoration-none p-0 align-baseline"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editCategoryModal{{ $category->id }}">
                                     {{ $category->name }}
-                                </a>
+                                </button>
                                 @if($category->description)
                                     <br><small class="text-muted">{{ Str::limit($category->description, 50) }}</small>
                                 @endif

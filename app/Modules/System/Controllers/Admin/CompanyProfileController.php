@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class CompanyProfileController extends Controller
@@ -61,6 +62,7 @@ class CompanyProfileController extends Controller
             'primary_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'secondary_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'accent_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'default_theme' => ['required', Rule::in(['light', 'dark', 'system'])],
             'light_header_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'light_header_color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'light_footer_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],

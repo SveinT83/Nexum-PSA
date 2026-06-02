@@ -6,7 +6,7 @@ use App\Models\Risk\RiskAssessment;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
- * Read model for listing risk assessments in the active tdPSA context.
+ * Read model for listing risk assessments in the active Nexum PSA context.
  *
  * Query objects keep controller methods small and make context-sensitive list
  * behavior easier to reuse from future dashboard widgets or API endpoints.

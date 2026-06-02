@@ -143,7 +143,7 @@ class AiSettings extends Component
             'name' => 'Knowledge Assistant',
             'slug' => '',
             'model' => '',
-            'instructions' => 'Answer using the allowed tdPSA data sources. Prefer Knowledge articles when available, cite the records used, and do not perform actions unless this agent explicitly has API action permission.',
+            'instructions' => 'Answer using the allowed Nexum PSA data sources. Prefer Knowledge articles when available, cite the records used, and do not perform actions unless this agent explicitly has API action permission.',
             'data_sources' => ['knowledge'],
             'allowed_tools' => ['knowledge.search'],
             'allowed_api_scopes' => [],

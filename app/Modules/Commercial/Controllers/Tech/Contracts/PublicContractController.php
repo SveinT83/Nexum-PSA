@@ -4,6 +4,7 @@ namespace App\Modules\Commercial\Controllers\Tech\Contracts;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Http\Request;
 
 class PublicContractController extends Controller
@@ -11,7 +12,7 @@ class PublicContractController extends Controller
     /**
      * Display the contract for the customer.
      */
-    public function view($token)
+    public function view($token, CompanyProfileSettings $companyProfile)
     {
         $contract = Contracts::with(['client', 'sla', 'items.slaPolicy', 'items.timeRates'])
             ->where('secure_token', $token)
@@ -26,6 +27,7 @@ class PublicContractController extends Controller
 
         return view('commercial::Tech.cs.contracts.public.view', [
             'contract' => $contract,
+            'companyProfile' => $companyProfile->get(),
         ]);
     }
 

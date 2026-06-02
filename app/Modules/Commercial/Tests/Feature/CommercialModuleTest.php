@@ -23,6 +23,7 @@ use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\Terms\terms as CommercialTerm;
 use App\Modules\Commercial\Models\TimeRate;
+use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
@@ -281,6 +282,34 @@ class CommercialModuleTest extends TestCase
     }
 
     #[Test]
+    public function commercial_admin_settings_pages_do_not_render_legacy_view_specs(): void
+    {
+        $this->assertSame('/tech/admin/settings/cs/contracts', route('tech.admin.settings.cs.contracts', absolute: false));
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.cs.contracts'))
+            ->assertOk()
+            ->assertSee('Commercial Contract Settings')
+            ->assertSee(route('tech.contracts.index'), false)
+            ->assertSee(route('tech.sla.index'), false)
+            ->assertDontSee('View Specification')
+            ->assertDontSee('Status: Not completed');
+
+        $this->actingAs($this->admin)
+            ->get('/tech/admin/settings/cs/contacts')
+            ->assertRedirect('/tech/admin/settings/cs/contracts');
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.cs.services'))
+            ->assertOk()
+            ->assertSee('Commercial Service Settings')
+            ->assertSee(route('tech.services.index'), false)
+            ->assertSee(route('tech.packages.index'), false)
+            ->assertDontSee('View Specification')
+            ->assertDontSee('Status: Not completed');
+    }
+
+    #[Test]
     public function contract_index_can_search_filter_and_sort_contracts(): void
     {
         $acme = Client::factory()->create(['name' => 'Acme Managed Services']);
@@ -524,6 +553,78 @@ class CommercialModuleTest extends TestCase
             ->get(route('tech.admin.settings.economy.units'))
             ->assertOk()
             ->assertViewIs('commercial::Admin.economy.units.index');
+    }
+
+    #[Test]
+    public function admin_creates_units_with_post_only_and_updates_common_code(): void
+    {
+        $this->assertContains('POST', Route::getRoutes()->getByName('tech.admin.settings.economy.units.store')->methods());
+
+        $this->actingAs($this->admin)
+            ->get('/tech/admin/settings/economy/units/store')
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('units', 0);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.economy.units.store'))
+            ->assertRedirect(route('tech.admin.settings.economy.units'));
+
+        $unit = Units::query()->firstOrFail();
+
+        $this->assertSame('xxx', $unit->name);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.economy.units.update', $unit), [
+                'action' => 'update',
+                'name' => 'Hour',
+                'short' => 'h',
+                'common_code' => 'HUR',
+            ])
+            ->assertRedirect(route('tech.admin.settings.economy.units'));
+
+        $unit->refresh();
+
+        $this->assertSame('Hour', $unit->name);
+        $this->assertSame('h', $unit->short);
+        $this->assertSame('HUR', $unit->common_code);
+    }
+
+    #[Test]
+    public function cost_deletion_is_delete_only(): void
+    {
+        $unit = Units::query()->create([
+            'name' => 'Hour',
+            'short' => 'h',
+            'common_code' => 'HUR',
+        ]);
+        $vendor = Vendor::query()->create([
+            'name' => 'Vendor AS',
+        ]);
+        $cost = Cost::query()->create([
+            'name' => 'Endpoint license',
+            'cost' => 120,
+            'unitId' => $unit->id,
+            'recurrence' => 'month',
+            'vendor_id' => $vendor->id,
+            'note' => 'Monthly endpoint cost.',
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        $this->assertContains('DELETE', Route::getRoutes()->getByName('tech.costs.delete')->methods());
+
+        $this->actingAs($this->tech)
+            ->get('/tech/costs/delete/'.$cost->id)
+            ->assertStatus(405);
+
+        $this->assertDatabaseHas('costs', ['id' => $cost->id]);
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.costs.delete', $cost))
+            ->assertRedirect(route('tech.costs.index'));
+
+        $this->assertDatabaseMissing('costs', ['id' => $cost->id]);
     }
 
     #[Test]
@@ -811,6 +912,29 @@ class CommercialModuleTest extends TestCase
     }
 
     #[Test]
+    public function public_contract_uses_company_profile_brand_name(): void
+    {
+        app(CompanyProfileSettings::class)->update([
+            'company_name' => 'Tronder Data',
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Brand Client']);
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'Brand-aware public contract.',
+            'start_date' => now()->toDateString(),
+            'approval_status' => 'sent_quote',
+            'secure_token' => 'public-brand-token',
+            'created_by' => $this->tech->id,
+        ]);
+
+        $this->get(route('contracts.public.view', $contract->secure_token))
+            ->assertOk()
+            ->assertSee('Tronder Data')
+            ->assertDontSee('tdPSA');
+    }
+
+    #[Test]
     public function tech_user_can_open_sla_show_view(): void
     {
         $this->assertSame(
@@ -927,7 +1051,9 @@ class CommercialModuleTest extends TestCase
             ->assertOk()
             ->assertSee('SLA Policy')
             ->assertSee('Use current system default SLA')
-            ->assertSee('Contract support');
+            ->assertSee('Contract support')
+            ->assertDontSee('View Specification')
+            ->assertDontSee('Status: Not completed');
 
         $this->actingAs($this->tech)
             ->post(route('tech.contracts.store'), [

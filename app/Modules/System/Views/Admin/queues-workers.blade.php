@@ -14,6 +14,8 @@
 @endsection
 
 @section('content')
+    @php($applicationPath = $basePath ?? base_path())
+
     <!-- -------------------------------------------------------------------------------------------------- -->
     <!-- Queue status overview -->
     <!-- Shows what Laravel can observe from configured queue tables without assuming a specific process manager. -->
@@ -217,18 +219,18 @@
                 <div class="modal-body">
                     <h5>Scheduler cron</h5>
                     <p class="text-muted">Laravel's scheduler should be called every minute. It can dispatch scheduled queue jobs and maintenance tasks.</p>
-                    <pre><code>* * * * * cd /var/Projects/tdPSA && php artisan schedule:run >> /dev/null 2>&1</code></pre>
+                    <pre><code>* * * * * cd {{ $applicationPath }} && php artisan schedule:run >> /dev/null 2>&1</code></pre>
 
                     <h5>Manual worker command</h5>
                     <p class="text-muted">Useful while developing or debugging. Stop with Ctrl+C.</p>
-                    <pre><code>cd /var/Projects/tdPSA
+                    <pre><code>cd {{ $applicationPath }}
 php artisan queue:work --queue={{ $status['worker_queues'] }} --sleep=3 --tries=3 --timeout=120</code></pre>
 
                     <h5>Supervisor example</h5>
                     <p class="text-muted">Recommended for long-running workers on a traditional Linux server.</p>
                     <pre><code>[program:tdpsa-worker]
 process_name=%(program_name)s_%(process_num)02d
-command=php /var/Projects/tdPSA/artisan queue:work --queue={{ $status['worker_queues'] }} --sleep=3 --tries=3 --timeout=120
+command=php {{ $applicationPath }}/artisan queue:work --queue={{ $status['worker_queues'] }} --sleep=3 --tries=3 --timeout=120
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -236,17 +238,17 @@ killasgroup=true
 user=www-data
 numprocs=2
 redirect_stderr=true
-stdout_logfile=/var/Projects/tdPSA/storage/logs/worker.log
+stdout_logfile={{ $applicationPath }}/storage/logs/worker.log
 stopwaitsecs=3600</code></pre>
 
                     <h5>systemd example</h5>
                     <p class="text-muted">Use this style when systemd owns application processes.</p>
                     <pre><code>[Unit]
-Description=tdPSA Laravel queue worker
+Description=Nexum PSA Laravel queue worker
 After=network.target
 
 [Service]
-WorkingDirectory=/var/Projects/tdPSA
+WorkingDirectory={{ $applicationPath }}
 ExecStart=/usr/bin/php artisan queue:work --queue={{ $status['worker_queues'] }} --sleep=3 --tries=3 --timeout=120
 Restart=always
 RestartSec=5

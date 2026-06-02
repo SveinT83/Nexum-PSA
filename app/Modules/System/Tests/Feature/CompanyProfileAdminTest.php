@@ -70,6 +70,7 @@ class CompanyProfileAdminTest extends TestCase
             ->assertSee('Theme Surfaces')
             ->assertSee('Live Preview')
             ->assertSee('Light mode logo')
+            ->assertSee('Default workspace theme')
             ->assertSee('Header background')
             ->assertSee('Primary button background')
             ->assertSee('Reset to default');
@@ -146,6 +147,7 @@ class CompanyProfileAdminTest extends TestCase
                 'primary_color' => '#123456',
                 'secondary_color' => '#654321',
                 'accent_color' => '#20c997',
+                'default_theme' => 'dark',
                 'light_header_background' => '#101010',
                 'dark_header_background' => '#202020',
                 'light_primary_button_background' => '#303030',
@@ -162,9 +164,31 @@ class CompanyProfileAdminTest extends TestCase
         $this->assertSame('#123456', $payload['primary_color']);
         $this->assertSame('#654321', $payload['secondary_color']);
         $this->assertSame('#20c997', $payload['accent_color']);
+        $this->assertSame('dark', $payload['default_theme']);
         $this->assertSame('#101010', $payload['light_header_background']);
         $this->assertSame('#202020', $payload['dark_header_background']);
         $this->assertSame('#303030', $payload['light_primary_button_background']);
+    }
+
+    #[Test]
+    public function tech_layout_uses_company_default_theme_when_user_has_no_override(): void
+    {
+        CommonSetting::query()->create([
+            'type' => 'company_profile',
+            'name' => 'branding',
+            'value' => 'Tronder Data',
+            'json' => json_encode([
+                'company_name' => 'Tronder Data',
+                'default_theme' => 'dark',
+            ]),
+        ]);
+
+        $html = $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.branding.edit'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('data-bs-theme="dark"', $html);
     }
 
     #[Test]
@@ -194,6 +218,7 @@ class CompanyProfileAdminTest extends TestCase
         $this->assertStringContainsString('--nexum-primary-button-bg: #FF6D1F;', $html);
         $this->assertStringContainsString('--bs-primary: #123456;', $html);
         $this->assertStringContainsString('--bs-primary-rgb: 18, 52, 86;', $html);
+        $this->assertStringContainsString('&copy; '.date('Y').' Tronder Data. All rights reserved.', $html);
     }
 
     #[Test]
@@ -278,6 +303,7 @@ class CompanyProfileAdminTest extends TestCase
             'primary_color' => '#FF6D1F',
             'secondary_color' => '#fc7730',
             'accent_color' => '#faba98',
+            'default_theme' => 'light',
             'light_header_background' => '#333333',
             'light_header_color' => '#ffffff',
             'light_footer_background' => '#333333',

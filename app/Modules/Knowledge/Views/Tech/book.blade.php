@@ -103,7 +103,7 @@
             @if($book->shelf)
                 <div class="mb-2"><span class="text-muted">Shelf:</span> {{ $book->shelf->name }}</div>
             @endif
-            <div class="mb-2"><span class="text-muted">Source:</span> {{ $isLocalBook ? 'Local tdPSA' : ucfirst(str_replace('_', ' ', $book->source_system)) }}</div>
+            <div class="mb-2"><span class="text-muted">Source:</span> {{ $isLocalBook ? 'Local Nexum PSA' : ucfirst(str_replace('_', ' ', $book->source_system)) }}</div>
             <div class="mb-2"><span class="text-muted">Chapters:</span> {{ $book->chapters->count() }}</div>
             <div class="mb-3"><span class="text-muted">Direct pages:</span> {{ $book->pages->count() }}</div>
             @if($book->source_url)

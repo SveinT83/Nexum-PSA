@@ -31,7 +31,10 @@ Route::middleware(['auth', 'tech', 'admin', 'tech.permission'])->group(function 
         // -----------------------------------------
         // Contracts & Services Settings
         // -----------------------------------------
-        Route::get('/admin/settings/cs/contacts', function () {
+        Route::redirect('/admin/settings/cs/contacts', '/tech/admin/settings/cs/contracts')
+            ->name('admin.settings.cs.contracts.legacy');
+
+        Route::get('/admin/settings/cs/contracts', function () {
             return view('tech.admin.settings.cs.contracts');
         })->name('admin.settings.cs.contracts');
 
