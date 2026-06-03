@@ -98,6 +98,8 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.tickets');
     Route::post('/admin/settings/tickets/default-email-account', [TicketSettingsController::class, 'updateDefaultEmailAccount'])
         ->name('admin.settings.tickets.default-email-account.update');
+    Route::post('/admin/settings/tickets/solution-policy', [TicketSettingsController::class, 'updateSolutionPolicy'])
+        ->name('admin.settings.tickets.solution-policy.update');
     Route::post('/admin/settings/tickets/merge-settings', [TicketSettingsController::class, 'updateMergeSettings'])
         ->name('admin.settings.tickets.merge-settings.update');
     Route::post('/admin/settings/tickets/queues', [TicketSettingsController::class, 'storeQueue'])

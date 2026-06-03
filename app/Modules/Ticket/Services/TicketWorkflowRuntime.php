@@ -6,6 +6,7 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
+use App\Modules\Ticket\Support\TicketSolutionPolicy;
 
 class TicketWorkflowRuntime
 {
@@ -170,6 +171,13 @@ class TicketWorkflowRuntime
     {
         return $ticket->messages()
             ->where('metadata->is_solution', true)
+            ->where(function ($query) {
+                $query->where('type', 'customer_reply');
+
+                if (app(TicketSolutionPolicy::class)->allowsInternalSolutionNotes()) {
+                    $query->orWhere('type', 'internal_note');
+                }
+            })
             ->exists();
     }
 

@@ -65,7 +65,10 @@
                     <select id="contact_id" name="contact_id" class="form-select @error('contact_id') is-invalid @enderror">
                         <option value="">No contact</option>
                         @foreach ($contacts as $contact)
-                            <option value="{{ $contact->id }}" @selected(old('contact_id', $ticket->contact_id) == $contact->id)>
+                            <option
+                                value="{{ $contact->id }}"
+                                data-client-id="{{ $contact->site?->client_id }}"
+                                @selected(old('contact_id', $ticket->contact_id) == $contact->id)>
                                 {{ $contact->name }}
                                 @if($contact->email)
                                     - {{ $contact->email }}
@@ -226,7 +229,41 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const clientSelect = document.getElementById('client_id');
+            const contactSelect = document.getElementById('contact_id');
             const normalizeTag = (value) => value.trim().replace(/\s+/g, ' ');
+
+            const syncContactOptions = () => {
+                if (!clientSelect || !contactSelect) {
+                    return;
+                }
+
+                const selectedClientId = clientSelect.value;
+                let selectedContactIsVisible = contactSelect.value === '';
+
+                Array.from(contactSelect.options).forEach((option) => {
+                    if (!option.value) {
+                        option.hidden = false;
+                        return;
+                    }
+
+                    const visible = selectedClientId !== '' && option.dataset.clientId === selectedClientId;
+                    option.hidden = !visible;
+
+                    if (visible && option.selected) {
+                        selectedContactIsVisible = true;
+                    }
+                });
+
+                if (!selectedContactIsVisible) {
+                    contactSelect.value = '';
+                }
+
+                contactSelect.disabled = selectedClientId === '';
+            };
+
+            clientSelect?.addEventListener('change', syncContactOptions);
+            syncContactOptions();
 
             document.querySelectorAll('[data-ticket-tag-input]').forEach((container) => {
                 const input = container.querySelector('.ticket-tag-input__field');

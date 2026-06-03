@@ -33,6 +33,32 @@
         </form>
     </x-card.default>
 
+    <!-- Solution policy: controls whether internal notes can satisfy workflow solution requirements. -->
+    <x-card.default title="Solution Policy">
+        <form method="POST" action="{{ route('tech.admin.settings.tickets.solution-policy.update') }}">
+            @csrf
+
+            <input type="hidden" name="allow_internal_solution_notes" value="0">
+            <div class="form-check form-switch mb-3">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="allow_internal_solution_notes"
+                    name="allow_internal_solution_notes"
+                    value="1"
+                    @checked($solutionPolicy['allow_internal_solution_notes'] ?? true)>
+                <label class="form-check-label" for="allow_internal_solution_notes">
+                    Allow internal notes to be marked as ticket solutions
+                </label>
+                <div class="form-text">
+                    Enables Internal solution in the ticket composer for RMM and asset-driven tickets where no customer email should be sent.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save solution policy</button>
+        </form>
+    </x-card.default>
+
     <!-- Ticket merge settings: manual merge is always available; automation and suggestions are explicitly controlled. -->
     <x-card.default title="Ticket Merging">
         <form method="POST" action="{{ route('tech.admin.settings.tickets.merge-settings.update') }}">

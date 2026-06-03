@@ -52,6 +52,7 @@
     @php
         $canReplyToContact = $replyContacts->isNotEmpty() && ($ticketActions['customer_reply'] ?? true);
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
+        $allowInternalSolutionNotes = $solutionPolicy['allow_internal_solution_notes'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
         $selectedMessageType = old('type', $defaultMessageType);
         $selectedReplyIntent = old('reply_intent', \App\Modules\Ticket\Support\TicketAction::CUSTOMER_UPDATE);
@@ -463,7 +464,9 @@
                                             @endif
                                             @if($canAddInternalNote)
                                                 <option value="internal_note" @selected($selectedMessageType === 'internal_note')>Internal note</option>
-                                                <option value="internal_solution" @selected($selectedMessageType === 'internal_solution')>Internal solution</option>
+                                                @if($allowInternalSolutionNotes)
+                                                    <option value="internal_solution" @selected($selectedMessageType === 'internal_solution')>Internal solution</option>
+                                                @endif
                                             @endif
                                         </select>
                                         @error('type')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -508,9 +511,13 @@
                                     </div>
                                 </div>
 
-                                @if (! $canReplyToContact)
+                                @if (! $canReplyToContact && $allowInternalSolutionNotes)
                                     <div class="alert alert-warning">
                                         This ticket has no contact with an email address. Use an internal solution to document the fix without sending email.
+                                    </div>
+                                @elseif(! $canReplyToContact)
+                                    <div class="alert alert-warning">
+                                        This ticket has no contact with an email address. Internal solution notes are disabled by Ticket settings.
                                     </div>
                                 @endif
 

@@ -84,6 +84,11 @@ Public technician replies can be marked as the solution. Workflows can require a
 
 This prevents tickets from being resolved without a clear answer visible in the conversation.
 
+Ticket Settings can also allow internal solution notes. When enabled, `Internal solution` records a
+technician-only fix and can satisfy solution requirements without sending customer email. This is the
+default beta behavior for RMM and asset-driven tickets. When disabled, internal notes can still be
+added, but only public technician solution replies satisfy workflow solution requirements.
+
 ## Action Guard
 
 `TicketActionGuard` centralizes basic safety checks.

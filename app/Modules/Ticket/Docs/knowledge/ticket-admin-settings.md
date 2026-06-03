@@ -71,6 +71,18 @@ Workflow settings define state transitions, requirements, manual buttons, and au
 
 The Livewire workflow editor is the primary admin UI for workflow configuration.
 
+## Solution Policy
+
+Ticket Settings controls whether internal notes may be marked as ticket solutions.
+
+When `Allow internal notes to be marked as ticket solutions` is enabled, technicians can use
+`Internal solution` in the ticket composer. This records the fix without sending customer email and
+can satisfy workflow solution requirements. This is useful for RMM and asset-driven tickets where
+there may be no customer contact or where a customer-visible RMM reply would be noise.
+
+When disabled, only public technician replies marked as solution satisfy workflow solution
+requirements. Internal notes remain available, but they do not count as selected solutions.
+
 ## Merge Settings
 
 Merge settings include:
