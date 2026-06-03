@@ -50,7 +50,7 @@
 @section('content')
 <div class="container-fluid">
     @php
-        $canReplyToContact = filled($ticket->contact?->email) && ($ticketActions['customer_reply'] ?? true);
+        $canReplyToContact = $replyContacts->isNotEmpty() && ($ticketActions['customer_reply'] ?? true);
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
         $selectedMessageType = old('type', $defaultMessageType);
@@ -136,6 +136,7 @@
                                         $costCollapseId = 'ticketCostEntryCollapse' . $costEntry->id;
                                         $costHeadingId = 'ticketCostEntryHeading' . $costEntry->id;
                                         $costText = $costEntry->invoice_text ?: $costEntry->item_name;
+                                        $costTypeLabel = $costEntry->storage_item_id ? 'Storage cost' : 'Manual cost';
                                     @endphp
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="{{ $costHeadingId }}">
@@ -147,7 +148,7 @@
                                                 aria-expanded="false"
                                                 aria-controls="{{ $costCollapseId }}">
                                                 <span class="d-flex align-items-center gap-2 w-100 pe-3 text-start min-w-0">
-                                                    <span class="fw-semibold flex-shrink-0">Cost</span>
+                                                    <span class="fw-semibold flex-shrink-0">{{ $costTypeLabel }}</span>
                                                     <span class="badge text-bg-light border flex-shrink-0">{{ $costEntry->quantity }} pcs</span>
                                                     <span class="small text-muted text-truncate flex-shrink-0" style="max-width: 14rem;">{{ $costEntry->user?->name ?? 'Technician' }}</span>
                                                     <span class="small text-body text-truncate min-w-0 flex-grow-1">
@@ -221,7 +222,7 @@
                                                     <div style="white-space: pre-wrap;">{{ $costEntry->note }}</div>
                                                 @endif
                                                 <div class="d-flex flex-wrap gap-1 mt-3">
-                                                    <span class="badge text-bg-light border">Reservation: {{ ucfirst($costEntry->status) }}</span>
+                                                    <span class="badge text-bg-light border">{{ $costEntry->storage_item_id ? 'Reservation' : 'Cost' }}: {{ ucfirst($costEntry->status) }}</span>
                                                     <span class="badge text-bg-light border">Billing: {{ ucfirst($costEntry->billing_status) }}</span>
                                                 </div>
                                             </div>
@@ -462,6 +463,7 @@
                                             @endif
                                             @if($canAddInternalNote)
                                                 <option value="internal_note" @selected($selectedMessageType === 'internal_note')>Internal note</option>
+                                                <option value="internal_solution" @selected($selectedMessageType === 'internal_solution')>Internal solution</option>
                                             @endif
                                         </select>
                                         @error('type')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -508,7 +510,7 @@
 
                                 @if (! $canReplyToContact)
                                     <div class="alert alert-warning">
-                                        This ticket has no contact with an email address. Only internal notes are available until a contact email is added.
+                                        This ticket has no contact with an email address. Use an internal solution to document the fix without sending email.
                                     </div>
                                 @endif
 
@@ -670,6 +672,18 @@
                 <div class="modal-body">
                     <div class="row g-2">
                         <div class="col-12">
+                            <label class="form-label">Cost type</label>
+                            <div class="btn-group w-100" role="group" aria-label="Cost type">
+                                <input type="radio" class="btn-check" name="cost_mode" id="cost_mode_storage" value="storage" autocomplete="off" @checked(old('cost_mode', 'storage') === 'storage')>
+                                <label class="btn btn-outline-secondary" for="cost_mode_storage">Storage item</label>
+
+                                <input type="radio" class="btn-check" name="cost_mode" id="cost_mode_manual" value="manual" autocomplete="off" @checked(old('cost_mode') === 'manual')>
+                                <label class="btn btn-outline-secondary" for="cost_mode_manual">Manual cost</label>
+                            </div>
+                            @error('cost_mode')<div class="text-danger small">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="col-12" data-cost-storage-fields>
                             <label for="cost_storage_item_search" class="form-label">Storage item</label>
                             <input id="cost_storage_item_id" name="storage_item_id" type="hidden" value="{{ old('storage_item_id') }}">
                             <input
@@ -702,7 +716,24 @@
                             </div>
                             <div id="cost_storage_item_no_results" class="text-muted small mt-2 d-none">No matching storage items.</div>
                         </div>
-                        <div class="col-md-4">
+
+                        <div class="col-md-6 d-none" data-cost-manual-fields>
+                            <label for="cost_item_name" class="form-label">Cost name</label>
+                            <input id="cost_item_name" name="item_name" type="text" class="form-control @error('item_name') is-invalid @enderror" value="{{ old('item_name') }}">
+                            @error('item_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-3 d-none" data-cost-manual-fields>
+                            <label for="cost_unit_price_ex_vat" class="form-label">Unit price ex VAT</label>
+                            <input id="cost_unit_price_ex_vat" name="unit_price_ex_vat" type="number" min="0" step="0.01" class="form-control @error('unit_price_ex_vat') is-invalid @enderror" value="{{ old('unit_price_ex_vat') }}">
+                            @error('unit_price_ex_vat')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-3 d-none" data-cost-manual-fields>
+                            <label for="cost_currency" class="form-label">Currency</label>
+                            <input id="cost_currency" name="currency" type="text" maxlength="3" class="form-control @error('currency') is-invalid @enderror" value="{{ old('currency', 'NOK') }}">
+                            @error('currency')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="col-md-4" data-cost-storage-fields>
                             <label for="cost_unit_price" class="form-label">Unit price</label>
                             <input id="cost_unit_price" type="text" class="form-control" value="-" readonly>
                         </div>
@@ -711,7 +742,7 @@
                             <input id="cost_quantity" name="quantity" type="number" min="1" step="1" class="form-control @error('quantity') is-invalid @enderror" value="{{ old('quantity', 1) }}" required>
                             @error('quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4" data-cost-storage-fields>
                             <label for="cost_total_price" class="form-label">Total</label>
                             <input id="cost_total_price" type="text" class="form-control" value="-" readonly>
                         </div>
@@ -729,7 +760,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" @disabled($storageItems->where('available', '>', 0)->isEmpty())>Reserve item</button>
+                    <button type="submit" class="btn btn-primary">Save cost</button>
                 </div>
             </form>
         </div>
@@ -814,6 +845,9 @@
         const costUnitPrice = document.getElementById('cost_unit_price');
         const costTotalPrice = document.getElementById('cost_total_price');
         const costInvoiceText = document.getElementById('cost_invoice_text');
+        const costModeInputs = Array.from(document.querySelectorAll('input[name="cost_mode"]'));
+        const costStorageFields = Array.from(document.querySelectorAll('[data-cost-storage-fields]'));
+        const costManualFields = Array.from(document.querySelectorAll('[data-cost-manual-fields]'));
         let selectedCostItem = null;
         const stopwatchDisplay = document.getElementById('ticketStopwatchDisplay');
         const stopwatchState = document.getElementById('ticketStopwatchState');
@@ -833,12 +867,13 @@
                 type.value = value;
             }
 
-            const isInternal = type.value === 'internal_note';
+            const isInternal = type.value === 'internal_note' || type.value === 'internal_solution';
+            const isInternalSolution = type.value === 'internal_solution';
 
             visibility.value = isInternal ? 'internal' : 'public';
             replyRecipientGroup.classList.toggle('d-none', isInternal);
             replyIntentGroup.classList.toggle('d-none', isInternal);
-            notifyTechnicianGroup.classList.toggle('d-none', ! isInternal);
+            notifyTechnicianGroup.classList.toggle('d-none', ! isInternal || isInternalSolution);
         };
 
         type.addEventListener('change', function () {
@@ -1093,6 +1128,14 @@
             }
         };
 
+        const syncCostMode = function () {
+            const mode = costModeInputs.find((input) => input.checked)?.value || 'storage';
+            const isManual = mode === 'manual';
+
+            costStorageFields.forEach((element) => element.classList.toggle('d-none', isManual));
+            costManualFields.forEach((element) => element.classList.toggle('d-none', ! isManual));
+        };
+
         const filterCostSuggestions = function () {
             const search = costItemSearch?.value.trim().toLowerCase() || '';
             let visibleCount = 0;
@@ -1130,6 +1173,10 @@
             syncCostPreview(false);
         });
 
+        costModeInputs.forEach(function (input) {
+            input.addEventListener('change', syncCostMode);
+        });
+
         document.querySelectorAll('.cost-storage-suggestion').forEach(function (button) {
             button.addEventListener('click', function () {
                 if (button.disabled || button.classList.contains('disabled')) {
@@ -1147,6 +1194,7 @@
 
         filterCostSuggestions();
         syncCostPreview(false);
+        syncCostMode();
 
         document.querySelectorAll('.ticket-edit-cost').forEach(function (button) {
             button.addEventListener('click', function () {

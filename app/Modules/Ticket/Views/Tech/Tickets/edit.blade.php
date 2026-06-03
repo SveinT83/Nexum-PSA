@@ -45,18 +45,41 @@
         </x-card.default>
 
         <x-card.default title="Client and contact">
-            <dl class="row mb-3 small">
-                <dt class="col-sm-3">Client</dt>
-                <dd class="col-sm-9">{{ $ticket->client?->name ?? 'Unassigned' }}</dd>
-                <dt class="col-sm-3">Contact</dt>
-                <dd class="col-sm-9">
-                    @if ($ticket->contact)
-                        {{ $ticket->contact->name }}@if ($ticket->contact->email) - {{ $ticket->contact->email }}@endif
-                    @else
-                        No contact
-                    @endif
-                </dd>
-            </dl>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="client_id" class="form-label">Client</label>
+                    <select id="client_id" name="client_id" class="form-select @error('client_id') is-invalid @enderror">
+                        <option value="">Unassigned</option>
+                        @foreach ($clients as $client)
+                            <option value="{{ $client->id }}" @selected(old('client_id', $ticket->client_id) == $client->id)>
+                                {{ $client->name }}@if($client->client_number) ({{ $client->client_number }})@endif
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('client_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text">Saving after changing client uses the client's default site when no site is selected.</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="contact_id" class="form-label">Contact</label>
+                    <select id="contact_id" name="contact_id" class="form-select @error('contact_id') is-invalid @enderror">
+                        <option value="">No contact</option>
+                        @foreach ($contacts as $contact)
+                            <option value="{{ $contact->id }}" @selected(old('contact_id', $ticket->contact_id) == $contact->id)>
+                                {{ $contact->name }}
+                                @if($contact->email)
+                                    - {{ $contact->email }}
+                                @endif
+                                @if($contact->site?->client)
+                                    ({{ $contact->site->client->name }})
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('contact_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text">The selected contact must belong to the selected client.</div>
+                </div>
+            </div>
 
             <div class="mb-3">
                 <label for="site_id" class="form-label">Site</label>

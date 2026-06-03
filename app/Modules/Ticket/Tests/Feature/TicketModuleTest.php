@@ -129,7 +129,11 @@ class TicketModuleTest extends TestCase
             ->assertSee('ticket_index_search')
             ->assertSee('ticketIndexFiltersCollapse')
             ->assertSee('ticket_index_status_id')
-            ->assertSee('New ticket');
+            ->assertSee('New ticket')
+            ->assertSee('lifecycle=open&amp;ownership=all', false)
+            ->assertSee('lifecycle=all&amp;ownership=mine', false)
+            ->assertSee('lifecycle=all&amp;ownership=all&amp;unread=1', false)
+            ->assertSee('lifecycle=all&amp;ownership=all&amp;unassigned=1', false);
 
         $this->assertDatabaseHas('ticket_queues', ['slug' => 'support', 'is_default' => true]);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'new', 'is_default' => true]);
@@ -1131,6 +1135,65 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function tech_user_can_add_manual_ticket_cost_without_storage_item(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999147',
+            'owner_id' => $this->tech->id,
+        ]);
+        $warehouse = StorageWarehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+        $item = StorageItem::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'STOCK-ITEM',
+            'name' => 'Stock Item',
+            'sale_price' => 100,
+            'qty_on_hand' => 5,
+            'qty_reserved' => 0,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'cost_mode' => 'manual',
+                'item_name' => 'Parking fee',
+                'quantity' => 1,
+                'unit_price_ex_vat' => 75,
+                'currency' => 'NOK',
+                'invoice_text' => 'Parking fee during onsite support.',
+                'note' => 'Receipt stored separately.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame(0, StorageReservation::count());
+        $this->assertSame(0, $item->refresh()->qty_reserved);
+        $this->assertDatabaseHas('ticket_cost_entries', [
+            'ticket_id' => $ticket->id,
+            'storage_item_id' => null,
+            'storage_reservation_id' => null,
+            'quantity' => 1,
+            'item_name' => 'Parking fee',
+            'unit_price_ex_vat' => '75.00',
+            'currency' => 'NOK',
+            'status' => 'manual',
+            'billing_status' => 'pending',
+            'invoice_text' => 'Parking fee during onsite support.',
+        ]);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'manual_cost_added',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Manual cost')
+            ->assertSee('Parking fee during onsite support.');
+    }
+
+    #[Test]
     public function ticket_show_displays_top_three_relevant_knowledge_articles(): void
     {
         $ticket = $this->createTicket(null, [
@@ -1443,6 +1506,73 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function technician_can_assign_unassigned_ticket_to_client_and_contact_from_edit_form(): void
+    {
+        $client = Client::factory()->create(['name' => 'Reassign Client']);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Default Site',
+            'is_default' => true,
+        ]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Reassign Contact',
+            'email' => 'reassign@example.com',
+        ]);
+        $otherContact = ClientUser::factory()->create(['name' => 'Other Client Contact']);
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999064',
+            'client_id' => null,
+            'site_id' => null,
+            'contact_id' => null,
+            'subject' => 'Unassigned customer ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.edit', $ticket))
+            ->assertOk()
+            ->assertSee('Reassign Client')
+            ->assertSee('Reassign Contact');
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.tickets.edit', $ticket))
+            ->patch(route('tech.tickets.update', $ticket), [
+                'subject' => 'Unassigned customer ticket',
+                'description' => null,
+                'queue_id' => $ticket->queue_id,
+                'status_id' => $ticket->status_id,
+                'priority_id' => $ticket->priority_id,
+                'client_id' => $client->id,
+                'contact_id' => $otherContact->id,
+                'owner_id' => $this->tech->id,
+            ])
+            ->assertSessionHasErrors('contact_id');
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.update', $ticket), [
+                'subject' => 'Assigned customer ticket',
+                'description' => 'Client context added.',
+                'queue_id' => $ticket->queue_id,
+                'status_id' => $ticket->status_id,
+                'priority_id' => $ticket->priority_id,
+                'client_id' => $client->id,
+                'contact_id' => $contact->id,
+                'owner_id' => $this->tech->id,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $ticket->refresh();
+
+        $this->assertSame($client->id, $ticket->client_id);
+        $this->assertSame($site->id, $ticket->site_id);
+        $this->assertSame($contact->id, $ticket->contact_id);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'fields_updated',
+        ]);
+    }
+
+    #[Test]
     public function create_ticket_form_prioritizes_contact_assets_before_site_assets(): void
     {
         $client = Client::factory()->create(['name' => 'Asset Client']);
@@ -1612,6 +1742,45 @@ class TicketModuleTest extends TestCase
             'visibility' => 'internal',
             'body' => 'Internal note.',
         ]);
+    }
+
+    #[Test]
+    public function technician_can_add_internal_solution_when_ticket_has_no_contact_email(): void
+    {
+        Queue::fake();
+
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999063',
+            'client_id' => null,
+            'contact_id' => null,
+            'subject' => 'No contact solution ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Internal solution')
+            ->assertSee('Use an internal solution to document the fix without sending email.');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_solution',
+                'visibility' => 'internal',
+                'body' => 'Resolved locally without a customer contact.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
+
+        $message = TicketMessage::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('body', 'Resolved locally without a customer contact.')
+            ->firstOrFail();
+
+        $this->assertSame('internal_note', $message->type);
+        $this->assertSame('internal', $message->visibility);
+        $this->assertTrue((bool) ($message->metadata['is_solution'] ?? false));
+        $this->assertSame(TicketAction::SEND_SOLUTION, $message->metadata['reply_intent'] ?? null);
     }
 
     #[Test]

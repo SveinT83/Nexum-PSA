@@ -29,7 +29,7 @@
                             <select id="warehouse_id" name="warehouse_id" class="form-select" required>
                                 <option value="">Select warehouse</option>
                                 @foreach($warehouses as $warehouse)
-                                    <option value="{{ $warehouse->id }}" @selected(old('warehouse_id') == $warehouse->id)>{{ $warehouse->name }}</option>
+                                    <option value="{{ $warehouse->id }}" @selected((string) old('warehouse_id', $defaultWarehouse?->id) === (string) $warehouse->id)>{{ $warehouse->name }}</option>
                                 @endforeach
                             </select>
                         </div>

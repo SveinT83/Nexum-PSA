@@ -17,6 +17,15 @@ Core concepts:
 - **Reservation** holds stock for a source such as a ticket without immediately removing it from on-hand quantity.
 - **Picking** consumes reserved stock and makes it ready for billing through Economy.
 
+Default warehouse:
+
+- Nexum keeps one default Company warehouse for Storage forms.
+- If no active warehouse exists, opening Storage inventory settings or a Storage create form creates
+  an active `Company Warehouse` with code `COMPANY`.
+- Admins can change the default warehouse from `/tech/admin/settings/storage/inventory`.
+- New Item and New Box forms preselect the configured default warehouse, but technicians can still
+  choose another active warehouse when needed.
+
 The inventory list defaults to a reorder-focused view. The `Should order` view includes items that are manually flagged, out of stock, over-reserved, or at/below reorder point.
 
 Create actions:

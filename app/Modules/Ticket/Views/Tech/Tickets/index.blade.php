@@ -659,30 +659,42 @@
 
     {{-- Right rail: lightweight operational counters, intentionally separate from the main list. --}}
     <x-card.default title="Ticket stats">
+        @php
+            $statLink = fn (array $overrides) => route('tech.tickets.index', array_filter(array_merge([
+                'q' => $filters['q'] ?? null,
+                'sort' => $filters['sort'] ?? null,
+                'direction' => $filters['direction'] ?? null,
+                'status_id' => $filters['status_id'] ?? null,
+                'priority_id' => $filters['priority_id'] ?? null,
+                'category_id' => $filters['category_id'] ?? null,
+                'queue_id' => $filters['queue_id'] ?? null,
+                'client_id' => $filters['client_id'] ?? null,
+            ], $overrides), fn ($value) => filled($value)));
+        @endphp
         <div class="row row-cols-2 g-2 text-center">
             <div class="col">
-                <div class="border rounded bg-light py-2 px-1">
+                <a href="{{ $statLink(['lifecycle' => 'open', 'ownership' => 'all']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
                     <div class="small text-muted text-uppercase">Open</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['open'] }}</div>
-                </div>
+                </a>
             </div>
             <div class="col">
-                <div class="border rounded bg-light py-2 px-1">
+                <a href="{{ $statLink(['lifecycle' => 'all', 'ownership' => 'mine']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
                     <div class="small text-muted text-uppercase">Mine</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['mine'] }}</div>
-                </div>
+                </a>
             </div>
             <div class="col">
-                <div class="border rounded bg-light py-2 px-1">
+                <a href="{{ $statLink(['lifecycle' => 'all', 'ownership' => 'all', 'unread' => '1']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
                     <div class="small text-muted text-uppercase">Unread</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['unread'] }}</div>
-                </div>
+                </a>
             </div>
             <div class="col">
-                <div class="border rounded bg-light py-2 px-1">
+                <a href="{{ $statLink(['lifecycle' => 'all', 'ownership' => 'all', 'unassigned' => '1']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
                     <div class="small text-muted text-uppercase">Unassigned</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['unassigned'] }}</div>
-                </div>
+                </a>
             </div>
         </div>
     </x-card.default>

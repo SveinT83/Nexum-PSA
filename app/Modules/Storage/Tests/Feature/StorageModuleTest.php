@@ -4,6 +4,7 @@ namespace App\Modules\Storage\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Economy\Models\EconomySetting;
 use App\Modules\Storage\Controllers\Admin\InventoryController;
@@ -86,14 +87,26 @@ class StorageModuleTest extends TestCase
             InventoryController::class . '@storeWarehouse',
             Route::getRoutes()->getByName('tech.admin.settings.storage.inventory.warehouses.store')->getActionName()
         );
+        $this->assertSame(
+            InventoryController::class . '@updateDefaultWarehouse',
+            Route::getRoutes()->getByName('tech.admin.settings.storage.inventory.default-warehouse.update')->getActionName()
+        );
 
         $this->actingAs($this->admin)
             ->get(route('tech.admin.settings.storage.inventory'))
             ->assertOk()
             ->assertViewIs('storage::Admin.Inventory.index')
             ->assertSee('Inventory Settings')
+            ->assertSee('Company Warehouse')
+            ->assertSee('Default')
             ->assertSee('Add Warehouse')
             ->assertSee('Create Warehouse');
+
+        $this->assertDatabaseHas('storage_warehouses', [
+            'name' => 'Company Warehouse',
+            'code' => 'COMPANY',
+            'is_active' => true,
+        ]);
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.storage.inventory.warehouses.store'), [
@@ -106,6 +119,46 @@ class StorageModuleTest extends TestCase
             'name' => 'Main Warehouse',
             'code' => 'MAIN',
         ]);
+    }
+
+    #[Test]
+    public function admin_can_change_default_warehouse_and_create_forms_preselect_it(): void
+    {
+        $company = Warehouse::create([
+            'name' => 'Company Warehouse',
+            'code' => 'COMPANY',
+        ]);
+        $van = Warehouse::create([
+            'name' => 'Technician Van',
+            'code' => 'VAN',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.storage.inventory.default-warehouse.update'), [
+                'default_warehouse_id' => $van->id,
+            ])
+            ->assertRedirect(route('tech.admin.settings.storage.inventory'));
+
+        $payload = json_decode((string) CommonSetting::query()
+            ->where('type', 'storage')
+            ->where('name', 'inventory_defaults')
+            ->value('json'), true);
+
+        $this->assertSame($van->id, $payload['default_warehouse_id']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.items.create'))
+            ->assertOk()
+            ->assertSee('value="' . $van->id . '" selected', false)
+            ->assertSee('Technician Van');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.boxes.create'))
+            ->assertOk()
+            ->assertSee('value="' . $van->id . '" selected', false)
+            ->assertSee('Technician Van');
+
+        $this->assertNotSame($company->id, $van->id);
     }
 
     #[Test]

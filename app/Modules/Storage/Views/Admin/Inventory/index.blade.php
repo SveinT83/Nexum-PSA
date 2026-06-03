@@ -37,6 +37,7 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                     <tr>
+                        <th style="width: 8rem;">Default</th>
                         <th>Name</th>
                         <th>Code</th>
                         <th>Address</th>
@@ -48,6 +49,19 @@
                     <tbody>
                     @forelse($warehouses as $warehouse)
                         <tr>
+                            <td>
+                                @if($defaultWarehouse && (int) $defaultWarehouse->id === (int) $warehouse->id)
+                                    <span class="badge text-bg-primary">Default</span>
+                                @elseif($warehouse->is_active)
+                                    <form method="POST" action="{{ route('tech.admin.settings.storage.inventory.default-warehouse.update') }}">
+                                        @csrf
+                                        <input type="hidden" name="default_warehouse_id" value="{{ $warehouse->id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Set default</button>
+                                    </form>
+                                @else
+                                    <span class="text-muted small">Inactive</span>
+                                @endif
+                            </td>
                             <td class="fw-semibold">{{ $warehouse->name }}</td>
                             <td>{{ $warehouse->code ?: '—' }}</td>
                             <td>
@@ -69,7 +83,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-5">
+                            <td colspan="7" class="text-center text-muted py-5">
                                 No warehouses have been configured yet.
                             </td>
                         </tr>

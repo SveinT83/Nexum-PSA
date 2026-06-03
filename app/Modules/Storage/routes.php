@@ -52,6 +52,9 @@ Route::middleware('admin')->group(function () {
     Route::get('/admin/settings/storage/inventory', [InventoryController::class, 'index'])
         ->name('admin.settings.storage.inventory');
 
+    Route::post('/admin/settings/storage/inventory/default-warehouse', [InventoryController::class, 'updateDefaultWarehouse'])
+        ->name('admin.settings.storage.inventory.default-warehouse.update');
+
     Route::post('/admin/settings/storage/inventory/warehouses', [InventoryController::class, 'storeWarehouse'])
         ->name('admin.settings.storage.inventory.warehouses.store');
 });
