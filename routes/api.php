@@ -5,6 +5,13 @@
 
 use Illuminate\Support\Facades\Route;
 
+// Nextcloud Talk webhook — public endpoint, no auth required.
+// Nextcloud calls this URL to deliver incoming bot messages.
+// Legitimacy is verified via HMAC-SHA256 signature headers.
+use App\Modules\Nextcloud\Controllers\TalkWebhookController;
+Route::post('nextcloud/talk/webhook', TalkWebhookController::class)
+    ->name('nextcloud.talk.webhook');
+
 Route::prefix('v1')->name('api.v1.')->group(function () {
 
     // ------------------------------------------------------------------------------------------
