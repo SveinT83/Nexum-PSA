@@ -11,6 +11,7 @@ use App\Modules\Storage\Models\Box;
 use App\Modules\Storage\Models\Item;
 use App\Modules\Storage\Models\ItemVendor;
 use App\Modules\Storage\Models\Warehouse;
+use App\Modules\Storage\Support\StorageInventoryDefaults;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,10 +22,11 @@ use InvalidArgumentException;
 
 class ItemController extends Controller
 {
-    public function create(EnsureEconomyDefaults $economyDefaults): View
+    public function create(EnsureEconomyDefaults $economyDefaults, StorageInventoryDefaults $inventoryDefaults): View
     {
         return view('storage::Tech.Storage.items.create', [
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
+            'defaultWarehouse' => $inventoryDefaults->defaultWarehouse(),
             'boxes' => Box::where('is_active', true)->with('warehouse')->orderBy('id')->get(),
             'manufacturers' => Vendor::where('is_active', true)->where('is_manufacturer', true)->orderBy('name')->get(),
             'suppliers' => Vendor::where('is_active', true)->where('is_supplier', true)->orderBy('name')->get(),

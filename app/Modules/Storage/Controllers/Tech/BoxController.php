@@ -6,16 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Modules\Storage\Actions\StoreBox;
 use App\Modules\Storage\Models\Box;
 use App\Modules\Storage\Models\Warehouse;
+use App\Modules\Storage\Support\StorageInventoryDefaults;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BoxController extends Controller
 {
-    public function create(): View
+    public function create(StorageInventoryDefaults $inventoryDefaults): View
     {
         return view('storage::Tech.Storage.boxes.create', [
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
+            'defaultWarehouse' => $inventoryDefaults->defaultWarehouse(),
         ]);
     }
 

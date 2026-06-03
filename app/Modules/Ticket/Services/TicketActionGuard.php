@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Services;
 
 use App\Models\Core\User;
+use App\Models\Clients\ClientUser;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Support\TicketAction;
 
@@ -25,7 +26,7 @@ class TicketActionGuard
 
         $ticket->loadMissing('status', 'contact');
 
-        if ($action === TicketAction::CUSTOMER_REPLY && empty($ticket->contact?->email)) {
+        if ($action === TicketAction::CUSTOMER_REPLY && ! $this->hasReplyContact($ticket)) {
             return 'A customer reply requires a ticket contact with an email address.';
         }
 
@@ -58,5 +59,22 @@ class TicketActionGuard
     private function isClosed(Ticket $ticket): bool
     {
         return (bool) ($ticket->status?->is_closed || $ticket->closed_at);
+    }
+
+    private function hasReplyContact(Ticket $ticket): bool
+    {
+        if (filled($ticket->contact?->email)) {
+            return true;
+        }
+
+        if (! $ticket->client_id) {
+            return false;
+        }
+
+        return ClientUser::query()
+            ->whereHas('site', fn ($query) => $query->where('client_id', $ticket->client_id))
+            ->where('active', true)
+            ->whereNotNull('email')
+            ->exists();
     }
 }

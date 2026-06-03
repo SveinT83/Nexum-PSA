@@ -103,8 +103,17 @@ class AddTicketMessage
             }
         }
 
-        if (($data['type'] ?? 'internal_note') === 'internal_note' && ! empty($data['notify_user_id'])) {
-            $metadata['notify_user_id'] = (int) $data['notify_user_id'];
+        if (($data['type'] ?? 'internal_note') === 'internal_note') {
+            if (($data['reply_intent'] ?? null) === TicketAction::SEND_SOLUTION) {
+                $metadata['reply_intent'] = TicketAction::SEND_SOLUTION;
+                $metadata['is_solution'] = true;
+                $metadata['solution_marked_at'] = now()->toISOString();
+                $metadata['solution_marked_by'] = $actor?->id;
+            }
+
+            if (! empty($data['notify_user_id'])) {
+                $metadata['notify_user_id'] = (int) $data['notify_user_id'];
+            }
         }
 
         return $metadata;
@@ -122,6 +131,10 @@ class AddTicketMessage
 
     private function workflowActionFor(TicketMessage $message): string
     {
+        if (($message->metadata['reply_intent'] ?? null) === TicketAction::SEND_SOLUTION) {
+            return TicketAction::SEND_SOLUTION;
+        }
+
         if ($message->type !== 'customer_reply') {
             return TicketAction::ADD_INTERNAL_NOTE;
         }

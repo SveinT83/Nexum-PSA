@@ -23,6 +23,7 @@ use App\Modules\Ticket\Actions\MarkTicketAsNotTicket;
 use App\Modules\Ticket\Actions\MergeTickets;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\StoreTicket;
+use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\ReserveTicketStorageItem;
 use App\Modules\Ticket\Actions\UpdateTicketStorageReservation;
@@ -291,6 +292,13 @@ class TicketController extends Controller
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
             'categories' => $this->ticketCategories(),
             'tags' => $this->activeTags(),
+            'clients' => Client::where('active', true)->orderBy('name')->get(['id', 'name', 'client_number']),
+            'contacts' => ClientUser::query()
+                ->with('site.client:id,name')
+                ->where('active', true)
+                ->whereHas('site.client', fn ($query) => $query->where('active', true))
+                ->orderBy('name')
+                ->get(['id', 'client_site_id', 'name', 'email']),
             'sites' => $ticket->client_id
                 ? ClientSite::where('client_id', $ticket->client_id)->orderByDesc('is_default')->orderBy('name')->get(['id', 'name'])
                 : collect(),
@@ -303,7 +311,7 @@ class TicketController extends Controller
     {
         $data = $request->validate([
             'body' => 'required|string',
-            'type' => 'required|string|in:internal_note,customer_reply',
+            'type' => 'required|string|in:internal_note,customer_reply,internal_solution',
             'reply_intent' => 'nullable|string|in:customer_update,request_customer_input,send_solution',
             'reply_contact_id' => 'nullable|integer|exists:client_users,id',
             'cc' => 'nullable|string|max:1000',
@@ -313,10 +321,19 @@ class TicketController extends Controller
             'attachments.*' => 'file|max:20480',
         ]);
 
+        $isInternalSolution = $data['type'] === 'internal_solution';
+
+        if ($isInternalSolution) {
+            $data['type'] = 'internal_note';
+            $data['reply_intent'] = TicketAction::SEND_SOLUTION;
+        }
+
         $data['visibility'] = $data['type'] === 'internal_note' ? 'internal' : 'public';
-        $data['reply_intent'] = $data['type'] === 'customer_reply'
-            ? ($data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE)
-            : null;
+        if (! $isInternalSolution) {
+            $data['reply_intent'] = $data['type'] === 'customer_reply'
+                ? ($data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE)
+                : null;
+        }
         $action = $data['type'] === 'customer_reply' ? TicketAction::CUSTOMER_REPLY : TicketAction::ADD_INTERNAL_NOTE;
 
         if ($reason = $actionGuard->reason($ticket, $action, $request->user())) {
@@ -367,14 +384,33 @@ class TicketController extends Controller
             ->with('success', 'Time entry added.');
     }
 
-    public function storeCostEntry(Request $request, Ticket $ticket, ReserveTicketStorageItem $reserveItem): RedirectResponse
+    public function storeCostEntry(Request $request, Ticket $ticket, ReserveTicketStorageItem $reserveItem, StoreManualTicketCostEntry $storeManualCost): RedirectResponse
     {
         $data = $request->validate([
-            'storage_item_id' => 'required|integer|exists:storage_items,id',
+            'cost_mode' => 'nullable|string|in:storage,manual',
+            'storage_item_id' => 'nullable|required_if:cost_mode,storage|integer|exists:storage_items,id',
+            'item_name' => 'nullable|required_if:cost_mode,manual|string|max:255',
             'quantity' => 'required|integer|min:1|max:100000',
+            'unit_price_ex_vat' => 'nullable|required_if:cost_mode,manual|numeric|min:0|max:9999999999.99',
+            'currency' => 'nullable|string|size:3',
             'invoice_text' => 'nullable|string|max:2000',
             'note' => 'nullable|string|max:2000',
         ]);
+
+        if (($data['cost_mode'] ?? 'storage') === 'manual') {
+            $storeManualCost->handle($ticket, [
+                'item_name' => $data['item_name'],
+                'quantity' => $data['quantity'],
+                'unit_price_ex_vat' => $data['unit_price_ex_vat'],
+                'currency' => Str::upper($data['currency'] ?? 'NOK'),
+                'invoice_text' => $data['invoice_text'] ?? null,
+                'note' => $data['note'] ?? null,
+            ], $request->user());
+
+            return redirect()->route('tech.tickets.show', $ticket)
+                ->with('success', 'Manual cost added.');
+        }
+
         $item = StorageItem::where('status', 'active')->findOrFail($data['storage_item_id']);
 
         try {
@@ -528,6 +564,8 @@ class TicketController extends Controller
             'status_id' => 'required|exists:ticket_statuses,id',
             'priority_id' => 'required|exists:ticket_priorities,id',
             'category_id' => ['nullable', $this->ticketCategoryRule()],
+            'client_id' => 'nullable|exists:clients,id',
+            'contact_id' => 'nullable|exists:client_users,id',
             'site_id' => 'nullable|exists:client_sites,id',
             'asset_id' => 'nullable|exists:assets,id',
             'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
@@ -541,10 +579,25 @@ class TicketController extends Controller
         $categoryId = empty($data['category_id'])
             ? null
             : $this->ticketCategoryId((int) $data['category_id']);
-        $siteId = $this->resolveSiteId($ticket->client_id, $data['site_id'] ?? null, $ticket->contact_id, $data['asset_id'] ?? null);
+        $clientId = $data['client_id'] ?? null;
+        $contactId = $data['contact_id'] ?? null;
+
+        if ($contactId && ! $clientId) {
+            return back()
+                ->withErrors(['client_id' => 'Select a client before selecting a contact.'])
+                ->withInput();
+        }
+
+        if ($contactId && $clientId && ! $this->contactBelongsToClient((int) $contactId, (int) $clientId)) {
+            return back()
+                ->withErrors(['contact_id' => 'The selected contact does not belong to the selected client.'])
+                ->withInput();
+        }
+
+        $siteId = $this->resolveSiteId($clientId, $data['site_id'] ?? null, $contactId, $data['asset_id'] ?? null);
         $assetId = empty($data['asset_id'])
             ? null
-            : $this->validateAssetScope($data['asset_id'], $ticket->client_id, $ticket->contact_id, $siteId)->id;
+            : $this->validateAssetScope($data['asset_id'], $clientId, $contactId, $siteId)->id;
 
         $updateTicketFields->handle($ticket, [
             'subject' => $data['subject'],
@@ -552,6 +605,8 @@ class TicketController extends Controller
             'queue_id' => $queue->id,
             'priority_id' => $priority->id,
             'category_id' => $categoryId,
+            'client_id' => $clientId,
+            'contact_id' => $contactId,
             'owner_id' => $data['owner_id'] ?? null,
             'site_id' => $siteId,
             'asset_id' => $assetId,
@@ -925,6 +980,13 @@ class TicketController extends Controller
             ->orderByDesc('is_default_for_client')
             ->orderBy('name')
             ->get(['id', 'client_site_id', 'name', 'email']);
+    }
+
+    private function contactBelongsToClient(int $contactId, int $clientId): bool
+    {
+        return ClientUser::whereKey($contactId)
+            ->whereHas('site', fn ($query) => $query->where('client_id', $clientId))
+            ->exists();
     }
 
     private function ticketCategories(): Collection
