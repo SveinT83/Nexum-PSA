@@ -209,7 +209,7 @@ class TalkWebhookController extends Controller
         // Send the response back to the Talk conversation.
         try {
             $talkClient->sendBotMessage($connection, $conversationToken, $responseText, [
-                'referenceId' => 'nexum-cmd-' . $command . '-' . time(),
+                'referenceId' => 'nexum-cmd-'.$command.'-'.time(),
             ]);
         } catch (\Throwable $e) {
             Log::error('Nextcloud Talk webhook: failed to send command response.', [
@@ -255,7 +255,7 @@ class TalkWebhookController extends Controller
      */
     private function formatHelpText(): string
     {
-        return <<<MARKDOWN
+        return <<<'MARKDOWN'
 **Nexum PSA Bot Commands**
 
 `!help` — Show this help message

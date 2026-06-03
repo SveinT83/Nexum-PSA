@@ -6,7 +6,6 @@ use App\Models\Clients\Client;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Nextcloud\Services\NextcloudTalkClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -15,7 +14,9 @@ class TalkWebhookTest extends TestCase
     use RefreshDatabase;
 
     private NextcloudConnection $connection;
+
     private string $botSecret = '38774b602b3d204d53821954a5d181128a36509ca30aed299410cccc025934c5';
+
     private string $conversationToken = 'abewy9qb';
 
     protected function setUp(): void
@@ -93,7 +94,7 @@ class TalkWebhookTest extends TestCase
     {
         $random = str()->random(64);
         $body = '';
-        $signature = hash_hmac('sha256', $random . $body, $this->botSecret);
+        $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
 
         $response = $this->withHeaders([
             'X-Nextcloud-Talk-Signature' => $signature,
@@ -105,13 +106,13 @@ class TalkWebhookTest extends TestCase
     }
 
     #[Test]
-    public function webhook_resolves_connection_by_conversationToken(): void
+    public function webhook_resolves_connection_by_conversation_token(): void
     {
         $talkClient = $this->app->make(NextcloudTalkClient::class);
         $payload = $this->makePayload('!ping');
         $body = json_encode($payload);
         $random = str()->random(64);
-        $signature = hash_hmac('sha256', $random . $body, $this->botSecret);
+        $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
 
         // Mock the talk client's sendBotMessage to prevent actual HTTP calls.
         $mockClient = $this->getMockBuilder(NextcloudTalkClient::class)
@@ -143,7 +144,7 @@ class TalkWebhookTest extends TestCase
         $payload = $this->makePayload('!ping', actorType: 'Application');
         $body = json_encode($payload);
         $random = str()->random(64);
-        $signature = hash_hmac('sha256', $random . $body, $this->botSecret);
+        $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
 
         $response = $this->withHeaders([
             'X-Nextcloud-Talk-Signature' => strtolower($signature),
@@ -160,7 +161,7 @@ class TalkWebhookTest extends TestCase
         $payload = $this->makePayload('Hello there, how are you?');
         $body = json_encode($payload);
         $random = str()->random(64);
-        $signature = hash_hmac('sha256', $random . $body, $this->botSecret);
+        $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
 
         $response = $this->withHeaders([
             'X-Nextcloud-Talk-Signature' => strtolower($signature),
@@ -192,7 +193,7 @@ class TalkWebhookTest extends TestCase
         $payload = $this->makePayload('!help');
         $body = json_encode($payload);
         $random = str()->random(64);
-        $signature = hash_hmac('sha256', $random . $body, $this->botSecret);
+        $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
 
         $response = $this->withHeaders([
             'X-Nextcloud-Talk-Signature' => strtolower($signature),
@@ -228,7 +229,7 @@ class TalkWebhookTest extends TestCase
         $body = json_encode($payload);
         $random = str()->random(64);
         // The default connection (is_default=true) should be matched.
-        $signature = hash_hmac('sha256', $random . $body, $this->botSecret);
+        $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
 
         $mockClient = $this->getMockBuilder(NextcloudTalkClient::class)
             ->disableOriginalConstructor()
@@ -257,7 +258,7 @@ class TalkWebhookTest extends TestCase
         $payload = $this->makePayload('!ping');
         $body = json_encode($payload);
         $random = str()->random(64);
-        $signature = hash_hmac('sha256', $random . $body, $this->botSecret);
+        $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
 
         $response = $this->withHeaders([
             'X-Nextcloud-Talk-Signature' => strtolower($signature),
@@ -280,7 +281,7 @@ class TalkWebhookTest extends TestCase
                 'name' => $actorType === 'Application' ? 'Nexum PSA' : 'Test User',
             ],
             'object' => [
-                'id' => 'msg-' . str()->random(8),
+                'id' => 'msg-'.str()->random(8),
                 'name' => 'message',
                 'content' => json_encode(['message' => $message]),
                 'mediaType' => 'text/plain',

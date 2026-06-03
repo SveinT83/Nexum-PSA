@@ -1,16 +1,15 @@
 <?php
+
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
-// Use Domain Architecture rout file in the module folder, Read module-architecture.md for more info.
+// Use Domain Architecture route file in the module folder, Read module-architecture.md for more info.
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 use Illuminate\Support\Facades\Route;
 
-// Nextcloud Talk webhook — public endpoint, no auth required.
-// Nextcloud calls this URL to deliver incoming bot messages.
-// Legitimacy is verified via HMAC-SHA256 signature headers.
-use App\Modules\Nextcloud\Controllers\TalkWebhookController;
-Route::post('nextcloud/talk/webhook', TalkWebhookController::class)
-    ->name('nextcloud.talk.webhook');
+// Nextcloud Talk webhook — public, no auth.
+// Loaded before the auth:sanctum group so the route is accessible without authentication.
+// Legitimacy is verified via HMAC-SHA256 signature headers from Nextcloud.
+require app_path('Modules/Nextcloud/api.php');
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
 
@@ -27,6 +26,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         unset($tdpsaLoadingApiRoutes);
 
         foreach (glob(app_path('Modules/*/api.php')) as $routeFile) {
+            // Nextcloud api.php is loaded above (public webhook route) — skip it here.
+            if (str_contains($routeFile, 'Modules/Nextcloud/api.php')) {
+                continue;
+            }
             require $routeFile;
         }
 
