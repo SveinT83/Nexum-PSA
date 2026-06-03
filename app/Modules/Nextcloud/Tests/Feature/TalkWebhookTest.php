@@ -122,7 +122,8 @@ class TalkWebhookTest extends TestCase
         $mockClient->expects($this->once())
             ->method('sendBotMessage')
             ->willReturnCallback(function ($conn, $token, $message, $options) {
-                $this->assertSame('🏓 Pong! Nexum PSA Talk bot is online.', $message);
+                $this->assertStringContainsString('Pong!', $message);
+                $this->assertStringContainsString('Nexum PSA v', $message);
                 $this->assertSame($this->conversationToken, $token);
 
                 return ['id' => 999];

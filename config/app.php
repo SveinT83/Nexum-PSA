@@ -13,7 +13,20 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Nexum PSA'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | This value is the current version of Nexum PSA. It is used by the API
+    | (Swagger/OpenAPI), the Talk bot, the admin footer, and deployment checks.
+    | Update APP_VERSION in .env when releasing a new version.
+    |
+    */
+
+    'version' => env('APP_VERSION', '0.1.0'),
 
     /*
     |--------------------------------------------------------------------------

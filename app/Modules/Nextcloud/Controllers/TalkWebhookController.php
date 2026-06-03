@@ -202,7 +202,7 @@ class TalkWebhookController extends Controller
         $responseText = match ($command) {
             'help' => $this->formatHelpText(),
             'status' => $this->handleStatusCommand($connection, $arg1),
-            'ping' => '🏓 Pong! Nexum PSA Talk bot is online.',
+            'ping' => '🏓 Pong! Nexum PSA v'.config('app.version', '0.1.0').' is online.',
             default => "Unknown command: `!{$command}`. Type `!help` for available commands.",
         };
 
@@ -255,8 +255,10 @@ class TalkWebhookController extends Controller
      */
     private function formatHelpText(): string
     {
-        return <<<'MARKDOWN'
-**Nexum PSA Bot Commands**
+        $version = config('app.version', '0.1.0');
+
+        return <<<MARKDOWN
+**Nexum PSA Bot Commands** (v{$version})
 
 `!help` — Show this help message
 `!ping` — Check if the bot is online
