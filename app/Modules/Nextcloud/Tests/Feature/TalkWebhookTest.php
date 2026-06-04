@@ -108,7 +108,6 @@ class TalkWebhookTest extends TestCase
     #[Test]
     public function webhook_resolves_connection_by_conversation_token(): void
     {
-        $talkClient = $this->app->make(NextcloudTalkClient::class);
         $payload = $this->makePayload('!ping');
         $body = json_encode($payload);
         $random = str()->random(64);
@@ -137,6 +136,39 @@ class TalkWebhookTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJson(['status' => 'processed', 'command' => 'ping']);
+    }
+
+    #[Test]
+    public function webhook_rejects_replayed_signed_requests(): void
+    {
+        $payload = $this->makePayload('!ping');
+        $body = json_encode($payload);
+        $random = str()->random(64);
+        $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
+
+        $mockClient = $this->getMockBuilder(NextcloudTalkClient::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['sendBotMessage'])
+            ->getMock();
+        $mockClient->expects($this->once())
+            ->method('sendBotMessage')
+            ->willReturn(['id' => 999]);
+        $this->app->instance(NextcloudTalkClient::class, $mockClient);
+
+        $headers = [
+            'X-Nextcloud-Talk-Signature' => strtolower($signature),
+            'X-Nextcloud-Talk-Random' => $random,
+        ];
+
+        $this->withHeaders($headers)
+            ->postJson('/api/nextcloud/talk/webhook', $payload)
+            ->assertOk()
+            ->assertJson(['status' => 'processed', 'command' => 'ping']);
+
+        $this->withHeaders($headers)
+            ->postJson('/api/nextcloud/talk/webhook', $payload)
+            ->assertStatus(409)
+            ->assertJson(['error' => 'Replay detected']);
     }
 
     #[Test]
@@ -206,10 +238,10 @@ class TalkWebhookTest extends TestCase
     }
 
     #[Test]
-    public function webhook_falls_back_to_default_connection_when_no_conversation_match(): void
+    public function webhook_rejects_unknown_conversation_token(): void
     {
         // Connection without matching talk_default_conversation_token.
-        $conn = NextcloudConnection::query()->create([
+        NextcloudConnection::query()->create([
             'name' => 'Other Cloud',
             'scope' => NextcloudConnection::SCOPE_GLOBAL,
             'mode' => NextcloudConnection::MODE_READ_ONLY,
@@ -226,19 +258,17 @@ class TalkWebhookTest extends TestCase
         // Change the target to something that doesn't match any default conversation token.
         $payload['target']['id'] = 'unknown-token';
 
-        // Re-sign with the connection that has the matching token.
+        // Re-sign with the default connection secret. The request is still
+        // rejected because the conversation token is not explicitly allowed.
         $body = json_encode($payload);
         $random = str()->random(64);
-        // The default connection (is_default=true) should be matched.
         $signature = hash_hmac('sha256', $random.$body, $this->botSecret);
 
         $mockClient = $this->getMockBuilder(NextcloudTalkClient::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['sendBotMessage'])
             ->getMock();
-        $mockClient->expects($this->once())
-            ->method('sendBotMessage')
-            ->willReturn(['id' => 1]);
+        $mockClient->expects($this->never())->method('sendBotMessage');
         $this->app->instance(NextcloudTalkClient::class, $mockClient);
 
         $response = $this->withHeaders([
@@ -246,8 +276,8 @@ class TalkWebhookTest extends TestCase
             'X-Nextcloud-Talk-Random' => $random,
         ])->postJson('/api/nextcloud/talk/webhook', $payload);
 
-        $response->assertStatus(200);
-        $response->assertJson(['status' => 'processed', 'command' => 'ping']);
+        $response->assertStatus(404);
+        $response->assertJson(['error' => 'No matching connection']);
     }
 
     #[Test]

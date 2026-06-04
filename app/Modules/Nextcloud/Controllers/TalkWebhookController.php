@@ -7,6 +7,7 @@ use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Nextcloud\Services\NextcloudTalkClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -84,6 +85,15 @@ class TalkWebhookController extends Controller
             return response()->json(['error' => 'Invalid signature'], 403);
         }
 
+        if (! $this->reserveNonce($connection, $random)) {
+            Log::warning('Nextcloud Talk webhook: replayed random header rejected.', [
+                'connection_id' => $connection->id,
+                'conversationToken' => $payload['target']['id'] ?? 'unknown',
+            ]);
+
+            return response()->json(['error' => 'Replay detected'], 409);
+        }
+
         // ── 5. Parse the incoming message ──────────────────────────────────
 
         $message = $talkClient->parseIncomingMessage($payload);
@@ -133,32 +143,32 @@ class TalkWebhookController extends Controller
      * Resolve the NextcloudConnection for an incoming payload.
      *
      * Strategy:
-     *   1. Match by conversation token (talk_default_conversation_token)
-     *   2. Fall back to the first active global connection with talk_bot_id set
+     *   1. Require an explicit conversation token from the payload target
+     *   2. Match it to talk_default_conversation_token on an active connection
      */
     private function resolveConnection(array $payload): ?NextcloudConnection
     {
         $conversationToken = $payload['target']['id'] ?? null;
 
-        // Try exact match on default conversation token first.
-        if ($conversationToken) {
-            $connection = NextcloudConnection::query()
-                ->where('is_active', true)
-                ->where('talk_default_conversation_token', $conversationToken)
-                ->first();
-
-            if ($connection && $connection->hasTalkBot()) {
-                return $connection;
-            }
+        if (! $conversationToken) {
+            return null;
         }
 
-        // Fall back to any active global connection with a talk bot configured.
-        return NextcloudConnection::query()
+        $connection = NextcloudConnection::query()
             ->where('is_active', true)
+            ->where('talk_default_conversation_token', $conversationToken)
             ->whereNotNull('talk_bot_id')
             ->whereNotNull('talk_bot_secret')
-            ->orderByDesc('is_default')
             ->first();
+
+        return $connection?->hasTalkBot() ? $connection : null;
+    }
+
+    private function reserveNonce(NextcloudConnection $connection, string $random): bool
+    {
+        $key = 'nextcloud:talk:webhook-random:'.sha1($connection->id.'|'.$random);
+
+        return Cache::add($key, true, now()->addMinutes(10));
     }
 
     /**
