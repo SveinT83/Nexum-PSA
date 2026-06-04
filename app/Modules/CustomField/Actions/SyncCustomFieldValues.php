@@ -4,13 +4,17 @@ namespace App\Modules\CustomField\Actions;
 
 use App\Modules\CustomField\Models\CustomFieldDefinition;
 use App\Modules\CustomField\Models\CustomFieldValue;
+use App\Modules\CustomField\Support\CustomFieldModelRegistry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class SyncCustomFieldValues
 {
-    public function __construct(private readonly NormalizeCustomFieldValue $normalizer)
+    public function __construct(
+        private readonly NormalizeCustomFieldValue $normalizer,
+        private readonly CustomFieldModelRegistry $models,
+    )
     {
     }
 
@@ -26,21 +30,31 @@ class SyncCustomFieldValues
             $payload = $this->normalizer->handle($definition, $values[$definition->key]);
             $this->ensureUnique($definition, $model, $payload['value_text']);
 
-            CustomFieldValue::query()->updateOrCreate(
-                [
-                    'custom_field_definition_id' => $definition->id,
-                    'model_type' => $model->getMorphClass(),
-                    'model_id' => $model->getKey(),
-                ],
-                $payload
-            );
+            $record = CustomFieldValue::query()
+                ->where('custom_field_definition_id', $definition->id)
+                ->whereIn('model_type', $this->models->storageTypesFor($model->getMorphClass()))
+                ->where('model_id', $model->getKey())
+                ->first();
+
+            if ($record) {
+                $record->forceFill($payload)->save();
+
+                continue;
+            }
+
+            CustomFieldValue::query()->create([
+                'custom_field_definition_id' => $definition->id,
+                'model_type' => $model->getMorphClass(),
+                'model_id' => $model->getKey(),
+                ...$payload,
+            ]);
         }
     }
 
     public function definitionsFor(Model $model, ?object $actor = null, string $channel = 'ui'): Collection
     {
         return CustomFieldDefinition::query()
-            ->where('model_type', $model->getMorphClass())
+            ->whereIn('model_type', $this->models->storageTypesFor($model->getMorphClass()))
             ->where('active', true)
             ->when($channel === 'ui', fn ($query) => $query->where('editable_in_ui', true))
             ->when($channel === 'api', fn ($query) => $query->where('editable_via_api', true))
@@ -71,7 +85,7 @@ class SyncCustomFieldValues
 
         $exists = CustomFieldValue::query()
             ->where('custom_field_definition_id', $definition->id)
-            ->where('model_type', $model->getMorphClass())
+            ->whereIn('model_type', $this->models->storageTypesFor($model->getMorphClass()))
             ->where('value_text', $value)
             ->where('model_id', '!=', $model->getKey())
             ->exists();
