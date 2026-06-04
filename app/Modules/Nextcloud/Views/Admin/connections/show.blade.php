@@ -624,7 +624,7 @@
                     <code>./occ talk:bot:install "Nexum Bot" &lt;secret&gt; &lt;webhook-url&gt; &lt;nextcloud-url&gt;</code>
                 </div>
 
-                <form method="POST" action="{{ route('tech.admin.nextcloud.connections.update', $connection) }}">
+                <form method="POST" action="{{ route('tech.admin.nextcloud.connections.update-talk-bot', $connection) }}">
                     @csrf
                     @method('PATCH')
 

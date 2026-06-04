@@ -24,8 +24,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Throwable;
 use Spatie\Permission\Models\Role;
+use Throwable;
 
 class NextcloudConnectionController extends Controller
 {
@@ -142,6 +142,38 @@ class NextcloudConnectionController extends Controller
     }
 
     /**
+     * Update Talk Bot configuration only (separate form on show page).
+     */
+    public function updateTalkBot(Request $request, NextcloudConnection $connection): RedirectResponse
+    {
+        $data = $request->validate([
+            'talk_bot_id' => ['nullable', 'integer'],
+            'talk_bot_secret' => ['nullable', 'string', 'max:500'],
+            'talk_default_conversation_token' => ['nullable', 'string', 'max:64'],
+            'talk_bot_features' => ['nullable', 'array'],
+            'talk_bot_features.*' => ['string', Rule::in(['reaction', 'no-setup'])],
+        ]);
+
+        $connection->talk_bot_id = isset($data['talk_bot_id']) && $data['talk_bot_id'] !== ''
+            ? (int) $data['talk_bot_id']
+            : null;
+
+        if (! empty($data['talk_bot_secret']) && $data['talk_bot_secret'] !== str_repeat('•', 8)) {
+            $connection->talk_bot_secret = $data['talk_bot_secret'];
+        }
+
+        $connection->talk_default_conversation_token = ($data['talk_default_conversation_token'] ?? '') !== ''
+            ? $data['talk_default_conversation_token']
+            : null;
+        $connection->talk_bot_features = $data['talk_bot_features'] ?? [];
+        $connection->save();
+
+        return redirect()
+            ->route('tech.admin.nextcloud.connections.show', $connection)
+            ->with('success', 'Talk Bot settings saved.');
+    }
+
+    /**
      * Send a test message via the Talk Bot API.
      */
     public function testTalkBot(NextcloudConnection $connection)
@@ -162,7 +194,7 @@ class NextcloudConnectionController extends Controller
                 $connection,
                 $conversationToken,
                 '🔔 Test message from Nexum — Talk bot integration is working!',
-                ['referenceId' => 'nexum-test-' . time()]
+                ['referenceId' => 'nexum-test-'.time()]
             );
 
             return response()->json(['success' => true]);
@@ -198,7 +230,7 @@ class NextcloudConnectionController extends Controller
             'remote_user_id' => ['required', 'string', 'max:255'],
             'remote_username' => ['nullable', 'string', 'max:255'],
             'remote_email' => ['nullable', 'email', 'max:255'],
-            'user_id' => ['nullable', 'integer', 'exists:'.(new User())->getTable().',id'],
+            'user_id' => ['nullable', 'integer', 'exists:'.(new User)->getTable().',id'],
             'client_user_id' => ['nullable', 'integer', 'exists:client_users,id'],
             'identity_type' => ['required', Rule::in(['technician', 'client_contact', 'portal_user', 'external'])],
         ]);
@@ -332,12 +364,12 @@ class NextcloudConnectionController extends Controller
                 : null;
 
             $clientUser ??= ClientUser::query()->create([
-                    'client_site_id' => $site->id,
-                    'name' => $data['remote_username'] ?: $data['remote_user_id'],
-                    'email' => $email,
-                    'role' => $clientRole,
-                    'active' => true,
-                ]);
+                'client_site_id' => $site->id,
+                'name' => $data['remote_username'] ?: $data['remote_user_id'],
+                'email' => $email,
+                'role' => $clientRole,
+                'active' => true,
+            ]);
 
             if ($clientUser->role !== $clientRole) {
                 $clientUser->forceFill(['role' => $clientRole])->save();
@@ -378,7 +410,7 @@ class NextcloudConnectionController extends Controller
             'remote_calendar_id' => ['required', 'string', 'max:500'],
             'remote_display_name' => ['nullable', 'string', 'max:255'],
             'calendar_id' => ['nullable', 'integer', 'exists:calendars,id'],
-            'user_id' => ['nullable', 'integer', 'exists:'.(new User())->getTable().',id'],
+            'user_id' => ['nullable', 'integer', 'exists:'.(new User)->getTable().',id'],
             'sync_direction' => ['required', Rule::in(['two_way', 'pull_only', 'push_only'])],
         ]);
 
