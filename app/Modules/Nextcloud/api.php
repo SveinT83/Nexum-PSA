@@ -1,12 +1,16 @@
 <?php
 
-// Nextcloud Talk webhook — public endpoint, no auth required.
-// Nextcloud calls this URL to deliver incoming bot messages.
-// Legitimacy is verified via HMAC-SHA256 signature headers.
-// This file is loaded by routes/api.php — do NOT put auth middleware here.
-
 use App\Modules\Nextcloud\Controllers\TalkWebhookController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('nextcloud/talk/webhook', TalkWebhookController::class)
-    ->name('nextcloud.talk.webhook');
+if (($tdpsaLoadingPublicApiRoutes ?? false) === true) {
+    // Nextcloud calls this public endpoint to deliver incoming bot messages.
+    // Legitimacy is verified by HMAC-SHA256 signature headers in the controller.
+    Route::post('nextcloud/talk/webhook', TalkWebhookController::class)
+        ->name('nextcloud.talk.webhook');
+
+    return;
+}
+
+// Protected Nextcloud API routes belong below. This file is also loaded inside
+// the auth:sanctum API group by routes/api.php.

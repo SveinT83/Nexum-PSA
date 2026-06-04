@@ -413,8 +413,14 @@ For self-hosted production installs on Debian, Fedora, or Arch Linux, see:
 Quick start:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/SveinT83/Nexum-PSA/Dev/scripts/install.sh | bash
+curl -fsSLO https://raw.githubusercontent.com/SveinT83/Nexum-PSA/vX.Y.Z/scripts/install.sh
+less install.sh
+bash install.sh
 ```
+
+Do not pipe install scripts directly from `Dev` into a shell. Production install
+docs should point to a tagged release and let operators inspect the script before
+running it.
 
 ## Releasing
 

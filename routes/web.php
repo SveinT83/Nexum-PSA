@@ -83,7 +83,7 @@ Route::get('/logout', function (Request $request) {
     $request->session()->regenerateToken();
 
     return redirect('/');
-})->name('logout');
+})->name('legacy.logout');
 
 $commercialPublicRoutes = true;
 require app_path('Modules/Commercial/routes.php');
