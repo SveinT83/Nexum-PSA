@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 #[OA\Info(
-    version: "1.0.0",
+    version: config('app.version', '0.1.0'),
     description: "API documentation for the Nexum PSA Clients module",
     title: "Nexum PSA API Documentation",
     contact: new OA\Contact(email: "support@example.com"),
