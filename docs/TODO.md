@@ -28,6 +28,7 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Ticket Actions v1 | Done | Codex | Shared action names, guard, apply SLA action, UI gating, Knowledge docs. |
 | Ticket Workflow v1 | Done | Codex | Default workflow, states, transitions, runtime validation, Ticket show actions, Knowledge docs. |
 | Ticket Workflow Editor v2 | Done | Codex | Admin create/edit workflow metadata, states, transitions, and stored requirements. |
+| Ticket Solution Policy | Done | Codex | Approved RFC 2026-06-03; internal solution notes are enabled by default and admin-configurable. |
 | Ticket Knowledge loop | Done | Codex | Ticket show creates documentation follow-up events and Ticket settings lists the latest requests. |
 | AI write tools | Blocked |  | Wait until Ticket Workflow/Action guards are stable enough. |
 | Contract SLA UI polish | Done | Codex | Contract index, form wording, show summary, tests, and Knowledge docs updated. |

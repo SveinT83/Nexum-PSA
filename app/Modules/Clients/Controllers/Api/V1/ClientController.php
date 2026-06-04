@@ -11,6 +11,7 @@ use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Clients\Resources\Api\V1\ClientSiteResource;
 use App\Modules\CustomField\Actions\SyncCustomFieldValues;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
+use App\Modules\CustomField\Support\CustomFieldModelRegistry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,7 @@ use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 #[OA\Info(
-    version: "1.0.0",
+    version: "0.1.0",
     description: "API documentation for the Nexum PSA Clients module",
     title: "Nexum PSA API Documentation",
     contact: new OA\Contact(email: "support@example.com"),
@@ -518,10 +519,11 @@ class ClientController extends Controller
     private function applyCustomFieldFilters($query, Request $request, string $modelClass, string $table): void
     {
         $model = new $modelClass();
+        $modelTypes = app(CustomFieldModelRegistry::class)->storageTypesFor($model->getMorphClass());
 
         foreach ((array) $request->input('custom_field', []) as $key => $value) {
             $definition = CustomFieldDefinition::query()
-                ->where('model_type', $model->getMorphClass())
+                ->whereIn('model_type', $modelTypes)
                 ->where('key', $key)
                 ->where('active', true)
                 ->where('searchable', true)
@@ -531,11 +533,11 @@ class ClientController extends Controller
                 continue;
             }
 
-            $query->whereExists(function ($exists) use ($definition, $model, $table, $value): void {
+            $query->whereExists(function ($exists) use ($definition, $modelTypes, $table, $value): void {
                 $exists->selectRaw('1')
                     ->from('custom_field_values')
                     ->whereColumn('custom_field_values.model_id', $table.'.id')
-                    ->where('custom_field_values.model_type', $model->getMorphClass())
+                    ->whereIn('custom_field_values.model_type', $modelTypes)
                     ->where('custom_field_values.custom_field_definition_id', $definition->id)
                     ->where('custom_field_values.value_text', (string) $value);
             });

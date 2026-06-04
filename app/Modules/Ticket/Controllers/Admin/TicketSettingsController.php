@@ -19,6 +19,7 @@ use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\Ticket\Support\TicketSolutionPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -27,7 +28,7 @@ use Illuminate\View\View;
 
 class TicketSettingsController extends Controller
 {
-    public function index(): View
+    public function index(TicketSolutionPolicy $solutionPolicy): View
     {
         $emailAccounts = EmailAccount::query()
             ->where('is_active', true)
@@ -40,6 +41,7 @@ class TicketSettingsController extends Controller
                 fn (EmailAccount $account) => in_array('tickets', (array) $account->defaults_for, true)
             ),
             'mergeSettings' => $this->ticketMergeSettings(),
+            'solutionPolicy' => $solutionPolicy->settings(),
             'queues' => TicketQueue::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'types' => TicketType::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
@@ -189,6 +191,19 @@ class TicketSettingsController extends Controller
         $updateDefaultTicketEmailAccount->handle($selectedAccount);
 
         return back()->with('success', 'Default ticket email account updated.');
+    }
+
+    public function updateSolutionPolicy(Request $request, TicketSolutionPolicy $solutionPolicy): RedirectResponse
+    {
+        $data = $request->validate([
+            'allow_internal_solution_notes' => 'nullable|boolean',
+        ]);
+
+        $solutionPolicy->update([
+            'allow_internal_solution_notes' => (bool) ($data['allow_internal_solution_notes'] ?? false),
+        ]);
+
+        return back()->with('success', 'Ticket solution policy updated.');
     }
 
     public function updateMergeSettings(Request $request): RedirectResponse

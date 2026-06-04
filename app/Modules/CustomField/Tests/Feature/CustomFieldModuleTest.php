@@ -285,6 +285,64 @@ class CustomFieldModuleTest extends TestCase
     }
 
     #[Test]
+    public function site_api_reads_alias_backed_custom_field_values(): void
+    {
+        $client = Client::create(['name' => 'Alias Synced Client', 'active' => true]);
+        $site = $client->sites()->create(['name' => 'Alias Synced Site']);
+        $definition = CustomFieldDefinition::create([
+            'model_type' => 'client_site',
+            'key' => 'msp_manager_site_id',
+            'label' => 'MSP Manager Site ID',
+            'field_type' => 'text',
+            'visible_in_ui' => true,
+            'editable_in_ui' => true,
+            'editable_via_api' => true,
+            'searchable' => true,
+            'unique_per_model' => true,
+            'active' => true,
+        ]);
+
+        CustomFieldValue::create([
+            'custom_field_definition_id' => $definition->id,
+            'model_type' => 'client_site',
+            'model_id' => $site->id,
+            'value_text' => 'SITE-ALIAS-339',
+        ]);
+
+        Sanctum::actingAs($this->admin, ['clients.read', 'clients.update']);
+
+        $this->getJson('/api/v1/client-sites')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $site->id)
+            ->assertJsonPath('data.0.custom_fields.msp_manager_site_id', 'SITE-ALIAS-339');
+
+        $this->getJson('/api/v1/client-sites?custom_field[msp_manager_site_id]=SITE-ALIAS-339')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $site->id)
+            ->assertJsonPath('data.0.custom_fields.msp_manager_site_id', 'SITE-ALIAS-339');
+
+        $this->patchJson("/api/v1/client-sites/{$site->id}", [
+            'custom_fields' => [
+                'msp_manager_site_id' => 'SITE-ALIAS-340',
+            ],
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.custom_fields.msp_manager_site_id', 'SITE-ALIAS-340');
+
+        $this->assertSame(1, CustomFieldValue::query()
+            ->where('custom_field_definition_id', $definition->id)
+            ->where('model_id', $site->id)
+            ->count());
+        $this->assertDatabaseHas('custom_field_values', [
+            'custom_field_definition_id' => $definition->id,
+            'model_type' => 'client_site',
+            'model_id' => $site->id,
+            'value_text' => 'SITE-ALIAS-340',
+        ]);
+    }
+
+    #[Test]
     public function custom_field_definition_api_lists_definitions_for_integrations(): void
     {
         $definition = CustomFieldDefinition::create([

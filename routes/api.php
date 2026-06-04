@@ -1,9 +1,17 @@
 <?php
+
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
-// Use Domain Architecture rout file in the module folder, Read module-architecture.md for more info.
+// Use Domain Architecture route file in the module folder, Read module-architecture.md for more info.
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 use Illuminate\Support\Facades\Route;
+
+// Nextcloud Talk webhook — public, no auth.
+// Loaded before the auth:sanctum group so the route is accessible without authentication.
+// Legitimacy is verified via HMAC-SHA256 signature headers from Nextcloud.
+$tdpsaLoadingPublicApiRoutes = true;
+require app_path('Modules/Nextcloud/api.php');
+unset($tdpsaLoadingPublicApiRoutes);
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
 

@@ -51,4 +51,18 @@ class CustomFieldModelRegistry
     {
         return self::MODELS[$aliasOrClass] ?? (in_array($aliasOrClass, self::MODELS, true) ? $aliasOrClass : null);
     }
+
+    /**
+     * @return array<int, string>
+     */
+    public function storageTypesFor(string $aliasOrClass): array
+    {
+        $class = $this->classFor($aliasOrClass) ?? $aliasOrClass;
+        $aliases = array_keys(array_filter(
+            self::MODELS,
+            fn (string $modelClass): bool => $modelClass === $class,
+        ));
+
+        return array_values(array_unique(array_filter([$class, $aliasOrClass, ...$aliases])));
+    }
 }

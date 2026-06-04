@@ -9,6 +9,10 @@ use Illuminate\Support\Collection;
 
 class CustomFieldPresenter
 {
+    public function __construct(private readonly CustomFieldModelRegistry $models)
+    {
+    }
+
     /**
      * @return Collection<int, array<string, mixed>>
      */
@@ -40,7 +44,7 @@ class CustomFieldPresenter
     private function definitionsFor(Model $model, ?object $actor, bool $onlyVisible): Collection
     {
         return CustomFieldDefinition::query()
-            ->where('model_type', $model->getMorphClass())
+            ->whereIn('model_type', $this->models->storageTypesFor($model->getMorphClass()))
             ->where('active', true)
             ->when($onlyVisible, fn ($query) => $query->where('visible_in_ui', true))
             ->orderBy('sort_order')
@@ -53,7 +57,7 @@ class CustomFieldPresenter
     {
         $value = CustomFieldValue::query()
             ->where('custom_field_definition_id', $definition->id)
-            ->where('model_type', $model->getMorphClass())
+            ->whereIn('model_type', $this->models->storageTypesFor($model->getMorphClass()))
             ->where('model_id', $model->getKey())
             ->first();
 

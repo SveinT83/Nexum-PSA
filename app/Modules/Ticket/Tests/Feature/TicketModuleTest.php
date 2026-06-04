@@ -101,6 +101,7 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class . '@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@updateMergeSettings', Route::getRoutes()->getByName('tech.admin.settings.tickets.merge-settings.update')->getActionName());
+        $this->assertSame(TicketSettingsController::class . '@updateSolutionPolicy', Route::getRoutes()->getByName('tech.admin.settings.tickets.solution-policy.update')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@storePriority', Route::getRoutes()->getByName('tech.admin.settings.tickets.priorities.store')->getActionName());
         $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
@@ -1532,7 +1533,10 @@ class TicketModuleTest extends TestCase
             ->get(route('tech.tickets.edit', $ticket))
             ->assertOk()
             ->assertSee('Reassign Client')
-            ->assertSee('Reassign Contact');
+            ->assertSee('Reassign Contact')
+            ->assertSee('data-client-id="' . $client->id . '"', false)
+            ->assertSee('const syncContactOptions', false)
+            ->assertSee('contactSelect.disabled = selectedClientId ===', false);
 
         $this->actingAs($this->tech)
             ->from(route('tech.tickets.edit', $ticket))
@@ -1781,6 +1785,44 @@ class TicketModuleTest extends TestCase
         $this->assertSame('internal', $message->visibility);
         $this->assertTrue((bool) ($message->metadata['is_solution'] ?? false));
         $this->assertSame(TicketAction::SEND_SOLUTION, $message->metadata['reply_intent'] ?? null);
+    }
+
+    #[Test]
+    public function internal_solution_is_blocked_when_ticket_solution_policy_disallows_it(): void
+    {
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket', 'name' => 'solution_policy'],
+            [
+                'description' => 'Ticket solution policy.',
+                'json' => json_encode(['allow_internal_solution_notes' => false]),
+            ]
+        );
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999067',
+            'client_id' => null,
+            'contact_id' => null,
+            'subject' => 'No contact policy ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertDontSee('value="internal_solution"', false)
+            ->assertSee('Internal solution notes are disabled by Ticket settings.');
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.tickets.show', $ticket))
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_solution',
+                'visibility' => 'internal',
+                'body' => 'Should not be accepted as internal solution.',
+            ])
+            ->assertSessionHasErrors('type');
+
+        $this->assertDatabaseMissing('ticket_messages', [
+            'ticket_id' => $ticket->id,
+            'body' => 'Should not be accepted as internal solution.',
+        ]);
     }
 
     #[Test]
@@ -2117,6 +2159,11 @@ class TicketModuleTest extends TestCase
             ->where('from_status_id', $new->id)
             ->where('to_status_id', $resolved->id)
             ->firstOrFail();
+        $transition->forceFill(['requires_response' => false, 'requires_resolution' => true])->save();
+        \App\Modules\Ticket\Models\TicketWorkflowState::query()
+            ->where('ticket_workflow_id', $workflow->id)
+            ->where('ticket_status_id', $resolved->id)
+            ->update(['requires_response' => false, 'requires_resolution' => true]);
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.workflow.transition', [$ticket, $transition]))
@@ -2141,6 +2188,65 @@ class TicketModuleTest extends TestCase
 
         $this->assertSame($resolved->id, $ticket->fresh()->status_id);
         $this->assertTrue((bool) $response->fresh()->metadata['is_solution']);
+    }
+
+    #[Test]
+    public function workflow_solution_requirement_respects_internal_solution_policy(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $transition = TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $new->id)
+            ->where('to_status_id', $resolved->id)
+            ->firstOrFail();
+        $transition->forceFill(['requires_response' => false, 'requires_resolution' => true])->save();
+        \App\Modules\Ticket\Models\TicketWorkflowState::query()
+            ->where('ticket_workflow_id', $workflow->id)
+            ->where('ticket_status_id', $resolved->id)
+            ->update(['requires_response' => false, 'requires_resolution' => true]);
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-9990672',
+            'status_id' => $new->id,
+            'workflow_id' => $workflow->id,
+        ]);
+
+        TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'internal_note',
+            'visibility' => 'internal',
+            'body' => 'Internal remediation completed.',
+            'metadata' => ['is_solution' => true],
+        ]);
+
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket', 'name' => 'solution_policy'],
+            [
+                'description' => 'Ticket solution policy.',
+                'json' => json_encode(['allow_internal_solution_notes' => false]),
+            ]
+        );
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket, $transition]))
+            ->assertSessionHasErrors('status_id');
+
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket', 'name' => 'solution_policy'],
+            [
+                'description' => 'Ticket solution policy.',
+                'json' => json_encode(['allow_internal_solution_notes' => true]),
+            ]
+        );
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket, $transition]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($resolved->id, $ticket->fresh()->status_id);
     }
 
     #[Test]
@@ -2909,6 +3015,8 @@ class TicketModuleTest extends TestCase
             ->get(route('tech.admin.settings.tickets'))
             ->assertOk()
             ->assertViewIs('ticket::Admin.Settings.index')
+            ->assertSee('Solution Policy')
+            ->assertSee('Allow internal notes to be marked as ticket solutions')
             ->assertSee('Ticket Merging')
             ->assertSee('Documentation Follow-Ups')
             ->assertSee('TD-2026-999046')
@@ -2916,6 +3024,41 @@ class TicketModuleTest extends TestCase
             ->assertSee('Automatically merge exact duplicate inbound tickets')
             ->assertSee('Allow AI-assisted merge suggestions')
             ->assertSee('AI similarity threshold');
+    }
+
+    #[Test]
+    public function admin_can_update_ticket_solution_policy(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.solution-policy.update'), [
+                'allow_internal_solution_notes' => '0',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Ticket solution policy updated.');
+
+        $payload = json_decode((string) CommonSetting::query()
+            ->where('type', 'ticket')
+            ->where('name', 'solution_policy')
+            ->value('json'), true);
+
+        $this->assertFalse($payload['allow_internal_solution_notes']);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.solution-policy.update'), [
+                'allow_internal_solution_notes' => '1',
+            ])
+            ->assertRedirect();
+
+        $payload = json_decode((string) CommonSetting::query()
+            ->where('type', 'ticket')
+            ->where('name', 'solution_policy')
+            ->value('json'), true);
+
+        $this->assertTrue($payload['allow_internal_solution_notes']);
     }
 
     #[Test]

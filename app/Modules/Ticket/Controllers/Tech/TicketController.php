@@ -49,6 +49,7 @@ use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Ticket\Services\TicketMergeSuggestionService;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\Ticket\Support\TicketSolutionPolicy;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Http\RedirectResponse;
@@ -235,7 +236,7 @@ class TicketController extends Controller
             ->with('success', 'Ticket ' . $ticket->ticket_key . ' created.');
     }
 
-    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions): View|RedirectResponse
+    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions, TicketSolutionPolicy $solutionPolicy): View|RedirectResponse
     {
         app(EnsureTicketDefaults::class)->handle();
 
@@ -255,6 +256,7 @@ class TicketController extends Controller
         return view('ticket::Tech.Tickets.show', [
             'ticket' => $ticket,
             'ticketActions' => $actionGuard->map($ticket, request()->user()),
+            'solutionPolicy' => $solutionPolicy->settings(),
             'workflowTransitions' => $workflowTransitions,
             'closeTransition' => $closeTransition,
             'latestAssignmentEvent' => $ticket->events
@@ -307,7 +309,7 @@ class TicketController extends Controller
         ]);
     }
 
-    public function addMessage(Request $request, Ticket $ticket, AddTicketMessage $addTicketMessage, TicketActionGuard $actionGuard): RedirectResponse
+    public function addMessage(Request $request, Ticket $ticket, AddTicketMessage $addTicketMessage, TicketActionGuard $actionGuard, TicketSolutionPolicy $solutionPolicy): RedirectResponse
     {
         $data = $request->validate([
             'body' => 'required|string',
@@ -324,6 +326,12 @@ class TicketController extends Controller
         $isInternalSolution = $data['type'] === 'internal_solution';
 
         if ($isInternalSolution) {
+            if (! $solutionPolicy->allowsInternalSolutionNotes()) {
+                return back()
+                    ->withErrors(['type' => 'Internal solution notes are disabled by Ticket solution policy.'])
+                    ->withInput();
+            }
+
             $data['type'] = 'internal_note';
             $data['reply_intent'] = TicketAction::SEND_SOLUTION;
         }
