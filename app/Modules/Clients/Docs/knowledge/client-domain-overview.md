@@ -13,6 +13,17 @@ Opening a Client sets `active_client_id` in the technician session. Opening a Si
 The Client index clears active client and site context so technicians can return to a global client
 view.
 
+## Technician UI
+
+The Client show page uses the gear action in the Summary card as the Client edit entry point.
+This edit surface updates core Client fields, Client status, the N-able RMM mapping, and editable
+Client custom field values.
+
+The Client index has a compact search row and an advanced filter panel behind the funnel icon.
+Technicians can filter by active status, Client format, contract presence, won contracts, and RMM
+link state when RMM is configured. Client index filters are remembered in the technician session for
+two hours or until the technician uses `Clear`.
+
 ## Sites
 
 Sites are physical or operational locations for a Client. Each Client should have a default Site so

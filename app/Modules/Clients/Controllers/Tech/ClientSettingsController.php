@@ -4,11 +4,13 @@ namespace App\Modules\Clients\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
+use App\Models\Clients\ClientFormat;
 use App\Models\System\Integrations\Integration;
 use App\Modules\CustomField\Actions\SyncCustomFieldValues;
 use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClientSettingsController extends Controller
 {
@@ -40,20 +42,45 @@ class ClientSettingsController extends Controller
             'rmmClients' => $rmmClients,
             'rmmError' => $rmmError,
             'currentRmmId' => $currentRmmId,
+            'clientFormats' => ClientFormat::activeOptions(),
             'customFields' => $customFields->editableFor($client, $request->user()),
         ]);
     }
 
     public function update(Request $request, Client $client, SyncCustomFieldValues $customFields)
     {
-        $request->validate([
-            'rmm_external_id' => 'nullable|string',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'client_number' => [
+                'nullable',
+                'string',
+                'regex:/^\d{5}$/',
+                Rule::unique('clients', 'client_number')->ignore($client->id),
+            ],
+            'org_no' => ['nullable', 'string', 'max:50'],
+            'client_format_id' => ['nullable', Rule::exists('client_formats', 'id')],
+            'website' => ['nullable', 'string', 'max:255'],
+            'billing_email' => ['nullable', 'email', 'max:255'],
+            'notes' => ['nullable', 'string'],
+            'active' => ['nullable', 'boolean'],
+            'rmm_external_id' => ['nullable', 'string'],
             'custom_fields' => ['nullable', 'array'],
         ]);
 
+        $client->forceFill([
+            'name' => $validated['name'],
+            'client_number' => $validated['client_number'] ?? null,
+            'org_no' => $validated['org_no'] ?? null,
+            'client_format_id' => $validated['client_format_id'] ?? null,
+            'website' => $validated['website'] ?? null,
+            'billing_email' => $validated['billing_email'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'active' => $request->boolean('active'),
+        ])->save();
+
         $rmmIntegration = Integration::where('type', 'rmm')->where('status', 'active')->first();
-        if ($rmmIntegration) {
-            if ($request->rmm_external_id) {
+        if ($rmmIntegration && $request->has('rmm_external_id')) {
+            if ($validated['rmm_external_id'] ?? null) {
                 \App\Models\System\Integrations\ClientRmmLink::updateOrCreate(
                     [
                         'integration_id' => $rmmIntegration->id,
