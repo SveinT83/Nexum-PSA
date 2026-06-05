@@ -477,6 +477,77 @@ class CommercialModuleTest extends TestCase
     }
 
     #[Test]
+    public function service_edit_shows_timebank_minutes_as_integer(): void
+    {
+        $unit = Units::query()->create(['name' => 'Hour', 'short' => 'h']);
+        $service = Services::query()->create([
+            'sku' => 'TIMEBANK-PLAN',
+            'name' => 'Timebank plan',
+            'unitId' => $unit->id,
+            'status' => 'Active',
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 1000,
+            'price_including_tax' => 1250,
+            'timebank_enabled' => true,
+            'timebank_minutes' => 60,
+            'timebank_interval' => 'monthly',
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.services.edit', $service))
+            ->assertOk()
+            ->assertSee('name="timebank_minutes"', false)
+            ->assertSee('value="60"', false)
+            ->assertDontSee('value="60.00"', false)
+            ->assertDontSee('value="60,00"', false);
+    }
+
+    #[Test]
+    public function service_update_accepts_decimal_formatted_timebank_minutes(): void
+    {
+        $unit = Units::query()->create(['name' => 'Hour', 'short' => 'h']);
+        $service = Services::query()->create([
+            'sku' => 'TIMEBANK-SAVE',
+            'name' => 'Timebank save',
+            'unitId' => $unit->id,
+            'status' => 'draft',
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 1000,
+            'price_including_tax' => 1250,
+            'timebank_enabled' => true,
+            'timebank_minutes' => 30,
+            'timebank_interval' => 'monthly',
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.services.update', $service), [
+                'sku' => 'TIMEBANK-SAVE',
+                'name' => 'Timebank save',
+                'unitId' => $unit->id,
+                'status' => 'draft',
+                'taxable' => 25,
+                'billing_cycle' => 'monthly',
+                'price_ex_vat' => 1000,
+                'price_including_tax' => 1250,
+                'timebank_enabled' => 1,
+                'timebank_minutes' => '60,00',
+                'timebank_interval' => 'monthly',
+            ])
+            ->assertRedirect(route('tech.services.show', $service));
+
+        $this->assertDatabaseHas('services', [
+            'id' => $service->id,
+            'timebank_minutes' => 60,
+        ]);
+    }
+
+    #[Test]
     public function cost_index_can_search_filter_and_sort_costs(): void
     {
         $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
@@ -539,6 +610,46 @@ class CommercialModuleTest extends TestCase
             ['Endpoint license'],
             $recurrenceResponse->viewData('costs')->getCollection()->pluck('name')->all()
         );
+    }
+
+    #[Test]
+    public function cost_form_links_to_vendor_creation(): void
+    {
+        Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.costs.create'))
+            ->assertOk()
+            ->assertViewIs('commercial::Tech.cs.costs.form')
+            ->assertSee('Vendor')
+            ->assertSee('New vendor')
+            ->assertSee(route('tech.documentations.vendors.create'), false)
+            ->assertSee('target="_blank"', false);
+    }
+
+    #[Test]
+    public function cost_can_be_created_without_note(): void
+    {
+        $unit = Units::query()->create(['name' => 'Lisens', 'short' => 'lic']);
+        $vendor = Vendor::query()->create(['name' => 'Microsoft']);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.costs.store'), [
+                'name' => 'Exchange Online (Plan1)',
+                'cost' => 48,
+                'unitId' => $unit->id,
+                'recurrence' => 'month',
+                'vendor_id' => $vendor->id,
+            ])
+            ->assertRedirect(route('tech.costs.index'));
+
+        $this->assertDatabaseHas('costs', [
+            'name' => 'Exchange Online (Plan1)',
+            'cost' => 48,
+            'unitId' => $unit->id,
+            'vendor_id' => $vendor->id,
+            'note' => '',
+        ]);
     }
 
     #[Test]
@@ -855,6 +966,50 @@ class CommercialModuleTest extends TestCase
             ->assertSee('Third-party email SLA')
             ->assertSee('Time with contract')
             ->assertSee('550,00');
+    }
+
+    #[Test]
+    public function contract_item_service_selection_populates_unit_price_field(): void
+    {
+        $client = Client::factory()->create();
+        $unit = Units::query()->create(['name' => 'License', 'short' => 'lic']);
+        $service = Services::query()->create([
+            'sku' => 'EXCHANGE-P1',
+            'name' => 'Exchange Online (Plan1)',
+            'unitId' => $unit->id,
+            'status' => 'published',
+            'orderable' => true,
+            'taxable' => 0,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 48,
+            'price_including_tax' => 48,
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'Contract with auto priced line.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'draft',
+            'created_by' => $this->tech->id,
+        ]);
+
+        Livewire::actingAs($this->tech)
+            ->test(ContractItemsEditor::class, ['contract' => $contract])
+            ->call('addItem')
+            ->set('items.0.service_id', $service->id)
+            ->assertSet('items.0.unit_price', '48.00')
+            ->assertSee('48,00 kr');
+
+        $this->assertDatabaseHas('contract_items', [
+            'contract_id' => $contract->id,
+            'service_id' => $service->id,
+            'unit_price' => 48,
+        ]);
     }
 
     #[Test]

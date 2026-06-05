@@ -4,7 +4,7 @@
         <!-- ------------------------------------------------- -->
         <!-- Top level row -->
         <!-- ------------------------------------------------- -->
-        <div class="row border-bottom mb-3 pb-3">
+        <div class="row border-bottom mb-3 pb-3" wire:key="contract-item-row-{{ $item['id'] ?? 'new-'.$index }}-service-{{ $item['service_id'] ?? 'none' }}">
 
             <!-- ------------------------------------------------- -->
             <!-- Top item level row -->
