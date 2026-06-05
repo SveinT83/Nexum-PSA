@@ -7,6 +7,8 @@ use App\Models\Clients\ClientFormat;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Models\System\Integrations\Integration;
+use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
@@ -263,6 +265,97 @@ class ClientTechTest extends TestCase
         $response->assertDontSee('Client Sites');
         $response->assertDontSee('Back to Clients');
         $this->assertEquals($client->id, session('active_client_id'));
+    }
+
+    #[Test]
+    public function client_settings_edit_updates_client_details_status_and_rmm_link(): void
+    {
+        $format = ClientFormat::query()->where('code', 'AS')->firstOrFail();
+        $client = Client::factory()->create([
+            'name' => 'Editable Client AS',
+            'client_number' => '12345',
+            'active' => true,
+        ]);
+        $integration = Integration::query()->create([
+            'name' => 'N-able RMM',
+            'type' => 'rmm',
+            'status' => 'active',
+            'base_url' => 'https://rmm.example.test',
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.settings.edit', $client))
+            ->assertOk()
+            ->assertViewIs('clients::Tech.Settings.edit')
+            ->assertSee('Edit Client')
+            ->assertSee('Client Details')
+            ->assertSee('N-able RMM Integration');
+
+        $this->actingAs($this->techUser)
+            ->put(route('tech.clients.settings.update', $client), [
+                'name' => 'Edited Client AS',
+                'client_number' => '54321',
+                'org_no' => '999888777',
+                'client_format_id' => $format->id,
+                'website' => 'https://edited.example.test',
+                'billing_email' => 'billing@edited.example.test',
+                'notes' => 'Updated during import cleanup.',
+                'active' => '0',
+                'rmm_external_id' => 'RMM-CLIENT-42',
+            ])
+            ->assertRedirect(route('tech.clients.show', $client->id));
+
+        $this->assertDatabaseHas('clients', [
+            'id' => $client->id,
+            'name' => 'Edited Client AS',
+            'client_number' => '54321',
+            'active' => false,
+            'billing_email' => 'billing@edited.example.test',
+        ]);
+        $this->assertDatabaseHas('client_rmm_links', [
+            'integration_id' => $integration->id,
+            'linkable_type' => Client::class,
+            'linkable_id' => $client->id,
+            'external_id' => 'RMM-CLIENT-42',
+        ]);
+    }
+
+    #[Test]
+    public function client_index_filters_without_contracts_and_remembers_until_clear(): void
+    {
+        $withoutContract = Client::factory()->create(['name' => 'No Contract Client AS']);
+        $withContract = Client::factory()->create(['name' => 'Contracted Client AS']);
+        Contracts::query()->create([
+            'client_id' => $withContract->id,
+            'description' => 'Managed services',
+            'start_date' => now()->toDateString(),
+            'approval_status' => 'won',
+            'created_by' => $this->techUser->id,
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.index', ['contract_filter' => 'without_contract']))
+            ->assertOk()
+            ->assertSee('No Contract Client AS')
+            ->assertDontSee('Contracted Client AS')
+            ->assertSee('clientAdvancedFilters', false)
+            ->assertSee('Clear');
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.index'))
+            ->assertOk()
+            ->assertSee('No Contract Client AS')
+            ->assertDontSee('Contracted Client AS');
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.index', ['clear_filters' => 1]))
+            ->assertRedirect(route('tech.clients.index'));
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.index'))
+            ->assertOk()
+            ->assertSee('No Contract Client AS')
+            ->assertSee('Contracted Client AS');
     }
 
     #[Test]
