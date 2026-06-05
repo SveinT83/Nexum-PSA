@@ -18,9 +18,11 @@ use Illuminate\Support\Facades\Log;
  * message to a bot in a Talk conversation.
  *
  * The route is unauthenticated (no Laravel auth middleware) because Nextcloud
+ * The route is unauthenticated (no Laravel auth middleware) because Nextcloud
  * calls it as an external webhook. Request legitimacy is verified via
  * HMAC-SHA256 signature in the X-Nextcloud-Talk-Signature and
- * X-Nextcloud-Talk-Random headers.
+ * X-Nextcloud-Talk-Random headers (note: no "Bot-" prefix — that prefix
+ * is only for bot-to-Nextcloud requests, not for Nextcloud-to-webhook).
  *
  * @see https://nextcloud-talk.readthedocs.io/en/latest/bots/
  */
@@ -32,6 +34,7 @@ class TalkWebhookController extends Controller
      * Expected headers:
      *   - X-Nextcloud-Talk-Signature: HMAC-SHA256 signature of (random + body)
      *   - X-Nextcloud-Talk-Random:  Random value used in the signature
+     * (Inbound webhooks from Nextcloud use headers WITHOUT the "Bot-" prefix)
      *
      * Expected body: Activity Streams 2.0 JSON from Nextcloud Talk bots.
      */
