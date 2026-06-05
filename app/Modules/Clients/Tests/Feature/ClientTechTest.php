@@ -219,6 +219,15 @@ class ClientTechTest extends TestCase
             'client_id' => $client->id,
             'name' => 'Main Office',
         ]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Primary Client Contact',
+            'email' => 'primary.contact@example.test',
+            'phone' => '+47 900 00 001',
+            'role' => 'IT contact',
+            'is_default_for_client' => true,
+            'active' => true,
+        ]);
         $task = app(StoreTask::class)->handle([
             'title' => 'Review client backup',
         ], $this->techUser, $client);
@@ -253,11 +262,17 @@ class ClientTechTest extends TestCase
         $response->assertSee('clientWorkspaceTabs', false);
         $response->assertSee('data-bs-target="#client-assets-pane"', false);
         $response->assertSee('data-bs-target="#client-sites-pane"', false);
+        $response->assertSee('data-bs-target="#client-contacts-pane"', false);
         $response->assertSee('data-bs-target="#client-contracts-pane"', false);
         $response->assertSee('data-bs-target="#client-tasks-pane"', false);
         $response->assertSee('nav nav-tabs border-bottom border-secondary-subtle', false);
         $response->assertSee('nav-link active text-body border border-bottom-0', false);
         $response->assertSee('Main Office');
+        $response->assertSee('Primary Client Contact');
+        $response->assertSee('primary.contact@example.test');
+        $response->assertSee('IT contact');
+        $response->assertSee(route('tech.clients.user.show', $contact), false);
+        $response->assertSee(route('tech.clients.user.create', $client), false);
         $response->assertSee('Review client backup');
         $response->assertSee('Ticket task visible on client');
         $response->assertSee('clientTaskQuickCreateModal', false);
@@ -265,6 +280,12 @@ class ClientTechTest extends TestCase
         $response->assertDontSee('Client Sites');
         $response->assertDontSee('Back to Clients');
         $this->assertEquals($client->id, session('active_client_id'));
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.show', ['client' => $client, 'tab' => 'contacts']))
+            ->assertOk()
+            ->assertSee('id="client-contacts-pane"', false)
+            ->assertSee('show active', false);
     }
 
     #[Test]

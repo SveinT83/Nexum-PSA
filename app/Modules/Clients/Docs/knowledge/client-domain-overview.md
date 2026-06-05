@@ -19,6 +19,11 @@ The Client show page uses the gear action in the Summary card as the Client edit
 This edit surface updates core Client fields, Client status, the N-able RMM mapping, and editable
 Client custom field values.
 
+The Client show page also has workspace tabs for related records. `Sites` shows the Client's
+locations, while `Contacts` shows all Client contacts across all Sites so technicians can verify
+whether a Client has contacts without opening each Site first. The Contacts tab links to the
+existing Client contact detail and create flows.
+
 The Client index has a compact search row and an advanced filter panel behind the funnel icon.
 Technicians can filter by active status, Client format, contract presence, won contracts, and RMM
 link state when RMM is configured. Client index filters are remembered in the technician session for
