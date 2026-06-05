@@ -57,8 +57,8 @@ class NextcloudTalkClientTest extends TestCase
         $this->assertEquals(['id' => 42], $result);
 
         Http::assertSent(function ($request) {
-            return $request->hasHeader('X-Nextcloud-Talk-Random')
-                && $request->hasHeader('X-Nextcloud-Talk-Signature')
+            return $request->hasHeader('X-Nextcloud-Talk-Bot-Random')
+                && $request->hasHeader('X-Nextcloud-Talk-Bot-Signature')
                 && $request->hasHeader('OCS-APIRequest')
                 && $request->url() === 'https://nextcloud.example.com/ocs/v2.php/apps/spreed/api/v1/bot/abc123xyz/message'
                 && $request->method() === 'POST';
@@ -140,13 +140,51 @@ class NextcloudTalkClientTest extends TestCase
     }
 
     #[Test]
+    public function it_signs_bot_message_over_random_and_plain_text(): void
+    {
+        Http::fake([
+            'nextcloud.example.com/ocs/v2.php/apps/spreed/api/v1/bot/testtoken/message' => Http::response([
+                'ocs' => [
+                    'meta' => ['status' => 'ok', 'statuscode' => 201],
+                    'data' => ['id' => 1],
+                ],
+            ], 201),
+        ]);
+
+        $this->client->sendBotMessage(
+            $this->connection,
+            'testtoken',
+            'Hello from Nexum!',
+        );
+
+        // The Talk Bot API signs over random + plain message text, NOT the JSON body.
+        // Verify the signature matches random + message, not random + jsonString.
+        Http::assertSent(function ($request) {
+            $random = $request->header('X-Nextcloud-Talk-Bot-Random')[0] ?? '';
+            $signature = strtolower($request->header('X-Nextcloud-Talk-Bot-Signature')[0] ?? '');
+            $secret = $this->connection->getTalkBotSecret();
+            $message = 'Hello from Nexum!';
+
+            $expectedOverMessage = hash_hmac('sha256', $random.$message, $secret);
+            $expectedOverBody = hash_hmac('sha256', $random.$request->body(), $secret);
+
+            // Signature must match random + plain message text
+            $matchesMessageHash = hash_equals($expectedOverMessage, $signature);
+            // And must NOT match random + JSON body (which would be a regression)
+            $matchesBodyHash = hash_equals($expectedOverBody, $signature);
+
+            return $matchesMessageHash && ! $matchesBodyHash;
+        });
+    }
+
+    #[Test]
     public function it_verifies_incoming_signatures(): void
     {
         $secret = 'my-bot-secret';
         $random = bin2hex(random_bytes(32));
         $body = json_encode(['type' => 'Activity', 'object' => ['content' => 'hello']]);
 
-        $signature = hash_hmac('sha256', $random . $body, $secret);
+        $signature = hash_hmac('sha256', $random.$body, $secret);
 
         $this->assertTrue(
             $this->client->verifyIncomingSignature($secret, $random, $signature, $body)

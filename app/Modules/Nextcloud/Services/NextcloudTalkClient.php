@@ -33,9 +33,9 @@ class NextcloudTalkClient
      * @param  string  $conversationToken  The Talk conversation token (e.g., "n3xtc10ud")
      * @param  string  $message  The message text (supports Markdown if the bot has the feature)
      * @param  array  $options  Optional: referenceId, silent, replyTo
-     * @return array  Response data from the Talk API
+     * @return array Response data from the Talk API
      *
-     * @throws RuntimeException  If the request fails
+     * @throws RuntimeException If the request fails
      */
     public function sendBotMessage(NextcloudConnection $connection, string $conversationToken, string $message, array $options = []): array
     {
@@ -59,7 +59,7 @@ class NextcloudTalkClient
             $body['referenceId'] = $options['referenceId'];
         }
 
-        if (!empty($options['silent'])) {
+        if (! empty($options['silent'])) {
             $body['silent'] = true;
         }
 
@@ -67,18 +67,18 @@ class NextcloudTalkClient
             $body['replyTo'] = $options['replyTo'];
         }
 
-        $jsonBody = json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-        // Generate HMAC-SHA256 signature
+        // Generate HMAC-SHA256 signature.
+        // Talk Bot API signs over random + plain message text (not the JSON body).
+        // @see https://nextcloud-talk.readthedocs.io/en/latest/bots/#sending-a-chat-message
         $random = $this->generateRandomString(64);
-        $signature = hash_hmac('sha256', $random . $jsonBody, $secret);
+        $signature = hash_hmac('sha256', $random.$message, $secret);
 
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
             'OCS-APIRequest' => 'true',
-            'X-Nextcloud-Talk-Signature' => strtolower($signature),
-            'X-Nextcloud-Talk-Random' => $random,
+            'X-Nextcloud-Talk-Bot-Signature' => strtolower($signature),
+            'X-Nextcloud-Talk-Bot-Random' => $random,
         ])
             ->timeout(15)
             ->post("{$baseUrl}{$endpoint}", $body);
@@ -98,7 +98,7 @@ class NextcloudTalkClient
      * @param  string  $conversationToken  The Talk conversation token
      * @param  string  $message  The message text
      * @param  array  $options  Optional: referenceId, replyTo, silent, object
-     * @return array  Response data from the Talk API
+     * @return array Response data from the Talk API
      */
     public function sendChatMessage(NextcloudConnection $connection, string $conversationToken, string $message, array $options = []): array
     {
@@ -115,7 +115,7 @@ class NextcloudTalkClient
             $body['replyTo'] = $options['replyTo'];
         }
 
-        if (!empty($options['silent'])) {
+        if (! empty($options['silent'])) {
             $body['silent'] = true;
         }
 
@@ -135,7 +135,7 @@ class NextcloudTalkClient
      * for bot messages and notification routing.
      *
      * @param  NextcloudConnection  $connection  The Nextcloud connection to use
-     * @return array  List of conversations with token, name, type, and displayName
+     * @return array List of conversations with token, name, type, and displayName
      */
     public function listConversations(NextcloudConnection $connection): array
     {
@@ -167,7 +167,7 @@ class NextcloudTalkClient
      *
      * @param  NextcloudConnection  $connection  The Nextcloud connection to use
      * @param  string  $conversationToken  The conversation token
-     * @return array  Conversation details
+     * @return array Conversation details
      */
     public function getConversation(NextcloudConnection $connection, string $conversationToken): array
     {
@@ -190,7 +190,7 @@ class NextcloudTalkClient
      * @param  string  $roomName  The name for the new conversation
      * @param  int  $roomType  1=group, 2=public, 3=one-to-one (deprecated), 4=changelog
      * @param  array  $options  Optional: password, object, invite users/groups
-     * @return array  Created conversation data
+     * @return array Created conversation data
      */
     public function createConversation(NextcloudConnection $connection, string $roomName, int $roomType = 1, array $options = []): array
     {
@@ -220,20 +220,24 @@ class NextcloudTalkClient
     }
 
     /**
-     * Verify an incoming webhook signature from a Talk bot.
+     * Verify an incoming webhook signature from Nextcloud Talk.
      *
-     * Use this to validate that incoming requests to Nexum's webhook endpoint
-     * are genuinely from the Nextcloud Talk server.
+     * IMPORTANT: Inbound webhooks from Nextcloud use headers WITHOUT the
+     * "Bot-" prefix (X-Nextcloud-Talk-Random, X-Nextcloud-Talk-Signature),
+     * while outbound bot messages TO Nextcloud use the "Bot-" prefix
+     * (X-Nextcloud-Talk-Bot-Random, X-Nextcloud-Talk-Bot-Signature).
+     *
+     * The signature covers random + raw body (the full JSON payload).
+     * This differs from outbound where the signature covers random + message text only.
      *
      * @param  string  $secret  The bot's shared secret
      * @param  string  $randomHeader  The X-Nextcloud-Talk-Random header value
      * @param  string  $signatureHeader  The X-Nextcloud-Talk-Signature header value
      * @param  string  $body  The raw request body
-     * @return bool  True if the signature is valid
      */
     public function verifyIncomingSignature(string $secret, string $randomHeader, string $signatureHeader, string $body): bool
     {
-        $expectedSignature = hash_hmac('sha256', $randomHeader . $body, $secret);
+        $expectedSignature = hash_hmac('sha256', $randomHeader.$body, $secret);
 
         return hash_equals(strtolower($expectedSignature), strtolower($signatureHeader));
     }
@@ -242,7 +246,7 @@ class NextcloudTalkClient
      * Check if the Talk server supports the bots-v1 capability.
      *
      * @param  NextcloudConnection  $connection  The Nextcloud connection to check
-     * @return bool  True if bots-v1 is supported
+     * @return bool True if bots-v1 is supported
      */
     public function supportsBots(NextcloudConnection $connection): bool
     {
@@ -270,7 +274,7 @@ class NextcloudTalkClient
      * This method extracts the key fields into a convenient array.
      *
      * @param  array  $payload  The parsed JSON payload from Talk
-     * @return array  Normalized message data
+     * @return array Normalized message data
      */
     public function parseIncomingMessage(array $payload): array
     {
@@ -314,7 +318,7 @@ class NextcloudTalkClient
      * List bots installed on the Nextcloud server (admin only).
      *
      * @param  NextcloudConnection  $connection  The Nextcloud connection (admin credentials)
-     * @return array  List of installed bots
+     * @return array List of installed bots
      */
     public function listInstalledBots(NextcloudConnection $connection): array
     {

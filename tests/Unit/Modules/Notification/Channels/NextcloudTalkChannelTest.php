@@ -2,13 +2,13 @@
 
 namespace Tests\Unit\Modules\Notification\Channels;
 
+use App\Models\Core\User;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Notification\Channels\NextcloudTalkChannel;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Notifications\TicketAssigned;
 use App\Modules\Ticket\Models\Ticket;
-use App\Models\Core\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
@@ -79,8 +79,8 @@ class NextcloudTalkChannelTest extends TestCase
         // Should have made a bot API call (signed message)
         Http::assertSent(function ($request) {
             return str_contains($request->url(), '/bot/support-room/message')
-                && $request->hasHeader('X-Nextcloud-Talk-Random')
-                && $request->hasHeader('X-Nextcloud-Talk-Signature')
+                && $request->hasHeader('X-Nextcloud-Talk-Bot-Random')
+                && $request->hasHeader('X-Nextcloud-Talk-Bot-Signature')
                 && $request->hasHeader('OCS-APIRequest');
         });
     }
@@ -122,7 +122,7 @@ class NextcloudTalkChannelTest extends TestCase
         // Should have made a webhook POST (no signing headers)
         Http::assertSent(function ($request) use ($webhookUrl) {
             return $request->url() === $webhookUrl
-                && !$request->hasHeader('X-Nextcloud-Talk-Signature');
+                && ! $request->hasHeader('X-Nextcloud-Talk-Bot-Signature');
         });
     }
 
