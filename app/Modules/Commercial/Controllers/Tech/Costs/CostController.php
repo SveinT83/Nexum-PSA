@@ -108,7 +108,7 @@ class CostController extends Controller
             'unitId' => $data['unitId'],
             'recurrence' => $data['recurrence'],
             'vendor_id' => $data['vendor_id'],
-            'note' => $data['note'],
+            'note' => $data['note'] ?? '',
             'created_by_user_id' => auth()->id(),
             'updated_by_user_id' => auth()->id(),
         ]);
@@ -146,7 +146,7 @@ class CostController extends Controller
             'unitId' => $data['unitId'],
             'recurrence' => $data['recurrence'],
             'vendor_id' => $data['vendor_id'],
-            'note' => $data['note'],
+            'note' => $data['note'] ?? '',
             'updated_by_user_id' => auth()->id(),
         ]);
 

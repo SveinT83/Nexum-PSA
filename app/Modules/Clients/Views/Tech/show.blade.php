@@ -18,7 +18,8 @@
     @php
         $clientTasks = $clientTasks->sortByDesc('updated_at')->values();
         $missing = fn ($value) => filled($value) ? $value : '—';
-        $availableTabs = ['assets', 'sites', 'contracts', 'tasks', 'custom-fields'];
+        $contacts = ($contacts ?? collect())->sortBy('name')->values();
+        $availableTabs = ['assets', 'sites', 'contacts', 'contracts', 'tasks', 'custom-fields'];
         $activeClientTab = in_array(request('tab'), $availableTabs, true) ? request('tab') : 'assets';
         if ($activeClientTab === 'custom-fields' && ($customFields ?? collect())->isEmpty()) {
             $activeClientTab = 'assets';
@@ -94,6 +95,11 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link {{ $activeClientTab === 'contacts' ? 'active ' : '' }}text-body border border-bottom-0" id="client-contacts-tab" data-bs-toggle="tab" data-bs-target="#client-contacts-pane" type="button" role="tab" aria-controls="client-contacts-pane" aria-selected="{{ $activeClientTab === 'contacts' ? 'true' : 'false' }}">
+                        Contacts <span class="badge text-bg-light border ms-1">{{ $contacts->count() }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link {{ $activeClientTab === 'contracts' ? 'active ' : '' }}text-body border border-bottom-0" id="client-contracts-tab" data-bs-toggle="tab" data-bs-target="#client-contracts-pane" type="button" role="tab" aria-controls="client-contracts-pane" aria-selected="{{ $activeClientTab === 'contracts' ? 'true' : 'false' }}">
                         Contracts <span class="badge text-bg-light border ms-1">{{ $contracts->count() }}</span>
                     </button>
@@ -151,6 +157,81 @@
                                     @empty
                                         <tr>
                                             <td colspan="4" class="text-center text-muted py-4">No sites registered for this client.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'contacts']) id="client-contacts-pane" role="tabpanel" aria-labelledby="client-contacts-tab" tabindex="0">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold">Contacts</span>
+                                <span class="badge text-bg-light border">{{ $contacts->count() }}</span>
+                            </div>
+                            <x-buttons.addlink url="{{ route('tech.clients.user.create', $client) }}" class="mb-0">New Contact</x-buttons.addlink>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Site</th>
+                                        <th>Role</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($contacts as $contact)
+                                        <tr class="cursor-pointer" data-href="{{ route('tech.clients.user.show', $contact) }}" onclick="window.location.href = this.dataset.href">
+                                            <td>
+                                                <a href="{{ route('tech.clients.user.show', $contact) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">
+                                                    {{ $contact->name }}
+                                                </a>
+                                                @if($contact->is_default_for_client)
+                                                    <span class="badge text-bg-light border ms-1">Default</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($contact->site)
+                                                    <a href="{{ route('tech.clients.sites.show', $contact->site) }}" class="text-decoration-none" onclick="event.stopPropagation()">
+                                                        {{ $contact->site->name }}
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                            </td>
+                                            <td class="{{ blank($contact->role) ? 'text-muted' : '' }}">{{ $missing($contact->role) }}</td>
+                                            <td class="{{ blank($contact->email) ? 'text-muted' : '' }}">
+                                                @if(filled($contact->email))
+                                                    <a href="mailto:{{ $contact->email }}" onclick="event.stopPropagation()">{{ $contact->email }}</a>
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                            <td class="{{ blank($contact->phone) ? 'text-muted' : '' }}">
+                                                @if(filled($contact->phone))
+                                                    <a href="tel:{{ $contact->phone }}" onclick="event.stopPropagation()">{{ $contact->phone }}</a>
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($contact->active)
+                                                    <span class="badge bg-success">Active</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted py-4">No contacts registered for this client.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

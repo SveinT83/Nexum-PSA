@@ -22,4 +22,5 @@ Rows are clickable and open the cost detail view. The cost name remains a direct
 
 - Cost values should be entered excluding VAT unless the finance workflow explicitly states otherwise.
 - Recurrence should match the vendor billing rhythm as closely as possible.
+- Vendors are shared master data owned by Documentation. Use `New vendor` on the Cost form when the needed vendor is not already available in the selector.
 - Costs attached to services influence profitability calculations, so update them when vendor pricing changes.

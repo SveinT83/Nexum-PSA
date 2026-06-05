@@ -1,6 +1,13 @@
 <!-- ------------------------------------------------- -->
 <!-- Form to create a new service -->
 <!-- ------------------------------------------------- -->
+@php
+    $timebankMinutesValue = old('timebank_minutes', $service->timebank_minutes ?? '');
+    $timebankMinutesValue = $timebankMinutesValue === '' || $timebankMinutesValue === null
+        ? ''
+        : (string) (int) str_replace(',', '.', (string) $timebankMinutesValue);
+@endphp
+
 <x-forms.form-default action="{{ route('tech.services.' . $formRoute, $service) }}" buttonText="{{ $buttonText }}" method="{{$method}}">
 
     <!-- ------------------------------------------------- -->
@@ -275,7 +282,7 @@
 
             <!-- timebank_minutes -->
             <div class="col-md-3 mb-3">
-                <x-forms.input_text name='timebank_minutes' labelName='Timebank Minutes' type='number' value="{{ old('timebank_minutes', $service->timebank_minutes ?? '') }}" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
+                <x-forms.input_text name='timebank_minutes' labelName='Timebank Minutes' type='number' :value="$timebankMinutesValue" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
             </div>
 
             <!-- timebank_interval -->

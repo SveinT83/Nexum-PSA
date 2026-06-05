@@ -71,17 +71,20 @@
                     <!-- Vendor -->
                     <div class="col-md-2 mb-3">
                         <x-forms.select name="vendor_id" labelName="Vendor">
-                        @if(isset($cost) && $cost->vendor)
-                            <option value="{{ $cost->vendor->id }}">{{ $cost->vendor->name }}</option>
-                        @else
-                            <option value="" disabled selected>Select vendor</option>
-                        @endif
+                            @if(isset($cost) && $cost->vendor)
+                                <option value="{{ $cost->vendor->id }}">{{ $cost->vendor->name }}</option>
+                            @else
+                                <option value="" disabled selected>Select vendor</option>
+                            @endif
 
-                        @foreach($vendors ?? [] as $vendor)
-                            <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                        @endforeach
-                    </x-forms.select>
+                            @foreach($vendors ?? [] as $vendor)
+                                <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                            @endforeach
+                        </x-forms.select>
 
+                        <div class="form-text">
+                            <a href="{{ route('tech.documentations.vendors.create') }}" target="_blank" rel="noopener">New vendor</a>
+                        </div>
                     </div>
 
                     <div class="col-12">

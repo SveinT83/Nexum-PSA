@@ -12,6 +12,29 @@ class ServiceStoreRequest extends FormRequest
         return auth()->check();
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->has('timebank_minutes')) {
+            return;
+        }
+
+        $minutes = $this->input('timebank_minutes');
+
+        if ($minutes === '' || $minutes === null) {
+            $this->merge(['timebank_minutes' => null]);
+
+            return;
+        }
+
+        $normalized = is_string($minutes)
+            ? str_replace(',', '.', $minutes)
+            : $minutes;
+
+        if (is_numeric($normalized)) {
+            $this->merge(['timebank_minutes' => (string) (int) $normalized]);
+        }
+    }
+
     public function rules(): array
     {
         return [

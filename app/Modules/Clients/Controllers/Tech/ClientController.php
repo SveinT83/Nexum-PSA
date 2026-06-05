@@ -179,6 +179,7 @@ class ClientController extends Controller
         // Client Contract (s)
         // -----------------------------------------
         $contracts = $client->contracts()->with('items')->latest('updated_at')->get();
+        $contacts = $client->contacts()->with('site')->orderBy('client_users.name')->get();
 
         // -----------------------------------------
         // Eager load risk assessments and items
@@ -226,6 +227,7 @@ class ClientController extends Controller
             'client' => $client,
             'sidebarMenuItems' => $sidebarMenuItems,
             'contracts' => $contracts,
+            'contacts' => $contacts,
             'technicians' => User::query()->where('status', User::STATUS_ACTIVE)->orderBy('name')->get(),
             'clientTasks' => $clientTasks,
             'customFields' => $customFields->visibleFor($client, $request->user()),
