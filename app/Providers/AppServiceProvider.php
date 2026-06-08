@@ -25,6 +25,7 @@ use App\Modules\Task\Livewire\Tech\TaskChecklistEditor;
 use App\Modules\Task\Livewire\Tech\TaskFormContext;
 use App\Modules\Ticket\Livewire\Admin\WorkflowEditor as TicketWorkflowEditor;
 use App\Modules\UserManagement\Livewire\Roles\RolePermissions as UserManagementRolePermissions;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
@@ -48,6 +49,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // tdPSA uses Bootstrap for operational UI, including paginated lists.
+        Paginator::useBootstrapFive();
+
         // Register module view namespaces used by module-owned controllers and Livewire views.
         foreach ([
             'asset' => 'Asset',
