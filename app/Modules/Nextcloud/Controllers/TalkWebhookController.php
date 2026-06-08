@@ -80,17 +80,20 @@ class TalkWebhookController extends Controller
         $secret = $connection->getTalkBotSecret();
 
         if (! $talkClient->verifyIncomingSignature($secret, $random, $signature, $body)) {
-            $expectedSignature = hash_hmac('sha256', $random.$body, $secret);
+            // Production-safe diagnostics: log enough to identify the mismatch
+            // without leaking full secrets, signatures, or request bodies.
+            $expected = hash_hmac('sha256', $random.$body, $secret);
             Log::warning('Nextcloud Talk webhook: signature verification failed.', [
                 'connection_id' => $connection->id,
                 'conversationToken' => $payload['target']['id'] ?? 'unknown',
-                'random_length' => strlen($random),
-                'body_length' => strlen($body),
-                'signature_received' => substr($signature, 0, 16).'...',
-                'signature_expected' => substr($expectedSignature, 0, 16).'...',
-                'secret_length' => strlen($secret),
-                'secret_prefix' => substr($secret, 0, 4).'...',
-                'body_preview' => substr($body, 0, 200),
+                'random_len' => strlen($random),
+                'body_len' => strlen($body),
+                'sig_match' => hash_equals($expected, $signature) ? 'yes' : 'no',
+                'sig_prefix_recv' => substr($signature, 0, 8).'...',
+                'sig_prefix_expect' => substr($expected, 0, 8).'...',
+                'secret_len' => strlen($secret),
+                'body_first_byte' => ord($body[0] ?? "\0"),
+                'body_last_byte' => ord($body[-1] ?? "\0"),
             ]);
 
             return response()->json(['error' => 'Invalid signature'], 403);
@@ -223,7 +226,7 @@ class TalkWebhookController extends Controller
         $responseText = match ($command) {
             'help' => $this->formatHelpText(),
             'status' => $this->handleStatusCommand($connection, $arg1),
-            'ping' => '🏓 Pong! Nexum PSA v'.config('app.version', '0.1.0').' is online.',
+            'ping' => '🏓 Pong! Nexum PSA v'.config('app.version', '0.2.1').' is online.',
             default => "Unknown command: `!{$command}`. Type `!help` for available commands.",
         };
 
@@ -276,7 +279,7 @@ class TalkWebhookController extends Controller
      */
     private function formatHelpText(): string
     {
-        $version = config('app.version', '0.1.0');
+        $version = config('app.version', '0.2.1');
 
         return <<<MARKDOWN
 **Nexum PSA Bot Commands** (v{$version})
