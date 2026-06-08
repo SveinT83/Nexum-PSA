@@ -80,9 +80,17 @@ class TalkWebhookController extends Controller
         $secret = $connection->getTalkBotSecret();
 
         if (! $talkClient->verifyIncomingSignature($secret, $random, $signature, $body)) {
+            $expectedSignature = hash_hmac('sha256', $random.$body, $secret);
             Log::warning('Nextcloud Talk webhook: signature verification failed.', [
                 'connection_id' => $connection->id,
                 'conversationToken' => $payload['target']['id'] ?? 'unknown',
+                'random_length' => strlen($random),
+                'body_length' => strlen($body),
+                'signature_received' => substr($signature, 0, 16).'...',
+                'signature_expected' => substr($expectedSignature, 0, 16).'...',
+                'secret_length' => strlen($secret),
+                'secret_prefix' => substr($secret, 0, 4).'...',
+                'body_preview' => substr($body, 0, 200),
             ]);
 
             return response()->json(['error' => 'Invalid signature'], 403);
