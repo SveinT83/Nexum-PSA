@@ -249,7 +249,7 @@
         <footer class="mt-auto py-3">
             <div class="container-fluid text-center">
                 <div class="row gy-2">
-                    <p class="mb-0">&copy; {{ date('Y') }} {{ $companyProfile['company_name'] ?? config('app.name', 'Nexum PSA') }}. All rights reserved. <span class="text-muted">v{{ config('app.version', '0.1.0') }}</span></p>
+                    <p class="mb-0">&copy; {{ date('Y') }} {{ $companyProfile['company_name'] ?? config('app.name', 'Nexum PSA') }}. All rights reserved. <span class="text-muted">v{{ config('app.version', '0.2.0') }}</span></p>
                     <div class="small d-flex flex-wrap justify-content-center gap-3">
                         <a href="https://github.com/SveinT83/Nexum-PSA/issues"
                            class="link-secondary text-decoration-none"

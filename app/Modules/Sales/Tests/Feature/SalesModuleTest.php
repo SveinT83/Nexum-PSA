@@ -525,6 +525,9 @@ class SalesModuleTest extends TestCase
             ->assertSee('Edit Quote')
             ->assertSee('Details')
             ->assertSee('Catalog item')
+            ->assertSee('Add at least one quote line before sending.')
+            ->assertSee('id="quoteLineMethod" value="PATCH" disabled', false)
+            ->assertDontSee('action="'.route('tech.sales.quote.send', $opportunity).'"', false)
             ->assertDontSee('Source ID');
 
         $this->actingAs($this->tech)

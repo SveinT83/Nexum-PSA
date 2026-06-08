@@ -73,6 +73,19 @@ class ClientTechTest extends TestCase
     }
 
     #[Test]
+    public function client_index_uses_bootstrap_pagination_markup(): void
+    {
+        Client::factory()->count(30)->create();
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.index'))
+            ->assertOk()
+            ->assertSee('<ul class="pagination"', false)
+            ->assertSee('page-link', false)
+            ->assertDontSee('w-5 h-5', false);
+    }
+
+    #[Test]
     public function authenticated_api_user_can_list_clients_with_client_read_scope(): void
     {
         Client::factory()->create([

@@ -206,6 +206,7 @@
                     @if($sale->currentQuoteVersion)
                         @php
                             $quoteSummaryVersion = $sale->currentQuoteVersion;
+                            $quoteLineCount = $quoteSummaryVersion->lines->count();
                         @endphp
                         <div class="small text-muted">
                             {{ ucfirst($quoteSummaryVersion->status) }} / {{ $quoteSummaryVersion->lines->count() }} lines / {{ number_format((float) $quoteSummaryVersion->total_ex_vat, 2, ',', ' ') }} ex VAT
@@ -223,10 +224,14 @@
                         <a href="{{ route('sales.quotes.public.pdf', $sale->currentQuoteVersion->secure_token) }}" class="btn btn-sm btn-outline-secondary" target="_blank">PDF</a>
                         @if($sale->currentQuoteVersion->status === 'draft')
                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quoteLineModal">Edit Quote</button>
-                            <form method="POST" action="{{ route('tech.sales.quote.send', $sale) }}">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-success">Send Quote</button>
-                            </form>
+                            @if($quoteLineCount > 0)
+                                <form method="POST" action="{{ route('tech.sales.quote.send', $sale) }}">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-success">Send Quote</button>
+                                </form>
+                            @else
+                                <button type="button" class="btn btn-sm btn-success" disabled title="Add at least one quote line before sending.">Send Quote</button>
+                            @endif
                         @elseif($sale->currentQuoteVersion->status === 'sent')
                             @if($sale->status === 'negotiation')
                                 <form method="POST" action="{{ route('tech.sales.quote.revise', $sale) }}">
@@ -401,7 +406,7 @@
                                 <div class="card-body">
                                     <form method="POST" action="{{ route('tech.sales.quote.lines.store', $sale) }}" id="quoteLineForm" class="row g-3 align-items-end" data-store-action="{{ route('tech.sales.quote.lines.store', $sale) }}">
                                         @csrf
-                                        <input type="hidden" name="_method" id="quoteLineMethod" value="POST" disabled>
+                                        <input type="hidden" name="_method" id="quoteLineMethod" value="PATCH" disabled>
                                         <div class="col-md-3">
                                             <label class="form-label">Source</label>
                                             <select name="source_type" class="form-select" id="quoteSourceType">
