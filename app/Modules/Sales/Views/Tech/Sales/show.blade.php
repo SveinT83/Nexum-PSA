@@ -230,7 +230,11 @@
                                     <button type="submit" class="btn btn-sm btn-success">Send Quote</button>
                                 </form>
                             @else
-                                <button type="button" class="btn btn-sm btn-success" disabled title="Add at least one quote line before sending.">Send Quote</button>
+                                <span
+                                    class="d-inline-block"
+                                    title="Add at least one quote line before sending.">
+                                    <button type="button" class="btn btn-sm btn-disabled" disabled>Send Quote</button>
+                                </span>
                             @endif
                         @elseif($sale->currentQuoteVersion->status === 'sent')
                             @if($sale->status === 'negotiation')
