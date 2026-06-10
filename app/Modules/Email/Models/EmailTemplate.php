@@ -43,6 +43,7 @@ class EmailTemplate extends Model
         'tickets' => 'Tickets',
         'system' => 'System notifications',
         'sales' => 'Sales',
+        'marketing' => 'Marketing',
         'alerts' => 'Alerts',
     ];
 }

@@ -11,6 +11,7 @@ use App\Modules\Contact\Controllers\Tech\ContactController;
 use App\Modules\Contact\Livewire\Tech\ContactForm;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Support\ContactSettings;
+use App\Modules\Signal\Models\Signal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
@@ -421,6 +422,16 @@ class ContactModuleTest extends TestCase
             'relation_type' => 'contact',
             'is_primary' => true,
         ]);
+        Signal::query()->create([
+            'source_domain' => 'email',
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'signal_type' => 'hard_bounce',
+            'severity' => 'error',
+            'confidence' => 95,
+            'summary' => 'Inbound email classified as hard bounce.',
+            'occurred_at' => now(),
+        ]);
 
         $this->actingAs($this->techUser)
             ->get(route('tech.contacts.show', $contact))
@@ -428,7 +439,9 @@ class ContactModuleTest extends TestCase
             ->assertSee('Organization / Client')
             ->assertSee('Show Client')
             ->assertSee('Site')
-            ->assertSee('Show Site');
+            ->assertSee('Show Site')
+            ->assertSee('Signals')
+            ->assertSee('Inbound email classified as hard bounce.');
     }
 
     #[Test]

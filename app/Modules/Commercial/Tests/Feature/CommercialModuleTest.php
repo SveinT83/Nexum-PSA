@@ -4,6 +4,7 @@ namespace App\Modules\Commercial\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Commercial\Models\Cost;
 use App\Modules\Commercial\Models\Contracts\Contracts;
@@ -307,6 +308,41 @@ class CommercialModuleTest extends TestCase
             ->assertSee(route('tech.packages.index'), false)
             ->assertDontSee('View Specification')
             ->assertDontSee('Status: Not completed');
+    }
+
+    #[Test]
+    public function admin_can_update_client_timebank_quick_policy(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.cs.timebank-policy'))
+            ->assertOk()
+            ->assertViewIs('commercial::Admin.settings.timebank-policy')
+            ->assertSee('Client Timebank Policy')
+            ->assertSee('Allow direct overuse')
+            ->assertSee('quick_timebank_max_minutes', false);
+
+        $this->actingAs($this->admin)
+            ->put(route('tech.admin.settings.cs.timebank-policy.update'), [
+                'quick_timebank_enabled' => '1',
+                'quick_timebank_require_remaining' => '0',
+                'quick_timebank_allow_overuse' => '1',
+                'quick_timebank_require_note' => '0',
+                'quick_timebank_max_minutes' => 45,
+            ])
+            ->assertRedirect(route('tech.admin.settings.cs.timebank-policy'));
+
+        $setting = CommonSetting::query()
+            ->where('type', 'commercial')
+            ->where('name', 'client_timebank_quick_policy')
+            ->firstOrFail();
+
+        $payload = json_decode($setting->json, true);
+
+        $this->assertTrue($payload['quick_timebank_enabled']);
+        $this->assertFalse($payload['quick_timebank_require_remaining']);
+        $this->assertTrue($payload['quick_timebank_allow_overuse']);
+        $this->assertFalse($payload['quick_timebank_require_note']);
+        $this->assertSame(45, $payload['quick_timebank_max_minutes']);
     }
 
     #[Test]

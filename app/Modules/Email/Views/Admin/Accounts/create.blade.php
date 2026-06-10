@@ -63,18 +63,12 @@
                   <div class="col-md-8">
                     <label class="form-label">Defaults for systems</label>
                     <div class="d-flex gap-3 flex-wrap">
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="def_tickets" name="defaults_for[]" value="tickets" {{ in_array('tickets', (array)$defaultsFor) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="def_tickets">Tickets</label>
-                      </div>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="def_sales" name="defaults_for[]" value="sales" {{ in_array('sales', (array)$defaultsFor) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="def_sales">Sales</label>
-                      </div>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="def_alerts" name="defaults_for[]" value="alerts" {{ in_array('alerts', (array)$defaultsFor) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="def_alerts">Alerts/System</label>
-                      </div>
+                      @foreach(\App\Modules\Email\Models\EmailAccount::DEFAULT_SCOPES as $scope => $label)
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="def_{{ $scope }}" name="defaults_for[]" value="{{ $scope }}" {{ in_array($scope, (array)$defaultsFor) ? 'checked' : '' }}>
+                          <label class="form-check-label" for="def_{{ $scope }}">{{ $label }}</label>
+                        </div>
+                      @endforeach
                     </div>
                   </div>
                 </div>

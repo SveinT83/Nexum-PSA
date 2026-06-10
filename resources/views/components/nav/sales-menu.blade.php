@@ -22,6 +22,12 @@
             'icon' => 'bi-person-plus',
         ],
         [
+            'label' => 'Marketing',
+            'route' => 'tech.marketing.index',
+            'pattern' => 'tech.marketing.*',
+            'icon' => 'bi-megaphone',
+        ],
+        [
             'label' => 'Contracts',
             'route' => 'tech.contracts.index',
             'pattern' => 'tech.contracts.*',

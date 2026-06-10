@@ -24,6 +24,17 @@ locations, while `Contacts` shows all Client contacts across all Sites so techni
 whether a Client has contacts without opening each Site first. The Contacts tab links to the
 existing Client contact detail and create flows.
 
+The `Contracts` tab shows active contract timebanks when the technician has
+`commercial.timebank.view`. Each timebank line displays the current period, included time, used time,
+remaining time, overuse, and a compact progress bar.
+
+The `Time` tab is the operational time usage surface for the Client. It includes quick no-ticket
+timebank registration when Commercial policy allows it, and lists time usage from quick Client
+entries, Tickets, and Tasks that have not already been included on an Economy order line. Editable
+rows can be corrected by the technician who owns the entry or by users with the relevant higher
+permission. Quick Client and Ticket rows can also have their time rate changed before they are
+ordered; Task time does not currently store a billing rate snapshot.
+
 The Client index has a compact search row and an advanced filter panel behind the funnel icon.
 Technicians can filter by active status, Client format, contract presence, won contracts, and RMM
 link state when RMM is configured. Client index filters are remembered in the technician session for

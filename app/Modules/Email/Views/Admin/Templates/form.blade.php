@@ -102,21 +102,31 @@
 @endsection
 
 @section('rightbar')
+    @if(!empty($preview))
+        <x-card.default title="Rendered Preview">
+            <div class="small text-muted mb-2">Subject</div>
+            <div class="fw-semibold mb-3">{{ $preview['subject'] }}</div>
+            <div class="small text-muted mb-2">HTML</div>
+            <div class="border rounded bg-white p-2 mb-3" style="max-height: 420px; overflow: auto;">
+                <iframe
+                    title="Email template preview"
+                    srcdoc="{{ e($preview['html']) }}"
+                    class="w-100 border-0"
+                    style="min-height: 360px;"></iframe>
+            </div>
+            <div class="small text-muted mb-2">Text</div>
+            <pre class="small bg-light border rounded p-2 mb-0" style="white-space: pre-wrap;">{{ $preview['text'] }}</pre>
+        </x-card.default>
+    @endif
+
     <x-card.default title="Available variables">
         <p class="small text-muted">
             Use variables as placeholders in subject and body, for example <code>@{{ message_body }}</code>.
         </p>
         <ul class="small text-muted mb-0">
-            <li><code>ticket_key</code></li>
-            <li><code>ticket_subject</code></li>
-            <li><code>opportunity_key</code></li>
-            <li><code>opportunity_title</code></li>
-            <li><code>quote_url</code></li>
-            <li><code>quote_key</code></li>
-            <li><code>contact_name</code></li>
-            <li><code>message_body</code></li>
-            <li><code>technician_name</code></li>
-            <li><code>seller_name</code></li>
+            @foreach(array_keys($sampleVariables ?? []) as $variable)
+                <li><code>{{ $variable }}</code></li>
+            @endforeach
         </ul>
     </x-card.default>
 @endsection

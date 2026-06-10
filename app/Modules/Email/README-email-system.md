@@ -21,7 +21,7 @@ Non-goals (for MVP):
 ## Key components at a glance
 
 - Models: `EmailAccount`, `EmailMessage`, `EmailAttachment`, `EmailHealthCheck`, `EmailLog`
-- Services: `ImapClient`, `EmailTestService`, `EmailTestResult`, `BodyNormalizer`, `HtmlSanitizer`
+- Services: `ImapClient`, `EmailTestService`, `EmailTestResult`, `BodyNormalizer`, `HtmlSanitizer`, `InboundEmailSignalClassifier`
 - Jobs: `PollActiveEmailAccounts`, `FetchImapAccount`, `StoreInboundMessage`, `ProcessInboundRules`, `EmailAccountHealthCheckJob`, `EmailRetentionPurgeJob`
 - Controllers (Admin/Settings): `AccountsController`, `ConfigController`, `RulesController`
 - Routes: declared in `app/Modules/Email/routes.php` under the `tech.admin.settings.email.*` namespace
@@ -45,7 +45,7 @@ Important columns:
 
 Notes:
 - Secrets are stored encrypted using Laravel `Crypt`.
-- `defaults_for` is a JSON array for per-scope defaults (e.g., tickets, sales, alerts).
+- `defaults_for` is a JSON array for per-scope defaults (e.g., tickets, sales, marketing, alerts).
 
 ### EmailMessage — `app/Modules/Email/Models/EmailMessage.php`
 Backs `email_messages` (`database/migrations/2025_11_11_000002_create_email_messages_table.php`). Represents stored inbound messages.
@@ -106,13 +106,14 @@ Basic sanitizer that removes risky tags/handlers. Intended to be replaced with H
 	 - Oversize messages are flagged; normal-sized messages are handed to `StoreInboundMessage`.
 4) `StoreInboundMessage` re-fetches full content by UID, stores raw EML and attachments, sanitizes/normalizes bodies, and upserts `EmailMessage` (+ attachments).
 5) Optionally, message can be deleted/moved server-side after successful persistence (delete-on-success setting).
-6) `ProcessInboundRules` runs async rules on persisted messages (tagging, triage, linking to tickets, etc.).
+6) `ProcessInboundRules` first asks `InboundEmailSignalClassifier` to detect machine replies, delivery failures, and recognized vendor notifications. Hard bounces, soft bounces, auto replies, out-of-office replies, unsubscribe requests, and QNAP-style firmware/security notices become Signal records and are archived before normal ticket routing.
+7) Human messages continue through async rules on persisted messages (tagging, triage, linking to tickets, etc.).
 
 ### Job catalog (paths referenced in codebase)
 - `app/Modules/Email/Jobs/PollActiveEmailAccounts.php` — iterates active accounts; schedule every minute. (Dispatcher/entry job.)
 - `app/Modules/Email/Jobs/FetchImapAccount.php` — connect via `ImapClient`, fetch unseen, dedupe by `account+mailbox+uid`, and dispatch `StoreInboundMessage` with a payload (marks oversize if > size limit).
 - `app/Modules/Email/Jobs/StoreInboundMessage.php` — refetch full message by UID, write `.eml` + attachments to disk, sanitize body HTML and extract text via `BodyNormalizer`, upsert `EmailMessage`, create `EmailAttachment` rows, enqueue `ProcessInboundRules`.
-- `app/Modules/Email/Jobs/ProcessInboundRules.php` — placeholder for rule engine; runs on stored messages.
+- `app/Modules/Email/Jobs/ProcessInboundRules.php` — classifies inbound machine/vendor signals, archives bounce/autoreply/unsubscribe/vendor-notice messages, then runs the inbound rule engine for normal messages.
 - `app/Modules/Email/Jobs/EmailAccountHealthCheckJob.php` — runs connectivity checks and writes `EmailHealthCheck` rows.
 - `app/Modules/Email/Jobs/EmailRetentionPurgeJob.php` — deletes old data past retention policy and cleans orphan files.
 
@@ -238,6 +239,7 @@ Operational notes:
 
 Common extension points:
 - Rules engine: implement rule definitions and runners in `ProcessInboundRules`. Keep them idempotent and fast; operate on stored `EmailMessage` records.
+- Signal classification: extend `InboundEmailSignalClassifier` when new inbound e-post signal types should be detected before ticket routing. Keep matching conservative so real customer requests are not archived accidentally.
 - Sanitizer: replace `HtmlSanitizer` with a robust library (HTMLPurifier) and add CID image rewriting to signed URLs for inline display.
 - Multi-mailbox: extend `ImapClient` to take mailbox names and update jobs to iterate folders beyond INBOX.
 - Delete/move-on-success: when enabled, after `StoreInboundMessage` succeeds, delete or move the message server-side (e.g., to an Archive folder).

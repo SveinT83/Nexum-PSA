@@ -3,6 +3,7 @@
 use App\Modules\Clients\Controllers\Admin\ClientFormatSettingsController;
 use App\Modules\Clients\Controllers\Tech\ClientCustomFieldValueController;
 use App\Modules\Clients\Controllers\Tech\ClientController;
+use App\Modules\Clients\Controllers\Tech\ClientTimeUsageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
@@ -10,6 +11,9 @@ Route::get('/clients/index', [ClientController::class, 'index'])->name('client.i
 Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
 Route::post('/clients/store', [ClientController::class, 'store'])->name('clients.store');
 Route::get('/clients/show/{client}', [ClientController::class, 'show'])->name('clients.show');
+Route::patch('/clients/{client}/time-usage/{source}/{entry}', [ClientTimeUsageController::class, 'update'])
+    ->whereIn('source', ['quick', 'ticket', 'task'])
+    ->name('clients.time-usage.update');
 
 // Sites
 Route::get('/clients/sites/{client?}', [\App\Modules\Clients\Controllers\Tech\ClientSiteController::class, 'index'])->name('clients.sites.index');

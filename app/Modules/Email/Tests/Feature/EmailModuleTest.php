@@ -21,8 +21,14 @@ use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\EmailTestResult;
 use App\Modules\Email\Services\EmailTestService;
+use App\Modules\Email\Services\EmailTemplateRenderer;
+use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\HtmlSanitizer;
 use App\Modules\Email\Controllers\Tech\InboxController;
+use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Models\ContactEmail;
+use App\Modules\Signal\Models\Signal;
+use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
@@ -512,6 +518,27 @@ class EmailModuleTest extends TestCase
     }
 
     #[Test]
+    public function email_accounts_can_be_marked_as_marketing_default_sender(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.email.accounts.store'), $this->emailAccountPayload([
+                'address' => 'marketing@example.test',
+                'defaults_for' => ['marketing'],
+            ]))
+            ->assertRedirect(route('tech.admin.settings.email.accounts'));
+
+        $account = EmailAccount::query()->where('address', 'marketing@example.test')->firstOrFail();
+
+        $this->assertSame(['marketing'], $account->defaults_for);
+        $this->assertTrue(app(DefaultEmailAccountResolver::class)->forScope('marketing')->is($account));
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.email.accounts'))
+            ->assertOk()
+            ->assertSee('Default (Marketing)');
+    }
+
+    #[Test]
     public function template_management_creates_missing_default_sales_templates_without_overwriting_custom_templates(): void
     {
         EmailTemplate::create([
@@ -614,6 +641,53 @@ class EmailModuleTest extends TestCase
                 'is_active' => true,
             ]);
         }
+
+        $this->assertDatabaseHas('email_templates', [
+            'scope' => 'marketing',
+            'key' => 'marketing_campaign_default',
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+    }
+
+    #[Test]
+    public function marketing_email_template_renders_with_branding_and_preview(): void
+    {
+        CommonSetting::query()->create([
+            'type' => 'company_profile',
+            'name' => 'branding',
+            'description' => 'Test branding',
+            'value' => 'Tronder Data',
+            'json' => json_encode([
+                'company_name' => 'Tronder Data',
+                'support_email' => 'support@tronderdata.no',
+                'website' => 'https://tronderdata.no',
+                'primary_color' => '#0055AA',
+                'secondary_color' => '#003366',
+                'accent_color' => '#AA5500',
+            ]),
+        ]);
+
+        $this->seed(EmailTemplateSeeder::class);
+        $template = EmailTemplate::query()
+            ->where('scope', 'marketing')
+            ->where('key', 'marketing_campaign_default')
+            ->firstOrFail();
+        $renderer = app(EmailTemplateRenderer::class);
+        $rendered = $renderer->render($template, $renderer->sampleVariables($template));
+
+        $this->assertStringContainsString('Tronder Data', $rendered['html']);
+        $this->assertStringContainsString('#003366', $rendered['html']);
+        $this->assertStringContainsString('Unsubscribe', $rendered['html']);
+        $this->assertStringContainsString('support@tronderdata.no', $rendered['html']);
+        $this->assertStringContainsString('Unsubscribe:', $rendered['text']);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.templatesManagement.email.edit', $template))
+            ->assertOk()
+            ->assertSee('Rendered Preview')
+            ->assertSee('marketing', false)
+            ->assertSee('unsubscribe_url');
     }
 
     #[Test]
@@ -734,6 +808,179 @@ class EmailModuleTest extends TestCase
 
         $this->assertSame($inProgress->id, $ticket->fresh()->status_id);
         $this->assertTrue($ticket->fresh()->is_unread);
+    }
+
+    #[Test]
+    public function inbound_hard_bounce_creates_signal_suppresses_contact_and_skips_ticket_routing(): void
+    {
+        $account = EmailAccount::create([
+            'address' => 'marketing@example.com',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'marketing@example.com',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'marketing@example.com',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Bounced Contact',
+            'do_not_email' => false,
+            'marketing_consent' => true,
+        ]);
+        ContactEmail::query()->create([
+            'contact_id' => $contact->id,
+            'label' => 'work',
+            'email' => 'bounced@example.test',
+            'is_primary' => true,
+        ]);
+        SignalRule::query()->create([
+            'name' => 'Suppress hard bounces',
+            'is_active' => true,
+            'priority' => 10,
+            'conditions' => [
+                'source_domain' => ['email'],
+                'signal_type' => ['hard_bounce'],
+            ],
+            'actions' => [
+                ['type' => 'marketing_suppress_contact_email'],
+                ['type' => 'tag_contact', 'tag' => 'Hard bounce'],
+            ],
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 501,
+            'message_id' => '<bounce@example.com>',
+            'subject' => 'Undeliverable: Campaign',
+            'from_email' => 'mailer-daemon@example.net',
+            'headers_json' => ['Content-Type' => 'multipart/report; report-type=delivery-status'],
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => "Delivery has failed.\nFinal-Recipient: rfc822; bounced@example.test\nDiagnostic-Code: smtp; 550 5.1.1 user unknown",
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $signal = Signal::query()->where('source_type', EmailMessage::class)->where('source_id', $email->id)->firstOrFail();
+
+        $this->assertSame('hard_bounce', $signal->signal_type);
+        $this->assertSame($contact->id, $signal->contact_id);
+        $this->assertSame(1, $signal->executions()->count());
+        $this->assertSame('archived', $email->fresh()->state);
+        $this->assertNull($email->fresh()->ticket_id);
+        $this->assertTrue($contact->fresh()->do_not_email);
+        $this->assertFalse($contact->fresh()->marketing_consent);
+        $this->assertSame(1, $contact->fresh()->tags()->where('slug', 'hard-bounce')->count());
+        $this->assertSame(1, Signal::query()->where('source_id', $email->id)->count());
+    }
+
+    #[Test]
+    public function inbound_out_of_office_creates_signal_and_skips_ticket_routing(): void
+    {
+        $account = EmailAccount::create([
+            'address' => 'support@example.com',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.com',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.com',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 502,
+            'message_id' => '<ooo@example.com>',
+            'subject' => 'Automatic reply: Out of office',
+            'from_email' => 'customer@example.test',
+            'headers_json' => ['Auto-Submitted' => 'auto-replied'],
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'I am out of office this week.',
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $this->assertDatabaseHas('signals', [
+            'source_type' => EmailMessage::class,
+            'source_id' => $email->id,
+            'source_domain' => 'email',
+            'signal_type' => 'out_of_office',
+        ]);
+        $this->assertSame('archived', $email->fresh()->state);
+        $this->assertNull($email->fresh()->ticket_id);
+    }
+
+    #[Test]
+    public function inbound_qnap_vendor_notification_creates_signal_and_rule_ticket(): void
+    {
+        SignalRule::query()->create([
+            'name' => 'QNAP firmware notice',
+            'is_active' => true,
+            'priority' => 10,
+            'conditions' => [
+                'source_domain' => ['email'],
+                'signal_type' => ['vendor_notification'],
+                'payload_equals' => ['vendor' => 'qnap'],
+                'payload_contains' => ['title' => 'firmware'],
+            ],
+            'actions' => [
+                ['type' => 'ticket_follow_up', 'subject' => 'Review QNAP firmware notice'],
+            ],
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'support@example.com',
+            'imap_host' => 'imap.example.com',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.com',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.com',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.com',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 503,
+            'message_id' => '<qnap-firmware@example.com>',
+            'subject' => 'QNAP Firmware Update Available',
+            'from_email' => 'newsletter@qnap.com',
+            'headers_json' => [],
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'QNAP firmware update available for NAS devices. You can unsubscribe from notifications.',
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $signal = Signal::query()->where('source_id', $email->id)->firstOrFail();
+
+        $this->assertSame('vendor_notification', $signal->signal_type);
+        $this->assertSame('qnap', $signal->payload['vendor']);
+        $this->assertSame('archived', $email->fresh()->state);
+        $this->assertNull($email->fresh()->ticket_id);
+        $this->assertSame(1, Ticket::query()->where('subject', 'Review QNAP firmware notice')->count());
     }
 
     #[Test]
@@ -1612,5 +1859,30 @@ class EmailModuleTest extends TestCase
             'email_message_id' => $email->id,
             'status' => 'matched',
         ]);
+    }
+
+    private function emailAccountPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'address' => 'account@example.test',
+            'description' => 'Test account',
+            'from_name' => 'Test Account',
+            'is_active' => '1',
+            'is_global_default' => '0',
+            'defaults_for' => [],
+            'delete_policy' => 'local_only',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'account@example.test',
+            'imap_secret' => 'secret',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'account@example.test',
+            'smtp_secret' => 'secret',
+            'smtp_auth_type' => 'password',
+        ], $overrides);
     }
 }

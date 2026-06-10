@@ -8,6 +8,7 @@ use App\Models\Clients\ClientSite;
 use App\Modules\Contact\Actions\StoreContact;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Support\ContactSettings;
+use App\Modules\Signal\Queries\RelatedSignals;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
@@ -137,12 +138,13 @@ class ContactController extends Controller
             ->with('status', 'Contact created.');
     }
 
-    public function show(Contact $contact): View
+    public function show(Contact $contact, RelatedSignals $signals): View
     {
         $contact->load(['emails', 'phones', 'addresses', 'relations', 'externalRefs', 'clientUser.site.client', 'user']);
 
         return view('contact::Tech.show', [
             'contact' => $contact,
+            'signals' => $signals->forContact($contact),
         ]);
     }
 

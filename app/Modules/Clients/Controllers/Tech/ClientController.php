@@ -11,7 +11,11 @@ use App\Modules\Clients\Actions\CreateClientWithDefaults;
 use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
 use App\Models\Core\User;
+use App\Modules\Clients\Actions\BuildClientTimeUsageEntries;
+use App\Modules\Commercial\Actions\CalculateClientTimebankBalances;
+use App\Modules\Commercial\Support\ClientTimebankQuickPolicy;
 use App\Modules\CustomField\Support\CustomFieldPresenter;
+use App\Modules\Signal\Queries\RelatedSignals;
 use App\Modules\Task\Models\Task;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -168,8 +172,15 @@ class ClientController extends Controller
      * @param Client $client
      * @return View
      */
-    public function show(Client $client, Request $request, CustomFieldPresenter $customFields)
-    {
+    public function show(
+        Client $client,
+        Request $request,
+        CustomFieldPresenter $customFields,
+        CalculateClientTimebankBalances $timebankBalances,
+        ClientTimebankQuickPolicy $timebankPolicy,
+        BuildClientTimeUsageEntries $timeUsageEntries,
+        RelatedSignals $signals,
+    ): View {
         // -----------------------------------------
         // Set the active client ID in session
         // -----------------------------------------
@@ -180,6 +191,11 @@ class ClientController extends Controller
         // -----------------------------------------
         $contracts = $client->contracts()->with('items')->latest('updated_at')->get();
         $contacts = $client->contacts()->with('site')->orderBy('client_users.name')->get();
+        $quickTimebankPolicy = $timebankPolicy->get();
+        $canViewTimebank = $request->user()?->can('commercial.timebank.view') ?? false;
+        $clientTimebankBalances = $canViewTimebank
+            ? $timebankBalances->forClient($client)
+            : collect();
 
         // -----------------------------------------
         // Eager load risk assessments and items
@@ -231,6 +247,13 @@ class ClientController extends Controller
             'technicians' => User::query()->where('status', User::STATUS_ACTIVE)->orderBy('name')->get(),
             'clientTasks' => $clientTasks,
             'customFields' => $customFields->visibleFor($client, $request->user()),
+            'clientTimebankBalances' => $clientTimebankBalances,
+            'quickTimebankPolicy' => $quickTimebankPolicy,
+            'canViewTimebank' => $canViewTimebank,
+            'canQuickConsumeTimebank' => $request->user()?->can('commercial.timebank.quick-consume') ?? false,
+            'canOverconsumeTimebank' => $request->user()?->can('commercial.timebank.overconsume') ?? false,
+            'clientTimeUsageEntries' => $timeUsageEntries->handle($client, $request->user()),
+            'signals' => $signals->forClient($client),
 
         ]);
     }

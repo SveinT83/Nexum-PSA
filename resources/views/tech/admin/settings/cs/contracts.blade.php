@@ -55,6 +55,15 @@
                                 <span class="d-block small text-muted mt-1">Review commercial order generation and billing-related settings.</span>
                             </a>
                         </div>
+                        <div class="col-md-6">
+                            <a href="{{ route('tech.admin.settings.cs.timebank-policy') }}" class="btn btn-outline-primary w-100 h-100 text-start p-3">
+                                <span class="d-flex align-items-center gap-2 fw-semibold">
+                                    <i class="bi bi-clock-history" aria-hidden="true"></i>
+                                    Timebank Policy
+                                </span>
+                                <span class="d-block small text-muted mt-1">Control quick Client timebank registration, notes, limits, and overuse behavior.</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -67,8 +76,7 @@
                     that already drive production workflows.
                 </p>
                 <p class="small text-muted mb-0">
-                    Global contract policy settings will be added as scoped settings only when the
-                    underlying behavior exists and is tested.
+                    Timebank quick registration policy is implemented as a scoped Commercial setting.
                 </p>
             </x-card.default>
         </div>

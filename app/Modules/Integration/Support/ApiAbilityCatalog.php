@@ -247,6 +247,11 @@ class ApiAbilityCatalog
             'description' => 'List and view available report definitions.',
             'domain' => 'Reports',
         ],
+        'signals.create' => [
+            'label' => 'Create signals',
+            'description' => 'Record normalized Signal events from integrations and webhooks.',
+            'domain' => 'Signal',
+        ],
         'users.read' => [
             'label' => 'Read users',
             'description' => 'List and view users, roles, and user profile metadata.',

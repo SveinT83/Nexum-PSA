@@ -90,6 +90,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Section: Signals and automation history. -->
+    <div class="mt-3">
+        @include('signal::Tech.partials.related-signals', ['signals' => $signals])
+    </div>
 </div>
 @endsection
 
