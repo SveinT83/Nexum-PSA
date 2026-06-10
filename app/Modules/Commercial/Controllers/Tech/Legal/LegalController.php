@@ -93,6 +93,11 @@ class LegalController extends Controller
     // -----------------------------------------
     public function delete(terms $term)
     {
+        if ($term->isInUse()) {
+            return redirect()->route('tech.legal.show', $term)
+                ->with('error', 'This legal or term cannot be deleted because it is currently in use.');
+        }
+
         $term->delete();
 
         return redirect()->route('tech.legal.index')
