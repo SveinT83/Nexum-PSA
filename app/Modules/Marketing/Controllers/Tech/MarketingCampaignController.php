@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Email\Actions\EnsureDefaultEmailTemplates;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Marketing\Actions\ApproveMarketingCampaign;
 use App\Modules\Marketing\Actions\BuildMarketingCampaignEmailSnapshot;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignEmailWithAi;
@@ -19,6 +20,7 @@ use App\Modules\Marketing\Models\MarketingCampaign;
 use App\Modules\Marketing\Models\MarketingCampaignEmail;
 use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Marketing\Models\MarketingList;
+use App\Modules\Marketing\Models\MarketingListMember;
 use App\Modules\Marketing\Support\MarketingSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -171,6 +173,7 @@ class MarketingCampaignController extends Controller
         MarketingCampaign $campaign,
         MarketingSettings $settings,
         AiAgentResolver $aiAgentResolver,
+        EmailTemplateRenderer $templateRenderer,
     ): View
     {
         $interestKeyCounts = $campaign->events()
@@ -189,14 +192,16 @@ class MarketingCampaignController extends Controller
             ->orderByDesc('is_default')
             ->orderBy('name')
             ->get();
+        $campaign = $campaign->load([
+            'list',
+            'emailAccount',
+            'approver',
+            'emails' => fn ($query) => $query->with('template')->withCount('recipients')->orderBy('sequence_order'),
+        ])->loadCount(['emails', 'recipients', 'events']);
+        $previewMember = $this->previewMember($campaign);
 
         return view('marketing::Tech.campaigns.show', [
-            'campaign' => $campaign->load([
-                'list',
-                'emailAccount',
-                'approver',
-                'emails' => fn ($query) => $query->with('template')->withCount('recipients')->orderBy('sequence_order'),
-            ])->loadCount(['emails', 'recipients', 'events']),
+            'campaign' => $campaign,
             'recipients' => $campaign->recipients()->with(['campaignEmail.template', 'client'])->latest('updated_at')->paginate(50),
             'templates' => $templates,
             'templateSnapshots' => $templates
@@ -206,7 +211,17 @@ class MarketingCampaignController extends Controller
                     'body_html' => $template->body_html,
                     'body_text' => $template->body_text,
                     'variables' => (array) $template->variables,
+                    'sample_variables' => $this->previewVariables($template, $campaign, null, $previewMember, $templateRenderer),
                 ]])
+                ->all(),
+            'campaignEmailPreviewVariables' => $campaign->emails
+                ->mapWithKeys(function (MarketingCampaignEmail $email) use ($campaign, $previewMember, $templateRenderer): array {
+                    $template = $email->renderableTemplate();
+
+                    return [(string) $email->id => $template
+                        ? $this->previewVariables($template, $campaign, $email, $previewMember, $templateRenderer)
+                        : []];
+                })
                 ->all(),
             'interestSummary' => $interestKeyCounts
                 ->map(fn (int $count, string $key): array => [
@@ -430,5 +445,38 @@ class MarketingCampaignController extends Controller
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
             ->with('status', 'Due campaign email send job queued.');
+    }
+
+    private function previewVariables(
+        EmailTemplate $template,
+        MarketingCampaign $campaign,
+        ?MarketingCampaignEmail $email,
+        ?MarketingListMember $member,
+        EmailTemplateRenderer $templateRenderer,
+    ): array {
+        return array_merge($templateRenderer->sampleVariables($template), [
+            'campaign_name' => $campaign->name,
+            'campaign_email_name' => $email?->displayName() ?? $template->name,
+            'contact_name' => $member ? ($member->name ?: 'there') : 'Ola Nordmann',
+            'client_name' => $member ? ($member->client?->name ?? '') : 'Example Client AS',
+            'unsubscribe_url' => url('/marketing/unsubscribe/example'),
+        ]);
+    }
+
+    private function previewMember(MarketingCampaign $campaign): ?MarketingListMember
+    {
+        if (! $campaign->list) {
+            return null;
+        }
+
+        return $campaign->list->members()
+            ->with('client')
+            ->where('status', 'eligible')
+            ->orderBy('id')
+            ->first()
+            ?: $campaign->list->members()
+                ->with('client')
+                ->orderBy('id')
+                ->first();
     }
 }

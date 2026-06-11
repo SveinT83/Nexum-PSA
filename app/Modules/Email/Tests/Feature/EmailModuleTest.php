@@ -648,6 +648,16 @@ class EmailModuleTest extends TestCase
             'is_default' => true,
             'is_active' => true,
         ]);
+
+        $marketingTemplate = EmailTemplate::query()
+            ->where('scope', 'marketing')
+            ->where('key', 'marketing_campaign_default')
+            ->firstOrFail();
+
+        $this->assertSame('Marketing update from {{ company_name }}', $marketingTemplate->subject);
+        $this->assertSame(['contact_name', 'company_name', 'unsubscribe_url'], $marketingTemplate->variables);
+        $this->assertStringNotContainsString('campaign_heading', $marketingTemplate->body_html);
+        $this->assertStringNotContainsString('primary_cta_url', $marketingTemplate->body_html);
     }
 
     #[Test]
@@ -676,6 +686,9 @@ class EmailModuleTest extends TestCase
         $renderer = app(EmailTemplateRenderer::class);
         $rendered = $renderer->render($template, $renderer->sampleVariables($template));
 
+        $this->assertSame(['contact_name', 'company_name', 'unsubscribe_url'], $template->variables);
+        $this->assertStringNotContainsString('campaign_heading', $template->body_html);
+        $this->assertStringNotContainsString('primary_cta_url', $template->body_html);
         $this->assertStringContainsString('Tronder Data', $rendered['html']);
         $this->assertStringContainsString('#003366', $rendered['html']);
         $this->assertStringContainsString('Unsubscribe', $rendered['html']);

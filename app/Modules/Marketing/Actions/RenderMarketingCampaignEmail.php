@@ -67,14 +67,8 @@ class RenderMarketingCampaignEmail
         return [
             'campaign_name' => $campaign->name,
             'campaign_email_name' => $email->displayName(),
-            'campaign_subject' => $email->effectiveSubject() ?? $campaign->name,
-            'campaign_heading' => $email->displayName(),
-            'campaign_intro' => $campaign->description ?: 'Here is an update from our team.',
-            'campaign_body' => '',
             'contact_name' => $member?->name ?: 'there',
             'client_name' => $member?->client?->name ?? '',
-            'primary_cta_label' => 'Read more',
-            'primary_cta_url' => url('/'),
             'unsubscribe_url' => url('/marketing/unsubscribe/example'),
         ];
     }

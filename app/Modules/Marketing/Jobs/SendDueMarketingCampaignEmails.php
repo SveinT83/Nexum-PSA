@@ -146,14 +146,8 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         return [
             'campaign_name' => $campaign->name,
             'campaign_email_name' => $campaignEmail->displayName(),
-            'campaign_subject' => $campaignEmail->effectiveSubject() ?? $campaign->name,
-            'campaign_heading' => $campaignEmail->displayName(),
-            'campaign_intro' => $campaign->description ?: 'Here is an update from our team.',
-            'campaign_body' => '',
             'contact_name' => $recipient->name ?: 'there',
             'client_name' => $recipient->client?->name ?? '',
-            'primary_cta_label' => 'Read more',
-            'primary_cta_url' => url('/'),
             'unsubscribe_url' => route('marketing.unsubscribe', $recipient->tracking_token),
         ];
     }

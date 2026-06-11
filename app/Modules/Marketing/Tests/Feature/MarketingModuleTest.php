@@ -501,9 +501,9 @@ class MarketingModuleTest extends TestCase
             'key' => 'campaign_test',
             'name' => 'Campaign test',
             'subject' => 'Hello {{ contact_name }}',
-            'body_html' => '<p>Hello {{ contact_name }}</p><p><a href="{{ primary_cta_url }}">Read more</a></p>',
-            'body_text' => "Hello {{ contact_name }}\n{{ primary_cta_url }}",
-            'variables' => ['contact_name', 'primary_cta_url', 'unsubscribe_url'],
+            'body_html' => '<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p>',
+            'body_text' => "Hello {{ contact_name }}\nhttps://example.test/cybersecurity",
+            'variables' => ['contact_name', 'unsubscribe_url'],
             'is_default' => false,
             'is_active' => true,
         ]);
@@ -532,7 +532,7 @@ class MarketingModuleTest extends TestCase
 
         $campaign = MarketingCampaign::query()->firstOrFail();
         $response->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
-        $this->assertSame('<p>Hello {{ contact_name }}</p><p><a href="{{ primary_cta_url }}">Read more</a></p>', $campaign->emails()->firstOrFail()->body_html_snapshot);
+        $this->assertSame('<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p>', $campaign->emails()->firstOrFail()->body_html_snapshot);
 
         $template->forceFill([
             'subject' => 'Changed live template subject',
@@ -674,9 +674,18 @@ class MarketingModuleTest extends TestCase
             ->assertSee('New Email')
             ->assertSee('data-template-select', false)
             ->assertSee('campaignEmailPanel-', false)
+            ->assertSee('campaignEmailPreviewVariables', false)
+            ->assertSee('sample_variables', false)
+            ->assertSee('Sequence Contact', false)
+            ->assertSee('Known data placeholders')
+            ->assertDontSee('campaign_heading', false)
+            ->assertDontSee('primary_cta_url', false)
             ->assertSee('Preview')
             ->assertSee('Send Test')
-            ->assertDontSee('name="scheduled_at"', false);
+            ->assertDontSee('name="scheduled_at"', false)
+            ->assertDontSee('${content ||', false)
+            ->assertDontSee('<body><main>', false)
+            ->assertDontSee('<span class="spinner-border spinner-border-sm"', false);
 
         $this->actingAs($user)
             ->post(route('tech.marketing.campaigns.emails.store', $campaign), [

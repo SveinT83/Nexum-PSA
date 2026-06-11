@@ -391,4 +391,17 @@ class CompanyProfileAdminTest extends TestCase
             ->assertSee('Nexum (default)')
             ->assertSee('Trønder Data');
     }
+
+    #[Test]
+    public function branding_page_uses_external_theme_preset_form(): void
+    {
+        $html = $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.branding.edit'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('id="theme-preset-form"', $html);
+        $this->assertStringContainsString('form="theme-preset-form"', $html);
+        $this->assertStringContainsString('action="'.route('tech.admin.system.branding.preset').'"', $html);
+    }
 }

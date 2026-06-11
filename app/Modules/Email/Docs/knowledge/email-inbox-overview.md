@@ -21,7 +21,10 @@ wrapped in a simple brand-aware email layout unless the template already contain
 document. Plain text output remains separate and readable.
 
 The default template seeder creates a `marketing/marketing_campaign_default` template with branded
-HTML, plaintext fallback, campaign call-to-action variables, and an `unsubscribe_url` placeholder.
+HTML, plaintext fallback, clear recipient/company placeholders, and an `unsubscribe_url`
+placeholder. Campaign-specific marketing copy is edited directly in each campaign email snapshot;
+the default template does not use ambiguous campaign heading, intro, body, or call-to-action
+variables.
 
 ## Inbox Rules
 

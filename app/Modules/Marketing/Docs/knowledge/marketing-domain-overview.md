@@ -101,12 +101,15 @@ Adding a sequence email to an approved or active campaign immediately creates pe
 for current eligible list members, so existing contacts can receive new follow-up emails without
 recreating the campaign.
 
-Preview uses the editable HTML body in the campaign email form. Test-send uses the current editor
-fields and sends through the campaign sender account or the default `marketing` account. The test
-recipient defaults to the current technician email address and can be overwritten for a colleague.
-AI drafting is available only when the technician has access to an active Integration AI agent. AI
-returns editable form fields and is audited as an AI chat; the technician still decides whether to
-save the result.
+Preview uses the editable HTML body in the campaign email form. Known recipient/company
+placeholders such as `contact_name`, `client_name`, `company_name`, and `unsubscribe_url` are
+rendered with real campaign/list context when available, then clear sample values. Unknown
+placeholders stay visible in preview so operators can see that the system does not know what data
+should replace them. Test-send uses the current editor fields and sends through the campaign sender
+account or the default `marketing` account. The test recipient defaults to the current technician
+email address and can be overwritten for a colleague. AI drafting is available only when the
+technician has access to an active Integration AI agent. AI returns editable form fields and is
+audited as an AI chat; the technician still decides whether to save the result.
 
 The scheduled Marketing job runs every minute and sends due recipients in batches. The manual command
 is:

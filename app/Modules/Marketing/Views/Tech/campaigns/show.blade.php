@@ -165,6 +165,7 @@
                                     <div class="col-12">
                                         <label for="body_html" class="form-label">HTML Body</label>
                                         <textarea id="body_html" name="body_html" rows="9" class="form-control form-control-sm font-monospace @error('body_html') is-invalid @enderror" data-email-html>{{ old('body_html') }}</textarea>
+                                        <div class="form-text">Known data placeholders: <code>@{{ contact_name }}</code>, <code>@{{ client_name }}</code>, <code>@{{ company_name }}</code>, <code>@{{ unsubscribe_url }}</code>. Campaign text should be written directly in this email.</div>
                                         @error('body_html')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                     <div class="col-12">
@@ -263,6 +264,7 @@
                                             <div class="col-12">
                                                 <label for="body_html_{{ $email->id }}" class="form-label">HTML Body</label>
                                                 <textarea id="body_html_{{ $email->id }}" name="body_html" rows="9" class="form-control form-control-sm font-monospace" data-email-html>{{ old('body_html', $email->effectiveBodyHtml()) }}</textarea>
+                                                <div class="form-text">Known data placeholders: <code>@{{ contact_name }}</code>, <code>@{{ client_name }}</code>, <code>@{{ company_name }}</code>, <code>@{{ unsubscribe_url }}</code>. Campaign text should be written directly in this email.</div>
                                             </div>
                                             <div class="col-12">
                                                 <label for="body_text_{{ $email->id }}" class="form-label">Plain Text Body</label>
@@ -391,19 +393,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const templateSnapshots = {!! \Illuminate\Support\Js::from($templateSnapshots) !!};
+            const campaignEmailPreviewVariables = {!! \Illuminate\Support\Js::from($campaignEmailPreviewVariables) !!};
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-
-            function escapeHtml(value) {
-                return String(value || '').replace(/[&<>"']/g, function (char) {
-                    return {
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&#039;',
-                    }[char];
-                });
-            }
 
             function previewDocument(html) {
                 const content = String(html || '').trim();
@@ -412,23 +403,60 @@
                     return content;
                 }
 
-                return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { margin: 0; background: #f3f4f6; font-family: Arial, Helvetica, sans-serif; color: #111827; }
-    main { max-width: 680px; margin: 24px auto; background: #ffffff; border: 1px solid #e5e7eb; padding: 24px; }
-    a { color: #0d6efd; }
-  </style>
-</head>
-<body><main>${content || '<p style="color:#6c757d;">No HTML body.</p>'}</main></body>
-</html>`;
+                const fallback = '\x3cp style="color:#6c757d;"\x3eNo HTML body.\x3c/p\x3e';
+
+                return [
+                    '\x3c!doctype html\x3e',
+                    '\x3chtml\x3e',
+                    '\x3chead\x3e',
+                    '\x3cmeta charset="utf-8"\x3e',
+                    '\x3cmeta name="viewport" content="width=device-width, initial-scale=1"\x3e',
+                    '\x3cstyle\x3e',
+                    'body { margin: 0; background: #f3f4f6; font-family: Arial, Helvetica, sans-serif; color: #111827; }',
+                    'main { max-width: 680px; margin: 24px auto; background: #ffffff; border: 1px solid #e5e7eb; padding: 24px; }',
+                    'a { color: #0d6efd; }',
+                    '\x3c/style\x3e',
+                    '\x3c/head\x3e',
+                    '\x3cbody\x3e\x3cmain\x3e',
+                    content || fallback,
+                    '\x3c/main\x3e\x3c/body\x3e',
+                    '\x3c/html\x3e',
+                ].join('');
             }
 
             function field(scope, selector) {
                 return scope.querySelector(selector);
+            }
+
+            function selectedTemplateSnapshot(scope) {
+                const templateSelect = field(scope, '[data-template-select]');
+
+                return templateSelect ? templateSnapshots[String(templateSelect.value)] : null;
+            }
+
+            function previewVariables(scope) {
+                const snapshot = selectedTemplateSnapshot(scope);
+
+                if (snapshot?.sample_variables) {
+                    return snapshot.sample_variables;
+                }
+
+                return campaignEmailPreviewVariables[String(scope.dataset.emailId)] || {};
+            }
+
+            function replacePreviewVariables(content, variables) {
+                let rendered = String(content || '');
+                const openToken = '{' + '{';
+                const closeToken = '}' + '}';
+
+                Object.entries(variables || {}).forEach(function ([key, value]) {
+                    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const pattern = new RegExp(openToken + '\\s*' + escapedKey + '\\s*' + closeToken, 'g');
+
+                    rendered = rendered.replace(pattern, value === null || value === undefined ? '' : String(value));
+                });
+
+                return rendered;
             }
 
             function updatePreview(scope) {
@@ -436,13 +464,16 @@
                 const html = field(scope, '[data-email-html]')?.value || '';
                 const subject = field(scope, '[data-email-subject]')?.value || '';
                 const subjectLabel = field(scope, '[data-email-preview-subject]');
+                const variables = previewVariables(scope);
+                const previewHtml = replacePreviewVariables(html, variables);
+                const previewSubject = replacePreviewVariables(subject, variables);
 
                 if (iframe) {
-                    iframe.srcdoc = previewDocument(html);
+                    iframe.srcdoc = previewDocument(previewHtml);
                 }
 
                 if (subjectLabel) {
-                    subjectLabel.textContent = subject;
+                    subjectLabel.textContent = previewSubject;
                 }
             }
 
@@ -535,7 +566,12 @@
                     }
 
                     button.disabled = true;
-                    button.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Drafting';
+                    button.textContent = '';
+
+                    const spinner = document.createElement('span');
+                    spinner.className = 'spinner-border spinner-border-sm';
+                    spinner.setAttribute('aria-hidden', 'true');
+                    button.append(spinner, document.createTextNode(' Drafting'));
 
                     if (status) {
                         status.className = 'form-text text-muted';
