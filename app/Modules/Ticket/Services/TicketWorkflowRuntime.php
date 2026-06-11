@@ -112,8 +112,8 @@ class TicketWorkflowRuntime
             return 'Add an internal note before using this workflow action.';
         }
 
-        if ($requiresResponse && ! $this->hasPublicTechnicianResponse($ticket)) {
-            return 'Send a response to the customer before using this workflow action.';
+        if ($requiresResponse && ! $this->hasPublicTechnicianResponse($ticket) && ! $this->hasAllowedInternalSolutionMessage($ticket)) {
+            return 'Send a response to the customer or add an internal solution before using this workflow action.';
         }
 
         if ($requiresResolution && ! $this->hasSolutionMessage($ticket)) {
@@ -178,6 +178,18 @@ class TicketWorkflowRuntime
                     $query->orWhere('type', 'internal_note');
                 }
             })
+            ->exists();
+    }
+
+    private function hasAllowedInternalSolutionMessage(Ticket $ticket): bool
+    {
+        if (! app(TicketSolutionPolicy::class)->allowsInternalSolutionNotes()) {
+            return false;
+        }
+
+        return $ticket->messages()
+            ->where('type', 'internal_note')
+            ->where('metadata->is_solution', true)
             ->exists();
     }
 

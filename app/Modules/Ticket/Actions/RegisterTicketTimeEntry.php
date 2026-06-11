@@ -62,6 +62,8 @@ class RegisterTicketTimeEntry
                 ],
             ]);
 
+            app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'time_entry_added');
+
             return $entry;
         });
     }

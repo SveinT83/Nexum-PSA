@@ -338,10 +338,14 @@
                                     $messageCollapseId = 'ticketMessageCollapse' . $message->id;
                                     $messageHeadingId = 'ticketMessageHeading' . $message->id;
                                     $isSolution = (bool) ($message->metadata['is_solution'] ?? false);
-                                    $canMarkSolution = $message->author_type === 'user'
+                                    $isPublicTechnicianReply = $message->author_type === 'user'
                                         && $message->type === 'customer_reply'
-                                        && $message->visibility === 'public'
-                                        && ! $isSolution;
+                                        && $message->visibility === 'public';
+                                    $isInternalTechnicianNote = $allowInternalSolutionNotes
+                                        && $message->author_type === 'user'
+                                        && $message->type === 'internal_note'
+                                        && $message->visibility === 'internal';
+                                    $canMarkSolution = ($isPublicTechnicianReply || $isInternalTechnicianNote) && ! $isSolution;
                                 @endphp
                                 <div class="accordion-item">
                                     <h2 class="accordion-header" id="{{ $messageHeadingId }}">
@@ -383,7 +387,7 @@
                                                 </div>
                                             @endif
                                             @if ($canMarkSolution)
-                                                <!-- Public technician replies can become the workflow solution required by solved transitions. -->
+                                                <!-- Technician replies and allowed internal notes can satisfy workflow solution requirements. -->
                                                 <div class="d-flex justify-content-end mb-2">
                                                     <form method="POST" action="{{ route('tech.tickets.messages.solution', [$ticket, $message]) }}">
                                                         @csrf
@@ -453,7 +457,7 @@
                                 @csrf
 
                                 <input type="hidden" name="_message_form" value="1">
-                                <input id="visibility" name="visibility" type="hidden" value="{{ $selectedMessageType === 'internal_note' ? 'internal' : 'public' }}">
+                                <input id="visibility" name="visibility" type="hidden" value="{{ in_array($selectedMessageType, ['internal_note', 'internal_solution'], true) ? 'internal' : 'public' }}">
 
                                 <div class="row g-2 mb-3">
                                     <div class="col-md-6">
@@ -471,7 +475,7 @@
                                         </select>
                                         @error('type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
-                                    <div id="reply_intent_group" class="col-md-6 @if ($selectedMessageType === 'internal_note') d-none @endif">
+                                    <div id="reply_intent_group" class="col-md-6 @if (in_array($selectedMessageType, ['internal_note', 'internal_solution'], true)) d-none @endif">
                                         <label for="reply_intent" class="form-label">Reply intent</label>
                                         <select id="reply_intent" name="reply_intent" class="form-select @error('reply_intent') is-invalid @enderror">
                                             <option value="customer_update" @selected($selectedReplyIntent === 'customer_update')>Update customer</option>

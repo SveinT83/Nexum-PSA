@@ -408,9 +408,9 @@
                                     <h3 class="h6 mb-0" id="quoteLineFormTitle">Add line</h3>
                                 </div>
                                 <div class="card-body">
-                                    <form method="POST" action="{{ route('tech.sales.quote.lines.store', $sale) }}" id="quoteLineForm" class="row g-3 align-items-end" data-store-action="{{ route('tech.sales.quote.lines.store', $sale) }}">
+                                    <form method="POST" action="{{ route('tech.sales.quote.lines.store', $sale) }}" id="quoteLineForm" class="row g-3 align-items-end" data-store-action="{{ route('tech.sales.quote.lines.store', $sale) }}" data-store-method="POST" data-update-method="PATCH">
                                         @csrf
-                                        <input type="hidden" name="_method" id="quoteLineMethod" value="PATCH" disabled>
+                                        <input type="hidden" name="_method" id="quoteLineMethod" value="POST">
                                         <div class="col-md-3">
                                             <label class="form-label">Source</label>
                                             <select name="source_type" class="form-select" id="quoteSourceType">
@@ -914,7 +914,7 @@
 
             const resetLineForm = () => {
                 quoteLineForm.action = quoteLineForm.dataset.storeAction;
-                quoteLineMethod.disabled = true;
+                quoteLineMethod.value = quoteLineForm.dataset.storeMethod || 'POST';
                 quoteLineTitle.textContent = 'Add line';
                 quoteLineSubmit.textContent = 'Add line';
                 editCancel.classList.add('d-none');
@@ -930,7 +930,7 @@
             document.querySelectorAll('.quote-line-edit').forEach((button) => {
                 button.addEventListener('click', () => {
                     quoteLineForm.action = button.dataset.action;
-                    quoteLineMethod.disabled = false;
+                    quoteLineMethod.value = quoteLineForm.dataset.updateMethod || 'PATCH';
                     quoteLineTitle.textContent = 'Edit line';
                     quoteLineSubmit.textContent = 'Save line';
                     editCancel.classList.remove('d-none');
@@ -956,6 +956,12 @@
                     vatInput.value = button.dataset.vatRate || '25';
                     quoteLineForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 });
+            });
+
+            quoteLineForm.addEventListener('submit', () => {
+                quoteLineMethod.value = quoteLineForm.action === quoteLineForm.dataset.storeAction
+                    ? (quoteLineForm.dataset.storeMethod || 'POST')
+                    : (quoteLineForm.dataset.updateMethod || 'PATCH');
             });
 
             editCancel?.addEventListener('click', resetLineForm);

@@ -44,6 +44,10 @@ class ChangeTicketStatus
                 throw ValidationException::withMessages(['status_id' => $reason]);
             }
 
+            if ((int) $ticket->status_id !== (int) $status->id) {
+                app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'status_changed');
+            }
+
             $before = [
                 'status_id' => $ticket->status_id,
                 'resolved_at' => $ticket->resolved_at?->toISOString(),

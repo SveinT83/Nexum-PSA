@@ -93,6 +93,8 @@ Ticket show includes assignment context and a manual re-run assignment action.
 
 Manual assignment and re-run assignment should respect action guards and current ticket state.
 
+Open unassigned tickets are also claimed automatically by the active technician when they perform meaningful ticket activity such as adding a message, changing status, editing fields, registering time, or adding a cost. Closed tickets are not auto-claimed, and the unassigned ticket list/stat focuses on open unassigned work.
+
 ## Recommended Rule Strategy
 
 Use Email Rules for raw email classification.
@@ -111,6 +113,7 @@ Important files:
 
 - `app/Modules/Ticket/Services/TicketRuleEngine.php`
 - `app/Modules/Ticket/Services/TicketAssignmentEngine.php`
+- `app/Modules/Ticket/Actions/ClaimUnassignedTicket.php`
 - `app/Modules/Ticket/Models/TicketRule.php`
 - `app/Modules/Ticket/Models/TicketAssignmentRule.php`
 - `app/Modules/Ticket/Models/TicketAssignmentSetting.php`

@@ -1005,6 +1005,55 @@ class CommercialModuleTest extends TestCase
     }
 
     #[Test]
+    public function approved_contract_show_does_not_render_not_ready_alert(): void
+    {
+        $client = Client::factory()->create();
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'Approved contract with historical start date.',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'won',
+            'accepted_at' => now(),
+            'accepted_by_name' => 'Internal Approval',
+            'created_by' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.contracts.show', $contract))
+            ->assertOk()
+            ->assertSee('Contract Won')
+            ->assertDontSee('Contract not ready for approval')
+            ->assertDontSee('Start date must be in the future.');
+    }
+
+    #[Test]
+    public function contract_services_back_button_returns_to_contract_show(): void
+    {
+        $client = Client::factory()->create();
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'Contract service edit navigation.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'draft',
+            'created_by' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.contracts.services.edit', $contract))
+            ->assertOk()
+            ->assertSee('Contract #'.$contract->id.' Services')
+            ->assertSee('href="'.route('tech.contracts.show', $contract).'"', false);
+    }
+
+    #[Test]
     public function contract_item_service_selection_populates_unit_price_field(): void
     {
         $client = Client::factory()->create();

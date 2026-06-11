@@ -49,6 +49,8 @@ class StoreManualTicketCostEntry
                 ],
             ]);
 
+            app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'manual_cost_added');
+
             return $entry;
         });
     }

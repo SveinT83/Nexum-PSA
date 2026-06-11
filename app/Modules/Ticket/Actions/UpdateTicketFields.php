@@ -41,9 +41,16 @@ class UpdateTicketFields
                 return $ticket;
             }
 
+            $wasUnassigned = blank($ticket->owner_id);
+            $ownerWasSubmitted = array_key_exists('owner_id', $updates);
+
             $ticket->forceFill(array_merge($after, [
                 'updated_by' => $actor?->id,
             ]))->save();
+
+            if ($wasUnassigned || ! $ownerWasSubmitted) {
+                app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'fields_updated');
+            }
 
             TicketEvent::create([
                 'ticket_id' => $ticket->id,
