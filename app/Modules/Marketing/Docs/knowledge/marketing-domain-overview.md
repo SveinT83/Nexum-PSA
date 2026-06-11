@@ -1,41 +1,49 @@
 The Marketing domain owns mailing lists, campaign automation, recipient state, tracking, suppression,
-consent policy, interest tags, and Sales follow-up signals.
+consent policy, and interest tags. Sales consumes marketing interest inside Lead Heat and
+classification workflows.
 
 Marketing is intentionally separate from Sales and Email.
 
 Sales owns leads, opportunities, quotes, and sales activities. Email owns SMTP/IMAP accounts,
 outbound templates, template rendering, health checks, and low-level delivery. Marketing uses those
 capabilities to decide who receives campaign messages, when messages are sent, how approvals work,
-and how engagement becomes useful Sales context.
+and how engagement becomes useful Sales/Leads context.
 
 ## Current Status
 
 The first slices create the Marketing and Email foundation:
 
-- `/tech/marketing` hub.
+- `/tech/marketing` email marketing dashboard.
 - `marketing.view` permission.
 - Future Marketing permissions for lists, campaigns, approval, sending, analytics, and settings.
 - Sales workspace navigation entry.
 - Approved RFC and ADR documentation.
 - Marketing list tables, default consent categories, default interest tags, list UI, and resolved
   list membership.
+- Mailing list audience modes for all business contacts or manually selected Contacts only.
+- Manual Contact additions from existing Contacts with active email addresses.
 - Campaign draft, approval, recipient queue, due send job, and open/click/unsubscribe tracking
   foundation.
 - Campaign sequence editing for multiple ordered emails, delay/scheduled timing, subject override,
   and active-campaign recipient queue sync.
+- Dashboard summaries for campaigns, recipients, mailing lists, sender setup, templates, queue, and
+  tracking activity.
 - Admin settings for consent, unsubscribe, active-contract eligibility, tracking defaults, quiet
   hours, and send batching.
 
 The Email foundation slices add the `marketing` sender scope, `marketing` Email template scope,
 brand-aware HTML rendering, template preview, and a seeded default marketing campaign template.
 
-WordPress content pull, Google integrations, social publishing, and richer Marketing-owned
-engagement follow-up lists are planned follow-up slices.
+WordPress content pull, Google integrations, social publishing, and AI-assisted content tooling are
+planned follow-up slices. Separate Marketing engagement/call lists are intentionally out of scope;
+marketing interest should be consumed by Sales/Leads sorting, Lead Heat, and classification.
 
 ## Mailing Lists
 
 Technicians with `marketing.list.manage` can create lists from `/tech/marketing/lists`. The current
-audience is `all_business_contacts`, with optional segmentation by shared Contact and Client tags.
+audiences are `all_business_contacts` and `manual_contacts`. The all-business audience can be
+segmented by shared Contact and Client tags. Either audience can include manually selected existing
+Contacts.
 
 List resolution includes:
 
@@ -45,6 +53,7 @@ List resolution includes:
 - Legacy `client_users` without a linked Contact while compatibility migration continues.
 - Selected Contact tags, when the list has Contact tag criteria.
 - Selected Client tags, when the list has Client tag criteria.
+- Selected manual Contacts, when the list has manual Contact criteria.
 
 List membership is materialized in `marketing_list_members`. This gives campaigns a stable recipient
 snapshot and lets operators refresh the list when Contacts change. Duplicate email addresses are
@@ -52,6 +61,10 @@ collapsed before members are stored.
 
 Contact tag criteria only match first-class Contacts. Client tag criteria match Contacts related to
 tagged Clients and legacy `client_users` that belong to tagged Clients.
+
+Manual Contact criteria resolve only first-class Contacts. They use the same eligibility rules as
+automatic segments, so opted-out, inactive, or email-less Contacts are not materialized as
+recipients even if their ID remains in the saved list criteria.
 
 Default consent categories are seeded on Marketing page access: Newsletter, Security, Websites, and
 Cloud. Default interest tags prepare later open/click tracking and Sales categorization.
@@ -136,5 +149,5 @@ Contact owns:
 - Future communication preferences.
 - Legacy `client_users` compatibility while migration continues.
 
-Sales consumes Marketing outcomes through call lists, activities, lead context, and interest
-signals. Sales does not own campaign execution.
+Sales consumes Marketing outcomes through lead context, Lead Heat, classification, and interest
+signals. Sales does not own campaign execution, and Marketing does not own seller call lists.

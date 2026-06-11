@@ -8,20 +8,24 @@ Marketing is separate from Sales and Email:
 - Email owns SMTP/IMAP accounts, outbound templates, rendering, and low-level delivery.
 - Contact owns person identity, communication endpoints, and future communication preferences.
 - Marketing owns lists, campaigns, approvals, sending state, tracking, suppressions, consent
-  policy, interest tags, and sales follow-up signals.
+  policy, and interest tags. Sales consumes marketing interest inside the Leads/Sales workflow.
 
 ## Current Slice
 
 The implemented foundation now covers:
 
-- Module routes, controller, and hub view.
+- Module routes, controller, and email marketing dashboard view.
 - Permission catalog entries.
 - Sales workspace navigation entry.
 - ADR and Knowledge documentation.
 - Email `marketing` sender/template scope, branded preview, and seeded campaign template.
+- Email marketing dashboard summaries for campaigns, recipients, lists, tracking, templates, and
+  sender setup.
 - Marketing list tables for consent categories, interest tags, lists, and resolved members.
 - Mailing list UI under `/tech/marketing/lists`.
+- Mailing list audience modes for all business contacts or manually selected Contacts only.
 - Mailing list segmentation by shared Contact and Client tags.
+- Manual Contact additions from existing Contacts with active email addresses.
 - Default consent categories and interest tags.
 - Recipient resolution from active Contacts and legacy `client_users`.
 - Campaign tables for drafts, ordered campaign emails, recipient queue, and tracking events.
@@ -36,15 +40,19 @@ The implemented foundation now covers:
   defaults, quiet hours, and default send batching.
 
 The hub intentionally exposes only implemented actions. WordPress pull, Google integrations, social
-publishing, and richer Marketing-owned engagement follow-up lists are follow-up feature slices under
-the approved RFC.
+publishing, and AI-assisted content tooling are follow-up feature slices under the approved RFC and
+should only become visible when the underlying integration or workflow exists. Marketing must not
+grow a separate engagement/call-list workflow; marketing interest should feed Lead Heat and
+classification in the Sales/Leads module.
 
 ## Mailing Lists
 
-Mailing lists currently support the `all_business_contacts` audience. Lists can optionally segment
-that audience by shared Contact tags and Client tags. Contact tag criteria only match first-class
-Contacts. Client tag criteria match both first-class Contacts related to a tagged Client and legacy
-`client_users` on a tagged Client while compatibility migration continues.
+Mailing lists currently support the `all_business_contacts` and `manual_contacts` audiences. Lists
+can optionally segment all business contacts by shared Contact tags and Client tags, and can also
+include manually selected existing Contacts. Contact tag criteria only match first-class Contacts.
+Client tag criteria match both first-class Contacts related to a tagged Client and legacy
+`client_users` on a tagged Client while compatibility migration continues. Manual contacts are
+resolved from first-class Contacts only.
 
 Resolution materializes members into `marketing_list_members` so future campaign sends can use a
 stable recipient snapshot.
@@ -53,6 +61,10 @@ Recipients are eligible when they are active, have an email address, and are not
 `do_not_email`. The default Marketing setting is opt-out, so existing business contacts are included
 unless they have opted out. If the setting is changed to explicit opt-in, Contacts must have
 `marketing_consent=true` to be included.
+
+Manual contacts use the same eligibility rules as automatic segments. If a selected Contact later
+opts out, is inactive, or loses its email address, list refresh keeps the manual criterion but does
+not materialize that Contact as an eligible recipient.
 
 Legacy `client_users` with no linked Contact are included while the Contact migration continues.
 Recipients are deduplicated by lowercased email address before list members are stored.
@@ -102,5 +114,5 @@ See `docs/rfc/2026-06-09-marketing-domain-email-campaigns.md`.
 - Keep views in `app/Modules/Marketing/Views`.
 - Do not duplicate Email template storage in Marketing. Campaign emails should reference Email
   templates with the `marketing` scope when that slice is implemented.
-- Do not move Sales pipeline behavior into Marketing. Marketing may create or feed Sales follow-up
-  signals after engagement is tracked.
+- Do not move Sales pipeline behavior into Marketing. Marketing may record engagement and interest
+  signals, but Lead Heat, classification, seller sorting, and follow-up workflow belong in Sales.

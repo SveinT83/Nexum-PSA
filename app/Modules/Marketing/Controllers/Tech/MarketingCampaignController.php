@@ -23,9 +23,10 @@ use Illuminate\View\View;
 
 class MarketingCampaignController extends Controller
 {
-    public function index(EnsureMarketingDefaults $marketingDefaults): View
+    public function index(EnsureMarketingDefaults $marketingDefaults, EnsureDefaultEmailTemplates $emailDefaults): View
     {
         $marketingDefaults->handle();
+        $emailDefaults->handle();
 
         return view('marketing::Tech.campaigns.index', [
             'campaigns' => MarketingCampaign::query()
@@ -33,6 +34,11 @@ class MarketingCampaignController extends Controller
                 ->withCount(['emails', 'recipients'])
                 ->latest('updated_at')
                 ->paginate(25),
+            'listsCount' => MarketingList::query()->count(),
+            'marketingTemplatesCount' => EmailTemplate::query()
+                ->where('scope', 'marketing')
+                ->where('is_active', true)
+                ->count(),
         ]);
     }
 
@@ -40,9 +46,38 @@ class MarketingCampaignController extends Controller
         EnsureMarketingDefaults $marketingDefaults,
         EnsureDefaultEmailTemplates $emailDefaults,
         MarketingSettings $settings,
-    ): View {
+        Request $request,
+    ): RedirectResponse|View {
         $marketingDefaults->handle();
         $emailDefaults->handle();
+
+        $lists = MarketingList::query()->withCount('members')->orderBy('name')->get();
+        $templates = EmailTemplate::query()
+            ->where('scope', 'marketing')
+            ->where('is_active', true)
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+
+        if ($lists->isEmpty()) {
+            $target = $request->user()?->can('marketing.list.manage')
+                ? 'tech.marketing.lists.create'
+                : 'tech.marketing.campaigns.index';
+
+            return redirect()
+                ->route($target)
+                ->with('status', 'Create a mailing list before creating a marketing campaign.');
+        }
+
+        if ($templates->isEmpty()) {
+            $target = $request->user()?->can('email.template_manage')
+                ? 'tech.admin.system.templatesManagement.email.index'
+                : 'tech.marketing.campaigns.index';
+
+            return redirect()
+                ->route($target, $target === 'tech.admin.system.templatesManagement.email.index' ? ['scope' => 'marketing'] : [])
+                ->with('status', 'Create an active marketing email template before creating a campaign.');
+        }
 
         return view('marketing::Tech.campaigns.form', [
             'campaign' => new MarketingCampaign([
@@ -50,8 +85,8 @@ class MarketingCampaignController extends Controller
                 'track_opens' => $settings->get()['open_tracking_enabled'],
                 'track_clicks' => $settings->get()['click_tracking_enabled'],
             ]),
-            'lists' => MarketingList::query()->withCount('members')->orderBy('name')->get(),
-            'templates' => EmailTemplate::query()->where('scope', 'marketing')->where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(),
+            'lists' => $lists,
+            'templates' => $templates,
             'accounts' => EmailAccount::query()->where('is_active', true)->orderBy('address')->get(),
             'settings' => $settings->get(),
         ]);

@@ -36,6 +36,7 @@
                         <label for="audience_type" class="form-label">Audience</label>
                         <select id="audience_type" name="audience_type" class="form-select @error('audience_type') is-invalid @enderror" required>
                             <option value="all_business_contacts" @selected(old('audience_type', $list->audience_type) === 'all_business_contacts')>All business contacts</option>
+                            <option value="manual_contacts" @selected(old('audience_type', $list->audience_type) === 'manual_contacts')>Manual contacts only</option>
                         </select>
                         @error('audience_type')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -62,6 +63,63 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                <span class="fw-semibold">Manual Contacts</span>
+                <span class="badge text-bg-light border">{{ $manualContacts->count() }} available</span>
+            </div>
+            <div class="card-body">
+                @php
+                    $selectedManualContacts = collect(old('manual_contact_ids', []))
+                        ->map(fn ($id) => (int) $id)
+                        ->filter()
+                        ->all();
+                @endphp
+
+                @error('manual_contact_ids')
+                    <div class="text-danger small mb-2">{{ $message }}</div>
+                @enderror
+                @error('manual_contact_ids.*')
+                    <div class="text-danger small mb-2">{{ $message }}</div>
+                @enderror
+
+                <div class="row g-3">
+                    <div class="col-lg-5">
+                        <label for="manual_contact_filter" class="form-label">Search Contacts</label>
+                        <input type="search" id="manual_contact_filter" class="form-control" placeholder="Name or email">
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="small text-muted mt-lg-4 pt-lg-2">
+                            Manual contacts are added in addition to automatic segments. With Manual contacts only, only selected contacts are resolved.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border rounded mt-3" style="max-height: 320px; overflow-y: auto;">
+                    @forelse($manualContacts as $contact)
+                        @php
+                            $email = $contact->emails->firstWhere('is_primary', true) ?? $contact->emails->first();
+                            $searchText = strtolower(trim($contact->display_name.' '.$email?->email));
+                        @endphp
+                        <label class="d-flex align-items-start gap-2 px-3 py-2 border-bottom mb-0 manual-contact-row" data-search="{{ $searchText }}">
+                            <input
+                                type="checkbox"
+                                name="manual_contact_ids[]"
+                                value="{{ $contact->id }}"
+                                class="form-check-input mt-1 @error('manual_contact_ids.*') is-invalid @enderror"
+                                @checked(in_array($contact->id, $selectedManualContacts, true))>
+                            <span>
+                                <span class="fw-semibold d-block">{{ $contact->display_name }}</span>
+                                <span class="small text-muted">{{ $email?->email }}</span>
+                            </span>
+                        </label>
+                    @empty
+                        <div class="text-muted small p-3">No active contacts with email are available for manual selection.</div>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -145,4 +203,25 @@
             <dd class="col-5 text-end">{{ $settings['active_contract_clients_eligible'] ? 'Included' : 'Excluded' }}</dd>
         </dl>
     </x-card.default>
+@endsection
+
+@section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filter = document.getElementById('manual_contact_filter');
+            const rows = Array.from(document.querySelectorAll('.manual-contact-row'));
+
+            if (!filter || rows.length === 0) {
+                return;
+            }
+
+            filter.addEventListener('input', () => {
+                const needle = filter.value.trim().toLowerCase();
+
+                rows.forEach((row) => {
+                    row.classList.toggle('d-none', needle !== '' && !row.dataset.search.includes(needle));
+                });
+            });
+        });
+    </script>
 @endsection

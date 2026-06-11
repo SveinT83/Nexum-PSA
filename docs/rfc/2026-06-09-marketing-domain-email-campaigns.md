@@ -10,7 +10,15 @@ Nexum PSA needs a production-ready marketing capability. The immediate need is e
 build mailing lists from contacts, create templates, create campaigns, schedule campaign emails, and
 send them automatically through existing SMTP accounts. The longer-term direction also includes
 WordPress content ingestion, Google integrations, social publishing, AI-assisted content and
-classification, sales follow-up lists, and interest scoring.
+classification, Sales/Leads interest consumption, and interest scoring.
+
+## Scope Amendment 2026-06-10
+
+Marketing must not build a separate engagement or seller call-list workflow. Marketing records
+campaign engagement, interest tags, and campaign analytics. Sales/Leads consumes that data for Lead
+Heat, classification, filtering, sorting, and seller follow-up. The immediate product focus is
+email marketing frontend completion: dashboard, campaign sequencing/lifecycle controls, email
+design, send preferences, and reliable autonomous campaign sending.
 
 This is a Level 3 change because it introduces a new domain, database tables, permissions,
 automation, outbound email behavior, tracking endpoints, integrations, and cross-module workflows
@@ -38,7 +46,8 @@ with Contact, Email, Sales, Integration, and future Signal/AI features.
 - Support scheduling, throttling, and batch sizes per campaign or global marketing settings.
 - Track delivery attempts, bounces, opens, and link clicks from the first version.
 - Prepare inbound bounce/autoreply classification for the planned Email Signal capability.
-- Capture recipient interest signals so Sales can build call lists and follow-up processes.
+- Capture recipient interest signals so Sales/Leads can adjust Lead Heat, classification, filtering,
+  sorting, and follow-up context.
 - Support categorization of both Contact and related Client based on engagement.
 - Support multiple marketing consent and interest categories from the start.
 - Automatically tag/categorize both Contact and related Client when tracked engagement identifies a
@@ -114,8 +123,10 @@ Integration owns external provider configuration:
 
 Sales consumes marketing outcomes:
 
-- Campaign engagement can produce sales activities, call lists, lead updates, and interest tags.
+- Campaign engagement can influence Lead Heat, classification, lead updates, activity context, and
+  interest tags inside the Sales/Leads module.
 - Sales should not own campaign execution.
+- Marketing should not own separate seller call lists.
 
 ### Campaign Flow
 
@@ -133,7 +144,8 @@ Sales consumes marketing outcomes:
 10. When a new contact enters an active list, they receive campaign emails that have already been
    released if they are still eligible and not suppressed.
 11. Opens, clicks, bounces, and inbound automated replies update engagement data.
-12. Engagement data can categorize the Contact and related Client and feed Sales call lists.
+12. Engagement data can categorize the Contact and related Client and feed Sales/Leads heat,
+    classification, filtering, and sorting.
 
 ### List And Segmentation Direction
 
@@ -173,8 +185,8 @@ Click tracking should rewrite campaign links through a signed/tokenized redirect
 - Topic/category metadata when available.
 
 Tracked topic/category metadata should automatically update Contact-level and Client-level interest
-tags. Sales follow-up views can then prioritize recipients and companies based on the interests they
-actually engaged with.
+tags. Sales/Leads views can then prioritize recipients and companies based on the interests they
+actually engaged with, without creating a separate Marketing-owned call-list surface.
 
 Bounce and automatic reply tracking should start with explicit data models and basic inbound
 classification hooks. The first implementation can record manual/system-detected bounce events and
@@ -191,7 +203,7 @@ Planned AI use cases:
 - Suggest subject lines.
 - Summarize WordPress content into campaign content blocks.
 - Classify link topics and recipient interests.
-- Recommend Sales follow-up actions.
+- Recommend Sales/Leads follow-up context.
 - Categorize Contacts and related Clients based on engagement.
 - Help build segment criteria in a controlled UI.
 
@@ -207,7 +219,8 @@ Affected modules:
 - `Email`: default `marketing` sender scope, SMTP delivery, outbound logs, Email templates,
   brand-aware rendering, preview, seeded marketing template, and inbound bounce/signal inputs.
 - `Integration`: WordPress settings and later Google/social provider settings.
-- `Sales`: call lists, activities, lead/opportunity follow-up from campaign engagement.
+- `Sales`: Lead Heat, classification, filtering, sorting, activities, and lead/opportunity context
+  from campaign engagement.
 - `Client`: client-level categorization based on member contact engagement.
 - `CustomField`: segment filters may use Contact and Client custom fields.
 - `Notification`: optional internal notifications for campaign approval/failures later.
@@ -393,10 +406,11 @@ Rollback:
 - Integrate with Email inbox stored messages where possible.
 - Prepare for planned Signal feature to classify bounces/autoreplies.
 
-### Slice 9: Sales Follow-Up
+### Slice 9: Sales/Leads Interest Consumption
 
-- Add campaign engagement call list.
-- Add Sales activity/lead handoff.
+- Surface marketing engagement in Sales/Leads filtering and sorting.
+- Feed Lead Heat and classification from tracked campaign interest.
+- Add Sales activity or lead context where useful without moving campaign execution into Sales.
 - Automatically categorize Contact and related Client based on tracked engagement topics.
 
 ### Slice 10: WordPress Content Pull
@@ -434,7 +448,8 @@ Rollback:
 - Update Email Knowledge/docs for the `marketing` default sender scope, marketing template scope,
   branded HTML rendering, default seed template, preview, and supported variables.
 - Update Contact docs for marketing preferences/suppression ownership.
-- Update Sales docs when campaign engagement creates call lists or Sales activities.
+- Update Sales docs when campaign engagement affects Lead Heat, classification, sorting, or Sales
+  activities.
 - Update Integration docs when WordPress settings are added.
 - Update deployment docs for required queue/scheduler behavior.
 

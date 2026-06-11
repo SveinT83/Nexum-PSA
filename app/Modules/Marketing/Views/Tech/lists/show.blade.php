@@ -65,38 +65,47 @@
         $criteria = $list->segment_criteria ?? [];
         $contactTagIds = collect($criteria['contact_tag_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
         $clientTagIds = collect($criteria['client_tag_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
+        $manualContactIds = collect($criteria['manual_contact_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
     @endphp
 
-    @if($contactTagIds->isNotEmpty() || $clientTagIds->isNotEmpty())
+    @if($contactTagIds->isNotEmpty() || $clientTagIds->isNotEmpty() || $manualContactIds->isNotEmpty())
         <div class="card mb-3">
             <div class="card-header">
                 <span class="fw-semibold">Active Segments</span>
             </div>
-            <div class="card-body d-grid gap-3">
-                @if($contactTagIds->isNotEmpty())
-                    <div>
-                        <div class="small text-muted text-uppercase fw-semibold mb-2">Contact tags</div>
-                        <div class="d-flex flex-wrap gap-2">
-                            @foreach($contactTagIds as $tagId)
-                                @if($segmentTags->has($tagId))
-                                    <span class="badge text-bg-light border">{{ $segmentTags->get($tagId)->name }}</span>
-                                @endif
-                            @endforeach
+            <div class="card-body">
+                <div class="row g-3">
+                    @if($manualContactIds->isNotEmpty())
+                        <div class="col-md-4">
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Manual contacts</div>
+                            <span class="badge text-bg-light border">{{ $manualContactIds->count() }} selected</span>
                         </div>
-                    </div>
-                @endif
-                @if($clientTagIds->isNotEmpty())
-                    <div>
-                        <div class="small text-muted text-uppercase fw-semibold mb-2">Client tags</div>
-                        <div class="d-flex flex-wrap gap-2">
-                            @foreach($clientTagIds as $tagId)
-                                @if($segmentTags->has($tagId))
-                                    <span class="badge text-bg-light border">{{ $segmentTags->get($tagId)->name }}</span>
-                                @endif
-                            @endforeach
+                    @endif
+                    @if($contactTagIds->isNotEmpty())
+                        <div class="col-md-4">
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Contact tags</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($contactTagIds as $tagId)
+                                    @if($segmentTags->has($tagId))
+                                        <span class="badge text-bg-light border">{{ $segmentTags->get($tagId)->name }}</span>
+                                    @endif
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
-                @endif
+                    @endif
+                    @if($clientTagIds->isNotEmpty())
+                        <div class="col-md-4">
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Client tags</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($clientTagIds as $tagId)
+                                    @if($segmentTags->has($tagId))
+                                        <span class="badge text-bg-light border">{{ $segmentTags->get($tagId)->name }}</span>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     @endif

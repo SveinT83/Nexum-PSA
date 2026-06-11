@@ -9,6 +9,7 @@ use App\Modules\Marketing\Models\MarketingConsentCategory;
 use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Marketing\Support\MarketingSettings;
 use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\Contact\Models\Contact;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -31,12 +32,14 @@ class MarketingListController extends Controller
     public function create(MarketingSettings $settings, EnsureMarketingDefaults $defaults): View
     {
         $defaults->handle();
+        $settingsPayload = $settings->get();
 
         return view('marketing::Tech.lists.form', [
             'list' => new MarketingList(['audience_type' => 'all_business_contacts', 'status' => 'active']),
-            'settings' => $settings->get(),
+            'settings' => $settingsPayload,
             'categories' => MarketingConsentCategory::query()->where('is_active', true)->orderBy('name')->get(),
             'tags' => $this->activeTags(),
+            'manualContacts' => $this->manualContacts($settingsPayload),
         ]);
     }
 
@@ -45,12 +48,14 @@ class MarketingListController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'audience_type' => ['required', 'string', 'in:all_business_contacts'],
+            'audience_type' => ['required', 'string', 'in:all_business_contacts,manual_contacts'],
             'consent_category_id' => ['nullable', 'exists:marketing_consent_categories,id'],
             'contact_tag_ids' => ['nullable', 'array'],
             'contact_tag_ids.*' => ['integer', 'exists:tags,id'],
             'client_tag_ids' => ['nullable', 'array'],
             'client_tag_ids.*' => ['integer', 'exists:tags,id'],
+            'manual_contact_ids' => ['nullable', 'array'],
+            'manual_contact_ids.*' => ['integer', 'exists:contacts,id'],
         ]);
 
         $segmentCriteria = $this->segmentCriteria($data['audience_type'], $request);
@@ -109,6 +114,21 @@ class MarketingListController extends Controller
             ->get(['id', 'name', 'color']);
     }
 
+    private function manualContacts(array $settings)
+    {
+        return Contact::query()
+            ->with(['emails' => fn ($query) => $query->orderByDesc('is_primary')->orderBy('id')])
+            ->where('status', 'active')
+            ->where('do_not_email', false)
+            ->when(
+                $settings['consent_mode'] === 'explicit_opt_in',
+                fn ($query) => $query->where('marketing_consent', true),
+            )
+            ->whereHas('emails')
+            ->orderBy('display_name')
+            ->get();
+    }
+
     private function segmentCriteria(string $audienceType, Request $request): array
     {
         return [
@@ -120,6 +140,12 @@ class MarketingListController extends Controller
                 ->values()
                 ->all(),
             'client_tag_ids' => collect($request->input('client_tag_ids', []))
+                ->map(fn ($id): int => (int) $id)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all(),
+            'manual_contact_ids' => collect($request->input('manual_contact_ids', []))
                 ->map(fn ($id): int => (int) $id)
                 ->filter()
                 ->unique()

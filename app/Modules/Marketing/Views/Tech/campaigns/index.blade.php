@@ -3,6 +3,9 @@
 @section('title', 'Marketing Campaigns')
 
 @section('pageHeader')
+    @php
+        $hasCampaignPrerequisites = $listsCount > 0 && $marketingTemplatesCount > 0;
+    @endphp
     <div class="d-flex align-items-center justify-content-between gap-3">
         <h1 class="h4 mb-0">Marketing Campaigns</h1>
         <div class="d-flex align-items-center gap-2">
@@ -11,16 +14,54 @@
                 Marketing
             </a>
             @can('marketing.campaign.create')
-                <a href="{{ route('tech.marketing.campaigns.create') }}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                    New Campaign
-                </a>
+                @if($hasCampaignPrerequisites)
+                    <a href="{{ route('tech.marketing.campaigns.create') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                        New Campaign
+                    </a>
+                @elseif($listsCount === 0)
+                    @can('marketing.list.manage')
+                        <a href="{{ route('tech.marketing.lists.create') }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-people" aria-hidden="true"></i>
+                            Create List First
+                        </a>
+                    @else
+                        <button type="button" class="btn btn-sm btn-primary" disabled>New Campaign</button>
+                    @endcan
+                @elseif($marketingTemplatesCount === 0)
+                    @can('email.template_manage')
+                        <a href="{{ route('tech.admin.system.templatesManagement.email.index', ['scope' => 'marketing']) }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                            Create Template First
+                        </a>
+                    @else
+                        <button type="button" class="btn btn-sm btn-primary" disabled>New Campaign</button>
+                    @endcan
+                @else
+                    <button type="button" class="btn btn-sm btn-primary" disabled>New Campaign</button>
+                @endif
             @endcan
         </div>
     </div>
 @endsection
 
 @section('content')
+    @if($listsCount === 0 || $marketingTemplatesCount === 0)
+        <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
+            <i class="bi bi-info-circle mt-1" aria-hidden="true"></i>
+            <div>
+                <div class="fw-semibold">Campaigns need a mailing list and an active marketing email template.</div>
+                <div class="small">
+                    @if($listsCount === 0)
+                        Create a mailing list first. The campaign uses that resolved list as its recipient source.
+                    @elseif($marketingTemplatesCount === 0)
+                        Create or activate a marketing email template first. Campaign emails use Email-owned templates.
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- ------------------------------------------------- -->
     <!-- Marketing campaign index -->
     <!-- ------------------------------------------------- -->

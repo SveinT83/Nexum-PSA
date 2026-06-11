@@ -16,6 +16,7 @@ use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Marketing\Models\MarketingCampaign;
+use App\Modules\Marketing\Models\MarketingCampaignEvent;
 use App\Modules\Marketing\Models\MarketingCampaignRecipient;
 use App\Modules\Marketing\Models\MarketingConsentCategory;
 use App\Modules\Marketing\Models\MarketingInterestTag;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class MarketingModuleTest extends TestCase
@@ -53,11 +55,128 @@ class MarketingModuleTest extends TestCase
             ->get(route('tech.marketing.index'))
             ->assertOk()
             ->assertViewIs('marketing::Tech.index')
-            ->assertSee('Marketing Foundation')
-            ->assertSee('RFC approved')
-            ->assertSee('Email account scope: marketing')
-            ->assertSee('Planned Capabilities')
-            ->assertSee('WordPress content pull');
+            ->assertSee('Active Campaigns')
+            ->assertSee('Due Now')
+            ->assertSee('Sending Queue')
+            ->assertSee('Tracking Activity')
+            ->assertSee('Email Marketing')
+            ->assertSee('Mailing Lists')
+            ->assertDontSee('Planned Capabilities')
+            ->assertDontSee('WordPress content pull');
+    }
+
+    #[Test]
+    public function marketing_dashboard_shows_campaign_queue_and_tracking_data(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo('marketing.view');
+
+        $list = MarketingList::query()->create([
+            'name' => 'Product launch list',
+            'status' => 'active',
+            'audience_type' => 'all_business_contacts',
+            'segment_criteria' => ['audience_type' => 'all_business_contacts'],
+        ]);
+
+        $member = $list->members()->create([
+            'source_type' => 'manual',
+            'source_id' => 1,
+            'email' => 'due@example.test',
+            'name' => 'Due Recipient',
+            'status' => 'active',
+        ]);
+
+        $template = $this->marketingTemplate('dashboard_template', 'Dashboard Template');
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'name' => 'Product launch campaign',
+            'status' => 'active',
+        ]);
+        $campaignEmail = $campaign->emails()->create([
+            'email_template_id' => $template->id,
+            'sequence_order' => 1,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+        $recipient = MarketingCampaignRecipient::query()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_campaign_email_id' => $campaignEmail->id,
+            'marketing_list_member_id' => $member->id,
+            'email' => 'due@example.test',
+            'name' => 'Due Recipient',
+            'status' => 'pending',
+            'due_at' => now()->subMinute(),
+            'tracking_token' => 'dashboard-token',
+        ]);
+        MarketingCampaignEvent::query()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_campaign_email_id' => $campaignEmail->id,
+            'marketing_campaign_recipient_id' => $recipient->id,
+            'type' => 'open',
+            'occurred_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.index'))
+            ->assertOk()
+            ->assertSee('Product launch campaign')
+            ->assertSee('due@example.test')
+            ->assertSee('Dashboard Template')
+            ->assertSee('Open');
+    }
+
+    #[Test]
+    public function campaign_index_guides_user_to_create_a_list_before_campaigns(): void
+    {
+        foreach (['marketing.view', 'marketing.campaign.create', 'marketing.list.manage'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.campaign.create', 'marketing.list.manage']);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.index'))
+            ->assertOk()
+            ->assertSee('Create List First')
+            ->assertSee('Campaigns need a mailing list')
+            ->assertDontSee('New Campaign');
+    }
+
+    #[Test]
+    public function campaign_create_redirects_to_list_creation_when_no_list_exists(): void
+    {
+        foreach (['marketing.campaign.create', 'marketing.list.manage'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.campaign.create', 'marketing.list.manage']);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.create'))
+            ->assertRedirect(route('tech.marketing.lists.create'))
+            ->assertSessionHas('status', 'Create a mailing list before creating a marketing campaign.');
+    }
+
+    #[Test]
+    public function marketing_defaults_create_missing_permissions_for_superuser_navigation(): void
+    {
+        $superuser = Role::findOrCreate('Superuser', 'web');
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole($superuser);
+
+        $this->assertDatabaseMissing('permissions', ['name' => 'marketing.list.manage']);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.index'))
+            ->assertOk()
+            ->assertSee('New List');
+
+        $this->assertDatabaseHas('permissions', ['name' => 'marketing.list.manage', 'guard_name' => 'web']);
+        $this->assertTrue($superuser->fresh()->hasPermissionTo('marketing.list.manage'));
     }
 
     #[Test]
@@ -219,6 +338,7 @@ class MarketingModuleTest extends TestCase
             'audience_type' => 'all_business_contacts',
             'contact_tag_ids' => [$contactTag->id],
             'client_tag_ids' => [$clientTag->id],
+            'manual_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [
             'marketing_list_id' => $list->id,
@@ -274,6 +394,69 @@ class MarketingModuleTest extends TestCase
             ->assertSee('Active Segments')
             ->assertSee('Website Interest')
             ->assertSee('Managed Services');
+    }
+
+    #[Test]
+    public function marketing_lists_can_be_created_from_manually_selected_contacts(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+        Permission::findOrCreate('marketing.list.manage', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage']);
+
+        $client = Client::factory()->create(['name' => 'Manual Client AS']);
+        $selected = $this->contactForClient($client, 'Selected Manual', 'selected-manual@example.test');
+        $unselected = $this->contactForClient($client, 'Unselected Manual', 'unselected-manual@example.test');
+        $blocked = $this->contactForClient($client, 'Blocked Manual', 'blocked-manual@example.test', doNotEmail: true);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.create'))
+            ->assertOk()
+            ->assertSee('Manual Contacts')
+            ->assertSee('Selected Manual')
+            ->assertDontSee('Blocked Manual');
+
+        $response = $this->actingAs($user)->post(route('tech.marketing.lists.store'), [
+            'name' => 'Manual contacts only',
+            'audience_type' => 'manual_contacts',
+            'manual_contact_ids' => [$selected->id, $blocked->id],
+        ]);
+
+        $list = MarketingList::query()->firstOrFail();
+
+        $response->assertRedirect(route('tech.marketing.lists.show', $list));
+        $this->assertSame([
+            'audience_type' => 'manual_contacts',
+            'contact_tag_ids' => [],
+            'client_tag_ids' => [],
+            'manual_contact_ids' => [$selected->id, $blocked->id],
+        ], $list->segment_criteria);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_type' => 'manual_contact',
+            'source_id' => $selected->id,
+            'email' => 'selected-manual@example.test',
+        ]);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $unselected->id,
+            'email' => 'unselected-manual@example.test',
+        ]);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $blocked->id,
+            'email' => 'blocked-manual@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.show', $list))
+            ->assertOk()
+            ->assertSee('Manual contacts')
+            ->assertSee('2 selected')
+            ->assertSee('selected-manual@example.test')
+            ->assertDontSee('unselected-manual@example.test')
+            ->assertDontSee('blocked-manual@example.test');
     }
 
     #[Test]

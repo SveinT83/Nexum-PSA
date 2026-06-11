@@ -21,6 +21,7 @@ class ResolveMarketingListMembers
         $settings = $this->settings->get();
         $criteria = $this->criteria($list);
         $resolved = collect()
+            ->concat($this->manualContactRecipients($settings, $criteria))
             ->concat($this->contactRecipients($settings, $criteria))
             ->concat($this->legacyClientUserRecipients($settings, $criteria));
 
@@ -44,6 +45,10 @@ class ResolveMarketingListMembers
         $clientMorph = (new Client())->getMorphClass();
         $contactTagIds = $criteria['contact_tag_ids'];
         $clientTagIds = $criteria['client_tag_ids'];
+
+        if ($criteria['audience_type'] === 'manual_contacts') {
+            return collect();
+        }
 
         return Contact::query()
             ->with([
@@ -97,6 +102,10 @@ class ResolveMarketingListMembers
 
     private function legacyClientUserRecipients(array $settings, array $criteria)
     {
+        if ($criteria['audience_type'] === 'manual_contacts') {
+            return collect();
+        }
+
         if ($criteria['contact_tag_ids'] !== []) {
             return collect();
         }
@@ -128,6 +137,51 @@ class ResolveMarketingListMembers
             ]);
     }
 
+    private function manualContactRecipients(array $settings, array $criteria)
+    {
+        if ($criteria['manual_contact_ids'] === []) {
+            return collect();
+        }
+
+        $clientMorph = (new Client())->getMorphClass();
+
+        return Contact::query()
+            ->with([
+                'clientUser',
+                'emails' => fn ($query) => $query->orderByDesc('is_primary')->orderBy('id'),
+                'relations' => fn ($query) => $query->where('related_type', $clientMorph),
+            ])
+            ->whereIn('id', $criteria['manual_contact_ids'])
+            ->where('status', 'active')
+            ->where('do_not_email', false)
+            ->when(
+                $settings['consent_mode'] === 'explicit_opt_in',
+                fn ($query) => $query->where('marketing_consent', true),
+            )
+            ->whereHas('emails')
+            ->get()
+            ->filter(fn (Contact $contact): bool => $this->allowsClientByContractSetting($contact->relations->first()?->related_id, $settings))
+            ->map(function (Contact $contact) {
+                $email = $contact->emails->first();
+                $clientId = $contact->relations->first()?->related_id;
+
+                return [
+                    'source_type' => 'manual_contact',
+                    'source_id' => $contact->id,
+                    'contact_id' => $contact->id,
+                    'client_user_id' => $contact->clientUser?->id,
+                    'client_id' => $clientId,
+                    'email' => $email->email,
+                    'name' => $contact->display_name,
+                    'status' => 'eligible',
+                    'metadata' => [
+                        'source' => 'manual_contact',
+                        'email_label' => $email->label,
+                    ],
+                ];
+            });
+    }
+
     private function allowsClientByContractSetting(?int $clientId, array $settings): bool
     {
         if ($settings['active_contract_clients_eligible'] || ! $clientId) {
@@ -150,6 +204,9 @@ class ResolveMarketingListMembers
         $criteria = $list->segment_criteria ?? [];
 
         return [
+            'audience_type' => in_array($criteria['audience_type'] ?? 'all_business_contacts', ['all_business_contacts', 'manual_contacts'], true)
+                ? $criteria['audience_type']
+                : 'all_business_contacts',
             'contact_tag_ids' => collect($criteria['contact_tag_ids'] ?? [])
                 ->map(fn ($id): int => (int) $id)
                 ->filter()
@@ -157,6 +214,12 @@ class ResolveMarketingListMembers
                 ->values()
                 ->all(),
             'client_tag_ids' => collect($criteria['client_tag_ids'] ?? [])
+                ->map(fn ($id): int => (int) $id)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all(),
+            'manual_contact_ids' => collect($criteria['manual_contact_ids'] ?? [])
                 ->map(fn ($id): int => (int) $id)
                 ->filter()
                 ->unique()

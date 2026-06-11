@@ -4,11 +4,27 @@ namespace App\Modules\Marketing\Actions;
 
 use App\Modules\Marketing\Models\MarketingConsentCategory;
 use App\Modules\Marketing\Models\MarketingInterestTag;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class EnsureMarketingDefaults
 {
+    public const PERMISSIONS = [
+        'marketing.view',
+        'marketing.list.manage',
+        'marketing.campaign.create',
+        'marketing.campaign.edit',
+        'marketing.campaign.approve',
+        'marketing.campaign.send',
+        'marketing.analytics.view',
+        'marketing.settings.manage',
+    ];
+
     public function handle(): void
     {
+        $this->ensurePermissions();
+
         foreach ($this->consentCategories() as $category) {
             MarketingConsentCategory::query()->updateOrCreate(
                 ['key' => $category['key']],
@@ -82,5 +98,20 @@ class EnsureMarketingDefaults
                 'is_active' => true,
             ],
         ];
+    }
+
+    private function ensurePermissions(): void
+    {
+        if (! class_exists(Permission::class) || ! Schema::hasTable('permissions')) {
+            return;
+        }
+
+        foreach (self::PERMISSIONS as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        foreach (Role::query()->whereIn('name', ['Admin', 'Superuser'])->get() as $role) {
+            $role->givePermissionTo(self::PERMISSIONS);
+        }
     }
 }
