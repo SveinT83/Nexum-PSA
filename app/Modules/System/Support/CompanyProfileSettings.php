@@ -14,6 +14,93 @@ class CompanyProfileSettings
 
     private const NAME = 'branding';
 
+    private const THEME_PRESETS = [
+        'nexum' => [
+            'label' => 'Nexum (default)',
+            'primary_color' => '#FF6D1F',
+            'secondary_color' => '#fc7730',
+            'accent_color' => '#faba98',
+            'light_header_background' => '#333333',
+            'light_header_color' => '#ffffff',
+            'light_footer_background' => '#333333',
+            'light_footer_color' => '#ffffff',
+            'light_left_sidebar_background' => '#f8f9fa',
+            'light_left_sidebar_color' => '#212529',
+            'light_main_background' => '#d1d1d1',
+            'light_right_sidebar_background' => '#f8f9fa',
+            'light_right_sidebar_color' => '#212529',
+            'light_page_header_background' => '#5c5c5c',
+            'light_page_header_color' => '#ffffff',
+            'light_card_header_background' => '#f8f9fa',
+            'light_card_header_color' => '#212529',
+            'light_content_background' => '#ffffff',
+            'light_primary_button_background' => '#FF6D1F',
+            'light_primary_button_color' => '#ffffff',
+            'light_secondary_button_background' => '#fc7730',
+            'light_secondary_button_color' => '#ffffff',
+            'dark_header_background' => '#111827',
+            'dark_header_color' => '#f8fafc',
+            'dark_footer_background' => '#111827',
+            'dark_footer_color' => '#f8fafc',
+            'dark_left_sidebar_background' => '#1f2937',
+            'dark_left_sidebar_color' => '#f8fafc',
+            'dark_main_background' => '#0f172a',
+            'dark_right_sidebar_background' => '#1f2937',
+            'dark_right_sidebar_color' => '#f8fafc',
+            'dark_page_header_background' => '#1f2937',
+            'dark_page_header_color' => '#f8fafc',
+            'dark_card_header_background' => '#111827',
+            'dark_card_header_color' => '#f8fafc',
+            'dark_content_background' => '#111827',
+            'dark_primary_button_background' => '#FF6D1F',
+            'dark_primary_button_color' => '#ffffff',
+            'dark_secondary_button_background' => '#fc7730',
+            'dark_secondary_button_color' => '#ffffff',
+        ],
+        'tronder-data' => [
+            'label' => 'Trønder Data',
+            'primary_color' => '#99B885',
+            'secondary_color' => '#D7DE8C',
+            'accent_color' => '#ECF5E1',
+            'light_header_background' => '#0D3D35',
+            'light_header_color' => '#ECF5E1',
+            'light_footer_background' => '#0D3D35',
+            'light_footer_color' => '#ECF5E1',
+            'light_left_sidebar_background' => '#ECF5E1',
+            'light_left_sidebar_color' => '#0D3D35',
+            'light_main_background' => '#ECF5E1',
+            'light_right_sidebar_background' => '#ECF5E1',
+            'light_right_sidebar_color' => '#0D3D35',
+            'light_page_header_background' => '#99B885',
+            'light_page_header_color' => '#0D3D35',
+            'light_card_header_background' => '#ECF5E1',
+            'light_card_header_color' => '#0D3D35',
+            'light_content_background' => '#FFFFFF',
+            'light_primary_button_background' => '#99B885',
+            'light_primary_button_color' => '#0D3D35',
+            'light_secondary_button_background' => '#D7DE8C',
+            'light_secondary_button_color' => '#0D3D35',
+            'dark_header_background' => '#0a302a',
+            'dark_header_color' => '#ECF5E1',
+            'dark_footer_background' => '#0a302a',
+            'dark_footer_color' => '#ECF5E1',
+            'dark_left_sidebar_background' => '#145e52',
+            'dark_left_sidebar_color' => '#ECF5E1',
+            'dark_main_background' => '#0D3D35',
+            'dark_right_sidebar_background' => '#145e52',
+            'dark_right_sidebar_color' => '#ECF5E1',
+            'dark_page_header_background' => '#12564a',
+            'dark_page_header_color' => '#ECF5E1',
+            'dark_card_header_background' => '#156759',
+            'dark_card_header_color' => '#ECF5E1',
+            'dark_content_background' => '#176f60',
+            'dark_primary_button_background' => '#99B885',
+            'dark_primary_button_color' => '#0D3D35',
+            'dark_secondary_button_background' => '#D7DE8C',
+            'dark_secondary_button_color' => '#0D3D35',
+        ],
+    ];
+
     private const DEFAULTS = [
         'company_name' => 'Nexum PSA',
         'legal_name' => null,
@@ -194,6 +281,52 @@ class CompanyProfileSettings
         );
 
         return $this->withComputedValues($payload);
+    }
+
+    public function applyPreset(string $presetKey): array
+    {
+        $preset = self::THEME_PRESETS[$presetKey] ?? null;
+
+        if (! $preset) {
+            return $this->get();
+        }
+
+        $current = $this->get();
+        $payload = $current;
+
+        // Apply all color keys from the preset, preserving logos and company info
+        foreach ($this->colorKeys() as $key) {
+            if (isset($preset[$key])) {
+                $payload[$key] = $preset[$key];
+            }
+        }
+
+        // Apply brand-level color keys that aren't covered by colorKeys()
+        foreach (['primary_color', 'secondary_color', 'accent_color'] as $key) {
+            if (isset($preset[$key])) {
+                $payload[$key] = $preset[$key];
+            }
+        }
+
+        $payload = $this->normalize($payload);
+
+        CommonSetting::query()->updateOrCreate(
+            ['type' => self::TYPE, 'name' => self::NAME],
+            [
+                'description' => 'Company profile and Bootstrap-compatible branding for the Nexum PSA shell.',
+                'value' => $payload['company_name'],
+                'json' => json_encode($payload),
+            ],
+        );
+
+        return $this->withComputedValues($payload);
+    }
+
+    public static function getPresets(): array
+    {
+        return collect(self::THEME_PRESETS)->mapWithKeys(
+            fn (array $preset, string $key) => [$key => $preset['label']],
+        )->all();
     }
 
     private function normalize(array $payload): array

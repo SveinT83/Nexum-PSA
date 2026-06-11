@@ -127,4 +127,13 @@ class CompanyProfileController extends Controller
 
         return back()->with('success', 'Branding was reset to defaults.');
     }
+
+    public function applyThemePreset(Request $request, CompanyProfileSettings $settings): RedirectResponse
+    {
+        $presetKey = $request->validate(['preset' => ['required', 'string', Rule::in(array_keys(CompanyProfileSettings::getPresets()))]])['preset'];
+
+        $settings->applyPreset($presetKey);
+
+        return back()->with('success', 'Theme preset was applied.');
+    }
 }
