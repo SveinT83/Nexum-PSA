@@ -26,6 +26,7 @@ Marketing owns:
 
 - Mailing lists and resolved memberships.
 - Campaigns and campaign email sequences.
+- Campaign-specific email subject/body snapshots created from reusable Email templates.
 - Campaign approvals and sending state.
 - Recipient queue state and send attempts.
 - Marketing tracking events, tracked links, opens, clicks, bounces, suppressions, engagement scores,

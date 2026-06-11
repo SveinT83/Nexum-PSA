@@ -8,6 +8,7 @@ use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
 use App\Modules\Marketing\Models\MarketingCampaign;
+use App\Modules\Marketing\Models\MarketingCampaignEmail;
 use App\Modules\Marketing\Models\MarketingCampaignRecipient;
 use App\Modules\Marketing\Support\MarketingSettings;
 use Illuminate\Bus\Queueable;
@@ -80,16 +81,22 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
             ->limit($limit)
             ->get()
             ->each(function (MarketingCampaignRecipient $recipient) use ($campaign, $account, $renderer, $mailer, $settingsPayload): void {
-                $template = $recipient->campaignEmail?->template;
+                $campaignEmail = $recipient->campaignEmail;
+                $template = $campaignEmail?->renderableTemplate();
 
-                if (! $template || ! $template->is_active || $template->scope !== 'marketing') {
-                    $this->markFailed($recipient, 'MARKETING_EMAIL_NO_TEMPLATE', 'No active marketing template exists for this campaign email.');
+                if (! $campaignEmail || ! $template || $template->scope !== 'marketing') {
+                    $this->markFailed($recipient, 'MARKETING_EMAIL_NO_CONTENT', 'No campaign email content exists for this recipient.');
+                    return;
+                }
+
+                if (! $campaignEmail->hasSnapshotContent() && (! $template->is_active || $template->scope !== 'marketing')) {
+                    $this->markFailed($recipient, 'MARKETING_EMAIL_NO_TEMPLATE', 'No active marketing template exists for this legacy campaign email.');
                     return;
                 }
 
                 try {
-                    $rendered = $renderer->render($template, $this->variables($campaign, $recipient));
-                    $subject = $recipient->campaignEmail->subject_override ?: $rendered['subject'];
+                    $rendered = $renderer->render($template, $this->variables($campaign, $recipient, $campaignEmail));
+                    $subject = $rendered['subject'];
                     $html = $this->appendTrackingPixel($campaign, $recipient, $this->appendUnsubscribeHtml($this->rewriteLinks($campaign, $recipient, $rendered['html']), $recipient, $settingsPayload));
                     $text = $this->appendUnsubscribeText($rendered['text'], $recipient, $settingsPayload);
 
@@ -134,12 +141,18 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         }
     }
 
-    private function variables(MarketingCampaign $campaign, MarketingCampaignRecipient $recipient): array
+    private function variables(MarketingCampaign $campaign, MarketingCampaignRecipient $recipient, MarketingCampaignEmail $campaignEmail): array
     {
         return [
             'campaign_name' => $campaign->name,
+            'campaign_email_name' => $campaignEmail->displayName(),
+            'campaign_subject' => $campaignEmail->effectiveSubject() ?? $campaign->name,
+            'campaign_heading' => $campaignEmail->displayName(),
+            'campaign_intro' => $campaign->description ?: 'Here is an update from our team.',
+            'campaign_body' => '',
             'contact_name' => $recipient->name ?: 'there',
             'client_name' => $recipient->client?->name ?? '',
+            'primary_cta_label' => 'Read more',
             'primary_cta_url' => url('/'),
             'unsubscribe_url' => route('marketing.unsubscribe', $recipient->tracking_token),
         ];

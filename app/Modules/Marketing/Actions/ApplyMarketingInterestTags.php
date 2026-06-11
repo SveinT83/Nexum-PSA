@@ -60,9 +60,9 @@ class ApplyMarketingInterestTags
             $event->url,
             $recipient->campaign?->name,
             $recipient->campaign?->description,
-            $recipient->campaignEmail?->subject_override,
-            $recipient->campaignEmail?->template?->name,
-            $recipient->campaignEmail?->template?->subject,
+            $recipient->campaignEmail?->displayName(),
+            $recipient->campaignEmail?->effectiveSubject(),
+            $recipient->campaignEmail?->sourceTemplateName(),
         ])->filter()->implode(' '));
 
         return collect([

@@ -33,17 +33,20 @@ The implemented foundation now covers:
   Clients.
 - Campaign UI under `/tech/marketing/campaigns`.
 - Approval gate, due-recipient send job, scheduled minute processing, and `marketing:send-due`.
-- Campaign sequence UI for multiple campaign emails with order, delay, scheduled time, subject
-  override, pending-recipient due-time updates, and safe removal/deactivation.
+- Campaign sequence UI for multiple campaign emails as collapsible cards with order, delay,
+  editable email subject/body snapshots, live preview, test-send, pending-recipient due-time
+  updates, and safe removal/deactivation.
+- AI-assisted campaign email drafting through active Integration AI agents. AI suggestions update
+  the editable form only and must still be saved by the technician.
 - Open, click, and unsubscribe tracking endpoints.
 - Admin settings UI for consent policy, unsubscribe behavior, active-contract eligibility, tracking
   defaults, quiet hours, and default send batching.
 
-The hub intentionally exposes only implemented actions. WordPress pull, Google integrations, social
-publishing, and AI-assisted content tooling are follow-up feature slices under the approved RFC and
-should only become visible when the underlying integration or workflow exists. Marketing must not
-grow a separate engagement/call-list workflow; marketing interest should feed Lead Heat and
-classification in the Sales/Leads module.
+The hub intentionally exposes only implemented actions. WordPress pull, Google integrations,
+social publishing, and richer AI/content tooling are follow-up feature slices under the approved
+RFC and should only become visible when the underlying integration or workflow exists. Marketing
+must not grow a separate engagement/call-list workflow; marketing interest should feed Lead Heat
+and classification in the Sales/Leads module.
 
 ## Mailing Lists
 
@@ -75,6 +78,11 @@ Campaigns are created as drafts and must be approved by a technician with
 `marketing.campaign.approve` before any recipients are sent. Approval materializes recipient queue
 rows for the selected list and active campaign emails.
 
+Each campaign email starts from an active Email template with the `marketing` scope, then stores its
+own subject, HTML body, plaintext body, source template name, and template variables as a snapshot.
+Sending uses that campaign email snapshot, so changing the reusable Email template later does not
+silently change draft, approved, active, or historical campaign emails.
+
 Sending uses the selected Email account, or the active Email account marked as default for the
 `marketing` scope. The scheduled job runs every minute and sends due recipients up to the campaign
 batch size. Operators can also run:
@@ -97,11 +105,20 @@ without failing recipients. Active-contract eligibility is applied during list r
 unsubscribe footer text is appended to campaign email HTML and plaintext.
 
 Campaigns can contain multiple ordered emails. Technicians with `marketing.campaign.edit` can add,
-update, deactivate, or remove campaign emails from the campaign detail page. Updating delay or
-scheduled time changes only pending recipients. Sent recipient history is kept; removing a campaign
-email with sent recipients deactivates it and cancels pending recipients instead of deleting history.
-Adding a new active email to an approved or active campaign queues recipients for the existing list
-members.
+update, deactivate, or remove campaign emails from the campaign detail page. Existing emails are
+shown as cards and expanded only when a technician wants to preview, test-send, or edit them. New
+emails are created from a hidden form; selecting a start template fills the editable snapshot fields
+before saving. Updating delay changes only pending recipients. Sent recipient history is kept;
+removing a campaign email with sent recipients deactivates it and cancels pending recipients instead
+of deleting history. Adding a new active email to an approved or active campaign queues recipients
+for the existing list members.
+
+Campaign email preview is rendered in the browser from the editable HTML body. Test-send uses the
+current editor fields and sends through the campaign sender account or the default `marketing`
+account. The test recipient defaults to the current technician email address and can be overwritten.
+The AI draft button is shown only when an active AI agent is available for the technician. AI uses
+campaign context, list context, and current email content, then returns editable fields; it does not
+send, approve, or save the campaign by itself.
 
 ## Approved RFC
 
@@ -112,7 +129,8 @@ See `docs/rfc/2026-06-09-marketing-domain-email-campaigns.md`.
 - Keep all Marketing routes in `app/Modules/Marketing/routes.php`.
 - Keep controllers in `app/Modules/Marketing/Controllers`.
 - Keep views in `app/Modules/Marketing/Views`.
-- Do not duplicate Email template storage in Marketing. Campaign emails should reference Email
-  templates with the `marketing` scope when that slice is implemented.
+- Keep reusable template ownership in Email. Marketing campaign emails may reference the source
+  Email template for traceability, but the actual campaign email content is owned by Marketing as a
+  snapshot.
 - Do not move Sales pipeline behavior into Marketing. Marketing may record engagement and interest
   signals, but Lead Heat, classification, seller sorting, and follow-up workflow belong in Sales.

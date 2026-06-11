@@ -24,8 +24,11 @@ The first slices create the Marketing and Email foundation:
 - Manual Contact additions from existing Contacts with active email addresses.
 - Campaign draft, approval, recipient queue, due send job, and open/click/unsubscribe tracking
   foundation.
-- Campaign sequence editing for multiple ordered emails, delay/scheduled timing, subject override,
-  and active-campaign recipient queue sync.
+- Campaign sequence editing for multiple ordered campaign emails as collapsible cards with delay,
+  editable email subject/body snapshots, preview, test-send, and active-campaign recipient queue
+  sync.
+- AI-assisted campaign email drafting from campaign, list, and current email context when an active
+  AI agent is available.
 - Dashboard summaries for campaigns, recipients, mailing lists, sender setup, templates, queue, and
   tracking activity.
 - Admin settings for consent, unsubscribe, active-contract eligibility, tracking defaults, quiet
@@ -34,7 +37,7 @@ The first slices create the Marketing and Email foundation:
 The Email foundation slices add the `marketing` sender scope, `marketing` Email template scope,
 brand-aware HTML rendering, template preview, and a seeded default marketing campaign template.
 
-WordPress content pull, Google integrations, social publishing, and AI-assisted content tooling are
+WordPress content pull, Google integrations, social publishing, and richer content tooling are
 planned follow-up slices. Separate Marketing engagement/call lists are intentionally out of scope;
 marketing interest should be consumed by Sales/Leads sorting, Lead Heat, and classification.
 
@@ -71,23 +74,39 @@ Cloud. Default interest tags prepare later open/click tracking and Sales categor
 
 ## Campaigns
 
-Marketing campaigns are created as drafts from a mailing list and an active Email template with the
-`marketing` scope. Each campaign can choose a sender account. If it does not, Marketing uses the
-active Email account marked as default for the `marketing` scope.
+Marketing campaigns are created as drafts from a mailing list and a first campaign email. The first
+campaign email uses an active Email template with the `marketing` scope as its starting point, then
+stores its own subject, HTML body, plaintext body, and template metadata as a snapshot. Each campaign
+can choose a sender account. If it does not, Marketing uses the active Email account marked as
+default for the `marketing` scope.
 
 A campaign must be approved by a technician with `marketing.campaign.approve` before sending. On
 approval, Marketing creates `marketing_campaign_recipients` rows from the current resolved list
 members. The queue stores due time, status, attempts, message id, and tracking token.
 
 Campaigns can contain multiple ordered emails. Technicians with `marketing.campaign.edit` can add a
-new sequence email, change order, change delay or scheduled time, set subject override, and set an
-email active or inactive. Delay and schedule changes update pending recipients only. Sent recipient
-history is kept. If a sent sequence email is removed, the email is deactivated and pending recipients
-are cancelled; unsent sequence emails are deleted with their pending queue rows.
+new sequence email from a start template, edit the campaign email name, subject, HTML body, plaintext
+body, order, delay, and active/inactive status. Existing emails are displayed as cards and expanded
+for preview, test-send, AI drafting, and editing. New emails are behind a button; selecting a start
+template fills the editable snapshot fields before save. Delay changes update pending recipients
+only. Sent recipient history is kept. If a sent sequence email is removed, the email is deactivated
+and pending recipients are cancelled; unsent sequence emails are deleted with their pending queue
+rows.
+
+Campaign emails send from their stored snapshot, not from the live Email template. This means an
+administrator can later change a reusable Marketing template without silently changing draft,
+approved, active, or historical campaign emails that were already created from it.
 
 Adding a sequence email to an approved or active campaign immediately creates pending recipient rows
 for current eligible list members, so existing contacts can receive new follow-up emails without
 recreating the campaign.
+
+Preview uses the editable HTML body in the campaign email form. Test-send uses the current editor
+fields and sends through the campaign sender account or the default `marketing` account. The test
+recipient defaults to the current technician email address and can be overwritten for a colleague.
+AI drafting is available only when the technician has access to an active Integration AI agent. AI
+returns editable form fields and is audited as an AI chat; the technician still decides whether to
+save the result.
 
 The scheduled Marketing job runs every minute and sends due recipients in batches. The manual command
 is:
@@ -130,6 +149,7 @@ Marketing owns:
 
 - Mailing lists and segmentation.
 - Campaigns and ordered campaign emails.
+- Campaign-specific email subject/body snapshots.
 - Campaign approvals.
 - Recipient queue state and send attempts.
 - Opens, clicks, bounces, suppressions, engagement scores, consent categories, and interest tags.

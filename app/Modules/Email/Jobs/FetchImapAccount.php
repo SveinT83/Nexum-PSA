@@ -40,6 +40,22 @@ class FetchImapAccount implements ShouldQueue
         }
 
         $messages = $client->fetchUnseen($this->batchSize);
+
+        if (count($messages) < $this->batchSize) {
+            $messages = collect($messages)
+                ->merge($client->fetchRecent($this->batchSize))
+                ->unique('imap_uid')
+                ->take($this->batchSize)
+                ->values()
+                ->all();
+        }
+
+        $account->forceFill([
+            'last_successful_fetch_at' => now(),
+            'last_error_code' => null,
+            'last_error_message' => null,
+        ])->save();
+
         foreach ($messages as $payload) {
             // Dedup check: skip if already stored by unique index (account+mailbox+uid)
             $exists = $account->messages()->where('imap_uid', $payload['imap_uid'])->where('mailbox', 'INBOX')->exists();

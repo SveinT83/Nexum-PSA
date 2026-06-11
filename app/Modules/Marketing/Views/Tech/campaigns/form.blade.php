@@ -56,13 +56,13 @@
 
         <div class="card">
             <div class="card-header">
-                <span class="fw-semibold">First Email</span>
+                <span class="fw-semibold">First Campaign Email</span>
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-lg-6">
-                        <label for="email_template_id" class="form-label">Template</label>
-                        <select id="email_template_id" name="email_template_id" class="form-select @error('email_template_id') is-invalid @enderror" required>
+                    <div class="col-lg-4">
+                        <label for="email_template_id" class="form-label">Start Template</label>
+                        <select id="email_template_id" name="email_template_id" class="form-select @error('email_template_id') is-invalid @enderror" required data-template-select>
                             <option value="">Select template</option>
                             @foreach($templates as $template)
                                 <option value="{{ $template->id }}" @selected((int) old('email_template_id') === $template->id)>{{ $template->name }}</option>
@@ -70,10 +70,25 @@
                         </select>
                         @error('email_template_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    <div class="col-lg-4">
+                        <label for="email_name" class="form-label">Email Name</label>
+                        <input type="text" id="email_name" name="email_name" class="form-control @error('email_name') is-invalid @enderror" value="{{ old('email_name') }}" maxlength="255" placeholder="First touch" data-email-name>
+                        @error('email_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-4">
+                        <label for="email_subject" class="form-label">Email Subject</label>
+                        <input type="text" id="email_subject" name="email_subject" class="form-control @error('email_subject') is-invalid @enderror" value="{{ old('email_subject') }}" maxlength="255" required data-email-subject>
+                        @error('email_subject')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                     <div class="col-lg-6">
-                        <label for="subject_override" class="form-label">Subject Override</label>
-                        <input type="text" id="subject_override" name="subject_override" class="form-control @error('subject_override') is-invalid @enderror" value="{{ old('subject_override') }}" maxlength="255">
-                        @error('subject_override')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <label for="body_html" class="form-label">HTML Body</label>
+                        <textarea id="body_html" name="body_html" rows="8" class="form-control font-monospace @error('body_html') is-invalid @enderror" data-email-html>{{ old('body_html') }}</textarea>
+                        @error('body_html')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-6">
+                        <label for="body_text" class="form-label">Plain Text Body</label>
+                        <textarea id="body_text" name="body_text" rows="8" class="form-control font-monospace @error('body_text') is-invalid @enderror" data-email-text>{{ old('body_text') }}</textarea>
+                        @error('body_text')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-lg-6">
                         <label for="email_account_id" class="form-label">Sender Account</label>
@@ -121,6 +136,42 @@
             </button>
         </div>
     </form>
+@endsection
+
+@section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const templateSnapshots = {!! \Illuminate\Support\Js::from($templateSnapshots) !!};
+            const select = document.querySelector('[data-template-select]');
+
+            if (!select) {
+                return;
+            }
+
+            select.addEventListener('change', function () {
+                const snapshot = templateSnapshots[String(select.value)];
+
+                if (!snapshot) {
+                    return;
+                }
+
+                const pairs = {
+                    '[data-email-name]': snapshot.name,
+                    '[data-email-subject]': snapshot.subject,
+                    '[data-email-html]': snapshot.body_html,
+                    '[data-email-text]': snapshot.body_text,
+                };
+
+                Object.entries(pairs).forEach(function ([selector, value]) {
+                    const input = document.querySelector(selector);
+
+                    if (input && value !== undefined && value !== null) {
+                        input.value = value;
+                    }
+                });
+            });
+        });
+    </script>
 @endsection
 
 @section('sidebar')

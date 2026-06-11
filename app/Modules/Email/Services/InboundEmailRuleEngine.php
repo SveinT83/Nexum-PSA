@@ -365,11 +365,16 @@ class InboundEmailRuleEngine
 
     private function referencedMessageIds(EmailMessage $message): array
     {
-        preg_match_all('/<[^>]+>/', trim((string) $message->in_reply_to . ' ' . (string) $message->references), $matches);
+        $source = trim((string) $message->in_reply_to . ' ' . (string) $message->references);
+        preg_match_all('/<([^>]+)>/', $source, $bracketedMatches);
+        $sourceWithoutBracketedIds = preg_replace('/<[^>]+>/', ' ', $source) ?: '';
+        preg_match_all('/[^\s<>;,]+@[^\s<>;,]+/', $sourceWithoutBracketedIds, $bareMatches);
 
-        return collect($matches[0] ?? [])
-            ->map(fn ($messageId) => trim($messageId))
+        return collect($bracketedMatches[1] ?? [])
+            ->merge($bareMatches[0] ?? [])
+            ->map(fn ($messageId) => trim($messageId, " \t\n\r\0\x0B<>;,"))
             ->filter()
+            ->flatMap(fn (string $messageId): array => [$messageId, '<'.$messageId.'>'])
             ->unique()
             ->values()
             ->all();

@@ -7,19 +7,26 @@ use App\Modules\Email\Actions\EnsureDefaultEmailTemplates;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Marketing\Actions\ApproveMarketingCampaign;
+use App\Modules\Marketing\Actions\BuildMarketingCampaignEmailSnapshot;
+use App\Modules\Marketing\Actions\DraftMarketingCampaignEmailWithAi;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
 use App\Modules\Marketing\Actions\ResolveMarketingListMembers;
+use App\Modules\Marketing\Actions\SendMarketingCampaignEmailTest;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
+use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Marketing\Models\MarketingCampaign;
 use App\Modules\Marketing\Models\MarketingCampaignEmail;
 use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Marketing\Support\MarketingSettings;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use RuntimeException;
+use Throwable;
 
 class MarketingCampaignController extends Controller
 {
@@ -87,12 +94,20 @@ class MarketingCampaignController extends Controller
             ]),
             'lists' => $lists,
             'templates' => $templates,
+            'templateSnapshots' => $templates
+                ->mapWithKeys(fn (EmailTemplate $template): array => [(string) $template->id => [
+                    'name' => $template->name,
+                    'subject' => $template->subject,
+                    'body_html' => $template->body_html,
+                    'body_text' => $template->body_text,
+                ]])
+                ->all(),
             'accounts' => EmailAccount::query()->where('is_active', true)->orderBy('address')->get(),
             'settings' => $settings->get(),
         ]);
     }
 
-    public function store(Request $request, ResolveMarketingListMembers $resolve): RedirectResponse
+    public function store(Request $request, ResolveMarketingListMembers $resolve, BuildMarketingCampaignEmailSnapshot $snapshot): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -100,7 +115,10 @@ class MarketingCampaignController extends Controller
             'marketing_list_id' => ['required', 'exists:marketing_lists,id'],
             'email_account_id' => ['nullable', 'exists:email_accounts,id'],
             'email_template_id' => ['required', 'exists:email_templates,id'],
-            'subject_override' => ['nullable', 'string', 'max:255'],
+            'email_name' => ['nullable', 'string', 'max:255'],
+            'email_subject' => ['required', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
             'starts_at' => ['nullable', 'date'],
             'batch_size' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'send_interval_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
@@ -130,11 +148,15 @@ class MarketingCampaignController extends Controller
         ]);
 
         $campaign->emails()->create([
-            'email_template_id' => $template->id,
+            ...$snapshot->fromTemplate($template, [
+                'name' => $data['email_name'] ?? null,
+                'email_subject' => $data['email_subject'],
+                'body_html' => $data['body_html'] ?? null,
+                'body_text' => $data['body_text'] ?? null,
+            ]),
             'sequence_order' => 1,
             'status' => 'active',
-            'scheduled_at' => $data['starts_at'] ?? null,
-            'subject_override' => $data['subject_override'] ?? null,
+            'scheduled_at' => null,
         ]);
 
         $resolve->handle($campaign->list);
@@ -144,7 +166,12 @@ class MarketingCampaignController extends Controller
             ->with('status', 'Marketing campaign created as draft.');
     }
 
-    public function show(MarketingCampaign $campaign, MarketingSettings $settings): View
+    public function show(
+        Request $request,
+        MarketingCampaign $campaign,
+        MarketingSettings $settings,
+        AiAgentResolver $aiAgentResolver,
+    ): View
     {
         $interestKeyCounts = $campaign->events()
             ->get(['metadata'])
@@ -156,6 +183,13 @@ class MarketingCampaignController extends Controller
             ->get()
             ->keyBy('key');
 
+        $templates = EmailTemplate::query()
+            ->where('scope', 'marketing')
+            ->where('is_active', true)
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+
         return view('marketing::Tech.campaigns.show', [
             'campaign' => $campaign->load([
                 'list',
@@ -164,7 +198,16 @@ class MarketingCampaignController extends Controller
                 'emails' => fn ($query) => $query->with('template')->withCount('recipients')->orderBy('sequence_order'),
             ])->loadCount(['emails', 'recipients', 'events']),
             'recipients' => $campaign->recipients()->with(['campaignEmail.template', 'client'])->latest('updated_at')->paginate(50),
-            'templates' => EmailTemplate::query()->where('scope', 'marketing')->where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(),
+            'templates' => $templates,
+            'templateSnapshots' => $templates
+                ->mapWithKeys(fn (EmailTemplate $template): array => [(string) $template->id => [
+                    'name' => $template->name,
+                    'subject' => $template->subject,
+                    'body_html' => $template->body_html,
+                    'body_text' => $template->body_text,
+                    'variables' => (array) $template->variables,
+                ]])
+                ->all(),
             'interestSummary' => $interestKeyCounts
                 ->map(fn (int $count, string $key): array => [
                     'key' => $key,
@@ -174,15 +217,24 @@ class MarketingCampaignController extends Controller
                 ->sortByDesc('count')
                 ->values(),
             'settings' => $settings->get(),
+            'aiDraftAvailable' => $request->user() ? (bool) $aiAgentResolver->defaultAgent($request->user(), 'marketing') : false,
         ]);
     }
 
-    public function storeEmail(MarketingCampaign $campaign, Request $request, SyncMarketingCampaignRecipients $syncRecipients): RedirectResponse
-    {
+    public function storeEmail(
+        MarketingCampaign $campaign,
+        Request $request,
+        SyncMarketingCampaignRecipients $syncRecipients,
+        BuildMarketingCampaignEmailSnapshot $snapshot,
+    ): RedirectResponse {
         abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign emails can only be changed before completion.');
 
         $data = $request->validate([
             'email_template_id' => ['required', 'exists:email_templates,id'],
+            'email_name' => ['nullable', 'string', 'max:255'],
+            'email_subject' => ['required', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
             'sequence_order' => [
                 'required',
                 'integer',
@@ -191,8 +243,6 @@ class MarketingCampaignController extends Controller
                 Rule::unique('marketing_campaign_emails', 'sequence_order')->where('marketing_campaign_id', $campaign->id),
             ],
             'delay_minutes' => ['required', 'integer', 'min:0', 'max:525600'],
-            'scheduled_at' => ['nullable', 'date'],
-            'subject_override' => ['nullable', 'string', 'max:255'],
         ]);
 
         $template = EmailTemplate::query()
@@ -202,12 +252,16 @@ class MarketingCampaignController extends Controller
             ->firstOrFail();
 
         $campaign->emails()->create([
-            'email_template_id' => $template->id,
+            ...$snapshot->fromTemplate($template, [
+                'name' => $data['email_name'] ?? null,
+                'email_subject' => $data['email_subject'],
+                'body_html' => $data['body_html'] ?? null,
+                'body_text' => $data['body_text'] ?? null,
+            ]),
             'sequence_order' => $data['sequence_order'],
             'status' => 'active',
-            'scheduled_at' => $data['scheduled_at'] ?? null,
+            'scheduled_at' => null,
             'delay_minutes' => $data['delay_minutes'],
-            'subject_override' => $data['subject_override'] ?? null,
         ]);
 
         $created = in_array($campaign->status, ['approved', 'active'], true)
@@ -219,12 +273,21 @@ class MarketingCampaignController extends Controller
             ->with('status', $created > 0 ? "Campaign email added and {$created} recipients queued." : 'Campaign email added.');
     }
 
-    public function updateEmail(MarketingCampaign $campaign, MarketingCampaignEmail $email, Request $request, SyncMarketingCampaignRecipients $syncRecipients): RedirectResponse
-    {
+    public function updateEmail(
+        MarketingCampaign $campaign,
+        MarketingCampaignEmail $email,
+        Request $request,
+        SyncMarketingCampaignRecipients $syncRecipients,
+        BuildMarketingCampaignEmailSnapshot $snapshot,
+    ): RedirectResponse {
         abort_if($email->marketing_campaign_id !== $campaign->id, 404);
         abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign emails can only be changed before completion.');
 
         $data = $request->validate([
+            'email_name' => ['nullable', 'string', 'max:255'],
+            'email_subject' => ['required', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
             'sequence_order' => [
                 'required',
                 'integer',
@@ -235,12 +298,20 @@ class MarketingCampaignController extends Controller
                     ->ignore($email->id),
             ],
             'delay_minutes' => ['required', 'integer', 'min:0', 'max:525600'],
-            'scheduled_at' => ['nullable', 'date'],
-            'subject_override' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', 'in:active,inactive'],
         ]);
 
-        $email->forceFill($data)->save();
+        $email->forceFill(array_merge($snapshot->editableContent([
+            'name' => $data['email_name'] ?? null,
+            'email_subject' => $data['email_subject'],
+            'body_html' => $data['body_html'] ?? null,
+            'body_text' => $data['body_text'] ?? null,
+        ]), [
+            'sequence_order' => $data['sequence_order'],
+            'delay_minutes' => $data['delay_minutes'],
+            'scheduled_at' => null,
+            'status' => $data['status'],
+        ]))->save();
 
         $dueAt = $syncRecipients->dueAt($campaign, $email->fresh());
         $email->recipients()
@@ -250,6 +321,72 @@ class MarketingCampaignController extends Controller
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
             ->with('status', 'Campaign email updated.');
+    }
+
+    public function testSendEmail(
+        MarketingCampaign $campaign,
+        MarketingCampaignEmail $email,
+        Request $request,
+        SendMarketingCampaignEmailTest $sendTest,
+    ): RedirectResponse {
+        abort_if($email->marketing_campaign_id !== $campaign->id, 404);
+
+        $data = $request->validate([
+            'test_to_email' => ['required', 'email', 'max:255'],
+            'test_to_name' => ['nullable', 'string', 'max:255'],
+            'email_name' => ['nullable', 'string', 'max:255'],
+            'email_subject' => ['nullable', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
+        ]);
+
+        $payload = [
+            'to_email' => $data['test_to_email'],
+            'to_name' => $data['test_to_name'] ?? null,
+        ];
+
+        foreach (['email_name', 'email_subject', 'body_html', 'body_text'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $payload[$key] = $data[$key];
+            }
+        }
+
+        try {
+            $sendTest->handle($campaign, $email, $request->user(), $payload);
+        } catch (Throwable $exception) {
+            return back()
+                ->withErrors(['test_send' => $exception->getMessage()])
+                ->withInput();
+        }
+
+        return back()->with('status', 'Test email sent to '.$data['test_to_email'].'.');
+    }
+
+    public function draftEmailWithAi(
+        MarketingCampaign $campaign,
+        Request $request,
+        DraftMarketingCampaignEmailWithAi $draftEmail,
+    ): JsonResponse {
+        $data = $request->validate([
+            'campaign_email_id' => ['nullable', 'integer', 'exists:marketing_campaign_emails,id'],
+            'prompt' => ['required', 'string', 'max:4000'],
+            'email_name' => ['nullable', 'string', 'max:255'],
+            'email_subject' => ['nullable', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
+        ]);
+        $email = null;
+
+        if (! empty($data['campaign_email_id'])) {
+            $email = MarketingCampaignEmail::query()->findOrFail($data['campaign_email_id']);
+            abort_if($email->marketing_campaign_id !== $campaign->id, 404);
+        }
+
+        try {
+            return response()->json($draftEmail->handle($request->user(), $campaign, $email, $data));
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
     }
 
     public function destroyEmail(MarketingCampaign $campaign, MarketingCampaignEmail $email): RedirectResponse

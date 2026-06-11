@@ -20,6 +20,23 @@ Heat, classification, filtering, sorting, and seller follow-up. The immediate pr
 email marketing frontend completion: dashboard, campaign sequencing/lifecycle controls, email
 design, send preferences, and reliable autonomous campaign sending.
 
+## Scope Amendment 2026-06-11
+
+Campaign emails are no longer live sends of Email template records. A Marketing campaign email uses
+an Email template as a starting point, then stores its own subject, HTML body, plaintext body,
+template source name, and template variables as a snapshot. This keeps approved and active campaign
+emails stable if an administrator edits the original Email template later. The Email module still
+owns reusable templates and rendering infrastructure; Marketing owns the campaign-specific email
+snapshot and sequence state.
+
+Campaign detail editing should treat existing campaign emails as collapsed cards, not as one large
+always-visible form. Creating a new campaign email is behind an explicit button. Selecting a start
+template fills the editable snapshot fields before saving. Campaign start time and per-email delay
+are the primary scheduling controls; per-email absolute schedule fields should not be exposed in the
+UI until a later lifecycle feature needs them. Preview, test-send, and AI-assisted drafting are part
+of the email-first frontend slice. AI drafting is a form-assist workflow: it may use campaign/list
+context and current email content, but it does not send, approve, or save without technician action.
+
 This is a Level 3 change because it introduces a new domain, database tables, permissions,
 automation, outbound email behavior, tracking endpoints, integrations, and cross-module workflows
 with Contact, Email, Sales, Integration, and future Signal/AI features.
@@ -134,9 +151,9 @@ Sales consumes marketing outcomes:
 2. A technician creates a marketing list using metadata filters.
 3. The list resolves recipients from Contacts and legacy `client_users`.
 4. A technician creates a campaign and adds one or more ordered campaign emails.
-5. Each campaign email selects an active Email template with `marketing` scope and can override
-   campaign-specific subject/content where supported.
-6. Each campaign email can be scheduled by absolute time or relative delay from recipient entry.
+5. Each campaign email selects an active Email template with `marketing` scope as its starting
+   template, then stores the editable campaign-specific subject and body snapshot.
+6. The campaign start time and each campaign email's relative delay determine recipient due time.
 7. A technician with approval permission approves the campaign.
 8. The campaign engine creates recipient states and dispatches queued send jobs.
 9. Jobs send in configured batches through the default `marketing` Email account or selected
@@ -199,8 +216,9 @@ for sending.
 
 Planned AI use cases:
 
-- Draft campaign email copy from templates, WordPress content, and company profile.
-- Suggest subject lines.
+- Draft campaign email copy from templates, campaign/list context, WordPress content when available,
+  and company profile.
+- Suggest subject lines and plaintext fallbacks from the editable HTML draft.
 - Summarize WordPress content into campaign content blocks.
 - Classify link topics and recipient interests.
 - Recommend Sales/Leads follow-up context.
@@ -325,8 +343,8 @@ Email templates:
 - Add preview/sample-variable support so admins can see the rendered HTML before use.
 - Add a seeded default marketing campaign template with subject, branded HTML, plaintext fallback,
   required unsubscribe footer variables, and tracking-ready link placeholders.
-- Keep Marketing campaign emails referencing Email templates rather than copying full template
-  records into Marketing.
+- Marketing campaign emails should keep the source Email template reference for traceability, but
+  send from the campaign email snapshot so later template edits do not change active campaigns.
 
 WordPress:
 
@@ -384,6 +402,8 @@ Rollback:
 - Let campaigns select a sender Email account, falling back to the default `marketing` account.
 - Render campaign previews through the Email template renderer.
 - Add preview/test-send using Email SMTP account.
+- Show existing campaign emails as collapsed cards and place new-email creation behind a button.
+- Add an AI draft form-assist button when an active Integration AI agent is available.
 
 ### Slice 6: Approval And Automated Sending
 

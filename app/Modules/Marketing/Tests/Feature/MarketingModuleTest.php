@@ -10,6 +10,8 @@ use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\Integration\Models\AiAgent;
+use App\Modules\Integration\Models\AiProvider;
 use App\Modules\Marketing\Controllers\Tech\MarketingController;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
@@ -24,6 +26,7 @@ use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
@@ -519,6 +522,7 @@ class MarketingModuleTest extends TestCase
             'marketing_list_id' => $list->id,
             'email_account_id' => $account->id,
             'email_template_id' => $template->id,
+            'email_subject' => 'Hello {{ contact_name }}',
             'starts_at' => now()->subMinute()->format('Y-m-d H:i:s'),
             'batch_size' => 10,
             'send_interval_minutes' => 15,
@@ -528,6 +532,13 @@ class MarketingModuleTest extends TestCase
 
         $campaign = MarketingCampaign::query()->firstOrFail();
         $response->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+        $this->assertSame('<p>Hello {{ contact_name }}</p><p><a href="{{ primary_cta_url }}">Read more</a></p>', $campaign->emails()->firstOrFail()->body_html_snapshot);
+
+        $template->forceFill([
+            'subject' => 'Changed live template subject',
+            'body_html' => '<p>Changed live template body</p>',
+            'body_text' => 'Changed live template text',
+        ])->save();
 
         $this->actingAs($user)
             ->post(route('tech.marketing.campaigns.approve', $campaign))
@@ -545,6 +556,8 @@ class MarketingModuleTest extends TestCase
                     $this->assertSame('campaign@example.test', $toEmail);
                     $this->assertSame('Campaign Contact', $toName);
                     $this->assertSame('Hello Campaign Contact', $subject);
+                    $this->assertStringContainsString('Hello Campaign Contact', $html);
+                    $this->assertStringNotContainsString('Changed live template body', $html);
                     $this->assertStringContainsString('/marketing/o/', $html);
                     $this->assertStringContainsString('/marketing/c/', $html);
                     $this->assertStringContainsString('/marketing/unsubscribe/', $text);
@@ -643,6 +656,7 @@ class MarketingModuleTest extends TestCase
             'name' => 'Sequence campaign',
             'marketing_list_id' => $list->id,
             'email_template_id' => $templateOne->id,
+            'email_subject' => 'First touch',
             'starts_at' => $start->format('Y-m-d H:i:s'),
             'batch_size' => 10,
             'send_interval_minutes' => 15,
@@ -656,18 +670,32 @@ class MarketingModuleTest extends TestCase
             ->get(route('tech.marketing.campaigns.show', $campaign))
             ->assertOk()
             ->assertSee('Campaign Emails')
-            ->assertSee('Sequence one');
+            ->assertSee('Sequence one')
+            ->assertSee('New Email')
+            ->assertSee('data-template-select', false)
+            ->assertSee('campaignEmailPanel-', false)
+            ->assertSee('Preview')
+            ->assertSee('Send Test')
+            ->assertDontSee('name="scheduled_at"', false);
 
         $this->actingAs($user)
             ->post(route('tech.marketing.campaigns.emails.store', $campaign), [
                 'email_template_id' => $templateTwo->id,
+                'email_name' => 'Second sequence email',
+                'email_subject' => 'Second touch',
                 'sequence_order' => 2,
                 'delay_minutes' => 60,
-                'subject_override' => 'Second touch',
             ])
             ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
 
         $this->assertSame(2, $campaign->fresh()->emails()->count());
+        $this->assertDatabaseHas('marketing_campaign_emails', [
+            'marketing_campaign_id' => $campaign->id,
+            'sequence_order' => 2,
+            'name' => 'Second sequence email',
+            'subject_snapshot' => 'Second touch',
+            'template_snapshot_name' => 'Sequence two',
+        ]);
 
         $this->actingAs($user)
             ->post(route('tech.marketing.campaigns.approve', $campaign))
@@ -683,13 +711,22 @@ class MarketingModuleTest extends TestCase
 
         $this->actingAs($user)
             ->put(route('tech.marketing.campaigns.emails.update', [$campaign, $secondEmail]), [
+                'email_name' => 'Second sequence email updated',
+                'email_subject' => 'Second touch updated',
+                'body_html' => '<p>Second body</p>',
+                'body_text' => 'Second body',
                 'sequence_order' => 2,
                 'delay_minutes' => 120,
-                'scheduled_at' => null,
-                'subject_override' => 'Second touch updated',
                 'status' => 'active',
             ])
             ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->assertDatabaseHas('marketing_campaign_emails', [
+            'id' => $secondEmail->id,
+            'name' => 'Second sequence email updated',
+            'subject_snapshot' => 'Second touch updated',
+            'body_html_snapshot' => '<p>Second body</p>',
+        ]);
 
         $this->assertSame(
             $start->copy()->addMinutes(120)->format('Y-m-d H:i'),
@@ -699,9 +736,9 @@ class MarketingModuleTest extends TestCase
         $this->actingAs($user)
             ->post(route('tech.marketing.campaigns.emails.store', $campaign->fresh()), [
                 'email_template_id' => $templateThree->id,
+                'email_subject' => 'Third touch',
                 'sequence_order' => 3,
                 'delay_minutes' => 180,
-                'subject_override' => 'Third touch',
             ])
             ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
 
@@ -715,6 +752,187 @@ class MarketingModuleTest extends TestCase
 
         $this->assertDatabaseMissing('marketing_campaign_emails', ['id' => $thirdEmail->id]);
         $this->assertSame(2, MarketingCampaignRecipient::query()->count());
+    }
+
+    #[Test]
+    public function campaign_email_test_send_uses_current_editor_content(): void
+    {
+        foreach (['marketing.view', 'marketing.campaign.edit'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create([
+            'status' => User::STATUS_ACTIVE,
+            'name' => 'Marketing Tech',
+            'email' => 'tech@example.test',
+        ]);
+        $user->givePermissionTo(['marketing.view', 'marketing.campaign.edit']);
+
+        $account = $this->marketingAccount();
+        $list = MarketingList::query()->create([
+            'name' => 'Test send list',
+            'status' => 'active',
+            'audience_type' => 'all_business_contacts',
+        ]);
+        $template = $this->marketingTemplate('test_send_template', 'Test Send Template');
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'email_account_id' => $account->id,
+            'name' => 'Test send campaign',
+            'status' => 'draft',
+        ]);
+        $email = $campaign->emails()->create([
+            'email_template_id' => $template->id,
+            'name' => 'Saved email',
+            'template_snapshot_name' => $template->name,
+            'subject_snapshot' => 'Saved subject',
+            'body_html_snapshot' => '<p>Saved body</p>',
+            'body_text_snapshot' => 'Saved body',
+            'variables_snapshot' => ['contact_name'],
+            'sequence_order' => 1,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock): void {
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(function (EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text): bool {
+                    $this->assertSame('marketing@example.test', $account->address);
+                    $this->assertSame('colleague@example.test', $toEmail);
+                    $this->assertSame('Colleague', $toName);
+                    $this->assertSame('[Test] Unsaved subject', $subject);
+                    $this->assertStringContainsString('Unsaved body for there', $html);
+                    $this->assertStringContainsString('Unsaved body for there', $text);
+
+                    return true;
+                })
+                ->andReturn('<marketing-test@example.test>');
+        });
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.emails.test-send', [$campaign, $email]), [
+                'test_to_email' => 'colleague@example.test',
+                'test_to_name' => 'Colleague',
+                'email_name' => 'Unsaved email',
+                'email_subject' => 'Unsaved subject',
+                'body_html' => '<p>Unsaved body for {{ contact_name }}</p>',
+                'body_text' => 'Unsaved body for {{ contact_name }}',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Test email sent to colleague@example.test.');
+
+        $this->assertDatabaseHas('email_logs', [
+            'scope' => 'marketing',
+            'code' => 'MARKETING_EMAIL_TEST_SENT',
+            'rfc_message_id' => '<marketing-test@example.test>',
+        ]);
+    }
+
+    #[Test]
+    public function campaign_email_ai_draft_returns_editable_content_with_campaign_and_list_context(): void
+    {
+        foreach (['marketing.view', 'marketing.campaign.edit'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.campaign.edit']);
+        $provider = AiProvider::query()->create([
+            'name' => 'OpenAI test',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-test',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        AiAgent::query()->create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Marketing Assistant',
+            'slug' => 'marketing-assistant',
+            'instructions' => 'Draft marketing email content.',
+            'default_domains' => ['marketing'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://api.openai.test/*' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'email_name' => 'AI launch email',
+                            'email_subject' => 'AI subject',
+                            'body_html' => '<p>AI body for launch</p>',
+                            'body_text' => 'AI body for launch',
+                        ]),
+                    ],
+                ]],
+            ]),
+        ]);
+
+        $client = Client::factory()->create(['name' => 'AI Client AS']);
+        $list = MarketingList::query()->create([
+            'name' => 'AI list',
+            'description' => 'Contacts interested in managed services',
+            'status' => 'active',
+            'audience_type' => 'all_business_contacts',
+        ]);
+        $list->members()->create([
+            'source_type' => 'manual',
+            'source_id' => 1,
+            'client_id' => $client->id,
+            'email' => 'ai-contact@example.test',
+            'name' => 'AI Contact',
+            'status' => 'eligible',
+        ]);
+        $template = $this->marketingTemplate('ai_draft_template', 'AI Draft Template');
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'name' => 'AI campaign',
+            'description' => 'Launch managed services',
+            'status' => 'draft',
+        ]);
+        $email = $campaign->emails()->create([
+            'email_template_id' => $template->id,
+            'name' => 'Existing email',
+            'template_snapshot_name' => $template->name,
+            'subject_snapshot' => 'Existing subject',
+            'body_html_snapshot' => '<p>Existing body</p>',
+            'body_text_snapshot' => 'Existing body',
+            'variables_snapshot' => ['contact_name'],
+            'sequence_order' => 1,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('tech.marketing.campaigns.emails.ai-draft', $campaign), [
+                'campaign_email_id' => $email->id,
+                'prompt' => 'Rewrite this for Norwegian business customers.',
+                'email_name' => 'Existing email',
+                'email_subject' => 'Existing subject',
+                'body_html' => '<p>Existing body</p>',
+                'body_text' => 'Existing body',
+            ])
+            ->assertOk()
+            ->assertJsonPath('email_name', 'AI launch email')
+            ->assertJsonPath('email_subject', 'AI subject')
+            ->assertJsonPath('body_html', '<p>AI body for launch</p>')
+            ->assertJsonPath('body_text', 'AI body for launch');
+
+        Http::assertSent(function ($request): bool {
+            $content = collect($request['messages'])->pluck('content')->implode("\n");
+
+            return str_contains($content, 'AI campaign')
+                && str_contains($content, 'AI list')
+                && str_contains($content, 'Existing body')
+                && str_contains($content, 'Do not invent WordPress post data');
+        });
+        $this->assertDatabaseHas('ai_chats', [
+            'status' => 'closed',
+        ]);
     }
 
     #[Test]

@@ -39,8 +39,12 @@ Route::get('/marketing/campaigns/{campaign}', [MarketingCampaignController::clas
     ->name('marketing.campaigns.show');
 Route::post('/marketing/campaigns/{campaign}/emails', [MarketingCampaignController::class, 'storeEmail'])
     ->name('marketing.campaigns.emails.store');
+Route::post('/marketing/campaigns/{campaign}/emails/ai-draft', [MarketingCampaignController::class, 'draftEmailWithAi'])
+    ->name('marketing.campaigns.emails.ai-draft');
 Route::put('/marketing/campaigns/{campaign}/emails/{email}', [MarketingCampaignController::class, 'updateEmail'])
     ->name('marketing.campaigns.emails.update');
+Route::post('/marketing/campaigns/{campaign}/emails/{email}/test-send', [MarketingCampaignController::class, 'testSendEmail'])
+    ->name('marketing.campaigns.emails.test-send');
 Route::delete('/marketing/campaigns/{campaign}/emails/{email}', [MarketingCampaignController::class, 'destroyEmail'])
     ->name('marketing.campaigns.emails.destroy');
 Route::post('/marketing/campaigns/{campaign}/approve', [MarketingCampaignController::class, 'approve'])
