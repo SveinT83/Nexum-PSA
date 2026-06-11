@@ -46,6 +46,11 @@ class CompanyProfileAdminTest extends TestCase
             CompanyProfileController::class . '@resetBranding',
             Route::getRoutes()->getByName('tech.admin.system.branding.reset')->getActionName()
         );
+
+        $this->assertSame(
+            CompanyProfileController::class . '@applyThemePreset',
+            Route::getRoutes()->getByName('tech.admin.system.branding.preset')->getActionName()
+        );
     }
 
     #[Test]
@@ -341,5 +346,49 @@ class CompanyProfileAdminTest extends TestCase
             'dark_secondary_button_background' => '#fc7730',
             'dark_secondary_button_color' => '#ffffff',
         ], $overrides);
+    }
+
+    #[Test]
+    public function admin_can_apply_theme_preset(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.branding.preset'), ['preset' => 'tronder-data'])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Theme preset was applied.');
+
+        $setting = CommonSetting::query()
+            ->where('type', 'company_profile')
+            ->where('name', 'branding')
+            ->firstOrFail();
+
+        $payload = json_decode($setting->json, true);
+
+        // Trønder Data preset values
+        $this->assertSame('#99B885', $payload['primary_color']);
+        $this->assertSame('#D7DE8C', $payload['secondary_color']);
+        $this->assertSame('#0D3D35', $payload['light_header_background']);
+        $this->assertSame('#0D3D35', $payload['dark_main_background']);
+
+        // Company info is preserved (not touched by preset)
+        $this->assertSame('Nexum PSA', $payload['company_name']);
+    }
+
+    #[Test]
+    public function admin_cannot_apply_invalid_theme_preset(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.branding.preset'), ['preset' => 'nonexistent'])
+            ->assertSessionHasErrors('preset');
+    }
+
+    #[Test]
+    public function branding_page_shows_theme_preset_selector(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.branding.edit'))
+            ->assertOk()
+            ->assertSee('Theme Preset')
+            ->assertSee('Nexum (default)')
+            ->assertSee('Trønder Data');
     }
 }

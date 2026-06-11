@@ -11,11 +11,57 @@
     --bs-border-color: var(--nexum-brand-border-soft) !important;
 }
 
+/*
+ * Bootstrap 5.3 CSS variable bridge for dark mode.
+ * Bootstrap components (cards, modals, form controls, tables) read from
+ * --bs-body-bg, --bs-body-color, etc.  The Nexum shell sets these via
+ * data-bs-theme="dark" but custom-color.css only overrides the shell
+ * surface variables (--nexum-*).  Without this bridge, cards and modals
+ * fall back to Bootstrap's default dark slate instead of the configured
+ * theme, causing white/light patches on a dark surface.
+ */
+[data-bs-theme="dark"] {
+    --bs-body-bg: var(--nexum-main-bg);
+    --bs-body-color: var(--nexum-left-sidebar-color);
+    --bs-tertiary-bg: var(--nexum-content-bg);
+    --bs-emphasis-color: var(--nexum-header-color);
+    --bs-border-color: var(--nexum-brand-border-soft);
+    --bs-card-bg: var(--nexum-content-bg);
+    --bs-card-cap-bg: var(--nexum-card-header-bg);
+    --bs-card-cap-color: var(--nexum-card-header-color);
+    --bs-modal-bg: var(--nexum-content-bg);
+    --bs-table-bg: var(--nexum-content-bg);
+    --bs-table-striped-bg: var(--nexum-main-bg);
+    --bs-input-bg: var(--nexum-content-bg);
+    --bs-input-color: var(--nexum-left-sidebar-color);
+    --bs-dropdown-bg: var(--nexum-content-bg);
+    --bs-dropdown-color: var(--nexum-left-sidebar-color);
+    --bs-list-group-bg: var(--nexum-content-bg);
+    --bs-list-group-color: var(--nexum-left-sidebar-color);
+    --bs-pagination-bg: var(--nexum-main-bg);
+    --bs-pagination-color: var(--nexum-left-sidebar-color);
+}
+
 /* ------------------------------------------- */
 /* -------------- Main Elements -------------- */
 /* ------------------------------------------- */
+
+/*
+ * Trønder Data brand fonts: TEKO for headings, PT Sans for body text.
+ * These are loaded via Google Fonts in the layout. When the Trønder Data
+ * preset is active, headings use TEKO and all other text uses PT Sans.
+ * Other presets fall back to the Bootstrap default stack.
+ */
 body {
     background-color: var(--nexum-main-bg) !important;
+    font-family: 'PT Sans', system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6,
+.page-header h1, .page-header h2, .page-header h3,
+.card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5 {
+    font-family: 'Teko', system-ui, -apple-system, sans-serif;
+    letter-spacing: 0.02em;
 }
 
 header {

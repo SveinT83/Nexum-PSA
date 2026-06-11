@@ -80,17 +80,20 @@ class TalkWebhookController extends Controller
         $secret = $connection->getTalkBotSecret();
 
         if (! $talkClient->verifyIncomingSignature($secret, $random, $signature, $body)) {
-            $expectedSignature = hash_hmac('sha256', $random.$body, $secret);
+            // Production-safe diagnostics: log enough to identify the mismatch
+            // without leaking full secrets, signatures, or request bodies.
+            $expected = hash_hmac('sha256', $random.$body, $secret);
             Log::warning('Nextcloud Talk webhook: signature verification failed.', [
                 'connection_id' => $connection->id,
                 'conversationToken' => $payload['target']['id'] ?? 'unknown',
-                'random_length' => strlen($random),
-                'body_length' => strlen($body),
-                'signature_received' => substr($signature, 0, 16).'...',
-                'signature_expected' => substr($expectedSignature, 0, 16).'...',
-                'secret_length' => strlen($secret),
-                'secret_prefix' => substr($secret, 0, 4).'...',
-                'body_preview' => substr($body, 0, 200),
+                'random_len' => strlen($random),
+                'body_len' => strlen($body),
+                'sig_match' => hash_equals($expected, $signature) ? 'yes' : 'no',
+                'sig_prefix_recv' => substr($signature, 0, 8).'...',
+                'sig_prefix_expect' => substr($expected, 0, 8).'...',
+                'secret_len' => strlen($secret),
+                'body_first_byte' => ord($body[0] ?? "\0"),
+                'body_last_byte' => ord($body[-1] ?? "\0"),
             ]);
 
             return response()->json(['error' => 'Invalid signature'], 403);
@@ -223,7 +226,7 @@ class TalkWebhookController extends Controller
         $responseText = match ($command) {
             'help' => $this->formatHelpText(),
             'status' => $this->handleStatusCommand($connection, $arg1),
-            'ping' => '🏓 Pong! Nexum PSA v'.config('app.version', '0.1.0').' is online.',
+            'ping' => '🏓 Pong! Nexum PSA v'.config('app.version', '0.2.1').' is online.',
             default => "Unknown command: `!{$command}`. Type `!help` for available commands.",
         };
 
@@ -250,15 +253,18 @@ class TalkWebhookController extends Controller
     private function handleStatusCommand(NextcloudConnection $connection, ?string $ticketNumber): string
     {
         if (empty($ticketNumber)) {
-            return "Usage: `!status TICKET-NUMBER`\nExample: `!status TK-42`";
+            return "Usage: `!status TD-YYYY-NNNNNN`\nExample: `!status TD-2026-000017`";
         }
 
-        // Normalize: accept TK-42, tk-42, TK42, tk42.
+        // Normalize: accept TD-2026-000017, td-2026-000017, TD2026000017, td2026000017.
         $normalized = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $ticketNumber));
 
-        if (! preg_match('/^TK\d+$/i', $normalized)) {
-            return "Invalid ticket format: `{$ticketNumber}`. Use format: `TK-42`";
+        if (! preg_match('/^TD\d{4}\d{6}$/i', $normalized)) {
+            return "Invalid ticket format: `{$ticketNumber}`. Use format: `TD-2026-000017`";
         }
+
+        // Re-format with hyphens: TD2026000017 → TD-2026-000017
+        $normalized = preg_replace('/^(TD)(\d{4})(\d{6})$/', '$1-$2-$3', $normalized);
 
         // Ticket lookup will be wired up in a follow-up once the Ticket
         // module has a query interface we can call from here.
@@ -276,14 +282,14 @@ class TalkWebhookController extends Controller
      */
     private function formatHelpText(): string
     {
-        $version = config('app.version', '0.1.0');
+        $version = config('app.version', '0.2.2');
 
         return <<<MARKDOWN
 **Nexum PSA Bot Commands** (v{$version})
 
 `!help` — Show this help message
 `!ping` — Check if the bot is online
-`!status TK-##` — Look up a ticket status
+`!status TD-YYYY-NNNNNN` — Look up a ticket status
 
 _More commands coming soon._
 MARKDOWN;
