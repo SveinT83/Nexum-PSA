@@ -108,6 +108,30 @@
 
         <div class="card mt-3">
             <div class="card-header">
+                <h2 class="h5 mb-0">Theme Preset</h2>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    Apply a preset to quickly set all brand and surface colors. This overwrites all color fields but preserves logos and company information.
+                </p>
+                <form method="POST" action="{{ route('tech.admin.system.branding.preset') }}" class="d-flex align-items-center gap-3">
+                    @csrf
+                    <select id="theme_preset" name="preset" class="form-select w-auto">
+                        @foreach(\App\Modules\System\Support\CompanyProfileSettings::getPresets() as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary"
+                            onclick="return confirm('Apply this theme preset? All color fields will be overwritten.');">
+                        <i class="bi bi-palette me-1" aria-hidden="true"></i>
+                        Apply preset
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
                 <h2 class="h5 mb-0">Brand Colors</h2>
             </div>
             <div class="card-body">

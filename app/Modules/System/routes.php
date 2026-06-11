@@ -33,6 +33,9 @@ Route::middleware('admin')->group(function () {
     Route::put('/admin/system/branding/reset', [CompanyProfileController::class, 'resetBranding'])
         ->name('admin.system.branding.reset');
 
+    Route::post('/admin/system/branding/preset', [CompanyProfileController::class, 'applyThemePreset'])
+        ->name('admin.system.branding.preset');
+
     // -------------------------------------------------
     // Queue and worker operations
     // -------------------------------------------------
