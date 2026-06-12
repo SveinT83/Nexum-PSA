@@ -102,7 +102,8 @@ Unsubscribe links mark linked Contacts as `do_not_email` and clear marketing con
 
 Marketing settings live under `/tech/admin/settings/marketing`. Quiet hours pause due sending
 without failing recipients. Active-contract eligibility is applied during list refresh, and
-unsubscribe footer text is appended to campaign email HTML and plaintext.
+unsubscribe footer text is appended to campaign email HTML and plaintext when the email content does
+not already include `unsubscribe_url`.
 
 Campaigns can contain multiple ordered emails. Technicians with `marketing.campaign.edit` can add,
 update, deactivate, or remove campaign emails from the campaign detail page. Existing emails are
@@ -116,9 +117,15 @@ for the existing list members.
 Campaign email preview is rendered in the browser from the editable HTML body. Test-send uses the
 current editor fields and sends through the campaign sender account or the default `marketing`
 account. The test recipient defaults to the current technician email address and can be overwritten.
-The AI draft button is shown only when an active AI agent is available for the technician. AI uses
-campaign context, list context, and current email content, then returns editable fields; it does not
-send, approve, or save the campaign by itself.
+AI is exposed as a compact icon on the campaign and email editor surfaces; the prompt opens only
+when the technician expands that assist control. A seeded Marketing Campaign Agent is used when it
+can be attached to an active Integration AI provider. Without an active provider/agent, the assist
+controls stay visible but disabled inside the opened panel. AI uses campaign context, list context,
+and current email content, then returns editable fields; it does not send, approve, or save the
+campaign by itself. AI-generated marketing emails are expected to include `unsubscribe_url` in the
+editable body so operators can see the unsubscribe footer in preview. External website fetching is
+not implemented yet. URLs in prompts are treated as destination links or brand hints only until a
+future content-source integration fetches and stores that content.
 
 ## Approved RFC
 

@@ -109,11 +109,18 @@ rendered with real campaign/list context when available, then clear sample value
 placeholders stay visible in preview so operators can see that the system does not know what data
 should replace them. Test-send uses the current editor fields and sends through the campaign sender
 account or the default `marketing` account. The test recipient defaults to the current technician
-email address and can be overwritten for a colleague. AI planning and drafting are available only
-when the technician has access to an active Integration AI agent. Campaign-level AI returns a draft
-campaign plan and proposed email sequence; email-level AI returns editable form fields for the
-current email draft. AI actions are audited as AI chats, and the technician still decides whether to
-save the result.
+email address and can be overwritten for a colleague. AI planning and drafting open from compact
+icon controls on the campaign and email editor surfaces, so the prompt is hidden until a technician
+asks for AI help. Marketing seeds a Marketing Campaign Agent and attaches it to the first active
+Integration AI provider when one exists. Without an active provider/agent, the assist controls stay
+visible but their prompt actions are disabled. Campaign-level AI returns a draft campaign plan and
+proposed email sequence; email-level AI returns editable form fields for the current email draft. AI
+actions are audited as AI chats, and the technician still decides whether to save the result.
+AI-generated marketing emails are expected to include `unsubscribe_url` in HTML and plaintext so
+operators can see the unsubscribe footer in preview. The send job appends a fallback unsubscribe
+footer only when the rendered email does not already contain the recipient unsubscribe URL.
+External website fetching is not implemented yet. URLs in prompts are treated as destination links
+or brand hints only until a future content-source integration fetches and stores that content.
 
 The scheduled Marketing job runs every minute and sends due recipients in batches. The manual command
 is:

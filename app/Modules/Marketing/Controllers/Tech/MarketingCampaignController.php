@@ -173,10 +173,13 @@ class MarketingCampaignController extends Controller
         Request $request,
         MarketingCampaign $campaign,
         MarketingSettings $settings,
+        EnsureMarketingDefaults $marketingDefaults,
         AiAgentResolver $aiAgentResolver,
         EmailTemplateRenderer $templateRenderer,
     ): View
     {
+        $marketingDefaults->handle();
+
         $interestKeyCounts = $campaign->events()
             ->get(['metadata'])
             ->flatMap(fn ($event) => $event->metadata['interest_tag_keys'] ?? [])

@@ -80,10 +80,13 @@ class DraftMarketingCampaignEmailWithAi
             'Return ONLY compact JSON. No Markdown, no explanation.',
             'Allowed JSON keys: email_name, email_subject, body_html, body_text.',
             'Use the user prompt, campaign context, mailing list context, and current email draft.',
+            'Known placeholders you may use: {{ contact_name }}, {{ client_name }}, {{ company_name }}, {{ unsubscribe_url }}.',
             'If HTML already exists, preserve useful layout, links, inline styles, and variables while improving copy.',
             'Make body_text match body_html content in plain text.',
-            'Do not include unsubscribe or tracking pixels. Nexum PSA adds those later.',
+            'Every marketing email must include an unsubscribe link using {{ unsubscribe_url }} in body_html and an Unsubscribe: {{ unsubscribe_url }} line in body_text.',
+            'Do not include tracking pixels. Nexum PSA adds those later.',
             'Use the same language as the prompt or current campaign when obvious.',
+            'External website fetching is not available in this slice. If the prompt includes URLs, treat them only as user-provided destination links or brand hints; do not claim that you visited or read them.',
             'Do not claim that WordPress content was pulled unless WordPress content is provided in the context.',
         ]);
     }
@@ -129,6 +132,7 @@ class DraftMarketingCampaignEmailWithAi
                 'body_text' => Str::limit((string) ($input['body_text'] ?? $email?->effectiveBodyText()), 8000),
             ],
             'future_content_sources' => [
+                'external_websites' => 'Not available in this slice. URLs in the prompt are destination links or brand hints only; do not claim that external website content was read.',
                 'wordpress' => 'Not available in this slice. Do not invent WordPress post data.',
             ],
         ];
@@ -165,8 +169,32 @@ class DraftMarketingCampaignEmailWithAi
         return [
             'email_name' => Str::limit(trim((string) ($payload['email_name'] ?? $input['email_name'] ?? '')), 255, ''),
             'email_subject' => Str::limit(trim((string) ($payload['email_subject'] ?? $input['email_subject'] ?? '')), 255, ''),
-            'body_html' => $html,
-            'body_text' => $text,
+            'body_html' => $this->ensureUnsubscribeHtml($html),
+            'body_text' => $this->ensureUnsubscribeText($text),
         ];
+    }
+
+    private function ensureUnsubscribeHtml(string $html): string
+    {
+        if ($this->containsUnsubscribePlaceholder($html)) {
+            return $html;
+        }
+
+        return rtrim($html).'<p style="margin-top:24px;color:#6c757d;font-size:12px;">'
+            .'You can unsubscribe at any time: <a href="{{ unsubscribe_url }}">Unsubscribe</a></p>';
+    }
+
+    private function ensureUnsubscribeText(string $text): string
+    {
+        if ($this->containsUnsubscribePlaceholder($text)) {
+            return $text;
+        }
+
+        return rtrim($text)."\n\nUnsubscribe: {{ unsubscribe_url }}";
+    }
+
+    private function containsUnsubscribePlaceholder(string $content): bool
+    {
+        return str_contains($content, '{{ unsubscribe_url }}') || str_contains($content, '{{unsubscribe_url}}');
     }
 }

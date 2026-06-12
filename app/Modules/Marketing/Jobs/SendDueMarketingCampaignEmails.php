@@ -168,6 +168,10 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         }
 
         return preg_replace_callback('/href=(["\'])(https?:\/\/[^"\']+)\1/i', function (array $matches) use ($recipient): string {
+            if ($this->isUnsubscribeUrl($matches[2], $recipient)) {
+                return $matches[0];
+            }
+
             return 'href='.$matches[1].e($this->clickUrl($recipient, $matches[2])).$matches[1];
         }, $html) ?: $html;
     }
@@ -182,6 +186,10 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
 
     private function appendUnsubscribeHtml(string $html, MarketingCampaignRecipient $recipient, array $settings): string
     {
+        if ($this->containsRenderedUnsubscribeUrl($html, $recipient)) {
+            return rtrim($html);
+        }
+
         $footer = trim((string) ($settings['unsubscribe_footer'] ?? ''));
 
         if ($footer === '') {
@@ -195,9 +203,25 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
 
     private function appendUnsubscribeText(string $text, MarketingCampaignRecipient $recipient, array $settings): string
     {
+        if ($this->containsRenderedUnsubscribeUrl($text, $recipient)) {
+            return rtrim($text);
+        }
+
         $footer = trim((string) ($settings['unsubscribe_footer'] ?? ''));
 
         return rtrim($text)."\n\n".($footer !== '' ? $footer."\n" : '').'Unsubscribe: '.route('marketing.unsubscribe', $recipient->tracking_token);
+    }
+
+    private function containsRenderedUnsubscribeUrl(string $content, MarketingCampaignRecipient $recipient): bool
+    {
+        return str_contains($content, route('marketing.unsubscribe', $recipient->tracking_token))
+            || str_contains($content, '/marketing/unsubscribe/'.$recipient->tracking_token);
+    }
+
+    private function isUnsubscribeUrl(string $url, MarketingCampaignRecipient $recipient): bool
+    {
+        return $url === route('marketing.unsubscribe', $recipient->tracking_token)
+            || str_contains($url, '/marketing/unsubscribe/'.$recipient->tracking_token);
     }
 
     private function isInsideQuietHours(array $settings): bool

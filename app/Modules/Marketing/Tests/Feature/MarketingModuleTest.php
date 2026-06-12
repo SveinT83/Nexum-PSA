@@ -69,6 +69,38 @@ class MarketingModuleTest extends TestCase
     }
 
     #[Test]
+    public function marketing_defaults_seed_default_ai_agent_for_active_provider(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo('marketing.view');
+        $provider = AiProvider::query()->create([
+            'name' => 'OpenAI marketing',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-marketing',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.index'))
+            ->assertOk();
+
+        $agent = AiAgent::query()->where('slug', 'marketing-campaign-agent')->firstOrFail();
+
+        $this->assertSame($provider->id, $agent->ai_provider_id);
+        $this->assertSame('Marketing Campaign Agent', $agent->name);
+        $this->assertSame('gpt-marketing', $agent->model);
+        $this->assertSame(['marketing'], $agent->default_domains);
+        $this->assertSame(['knowledge'], $agent->data_sources);
+        $this->assertSame(['knowledge.search'], $agent->allowed_tools);
+        $this->assertFalse($agent->can_execute_actions);
+        $this->assertFalse($agent->is_default);
+        $this->assertTrue($agent->is_active);
+    }
+
+    #[Test]
     public function marketing_dashboard_shows_campaign_queue_and_tracking_data(): void
     {
         Permission::findOrCreate('marketing.view', 'web');
@@ -501,8 +533,8 @@ class MarketingModuleTest extends TestCase
             'key' => 'campaign_test',
             'name' => 'Campaign test',
             'subject' => 'Hello {{ contact_name }}',
-            'body_html' => '<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p>',
-            'body_text' => "Hello {{ contact_name }}\nhttps://example.test/cybersecurity",
+            'body_html' => '<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p><p><a href="{{ unsubscribe_url }}">Unsubscribe</a></p>',
+            'body_text' => "Hello {{ contact_name }}\nhttps://example.test/cybersecurity\nUnsubscribe: {{ unsubscribe_url }}",
             'variables' => ['contact_name', 'unsubscribe_url'],
             'is_default' => false,
             'is_active' => true,
@@ -532,7 +564,7 @@ class MarketingModuleTest extends TestCase
 
         $campaign = MarketingCampaign::query()->firstOrFail();
         $response->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
-        $this->assertSame('<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p>', $campaign->emails()->firstOrFail()->body_html_snapshot);
+        $this->assertSame('<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p><p><a href="{{ unsubscribe_url }}">Unsubscribe</a></p>', $campaign->emails()->firstOrFail()->body_html_snapshot);
 
         $template->forceFill([
             'subject' => 'Changed live template subject',
@@ -560,7 +592,10 @@ class MarketingModuleTest extends TestCase
                     $this->assertStringNotContainsString('Changed live template body', $html);
                     $this->assertStringContainsString('/marketing/o/', $html);
                     $this->assertStringContainsString('/marketing/c/', $html);
+                    $this->assertStringContainsString('/marketing/unsubscribe/', $html);
+                    $this->assertSame(1, substr_count($html, '/marketing/unsubscribe/'));
                     $this->assertStringContainsString('/marketing/unsubscribe/', $text);
+                    $this->assertSame(1, substr_count($text, '/marketing/unsubscribe/'));
 
                     return true;
                 })
@@ -678,6 +713,11 @@ class MarketingModuleTest extends TestCase
             ->assertSee('sample_variables', false)
             ->assertSee('Sequence Contact', false)
             ->assertSee('Known data placeholders')
+            ->assertSee('data-campaign-ai-toggle', false)
+            ->assertSee('campaignAiPlannerPanel', false)
+            ->assertSee('data-email-ai-toggle', false)
+            ->assertSee('emailAiPromptNew', false)
+            ->assertSee('No active AI agent is configured for Marketing.')
             ->assertDontSee('campaign_heading', false)
             ->assertDontSee('primary_cta_url', false)
             ->assertSee('Preview')
@@ -928,8 +968,8 @@ class MarketingModuleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('email_name', 'AI launch email')
             ->assertJsonPath('email_subject', 'AI subject')
-            ->assertJsonPath('body_html', '<p>AI body for launch</p>')
-            ->assertJsonPath('body_text', 'AI body for launch');
+            ->assertJsonPath('body_html', '<p>AI body for launch</p><p style="margin-top:24px;color:#6c757d;font-size:12px;">You can unsubscribe at any time: <a href="{{ unsubscribe_url }}">Unsubscribe</a></p>')
+            ->assertJsonPath('body_text', "AI body for launch\n\nUnsubscribe: {{ unsubscribe_url }}");
 
         Http::assertSent(function ($request): bool {
             $content = collect($request['messages'])->pluck('content')->implode("\n");
@@ -937,6 +977,9 @@ class MarketingModuleTest extends TestCase
             return str_contains($content, 'AI campaign')
                 && str_contains($content, 'AI list')
                 && str_contains($content, 'Existing body')
+                && str_contains($content, '{{ unsubscribe_url }}')
+                && str_contains($content, 'Every marketing email must include an unsubscribe link')
+                && str_contains($content, 'External website fetching is not available')
                 && str_contains($content, 'Do not invent WordPress post data');
         });
         $this->assertDatabaseHas('ai_chats', [
@@ -1040,7 +1083,8 @@ class MarketingModuleTest extends TestCase
         $this->actingAs($user)
             ->get(route('tech.marketing.campaigns.show', $campaign))
             ->assertOk()
-            ->assertSee('AI Campaign Planner');
+            ->assertSee('data-campaign-ai-toggle', false)
+            ->assertSee('campaignAiPlannerPanel', false);
 
         $this->actingAs($user)
             ->postJson(route('tech.marketing.campaigns.ai-plan', $campaign), [
@@ -1051,7 +1095,8 @@ class MarketingModuleTest extends TestCase
             ->assertJsonPath('emails.0.email_name', 'Security intro')
             ->assertJsonPath('emails.0.delay_minutes', 0)
             ->assertJsonPath('emails.1.delay_minutes', 1440)
-            ->assertJsonPath('emails.0.body_html', '<p>Read our guide: <a href="https://example.test/security">Security guide</a></p>');
+            ->assertJsonPath('emails.0.body_html', '<p>Read our guide: <a href="https://example.test/security">Security guide</a></p><p style="margin-top:24px;color:#6c757d;font-size:12px;">You can unsubscribe at any time: <a href="{{ unsubscribe_url }}">Unsubscribe</a></p>')
+            ->assertJsonPath('emails.0.body_text', "Read our guide: https://example.test/security\n\nUnsubscribe: {{ unsubscribe_url }}");
 
         Http::assertSent(function ($request): bool {
             $content = collect($request['messages'])->pluck('content')->implode("\n");
@@ -1060,6 +1105,9 @@ class MarketingModuleTest extends TestCase
                 && str_contains($content, 'Planner list')
                 && str_contains($content, 'Existing sequence body')
                 && str_contains($content, 'AI Plan Template')
+                && str_contains($content, '{{ unsubscribe_url }}')
+                && str_contains($content, 'Every marketing email must include an unsubscribe link')
+                && str_contains($content, 'External website fetching is not available')
                 && str_contains($content, 'Use normal destination URLs')
                 && str_contains($content, 'Do not invent WordPress post data');
         });

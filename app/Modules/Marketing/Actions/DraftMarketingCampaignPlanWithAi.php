@@ -77,12 +77,16 @@ class DraftMarketingCampaignPlanWithAi
             'Allowed JSON keys: campaign_name, campaign_description, emails.',
             'emails must be an array of objects with keys: email_name, email_subject, delay_minutes, body_html, body_text.',
             'Use the user prompt, campaign context, mailing list context, current sequence emails, and available Marketing templates.',
-            'Plan a coherent ordered sequence. Keep delay_minutes relative to campaign start or the previous sequence step.',
+            'Known placeholders you may use: {{ contact_name }}, {{ client_name }}, {{ company_name }}, {{ unsubscribe_url }}.',
+            'Plan a coherent ordered sequence. Never return more than 10 emails. Keep delay_minutes relative to campaign start or the previous sequence step.',
+            'Keep each email concise enough for direct editing in the current campaign email editor.',
             'Use normal http or https destination links when links are useful. Nexum PSA rewrites normal links for click tracking when tracking is enabled, so never invent tracking redirect URLs.',
-            'Do not include unsubscribe links or tracking pixels. Nexum PSA adds those later.',
+            'Every marketing email must include an unsubscribe link using {{ unsubscribe_url }} in body_html and an Unsubscribe: {{ unsubscribe_url }} line in body_text.',
+            'Do not include tracking pixels. Nexum PSA adds those later.',
             'Use clear editable HTML that can be pasted into the current campaign email editor.',
             'Make body_text match body_html content in plain text.',
             'Use the same language as the prompt or current campaign when obvious.',
+            'External website fetching is not available in this slice. If the prompt includes URLs, treat them only as user-provided destination links or brand hints; do not claim that you visited or read them.',
             'WordPress content is a future context source. Do not claim that WordPress content was pulled unless WordPress content is provided in the context.',
         ]);
     }
@@ -148,6 +152,7 @@ class DraftMarketingCampaignPlanWithAi
                 ])
                 ->all(),
             'future_content_sources' => [
+                'external_websites' => 'Not available in this slice. URLs in the prompt are destination links or brand hints only; do not claim that external website content was read.',
                 'wordpress' => 'Not available in this slice. Do not invent WordPress post data. When available later, WordPress posts, excerpts, source URLs, and links can be included here.',
             ],
             'link_tracking' => [
@@ -194,8 +199,8 @@ class DraftMarketingCampaignPlanWithAi
                     'email_name' => Str::limit(trim((string) ($email['email_name'] ?? 'Campaign email '.($index + 1))), 255, ''),
                     'email_subject' => Str::limit(trim((string) ($email['email_subject'] ?? '')), 255, ''),
                     'delay_minutes' => max(0, min(525600, (int) ($email['delay_minutes'] ?? ($index * 1440)))),
-                    'body_html' => $html,
-                    'body_text' => $text,
+                    'body_html' => $this->ensureUnsubscribeHtml($html),
+                    'body_text' => $this->ensureUnsubscribeText($text),
                 ];
             })
             ->all();
@@ -205,5 +210,29 @@ class DraftMarketingCampaignPlanWithAi
             'campaign_description' => Str::limit(trim((string) ($payload['campaign_description'] ?? $campaign->description ?? '')), 2000, ''),
             'emails' => $emails,
         ];
+    }
+
+    private function ensureUnsubscribeHtml(string $html): string
+    {
+        if ($this->containsUnsubscribePlaceholder($html)) {
+            return $html;
+        }
+
+        return rtrim($html).'<p style="margin-top:24px;color:#6c757d;font-size:12px;">'
+            .'You can unsubscribe at any time: <a href="{{ unsubscribe_url }}">Unsubscribe</a></p>';
+    }
+
+    private function ensureUnsubscribeText(string $text): string
+    {
+        if ($this->containsUnsubscribePlaceholder($text)) {
+            return $text;
+        }
+
+        return rtrim($text)."\n\nUnsubscribe: {{ unsubscribe_url }}";
+    }
+
+    private function containsUnsubscribePlaceholder(string $content): bool
+    {
+        return str_contains($content, '{{ unsubscribe_url }}') || str_contains($content, '{{unsubscribe_url}}');
     }
 }

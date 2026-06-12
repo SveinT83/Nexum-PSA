@@ -107,41 +107,14 @@
         </div>
     @endif
 
-    @can('marketing.campaign.edit')
-        @if($aiDraftAvailable)
-            <div class="card mb-3" data-campaign-ai-planner>
-                <div class="card-header d-flex align-items-center justify-content-between gap-2">
-                    <span class="fw-semibold">AI Campaign Planner</span>
-                    <i class="bi bi-stars text-primary" aria-hidden="true"></i>
-                </div>
-                <div class="card-body">
-                    <label for="campaign_ai_prompt" class="form-label">Prompt</label>
-                    <div class="input-group input-group-sm">
-                        <textarea id="campaign_ai_prompt" class="form-control" rows="2" data-campaign-ai-prompt></textarea>
-                        <button type="button" class="btn btn-outline-primary" data-campaign-ai-button data-ai-url="{{ route('tech.marketing.campaigns.ai-plan', $campaign) }}">
-                            <i class="bi bi-stars" aria-hidden="true"></i>
-                            Plan Campaign
-                        </button>
-                    </div>
-                    <div class="form-text" data-campaign-ai-status></div>
-                    <div class="d-none mt-3" data-campaign-ai-result>
-                        <div class="border rounded p-2 mb-2">
-                            <div class="small text-muted text-uppercase fw-semibold">Suggested Campaign</div>
-                            <div class="fw-semibold" data-campaign-ai-name></div>
-                            <div class="small text-muted" data-campaign-ai-description></div>
-                        </div>
-                        <div class="list-group" data-campaign-ai-emails></div>
-                    </div>
-                </div>
-            </div>
-        @endif
-    @endcan
-
     <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
         <h2 class="h5 mb-0">Campaign Emails</h2>
         <div class="d-flex align-items-center gap-2">
             <span class="badge text-bg-light border">{{ $campaign->emails_count }} total</span>
             @can('marketing.campaign.edit')
+                <button class="btn btn-sm btn-outline-secondary px-2" type="button" data-bs-toggle="collapse" data-bs-target="#campaignAiPlannerPanel" aria-expanded="false" aria-controls="campaignAiPlannerPanel" data-campaign-ai-toggle title="{{ $aiDraftAvailable ? 'AI campaign planner' : 'No active AI agent is configured for Marketing.' }}" aria-label="AI campaign planner">
+                    <i class="bi bi-stars" aria-hidden="true"></i>
+                </button>
                 <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#campaignEmailCreatePanel" aria-expanded="false" aria-controls="campaignEmailCreatePanel">
                     <i class="bi bi-plus-lg" aria-hidden="true"></i>
                     New Email
@@ -151,6 +124,40 @@
     </div>
 
     @can('marketing.campaign.edit')
+        <div data-campaign-ai-planner>
+            <div class="collapse mb-3" id="campaignAiPlannerPanel">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between gap-2 py-2">
+                        <span class="fw-semibold">AI Campaign Planner</span>
+                        <i class="bi bi-stars text-primary" aria-hidden="true"></i>
+                    </div>
+                    <div class="card-body">
+                        <label for="campaign_ai_prompt" class="form-label">Prompt</label>
+                        <div class="input-group input-group-sm">
+                            <textarea id="campaign_ai_prompt" class="form-control" rows="2" data-campaign-ai-prompt @disabled(! $aiDraftAvailable)></textarea>
+                            <button type="button" class="btn btn-outline-primary" data-campaign-ai-button data-ai-url="{{ route('tech.marketing.campaigns.ai-plan', $campaign) }}" @disabled(! $aiDraftAvailable)>
+                                <i class="bi bi-stars" aria-hidden="true"></i>
+                                Plan Campaign
+                            </button>
+                        </div>
+                        <div class="form-text" data-campaign-ai-status>
+                            @unless($aiDraftAvailable)
+                                No active AI agent is configured for Marketing.
+                            @endunless
+                        </div>
+                        <div class="d-none mt-3" data-campaign-ai-result>
+                            <div class="border rounded p-2 mb-2">
+                                <div class="small text-muted text-uppercase fw-semibold">Suggested Campaign</div>
+                                <div class="fw-semibold" data-campaign-ai-name></div>
+                                <div class="small text-muted" data-campaign-ai-description></div>
+                            </div>
+                            <div class="list-group" data-campaign-ai-emails></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="collapse mb-3" id="campaignEmailCreatePanel">
             <div class="card" data-email-workspace data-email-id="new">
                 <div class="card-header">
@@ -193,29 +200,38 @@
                                         @error('delay_minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                     <div class="col-12">
-                                        <label for="body_html" class="form-label">HTML Body</label>
+                                        <div class="d-flex align-items-center justify-content-between gap-2">
+                                            <label for="body_html" class="form-label">HTML Body</label>
+                                            <button class="btn btn-sm btn-outline-secondary px-2 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#emailAiPromptNew" aria-expanded="false" aria-controls="emailAiPromptNew" data-email-ai-toggle title="{{ $aiDraftAvailable ? 'AI email draft' : 'No active AI agent is configured for Marketing.' }}" aria-label="AI email draft">
+                                                <i class="bi bi-stars" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
                                         <textarea id="body_html" name="body_html" rows="9" class="form-control form-control-sm font-monospace @error('body_html') is-invalid @enderror" data-email-html>{{ old('body_html') }}</textarea>
                                         <div class="form-text">Known data placeholders: <code>@{{ contact_name }}</code>, <code>@{{ client_name }}</code>, <code>@{{ company_name }}</code>, <code>@{{ unsubscribe_url }}</code>. Campaign text should be written directly in this email.</div>
                                         @error('body_html')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        <div class="collapse mt-2" id="emailAiPromptNew">
+                                            <div class="border rounded p-2">
+                                                <label for="ai_prompt_new" class="form-label">AI Prompt</label>
+                                                <div class="input-group input-group-sm">
+                                                    <textarea id="ai_prompt_new" class="form-control" rows="2" data-email-ai-prompt @disabled(! $aiDraftAvailable)></textarea>
+                                                    <button type="button" class="btn btn-outline-primary" data-email-ai-button data-ai-url="{{ route('tech.marketing.campaigns.emails.ai-draft', $campaign) }}" @disabled(! $aiDraftAvailable)>
+                                                        <i class="bi bi-stars" aria-hidden="true"></i>
+                                                        Draft
+                                                    </button>
+                                                </div>
+                                                <div class="form-text" data-email-ai-status>
+                                                    @unless($aiDraftAvailable)
+                                                        No active AI agent is configured for Marketing.
+                                                    @endunless
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-12">
                                         <label for="body_text" class="form-label">Plain Text Body</label>
                                         <textarea id="body_text" name="body_text" rows="5" class="form-control form-control-sm font-monospace @error('body_text') is-invalid @enderror" data-email-text>{{ old('body_text') }}</textarea>
                                         @error('body_text')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
-                                    @if($aiDraftAvailable)
-                                        <div class="col-12">
-                                            <label for="ai_prompt_new" class="form-label">AI Prompt</label>
-                                            <div class="input-group input-group-sm">
-                                                <textarea id="ai_prompt_new" class="form-control" rows="2" data-email-ai-prompt></textarea>
-                                                <button type="button" class="btn btn-outline-primary" data-email-ai-button data-ai-url="{{ route('tech.marketing.campaigns.emails.ai-draft', $campaign) }}">
-                                                    <i class="bi bi-stars" aria-hidden="true"></i>
-                                                    AI Draft
-                                                </button>
-                                            </div>
-                                            <div class="form-text" data-email-ai-status></div>
-                                        </div>
-                                    @endif
                                     <div class="col-12 text-end">
                                         <button type="submit" class="btn btn-sm btn-primary">
                                             <i class="bi bi-plus-lg" aria-hidden="true"></i>
@@ -292,27 +308,36 @@
                                                 </select>
                                             </div>
                                             <div class="col-12">
-                                                <label for="body_html_{{ $email->id }}" class="form-label">HTML Body</label>
+                                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                                    <label for="body_html_{{ $email->id }}" class="form-label">HTML Body</label>
+                                                    <button class="btn btn-sm btn-outline-secondary px-2 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#emailAiPrompt{{ $email->id }}" aria-expanded="false" aria-controls="emailAiPrompt{{ $email->id }}" data-email-ai-toggle title="{{ $aiDraftAvailable ? 'AI email draft' : 'No active AI agent is configured for Marketing.' }}" aria-label="AI email draft">
+                                                        <i class="bi bi-stars" aria-hidden="true"></i>
+                                                    </button>
+                                                </div>
                                                 <textarea id="body_html_{{ $email->id }}" name="body_html" rows="9" class="form-control form-control-sm font-monospace" data-email-html>{{ old('body_html', $email->effectiveBodyHtml()) }}</textarea>
                                                 <div class="form-text">Known data placeholders: <code>@{{ contact_name }}</code>, <code>@{{ client_name }}</code>, <code>@{{ company_name }}</code>, <code>@{{ unsubscribe_url }}</code>. Campaign text should be written directly in this email.</div>
+                                                <div class="collapse mt-2" id="emailAiPrompt{{ $email->id }}">
+                                                    <div class="border rounded p-2">
+                                                        <label for="ai_prompt_{{ $email->id }}" class="form-label">AI Prompt</label>
+                                                        <div class="input-group input-group-sm">
+                                                            <textarea id="ai_prompt_{{ $email->id }}" class="form-control" rows="2" data-email-ai-prompt @disabled(! $aiDraftAvailable)></textarea>
+                                                            <button type="button" class="btn btn-outline-primary" data-email-ai-button data-ai-url="{{ route('tech.marketing.campaigns.emails.ai-draft', $campaign) }}" @disabled(! $aiDraftAvailable)>
+                                                                <i class="bi bi-stars" aria-hidden="true"></i>
+                                                                Draft
+                                                            </button>
+                                                        </div>
+                                                        <div class="form-text" data-email-ai-status>
+                                                            @unless($aiDraftAvailable)
+                                                                No active AI agent is configured for Marketing.
+                                                            @endunless
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="col-12">
                                                 <label for="body_text_{{ $email->id }}" class="form-label">Plain Text Body</label>
                                                 <textarea id="body_text_{{ $email->id }}" name="body_text" rows="5" class="form-control form-control-sm font-monospace" data-email-text>{{ old('body_text', $email->effectiveBodyText()) }}</textarea>
                                             </div>
-                                            @if($aiDraftAvailable)
-                                                <div class="col-12">
-                                                    <label for="ai_prompt_{{ $email->id }}" class="form-label">AI Prompt</label>
-                                                    <div class="input-group input-group-sm">
-                                                        <textarea id="ai_prompt_{{ $email->id }}" class="form-control" rows="2" data-email-ai-prompt></textarea>
-                                                        <button type="button" class="btn btn-outline-primary" data-email-ai-button data-ai-url="{{ route('tech.marketing.campaigns.emails.ai-draft', $campaign) }}">
-                                                            <i class="bi bi-stars" aria-hidden="true"></i>
-                                                            AI Draft
-                                                        </button>
-                                                    </div>
-                                                    <div class="form-text" data-email-ai-status></div>
-                                                </div>
-                                            @endif
                                             <div class="col-12 d-flex justify-content-end gap-2">
                                                 <button type="submit" class="btn btn-sm btn-primary">
                                                     <i class="bi bi-save" aria-hidden="true"></i>

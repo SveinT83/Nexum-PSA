@@ -678,6 +678,56 @@ class IntegrationModuleTest extends TestCase
     }
 
     #[Test]
+    public function openai_compatible_chat_requests_omit_hardcoded_temperature(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/chat/completions' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'Temperature compatible response.']],
+                ],
+            ], 200),
+        ]);
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $provider = AiProvider::create([
+            'name' => 'OpenAI',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-5',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Default temperature agent',
+            'slug' => 'default-temperature-agent',
+            'instructions' => 'Use provider defaults.',
+            'is_active' => true,
+        ]);
+        $chat = AiChat::create([
+            'user_id' => $user->id,
+            'ai_agent_id' => $agent->id,
+            'title' => 'Temperature test',
+            'status' => 'open',
+        ]);
+        $chat->messages()->create(['user_id' => $user->id, 'role' => 'user', 'body' => 'Hei']);
+        $pending = $chat->messages()->create(['role' => 'assistant', 'body' => 'AI is thinking...', 'metadata' => ['status' => 'pending']]);
+
+        app(AiChatResponder::class)->respond($chat, $pending->id);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/chat/completions'
+            && $request['model'] === 'gpt-5'
+            && array_key_exists('messages', $request->data())
+            && ! array_key_exists('temperature', $request->data()));
+        $this->assertDatabaseHas('ai_chat_messages', [
+            'ai_chat_id' => $chat->id,
+            'role' => 'assistant',
+            'body' => 'Temperature compatible response.',
+        ]);
+    }
+
+    #[Test]
     public function ai_responder_uses_configured_context_message_limit(): void
     {
         Http::fake([
