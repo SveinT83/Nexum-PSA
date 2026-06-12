@@ -46,9 +46,32 @@
                         @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-lg-4">
-                        <label for="starts_at" class="form-label">Start</label>
+                        <label for="starts_at" class="form-label">First Send At</label>
                         <input type="datetime-local" id="starts_at" name="starts_at" class="form-control @error('starts_at') is-invalid @enderror" value="{{ old('starts_at') }}">
                         @error('starts_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-3">
+                        <label for="sequence_interval_value" class="form-label">Email Cadence</label>
+                        <input type="number" min="1" max="999" id="sequence_interval_value" name="sequence_interval_value" class="form-control @error('sequence_interval_value') is-invalid @enderror" value="{{ old('sequence_interval_value', 1) }}">
+                        @error('sequence_interval_value')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-3">
+                        <label for="sequence_interval_unit" class="form-label">Cadence Unit</label>
+                        <select id="sequence_interval_unit" name="sequence_interval_unit" class="form-select @error('sequence_interval_unit') is-invalid @enderror">
+                            @foreach($sequenceIntervalUnits as $value => $label)
+                                <option value="{{ $value }}" @selected(old('sequence_interval_unit', 'days') === $value)>Every {{ strtolower($label) }}</option>
+                            @endforeach
+                        </select>
+                        @error('sequence_interval_unit')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-6">
+                        <label for="new_recipient_policy" class="form-label">New Contacts</label>
+                        <select id="new_recipient_policy" name="new_recipient_policy" class="form-select @error('new_recipient_policy') is-invalid @enderror">
+                            @foreach($newRecipientPolicies as $value => $label)
+                                <option value="{{ $value }}" @selected(old('new_recipient_policy', 'start_at_first_email') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('new_recipient_policy')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
             </div>
@@ -106,8 +129,9 @@
                         @error('batch_size')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-lg-3">
-                        <label for="send_interval_minutes" class="form-label">Interval Minutes</label>
+                        <label for="send_interval_minutes" class="form-label">Batch Interval Minutes</label>
                         <input type="number" min="1" max="1440" id="send_interval_minutes" name="send_interval_minutes" class="form-control @error('send_interval_minutes') is-invalid @enderror" value="{{ old('send_interval_minutes', $settings['default_send_interval_minutes']) }}">
+                        <div class="form-text">Spacing between recipient batches, not between campaign emails.</div>
                         @error('send_interval_minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-lg-6">

@@ -17,6 +17,7 @@ use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
+use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
 use App\Modules\Marketing\Models\MarketingCampaign;
 use App\Modules\Marketing\Models\MarketingCampaignEvent;
 use App\Modules\Marketing\Models\MarketingCampaignRecipient;
@@ -25,6 +26,7 @@ use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -917,6 +919,8 @@ class MarketingModuleTest extends TestCase
         $this->actingAs($user)
             ->get(route('tech.marketing.campaigns.show', $campaign))
             ->assertOk()
+            ->assertSee('Campaign Schedule')
+            ->assertSee('Email Cadence')
             ->assertSee('Campaign Emails')
             ->assertSee('Sequence one')
             ->assertSee('New Email')
@@ -935,6 +939,7 @@ class MarketingModuleTest extends TestCase
             ->assertDontSee('primary_cta_url', false)
             ->assertSee('Preview')
             ->assertSee('Send Test')
+            ->assertSee('Extra Delay Minutes')
             ->assertDontSee('name="scheduled_at"', false)
             ->assertDontSee('${content ||', false)
             ->assertDontSee('<body><main>', false)
@@ -991,7 +996,7 @@ class MarketingModuleTest extends TestCase
         ]);
 
         $this->assertSame(
-            $start->copy()->addMinutes(120)->format('Y-m-d H:i'),
+            $start->copy()->addDay()->addMinutes(120)->format('Y-m-d H:i'),
             $secondEmail->fresh()->recipients()->first()->due_at->format('Y-m-d H:i'),
         );
 
@@ -1014,6 +1019,216 @@ class MarketingModuleTest extends TestCase
 
         $this->assertDatabaseMissing('marketing_campaign_emails', ['id' => $thirdEmail->id]);
         $this->assertSame(2, MarketingCampaignRecipient::query()->count());
+    }
+
+    #[Test]
+    public function campaign_schedule_controls_sequence_cadence_and_recipient_batch_spacing(): void
+    {
+        foreach ([
+            'marketing.view',
+            'marketing.list.manage',
+            'marketing.campaign.create',
+            'marketing.campaign.edit',
+            'marketing.campaign.approve',
+        ] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $this->travelTo(Carbon::parse('2026-06-12 12:00:00'));
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo([
+            'marketing.view',
+            'marketing.list.manage',
+            'marketing.campaign.create',
+            'marketing.campaign.edit',
+            'marketing.campaign.approve',
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Schedule Client AS']);
+        $this->contactForClient($client, 'Schedule A', 'schedule-a@example.test');
+        $this->contactForClient($client, 'Schedule B', 'schedule-b@example.test');
+        $this->contactForClient($client, 'Schedule C', 'schedule-c@example.test');
+
+        $list = MarketingList::query()->create([
+            'name' => 'Schedule list',
+            'status' => 'active',
+            'audience_type' => 'all_business_contacts',
+            'segment_criteria' => ['audience_type' => 'all_business_contacts'],
+        ]);
+        $this->actingAs($user)->post(route('tech.marketing.lists.refresh', $list))->assertRedirect();
+
+        $templateOne = $this->marketingTemplate('schedule_one', 'Schedule one');
+        $templateTwo = $this->marketingTemplate('schedule_two', 'Schedule two');
+        $templateThree = $this->marketingTemplate('schedule_three', 'Schedule three');
+        $start = Carbon::parse('2026-06-14 17:00:00');
+
+        $this->actingAs($user)->post(route('tech.marketing.campaigns.store'), [
+            'name' => 'Weekly schedule campaign',
+            'marketing_list_id' => $list->id,
+            'email_template_id' => $templateOne->id,
+            'email_subject' => 'First weekly touch',
+            'starts_at' => $start->format('Y-m-d H:i:s'),
+            'sequence_interval_value' => 1,
+            'sequence_interval_unit' => 'weeks',
+            'new_recipient_policy' => 'start_at_first_email',
+            'batch_size' => 2,
+            'send_interval_minutes' => 10,
+            'track_opens' => 1,
+            'track_clicks' => 1,
+        ])->assertRedirect();
+
+        $campaign = MarketingCampaign::query()->firstOrFail();
+
+        $this->actingAs($user)->post(route('tech.marketing.campaigns.emails.store', $campaign), [
+            'email_template_id' => $templateTwo->id,
+            'email_subject' => 'Second weekly touch',
+            'sequence_order' => 2,
+            'delay_minutes' => 0,
+        ])->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->actingAs($user)->post(route('tech.marketing.campaigns.emails.store', $campaign), [
+            'email_template_id' => $templateThree->id,
+            'email_subject' => 'Third weekly touch',
+            'sequence_order' => 3,
+            'delay_minutes' => 0,
+        ])->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.approve', $campaign))
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $emails = $campaign->fresh()->emails()->orderBy('sequence_order')->get();
+        $firstRecipients = MarketingCampaignRecipient::query()
+            ->where('marketing_campaign_email_id', $emails[0]->id)
+            ->orderBy('email')
+            ->get();
+        $secondRecipients = MarketingCampaignRecipient::query()
+            ->where('marketing_campaign_email_id', $emails[1]->id)
+            ->orderBy('email')
+            ->get();
+        $thirdRecipients = MarketingCampaignRecipient::query()
+            ->where('marketing_campaign_email_id', $emails[2]->id)
+            ->orderBy('email')
+            ->get();
+
+        $this->assertSame($start->format('Y-m-d H:i'), $firstRecipients[0]->due_at->format('Y-m-d H:i'));
+        $this->assertSame($start->format('Y-m-d H:i'), $firstRecipients[1]->due_at->format('Y-m-d H:i'));
+        $this->assertSame($start->copy()->addMinutes(10)->format('Y-m-d H:i'), $firstRecipients[2]->due_at->format('Y-m-d H:i'));
+        $this->assertSame($start->copy()->addWeek()->format('Y-m-d H:i'), $secondRecipients[0]->due_at->format('Y-m-d H:i'));
+        $this->assertSame($start->copy()->addWeeks(2)->format('Y-m-d H:i'), $thirdRecipients[0]->due_at->format('Y-m-d H:i'));
+
+        $newStart = Carbon::parse('2026-06-15 09:00:00');
+        $this->actingAs($user)
+            ->put(route('tech.marketing.campaigns.schedule.update', $campaign), [
+                'starts_at' => $newStart->format('Y-m-d H:i:s'),
+                'sequence_interval_value' => 1,
+                'sequence_interval_unit' => 'days',
+                'new_recipient_policy' => 'start_at_first_email',
+                'batch_size' => 1,
+                'send_interval_minutes' => 5,
+            ])
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign))
+            ->assertSessionHas('status', 'Campaign schedule updated. 9 pending recipients were rescheduled.');
+
+        $firstRecipients = MarketingCampaignRecipient::query()
+            ->where('marketing_campaign_email_id', $emails[0]->id)
+            ->orderBy('email')
+            ->get();
+        $secondRecipients = MarketingCampaignRecipient::query()
+            ->where('marketing_campaign_email_id', $emails[1]->id)
+            ->orderBy('email')
+            ->get();
+
+        $this->assertSame($newStart->format('Y-m-d H:i'), $firstRecipients[0]->fresh()->due_at->format('Y-m-d H:i'));
+        $this->assertSame($newStart->copy()->addMinutes(5)->format('Y-m-d H:i'), $firstRecipients[1]->fresh()->due_at->format('Y-m-d H:i'));
+        $this->assertSame($newStart->copy()->addMinutes(10)->format('Y-m-d H:i'), $firstRecipients[2]->fresh()->due_at->format('Y-m-d H:i'));
+        $this->assertSame($newStart->copy()->addDay()->format('Y-m-d H:i'), $secondRecipients[0]->fresh()->due_at->format('Y-m-d H:i'));
+    }
+
+    #[Test]
+    public function new_contacts_can_join_current_campaign_schedule_without_old_sequence_emails(): void
+    {
+        foreach ([
+            'marketing.view',
+            'marketing.list.manage',
+            'marketing.campaign.approve',
+        ] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $this->travelTo(Carbon::parse('2026-06-20 12:00:00'));
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage', 'marketing.campaign.approve']);
+        $client = Client::factory()->create(['name' => 'Newsletter Client AS']);
+        $existing = $this->contactForClient($client, 'Existing Newsletter', 'existing-newsletter@example.test');
+
+        $list = MarketingList::query()->create([
+            'name' => 'Newsletter list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$existing->id],
+            ],
+        ]);
+        $this->actingAs($user)->post(route('tech.marketing.lists.refresh', $list))->assertRedirect();
+
+        $template = $this->marketingTemplate('newsletter_sequence', 'Newsletter sequence');
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'name' => 'Newsletter campaign',
+            'status' => 'draft',
+            'starts_at' => Carbon::parse('2026-06-01 09:00:00'),
+            'sequence_interval_value' => 1,
+            'sequence_interval_unit' => 'weeks',
+            'new_recipient_policy' => 'join_current_step',
+            'batch_size' => 10,
+            'send_interval_minutes' => 15,
+        ]);
+
+        foreach ([1, 2, 3, 4] as $order) {
+            $campaign->emails()->create([
+                'email_template_id' => $template->id,
+                'name' => 'Newsletter '.$order,
+                'template_snapshot_name' => $template->name,
+                'subject_snapshot' => 'Newsletter '.$order,
+                'body_html_snapshot' => '<p>Newsletter '.$order.'</p>',
+                'body_text_snapshot' => 'Newsletter '.$order,
+                'sequence_order' => $order,
+                'status' => 'active',
+                'delay_minutes' => 0,
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.approve', $campaign))
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->assertSame(1, MarketingCampaignRecipient::query()->count());
+        $this->assertSame(4, MarketingCampaignRecipient::query()->firstOrFail()->campaignEmail->sequence_order);
+
+        $newContact = $this->contactForClient($client, 'New Newsletter', 'new-newsletter@example.test');
+        $list->forceFill([
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$existing->id, $newContact->id],
+            ],
+        ])->save();
+        $this->actingAs($user)->post(route('tech.marketing.lists.refresh', $list))->assertRedirect();
+
+        app(SyncMarketingCampaignRecipients::class)->handle($campaign->fresh(['emails', 'list.members', 'recipients']));
+
+        $this->assertSame(2, MarketingCampaignRecipient::query()->count());
+        $this->assertDatabaseMissing('marketing_campaign_recipients', [
+            'email' => 'new-newsletter@example.test',
+            'marketing_campaign_email_id' => $campaign->emails()->where('sequence_order', 1)->value('id'),
+        ]);
+        $this->assertDatabaseHas('marketing_campaign_recipients', [
+            'email' => 'new-newsletter@example.test',
+            'marketing_campaign_email_id' => $campaign->emails()->where('sequence_order', 4)->value('id'),
+        ]);
     }
 
     #[Test]
@@ -1353,6 +1568,17 @@ class MarketingModuleTest extends TestCase
                 'email_template_id' => 1,
                 'sequence_order' => 2,
                 'delay_minutes' => 60,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->put(route('tech.marketing.campaigns.schedule.update', $campaign), [
+                'starts_at' => now()->addDay()->format('Y-m-d H:i:s'),
+                'sequence_interval_value' => 1,
+                'sequence_interval_unit' => 'weeks',
+                'new_recipient_policy' => 'start_at_first_email',
+                'batch_size' => 10,
+                'send_interval_minutes' => 15,
             ])
             ->assertForbidden();
     }

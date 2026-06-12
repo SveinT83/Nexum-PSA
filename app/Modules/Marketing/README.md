@@ -34,9 +34,10 @@ The implemented foundation now covers:
   Clients.
 - Campaign UI under `/tech/marketing/campaigns`.
 - Approval gate, due-recipient send job, scheduled minute processing, and `marketing:send-due`.
-- Campaign sequence UI for multiple campaign emails as collapsible cards with order, delay,
-  editable email subject/body snapshots, live preview, test-send, pending-recipient due-time
-  updates, and safe removal/deactivation.
+- Campaign sequence UI for multiple campaign emails as collapsible cards with order, campaign-level
+  cadence, extra per-email delay, editable email subject/body snapshots, live preview, test-send,
+  pending-recipient due-time updates, new-contact policy, recipient batch throttling, and safe
+  removal/deactivation.
 - AI-assisted campaign email drafting through active Integration AI agents. AI suggestions update
   the editable form only and must still be saved by the technician.
 - Open, click, and unsubscribe tracking endpoints.
@@ -121,10 +122,22 @@ Campaigns can contain multiple ordered emails. Technicians with `marketing.campa
 update, deactivate, or remove campaign emails from the campaign detail page. Existing emails are
 shown as cards and expanded only when a technician wants to preview, test-send, or edit them. New
 emails are created from a hidden form; selecting a start template fills the editable snapshot fields
-before saving. Updating delay changes only pending recipients. Sent recipient history is kept;
-removing a campaign email with sent recipients deactivates it and cancels pending recipients instead
-of deleting history. Adding a new active email to an approved or active campaign queues recipients
-for the existing list members.
+before saving.
+
+Campaign scheduling is owned at campaign level. `starts_at` controls the first sequence email, and
+the campaign sequence interval controls whether each ordered email goes daily, weekly, monthly, or
+another supported cadence after that. Campaign email `delay_minutes` is only an optional extra delay
+for that specific sequence step. Updating the campaign schedule recalculates pending recipient due
+times.
+
+Recipient throttling is separate from sequence timing. `batch_size` controls how many recipients in
+one campaign email are due at the same time, and `send_interval_minutes` spaces the next recipient
+batch to reduce delivery bursts. New contacts can either start at the first campaign email, which is
+useful for nurture sequences, or join the current campaign schedule, which is useful for newsletter
+lists where new subscribers should not receive old news. Sent recipient history is kept; removing a
+campaign email with sent recipients deactivates it and cancels pending recipients instead of
+deleting history. Adding a new active email to an approved or active campaign queues recipients for
+the existing list members according to the campaign schedule.
 
 Campaign email preview is rendered in the browser from the editable HTML body. Test-send uses the
 current editor fields and sends through the campaign sender account or the default `marketing`

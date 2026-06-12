@@ -107,6 +107,81 @@
         </div>
     @endif
 
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center justify-content-between gap-2">
+            <span class="fw-semibold">Campaign Schedule</span>
+            <span class="badge text-bg-light border">{{ $campaign->sequenceIntervalLabel() }}</span>
+        </div>
+        <div class="card-body">
+            @can('marketing.campaign.edit')
+                <form method="POST" action="{{ route('tech.marketing.campaigns.schedule.update', $campaign) }}">
+                    @csrf
+                    @method('PUT')
+                    <div class="row g-3 align-items-end">
+                        <div class="col-lg-3">
+                            <label for="starts_at" class="form-label">First Send At</label>
+                            <input type="datetime-local" id="starts_at" name="starts_at" class="form-control form-control-sm @error('starts_at') is-invalid @enderror" value="{{ old('starts_at', $campaign->starts_at?->format('Y-m-d\TH:i')) }}">
+                            @error('starts_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-2">
+                            <label for="sequence_interval_value" class="form-label">Email Cadence</label>
+                            <input type="number" min="1" max="999" id="sequence_interval_value" name="sequence_interval_value" class="form-control form-control-sm @error('sequence_interval_value') is-invalid @enderror" value="{{ old('sequence_interval_value', $campaign->sequence_interval_value ?: 1) }}">
+                            @error('sequence_interval_value')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-2">
+                            <label for="sequence_interval_unit" class="form-label">Cadence Unit</label>
+                            <select id="sequence_interval_unit" name="sequence_interval_unit" class="form-select form-select-sm @error('sequence_interval_unit') is-invalid @enderror">
+                                @foreach($sequenceIntervalUnits as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('sequence_interval_unit', $campaign->sequence_interval_unit ?: 'days') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('sequence_interval_unit')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-3">
+                            <label for="new_recipient_policy" class="form-label">New Contacts</label>
+                            <select id="new_recipient_policy" name="new_recipient_policy" class="form-select form-select-sm @error('new_recipient_policy') is-invalid @enderror">
+                                @foreach($newRecipientPolicies as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('new_recipient_policy', $campaign->new_recipient_policy ?: 'start_at_first_email') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('new_recipient_policy')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-1">
+                            <label for="batch_size" class="form-label">Batch</label>
+                            <input type="number" min="1" max="1000" id="batch_size" name="batch_size" class="form-control form-control-sm @error('batch_size') is-invalid @enderror" value="{{ old('batch_size', $campaign->batch_size ?: $settings['default_batch_size']) }}">
+                            @error('batch_size')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-1">
+                            <label for="send_interval_minutes" class="form-label">Gap Min</label>
+                            <input type="number" min="1" max="1440" id="send_interval_minutes" name="send_interval_minutes" class="form-control form-control-sm @error('send_interval_minutes') is-invalid @enderror" value="{{ old('send_interval_minutes', $campaign->send_interval_minutes ?: $settings['default_send_interval_minutes']) }}">
+                            @error('send_interval_minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <div class="small text-muted">
+                                Email cadence controls the ordered campaign emails. Batch and gap minutes throttle recipients inside each campaign email.
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-calendar-check" aria-hidden="true"></i>
+                                Save Schedule
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            @else
+                <dl class="row small mb-0">
+                    <dt class="col-md-3">First send</dt>
+                    <dd class="col-md-9">{{ $campaign->starts_at?->format('Y-m-d H:i') ?? 'When approved' }}</dd>
+                    <dt class="col-md-3">Email cadence</dt>
+                    <dd class="col-md-9">{{ $campaign->sequenceIntervalLabel() }}</dd>
+                    <dt class="col-md-3">New contacts</dt>
+                    <dd class="col-md-9">{{ $campaign->newRecipientPolicyLabel() }}</dd>
+                    <dt class="col-md-3">Recipient throttle</dt>
+                    <dd class="col-md-9">{{ $campaign->batch_size ?: $settings['default_batch_size'] }} per batch, {{ $campaign->send_interval_minutes ?: $settings['default_send_interval_minutes'] }} minutes between batches</dd>
+                </dl>
+            @endcan
+        </div>
+    </div>
+
     <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
         <h2 class="h5 mb-0">Campaign Emails</h2>
         <div class="d-flex align-items-center gap-2">
@@ -195,8 +270,9 @@
                                         @error('sequence_order')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                     <div class="col-lg-3">
-                                        <label for="delay_minutes" class="form-label">Delay Minutes</label>
+                                        <label for="delay_minutes" class="form-label">Extra Delay Minutes</label>
                                         <input type="number" id="delay_minutes" name="delay_minutes" min="0" max="525600" class="form-control form-control-sm @error('delay_minutes') is-invalid @enderror" value="{{ old('delay_minutes', 0) }}" required>
+                                        <div class="form-text">Added after the campaign cadence for this email.</div>
                                         @error('delay_minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                     <div class="col-12">
@@ -268,7 +344,7 @@
                             </div>
                             <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                                 <span class="badge text-bg-{{ $email->status === 'active' ? 'success' : 'light' }} border">{{ ucfirst($email->status) }}</span>
-                                <span class="badge text-bg-light border">{{ $email->delay_minutes }} min</span>
+                                <span class="badge text-bg-light border">Extra {{ $email->delay_minutes }} min</span>
                                 <span class="badge text-bg-light border">{{ $email->recipients_count }} recipients</span>
                                 <span class="badge text-bg-light border">{{ $email->sourceTemplateName() ?? 'No template' }}</span>
                             </div>
@@ -297,8 +373,9 @@
                                                 <input type="number" id="sequence_order_{{ $email->id }}" name="sequence_order" min="1" max="999" class="form-control form-control-sm" value="{{ old('sequence_order', $email->sequence_order) }}" required>
                                             </div>
                                             <div class="col-lg-3">
-                                                <label for="delay_minutes_{{ $email->id }}" class="form-label">Delay Minutes</label>
+                                                <label for="delay_minutes_{{ $email->id }}" class="form-label">Extra Delay Minutes</label>
                                                 <input type="number" id="delay_minutes_{{ $email->id }}" name="delay_minutes" min="0" max="525600" class="form-control form-control-sm" value="{{ old('delay_minutes', $email->delay_minutes) }}" required>
+                                                <div class="form-text">Added after the campaign cadence.</div>
                                             </div>
                                             <div class="col-lg-3">
                                                 <label for="status_{{ $email->id }}" class="form-label">Status</label>
@@ -350,7 +427,7 @@
                                     <dl class="row small mb-0">
                                         <dt class="col-md-3">Subject</dt>
                                         <dd class="col-md-9">{{ $email->effectiveSubject() ?? '—' }}</dd>
-                                        <dt class="col-md-3">Delay</dt>
+                                        <dt class="col-md-3">Extra delay</dt>
                                         <dd class="col-md-9">{{ $email->delay_minutes }} min</dd>
                                         <dt class="col-md-3">Template</dt>
                                         <dd class="col-md-9">{{ $email->sourceTemplateName() ?? '—' }}</dd>
@@ -631,7 +708,7 @@
 
                     const delay = document.createElement('span');
                     delay.className = 'badge text-bg-light border mt-1';
-                    delay.textContent = `${email.delay_minutes || 0} min`;
+                    delay.textContent = `Extra ${email.delay_minutes || 0} min`;
 
                     body.append(title, subject, delay);
 

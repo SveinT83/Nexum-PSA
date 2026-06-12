@@ -31,6 +31,11 @@ class MarketingList extends Model
         return $this->hasMany(MarketingListMember::class);
     }
 
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(MarketingCampaign::class);
+    }
+
     public function consentCategory(): BelongsTo
     {
         return $this->belongsTo(MarketingConsentCategory::class);

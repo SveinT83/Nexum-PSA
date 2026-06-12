@@ -46,6 +46,7 @@ class EnforceTechRoutePermission
         'tech.marketing.campaigns.create' => 'marketing.campaign.create',
         'tech.marketing.campaigns.store' => 'marketing.campaign.create',
         'tech.marketing.campaigns.ai-plan' => 'marketing.campaign.edit',
+        'tech.marketing.campaigns.schedule.*' => 'marketing.campaign.edit',
         'tech.marketing.campaigns.emails.*' => 'marketing.campaign.edit',
         'tech.marketing.campaigns.approve' => 'marketing.campaign.approve',
         'tech.marketing.campaigns.send-due' => 'marketing.campaign.send',

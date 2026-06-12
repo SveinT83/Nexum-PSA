@@ -107,6 +107,8 @@ class MarketingCampaignController extends Controller
                 ->all(),
             'accounts' => EmailAccount::query()->where('is_active', true)->orderBy('address')->get(),
             'settings' => $settings->get(),
+            'sequenceIntervalUnits' => MarketingCampaign::SEQUENCE_INTERVAL_UNITS,
+            'newRecipientPolicies' => MarketingCampaign::NEW_RECIPIENT_POLICIES,
         ]);
     }
 
@@ -125,6 +127,9 @@ class MarketingCampaignController extends Controller
             'starts_at' => ['nullable', 'date'],
             'batch_size' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'send_interval_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'new_recipient_policy' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
             'track_opens' => ['nullable', 'boolean'],
             'track_clicks' => ['nullable', 'boolean'],
         ]);
@@ -144,6 +149,9 @@ class MarketingCampaignController extends Controller
             'starts_at' => $data['starts_at'] ?? null,
             'batch_size' => $data['batch_size'] ?? null,
             'send_interval_minutes' => $data['send_interval_minutes'] ?? null,
+            'sequence_interval_value' => $data['sequence_interval_value'] ?? 1,
+            'sequence_interval_unit' => $data['sequence_interval_unit'] ?? 'days',
+            'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
             'track_opens' => $request->boolean('track_opens'),
             'track_clicks' => $request->boolean('track_clicks'),
             'created_by' => $request->user()?->id,
@@ -237,7 +245,42 @@ class MarketingCampaignController extends Controller
                 ->values(),
             'settings' => $settings->get(),
             'aiDraftAvailable' => $request->user() ? (bool) $aiAgentResolver->defaultAgent($request->user(), 'marketing') : false,
+            'sequenceIntervalUnits' => MarketingCampaign::SEQUENCE_INTERVAL_UNITS,
+            'newRecipientPolicies' => MarketingCampaign::NEW_RECIPIENT_POLICIES,
         ]);
+    }
+
+    public function updateSchedule(
+        MarketingCampaign $campaign,
+        Request $request,
+        SyncMarketingCampaignRecipients $syncRecipients,
+    ): RedirectResponse {
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign schedule can only be changed before completion.');
+
+        $data = $request->validate([
+            'starts_at' => ['nullable', 'date'],
+            'batch_size' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'send_interval_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'sequence_interval_value' => ['required', 'integer', 'min:1', 'max:999'],
+            'sequence_interval_unit' => ['required', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'new_recipient_policy' => ['required', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
+        ]);
+
+        $campaign->forceFill([
+            'starts_at' => $data['starts_at'] ?? null,
+            'batch_size' => $data['batch_size'] ?? null,
+            'send_interval_minutes' => $data['send_interval_minutes'] ?? null,
+            'sequence_interval_value' => $data['sequence_interval_value'],
+            'sequence_interval_unit' => $data['sequence_interval_unit'],
+            'new_recipient_policy' => $data['new_recipient_policy'],
+            'updated_by' => $request->user()?->id,
+        ])->save();
+
+        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
+
+        return redirect()
+            ->route('tech.marketing.campaigns.show', $campaign)
+            ->with('status', "Campaign schedule updated. {$updated} pending recipients were rescheduled.");
     }
 
     public function storeEmail(
@@ -332,10 +375,7 @@ class MarketingCampaignController extends Controller
             'status' => $data['status'],
         ]))->save();
 
-        $dueAt = $syncRecipients->dueAt($campaign, $email->fresh());
-        $email->recipients()
-            ->where('status', 'pending')
-            ->update(['due_at' => $dueAt, 'updated_at' => now()]);
+        $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
 
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)

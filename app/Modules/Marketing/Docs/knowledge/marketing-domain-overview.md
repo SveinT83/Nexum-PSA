@@ -25,8 +25,9 @@ The first slices create the Marketing and Email foundation:
   email addresses, and guarded deletion for lists that are not used by campaigns.
 - Campaign draft, approval, recipient queue, due send job, and open/click/unsubscribe tracking
   foundation.
-- Campaign sequence editing for multiple ordered campaign emails as collapsible cards with delay,
-  editable email subject/body snapshots, preview, test-send, and active-campaign recipient queue
+- Campaign sequence editing for multiple ordered campaign emails as collapsible cards with
+  campaign-level cadence, optional extra delay, editable email subject/body snapshots, preview,
+  test-send, new-contact policy, recipient batch throttling, and active-campaign recipient queue
   sync.
 - AI-assisted campaign planning from campaign, list, available template, and current sequence
   context when an active AI agent is available.
@@ -99,12 +100,21 @@ members. The queue stores due time, status, attempts, message id, and tracking t
 
 Campaigns can contain multiple ordered emails. Technicians with `marketing.campaign.edit` can add a
 new sequence email from a start template, edit the campaign email name, subject, HTML body, plaintext
-body, order, delay, and active/inactive status. Existing emails are displayed as cards and expanded
-for preview, test-send, AI drafting, and editing. New emails are behind a button; selecting a start
-template fills the editable snapshot fields before save. Delay changes update pending recipients
-only. Sent recipient history is kept. If a sent sequence email is removed, the email is deactivated
-and pending recipients are cancelled; unsent sequence emails are deleted with their pending queue
-rows.
+body, order, optional extra delay, and active/inactive status. Existing emails are displayed as
+cards and expanded for preview, test-send, AI drafting, and editing. New emails are behind a button;
+selecting a start template fills the editable snapshot fields before save.
+
+Campaign-level schedule controls the normal ordered sequence. The first email uses `starts_at`, and
+later emails use the campaign sequence cadence, such as daily, weekly, or monthly. A sequence
+email's delay is only extra delay on top of that campaign cadence. Updating the campaign schedule
+recalculates pending recipient due times.
+
+Recipient throttling is separate from sequence timing. Batch size controls how many recipients are
+due at the same time for a campaign email, and batch interval minutes space later recipient batches.
+New contacts can either start at the first sequence email, or join the current schedule so newsletter
+subscribers do not receive old campaign emails. Sent recipient history is kept. If a sent sequence
+email is removed, the email is deactivated and pending recipients are cancelled; unsent sequence
+emails are deleted with their pending queue rows.
 
 Campaign emails send from their stored snapshot, not from the live Email template. This means an
 administrator can later change a reusable Marketing template without silently changing draft,
