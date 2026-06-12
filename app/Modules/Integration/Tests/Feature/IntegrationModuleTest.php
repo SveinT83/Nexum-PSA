@@ -94,6 +94,7 @@ class IntegrationModuleTest extends TestCase
             ->assertSee('Read contacts')
             ->assertSee('Create contacts')
             ->assertSee('Update contacts')
+            ->assertSee('Repair contact ownership')
             ->assertSee('Read tickets')
             ->assertSee('Create tickets')
             ->assertSee('Update tickets')

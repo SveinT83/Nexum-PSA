@@ -57,6 +57,11 @@ class ApiAbilityCatalog
             'description' => 'Update contacts, including client and site relations.',
             'domain' => 'Contacts',
         ],
+        'contacts.ownership_manage' => [
+            'label' => 'Repair contact ownership',
+            'description' => 'Inspect, move, bulk repair, and detach Contact ownership across clients and legacy client users.',
+            'domain' => 'Contacts',
+        ],
         'tickets.read' => [
             'label' => 'Read tickets',
             'description' => 'List and view ticket records.',

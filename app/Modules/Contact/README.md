@@ -41,6 +41,29 @@ must migrate each dependent module before any cleanup migration removes old colu
 New contact functionality should use Contact models. Existing workflows may keep using
 `ClientUser` until their module is migrated.
 
+## Ownership Repair API
+
+The Contact API includes a repair surface for trusted cleanup tools while `client_users` is still
+the compatibility layer.
+
+Supported routes:
+
+- `GET /api/v1/clients/{client}/contacts`
+- `POST /api/v1/contacts/{contact}/move`
+- `POST /api/v1/clients/{client}/contacts/bulk-fix`
+- `DELETE /api/v1/clients/{client}/contacts/{contact}`
+
+`{client}` accepts the internal Client ID or `client_number`. This is important in production where
+operators may know a customer by client number instead of database ID.
+
+Mutating ownership routes require the `contacts.ownership_manage` API scope and support `dry_run`.
+Actual moves update `contact_relations` and the linked `client_users` bridge in one transaction.
+Detach removes the selected Client and Site relations and clears `client_users.contact_id` for that
+Client, but it does not hard-delete the Contact by default.
+
+Repair calls are written to the activity log with the actor, API token ID when available, reason,
+before state, result, and after state.
+
 ## Future Phases
 
 - Contact create and edit UI.
