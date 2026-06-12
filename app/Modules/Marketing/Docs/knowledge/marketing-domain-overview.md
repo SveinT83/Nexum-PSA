@@ -21,7 +21,8 @@ The first slices create the Marketing and Email foundation:
 - Marketing list tables, default consent categories, default interest tags, list UI, and resolved
   list membership.
 - Mailing list audience modes for all business contacts or manually selected Contacts only.
-- Manual Contact additions from existing Contacts with active email addresses.
+- Mailing list editing plus manual Contact additions/removals from existing Contacts with active
+  email addresses, and guarded deletion for lists that are not used by campaigns.
 - Campaign draft, approval, recipient queue, due send job, and open/click/unsubscribe tracking
   foundation.
 - Campaign sequence editing for multiple ordered campaign emails as collapsible cards with delay,
@@ -45,10 +46,10 @@ marketing interest should be consumed by Sales/Leads sorting, Lead Heat, and cla
 
 ## Mailing Lists
 
-Technicians with `marketing.list.manage` can create lists from `/tech/marketing/lists`. The current
-audiences are `all_business_contacts` and `manual_contacts`. The all-business audience can be
-segmented by shared Contact and Client tags. Either audience can include manually selected existing
-Contacts.
+Technicians with `marketing.list.manage` can create and edit lists from `/tech/marketing/lists`. The
+current audiences are `all_business_contacts` and `manual_contacts`. The all-business audience can
+be segmented by shared Contact and Client tags. Either audience can include manually selected
+existing Contacts.
 
 List resolution includes:
 
@@ -59,10 +60,20 @@ List resolution includes:
 - Selected Contact tags, when the list has Contact tag criteria.
 - Selected Client tags, when the list has Client tag criteria.
 - Selected manual Contacts, when the list has manual Contact criteria.
+- Contacts removed from this specific list are excluded from future refreshes until they are added
+  again.
 
 List membership is materialized in `marketing_list_members`. This gives campaigns a stable recipient
 snapshot and lets operators refresh the list when Contacts change. Duplicate email addresses are
 collapsed before members are stored.
+
+The list detail page lets list managers add eligible existing Contacts and remove resolved
+first-class Contacts. Removal is a Marketing list exclusion, not a Contact preference change; it does
+not set `do_not_email` or change global consent.
+
+The edit page lets list managers delete unused mailing lists. Deletion removes the list and its
+resolved members, but never deletes Contacts. Lists used by campaigns are protected from deletion so
+campaign sequence, recipient, and tracking history is preserved.
 
 Contact tag criteria only match first-class Contacts. Client tag criteria match Contacts related to
 tagged Clients and legacy `client_users` that belong to tagged Clients.

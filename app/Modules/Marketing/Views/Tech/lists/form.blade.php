@@ -1,13 +1,13 @@
 @extends('layouts.default_tech')
 
-@section('title', 'New Marketing List')
+@section('title', $list->exists ? 'Edit Marketing List' : 'New Marketing List')
 
 @section('pageHeader')
     <div class="d-flex align-items-center justify-content-between gap-3">
-        <h1 class="h4 mb-0">New Marketing List</h1>
-        <a href="{{ route('tech.marketing.lists.index') }}" class="btn btn-sm btn-outline-secondary">
+        <h1 class="h4 mb-0">{{ $list->exists ? 'Edit Marketing List' : 'New Marketing List' }}</h1>
+        <a href="{{ $list->exists ? route('tech.marketing.lists.show', $list) : route('tech.marketing.lists.index') }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-left" aria-hidden="true"></i>
-            Lists
+            {{ $list->exists ? 'List' : 'Lists' }}
         </a>
     </div>
 @endsection
@@ -16,8 +16,19 @@
     <!-- ------------------------------------------------- -->
     <!-- Marketing list form -->
     <!-- ------------------------------------------------- -->
-    <form method="POST" action="{{ route('tech.marketing.lists.store') }}" class="d-grid gap-3">
+    @if($errors->any())
+        <div class="alert alert-danger py-2">
+            @foreach($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
+    <form method="POST" action="{{ $list->exists ? route('tech.marketing.lists.update', $list) : route('tech.marketing.lists.store') }}" class="d-grid gap-3">
         @csrf
+        @if($list->exists)
+            @method('PUT')
+        @endif
 
         <div class="card">
             <div class="card-header">
@@ -74,7 +85,8 @@
             </div>
             <div class="card-body">
                 @php
-                    $selectedManualContacts = collect(old('manual_contact_ids', []))
+                    $criteria = $list->segment_criteria ?? [];
+                    $selectedManualContacts = collect(old('manual_contact_ids', $criteria['manual_contact_ids'] ?? []))
                         ->map(fn ($id) => (int) $id)
                         ->filter()
                         ->all();
@@ -139,7 +151,7 @@
                         <div class="border rounded p-2" style="max-height: 220px; overflow-y: auto;">
                             @forelse($tags as $tag)
                                 <div class="form-check">
-                                    <input type="checkbox" id="contact_tag_{{ $tag->id }}" name="contact_tag_ids[]" value="{{ $tag->id }}" class="form-check-input @error('contact_tag_ids.*') is-invalid @enderror" @checked(in_array($tag->id, old('contact_tag_ids', [])))>
+                                    <input type="checkbox" id="contact_tag_{{ $tag->id }}" name="contact_tag_ids[]" value="{{ $tag->id }}" class="form-check-input @error('contact_tag_ids.*') is-invalid @enderror" @checked(in_array($tag->id, collect(old('contact_tag_ids', $criteria['contact_tag_ids'] ?? []))->map(fn ($id) => (int) $id)->all(), true))>
                                     <label for="contact_tag_{{ $tag->id }}" class="form-check-label">
                                         @if($tag->color)
                                             <span class="badge rounded-pill me-1" style="background-color: {{ $tag->color }};">&nbsp;</span>
@@ -161,7 +173,7 @@
                         <div class="border rounded p-2" style="max-height: 220px; overflow-y: auto;">
                             @forelse($tags as $tag)
                                 <div class="form-check">
-                                    <input type="checkbox" id="client_tag_{{ $tag->id }}" name="client_tag_ids[]" value="{{ $tag->id }}" class="form-check-input @error('client_tag_ids.*') is-invalid @enderror" @checked(in_array($tag->id, old('client_tag_ids', [])))>
+                                    <input type="checkbox" id="client_tag_{{ $tag->id }}" name="client_tag_ids[]" value="{{ $tag->id }}" class="form-check-input @error('client_tag_ids.*') is-invalid @enderror" @checked(in_array($tag->id, collect(old('client_tag_ids', $criteria['client_tag_ids'] ?? []))->map(fn ($id) => (int) $id)->all(), true))>
                                     <label for="client_tag_{{ $tag->id }}" class="form-check-label">
                                         @if($tag->color)
                                             <span class="badge rounded-pill me-1" style="background-color: {{ $tag->color }};">&nbsp;</span>
@@ -179,13 +191,39 @@
         </div>
 
         <div class="d-flex justify-content-end gap-2">
-            <a href="{{ route('tech.marketing.lists.index') }}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+            <a href="{{ $list->exists ? route('tech.marketing.lists.show', $list) : route('tech.marketing.lists.index') }}" class="btn btn-sm btn-outline-secondary">Cancel</a>
             <button type="submit" class="btn btn-sm btn-primary">
                 <i class="bi bi-check2" aria-hidden="true"></i>
-                Create List
+                {{ $list->exists ? 'Save List' : 'Create List' }}
             </button>
         </div>
     </form>
+
+    @if($list->exists)
+        <div class="card border-danger mt-3">
+            <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                <span class="fw-semibold text-danger">Danger Zone</span>
+                <span class="badge text-bg-light border">{{ $list->campaigns_count ?? 0 }} campaigns</span>
+            </div>
+            <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div class="small text-muted">
+                    @if(($list->campaigns_count ?? 0) > 0)
+                        This list is used by campaigns and cannot be deleted without preserving campaign history first.
+                    @else
+                        Delete this list and its resolved recipients. Contacts are not deleted.
+                    @endif
+                </div>
+                <form method="POST" action="{{ route('tech.marketing.lists.destroy', $list) }}" class="mb-0" onsubmit="return confirm('Delete this marketing list?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-outline-danger" @disabled(($list->campaigns_count ?? 0) > 0)>
+                        <i class="bi bi-trash" aria-hidden="true"></i>
+                        Delete List
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
 @endsection
 
 @section('sidebar')

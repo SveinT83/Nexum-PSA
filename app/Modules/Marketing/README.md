@@ -25,7 +25,8 @@ The implemented foundation now covers:
 - Mailing list UI under `/tech/marketing/lists`.
 - Mailing list audience modes for all business contacts or manually selected Contacts only.
 - Mailing list segmentation by shared Contact and Client tags.
-- Manual Contact additions from existing Contacts with active email addresses.
+- Mailing list edit flow plus manual Contact additions/removals from existing Contacts with active
+  email addresses, and guarded deletion for lists that are not used by campaigns.
 - Default consent categories and interest tags.
 - Recipient resolution from active Contacts and legacy `client_users`.
 - Campaign tables for drafts, ordered campaign emails, recipient queue, and tracking events.
@@ -59,6 +60,17 @@ resolved from first-class Contacts only.
 
 Resolution materializes members into `marketing_list_members` so future campaign sends can use a
 stable recipient snapshot.
+
+Technicians with `marketing.list.manage` can edit list details and criteria after creation. They can
+also add eligible Contacts directly from the list detail page, or remove resolved first-class
+Contacts from the list. Removed Contacts are stored as list-level exclusions and stay excluded on
+future refreshes until they are added again. This does not mark the Contact as `do_not_email`; it
+only changes membership for that Marketing list.
+
+Unused mailing lists can be deleted from the edit screen. Deleting a list removes its resolved list
+members but does not delete Contacts. Lists already used by campaigns are protected from deletion so
+campaign sequence, recipient, and tracking history is not removed through the existing campaign
+foreign-key cascade.
 
 Recipients are eligible when they are active, have an email address, and are not marked
 `do_not_email`. The default Marketing setting is opt-out, so existing business contacts are included

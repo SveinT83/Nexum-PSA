@@ -62,5 +62,15 @@ Route::post('/marketing/lists', [MarketingListController::class, 'store'])
     ->name('marketing.lists.store');
 Route::get('/marketing/lists/{list}', [MarketingListController::class, 'show'])
     ->name('marketing.lists.show');
+Route::get('/marketing/lists/{list}/edit', [MarketingListController::class, 'edit'])
+    ->name('marketing.lists.edit');
+Route::put('/marketing/lists/{list}', [MarketingListController::class, 'update'])
+    ->name('marketing.lists.update');
+Route::delete('/marketing/lists/{list}', [MarketingListController::class, 'destroy'])
+    ->name('marketing.lists.destroy');
 Route::post('/marketing/lists/{list}/refresh', [MarketingListController::class, 'refresh'])
     ->name('marketing.lists.refresh');
+Route::post('/marketing/lists/{list}/contacts', [MarketingListController::class, 'addContacts'])
+    ->name('marketing.lists.contacts.add');
+Route::delete('/marketing/lists/{list}/contacts/{contact}', [MarketingListController::class, 'removeContact'])
+    ->name('marketing.lists.contacts.remove');

@@ -222,6 +222,17 @@ class MarketingModuleTest extends TestCase
 
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $user->givePermissionTo('marketing.view');
+        $client = Client::factory()->create(['name' => 'Protected List Client AS']);
+        $contact = $this->contactForClient($client, 'Protected Contact', 'protected@example.test');
+        $list = MarketingList::query()->create([
+            'name' => 'Protected list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$contact->id],
+            ],
+        ]);
 
         $this->actingAs($user)
             ->get(route('tech.marketing.lists.index'))
@@ -230,6 +241,32 @@ class MarketingModuleTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('tech.marketing.lists.create'))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.edit', $list))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->put(route('tech.marketing.lists.update', $list), [
+                'name' => 'Protected list update',
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$contact->id],
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.lists.destroy', $list))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.lists.contacts.add', $list), [
+                'contact_ids' => [$contact->id],
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.lists.contacts.remove', [$list, $contact]))
             ->assertForbidden();
     }
 
@@ -374,6 +411,7 @@ class MarketingModuleTest extends TestCase
             'contact_tag_ids' => [$contactTag->id],
             'client_tag_ids' => [$clientTag->id],
             'manual_contact_ids' => [],
+            'excluded_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [
             'marketing_list_id' => $list->id,
@@ -466,6 +504,7 @@ class MarketingModuleTest extends TestCase
             'contact_tag_ids' => [],
             'client_tag_ids' => [],
             'manual_contact_ids' => [$selected->id, $blocked->id],
+            'excluded_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [
             'marketing_list_id' => $list->id,
@@ -489,9 +528,183 @@ class MarketingModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Manual contacts')
             ->assertSee('2 selected')
+            ->assertSee('Add Contacts')
             ->assertSee('selected-manual@example.test')
-            ->assertDontSee('unselected-manual@example.test')
+            ->assertSee('unselected-manual@example.test')
             ->assertDontSee('blocked-manual@example.test');
+    }
+
+    #[Test]
+    public function marketing_lists_can_be_edited_and_contacts_can_be_added_or_removed(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+        Permission::findOrCreate('marketing.list.manage', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage']);
+
+        $client = Client::factory()->create(['name' => 'Editable Client AS']);
+        $kept = $this->contactForClient($client, 'Kept Contact', 'kept@example.test');
+        $added = $this->contactForClient($client, 'Added Contact', 'added@example.test');
+        $removed = $this->contactForClient($client, 'Removed Contact', 'removed@example.test');
+
+        $list = MarketingList::query()->create([
+            'name' => 'Editable list',
+            'description' => 'Before',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'contact_tag_ids' => [],
+                'client_tag_ids' => [],
+                'manual_contact_ids' => [$kept->id],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.lists.refresh', $list))
+            ->assertRedirect(route('tech.marketing.lists.show', $list));
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.show', $list))
+            ->assertOk()
+            ->assertSee('Edit')
+            ->assertSee('Add Contacts')
+            ->assertSee('Remove')
+            ->assertSee('Added Contact')
+            ->assertSee('kept@example.test');
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.edit', $list))
+            ->assertOk()
+            ->assertSee('Edit Marketing List')
+            ->assertSee('Save List')
+            ->assertSee('Kept Contact');
+
+        $this->actingAs($user)
+            ->put(route('tech.marketing.lists.update', $list), [
+                'name' => 'Updated editable list',
+                'description' => 'After',
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$kept->id, $removed->id],
+            ])
+            ->assertRedirect(route('tech.marketing.lists.show', $list));
+
+        $list = $list->fresh();
+        $this->assertSame('Updated editable list', $list->name);
+        $this->assertSame([
+            'audience_type' => 'manual_contacts',
+            'contact_tag_ids' => [],
+            'client_tag_ids' => [],
+            'manual_contact_ids' => [$kept->id, $removed->id],
+            'excluded_contact_ids' => [],
+        ], $list->segment_criteria);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $removed->id,
+            'email' => 'removed@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.lists.contacts.remove', [$list, $removed]))
+            ->assertRedirect(route('tech.marketing.lists.show', $list));
+
+        $criteria = $list->fresh()->segment_criteria;
+        $this->assertSame([$kept->id], $criteria['manual_contact_ids']);
+        $this->assertSame([$removed->id], $criteria['excluded_contact_ids']);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $removed->id,
+            'email' => 'removed@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.lists.contacts.add', $list), [
+                'contact_ids' => [$added->id, $removed->id],
+            ])
+            ->assertRedirect(route('tech.marketing.lists.show', $list));
+
+        $criteria = $list->fresh()->segment_criteria;
+        $this->assertSame([$kept->id, $added->id, $removed->id], $criteria['manual_contact_ids']);
+        $this->assertSame([], $criteria['excluded_contact_ids']);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $added->id,
+            'email' => 'added@example.test',
+        ]);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $removed->id,
+            'email' => 'removed@example.test',
+        ]);
+    }
+
+    #[Test]
+    public function marketing_lists_can_be_deleted_only_when_not_used_by_campaigns(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+        Permission::findOrCreate('marketing.list.manage', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage']);
+        $client = Client::factory()->create(['name' => 'Delete List Client AS']);
+        $contact = $this->contactForClient($client, 'Delete List Contact', 'delete-list@example.test');
+        $unusedList = MarketingList::query()->create([
+            'name' => 'Unused delete list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$contact->id],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.lists.refresh', $unusedList))
+            ->assertRedirect(route('tech.marketing.lists.show', $unusedList));
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.edit', $unusedList))
+            ->assertOk()
+            ->assertSee('Danger Zone')
+            ->assertSee('Delete List')
+            ->assertSee('Delete this list and its resolved recipients. Contacts are not deleted.');
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.lists.destroy', $unusedList))
+            ->assertRedirect(route('tech.marketing.lists.index'))
+            ->assertSessionHas('status', 'Marketing list deleted.');
+
+        $this->assertDatabaseMissing('marketing_lists', ['id' => $unusedList->id]);
+        $this->assertDatabaseMissing('marketing_list_members', ['marketing_list_id' => $unusedList->id]);
+        $this->assertDatabaseHas('contacts', ['id' => $contact->id]);
+
+        $usedList = MarketingList::query()->create([
+            'name' => 'Used delete list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+        ]);
+        MarketingCampaign::query()->create([
+            'marketing_list_id' => $usedList->id,
+            'name' => 'List history campaign',
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.edit', $usedList))
+            ->assertOk()
+            ->assertSee('This list is used by campaigns and cannot be deleted without preserving campaign history first.');
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.lists.destroy', $usedList))
+            ->assertRedirect(route('tech.marketing.lists.edit', $usedList))
+            ->assertSessionHasErrors('list');
+
+        $this->assertDatabaseHas('marketing_lists', ['id' => $usedList->id]);
+        $this->assertDatabaseHas('marketing_campaigns', [
+            'marketing_list_id' => $usedList->id,
+            'name' => 'List history campaign',
+        ]);
     }
 
     #[Test]

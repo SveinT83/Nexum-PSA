@@ -45,6 +45,7 @@ class ResolveMarketingListMembers
         $clientMorph = (new Client())->getMorphClass();
         $contactTagIds = $criteria['contact_tag_ids'];
         $clientTagIds = $criteria['client_tag_ids'];
+        $excludedContactIds = $criteria['excluded_contact_ids'];
 
         if ($criteria['audience_type'] === 'manual_contacts') {
             return collect();
@@ -58,6 +59,7 @@ class ResolveMarketingListMembers
             ])
             ->where('status', 'active')
             ->where('do_not_email', false)
+            ->when($excludedContactIds !== [], fn ($query) => $query->whereNotIn('id', $excludedContactIds))
             ->when(
                 $contactTagIds !== [],
                 fn ($query) => $query->whereHas('tags', fn ($tagQuery) => $tagQuery->whereIn('tags.id', $contactTagIds)),
@@ -152,6 +154,7 @@ class ResolveMarketingListMembers
                 'relations' => fn ($query) => $query->where('related_type', $clientMorph),
             ])
             ->whereIn('id', $criteria['manual_contact_ids'])
+            ->whereNotIn('id', $criteria['excluded_contact_ids'])
             ->where('status', 'active')
             ->where('do_not_email', false)
             ->when(
@@ -220,6 +223,12 @@ class ResolveMarketingListMembers
                 ->values()
                 ->all(),
             'manual_contact_ids' => collect($criteria['manual_contact_ids'] ?? [])
+                ->map(fn ($id): int => (int) $id)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all(),
+            'excluded_contact_ids' => collect($criteria['excluded_contact_ids'] ?? [])
                 ->map(fn ($id): int => (int) $id)
                 ->filter()
                 ->unique()
