@@ -945,6 +945,130 @@ class MarketingModuleTest extends TestCase
     }
 
     #[Test]
+    public function campaign_ai_plan_returns_editable_sequence_with_campaign_context(): void
+    {
+        foreach (['marketing.view', 'marketing.campaign.edit'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.campaign.edit']);
+        $provider = AiProvider::query()->create([
+            'name' => 'OpenAI test',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-test',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        AiAgent::query()->create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Marketing Planner',
+            'slug' => 'marketing-planner',
+            'instructions' => 'Plan marketing campaigns.',
+            'default_domains' => ['marketing'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://api.openai.test/*' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'campaign_name' => 'AI security campaign',
+                            'campaign_description' => 'A three step security awareness campaign.',
+                            'emails' => [
+                                [
+                                    'email_name' => 'Security intro',
+                                    'email_subject' => 'Start with better security',
+                                    'delay_minutes' => 0,
+                                    'body_html' => '<p>Read our guide: <a href="https://example.test/security">Security guide</a></p>',
+                                    'body_text' => 'Read our guide: https://example.test/security',
+                                ],
+                                [
+                                    'email_name' => 'Security follow-up',
+                                    'email_subject' => 'Next step for your team',
+                                    'delay_minutes' => 1440,
+                                    'body_html' => '<p>Book a review.</p>',
+                                    'body_text' => 'Book a review.',
+                                ],
+                            ],
+                        ]),
+                    ],
+                ]],
+            ]),
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Planner Client AS']);
+        $list = MarketingList::query()->create([
+            'name' => 'Planner list',
+            'description' => 'Customers with security interest',
+            'status' => 'active',
+            'audience_type' => 'all_business_contacts',
+        ]);
+        $list->members()->create([
+            'source_type' => 'manual',
+            'source_id' => 1,
+            'client_id' => $client->id,
+            'email' => 'planner@example.test',
+            'name' => 'Planner Contact',
+            'status' => 'eligible',
+        ]);
+        $template = $this->marketingTemplate('ai_plan_template', 'AI Plan Template');
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'name' => 'Existing planner campaign',
+            'description' => 'Existing security campaign',
+            'status' => 'draft',
+            'track_clicks' => true,
+        ]);
+        $campaign->emails()->create([
+            'email_template_id' => $template->id,
+            'name' => 'Existing sequence email',
+            'template_snapshot_name' => $template->name,
+            'subject_snapshot' => 'Existing sequence subject',
+            'body_html_snapshot' => '<p>Existing sequence body</p>',
+            'body_text_snapshot' => 'Existing sequence body',
+            'variables_snapshot' => ['contact_name'],
+            'sequence_order' => 1,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.show', $campaign))
+            ->assertOk()
+            ->assertSee('AI Campaign Planner');
+
+        $this->actingAs($user)
+            ->postJson(route('tech.marketing.campaigns.ai-plan', $campaign), [
+                'prompt' => 'Plan a security campaign with useful links.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('campaign_name', 'AI security campaign')
+            ->assertJsonPath('emails.0.email_name', 'Security intro')
+            ->assertJsonPath('emails.0.delay_minutes', 0)
+            ->assertJsonPath('emails.1.delay_minutes', 1440)
+            ->assertJsonPath('emails.0.body_html', '<p>Read our guide: <a href="https://example.test/security">Security guide</a></p>');
+
+        Http::assertSent(function ($request): bool {
+            $content = collect($request['messages'])->pluck('content')->implode("\n");
+
+            return str_contains($content, 'Existing planner campaign')
+                && str_contains($content, 'Planner list')
+                && str_contains($content, 'Existing sequence body')
+                && str_contains($content, 'AI Plan Template')
+                && str_contains($content, 'Use normal destination URLs')
+                && str_contains($content, 'Do not invent WordPress post data');
+        });
+        $this->assertDatabaseHas('ai_chats', [
+            'status' => 'closed',
+        ]);
+    }
+
+    #[Test]
     public function campaign_email_sequence_requires_edit_permission(): void
     {
         Permission::findOrCreate('marketing.view', 'web');

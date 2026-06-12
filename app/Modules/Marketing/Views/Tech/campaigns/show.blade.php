@@ -107,6 +107,36 @@
         </div>
     @endif
 
+    @can('marketing.campaign.edit')
+        @if($aiDraftAvailable)
+            <div class="card mb-3" data-campaign-ai-planner>
+                <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                    <span class="fw-semibold">AI Campaign Planner</span>
+                    <i class="bi bi-stars text-primary" aria-hidden="true"></i>
+                </div>
+                <div class="card-body">
+                    <label for="campaign_ai_prompt" class="form-label">Prompt</label>
+                    <div class="input-group input-group-sm">
+                        <textarea id="campaign_ai_prompt" class="form-control" rows="2" data-campaign-ai-prompt></textarea>
+                        <button type="button" class="btn btn-outline-primary" data-campaign-ai-button data-ai-url="{{ route('tech.marketing.campaigns.ai-plan', $campaign) }}">
+                            <i class="bi bi-stars" aria-hidden="true"></i>
+                            Plan Campaign
+                        </button>
+                    </div>
+                    <div class="form-text" data-campaign-ai-status></div>
+                    <div class="d-none mt-3" data-campaign-ai-result>
+                        <div class="border rounded p-2 mb-2">
+                            <div class="small text-muted text-uppercase fw-semibold">Suggested Campaign</div>
+                            <div class="fw-semibold" data-campaign-ai-name></div>
+                            <div class="small text-muted" data-campaign-ai-description></div>
+                        </div>
+                        <div class="list-group" data-campaign-ai-emails></div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endcan
+
     <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
         <h2 class="h5 mb-0">Campaign Emails</h2>
         <div class="d-flex align-items-center gap-2">
@@ -394,6 +424,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             const templateSnapshots = {!! \Illuminate\Support\Js::from($templateSnapshots) !!};
             const campaignEmailPreviewVariables = {!! \Illuminate\Support\Js::from($campaignEmailPreviewVariables) !!};
+            const defaultTemplateId = '{{ $templates->first()?->id }}';
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
             function previewDocument(html) {
@@ -496,6 +527,108 @@
                 updatePreview(scope);
             }
 
+            function setFieldValue(scope, selector, value) {
+                const input = field(scope, selector);
+
+                if (input && value !== undefined && value !== null) {
+                    input.value = value;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+
+            function openCreatePanel() {
+                const panel = document.getElementById('campaignEmailCreatePanel');
+
+                if (panel && window.bootstrap?.Collapse) {
+                    window.bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false }).show();
+                }
+
+                return panel?.querySelector('[data-email-workspace]') || document.querySelector('[data-email-workspace][data-email-id="new"]');
+            }
+
+            function applyCampaignPlanEmail(email, index) {
+                const scope = openCreatePanel();
+
+                if (!scope) {
+                    return;
+                }
+
+                const templateSelect = field(scope, '[data-template-select]');
+
+                if (templateSelect && !templateSelect.value && defaultTemplateId) {
+                    templateSelect.value = defaultTemplateId;
+                    templateSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                setFieldValue(scope, '[data-email-name]', email.email_name || '');
+                setFieldValue(scope, '[data-email-subject]', email.email_subject || '');
+                setFieldValue(scope, '[data-email-html]', email.body_html || '');
+                setFieldValue(scope, '[data-email-text]', email.body_text || '');
+                setFieldValue(scope, '#sequence_order', String({{ $campaign->emails->max('sequence_order') + 1 }} + index));
+                setFieldValue(scope, '#delay_minutes', String(email.delay_minutes ?? 0));
+                updatePreview(scope);
+                field(scope, '[data-email-name]')?.focus();
+            }
+
+            function renderCampaignPlan(payload) {
+                const result = document.querySelector('[data-campaign-ai-result]');
+                const name = document.querySelector('[data-campaign-ai-name]');
+                const description = document.querySelector('[data-campaign-ai-description]');
+                const emailList = document.querySelector('[data-campaign-ai-emails]');
+
+                if (!result || !emailList) {
+                    return;
+                }
+
+                if (name) {
+                    name.textContent = payload.campaign_name || '';
+                }
+
+                if (description) {
+                    description.textContent = payload.campaign_description || '';
+                }
+
+                emailList.textContent = '';
+
+                (payload.emails || []).forEach(function (email, index) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex flex-column flex-lg-row justify-content-between gap-2';
+
+                    const body = document.createElement('div');
+                    const title = document.createElement('div');
+                    title.className = 'fw-semibold';
+                    title.textContent = `${index + 1}. ${email.email_name || 'Campaign email'}`;
+
+                    const subject = document.createElement('div');
+                    subject.className = 'small text-muted';
+                    subject.textContent = email.email_subject || 'No subject';
+
+                    const delay = document.createElement('span');
+                    delay.className = 'badge text-bg-light border mt-1';
+                    delay.textContent = `${email.delay_minutes || 0} min`;
+
+                    body.append(title, subject, delay);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'd-flex align-items-start';
+
+                    const useButton = document.createElement('button');
+                    useButton.type = 'button';
+                    useButton.className = 'btn btn-sm btn-outline-primary';
+                    useButton.textContent = 'Use';
+                    useButton.addEventListener('click', function () {
+                        applyCampaignPlanEmail(email, index);
+                    });
+
+                    actions.append(useButton);
+                    item.append(body, actions);
+                    emailList.append(item);
+                });
+
+                result.classList.remove('d-none');
+            }
+
             document.querySelectorAll('[data-email-workspace]').forEach(function (scope) {
                 scope.querySelectorAll('[data-email-name], [data-email-subject], [data-email-html], [data-email-text]').forEach(function (input) {
                     input.addEventListener('input', function () {
@@ -521,6 +654,73 @@
                         body_html: snapshot.body_html,
                         body_text: snapshot.body_text,
                     });
+                });
+            });
+
+            document.querySelectorAll('[data-campaign-ai-button]').forEach(function (button) {
+                button.addEventListener('click', async function () {
+                    const planner = button.closest('[data-campaign-ai-planner]');
+                    const prompt = planner?.querySelector('[data-campaign-ai-prompt]')?.value.trim() || '';
+                    const status = planner?.querySelector('[data-campaign-ai-status]');
+                    const originalHtml = button.innerHTML;
+
+                    if (!prompt) {
+                        if (status) {
+                            status.className = 'form-text text-danger';
+                            status.textContent = 'Prompt is required.';
+                        }
+
+                        return;
+                    }
+
+                    button.disabled = true;
+                    button.textContent = '';
+
+                    const spinner = document.createElement('span');
+                    spinner.className = 'spinner-border spinner-border-sm';
+                    spinner.setAttribute('aria-hidden', 'true');
+                    button.append(spinner, document.createTextNode(' Planning'));
+
+                    if (status) {
+                        status.className = 'form-text text-muted';
+                        status.textContent = 'AI is planning.';
+                    }
+
+                    try {
+                        const response = await fetch(button.dataset.aiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            body: JSON.stringify({
+                                prompt: prompt,
+                            }),
+                        });
+                        const payload = await response.json().catch(function () {
+                            return {};
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(payload.message || 'AI campaign plan failed.');
+                        }
+
+                        renderCampaignPlan(payload);
+
+                        if (status) {
+                            status.className = 'form-text text-success';
+                            status.textContent = 'Plan ready.';
+                        }
+                    } catch (error) {
+                        if (status) {
+                            status.className = 'form-text text-danger';
+                            status.textContent = error.message || 'AI campaign plan failed.';
+                        }
+                    } finally {
+                        button.disabled = false;
+                        button.innerHTML = originalHtml;
+                    }
                 });
             });
 

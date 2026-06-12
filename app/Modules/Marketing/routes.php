@@ -37,6 +37,8 @@ Route::post('/marketing/campaigns', [MarketingCampaignController::class, 'store'
     ->name('marketing.campaigns.store');
 Route::get('/marketing/campaigns/{campaign}', [MarketingCampaignController::class, 'show'])
     ->name('marketing.campaigns.show');
+Route::post('/marketing/campaigns/{campaign}/ai-plan', [MarketingCampaignController::class, 'draftPlanWithAi'])
+    ->name('marketing.campaigns.ai-plan');
 Route::post('/marketing/campaigns/{campaign}/emails', [MarketingCampaignController::class, 'storeEmail'])
     ->name('marketing.campaigns.emails.store');
 Route::post('/marketing/campaigns/{campaign}/emails/ai-draft', [MarketingCampaignController::class, 'draftEmailWithAi'])

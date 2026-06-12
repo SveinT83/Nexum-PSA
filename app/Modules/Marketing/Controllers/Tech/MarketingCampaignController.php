@@ -10,6 +10,7 @@ use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Marketing\Actions\ApproveMarketingCampaign;
 use App\Modules\Marketing\Actions\BuildMarketingCampaignEmailSnapshot;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignEmailWithAi;
+use App\Modules\Marketing\Actions\DraftMarketingCampaignPlanWithAi;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
 use App\Modules\Marketing\Actions\ResolveMarketingListMembers;
 use App\Modules\Marketing\Actions\SendMarketingCampaignEmailTest;
@@ -399,6 +400,22 @@ class MarketingCampaignController extends Controller
 
         try {
             return response()->json($draftEmail->handle($request->user(), $campaign, $email, $data));
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+    }
+
+    public function draftPlanWithAi(
+        MarketingCampaign $campaign,
+        Request $request,
+        DraftMarketingCampaignPlanWithAi $draftPlan,
+    ): JsonResponse {
+        $data = $request->validate([
+            'prompt' => ['required', 'string', 'max:4000'],
+        ]);
+
+        try {
+            return response()->json($draftPlan->handle($request->user(), $campaign, $data));
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }

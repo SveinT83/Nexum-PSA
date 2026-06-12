@@ -27,6 +27,8 @@ The first slices create the Marketing and Email foundation:
 - Campaign sequence editing for multiple ordered campaign emails as collapsible cards with delay,
   editable email subject/body snapshots, preview, test-send, and active-campaign recipient queue
   sync.
+- AI-assisted campaign planning from campaign, list, available template, and current sequence
+  context when an active AI agent is available.
 - AI-assisted campaign email drafting from campaign, list, and current email context when an active
   AI agent is available.
 - Dashboard summaries for campaigns, recipients, mailing lists, sender setup, templates, queue, and
@@ -107,9 +109,11 @@ rendered with real campaign/list context when available, then clear sample value
 placeholders stay visible in preview so operators can see that the system does not know what data
 should replace them. Test-send uses the current editor fields and sends through the campaign sender
 account or the default `marketing` account. The test recipient defaults to the current technician
-email address and can be overwritten for a colleague. AI drafting is available only when the
-technician has access to an active Integration AI agent. AI returns editable form fields and is
-audited as an AI chat; the technician still decides whether to save the result.
+email address and can be overwritten for a colleague. AI planning and drafting are available only
+when the technician has access to an active Integration AI agent. Campaign-level AI returns a draft
+campaign plan and proposed email sequence; email-level AI returns editable form fields for the
+current email draft. AI actions are audited as AI chats, and the technician still decides whether to
+save the result.
 
 The scheduled Marketing job runs every minute and sends due recipients in batches. The manual command
 is:
@@ -119,8 +123,11 @@ php artisan marketing:send-due
 ```
 
 Open tracking records a public pixel request. Click tracking records the click and redirects the
-recipient to the original URL. Clicks are classified against active Marketing interest tags when the
-URL or campaign context clearly matches subjects such as security, websites, or cloud.
+recipient to the original URL. When click tracking is enabled, normal `http` and `https` links in a
+campaign email are rewritten at send time, including WordPress links and links to unrelated external
+sites, so the click can be reported back to Nexum PSA before the recipient is redirected. Clicks are
+classified against active Marketing interest tags when the URL or campaign context clearly matches
+subjects such as security, websites, or cloud.
 
 Matching interest is stored in `marketing_interest_assignments` for the linked Contact and Client.
 Each assignment keeps first and last event references, event count, engagement score, and last

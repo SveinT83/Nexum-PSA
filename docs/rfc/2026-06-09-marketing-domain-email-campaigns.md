@@ -201,6 +201,11 @@ Click tracking should rewrite campaign links through a signed/tokenized redirect
 - Timestamp.
 - Topic/category metadata when available.
 
+Any normal `http` or `https` link in a campaign email, including WordPress article links and links
+to third-party sites, should be reportable back to Nexum PSA when click tracking is enabled. Authors
+and AI tools should write normal destination links; Marketing owns rewriting those links through the
+tracking redirect at send time and recording the original URL before redirecting the recipient.
+
 Tracked topic/category metadata should automatically update Contact-level and Client-level interest
 tags. Sales/Leads views can then prioritize recipients and companies based on the interests they
 actually engaged with, without creating a separate Marketing-owned call-list surface.
@@ -216,8 +221,14 @@ for sending.
 
 Planned AI use cases:
 
+- Plan a full campaign from a campaign-level prompt, existing campaign/list context, current sequence
+  emails, available Marketing templates, and later WordPress content sources. The first slice should
+  return a draft plan only; technicians still choose which suggested emails to save and campaigns
+  still require approval before sending.
 - Draft campaign email copy from templates, campaign/list context, WordPress content when available,
   and company profile.
+- Edit an existing campaign email draft from the current subject/body, campaign context, list
+  context, future WordPress content context, and clear link-tracking rules.
 - Suggest subject lines and plaintext fallbacks from the editable HTML draft.
 - Summarize WordPress content into campaign content blocks.
 - Classify link topics and recipient interests.
@@ -227,6 +238,14 @@ Planned AI use cases:
 
 AI decisions must be auditable and must not bypass permissions, unsubscribe rules, or campaign
 approval.
+
+### Shared Content Editor Direction
+
+Marketing email editing should later use a reusable WordPress-like editor rather than plain HTML
+textareas. The editor should support visual block editing, drag/drop content blocks, HTML/source
+editing, reusable template sections, preview, and safe output. It should be built as a shared
+platform editor so the same editing surface can be reused by Marketing campaign emails, Email
+templates, Documentation, Knowledge articles, and future content workflows.
 
 ## Impact Analysis
 
