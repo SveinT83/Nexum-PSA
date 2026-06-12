@@ -19,8 +19,18 @@
         $clientTasks = $clientTasks->sortByDesc('updated_at')->values();
         $missing = fn ($value) => filled($value) ? $value : '—';
         $contacts = ($contacts ?? collect())->sortBy('name')->values();
-        $availableTabs = ['assets', 'sites', 'contacts', 'contracts', 'tasks', 'custom-fields'];
+        $availableTabs = ['assets', 'sites', 'contacts', 'contracts', 'time-usage', 'signals', 'tasks', 'custom-fields'];
         $activeClientTab = in_array(request('tab'), $availableTabs, true) ? request('tab') : 'assets';
+        $formatMinutes = function (int $minutes): string {
+            $hours = intdiv($minutes, 60);
+            $remainder = $minutes % 60;
+
+            if ($hours > 0 && $remainder > 0) {
+                return "{$hours}h {$remainder}m";
+            }
+
+            return $hours > 0 ? "{$hours}h" : "{$remainder}m";
+        };
         if ($activeClientTab === 'custom-fields' && ($customFields ?? collect())->isEmpty()) {
             $activeClientTab = 'assets';
         }
@@ -102,6 +112,16 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link {{ $activeClientTab === 'contracts' ? 'active ' : '' }}text-body border border-bottom-0" id="client-contracts-tab" data-bs-toggle="tab" data-bs-target="#client-contracts-pane" type="button" role="tab" aria-controls="client-contracts-pane" aria-selected="{{ $activeClientTab === 'contracts' ? 'true' : 'false' }}">
                         Contracts <span class="badge text-bg-light border ms-1">{{ $contracts->count() }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {{ $activeClientTab === 'time-usage' ? 'active ' : '' }}text-body border border-bottom-0" id="client-time-usage-tab" data-bs-toggle="tab" data-bs-target="#client-time-usage-pane" type="button" role="tab" aria-controls="client-time-usage-pane" aria-selected="{{ $activeClientTab === 'time-usage' ? 'true' : 'false' }}">
+                        Time <span class="badge text-bg-light border ms-1">{{ $clientTimeUsageEntries->count() }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {{ $activeClientTab === 'signals' ? 'active ' : '' }}text-body border border-bottom-0" id="client-signals-tab" data-bs-toggle="tab" data-bs-target="#client-signals-pane" type="button" role="tab" aria-controls="client-signals-pane" aria-selected="{{ $activeClientTab === 'signals' ? 'true' : 'false' }}">
+                        Signals <span class="badge text-bg-light border ms-1">{{ $signals->count() }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -241,6 +261,74 @@
                 </div>
 
                 <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'contracts']) id="client-contracts-pane" role="tabpanel" aria-labelledby="client-contracts-tab" tabindex="0">
+                    @if($canViewTimebank)
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold">Contract Timebank</span>
+                                    <span class="badge text-bg-light border">{{ $clientTimebankBalances->count() }}</span>
+                                </div>
+                                @unless($quickTimebankPolicy['quick_timebank_enabled'])
+                                    <span class="badge text-bg-secondary">Quick registration disabled</span>
+                                @endunless
+                            </div>
+                            <div class="list-group list-group-flush">
+                                @forelse($clientTimebankBalances as $timebank)
+                                    <div class="list-group-item">
+                                        <div>
+                                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                                    <span class="fw-semibold">{{ $timebank['contract_item']->name }}</span>
+                                                    <a href="{{ route('tech.contracts.show', $timebank['contract']) }}" class="small text-decoration-none">
+                                                        Contract #{{ $timebank['contract']->id }}
+                                                    </a>
+                                                    <span class="badge text-bg-light border">
+                                                        {{ $timebank['period_start']->format('Y-m-d') }} - {{ $timebank['period_end']->format('Y-m-d') }}
+                                                    </span>
+                                                    @if($timebank['overused_minutes'] > 0)
+                                                        <span class="badge text-bg-danger">Overused {{ $formatMinutes($timebank['overused_minutes']) }}</span>
+                                                    @else
+                                                        <span class="badge text-bg-success">Remaining {{ $formatMinutes($timebank['remaining_minutes']) }}</span>
+                                                    @endif
+                                                </div>
+
+                                                <div class="progress mb-2" style="height: 0.85rem;" role="progressbar" aria-label="Timebank usage" aria-valuenow="{{ $timebank['used_minutes'] }}" aria-valuemin="0" aria-valuemax="{{ max(1, $timebank['included_minutes']) }}">
+                                                    <div class="progress-bar {{ $timebank['overused_minutes'] > 0 ? 'bg-danger' : 'bg-success' }}" style="width: {{ $timebank['usage_percent'] }}%"></div>
+                                                </div>
+                                                @if($timebank['overused_minutes'] > 0)
+                                                    <div class="progress mb-2" style="height: 0.35rem;" role="progressbar" aria-label="Timebank overuse" aria-valuenow="{{ $timebank['overused_minutes'] }}" aria-valuemin="0" aria-valuemax="{{ max(1, $timebank['included_minutes']) }}">
+                                                        <div class="progress-bar bg-danger" style="width: {{ max(6, $timebank['overuse_percent']) }}%"></div>
+                                                    </div>
+                                                @endif
+
+                                                <div class="row g-2 small">
+                                                    <div class="col-6 col-md-3">
+                                                        <span class="text-muted">Included</span>
+                                                        <div class="fw-semibold">{{ $formatMinutes($timebank['included_minutes']) }}</div>
+                                                    </div>
+                                                    <div class="col-6 col-md-3">
+                                                        <span class="text-muted">Used</span>
+                                                        <div class="fw-semibold">{{ $formatMinutes($timebank['used_minutes']) }}</div>
+                                                    </div>
+                                                    <div class="col-6 col-md-3">
+                                                        <span class="text-muted">Remaining</span>
+                                                        <div class="fw-semibold">{{ $formatMinutes($timebank['remaining_minutes']) }}</div>
+                                                    </div>
+                                                    <div class="col-6 col-md-3">
+                                                        <span class="text-muted">Overused</span>
+                                                        <div class="fw-semibold {{ $timebank['overused_minutes'] > 0 ? 'text-danger' : '' }}">{{ $formatMinutes($timebank['overused_minutes']) }}</div>
+                                                    </div>
+                                                </div>
+
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="list-group-item text-center text-muted py-4">No active contract timebank found for this client.</div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                    @endif
+
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-2">
@@ -285,6 +373,230 @@
                             </table>
                         </div>
                     </div>
+                </div>
+
+                <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'time-usage']) id="client-time-usage-pane" role="tabpanel" aria-labelledby="client-time-usage-tab" tabindex="0">
+                    @if($canViewTimebank && $quickTimebankPolicy['quick_timebank_enabled'] && $canQuickConsumeTimebank)
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold">Quick Time Registration</span>
+                                    <span class="badge text-bg-light border">{{ $clientTimebankBalances->count() }}</span>
+                                </div>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                @forelse($clientTimebankBalances as $timebank)
+                                    @php
+                                        $canQuickUseLine = $timebank['time_rate_options']->isNotEmpty()
+                                            && (
+                                                $timebank['remaining_minutes'] > 0
+                                                || (! $quickTimebankPolicy['quick_timebank_require_remaining'] && $quickTimebankPolicy['quick_timebank_allow_overuse'] && $canOverconsumeTimebank)
+                                            );
+                                        $modalId = 'quickTimebankConsumptionModal'.$timebank['contract_item']->id;
+                                    @endphp
+                                    <div class="list-group-item d-flex flex-column flex-lg-row justify-content-between gap-2">
+                                        <div>
+                                            <div class="fw-semibold">{{ $timebank['contract_item']->name }}</div>
+                                            <div class="small text-muted">
+                                                Remaining {{ $formatMinutes($timebank['remaining_minutes']) }} / Included {{ $formatMinutes($timebank['included_minutes']) }}
+                                                @if($timebank['overused_minutes'] > 0)
+                                                    <span class="text-danger ms-1">Overused {{ $formatMinutes($timebank['overused_minutes']) }}</span>
+                                                @endif
+                                            </div>
+                                            @if($timebank['time_rate_options']->isEmpty())
+                                                <div class="small text-danger">No contract time rate available.</div>
+                                            @endif
+                                        </div>
+                                        <div class="d-flex align-items-start">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}" @disabled(! $canQuickUseLine)>
+                                                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                                                Register time
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-labelledby="{{ $modalId }}Label" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <form method="post" action="{{ route('tech.clients.contracts.timebank-consumptions.store', $client) }}" class="modal-content">
+                                                @csrf
+                                                <input type="hidden" name="contract_item_id" value="{{ $timebank['contract_item']->id }}">
+                                                <div class="modal-header">
+                                                    <h2 class="modal-title fs-6" id="{{ $modalId }}Label">Register Time</h2>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <div class="fw-semibold">{{ $timebank['contract_item']->name }}</div>
+                                                        <div class="small text-muted">Contract #{{ $timebank['contract']->id }} · Remaining {{ $formatMinutes($timebank['remaining_minutes']) }}</div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="time_rate_source_{{ $timebank['contract_item']->id }}" class="form-label">Time rate</label>
+                                                        <select name="time_rate_source" id="time_rate_source_{{ $timebank['contract_item']->id }}" class="form-select" required>
+                                                            @foreach($timebank['time_rate_options'] as $rateOption)
+                                                                <option value="{{ $rateOption['value'] }}" @selected(old('time_rate_source') === $rateOption['value'])>{{ $rateOption['label'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="row g-3">
+                                                        <div class="col-sm-6">
+                                                            <label for="work_date_{{ $timebank['contract_item']->id }}" class="form-label">Work date</label>
+                                                            <input type="date" name="work_date" id="work_date_{{ $timebank['contract_item']->id }}" value="{{ old('work_date', now()->toDateString()) }}" class="form-control" required>
+                                                        </div>
+                                                        <div class="col-sm-6">
+                                                            <label for="minutes_{{ $timebank['contract_item']->id }}" class="form-label">Minutes</label>
+                                                            <input type="number" name="minutes" id="minutes_{{ $timebank['contract_item']->id }}" value="{{ old('minutes') }}" min="1" max="{{ $quickTimebankPolicy['quick_timebank_max_minutes'] }}" class="form-control" required>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <label for="note_{{ $timebank['contract_item']->id }}" class="form-label">Note</label>
+                                                            <textarea name="note" id="note_{{ $timebank['contract_item']->id }}" rows="3" class="form-control" @required($quickTimebankPolicy['quick_timebank_require_note'])>{{ old('note') }}</textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                                        Register time
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="list-group-item text-center text-muted py-4">No active contract timebank found for quick registration.</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold">Time Usage</span>
+                                <span class="badge text-bg-light border">{{ $clientTimeUsageEntries->count() }}</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Source</th>
+                                        <th>Context</th>
+                                        <th>Technician</th>
+                                        <th>Minutes</th>
+                                        <th>Rate</th>
+                                        <th>Note</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($clientTimeUsageEntries as $usage)
+                                        @php
+                                            $usageModalId = 'clientTimeUsageEditModal'.$usage['source'].$usage['id'];
+                                        @endphp
+                                        <tr>
+                                            <td>{{ $usage['work_date']?->format('Y-m-d') ?? '—' }}</td>
+                                            <td><span class="badge text-bg-light border">{{ $usage['label'] }}</span></td>
+                                            <td><a href="{{ $usage['context_url'] }}" class="text-decoration-none">{{ \Illuminate\Support\Str::limit($usage['context'], 70) }}</a></td>
+                                            <td>{{ $usage['user']?->name ?? 'Unknown' }}</td>
+                                            <td>{{ $formatMinutes((int) $usage['minutes']) }}</td>
+                                            <td>
+                                                {{ $usage['rate_name'] ?? '—' }}
+                                                @if($usage['overused_minutes'])
+                                                    <span class="badge text-bg-danger ms-1">Overuse {{ $formatMinutes((int) $usage['overused_minutes']) }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="{{ blank($usage['note'] ?? $usage['invoice_text']) ? 'text-muted' : '' }}">{{ \Illuminate\Support\Str::limit($usage['note'] ?: $usage['invoice_text'] ?: '—', 80) }}</td>
+                                            <td class="text-end">
+                                                @if($usage['ordered'])
+                                                    <span class="badge text-bg-secondary">Ordered</span>
+                                                @elseif($usage['can_edit'])
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#{{ $usageModalId }}">
+                                                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                                                        Edit
+                                                    </button>
+                                                @else
+                                                    <span class="text-muted small">Locked</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted py-4">No time usage registered for this client.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+	                            </table>
+	                        </div>
+	                    </div>
+
+	                    @foreach($clientTimeUsageEntries as $usage)
+	                        @php
+	                            $usageModalId = 'clientTimeUsageEditModal'.$usage['source'].$usage['id'];
+	                        @endphp
+	                        @if($usage['can_edit'] && ! $usage['ordered'])
+	                            <div class="modal fade" id="{{ $usageModalId }}" tabindex="-1" aria-labelledby="{{ $usageModalId }}Label" aria-hidden="true">
+	                                <div class="modal-dialog">
+	                                    <form method="post" action="{{ route('tech.clients.time-usage.update', [$client, $usage['source'], $usage['id']]) }}" class="modal-content">
+	                                        @csrf
+	                                        @method('PATCH')
+	                                        <div class="modal-header">
+	                                            <h2 class="modal-title fs-6" id="{{ $usageModalId }}Label">Edit Time Usage</h2>
+	                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	                                        </div>
+	                                        <div class="modal-body">
+	                                            <div class="mb-3">
+	                                                <div class="fw-semibold">{{ $usage['context'] }}</div>
+	                                                <div class="small text-muted">{{ $usage['label'] }} · {{ $usage['rate_name'] ?? 'No rate' }}</div>
+	                                            </div>
+	                                            <div class="row g-3">
+	                                                @if($usage['rate_options']->isNotEmpty())
+	                                                    <div class="col-12">
+	                                                        <label class="form-label" for="usage_time_rate_source_{{ $usage['source'] }}_{{ $usage['id'] }}">Time rate</label>
+	                                                        <select name="time_rate_source" id="usage_time_rate_source_{{ $usage['source'] }}_{{ $usage['id'] }}" class="form-select" required>
+	                                                            @foreach($usage['rate_options'] as $rateOption)
+	                                                                <option value="{{ $rateOption['value'] }}" @selected(old('time_rate_source', $usage['current_rate_source']) === $rateOption['value'])>{{ $rateOption['label'] }}</option>
+	                                                            @endforeach
+	                                                        </select>
+	                                                    </div>
+	                                                @endif
+	                                                <div class="col-sm-6">
+	                                                    <label class="form-label" for="usage_work_date_{{ $usage['source'] }}_{{ $usage['id'] }}">Work date</label>
+	                                                    <input type="date" name="work_date" id="usage_work_date_{{ $usage['source'] }}_{{ $usage['id'] }}" value="{{ old('work_date', $usage['work_date']?->toDateString() ?? now()->toDateString()) }}" class="form-control" required>
+	                                                </div>
+	                                                <div class="col-sm-6">
+	                                                    <label class="form-label" for="usage_minutes_{{ $usage['source'] }}_{{ $usage['id'] }}">Minutes</label>
+	                                                    <input type="number" name="minutes" id="usage_minutes_{{ $usage['source'] }}_{{ $usage['id'] }}" value="{{ old('minutes', $usage['minutes']) }}" min="1" max="1440" class="form-control" required>
+	                                                </div>
+	                                                @if($usage['source'] === 'ticket')
+	                                                    <div class="col-12">
+	                                                        <label class="form-label" for="usage_invoice_text_{{ $usage['id'] }}">Invoice text</label>
+	                                                        <textarea name="invoice_text" id="usage_invoice_text_{{ $usage['id'] }}" rows="2" class="form-control">{{ old('invoice_text', $usage['invoice_text']) }}</textarea>
+	                                                    </div>
+	                                                @endif
+	                                                <div class="col-12">
+	                                                    <label class="form-label" for="usage_note_{{ $usage['source'] }}_{{ $usage['id'] }}">Note</label>
+	                                                    <textarea name="note" id="usage_note_{{ $usage['source'] }}_{{ $usage['id'] }}" rows="3" class="form-control">{{ old('note', $usage['note']) }}</textarea>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                        <div class="modal-footer">
+	                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+	                                            <button type="submit" class="btn btn-sm btn-primary">
+	                                                <i class="bi bi-check-lg" aria-hidden="true"></i>
+	                                                Save
+	                                            </button>
+	                                        </div>
+	                                    </form>
+	                                </div>
+	                            </div>
+	                        @endif
+	                    @endforeach
+                </div>
+
+                <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'signals']) id="client-signals-pane" role="tabpanel" aria-labelledby="client-signals-tab" tabindex="0">
+                    @include('signal::Tech.partials.related-signals', ['signals' => $signals])
                 </div>
 
                 <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'tasks']) id="client-tasks-pane" role="tabpanel" aria-labelledby="client-tasks-tab" tabindex="0">

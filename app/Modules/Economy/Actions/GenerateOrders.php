@@ -3,6 +3,7 @@
 namespace App\Modules\Economy\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Commercial\Models\Contracts\ClientContractTimeConsumption;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\TimeRate;
@@ -36,6 +37,8 @@ class GenerateOrders
                 'time_entries_waiting_for_contract' => 0,
                 'cost_entries_seen' => 0,
                 'cost_entries_ordered' => 0,
+                'quick_timebank_entries_seen' => 0,
+                'quick_timebank_entries_ordered' => 0,
             ];
 
             if ($settings->create_orders_from_closed_ticket_time || $settings->create_orders_from_resolved_ticket_time || $settings->include_unresolved_ticket_time_in_period_close) {
@@ -45,6 +48,8 @@ class GenerateOrders
             if ($settings->create_orders_from_picked_ticket_costs) {
                 $this->generateCostLines($periodStart, $periodEnd, $actor, $settings, $summary);
             }
+
+            $this->generateQuickTimebankLines($periodStart, $periodEnd, $actor, $settings, $summary);
 
             return $summary;
         });
@@ -398,6 +403,73 @@ class GenerateOrders
             });
     }
 
+    private function generateQuickTimebankLines(CarbonInterface $periodStart, CarbonInterface $periodEnd, ?User $actor, $settings, array &$summary): void
+    {
+        ClientContractTimeConsumption::query()
+            ->with(['client', 'contract', 'contractItem'])
+            ->where('overused_minutes', '>', 0)
+            ->whereNotNull('rate_amount_ex_vat')
+            ->where('rate_amount_ex_vat', '>', 0)
+            ->whereBetween('work_date', [$periodStart->toDateString(), $periodEnd->toDateString()])
+            ->orderBy('work_date')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get()
+            ->each(function (ClientContractTimeConsumption $entry) use ($periodStart, $periodEnd, $actor, $settings, &$summary): void {
+                $summary['quick_timebank_entries_seen']++;
+
+                $rate = (float) ($entry->rate_amount_ex_vat ?? 0);
+                if ($entry->overused_minutes <= 0 || $rate <= 0) {
+                    return;
+                }
+
+                $order = $this->draftOrder($entry->client_id, $periodStart, $periodEnd, $actor, $settings);
+                $unitPrice = round($rate / 60, 4);
+                $lineTotal = round($unitPrice * $entry->overused_minutes, 2);
+                $vatRate = $settings->default_vat_rate !== null ? (float) $settings->default_vat_rate : null;
+                $vatAmount = $vatRate === null ? null : round($lineTotal * ($vatRate / 100), 2);
+
+                EconomyOrderLine::query()->firstOrCreate(
+                    [
+                        'source_type' => $entry->getMorphClass(),
+                        'source_id' => $entry->id,
+                    ],
+                    [
+                        'economy_order_id' => $order->id,
+                        'client_id' => $entry->client_id,
+                        'ticket_id' => null,
+                        'work_date' => $entry->work_date,
+                        'line_type' => 'quick_timebank_overuse',
+                        'description' => $this->quickTimebankDescription($entry),
+                        'quantity' => $entry->overused_minutes,
+                        'unit' => 'min',
+                        'unit_price_ex_vat' => $unitPrice,
+                        'line_total_ex_vat' => $lineTotal,
+                        'vat_rate' => $vatRate,
+                        'vat_amount' => $vatAmount,
+                        'total_inc_vat' => $lineTotal + ($vatAmount ?? 0),
+                        'currency' => $entry->rate_currency ?: 'NOK',
+                        'metadata' => [
+                            'contract_id' => $entry->contract_id,
+                            'contract_item_id' => $entry->contract_item_id,
+                            'contract_item_name' => $entry->contractItem?->name,
+                            'rate_name' => $entry->rate_name,
+                            'rate_amount_ex_vat_per_hour' => $rate,
+                            'included_minutes_snapshot' => $entry->included_minutes_snapshot,
+                            'used_before_minutes_snapshot' => $entry->used_before_minutes_snapshot,
+                            'registered_minutes' => $entry->minutes,
+                            'overused_minutes' => $entry->overused_minutes,
+                        ],
+                    ]
+                );
+
+                $summary['quick_timebank_entries_ordered']++;
+                $summary['lines_created']++;
+                $summary['orders_touched']++;
+                $this->recalculate($order);
+            });
+    }
+
     private function timeEntryIsEligible(TicketTimeEntry $entry, $settings): bool
     {
         if ($settings->include_unresolved_ticket_time_in_period_close) {
@@ -456,5 +528,13 @@ class GenerateOrders
     private function costDescription(TicketCostEntry $entry): string
     {
         return trim(($entry->ticket?->ticket_key ? $entry->ticket->ticket_key . ' - ' : '') . ($entry->invoice_text ?: $entry->item_name));
+    }
+
+    private function quickTimebankDescription(ClientContractTimeConsumption $entry): string
+    {
+        $name = $entry->contractItem?->name ?: 'Contract timebank';
+        $note = $entry->note ? ' - '.$entry->note : '';
+
+        return trim('Overused timebank: '.$name.$note);
     }
 }

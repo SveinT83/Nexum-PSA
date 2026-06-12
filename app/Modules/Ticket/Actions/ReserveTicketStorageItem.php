@@ -84,6 +84,8 @@ class ReserveTicketStorageItem
                 ],
             ]);
 
+            app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'storage_item_reserved');
+
             return $entry;
         });
     }

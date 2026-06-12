@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <h1>Contract #{{ $contract->id }} Services</h1>
         <div>
-            <x-buttons.back url="{{ route('tech.contracts.index') }}" class="mb-0">Back</x-buttons.back>
+            <x-buttons.back url="{{ route('tech.contracts.show', $contract) }}" class="mb-0">Back</x-buttons.back>
         </div>
     </div>
 @endsection

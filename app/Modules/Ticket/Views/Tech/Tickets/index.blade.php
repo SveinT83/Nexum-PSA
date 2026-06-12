@@ -691,7 +691,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="{{ $statLink(['lifecycle' => 'all', 'ownership' => 'all', 'unassigned' => '1']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
+                <a href="{{ $statLink(['lifecycle' => 'open', 'ownership' => 'all', 'unassigned' => '1']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
                     <div class="small text-muted text-uppercase">Unassigned</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['unassigned'] }}</div>
                 </a>

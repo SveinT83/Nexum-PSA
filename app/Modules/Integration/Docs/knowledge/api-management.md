@@ -24,6 +24,7 @@ Implemented scopes:
 - `contacts.read`: list and view contacts.
 - `contacts.create`: create contacts through the Contact upsert endpoint.
 - `contacts.update`: update contacts, including client and site relations.
+- `contacts.ownership_manage`: repair Contact ownership across Clients and legacy Client Users.
 - `tickets.read`: list and view tickets.
 - `tickets.create`: create tickets through the ticket engine.
 - `tickets.update`: update ticket fields and status.
@@ -94,6 +95,10 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/contacts`
 - `PUT /api/v1/contacts/{contact}`
 - `PATCH /api/v1/contacts/{contact}`
+- `GET /api/v1/clients/{client}/contacts`
+- `POST /api/v1/contacts/{contact}/move`
+- `POST /api/v1/clients/{client}/contacts/bulk-fix`
+- `DELETE /api/v1/clients/{client}/contacts/{contact}`
 - `GET /api/v1/tickets`
 - `GET /api/v1/tickets/{ticket}`
 - `POST /api/v1/tickets`
@@ -245,6 +250,37 @@ ticket and client workflows continue to work while the Contact Domain transition
 
 `PUT` and `PATCH /api/v1/contacts/{contact}` update a known Contact by ID and require
 `contacts.update`.
+
+## Contact Ownership Repair API
+
+Contact ownership repair endpoints are intended for trusted cleanup tools and production support.
+They keep canonical `contact_relations` and legacy `client_users` aligned while the Contact Domain
+transition is in progress.
+
+`GET /api/v1/clients/{client}/contacts` requires `contacts.read`. The `{client}` parameter accepts
+either internal Client ID or `client_number`. The response includes canonical Contacts, their
+relations, and legacy `client_users` rows for the Client's Sites.
+
+Mutating repair endpoints require `contacts.ownership_manage`:
+
+- `POST /api/v1/contacts/{contact}/move`
+- `POST /api/v1/clients/{client}/contacts/bulk-fix`
+- `DELETE /api/v1/clients/{client}/contacts/{contact}`
+
+`POST /api/v1/contacts/{contact}/move` accepts `target_client_id` or `target_client_number`,
+optional `target_site_id`, `dry_run`, and `reason`. Actual moves are transactional and update both
+Contact relations and the legacy Client User bridge.
+
+`POST /api/v1/clients/{client}/contacts/bulk-fix` accepts `contact_ids`, optional `target_site_id`,
+`dry_run`, and `reason`. Use `dry_run: true` first to get per-Contact statuses before mutating data.
+
+`DELETE /api/v1/clients/{client}/contacts/{contact}` detaches a Contact from one Client. It deletes
+linked legacy `client_users` rows for that Client so the legacy contact does not remain visible on
+the wrong customer. `delete_if_orphan` can soft-delete the Contact only when it has no remaining
+ownership or User account link.
+
+Repair calls are audited in the activity log with the actor, API token ID when available, reason,
+dry-run flag, before state, result, and after state.
 
 ## Ticket API
 

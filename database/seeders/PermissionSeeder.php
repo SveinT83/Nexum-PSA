@@ -105,6 +105,9 @@ class PermissionSeeder extends Seeder
             'commercial.cost_manage',
             'commercial.sla_manage',
             'commercial.rate_manage',
+            'commercial.timebank.view',
+            'commercial.timebank.quick-consume',
+            'commercial.timebank.overconsume',
 
             'economy.view',
             'economy.order_manage',
@@ -136,6 +139,20 @@ class PermissionSeeder extends Seeder
             'sales.quote_manage',
             'sales.email_send',
             'sales.manage_settings',
+
+            'marketing.view',
+            'marketing.list.manage',
+            'marketing.campaign.create',
+            'marketing.campaign.edit',
+            'marketing.campaign.approve',
+            'marketing.campaign.send',
+            'marketing.analytics.view',
+            'marketing.settings.manage',
+
+            'signal.view',
+            'signal.rule.manage',
+            'signal.webhook.manage',
+            'signal.action.execute',
 
             'risk.view',
             'risk.create',

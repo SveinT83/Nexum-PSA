@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Menus\SideBar\TemplatesMenu;
 use App\Modules\Email\Actions\EnsureDefaultEmailTemplates;
 use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Email\Services\EmailTemplateRenderer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -58,20 +59,26 @@ class EmailTemplateController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(EmailTemplateRenderer $renderer): View
     {
+        $template = new EmailTemplate(['scope' => 'tickets', 'is_active' => true]);
+
         return view('email::Admin.Templates.form', [
-            'template' => new EmailTemplate(['scope' => 'tickets', 'is_active' => true]),
+            'template' => $template,
             'scopes' => EmailTemplate::SCOPES,
+            'preview' => null,
+            'sampleVariables' => $renderer->sampleVariables($template),
             'sidebarMenuItems' => (new TemplatesMenu())->TemplatesMenu('email'),
         ]);
     }
 
-    public function edit(EmailTemplate $template): View
+    public function edit(EmailTemplate $template, EmailTemplateRenderer $renderer): View
     {
         return view('email::Admin.Templates.form', [
             'template' => $template,
             'scopes' => EmailTemplate::SCOPES,
+            'preview' => $renderer->render($template, $renderer->sampleVariables($template)),
+            'sampleVariables' => $renderer->sampleVariables($template),
             'sidebarMenuItems' => (new TemplatesMenu())->TemplatesMenu('email'),
         ]);
     }

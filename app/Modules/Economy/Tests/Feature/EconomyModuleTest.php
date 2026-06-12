@@ -4,9 +4,11 @@ namespace App\Modules\Economy\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Modules\Commercial\Models\Contracts\ClientContractTimeConsumption;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Services\Services;
+use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Economy\Actions\GenerateOrders;
 use App\Modules\Economy\Controllers\Admin\EconomySettingsController;
 use App\Modules\Economy\Controllers\Tech\EconomyController;
@@ -381,6 +383,88 @@ class EconomyModuleTest extends TestCase
             'source_type' => $entry->getMorphClass(),
             'source_id' => $entry->id,
             'quantity' => 80,
+        ]);
+    }
+
+    #[Test]
+    public function quick_timebank_overuse_generates_an_order_line(): void
+    {
+        $client = Client::create(['name' => 'Quick Overuse Client AS', 'active' => true]);
+        $rate = TimeRate::create([
+            'name' => 'Contract overuse',
+            'slug' => 'contract-overuse',
+            'code' => 'CONTRACT_OVERUSE',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 650,
+            'currency' => 'NOK',
+            'applies_with_contract' => true,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        $service = Services::create([
+            'name' => 'Quick support bank',
+            'sku' => 'QUICK-BANK',
+            'status' => 'active',
+            'unitId' => 1,
+            'taxable' => 25,
+            'timebank_enabled' => true,
+            'timebank_minutes' => 300,
+            'timebank_interval' => 'monthly',
+            'created_by_user_id' => $this->tech->id,
+        ]);
+        $contract = Contracts::create([
+            'client_id' => $client->id,
+            'created_by' => $this->tech->id,
+            'description' => 'Quick support contract',
+            'approval_status' => 'won',
+            'start_date' => now()->startOfMonth()->toDateString(),
+            'end_date' => now()->endOfYear()->toDateString(),
+        ]);
+        $contractItem = ContractItem::create([
+            'contract_id' => $contract->id,
+            'service_id' => $service->id,
+            'name' => 'Quick support bank',
+            'sku' => 'QUICK-BANK',
+            'unit_price' => 0,
+            'quantity' => 1,
+            'unit' => 'month',
+            'billing_interval' => 'monthly',
+        ]);
+        $entry = ClientContractTimeConsumption::create([
+            'client_id' => $client->id,
+            'contract_id' => $contract->id,
+            'contract_item_id' => $contractItem->id,
+            'time_rate_id' => $rate->id,
+            'user_id' => $this->tech->id,
+            'work_date' => now()->toDateString(),
+            'minutes' => 30,
+            'note' => 'Counter support',
+            'source' => 'quick_client',
+            'rate_name' => $rate->name,
+            'rate_code' => $rate->code,
+            'rate_type' => $rate->rate_type,
+            'rate_unit' => $rate->unit,
+            'rate_amount_ex_vat' => $rate->amount_ex_vat,
+            'rate_currency' => $rate->currency,
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'included_minutes_snapshot' => 300,
+            'used_before_minutes_snapshot' => 300,
+            'overused_minutes' => 30,
+        ]);
+
+        $summary = app(GenerateOrders::class)->handle(now()->startOfMonth(), now()->endOfMonth(), $this->tech);
+
+        $this->assertSame(1, $summary['quick_timebank_entries_seen']);
+        $this->assertSame(1, $summary['quick_timebank_entries_ordered']);
+        $this->assertDatabaseHas('economy_order_lines', [
+            'source_type' => $entry->getMorphClass(),
+            'source_id' => $entry->id,
+            'line_type' => 'quick_timebank_overuse',
+            'quantity' => 30,
+            'unit_price_ex_vat' => 10.8333,
+            'line_total_ex_vat' => 325,
         ]);
     }
 

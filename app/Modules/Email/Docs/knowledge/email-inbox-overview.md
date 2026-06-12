@@ -5,11 +5,39 @@ The Tech inbox is available at `/tech/inbox`.
 
 Admin email account settings are available under `/tech/admin/settings/email/accounts`.
 
+## Outbound Defaults And Templates
+
+Email accounts can be marked as default senders for scoped workflows. Current scopes are `tickets`,
+`sales`, `marketing`, and `alerts`. The `marketing` scope is used by the Marketing domain as the
+default campaign sender, while each future campaign can still override the sender account.
+
+Email templates are owned by the Email domain and managed from the Templates hub. Templates support
+the `marketing` scope so campaign emails can reuse the shared renderer instead of storing separate
+template copies in Marketing.
+
+The renderer injects company branding variables such as `company_name`, `company_logo_url`,
+`brand_primary`, `brand_secondary`, `brand_accent`, `support_email`, and `website`. HTML bodies are
+wrapped in a simple brand-aware email layout unless the template already contains a complete HTML
+document. Plain text output remains separate and readable.
+
+The default template seeder creates a `marketing/marketing_campaign_default` template with branded
+HTML, plaintext fallback, clear recipient/company placeholders, and an `unsubscribe_url`
+placeholder. Campaign-specific marketing copy is edited directly in each campaign email snapshot;
+the default template does not use ambiguous campaign heading, intro, body, or call-to-action
+variables.
+
 ## Inbox Rules
 
 Inbox only shows messages that are not linked to a Ticket.
 
 Messages linked to tickets have `ticket_id` set and are no longer treated as unrouted inbox work.
+
+Before inbound ticket rules run, Email classifies common machine responses and vendor notifications
+into the Signal domain. Hard bounces, soft bounces, automatic replies, out-of-office replies,
+unsubscribe requests, and recognized vendor update notices such as QNAP firmware/security messages
+are recorded as Signal records, archived locally, and skipped by normal ticket routing. Signal rules
+can then suppress marketing email, tag contacts or clients, create follow-up tickets, emit derived
+signals, or call webhooks.
 
 Technicians can mark an inbox message as spam. This:
 

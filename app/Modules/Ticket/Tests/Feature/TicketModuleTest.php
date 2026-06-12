@@ -134,7 +134,7 @@ class TicketModuleTest extends TestCase
             ->assertSee('lifecycle=open&amp;ownership=all', false)
             ->assertSee('lifecycle=all&amp;ownership=mine', false)
             ->assertSee('lifecycle=all&amp;ownership=all&amp;unread=1', false)
-            ->assertSee('lifecycle=all&amp;ownership=all&amp;unassigned=1', false);
+            ->assertSee('lifecycle=open&amp;ownership=all&amp;unassigned=1', false);
 
         $this->assertDatabaseHas('ticket_queues', ['slug' => 'support', 'is_default' => true]);
         $this->assertDatabaseHas('ticket_statuses', ['slug' => 'new', 'is_default' => true]);
@@ -552,6 +552,42 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function ticket_index_unassigned_stat_counts_open_unassigned_tickets_only(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+
+        $openUnassigned = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999024',
+            'subject' => 'Open unassigned stat visible',
+            'owner_id' => null,
+        ]);
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999025',
+            'subject' => 'Closed unassigned stat hidden',
+            'status_id' => $closed->id,
+            'owner_id' => null,
+        ]);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee('lifecycle=open&amp;ownership=all&amp;unassigned=1', false);
+
+        $this->assertSame(1, $response->viewData('stats')['unassigned']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index', [
+                'lifecycle' => 'open',
+                'ownership' => 'all',
+                'unassigned' => '1',
+            ]))
+            ->assertOk()
+            ->assertSee($openUnassigned->ticket_key)
+            ->assertDontSee('Closed unassigned stat hidden');
+    }
+
+    #[Test]
     public function tech_user_can_mark_ticket_as_not_ticket_from_ticket_list(): void
     {
         $ticket = $this->createTicket(null, [
@@ -882,6 +918,31 @@ class TicketModuleTest extends TestCase
 
         $this->assertSame(2, TicketMessage::count());
         $this->assertSame(1, $ticket->events()->where('type', 'message_added')->count());
+    }
+
+    #[Test]
+    public function technician_activity_claims_open_unassigned_ticket(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999070',
+            'owner_id' => null,
+            'subject' => 'Unassigned activity claim ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_note',
+                'visibility' => 'internal',
+                'body' => 'Started working on this.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($this->tech->id, $ticket->fresh()->owner_id);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'assigned',
+            'message' => 'Ticket assigned to technician by activity.',
+        ]);
     }
 
     #[Test]
@@ -1788,6 +1849,83 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function internal_solution_allows_default_workflow_to_solve_and_close_without_customer_email(): void
+    {
+        Queue::fake();
+        app(EnsureTicketDefaults::class)->handle();
+
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
+        $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999068',
+            'client_id' => null,
+            'contact_id' => null,
+            'status_id' => $inProgress->id,
+            'workflow_id' => $workflow->id,
+            'subject' => 'Internal solution close ticket',
+        ]);
+        $resolvedTransition = TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $inProgress->id)
+            ->where('to_status_id', $resolved->id)
+            ->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_solution',
+                'visibility' => 'internal',
+                'body' => 'Fixed internally without notifying the customer.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket->fresh(), $resolvedTransition]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($resolved->id, $ticket->fresh()->status_id);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.close', $ticket->fresh()))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($closed->id, $ticket->fresh()->status_id);
+    }
+
+    #[Test]
+    public function existing_internal_note_can_be_marked_as_solution_when_policy_allows_it(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
+        $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
+        $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999069',
+            'status_id' => $inProgress->id,
+            'workflow_id' => $workflow->id,
+            'subject' => 'Internal note solution ticket',
+        ]);
+        $note = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'internal_note',
+            'visibility' => 'internal',
+            'body' => 'Existing internal remediation note.',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.solution', [$ticket, $note]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertTrue((bool) ($note->fresh()->metadata['is_solution'] ?? false));
+        $this->assertSame($resolved->id, $ticket->fresh()->status_id);
+    }
+
+    #[Test]
     public function internal_solution_is_blocked_when_ticket_solution_policy_disallows_it(): void
     {
         CommonSetting::updateOrCreate(
@@ -2029,6 +2167,30 @@ class TicketModuleTest extends TestCase
             'type' => 'status_changed',
             'message' => 'Ticket status changed to Resolved.',
         ]);
+    }
+
+    #[Test]
+    public function technician_can_explicitly_unassign_ticket_from_edit_form(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999112',
+            'owner_id' => $this->tech->id,
+            'subject' => 'Explicit unassign ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.update', $ticket), [
+                'subject' => 'Explicit unassign ticket updated',
+                'description' => $ticket->description,
+                'queue_id' => $ticket->queue_id,
+                'status_id' => $ticket->status_id,
+                'priority_id' => $ticket->priority_id,
+                'category_id' => $ticket->category_id,
+                'owner_id' => null,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertNull($ticket->fresh()->owner_id);
     }
 
     #[Test]

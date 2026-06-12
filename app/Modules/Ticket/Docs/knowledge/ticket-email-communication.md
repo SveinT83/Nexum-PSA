@@ -7,7 +7,7 @@ Inbound email can become a ticket through Email Rules or default inbound policy.
 The current behavior supports:
 
 - Linking to an existing ticket when the subject contains a ticket key such as `TD-2026-000001`.
-- Linking to an existing ticket by `In-Reply-To` or `References` headers when they match previous outbound ticket reply `Message-ID` logs.
+- Linking to an existing ticket by `In-Reply-To` or `References` headers when they match previous outbound ticket reply `Message-ID` logs, whether the provider stores the IDs bare or inside angle brackets.
 - Creating a new ticket from unmatched inbound email.
 - Creating tickets for known active client contacts by default.
 - Creating Lead tickets for unknown senders unless the Email message was archived or tagged as not-ticket/noise first.

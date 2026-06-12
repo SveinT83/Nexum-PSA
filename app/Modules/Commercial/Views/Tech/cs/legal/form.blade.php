@@ -76,6 +76,34 @@
 
     </x-forms.form-card>
 
+    @if($isShow && isset($term))
+        <div class="card mt-3 border-danger">
+            <div class="card-header text-danger fw-bold">
+                Danger zone
+            </div>
+            <div class="card-body">
+                @if(! $term->isInUse())
+                    <p class="text-muted">
+                        This legal or term is not connected to any services or packages and can be deleted.
+                    </p>
+
+                    <form method="POST" action="{{ route('tech.legal.delete', $term) }}" onsubmit="return confirm('Are you sure you want to delete this legal or term?')">
+                        @csrf
+                        @method('DELETE')
+
+                        <button type="submit" class="btn btn-danger">
+                            Delete legal or term
+                        </button>
+                    </form>
+                @else
+                    <p class="text-muted mb-0">
+                        This legal or term cannot be deleted because it is currently in use.
+                    </p>
+                @endif
+            </div>
+        </div>
+    @endif
+
 @endsection
 
 @section('sidebar')

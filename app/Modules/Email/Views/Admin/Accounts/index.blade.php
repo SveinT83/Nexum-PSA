@@ -63,15 +63,10 @@
                     @if($account->is_global_default)
                       <span class="badge text-bg-primary" aria-label="Default Global">Default (Global)</span>
                     @endif
-                    @if(in_array('tickets', $defaults))
-                      <span class="badge text-bg-info" aria-label="Default Tickets">Default (Tickets)</span>
-                    @endif
-                    @if(in_array('sales', $defaults))
-                      <span class="badge text-bg-info" aria-label="Default Sales">Default (Sales)</span>
-                    @endif
-                    @if(in_array('alerts', $defaults))
-                      <span class="badge text-bg-warning" aria-label="Default Alerts">&#9888; Default (Alerts)</span>
-                    @endif
+                    @foreach(\App\Modules\Email\Models\EmailAccount::DEFAULT_SCOPES as $scope => $label)
+                      @continue(! in_array($scope, $defaults))
+                      <span class="badge {{ $scope === 'alerts' ? 'text-bg-warning' : 'text-bg-info' }}" aria-label="Default {{ $label }}">Default ({{ $label }})</span>
+                    @endforeach
                   </div>
                 </td>
                 <td class="text-end">

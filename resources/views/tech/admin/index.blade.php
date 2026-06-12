@@ -43,6 +43,16 @@
             ],
         ],
         [
+            'title' => 'Marketing',
+            'icon' => 'bi-megaphone',
+            'description' => 'Control campaign consent, unsubscribe behavior, tracking defaults, and send batching.',
+            'links' => [
+                ['label' => 'Marketing settings', 'route' => route('tech.admin.settings.marketing')],
+                ['label' => 'Email accounts', 'route' => route('tech.admin.settings.email.accounts')],
+                ['label' => 'Email templates', 'route' => route('tech.admin.system.templatesManagement.email.index')],
+            ],
+        ],
+        [
             'title' => 'Clients',
             'icon' => 'bi-buildings',
             'description' => 'Client and contact domain settings and reusable customer classifications.',
@@ -122,6 +132,8 @@
                 ['label' => 'Tags', 'route' => route('tech.admin.system.tag.index')],
                 ['label' => 'Queues and workers', 'route' => route('tech.admin.system.queues-workers.index')],
                 ['label' => 'Notification channels', 'route' => route('tech.admin.notification-channels.index')],
+                ['label' => 'Signal feed', 'route' => route('tech.admin.system.signals.index')],
+                ['label' => 'Signal rules', 'route' => route('tech.admin.system.signals.rules.index')],
             ],
         ],
         [

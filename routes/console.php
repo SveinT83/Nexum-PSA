@@ -15,6 +15,7 @@ use App\Modules\Integration\Jobs\CleanupAiChats;
 use App\Modules\Integration\Services\AiChatCleanup;
 use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
 use App\Modules\Contact\Actions\MigrateClientUsersToContacts;
+use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Jobs\Integrations\NAbleRmmSyncJob;
 
 Artisan::command('inspire', function () {
@@ -80,6 +81,13 @@ Schedule::job(new CleanupAiChats())
 Schedule::job(new GenerateEconomyOrdersJob())
     ->dailyAt('02:15')
     ->name('economy.orders.generate')
+    ->withoutOverlapping();
+
+// Marketing campaign automation. Campaign settings and recipient due_at control
+// whether this run performs work.
+Schedule::job(new SendDueMarketingCampaignEmails())
+    ->everyMinute()
+    ->name('marketing.campaigns.send_due')
     ->withoutOverlapping();
 
 Artisan::command('ai:cleanup-chats {--queue : Dispatch cleanup to the queue instead of running now}', function () {
@@ -170,3 +178,13 @@ Artisan::command('contacts:migrate-client-users', function (MigrateClientUsersTo
 
     return 0;
 })->purpose('Create Contact records from legacy client_users and link compatibility records');
+
+Artisan::command('marketing:send-due {--campaign=}', function () {
+    $campaignId = $this->option('campaign') ? (int) $this->option('campaign') : null;
+
+    SendDueMarketingCampaignEmails::dispatchSync($campaignId);
+
+    $this->info('Due marketing campaign email processing completed.');
+
+    return 0;
+})->purpose('Send due marketing campaign emails through the configured marketing SMTP account');

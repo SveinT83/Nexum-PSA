@@ -4,6 +4,7 @@ namespace App\Modules\Commercial\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Commercial\Models\Cost;
 use App\Modules\Commercial\Models\Contracts\Contracts;
@@ -307,6 +308,41 @@ class CommercialModuleTest extends TestCase
             ->assertSee(route('tech.packages.index'), false)
             ->assertDontSee('View Specification')
             ->assertDontSee('Status: Not completed');
+    }
+
+    #[Test]
+    public function admin_can_update_client_timebank_quick_policy(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.cs.timebank-policy'))
+            ->assertOk()
+            ->assertViewIs('commercial::Admin.settings.timebank-policy')
+            ->assertSee('Client Timebank Policy')
+            ->assertSee('Allow direct overuse')
+            ->assertSee('quick_timebank_max_minutes', false);
+
+        $this->actingAs($this->admin)
+            ->put(route('tech.admin.settings.cs.timebank-policy.update'), [
+                'quick_timebank_enabled' => '1',
+                'quick_timebank_require_remaining' => '0',
+                'quick_timebank_allow_overuse' => '1',
+                'quick_timebank_require_note' => '0',
+                'quick_timebank_max_minutes' => 45,
+            ])
+            ->assertRedirect(route('tech.admin.settings.cs.timebank-policy'));
+
+        $setting = CommonSetting::query()
+            ->where('type', 'commercial')
+            ->where('name', 'client_timebank_quick_policy')
+            ->firstOrFail();
+
+        $payload = json_decode($setting->json, true);
+
+        $this->assertTrue($payload['quick_timebank_enabled']);
+        $this->assertFalse($payload['quick_timebank_require_remaining']);
+        $this->assertTrue($payload['quick_timebank_allow_overuse']);
+        $this->assertFalse($payload['quick_timebank_require_note']);
+        $this->assertSame(45, $payload['quick_timebank_max_minutes']);
     }
 
     #[Test]
@@ -966,6 +1002,55 @@ class CommercialModuleTest extends TestCase
             ->assertSee('Third-party email SLA')
             ->assertSee('Time with contract')
             ->assertSee('550,00');
+    }
+
+    #[Test]
+    public function approved_contract_show_does_not_render_not_ready_alert(): void
+    {
+        $client = Client::factory()->create();
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'Approved contract with historical start date.',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'won',
+            'accepted_at' => now(),
+            'accepted_by_name' => 'Internal Approval',
+            'created_by' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.contracts.show', $contract))
+            ->assertOk()
+            ->assertSee('Contract Won')
+            ->assertDontSee('Contract not ready for approval')
+            ->assertDontSee('Start date must be in the future.');
+    }
+
+    #[Test]
+    public function contract_services_back_button_returns_to_contract_show(): void
+    {
+        $client = Client::factory()->create();
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'Contract service edit navigation.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'draft',
+            'created_by' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.contracts.services.edit', $contract))
+            ->assertOk()
+            ->assertSee('Contract #'.$contract->id.' Services')
+            ->assertSee('href="'.route('tech.contracts.show', $contract).'"', false);
     }
 
     #[Test]

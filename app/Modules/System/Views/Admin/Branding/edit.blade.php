@@ -114,19 +114,20 @@
                 <p class="small text-muted mb-3">
                     Apply a preset to quickly set all brand and surface colors. This overwrites all color fields but preserves logos and company information.
                 </p>
-                <form method="POST" action="{{ route('tech.admin.system.branding.preset') }}" class="d-flex align-items-center gap-3">
-                    @csrf
-                    <select id="theme_preset" name="preset" class="form-select w-auto">
+                <div class="d-flex align-items-center gap-3">
+                    <select id="theme_preset" name="preset" form="theme-preset-form" class="form-select w-auto">
                         @foreach(\App\Modules\System\Support\CompanyProfileSettings::getPresets() as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="btn btn-outline-primary"
+                    <button type="submit"
+                            form="theme-preset-form"
+                            class="btn btn-outline-primary"
                             onclick="return confirm('Apply this theme preset? All color fields will be overwritten.');">
                         <i class="bi bi-palette me-1" aria-hidden="true"></i>
                         Apply preset
                     </button>
-                </form>
+                </div>
             </div>
         </div>
 
@@ -220,6 +221,10 @@
     <form id="reset-branding-form" method="POST" action="{{ route('tech.admin.system.branding.reset') }}">
         @csrf
         @method('PUT')
+    </form>
+
+    <form id="theme-preset-form" method="POST" action="{{ route('tech.admin.system.branding.preset') }}">
+        @csrf
     </form>
 @endsection
 

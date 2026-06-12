@@ -212,7 +212,6 @@ class AutoMatchClientFolders
             ->post(rtrim((string) $baseUrl, '/').'/chat/completions', [
                 'model' => $model,
                 'messages' => $messages,
-                'temperature' => 0.1,
             ]);
 
         if (! $response->successful()) {

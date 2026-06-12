@@ -43,37 +43,23 @@ class ImapClient
      */
     public function fetchUnseen(int $limit = 20): array
     {
-        // Folder retrieval differences across versions: try getFolderByPath first
-        $folder = method_exists($this->client, 'getFolderByPath')
-            ? $this->client->getFolderByPath('INBOX')
-            : $this->client->getFolder('INBOX');
+        return $this->payloadsFromMessages($this->inbox()->messages()->unseen()->limit($limit)->get());
+    }
 
-        $messages = $folder->messages()->unseen()->limit($limit)->get();
-        $result = [];
-        foreach ($messages as $msg) {
-            $fromList = $this->normalizeAddressList($msg->getFrom());
-            $from = $fromList[0] ?? null;
+    /**
+     * Fetch recent INBOX messages regardless of Seen state. This protects
+     * monitored mailboxes where a user or provider marks mail read before the
+     * next Nexum poll; storage dedupe still prevents duplicate processing.
+     */
+    public function fetchRecent(int $limit = 20): array
+    {
+        $query = $this->inbox()->messages()->all();
 
-            $toList = $this->normalizeAddressList($msg->getTo());
-            $ccList = $this->normalizeAddressList($msg->getCc());
-            $references = $this->normalizeScalarList($msg->getReferences());
-
-            $result[] = [
-                'imap_uid'    => (int)$msg->getUid(),
-                'message_id'  => $this->normalizeString($msg->getMessageId()),
-                'subject'     => $this->normalizeString($msg->getSubject()),
-                'from_name'   => $from['name'] ?? null,
-                'from_email'  => $from['email'] ?? null,
-                'to'          => $toList,
-                'cc'          => $ccList,
-                'in_reply_to' => $this->normalizeString($msg->getInReplyTo()),
-                'references'  => implode(' ', $references),
-                'headers'     => $msg->getHeaders()->toArray(),
-                'received_at' => $this->normalizeDate($msg->getDate()),
-                'size_bytes'  => $msg->getSize() ?? null,
-            ];
+        if (method_exists($query, 'setFetchOrderDesc')) {
+            $query->setFetchOrderDesc();
         }
-        return $result;
+
+        return $this->payloadsFromMessages($query->limit($limit)->get());
     }
 
     /**
@@ -81,9 +67,7 @@ class ImapClient
      */
     public function fetchByUid(int $uid)
     {
-        $folder = method_exists($this->client, 'getFolderByPath')
-            ? $this->client->getFolderByPath('INBOX')
-            : $this->client->getFolder('INBOX');
+        $folder = $this->inbox();
 
         // Preferred (v6) API
         if (method_exists($folder, 'query')) {
@@ -164,6 +148,41 @@ class ImapClient
             $out[] = ['name' => $name, 'email' => $email];
         }
         return $out;
+    }
+
+    private function inbox()
+    {
+        return method_exists($this->client, 'getFolderByPath')
+            ? $this->client->getFolderByPath('INBOX')
+            : $this->client->getFolder('INBOX');
+    }
+
+    private function payloadsFromMessages(iterable $messages): array
+    {
+        $result = [];
+
+        foreach ($messages as $msg) {
+            $fromList = $this->normalizeAddressList($msg->getFrom());
+            $from = $fromList[0] ?? null;
+            $references = $this->normalizeScalarList($msg->getReferences());
+
+            $result[] = [
+                'imap_uid'    => (int)$msg->getUid(),
+                'message_id'  => $this->normalizeString($msg->getMessageId()),
+                'subject'     => $this->normalizeString($msg->getSubject()),
+                'from_name'   => $from['name'] ?? null,
+                'from_email'  => $from['email'] ?? null,
+                'to'          => $this->normalizeAddressList($msg->getTo()),
+                'cc'          => $this->normalizeAddressList($msg->getCc()),
+                'in_reply_to' => $this->normalizeString($msg->getInReplyTo()),
+                'references'  => implode(' ', $references),
+                'headers'     => $msg->getHeaders()->toArray(),
+                'received_at' => $this->normalizeDate($msg->getDate()),
+                'size_bytes'  => $msg->getSize() ?? null,
+            ];
+        }
+
+        return $result;
     }
 
     /**

@@ -526,12 +526,14 @@ class SalesModuleTest extends TestCase
             ->assertSee('Details')
             ->assertSee('Catalog item')
             ->assertSee('Add at least one quote line before sending.')
-            ->assertSee('id="quoteLineMethod" value="PATCH" disabled', false)
+            ->assertSee('id="quoteLineMethod" value="POST"', false)
+            ->assertSee("quoteLineMethod.value = quoteLineForm.dataset.updateMethod || 'PATCH';", false)
             ->assertDontSee('action="'.route('tech.sales.quote.send', $opportunity).'"', false)
             ->assertDontSee('Source ID');
 
         $this->actingAs($this->tech)
             ->post(route('tech.sales.quote.lines.store', $opportunity), [
+                '_method' => 'POST',
                 'source_type' => 'custom',
                 'section' => 'monthly_services',
                 'downstream_type' => 'recurring_contract',
@@ -552,7 +554,8 @@ class SalesModuleTest extends TestCase
         $this->assertSame('1800.00', $opportunity->refresh()->estimated_value_ex_vat);
 
         $this->actingAs($this->tech)
-            ->patch(route('tech.sales.quote.lines.update', [$opportunity, $line]), [
+            ->post(route('tech.sales.quote.lines.update', [$opportunity, $line]), [
+                '_method' => 'PATCH',
                 'section' => 'monthly_services',
                 'downstream_type' => 'recurring_contract',
                 'name' => 'Managed IT service updated',

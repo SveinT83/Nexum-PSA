@@ -1,7 +1,9 @@
 <?php
 
+use App\Modules\Commercial\Controllers\Admin\ClientTimebankPolicyController;
 use App\Modules\Commercial\Controllers\Admin\TimeRateController;
 use App\Modules\Commercial\Controllers\Admin\UnitsController;
+use App\Modules\Commercial\Controllers\Tech\Contracts\ClientTimebankConsumptionController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\PublicContractController;
 use App\Modules\Commercial\Controllers\Tech\Costs\CostController;
@@ -62,6 +64,8 @@ Route::get('/contracts/{contract}/terms', [ContractController::class, 'terms'])
     ->name('contracts.terms');
 Route::post('/contracts/{contract}/terms', [ContractController::class, 'termsUpdate'])
     ->name('contracts.terms.update');
+Route::post('/clients/{client}/contracts/timebank-consumptions', [ClientTimebankConsumptionController::class, 'store'])
+    ->name('clients.contracts.timebank-consumptions.store');
 
 Route::get('/packages', [PackageController::class, 'index'])
     ->name('packages.index');
@@ -146,6 +150,10 @@ Route::delete('/sla/delete/{sla}', [SlaController::class, 'destroy'])
     ->name('sla.delete');
 
 Route::middleware('admin')->group(function () {
+    Route::get('/admin/settings/cs/timebank-policy', [ClientTimebankPolicyController::class, 'edit'])
+        ->name('admin.settings.cs.timebank-policy');
+    Route::put('/admin/settings/cs/timebank-policy', [ClientTimebankPolicyController::class, 'update'])
+        ->name('admin.settings.cs.timebank-policy.update');
     Route::get('/admin/settings/economy/units', [UnitsController::class, 'index'])
         ->name('admin.settings.economy.units');
     Route::post('/admin/settings/economy/units', [UnitsController::class, 'store'])

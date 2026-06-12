@@ -91,6 +91,9 @@ require app_path('Modules/Commercial/routes.php');
 $salesPublicRoutes = true;
 require app_path('Modules/Sales/routes.php');
 
+$marketingPublicRoutes = true;
+require app_path('Modules/Marketing/routes.php');
+
 $userManagementPublicRoutes = true;
 require app_path('Modules/UserManagement/routes.php');
 

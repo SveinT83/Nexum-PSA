@@ -43,6 +43,7 @@ class AddTicketMessage
             }
 
             $ticket->forceFill($ticketUpdates)->touch();
+            app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'message_added');
 
             TicketEvent::create([
                 'ticket_id' => $ticket->id,

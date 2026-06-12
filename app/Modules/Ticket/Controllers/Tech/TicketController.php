@@ -105,7 +105,9 @@ class TicketController extends Controller
                 'open' => Ticket::whereHas('status', fn ($query) => $query->where('is_closed', false))->count(),
                 'mine' => Ticket::where('owner_id', $request->user()?->id)->count(),
                 'unread' => Ticket::where('is_unread', true)->count(),
-                'unassigned' => Ticket::whereNull('owner_id')->count(),
+                'unassigned' => Ticket::whereNull('owner_id')
+                    ->whereHas('status', fn ($query) => $query->where('is_closed', false))
+                    ->count(),
             ],
         ]);
     }

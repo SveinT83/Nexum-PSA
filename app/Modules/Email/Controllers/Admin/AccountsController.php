@@ -65,6 +65,7 @@ class AccountsController extends Controller
             'is_active' => 'sometimes|boolean',
             'is_global_default' => 'sometimes|boolean',
             'defaults_for' => 'nullable|array',
+            'defaults_for.*' => 'string|in:' . implode(',', array_keys(EmailAccount::DEFAULT_SCOPES)),
             'delete_policy' => 'required|in:local_only,sync_delete,auto_delete',
             // IMAP
             'imap_host' => 'required|string',

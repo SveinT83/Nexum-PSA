@@ -44,7 +44,7 @@
                 Shows a summary of why a contract is not yet "ready" for approval.
                 Conditions checked: items presence, terms snapshot status, and start date.
             --}}
-            @if(!$validation['ready'])
+            @if($validation['show_readiness_status'] && !$validation['ready'])
                 <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4">
                     <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
                     <div>
@@ -65,7 +65,7 @@
                         </ul>
                     </div>
                 </div>
-            @else
+            @elseif($validation['show_readiness_status'])
                 <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4">
                     <i class="bi bi-check-circle-fill fs-4 me-3"></i>
                     <div>

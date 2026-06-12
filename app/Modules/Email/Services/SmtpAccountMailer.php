@@ -56,11 +56,9 @@ class SmtpAccountMailer
             }
         }
 
+        $messageId = $this->ensureMessageId($email, $account);
         $mailer = new Mailer($transport);
         $mailer->send($email);
-
-        $headers = $email->getHeaders();
-        $messageId = $headers->has('Message-ID') ? $headers->get('Message-ID')->getBodyAsString() : '';
 
         $account->forceFill([
             'last_successful_send_at' => now(),
@@ -80,5 +78,25 @@ class SmtpAccountMailer
             'tls', 'starttls' => [false, 'tls'],
             default => [false, null],
         };
+    }
+
+    private function ensureMessageId(Email $email, EmailAccount $account): string
+    {
+        $headers = $email->getHeaders();
+
+        if (! $headers->has('Message-ID')) {
+            $headers->addIdHeader('Message-ID', $this->newMessageId($account));
+        }
+
+        return $headers->get('Message-ID')->getBodyAsString();
+    }
+
+    private function newMessageId(EmailAccount $account): string
+    {
+        $domain = trim((string) str($account->address)->after('@'));
+        $domain = preg_replace('/[^a-z0-9.-]/i', '', $domain) ?: parse_url((string) config('app.url'), PHP_URL_HOST);
+        $domain = $domain ?: 'nexum-psa.local';
+
+        return bin2hex(random_bytes(16)).'@'.$domain;
     }
 }

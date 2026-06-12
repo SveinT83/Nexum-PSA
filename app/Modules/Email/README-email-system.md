@@ -21,7 +21,7 @@ Non-goals (for MVP):
 ## Key components at a glance
 
 - Models: `EmailAccount`, `EmailMessage`, `EmailAttachment`, `EmailHealthCheck`, `EmailLog`
-- Services: `ImapClient`, `EmailTestService`, `EmailTestResult`, `BodyNormalizer`, `HtmlSanitizer`
+- Services: `ImapClient`, `EmailTestService`, `EmailTestResult`, `BodyNormalizer`, `HtmlSanitizer`, `InboundEmailSignalClassifier`
 - Jobs: `PollActiveEmailAccounts`, `FetchImapAccount`, `StoreInboundMessage`, `ProcessInboundRules`, `EmailAccountHealthCheckJob`, `EmailRetentionPurgeJob`
 - Controllers (Admin/Settings): `AccountsController`, `ConfigController`, `RulesController`
 - Routes: declared in `app/Modules/Email/routes.php` under the `tech.admin.settings.email.*` namespace
@@ -45,7 +45,7 @@ Important columns:
 
 Notes:
 - Secrets are stored encrypted using Laravel `Crypt`.
-- `defaults_for` is a JSON array for per-scope defaults (e.g., tickets, sales, alerts).
+- `defaults_for` is a JSON array for per-scope defaults (e.g., tickets, sales, marketing, alerts).
 
 ### EmailMessage — `app/Modules/Email/Models/EmailMessage.php`
 Backs `email_messages` (`database/migrations/2025_11_11_000002_create_email_messages_table.php`). Represents stored inbound messages.
@@ -75,6 +75,7 @@ Backs `email_logs` (`database/migrations/2025_11_11_000005_create_email_logs_tab
 A thin wrapper around Webklex to connect to a specific account and interact with a mailbox (currently INBOX).
 - `connect()`: builds a `Client` via `ClientManager`, using `imap_host/port/encryption`, `username`, and decrypted `secret`.
 - `fetchUnseen(limit)`: opens INBOX, fetches unseen messages up to a limit, returns lightweight arrays with header-level info and UID, without heavy parsing.
+- `fetchRecent(limit)`: opens INBOX and fetches recent messages regardless of Seen state, so another mail client or provider cannot make Nexum skip a message by marking it read first.
 - `fetchByUid(uid)`: loads a specific message by IMAP UID from INBOX for full body/attachments.
 
 Implementation notes:
@@ -101,18 +102,19 @@ Basic sanitizer that removes risky tags/handlers. Intended to be replaced with H
 
 ### High-level ingest flow
 1) Polling picks active accounts and dispatches fetch jobs.
-2) `FetchImapAccount` connects, pulls unseen message heads, emits work units.
+2) `FetchImapAccount` connects, pulls unseen message heads, fills the remaining batch with recent INBOX messages regardless of Seen state, and emits work units.
 3) For each message:
 	 - Oversize messages are flagged; normal-sized messages are handed to `StoreInboundMessage`.
 4) `StoreInboundMessage` re-fetches full content by UID, stores raw EML and attachments, sanitizes/normalizes bodies, and upserts `EmailMessage` (+ attachments).
 5) Optionally, message can be deleted/moved server-side after successful persistence (delete-on-success setting).
-6) `ProcessInboundRules` runs async rules on persisted messages (tagging, triage, linking to tickets, etc.).
+6) `ProcessInboundRules` first asks `InboundEmailSignalClassifier` to detect machine replies, delivery failures, and recognized vendor notifications. Hard bounces, soft bounces, auto replies, out-of-office replies, unsubscribe requests, and QNAP-style firmware/security notices become Signal records and are archived before normal ticket routing.
+7) Human messages continue through async rules on persisted messages (tagging, triage, linking to tickets, etc.).
 
 ### Job catalog (paths referenced in codebase)
 - `app/Modules/Email/Jobs/PollActiveEmailAccounts.php` — iterates active accounts; schedule every minute. (Dispatcher/entry job.)
-- `app/Modules/Email/Jobs/FetchImapAccount.php` — connect via `ImapClient`, fetch unseen, dedupe by `account+mailbox+uid`, and dispatch `StoreInboundMessage` with a payload (marks oversize if > size limit).
+- `app/Modules/Email/Jobs/FetchImapAccount.php` — connect via `ImapClient`, fetch unseen plus recent messages, dedupe by `account+mailbox+uid`, and dispatch `StoreInboundMessage` with a payload (marks oversize if > size limit).
 - `app/Modules/Email/Jobs/StoreInboundMessage.php` — refetch full message by UID, write `.eml` + attachments to disk, sanitize body HTML and extract text via `BodyNormalizer`, upsert `EmailMessage`, create `EmailAttachment` rows, enqueue `ProcessInboundRules`.
-- `app/Modules/Email/Jobs/ProcessInboundRules.php` — placeholder for rule engine; runs on stored messages.
+- `app/Modules/Email/Jobs/ProcessInboundRules.php` — classifies inbound machine/vendor signals, archives bounce/autoreply/unsubscribe/vendor-notice messages, then runs the inbound rule engine for normal messages.
 - `app/Modules/Email/Jobs/EmailAccountHealthCheckJob.php` — runs connectivity checks and writes `EmailHealthCheck` rows.
 - `app/Modules/Email/Jobs/EmailRetentionPurgeJob.php` — deletes old data past retention policy and cleans orphan files.
 
@@ -161,7 +163,7 @@ Note: The UI relies on these exact names; ensure the `tech.` prefix is present i
 IMAP:
 - Library: Webklex IMAP.
 - Encryption mapping: accepts `ssl`, `tls`, or `starttls`. Certificates validated.
-- Fetch strategy: INBOX only for now, unseen first; up to batch size per poll.
+- Fetch strategy: INBOX only for now, unseen first, then recent messages regardless of Seen state; up to batch size per poll.
 - Dedup: keyed by `account_id + mailbox + imap_uid`.
 
 SMTP:
@@ -216,21 +218,22 @@ Notes:
 
 ## Manual inbox polling (on-demand)
 
-The Tech Inbox view exposes a "Check now" button for immediate ingestion without waiting for the next cron tick.
+The Tech Inbox view exposes a "Check now" button for on-demand ingestion without waiting for the next cron tick.
 
 Implementation summary:
 - Route: `POST /tech/inbox/poll` named `tech.inbox.poll` (defined in `app/Modules/Email/routes.php`).
-- Controller: `IndexController@poll` (`app/Modules/Email/Controllers/Tech/InboxController.php`) loads all active `EmailAccount` rows and runs `FetchImapAccount` synchronously per account using `dispatchSync`.
+- Controller: `IndexController@poll` (`app/Modules/Email/Controllers/Tech/InboxController.php`) loads all active `EmailAccount` rows and queues `FetchImapAccount` per account.
+- CLI: `php artisan email:poll` runs `FetchImapAccount` immediately for active accounts unless `--async` is supplied.
 - View: `resources/views/Tech/Inbox/index.blade.php` includes a CSRF-protected form that posts to the route.
-- Feedback: Flash message indicates how many accounts were checked immediately.
+- Feedback: Flash message indicates how many accounts were queued for checking.
 
 Use cases:
-- Force immediate fetch after adding an account or fixing credentials; results are visible right away on return to the inbox.
-- Development convenience when a queue worker is not running.
+- Queue a fetch after adding an account or fixing credentials; results appear after the queue processes the jobs.
+- Development convenience through `php artisan email:poll` when a queue worker is not running.
 
 Operational notes:
-- Synchronous execution happens in the HTTP request; for many/slow accounts, consider using the scheduler + queue worker for better responsiveness.
-- Safe to click multiple times; duplicate unseen messages are deduped by `account_id + mailbox + imap_uid`.
+- UI polling depends on queue processing; for direct troubleshooting use the CLI without `--async`.
+- Safe to click multiple times; duplicate messages are deduped by `account_id + mailbox + imap_uid`.
 - In production, prefer the scheduler + worker for steady-state ingestion; keep the manual button for ad-hoc checks.
 
 
@@ -238,6 +241,7 @@ Operational notes:
 
 Common extension points:
 - Rules engine: implement rule definitions and runners in `ProcessInboundRules`. Keep them idempotent and fast; operate on stored `EmailMessage` records.
+- Signal classification: extend `InboundEmailSignalClassifier` when new inbound e-post signal types should be detected before ticket routing. Keep matching conservative so real customer requests are not archived accidentally.
 - Sanitizer: replace `HtmlSanitizer` with a robust library (HTMLPurifier) and add CID image rewriting to signed URLs for inline display.
 - Multi-mailbox: extend `ImapClient` to take mailbox names and update jobs to iterate folders beyond INBOX.
 - Delete/move-on-success: when enabled, after `StoreInboundMessage` succeeds, delete or move the message server-side (e.g., to an Archive folder).

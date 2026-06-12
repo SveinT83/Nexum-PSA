@@ -8,8 +8,16 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Commercial\Models\Services\Services;
+use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
+use App\Modules\Commercial\Models\Contracts\ClientContractTimeConsumption;
+use App\Modules\Economy\Models\EconomyOrder;
+use App\Modules\Economy\Models\EconomyOrderLine;
+use App\Modules\Signal\Models\Signal;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
@@ -18,6 +26,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -263,6 +272,15 @@ class ClientTechTest extends TestCase
         app(StoreTask::class)->handle([
             'title' => 'Ticket task visible on client',
         ], $this->techUser, $ticket);
+        Signal::query()->create([
+            'source_domain' => 'marketing',
+            'client_id' => $client->id,
+            'signal_type' => 'marketing_click',
+            'severity' => 'info',
+            'confidence' => 90,
+            'summary' => 'Clicked website campaign link.',
+            'occurred_at' => now(),
+        ]);
 
         $response = $this->actingAs($this->techUser)
             ->get(route('tech.clients.show', $client));
@@ -277,6 +295,7 @@ class ClientTechTest extends TestCase
         $response->assertSee('data-bs-target="#client-sites-pane"', false);
         $response->assertSee('data-bs-target="#client-contacts-pane"', false);
         $response->assertSee('data-bs-target="#client-contracts-pane"', false);
+        $response->assertSee('data-bs-target="#client-signals-pane"', false);
         $response->assertSee('data-bs-target="#client-tasks-pane"', false);
         $response->assertSee('nav nav-tabs border-bottom border-secondary-subtle', false);
         $response->assertSee('nav-link active text-body border border-bottom-0', false);
@@ -288,6 +307,7 @@ class ClientTechTest extends TestCase
         $response->assertSee(route('tech.clients.user.create', $client), false);
         $response->assertSee('Review client backup');
         $response->assertSee('Ticket task visible on client');
+        $response->assertSee('Clicked website campaign link.');
         $response->assertSee('clientTaskQuickCreateModal', false);
         $response->assertSee('clientTaskQuickViewModal'.$task->id, false);
         $response->assertDontSee('Client Sites');
@@ -390,6 +410,201 @@ class ClientTechTest extends TestCase
             ->assertOk()
             ->assertSee('No Contract Client AS')
             ->assertSee('Contracted Client AS');
+    }
+
+    #[Test]
+    public function client_contracts_tab_shows_timebank_balance_bar(): void
+    {
+        $this->grantTimebankPermissions('commercial.timebank.view', 'commercial.timebank.quick-consume');
+        [$client] = $this->createClientTimebankContract(120);
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.show', ['client' => $client->id, 'tab' => 'contracts']))
+            ->assertOk()
+            ->assertSee('Contract Timebank')
+            ->assertSee('Support Timebank')
+            ->assertSee('Included')
+            ->assertSee('2h')
+            ->assertSee('Remaining')
+            ->assertSee('Time <span', false)
+            ->assertSee('Register time');
+    }
+
+    #[Test]
+    public function technician_can_quick_register_client_timebank_consumption(): void
+    {
+        $this->grantTimebankPermissions('commercial.timebank.view', 'commercial.timebank.quick-consume');
+        [$client, $contract, $item] = $this->createClientTimebankContract(120);
+
+        $this->actingAs($this->techUser)
+            ->post(route('tech.clients.contracts.timebank-consumptions.store', $client), [
+                'contract_item_id' => $item->id,
+                'time_rate_source' => 'global:'.TimeRate::query()->where('code', 'TIME_WITH_CONTRACT')->value('id'),
+                'work_date' => now()->toDateString(),
+                'minutes' => 45,
+                'note' => 'Quick counter help.',
+            ])
+            ->assertRedirect(route('tech.clients.show', ['client' => $client->id, 'tab' => 'contracts']));
+
+        $this->assertDatabaseHas('client_contract_time_consumptions', [
+            'client_id' => $client->id,
+            'contract_id' => $contract->id,
+            'contract_item_id' => $item->id,
+            'user_id' => $this->techUser->id,
+            'minutes' => 45,
+            'included_minutes_snapshot' => 120,
+            'used_before_minutes_snapshot' => 0,
+            'overused_minutes' => 0,
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.show', ['client' => $client->id, 'tab' => 'contracts']))
+            ->assertOk()
+            ->assertSee('45m')
+            ->assertSee('1h 15m');
+    }
+
+    #[Test]
+    public function client_time_usage_tab_lists_and_edits_quick_entries(): void
+    {
+        $this->grantTimebankPermissions('commercial.timebank.view', 'commercial.timebank.quick-consume');
+        [$client, , $item] = $this->createClientTimebankContract(120);
+        $afterHoursRate = TimeRate::query()->create([
+            'name' => 'After hours contract time',
+            'slug' => 'after-hours-contract-time',
+            'code' => 'AFTER_HOURS_CONTRACT',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 950,
+            'currency' => 'NOK',
+            'applies_without_contract' => false,
+            'applies_with_contract' => true,
+            'is_active' => true,
+            'sort_order' => 30,
+        ]);
+
+        $entry = ClientContractTimeConsumption::query()->create([
+            'client_id' => $client->id,
+            'contract_id' => $item->contract_id,
+            'contract_item_id' => $item->id,
+            'time_rate_id' => TimeRate::query()->where('code', 'TIME_WITH_CONTRACT')->value('id'),
+            'user_id' => $this->techUser->id,
+            'work_date' => now()->toDateString(),
+            'minutes' => 30,
+            'note' => 'Wrong duration.',
+            'source' => 'quick_client',
+            'rate_name' => 'Time with contract',
+            'rate_code' => 'TIME_WITH_CONTRACT',
+            'rate_type' => 'labor',
+            'rate_unit' => 'hour',
+            'rate_amount_ex_vat' => 650,
+            'rate_currency' => 'NOK',
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'included_minutes_snapshot' => 120,
+            'used_before_minutes_snapshot' => 0,
+            'overused_minutes' => 0,
+        ]);
+        $orderedEntry = ClientContractTimeConsumption::query()->create([
+            'client_id' => $client->id,
+            'contract_id' => $item->contract_id,
+            'contract_item_id' => $item->id,
+            'time_rate_id' => TimeRate::query()->where('code', 'TIME_WITH_CONTRACT')->value('id'),
+            'user_id' => $this->techUser->id,
+            'work_date' => now()->toDateString(),
+            'minutes' => 15,
+            'note' => 'Already invoiced time.',
+            'source' => 'quick_client',
+            'rate_name' => 'Time with contract',
+            'rate_code' => 'TIME_WITH_CONTRACT',
+            'rate_type' => 'labor',
+            'rate_unit' => 'hour',
+            'rate_amount_ex_vat' => 650,
+            'rate_currency' => 'NOK',
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'included_minutes_snapshot' => 120,
+            'used_before_minutes_snapshot' => 0,
+            'overused_minutes' => 0,
+        ]);
+        $order = EconomyOrder::query()->create([
+            'client_id' => $client->id,
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'status' => 'draft',
+        ]);
+        EconomyOrderLine::query()->create([
+            'economy_order_id' => $order->id,
+            'client_id' => $client->id,
+            'source_type' => $orderedEntry->getMorphClass(),
+            'source_id' => $orderedEntry->id,
+            'work_date' => now()->toDateString(),
+            'line_type' => 'quick_timebank_overuse',
+            'description' => 'Already invoiced time.',
+            'quantity' => 15,
+            'unit' => 'min',
+            'unit_price_ex_vat' => 10,
+            'line_total_ex_vat' => 150,
+            'total_inc_vat' => 150,
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.show', ['client' => $client->id, 'tab' => 'time-usage']))
+            ->assertOk()
+            ->assertSee('Time Usage')
+            ->assertSee('Wrong duration.')
+            ->assertSee('After hours contract time')
+            ->assertSee('Edit')
+            ->assertDontSee('Already invoiced time.');
+
+        $this->actingAs($this->techUser)
+            ->patch(route('tech.clients.time-usage.update', [$client, 'quick', $entry->id]), [
+                'work_date' => now()->toDateString(),
+                'minutes' => 45,
+                'time_rate_source' => 'global:'.$afterHoursRate->id,
+                'note' => 'Corrected duration.',
+            ])
+            ->assertRedirect(route('tech.clients.show', ['client' => $client->id, 'tab' => 'time-usage']));
+
+        $this->assertDatabaseHas('client_contract_time_consumptions', [
+            'id' => $entry->id,
+            'minutes' => 45,
+            'note' => 'Corrected duration.',
+            'time_rate_id' => $afterHoursRate->id,
+            'rate_name' => 'After hours contract time',
+            'rate_amount_ex_vat' => 950,
+        ]);
+    }
+
+    #[Test]
+    public function quick_timebank_registration_blocks_overuse_by_default(): void
+    {
+        $this->grantTimebankPermissions('commercial.timebank.view', 'commercial.timebank.quick-consume');
+        [$client, $contract, $item] = $this->createClientTimebankContract(60);
+
+        $this->actingAs($this->techUser)
+            ->post(route('tech.clients.contracts.timebank-consumptions.store', $client), [
+                'contract_item_id' => $item->id,
+                'time_rate_source' => 'global:'.TimeRate::query()->where('code', 'TIME_WITH_CONTRACT')->value('id'),
+                'work_date' => now()->toDateString(),
+                'minutes' => 50,
+                'note' => 'First quick help.',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($this->techUser)
+            ->from(route('tech.clients.show', ['client' => $client->id, 'tab' => 'contracts']))
+            ->post(route('tech.clients.contracts.timebank-consumptions.store', $client), [
+                'contract_item_id' => $item->id,
+                'time_rate_source' => 'global:'.TimeRate::query()->where('code', 'TIME_WITH_CONTRACT')->value('id'),
+                'work_date' => now()->toDateString(),
+                'minutes' => 20,
+                'note' => 'Would overuse.',
+            ])
+            ->assertRedirect(route('tech.clients.show', ['client' => $client->id, 'tab' => 'contracts']))
+            ->assertSessionHasErrors('minutes');
+
+        $this->assertDatabaseCount('client_contract_time_consumptions', 1);
     }
 
     #[Test]
@@ -714,5 +929,74 @@ class ClientTechTest extends TestCase
             'code' => 'STARTUP',
             'is_active' => true,
         ]);
+    }
+
+    private function grantTimebankPermissions(string ...$permissions): void
+    {
+        foreach ($permissions as $permission) {
+            Permission::findOrCreate($permission, 'web');
+            $this->techUser->givePermissionTo($permission);
+        }
+    }
+
+    private function createClientTimebankContract(int $includedMinutes): array
+    {
+        $client = Client::factory()->create(['name' => 'Timebank Client AS']);
+        $unit = Units::query()->create(['name' => 'Month', 'short' => 'mo']);
+        $service = Services::query()->create([
+            'sku' => 'SUPPORT-TIMEBANK-'.$includedMinutes,
+            'name' => 'Support Timebank',
+            'unitId' => $unit->id,
+            'status' => 'published',
+            'availability_audience' => 'business',
+            'orderable' => false,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 0,
+            'price_including_tax' => 0,
+            'timebank_enabled' => true,
+            'timebank_minutes' => $includedMinutes,
+            'timebank_interval' => 'monthly',
+            'created_by_user_id' => $this->techUser->id,
+            'updated_by_user_id' => $this->techUser->id,
+        ]);
+        TimeRate::query()->firstOrCreate(
+            ['code' => 'TIME_WITH_CONTRACT'],
+            [
+                'name' => 'Time with contract',
+                'slug' => 'time-with-contract',
+                'rate_type' => 'labor',
+                'unit' => 'hour',
+                'amount_ex_vat' => 650,
+                'currency' => 'NOK',
+                'applies_without_contract' => false,
+                'applies_with_contract' => true,
+                'is_active' => true,
+                'sort_order' => 20,
+            ],
+        );
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'created_by' => $this->techUser->id,
+            'description' => 'Managed support',
+            'approval_status' => 'won',
+            'start_date' => now()->startOfMonth()->toDateString(),
+            'end_date' => now()->endOfMonth()->toDateString(),
+        ]);
+        $item = ContractItem::query()->create([
+            'contract_id' => $contract->id,
+            'service_id' => $service->id,
+            'name' => 'Support Timebank',
+            'sku' => $service->sku,
+            'unit_price' => 0,
+            'quantity' => 1,
+            'unit' => $unit->name,
+            'billing_interval' => 'monthly',
+            'discount_value' => 0,
+            'discount_type' => 'amount',
+            'setup_fee' => 0,
+        ]);
+
+        return [$client, $contract, $item];
     }
 }

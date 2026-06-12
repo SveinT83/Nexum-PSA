@@ -9,6 +9,13 @@ class EmailAccount extends Model
 {
     protected $table = 'email_accounts';
 
+    public const DEFAULT_SCOPES = [
+        'tickets' => 'Tickets',
+        'sales' => 'Sales',
+        'marketing' => 'Marketing',
+        'alerts' => 'Alerts/System',
+    ];
+
     protected $fillable = [
         'address', 'description', 'from_name',
         'is_active', 'is_global_default', 'defaults_for', 'delete_policy',

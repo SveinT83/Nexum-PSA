@@ -130,6 +130,50 @@ The upsert endpoint requires an API token with both `contacts.create` and `conta
 `PATCH` and `PUT /api/v1/contacts/{contact}` update a known Contact by ID and require
 `contacts.update`.
 
+## Ownership Repair API
+
+The Contact Domain also exposes a repair API for trusted cleanup workflows while Nexum still keeps
+the legacy `client_users` bridge.
+
+Routes:
+
+- `GET /api/v1/clients/{client}/contacts`
+- `POST /api/v1/contacts/{contact}/move`
+- `POST /api/v1/clients/{client}/contacts/bulk-fix`
+- `DELETE /api/v1/clients/{client}/contacts/{contact}`
+
+The `{client}` value can be either the internal Client ID or the Client's `client_number`. If one
+value matches more than one Client, Nexum rejects the request instead of choosing one.
+
+`GET /api/v1/clients/{client}/contacts` requires `contacts.read` and returns both canonical Contact
+relations and legacy `client_users` so operators can see where the Contact actually belongs.
+
+The move, bulk-fix, and detach routes require `contacts.ownership_manage`. They support `dry_run` so
+an integration can preview the operation before writing data.
+
+`POST /api/v1/contacts/{contact}/move` accepts:
+
+- `target_client_id` or `target_client_number`
+- `target_site_id`
+- `dry_run`
+- `reason`
+
+Actual moves are transactional. Nexum removes old Client/Site ownership, creates the target
+Client/Site relation, and moves or creates one `client_users` bridge row for the target Site.
+
+`POST /api/v1/clients/{client}/contacts/bulk-fix` accepts a list of Contact IDs and returns per-row
+statuses such as `no_change`, `would_move`, `would_attach`, `conflict`, and `missing_contact`.
+Bulk-fix is conservative: Contacts with multiple current Client owners or multiple linked legacy
+rows are reported as conflicts for manual review.
+
+`DELETE /api/v1/clients/{client}/contacts/{contact}` detaches the Contact from that Client. It
+removes Contact relations for the Client and its Sites and deletes linked legacy `client_users` rows
+under that Client. It does not delete the Contact unless `delete_if_orphan` is true and the Contact
+has no remaining relations, legacy links, or User account link.
+
+Ownership repair calls are written to the activity log with the actor, API token ID when available,
+reason, dry-run flag, before state, result, and after state.
+
 ## Migration Command
 
 The migration command is:

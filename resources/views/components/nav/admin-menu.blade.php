@@ -43,6 +43,12 @@
             'pattern' => 'tech.admin.settings.sales.*',
             'icon' => 'bi-graph-up-arrow',
         ],
+        'marketing' => [
+            'name' => 'Marketing',
+            'route' => 'tech.admin.settings.marketing',
+            'pattern' => 'tech.admin.settings.marketing*',
+            'icon' => 'bi-megaphone',
+        ],
         'clients' => [
             'name' => 'Clients',
             'route' => 'tech.admin.settings.clients.client-formats',
@@ -115,6 +121,7 @@
                 'tech.admin.settings.risk*',
                 'tech.admin.system.queues-workers.*',
                 'tech.admin.notification-channels.*',
+                'tech.admin.system.signals.*',
             ],
             'icon' => 'bi-sliders',
         ],
@@ -142,6 +149,7 @@
         'commercial' => [
             ['name' => 'Contracts', 'route' => 'tech.admin.settings.cs.contracts', 'pattern' => 'tech.admin.settings.cs.contracts'],
             ['name' => 'Services', 'route' => 'tech.admin.settings.cs.services', 'pattern' => 'tech.admin.settings.cs.services'],
+            ['name' => 'Timebank policy', 'route' => 'tech.admin.settings.cs.timebank-policy', 'pattern' => 'tech.admin.settings.cs.timebank-policy*'],
             ['name' => 'Units', 'route' => 'tech.admin.settings.economy.units', 'pattern' => 'tech.admin.settings.economy.units*'],
         ],
         'economy' => [
@@ -156,6 +164,11 @@
         'sales' => [
             ['name' => 'Rules', 'route' => 'tech.admin.settings.sales.rules', 'pattern' => 'tech.admin.settings.sales.rules*'],
             ['name' => 'Workflows', 'route' => 'tech.admin.settings.sales.workflows', 'pattern' => 'tech.admin.settings.sales.workflows*'],
+        ],
+        'marketing' => [
+            ['name' => 'Marketing settings', 'route' => 'tech.admin.settings.marketing', 'pattern' => 'tech.admin.settings.marketing*'],
+            ['name' => 'Email accounts', 'route' => 'tech.admin.settings.email.accounts', 'pattern' => 'tech.admin.settings.email.accounts*'],
+            ['name' => 'Email templates', 'route' => 'tech.admin.system.templatesManagement.email.index', 'pattern' => 'tech.admin.system.templatesManagement.email.*'],
         ],
         'clients' => [
             ['name' => 'Client formats', 'route' => 'tech.admin.settings.clients.client-formats', 'pattern' => 'tech.admin.settings.clients.client-formats*'],
@@ -199,6 +212,8 @@
             ['name' => 'Tags', 'route' => 'tech.admin.system.tag.index', 'pattern' => 'tech.admin.system.tag.*'],
             ['name' => 'Queues and workers', 'route' => 'tech.admin.system.queues-workers.index', 'pattern' => 'tech.admin.system.queues-workers.*'],
             ['name' => 'Notification channels', 'route' => 'tech.admin.notification-channels.index', 'pattern' => 'tech.admin.notification-channels.*'],
+            ['name' => 'Signal feed', 'route' => 'tech.admin.system.signals.index', 'pattern' => ['tech.admin.system.signals.index', 'tech.admin.system.signals.show']],
+            ['name' => 'Signal rules', 'route' => 'tech.admin.system.signals.rules.index', 'pattern' => 'tech.admin.system.signals.rules.*'],
         ],
         'integrations' => [
             ['name' => 'All integrations', 'route' => 'tech.admin.system.integrations.index', 'pattern' => 'tech.admin.system.integrations.index'],

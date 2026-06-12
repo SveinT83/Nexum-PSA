@@ -11,6 +11,8 @@ use RuntimeException;
 
 class AiChatResponder
 {
+    private const OPENAI_COMPATIBLE_TIMEOUT_SECONDS = 180;
+
     public function __construct(private AiToolContextBuilder $toolContextBuilder)
     {
     }
@@ -92,11 +94,10 @@ class AiChatResponder
 
         $response = Http::acceptJson()
             ->withToken($apiKey)
-            ->timeout(60)
+            ->timeout(self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS)
             ->post(rtrim((string) $baseUrl, '/').'/chat/completions', [
                 'model' => $model,
                 'messages' => $messages,
-                'temperature' => 0.2,
             ]);
 
         if (! $response->successful()) {

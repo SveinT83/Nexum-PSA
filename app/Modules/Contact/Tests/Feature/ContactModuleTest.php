@@ -4,6 +4,7 @@ namespace App\Modules\Contact\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
+use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Contact\Controllers\Admin\ContactSettingsController;
@@ -11,6 +12,7 @@ use App\Modules\Contact\Controllers\Tech\ContactController;
 use App\Modules\Contact\Livewire\Tech\ContactForm;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Support\ContactSettings;
+use App\Modules\Signal\Models\Signal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
@@ -367,6 +369,230 @@ class ContactModuleTest extends TestCase
     }
 
     #[Test]
+    public function api_user_can_inspect_client_contacts_by_client_number(): void
+    {
+        $client = Client::factory()->create(['name' => 'Numbered Client', 'client_number' => '10186']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Numbered Site', 'is_default' => true]);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Ownership Contact',
+        ]);
+        $contact->emails()->create([
+            'label' => 'work',
+            'email' => 'ownership@example.test',
+            'is_primary' => true,
+        ]);
+        $contact->relations()->create([
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+            'relation_type' => 'contact',
+            'is_primary' => true,
+        ]);
+        $contact->relations()->create([
+            'related_type' => $site->getMorphClass(),
+            'related_id' => $site->id,
+            'relation_type' => 'site_contact',
+            'is_primary' => true,
+        ]);
+        ClientUser::factory()->create([
+            'contact_id' => $contact->id,
+            'client_site_id' => $site->id,
+            'name' => 'Ownership Contact',
+            'email' => 'ownership@example.test',
+        ]);
+        ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Legacy Only',
+            'email' => 'legacy-only@example.test',
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['contacts.read']);
+
+        $this->getJson(route('api.v1.clients.contacts.index', ['client' => '10186']))
+            ->assertOk()
+            ->assertJsonPath('client.client_number', '10186')
+            ->assertJsonPath('summary.contacts', 1)
+            ->assertJsonPath('summary.legacy_client_users', 2)
+            ->assertJsonPath('summary.legacy_without_contact', 1)
+            ->assertJsonPath('contacts.0.display_name', 'Ownership Contact')
+            ->assertJsonPath('contacts.0.legacy_client_users.0.client.client_number', '10186');
+    }
+
+    #[Test]
+    public function contact_ownership_move_dry_run_does_not_mutate_data(): void
+    {
+        [$oldClient, $oldSite, $newClient, $newSite, $contact] = $this->ownershipMoveFixture();
+
+        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+
+        $this->postJson(route('api.v1.contacts.move', $contact), [
+            'target_client_number' => $newClient->client_number,
+            'dry_run' => true,
+            'reason' => 'Preview cleanup.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('dry_run', true)
+            ->assertJsonPath('changed', false)
+            ->assertJsonPath('plan.status', 'would_move');
+
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $oldClient->getMorphClass(),
+            'related_id' => $oldClient->id,
+        ]);
+        $this->assertDatabaseMissing('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $newClient->getMorphClass(),
+            'related_id' => $newClient->id,
+        ]);
+        $this->assertDatabaseHas('client_users', [
+            'contact_id' => $contact->id,
+            'client_site_id' => $oldSite->id,
+        ]);
+        $this->assertDatabaseMissing('client_users', [
+            'contact_id' => $contact->id,
+            'client_site_id' => $newSite->id,
+        ]);
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'contact_ownership',
+            'event' => 'contact_ownership.move',
+        ]);
+    }
+
+    #[Test]
+    public function api_user_can_move_contact_ownership_by_client_number(): void
+    {
+        [$oldClient, $oldSite, $newClient, $newSite, $contact] = $this->ownershipMoveFixture();
+
+        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+
+        $this->postJson(route('api.v1.contacts.move', $contact), [
+            'target_client_number' => $newClient->client_number,
+            'reason' => 'Move to correct client.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('dry_run', false)
+            ->assertJsonPath('changed', true)
+            ->assertJsonPath('plan.status', 'no_change')
+            ->assertJsonPath('contact.legacy_client_users.0.site.id', $newSite->id);
+
+        $this->assertDatabaseMissing('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $oldClient->getMorphClass(),
+            'related_id' => $oldClient->id,
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $newClient->getMorphClass(),
+            'related_id' => $newClient->id,
+            'relation_type' => 'technical_contact',
+        ]);
+        $this->assertDatabaseHas('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $newSite->getMorphClass(),
+            'related_id' => $newSite->id,
+            'relation_type' => 'technical_contact',
+        ]);
+        $this->assertDatabaseHas('client_users', [
+            'contact_id' => $contact->id,
+            'client_site_id' => $newSite->id,
+            'email' => 'move@example.test',
+        ]);
+        $this->assertDatabaseMissing('client_users', [
+            'contact_id' => $contact->id,
+            'client_site_id' => $oldSite->id,
+        ]);
+    }
+
+    #[Test]
+    public function bulk_fix_dry_run_reports_missing_no_change_and_move_candidates(): void
+    {
+        $targetClient = Client::factory()->create(['name' => 'Target Client', 'client_number' => '20001']);
+        $targetSite = ClientSite::factory()->create(['client_id' => $targetClient->id, 'name' => 'Target Site', 'is_default' => true]);
+        $oldClient = Client::factory()->create(['name' => 'Old Client', 'client_number' => '20002']);
+        $oldSite = ClientSite::factory()->create(['client_id' => $oldClient->id, 'name' => 'Old Site', 'is_default' => true]);
+
+        $alreadyCorrect = $this->contactWithOwnership('Already Correct', 'correct@example.test', $targetClient, $targetSite);
+        $moveCandidate = $this->contactWithOwnership('Move Candidate', 'candidate@example.test', $oldClient, $oldSite);
+
+        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+
+        $this->postJson(route('api.v1.clients.contacts.bulk-fix', ['client' => $targetClient->client_number]), [
+            'contact_ids' => [$alreadyCorrect->id, $moveCandidate->id, 999999],
+            'dry_run' => true,
+            'reason' => 'Preview production cleanup.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('summary.total', 3)
+            ->assertJsonPath('summary.changed', 0)
+            ->assertJsonPath('summary.missing_contacts', 1)
+            ->assertJsonPath('summary.no_change', 1)
+            ->assertJsonPath('results.0.status', 'no_change')
+            ->assertJsonPath('results.1.status', 'would_move')
+            ->assertJsonPath('results.2.status', 'missing_contact');
+    }
+
+    #[Test]
+    public function api_user_can_detach_contact_from_client_without_deleting_contact(): void
+    {
+        $client = Client::factory()->create(['name' => 'Detach Client', 'client_number' => '30001']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Detach Site', 'is_default' => true]);
+        $contact = $this->contactWithOwnership('Detach Contact', 'detach@example.test', $client, $site);
+        $legacyClientUserId = ClientUser::query()
+            ->where('contact_id', $contact->id)
+            ->where('client_site_id', $site->id)
+            ->value('id');
+        $this->assertNotNull($legacyClientUserId);
+
+        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+
+        $this->deleteJson(route('api.v1.clients.contacts.detach', ['client' => $client->client_number, 'contact' => $contact]), [
+            'reason' => 'Detach from wrong client.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('changed', true)
+            ->assertJsonPath('plan.status', 'detached')
+            ->assertJsonPath('plan.delete_legacy_client_user_ids.0', $legacyClientUserId);
+
+        $this->assertDatabaseMissing('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+        ]);
+        $this->assertDatabaseMissing('contact_relations', [
+            'contact_id' => $contact->id,
+            'related_type' => $site->getMorphClass(),
+            'related_id' => $site->id,
+        ]);
+        $this->assertDatabaseMissing('client_users', [
+            'client_site_id' => $site->id,
+            'email' => 'detach@example.test',
+        ]);
+        $this->assertDatabaseHas('contacts', [
+            'id' => $contact->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    #[Test]
+    public function contact_update_scope_cannot_move_contact_ownership(): void
+    {
+        $targetClient = Client::factory()->create(['client_number' => '40001']);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Blocked Move Contact',
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['contacts.update']);
+
+        $this->postJson(route('api.v1.contacts.move', $contact), [
+            'target_client_number' => $targetClient->client_number,
+        ])->assertForbidden();
+    }
+
+    #[Test]
     public function contact_index_can_search_email_and_show_contact_detail(): void
     {
         $match = Contact::query()->create([
@@ -421,6 +647,16 @@ class ContactModuleTest extends TestCase
             'relation_type' => 'contact',
             'is_primary' => true,
         ]);
+        Signal::query()->create([
+            'source_domain' => 'email',
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'signal_type' => 'hard_bounce',
+            'severity' => 'error',
+            'confidence' => 95,
+            'summary' => 'Inbound email classified as hard bounce.',
+            'occurred_at' => now(),
+        ]);
 
         $this->actingAs($this->techUser)
             ->get(route('tech.contacts.show', $contact))
@@ -428,7 +664,9 @@ class ContactModuleTest extends TestCase
             ->assertSee('Organization / Client')
             ->assertSee('Show Client')
             ->assertSee('Site')
-            ->assertSee('Show Site');
+            ->assertSee('Show Site')
+            ->assertSee('Signals')
+            ->assertSee('Inbound email classified as hard bounce.');
     }
 
     #[Test]
@@ -1019,5 +1257,57 @@ class ContactModuleTest extends TestCase
             'contact_id' => $existing->id,
             'email' => 'phone-match@example.test',
         ]);
+    }
+
+    private function ownershipMoveFixture(): array
+    {
+        $oldClient = Client::factory()->create(['name' => 'Old Ownership Client', 'client_number' => '10001']);
+        $oldSite = ClientSite::factory()->create(['client_id' => $oldClient->id, 'name' => 'Old Ownership Site', 'is_default' => true]);
+        $newClient = Client::factory()->create(['name' => 'New Ownership Client', 'client_number' => '10002']);
+        $newSite = ClientSite::factory()->create(['client_id' => $newClient->id, 'name' => 'New Ownership Site', 'is_default' => true]);
+        $contact = $this->contactWithOwnership('Move Contact', 'move@example.test', $oldClient, $oldSite, 'technical_contact');
+
+        return [$oldClient, $oldSite, $newClient, $newSite, $contact];
+    }
+
+    private function contactWithOwnership(
+        string $displayName,
+        string $email,
+        Client $client,
+        ClientSite $site,
+        string $relationType = 'contact'
+    ): Contact {
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => $displayName,
+            'job_title' => 'Technical Contact',
+        ]);
+        $contact->emails()->create([
+            'label' => 'work',
+            'email' => $email,
+            'is_primary' => true,
+        ]);
+        $contact->relations()->create([
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+            'relation_type' => $relationType,
+            'is_primary' => true,
+        ]);
+        $contact->relations()->create([
+            'related_type' => $site->getMorphClass(),
+            'related_id' => $site->id,
+            'relation_type' => $relationType,
+            'is_primary' => true,
+        ]);
+        ClientUser::factory()->create([
+            'contact_id' => $contact->id,
+            'client_site_id' => $site->id,
+            'name' => $displayName,
+            'email' => $email,
+            'role' => 'Technical Contact',
+        ]);
+
+        return $contact;
     }
 }

@@ -106,6 +106,21 @@ class EnsureDefaultEmailTemplates
                 'is_default' => true,
                 'is_active' => true,
             ],
+            [
+                'scope' => 'marketing',
+                'key' => 'marketing_campaign_default',
+                'name' => 'Default marketing campaign email',
+                'subject' => 'Marketing update from {{ company_name }}',
+                'body_html' => '<p>Hello {{ contact_name }},</p><h2>Marketing update</h2><p>Write the message for this campaign email here.</p><p>Replace this paragraph with the offer, news, or customer value you want to send.</p><p style="margin-top:24px;color:#6c757d;font-size:12px;">You receive this email because your organization has a business relationship with {{ company_name }}. <a href="{{ unsubscribe_url }}">Unsubscribe</a></p>',
+                'body_text' => "Hello {{ contact_name }},\n\nMarketing update\n\nWrite the message for this campaign email here.\n\nReplace this paragraph with the offer, news, or customer value you want to send.\n\nYou receive this email because your organization has a business relationship with {{ company_name }}.\nUnsubscribe: {{ unsubscribe_url }}",
+                'variables' => [
+                    'contact_name',
+                    'company_name',
+                    'unsubscribe_url',
+                ],
+                'is_default' => true,
+                'is_active' => true,
+            ],
         ];
     }
 }

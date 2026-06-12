@@ -1,4 +1,4 @@
-<ul class="nav nav-tabs">
+<ul class="nav nav-tabs align-items-center">
     <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('tech.dashboard') ? 'active' : '' }}" aria-current="page" href="{{ route('tech.dashboard') }}">Dashboard</a>
     </li>
@@ -248,6 +248,14 @@
             <li><a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
         </ul>
     </li>
+
+    <li class="nav-item d-flex align-items-center">
+        {{-- Notification bell --}}
+        <div class="d-flex align-items-center px-2">
+            <livewire:notification-bell />
+        </div>
+    </li>
+
     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
 
 </ul>

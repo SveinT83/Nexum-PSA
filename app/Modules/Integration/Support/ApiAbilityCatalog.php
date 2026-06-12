@@ -57,6 +57,11 @@ class ApiAbilityCatalog
             'description' => 'Update contacts, including client and site relations.',
             'domain' => 'Contacts',
         ],
+        'contacts.ownership_manage' => [
+            'label' => 'Repair contact ownership',
+            'description' => 'Inspect, move, bulk repair, and detach Contact ownership across clients and legacy client users.',
+            'domain' => 'Contacts',
+        ],
         'tickets.read' => [
             'label' => 'Read tickets',
             'description' => 'List and view ticket records.',
@@ -246,6 +251,11 @@ class ApiAbilityCatalog
             'label' => 'Read reports',
             'description' => 'List and view available report definitions.',
             'domain' => 'Reports',
+        ],
+        'signals.create' => [
+            'label' => 'Create signals',
+            'description' => 'Record normalized Signal events from integrations and webhooks.',
+            'domain' => 'Signal',
         ],
         'users.read' => [
             'label' => 'Read users',

@@ -793,7 +793,8 @@ XML, 207);
             'remote_path' => '/Kunder/TD Norge',
             'auto_created' => true,
         ]);
-        Http::assertSent(fn ($request) => str_contains((string) $request->url(), '/chat/completions'));
+        Http::assertSent(fn ($request): bool => str_contains((string) $request->url(), '/chat/completions')
+            && ! array_key_exists('temperature', $request->data()));
     }
 
     #[Test]

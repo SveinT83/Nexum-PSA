@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Support\TicketSolutionPolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -26,8 +27,19 @@ class MarkTicketMessageSolution
             throw ValidationException::withMessages(['message' => 'The selected response does not belong to this ticket.']);
         }
 
-        if ($message->author_type !== 'user' || $message->type !== 'customer_reply' || $message->visibility !== 'public') {
-            throw ValidationException::withMessages(['message' => 'Only public technician responses can be marked as the solution.']);
+        $isPublicTechnicianReply = $message->author_type === 'user'
+            && $message->type === 'customer_reply'
+            && $message->visibility === 'public';
+        $isInternalTechnicianNote = $message->author_type === 'user'
+            && $message->type === 'internal_note'
+            && $message->visibility === 'internal';
+
+        if (! $isPublicTechnicianReply && ! $isInternalTechnicianNote) {
+            throw ValidationException::withMessages(['message' => 'Only technician responses or internal notes can be marked as the solution.']);
+        }
+
+        if ($isInternalTechnicianNote && ! app(TicketSolutionPolicy::class)->allowsInternalSolutionNotes()) {
+            throw ValidationException::withMessages(['message' => 'Internal solution notes are disabled by Ticket solution policy.']);
         }
 
         return DB::transaction(function () use ($ticket, $message, $actor) {

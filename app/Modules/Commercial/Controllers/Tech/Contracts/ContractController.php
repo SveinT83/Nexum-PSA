@@ -71,6 +71,7 @@ class ContractController extends Controller
             'future_start_date' => $contract->start_date && $contract->start_date->isFuture(),
             'ready' => $contract->isReady(),
             'has_missing_terms' => $hasMissingTerms,
+            'show_readiness_status' => ! in_array($contract->approval_status, ['approved', 'won'], true),
         ];
 
         return view('commercial::Tech.cs.contracts.show', [
