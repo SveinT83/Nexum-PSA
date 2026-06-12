@@ -51,6 +51,7 @@ Supported routes:
 - `GET /api/v1/clients/{client}/contacts`
 - `POST /api/v1/contacts/{contact}/move`
 - `POST /api/v1/clients/{client}/contacts/bulk-fix`
+- `POST /api/v1/clients/{client}/contacts/legacy-orphans/cleanup`
 - `DELETE /api/v1/clients/{client}/contacts/{contact}`
 
 `{client}` accepts the internal Client ID or `client_number`. This is important in production where
@@ -60,6 +61,9 @@ Mutating ownership routes require the `contacts.ownership_manage` API scope and 
 Actual moves update `contact_relations` and the linked `client_users` bridge in one transaction.
 Detach removes the selected Client and Site relations and deletes linked legacy `client_users` rows
 for that Client, but it does not hard-delete the Contact by default.
+Legacy orphan cleanup deletes explicitly selected `client_users` rows only when they belong to the
+selected Client and have no linked Contact. Rows with a `contact_id` must use the Contact detach
+endpoint instead.
 
 Repair calls are written to the activity log with the actor, API token ID when available, reason,
 before state, result, and after state.
