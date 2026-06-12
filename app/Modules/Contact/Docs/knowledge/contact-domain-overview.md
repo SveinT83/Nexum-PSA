@@ -167,9 +167,9 @@ Bulk-fix is conservative: Contacts with multiple current Client owners or multip
 rows are reported as conflicts for manual review.
 
 `DELETE /api/v1/clients/{client}/contacts/{contact}` detaches the Contact from that Client. It
-removes Contact relations for the Client and its Sites and clears `client_users.contact_id` for
-legacy rows under that Client. It does not delete the Contact unless `delete_if_orphan` is true and
-the Contact has no remaining relations, legacy links, or User account link.
+removes Contact relations for the Client and its Sites and deletes linked legacy `client_users` rows
+under that Client. It does not delete the Contact unless `delete_if_orphan` is true and the Contact
+has no remaining relations, legacy links, or User account link.
 
 Ownership repair calls are written to the activity log with the actor, API token ID when available,
 reason, dry-run flag, before state, result, and after state.

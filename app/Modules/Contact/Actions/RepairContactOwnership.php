@@ -290,7 +290,7 @@ class RepairContactOwnership
         $plan = [
             'status' => ($relationIds === [] && $legacyIds === []) ? 'no_change' : 'would_detach',
             'delete_relation_ids' => $relationIds,
-            'detach_legacy_client_user_ids' => $legacyIds,
+            'delete_legacy_client_user_ids' => $legacyIds,
             'delete_if_orphan' => $deleteIfOrphan,
         ];
 
@@ -311,7 +311,7 @@ class RepairContactOwnership
 
             ClientUser::query()
                 ->whereIn('id', $legacyIds)
-                ->update(['contact_id' => null]);
+                ->delete();
 
             $fresh = $contact->fresh();
 

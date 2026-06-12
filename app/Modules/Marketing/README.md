@@ -130,7 +130,9 @@ Campaign scheduling is owned at campaign level. Operators choose a send rhythm s
 weekly, monthly, or a custom interval, plus first send date, send time, and for weekly campaigns the
 weekday. For example, weekly with Friday and 12:00 schedules the ordered campaign emails on Fridays
 at noon. Campaign email `delay_minutes` is only an optional extra delay for that specific sequence
-step. Updating the campaign schedule recalculates pending recipient due times.
+step. Updating the campaign schedule recalculates pending recipient due times. On the campaign
+detail page, schedule and recipient queue panels are collapsed by default so the ordered campaign
+emails remain the primary work surface.
 
 Recipient throttling is separate from sequence timing. `batch_size` controls how many recipients in
 one campaign email are due at the same time, and `send_interval_minutes` spaces the next recipient

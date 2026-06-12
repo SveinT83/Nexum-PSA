@@ -58,8 +58,8 @@ operators may know a customer by client number instead of database ID.
 
 Mutating ownership routes require the `contacts.ownership_manage` API scope and support `dry_run`.
 Actual moves update `contact_relations` and the linked `client_users` bridge in one transaction.
-Detach removes the selected Client and Site relations and clears `client_users.contact_id` for that
-Client, but it does not hard-delete the Contact by default.
+Detach removes the selected Client and Site relations and deletes linked legacy `client_users` rows
+for that Client, but it does not hard-delete the Contact by default.
 
 Repair calls are written to the activity log with the actor, API token ID when available, reason,
 before state, result, and after state.

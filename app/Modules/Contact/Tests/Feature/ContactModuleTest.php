@@ -539,6 +539,11 @@ class ContactModuleTest extends TestCase
         $client = Client::factory()->create(['name' => 'Detach Client', 'client_number' => '30001']);
         $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Detach Site', 'is_default' => true]);
         $contact = $this->contactWithOwnership('Detach Contact', 'detach@example.test', $client, $site);
+        $legacyClientUserId = ClientUser::query()
+            ->where('contact_id', $contact->id)
+            ->where('client_site_id', $site->id)
+            ->value('id');
+        $this->assertNotNull($legacyClientUserId);
 
         Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
 
@@ -547,7 +552,8 @@ class ContactModuleTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('changed', true)
-            ->assertJsonPath('plan.status', 'detached');
+            ->assertJsonPath('plan.status', 'detached')
+            ->assertJsonPath('plan.delete_legacy_client_user_ids.0', $legacyClientUserId);
 
         $this->assertDatabaseMissing('contact_relations', [
             'contact_id' => $contact->id,
@@ -559,9 +565,8 @@ class ContactModuleTest extends TestCase
             'related_type' => $site->getMorphClass(),
             'related_id' => $site->id,
         ]);
-        $this->assertDatabaseHas('client_users', [
+        $this->assertDatabaseMissing('client_users', [
             'client_site_id' => $site->id,
-            'contact_id' => null,
             'email' => 'detach@example.test',
         ]);
         $this->assertDatabaseHas('contacts', [

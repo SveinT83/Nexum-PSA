@@ -111,6 +111,8 @@ as daily, weekly, monthly, or a custom interval. The schedule form also exposes 
 time, and for weekly campaigns the weekday, so a campaign can be set to send every Friday at 12:00
 without interpreting technical cadence fields. A sequence email's delay is only extra delay on top
 of that campaign rhythm. Updating the campaign schedule recalculates pending recipient due times.
+On the campaign detail page, schedule and recipient queue panels are collapsed by default so the
+ordered campaign emails remain the primary work surface.
 
 Recipient throttling is separate from sequence timing. Batch size controls how many recipients are
 due at the same time for a campaign email, and batch interval minutes space later recipient batches.

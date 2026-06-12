@@ -274,9 +274,10 @@ Contact relations and the legacy Client User bridge.
 `POST /api/v1/clients/{client}/contacts/bulk-fix` accepts `contact_ids`, optional `target_site_id`,
 `dry_run`, and `reason`. Use `dry_run: true` first to get per-Contact statuses before mutating data.
 
-`DELETE /api/v1/clients/{client}/contacts/{contact}` detaches a Contact from one Client. It clears
-legacy `client_users.contact_id` for that Client instead of deleting the legacy row. `delete_if_orphan`
-can soft-delete the Contact only when it has no remaining ownership or User account link.
+`DELETE /api/v1/clients/{client}/contacts/{contact}` detaches a Contact from one Client. It deletes
+linked legacy `client_users` rows for that Client so the legacy contact does not remain visible on
+the wrong customer. `delete_if_orphan` can soft-delete the Contact only when it has no remaining
+ownership or User account link.
 
 Repair calls are audited in the activity log with the actor, API token ID when available, reason,
 dry-run flag, before state, result, and after state.
