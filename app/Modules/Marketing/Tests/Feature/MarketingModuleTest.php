@@ -716,6 +716,7 @@ class MarketingModuleTest extends TestCase
             'marketing.view',
             'marketing.list.manage',
             'marketing.campaign.create',
+            'marketing.campaign.edit',
             'marketing.campaign.approve',
             'marketing.campaign.send',
         ] as $permission) {
@@ -727,6 +728,7 @@ class MarketingModuleTest extends TestCase
             'marketing.view',
             'marketing.list.manage',
             'marketing.campaign.create',
+            'marketing.campaign.edit',
             'marketing.campaign.approve',
             'marketing.campaign.send',
         ]);
@@ -768,8 +770,6 @@ class MarketingModuleTest extends TestCase
             'description' => 'Campaign description',
             'marketing_list_id' => $list->id,
             'email_account_id' => $account->id,
-            'email_template_id' => $template->id,
-            'email_subject' => 'Hello {{ contact_name }}',
             'starts_at' => now()->subMinute()->format('Y-m-d H:i:s'),
             'batch_size' => 10,
             'send_interval_minutes' => 15,
@@ -779,6 +779,16 @@ class MarketingModuleTest extends TestCase
 
         $campaign = MarketingCampaign::query()->firstOrFail();
         $response->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.emails.store', $campaign), [
+                'email_template_id' => $template->id,
+                'email_subject' => 'Hello {{ contact_name }}',
+                'sequence_order' => 1,
+                'delay_minutes' => 0,
+            ])
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
         $this->assertSame('<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p><p><a href="{{ unsubscribe_url }}">Unsubscribe</a></p>', $campaign->emails()->firstOrFail()->body_html_snapshot);
 
         $template->forceFill([
@@ -860,6 +870,9 @@ class MarketingModuleTest extends TestCase
             ->get(route('tech.marketing.campaigns.show', $campaign))
             ->assertOk()
             ->assertSee('Interest Signals')
+            ->assertSee('1 sent')
+            ->assertSee('1 opened')
+            ->assertSee('1 click')
             ->assertSee('Clicked security content');
     }
 
@@ -902,11 +915,17 @@ class MarketingModuleTest extends TestCase
         $templateThree = $this->marketingTemplate('sequence_three', 'Sequence three');
         $start = now()->addMinutes(10)->seconds(0);
 
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.create'))
+            ->assertOk()
+            ->assertSee('Send Rhythm')
+            ->assertSee('Sending Preferences')
+            ->assertDontSee('First Campaign Email')
+            ->assertDontSee('Start Template');
+
         $this->actingAs($user)->post(route('tech.marketing.campaigns.store'), [
             'name' => 'Sequence campaign',
             'marketing_list_id' => $list->id,
-            'email_template_id' => $templateOne->id,
-            'email_subject' => 'First touch',
             'starts_at' => $start->format('Y-m-d H:i:s'),
             'batch_size' => 10,
             'send_interval_minutes' => 15,
@@ -917,10 +936,24 @@ class MarketingModuleTest extends TestCase
         $campaign = MarketingCampaign::query()->firstOrFail();
 
         $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.emails.store', $campaign), [
+                'email_template_id' => $templateOne->id,
+                'email_subject' => 'First touch',
+                'sequence_order' => 1,
+                'delay_minutes' => 0,
+            ])
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->actingAs($user)
             ->get(route('tech.marketing.campaigns.show', $campaign))
             ->assertOk()
             ->assertSee('Campaign Schedule')
-            ->assertSee('Email Cadence')
+            ->assertSee('Send Rhythm')
+            ->assertSee('First Send Date')
+            ->assertSee('Send Time')
+            ->assertSee('Weekday')
+            ->assertDontSee('Email Cadence')
+            ->assertDontSee('Cadence Unit')
             ->assertSee('Campaign Emails')
             ->assertSee('Sequence one')
             ->assertSee('New Email')
@@ -1022,7 +1055,7 @@ class MarketingModuleTest extends TestCase
     }
 
     #[Test]
-    public function campaign_schedule_controls_sequence_cadence_and_recipient_batch_spacing(): void
+    public function campaign_schedule_controls_send_rhythm_and_recipient_batch_spacing(): void
     {
         foreach ([
             'marketing.view',
@@ -1061,16 +1094,15 @@ class MarketingModuleTest extends TestCase
         $templateOne = $this->marketingTemplate('schedule_one', 'Schedule one');
         $templateTwo = $this->marketingTemplate('schedule_two', 'Schedule two');
         $templateThree = $this->marketingTemplate('schedule_three', 'Schedule three');
-        $start = Carbon::parse('2026-06-14 17:00:00');
+        $start = Carbon::parse('2026-06-19 12:00:00');
 
         $this->actingAs($user)->post(route('tech.marketing.campaigns.store'), [
             'name' => 'Weekly schedule campaign',
             'marketing_list_id' => $list->id,
-            'email_template_id' => $templateOne->id,
-            'email_subject' => 'First weekly touch',
-            'starts_at' => $start->format('Y-m-d H:i:s'),
-            'sequence_interval_value' => 1,
-            'sequence_interval_unit' => 'weeks',
+            'schedule_frequency' => 'weekly',
+            'first_send_date' => '2026-06-18',
+            'send_weekday' => 5,
+            'send_time' => '12:00',
             'new_recipient_policy' => 'start_at_first_email',
             'batch_size' => 2,
             'send_interval_minutes' => 10,
@@ -1079,6 +1111,15 @@ class MarketingModuleTest extends TestCase
         ])->assertRedirect();
 
         $campaign = MarketingCampaign::query()->firstOrFail();
+        $this->assertSame('Every Friday at 12:00', $campaign->sendRhythmLabel());
+        $this->assertSame($start->format('Y-m-d H:i'), $campaign->starts_at->format('Y-m-d H:i'));
+
+        $this->actingAs($user)->post(route('tech.marketing.campaigns.emails.store', $campaign), [
+            'email_template_id' => $templateOne->id,
+            'email_subject' => 'First weekly touch',
+            'sequence_order' => 1,
+            'delay_minutes' => 0,
+        ])->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
 
         $this->actingAs($user)->post(route('tech.marketing.campaigns.emails.store', $campaign), [
             'email_template_id' => $templateTwo->id,
@@ -1118,12 +1159,13 @@ class MarketingModuleTest extends TestCase
         $this->assertSame($start->copy()->addWeek()->format('Y-m-d H:i'), $secondRecipients[0]->due_at->format('Y-m-d H:i'));
         $this->assertSame($start->copy()->addWeeks(2)->format('Y-m-d H:i'), $thirdRecipients[0]->due_at->format('Y-m-d H:i'));
 
-        $newStart = Carbon::parse('2026-06-15 09:00:00');
+        $newStart = Carbon::parse('2026-06-26 12:00:00');
         $this->actingAs($user)
             ->put(route('tech.marketing.campaigns.schedule.update', $campaign), [
-                'starts_at' => $newStart->format('Y-m-d H:i:s'),
-                'sequence_interval_value' => 1,
-                'sequence_interval_unit' => 'days',
+                'schedule_frequency' => 'weekly',
+                'first_send_date' => '2026-06-25',
+                'send_weekday' => 5,
+                'send_time' => '12:00',
                 'new_recipient_policy' => 'start_at_first_email',
                 'batch_size' => 1,
                 'send_interval_minutes' => 5,
@@ -1143,7 +1185,7 @@ class MarketingModuleTest extends TestCase
         $this->assertSame($newStart->format('Y-m-d H:i'), $firstRecipients[0]->fresh()->due_at->format('Y-m-d H:i'));
         $this->assertSame($newStart->copy()->addMinutes(5)->format('Y-m-d H:i'), $firstRecipients[1]->fresh()->due_at->format('Y-m-d H:i'));
         $this->assertSame($newStart->copy()->addMinutes(10)->format('Y-m-d H:i'), $firstRecipients[2]->fresh()->due_at->format('Y-m-d H:i'));
-        $this->assertSame($newStart->copy()->addDay()->format('Y-m-d H:i'), $secondRecipients[0]->fresh()->due_at->format('Y-m-d H:i'));
+        $this->assertSame($newStart->copy()->addWeek()->format('Y-m-d H:i'), $secondRecipients[0]->fresh()->due_at->format('Y-m-d H:i'));
     }
 
     #[Test]

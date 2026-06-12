@@ -78,7 +78,7 @@ class DraftMarketingCampaignPlanWithAi
             'emails must be an array of objects with keys: email_name, email_subject, delay_minutes, body_html, body_text.',
             'Use the user prompt, campaign context, mailing list context, current sequence emails, and available Marketing templates.',
             'Known placeholders you may use: {{ contact_name }}, {{ client_name }}, {{ company_name }}, {{ unsubscribe_url }}.',
-            'Plan a coherent ordered sequence. Never return more than 10 emails. Campaign-level email cadence controls normal spacing between sequence emails; use delay_minutes only as extra delay for exceptions and prefer 0 when the campaign cadence is enough.',
+            'Plan a coherent ordered sequence. Never return more than 10 emails. Campaign-level send rhythm controls normal spacing between sequence emails; use delay_minutes only as extra delay for exceptions and prefer 0 when the campaign rhythm is enough.',
             'Keep each email concise enough for direct editing in the current campaign email editor.',
             'Use normal http or https destination links when links are useful. Nexum PSA rewrites normal links for click tracking when tracking is enabled, so never invent tracking redirect URLs.',
             'Every marketing email must include an unsubscribe link using {{ unsubscribe_url }} in body_html and an Unsubscribe: {{ unsubscribe_url }} line in body_text.',

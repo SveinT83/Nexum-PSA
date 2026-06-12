@@ -26,7 +26,7 @@ The first slices create the Marketing and Email foundation:
 - Campaign draft, approval, recipient queue, due send job, and open/click/unsubscribe tracking
   foundation.
 - Campaign sequence editing for multiple ordered campaign emails as collapsible cards with
-  campaign-level cadence, optional extra delay, editable email subject/body snapshots, preview,
+  campaign-level send rhythm, optional extra delay, editable email subject/body snapshots, preview,
   test-send, new-contact policy, recipient batch throttling, and active-campaign recipient queue
   sync.
 - AI-assisted campaign planning from campaign, list, available template, and current sequence
@@ -88,11 +88,12 @@ Cloud. Default interest tags prepare later open/click tracking and Sales categor
 
 ## Campaigns
 
-Marketing campaigns are created as drafts from a mailing list and a first campaign email. The first
-campaign email uses an active Email template with the `marketing` scope as its starting point, then
-stores its own subject, HTML body, plaintext body, and template metadata as a snapshot. Each campaign
-can choose a sender account. If it does not, Marketing uses the active Email account marked as
-default for the `marketing` scope.
+Marketing campaigns are created as drafts from a mailing list, send rhythm, sender account, and
+send preferences. Campaign emails are added after the campaign exists from the campaign detail page.
+Each campaign email uses an active Email template with the `marketing` scope as its starting point,
+then stores its own subject, HTML body, plaintext body, and template metadata as a snapshot. Each
+campaign can choose a sender account. If it does not, Marketing uses the active Email account marked
+as default for the `marketing` scope.
 
 A campaign must be approved by a technician with `marketing.campaign.approve` before sending. On
 approval, Marketing creates `marketing_campaign_recipients` rows from the current resolved list
@@ -101,13 +102,15 @@ members. The queue stores due time, status, attempts, message id, and tracking t
 Campaigns can contain multiple ordered emails. Technicians with `marketing.campaign.edit` can add a
 new sequence email from a start template, edit the campaign email name, subject, HTML body, plaintext
 body, order, optional extra delay, and active/inactive status. Existing emails are displayed as
-cards and expanded for preview, test-send, AI drafting, and editing. New emails are behind a button;
-selecting a start template fills the editable snapshot fields before save.
+cards with recipient, sent, open, and click counts, then expanded for preview, test-send, AI
+drafting, and editing. New emails are behind a button; selecting a start template fills the editable
+snapshot fields before save.
 
-Campaign-level schedule controls the normal ordered sequence. The first email uses `starts_at`, and
-later emails use the campaign sequence cadence, such as daily, weekly, or monthly. A sequence
-email's delay is only extra delay on top of that campaign cadence. Updating the campaign schedule
-recalculates pending recipient due times.
+Campaign-level schedule controls the normal ordered sequence. Operators choose a send rhythm such
+as daily, weekly, monthly, or a custom interval. The schedule form also exposes first send date, send
+time, and for weekly campaigns the weekday, so a campaign can be set to send every Friday at 12:00
+without interpreting technical cadence fields. A sequence email's delay is only extra delay on top
+of that campaign rhythm. Updating the campaign schedule recalculates pending recipient due times.
 
 Recipient throttling is separate from sequence timing. Batch size controls how many recipients are
 due at the same time for a campaign email, and batch interval minutes space later recipient batches.

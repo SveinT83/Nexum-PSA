@@ -47,6 +47,11 @@ class MarketingCampaignEmail extends Model
         return $this->hasMany(MarketingCampaignRecipient::class);
     }
 
+    public function events(): HasMany
+    {
+        return $this->hasMany(MarketingCampaignEvent::class);
+    }
+
     public function hasSnapshotContent(): bool
     {
         return filled($this->subject_snapshot)

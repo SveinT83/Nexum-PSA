@@ -107,38 +107,76 @@
         </div>
     @endif
 
+    @php
+        $scheduleFrequency = old('schedule_frequency', $campaign->scheduleFrequency());
+        $firstSendDate = old('first_send_date', $campaign->starts_at?->format('Y-m-d'));
+        $sendTime = old('send_time', $campaign->scheduleTime());
+        $sendWeekday = (int) old('send_weekday', $campaign->scheduleWeekday());
+        $monthDay = old('month_day', $campaign->scheduleMonthDay());
+        $customIntervalValue = old('custom_interval_value', $campaign->sequence_interval_value ?: 1);
+        $customIntervalUnit = old('custom_interval_unit', $campaign->sequence_interval_unit ?: 'days');
+    @endphp
+
     <div class="card mb-3">
         <div class="card-header d-flex align-items-center justify-content-between gap-2">
             <span class="fw-semibold">Campaign Schedule</span>
-            <span class="badge text-bg-light border">{{ $campaign->sequenceIntervalLabel() }}</span>
+            <span class="badge text-bg-light border">{{ $campaign->sendRhythmLabel() }}</span>
         </div>
         <div class="card-body">
             @can('marketing.campaign.edit')
-                <form method="POST" action="{{ route('tech.marketing.campaigns.schedule.update', $campaign) }}">
+                <form method="POST" action="{{ route('tech.marketing.campaigns.schedule.update', $campaign) }}" data-campaign-schedule-form>
                     @csrf
                     @method('PUT')
                     <div class="row g-3 align-items-end">
                         <div class="col-lg-3">
-                            <label for="starts_at" class="form-label">First Send At</label>
-                            <input type="datetime-local" id="starts_at" name="starts_at" class="form-control form-control-sm @error('starts_at') is-invalid @enderror" value="{{ old('starts_at', $campaign->starts_at?->format('Y-m-d\TH:i')) }}">
-                            @error('starts_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-lg-2">
-                            <label for="sequence_interval_value" class="form-label">Email Cadence</label>
-                            <input type="number" min="1" max="999" id="sequence_interval_value" name="sequence_interval_value" class="form-control form-control-sm @error('sequence_interval_value') is-invalid @enderror" value="{{ old('sequence_interval_value', $campaign->sequence_interval_value ?: 1) }}">
-                            @error('sequence_interval_value')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-lg-2">
-                            <label for="sequence_interval_unit" class="form-label">Cadence Unit</label>
-                            <select id="sequence_interval_unit" name="sequence_interval_unit" class="form-select form-select-sm @error('sequence_interval_unit') is-invalid @enderror">
-                                @foreach($sequenceIntervalUnits as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('sequence_interval_unit', $campaign->sequence_interval_unit ?: 'days') === $value)>{{ $label }}</option>
+                            <label for="schedule_frequency" class="form-label">Send Rhythm</label>
+                            <select id="schedule_frequency" name="schedule_frequency" class="form-select form-select-sm @error('schedule_frequency') is-invalid @enderror" data-schedule-frequency>
+                                @foreach($scheduleFrequencies as $value => $label)
+                                    <option value="{{ $value }}" @selected($scheduleFrequency === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
-                            @error('sequence_interval_unit')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @error('schedule_frequency')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-2">
+                            <label for="first_send_date" class="form-label">First Send Date</label>
+                            <input type="date" id="first_send_date" name="first_send_date" class="form-control form-control-sm @error('first_send_date') is-invalid @enderror" value="{{ $firstSendDate }}">
+                            @error('first_send_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-2">
+                            <label for="send_time" class="form-label">Send Time</label>
+                            <input type="time" id="send_time" name="send_time" class="form-control form-control-sm @error('send_time') is-invalid @enderror" value="{{ $sendTime }}">
+                            @error('send_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-2" data-schedule-weekly>
+                            <label for="send_weekday" class="form-label">Weekday</label>
+                            <select id="send_weekday" name="send_weekday" class="form-select form-select-sm @error('send_weekday') is-invalid @enderror">
+                                @foreach($weekdays as $value => $label)
+                                    <option value="{{ $value }}" @selected($sendWeekday === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('send_weekday')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-2" data-schedule-monthly>
+                            <label for="month_day" class="form-label">Month Day</label>
+                            <input type="number" min="1" max="31" id="month_day" name="month_day" class="form-control form-control-sm @error('month_day') is-invalid @enderror" value="{{ $monthDay }}">
+                            @error('month_day')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-2" data-schedule-custom>
+                            <label for="custom_interval_value" class="form-label">Every</label>
+                            <input type="number" min="1" max="999" id="custom_interval_value" name="custom_interval_value" class="form-control form-control-sm @error('custom_interval_value') is-invalid @enderror" value="{{ $customIntervalValue }}">
+                            @error('custom_interval_value')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-lg-2" data-schedule-custom>
+                            <label for="custom_interval_unit" class="form-label">Interval Unit</label>
+                            <select id="custom_interval_unit" name="custom_interval_unit" class="form-select form-select-sm @error('custom_interval_unit') is-invalid @enderror">
+                                @foreach($sequenceIntervalUnits as $value => $label)
+                                    <option value="{{ $value }}" @selected($customIntervalUnit === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('custom_interval_unit')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-lg-3">
-                            <label for="new_recipient_policy" class="form-label">New Contacts</label>
+                            <label for="new_recipient_policy" class="form-label">New Contacts Added Later</label>
                             <select id="new_recipient_policy" name="new_recipient_policy" class="form-select form-select-sm @error('new_recipient_policy') is-invalid @enderror">
                                 @foreach($newRecipientPolicies as $value => $label)
                                     <option value="{{ $value }}" @selected(old('new_recipient_policy', $campaign->new_recipient_policy ?: 'start_at_first_email') === $value)>{{ $label }}</option>
@@ -152,13 +190,13 @@
                             @error('batch_size')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-lg-1">
-                            <label for="send_interval_minutes" class="form-label">Gap Min</label>
+                            <label for="send_interval_minutes" class="form-label">Batch Gap</label>
                             <input type="number" min="1" max="1440" id="send_interval_minutes" name="send_interval_minutes" class="form-control form-control-sm @error('send_interval_minutes') is-invalid @enderror" value="{{ old('send_interval_minutes', $campaign->send_interval_minutes ?: $settings['default_send_interval_minutes']) }}">
                             @error('send_interval_minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
                             <div class="small text-muted">
-                                Email cadence controls the ordered campaign emails. Batch and gap minutes throttle recipients inside each campaign email.
+                                Send rhythm controls the ordered campaign emails. Batch and batch gap only throttle recipients inside one email.
                             </div>
                             <button type="submit" class="btn btn-sm btn-primary">
                                 <i class="bi bi-calendar-check" aria-hidden="true"></i>
@@ -171,8 +209,8 @@
                 <dl class="row small mb-0">
                     <dt class="col-md-3">First send</dt>
                     <dd class="col-md-9">{{ $campaign->starts_at?->format('Y-m-d H:i') ?? 'When approved' }}</dd>
-                    <dt class="col-md-3">Email cadence</dt>
-                    <dd class="col-md-9">{{ $campaign->sequenceIntervalLabel() }}</dd>
+                    <dt class="col-md-3">Send rhythm</dt>
+                    <dd class="col-md-9">{{ $campaign->sendRhythmLabel() }}</dd>
                     <dt class="col-md-3">New contacts</dt>
                     <dd class="col-md-9">{{ $campaign->newRecipientPolicyLabel() }}</dd>
                     <dt class="col-md-3">Recipient throttle</dt>
@@ -272,7 +310,7 @@
                                     <div class="col-lg-3">
                                         <label for="delay_minutes" class="form-label">Extra Delay Minutes</label>
                                         <input type="number" id="delay_minutes" name="delay_minutes" min="0" max="525600" class="form-control form-control-sm @error('delay_minutes') is-invalid @enderror" value="{{ old('delay_minutes', 0) }}" required>
-                                        <div class="form-text">Added after the campaign cadence for this email.</div>
+                                        <div class="form-text">Added after this email's normal send rhythm.</div>
                                         @error('delay_minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
                                     <div class="col-12">
@@ -334,6 +372,11 @@
 
     <div class="accordion mb-3" id="campaignEmailAccordion">
         @forelse($campaign->emails as $email)
+            @php
+                $sentCount = (int) ($email->sent_recipients_count ?? 0);
+                $openCount = (int) ($email->open_events_count ?? 0);
+                $clickCount = (int) ($email->click_events_count ?? 0);
+            @endphp
             <div class="card mb-2" data-email-workspace data-email-id="{{ $email->id }}">
                 <div class="card-header p-0">
                     <button class="btn btn-link text-start text-decoration-none w-100 p-3" type="button" data-bs-toggle="collapse" data-bs-target="#campaignEmailPanel-{{ $email->id }}" aria-expanded="false" aria-controls="campaignEmailPanel-{{ $email->id }}">
@@ -346,6 +389,15 @@
                                 <span class="badge text-bg-{{ $email->status === 'active' ? 'success' : 'light' }} border">{{ ucfirst($email->status) }}</span>
                                 <span class="badge text-bg-light border">Extra {{ $email->delay_minutes }} min</span>
                                 <span class="badge text-bg-light border">{{ $email->recipients_count }} recipients</span>
+                                <span class="badge text-bg-light border text-nowrap" title="Recipients successfully sent this campaign email.">
+                                    <i class="bi bi-send-check me-1" aria-hidden="true"></i>{{ $sentCount }} sent
+                                </span>
+                                <span class="badge text-bg-light border text-nowrap" title="Tracked open events. Email clients can block this, so it is not guaranteed read time.">
+                                    <i class="bi bi-envelope-open me-1" aria-hidden="true"></i>{{ $openCount }} opened
+                                </span>
+                                <span class="badge text-bg-light border text-nowrap" title="Tracked link click events for this campaign email.">
+                                    <i class="bi bi-cursor me-1" aria-hidden="true"></i>{{ $clickCount }} {{ $clickCount === 1 ? 'click' : 'clicks' }}
+                                </span>
                                 <span class="badge text-bg-light border">{{ $email->sourceTemplateName() ?? 'No template' }}</span>
                             </div>
                         </div>
@@ -375,7 +427,7 @@
                                             <div class="col-lg-3">
                                                 <label for="delay_minutes_{{ $email->id }}" class="form-label">Extra Delay Minutes</label>
                                                 <input type="number" id="delay_minutes_{{ $email->id }}" name="delay_minutes" min="0" max="525600" class="form-control form-control-sm" value="{{ old('delay_minutes', $email->delay_minutes) }}" required>
-                                                <div class="form-text">Added after the campaign cadence.</div>
+                                                <div class="form-text">Added after this email's normal send rhythm.</div>
                                             </div>
                                             <div class="col-lg-3">
                                                 <label for="status_{{ $email->id }}" class="form-label">Status</label>
@@ -528,6 +580,30 @@
             const campaignEmailPreviewVariables = {!! \Illuminate\Support\Js::from($campaignEmailPreviewVariables) !!};
             const defaultTemplateId = '{{ $templates->first()?->id }}';
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+            document.querySelectorAll('[data-campaign-schedule-form]').forEach(function (form) {
+                const frequency = form.querySelector('[data-schedule-frequency]');
+                const weeklyFields = form.querySelectorAll('[data-schedule-weekly]');
+                const monthlyFields = form.querySelectorAll('[data-schedule-monthly]');
+                const customFields = form.querySelectorAll('[data-schedule-custom]');
+
+                const syncScheduleFields = function () {
+                    const value = frequency ? frequency.value : 'daily';
+
+                    weeklyFields.forEach(function (field) {
+                        field.classList.toggle('d-none', value !== 'weekly');
+                    });
+                    monthlyFields.forEach(function (field) {
+                        field.classList.toggle('d-none', value !== 'monthly');
+                    });
+                    customFields.forEach(function (field) {
+                        field.classList.toggle('d-none', value !== 'custom');
+                    });
+                };
+
+                frequency?.addEventListener('change', syncScheduleFields);
+                syncScheduleFields();
+            });
 
             function previewDocument(html) {
                 const content = String(html || '').trim();

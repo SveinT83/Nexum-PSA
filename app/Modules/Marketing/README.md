@@ -35,9 +35,9 @@ The implemented foundation now covers:
 - Campaign UI under `/tech/marketing/campaigns`.
 - Approval gate, due-recipient send job, scheduled minute processing, and `marketing:send-due`.
 - Campaign sequence UI for multiple campaign emails as collapsible cards with order, campaign-level
-  cadence, extra per-email delay, editable email subject/body snapshots, live preview, test-send,
-  pending-recipient due-time updates, new-contact policy, recipient batch throttling, and safe
-  removal/deactivation.
+  send rhythm such as every Friday at 12:00, extra per-email delay, editable email subject/body
+  snapshots, live preview, test-send, pending-recipient due-time updates, new-contact policy,
+  recipient batch throttling, and safe removal/deactivation.
 - AI-assisted campaign email drafting through active Integration AI agents. AI suggestions update
   the editable form only and must still be saved by the technician.
 - Open, click, and unsubscribe tracking endpoints.
@@ -87,9 +87,11 @@ Recipients are deduplicated by lowercased email address before list members are 
 
 ## Campaigns
 
-Campaigns are created as drafts and must be approved by a technician with
-`marketing.campaign.approve` before any recipients are sent. Approval materializes recipient queue
-rows for the selected list and active campaign emails.
+Campaigns are created as drafts from a mailing list, send rhythm, sender account, and send
+preferences. Campaign emails are added from the campaign detail page after the campaign exists. A
+campaign must be approved by a technician with `marketing.campaign.approve` before any recipients
+are sent. Approval materializes recipient queue rows for the selected list and active campaign
+emails.
 
 Each campaign email starts from an active Email template with the `marketing` scope, then stores its
 own subject, HTML body, plaintext body, source template name, and template variables as a snapshot.
@@ -120,15 +122,15 @@ not already include `unsubscribe_url`.
 
 Campaigns can contain multiple ordered emails. Technicians with `marketing.campaign.edit` can add,
 update, deactivate, or remove campaign emails from the campaign detail page. Existing emails are
-shown as cards and expanded only when a technician wants to preview, test-send, or edit them. New
-emails are created from a hidden form; selecting a start template fills the editable snapshot fields
-before saving.
+shown as cards with recipient, sent, open, and click counts, then expanded only when a technician
+wants to preview, test-send, or edit them. New emails are created from a hidden form; selecting a
+start template fills the editable snapshot fields before saving.
 
-Campaign scheduling is owned at campaign level. `starts_at` controls the first sequence email, and
-the campaign sequence interval controls whether each ordered email goes daily, weekly, monthly, or
-another supported cadence after that. Campaign email `delay_minutes` is only an optional extra delay
-for that specific sequence step. Updating the campaign schedule recalculates pending recipient due
-times.
+Campaign scheduling is owned at campaign level. Operators choose a send rhythm such as daily,
+weekly, monthly, or a custom interval, plus first send date, send time, and for weekly campaigns the
+weekday. For example, weekly with Friday and 12:00 schedules the ordered campaign emails on Fridays
+at noon. Campaign email `delay_minutes` is only an optional extra delay for that specific sequence
+step. Updating the campaign schedule recalculates pending recipient due times.
 
 Recipient throttling is separate from sequence timing. `batch_size` controls how many recipients in
 one campaign email are due at the same time, and `send_interval_minutes` spaces the next recipient

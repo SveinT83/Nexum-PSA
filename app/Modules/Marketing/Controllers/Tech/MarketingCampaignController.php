@@ -26,6 +26,7 @@ use App\Modules\Marketing\Support\MarketingSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
@@ -62,13 +63,6 @@ class MarketingCampaignController extends Controller
         $emailDefaults->handle();
 
         $lists = MarketingList::query()->withCount('members')->orderBy('name')->get();
-        $templates = EmailTemplate::query()
-            ->where('scope', 'marketing')
-            ->where('is_active', true)
-            ->orderByDesc('is_default')
-            ->orderBy('name')
-            ->get();
-
         if ($lists->isEmpty()) {
             $target = $request->user()?->can('marketing.list.manage')
                 ? 'tech.marketing.lists.create'
@@ -79,16 +73,6 @@ class MarketingCampaignController extends Controller
                 ->with('status', 'Create a mailing list before creating a marketing campaign.');
         }
 
-        if ($templates->isEmpty()) {
-            $target = $request->user()?->can('email.template_manage')
-                ? 'tech.admin.system.templatesManagement.email.index'
-                : 'tech.marketing.campaigns.index';
-
-            return redirect()
-                ->route($target, $target === 'tech.admin.system.templatesManagement.email.index' ? ['scope' => 'marketing'] : [])
-                ->with('status', 'Create an active marketing email template before creating a campaign.');
-        }
-
         return view('marketing::Tech.campaigns.form', [
             'campaign' => new MarketingCampaign([
                 'status' => 'draft',
@@ -96,35 +80,30 @@ class MarketingCampaignController extends Controller
                 'track_clicks' => $settings->get()['click_tracking_enabled'],
             ]),
             'lists' => $lists,
-            'templates' => $templates,
-            'templateSnapshots' => $templates
-                ->mapWithKeys(fn (EmailTemplate $template): array => [(string) $template->id => [
-                    'name' => $template->name,
-                    'subject' => $template->subject,
-                    'body_html' => $template->body_html,
-                    'body_text' => $template->body_text,
-                ]])
-                ->all(),
             'accounts' => EmailAccount::query()->where('is_active', true)->orderBy('address')->get(),
             'settings' => $settings->get(),
+            'scheduleFrequencies' => MarketingCampaign::SCHEDULE_FREQUENCIES,
             'sequenceIntervalUnits' => MarketingCampaign::SEQUENCE_INTERVAL_UNITS,
+            'weekdays' => MarketingCampaign::WEEKDAYS,
             'newRecipientPolicies' => MarketingCampaign::NEW_RECIPIENT_POLICIES,
         ]);
     }
 
-    public function store(Request $request, ResolveMarketingListMembers $resolve, BuildMarketingCampaignEmailSnapshot $snapshot): RedirectResponse
+    public function store(Request $request, ResolveMarketingListMembers $resolve): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'marketing_list_id' => ['required', 'exists:marketing_lists,id'],
             'email_account_id' => ['nullable', 'exists:email_accounts,id'],
-            'email_template_id' => ['required', 'exists:email_templates,id'],
-            'email_name' => ['nullable', 'string', 'max:255'],
-            'email_subject' => ['required', 'string', 'max:255'],
-            'body_html' => ['nullable', 'string'],
-            'body_text' => ['nullable', 'string'],
             'starts_at' => ['nullable', 'date'],
+            'schedule_frequency' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SCHEDULE_FREQUENCIES))],
+            'first_send_date' => ['nullable', 'date_format:Y-m-d'],
+            'send_time' => ['nullable', 'date_format:H:i'],
+            'send_weekday' => ['nullable', 'integer', 'min:1', 'max:7'],
+            'month_day' => ['nullable', 'integer', 'min:1', 'max:31'],
+            'custom_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'custom_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'batch_size' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'send_interval_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
             'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
@@ -133,12 +112,7 @@ class MarketingCampaignController extends Controller
             'track_opens' => ['nullable', 'boolean'],
             'track_clicks' => ['nullable', 'boolean'],
         ]);
-
-        $template = EmailTemplate::query()
-            ->whereKey($data['email_template_id'])
-            ->where('scope', 'marketing')
-            ->where('is_active', true)
-            ->firstOrFail();
+        $schedule = $this->normalizeSchedulePayload($data);
 
         $campaign = MarketingCampaign::query()->create([
             'marketing_list_id' => $data['marketing_list_id'],
@@ -146,28 +120,16 @@ class MarketingCampaignController extends Controller
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'status' => 'draft',
-            'starts_at' => $data['starts_at'] ?? null,
+            'starts_at' => $schedule['starts_at'],
             'batch_size' => $data['batch_size'] ?? null,
             'send_interval_minutes' => $data['send_interval_minutes'] ?? null,
-            'sequence_interval_value' => $data['sequence_interval_value'] ?? 1,
-            'sequence_interval_unit' => $data['sequence_interval_unit'] ?? 'days',
+            'sequence_interval_value' => $schedule['sequence_interval_value'],
+            'sequence_interval_unit' => $schedule['sequence_interval_unit'],
             'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
             'track_opens' => $request->boolean('track_opens'),
             'track_clicks' => $request->boolean('track_clicks'),
             'created_by' => $request->user()?->id,
             'updated_by' => $request->user()?->id,
-        ]);
-
-        $campaign->emails()->create([
-            ...$snapshot->fromTemplate($template, [
-                'name' => $data['email_name'] ?? null,
-                'email_subject' => $data['email_subject'],
-                'body_html' => $data['body_html'] ?? null,
-                'body_text' => $data['body_text'] ?? null,
-            ]),
-            'sequence_order' => 1,
-            'status' => 'active',
-            'scheduled_at' => null,
         ]);
 
         $resolve->handle($campaign->list);
@@ -208,7 +170,15 @@ class MarketingCampaignController extends Controller
             'list',
             'emailAccount',
             'approver',
-            'emails' => fn ($query) => $query->with('template')->withCount('recipients')->orderBy('sequence_order'),
+            'emails' => fn ($query) => $query
+                ->with('template')
+                ->withCount([
+                    'recipients',
+                    'recipients as sent_recipients_count' => fn ($query) => $query->where('status', 'sent'),
+                    'events as open_events_count' => fn ($query) => $query->where('type', 'open'),
+                    'events as click_events_count' => fn ($query) => $query->where('type', 'click'),
+                ])
+                ->orderBy('sequence_order'),
         ])->loadCount(['emails', 'recipients', 'events']);
         $previewMember = $this->previewMember($campaign);
 
@@ -245,7 +215,9 @@ class MarketingCampaignController extends Controller
                 ->values(),
             'settings' => $settings->get(),
             'aiDraftAvailable' => $request->user() ? (bool) $aiAgentResolver->defaultAgent($request->user(), 'marketing') : false,
+            'scheduleFrequencies' => MarketingCampaign::SCHEDULE_FREQUENCIES,
             'sequenceIntervalUnits' => MarketingCampaign::SEQUENCE_INTERVAL_UNITS,
+            'weekdays' => MarketingCampaign::WEEKDAYS,
             'newRecipientPolicies' => MarketingCampaign::NEW_RECIPIENT_POLICIES,
         ]);
     }
@@ -259,19 +231,27 @@ class MarketingCampaignController extends Controller
 
         $data = $request->validate([
             'starts_at' => ['nullable', 'date'],
+            'schedule_frequency' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SCHEDULE_FREQUENCIES))],
+            'first_send_date' => ['nullable', 'date_format:Y-m-d'],
+            'send_time' => ['nullable', 'date_format:H:i'],
+            'send_weekday' => ['nullable', 'integer', 'min:1', 'max:7'],
+            'month_day' => ['nullable', 'integer', 'min:1', 'max:31'],
+            'custom_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'custom_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'batch_size' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'send_interval_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
-            'sequence_interval_value' => ['required', 'integer', 'min:1', 'max:999'],
-            'sequence_interval_unit' => ['required', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'new_recipient_policy' => ['required', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
         ]);
+        $schedule = $this->normalizeSchedulePayload($data);
 
         $campaign->forceFill([
-            'starts_at' => $data['starts_at'] ?? null,
+            'starts_at' => $schedule['starts_at'],
             'batch_size' => $data['batch_size'] ?? null,
             'send_interval_minutes' => $data['send_interval_minutes'] ?? null,
-            'sequence_interval_value' => $data['sequence_interval_value'],
-            'sequence_interval_unit' => $data['sequence_interval_unit'],
+            'sequence_interval_value' => $schedule['sequence_interval_value'],
+            'sequence_interval_unit' => $schedule['sequence_interval_unit'],
             'new_recipient_policy' => $data['new_recipient_policy'],
             'updated_by' => $request->user()?->id,
         ])->save();
@@ -505,6 +485,100 @@ class MarketingCampaignController extends Controller
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
             ->with('status', 'Due campaign email send job queued.');
+    }
+
+    private function normalizeSchedulePayload(array $data): array
+    {
+        $frequency = $data['schedule_frequency'] ?? null;
+
+        if (! $frequency) {
+            return [
+                'starts_at' => $this->dateTimeFromLegacyPayload($data),
+                'sequence_interval_value' => $data['sequence_interval_value'] ?? 1,
+                'sequence_interval_unit' => $data['sequence_interval_unit'] ?? 'days',
+            ];
+        }
+
+        $startsAt = $this->startsAtFromScheduleFields($data);
+
+        return match ($frequency) {
+            'daily' => [
+                'starts_at' => $startsAt,
+                'sequence_interval_value' => 1,
+                'sequence_interval_unit' => 'days',
+            ],
+            'weekly' => [
+                'starts_at' => $this->weeklyStart($startsAt, (int) ($data['send_weekday'] ?? 5)),
+                'sequence_interval_value' => 1,
+                'sequence_interval_unit' => 'weeks',
+            ],
+            'monthly' => [
+                'starts_at' => $this->monthlyStart($startsAt, (int) ($data['month_day'] ?? 1)),
+                'sequence_interval_value' => 1,
+                'sequence_interval_unit' => 'months',
+            ],
+            default => [
+                'starts_at' => $startsAt,
+                'sequence_interval_value' => $data['custom_interval_value'] ?? $data['sequence_interval_value'] ?? 1,
+                'sequence_interval_unit' => $data['custom_interval_unit'] ?? $data['sequence_interval_unit'] ?? 'days',
+            ],
+        };
+    }
+
+    private function startsAtFromScheduleFields(array $data): ?Carbon
+    {
+        if (! empty($data['first_send_date'])) {
+            $time = $data['send_time'] ?? '12:00';
+
+            return Carbon::parse($data['first_send_date'].' '.$time)->seconds(0);
+        }
+
+        return $this->dateTimeFromLegacyPayload($data);
+    }
+
+    private function dateTimeFromLegacyPayload(array $data): ?Carbon
+    {
+        if (empty($data['starts_at'])) {
+            return null;
+        }
+
+        return Carbon::parse($data['starts_at'])->seconds(0);
+    }
+
+    private function weeklyStart(?Carbon $startsAt, int $weekday): ?Carbon
+    {
+        if (! $startsAt) {
+            return null;
+        }
+
+        $weekday = max(1, min(7, $weekday));
+        $daysToAdd = ($weekday - (int) $startsAt->format('N') + 7) % 7;
+
+        return $startsAt->copy()->addDays($daysToAdd);
+    }
+
+    private function monthlyStart(?Carbon $startsAt, int $monthDay): ?Carbon
+    {
+        if (! $startsAt) {
+            return null;
+        }
+
+        $monthDay = max(1, min(31, $monthDay));
+        $candidate = $this->dateOnMonthDay($startsAt, $monthDay);
+
+        if ($candidate->lt($startsAt)) {
+            $candidate = $this->dateOnMonthDay($startsAt->copy()->addMonthNoOverflow(), $monthDay);
+        }
+
+        return $candidate;
+    }
+
+    private function dateOnMonthDay(Carbon $date, int $monthDay): Carbon
+    {
+        $month = $date->copy()->day(1);
+        $safeDay = min($monthDay, $month->daysInMonth);
+
+        return $month->day($safeDay)->setTime((int) $date->format('H'), (int) $date->format('i'));
     }
 
     private function previewVariables(
