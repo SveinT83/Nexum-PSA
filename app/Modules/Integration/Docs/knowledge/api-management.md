@@ -53,7 +53,7 @@ Implemented scopes:
 - `sales.update`: update sales opportunities and add sales activities.
 - `lead-intelligence.read`: read Lead Intelligence settings, segments, research runs, scan ledger, and policy results.
 - `lead-intelligence.manage`: update Lead Intelligence settings and manage lead segments.
-- `lead-intelligence.run`: create planned research runs and evaluate contact marketing eligibility.
+- `lead-intelligence.run`: create planned research runs, evaluate contact marketing eligibility, and promote approved candidates.
 - `taxonomy.read`: list and view shared categories and tags.
 - `taxonomy.create`: create shared categories and tags.
 - `taxonomy.update`: update shared categories and tags.
@@ -172,6 +172,7 @@ Current API routes are under `/api/v1`:
 - `GET /api/v1/lead-research-runs/{run}`
 - `GET /api/v1/lead-scan-ledger`
 - `POST /api/v1/lead-intelligence/evaluate-contact`
+- `POST /api/v1/lead-intelligence/promote-candidate`
 - `GET /api/v1/taxonomy/categories`
 - `GET /api/v1/taxonomy/categories/{category}`
 - `POST /api/v1/taxonomy/categories`

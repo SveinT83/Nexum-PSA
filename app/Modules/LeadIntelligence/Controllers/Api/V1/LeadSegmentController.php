@@ -3,6 +3,7 @@
 namespace App\Modules\LeadIntelligence\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Modules\LeadIntelligence\Actions\PlanDueLeadResearchRuns;
 use App\Modules\LeadIntelligence\Models\LeadSegment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,9 +51,15 @@ class LeadSegmentController extends Controller
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, PlanDueLeadResearchRuns $planner): JsonResponse
     {
-        $segment = LeadSegment::query()->create($this->payload($request, true));
+        $segment = new LeadSegment($this->payload($request, true));
+
+        if ($segment->schedule_enabled && ! $segment->next_run_at) {
+            $segment->next_run_at = $planner->firstRunAt($segment);
+        }
+
+        $segment->save();
 
         return response()->json(['data' => $this->serialize($segment)], 201);
     }
@@ -62,9 +69,19 @@ class LeadSegmentController extends Controller
         return response()->json(['data' => $this->serialize($segment)]);
     }
 
-    public function update(Request $request, LeadSegment $segment): JsonResponse
+    public function update(Request $request, LeadSegment $segment, PlanDueLeadResearchRuns $planner): JsonResponse
     {
-        $segment->update($this->payload($request, false));
+        $wasScheduled = (bool) $segment->schedule_enabled;
+
+        $segment->fill($this->payload($request, false));
+
+        if (! $segment->schedule_enabled) {
+            $segment->next_run_at = null;
+        } elseif (! $wasScheduled || ! $segment->next_run_at) {
+            $segment->next_run_at = $planner->firstRunAt($segment);
+        }
+
+        $segment->save();
 
         return response()->json(['data' => $this->serialize($segment->fresh())]);
     }

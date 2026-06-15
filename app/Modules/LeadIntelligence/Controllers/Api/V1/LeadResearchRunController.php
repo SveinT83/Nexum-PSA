@@ -16,7 +16,7 @@ class LeadResearchRunController extends Controller
     {
         $validated = $request->validate([
             'lead_segment_id' => ['nullable', Rule::exists('lead_segments', 'id')],
-            'status' => ['sometimes', 'string', Rule::in(LeadResearchRun::STATUSES)],
+            'status' => ['sometimes', 'string', Rule::in([LeadResearchRun::STATUS_DRAFT, LeadResearchRun::STATUS_QUEUED])],
             'summary' => ['sometimes', 'nullable', 'array'],
         ]);
 

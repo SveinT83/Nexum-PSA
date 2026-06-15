@@ -368,7 +368,19 @@
             assetId.innerHTML = '';
             assetId.append(optionElement('', 'No asset'));
 
-            Object.entries(Object.groupBy(assets, (asset) => asset.group)).forEach(([group, groupedAssets]) => {
+            const assetsByGroup = assets.reduce((groups, asset) => {
+                const group = asset.group || 'Assets';
+
+                if (!groups[group]) {
+                    groups[group] = [];
+                }
+
+                groups[group].push(asset);
+
+                return groups;
+            }, {});
+
+            Object.entries(assetsByGroup).forEach(([group, groupedAssets]) => {
                 const optgroup = document.createElement('optgroup');
                 optgroup.label = group;
 

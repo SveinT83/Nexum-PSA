@@ -204,7 +204,7 @@ class ApiAbilityCatalog
         ],
         'lead-intelligence.run' => [
             'label' => 'Run lead intelligence research',
-            'description' => 'Create planned research runs and evaluate contact marketing eligibility.',
+            'description' => 'Create planned research runs, evaluate contact marketing eligibility, and promote approved candidates.',
             'domain' => 'Lead Intelligence',
         ],
         'taxonomy.read' => [

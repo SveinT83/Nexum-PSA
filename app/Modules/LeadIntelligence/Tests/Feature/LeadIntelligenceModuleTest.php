@@ -216,6 +216,69 @@ class LeadIntelligenceModuleTest extends TestCase
     }
 
     #[Test]
+    public function api_scheduled_segments_receive_future_next_run_at_before_planner_runs(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-06-15 07:00:00'));
+
+        try {
+            Sanctum::actingAs($this->user, ['lead-intelligence.manage']);
+
+            $response = $this->postJson(route('api.v1.lead-segments.store'), [
+                'name' => 'Scheduled API segment',
+                'description' => 'Find contactable leads after schedule time.',
+                'enabled' => true,
+                'schedule_enabled' => true,
+                'schedule_period' => 'daily',
+                'schedule_time' => '08:30',
+                'run_interval_days' => 1,
+                'target_new_leads_per_period' => 5,
+                'token_budget_unlimited' => true,
+            ])
+                ->assertCreated()
+                ->assertJsonPath('data.schedule_enabled', true);
+
+            $segment = LeadSegment::query()->findOrFail($response->json('data.id'));
+
+            $this->assertNotNull($segment->next_run_at);
+            $this->assertTrue($segment->next_run_at->greaterThan(now()));
+
+            $summary = app(PlanDueLeadResearchRuns::class)->handle(now());
+
+            $this->assertSame(0, $summary['created']);
+            $this->assertSame(0, LeadResearchRun::query()->count());
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    #[Test]
+    public function research_run_api_accepts_only_plannable_statuses(): void
+    {
+        $segment = LeadSegment::query()->create([
+            'name' => 'API run segment',
+            'enabled' => true,
+        ]);
+
+        Sanctum::actingAs($this->user, ['lead-intelligence.run']);
+
+        $this->postJson(route('api.v1.lead-research-runs.store'), [
+            'lead_segment_id' => $segment->id,
+            'status' => LeadResearchRun::STATUS_COMPLETED,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status']);
+
+        $this->assertSame(0, LeadResearchRun::query()->count());
+
+        $this->postJson(route('api.v1.lead-research-runs.store'), [
+            'lead_segment_id' => $segment->id,
+            'status' => LeadResearchRun::STATUS_DRAFT,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', LeadResearchRun::STATUS_DRAFT);
+    }
+
+    #[Test]
     public function scan_ledger_due_filter_respects_next_scan_after(): void
     {
         $due = LeadScanLedger::query()->create([
@@ -537,6 +600,48 @@ class LeadIntelligenceModuleTest extends TestCase
             'eligible' => true,
         ]);
         $this->assertSame(1, ContactMarketingEligibility::query()->count());
+    }
+
+    #[Test]
+    public function evaluate_contact_api_rejects_source_evidence_from_another_contact_or_client(): void
+    {
+        $client = Client::factory()->create(['name' => 'Correct Client AS']);
+        $otherClient = Client::factory()->create(['name' => 'Other Client AS']);
+        $contact = $this->contactWithEmail('Correct Contact', 'correct@example.test', 'IT');
+        $otherContact = $this->contactWithEmail('Other Contact', 'other@example.test', 'IT');
+        $otherEvidence = LeadSourceEvidence::query()->create([
+            'client_id' => $otherClient->id,
+            'contact_id' => $otherContact->id,
+            'source_type' => 'website',
+            'source_url' => 'https://other.example.test/contact',
+            'source_title' => 'Other contact page',
+            'excerpt' => 'Other Contact other@example.test',
+            'confidence' => 95,
+            'metadata' => [
+                'company_score' => 95,
+                'contact_score' => 95,
+            ],
+        ]);
+
+        app(LeadIntelligenceSettings::class)->update([
+            'allow_named_work_emails' => true,
+            'require_source_url_for_contacts' => true,
+            'require_role_for_named_contacts' => true,
+            'minimum_contact_score' => 0,
+            'minimum_company_score' => 0,
+        ]);
+
+        Sanctum::actingAs($this->user, ['lead-intelligence.run']);
+
+        $this->postJson(route('api.v1.lead-intelligence.evaluate-contact'), [
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'source_evidence_id' => $otherEvidence->id,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['source_evidence_id']);
+
+        $this->assertSame(0, ContactMarketingEligibility::query()->count());
     }
 
     #[Test]

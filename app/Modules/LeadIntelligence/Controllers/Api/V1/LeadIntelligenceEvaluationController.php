@@ -7,9 +7,11 @@ use App\Models\Clients\Client;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\LeadIntelligence\Actions\LeadMarketingEligibilityEvaluator;
 use App\Modules\LeadIntelligence\Models\LeadSourceEvidence;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class LeadIntelligenceEvaluationController extends Controller
 {
@@ -46,9 +48,26 @@ class LeadIntelligenceEvaluationController extends Controller
     private function resolveEvidence(array $validated, Contact $contact, ?Client $client): ?LeadSourceEvidence
     {
         if (! empty($validated['source_evidence_id'])) {
-            return LeadSourceEvidence::query()->findOrFail($validated['source_evidence_id']);
+            $evidence = $this->evidenceScopedToContact($contact, $client)
+                ->whereKey($validated['source_evidence_id'])
+                ->first();
+
+            if (! $evidence) {
+                throw ValidationException::withMessages([
+                    'source_evidence_id' => 'The selected source evidence does not belong to the selected contact or client.',
+                ]);
+            }
+
+            return $evidence;
         }
 
+        return $this->evidenceScopedToContact($contact, $client)
+            ->latest()
+            ->first();
+    }
+
+    private function evidenceScopedToContact(Contact $contact, ?Client $client): Builder
+    {
         return LeadSourceEvidence::query()
             ->where(function ($query) use ($contact): void {
                 $query->where('contact_id', $contact->id)
@@ -59,9 +78,11 @@ class LeadIntelligenceEvaluationController extends Controller
                     $inner->where('client_id', $client->id)
                         ->orWhereNull('client_id');
                 });
-            })
-            ->latest()
-            ->first();
+            }, function ($query) use ($contact): void {
+                $query->where(function ($inner) use ($contact): void {
+                    $inner->whereNull('client_id')
+                        ->orWhere('contact_id', $contact->id);
+                });
+            });
     }
 }
-
