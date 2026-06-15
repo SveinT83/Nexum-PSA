@@ -192,6 +192,21 @@ class ApiAbilityCatalog
             'description' => 'Update sales opportunities and add sales activities.',
             'domain' => 'Sales',
         ],
+        'lead-intelligence.read' => [
+            'label' => 'Read lead intelligence',
+            'description' => 'Read Lead Intelligence settings, segments, research runs, scan ledger, and policy results.',
+            'domain' => 'Lead Intelligence',
+        ],
+        'lead-intelligence.manage' => [
+            'label' => 'Manage lead intelligence',
+            'description' => 'Update Lead Intelligence settings and manage lead segments.',
+            'domain' => 'Lead Intelligence',
+        ],
+        'lead-intelligence.run' => [
+            'label' => 'Run lead intelligence research',
+            'description' => 'Create planned research runs, evaluate contact marketing eligibility, and promote approved candidates.',
+            'domain' => 'Lead Intelligence',
+        ],
         'taxonomy.read' => [
             'label' => 'Read taxonomy',
             'description' => 'List and view shared categories and tags.',

@@ -36,6 +36,8 @@ class EnforceTechRoutePermission
         'tech.signals.rules.*' => 'signal.view',
         'tech.signals.*' => 'signal.view',
         'tech.admin.settings.marketing*' => 'marketing.settings.manage',
+        'tech.admin.settings.lead-intelligence*' => 'sales.lead_manage',
+        'tech.lead-intelligence.*' => 'sales.lead_manage',
         'tech.marketing.lists.create' => 'marketing.list.manage',
         'tech.marketing.lists.store' => 'marketing.list.manage',
         'tech.marketing.lists.edit' => 'marketing.list.manage',

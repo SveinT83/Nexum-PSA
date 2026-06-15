@@ -12,6 +12,7 @@ use RuntimeException;
 class AiChatResponder
 {
     private const OPENAI_COMPATIBLE_TIMEOUT_SECONDS = 180;
+    private const OPENAI_RESPONSES_TIMEOUT_SECONDS = 120;
 
     public function __construct(private AiToolContextBuilder $toolContextBuilder)
     {
@@ -55,15 +56,15 @@ class AiChatResponder
     /**
      * Send a non-streaming chat request to the configured provider.
      */
-    public function complete(AiAgent $agent, array $messages): string
+    public function complete(AiAgent $agent, array $messages, ?int $timeoutSeconds = null): string
     {
-        return $this->send($agent, $messages);
+        return $this->send($agent, $messages, $timeoutSeconds);
     }
 
     /**
      * Send a non-streaming chat request to the configured provider.
      */
-    private function send(AiAgent $agent, array $messages): string
+    private function send(AiAgent $agent, array $messages, ?int $timeoutSeconds = null): string
     {
         $provider = $agent->provider;
 
@@ -77,30 +78,52 @@ class AiChatResponder
             throw new RuntimeException('Select a model for this agent or its provider before chatting.');
         }
 
+        $timeoutSeconds = $timeoutSeconds ?: self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS;
+
         return match ($provider->provider_key) {
-            'openai', 'custom_openai_compatible' => $this->openAiCompatible($provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages),
-            'mistral' => $this->openAiCompatible($provider->base_url ?: 'https://api.mistral.ai/v1', $provider->getSecret('api_key'), $model, $messages),
-            'openrouter' => $this->openAiCompatible($provider->base_url ?: 'https://openrouter.ai/api/v1', $provider->getSecret('api_key'), $model, $messages),
-            'ollama' => $this->ollama($provider->base_url, $model, $messages),
+            'openai' => $this->openAiCompatible($provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages, $timeoutSeconds, $this->shouldPreferResponsesEndpoint($model)),
+            'custom_openai_compatible' => $this->openAiCompatible($provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages, $timeoutSeconds),
+            'mistral' => $this->openAiCompatible($provider->base_url ?: 'https://api.mistral.ai/v1', $provider->getSecret('api_key'), $model, $messages, $timeoutSeconds),
+            'openrouter' => $this->openAiCompatible($provider->base_url ?: 'https://openrouter.ai/api/v1', $provider->getSecret('api_key'), $model, $messages, $timeoutSeconds),
+            'ollama' => $this->ollama($provider->base_url, $model, $messages, $timeoutSeconds),
             default => throw new RuntimeException('Chat is not wired for '.$provider->provider_key.' yet.'),
         };
     }
 
-    private function openAiCompatible(?string $baseUrl, ?string $apiKey, string $model, array $messages): string
+    private function openAiCompatible(
+        ?string $baseUrl,
+        ?string $apiKey,
+        string $model,
+        array $messages,
+        int $timeoutSeconds = self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS,
+        bool $preferResponsesEndpoint = false,
+    ): string
     {
         if (! $apiKey) {
             throw new RuntimeException('API key is missing for this provider.');
         }
 
+        if ($preferResponsesEndpoint) {
+            return $this->openAiCompatibleResponse($baseUrl, $apiKey, $model, $messages, min($timeoutSeconds, self::OPENAI_RESPONSES_TIMEOUT_SECONDS));
+        }
+
+        if ($this->shouldUseCompletionEndpoint($model)) {
+            return $this->openAiCompatibleCompletion($baseUrl, $apiKey, $model, $messages, $timeoutSeconds);
+        }
+
         $response = Http::acceptJson()
             ->withToken($apiKey)
-            ->timeout(self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS)
+            ->timeout($timeoutSeconds)
             ->post(rtrim((string) $baseUrl, '/').'/chat/completions', [
                 'model' => $model,
                 'messages' => $messages,
             ]);
 
         if (! $response->successful()) {
+            if ($this->isNotChatModelError($response->body())) {
+                return $this->openAiCompatibleCompletion($baseUrl, $apiKey, $model, $messages, $timeoutSeconds);
+            }
+
             throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
         }
 
@@ -113,14 +136,66 @@ class AiChatResponder
         return trim($content);
     }
 
-    private function ollama(?string $baseUrl, string $model, array $messages): string
+    private function openAiCompatibleCompletion(?string $baseUrl, string $apiKey, string $model, array $messages, int $timeoutSeconds = self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS): string
+    {
+        $response = Http::acceptJson()
+            ->withToken($apiKey)
+            ->timeout($timeoutSeconds)
+            ->post(rtrim((string) $baseUrl, '/').'/completions', [
+                'model' => $model,
+                'prompt' => $this->completionPrompt($messages),
+                'max_tokens' => 2000,
+            ]);
+
+        if (! $response->successful()) {
+            if ($this->isCompletionUnsupportedError($response->body())) {
+                return $this->openAiCompatibleResponse($baseUrl, $apiKey, $model, $messages, min($timeoutSeconds, self::OPENAI_RESPONSES_TIMEOUT_SECONDS));
+            }
+
+            throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
+        }
+
+        $content = $response->json('choices.0.text');
+
+        if (! filled($content)) {
+            throw new RuntimeException('Provider returned an empty response.');
+        }
+
+        return trim($content);
+    }
+
+    private function openAiCompatibleResponse(?string $baseUrl, string $apiKey, string $model, array $messages, int $timeoutSeconds = self::OPENAI_RESPONSES_TIMEOUT_SECONDS): string
+    {
+        $response = Http::acceptJson()
+            ->withToken($apiKey)
+            ->timeout($timeoutSeconds)
+            ->post(rtrim((string) $baseUrl, '/').'/responses', [
+                'model' => $model,
+                'input' => $this->completionPrompt($messages),
+                'max_output_tokens' => 1200,
+            ]);
+
+        if (! $response->successful()) {
+            throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
+        }
+
+        $content = $this->responseOutputText($response->json());
+
+        if (! filled($content)) {
+            throw new RuntimeException($this->emptyResponseMessage($response->json()));
+        }
+
+        return trim($content);
+    }
+
+    private function ollama(?string $baseUrl, string $model, array $messages, int $timeoutSeconds = 120): string
     {
         if (! $baseUrl) {
             throw new RuntimeException('Ollama URL is missing for this provider.');
         }
 
         $response = Http::acceptJson()
-            ->timeout(120)
+            ->timeout($timeoutSeconds)
             ->post(rtrim($baseUrl, '/').'/api/chat', [
                 'model' => $model,
                 'messages' => $messages,
@@ -187,6 +262,122 @@ class AiChatResponder
         }
 
         return $messages;
+    }
+
+    private function completionPrompt(array $messages): string
+    {
+        $lines = collect($messages)
+            ->map(function (array $message): string {
+                $role = Str::headline((string) ($message['role'] ?? 'message'));
+                $content = trim((string) ($message['content'] ?? ''));
+
+                return $role.":\n".$content;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        $lines[] = "Assistant:\n";
+
+        return implode("\n\n", $lines);
+    }
+
+    private function shouldUseCompletionEndpoint(string $model): bool
+    {
+        $model = Str::lower($model);
+
+        return Str::contains($model, [
+            'instruct',
+            'davinci',
+            'babbage',
+            'curie',
+            'ada',
+        ]);
+    }
+
+    private function shouldPreferResponsesEndpoint(string $model): bool
+    {
+        $model = Str::lower($model);
+
+        return Str::startsWith($model, [
+            'gpt-5',
+            'o1',
+            'o3',
+            'o4',
+            'computer-use',
+            'codex',
+        ]);
+    }
+
+    private function isNotChatModelError(string $body): bool
+    {
+        $body = str_replace('\/', '/', Str::lower($body));
+
+        return Str::contains($body, 'not a chat model')
+            || Str::contains($body, 'v1/completions');
+    }
+
+    private function isCompletionUnsupportedError(string $body): bool
+    {
+        $body = str_replace('\/', '/', Str::lower($body));
+
+        return Str::contains($body, 'not supported in the v1/completions endpoint')
+            || Str::contains($body, 'responses api');
+    }
+
+    private function responseOutputText(array $payload): string
+    {
+        $direct = data_get($payload, 'output_text')
+            ?: data_get($payload, 'message.content')
+            ?: data_get($payload, 'choices.0.message.content');
+
+        if (filled($direct)) {
+            return (string) $direct;
+        }
+
+        return collect(data_get($payload, 'output', []))
+            ->flatMap(function (array $item): array {
+                $content = $item['content'] ?? [];
+
+                if (is_string($content)) {
+                    return [['text' => $content]];
+                }
+
+                return (array) $content;
+            })
+            ->map(function (mixed $content): ?string {
+                if (is_string($content)) {
+                    return $content;
+                }
+
+                if (! is_array($content)) {
+                    return null;
+                }
+
+                $text = $content['text'] ?? $content['content'] ?? null;
+
+                if (is_array($text)) {
+                    $text = collect($text)
+                        ->map(fn (mixed $part): ?string => is_array($part) ? ($part['text'] ?? $part['content'] ?? null) : (is_string($part) ? $part : null))
+                        ->filter()
+                        ->implode("\n");
+                }
+
+                return is_string($text) ? $text : null;
+            })
+            ->filter()
+            ->implode("\n");
+    }
+
+    private function emptyResponseMessage(array $payload): string
+    {
+        $details = array_filter([
+            data_get($payload, 'status') ? 'status='.data_get($payload, 'status') : null,
+            data_get($payload, 'incomplete_details.reason') ? 'reason='.data_get($payload, 'incomplete_details.reason') : null,
+            data_get($payload, 'error.message') ? 'error='.data_get($payload, 'error.message') : null,
+        ]);
+
+        return 'Provider returned an empty response'.($details ? ' ('.implode(', ', $details).').' : '.');
     }
 
     private function pageContextInstructions(AiChat $chat): string

@@ -17,6 +17,9 @@ Route::get('/tickets', [TicketController::class, 'index'])
 Route::get('/tickets/create', [TicketController::class, 'create'])
     ->name('tickets.create');
 
+Route::get('/tickets/create/context', [TicketController::class, 'createContext'])
+    ->name('tickets.create.context');
+
 Route::get('/tickets/profile', [TicketAssignmentSettingsController::class, 'edit'])
     ->name('tickets.profile.edit');
 

@@ -65,6 +65,7 @@ class AppServiceProvider extends ServiceProvider
             'economy' => 'Economy',
             'integration' => 'Integration',
             'knowledge' => 'Knowledge',
+            'leadintelligence' => 'LeadIntelligence',
             'marketing' => 'Marketing',
             'nextcloud' => 'Nextcloud',
             'notification' => 'Notification',

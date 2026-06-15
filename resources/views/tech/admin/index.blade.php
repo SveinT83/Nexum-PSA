@@ -53,6 +53,17 @@
             ],
         ],
         [
+            'title' => 'Lead Intelligence',
+            'icon' => 'bi-search-heart',
+            'description' => 'Configure prospecting policy, segment targeting, planned research runs, and suppression-aware contact eligibility.',
+            'links' => [
+                ['label' => 'Settings', 'route' => route('tech.admin.settings.lead-intelligence')],
+                ['label' => 'Segments', 'route' => route('tech.lead-intelligence.segments.index')],
+                ['label' => 'Research runs', 'route' => route('tech.lead-intelligence.runs.index')],
+                ['label' => 'Scan ledger', 'route' => route('tech.lead-intelligence.scan-ledger.index')],
+            ],
+        ],
+        [
             'title' => 'Clients',
             'icon' => 'bi-buildings',
             'description' => 'Client and contact domain settings and reusable customer classifications.',
