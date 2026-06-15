@@ -293,11 +293,15 @@
     document.addEventListener('DOMContentLoaded', function () {
         const clientLookup = document.getElementById('client_lookup');
         const clientId = document.getElementById('client_id');
-        const clientOptions = Array.from(document.getElementById('client_suggestions').options);
+        const clientSuggestions = document.getElementById('client_suggestions');
+        const clientOptions = Array.from(clientSuggestions.options);
         const contactLookup = document.getElementById('contact_lookup');
         const contactId = document.getElementById('contact_id');
-        const contactOptions = Array.from(document.getElementById('contact_suggestions').options);
+        const contactSuggestions = document.getElementById('contact_suggestions');
         const siteId = document.getElementById('site_id');
+        const assetId = document.getElementById('asset_id');
+        const openClientTickets = document.getElementById('open_client_tickets');
+        const contextUrl = @json(route('tech.tickets.create.context'));
 
         function selectedOption(options, value) {
             return options.find(function (option) {
@@ -305,24 +309,173 @@
             });
         }
 
-        // Client selection changes available contacts and rightbar tickets, so exact matches reload the page.
-        clientLookup.addEventListener('change', function () {
+        function optionElement(value, text, selected = false) {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = text;
+            option.selected = selected;
+
+            return option;
+        }
+
+        function datalistOption(value, id) {
+            const option = document.createElement('option');
+            option.value = value;
+            option.dataset.id = id;
+
+            return option;
+        }
+
+        function resetDependentFields() {
+            contactLookup.value = '';
+            contactLookup.disabled = true;
+            contactLookup.placeholder = 'Select a client first';
+            contactId.value = '';
+            contactSuggestions.innerHTML = '';
+
+            siteId.innerHTML = '';
+            siteId.append(optionElement('', 'No site'));
+            siteId.disabled = true;
+
+            assetId.innerHTML = '';
+            assetId.append(optionElement('', 'No asset'));
+            assetId.disabled = true;
+        }
+
+        function renderSites(sites, selectedSiteId = '') {
+            siteId.innerHTML = '';
+            siteId.append(optionElement('', 'No site'));
+
+            sites.forEach((site) => {
+                siteId.append(optionElement(site.id, site.name, String(site.id) === String(selectedSiteId)));
+            });
+
+            siteId.disabled = sites.length === 0 || Boolean(contactId.value);
+        }
+
+        function renderContacts(contacts) {
+            contactSuggestions.innerHTML = '';
+
+            contacts.forEach((contact) => {
+                contactSuggestions.append(datalistOption(contact.label, contact.id));
+            });
+
+            contactLookup.disabled = false;
+            contactLookup.placeholder = 'Search and select contact';
+        }
+
+        function renderAssets(assets) {
+            assetId.innerHTML = '';
+            assetId.append(optionElement('', 'No asset'));
+
+            Object.entries(Object.groupBy(assets, (asset) => asset.group)).forEach(([group, groupedAssets]) => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = group;
+
+                groupedAssets.forEach((asset) => {
+                    optgroup.append(optionElement(asset.id, asset.label));
+                });
+
+                assetId.append(optgroup);
+            });
+
+            assetId.disabled = assets.length === 0;
+        }
+
+        function renderOpenTickets(tickets) {
+            if (!openClientTickets) {
+                return;
+            }
+
+            if (tickets.length === 0) {
+                openClientTickets.innerHTML = '<div class="text-muted small">No open tickets for this client.</div>';
+                return;
+            }
+
+            const list = document.createElement('div');
+            list.className = 'list-group list-group-flush';
+
+            tickets.forEach((ticket) => {
+                const link = document.createElement('a');
+                link.href = ticket.url;
+                link.className = 'list-group-item list-group-item-action px-0';
+
+                const meta = [ticket.status, ticket.priority].filter(Boolean).join(' · ');
+
+                link.innerHTML = `
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong></strong>
+                        <span class="text-muted small"></span>
+                    </div>
+                    <div class="text-truncate"></div>
+                    <div class="small text-muted"></div>
+                `;
+
+                link.querySelector('strong').textContent = ticket.key;
+                link.querySelector('.text-muted.small').textContent = ticket.updated || '';
+                link.querySelector('.text-truncate').textContent = ticket.subject || '';
+                link.querySelector('.small.text-muted:last-child').textContent = meta;
+
+                list.append(link);
+            });
+
+            openClientTickets.innerHTML = '';
+            openClientTickets.append(list);
+        }
+
+        async function loadContext({ selectedContactId = '', selectedSiteId = '' } = {}) {
+            if (!clientId.value) {
+                resetDependentFields();
+
+                if (openClientTickets) {
+                    openClientTickets.innerHTML = '<div class="text-muted small">Select a client to see open tickets before creating a new one.</div>';
+                }
+
+                return;
+            }
+
+            const url = new URL(contextUrl);
+            url.searchParams.set('client_id', clientId.value);
+
+            if (selectedContactId) {
+                url.searchParams.set('contact_id', selectedContactId);
+            }
+
+            if (selectedSiteId) {
+                url.searchParams.set('site_id', selectedSiteId);
+            }
+
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const payload = await response.json();
+
+            renderContacts(payload.contacts || []);
+            renderSites(payload.sites || [], selectedSiteId);
+            renderAssets(payload.assets || []);
+            renderOpenTickets(payload.openTickets || []);
+        }
+
+        // Client selection now updates dependent fields in-place instead of refreshing the page.
+        clientLookup.addEventListener('change', async function () {
             const option = selectedOption(clientOptions, this.value);
             const nextClientId = option ? option.dataset.id : '';
 
             clientId.value = nextClientId;
+            contactId.value = '';
 
-            if (! nextClientId && this.value.trim() !== '') {
+            if (!nextClientId && this.value.trim() !== '') {
                 return;
             }
 
-            const url = new URL(@json(route('tech.tickets.create')));
-
-            if (nextClientId) {
-                url.searchParams.set('client_id', nextClientId);
-            }
-
-            window.location.href = url.toString();
+            await loadContext();
         });
 
         // While typing, clear client_id unless the visible value exactly matches a datalist option.
@@ -331,48 +484,30 @@
             clientId.value = option ? option.dataset.id : '';
         });
 
-        // Contact selection changes available assets, so exact matches reload the page with client and contact context.
-        contactLookup.addEventListener('change', function () {
+        // Contact selection now refreshes site/assets in-place and preserves ticket details.
+        contactLookup.addEventListener('change', async function () {
+            const contactOptions = Array.from(contactSuggestions.options);
             const option = selectedOption(contactOptions, this.value);
             const nextContactId = option ? option.dataset.id : '';
 
             contactId.value = nextContactId;
 
-            if (! nextContactId && this.value.trim() !== '') {
+            if (!nextContactId && this.value.trim() !== '') {
                 return;
             }
 
-            const url = new URL(@json(route('tech.tickets.create')));
-
-            if (clientId.value) {
-                url.searchParams.set('client_id', clientId.value);
-            }
-
-            if (nextContactId) {
-                url.searchParams.set('contact_id', nextContactId);
-            }
-
-            window.location.href = url.toString();
+            await loadContext({ selectedContactId: nextContactId });
         });
 
         // Contact suggestions are already scoped by selected client; only exact matches should submit an ID while typing.
         contactLookup.addEventListener('input', function () {
+            const contactOptions = Array.from(contactSuggestions.options);
             const option = selectedOption(contactOptions, this.value);
             contactId.value = option ? option.dataset.id : '';
         });
 
-        siteId.addEventListener('change', function () {
-            const url = new URL(@json(route('tech.tickets.create')));
-
-            if (clientId.value) {
-                url.searchParams.set('client_id', clientId.value);
-            }
-
-            if (this.value) {
-                url.searchParams.set('site_id', this.value);
-            }
-
-            window.location.href = url.toString();
+        siteId.addEventListener('change', async function () {
+            await loadContext({ selectedSiteId: this.value });
         });
 
         const normalizeTag = (value) => value.trim().replace(/\s+/g, ' ');
@@ -451,27 +586,29 @@
 <!-- -------------------------------------------------------------------------------------------------- -->
 @section('rightbar')
     <x-card.default title="Open client tickets">
-        @if ($selectedClient)
-            <div class="small text-muted mb-2">{{ $selectedClient->name }}</div>
+        <div id="open_client_tickets">
+            @if ($selectedClient)
+                <div class="small text-muted mb-2">{{ $selectedClient->name }}</div>
 
-            <div class="list-group list-group-flush">
-                @forelse ($openClientTickets as $ticket)
-                    <a href="{{ route('tech.tickets.show', $ticket) }}" class="list-group-item list-group-item-action px-0">
-                        <div class="d-flex justify-content-between gap-2">
-                            <strong>{{ $ticket->ticket_key }}</strong>
-                            <span class="text-muted small">{{ $ticket->updated_at?->diffForHumans() }}</span>
-                        </div>
-                        <div class="text-truncate">{{ $ticket->subject }}</div>
-                        <div class="small text-muted">
-                            {{ $ticket->status?->name }}@if ($ticket->priority) · P{{ $ticket->priority->level }} {{ $ticket->priority->name }}@endif
-                        </div>
-                    </a>
-                @empty
-                    <div class="text-muted small">No open tickets for this client.</div>
-                @endforelse
-            </div>
-        @else
-            <div class="text-muted small">Select a client to see open tickets before creating a new one.</div>
-        @endif
+                <div class="list-group list-group-flush">
+                    @forelse ($openClientTickets as $ticket)
+                        <a href="{{ route('tech.tickets.show', $ticket) }}" class="list-group-item list-group-item-action px-0">
+                            <div class="d-flex justify-content-between gap-2">
+                                <strong>{{ $ticket->ticket_key }}</strong>
+                                <span class="text-muted small">{{ $ticket->updated_at?->diffForHumans() }}</span>
+                            </div>
+                            <div class="text-truncate">{{ $ticket->subject }}</div>
+                            <div class="small text-muted">
+                                {{ $ticket->status?->name }}@if ($ticket->priority) · P{{ $ticket->priority->level }} {{ $ticket->priority->name }}@endif
+                            </div>
+                        </a>
+                    @empty
+                        <div class="text-muted small">No open tickets for this client.</div>
+                    @endforelse
+                </div>
+            @else
+                <div class="text-muted small">Select a client to see open tickets before creating a new one.</div>
+            @endif
+        </div>
     </x-card.default>
 @endsection

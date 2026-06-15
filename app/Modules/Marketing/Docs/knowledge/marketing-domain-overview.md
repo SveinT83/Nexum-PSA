@@ -66,7 +66,8 @@ List resolution includes:
 
 List membership is materialized in `marketing_list_members`. This gives campaigns a stable recipient
 snapshot and lets operators refresh the list when Contacts change. Duplicate email addresses are
-collapsed before members are stored.
+collapsed before members are stored. Refresh rebuilds criteria-driven members, but preserves members
+promoted by Lead Intelligence unless the Contact has been removed from that specific list.
 
 The list detail page lets list managers add eligible existing Contacts and remove resolved
 first-class Contacts. Removal is a Marketing list exclusion, not a Contact preference change; it does

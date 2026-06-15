@@ -138,7 +138,7 @@
     <!-- Contracts & Services dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*') || request()->routeIs('tech.packages.*') || request()->routeIs('tech.sales.*');
+        $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*') || request()->routeIs('tech.packages.*') || request()->routeIs('tech.sales.*') || request()->routeIs('tech.lead-intelligence.*');
         $economyGroupActive = request()->routeIs('tech.economy.*');
     @endphp
 
@@ -156,6 +156,12 @@
             @if(Route::has('tech.sales.leads.index'))
                 <li class="nav-item">
                     <a class="dropdown-item {{ request()->routeIs('tech.sales.leads.*') ? 'active' : '' }}" href="{{ route('tech.sales.leads.index') }}">Leads</a>
+                </li>
+            @endif
+
+            @if(Route::has('tech.lead-intelligence.segments.index'))
+                <li class="nav-item">
+                    <a class="dropdown-item {{ request()->routeIs('tech.lead-intelligence.*') ? 'active' : '' }}" href="{{ route('tech.lead-intelligence.segments.index') }}">Lead Intelligence</a>
                 </li>
             @endif
 

@@ -22,6 +22,12 @@
             'icon' => 'bi-person-plus',
         ],
         [
+            'label' => 'Lead Intelligence',
+            'route' => 'tech.lead-intelligence.segments.index',
+            'pattern' => 'tech.lead-intelligence.*',
+            'icon' => 'bi-search-heart',
+        ],
+        [
             'label' => 'Marketing',
             'route' => 'tech.marketing.index',
             'pattern' => 'tech.marketing.*',

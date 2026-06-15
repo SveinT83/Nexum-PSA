@@ -6,8 +6,11 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientUser;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\LeadIntelligence\Models\ContactMarketingEligibility;
 use App\Modules\Marketing\Models\MarketingList;
+use App\Modules\Marketing\Models\MarketingListMember;
 use App\Modules\Marketing\Support\MarketingSettings;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ResolveMarketingListMembers
@@ -23,21 +26,53 @@ class ResolveMarketingListMembers
         $resolved = collect()
             ->concat($this->manualContactRecipients($settings, $criteria))
             ->concat($this->contactRecipients($settings, $criteria))
-            ->concat($this->legacyClientUserRecipients($settings, $criteria));
+            ->concat($this->legacyClientUserRecipients($settings, $criteria))
+            ->concat($this->leadIntelligenceRecipients($settings, $criteria, $list));
 
-        return DB::transaction(function () use ($list, $resolved): int {
-            $list->members()->delete();
+        return DB::transaction(function () use ($list, $resolved, $criteria): int {
+            $preservedMembers = $this->preservedExternalMembers($list, $criteria);
+            $preservedMemberIds = $preservedMembers->pluck('id');
+            $preservedEmails = $preservedMembers
+                ->pluck('email')
+                ->map(fn (?string $email): string => strtolower((string) $email))
+                ->filter()
+                ->values();
+
+            $deleteQuery = $list->members();
+
+            if ($preservedMemberIds->isNotEmpty()) {
+                $deleteQuery->whereNotIn('id', $preservedMemberIds);
+            }
+
+            $deleteQuery->delete();
 
             $members = $resolved
                 ->unique(fn (array $recipient): string => strtolower($recipient['email']))
+                ->reject(fn (array $recipient): bool => $preservedEmails->contains(strtolower($recipient['email'])))
                 ->values();
 
             $members->each(fn (array $recipient) => $list->members()->create($recipient));
 
             $list->forceFill(['last_resolved_at' => now()])->save();
 
-            return $members->count();
+            return $preservedMembers->count() + $members->count();
         });
+    }
+
+    private function preservedExternalMembers(MarketingList $list, array $criteria): Collection
+    {
+        $excludedContactIds = $criteria['excluded_contact_ids'];
+
+        return $list->members()
+            ->get()
+            ->filter(function (MarketingListMember $member) use ($excludedContactIds): bool {
+                if (($member->metadata['source'] ?? null) !== 'lead_intelligence') {
+                    return false;
+                }
+
+                return ! $member->contact_id || ! in_array((int) $member->contact_id, $excludedContactIds, true);
+            })
+            ->values();
     }
 
     private function contactRecipients(array $settings, array $criteria)
@@ -137,6 +172,65 @@ class ResolveMarketingListMembers
                     'site_id' => $clientUser->client_site_id,
                 ],
             ]);
+    }
+
+    private function leadIntelligenceRecipients(array $settings, array $criteria, MarketingList $list)
+    {
+        $excludedContactIds = $criteria['excluded_contact_ids'];
+
+        return ContactMarketingEligibility::query()
+            ->with([
+                'contact.emails' => fn ($query) => $query->orderByDesc('is_primary')->orderBy('id'),
+                'contact.clientUser',
+                'client',
+            ])
+            ->where('eligible', true)
+            ->whereNotNull('contact_id')
+            ->get()
+            ->filter(fn (ContactMarketingEligibility $eligibility): bool => in_array(
+                (int) $list->id,
+                collect((array) ($eligibility->metadata['recommended_marketing_lists'] ?? []))
+                    ->map(fn (mixed $id): int => (int) $id)
+                    ->filter()
+                    ->all(),
+                true,
+            ))
+            ->filter(function (ContactMarketingEligibility $eligibility) use ($settings, $excludedContactIds): bool {
+                $contact = $eligibility->contact;
+
+                if (! $contact || $contact->status !== 'active' || $contact->do_not_email) {
+                    return false;
+                }
+
+                if (in_array((int) $contact->id, $excludedContactIds, true)) {
+                    return false;
+                }
+
+                if ($settings['consent_mode'] === 'explicit_opt_in' && ! $contact->marketing_consent) {
+                    return false;
+                }
+
+                return filled($eligibility->email);
+            })
+            ->map(function (ContactMarketingEligibility $eligibility): array {
+                $contact = $eligibility->contact;
+
+                return [
+                    'source_type' => 'contact',
+                    'source_id' => $contact->id,
+                    'contact_id' => $contact->id,
+                    'client_user_id' => $contact->clientUser?->id,
+                    'client_id' => $eligibility->client_id,
+                    'email' => $eligibility->email,
+                    'name' => $contact->display_name,
+                    'status' => 'eligible',
+                    'metadata' => [
+                        'source' => 'lead_intelligence',
+                        'eligibility_id' => $eligibility->id,
+                        'source_evidence_id' => $eligibility->source_evidence_id,
+                    ],
+                ];
+            });
     }
 
     private function manualContactRecipients(array $settings, array $criteria)

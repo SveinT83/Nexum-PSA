@@ -694,7 +694,7 @@ class IntegrationModuleTest extends TestCase
             'name' => 'OpenAI',
             'provider_key' => 'openai',
             'base_url' => 'https://api.openai.test/v1',
-            'default_model' => 'gpt-5',
+            'default_model' => 'gpt-4.1',
             'status' => 'active',
         ]);
         $provider->setSecret('api_key', 'test-key');
@@ -718,13 +718,228 @@ class IntegrationModuleTest extends TestCase
         app(AiChatResponder::class)->respond($chat, $pending->id);
 
         Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/chat/completions'
-            && $request['model'] === 'gpt-5'
+            && $request['model'] === 'gpt-4.1'
             && array_key_exists('messages', $request->data())
             && ! array_key_exists('temperature', $request->data()));
         $this->assertDatabaseHas('ai_chat_messages', [
             'ai_chat_id' => $chat->id,
             'role' => 'assistant',
             'body' => 'Temperature compatible response.',
+        ]);
+    }
+
+    #[Test]
+    public function openai_provider_prefers_responses_for_gpt5_models(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/responses' => Http::response([
+                'output_text' => 'Responses model response.',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $provider = AiProvider::create([
+            'name' => 'OpenAI',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-5-mini',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Responses preferred agent',
+            'slug' => 'responses-preferred-agent',
+            'instructions' => 'Use provider defaults.',
+            'is_active' => true,
+        ]);
+        $chat = AiChat::create([
+            'user_id' => $user->id,
+            'ai_agent_id' => $agent->id,
+            'title' => 'Responses preferred test',
+            'status' => 'open',
+        ]);
+        $chat->messages()->create(['user_id' => $user->id, 'role' => 'user', 'body' => 'Hei']);
+        $pending = $chat->messages()->create(['role' => 'assistant', 'body' => 'AI is thinking...', 'metadata' => ['status' => 'pending']]);
+
+        app(AiChatResponder::class)->respond($chat, $pending->id);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/responses'
+            && $request['model'] === 'gpt-5-mini'
+            && array_key_exists('input', $request->data())
+            && $request['max_output_tokens'] === 1200);
+        Http::assertNotSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/chat/completions');
+        $this->assertDatabaseHas('ai_chat_messages', [
+            'ai_chat_id' => $chat->id,
+            'role' => 'assistant',
+            'body' => 'Responses model response.',
+        ]);
+    }
+
+    #[Test]
+    public function openai_responses_parser_accepts_nested_text_content(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/responses' => Http::response([
+                'output' => [
+                    [
+                        'type' => 'message',
+                        'content' => [
+                            [
+                                'type' => 'text',
+                                'text' => 'Nested Responses text.',
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $provider = AiProvider::create([
+            'name' => 'OpenAI nested responses',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-5-mini',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Nested responses agent',
+            'slug' => 'nested-responses-agent',
+            'instructions' => 'Return text.',
+            'is_active' => true,
+        ]);
+
+        $reply = app(AiChatResponder::class)->complete($agent, [
+            ['role' => 'user', 'content' => 'Hei'],
+        ]);
+
+        $this->assertSame('Nested Responses text.', $reply);
+    }
+
+    #[Test]
+    public function openai_compatible_responder_falls_back_to_completions_for_non_chat_models(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/chat/completions' => Http::response([
+                'error' => [
+                    'message' => 'This is not a chat model and thus not supported in the v1/chat/completions endpoint. Did you mean to use v1/completions?',
+                    'type' => 'invalid_request_error',
+                    'param' => 'model',
+                    'code' => null,
+                ],
+            ], 404),
+            'https://api.openai.test/v1/completions' => Http::response([
+                'choices' => [
+                    ['text' => 'Completion fallback response.'],
+                ],
+            ], 200),
+        ]);
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $provider = AiProvider::create([
+            'name' => 'OpenAI legacy',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'legacy-completion-model',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Legacy model agent',
+            'slug' => 'legacy-model-agent',
+            'model' => 'legacy-completion-model',
+            'instructions' => 'Use JSON.',
+            'is_active' => true,
+        ]);
+        $chat = AiChat::create([
+            'user_id' => $user->id,
+            'ai_agent_id' => $agent->id,
+            'title' => 'Fallback test',
+            'status' => 'open',
+        ]);
+        $chat->messages()->create(['user_id' => $user->id, 'role' => 'user', 'body' => 'Lag segment']);
+        $pending = $chat->messages()->create(['role' => 'assistant', 'body' => 'AI is thinking...', 'metadata' => ['status' => 'pending']]);
+
+        app(AiChatResponder::class)->respond($chat, $pending->id);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/completions'
+            && $request['model'] === 'legacy-completion-model'
+            && array_key_exists('prompt', $request->data())
+            && $request['max_tokens'] === 2000);
+        $this->assertDatabaseHas('ai_chat_messages', [
+            'ai_chat_id' => $chat->id,
+            'role' => 'assistant',
+            'body' => 'Completion fallback response.',
+        ]);
+    }
+
+    #[Test]
+    public function openai_compatible_responder_falls_back_to_responses_when_completions_are_unsupported(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/chat/completions' => Http::response([
+                'error' => [
+                    'message' => 'This is not a chat model and thus not supported in the v1/chat/completions endpoint. Did you mean to use v1/completions?',
+                    'type' => 'invalid_request_error',
+                    'param' => 'model',
+                    'code' => null,
+                ],
+            ], 404),
+            'https://api.openai.test/v1/completions' => Http::response([
+                'error' => [
+                    'message' => 'This model is not supported in the v1/completions endpoint.',
+                    'type' => 'invalid_request_error',
+                    'param' => 'model',
+                    'code' => null,
+                ],
+            ], 404),
+            'https://api.openai.test/v1/responses' => Http::response([
+                'output_text' => 'Responses fallback response.',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $provider = AiProvider::create([
+            'name' => 'OpenAI responses',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'responses-only-model',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Responses model agent',
+            'slug' => 'responses-model-agent',
+            'model' => 'responses-only-model',
+            'instructions' => 'Use JSON.',
+            'is_active' => true,
+        ]);
+        $chat = AiChat::create([
+            'user_id' => $user->id,
+            'ai_agent_id' => $agent->id,
+            'title' => 'Responses fallback test',
+            'status' => 'open',
+        ]);
+        $chat->messages()->create(['user_id' => $user->id, 'role' => 'user', 'body' => 'Lag segment']);
+        $pending = $chat->messages()->create(['role' => 'assistant', 'body' => 'AI is thinking...', 'metadata' => ['status' => 'pending']]);
+
+        app(AiChatResponder::class)->respond($chat, $pending->id);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/responses'
+            && $request['model'] === 'responses-only-model'
+            && array_key_exists('input', $request->data()));
+        $this->assertDatabaseHas('ai_chat_messages', [
+            'ai_chat_id' => $chat->id,
+            'role' => 'assistant',
+            'body' => 'Responses fallback response.',
         ]);
     }
 

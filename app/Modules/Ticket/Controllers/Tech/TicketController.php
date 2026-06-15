@@ -167,6 +167,85 @@ class TicketController extends Controller
         ]);
     }
 
+    public function createContext(Request $request): JsonResponse
+    {
+        $clientId = $request->integer('client_id') ?: null;
+        $contactId = $request->integer('contact_id') ?: null;
+        $siteId = $request->integer('site_id') ?: null;
+
+        if (! $clientId) {
+            return response()->json([
+                'sites' => [],
+                'contacts' => [],
+                'assets' => [],
+                'openTickets' => [],
+            ]);
+        }
+
+        $client = Client::query()
+            ->where('active', true)
+            ->findOrFail($clientId);
+
+        $contact = $contactId
+            ? ClientUser::query()
+                ->whereKey($contactId)
+                ->where('active', true)
+                ->whereHas('site', fn ($query) => $query->where('client_id', $client->id))
+                ->first()
+            : null;
+
+        $resolvedSiteId = $contact?->client_site_id ?: $siteId;
+
+        return response()->json([
+            'sites' => ClientSite::query()
+                ->where('client_id', $client->id)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (ClientSite $site) => [
+                    'id' => $site->id,
+                    'name' => $site->name,
+                ])
+                ->values(),
+            'contacts' => ClientUser::query()
+                ->whereHas('site', fn ($query) => $query->where('client_id', $client->id))
+                ->where('active', true)
+                ->orderByDesc('is_default_for_client')
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'phone'])
+                ->map(fn (ClientUser $contact) => [
+                    'id' => $contact->id,
+                    'label' => $contact->name . ($contact->email ? ' - ' . $contact->email : ''),
+                ])
+                ->values(),
+            'assets' => $this->assetOptions($client->id, $contact?->id, $resolvedSiteId)
+                ->map(fn (array $asset) => [
+                    'id' => $asset['id'],
+                    'group' => $asset['group'],
+                    'label' => $asset['label'],
+                ])
+                ->values(),
+            'openTickets' => Ticket::query()
+                ->with(['status', 'priority'])
+                ->where('client_id', $client->id)
+                ->whereHas('status', fn ($query) => $query->where('is_closed', false))
+                ->latest('updated_at')
+                ->limit(8)
+                ->get()
+                ->map(fn (Ticket $ticket) => [
+                    'key' => $ticket->ticket_key,
+                    'url' => route('tech.tickets.show', $ticket),
+                    'subject' => $ticket->subject,
+                    'updated' => $ticket->updated_at?->diffForHumans(),
+                    'status' => $ticket->status?->name,
+                    'priority' => $ticket->priority
+                        ? 'P' . $ticket->priority->level . ' ' . $ticket->priority->name
+                        : null,
+                ])
+                ->values(),
+        ]);
+    }
+
     public function store(Request $request, StoreTicket $storeTicket): RedirectResponse
     {
         $data = $request->validate([
