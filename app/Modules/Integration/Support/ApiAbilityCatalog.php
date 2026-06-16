@@ -94,18 +94,28 @@ class ApiAbilityCatalog
         ],
         'knowledge.read' => [
             'label' => 'Read knowledge',
-            'description' => 'List and view knowledge articles.',
+            'description' => 'List and view knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
         ],
         'knowledge.create' => [
             'label' => 'Create knowledge',
-            'description' => 'Create knowledge articles.',
+            'description' => 'Create knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
         ],
         'knowledge.update' => [
             'label' => 'Update knowledge',
-            'description' => 'Update knowledge articles.',
+            'description' => 'Update or delete knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
+        ],
+        'integration.bookstack.read' => [
+            'label' => 'Read BookStack sync status',
+            'description' => 'Read sanitized BookStack integration health, sync status, and sync summaries.',
+            'domain' => 'Integration',
+        ],
+        'integration.bookstack.run' => [
+            'label' => 'Run BookStack sync',
+            'description' => 'Test the BookStack connection and run pull or push sync operations.',
+            'domain' => 'Integration',
         ],
         'storage.read' => [
             'label' => 'Read storage',

@@ -42,19 +42,19 @@ class AiToolCatalog
                     'label' => 'Update tickets',
                     'description' => 'Change ticket fields, status, assignment, priority, or internal metadata.',
                     'requires_data_source' => 'active_tickets',
-                    'requires_scope' => 'tickets.write',
+                    'requires_scope' => 'tickets.update',
                 ],
                 'tickets.reply' => [
                     'label' => 'Post ticket replies',
                     'description' => 'Create internal notes or customer-visible ticket replies.',
                     'requires_data_source' => 'active_tickets',
-                    'requires_scope' => 'tickets.write',
+                    'requires_scope' => 'tickets.update',
                 ],
                 'knowledge.update' => [
                     'label' => 'Update Knowledge',
                     'description' => 'Create or update Knowledge books, chapters, or articles.',
                     'requires_data_source' => 'knowledge',
-                    'requires_scope' => 'knowledge.write',
+                    'requires_scope' => 'knowledge.update',
                 ],
             ],
         ];

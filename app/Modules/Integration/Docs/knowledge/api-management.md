@@ -31,9 +31,11 @@ Implemented scopes:
 - `tasks.read`: list and view tasks.
 - `tasks.create`: create tasks.
 - `tasks.update`: update task fields and status.
-- `knowledge.read`: list and view knowledge articles.
-- `knowledge.create`: create knowledge articles.
-- `knowledge.update`: update knowledge articles.
+- `knowledge.read`: list and view knowledge shelves, books, chapters, and articles.
+- `knowledge.create`: create knowledge shelves, books, chapters, and articles.
+- `knowledge.update`: update or delete knowledge shelves, books, chapters, and articles.
+- `integration.bookstack.read`: read sanitized BookStack sync status and summaries.
+- `integration.bookstack.run`: test the BookStack connection and run pull or push sync operations.
 - `storage.read`: list and view storage items, warehouses, and boxes.
 - `storage.create`: create storage items, warehouses, and boxes.
 - `storage.update`: update storage records and adjust stock.
@@ -117,6 +119,29 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/knowledge/articles`
 - `PUT /api/v1/knowledge/articles/{article}`
 - `PATCH /api/v1/knowledge/articles/{article}`
+- `DELETE /api/v1/knowledge/articles/{article}`
+- `GET /api/v1/knowledge/shelves`
+- `GET /api/v1/knowledge/shelves/{shelf}`
+- `POST /api/v1/knowledge/shelves`
+- `PUT /api/v1/knowledge/shelves/{shelf}`
+- `PATCH /api/v1/knowledge/shelves/{shelf}`
+- `DELETE /api/v1/knowledge/shelves/{shelf}`
+- `GET /api/v1/knowledge/books`
+- `GET /api/v1/knowledge/books/{book}`
+- `POST /api/v1/knowledge/books`
+- `PUT /api/v1/knowledge/books/{book}`
+- `PATCH /api/v1/knowledge/books/{book}`
+- `DELETE /api/v1/knowledge/books/{book}`
+- `GET /api/v1/knowledge/chapters`
+- `GET /api/v1/knowledge/chapters/{chapter}`
+- `POST /api/v1/knowledge/chapters`
+- `PUT /api/v1/knowledge/chapters/{chapter}`
+- `PATCH /api/v1/knowledge/chapters/{chapter}`
+- `DELETE /api/v1/knowledge/chapters/{chapter}`
+- `GET /api/v1/integrations/book-stack/status`
+- `POST /api/v1/integrations/book-stack/test`
+- `POST /api/v1/integrations/book-stack/pull`
+- `POST /api/v1/integrations/book-stack/push`
 - `GET /api/v1/storage/items`
 - `GET /api/v1/storage/items/{item}`
 - `POST /api/v1/storage/items`
@@ -354,8 +379,14 @@ Common create fields:
 
 ## Knowledge API
 
-Knowledge API routes expose article read and write operations for trusted automation and future AI
-agents.
+Knowledge API routes expose shelves, books, chapters, and article read/write operations for trusted
+automation and future AI agents.
+
+Use hierarchy endpoints to create the BookStack-compatible structure before creating pages:
+
+- `POST /api/v1/knowledge/shelves`
+- `POST /api/v1/knowledge/books`
+- `POST /api/v1/knowledge/chapters`
 
 `POST /api/v1/knowledge/articles` creates articles through the Knowledge `StoreArticle` action. This
 applies article defaults, assigns owner and creator, generates the slug, and renders Markdown to
@@ -372,9 +403,32 @@ Common create fields:
 - `knowledge_chapter_id`
 - `priority`
 - `next_review_at`
+- `sync_to_book_stack`
 
 `PUT` and `PATCH /api/v1/knowledge/articles/{article}` update articles through the Knowledge
 `UpdateArticle` action and re-render Markdown to HTML.
+
+When `sync_to_book_stack` is true, the BookStack integration must be active and two-way sync must be
+enabled. Nexum marks the record and any needed local parent hierarchy as `pending_push` and queues
+the BookStack push worker. BookStack-owned records reject local API edits unless two-way sync is
+enabled.
+
+## BookStack Sync API
+
+BookStack sync API routes expose the same pull and push actions used by the Admin UI.
+
+Routes:
+
+- `GET /api/v1/integrations/book-stack/status`
+- `POST /api/v1/integrations/book-stack/test`
+- `POST /api/v1/integrations/book-stack/pull`
+- `POST /api/v1/integrations/book-stack/push`
+
+`status` requires `integration.bookstack.read`. Mutating operations require
+`integration.bookstack.run`.
+
+Responses return sanitized status and summary payloads. Secrets are never returned. Push summaries
+include shelves, books, chapters, pages, skipped, failed, total, and errors.
 
 ## Storage API
 
