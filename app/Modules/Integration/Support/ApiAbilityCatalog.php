@@ -94,18 +94,28 @@ class ApiAbilityCatalog
         ],
         'knowledge.read' => [
             'label' => 'Read knowledge',
-            'description' => 'List and view knowledge articles.',
+            'description' => 'List and view knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
         ],
         'knowledge.create' => [
             'label' => 'Create knowledge',
-            'description' => 'Create knowledge articles.',
+            'description' => 'Create knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
         ],
         'knowledge.update' => [
             'label' => 'Update knowledge',
-            'description' => 'Update knowledge articles.',
+            'description' => 'Update or delete knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
+        ],
+        'integration.bookstack.read' => [
+            'label' => 'Read BookStack sync status',
+            'description' => 'Read sanitized BookStack integration health, sync status, and sync summaries.',
+            'domain' => 'Integration',
+        ],
+        'integration.bookstack.run' => [
+            'label' => 'Run BookStack sync',
+            'description' => 'Test the BookStack connection and run pull or push sync operations.',
+            'domain' => 'Integration',
         ],
         'storage.read' => [
             'label' => 'Read storage',
@@ -191,6 +201,21 @@ class ApiAbilityCatalog
             'label' => 'Update sales',
             'description' => 'Update sales opportunities and add sales activities.',
             'domain' => 'Sales',
+        ],
+        'lead-intelligence.read' => [
+            'label' => 'Read lead intelligence',
+            'description' => 'Read Lead Intelligence settings, segments, research runs, scan ledger, and policy results.',
+            'domain' => 'Lead Intelligence',
+        ],
+        'lead-intelligence.manage' => [
+            'label' => 'Manage lead intelligence',
+            'description' => 'Update Lead Intelligence settings and manage lead segments.',
+            'domain' => 'Lead Intelligence',
+        ],
+        'lead-intelligence.run' => [
+            'label' => 'Run lead intelligence research',
+            'description' => 'Create planned research runs, evaluate contact marketing eligibility, and promote approved candidates.',
+            'domain' => 'Lead Intelligence',
         ],
         'taxonomy.read' => [
             'label' => 'Read taxonomy',

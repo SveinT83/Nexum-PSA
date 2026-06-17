@@ -7,6 +7,7 @@ use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiProvider;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiToolCatalog;
+use App\Modules\Integration\Support\ApiAbilityCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -271,20 +272,15 @@ class AiIntegrationController extends Controller
 
     private function apiScopeOptions(): array
     {
-        return [
-            'tickets.read' => 'Read tickets',
-            'tickets.write' => 'Update tickets',
-            'knowledge.read' => 'Read knowledge',
-            'knowledge.write' => 'Update knowledge',
-            'clients.read' => 'Read clients',
-            'assets.read' => 'Read assets',
-        ];
+        return collect(app(ApiAbilityCatalog::class)->all())
+            ->mapWithKeys(fn (array $ability, string $key) => [$key => $ability['label']])
+            ->all();
     }
 
     private function normalizeApiScopes(array $scopes, bool $canExecuteActions): array
     {
         return collect($scopes)
-            ->when(! $canExecuteActions, fn ($items) => $items->reject(fn ($scope) => Str::endsWith($scope, '.write')))
+            ->when(! $canExecuteActions, fn ($items) => $items->filter(fn ($scope) => Str::endsWith($scope, '.read')))
             ->unique()
             ->values()
             ->all();

@@ -12,6 +12,7 @@ use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiProvider;
+use App\Modules\LeadIntelligence\Models\ContactMarketingEligibility;
 use App\Modules\Marketing\Controllers\Tech\MarketingController;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
@@ -24,6 +25,7 @@ use App\Modules\Marketing\Models\MarketingCampaignRecipient;
 use App\Modules\Marketing\Models\MarketingConsentCategory;
 use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Marketing\Models\MarketingList;
+use App\Modules\Marketing\Models\MarketingListMember;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -638,6 +640,97 @@ class MarketingModuleTest extends TestCase
             'marketing_list_id' => $list->id,
             'source_id' => $removed->id,
             'email' => 'removed@example.test',
+        ]);
+    }
+
+    #[Test]
+    public function marketing_list_refresh_preserves_lead_intelligence_members_until_contact_is_removed(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+        Permission::findOrCreate('marketing.list.manage', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage']);
+
+        $client = Client::factory()->create(['name' => 'Lead Intelligence List Client AS']);
+        $manual = $this->contactForClient($client, 'Manual Contact', 'manual-li-list@example.test');
+        $leadIntelligence = $this->contactForClient($client, 'Lead Intelligence Contact', 'lead-intelligence-list@example.test');
+
+        $list = MarketingList::query()->create([
+            'name' => 'Lead Intelligence preserved list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$manual->id],
+                'excluded_contact_ids' => [],
+            ],
+        ]);
+        MarketingListMember::query()->create([
+            'marketing_list_id' => $list->id,
+            'source_type' => 'contact',
+            'source_id' => $leadIntelligence->id,
+            'contact_id' => $leadIntelligence->id,
+            'client_id' => $client->id,
+            'email' => 'lead-intelligence-list@example.test',
+            'name' => 'Lead Intelligence Contact',
+            'status' => 'eligible',
+            'metadata' => ['source' => 'lead_intelligence'],
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.lists.refresh', $list))
+            ->assertRedirect(route('tech.marketing.lists.show', $list));
+
+        $this->assertSame(2, $list->fresh()->members()->count());
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'email' => 'manual-li-list@example.test',
+        ]);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'email' => 'lead-intelligence-list@example.test',
+        ]);
+
+        ContactMarketingEligibility::query()->create([
+            'contact_id' => $leadIntelligence->id,
+            'client_id' => $client->id,
+            'email' => 'lead-intelligence-list@example.test',
+            'email_type' => 'named_work',
+            'role' => 'daglig leder',
+            'eligible' => true,
+            'reason' => 'Eligible under current Lead Intelligence settings.',
+            'evaluated_at' => now(),
+            'metadata' => [
+                'recommended_marketing_lists' => [$list->id],
+                'required_review' => false,
+            ],
+        ]);
+        $list->members()->where('email', 'lead-intelligence-list@example.test')->delete();
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.lists.refresh', $list))
+            ->assertRedirect(route('tech.marketing.lists.show', $list));
+
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'email' => 'lead-intelligence-list@example.test',
+            'metadata->source' => 'lead_intelligence',
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.lists.contacts.remove', [$list, $leadIntelligence]))
+            ->assertRedirect(route('tech.marketing.lists.show', $list));
+
+        $criteria = $list->fresh()->segment_criteria;
+        $this->assertSame([$leadIntelligence->id], $criteria['excluded_contact_ids']);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'email' => 'lead-intelligence-list@example.test',
+        ]);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'email' => 'manual-li-list@example.test',
         ]);
     }
 

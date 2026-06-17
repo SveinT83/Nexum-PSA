@@ -7,9 +7,6 @@ use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
 use App\Models\Knowledge\Shelf;
-use App\Models\System\Integrations\Integration;
-use App\Modules\Integration\Jobs\PushPendingKnowledgeToBookStack;
-use App\Modules\Integration\Services\BookStack\BookStackClient;
 use App\Modules\Knowledge\Actions\DeleteArticle;
 use App\Modules\Knowledge\Actions\RecordArticleView;
 use App\Modules\Knowledge\Actions\StoreArticle;
@@ -18,6 +15,7 @@ use App\Modules\Knowledge\Actions\StoreChapter;
 use App\Modules\Knowledge\Actions\StoreShelf;
 use App\Modules\Knowledge\Actions\UpdateArticle;
 use App\Modules\Knowledge\Queries\ArticleQuery;
+use App\Modules\Knowledge\Support\KnowledgeBookStackSync;
 use App\Modules\Knowledge\Support\KnowledgeSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,12 +37,10 @@ class KnowledgeController extends Controller
      */
     public function index(ArticleQuery $query): View
     {
-        $bookStackIntegration = Integration::where('type', 'book_stack')->first();
-
         return view('knowledge::Tech.index', [
             'shelves' => $query->shelvesForLibrary(),
             'articles' => $query->paginateForTechIndex(),
-            'bookStackCanSync' => $this->bookStackCanSync($bookStackIntegration),
+            'bookStackCanSync' => $this->bookStackSync()->canPull(),
         ]);
     }
 
@@ -105,7 +101,7 @@ class KnowledgeController extends Controller
         $shelf = $action->handle($validated);
 
         if ($syncToBookStack) {
-            PushPendingKnowledgeToBookStack::dispatch();
+            $this->bookStackSync()->dispatchPush();
         }
 
         return redirect()->route('tech.knowledge.shelf', $shelf)
@@ -161,7 +157,7 @@ class KnowledgeController extends Controller
         $shelf->save();
 
         if ($syncToBookStack) {
-            PushPendingKnowledgeToBookStack::dispatch();
+            $this->bookStackSync()->dispatchPush();
         }
 
         return redirect()->route('tech.knowledge.shelf', $shelf)
@@ -245,7 +241,7 @@ class KnowledgeController extends Controller
                 $shelf->forceFill(['sync_status' => 'pending_push'])->save();
             }
 
-            PushPendingKnowledgeToBookStack::dispatch();
+            $this->bookStackSync()->dispatchPush();
         }
 
         return redirect()->route('tech.knowledge.book', $book)
@@ -310,7 +306,7 @@ class KnowledgeController extends Controller
         $book->save();
 
         if ($syncToBookStack) {
-            PushPendingKnowledgeToBookStack::dispatch();
+            $this->bookStackSync()->dispatchPush();
         }
 
         return redirect()->route('tech.knowledge.book', $book)
@@ -401,7 +397,7 @@ class KnowledgeController extends Controller
                 $book->shelf->forceFill(['sync_status' => 'pending_push'])->save();
             }
 
-            PushPendingKnowledgeToBookStack::dispatch();
+            $this->bookStackSync()->dispatchPush();
         }
 
         return redirect()->route('tech.knowledge.book', $book)
@@ -458,7 +454,7 @@ class KnowledgeController extends Controller
         $chapter->save();
 
         if ($syncToBookStack) {
-            PushPendingKnowledgeToBookStack::dispatch();
+            $this->bookStackSync()->dispatchPush();
         }
 
         return redirect()->route('tech.knowledge.book', $chapter->book)
@@ -636,43 +632,15 @@ class KnowledgeController extends Controller
      */
     private function bookStackTwoWaySyncEnabled(): bool
     {
-        $integration = Integration::where('type', 'book_stack')->first();
-        $config = $integration?->config ?? [];
-
-        return (bool) (
-            $integration?->status === 'active'
-            && $integration->server
-            && ($config['two_way_sync_enabled'] ?? false)
-        );
+        return $this->bookStackSync()->twoWayEnabled();
     }
 
     /**
      * Build a BookStack API client when the integration has stored credentials.
      */
-    private function bookStackClient(): ?BookStackClient
+    private function bookStackClient()
     {
-        $integration = Integration::where('type', 'book_stack')->first();
-        $tokenId = $integration?->getSecret('token_id');
-        $tokenSecret = $integration?->getSecret('token_secret');
-
-        if (! $integration?->server || ! $tokenId || ! $tokenSecret) {
-            return null;
-        }
-
-        return new BookStackClient($integration->server, $tokenId, $tokenSecret);
-    }
-
-    /**
-     * Determine whether the BookStack pull action can be triggered.
-     */
-    private function bookStackCanSync(?Integration $integration): bool
-    {
-        return (bool) (
-            $integration?->status === 'active'
-            && $integration->server
-            && $integration->getSecret('token_id')
-            && $integration->getSecret('token_secret')
-        );
+        return $this->bookStackSync()->client();
     }
 
     /**
@@ -680,21 +648,14 @@ class KnowledgeController extends Controller
      */
     private function markArticleForBookStackPushWhenNeeded(Article $article): void
     {
-        if (! $this->bookStackTwoWaySyncEnabled()) {
-            return;
-        }
+        $this->bookStackSync()->markArticleForPushWhenNeeded($article);
+    }
 
-        $article->loadMissing(['knowledgeBook', 'knowledgeChapter']);
-
-        $shouldPush = $article->source_system === 'book_stack'
-            || $article->knowledgeChapter?->source_system === 'book_stack'
-            || $article->knowledgeBook?->source_system === 'book_stack';
-
-        if (! $shouldPush) {
-            return;
-        }
-
-        $article->forceFill(['sync_status' => 'pending_push'])->save();
-        PushPendingKnowledgeToBookStack::dispatch();
+    /**
+     * Resolve the shared BookStack sync policy helper.
+     */
+    private function bookStackSync(): KnowledgeBookStackSync
+    {
+        return app(KnowledgeBookStackSync::class);
     }
 }

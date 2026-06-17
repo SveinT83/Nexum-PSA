@@ -66,6 +66,7 @@ class AiAgentResolver
             'storage' => 'Storage',
             'tasks' => 'Tasks',
             'marketing' => 'Marketing',
+            'lead_intelligence' => 'Lead Intelligence',
             'system' => 'System/Admin',
         ];
     }

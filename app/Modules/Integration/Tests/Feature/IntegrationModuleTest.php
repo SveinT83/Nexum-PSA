@@ -2,6 +2,7 @@
 
 namespace App\Modules\Integration\Tests\Feature;
 
+use App\Jobs\Integrations\NAbleRmmSyncJob;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
@@ -13,9 +14,8 @@ use App\Models\Knowledge\Shelf;
 use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Models\Tech\Work\Assets\Asset;
-use App\Jobs\Integrations\NAbleRmmSyncJob;
-use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
+use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\IntegrationsController;
 use App\Modules\Integration\Controllers\Tech\AiChatController;
 use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -217,7 +218,7 @@ class IntegrationModuleTest extends TestCase
             'linkable_id' => $client->id,
         ]);
 
-        (new NAbleRmmSyncJob())->handle();
+        (new NAbleRmmSyncJob)->handle();
 
         $site = ClientSite::where('client_id', $client->id)
             ->where('name', 'RMM Site 200')
@@ -301,7 +302,7 @@ class IntegrationModuleTest extends TestCase
                 'instructions' => 'Use Knowledge first and cite the source records.',
                 'data_sources' => ['knowledge', 'active_tickets'],
                 'allowed_tools' => ['search', 'read_records', 'tickets.update'],
-                'allowed_api_scopes' => ['tickets.read', 'tickets.write', 'knowledge.read'],
+                'allowed_api_scopes' => ['tickets.read', 'tickets.update', 'knowledge.read'],
                 'role_ids' => [$techRole->id],
                 'default_domains' => ['tickets'],
                 'is_active' => '1',
@@ -694,7 +695,7 @@ class IntegrationModuleTest extends TestCase
             'name' => 'OpenAI',
             'provider_key' => 'openai',
             'base_url' => 'https://api.openai.test/v1',
-            'default_model' => 'gpt-5',
+            'default_model' => 'gpt-4.1',
             'status' => 'active',
         ]);
         $provider->setSecret('api_key', 'test-key');
@@ -718,13 +719,228 @@ class IntegrationModuleTest extends TestCase
         app(AiChatResponder::class)->respond($chat, $pending->id);
 
         Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/chat/completions'
-            && $request['model'] === 'gpt-5'
+            && $request['model'] === 'gpt-4.1'
             && array_key_exists('messages', $request->data())
             && ! array_key_exists('temperature', $request->data()));
         $this->assertDatabaseHas('ai_chat_messages', [
             'ai_chat_id' => $chat->id,
             'role' => 'assistant',
             'body' => 'Temperature compatible response.',
+        ]);
+    }
+
+    #[Test]
+    public function openai_provider_prefers_responses_for_gpt5_models(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/responses' => Http::response([
+                'output_text' => 'Responses model response.',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $provider = AiProvider::create([
+            'name' => 'OpenAI',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-5-mini',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Responses preferred agent',
+            'slug' => 'responses-preferred-agent',
+            'instructions' => 'Use provider defaults.',
+            'is_active' => true,
+        ]);
+        $chat = AiChat::create([
+            'user_id' => $user->id,
+            'ai_agent_id' => $agent->id,
+            'title' => 'Responses preferred test',
+            'status' => 'open',
+        ]);
+        $chat->messages()->create(['user_id' => $user->id, 'role' => 'user', 'body' => 'Hei']);
+        $pending = $chat->messages()->create(['role' => 'assistant', 'body' => 'AI is thinking...', 'metadata' => ['status' => 'pending']]);
+
+        app(AiChatResponder::class)->respond($chat, $pending->id);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/responses'
+            && $request['model'] === 'gpt-5-mini'
+            && array_key_exists('input', $request->data())
+            && $request['max_output_tokens'] === 1200);
+        Http::assertNotSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/chat/completions');
+        $this->assertDatabaseHas('ai_chat_messages', [
+            'ai_chat_id' => $chat->id,
+            'role' => 'assistant',
+            'body' => 'Responses model response.',
+        ]);
+    }
+
+    #[Test]
+    public function openai_responses_parser_accepts_nested_text_content(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/responses' => Http::response([
+                'output' => [
+                    [
+                        'type' => 'message',
+                        'content' => [
+                            [
+                                'type' => 'text',
+                                'text' => 'Nested Responses text.',
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $provider = AiProvider::create([
+            'name' => 'OpenAI nested responses',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-5-mini',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Nested responses agent',
+            'slug' => 'nested-responses-agent',
+            'instructions' => 'Return text.',
+            'is_active' => true,
+        ]);
+
+        $reply = app(AiChatResponder::class)->complete($agent, [
+            ['role' => 'user', 'content' => 'Hei'],
+        ]);
+
+        $this->assertSame('Nested Responses text.', $reply);
+    }
+
+    #[Test]
+    public function openai_compatible_responder_falls_back_to_completions_for_non_chat_models(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/chat/completions' => Http::response([
+                'error' => [
+                    'message' => 'This is not a chat model and thus not supported in the v1/chat/completions endpoint. Did you mean to use v1/completions?',
+                    'type' => 'invalid_request_error',
+                    'param' => 'model',
+                    'code' => null,
+                ],
+            ], 404),
+            'https://api.openai.test/v1/completions' => Http::response([
+                'choices' => [
+                    ['text' => 'Completion fallback response.'],
+                ],
+            ], 200),
+        ]);
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $provider = AiProvider::create([
+            'name' => 'OpenAI legacy',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'legacy-completion-model',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Legacy model agent',
+            'slug' => 'legacy-model-agent',
+            'model' => 'legacy-completion-model',
+            'instructions' => 'Use JSON.',
+            'is_active' => true,
+        ]);
+        $chat = AiChat::create([
+            'user_id' => $user->id,
+            'ai_agent_id' => $agent->id,
+            'title' => 'Fallback test',
+            'status' => 'open',
+        ]);
+        $chat->messages()->create(['user_id' => $user->id, 'role' => 'user', 'body' => 'Lag segment']);
+        $pending = $chat->messages()->create(['role' => 'assistant', 'body' => 'AI is thinking...', 'metadata' => ['status' => 'pending']]);
+
+        app(AiChatResponder::class)->respond($chat, $pending->id);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/completions'
+            && $request['model'] === 'legacy-completion-model'
+            && array_key_exists('prompt', $request->data())
+            && $request['max_tokens'] === 2000);
+        $this->assertDatabaseHas('ai_chat_messages', [
+            'ai_chat_id' => $chat->id,
+            'role' => 'assistant',
+            'body' => 'Completion fallback response.',
+        ]);
+    }
+
+    #[Test]
+    public function openai_compatible_responder_falls_back_to_responses_when_completions_are_unsupported(): void
+    {
+        Http::fake([
+            'https://api.openai.test/v1/chat/completions' => Http::response([
+                'error' => [
+                    'message' => 'This is not a chat model and thus not supported in the v1/chat/completions endpoint. Did you mean to use v1/completions?',
+                    'type' => 'invalid_request_error',
+                    'param' => 'model',
+                    'code' => null,
+                ],
+            ], 404),
+            'https://api.openai.test/v1/completions' => Http::response([
+                'error' => [
+                    'message' => 'This model is not supported in the v1/completions endpoint.',
+                    'type' => 'invalid_request_error',
+                    'param' => 'model',
+                    'code' => null,
+                ],
+            ], 404),
+            'https://api.openai.test/v1/responses' => Http::response([
+                'output_text' => 'Responses fallback response.',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $provider = AiProvider::create([
+            'name' => 'OpenAI responses',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'responses-only-model',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        $agent = AiAgent::create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Responses model agent',
+            'slug' => 'responses-model-agent',
+            'model' => 'responses-only-model',
+            'instructions' => 'Use JSON.',
+            'is_active' => true,
+        ]);
+        $chat = AiChat::create([
+            'user_id' => $user->id,
+            'ai_agent_id' => $agent->id,
+            'title' => 'Responses fallback test',
+            'status' => 'open',
+        ]);
+        $chat->messages()->create(['user_id' => $user->id, 'role' => 'user', 'body' => 'Lag segment']);
+        $pending = $chat->messages()->create(['role' => 'assistant', 'body' => 'AI is thinking...', 'metadata' => ['status' => 'pending']]);
+
+        app(AiChatResponder::class)->respond($chat, $pending->id);
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.test/v1/responses'
+            && $request['model'] === 'responses-only-model'
+            && array_key_exists('input', $request->data()));
+        $this->assertDatabaseHas('ai_chat_messages', [
+            'ai_chat_id' => $chat->id,
+            'role' => 'assistant',
+            'body' => 'Responses fallback response.',
         ]);
     }
 
@@ -1346,7 +1562,7 @@ class IntegrationModuleTest extends TestCase
         $integration->setSecret('token_secret', 'token-secret');
         $integration->save();
 
-        (new PullBookStackToKnowledge())->handle();
+        (new PullBookStackToKnowledge)->handle();
 
         Http::assertNothingSent();
         $this->assertSame(
@@ -1358,7 +1574,7 @@ class IntegrationModuleTest extends TestCase
         $config['last_pull_at'] = now()->subMinutes(61)->toIso8601String();
         $integration->forceFill(['config' => $config])->save();
 
-        (new PullBookStackToKnowledge())->handle();
+        (new PullBookStackToKnowledge)->handle();
 
         Http::assertSent(fn ($request) => $request->url() === 'https://docs.example.test/api/shelves?count=100&offset=0&sort=%2Bid');
         $this->assertSame(0, $integration->fresh()->config['last_sync_summary']['failed']);
@@ -1384,7 +1600,7 @@ class IntegrationModuleTest extends TestCase
             ],
         ]);
 
-        (new PullBookStackToKnowledge())->handle();
+        (new PullBookStackToKnowledge)->handle();
 
         $integration = Integration::where('type', 'book_stack')->firstOrFail();
 
@@ -1409,12 +1625,146 @@ class IntegrationModuleTest extends TestCase
             ],
         ]);
 
-        (new PushPendingKnowledgeToBookStack())->handle();
+        (new PushPendingKnowledgeToBookStack)->handle();
 
         $integration = Integration::where('type', 'book_stack')->firstOrFail();
 
         $this->assertFalse($integration->is_healthy);
         $this->assertSame('BookStack scheduled push is missing server, token id, or token secret.', $integration->last_error);
+        Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function book_stack_sync_api_exposes_sanitized_status_and_requires_run_scope(): void
+    {
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'last_push_summary' => ['failed' => 0],
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        Sanctum::actingAs($this->admin, ['integration.bookstack.read']);
+
+        $response = $this->getJson(route('api.v1.integrations.book-stack.status'))
+            ->assertOk()
+            ->assertJsonPath('data.active', true)
+            ->assertJsonPath('data.server', 'https://docs.example.test');
+
+        $this->assertStringNotContainsString('token-id', $response->getContent());
+        $this->assertStringNotContainsString('token-secret', $response->getContent());
+
+        $this->postJson(route('api.v1.integrations.book-stack.push'))
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function book_stack_pull_api_runs_existing_pull_action(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/shelves*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+            'https://docs.example.test/api/books*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+            'https://docs.example.test/api/chapters*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+            'https://docs.example.test/api/pages*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+        ]);
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'sync_interval_minutes' => 10,
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        Sanctum::actingAs($this->admin, ['integration.bookstack.run']);
+
+        $this->postJson(route('api.v1.integrations.book-stack.pull'))
+            ->assertOk()
+            ->assertJsonPath('data.summary.failed', 0)
+            ->assertJsonPath('data.status.is_healthy', true);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://docs.example.test/api/shelves?count=100&offset=0&sort=%2Bid');
+    }
+
+    #[Test]
+    public function book_stack_push_api_reports_skipped_unsynced_parents_as_unhealthy(): void
+    {
+        Http::fake();
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $book = Book::create([
+            'name' => 'Unsynced Book',
+            'slug' => 'unsynced-book',
+            'sync_status' => 'local',
+        ]);
+        Article::create([
+            'title' => 'Skipped Page',
+            'slug' => 'skipped-page',
+            'body_markdown' => 'Cannot push without a synced parent.',
+            'body_html' => '<p>Cannot push without a synced parent.</p>',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->admin->id,
+            'created_by' => $this->admin->id,
+            'knowledge_book_id' => $book->id,
+            'sync_status' => 'pending_push',
+        ]);
+
+        Sanctum::actingAs($this->admin, ['integration.bookstack.run']);
+
+        $this->postJson(route('api.v1.integrations.book-stack.push'))
+            ->assertUnprocessable()
+            ->assertJsonPath('data.summary.failed', 0)
+            ->assertJsonPath('data.summary.skipped', 1)
+            ->assertJsonPath('data.status.is_healthy', false);
+
+        $integration->refresh();
+
+        $this->assertFalse($integration->is_healthy);
+        $this->assertStringContainsString('skipped because it has no synced BookStack book or chapter', $integration->last_error);
         Http::assertNothingSent();
     }
 

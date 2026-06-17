@@ -60,7 +60,8 @@ Client tag criteria match both first-class Contacts related to a tagged Client a
 resolved from first-class Contacts only.
 
 Resolution materializes members into `marketing_list_members` so future campaign sends can use a
-stable recipient snapshot.
+stable recipient snapshot. Refresh rebuilds criteria-driven members, but preserves members promoted
+by Lead Intelligence unless the Contact has been removed from that specific list.
 
 Technicians with `marketing.list.manage` can edit list details and criteria after creation. They can
 also add eligible Contacts directly from the list detail page, or remove resolved first-class

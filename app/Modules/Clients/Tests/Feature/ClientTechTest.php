@@ -13,6 +13,7 @@ use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Economy\Units;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\TimeRate;
+use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
 use App\Modules\Commercial\Models\Contracts\ClientContractTimeConsumption;
 use App\Modules\Economy\Models\EconomyOrder;
@@ -127,6 +128,15 @@ class ClientTechTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.name', 'Ellrun Thun Saur');
+    }
+
+    #[Test]
+    public function suggested_client_number_uses_numeric_order_and_skips_existing_padded_numbers(): void
+    {
+        Client::factory()->create(['client_number' => '1002']);
+        Client::factory()->create(['client_number' => '01003']);
+
+        $this->assertSame('01004', app(SuggestClientNumber::class)->handle());
     }
 
     #[Test]

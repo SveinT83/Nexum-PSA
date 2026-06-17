@@ -49,6 +49,12 @@
             'pattern' => 'tech.admin.settings.marketing*',
             'icon' => 'bi-megaphone',
         ],
+        'lead-intelligence' => [
+            'name' => 'Lead Intelligence',
+            'route' => 'tech.admin.settings.lead-intelligence',
+            'pattern' => ['tech.admin.settings.lead-intelligence*', 'tech.lead-intelligence.*'],
+            'icon' => 'bi-search-heart',
+        ],
         'clients' => [
             'name' => 'Clients',
             'route' => 'tech.admin.settings.clients.client-formats',
@@ -169,6 +175,12 @@
             ['name' => 'Marketing settings', 'route' => 'tech.admin.settings.marketing', 'pattern' => 'tech.admin.settings.marketing*'],
             ['name' => 'Email accounts', 'route' => 'tech.admin.settings.email.accounts', 'pattern' => 'tech.admin.settings.email.accounts*'],
             ['name' => 'Email templates', 'route' => 'tech.admin.system.templatesManagement.email.index', 'pattern' => 'tech.admin.system.templatesManagement.email.*'],
+        ],
+        'lead-intelligence' => [
+            ['name' => 'Lead Intelligence settings', 'route' => 'tech.admin.settings.lead-intelligence', 'pattern' => 'tech.admin.settings.lead-intelligence*'],
+            ['name' => 'Segments', 'route' => 'tech.lead-intelligence.segments.index', 'pattern' => 'tech.lead-intelligence.segments.*'],
+            ['name' => 'Research runs', 'route' => 'tech.lead-intelligence.runs.index', 'pattern' => 'tech.lead-intelligence.runs.*'],
+            ['name' => 'Scan ledger', 'route' => 'tech.lead-intelligence.scan-ledger.index', 'pattern' => 'tech.lead-intelligence.scan-ledger.*'],
         ],
         'clients' => [
             ['name' => 'Client formats', 'route' => 'tech.admin.settings.clients.client-formats', 'pattern' => 'tech.admin.settings.clients.client-formats*'],

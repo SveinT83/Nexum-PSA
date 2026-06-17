@@ -31,7 +31,7 @@ Articles edited inside Nexum are saved locally first. If they belong to a BookSt
 
 ## API
 
-Knowledge article API routes are available under `/api/v1/knowledge/articles`.
+Knowledge API routes are available under `/api/v1/knowledge`.
 
 Scopes:
 
@@ -41,17 +41,40 @@ Scopes:
 
 Routes:
 
+- `GET /api/v1/knowledge/shelves`
+- `POST /api/v1/knowledge/shelves`
+- `GET /api/v1/knowledge/shelves/{shelf}`
+- `PUT/PATCH /api/v1/knowledge/shelves/{shelf}`
+- `DELETE /api/v1/knowledge/shelves/{shelf}`
+- `GET /api/v1/knowledge/books`
+- `POST /api/v1/knowledge/books`
+- `GET /api/v1/knowledge/books/{book}`
+- `PUT/PATCH /api/v1/knowledge/books/{book}`
+- `DELETE /api/v1/knowledge/books/{book}`
+- `GET /api/v1/knowledge/chapters`
+- `POST /api/v1/knowledge/chapters`
+- `GET /api/v1/knowledge/chapters/{chapter}`
+- `PUT/PATCH /api/v1/knowledge/chapters/{chapter}`
+- `DELETE /api/v1/knowledge/chapters/{chapter}`
 - `GET /api/v1/knowledge/articles`
 - `GET /api/v1/knowledge/articles/{article}`
 - `POST /api/v1/knowledge/articles`
 - `PUT /api/v1/knowledge/articles/{article}`
 - `PATCH /api/v1/knowledge/articles/{article}`
+- `DELETE /api/v1/knowledge/articles/{article}`
 
 `POST /api/v1/knowledge/articles` uses `StoreArticle`, so article defaults, owner/creator metadata,
 slug generation, and Markdown rendering stay aligned with the Tech UI.
 
 `PUT` and `PATCH /api/v1/knowledge/articles/{article}` use `UpdateArticle`, which re-renders
 Markdown and updates the slug when the title changes.
+
+Hierarchy create and update endpoints accept `sync_to_book_stack`. When BookStack is active and
+two-way sync is enabled, this marks the shelf, book, chapter, or article as `pending_push` and queues
+the BookStack push worker. API-created articles under BookStack-backed books or chapters are also
+marked for push, matching the Tech UI.
+
+BookStack-owned records cannot be edited through the API unless two-way sync is enabled.
 
 ## Repository Documentation
 
