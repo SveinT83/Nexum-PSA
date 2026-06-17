@@ -30,6 +30,9 @@ class KnowledgeArticleResource extends JsonResource
             'view_count' => $this->view_count,
             'next_review_at' => $this->next_review_at,
             'source_system' => $this->source_system,
+            'source_type' => $this->source_type,
+            'source_id' => $this->source_id,
+            'source_url' => $this->source_url,
             'sync_status' => $this->sync_status,
             'book' => $this->whenLoaded('knowledgeBook', fn () => [
                 'id' => $this->knowledgeBook?->id,

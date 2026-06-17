@@ -50,7 +50,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>} $summary
+     * @param  array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>}  $summary
      */
     private function pushShelves(array &$summary): void
     {
@@ -93,7 +93,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>} $summary
+     * @param  array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>}  $summary
      */
     private function pushBooks(array &$summary): void
     {
@@ -136,7 +136,7 @@ class PushKnowledgeToBookStack
     /**
      * BookStack assigns books to shelves by updating the shelf's book ID list.
      *
-     * @param array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>} $summary
+     * @param  array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>}  $summary
      */
     private function syncShelfBookMemberships(array &$summary): void
     {
@@ -164,7 +164,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>} $summary
+     * @param  array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>}  $summary
      */
     private function pushChapters(array &$summary): void
     {
@@ -235,7 +235,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>} $summary
+     * @param  array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>}  $summary
      */
     private function pushPages(array &$summary): void
     {
@@ -321,7 +321,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function markShelfSynced(Shelf $shelf, array $payload): void
     {
@@ -342,7 +342,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function markBookSynced(Book $book, array $payload): void
     {
@@ -363,7 +363,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function markChapterSynced(Chapter $chapter, array $payload): void
     {
@@ -386,7 +386,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function markPageSynced(Article $article, array $payload): void
     {
@@ -408,7 +408,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>} $summary
+     * @param  array{shelves: int, books: int, chapters: int, pages: int, skipped: int, failed: int, total: int, errors: array<int, string>}  $summary
      */
     private function recordSummary(array $summary): void
     {
@@ -417,15 +417,15 @@ class PushKnowledgeToBookStack
         $config['last_push_at'] = now()->toIso8601String();
         $this->integration->config = $config;
         $this->integration->last_sync_at = now();
-        $this->integration->is_healthy = $summary['failed'] === 0;
-        $this->integration->last_error = $summary['failed'] === 0
+        $this->integration->is_healthy = $summary['failed'] === 0 && $summary['skipped'] === 0;
+        $this->integration->last_error = $summary['failed'] === 0 && $summary['skipped'] === 0
             ? null
             : implode("\n", array_slice($summary['errors'], 0, 5));
         $this->integration->save();
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function shelfUrl(array $payload): ?string
     {
@@ -435,7 +435,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function bookUrl(array $payload): ?string
     {
@@ -445,7 +445,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function chapterUrl(Chapter $chapter, array $payload): ?string
     {
@@ -460,7 +460,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function pageUrl(Article $article, array $payload): ?string
     {
@@ -479,7 +479,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function sourceUpdatedAt(array $payload): ?\Illuminate\Support\Carbon
     {
@@ -489,7 +489,7 @@ class PushKnowledgeToBookStack
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function payloadChecksum(array $payload): string
     {

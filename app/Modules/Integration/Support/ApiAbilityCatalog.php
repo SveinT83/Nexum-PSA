@@ -62,6 +62,41 @@ class ApiAbilityCatalog
             'description' => 'Inspect, move, bulk repair, and detach Contact ownership across clients and legacy client users.',
             'domain' => 'Contacts',
         ],
+        'marketing.read' => [
+            'label' => 'Read marketing',
+            'description' => 'List and view marketing lists, campaigns, recipients, and settings.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.lists.manage' => [
+            'label' => 'Manage marketing lists',
+            'description' => 'Create, update, delete, refresh, and manage contacts on marketing mailing lists.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.campaigns.create' => [
+            'label' => 'Create marketing campaigns',
+            'description' => 'Create marketing campaigns from mailing lists.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.campaigns.update' => [
+            'label' => 'Update marketing campaigns',
+            'description' => 'Update marketing campaigns, schedules, campaign emails, test sends, and AI draft requests.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.campaigns.approve' => [
+            'label' => 'Approve marketing campaigns',
+            'description' => 'Approve draft or paused marketing campaigns and materialize recipient queues.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.campaigns.send' => [
+            'label' => 'Send marketing campaigns',
+            'description' => 'Queue due-send processing for approved marketing campaigns.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.settings.update' => [
+            'label' => 'Update marketing settings',
+            'description' => 'Update consent, unsubscribe, tracking, quiet hours, and batching settings.',
+            'domain' => 'Marketing',
+        ],
         'tickets.read' => [
             'label' => 'Read tickets',
             'description' => 'List and view ticket records.',
@@ -94,18 +129,28 @@ class ApiAbilityCatalog
         ],
         'knowledge.read' => [
             'label' => 'Read knowledge',
-            'description' => 'List and view knowledge articles.',
+            'description' => 'List and view knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
         ],
         'knowledge.create' => [
             'label' => 'Create knowledge',
-            'description' => 'Create knowledge articles.',
+            'description' => 'Create knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
         ],
         'knowledge.update' => [
             'label' => 'Update knowledge',
-            'description' => 'Update knowledge articles.',
+            'description' => 'Update or delete knowledge shelves, books, chapters, and articles.',
             'domain' => 'Knowledge',
+        ],
+        'integration.bookstack.read' => [
+            'label' => 'Read BookStack sync status',
+            'description' => 'Read sanitized BookStack integration health, sync status, and sync summaries.',
+            'domain' => 'Integration',
+        ],
+        'integration.bookstack.run' => [
+            'label' => 'Run BookStack sync',
+            'description' => 'Test the BookStack connection and run pull or push sync operations.',
+            'domain' => 'Integration',
         ],
         'storage.read' => [
             'label' => 'Read storage',

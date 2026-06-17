@@ -120,6 +120,169 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function authenticated_api_user_can_manage_knowledge_hierarchy(): void
+    {
+        Queue::fake();
+        Sanctum::actingAs($this->tech, ['knowledge.read', 'knowledge.create', 'knowledge.update']);
+
+        Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+            ],
+        ]);
+
+        $this->postJson(route('api.v1.knowledge.shelves.store'), [
+            'name' => 'API Shelf',
+            'description' => 'Created by API.',
+            'sync_to_book_stack' => true,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API Shelf')
+            ->assertJsonPath('data.sync_status', 'pending_push');
+
+        $shelf = Shelf::where('name', 'API Shelf')->firstOrFail();
+
+        $this->postJson(route('api.v1.knowledge.books.store'), [
+            'shelf_id' => $shelf->id,
+            'name' => 'API Book',
+            'priority' => 10,
+            'sync_to_book_stack' => true,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API Book')
+            ->assertJsonPath('data.shelf_id', $shelf->id)
+            ->assertJsonPath('data.sync_status', 'pending_push');
+
+        $book = Book::where('name', 'API Book')->firstOrFail();
+
+        $this->postJson(route('api.v1.knowledge.chapters.store'), [
+            'book_id' => $book->id,
+            'name' => 'API Chapter',
+            'priority' => 20,
+            'sync_to_book_stack' => true,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API Chapter')
+            ->assertJsonPath('data.book_id', $book->id)
+            ->assertJsonPath('data.sync_status', 'pending_push');
+
+        $chapter = Chapter::where('name', 'API Chapter')->firstOrFail();
+
+        $this->getJson(route('api.v1.knowledge.shelves.index', ['q' => 'API Shelf']))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $shelf->id);
+
+        $this->patchJson(route('api.v1.knowledge.chapters.update', $chapter), [
+            'description' => 'Updated by API.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.description', 'Updated by API.');
+
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+    }
+
+    #[Test]
+    public function knowledge_api_rejects_book_stack_sync_request_when_two_way_sync_is_disabled(): void
+    {
+        Sanctum::actingAs($this->tech, ['knowledge.create']);
+
+        $this->postJson(route('api.v1.knowledge.shelves.store'), [
+            'name' => 'Unsynced Shelf',
+            'sync_to_book_stack' => true,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('sync_to_book_stack');
+    }
+
+    #[Test]
+    public function article_api_can_mark_local_hierarchy_for_book_stack_push(): void
+    {
+        Queue::fake();
+        Sanctum::actingAs($this->tech, ['knowledge.read', 'knowledge.create', 'knowledge.update']);
+
+        Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+            ],
+        ]);
+
+        $shelf = Shelf::create([
+            'name' => 'Local Shelf',
+            'slug' => 'local-shelf',
+            'sync_status' => 'local',
+        ]);
+        $book = Book::create([
+            'shelf_id' => $shelf->id,
+            'name' => 'Local Book',
+            'slug' => 'local-book',
+            'sync_status' => 'local',
+        ]);
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Local Chapter',
+            'slug' => 'local-chapter',
+            'sync_status' => 'local',
+        ]);
+
+        $this->postJson(route('api.v1.knowledge.articles.store'), [
+            'title' => 'Pushable API Article',
+            'body_markdown' => 'Ready for BookStack.',
+            'knowledge_chapter_id' => $chapter->id,
+            'visibility' => 'internal',
+            'status' => 'published',
+            'sync_to_book_stack' => true,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.sync_status', 'pending_push');
+
+        $article = Article::where('title', 'Pushable API Article')->firstOrFail();
+
+        $this->assertSame('pending_push', $article->sync_status);
+        $this->assertSame('pending_push', $chapter->fresh()->sync_status);
+        $this->assertSame('pending_push', $book->fresh()->sync_status);
+        $this->assertSame('pending_push', $shelf->fresh()->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+    }
+
+    #[Test]
+    public function article_api_rejects_book_stack_owned_update_when_two_way_sync_is_disabled(): void
+    {
+        Sanctum::actingAs($this->tech, ['knowledge.update']);
+
+        $article = Article::create([
+            'title' => 'Synced Page',
+            'slug' => 'synced-page',
+            'body_markdown' => 'Synced.',
+            'body_html' => '<p>Synced.</p>',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'source_system' => 'book_stack',
+            'source_type' => 'page',
+            'source_id' => '123',
+        ]);
+
+        $this->patchJson(route('api.v1.knowledge.articles.update', $article), [
+            'title' => 'Blocked Update',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('book_stack');
+    }
+
+    #[Test]
     public function admin_can_update_knowledge_article_defaults(): void
     {
         $this->actingAs($this->tech)

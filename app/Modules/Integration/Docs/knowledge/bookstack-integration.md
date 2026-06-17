@@ -77,6 +77,29 @@ php artisan knowledge:sync-docs --push
 
 Administrators can also use the BookStack integration settings page to pull from BookStack or push pending local Knowledge changes.
 
+## API Operations
+
+Trusted automation can inspect and run BookStack sync through the Integration API.
+
+Scopes:
+
+- `integration.bookstack.read`
+- `integration.bookstack.run`
+
+Routes:
+
+- `GET /api/v1/integrations/book-stack/status`
+- `POST /api/v1/integrations/book-stack/test`
+- `POST /api/v1/integrations/book-stack/pull`
+- `POST /api/v1/integrations/book-stack/push`
+
+The status response is sanitized. It includes health, timestamps, sync mode, last pull summary, last
+push summary, and last error, but never returns token ID or token secret values.
+
+Push summaries include shelves, books, chapters, pages, skipped, failed, total, and errors. Skipped
+records caused by missing synced parents are treated as unhealthy so API agents can detect and repair
+the hierarchy before retrying.
+
 ## Safety Rules
 
 Do not overwrite BookStack source metadata when updating repository-owned documentation.
