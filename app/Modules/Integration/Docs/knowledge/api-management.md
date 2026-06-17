@@ -103,6 +103,7 @@ Current API routes are under `/api/v1`:
 - `GET /api/v1/clients/{client}/contacts`
 - `POST /api/v1/contacts/{contact}/move`
 - `POST /api/v1/clients/{client}/contacts/bulk-fix`
+- `POST /api/v1/clients/{client}/contacts/legacy-orphans/cleanup`
 - `DELETE /api/v1/clients/{client}/contacts/{contact}`
 - `GET /api/v1/tickets`
 - `GET /api/v1/tickets/{ticket}`
@@ -312,6 +313,10 @@ Contact relations and the legacy Client User bridge.
 
 `POST /api/v1/clients/{client}/contacts/bulk-fix` accepts `contact_ids`, optional `target_site_id`,
 `dry_run`, and `reason`. Use `dry_run: true` first to get per-Contact statuses before mutating data.
+
+`POST /api/v1/clients/{client}/contacts/legacy-orphans/cleanup` accepts explicit `client_user_ids`,
+`dry_run`, and `reason`. It deletes only legacy rows for the selected Client that have no
+`contact_id`; linked rows are skipped and should be handled through Contact detach.
 
 `DELETE /api/v1/clients/{client}/contacts/{contact}` detaches a Contact from one Client. It deletes
 linked legacy `client_users` rows for that Client so the legacy contact does not remain visible on

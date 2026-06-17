@@ -33,6 +33,10 @@ Route::post('clients/{client}/contacts/bulk-fix', [ContactOwnershipController::c
     ->name('clients.contacts.bulk-fix')
     ->middleware(CheckAbilities::class.':contacts.ownership_manage');
 
+Route::post('clients/{client}/contacts/legacy-orphans/cleanup', [ContactOwnershipController::class, 'cleanupLegacyOrphans'])
+    ->name('clients.contacts.legacy-orphans.cleanup')
+    ->middleware(CheckAbilities::class.':contacts.ownership_manage');
+
 Route::delete('clients/{client}/contacts/{contact}', [ContactOwnershipController::class, 'detach'])
     ->name('clients.contacts.detach')
     ->middleware(CheckAbilities::class.':contacts.ownership_manage');
