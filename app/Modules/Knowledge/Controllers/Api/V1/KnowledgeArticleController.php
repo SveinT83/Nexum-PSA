@@ -4,12 +4,15 @@ namespace App\Modules\Knowledge\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Knowledge\Article;
+use App\Modules\Knowledge\Actions\DeleteArticle;
 use App\Modules\Knowledge\Actions\StoreArticle;
 use App\Modules\Knowledge\Actions\UpdateArticle;
 use App\Modules\Knowledge\Resources\Api\V1\KnowledgeArticleResource;
+use App\Modules\Knowledge\Support\KnowledgeBookStackSync;
 use App\Modules\Knowledge\Support\KnowledgeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(
@@ -18,6 +21,8 @@ use OpenApi\Attributes as OA;
 )]
 class KnowledgeArticleController extends Controller
 {
+    public function __construct(private readonly KnowledgeBookStackSync $bookStackSync) {}
+
     #[OA\Get(
         path: '/api/v1/knowledge/articles',
         operationId: 'getKnowledgeArticleList',
@@ -123,8 +128,14 @@ class KnowledgeArticleController extends Controller
     public function store(Request $request, StoreArticle $storeArticle, KnowledgeSettings $settings)
     {
         $request->merge($settings->articleDefaults($request->all()));
+        $syncToBookStack = $request->boolean('sync_to_book_stack');
+        $this->ensureTwoWaySyncWhenRequested($syncToBookStack);
 
-        $article = $storeArticle->handle($this->validateArticlePayload($request, creating: true));
+        $data = $this->validateArticlePayload($request, creating: true);
+        unset($data['sync_to_book_stack']);
+
+        $article = $storeArticle->handle($data);
+        $this->markForBookStackPush($article, $syncToBookStack);
 
         return (new KnowledgeArticleResource($this->loadArticle($article)))
             ->response()
@@ -169,14 +180,36 @@ class KnowledgeArticleController extends Controller
     )]
     public function update(Request $request, Article $article, UpdateArticle $updateArticle)
     {
+        $this->ensureBookStackOwnedArticleCanBeEdited($article);
+
+        $syncToBookStack = $request->boolean('sync_to_book_stack');
+        $this->ensureTwoWaySyncWhenRequested($syncToBookStack);
+
+        $validated = $this->validateArticlePayload($request, creating: false);
+        unset($validated['sync_to_book_stack']);
+
         $data = array_merge(
             $this->payloadFromArticle($article),
-            $this->validateArticlePayload($request, creating: false)
+            $validated
         );
 
         $article = $updateArticle->handle($article, $data);
+        $this->markForBookStackPush($article, $syncToBookStack);
 
         return new KnowledgeArticleResource($this->loadArticle($article));
+    }
+
+    public function destroy(Article $article, DeleteArticle $deleteArticle)
+    {
+        if ($article->source_system) {
+            throw ValidationException::withMessages([
+                'article' => 'Synced pages must be removed in BookStack.',
+            ]);
+        }
+
+        $deleteArticle->handle($article);
+
+        return response()->noContent();
     }
 
     private function validateArticlePayload(Request $request, bool $creating): array
@@ -193,6 +226,7 @@ class KnowledgeArticleController extends Controller
             'knowledge_chapter_id' => ['sometimes', 'nullable', Rule::exists('knowledge_chapters', 'id')],
             'priority' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'next_review_at' => ['sometimes', 'nullable', 'date'],
+            'sync_to_book_stack' => ['sometimes', 'boolean'],
         ]);
     }
 
@@ -216,5 +250,35 @@ class KnowledgeArticleController extends Controller
     private function loadArticle(Article $article): Article
     {
         return $article->load(['knowledgeShelf', 'knowledgeBook', 'knowledgeChapter', 'owner', 'creator', 'updater']);
+    }
+
+    private function ensureTwoWaySyncWhenRequested(bool $syncToBookStack): void
+    {
+        if ($syncToBookStack && ! $this->bookStackSync->twoWayEnabled()) {
+            throw ValidationException::withMessages([
+                'sync_to_book_stack' => 'BookStack two-way sync must be active before this article can be pushed.',
+            ]);
+        }
+    }
+
+    private function ensureBookStackOwnedArticleCanBeEdited(Article $article): void
+    {
+        if ($article->source_system && ! $this->bookStackSync->twoWayEnabled()) {
+            throw ValidationException::withMessages([
+                'book_stack' => 'Enable two-way sync before editing BookStack-owned pages in Nexum PSA.',
+            ]);
+        }
+    }
+
+    private function markForBookStackPush(Article $article, bool $syncToBookStack): void
+    {
+        if ($syncToBookStack) {
+            $this->bookStackSync->markArticleForPush($article);
+            $this->bookStackSync->dispatchPush();
+
+            return;
+        }
+
+        $this->bookStackSync->markArticleForPushWhenNeeded($article);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Integration\Tests\Feature;
 
+use App\Jobs\Integrations\NAbleRmmSyncJob;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
@@ -13,9 +14,8 @@ use App\Models\Knowledge\Shelf;
 use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Models\Tech\Work\Assets\Asset;
-use App\Jobs\Integrations\NAbleRmmSyncJob;
-use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
+use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\IntegrationsController;
 use App\Modules\Integration\Controllers\Tech\AiChatController;
 use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -217,7 +218,7 @@ class IntegrationModuleTest extends TestCase
             'linkable_id' => $client->id,
         ]);
 
-        (new NAbleRmmSyncJob())->handle();
+        (new NAbleRmmSyncJob)->handle();
 
         $site = ClientSite::where('client_id', $client->id)
             ->where('name', 'RMM Site 200')
@@ -301,7 +302,7 @@ class IntegrationModuleTest extends TestCase
                 'instructions' => 'Use Knowledge first and cite the source records.',
                 'data_sources' => ['knowledge', 'active_tickets'],
                 'allowed_tools' => ['search', 'read_records', 'tickets.update'],
-                'allowed_api_scopes' => ['tickets.read', 'tickets.write', 'knowledge.read'],
+                'allowed_api_scopes' => ['tickets.read', 'tickets.update', 'knowledge.read'],
                 'role_ids' => [$techRole->id],
                 'default_domains' => ['tickets'],
                 'is_active' => '1',
@@ -1561,7 +1562,7 @@ class IntegrationModuleTest extends TestCase
         $integration->setSecret('token_secret', 'token-secret');
         $integration->save();
 
-        (new PullBookStackToKnowledge())->handle();
+        (new PullBookStackToKnowledge)->handle();
 
         Http::assertNothingSent();
         $this->assertSame(
@@ -1573,7 +1574,7 @@ class IntegrationModuleTest extends TestCase
         $config['last_pull_at'] = now()->subMinutes(61)->toIso8601String();
         $integration->forceFill(['config' => $config])->save();
 
-        (new PullBookStackToKnowledge())->handle();
+        (new PullBookStackToKnowledge)->handle();
 
         Http::assertSent(fn ($request) => $request->url() === 'https://docs.example.test/api/shelves?count=100&offset=0&sort=%2Bid');
         $this->assertSame(0, $integration->fresh()->config['last_sync_summary']['failed']);
@@ -1599,7 +1600,7 @@ class IntegrationModuleTest extends TestCase
             ],
         ]);
 
-        (new PullBookStackToKnowledge())->handle();
+        (new PullBookStackToKnowledge)->handle();
 
         $integration = Integration::where('type', 'book_stack')->firstOrFail();
 
@@ -1624,12 +1625,146 @@ class IntegrationModuleTest extends TestCase
             ],
         ]);
 
-        (new PushPendingKnowledgeToBookStack())->handle();
+        (new PushPendingKnowledgeToBookStack)->handle();
 
         $integration = Integration::where('type', 'book_stack')->firstOrFail();
 
         $this->assertFalse($integration->is_healthy);
         $this->assertSame('BookStack scheduled push is missing server, token id, or token secret.', $integration->last_error);
+        Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function book_stack_sync_api_exposes_sanitized_status_and_requires_run_scope(): void
+    {
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+                'last_push_summary' => ['failed' => 0],
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        Sanctum::actingAs($this->admin, ['integration.bookstack.read']);
+
+        $response = $this->getJson(route('api.v1.integrations.book-stack.status'))
+            ->assertOk()
+            ->assertJsonPath('data.active', true)
+            ->assertJsonPath('data.server', 'https://docs.example.test');
+
+        $this->assertStringNotContainsString('token-id', $response->getContent());
+        $this->assertStringNotContainsString('token-secret', $response->getContent());
+
+        $this->postJson(route('api.v1.integrations.book-stack.push'))
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function book_stack_pull_api_runs_existing_pull_action(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/shelves*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+            'https://docs.example.test/api/books*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+            'https://docs.example.test/api/chapters*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+            'https://docs.example.test/api/pages*' => Http::response([
+                'data' => [],
+                'total' => 0,
+            ], 200),
+        ]);
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'sync_interval_minutes' => 10,
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        Sanctum::actingAs($this->admin, ['integration.bookstack.run']);
+
+        $this->postJson(route('api.v1.integrations.book-stack.pull'))
+            ->assertOk()
+            ->assertJsonPath('data.summary.failed', 0)
+            ->assertJsonPath('data.status.is_healthy', true);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://docs.example.test/api/shelves?count=100&offset=0&sort=%2Bid');
+    }
+
+    #[Test]
+    public function book_stack_push_api_reports_skipped_unsynced_parents_as_unhealthy(): void
+    {
+        Http::fake();
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'two_way_sync_enabled' => true,
+                'sync_mode' => 'two_way',
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $book = Book::create([
+            'name' => 'Unsynced Book',
+            'slug' => 'unsynced-book',
+            'sync_status' => 'local',
+        ]);
+        Article::create([
+            'title' => 'Skipped Page',
+            'slug' => 'skipped-page',
+            'body_markdown' => 'Cannot push without a synced parent.',
+            'body_html' => '<p>Cannot push without a synced parent.</p>',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->admin->id,
+            'created_by' => $this->admin->id,
+            'knowledge_book_id' => $book->id,
+            'sync_status' => 'pending_push',
+        ]);
+
+        Sanctum::actingAs($this->admin, ['integration.bookstack.run']);
+
+        $this->postJson(route('api.v1.integrations.book-stack.push'))
+            ->assertUnprocessable()
+            ->assertJsonPath('data.summary.failed', 0)
+            ->assertJsonPath('data.summary.skipped', 1)
+            ->assertJsonPath('data.status.is_healthy', false);
+
+        $integration->refresh();
+
+        $this->assertFalse($integration->is_healthy);
+        $this->assertStringContainsString('skipped because it has no synced BookStack book or chapter', $integration->last_error);
         Http::assertNothingSent();
     }
 

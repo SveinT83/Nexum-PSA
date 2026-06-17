@@ -43,6 +43,8 @@ The implemented foundation now covers:
 - Open, click, and unsubscribe tracking endpoints.
 - Admin settings UI for consent policy, unsubscribe behavior, active-contract eligibility, tracking
   defaults, quiet hours, and default send batching.
+- Sanctum API routes for mailing lists, list members, campaigns, campaign emails, approval,
+  due-send queueing, AI assists, and Marketing settings.
 
 The hub intentionally exposes only implemented actions. WordPress pull, Google integrations,
 social publishing, and richer AI/content tooling are follow-up feature slices under the approved
@@ -157,9 +159,35 @@ editable body so operators can see the unsubscribe footer in preview. External w
 not implemented yet. URLs in prompts are treated as destination links or brand hints only until a
 future content-source integration fetches and stores that content.
 
+## API
+
+Marketing exposes versioned API routes under `/api/v1/marketing`. These routes require Sanctum API
+tokens with explicit Marketing scopes:
+
+- `marketing.read`
+- `marketing.lists.manage`
+- `marketing.campaigns.create`
+- `marketing.campaigns.update`
+- `marketing.campaigns.approve`
+- `marketing.campaigns.send`
+- `marketing.settings.update`
+
+Clients and Contacts are still created through the Client and Contact APIs. Contact API writes can
+set `do_not_email` and `marketing_consent`; those fields directly affect list resolution. Marketing
+API list routes then create, update, refresh, and manage Contact membership for mailing lists.
+
+Campaign API routes create draft campaigns, update campaign metadata and schedules, add/update/remove
+campaign emails, request AI plans or email drafts, test-send one campaign email, approve campaigns,
+and queue due-send processing. The API uses the same Marketing actions as the technician UI, so list
+resolution, approval, recipient queue creation, snapshots, AI behavior, and send jobs follow the
+same rules.
+
 ## Approved RFC
 
-See `docs/rfc/2026-06-09-marketing-domain-email-campaigns.md`.
+See:
+
+- `docs/rfc/2026-06-09-marketing-domain-email-campaigns.md`
+- `docs/rfc/2026-06-17-marketing-api-surface.md`
 
 ## Ownership Rules
 

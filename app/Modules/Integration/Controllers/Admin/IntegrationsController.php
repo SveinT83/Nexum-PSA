@@ -376,14 +376,15 @@ class IntegrationsController extends Controller
         $summary = (new PushKnowledgeToBookStack($integration, $client))->execute();
 
         $message = sprintf(
-            'BookStack push finished. Shelves: %d. Books: %d. Pages: %d. Skipped: %d. Failed: %d.',
+            'BookStack push finished. Shelves: %d. Books: %d. Chapters: %d. Pages: %d. Skipped: %d. Failed: %d.',
             $summary['shelves'],
             $summary['books'],
+            $summary['chapters'],
             $summary['pages'],
             $summary['skipped'],
             $summary['failed'],
         );
 
-        return back()->with($summary['failed'] > 0 ? 'warning' : 'success', $message);
+        return back()->with($summary['failed'] > 0 || $summary['skipped'] > 0 ? 'warning' : 'success', $message);
     }
 }

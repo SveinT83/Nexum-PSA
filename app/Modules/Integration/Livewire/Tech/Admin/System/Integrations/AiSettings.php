@@ -8,6 +8,7 @@ use App\Modules\Integration\Models\AiSystemSetting;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiProviderModelCatalog;
 use App\Modules\Integration\Services\AiToolCatalog;
+use App\Modules\Integration\Support\ApiAbilityCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -17,18 +18,25 @@ use Spatie\Permission\Models\Role;
 class AiSettings extends Component
 {
     public ?string $editingProviderId = null;
+
     public ?int $editingAgentId = null;
 
     public bool $providerModalOpen = false;
+
     public bool $agentModalOpen = false;
+
     public bool $deleteModalOpen = false;
 
     public ?string $pendingDeleteType = null;
+
     public string|int|null $pendingDeleteId = null;
+
     public ?string $pendingDeleteName = null;
 
     public array $providerForm = [];
+
     public array $agentForm = [];
+
     public array $retentionForm = [];
 
     public array $modelOptions = [];
@@ -447,20 +455,15 @@ class AiSettings extends Component
 
     private function apiScopeOptions(): array
     {
-        return [
-            'tickets.read' => 'Read tickets',
-            'tickets.write' => 'Update tickets',
-            'knowledge.read' => 'Read knowledge',
-            'knowledge.write' => 'Update knowledge',
-            'clients.read' => 'Read clients',
-            'assets.read' => 'Read assets',
-        ];
+        return collect(app(ApiAbilityCatalog::class)->all())
+            ->mapWithKeys(fn (array $ability, string $key) => [$key => $ability['label']])
+            ->all();
     }
 
     private function normalizeApiScopes(array $scopes, bool $canExecuteActions): array
     {
         return collect($scopes)
-            ->when(! $canExecuteActions, fn ($items) => $items->reject(fn ($scope) => Str::endsWith($scope, '.write')))
+            ->when(! $canExecuteActions, fn ($items) => $items->filter(fn ($scope) => Str::endsWith($scope, '.read')))
             ->unique()
             ->values()
             ->all();

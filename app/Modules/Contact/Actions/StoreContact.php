@@ -37,6 +37,9 @@ class StoreContact
                     'job_title' => $data['job_title'] ?? null,
                     'preferred_language' => $data['preferred_language'] ?? null,
                     'communication_language' => $data['preferred_language'] ?? null,
+                    'do_not_call' => (bool) ($data['do_not_call'] ?? false),
+                    'do_not_email' => (bool) ($data['do_not_email'] ?? false),
+                    'marketing_consent' => (bool) ($data['marketing_consent'] ?? false),
                     'metadata' => ['created_from' => 'tech_contacts_create'],
                 ]);
             }
@@ -110,6 +113,9 @@ class StoreContact
             'job_title' => $overwrite ? ($data['job_title'] ?? null) : ($contact->job_title ?: ($data['job_title'] ?? null)),
             'preferred_language' => $overwrite ? ($data['preferred_language'] ?? null) : ($contact->preferred_language ?: ($data['preferred_language'] ?? null)),
             'communication_language' => $overwrite ? ($data['preferred_language'] ?? null) : ($contact->communication_language ?: ($data['preferred_language'] ?? null)),
+            'do_not_call' => array_key_exists('do_not_call', $data) ? (bool) $data['do_not_call'] : $contact->do_not_call,
+            'do_not_email' => array_key_exists('do_not_email', $data) ? (bool) $data['do_not_email'] : $contact->do_not_email,
+            'marketing_consent' => array_key_exists('marketing_consent', $data) ? (bool) $data['marketing_consent'] : $contact->marketing_consent,
             'metadata' => $metadata,
         ])->save();
     }

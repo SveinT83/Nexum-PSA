@@ -10,7 +10,7 @@ clearly owned service namespace.
 - N-able RMM settings and sync entry points.
 - Tactical RMM settings and sync entry points.
 - BookStack connection settings and health check.
-- BookStack manual read-only sync into Knowledge articles.
+- BookStack pull sync into Knowledge and guarded two-way push for shelves, books, chapters, and pages.
 - API key management for tdPSA external access.
 
 Routes live in `app/Modules/Integration/routes.php`. Controllers live in
@@ -59,13 +59,14 @@ BookStack must not replace tdPSA Knowledge. The target model is synchronization:
 - Sync should map BookStack shelves, books, chapters, and pages into tdPSA Knowledge structures.
 - Sync should preserve external IDs, source URLs, checksums, last synced timestamps, and conflict
   status.
-- The first production sync path should be read-only from BookStack into tdPSA unless a specific
-  write-back workflow is designed and approved.
+- Two-way write-back is guarded by the BookStack two-way sync setting and explicit API/admin sync
+  actions.
 - Synced content should become available to Knowledge search and later to AI retrieval.
 
-The existing `BookStackClient` verifies connectivity through the BookStack books API and can pull
-visible pages through the BookStack pages API. Manual sync stores pages as Knowledge articles with
-BookStack source metadata and checksums so unchanged pages can be skipped on later runs.
+The existing `BookStackClient` verifies connectivity through the BookStack books API, pulls visible
+shelves, books, chapters, and pages into Knowledge, and pushes pending local Knowledge records back to
+BookStack when two-way sync is enabled. Sync stores source metadata and checksums so unchanged records
+can be skipped on later runs.
 
 BookStack hierarchy sync must be idempotent. Shelves, books, and chapters are reconciled by
 BookStack source metadata first and by the deterministic imported slug second. This lets the sync
@@ -74,7 +75,7 @@ or stale BookStack source metadata.
 
 ## Suggested Build Order
 
-1. Finish BookStack read sync into Knowledge-compatible records.
+1. Finish BookStack API and sync hardening for Knowledge-compatible records.
 2. Add Knowledge source metadata and search/indexing hooks needed by both local and synced content.
 3. Create provider-neutral AI Integration models and Admin UI.
 4. Install and wrap Laravel AI SDK behind tdPSA-owned services.
