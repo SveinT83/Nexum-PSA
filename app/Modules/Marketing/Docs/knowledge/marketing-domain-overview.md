@@ -37,6 +37,8 @@ The first slices create the Marketing and Email foundation:
   tracking activity.
 - Admin settings for consent, unsubscribe, active-contract eligibility, tracking defaults, quiet
   hours, and send batching.
+- Sanctum API endpoints for mailing lists, list members, campaigns, campaign emails, approval,
+  due-send queueing, AI assists, and Marketing settings.
 
 The Email foundation slices add the `marketing` sender scope, `marketing` Email template scope,
 brand-aware HTML rendering, template preview, and a seeded default marketing campaign template.
@@ -186,6 +188,29 @@ The settings control:
 - Default batch size and send interval for campaigns.
 - Quiet hours. Due recipients remain pending while quiet hours are active.
 - Unsubscribe footer text appended to HTML and plaintext campaign email.
+
+## API
+
+Marketing API routes are available under `/api/v1/marketing` for integrations with Sanctum tokens.
+The Client and Contact APIs remain responsible for creating or updating Clients and Contacts.
+Contact API writes can set `do_not_email` and `marketing_consent`, and those fields are respected
+when Marketing lists resolve members.
+
+The Marketing API scopes are:
+
+- `marketing.read`
+- `marketing.lists.manage`
+- `marketing.campaigns.create`
+- `marketing.campaigns.update`
+- `marketing.campaigns.approve`
+- `marketing.campaigns.send`
+- `marketing.settings.update`
+
+The API exposes list create/read/update/delete, member lookup, list refresh, Contact add/remove,
+campaign create/read/update, schedule update, campaign email create/update/delete/test-send, AI plan,
+AI email draft, approval, due-send queueing, and settings read/update. These endpoints reuse the same
+Marketing actions as the technician UI, so recipient resolution, campaign email snapshots, approval,
+queue creation, and due-send behavior stay consistent.
 
 ## Domain Ownership
 
