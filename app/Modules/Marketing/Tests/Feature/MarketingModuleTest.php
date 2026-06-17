@@ -31,7 +31,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -102,6 +104,137 @@ class MarketingModuleTest extends TestCase
         $this->assertFalse($agent->can_execute_actions);
         $this->assertFalse($agent->is_default);
         $this->assertTrue($agent->is_active);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_manage_marketing_lists_campaigns_and_settings(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $client = Client::factory()->create(['name' => 'API Marketing Client AS']);
+        $contact = $this->contactForClient($client, 'API Contact', 'api-contact@example.test');
+        $extraContact = $this->contactForClient($client, 'API Extra Contact', 'api-extra@example.test');
+        $template = $this->marketingTemplate('api_marketing_template', 'API Marketing Template');
+
+        Sanctum::actingAs($user, [
+            'marketing.read',
+            'marketing.lists.manage',
+            'marketing.campaigns.create',
+            'marketing.campaigns.update',
+            'marketing.campaigns.approve',
+            'marketing.campaigns.send',
+            'marketing.settings.update',
+        ]);
+
+        $this->patchJson(route('api.v1.marketing.settings.update'), [
+            'consent_mode' => 'opt_out',
+            'unsubscribe_mode' => 'all_marketing',
+            'default_batch_size' => 25,
+            'default_send_interval_minutes' => 10,
+            'open_tracking_enabled' => true,
+            'click_tracking_enabled' => true,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.default_batch_size', 25);
+
+        $listResponse = $this->postJson(route('api.v1.marketing.lists.store'), [
+            'name' => 'API manual list',
+            'description' => 'Created from API test.',
+            'audience_type' => 'manual_contacts',
+            'manual_contact_ids' => [$contact->id],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API manual list')
+            ->assertJsonPath('data.members_count', 1);
+
+        $listId = $listResponse->json('data.id');
+
+        $this->postJson(route('api.v1.marketing.lists.contacts.add', $listId), [
+            'contact_ids' => [$extraContact->id],
+        ])
+            ->assertOk()
+            ->assertJsonPath('meta.resolved_members', 2);
+
+        $this->getJson(route('api.v1.marketing.lists.members.index', $listId))
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
+
+        $campaignResponse = $this->postJson(route('api.v1.marketing.campaigns.store'), [
+            'name' => 'API campaign',
+            'description' => 'Campaign from API test.',
+            'marketing_list_id' => $listId,
+            'schedule_frequency' => 'weekly',
+            'first_send_date' => '2026-06-19',
+            'send_time' => '12:00',
+            'send_weekday' => 5,
+            'new_recipient_policy' => 'start_at_first_email',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.batch_size', 25);
+
+        $campaignId = $campaignResponse->json('data.id');
+
+        $this->postJson(route('api.v1.marketing.campaigns.emails.store', $campaignId), [
+            'email_template_id' => $template->id,
+            'email_name' => 'API sequence email',
+            'email_subject' => 'Hello {{ contact_name }}',
+            'body_html' => '<p>Hello {{ contact_name }}</p><p><a href="{{ unsubscribe_url }}">Unsubscribe</a></p>',
+            'body_text' => "Hello {{ contact_name }}\nUnsubscribe: {{ unsubscribe_url }}",
+            'sequence_order' => 1,
+            'delay_minutes' => 0,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.display_name', 'API sequence email');
+
+        $this->patchJson(route('api.v1.marketing.campaigns.schedule.update', $campaignId), [
+            'schedule_frequency' => 'daily',
+            'first_send_date' => '2026-06-20',
+            'send_time' => '09:30',
+            'new_recipient_policy' => 'join_current_step',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.sequence_interval_unit', 'days')
+            ->assertJsonPath('data.new_recipient_policy', 'join_current_step');
+
+        $this->postJson(route('api.v1.marketing.campaigns.approve', $campaignId))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved')
+            ->assertJsonPath('meta.queued_recipients', 2);
+
+        $this->postJson(route('api.v1.marketing.campaigns.send-due', $campaignId))
+            ->assertOk()
+            ->assertJsonPath('meta.queued_send_job', true);
+
+        Queue::assertPushedOn('email', SendDueMarketingCampaignEmails::class);
+
+        $this->assertDatabaseHas('marketing_campaign_recipients', [
+            'marketing_campaign_id' => $campaignId,
+            'email' => 'api-contact@example.test',
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('marketing_campaign_recipients', [
+            'marketing_campaign_id' => $campaignId,
+            'email' => 'api-extra@example.test',
+            'status' => 'pending',
+        ]);
+    }
+
+    #[Test]
+    public function marketing_read_api_token_cannot_mutate_marketing_records(): void
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+
+        Sanctum::actingAs($user, ['marketing.read']);
+
+        $this->getJson(route('api.v1.marketing.lists.index'))
+            ->assertOk();
+
+        $this->postJson(route('api.v1.marketing.lists.store'), [
+            'name' => 'Blocked API list',
+            'audience_type' => 'manual_contacts',
+        ])->assertForbidden();
     }
 
     #[Test]

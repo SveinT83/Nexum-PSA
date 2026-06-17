@@ -25,6 +25,13 @@ Implemented scopes:
 - `contacts.create`: create contacts through the Contact upsert endpoint.
 - `contacts.update`: update contacts, including client and site relations.
 - `contacts.ownership_manage`: repair Contact ownership across Clients and legacy Client Users.
+- `marketing.read`: list and view marketing lists, campaigns, recipients, and settings.
+- `marketing.lists.manage`: create, update, delete, refresh, and manage contacts on marketing mailing lists.
+- `marketing.campaigns.create`: create marketing campaigns from mailing lists.
+- `marketing.campaigns.update`: update campaigns, schedules, campaign emails, test sends, and AI draft requests.
+- `marketing.campaigns.approve`: approve campaigns and queue recipients.
+- `marketing.campaigns.send`: queue due-send processing for approved campaigns.
+- `marketing.settings.update`: update consent, unsubscribe, tracking, quiet hours, and batching settings.
 - `tickets.read`: list and view tickets.
 - `tickets.create`: create tickets through the ticket engine.
 - `tickets.update`: update ticket fields and status.
@@ -105,6 +112,35 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/clients/{client}/contacts/bulk-fix`
 - `POST /api/v1/clients/{client}/contacts/legacy-orphans/cleanup`
 - `DELETE /api/v1/clients/{client}/contacts/{contact}`
+- `GET /api/v1/marketing/lists`
+- `POST /api/v1/marketing/lists`
+- `GET /api/v1/marketing/lists/{list}`
+- `PUT /api/v1/marketing/lists/{list}`
+- `PATCH /api/v1/marketing/lists/{list}`
+- `DELETE /api/v1/marketing/lists/{list}`
+- `GET /api/v1/marketing/lists/{list}/members`
+- `POST /api/v1/marketing/lists/{list}/refresh`
+- `POST /api/v1/marketing/lists/{list}/contacts`
+- `DELETE /api/v1/marketing/lists/{list}/contacts/{contact}`
+- `GET /api/v1/marketing/campaigns`
+- `POST /api/v1/marketing/campaigns`
+- `GET /api/v1/marketing/campaigns/{campaign}`
+- `PUT /api/v1/marketing/campaigns/{campaign}`
+- `PATCH /api/v1/marketing/campaigns/{campaign}`
+- `POST /api/v1/marketing/campaigns/{campaign}/ai-plan`
+- `PUT /api/v1/marketing/campaigns/{campaign}/schedule`
+- `PATCH /api/v1/marketing/campaigns/{campaign}/schedule`
+- `POST /api/v1/marketing/campaigns/{campaign}/emails`
+- `POST /api/v1/marketing/campaigns/{campaign}/emails/ai-draft`
+- `PUT /api/v1/marketing/campaigns/{campaign}/emails/{email}`
+- `PATCH /api/v1/marketing/campaigns/{campaign}/emails/{email}`
+- `POST /api/v1/marketing/campaigns/{campaign}/emails/{email}/test-send`
+- `DELETE /api/v1/marketing/campaigns/{campaign}/emails/{email}`
+- `POST /api/v1/marketing/campaigns/{campaign}/approve`
+- `POST /api/v1/marketing/campaigns/{campaign}/send-due`
+- `GET /api/v1/marketing/settings`
+- `PUT /api/v1/marketing/settings`
+- `PATCH /api/v1/marketing/settings`
 - `GET /api/v1/tickets`
 - `GET /api/v1/tickets/{ticket}`
 - `POST /api/v1/tickets`
@@ -280,6 +316,9 @@ Common payload fields:
 - `email`
 - `phone`
 - `preferred_language`
+- `do_not_call`
+- `do_not_email`
+- `marketing_consent`
 - `client_id`
 - `site_id`
 - `relation_type`
@@ -290,6 +329,51 @@ ticket and client workflows continue to work while the Contact Domain transition
 
 `PUT` and `PATCH /api/v1/contacts/{contact}` update a known Contact by ID and require
 `contacts.update`.
+
+## Marketing API
+
+The Marketing API uses existing Client and Contact APIs for identity records. Create or update the
+Client first, then create or upsert the Contact with `contacts.create` and `contacts.update`.
+Marketing list membership can then be managed with `marketing.lists.manage`.
+
+Important Contact fields for Marketing:
+
+- `do_not_email`: excludes the Contact from Marketing list resolution.
+- `marketing_consent`: required for list resolution when Marketing settings use explicit opt-in.
+
+Mailing list endpoints use these common fields:
+
+- `name`
+- `description`
+- `audience_type`: `all_business_contacts` or `manual_contacts`
+- `consent_category_id`
+- `contact_tag_ids`
+- `client_tag_ids`
+- `manual_contact_ids`
+
+Campaign endpoints use these common fields:
+
+- `marketing_list_id`
+- `email_account_id`
+- `name`
+- `description`
+- `schedule_frequency`: `daily`, `weekly`, `monthly`, or `custom`
+- `first_send_date`
+- `send_time`
+- `send_weekday`
+- `month_day`
+- `batch_size`
+- `send_interval_minutes`
+- `sequence_interval_value`
+- `sequence_interval_unit`
+- `new_recipient_policy`
+- `track_opens`
+- `track_clicks`
+
+Campaign emails use an active Email template with `scope=marketing`, then store their own subject,
+HTML body, plaintext body, and sequence settings as a campaign snapshot. The API does not send a
+campaign until `POST /api/v1/marketing/campaigns/{campaign}/approve` has created recipient queue
+rows and due-send processing has been queued or run.
 
 ## Contact Ownership Repair API
 

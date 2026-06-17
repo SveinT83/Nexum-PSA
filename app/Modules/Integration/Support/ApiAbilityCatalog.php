@@ -62,6 +62,41 @@ class ApiAbilityCatalog
             'description' => 'Inspect, move, bulk repair, and detach Contact ownership across clients and legacy client users.',
             'domain' => 'Contacts',
         ],
+        'marketing.read' => [
+            'label' => 'Read marketing',
+            'description' => 'List and view marketing lists, campaigns, recipients, and settings.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.lists.manage' => [
+            'label' => 'Manage marketing lists',
+            'description' => 'Create, update, delete, refresh, and manage contacts on marketing mailing lists.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.campaigns.create' => [
+            'label' => 'Create marketing campaigns',
+            'description' => 'Create marketing campaigns from mailing lists.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.campaigns.update' => [
+            'label' => 'Update marketing campaigns',
+            'description' => 'Update marketing campaigns, schedules, campaign emails, test sends, and AI draft requests.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.campaigns.approve' => [
+            'label' => 'Approve marketing campaigns',
+            'description' => 'Approve draft or paused marketing campaigns and materialize recipient queues.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.campaigns.send' => [
+            'label' => 'Send marketing campaigns',
+            'description' => 'Queue due-send processing for approved marketing campaigns.',
+            'domain' => 'Marketing',
+        ],
+        'marketing.settings.update' => [
+            'label' => 'Update marketing settings',
+            'description' => 'Update consent, unsubscribe, tracking, quiet hours, and batching settings.',
+            'domain' => 'Marketing',
+        ],
         'tickets.read' => [
             'label' => 'Read tickets',
             'description' => 'List and view ticket records.',

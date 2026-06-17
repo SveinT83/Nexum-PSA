@@ -252,11 +252,15 @@ class ContactModuleTest extends TestCase
             'job_title' => 'Operations',
             'email' => 'n8n.contact@example.test',
             'phone' => '+47 11 22 33 44',
+            'do_not_email' => false,
+            'marketing_consent' => true,
             'client_id' => $client->id,
         ])
             ->assertCreated()
             ->assertJsonPath('data.display_name', 'N8N Contact')
             ->assertJsonPath('data.primary_email', 'n8n.contact@example.test')
+            ->assertJsonPath('data.do_not_email', false)
+            ->assertJsonPath('data.marketing_consent', true)
             ->assertJsonPath('meta.created', true);
 
         $contact = Contact::query()->where('display_name', 'N8N Contact')->firstOrFail();
@@ -285,15 +289,21 @@ class ContactModuleTest extends TestCase
             'job_title' => 'Service Desk',
             'email' => 'n8n.contact@example.test',
             'phone' => '+47 22 33 44 55',
+            'do_not_email' => true,
+            'marketing_consent' => false,
             'client_id' => $client->id,
         ])
             ->assertOk()
             ->assertJsonPath('data.id', $contact->id)
             ->assertJsonPath('data.display_name', 'N8N Contact Updated')
             ->assertJsonPath('data.primary_phone', '+47 22 33 44 55')
+            ->assertJsonPath('data.do_not_email', true)
+            ->assertJsonPath('data.marketing_consent', false)
             ->assertJsonPath('meta.upserted', true);
 
         $this->assertSame(1, Contact::query()->whereHas('emails', fn ($query) => $query->where('email', 'n8n.contact@example.test'))->count());
+        $this->assertTrue($contact->fresh()->do_not_email);
+        $this->assertFalse($contact->fresh()->marketing_consent);
     }
 
     #[Test]

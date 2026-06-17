@@ -1,0 +1,575 @@
+<?php
+
+namespace App\Modules\Marketing\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Marketing\Actions\ApproveMarketingCampaign;
+use App\Modules\Marketing\Actions\BuildMarketingCampaignEmailSnapshot;
+use App\Modules\Marketing\Actions\DraftMarketingCampaignEmailWithAi;
+use App\Modules\Marketing\Actions\DraftMarketingCampaignPlanWithAi;
+use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
+use App\Modules\Marketing\Actions\ResolveMarketingListMembers;
+use App\Modules\Marketing\Actions\SendMarketingCampaignEmailTest;
+use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
+use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
+use App\Modules\Marketing\Models\MarketingCampaign;
+use App\Modules\Marketing\Models\MarketingCampaignEmail;
+use App\Modules\Marketing\Resources\Api\V1\MarketingCampaignEmailResource;
+use App\Modules\Marketing\Resources\Api\V1\MarketingCampaignResource;
+use App\Modules\Marketing\Support\MarketingSettings;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
+use RuntimeException;
+use Throwable;
+
+class MarketingCampaignController extends Controller
+{
+    public function index(Request $request, EnsureMarketingDefaults $defaults)
+    {
+        $defaults->handle();
+
+        $query = MarketingCampaign::query()
+            ->with(['list', 'emailAccount'])
+            ->withCount(['emails', 'recipients', 'events'])
+            ->latest('updated_at');
+
+        if ($request->filled('q')) {
+            $needle = '%'.trim((string) $request->input('q')).'%';
+            $query->where(function ($inner) use ($needle): void {
+                $inner->where('name', 'like', $needle)
+                    ->orWhere('description', 'like', $needle)
+                    ->orWhereHas('list', fn ($list) => $list->where('name', 'like', $needle));
+            });
+        }
+
+        foreach (['status', 'marketing_list_id', 'email_account_id'] as $field) {
+            if ($request->filled($field)) {
+                $query->where($field, in_array($field, ['marketing_list_id', 'email_account_id'], true) ? $request->integer($field) : $request->input($field));
+            }
+        }
+
+        return MarketingCampaignResource::collection($query->paginate($request->integer('per_page') ?: 15));
+    }
+
+    public function store(
+        Request $request,
+        ResolveMarketingListMembers $resolve,
+        MarketingSettings $settings,
+        EnsureMarketingDefaults $defaults,
+    ) {
+        $defaults->handle();
+        $data = $this->validatedCampaignData($request, creating: true);
+        $schedule = $this->normalizeSchedulePayload($data);
+        $settingsPayload = $settings->get();
+
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $data['marketing_list_id'],
+            'email_account_id' => $data['email_account_id'] ?? null,
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'status' => 'draft',
+            'starts_at' => $schedule['starts_at'],
+            'batch_size' => $data['batch_size'] ?? $settingsPayload['default_batch_size'],
+            'send_interval_minutes' => $data['send_interval_minutes'] ?? $settingsPayload['default_send_interval_minutes'],
+            'sequence_interval_value' => $schedule['sequence_interval_value'],
+            'sequence_interval_unit' => $schedule['sequence_interval_unit'],
+            'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
+            'track_opens' => $request->boolean('track_opens', $settingsPayload['open_tracking_enabled']),
+            'track_clicks' => $request->boolean('track_clicks', $settingsPayload['click_tracking_enabled']),
+            'created_by' => $request->user()?->id,
+            'updated_by' => $request->user()?->id,
+        ]);
+
+        $resolve->handle($campaign->list);
+
+        return (new MarketingCampaignResource($this->loadCampaign($campaign)))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function show(Request $request, MarketingCampaign $campaign)
+    {
+        return new MarketingCampaignResource($this->loadCampaign($campaign, $request->boolean('include_recipients')));
+    }
+
+    public function update(
+        Request $request,
+        MarketingCampaign $campaign,
+        ResolveMarketingListMembers $resolve,
+        SyncMarketingCampaignRecipients $syncRecipients,
+    ) {
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign can only be changed before completion.');
+
+        $data = $this->validatedCampaignData($request, creating: false);
+        $listChanged = array_key_exists('marketing_list_id', $data)
+            && (int) $data['marketing_list_id'] !== (int) $campaign->marketing_list_id;
+        $attributes = ['updated_by' => $request->user()?->id];
+
+        foreach (['name', 'description', 'marketing_list_id', 'email_account_id'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $attributes[$field] = $data[$field];
+            }
+        }
+
+        foreach (['track_opens', 'track_clicks'] as $field) {
+            if ($request->has($field)) {
+                $attributes[$field] = $request->boolean($field);
+            }
+        }
+
+        $campaign->forceFill($attributes)->save();
+
+        $created = 0;
+        if ($listChanged) {
+            $resolve->handle($campaign->fresh()->list);
+
+            if (in_array($campaign->status, ['approved', 'active'], true)) {
+                $created = $syncRecipients->handle($campaign->fresh(['emails', 'list.members', 'recipients']));
+            }
+        }
+
+        return (new MarketingCampaignResource($this->loadCampaign($campaign)))
+            ->additional(['meta' => ['queued_recipients' => $created]]);
+    }
+
+    public function updateSchedule(
+        MarketingCampaign $campaign,
+        Request $request,
+        SyncMarketingCampaignRecipients $syncRecipients,
+    ) {
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign schedule can only be changed before completion.');
+
+        $data = array_merge($this->schedulePayloadFromCampaign($campaign), $this->validatedScheduleData($request));
+        $schedule = $this->normalizeSchedulePayload($data);
+
+        $campaign->forceFill([
+            'starts_at' => $schedule['starts_at'],
+            'batch_size' => $data['batch_size'] ?? null,
+            'send_interval_minutes' => $data['send_interval_minutes'] ?? null,
+            'sequence_interval_value' => $schedule['sequence_interval_value'],
+            'sequence_interval_unit' => $schedule['sequence_interval_unit'],
+            'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
+            'updated_by' => $request->user()?->id,
+        ])->save();
+
+        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
+
+        return (new MarketingCampaignResource($this->loadCampaign($campaign)))
+            ->additional(['meta' => ['rescheduled_pending_recipients' => $updated]]);
+    }
+
+    public function storeEmail(
+        MarketingCampaign $campaign,
+        Request $request,
+        SyncMarketingCampaignRecipients $syncRecipients,
+        BuildMarketingCampaignEmailSnapshot $snapshot,
+    ) {
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign emails can only be changed before completion.');
+
+        $data = $this->validatedCampaignEmailData($request, $campaign, creating: true);
+        $template = EmailTemplate::query()
+            ->whereKey($data['email_template_id'])
+            ->where('scope', 'marketing')
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $email = $campaign->emails()->create([
+            ...$snapshot->fromTemplate($template, [
+                'name' => $data['email_name'] ?? null,
+                'email_subject' => $data['email_subject'],
+                'body_html' => $data['body_html'] ?? null,
+                'body_text' => $data['body_text'] ?? null,
+            ]),
+            'sequence_order' => $data['sequence_order'],
+            'status' => 'active',
+            'scheduled_at' => null,
+            'delay_minutes' => $data['delay_minutes'],
+        ]);
+
+        $created = in_array($campaign->status, ['approved', 'active'], true)
+            ? $syncRecipients->handle($campaign->fresh(['emails', 'list.members']))
+            : 0;
+
+        return (new MarketingCampaignEmailResource($this->loadCampaignEmail($email)))
+            ->additional(['meta' => ['queued_recipients' => $created]])
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function updateEmail(
+        MarketingCampaign $campaign,
+        MarketingCampaignEmail $email,
+        Request $request,
+        SyncMarketingCampaignRecipients $syncRecipients,
+        BuildMarketingCampaignEmailSnapshot $snapshot,
+    ) {
+        abort_if($email->marketing_campaign_id !== $campaign->id, 404);
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign emails can only be changed before completion.');
+
+        $data = $this->validatedCampaignEmailData($request, $campaign, creating: false, email: $email);
+
+        $email->forceFill(array_merge($snapshot->editableContent([
+            'name' => $data['email_name'] ?? null,
+            'email_subject' => $data['email_subject'],
+            'body_html' => $data['body_html'] ?? null,
+            'body_text' => $data['body_text'] ?? null,
+        ]), [
+            'sequence_order' => $data['sequence_order'],
+            'delay_minutes' => $data['delay_minutes'],
+            'scheduled_at' => null,
+            'status' => $data['status'],
+        ]))->save();
+
+        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
+
+        return (new MarketingCampaignEmailResource($this->loadCampaignEmail($email)))
+            ->additional(['meta' => ['rescheduled_pending_recipients' => $updated]]);
+    }
+
+    public function testSendEmail(
+        MarketingCampaign $campaign,
+        MarketingCampaignEmail $email,
+        Request $request,
+        SendMarketingCampaignEmailTest $sendTest,
+    ) {
+        abort_if($email->marketing_campaign_id !== $campaign->id, 404);
+
+        $data = $request->validate([
+            'test_to_email' => ['required', 'email', 'max:255'],
+            'test_to_name' => ['nullable', 'string', 'max:255'],
+            'email_name' => ['nullable', 'string', 'max:255'],
+            'email_subject' => ['nullable', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
+        ]);
+        $payload = [
+            'to_email' => $data['test_to_email'],
+            'to_name' => $data['test_to_name'] ?? null,
+        ];
+
+        foreach (['email_name', 'email_subject', 'body_html', 'body_text'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $payload[$key] = $data[$key];
+            }
+        }
+
+        try {
+            $messageId = $sendTest->handle($campaign, $email, $request->user(), $payload);
+        } catch (Throwable $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
+        return response()->json([
+            'data' => [
+                'message_id' => $messageId,
+                'to_email' => $data['test_to_email'],
+            ],
+        ]);
+    }
+
+    public function draftEmailWithAi(
+        MarketingCampaign $campaign,
+        Request $request,
+        DraftMarketingCampaignEmailWithAi $draftEmail,
+    ) {
+        $data = $request->validate([
+            'campaign_email_id' => ['nullable', 'integer', 'exists:marketing_campaign_emails,id'],
+            'prompt' => ['required', 'string', 'max:4000'],
+            'email_name' => ['nullable', 'string', 'max:255'],
+            'email_subject' => ['nullable', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
+        ]);
+        $email = null;
+
+        if (! empty($data['campaign_email_id'])) {
+            $email = MarketingCampaignEmail::query()->findOrFail($data['campaign_email_id']);
+            abort_if($email->marketing_campaign_id !== $campaign->id, 404);
+        }
+
+        try {
+            return response()->json(['data' => $draftEmail->handle($request->user(), $campaign, $email, $data)]);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+    }
+
+    public function draftPlanWithAi(
+        MarketingCampaign $campaign,
+        Request $request,
+        DraftMarketingCampaignPlanWithAi $draftPlan,
+    ) {
+        $data = $request->validate([
+            'prompt' => ['required', 'string', 'max:4000'],
+        ]);
+
+        try {
+            return response()->json(['data' => $draftPlan->handle($request->user(), $campaign, $data)]);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+    }
+
+    public function destroyEmail(MarketingCampaign $campaign, MarketingCampaignEmail $email)
+    {
+        abort_if($email->marketing_campaign_id !== $campaign->id, 404);
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign emails can only be changed before completion.');
+
+        $sentExists = $email->recipients()->where('status', 'sent')->exists();
+
+        if ($sentExists) {
+            $email->forceFill(['status' => 'inactive'])->save();
+            $email->recipients()->where('status', 'pending')->update(['status' => 'cancelled', 'updated_at' => now()]);
+
+            return (new MarketingCampaignEmailResource($this->loadCampaignEmail($email)))
+                ->additional(['meta' => ['deactivated' => true]]);
+        }
+
+        $email->recipients()->delete();
+        $email->delete();
+
+        return response()->noContent();
+    }
+
+    public function approve(MarketingCampaign $campaign, Request $request, ApproveMarketingCampaign $approve)
+    {
+        abort_if(! in_array($campaign->status, ['draft', 'paused'], true), 422, 'Only draft or paused campaigns can be approved.');
+        abort_if($campaign->emails()->where('status', 'active')->doesntExist(), 422, 'Campaign must have at least one active email.');
+
+        $count = $approve->handle($campaign, $request->user());
+
+        return (new MarketingCampaignResource($this->loadCampaign($campaign)))
+            ->additional(['meta' => ['queued_recipients' => $count]]);
+    }
+
+    public function sendDue(MarketingCampaign $campaign)
+    {
+        abort_if(! in_array($campaign->status, ['approved', 'active'], true), 422, 'Campaign must be approved before sending.');
+
+        SendDueMarketingCampaignEmails::dispatch($campaign->id)->onQueue('email');
+
+        return (new MarketingCampaignResource($this->loadCampaign($campaign)))
+            ->additional(['meta' => ['queued_send_job' => true]]);
+    }
+
+    private function validatedCampaignData(Request $request, bool $creating): array
+    {
+        $nameRule = $creating ? 'required' : 'sometimes';
+        $listRule = $creating ? 'required' : 'sometimes';
+
+        return $request->validate([
+            'name' => [$nameRule, 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'marketing_list_id' => [$listRule, 'exists:marketing_lists,id'],
+            'email_account_id' => ['sometimes', 'nullable', 'exists:email_accounts,id'],
+            'starts_at' => ['nullable', 'date'],
+            'schedule_frequency' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SCHEDULE_FREQUENCIES))],
+            'first_send_date' => ['nullable', 'date_format:Y-m-d'],
+            'send_time' => ['nullable', 'date_format:H:i'],
+            'send_weekday' => ['nullable', 'integer', 'min:1', 'max:7'],
+            'month_day' => ['nullable', 'integer', 'min:1', 'max:31'],
+            'custom_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'custom_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'batch_size' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'send_interval_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'new_recipient_policy' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
+            'track_opens' => ['nullable', 'boolean'],
+            'track_clicks' => ['nullable', 'boolean'],
+        ]);
+    }
+
+    private function validatedScheduleData(Request $request): array
+    {
+        return $request->validate([
+            'starts_at' => ['nullable', 'date'],
+            'schedule_frequency' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SCHEDULE_FREQUENCIES))],
+            'first_send_date' => ['nullable', 'date_format:Y-m-d'],
+            'send_time' => ['nullable', 'date_format:H:i'],
+            'send_weekday' => ['nullable', 'integer', 'min:1', 'max:7'],
+            'month_day' => ['nullable', 'integer', 'min:1', 'max:31'],
+            'custom_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'custom_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'batch_size' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'send_interval_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'new_recipient_policy' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
+        ]);
+    }
+
+    private function validatedCampaignEmailData(
+        Request $request,
+        MarketingCampaign $campaign,
+        bool $creating,
+        ?MarketingCampaignEmail $email = null,
+    ): array {
+        $sequenceRule = Rule::unique('marketing_campaign_emails', 'sequence_order')
+            ->where('marketing_campaign_id', $campaign->id);
+
+        if ($email) {
+            $sequenceRule->ignore($email->id);
+        }
+
+        return $request->validate([
+            'email_template_id' => [$creating ? 'required' : 'sometimes', 'exists:email_templates,id'],
+            'email_name' => ['nullable', 'string', 'max:255'],
+            'email_subject' => ['required', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
+            'sequence_order' => ['required', 'integer', 'min:1', 'max:999', $sequenceRule],
+            'delay_minutes' => ['required', 'integer', 'min:0', 'max:525600'],
+            'status' => [$creating ? 'nullable' : 'required', 'string', 'in:active,inactive'],
+        ]);
+    }
+
+    private function schedulePayloadFromCampaign(MarketingCampaign $campaign): array
+    {
+        return [
+            'starts_at' => $campaign->starts_at?->toDateTimeString(),
+            'batch_size' => $campaign->batch_size,
+            'send_interval_minutes' => $campaign->send_interval_minutes,
+            'sequence_interval_value' => $campaign->sequence_interval_value ?: 1,
+            'sequence_interval_unit' => $campaign->sequence_interval_unit ?: 'days',
+            'new_recipient_policy' => $campaign->new_recipient_policy ?: 'start_at_first_email',
+        ];
+    }
+
+    private function normalizeSchedulePayload(array $data): array
+    {
+        $frequency = $data['schedule_frequency'] ?? null;
+
+        if (! $frequency) {
+            return [
+                'starts_at' => $this->dateTimeFromLegacyPayload($data),
+                'sequence_interval_value' => $data['sequence_interval_value'] ?? 1,
+                'sequence_interval_unit' => $data['sequence_interval_unit'] ?? 'days',
+            ];
+        }
+
+        $startsAt = $this->startsAtFromScheduleFields($data);
+
+        return match ($frequency) {
+            'daily' => [
+                'starts_at' => $startsAt,
+                'sequence_interval_value' => 1,
+                'sequence_interval_unit' => 'days',
+            ],
+            'weekly' => [
+                'starts_at' => $this->weeklyStart($startsAt, (int) ($data['send_weekday'] ?? 5)),
+                'sequence_interval_value' => 1,
+                'sequence_interval_unit' => 'weeks',
+            ],
+            'monthly' => [
+                'starts_at' => $this->monthlyStart($startsAt, (int) ($data['month_day'] ?? 1)),
+                'sequence_interval_value' => 1,
+                'sequence_interval_unit' => 'months',
+            ],
+            default => [
+                'starts_at' => $startsAt,
+                'sequence_interval_value' => $data['custom_interval_value'] ?? $data['sequence_interval_value'] ?? 1,
+                'sequence_interval_unit' => $data['custom_interval_unit'] ?? $data['sequence_interval_unit'] ?? 'days',
+            ],
+        };
+    }
+
+    private function startsAtFromScheduleFields(array $data): ?Carbon
+    {
+        if (! empty($data['first_send_date'])) {
+            $time = $data['send_time'] ?? '12:00';
+
+            return Carbon::parse($data['first_send_date'].' '.$time)->seconds(0);
+        }
+
+        return $this->dateTimeFromLegacyPayload($data);
+    }
+
+    private function dateTimeFromLegacyPayload(array $data): ?Carbon
+    {
+        if (empty($data['starts_at'])) {
+            return null;
+        }
+
+        return Carbon::parse($data['starts_at'])->seconds(0);
+    }
+
+    private function weeklyStart(?Carbon $startsAt, int $weekday): ?Carbon
+    {
+        if (! $startsAt) {
+            return null;
+        }
+
+        $weekday = max(1, min(7, $weekday));
+        $daysToAdd = ($weekday - (int) $startsAt->format('N') + 7) % 7;
+
+        return $startsAt->copy()->addDays($daysToAdd);
+    }
+
+    private function monthlyStart(?Carbon $startsAt, int $monthDay): ?Carbon
+    {
+        if (! $startsAt) {
+            return null;
+        }
+
+        $monthDay = max(1, min(31, $monthDay));
+        $candidate = $this->dateOnMonthDay($startsAt, $monthDay);
+
+        if ($candidate->lt($startsAt)) {
+            $candidate = $this->dateOnMonthDay($startsAt->copy()->addMonthNoOverflow(), $monthDay);
+        }
+
+        return $candidate;
+    }
+
+    private function dateOnMonthDay(Carbon $date, int $monthDay): Carbon
+    {
+        $month = $date->copy()->day(1);
+        $safeDay = min($monthDay, $month->daysInMonth);
+
+        return $month->day($safeDay)->setTime((int) $date->format('H'), (int) $date->format('i'));
+    }
+
+    private function loadCampaign(MarketingCampaign $campaign, bool $includeRecipients = false): MarketingCampaign
+    {
+        $campaign = $campaign->fresh() ?: $campaign;
+        $campaign->load([
+            'list',
+            'emailAccount',
+            'approver',
+            'emails' => fn ($query) => $query
+                ->with('template')
+                ->withCount([
+                    'recipients',
+                    'recipients as sent_recipients_count' => fn ($query) => $query->where('status', 'sent'),
+                    'events as open_events_count' => fn ($query) => $query->where('type', 'open'),
+                    'events as click_events_count' => fn ($query) => $query->where('type', 'click'),
+                ])
+                ->orderBy('sequence_order'),
+        ])->loadCount(['emails', 'recipients', 'events']);
+
+        if ($includeRecipients) {
+            $campaign->load([
+                'recipients' => fn ($query) => $query
+                    ->with(['campaignEmail', 'client'])
+                    ->latest('updated_at'),
+            ]);
+        }
+
+        return $campaign;
+    }
+
+    private function loadCampaignEmail(MarketingCampaignEmail $email): MarketingCampaignEmail
+    {
+        return ($email->fresh() ?: $email)
+            ->load('template')
+            ->loadCount([
+                'recipients',
+                'recipients as sent_recipients_count' => fn ($query) => $query->where('status', 'sent'),
+                'events as open_events_count' => fn ($query) => $query->where('type', 'open'),
+                'events as click_events_count' => fn ($query) => $query->where('type', 'click'),
+            ]);
+    }
+}
