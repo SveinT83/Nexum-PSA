@@ -60,6 +60,7 @@
         $selectedNotifyUserId = old('notify_user_id');
         $showAddMessage = old('_message_form') || old('body') || old('type');
         $showAddTimeModal = old('_time_entry_form');
+        $defaultTimeRateKey = old('rate_key', $timeRateOptions->first()['key'] ?? null);
         // Activity combines conversation and time records into one technician-facing timeline.
         $activityItems = $ticket->messages
             ->map(fn ($message) => ['type' => 'message', 'date' => $message->created_at, 'record' => $message])
@@ -577,7 +578,7 @@
                             <select id="time_rate_key" name="rate_key" class="form-select @error('rate_key') is-invalid @enderror" required>
                                 <option value="">Select rate</option>
                                 @foreach($timeRateOptions as $rateOption)
-                                    <option value="{{ $rateOption['key'] }}" @selected(old('rate_key') === $rateOption['key'])>
+                                    <option value="{{ $rateOption['key'] }}" @selected($defaultTimeRateKey === $rateOption['key'])>
                                         {{ $rateOption['label'] }} - {{ $rateOption['description'] }}
                                     </option>
                                 @endforeach

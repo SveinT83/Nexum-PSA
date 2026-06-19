@@ -77,6 +77,10 @@ class StoreTicket
                     'visibility' => 'internal',
                     'subject' => $ticket->subject,
                     'body' => $data['description'],
+                    'metadata' => [
+                        'created_from' => 'ticket_initial_description',
+                        'is_default_initial_note' => true,
+                    ],
                 ]);
             }
 

@@ -23,6 +23,7 @@ use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Storage\Models\Reservation as StorageReservation;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
 use App\Modules\Task\Actions\StoreTask;
+use App\Modules\Task\Models\TaskStatus;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
@@ -73,6 +74,61 @@ class TicketModuleTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+    }
+
+    #[Test]
+    public function ticket_cannot_be_closed_when_it_has_unresolved_tasks(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999301',
+            'subject' => 'Ticket with unresolved task',
+        ]);
+
+        app(StoreTask::class)->handle([
+            'title' => 'Unresolved follow-up task',
+        ], $this->tech, $ticket);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.close', $ticket))
+            ->assertRedirect()
+            ->assertSessionHasErrors('status_id');
+
+        $ticket->refresh();
+
+        $this->assertNull($ticket->closed_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'ticket_close_blocked',
+            'message' => 'Ticket cannot be closed while it has unresolved tasks.',
+        ]);
+    }
+
+    #[Test]
+    public function ticket_can_be_closed_when_linked_tasks_are_resolved(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999302',
+            'subject' => 'Ticket with resolved task',
+        ]);
+
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Resolved follow-up task',
+        ], $this->tech, $ticket);
+
+        $doneStatus = TaskStatus::query()->where('is_done', true)->firstOrFail();
+
+        $task->forceFill([
+            'status_id' => $doneStatus->id,
+            'completed_at' => now(),
+            'completed_by' => $this->tech->id,
+        ])->save();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.close', $ticket))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Ticket closed.');
+
+        $this->assertNotNull($ticket->refresh()->closed_at);
     }
 
     #[Test]
@@ -1892,6 +1948,34 @@ class TicketModuleTest extends TestCase
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
         $this->assertSame($closed->id, $ticket->fresh()->status_id);
+    }
+
+    #[Test]
+    public function initial_internal_note_created_with_new_ticket_cannot_be_marked_as_solution(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Fresh ticket needs real work',
+                'description' => 'Initial problem description.',
+                'channel' => 'manual',
+            ])
+            ->assertRedirect();
+
+        $ticket = Ticket::query()
+            ->where('subject', 'Fresh ticket needs real work')
+            ->firstOrFail();
+        $initialNote = $ticket->messages()
+            ->where('type', 'internal_note')
+            ->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.solution', [$ticket, $initialNote]))
+            ->assertRedirect()
+            ->assertSessionHasErrors('message');
+
+        $this->assertFalse((bool) ($initialNote->fresh()->metadata['is_solution'] ?? false));
     }
 
     #[Test]
