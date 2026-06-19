@@ -335,6 +335,106 @@ class RepairContactOwnership
         ];
     }
 
+    public function cleanupLegacyOrphans(
+        Client $client,
+        array $clientUserIds,
+        bool $dryRun,
+        ?string $reason,
+        Request $request
+    ): array {
+        $client->loadMissing('sites');
+        $siteIds = $client->sites->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $uniqueIds = collect($clientUserIds)->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $rows = ClientUser::query()
+            ->with('site.client')
+            ->whereIn('id', $uniqueIds)
+            ->get()
+            ->keyBy('id');
+
+        $results = [];
+        $deleteIds = [];
+
+        foreach ($uniqueIds as $clientUserId) {
+            /** @var ClientUser|null $clientUser */
+            $clientUser = $rows->get($clientUserId);
+
+            if (! $clientUser) {
+                $results[] = [
+                    'client_user_id' => $clientUserId,
+                    'status' => 'missing_client_user',
+                    'message' => 'Client user was not found.',
+                ];
+
+                continue;
+            }
+
+            if (! in_array((int) $clientUser->client_site_id, $siteIds, true)) {
+                $results[] = [
+                    'client_user_id' => $clientUserId,
+                    'status' => 'wrong_client',
+                    'message' => 'Client user does not belong to the selected Client.',
+                    'client_user' => $this->legacyClientUserPayload($clientUser),
+                ];
+
+                continue;
+            }
+
+            if ($clientUser->contact_id) {
+                $results[] = [
+                    'client_user_id' => $clientUserId,
+                    'status' => 'linked_contact',
+                    'message' => 'Client user is linked to a Contact. Use the Contact detach endpoint instead.',
+                    'client_user' => $this->legacyClientUserPayload($clientUser),
+                ];
+
+                continue;
+            }
+
+            $deleteIds[] = $clientUserId;
+            $results[] = [
+                'client_user_id' => $clientUserId,
+                'status' => $dryRun ? 'would_delete' : 'deleted',
+                'client_user' => $this->legacyClientUserPayload($clientUser),
+            ];
+        }
+
+        if (! $dryRun && $deleteIds !== []) {
+            ClientUser::query()
+                ->whereIn('id', $deleteIds)
+                ->whereIn('client_site_id', $siteIds)
+                ->whereNull('contact_id')
+                ->delete();
+        }
+
+        $summary = [
+            'total' => count($uniqueIds),
+            'eligible' => count($deleteIds),
+            'changed' => $dryRun ? 0 : count($deleteIds),
+            'dry_run' => $dryRun,
+            'skipped' => collect($results)
+                ->whereIn('status', ['missing_client_user', 'wrong_client', 'linked_contact'])
+                ->count(),
+            'missing_client_users' => collect($results)->where('status', 'missing_client_user')->count(),
+            'wrong_client' => collect($results)->where('status', 'wrong_client')->count(),
+            'linked_contacts' => collect($results)->where('status', 'linked_contact')->count(),
+        ];
+
+        $auditId = $this->recordAudit($request, 'contact_ownership.legacy_orphan_cleanup', null, $client, null, $dryRun, $reason, [
+            'client_user_ids' => $uniqueIds,
+            'delete_client_user_ids' => $deleteIds,
+        ], [
+            'summary' => $summary,
+            'results' => $results,
+        ]);
+
+        return [
+            'client' => $this->clientPayload($client),
+            'summary' => $summary,
+            'audit_id' => $auditId,
+            'results' => $results,
+        ];
+    }
+
     private function buildMovePlan(Contact $contact, Client $targetClient, ?ClientSite $targetSite, bool $bulkMode): array
     {
         $contact->loadMissing(['emails', 'phones', 'relations']);

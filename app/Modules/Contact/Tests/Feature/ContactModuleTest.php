@@ -252,11 +252,15 @@ class ContactModuleTest extends TestCase
             'job_title' => 'Operations',
             'email' => 'n8n.contact@example.test',
             'phone' => '+47 11 22 33 44',
+            'do_not_email' => false,
+            'marketing_consent' => true,
             'client_id' => $client->id,
         ])
             ->assertCreated()
             ->assertJsonPath('data.display_name', 'N8N Contact')
             ->assertJsonPath('data.primary_email', 'n8n.contact@example.test')
+            ->assertJsonPath('data.do_not_email', false)
+            ->assertJsonPath('data.marketing_consent', true)
             ->assertJsonPath('meta.created', true);
 
         $contact = Contact::query()->where('display_name', 'N8N Contact')->firstOrFail();
@@ -285,15 +289,21 @@ class ContactModuleTest extends TestCase
             'job_title' => 'Service Desk',
             'email' => 'n8n.contact@example.test',
             'phone' => '+47 22 33 44 55',
+            'do_not_email' => true,
+            'marketing_consent' => false,
             'client_id' => $client->id,
         ])
             ->assertOk()
             ->assertJsonPath('data.id', $contact->id)
             ->assertJsonPath('data.display_name', 'N8N Contact Updated')
             ->assertJsonPath('data.primary_phone', '+47 22 33 44 55')
+            ->assertJsonPath('data.do_not_email', true)
+            ->assertJsonPath('data.marketing_consent', false)
             ->assertJsonPath('meta.upserted', true);
 
         $this->assertSame(1, Contact::query()->whereHas('emails', fn ($query) => $query->where('email', 'n8n.contact@example.test'))->count());
+        $this->assertTrue($contact->fresh()->do_not_email);
+        $this->assertFalse($contact->fresh()->marketing_consent);
     }
 
     #[Test]
@@ -572,6 +582,89 @@ class ContactModuleTest extends TestCase
         $this->assertDatabaseHas('contacts', [
             'id' => $contact->id,
             'deleted_at' => null,
+        ]);
+    }
+
+    #[Test]
+    public function api_user_can_cleanup_legacy_client_users_without_contacts(): void
+    {
+        $client = Client::factory()->create(['name' => 'Legacy Cleanup Client', 'client_number' => '30002']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Legacy Cleanup Site', 'is_default' => true]);
+        $otherClient = Client::factory()->create(['name' => 'Other Legacy Client', 'client_number' => '30003']);
+        $otherSite = ClientSite::factory()->create(['client_id' => $otherClient->id, 'name' => 'Other Legacy Site', 'is_default' => true]);
+
+        $orphanOne = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => null,
+            'name' => 'Imported Wrong One',
+            'email' => 'wrong-one@example.test',
+        ]);
+        $orphanTwo = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => null,
+            'name' => 'Imported Wrong Two',
+            'email' => 'wrong-two@example.test',
+        ]);
+        $linkedContact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Linked Contact',
+        ]);
+        $linkedRow = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => $linkedContact->id,
+            'name' => 'Linked Contact',
+            'email' => 'linked@example.test',
+        ]);
+        $otherRow = ClientUser::factory()->create([
+            'client_site_id' => $otherSite->id,
+            'contact_id' => null,
+            'name' => 'Other Client User',
+            'email' => 'other@example.test',
+        ]);
+
+        Sanctum::actingAs($this->techUser, ['contacts.ownership_manage']);
+
+        $payload = [
+            'client_user_ids' => [$orphanOne->id, $orphanTwo->id, $linkedRow->id, $otherRow->id, 999999],
+            'dry_run' => true,
+            'reason' => 'Preview legacy cleanup.',
+        ];
+
+        $this->postJson(route('api.v1.clients.contacts.legacy-orphans.cleanup', ['client' => $client->client_number]), $payload)
+            ->assertOk()
+            ->assertJsonPath('summary.total', 5)
+            ->assertJsonPath('summary.eligible', 2)
+            ->assertJsonPath('summary.changed', 0)
+            ->assertJsonPath('summary.skipped', 3)
+            ->assertJsonPath('results.0.status', 'would_delete')
+            ->assertJsonPath('results.1.status', 'would_delete')
+            ->assertJsonPath('results.2.status', 'linked_contact')
+            ->assertJsonPath('results.3.status', 'wrong_client')
+            ->assertJsonPath('results.4.status', 'missing_client_user');
+
+        $this->assertDatabaseHas('client_users', ['id' => $orphanOne->id]);
+        $this->assertDatabaseHas('client_users', ['id' => $orphanTwo->id]);
+
+        $payload['dry_run'] = false;
+        $payload['reason'] = 'Delete N8N-imported legacy rows.';
+
+        $this->postJson(route('api.v1.clients.contacts.legacy-orphans.cleanup', ['client' => $client->client_number]), $payload)
+            ->assertOk()
+            ->assertJsonPath('summary.total', 5)
+            ->assertJsonPath('summary.eligible', 2)
+            ->assertJsonPath('summary.changed', 2)
+            ->assertJsonPath('summary.skipped', 3)
+            ->assertJsonPath('results.0.status', 'deleted')
+            ->assertJsonPath('results.1.status', 'deleted');
+
+        $this->assertDatabaseMissing('client_users', ['id' => $orphanOne->id]);
+        $this->assertDatabaseMissing('client_users', ['id' => $orphanTwo->id]);
+        $this->assertDatabaseHas('client_users', ['id' => $linkedRow->id]);
+        $this->assertDatabaseHas('client_users', ['id' => $otherRow->id]);
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'contact_ownership',
+            'event' => 'contact_ownership.legacy_orphan_cleanup',
         ]);
     }
 

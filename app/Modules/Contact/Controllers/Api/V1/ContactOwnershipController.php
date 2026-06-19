@@ -101,4 +101,22 @@ class ContactOwnershipController extends Controller
             $request,
         ));
     }
+
+    public function cleanupLegacyOrphans(string $client, Request $request, RepairContactOwnership $repair): JsonResponse
+    {
+        $validated = $request->validate([
+            'client_user_ids' => ['required', 'array', 'min:1', 'max:500'],
+            'client_user_ids.*' => ['integer'],
+            'dry_run' => ['sometimes', 'boolean'],
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        return response()->json($repair->cleanupLegacyOrphans(
+            $repair->resolveClient($client),
+            $validated['client_user_ids'],
+            (bool) ($validated['dry_run'] ?? true),
+            $validated['reason'] ?? null,
+            $request,
+        ));
+    }
 }

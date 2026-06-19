@@ -140,6 +140,7 @@ Routes:
 - `GET /api/v1/clients/{client}/contacts`
 - `POST /api/v1/contacts/{contact}/move`
 - `POST /api/v1/clients/{client}/contacts/bulk-fix`
+- `POST /api/v1/clients/{client}/contacts/legacy-orphans/cleanup`
 - `DELETE /api/v1/clients/{client}/contacts/{contact}`
 
 The `{client}` value can be either the internal Client ID or the Client's `client_number`. If one
@@ -165,6 +166,11 @@ Client/Site relation, and moves or creates one `client_users` bridge row for the
 statuses such as `no_change`, `would_move`, `would_attach`, `conflict`, and `missing_contact`.
 Bulk-fix is conservative: Contacts with multiple current Client owners or multiple linked legacy
 rows are reported as conflicts for manual review.
+
+`POST /api/v1/clients/{client}/contacts/legacy-orphans/cleanup` accepts `client_user_ids`,
+`dry_run`, and `reason`. It is only for legacy `client_users` rows that belong to the selected
+Client and have no `contact_id`; linked rows are skipped and should be handled through Contact
+detach.
 
 `DELETE /api/v1/clients/{client}/contacts/{contact}` detaches the Contact from that Client. It
 removes Contact relations for the Client and its Sites and deletes linked legacy `client_users` rows
