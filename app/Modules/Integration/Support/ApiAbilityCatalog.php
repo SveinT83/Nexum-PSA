@@ -164,7 +164,7 @@ class ApiAbilityCatalog
         ],
         'storage.update' => [
             'label' => 'Update storage',
-            'description' => 'Update storage records and adjust item stock.',
+            'description' => 'Update storage records, adjust item stock, and soft-delete zero-stock items.',
             'domain' => 'Storage',
         ],
         'calendar.read' => [

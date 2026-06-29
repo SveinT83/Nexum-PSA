@@ -24,6 +24,7 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
+            @php($canDeleteItem = $item->canBeDeletedFromInventory())
             @if($item->needs_reorder)
                 <span class="badge text-bg-warning">Should order</span>
             @else
@@ -33,6 +34,21 @@
                 <i class="bi bi-pencil" aria-hidden="true"></i>
                 Edit
             </a>
+            @if($canDeleteItem)
+                <form method="POST" action="{{ route('tech.storage.items.destroy', $item) }}" onsubmit="return confirm('Delete this storage item? Historical references remain, but the item will be hidden from inventory.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash" aria-hidden="true"></i>
+                        Delete
+                    </button>
+                </form>
+            @else
+                <button type="button" class="btn btn-sm btn-outline-danger" disabled title="On-hand, reserved, and stock unit quantities must be 0.">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                    Delete
+                </button>
+            @endif
         </div>
     </div>
 @endsection

@@ -374,6 +374,9 @@ class StorageModuleTest extends TestCase
             'delta' => 1,
             'reason' => 'denied',
         ])->assertForbidden();
+
+        $this->deleteJson(route('api.v1.storage.items.destroy', $item))
+            ->assertForbidden();
     }
 
     #[Test]
@@ -454,11 +457,127 @@ class StorageModuleTest extends TestCase
     }
 
     #[Test]
+    public function tech_user_can_soft_delete_zero_stock_storage_item(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+        $item = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'DELETE-EMPTY',
+            'name' => 'Delete Empty Item',
+            'qty_on_hand' => 0,
+            'qty_reserved' => 0,
+            'status' => 'active',
+        ]);
+        $ticket = $this->createTicket(['ticket_key' => 'TD-2026-999401']);
+        $entry = TicketCostEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'storage_item_id' => $item->id,
+            'quantity' => 1,
+            'item_name' => $item->name,
+            'item_sku' => $item->sku,
+            'unit_price_ex_vat' => 100,
+            'currency' => 'NOK',
+            'status' => 'picked',
+            'billing_status' => 'invoiced',
+            'invoice_text' => $item->name,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.storage.items.destroy', $item))
+            ->assertRedirect(route('tech.storage.index'))
+            ->assertSessionHas('success', 'Storage item deleted.');
+
+        $this->assertSoftDeleted('storage_items', ['id' => $item->id]);
+        $this->assertNull(Item::query()->find($item->id));
+        $this->assertSame($item->id, $entry->refresh()->storageItem?->id);
+    }
+
+    #[Test]
+    public function storage_item_delete_is_blocked_when_stock_or_reservations_exist(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+        $stocked = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'DELETE-STOCKED',
+            'name' => 'Delete Stocked Item',
+            'qty_on_hand' => 1,
+            'qty_reserved' => 0,
+            'status' => 'active',
+        ]);
+        $reserved = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'DELETE-RESERVED',
+            'name' => 'Delete Reserved Item',
+            'qty_on_hand' => 0,
+            'qty_reserved' => 1,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.storage.items.destroy', $stocked))
+            ->assertRedirect()
+            ->assertSessionHasErrors('item');
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.storage.items.destroy', $reserved))
+            ->assertRedirect()
+            ->assertSessionHasErrors('item');
+
+        $this->assertDatabaseHas('storage_items', ['id' => $stocked->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('storage_items', ['id' => $reserved->id, 'deleted_at' => null]);
+    }
+
+    #[Test]
+    public function api_user_can_soft_delete_zero_stock_storage_item(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'API Warehouse',
+            'code' => 'API',
+        ]);
+        $item = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'API-DELETE',
+            'name' => 'API Delete Item',
+            'qty_on_hand' => 0,
+            'qty_reserved' => 0,
+            'status' => 'active',
+        ]);
+        $stocked = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'API-DELETE-STOCKED',
+            'name' => 'API Delete Stocked Item',
+            'qty_on_hand' => 1,
+            'qty_reserved' => 0,
+            'status' => 'active',
+        ]);
+
+        Sanctum::actingAs($this->tech, ['storage.read', 'storage.update']);
+
+        $this->deleteJson(route('api.v1.storage.items.destroy', $stocked))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('item');
+
+        $this->deleteJson(route('api.v1.storage.items.destroy', $item))
+            ->assertNoContent();
+
+        $this->assertSoftDeleted('storage_items', ['id' => $item->id]);
+        $this->assertDatabaseHas('storage_items', ['id' => $stocked->id, 'deleted_at' => null]);
+    }
+
+    #[Test]
     public function storage_item_and_box_show_routes_are_module_owned(): void
     {
         $this->assertSame(ItemController::class . '@show', Route::getRoutes()->getByName('tech.storage.items.show')->getActionName());
         $this->assertSame(ItemController::class . '@edit', Route::getRoutes()->getByName('tech.storage.items.edit')->getActionName());
         $this->assertSame(ItemController::class . '@update', Route::getRoutes()->getByName('tech.storage.items.update')->getActionName());
+        $this->assertSame(ItemController::class . '@destroy', Route::getRoutes()->getByName('tech.storage.items.destroy')->getActionName());
         $this->assertSame(BoxController::class . '@show', Route::getRoutes()->getByName('tech.storage.boxes.show')->getActionName());
         $this->assertSame(StorageController::class . '@picking', Route::getRoutes()->getByName('tech.storage.picking')->getActionName());
         $this->assertSame(StorageController::class . '@pickingDocs', Route::getRoutes()->getByName('tech.storage.picking.docs')->getActionName());

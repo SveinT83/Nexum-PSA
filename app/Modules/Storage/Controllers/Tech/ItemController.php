@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Economy\Actions\EnsureEconomyDefaults;
 use App\Modules\Storage\Actions\AdjustItemStock;
+use App\Modules\Storage\Actions\DeleteItem;
 use App\Modules\Storage\Actions\StoreItem;
 use App\Modules\Storage\Models\Box;
 use App\Modules\Storage\Models\Item;
@@ -136,6 +137,19 @@ class ItemController extends Controller
         }
 
         return back()->with('success', 'Stock adjusted.');
+    }
+
+    public function destroy(Request $request, Item $item, DeleteItem $deleteItem): RedirectResponse
+    {
+        try {
+            $deleteItem->handle($item, $request->user());
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors(['item' => $exception->getMessage()]);
+        }
+
+        return redirect()
+            ->route('tech.storage.index')
+            ->with('success', 'Storage item deleted.');
     }
 
     private function validatedItem(Request $request): array

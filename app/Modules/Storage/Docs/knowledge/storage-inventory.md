@@ -79,3 +79,12 @@ readers should initially use `q`, `sku`, or `ean_number` depending on what the d
 
 Stock changes must use `/api/v1/storage/items/{item}/adjust`. Directly changing `qty_on_hand` is not
 allowed because it would bypass the movement history.
+
+Deleting items:
+
+- Storage items are soft-deleted so historical ticket, order, and invoice references keep their
+  item ID and SKU context.
+- An item can only be deleted when on-hand quantity, reserved quantity, active reservations, and
+  stock unit quantities are all zero.
+- Delete is available from the item detail page and through `DELETE /api/v1/storage/items/{item}`.
+- The API delete route uses the existing `storage.update` scope.

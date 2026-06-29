@@ -272,6 +272,7 @@ class EnforceTechRoutePermission
         'tech.storage.items.store' => 'storage.item_manage',
         'tech.storage.items.edit' => 'storage.item_manage',
         'tech.storage.items.update' => 'storage.item_manage',
+        'tech.storage.items.destroy' => 'storage.item_manage',
         'tech.storage.boxes.*' => 'storage.item_manage',
         'tech.storage.*' => 'storage.view',
     ];

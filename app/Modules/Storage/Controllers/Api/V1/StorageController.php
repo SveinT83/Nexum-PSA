@@ -5,6 +5,7 @@ namespace App\Modules\Storage\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Storage\Actions\AdjustItemStock;
+use App\Modules\Storage\Actions\DeleteItem;
 use App\Modules\Storage\Actions\StoreBox;
 use App\Modules\Storage\Actions\StoreItem;
 use App\Modules\Storage\Actions\StoreWarehouse;
@@ -222,6 +223,35 @@ class StorageController extends Controller
         }
 
         return new StorageItemResource($this->loadItem($item));
+    }
+
+    #[OA\Delete(
+        path: '/api/v1/storage/items/{item}',
+        operationId: 'deleteStorageItem',
+        description: 'Soft-deletes a storage item when on-hand quantity, reserved quantity, active reservations, and stock unit quantities are all zero.',
+        summary: 'Delete zero-stock storage item',
+        security: [['bearerAuth' => []]],
+        tags: ['Storage'],
+        parameters: [
+            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 204, description: 'Item deleted'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Missing storage.update scope'),
+            new OA\Response(response: 404, description: 'Item not found'),
+            new OA\Response(response: 422, description: 'Item still has stock or reservations'),
+        ]
+    )]
+    public function destroyItem(Request $request, Item $item, DeleteItem $deleteItem)
+    {
+        try {
+            $deleteItem->handle($item, $request->user());
+        } catch (InvalidArgumentException $exception) {
+            throw ValidationException::withMessages(['item' => $exception->getMessage()]);
+        }
+
+        return response()->noContent();
     }
 
     #[OA\Get(
