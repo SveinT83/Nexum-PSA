@@ -143,22 +143,30 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Status</th>
-                                <th>List</th>
+                                <th>Audience Lists</th>
                                 <th class="text-end">Emails</th>
-                                <th class="text-end">Recipients</th>
+                                <th class="text-end">Audience Recipients</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($recentCampaigns as $campaign)
+                                @php($audienceLists = $campaign->audienceLists())
+                                @php($audienceRecipientsCount = (int) ($campaign->audience_recipients_count ?? $campaign->recipients_count))
                                 <tr class="cursor-pointer" data-href="{{ route('tech.marketing.campaigns.show', $campaign) }}" onclick="window.location.href = this.dataset.href">
                                     <td>
                                         <a href="{{ route('tech.marketing.campaigns.show', $campaign) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">{{ $campaign->name }}</a>
                                         <div class="small text-muted">{{ $campaign->emailAccount?->address ?? 'Marketing default sender' }}</div>
                                     </td>
                                     <td><span class="badge text-bg-{{ $statusBadge($campaign->status) }} border">{{ ucfirst($campaign->status) }}</span></td>
-                                    <td>{{ $campaign->list?->name ?? '—' }}</td>
+                                    <td>
+                                        @forelse($audienceLists as $list)
+                                            <span class="badge text-bg-light border">{{ $list->name }}</span>
+                                        @empty
+                                            <span class="text-muted">—</span>
+                                        @endforelse
+                                    </td>
                                     <td class="text-end">{{ $campaign->emails_count }}</td>
-                                    <td class="text-end">{{ $campaign->recipients_count }}</td>
+                                    <td class="text-end">{{ number_format($audienceRecipientsCount) }}</td>
                                 </tr>
                             @empty
                                 <tr>

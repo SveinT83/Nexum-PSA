@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Marketing\Actions\ApproveMarketingCampaign;
 use App\Modules\Marketing\Actions\BuildMarketingCampaignEmailSnapshot;
+use App\Modules\Marketing\Actions\CountMarketingCampaignAudienceRecipients;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignEmailWithAi;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignPlanWithAi;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
@@ -26,12 +27,17 @@ use Throwable;
 
 class MarketingCampaignController extends Controller
 {
+    public function __construct(
+        private readonly CountMarketingCampaignAudienceRecipients $audienceCounter,
+    ) {
+    }
+
     public function index(Request $request, EnsureMarketingDefaults $defaults)
     {
         $defaults->handle();
 
         $query = MarketingCampaign::query()
-            ->with(['list', 'lists', 'emailAccount'])
+            ->with(['list.members', 'lists.members', 'emailAccount'])
             ->withCount(['emails', 'recipients', 'events'])
             ->latest('updated_at');
 
@@ -59,7 +65,10 @@ class MarketingCampaignController extends Controller
             });
         }
 
-        return MarketingCampaignResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        $campaigns = $query->paginate($request->integer('per_page') ?: 15);
+        $this->attachAudienceRecipientCounts($campaigns->getCollection());
+
+        return MarketingCampaignResource::collection($campaigns);
     }
 
     public function store(
@@ -606,7 +615,16 @@ class MarketingCampaignController extends Controller
             ]);
         }
 
+        $campaign->setAttribute('audience_recipients_count', $this->audienceCounter->handle($campaign));
+
         return $campaign;
+    }
+
+    private function attachAudienceRecipientCounts(iterable $campaigns): void
+    {
+        foreach ($campaigns as $campaign) {
+            $campaign->setAttribute('audience_recipients_count', $this->audienceCounter->handle($campaign));
+        }
     }
 
     private function loadCampaignEmail(MarketingCampaignEmail $email): MarketingCampaignEmail

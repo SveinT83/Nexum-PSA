@@ -53,6 +53,10 @@
             @endforeach
         </div>
     @endif
+    @php
+        $audienceRecipientsCount = (int) ($campaign->audience_recipients_count ?? $campaign->recipients_count);
+        $queuedRecipientsCount = (int) $campaign->recipients_count;
+    @endphp
 
     <div class="row g-3 mb-3">
         <div class="col-md-3">
@@ -66,8 +70,9 @@
         <div class="col-md-3">
             <div class="card h-100">
                 <div class="card-body py-3">
-                    <div class="small text-muted text-uppercase fw-semibold">Recipients</div>
-                    <div class="fs-5 fw-semibold">{{ $campaign->recipients_count }}</div>
+                    <div class="small text-muted text-uppercase fw-semibold">Audience Recipients</div>
+                    <div class="fs-5 fw-semibold">{{ number_format($audienceRecipientsCount) }}</div>
+                    <div class="small text-muted">{{ number_format($queuedRecipientsCount) }} queued</div>
                 </div>
             </div>
         </div>
@@ -567,7 +572,7 @@
                 <div class="d-flex align-items-center justify-content-between gap-2">
                     <span class="fw-semibold text-body">Recipient Queue</span>
                     <span class="d-flex align-items-center gap-2">
-                        <span class="badge text-bg-light border">{{ $recipients->total() }} total</span>
+                        <span class="badge text-bg-light border">{{ number_format($recipients->total()) }} total</span>
                         <i class="bi bi-chevron-down text-muted" aria-hidden="true"></i>
                     </span>
                 </div>
@@ -1046,6 +1051,7 @@
 
 @section('rightbar')
     @php($audienceLists = $campaign->audienceLists())
+    @php($audienceRecipientsCount = (int) ($campaign->audience_recipients_count ?? $campaign->recipients_count))
     <x-card.default title="Campaign Settings">
         <dl class="row small mb-0">
             <dt class="col-5">Audience</dt>
@@ -1056,6 +1062,8 @@
                     <span class="text-muted">—</span>
                 @endforelse
             </dd>
+            <dt class="col-6">Audience Recipients</dt>
+            <dd class="col-6 text-end">{{ number_format($audienceRecipientsCount) }}</dd>
             <dt class="col-6">Sender</dt>
             <dd class="col-6 text-end">{{ $campaign->emailAccount?->address ?? 'Marketing default' }}</dd>
             <dt class="col-6">Batch</dt>

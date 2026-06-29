@@ -17,6 +17,7 @@ use App\Modules\Marketing\Controllers\Tech\MarketingController;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
+use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
 use App\Modules\Marketing\Models\MarketingCampaign;
@@ -26,6 +27,7 @@ use App\Modules\Marketing\Models\MarketingConsentCategory;
 use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Marketing\Models\MarketingListMember;
+use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -114,12 +116,28 @@ class MarketingModuleTest extends TestCase
             'marketing_campaign_id' => $campaign->id,
             'marketing_list_id' => $secondList->id,
         ]);
+        $this->assertSame(0, MarketingCampaignRecipient::query()->where('marketing_campaign_id', $campaign->id)->count());
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.index'))
+            ->assertOk()
+            ->assertSee('Audience Recipients')
+            ->assertSee('3');
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.index'))
+            ->assertOk()
+            ->assertSee('Audience Recipients')
+            ->assertSee('3');
 
         $this->actingAs($user)
             ->get(route('tech.marketing.campaigns.show', $campaign))
             ->assertOk()
             ->assertSee('First audience list')
-            ->assertSee('Second audience list');
+            ->assertSee('Second audience list')
+            ->assertSee('Audience Recipients')
+            ->assertSee('3')
+            ->assertSee('0 queued');
 
         $this->actingAs($user)
             ->post(route('tech.marketing.campaigns.emails.store', $campaign), [
@@ -284,6 +302,8 @@ class MarketingModuleTest extends TestCase
             ->assertJsonPath('data.batch_size', 25)
             ->assertJsonPath('data.marketing_list_ids.0', $listId)
             ->assertJsonPath('data.marketing_list_ids.1', $secondListId)
+            ->assertJsonPath('data.audience_recipients_count', 2)
+            ->assertJsonPath('data.recipients_count', 0)
             ->assertJsonCount(2, 'data.lists');
 
         $campaignId = $campaignResponse->json('data.id');
@@ -319,6 +339,8 @@ class MarketingModuleTest extends TestCase
         $this->postJson(route('api.v1.marketing.campaigns.approve', $campaignId))
             ->assertOk()
             ->assertJsonPath('data.status', 'approved')
+            ->assertJsonPath('data.audience_recipients_count', 2)
+            ->assertJsonPath('data.recipients_count', 2)
             ->assertJsonPath('meta.queued_recipients', 2);
 
         $this->postJson(route('api.v1.marketing.campaigns.send-due', $campaignId))
@@ -666,6 +688,12 @@ class MarketingModuleTest extends TestCase
             'contact_tag_ids' => [$contactTag->id],
             'client_tag_ids' => [$clientTag->id],
             'manual_contact_ids' => [],
+            'manual_client_user_ids' => [],
+            'postal_codes' => [],
+            'counties' => [],
+            'countries' => [],
+            'sales_category_ids' => [],
+            'contract_filter' => 'any',
             'excluded_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [
@@ -725,6 +753,149 @@ class MarketingModuleTest extends TestCase
     }
 
     #[Test]
+    public function marketing_lists_can_segment_recipients_by_location_industry_and_contract_status(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+        Permission::findOrCreate('marketing.list.manage', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage']);
+
+        $industry = Category::query()->create([
+            'name' => 'Construction',
+            'slug' => 'construction',
+            'type' => 'sales',
+            'is_active' => true,
+        ]);
+        $otherIndustry = Category::query()->create([
+            'name' => 'Retail',
+            'slug' => 'retail',
+            'type' => 'sales',
+            'is_active' => true,
+        ]);
+
+        $targetClient = Client::factory()->create([
+            'name' => 'Target Client AS',
+            'sales_category_id' => $industry->id,
+        ]);
+        ClientSite::factory()->create([
+            'client_id' => $targetClient->id,
+            'zip' => '7713',
+            'county' => 'Trondelag',
+            'country' => 'NO',
+        ]);
+        $targetContact = $this->contactForClient($targetClient, 'Target Recipient', 'target-recipient@example.test');
+        Contracts::query()->create([
+            'client_id' => $targetClient->id,
+            'created_by' => $user->id,
+            'description' => 'Active target contract',
+            'approval_status' => 'won',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
+        ]);
+
+        $wrongLocationClient = Client::factory()->create([
+            'name' => 'Wrong Location AS',
+            'sales_category_id' => $industry->id,
+        ]);
+        ClientSite::factory()->create([
+            'client_id' => $wrongLocationClient->id,
+            'zip' => '0150',
+            'county' => 'Oslo',
+            'country' => 'NO',
+        ]);
+        $wrongLocationContact = $this->contactForClient($wrongLocationClient, 'Wrong Location', 'wrong-location@example.test');
+        Contracts::query()->create([
+            'client_id' => $wrongLocationClient->id,
+            'created_by' => $user->id,
+            'description' => 'Wrong location contract',
+            'approval_status' => 'won',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
+        ]);
+
+        $wrongIndustryClient = Client::factory()->create([
+            'name' => 'Wrong Industry AS',
+            'sales_category_id' => $otherIndustry->id,
+        ]);
+        ClientSite::factory()->create([
+            'client_id' => $wrongIndustryClient->id,
+            'zip' => '7713',
+            'county' => 'Trondelag',
+            'country' => 'NO',
+        ]);
+        $wrongIndustryContact = $this->contactForClient($wrongIndustryClient, 'Wrong Industry', 'wrong-industry@example.test');
+        Contracts::query()->create([
+            'client_id' => $wrongIndustryClient->id,
+            'created_by' => $user->id,
+            'description' => 'Wrong industry contract',
+            'approval_status' => 'won',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
+        ]);
+
+        $noContractClient = Client::factory()->create([
+            'name' => 'No Contract AS',
+            'sales_category_id' => $industry->id,
+        ]);
+        ClientSite::factory()->create([
+            'client_id' => $noContractClient->id,
+            'zip' => '7713',
+            'county' => 'Trondelag',
+            'country' => 'NO',
+        ]);
+        $noContractContact = $this->contactForClient($noContractClient, 'No Contract', 'no-contract@example.test');
+
+        $response = $this->actingAs($user)->post(route('tech.marketing.lists.store'), [
+            'name' => 'Construction Trondelag contracts',
+            'audience_type' => 'all_business_contacts',
+            'postal_codes' => '7713',
+            'counties' => 'Trondelag',
+            'countries' => 'NO',
+            'sales_category_ids' => [$industry->id],
+            'contract_filter' => 'active_contract',
+        ]);
+
+        $list = MarketingList::query()->firstOrFail();
+
+        $response->assertRedirect(route('tech.marketing.lists.show', $list));
+        $this->assertSame(['7713'], $list->segment_criteria['postal_codes']);
+        $this->assertSame(['trondelag'], $list->segment_criteria['counties']);
+        $this->assertSame(['no'], $list->segment_criteria['countries']);
+        $this->assertSame([$industry->id], $list->segment_criteria['sales_category_ids']);
+        $this->assertSame('active_contract', $list->segment_criteria['contract_filter']);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $targetContact->id,
+            'email' => 'target-recipient@example.test',
+        ]);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $wrongLocationContact->id,
+            'email' => 'wrong-location@example.test',
+        ]);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $wrongIndustryContact->id,
+            'email' => 'wrong-industry@example.test',
+        ]);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $noContractContact->id,
+            'email' => 'no-contract@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.show', $list))
+            ->assertOk()
+            ->assertSee('Client industry')
+            ->assertSee('Construction')
+            ->assertSee('Contract status')
+            ->assertSee('Active Contract')
+            ->assertSee('Postcode 7713');
+    }
+
+    #[Test]
     public function marketing_lists_can_be_created_from_manually_selected_contacts(): void
     {
         Permission::findOrCreate('marketing.view', 'web');
@@ -759,6 +930,12 @@ class MarketingModuleTest extends TestCase
             'contact_tag_ids' => [],
             'client_tag_ids' => [],
             'manual_contact_ids' => [$selected->id, $blocked->id],
+            'manual_client_user_ids' => [],
+            'postal_codes' => [],
+            'counties' => [],
+            'countries' => [],
+            'sales_category_ids' => [],
+            'contract_filter' => 'any',
             'excluded_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [
@@ -787,6 +964,62 @@ class MarketingModuleTest extends TestCase
             ->assertSee('selected-manual@example.test')
             ->assertSee('unselected-manual@example.test')
             ->assertDontSee('blocked-manual@example.test');
+    }
+
+    #[Test]
+    public function marketing_lists_can_be_created_from_manually_selected_legacy_client_users(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+        Permission::findOrCreate('marketing.list.manage', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage']);
+
+        $client = Client::factory()->create(['name' => 'Legacy Manual Client AS']);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Main Site',
+        ]);
+        $clientUser = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => null,
+            'name' => 'Legacy Manual Contact',
+            'email' => 'legacy-manual@example.test',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.create'))
+            ->assertOk()
+            ->assertSee('Client contacts pending Contact migration')
+            ->assertSee('Legacy Manual Contact')
+            ->assertSee('legacy-manual@example.test');
+
+        $response = $this->actingAs($user)->post(route('tech.marketing.lists.store'), [
+            'name' => 'Manual legacy client contacts',
+            'audience_type' => 'manual_contacts',
+            'manual_client_user_ids' => [$clientUser->id],
+        ]);
+
+        $list = MarketingList::query()->firstOrFail();
+
+        $response->assertRedirect(route('tech.marketing.lists.show', $list));
+        $this->assertSame([$clientUser->id], $list->segment_criteria['manual_client_user_ids']);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_type' => 'client_user',
+            'source_id' => $clientUser->id,
+            'client_user_id' => $clientUser->id,
+            'client_id' => $client->id,
+            'email' => 'legacy-manual@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.show', $list))
+            ->assertOk()
+            ->assertSee('Client contacts')
+            ->assertSee('1 selected')
+            ->assertSee('legacy-manual@example.test');
     }
 
     #[Test]
@@ -852,6 +1085,12 @@ class MarketingModuleTest extends TestCase
             'contact_tag_ids' => [],
             'client_tag_ids' => [],
             'manual_contact_ids' => [$kept->id, $removed->id],
+            'manual_client_user_ids' => [],
+            'postal_codes' => [],
+            'counties' => [],
+            'countries' => [],
+            'sales_category_ids' => [],
+            'contract_filter' => 'any',
             'excluded_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [

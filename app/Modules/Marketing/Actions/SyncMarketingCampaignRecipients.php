@@ -16,6 +16,11 @@ class SyncMarketingCampaignRecipients
 
     private const FALLBACK_BATCH_INTERVAL_MINUTES = 15;
 
+    public function __construct(
+        private readonly ResolveMarketingCampaignAudienceMembers $audienceMembers,
+    ) {
+    }
+
     public function handle(MarketingCampaign $campaign): int
     {
         $campaign->loadMissing(['emails.recipients', 'lists.members', 'list.members', 'recipients']);
@@ -127,37 +132,7 @@ class SyncMarketingCampaignRecipients
 
     private function eligibleMembers(MarketingCampaign $campaign): Collection
     {
-        $seenContactIds = [];
-        $seenClientUserIds = [];
-        $seenEmails = [];
-
-        return $campaign->audienceLists()
-            ->flatMap(fn ($list) => $list->members->whereIn('status', ['eligible', 'active']))
-            ->filter(fn (MarketingListMember $member): bool => filled($member->email))
-            ->filter(function (MarketingListMember $member) use (&$seenContactIds, &$seenClientUserIds, &$seenEmails): bool {
-                $email = $this->normalizeEmail($member->email);
-
-                if (
-                    ($member->contact_id && isset($seenContactIds[(int) $member->contact_id]))
-                    || ($member->client_user_id && isset($seenClientUserIds[(int) $member->client_user_id]))
-                    || isset($seenEmails[$email])
-                ) {
-                    return false;
-                }
-
-                if ($member->contact_id) {
-                    $seenContactIds[(int) $member->contact_id] = true;
-                }
-
-                if ($member->client_user_id) {
-                    $seenClientUserIds[(int) $member->client_user_id] = true;
-                }
-
-                $seenEmails[$email] = true;
-
-                return true;
-            })
-            ->values();
+        return $this->audienceMembers->handle($campaign);
     }
 
     private function normalizeEmail(?string $email): string

@@ -39,6 +39,7 @@ class MarketingCampaignResource extends JsonResource
             'approved_by' => $this->approved_by,
             'approved_at' => $this->approved_at,
             'emails_count' => $this->whenCounted('emails'),
+            'audience_recipients_count' => $this->when(isset($this->audience_recipients_count), (int) $this->audience_recipients_count),
             'recipients_count' => $this->whenCounted('recipients'),
             'events_count' => $this->whenCounted('events'),
             'list' => $this->whenLoaded('list', fn () => $this->list ? [

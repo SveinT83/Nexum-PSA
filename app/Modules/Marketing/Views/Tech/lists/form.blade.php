@@ -90,12 +90,22 @@
                         ->map(fn ($id) => (int) $id)
                         ->filter()
                         ->all();
+                    $selectedManualClientUsers = collect(old('manual_client_user_ids', $criteria['manual_client_user_ids'] ?? []))
+                        ->map(fn ($id) => (int) $id)
+                        ->filter()
+                        ->all();
                 @endphp
 
                 @error('manual_contact_ids')
                     <div class="text-danger small mb-2">{{ $message }}</div>
                 @enderror
                 @error('manual_contact_ids.*')
+                    <div class="text-danger small mb-2">{{ $message }}</div>
+                @enderror
+                @error('manual_client_user_ids')
+                    <div class="text-danger small mb-2">{{ $message }}</div>
+                @enderror
+                @error('manual_client_user_ids.*')
                     <div class="text-danger small mb-2">{{ $message }}</div>
                 @enderror
 
@@ -133,6 +143,34 @@
                         <div class="text-muted small p-3">No active contacts with email are available for manual selection.</div>
                     @endforelse
                 </div>
+
+                @if($manualClientUsers->isNotEmpty())
+                    <div class="small text-muted text-uppercase fw-semibold mt-3 mb-2">Client contacts pending Contact migration</div>
+                    <div class="border rounded" style="max-height: 260px; overflow-y: auto;">
+                        @foreach($manualClientUsers as $clientUser)
+                            @php
+                                $searchText = strtolower(trim($clientUser->name.' '.$clientUser->email.' '.$clientUser->site?->client?->name.' '.$clientUser->site?->name));
+                            @endphp
+                            <label class="d-flex align-items-start gap-2 px-3 py-2 border-bottom mb-0 manual-contact-row" data-search="{{ $searchText }}">
+                                <input
+                                    type="checkbox"
+                                    name="manual_client_user_ids[]"
+                                    value="{{ $clientUser->id }}"
+                                    class="form-check-input mt-1 @error('manual_client_user_ids.*') is-invalid @enderror"
+                                    @checked(in_array($clientUser->id, $selectedManualClientUsers, true))>
+                                <span>
+                                    <span class="fw-semibold d-block">{{ $clientUser->name }}</span>
+                                    <span class="small text-muted">
+                                        {{ $clientUser->email }}
+                                        @if($clientUser->site?->client)
+                                            · {{ $clientUser->site->client->name }}
+                                        @endif
+                                    </span>
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -141,6 +179,16 @@
                 <span class="fw-semibold">Segments</span>
             </div>
             <div class="card-body">
+                @php
+                    $selectedSalesCategoryIds = collect(old('sales_category_ids', $criteria['sales_category_ids'] ?? []))
+                        ->map(fn ($id) => (int) $id)
+                        ->filter()
+                        ->all();
+                    $contractFilter = old('contract_filter', $criteria['contract_filter'] ?? 'any');
+                    $postalCodes = collect((array) old('postal_codes', $criteria['postal_codes'] ?? []))->implode(', ');
+                    $counties = collect((array) old('counties', $criteria['counties'] ?? []))->implode(', ');
+                    $countries = collect((array) old('countries', $criteria['countries'] ?? []))->implode(', ');
+                @endphp
                 <div class="row g-4">
                     <div class="col-lg-6">
                         <div class="fw-semibold mb-1">Contact Tags</div>
@@ -184,6 +232,62 @@
                             @empty
                                 <div class="text-muted small py-2">No active tags are available.</div>
                             @endforelse
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="fw-semibold mb-1">Client Profile</div>
+                        <div class="small text-muted mb-2">Filter by client industry and contract status.</div>
+                        @error('sales_category_ids')
+                            <div class="text-danger small mb-2">{{ $message }}</div>
+                        @enderror
+                        <div class="border rounded p-2 mb-3" style="max-height: 220px; overflow-y: auto;">
+                            @forelse($salesCategories as $category)
+                                <div class="form-check">
+                                    <input type="checkbox" id="sales_category_{{ $category->id }}" name="sales_category_ids[]" value="{{ $category->id }}" class="form-check-input @error('sales_category_ids.*') is-invalid @enderror" @checked(in_array($category->id, $selectedSalesCategoryIds, true))>
+                                    <label for="sales_category_{{ $category->id }}" class="form-check-label">{{ $category->name }}</label>
+                                </div>
+                            @empty
+                                <div class="text-muted small py-2">No active client categories are available.</div>
+                            @endforelse
+                        </div>
+                        <label for="contract_filter" class="form-label">Contract Status</label>
+                        <select id="contract_filter" name="contract_filter" class="form-select @error('contract_filter') is-invalid @enderror">
+                            <option value="any" @selected($contractFilter === 'any')>Any contract status</option>
+                            <option value="with_contract" @selected($contractFilter === 'with_contract')>Has any contract</option>
+                            <option value="without_contract" @selected($contractFilter === 'without_contract')>Has no contracts</option>
+                            <option value="active_contract" @selected($contractFilter === 'active_contract')>Has active approved/won contract</option>
+                            <option value="without_active_contract" @selected($contractFilter === 'without_active_contract')>No active approved/won contract</option>
+                            <option value="won_contract" @selected($contractFilter === 'won_contract')>Has won contract</option>
+                        </select>
+                        @error('contract_filter')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="fw-semibold mb-1">Location</div>
+                        <div class="small text-muted mb-2">Comma separated values. Matches contact, client user, and site location fields.</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="postal_codes" class="form-label">Postcodes</label>
+                                <input type="text" id="postal_codes" name="postal_codes" class="form-control @error('postal_codes') is-invalid @enderror" value="{{ $postalCodes }}">
+                                @error('postal_codes')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label for="counties" class="form-label">Counties</label>
+                                <input type="text" id="counties" name="counties" class="form-control @error('counties') is-invalid @enderror" value="{{ $counties }}">
+                                @error('counties')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label for="countries" class="form-label">Countries</label>
+                                <input type="text" id="countries" name="countries" class="form-control @error('countries') is-invalid @enderror" value="{{ $countries }}">
+                                @error('countries')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
                     </div>
                 </div>

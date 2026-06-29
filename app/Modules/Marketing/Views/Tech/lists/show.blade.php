@@ -77,10 +77,16 @@
         $contactTagIds = collect($criteria['contact_tag_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
         $clientTagIds = collect($criteria['client_tag_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
         $manualContactIds = collect($criteria['manual_contact_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
+        $manualClientUserIds = collect($criteria['manual_client_user_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
+        $salesCategoryIds = collect($criteria['sales_category_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
+        $postalCodes = collect($criteria['postal_codes'] ?? [])->filter();
+        $counties = collect($criteria['counties'] ?? [])->filter();
+        $countries = collect($criteria['countries'] ?? [])->filter();
+        $contractFilter = $criteria['contract_filter'] ?? 'any';
         $excludedContactIds = collect($criteria['excluded_contact_ids'] ?? [])->map(fn ($id) => (int) $id)->filter();
     @endphp
 
-    @if($contactTagIds->isNotEmpty() || $clientTagIds->isNotEmpty() || $manualContactIds->isNotEmpty() || $excludedContactIds->isNotEmpty())
+    @if($contactTagIds->isNotEmpty() || $clientTagIds->isNotEmpty() || $manualContactIds->isNotEmpty() || $manualClientUserIds->isNotEmpty() || $salesCategoryIds->isNotEmpty() || $postalCodes->isNotEmpty() || $counties->isNotEmpty() || $countries->isNotEmpty() || $contractFilter !== 'any' || $excludedContactIds->isNotEmpty())
         <div class="card mb-3">
             <div class="card-header">
                 <span class="fw-semibold">Active Segments</span>
@@ -91,6 +97,12 @@
                         <div class="col-md-4">
                             <div class="small text-muted text-uppercase fw-semibold mb-2">Manual contacts</div>
                             <span class="badge text-bg-light border">{{ $manualContactIds->count() }} selected</span>
+                        </div>
+                    @endif
+                    @if($manualClientUserIds->isNotEmpty())
+                        <div class="col-md-4">
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Client contacts</div>
+                            <span class="badge text-bg-light border">{{ $manualClientUserIds->count() }} selected</span>
                         </div>
                     @endif
                     @if($excludedContactIds->isNotEmpty())
@@ -119,6 +131,40 @@
                                     @if($segmentTags->has($tagId))
                                         <span class="badge text-bg-light border">{{ $segmentTags->get($tagId)->name }}</span>
                                     @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                    @if($salesCategoryIds->isNotEmpty())
+                        <div class="col-md-4">
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Client industry</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($salesCategoryIds as $categoryId)
+                                    @if($salesCategories->has($categoryId))
+                                        <span class="badge text-bg-light border">{{ $salesCategories->get($categoryId)->name }}</span>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                    @if($contractFilter !== 'any')
+                        <div class="col-md-4">
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Contract status</div>
+                            <span class="badge text-bg-light border">{{ str($contractFilter)->replace('_', ' ')->title() }}</span>
+                        </div>
+                    @endif
+                    @if($postalCodes->isNotEmpty() || $counties->isNotEmpty() || $countries->isNotEmpty())
+                        <div class="col-md-4">
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Location</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($postalCodes as $value)
+                                    <span class="badge text-bg-light border">Postcode {{ $value }}</span>
+                                @endforeach
+                                @foreach($counties as $value)
+                                    <span class="badge text-bg-light border">{{ $value }}</span>
+                                @endforeach
+                                @foreach($countries as $value)
+                                    <span class="badge text-bg-light border">{{ $value }}</span>
                                 @endforeach
                             </div>
                         </div>

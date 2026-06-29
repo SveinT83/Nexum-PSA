@@ -3,16 +3,19 @@
 namespace App\Modules\Marketing\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
+use App\Models\Clients\ClientUser;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
 use App\Modules\Marketing\Actions\ResolveMarketingListMembers;
 use App\Modules\Marketing\Models\MarketingConsentCategory;
 use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Marketing\Support\MarketingSettings;
+use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Contact\Models\Contact;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MarketingListController extends Controller
@@ -41,6 +44,8 @@ class MarketingListController extends Controller
             'categories' => MarketingConsentCategory::query()->where('is_active', true)->orderBy('name')->get(),
             'tags' => $this->activeTags(),
             'manualContacts' => $this->manualContacts($settingsPayload),
+            'manualClientUsers' => $this->manualClientUsers(),
+            'salesCategories' => $this->salesCategories(),
         ]);
     }
 
@@ -90,6 +95,9 @@ class MarketingListController extends Controller
             'addableContacts' => $this->manualContacts($settingsPayload)
                 ->whereNotIn('id', $memberContactIds)
                 ->values(),
+            'salesCategories' => $this->salesCategories()
+                ->whereIn('id', collect($list->segment_criteria ?? [])->get('sales_category_ids', []))
+                ->keyBy('id'),
         ]);
     }
 
@@ -106,6 +114,8 @@ class MarketingListController extends Controller
             'categories' => MarketingConsentCategory::query()->where('is_active', true)->orderBy('name')->get(),
             'tags' => $this->activeTags(),
             'manualContacts' => $this->manualContacts($settingsPayload),
+            'manualClientUsers' => $this->manualClientUsers(),
+            'salesCategories' => $this->salesCategories(),
         ]);
     }
 
@@ -245,6 +255,25 @@ class MarketingListController extends Controller
             ->get();
     }
 
+    private function manualClientUsers()
+    {
+        return ClientUser::query()
+            ->with('site.client')
+            ->whereNull('contact_id')
+            ->where('active', true)
+            ->whereNotNull('email')
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function salesCategories()
+    {
+        return Category::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
+
     private function validatedListData(Request $request): array
     {
         return $request->validate([
@@ -258,6 +287,21 @@ class MarketingListController extends Controller
             'client_tag_ids.*' => ['integer', 'exists:tags,id'],
             'manual_contact_ids' => ['nullable', 'array'],
             'manual_contact_ids.*' => ['integer', 'exists:contacts,id'],
+            'manual_client_user_ids' => ['nullable', 'array'],
+            'manual_client_user_ids.*' => ['integer', 'exists:client_users,id'],
+            'postal_codes' => ['nullable'],
+            'counties' => ['nullable'],
+            'countries' => ['nullable'],
+            'sales_category_ids' => ['nullable', 'array'],
+            'sales_category_ids.*' => ['integer', 'exists:categories,id'],
+            'contract_filter' => ['nullable', 'string', Rule::in([
+                'any',
+                'with_contract',
+                'without_contract',
+                'active_contract',
+                'without_active_contract',
+                'won_contract',
+            ])],
         ]);
     }
 
@@ -268,6 +312,12 @@ class MarketingListController extends Controller
             'contact_tag_ids' => $this->requestIntegerIds($request, 'contact_tag_ids')->all(),
             'client_tag_ids' => $this->requestIntegerIds($request, 'client_tag_ids')->all(),
             'manual_contact_ids' => $this->requestIntegerIds($request, 'manual_contact_ids')->all(),
+            'manual_client_user_ids' => $this->requestIntegerIds($request, 'manual_client_user_ids')->all(),
+            'postal_codes' => $this->requestStringValues($request, 'postal_codes')->all(),
+            'counties' => $this->requestStringValues($request, 'counties')->all(),
+            'countries' => $this->requestStringValues($request, 'countries')->all(),
+            'sales_category_ids' => $this->requestIntegerIds($request, 'sales_category_ids')->all(),
+            'contract_filter' => $request->input('contract_filter', 'any') ?: 'any',
             'excluded_contact_ids' => collect($excludedContactIds)
                 ->map(fn ($id): int => (int) $id)
                 ->filter()
@@ -281,6 +331,16 @@ class MarketingListController extends Controller
     {
         return collect($request->input($key, []))
             ->map(fn ($id): int => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
+    private function requestStringValues(Request $request, string $key): Collection
+    {
+        return collect((array) $request->input($key, []))
+            ->flatMap(fn ($value): array => is_string($value) ? preg_split('/[\r\n,]+/', $value) ?: [] : [$value])
+            ->map(fn ($value): string => mb_strtolower(trim((string) $value)))
             ->filter()
             ->unique()
             ->values();

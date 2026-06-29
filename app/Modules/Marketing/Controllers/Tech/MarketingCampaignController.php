@@ -9,6 +9,7 @@ use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Marketing\Actions\ApproveMarketingCampaign;
 use App\Modules\Marketing\Actions\BuildMarketingCampaignEmailSnapshot;
+use App\Modules\Marketing\Actions\CountMarketingCampaignAudienceRecipients;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignEmailWithAi;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignPlanWithAi;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
@@ -34,17 +35,24 @@ use Throwable;
 
 class MarketingCampaignController extends Controller
 {
-    public function index(EnsureMarketingDefaults $marketingDefaults, EnsureDefaultEmailTemplates $emailDefaults): View
+    public function index(
+        EnsureMarketingDefaults $marketingDefaults,
+        EnsureDefaultEmailTemplates $emailDefaults,
+        CountMarketingCampaignAudienceRecipients $audienceCounter,
+    ): View
     {
         $marketingDefaults->handle();
         $emailDefaults->handle();
 
+        $campaigns = MarketingCampaign::query()
+            ->with(['list.members', 'lists.members', 'emailAccount'])
+            ->withCount(['emails', 'recipients'])
+            ->latest('updated_at')
+            ->paginate(25);
+        $this->attachAudienceRecipientCounts($campaigns->getCollection(), $audienceCounter);
+
         return view('marketing::Tech.campaigns.index', [
-            'campaigns' => MarketingCampaign::query()
-                ->with(['list', 'lists', 'emailAccount'])
-                ->withCount(['emails', 'recipients'])
-                ->latest('updated_at')
-                ->paginate(25),
+            'campaigns' => $campaigns,
             'listsCount' => MarketingList::query()->count(),
             'marketingTemplatesCount' => EmailTemplate::query()
                 ->where('scope', 'marketing')
@@ -160,6 +168,7 @@ class MarketingCampaignController extends Controller
         MarketingCampaign $campaign,
         MarketingSettings $settings,
         EnsureMarketingDefaults $marketingDefaults,
+        CountMarketingCampaignAudienceRecipients $audienceCounter,
         AiAgentResolver $aiAgentResolver,
         EmailTemplateRenderer $templateRenderer,
     ): View
@@ -197,6 +206,7 @@ class MarketingCampaignController extends Controller
                 ])
                 ->orderBy('sequence_order'),
         ])->loadCount(['emails', 'recipients', 'events']);
+        $campaign->setAttribute('audience_recipients_count', $audienceCounter->handle($campaign));
         $previewMember = $this->previewMember($campaign);
 
         return view('marketing::Tech.campaigns.show', [
@@ -502,6 +512,13 @@ class MarketingCampaignController extends Controller
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
             ->with('status', 'Due campaign email send job queued.');
+    }
+
+    private function attachAudienceRecipientCounts(iterable $campaigns, CountMarketingCampaignAudienceRecipients $audienceCounter): void
+    {
+        foreach ($campaigns as $campaign) {
+            $campaign->setAttribute('audience_recipients_count', $audienceCounter->handle($campaign));
+        }
     }
 
     private function normalizeSchedulePayload(array $data): array
