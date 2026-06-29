@@ -27,6 +27,22 @@ use Throwable;
 
 class MarketingCampaignController extends Controller
 {
+    private const SCHEDULE_FIELDS = [
+        'starts_at',
+        'schedule_frequency',
+        'first_send_date',
+        'send_time',
+        'send_weekday',
+        'month_day',
+        'custom_interval_value',
+        'custom_interval_unit',
+        'batch_size',
+        'send_interval_minutes',
+        'sequence_interval_value',
+        'sequence_interval_unit',
+        'new_recipient_policy',
+    ];
+
     public function __construct(
         private readonly CountMarketingCampaignAudienceRecipients $audienceCounter,
     ) {
@@ -130,6 +146,7 @@ class MarketingCampaignController extends Controller
         $marketingListIds = $this->campaignListIds($data);
         $listChanged = $marketingListIds !== []
             && $campaign->audienceLists()->pluck('id')->sort()->values()->all() !== collect($marketingListIds)->sort()->values()->all();
+        $scheduleChanged = $this->hasScheduleData($data);
         $attributes = ['updated_by' => $request->user()?->id];
 
         foreach (['name', 'description', 'email_account_id'] as $field) {
@@ -148,6 +165,20 @@ class MarketingCampaignController extends Controller
             }
         }
 
+        if ($scheduleChanged) {
+            $scheduleData = $this->scheduleDataFromCampaign($campaign, $data);
+            $schedule = $this->normalizeSchedulePayload($scheduleData);
+
+            $attributes = array_merge($attributes, [
+                'starts_at' => $schedule['starts_at'],
+                'batch_size' => $scheduleData['batch_size'] ?? null,
+                'send_interval_minutes' => $scheduleData['send_interval_minutes'] ?? null,
+                'sequence_interval_value' => $schedule['sequence_interval_value'],
+                'sequence_interval_unit' => $schedule['sequence_interval_unit'],
+                'new_recipient_policy' => $scheduleData['new_recipient_policy'] ?? 'start_at_first_email',
+            ]);
+        }
+
         $campaign->forceFill($attributes)->save();
 
         if ($marketingListIds !== []) {
@@ -155,6 +186,7 @@ class MarketingCampaignController extends Controller
         }
 
         $created = 0;
+        $rescheduled = 0;
         if ($listChanged) {
             $campaign = $campaign->fresh(['lists', 'list']);
 
@@ -167,8 +199,15 @@ class MarketingCampaignController extends Controller
             }
         }
 
+        if ($scheduleChanged) {
+            $rescheduled = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients']));
+        }
+
         return (new MarketingCampaignResource($this->loadCampaign($campaign)))
-            ->additional(['meta' => ['queued_recipients' => $created]]);
+            ->additional(['meta' => [
+                'queued_recipients' => $created,
+                'rescheduled_pending_recipients' => $rescheduled,
+            ]]);
     }
 
     public function updateSchedule(
@@ -220,7 +259,7 @@ class MarketingCampaignController extends Controller
                 'body_text' => $data['body_text'] ?? null,
             ]),
             'sequence_order' => $data['sequence_order'],
-            'status' => 'active',
+            'status' => $data['status'] ?? 'active',
             'scheduled_at' => null,
             'delay_minutes' => $data['delay_minutes'],
         ]);
@@ -247,12 +286,30 @@ class MarketingCampaignController extends Controller
 
         $data = $this->validatedCampaignEmailData($request, $campaign, creating: false, email: $email);
 
-        $email->forceFill(array_merge($snapshot->editableContent([
-            'name' => $data['email_name'] ?? null,
-            'email_subject' => $data['email_subject'],
-            'body_html' => $data['body_html'] ?? null,
-            'body_text' => $data['body_text'] ?? null,
-        ]), [
+        $template = null;
+        if (array_key_exists('email_template_id', $data)) {
+            $template = EmailTemplate::query()
+                ->whereKey($data['email_template_id'])
+                ->where('scope', 'marketing')
+                ->where('is_active', true)
+                ->firstOrFail();
+        }
+
+        $content = $template
+            ? $snapshot->fromTemplate($template, [
+                'name' => $data['email_name'] ?? null,
+                'email_subject' => $data['email_subject'],
+                'body_html' => $data['body_html'] ?? null,
+                'body_text' => $data['body_text'] ?? null,
+            ])
+            : $snapshot->editableContent([
+                'name' => $data['email_name'] ?? null,
+                'email_subject' => $data['email_subject'],
+                'body_html' => $data['body_html'] ?? null,
+                'body_text' => $data['body_text'] ?? null,
+            ]);
+
+        $email->forceFill(array_merge($content, [
             'sequence_order' => $data['sequence_order'],
             'delay_minutes' => $data['delay_minutes'],
             'scheduled_at' => null,
@@ -492,6 +549,30 @@ class MarketingCampaignController extends Controller
             'sequence_interval_unit' => $campaign->sequence_interval_unit ?: 'days',
             'new_recipient_policy' => $campaign->new_recipient_policy ?: 'start_at_first_email',
         ];
+    }
+
+    private function hasScheduleData(array $data): bool
+    {
+        foreach (self::SCHEDULE_FIELDS as $field) {
+            if (array_key_exists($field, $data)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function scheduleDataFromCampaign(MarketingCampaign $campaign, array $data): array
+    {
+        $scheduleData = $this->schedulePayloadFromCampaign($campaign);
+
+        foreach (self::SCHEDULE_FIELDS as $field) {
+            if (array_key_exists($field, $data)) {
+                $scheduleData[$field] = $data[$field];
+            }
+        }
+
+        return $scheduleData;
     }
 
     private function normalizeSchedulePayload(array $data): array

@@ -233,6 +233,7 @@ class MarketingModuleTest extends TestCase
         $contact = $this->contactForClient($client, 'API Contact', 'api-contact@example.test');
         $extraContact = $this->contactForClient($client, 'API Extra Contact', 'api-extra@example.test');
         $template = $this->marketingTemplate('api_marketing_template', 'API Marketing Template');
+        $replacementTemplate = $this->marketingTemplate('api_replacement_marketing_template', 'API Replacement Template');
 
         Sanctum::actingAs($user, [
             'marketing.read',
@@ -308,7 +309,26 @@ class MarketingModuleTest extends TestCase
 
         $campaignId = $campaignResponse->json('data.id');
 
-        $this->postJson(route('api.v1.marketing.campaigns.emails.store', $campaignId), [
+        $this->patchJson(route('api.v1.marketing.campaigns.update', $campaignId), [
+            'name' => 'API campaign updated',
+            'schedule_frequency' => 'monthly',
+            'first_send_date' => '2026-07-15',
+            'send_time' => '10:15',
+            'month_day' => 15,
+            'batch_size' => 30,
+            'send_interval_minutes' => 12,
+            'new_recipient_policy' => 'join_current_step',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'API campaign updated')
+            ->assertJsonPath('data.sequence_interval_unit', 'months')
+            ->assertJsonPath('data.batch_size', 30)
+            ->assertJsonPath('data.send_interval_minutes', 12)
+            ->assertJsonPath('data.new_recipient_policy', 'join_current_step')
+            ->assertJsonPath('data.schedule_time', '10:15')
+            ->assertJsonPath('data.month_day', 15);
+
+        $emailResponse = $this->postJson(route('api.v1.marketing.campaigns.emails.store', $campaignId), [
             'email_template_id' => $template->id,
             'email_name' => 'API sequence email',
             'email_subject' => 'Hello {{ contact_name }}',
@@ -316,9 +336,31 @@ class MarketingModuleTest extends TestCase
             'body_text' => "Hello {{ contact_name }}\nUnsubscribe: {{ unsubscribe_url }}",
             'sequence_order' => 1,
             'delay_minutes' => 0,
+            'status' => 'inactive',
         ])
             ->assertCreated()
-            ->assertJsonPath('data.display_name', 'API sequence email');
+            ->assertJsonPath('data.display_name', 'API sequence email')
+            ->assertJsonPath('data.status', 'inactive');
+
+        $emailId = $emailResponse->json('data.id');
+
+        $this->patchJson(route('api.v1.marketing.campaigns.emails.update', [
+            'campaign' => $campaignId,
+            'email' => $emailId,
+        ]), [
+            'email_template_id' => $replacementTemplate->id,
+            'email_name' => 'API sequence email updated',
+            'email_subject' => 'Updated hello {{ contact_name }}',
+            'body_html' => '<p>Updated hello {{ contact_name }}</p><p><a href="{{ unsubscribe_url }}">Unsubscribe</a></p>',
+            'body_text' => "Updated hello {{ contact_name }}\nUnsubscribe: {{ unsubscribe_url }}",
+            'sequence_order' => 1,
+            'delay_minutes' => 0,
+            'status' => 'active',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.email_template_id', $replacementTemplate->id)
+            ->assertJsonPath('data.template_snapshot_name', 'API Replacement Template')
+            ->assertJsonPath('data.status', 'active');
 
         $this->patchJson(route('api.v1.marketing.campaigns.schedule.update', $campaignId), [
             'schedule_frequency' => 'daily',
