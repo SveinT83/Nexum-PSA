@@ -9,7 +9,7 @@
 @php
     $isTicketTask = $task->owner instanceof \App\Modules\Ticket\Models\Ticket;
     $defaultInvoiceText = 'Task: '.$task->title;
-    $defaultTicketRateKey = old('rate_key', $task->metadata['ticket_rate_key'] ?? null);
+    $defaultTicketRateKey = old('rate_key', $task->metadata['ticket_rate_key'] ?? ($timeRateOptions->first()['key'] ?? null));
 @endphp
 
 @section('pageHeader')

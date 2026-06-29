@@ -31,6 +31,21 @@ class ChangeTicketStatus
     public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null): Ticket
     {
         return DB::transaction(function () use ($ticket, $status, $actor) {
+            if ($status->is_closed && $this->hasUnresolvedTasks($ticket)) {
+                $reason = 'Ticket cannot be closed while it has unresolved tasks.';
+
+                TicketEvent::create([
+                    'ticket_id' => $ticket->id,
+                    'actor_id' => $actor?->id,
+                    'type' => 'ticket_close_blocked',
+                    'message' => $reason,
+                    'before' => ['status_id' => $ticket->status_id],
+                    'after' => ['status_id' => $status->id],
+                ]);
+
+                throw ValidationException::withMessages(['status_id' => $reason]);
+            }
+
             if ($reason = $this->workflowRuntime->blockedReason($ticket, $status)) {
                 TicketEvent::create([
                     'ticket_id' => $ticket->id,
@@ -113,5 +128,16 @@ class ChangeTicketStatus
 
             return $ticket;
         });
+    }
+
+    private function hasUnresolvedTasks(Ticket $ticket): bool
+    {
+        return $ticket->tasks()
+            ->whereNull('completed_at')
+            ->whereHas('status', fn ($query) => $query
+                ->where('is_done', false)
+                ->where('is_cancelled', false)
+            )
+            ->exists();
     }
 }

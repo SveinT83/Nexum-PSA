@@ -57,7 +57,7 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label for="knowledge_shelf_id" class="form-label fw-bold text-muted small text-uppercase">Shelf</label>
-                    <select class="form-select @error('knowledge_shelf_id') is-invalid @enderror" id="knowledge_shelf_id" wire:model="knowledge_shelf_id">
+                    <select class="form-select @error('knowledge_shelf_id') is-invalid @enderror" id="knowledge_shelf_id" wire:model.live="knowledge_shelf_id">
                         <option value="">No Shelf</option>
                         @foreach($shelves as $shelf)
                             <option value="{{ $shelf->id }}">{{ $shelf->name }}</option>
@@ -70,25 +70,31 @@
 
                 <div class="col-md-4 mb-3">
                     <label for="knowledge_book_id" class="form-label fw-bold text-muted small text-uppercase">Book</label>
-                    <select class="form-select @error('knowledge_book_id') is-invalid @enderror" id="knowledge_book_id" wire:model="knowledge_book_id">
+                    <select class="form-select @error('knowledge_book_id') is-invalid @enderror" id="knowledge_book_id" wire:model.live="knowledge_book_id" @disabled(empty($knowledge_shelf_id))>
                         <option value="">No Book</option>
                         @foreach($books as $book)
                             <option value="{{ $book->id }}">{{ $book->name }}</option>
                         @endforeach
                     </select>
+                    <div class="form-text">
+                        Select a shelf first to choose one of its books.
+                    </div>
                     @error('knowledge_book_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
 
                 <div class="col-md-4 mb-3">
                     <label for="knowledge_chapter_id" class="form-label fw-bold text-muted small text-uppercase">Chapter</label>
-                    <select class="form-select @error('knowledge_chapter_id') is-invalid @enderror" id="knowledge_chapter_id" wire:model="knowledge_chapter_id">
+                    <select class="form-select @error('knowledge_chapter_id') is-invalid @enderror" id="knowledge_chapter_id" wire:model="knowledge_chapter_id" @disabled(empty($knowledge_book_id))>
                         <option value="">No Chapter</option>
                         @foreach($chapters as $chapter)
-                            <option value="{{ $chapter->id }}">{{ $chapter->book->name ?? 'Book' }} / {{ $chapter->name }}</option>
+                            <option value="{{ $chapter->id }}">{{ $chapter->name }}</option>
                         @endforeach
                     </select>
+                    <div class="form-text">
+                        Select a book first to choose one of its chapters.
+                    </div>
                     @error('knowledge_chapter_id')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror

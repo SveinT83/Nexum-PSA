@@ -91,7 +91,7 @@
 .knowledge-tree {
     margin-bottom: 1rem;
     padding: .75rem;
-    background: #ffffff;
+    background: var(--bs-body-bg, #ffffff);
     border: 1px solid var(--nexum-brand-border-soft, #dee2e6);
     border-radius: .5rem;
     box-shadow: 0 .125rem .35rem rgba(51, 51, 51, .08);
@@ -125,7 +125,7 @@
     align-items: center;
     gap: .375rem;
     padding: .375rem .5rem;
-    color: #212529;
+    color: var(--bs-body-color, #212529);
     text-decoration: none;
     border-radius: .375rem;
 }
@@ -137,8 +137,8 @@
 
 .knowledge-tree-link:hover,
 .knowledge-tree-page:hover {
-    background: #f8f9fa;
-    color: #212529;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    color: var(--bs-body-color, #212529);
 }
 
 .knowledge-tree-row.is-active,
@@ -162,7 +162,7 @@
     border: 0;
     border-radius: .375rem;
     background: transparent;
-    color: #6c757d;
+    color: var(--bs-secondary-color, #6c757d);
 }
 
 .knowledge-tree-toggle[aria-expanded="true"] .bi-chevron-down {
@@ -179,7 +179,7 @@
 .knowledge-tree-children {
     margin-left: .65rem;
     padding-left: .5rem;
-    border-left: 1px solid #e9ecef;
+    border-left: 1px solid var(--bs-border-color, #e9ecef);
 }
 
 .knowledge-tree-children-book {
@@ -192,6 +192,6 @@
 
 .knowledge-tree-empty {
     padding: .25rem .5rem;
-    color: #6c757d;
+    color: var(--bs-secondary-color, #6c757d);
     font-size: .8125rem;
 }

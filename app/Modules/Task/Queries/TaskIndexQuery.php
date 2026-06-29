@@ -33,6 +33,11 @@ class TaskIndexQuery
 
         if ($statusId = $request->integer('status_id')) {
             $query->where('status_id', $statusId);
+        } elseif (! $request->boolean('include_done')) {
+            $query->where(function (Builder $nested) {
+                $nested->whereNull('completed_at')
+                    ->whereHas('status', fn (Builder $status) => $status->where('is_done', false));
+            });
         }
 
         if ($queueId = $request->integer('queue_id')) {

@@ -13,6 +13,7 @@ use App\Modules\Knowledge\Actions\StoreArticle;
 use App\Modules\Knowledge\Actions\UpdateArticle;
 use App\Modules\Knowledge\Support\KnowledgeSettings;
 use App\Modules\Taxonomy\Models\Category;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /**
@@ -71,8 +72,8 @@ class ArticleForm extends Component
         $this->categories = Category::orderBy('name')->get();
         $this->clients = Client::where('active', true)->orderBy('name')->get();
         $this->shelves = Shelf::query()->orderBy('name')->get();
-        $this->books = Book::query()->orderBy('name')->get();
-        $this->chapters = Chapter::query()->with('book')->orderBy('name')->get();
+        $this->books = collect();
+        $this->chapters = collect();
 
         if ($article->exists) {
             $this->title = $article->title;
@@ -86,6 +87,8 @@ class ArticleForm extends Component
             $this->status = $article->status;
             $this->client_scope_id = $article->client_scope_id;
             $this->next_review_at = $article->next_review_at?->format('Y-m-d');
+            $this->refreshBookOptions();
+            $this->refreshChapterOptions();
 
             return;
         }
@@ -99,6 +102,56 @@ class ArticleForm extends Component
         $this->knowledge_book_id = $article->knowledge_book_id;
         $this->knowledge_chapter_id = $article->knowledge_chapter_id;
         $this->next_review_at = $defaults['next_review_at'];
+        $this->refreshBookOptions();
+        $this->refreshChapterOptions();
+    }
+
+    /**
+     * Refresh book options when the selected shelf changes.
+     */
+    public function updatedKnowledgeShelfId(): void
+    {
+        $this->knowledge_book_id = null;
+        $this->knowledge_chapter_id = null;
+        $this->refreshBookOptions();
+        $this->refreshChapterOptions();
+    }
+
+    /**
+     * Refresh chapter options when the selected book changes.
+     */
+    public function updatedKnowledgeBookId(): void
+    {
+        $this->knowledge_chapter_id = null;
+        $this->refreshChapterOptions();
+    }
+
+    /**
+     * Only show books that belong to the selected shelf.
+     */
+    private function refreshBookOptions(): void
+    {
+        $this->books = empty($this->knowledge_shelf_id)
+            ? collect()
+            : Book::query()
+                ->where('shelf_id', $this->knowledge_shelf_id)
+                ->orderBy('priority')
+                ->orderBy('name')
+                ->get();
+    }
+
+    /**
+     * Only show chapters that belong to the selected book.
+     */
+    private function refreshChapterOptions(): void
+    {
+        $this->chapters = empty($this->knowledge_book_id)
+            ? collect()
+            : Chapter::query()
+                ->where('book_id', $this->knowledge_book_id)
+                ->orderBy('priority')
+                ->orderBy('name')
+                ->get();
     }
 
     /**
@@ -138,8 +191,16 @@ class ArticleForm extends Component
             'status' => 'required|string|in:draft,published,archived,needs_review',
             'category_id' => 'nullable|exists:categories,id',
             'knowledge_shelf_id' => 'nullable|exists:knowledge_shelves,id',
-            'knowledge_book_id' => 'nullable|exists:knowledge_books,id',
-            'knowledge_chapter_id' => 'nullable|exists:knowledge_chapters,id',
+            'knowledge_book_id' => [
+                'nullable',
+                Rule::exists('knowledge_books', 'id')
+                    ->where(fn ($query) => $query->where('shelf_id', $this->knowledge_shelf_id)),
+            ],
+            'knowledge_chapter_id' => [
+                'nullable',
+                Rule::exists('knowledge_chapters', 'id')
+                    ->where(fn ($query) => $query->where('book_id', $this->knowledge_book_id)),
+            ],
             'priority' => 'nullable|integer|min:0',
             'client_scope_id' => 'nullable|exists:clients,id',
             'next_review_at' => 'nullable|date',

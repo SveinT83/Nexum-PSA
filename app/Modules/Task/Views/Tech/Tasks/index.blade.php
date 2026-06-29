@@ -18,9 +18,10 @@
             || filled($filters['queue_id'] ?? null)
             || filled($filters['priority_id'] ?? null)
             || filled($filters['assigned_to'] ?? null)
-            || ! empty($filters['mine']);
+            || ! empty($filters['mine'])
+            || ! empty($filters['include_done']);
 
-        $filterCount = collect(['status_id', 'queue_id', 'priority_id', 'assigned_to', 'mine'])
+        $filterCount = collect(['status_id', 'queue_id', 'priority_id', 'assigned_to', 'mine', 'include_done'])
             ->filter(fn ($key) => filled($filters[$key] ?? null))
             ->count();
 
@@ -111,6 +112,12 @@
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="mine" name="mine" value="1" @checked(! empty($filters['mine']))>
                             <label class="form-check-label" for="mine">Assigned to me</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="include_done" name="include_done" value="1" @checked(! empty($filters['include_done']))>
+                            <label class="form-check-label" for="include_done">Show completed tasks</label>
                         </div>
                     </div>
                     <div class="col-md-9 text-md-end">

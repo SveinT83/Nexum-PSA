@@ -282,7 +282,16 @@
                                 @endif
                             </td>
                             <td>{{ $ticket->subject }}</td>
-                            <td>{{ $ticket->client?->name ?? 'Unassigned' }}</td>
+                            <td>
+                                @if($ticket->client)
+                                    <div class="text-truncate">{{ $ticket->client->name }}</div>
+                                    @if($ticket->client->client_number)
+                                        <div class="small text-muted">{{ $ticket->client->client_number }}</div>
+                                    @endif
+                                @else
+                                    <span class="text-muted">Unassigned</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($ticket->owner)
                                     {{ $ticket->owner->name }}

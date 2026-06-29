@@ -42,6 +42,12 @@ class MarkTicketMessageSolution
             throw ValidationException::withMessages(['message' => 'Internal solution notes are disabled by Ticket solution policy.']);
         }
 
+        if ($isInternalTechnicianNote && $this->isDefaultInitialInternalNote($ticket, $message)) {
+            throw ValidationException::withMessages([
+                'message' => 'The initial internal note created with the ticket cannot be marked as the solution. Add a technician response or internal note first.',
+            ]);
+        }
+
         return DB::transaction(function () use ($ticket, $message, $actor) {
             $ticket->messages()
                 ->where('id', '!=', $message->id)
@@ -73,5 +79,23 @@ class MarkTicketMessageSolution
 
             return $message->refresh();
         });
+    }
+
+    private function isDefaultInitialInternalNote(Ticket $ticket, TicketMessage $message): bool
+    {
+        $metadata = $message->metadata ?? [];
+
+        if (($metadata['is_default_initial_note'] ?? false) === true) {
+            return true;
+        }
+
+        // Backward-compatible guard for tickets created before initial notes were explicitly marked.
+        return $message->type === 'internal_note'
+            && $message->visibility === 'internal'
+            && $message->subject === $ticket->subject
+            && trim((string) $message->body) === trim((string) $ticket->description)
+            && ! $ticket->messages()
+                ->where('id', '<', $message->id)
+                ->exists();
     }
 }

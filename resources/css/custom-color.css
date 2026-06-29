@@ -40,6 +40,38 @@
     --bs-list-group-color: var(--nexum-left-sidebar-color);
     --bs-pagination-bg: var(--nexum-main-bg);
     --bs-pagination-color: var(--nexum-left-sidebar-color);
+
+    /*
+     * bg-light and text-bg-light dark mode bridge.
+     * Bootstrap 5.3 uses --bs-light / --bs-light-bg-subtle for these,
+     * but the Nexum theme doesn't bridge them. Without overrides,
+     * .bg-light stays white and .text-bg-light badges become
+     * near-invisible (light text on white background) in dark mode.
+     */
+    --bs-light: var(--nexum-content-bg);
+    --bs-light-rgb: 17, 24, 39;
+    --bs-light-bg-subtle: var(--nexum-main-bg);
+    --bs-light-text-emphasis: var(--nexum-left-sidebar-color);
+    --bs-light-border-subtle: var(--nexum-brand-border-soft);
+}
+
+/*
+ * Dark mode overrides for bg-light and text-bg-light utility classes.
+ * These ensure info boxes, badges, and detail grids remain readable
+ * (light text on dark background) instead of light-on-white.
+ */
+[data-bs-theme="dark"] .bg-light {
+    background-color: var(--bs-light) !important;
+    color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .text-bg-light {
+    background-color: var(--bs-light-bg-subtle) !important;
+    color: var(--bs-light-text-emphasis) !important;
+}
+
+[data-bs-theme="dark"] .text-muted {
+    color: var(--bs-secondary-color) !important;
 }
 
 /* ------------------------------------------- */

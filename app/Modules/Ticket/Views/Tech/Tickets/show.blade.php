@@ -60,6 +60,7 @@
         $selectedNotifyUserId = old('notify_user_id');
         $showAddMessage = old('_message_form') || old('body') || old('type');
         $showAddTimeModal = old('_time_entry_form');
+        $defaultTimeRateKey = old('rate_key', $timeRateOptions->first()['key'] ?? null);
         // Activity combines conversation and time records into one technician-facing timeline.
         $activityItems = $ticket->messages
             ->map(fn ($message) => ['type' => 'message', 'date' => $message->created_at, 'record' => $message])
@@ -577,7 +578,7 @@
                             <select id="time_rate_key" name="rate_key" class="form-select @error('rate_key') is-invalid @enderror" required>
                                 <option value="">Select rate</option>
                                 @foreach($timeRateOptions as $rateOption)
-                                    <option value="{{ $rateOption['key'] }}" @selected(old('rate_key') === $rateOption['key'])>
+                                    <option value="{{ $rateOption['key'] }}" @selected($defaultTimeRateKey === $rateOption['key'])>
                                         {{ $rateOption['label'] }} - {{ $rateOption['description'] }}
                                     </option>
                                 @endforeach
@@ -1431,6 +1432,86 @@
                             <p class="text-muted small mb-0">No workflow transitions available.</p>
                         @endforelse
                     </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Customer section: quick access to client name, number, domain, contact, and site --}}
+        <div class="accordion-item border rounded mb-2 overflow-hidden">
+            <h2 class="accordion-header" id="ticketCustomerHeading">
+                <button
+                    class="accordion-button py-2 px-3"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#ticketCustomerCollapse"
+                    aria-expanded="true"
+                    aria-controls="ticketCustomerCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-person-vcard" aria-hidden="true"></i>
+                        <span>Customer</span>
+                        @if($ticket->client)
+                            <span class="badge text-bg-light border text-truncate" style="max-width: 12em;">{{ $ticket->client->name }}</span>
+                        @endif
+                    </span>
+                </button>
+            </h2>
+            <div
+                id="ticketCustomerCollapse"
+                class="accordion-collapse collapse show"
+                aria-labelledby="ticketCustomerHeading"
+                data-bs-parent="#ticketRightbarAccordion">
+                <div class="accordion-body p-3">
+                    @if($ticket->client)
+                        <div class="small">
+                            {{-- Client name and number --}}
+                            <div class="fw-semibold text-truncate mb-1">{{ $ticket->client->name }}</div>
+                            @if($ticket->client->client_number)
+                                <div class="text-muted mb-1">{{ $ticket->client->client_number }}</div>
+                            @endif
+                            @if($ticket->client->website)
+                                <div class="text-truncate mb-1">
+                                    <i class="bi bi-globe small" aria-hidden="true"></i>
+                                    <a href="{{ $ticket->client->website }}" target="_blank" rel="noopener" class="text-decoration-none">{{ preg_replace('#^https?://(www\.)?#', '', $ticket->client->website) }}</a>
+                                </div>
+                            @endif
+
+                            {{-- Contact person --}}
+                            @if($ticket->contact)
+                                <div class="border-top mt-2 pt-2">
+                                    <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Contact</div>
+                                    <div class="fw-semibold">{{ $ticket->contact->name }}</div>
+                                    @if($ticket->contact->email)
+                                        <div class="text-truncate">
+                                            <i class="bi bi-envelope small" aria-hidden="true"></i>
+                                            <a href="mailto:{{ $ticket->contact->email }}" class="text-decoration-none">{{ $ticket->contact->email }}</a>
+                                        </div>
+                                    @endif
+                                    @if($ticket->contact->phone)
+                                        <div>
+                                            <i class="bi bi-telephone small" aria-hidden="true"></i>
+                                            <a href="tel:{{ $ticket->contact->phone }}" class="text-decoration-none">{{ $ticket->contact->phone }}</a>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+
+                            {{-- Site --}}
+                            @if($ticket->site)
+                                <div class="border-top mt-2 pt-2">
+                                    <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Site</div>
+                                    <div class="fw-semibold">{{ $ticket->site->name }}</div>
+                                    @if($ticket->site->address)
+                                        <div>{{ $ticket->site->address }}</div>
+                                    @endif
+                                    @if($ticket->site->zip || $ticket->site->city)
+                                        <div>{{ trim(($ticket->site->zip ?? '') . ' ' . ($ticket->site->city ?? '')) }}</div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        <p class="text-muted small mb-0">No client assigned.</p>
+                    @endif
                 </div>
             </div>
         </div>
