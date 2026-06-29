@@ -243,9 +243,15 @@
                         </form>
                     @endif
 
-                    <button class="btn btn-outline-dark" @if(!$validation['ready']) disabled @endif>
-                        <i class="bi bi-file-earmark-pdf me-2"></i> Download PDF
-                    </button>
+                    @if($validation['pdf_available'])
+                        <a href="{{ route('tech.contracts.pdf', $contract) }}" class="btn btn-outline-dark">
+                            <i class="bi bi-file-earmark-pdf me-2"></i> Download PDF
+                        </a>
+                    @else
+                        <button class="btn btn-outline-dark" disabled>
+                            <i class="bi bi-file-earmark-pdf me-2"></i> Download PDF
+                        </button>
+                    @endif
                     <hr>
                     @if($contract->isEditable())
                         <a href="{{ route('tech.contracts.edit', $contract) }}" class="btn btn-sm btn-outline-warning">

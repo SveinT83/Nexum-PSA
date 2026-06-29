@@ -7,6 +7,7 @@ use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Commercial\Models\Cost;
+use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Controllers\Admin\UnitsController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
@@ -1148,6 +1149,59 @@ class CommercialModuleTest extends TestCase
         $this->assertSame(
             PublicContractController::class . '@view',
             Route::getRoutes()->getByName('contracts.public.view')->getActionName()
+        );
+    }
+
+    #[Test]
+    public function contract_pdf_route_is_owned_by_commercial_module(): void
+    {
+        $this->assertSame(
+            ContractController::class . '@pdf',
+            Route::getRoutes()->getByName('tech.contracts.pdf')->getActionName()
+        );
+    }
+
+    #[Test]
+    public function tech_user_can_download_contract_pdf_from_contract_show(): void
+    {
+        $client = Client::factory()->create(['name' => 'PDF Client']);
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'PDF ready contract.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'draft',
+            'terms_snapshot' => 'PDF terms and conditions.',
+            'created_by' => $this->tech->id,
+        ]);
+        ContractItem::query()->create([
+            'contract_id' => $contract->id,
+            'name' => 'Managed support',
+            'sku' => 'SUPPORT',
+            'unit_price' => 1500,
+            'quantity' => 2,
+            'unit' => 'month',
+            'billing_interval' => 'monthly',
+            'uses_contract_default_sla' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.contracts.show', $contract))
+            ->assertOk()
+            ->assertSee(route('tech.contracts.pdf', $contract), false);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.contracts.pdf', $contract));
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+        $this->assertStringContainsString(
+            'attachment; filename="contract-'.$contract->id.'-pdf-client.pdf"',
+            $response->headers->get('content-disposition')
         );
     }
 

@@ -15,6 +15,7 @@ The contract must not depend directly on mutable service defaults after it has b
 5. Legal terms, DPA content, SLA text, and general clauses are collected from the selected services.
 6. The generated snapshots can be reviewed and edited before the contract is sent.
 7. The public contract view exposes the agreed services, SLA, rates, and legal content for acceptance.
+8. Technicians can download a PDF artifact from the contract show page once the contract is ready, sent, or won.
 
 ## Contract List Workflow
 
@@ -29,6 +30,12 @@ The search card supports:
 - Sortable table headings for id, client, status, start date, end date, monthly price, and yearly profit.
 
 Rows are clickable and open the contract detail view. The client name remains a direct link to the client record.
+
+## Contract PDF
+
+The contract show action card exposes `Download PDF` through `tech.contracts.pdf`. The export renders a PDF-specific Blade view with internal CSS through Dompdf, so it does not depend on external CDN assets. The PDF includes contract metadata, client identity, service lines, negotiated time rates, SLA snapshots, terms, DPA/legal snapshots, and acceptance details for won contracts.
+
+PDF export is available when the contract is ready for sending, or when it has already been sent as a quote, sent as a binding contract, or won. Incomplete drafts keep the PDF button disabled.
 
 ## Service Snapshots
 

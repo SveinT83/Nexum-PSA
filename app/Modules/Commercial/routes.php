@@ -38,6 +38,8 @@ Route::get('/contracts', [ContractController::class, 'index'])
     ->name('contracts.index');
 Route::get('/contracts/show/{contract}', [ContractController::class, 'show'])
     ->name('contracts.show');
+Route::get('/contracts/{contract}/pdf', [ContractController::class, 'pdf'])
+    ->name('contracts.pdf');
 Route::get('/contracts/create', [ContractController::class, 'create'])
     ->name('contracts.create');
 Route::post('/contracts/store', [ContractController::class, 'store'])
