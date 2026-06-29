@@ -1,5 +1,17 @@
 The N-able RMM integration synchronizes clients, sites, and assets between N-able RMM and Nexum PSA.
 
+MSP Manager ticket comments can be mirrored into Nexum tickets through the Ticket API endpoint:
+
+```text
+POST /api/v1/tickets/{ticket}/external-messages
+```
+
+Use `source = msp_manager` and a stable MSP Manager comment or answer ID as `external_id`. The
+endpoint is idempotent: sending the same `source` and `external_id` updates the existing
+`TicketMessage` instead of creating a duplicate. Imported external messages are stored with
+`author_type = external`, keep external author metadata, mark the Nexum ticket unread, and do not
+trigger outbound Nexum email.
+
 ## Requirements
 
 The integration must be active and configured with:

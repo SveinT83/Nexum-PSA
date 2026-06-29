@@ -11,6 +11,7 @@ use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\StoreTicket;
+use App\Modules\Ticket\Actions\SyncExternalTicketMessage;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketPriority;
@@ -232,6 +233,45 @@ class TicketController extends Controller
         return new TicketResource($this->loadTicket($ticket->refresh()));
     }
 
+    #[OA\Post(
+        path: '/api/v1/tickets/{ticket}/external-messages',
+        operationId: 'syncExternalTicketMessage',
+        description: 'Creates or updates an idempotent externally sourced ticket message, such as an N-able MSP Manager comment.',
+        summary: 'Sync external ticket message',
+        security: [['bearerAuth' => []]],
+        tags: ['Tickets'],
+        parameters: [
+            new OA\Parameter(name: 'ticket', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'External message updated'),
+            new OA\Response(response: 201, description: 'External message created'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Missing tickets.update scope'),
+            new OA\Response(response: 404, description: 'Ticket not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    public function storeExternalMessage(Request $request, Ticket $ticket, SyncExternalTicketMessage $syncExternalTicketMessage)
+    {
+        [$message, $created] = $syncExternalTicketMessage->handle($ticket, $this->validateExternalMessagePayload($request));
+
+        return response()->json([
+            'data' => [
+                'id' => $message->id,
+                'ticket_key' => $ticket->ticket_key,
+                'type' => $message->type,
+                'visibility' => $message->visibility,
+                'subject' => $message->subject,
+                'body' => $message->body,
+                'metadata' => $message->metadata,
+                'created_at' => $message->created_at?->toISOString(),
+                'updated_at' => $message->updated_at?->toISOString(),
+            ],
+            'created' => $created,
+        ], $created ? 201 : 200);
+    }
+
     private function validateStorePayload(Request $request): array
     {
         return $request->validate([
@@ -265,6 +305,22 @@ class TicketController extends Controller
             'owner_id' => ['sometimes', 'nullable', Rule::exists((new User())->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
             'site_id' => ['sometimes', 'nullable', Rule::exists('client_sites', 'id')],
             'asset_id' => ['sometimes', 'nullable', Rule::exists('assets', 'id')],
+        ]);
+    }
+
+    private function validateExternalMessagePayload(Request $request): array
+    {
+        return $request->validate([
+            'source' => ['required', 'string', 'max:100'],
+            'external_id' => ['required', 'string', 'max:255'],
+            'type' => ['nullable', Rule::in(['internal_note', 'customer_reply'])],
+            'visibility' => ['nullable', Rule::in(['internal', 'public'])],
+            'subject' => ['nullable', 'string', 'max:255'],
+            'body' => ['required', 'string'],
+            'author_name' => ['nullable', 'string', 'max:255'],
+            'author_email' => ['nullable', 'email', 'max:255'],
+            'occurred_at' => ['nullable', 'date'],
+            'metadata' => ['nullable', 'array'],
         ]);
     }
 

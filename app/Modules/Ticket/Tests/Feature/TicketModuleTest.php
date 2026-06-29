@@ -169,6 +169,7 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketSettingsController::class . '@storeWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.store')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@editWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.edit')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@updateWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.update')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Api\V1\TicketController::class . '@storeExternalMessage', Route::getRoutes()->getByName('api.v1.tickets.external-messages.store')->getActionName());
     }
 
     #[Test]
@@ -262,6 +263,75 @@ class TicketModuleTest extends TestCase
             'ticket_id' => $ticket->id,
             'type' => 'status_changed',
         ]);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_sync_external_msp_manager_comments_idempotently(): void
+    {
+        Queue::fake([SendTicketReplyEmail::class]);
+
+        $client = Client::factory()->create(['name' => 'MSP Manager Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999045',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'subject' => 'MSP Manager synced ticket',
+            'is_unread' => false,
+        ]);
+
+        Sanctum::actingAs($this->tech, ['tickets.update']);
+
+        $payload = [
+            'source' => 'msp_manager',
+            'external_id' => 'comment-8842',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'subject' => 'MSP Manager response',
+            'body' => 'Technician answered from MSP Manager.',
+            'author_name' => 'N-able Technician',
+            'author_email' => 'tech@example.test',
+            'occurred_at' => now()->subMinutes(5)->toISOString(),
+        ];
+
+        $this->postJson(route('api.v1.tickets.external-messages.store', $ticket), $payload)
+            ->assertCreated()
+            ->assertJsonPath('created', true)
+            ->assertJsonPath('data.metadata.external_source', 'msp_manager')
+            ->assertJsonPath('data.metadata.external_id', 'comment-8842');
+
+        $this->postJson(route('api.v1.tickets.external-messages.store', $ticket), array_merge($payload, [
+            'body' => 'Technician updated the MSP Manager response.',
+        ]))
+            ->assertOk()
+            ->assertJsonPath('created', false)
+            ->assertJsonPath('data.body', 'Technician updated the MSP Manager response.');
+
+        $this->assertSame(1, TicketMessage::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('metadata->external_source', 'msp_manager')
+            ->where('metadata->external_id', 'comment-8842')
+            ->count());
+
+        $message = TicketMessage::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('metadata->external_id', 'comment-8842')
+            ->firstOrFail();
+
+        $this->assertSame('external', $message->author_type);
+        $this->assertSame('customer_reply', $message->type);
+        $this->assertSame('public', $message->visibility);
+        $this->assertSame('N-able Technician', $message->metadata['external_author_name']);
+        $this->assertTrue($ticket->fresh()->is_unread);
+        $this->assertNotNull($ticket->fresh()->first_responded_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'external_message_synced',
+        ]);
+
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
     }
 
     #[Test]
