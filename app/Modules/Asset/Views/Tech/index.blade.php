@@ -90,6 +90,26 @@
                         <option value="in_service" {{ request('status') == 'in_service' ? 'selected' : '' }}>In Service</option>
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <label for="sensitivity_level" class="form-label text-muted small fw-bold text-uppercase">Sensitivity</label>
+                    <select name="sensitivity_level" id="sensitivity_level" class="form-select">
+                        <option value="">All Sensitivity</option>
+                        <option value="low" {{ request('sensitivity_level') == 'low' ? 'selected' : '' }}>Low</option>
+                        <option value="medium" {{ request('sensitivity_level') == 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="high" {{ request('sensitivity_level') == 'high' ? 'selected' : '' }}>High</option>
+                        <option value="ultra" {{ request('sensitivity_level') == 'ultra' ? 'selected' : '' }}>Ultra</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="criticality_level" class="form-label text-muted small fw-bold text-uppercase">Criticality</label>
+                    <select name="criticality_level" id="criticality_level" class="form-select">
+                        <option value="">All Criticality</option>
+                        <option value="low" {{ request('criticality_level') == 'low' ? 'selected' : '' }}>Low</option>
+                        <option value="medium" {{ request('criticality_level') == 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="high" {{ request('criticality_level') == 'high' ? 'selected' : '' }}>High</option>
+                        <option value="critical" {{ request('criticality_level') == 'critical' ? 'selected' : '' }}>Critical</option>
+                    </select>
+                </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" name="has_alerts" value="1" id="has_alerts" {{ request('has_alerts') ? 'checked' : '' }}>
@@ -145,6 +165,7 @@
                                     Status <i class="bi {{ $sortIcon('status') }}"></i>
                                 </a>
                             </th>
+                            <th>Classification</th>
                             <th>
                                 <a href="{{ $sortLink('last_seen_at') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
                                     Last Seen <i class="bi {{ $sortIcon('last_seen_at') }}"></i>
@@ -191,12 +212,29 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if($asset->sensitivity_level)
+                                        <span class="badge bg-warning text-dark border me-1">
+                                            S: {{ ucfirst($asset->sensitivity_level) }}
+                                        </span>
+                                    @endif
+
+                                    @if($asset->criticality_level)
+                                        <span class="badge {{ $asset->criticality_level === 'critical' ? 'bg-danger' : 'bg-info text-dark' }} border">
+                                            C: {{ ucfirst($asset->criticality_level) }}
+                                        </span>
+                                    @endif
+
+                                    @if(!$asset->sensitivity_level && !$asset->criticality_level)
+                                        <span class="text-muted small">—</span>
+                                    @endif
+                                </td>
+                                <td>
                                     <small class="{{ $asset->last_seen_at ? '' : 'text-muted' }}">{{ $asset->last_seen_at ? $asset->last_seen_at->diffForHumans() : '—' }}</small>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
+                                <td colspan="6" class="text-center py-5 text-muted">
                                     <i class="bi bi-cpu-fill display-4 d-block mb-3 opacity-25"></i>
                                     No assets found matching your criteria.
                                 </td>

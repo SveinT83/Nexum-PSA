@@ -7,6 +7,7 @@ use App\Modules\Email\Actions\EnsureDefaultEmailTemplates;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Marketing\Actions\CountMarketingCampaignAudienceRecipients;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
 use App\Modules\Marketing\Models\MarketingCampaign;
 use App\Modules\Marketing\Models\MarketingCampaignEvent;
@@ -23,6 +24,7 @@ class MarketingController extends Controller
         EnsureDefaultEmailTemplates $emailDefaults,
         DefaultEmailAccountResolver $accountResolver,
         MarketingSettings $settings,
+        CountMarketingCampaignAudienceRecipients $audienceCounter,
     ): View
     {
         $defaults->handle();
@@ -42,6 +44,16 @@ class MarketingController extends Controller
             ->pluck('aggregate', 'type');
 
         $marketingDefaultAccount = $accountResolver->forScope('marketing');
+        $recentCampaigns = MarketingCampaign::query()
+            ->with(['list.members', 'lists.members', 'emailAccount'])
+            ->withCount(['emails', 'recipients'])
+            ->latest('updated_at')
+            ->limit(8)
+            ->get();
+
+        foreach ($recentCampaigns as $campaign) {
+            $campaign->setAttribute('audience_recipients_count', $audienceCounter->handle($campaign));
+        }
 
         return view('marketing::Tech.index', [
             'dashboard' => [
@@ -71,12 +83,7 @@ class MarketingController extends Controller
                     ->count(),
             ],
             'marketingDefaultAccount' => $marketingDefaultAccount,
-            'recentCampaigns' => MarketingCampaign::query()
-                ->with(['list', 'emailAccount'])
-                ->withCount(['emails', 'recipients'])
-                ->latest('updated_at')
-                ->limit(8)
-                ->get(),
+            'recentCampaigns' => $recentCampaigns,
             'dueRecipients' => MarketingCampaignRecipient::query()
                 ->with(['campaign', 'campaignEmail.template'])
                 ->where('status', 'pending')

@@ -30,6 +30,8 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('client_users')->onDelete('set null');
             $table->enum('ip_type', ['dhcp', 'fixed'])->default('dhcp');
             $table->foreignId('vendor_id')->nullable()->constrained('vendors')->onDelete('set null');
+            $table->enum('sensitivity_level', ['low', 'medium', 'high', 'ultra'])->nullable()->after('vendor_id');
+            $table->enum('criticality_level', ['low', 'medium', 'high', 'critical'])->nullable()->after('sensitivity_level');
             $table->timestamp('last_seen_at')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();

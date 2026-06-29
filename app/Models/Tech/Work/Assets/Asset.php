@@ -23,6 +23,30 @@ class Asset extends Model
     public const TYPE_MOBILE = 'mobile';
     public const TYPE_OTHER = 'other';
 
+    public const SENSITIVITY_LOW = 'low';
+    public const SENSITIVITY_MEDIUM = 'medium';
+    public const SENSITIVITY_HIGH = 'high';
+    public const SENSITIVITY_ULTRA = 'ultra';
+
+    public const CRITICALITY_LOW = 'low';
+    public const CRITICALITY_MEDIUM = 'medium';
+    public const CRITICALITY_HIGH = 'high';
+    public const CRITICALITY_CRITICAL = 'critical';
+
+    public const SENSITIVITY_LEVELS = [
+        self::SENSITIVITY_LOW,
+        self::SENSITIVITY_MEDIUM,
+        self::SENSITIVITY_HIGH,
+        self::SENSITIVITY_ULTRA,
+    ];
+
+    public const CRITICALITY_LEVELS = [
+        self::CRITICALITY_LOW,
+        self::CRITICALITY_MEDIUM,
+        self::CRITICALITY_HIGH,
+        self::CRITICALITY_CRITICAL,
+    ];
+
     protected $fillable = [
         'client_id',
         'site_id',
@@ -42,6 +66,8 @@ class Asset extends Model
         'status',
         'last_seen_at',
         'metadata',
+        'sensitivity_level',
+        'criticality_level',
     ];
 
     protected $casts = [

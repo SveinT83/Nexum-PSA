@@ -4,8 +4,10 @@ namespace App\Modules\Marketing\Models;
 
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MarketingCampaign extends Model
@@ -71,6 +73,27 @@ class MarketingCampaign extends Model
     public function list(): BelongsTo
     {
         return $this->belongsTo(MarketingList::class, 'marketing_list_id');
+    }
+
+    public function lists(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            MarketingList::class,
+            'marketing_campaign_marketing_list',
+            'marketing_campaign_id',
+            'marketing_list_id'
+        )->withTimestamps();
+    }
+
+    public function audienceLists(): EloquentCollection
+    {
+        $this->loadMissing(['lists', 'list']);
+
+        if ($this->lists->isNotEmpty()) {
+            return $this->lists;
+        }
+
+        return new EloquentCollection($this->list ? [$this->list] : []);
     }
 
     public function emailAccount(): BelongsTo

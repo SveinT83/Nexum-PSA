@@ -51,8 +51,10 @@ marketing interest should be consumed by Sales/Leads sorting, Lead Heat, and cla
 
 Technicians with `marketing.list.manage` can create and edit lists from `/tech/marketing/lists`. The
 current audiences are `all_business_contacts` and `manual_contacts`. The all-business audience can
-be segmented by shared Contact and Client tags. Either audience can include manually selected
-existing Contacts.
+be segmented by shared Contact and Client tags, client industry category, contract status, postcode,
+county, and country. Location criteria match Contact address, legacy client user, and Client Site
+fields. Either audience can include manually selected existing Contacts and legacy client contacts
+that have not yet been linked to first-class Contacts.
 
 List resolution includes:
 
@@ -62,7 +64,9 @@ List resolution includes:
 - Legacy `client_users` without a linked Contact while compatibility migration continues.
 - Selected Contact tags, when the list has Contact tag criteria.
 - Selected Client tags, when the list has Client tag criteria.
+- Selected Client industry categories, contract status, postcode, county, and country.
 - Selected manual Contacts, when the list has manual Contact criteria.
+- Selected manual legacy `client_users`, when the list has manual client contact criteria.
 - Contacts removed from this specific list are excluded from future refreshes until they are added
   again.
 
@@ -76,31 +80,38 @@ first-class Contacts. Removal is a Marketing list exclusion, not a Contact prefe
 not set `do_not_email` or change global consent.
 
 The edit page lets list managers delete unused mailing lists. Deletion removes the list and its
-resolved members, but never deletes Contacts. Lists used by campaigns are protected from deletion so
-campaign sequence, recipient, and tracking history is preserved.
+resolved members, but never deletes Contacts. Lists used by campaigns are protected from deletion
+whether they are the legacy primary list or one of the selected campaign audience lists, so campaign
+sequence, recipient, and tracking history is preserved.
 
-Contact tag criteria only match first-class Contacts. Client tag criteria match Contacts related to
-tagged Clients and legacy `client_users` that belong to tagged Clients.
+Contact tag criteria only match first-class Contacts. Client tag, industry, contract, and location
+criteria match Contacts related to matching Clients and legacy `client_users` that belong to
+matching Clients.
 
-Manual Contact criteria resolve only first-class Contacts. They use the same eligibility rules as
-automatic segments, so opted-out, inactive, or email-less Contacts are not materialized as
-recipients even if their ID remains in the saved list criteria.
+Manual Contact criteria resolve first-class Contacts, and manual client contact criteria resolve
+legacy `client_users` that are not linked to Contacts yet. First-class manual Contacts use the same
+eligibility rules as automatic segments, so opted-out, inactive, or email-less Contacts are not
+materialized as recipients even if their ID remains in the saved list criteria.
 
 Default consent categories are seeded on Marketing page access: Newsletter, Security, Websites, and
 Cloud. Default interest tags prepare later open/click tracking and Sales categorization.
 
 ## Campaigns
 
-Marketing campaigns are created as drafts from a mailing list, send rhythm, sender account, and
-send preferences. Campaign emails are added after the campaign exists from the campaign detail page.
+Marketing campaigns are created as drafts from one or more mailing lists, send rhythm, sender
+account, and send preferences. Campaign emails are added after the campaign exists from the campaign detail page.
 Each campaign email uses an active Email template with the `marketing` scope as its starting point,
 then stores its own subject, HTML body, plaintext body, and template metadata as a snapshot. Each
 campaign can choose a sender account. If it does not, Marketing uses the active Email account marked
 as default for the `marketing` scope.
 
 A campaign must be approved by a technician with `marketing.campaign.approve` before sending. On
-approval, Marketing creates `marketing_campaign_recipients` rows from the current resolved list
-members. The queue stores due time, status, attempts, message id, and tracking token.
+approval, Marketing creates `marketing_campaign_recipients` rows from the current resolved members
+in every selected audience list. Recipients are deduplicated by Contact, legacy `client_users`
+identity, and normalized email address before queue rows are created. The queue stores due time,
+status, attempts, message id, and tracking token.
+Draft and paused campaigns expose a deduplicated audience recipient count from their selected
+lists, while actual recipient queue rows remain approval-only.
 
 Campaigns can contain multiple ordered emails. Technicians with `marketing.campaign.edit` can add a
 new sequence email from a start template, edit the campaign email name, subject, HTML body, plaintext
@@ -134,7 +145,7 @@ recreating the campaign.
 
 Preview uses the editable HTML body in the campaign email form. Known recipient/company
 placeholders such as `contact_name`, `client_name`, `company_name`, and `unsubscribe_url` are
-rendered with real campaign/list context when available, then clear sample values. Unknown
+rendered with real campaign/audience-list context when available, then clear sample values. Unknown
 placeholders stay visible in preview so operators can see that the system does not know what data
 should replace them. Test-send uses the current editor fields and sends through the campaign sender
 account or the default `marketing` account. The test recipient defaults to the current technician

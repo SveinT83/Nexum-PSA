@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Marketing\Actions\ApproveMarketingCampaign;
 use App\Modules\Marketing\Actions\BuildMarketingCampaignEmailSnapshot;
+use App\Modules\Marketing\Actions\CountMarketingCampaignAudienceRecipients;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignEmailWithAi;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignPlanWithAi;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
@@ -42,12 +43,17 @@ class MarketingCampaignController extends Controller
         'new_recipient_policy',
     ];
 
+    public function __construct(
+        private readonly CountMarketingCampaignAudienceRecipients $audienceCounter,
+    ) {
+    }
+
     public function index(Request $request, EnsureMarketingDefaults $defaults)
     {
         $defaults->handle();
 
         $query = MarketingCampaign::query()
-            ->with(['list', 'emailAccount'])
+            ->with(['list.members', 'lists.members', 'emailAccount'])
             ->withCount(['emails', 'recipients', 'events'])
             ->latest('updated_at');
 
@@ -56,17 +62,29 @@ class MarketingCampaignController extends Controller
             $query->where(function ($inner) use ($needle): void {
                 $inner->where('name', 'like', $needle)
                     ->orWhere('description', 'like', $needle)
-                    ->orWhereHas('list', fn ($list) => $list->where('name', 'like', $needle));
+                    ->orWhereHas('list', fn ($list) => $list->where('name', 'like', $needle))
+                    ->orWhereHas('lists', fn ($list) => $list->where('name', 'like', $needle));
             });
         }
 
-        foreach (['status', 'marketing_list_id', 'email_account_id'] as $field) {
+        foreach (['status', 'email_account_id'] as $field) {
             if ($request->filled($field)) {
-                $query->where($field, in_array($field, ['marketing_list_id', 'email_account_id'], true) ? $request->integer($field) : $request->input($field));
+                $query->where($field, $field === 'email_account_id' ? $request->integer($field) : $request->input($field));
             }
         }
 
-        return MarketingCampaignResource::collection($query->paginate($request->integer('per_page') ?: 15));
+        if ($request->filled('marketing_list_id')) {
+            $listId = $request->integer('marketing_list_id');
+            $query->where(function ($inner) use ($listId): void {
+                $inner->where('marketing_list_id', $listId)
+                    ->orWhereHas('lists', fn ($list) => $list->whereKey($listId));
+            });
+        }
+
+        $campaigns = $query->paginate($request->integer('per_page') ?: 15);
+        $this->attachAudienceRecipientCounts($campaigns->getCollection());
+
+        return MarketingCampaignResource::collection($campaigns);
     }
 
     public function store(
@@ -77,11 +95,12 @@ class MarketingCampaignController extends Controller
     ) {
         $defaults->handle();
         $data = $this->validatedCampaignData($request, creating: true);
+        $marketingListIds = $this->campaignListIds($data);
         $schedule = $this->normalizeSchedulePayload($data);
         $settingsPayload = $settings->get();
 
         $campaign = MarketingCampaign::query()->create([
-            'marketing_list_id' => $data['marketing_list_id'],
+            'marketing_list_id' => $marketingListIds[0],
             'email_account_id' => $data['email_account_id'] ?? null,
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
@@ -98,7 +117,12 @@ class MarketingCampaignController extends Controller
             'updated_by' => $request->user()?->id,
         ]);
 
-        $resolve->handle($campaign->list);
+        $campaign->lists()->sync($marketingListIds);
+
+        $campaign->load('lists');
+        foreach ($campaign->lists as $list) {
+            $resolve->handle($list);
+        }
 
         return (new MarketingCampaignResource($this->loadCampaign($campaign)))
             ->response()
@@ -119,15 +143,20 @@ class MarketingCampaignController extends Controller
         abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign can only be changed before completion.');
 
         $data = $this->validatedCampaignData($request, creating: false);
-        $listChanged = array_key_exists('marketing_list_id', $data)
-            && (int) $data['marketing_list_id'] !== (int) $campaign->marketing_list_id;
+        $marketingListIds = $this->campaignListIds($data);
+        $listChanged = $marketingListIds !== []
+            && $campaign->audienceLists()->pluck('id')->sort()->values()->all() !== collect($marketingListIds)->sort()->values()->all();
         $scheduleChanged = $this->hasScheduleData($data);
         $attributes = ['updated_by' => $request->user()?->id];
 
-        foreach (['name', 'description', 'marketing_list_id', 'email_account_id'] as $field) {
+        foreach (['name', 'description', 'email_account_id'] as $field) {
             if (array_key_exists($field, $data)) {
                 $attributes[$field] = $data[$field];
             }
+        }
+
+        if ($marketingListIds !== []) {
+            $attributes['marketing_list_id'] = $marketingListIds[0];
         }
 
         foreach (['track_opens', 'track_clicks'] as $field) {
@@ -152,18 +181,26 @@ class MarketingCampaignController extends Controller
 
         $campaign->forceFill($attributes)->save();
 
+        if ($marketingListIds !== []) {
+            $campaign->lists()->sync($marketingListIds);
+        }
+
         $created = 0;
         $rescheduled = 0;
         if ($listChanged) {
-            $resolve->handle($campaign->fresh()->list);
+            $campaign = $campaign->fresh(['lists', 'list']);
+
+            foreach ($campaign->audienceLists() as $list) {
+                $resolve->handle($list);
+            }
 
             if (in_array($campaign->status, ['approved', 'active'], true)) {
-                $created = $syncRecipients->handle($campaign->fresh(['emails', 'list.members', 'recipients']));
+                $created = $syncRecipients->handle($campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients']));
             }
         }
 
         if ($scheduleChanged) {
-            $rescheduled = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
+            $rescheduled = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients']));
         }
 
         return (new MarketingCampaignResource($this->loadCampaign($campaign)))
@@ -193,7 +230,7 @@ class MarketingCampaignController extends Controller
             'updated_by' => $request->user()?->id,
         ])->save();
 
-        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
+        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients']));
 
         return (new MarketingCampaignResource($this->loadCampaign($campaign)))
             ->additional(['meta' => ['rescheduled_pending_recipients' => $updated]]);
@@ -228,7 +265,7 @@ class MarketingCampaignController extends Controller
         ]);
 
         $created = in_array($campaign->status, ['approved', 'active'], true)
-            ? $syncRecipients->handle($campaign->fresh(['emails', 'list.members']))
+            ? $syncRecipients->handle($campaign->fresh(['emails', 'lists.members', 'list.members']))
             : 0;
 
         return (new MarketingCampaignEmailResource($this->loadCampaignEmail($email)))
@@ -279,7 +316,7 @@ class MarketingCampaignController extends Controller
             'status' => $data['status'],
         ]))->save();
 
-        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
+        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients']));
 
         return (new MarketingCampaignEmailResource($this->loadCampaignEmail($email)))
             ->additional(['meta' => ['rescheduled_pending_recipients' => $updated]]);
@@ -414,12 +451,15 @@ class MarketingCampaignController extends Controller
     private function validatedCampaignData(Request $request, bool $creating): array
     {
         $nameRule = $creating ? 'required' : 'sometimes';
-        $listRule = $creating ? 'required' : 'sometimes';
+        $listRule = $creating ? 'required_without:marketing_list_ids' : 'sometimes';
+        $listIdsRule = $creating ? 'required_without:marketing_list_id' : 'sometimes';
 
         return $request->validate([
             'name' => [$nameRule, 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'marketing_list_id' => [$listRule, 'exists:marketing_lists,id'],
+            'marketing_list_id' => [$listRule, 'integer', 'exists:marketing_lists,id'],
+            'marketing_list_ids' => [$listIdsRule, 'array', 'min:1'],
+            'marketing_list_ids.*' => ['integer', 'distinct', 'exists:marketing_lists,id'],
             'email_account_id' => ['sometimes', 'nullable', 'exists:email_accounts,id'],
             'starts_at' => ['nullable', 'date'],
             'schedule_frequency' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SCHEDULE_FREQUENCIES))],
@@ -437,6 +477,22 @@ class MarketingCampaignController extends Controller
             'track_opens' => ['nullable', 'boolean'],
             'track_clicks' => ['nullable', 'boolean'],
         ]);
+    }
+
+    private function campaignListIds(array $data): array
+    {
+        $ids = collect($data['marketing_list_ids'] ?? []);
+
+        if ($ids->isEmpty() && ! empty($data['marketing_list_id'])) {
+            $ids->push((int) $data['marketing_list_id']);
+        }
+
+        return $ids
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function validatedScheduleData(Request $request): array
@@ -618,6 +674,7 @@ class MarketingCampaignController extends Controller
         $campaign = $campaign->fresh() ?: $campaign;
         $campaign->load([
             'list',
+            'lists',
             'emailAccount',
             'approver',
             'emails' => fn ($query) => $query
@@ -639,7 +696,16 @@ class MarketingCampaignController extends Controller
             ]);
         }
 
+        $campaign->setAttribute('audience_recipients_count', $this->audienceCounter->handle($campaign));
+
         return $campaign;
+    }
+
+    private function attachAudienceRecipientCounts(iterable $campaigns): void
+    {
+        foreach ($campaigns as $campaign) {
+            $campaign->setAttribute('audience_recipients_count', $this->audienceCounter->handle($campaign));
+        }
     }
 
     private function loadCampaignEmail(MarketingCampaignEmail $email): MarketingCampaignEmail

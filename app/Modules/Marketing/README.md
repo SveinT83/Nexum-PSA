@@ -23,8 +23,10 @@ The implemented foundation now covers:
   sender setup.
 - Marketing list tables for consent categories, interest tags, lists, and resolved members.
 - Mailing list UI under `/tech/marketing/lists`.
-- Mailing list audience modes for all business contacts or manually selected Contacts only.
-- Mailing list segmentation by shared Contact and Client tags.
+- Mailing list audience modes for all business contacts or manually selected Contacts and legacy
+  client contacts.
+- Mailing list segmentation by shared Contact and Client tags, client industry, contract status,
+  postcode, county, and country.
 - Mailing list edit flow plus manual Contact additions/removals from existing Contacts with active
   email addresses, and guarded deletion for lists that are not used by campaigns.
 - Default consent categories and interest tags.
@@ -55,11 +57,12 @@ and classification in the Sales/Leads module.
 ## Mailing Lists
 
 Mailing lists currently support the `all_business_contacts` and `manual_contacts` audiences. Lists
-can optionally segment all business contacts by shared Contact tags and Client tags, and can also
-include manually selected existing Contacts. Contact tag criteria only match first-class Contacts.
-Client tag criteria match both first-class Contacts related to a tagged Client and legacy
-`client_users` on a tagged Client while compatibility migration continues. Manual contacts are
-resolved from first-class Contacts only.
+can optionally segment all business contacts by shared Contact tags, Client tags, client industry
+category, contract status, postcode, county, and country. Location criteria match Contact address,
+legacy client user, and Client Site fields. Contact tag criteria only match first-class Contacts.
+Client-level criteria match both first-class Contacts related to a matching Client and legacy
+`client_users` on a matching Client while compatibility migration continues. Manual selections can
+include first-class Contacts and legacy `client_users` that have not yet been linked to Contacts.
 
 Resolution materializes members into `marketing_list_members` so future campaign sends can use a
 stable recipient snapshot. Refresh rebuilds criteria-driven members, but preserves members promoted
@@ -72,9 +75,9 @@ future refreshes until they are added again. This does not mark the Contact as `
 only changes membership for that Marketing list.
 
 Unused mailing lists can be deleted from the edit screen. Deleting a list removes its resolved list
-members but does not delete Contacts. Lists already used by campaigns are protected from deletion so
-campaign sequence, recipient, and tracking history is not removed through the existing campaign
-foreign-key cascade.
+members but does not delete Contacts. Lists already used by campaigns, either as the legacy primary
+campaign list or as one of the selected campaign audience lists, are protected from deletion so
+campaign sequence, recipient, and tracking history is preserved.
 
 Recipients are eligible when they are active, have an email address, and are not marked
 `do_not_email`. The default Marketing setting is opt-out, so existing business contacts are included
@@ -85,16 +88,21 @@ Manual contacts use the same eligibility rules as automatic segments. If a selec
 opts out, is inactive, or loses its email address, list refresh keeps the manual criterion but does
 not materialize that Contact as an eligible recipient.
 
-Legacy `client_users` with no linked Contact are included while the Contact migration continues.
-Recipients are deduplicated by lowercased email address before list members are stored.
+Legacy `client_users` with no linked Contact are included while the Contact migration continues, and
+can also be manually selected for manual-only lists. Recipients are deduplicated by lowercased email
+address before list members are stored.
 
 ## Campaigns
 
-Campaigns are created as drafts from a mailing list, send rhythm, sender account, and send
+Campaigns are created as drafts from one or more mailing lists, send rhythm, sender account, and send
 preferences. Campaign emails are added from the campaign detail page after the campaign exists. A
 campaign must be approved by a technician with `marketing.campaign.approve` before any recipients
-are sent. Approval materializes recipient queue rows for the selected list and active campaign
-emails.
+are sent. Approval materializes recipient queue rows for all selected audience lists and active
+campaign emails. Recipients are deduplicated by Contact, legacy `client_users` identity, and
+normalized email address so one person/email is queued once per campaign email even when they appear
+in multiple lists.
+Draft and paused campaigns still expose a deduplicated audience recipient count from the selected
+lists, but queue rows are not created until approval.
 
 Each campaign email starts from an active Email template with the `marketing` scope, then stores its
 own subject, HTML body, plaintext body, source template name, and template variables as a snapshot.
@@ -152,7 +160,7 @@ account. The test recipient defaults to the current technician email address and
 AI is exposed as a compact icon on the campaign and email editor surfaces; the prompt opens only
 when the technician expands that assist control. A seeded Marketing Campaign Agent is used when it
 can be attached to an active Integration AI provider. Without an active provider/agent, the assist
-controls stay visible but disabled inside the opened panel. AI uses campaign context, list context,
+controls stay visible but disabled inside the opened panel. AI uses campaign context, audience-list context,
 and current email content, then returns editable fields; it does not send, approve, or save the
 campaign by itself. AI-generated marketing emails are expected to include `unsubscribe_url` in the
 editable body so operators can see the unsubscribe footer in preview. External website fetching is

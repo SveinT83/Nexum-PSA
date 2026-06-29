@@ -57,6 +57,14 @@ class AssetQuery
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('sensitivity_level')) {
+            $query->where('sensitivity_level', $request->string('sensitivity_level')->toString());
+        }
+
+        if ($request->filled('criticality_level')) {
+            $query->where('criticality_level', $request->string('criticality_level')->toString());
+        }
+
         if ($request->boolean('has_alerts')) {
             $query->whereHas('alerts', function (Builder $alertQuery): void {
                 $alertQuery->where('status', 'active');

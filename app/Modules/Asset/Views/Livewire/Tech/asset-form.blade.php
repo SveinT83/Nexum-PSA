@@ -90,6 +90,37 @@
             </div>
         </div>
 
+        {{-- SECTION: Classification --}}
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h5 class="mb-3 border-bottom pb-2">Classification</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="sensitivity_level" class="form-label">Sensitivity Rating</label>
+                        <select wire:model="sensitivity_level" id="sensitivity_level" class="form-select @error('sensitivity_level') is-invalid @enderror">
+                            <option value="">Not Set</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="ultra">Ultra</option>
+                        </select>
+                        @error('sensitivity_level') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label for="criticality_level" class="form-label">Criticality Rating</label>
+                        <select wire:model="criticality_level" id="criticality_level" class="form-select @error('criticality_level') is-invalid @enderror">
+                            <option value="">Not Set</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                        @error('criticality_level') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- SECTION: Network Configuration --}}
         <div class="row mb-4">
             <div class="col-md-12">

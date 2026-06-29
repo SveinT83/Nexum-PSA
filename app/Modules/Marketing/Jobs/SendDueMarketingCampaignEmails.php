@@ -37,7 +37,7 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         SyncMarketingCampaignRecipients $syncRecipients,
     ): void {
         $campaigns = MarketingCampaign::query()
-            ->with(['emailAccount', 'emails.template', 'list.members'])
+            ->with(['emailAccount', 'emails.template', 'lists.members', 'list.members'])
             ->whereIn('status', ['approved', 'active'])
             ->when($this->campaignId, fn ($query) => $query->whereKey($this->campaignId))
             ->get();

@@ -75,24 +75,37 @@
                 <thead class="table-light">
                     <tr>
                         <th>Name</th>
-                        <th>List</th>
+                        <th>Audience Lists</th>
                         <th>Status</th>
                         <th>Emails</th>
-                        <th>Recipients</th>
+                        <th>Audience Recipients</th>
                         <th>Sender</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($campaigns as $campaign)
+                        @php($audienceLists = $campaign->audienceLists())
+                        @php($audienceRecipientsCount = (int) ($campaign->audience_recipients_count ?? $campaign->recipients_count))
                         <tr class="cursor-pointer" data-href="{{ route('tech.marketing.campaigns.show', $campaign) }}" onclick="window.location.href = this.dataset.href">
                             <td>
                                 <a href="{{ route('tech.marketing.campaigns.show', $campaign) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">{{ $campaign->name }}</a>
                                 <div class="small text-muted">{{ \Illuminate\Support\Str::limit($campaign->description, 90) ?: '—' }}</div>
                             </td>
-                            <td>{{ $campaign->list?->name ?? '—' }}</td>
+                            <td>
+                                @forelse($audienceLists as $list)
+                                    <span class="badge text-bg-light border">{{ $list->name }}</span>
+                                @empty
+                                    <span class="text-muted">—</span>
+                                @endforelse
+                            </td>
                             <td><span class="badge text-bg-{{ in_array($campaign->status, ['approved', 'active'], true) ? 'success' : 'light' }} border">{{ ucfirst($campaign->status) }}</span></td>
                             <td>{{ $campaign->emails_count }}</td>
-                            <td>{{ $campaign->recipients_count }}</td>
+                            <td>
+                                {{ number_format($audienceRecipientsCount) }}
+                                @if((int) $campaign->recipients_count > 0 && (int) $campaign->recipients_count !== $audienceRecipientsCount)
+                                    <div class="small text-muted">{{ number_format((int) $campaign->recipients_count) }} queued</div>
+                                @endif
+                            </td>
                             <td>{{ $campaign->emailAccount?->address ?? 'Marketing default' }}</td>
                         </tr>
                     @empty

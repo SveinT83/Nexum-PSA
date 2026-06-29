@@ -17,6 +17,7 @@ use App\Modules\Marketing\Controllers\Tech\MarketingController;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
+use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
 use App\Modules\Marketing\Models\MarketingCampaign;
@@ -26,6 +27,7 @@ use App\Modules\Marketing\Models\MarketingConsentCategory;
 use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Marketing\Models\MarketingListMember;
+use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -42,6 +44,120 @@ use Tests\TestCase;
 class MarketingModuleTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    public function campaigns_can_target_multiple_marketing_lists_and_deduplicate_recipients(): void
+    {
+        foreach ([
+            'marketing.view',
+            'marketing.campaign.create',
+            'marketing.campaign.edit',
+            'marketing.campaign.approve',
+        ] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo([
+            'marketing.view',
+            'marketing.campaign.create',
+            'marketing.campaign.edit',
+            'marketing.campaign.approve',
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Multi List Client AS']);
+        $shared = $this->contactForClient($client, 'Shared Recipient', 'shared@example.test');
+        $firstOnly = $this->contactForClient($client, 'First Only', 'first-only@example.test');
+        $secondOnly = $this->contactForClient($client, 'Second Only', 'second-only@example.test');
+        $duplicateEmail = $this->contactForClient($client, 'Duplicate Email', 'FIRST-ONLY@example.test');
+        $template = $this->marketingTemplate('multi_list_campaign', 'Multi-list campaign');
+
+        $firstList = MarketingList::query()->create([
+            'name' => 'First audience list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$shared->id, $firstOnly->id],
+                'excluded_contact_ids' => [],
+            ],
+        ]);
+        $secondList = MarketingList::query()->create([
+            'name' => 'Second audience list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$shared->id, $secondOnly->id, $duplicateEmail->id],
+                'excluded_contact_ids' => [],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.store'), [
+                'name' => 'Multi-list campaign',
+                'marketing_list_ids' => [$firstList->id, $secondList->id],
+                'batch_size' => 10,
+                'send_interval_minutes' => 15,
+                'track_opens' => 1,
+                'track_clicks' => 1,
+            ])
+            ->assertRedirect();
+
+        $campaign = MarketingCampaign::query()->firstOrFail();
+
+        $this->assertSame($firstList->id, $campaign->marketing_list_id);
+        $this->assertDatabaseHas('marketing_campaign_marketing_list', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_id' => $firstList->id,
+        ]);
+
+        $this->assertDatabaseHas('marketing_campaign_marketing_list', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_id' => $secondList->id,
+        ]);
+        $this->assertSame(0, MarketingCampaignRecipient::query()->where('marketing_campaign_id', $campaign->id)->count());
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.index'))
+            ->assertOk()
+            ->assertSee('Audience Recipients')
+            ->assertSee('3');
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.index'))
+            ->assertOk()
+            ->assertSee('Audience Recipients')
+            ->assertSee('3');
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.show', $campaign))
+            ->assertOk()
+            ->assertSee('First audience list')
+            ->assertSee('Second audience list')
+            ->assertSee('Audience Recipients')
+            ->assertSee('3')
+            ->assertSee('0 queued');
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.emails.store', $campaign), [
+                'email_template_id' => $template->id,
+                'email_subject' => 'Hello {{ contact_name }}',
+                'sequence_order' => 1,
+                'delay_minutes' => 0,
+            ])
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.approve', $campaign))
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign))
+            ->assertSessionHas('status', 'Campaign approved with 3 queued recipients.');
+
+        $this->assertSame(3, MarketingCampaignRecipient::query()->where('marketing_campaign_id', $campaign->id)->count());
+        $this->assertSame(1, MarketingCampaignRecipient::query()->where('email', 'shared@example.test')->count());
+        $this->assertSame(1, MarketingCampaignRecipient::query()->whereRaw('lower(email) = ?', ['first-only@example.test'])->count());
+        $this->assertSame(1, MarketingCampaignRecipient::query()->where('email', 'second-only@example.test')->count());
+    }
 
     #[Test]
     public function marketing_route_is_owned_by_marketing_module(): void
@@ -110,6 +226,7 @@ class MarketingModuleTest extends TestCase
     public function authenticated_api_user_can_manage_marketing_lists_campaigns_and_settings(): void
     {
         Queue::fake();
+        $this->travelTo(Carbon::parse('2026-06-18 10:00:00'));
 
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $client = Client::factory()->create(['name' => 'API Marketing Client AS']);
@@ -161,10 +278,20 @@ class MarketingModuleTest extends TestCase
             ->assertOk()
             ->assertJsonCount(2, 'data');
 
+        $secondListResponse = $this->postJson(route('api.v1.marketing.lists.store'), [
+            'name' => 'API duplicate audience list',
+            'description' => 'Second list for the same campaign.',
+            'audience_type' => 'manual_contacts',
+            'manual_contact_ids' => [$extraContact->id],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.members_count', 1);
+        $secondListId = $secondListResponse->json('data.id');
+
         $campaignResponse = $this->postJson(route('api.v1.marketing.campaigns.store'), [
             'name' => 'API campaign',
             'description' => 'Campaign from API test.',
-            'marketing_list_id' => $listId,
+            'marketing_list_ids' => [$listId, $secondListId],
             'schedule_frequency' => 'weekly',
             'first_send_date' => '2026-06-19',
             'send_time' => '12:00',
@@ -173,7 +300,12 @@ class MarketingModuleTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('data.status', 'draft')
-            ->assertJsonPath('data.batch_size', 25);
+            ->assertJsonPath('data.batch_size', 25)
+            ->assertJsonPath('data.marketing_list_ids.0', $listId)
+            ->assertJsonPath('data.marketing_list_ids.1', $secondListId)
+            ->assertJsonPath('data.audience_recipients_count', 2)
+            ->assertJsonPath('data.recipients_count', 0)
+            ->assertJsonCount(2, 'data.lists');
 
         $campaignId = $campaignResponse->json('data.id');
 
@@ -240,9 +372,17 @@ class MarketingModuleTest extends TestCase
             ->assertJsonPath('data.sequence_interval_unit', 'days')
             ->assertJsonPath('data.new_recipient_policy', 'join_current_step');
 
+        $campaign = MarketingCampaign::query()->findOrFail($campaignId);
+        $this->assertSame([$listId, $secondListId], $campaign->audienceLists()->pluck('id')->values()->all());
+        $this->assertSame(2, MarketingList::query()->findOrFail($listId)->members()->count());
+        $this->assertSame(1, MarketingList::query()->findOrFail($secondListId)->members()->count());
+        $this->assertSame(1, $campaign->emails()->where('status', 'active')->count());
+
         $this->postJson(route('api.v1.marketing.campaigns.approve', $campaignId))
             ->assertOk()
             ->assertJsonPath('data.status', 'approved')
+            ->assertJsonPath('data.audience_recipients_count', 2)
+            ->assertJsonPath('data.recipients_count', 2)
             ->assertJsonPath('meta.queued_recipients', 2);
 
         $this->postJson(route('api.v1.marketing.campaigns.send-due', $campaignId))
@@ -590,6 +730,12 @@ class MarketingModuleTest extends TestCase
             'contact_tag_ids' => [$contactTag->id],
             'client_tag_ids' => [$clientTag->id],
             'manual_contact_ids' => [],
+            'manual_client_user_ids' => [],
+            'postal_codes' => [],
+            'counties' => [],
+            'countries' => [],
+            'sales_category_ids' => [],
+            'contract_filter' => 'any',
             'excluded_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [
@@ -649,6 +795,149 @@ class MarketingModuleTest extends TestCase
     }
 
     #[Test]
+    public function marketing_lists_can_segment_recipients_by_location_industry_and_contract_status(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+        Permission::findOrCreate('marketing.list.manage', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage']);
+
+        $industry = Category::query()->create([
+            'name' => 'Construction',
+            'slug' => 'construction',
+            'type' => 'sales',
+            'is_active' => true,
+        ]);
+        $otherIndustry = Category::query()->create([
+            'name' => 'Retail',
+            'slug' => 'retail',
+            'type' => 'sales',
+            'is_active' => true,
+        ]);
+
+        $targetClient = Client::factory()->create([
+            'name' => 'Target Client AS',
+            'sales_category_id' => $industry->id,
+        ]);
+        ClientSite::factory()->create([
+            'client_id' => $targetClient->id,
+            'zip' => '7713',
+            'county' => 'Trondelag',
+            'country' => 'NO',
+        ]);
+        $targetContact = $this->contactForClient($targetClient, 'Target Recipient', 'target-recipient@example.test');
+        Contracts::query()->create([
+            'client_id' => $targetClient->id,
+            'created_by' => $user->id,
+            'description' => 'Active target contract',
+            'approval_status' => 'won',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
+        ]);
+
+        $wrongLocationClient = Client::factory()->create([
+            'name' => 'Wrong Location AS',
+            'sales_category_id' => $industry->id,
+        ]);
+        ClientSite::factory()->create([
+            'client_id' => $wrongLocationClient->id,
+            'zip' => '0150',
+            'county' => 'Oslo',
+            'country' => 'NO',
+        ]);
+        $wrongLocationContact = $this->contactForClient($wrongLocationClient, 'Wrong Location', 'wrong-location@example.test');
+        Contracts::query()->create([
+            'client_id' => $wrongLocationClient->id,
+            'created_by' => $user->id,
+            'description' => 'Wrong location contract',
+            'approval_status' => 'won',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
+        ]);
+
+        $wrongIndustryClient = Client::factory()->create([
+            'name' => 'Wrong Industry AS',
+            'sales_category_id' => $otherIndustry->id,
+        ]);
+        ClientSite::factory()->create([
+            'client_id' => $wrongIndustryClient->id,
+            'zip' => '7713',
+            'county' => 'Trondelag',
+            'country' => 'NO',
+        ]);
+        $wrongIndustryContact = $this->contactForClient($wrongIndustryClient, 'Wrong Industry', 'wrong-industry@example.test');
+        Contracts::query()->create([
+            'client_id' => $wrongIndustryClient->id,
+            'created_by' => $user->id,
+            'description' => 'Wrong industry contract',
+            'approval_status' => 'won',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
+        ]);
+
+        $noContractClient = Client::factory()->create([
+            'name' => 'No Contract AS',
+            'sales_category_id' => $industry->id,
+        ]);
+        ClientSite::factory()->create([
+            'client_id' => $noContractClient->id,
+            'zip' => '7713',
+            'county' => 'Trondelag',
+            'country' => 'NO',
+        ]);
+        $noContractContact = $this->contactForClient($noContractClient, 'No Contract', 'no-contract@example.test');
+
+        $response = $this->actingAs($user)->post(route('tech.marketing.lists.store'), [
+            'name' => 'Construction Trondelag contracts',
+            'audience_type' => 'all_business_contacts',
+            'postal_codes' => '7713',
+            'counties' => 'Trondelag',
+            'countries' => 'NO',
+            'sales_category_ids' => [$industry->id],
+            'contract_filter' => 'active_contract',
+        ]);
+
+        $list = MarketingList::query()->firstOrFail();
+
+        $response->assertRedirect(route('tech.marketing.lists.show', $list));
+        $this->assertSame(['7713'], $list->segment_criteria['postal_codes']);
+        $this->assertSame(['trondelag'], $list->segment_criteria['counties']);
+        $this->assertSame(['no'], $list->segment_criteria['countries']);
+        $this->assertSame([$industry->id], $list->segment_criteria['sales_category_ids']);
+        $this->assertSame('active_contract', $list->segment_criteria['contract_filter']);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $targetContact->id,
+            'email' => 'target-recipient@example.test',
+        ]);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $wrongLocationContact->id,
+            'email' => 'wrong-location@example.test',
+        ]);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $wrongIndustryContact->id,
+            'email' => 'wrong-industry@example.test',
+        ]);
+        $this->assertDatabaseMissing('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_id' => $noContractContact->id,
+            'email' => 'no-contract@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.show', $list))
+            ->assertOk()
+            ->assertSee('Client industry')
+            ->assertSee('Construction')
+            ->assertSee('Contract status')
+            ->assertSee('Active Contract')
+            ->assertSee('Postcode 7713');
+    }
+
+    #[Test]
     public function marketing_lists_can_be_created_from_manually_selected_contacts(): void
     {
         Permission::findOrCreate('marketing.view', 'web');
@@ -683,6 +972,12 @@ class MarketingModuleTest extends TestCase
             'contact_tag_ids' => [],
             'client_tag_ids' => [],
             'manual_contact_ids' => [$selected->id, $blocked->id],
+            'manual_client_user_ids' => [],
+            'postal_codes' => [],
+            'counties' => [],
+            'countries' => [],
+            'sales_category_ids' => [],
+            'contract_filter' => 'any',
             'excluded_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [
@@ -711,6 +1006,62 @@ class MarketingModuleTest extends TestCase
             ->assertSee('selected-manual@example.test')
             ->assertSee('unselected-manual@example.test')
             ->assertDontSee('blocked-manual@example.test');
+    }
+
+    #[Test]
+    public function marketing_lists_can_be_created_from_manually_selected_legacy_client_users(): void
+    {
+        Permission::findOrCreate('marketing.view', 'web');
+        Permission::findOrCreate('marketing.list.manage', 'web');
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.list.manage']);
+
+        $client = Client::factory()->create(['name' => 'Legacy Manual Client AS']);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Main Site',
+        ]);
+        $clientUser = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => null,
+            'name' => 'Legacy Manual Contact',
+            'email' => 'legacy-manual@example.test',
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.create'))
+            ->assertOk()
+            ->assertSee('Client contacts pending Contact migration')
+            ->assertSee('Legacy Manual Contact')
+            ->assertSee('legacy-manual@example.test');
+
+        $response = $this->actingAs($user)->post(route('tech.marketing.lists.store'), [
+            'name' => 'Manual legacy client contacts',
+            'audience_type' => 'manual_contacts',
+            'manual_client_user_ids' => [$clientUser->id],
+        ]);
+
+        $list = MarketingList::query()->firstOrFail();
+
+        $response->assertRedirect(route('tech.marketing.lists.show', $list));
+        $this->assertSame([$clientUser->id], $list->segment_criteria['manual_client_user_ids']);
+        $this->assertDatabaseHas('marketing_list_members', [
+            'marketing_list_id' => $list->id,
+            'source_type' => 'client_user',
+            'source_id' => $clientUser->id,
+            'client_user_id' => $clientUser->id,
+            'client_id' => $client->id,
+            'email' => 'legacy-manual@example.test',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.show', $list))
+            ->assertOk()
+            ->assertSee('Client contacts')
+            ->assertSee('1 selected')
+            ->assertSee('legacy-manual@example.test');
     }
 
     #[Test]
@@ -776,6 +1127,12 @@ class MarketingModuleTest extends TestCase
             'contact_tag_ids' => [],
             'client_tag_ids' => [],
             'manual_contact_ids' => [$kept->id, $removed->id],
+            'manual_client_user_ids' => [],
+            'postal_codes' => [],
+            'counties' => [],
+            'countries' => [],
+            'sales_category_ids' => [],
+            'contract_filter' => 'any',
             'excluded_contact_ids' => [],
         ], $list->segment_criteria);
         $this->assertDatabaseHas('marketing_list_members', [
@@ -954,15 +1311,22 @@ class MarketingModuleTest extends TestCase
             'status' => 'active',
             'audience_type' => 'manual_contacts',
         ]);
-        MarketingCampaign::query()->create([
+        $pivotOnlyList = MarketingList::query()->create([
+            'name' => 'Pivot used delete list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+        ]);
+        $campaign = MarketingCampaign::query()->create([
             'marketing_list_id' => $usedList->id,
             'name' => 'List history campaign',
             'status' => 'draft',
         ]);
+        $campaign->lists()->sync([$usedList->id, $pivotOnlyList->id]);
 
         $this->actingAs($user)
             ->get(route('tech.marketing.lists.edit', $usedList))
             ->assertOk()
+            ->assertSee('1 campaigns')
             ->assertSee('This list is used by campaigns and cannot be deleted without preserving campaign history first.');
 
         $this->actingAs($user)
@@ -970,10 +1334,26 @@ class MarketingModuleTest extends TestCase
             ->assertRedirect(route('tech.marketing.lists.edit', $usedList))
             ->assertSessionHasErrors('list');
 
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.edit', $pivotOnlyList))
+            ->assertOk()
+            ->assertSee('1 campaigns')
+            ->assertSee('This list is used by campaigns and cannot be deleted without preserving campaign history first.');
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.lists.destroy', $pivotOnlyList))
+            ->assertRedirect(route('tech.marketing.lists.edit', $pivotOnlyList))
+            ->assertSessionHasErrors('list');
+
         $this->assertDatabaseHas('marketing_lists', ['id' => $usedList->id]);
+        $this->assertDatabaseHas('marketing_lists', ['id' => $pivotOnlyList->id]);
         $this->assertDatabaseHas('marketing_campaigns', [
             'marketing_list_id' => $usedList->id,
             'name' => 'List history campaign',
+        ]);
+        $this->assertDatabaseHas('marketing_campaign_marketing_list', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_id' => $pivotOnlyList->id,
         ]);
     }
 

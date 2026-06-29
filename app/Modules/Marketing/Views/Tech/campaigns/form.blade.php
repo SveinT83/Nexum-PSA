@@ -41,14 +41,29 @@
                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-lg-4">
-                        <label for="marketing_list_id" class="form-label">List</label>
-                        <select id="marketing_list_id" name="marketing_list_id" class="form-select @error('marketing_list_id') is-invalid @enderror" required>
-                            <option value="">Select list</option>
+                        <label for="marketing_list_ids" class="form-label">Audience Lists</label>
+                        @php
+                            $selectedMarketingListIds = collect(old('marketing_list_ids', old('marketing_list_id') ? [old('marketing_list_id')] : []))
+                                ->map(fn ($id) => (int) $id)
+                                ->all();
+                        @endphp
+                        <select
+                            id="marketing_list_ids"
+                            name="marketing_list_ids[]"
+                            class="form-select @error('marketing_list_ids') is-invalid @enderror @error('marketing_list_ids.*') is-invalid @enderror"
+                            multiple
+                            required
+                            size="{{ min(max($lists->count(), 3), 8) }}"
+                        >
                             @foreach($lists as $list)
-                                <option value="{{ $list->id }}" @selected((int) old('marketing_list_id') === $list->id)>{{ $list->name }} ({{ $list->members_count }})</option>
+                                <option value="{{ $list->id }}" @selected(in_array($list->id, $selectedMarketingListIds, true))>
+                                    {{ $list->name }} ({{ $list->members_count }})
+                                </option>
                             @endforeach
                         </select>
-                        @error('marketing_list_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">Select one or more lists. Duplicate contacts are queued only once.</div>
+                        @error('marketing_list_ids')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        @error('marketing_list_ids.*')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-lg-8">
                         <label for="description" class="form-label">Description</label>

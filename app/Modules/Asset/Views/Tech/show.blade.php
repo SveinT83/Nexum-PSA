@@ -93,6 +93,33 @@
                             <div class="col-sm-9">{{ ucfirst($asset->type) }}</div>
                         </div>
 
+                        <!-- Classification -->
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">Sensitivity:</div>
+                            <div class="col-sm-9">
+                                @if($asset->sensitivity_level)
+                                    <span class="badge bg-warning text-dark border">
+                                        {{ ucfirst($asset->sensitivity_level) }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">Not Set</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-3 fw-bold">Criticality:</div>
+                            <div class="col-sm-9">
+                                @if($asset->criticality_level)
+                                    <span class="badge {{ $asset->criticality_level === 'critical' ? 'bg-danger' : 'bg-info text-dark' }} border">
+                                        {{ ucfirst($asset->criticality_level) }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">Not Set</span>
+                                @endif
+                            </div>
+                        </div>
+
                         <!-- Vendor -->
                         <div class="row mb-3">
                             <div class="col-sm-3 fw-bold">Vendor / Model:</div>
