@@ -85,5 +85,11 @@ The API does not expose raw storage paths or email account secrets.
 `POST /api/v1/email/inbox/poll` queues `FetchImapAccount` jobs for active accounts. It does not run
 IMAP polling inside the HTTP request.
 
+Inbound storage is idempotent by `account_id`, mailbox, and IMAP UID. Polling checks soft-deleted
+messages too, because the database unique key still reserves those UIDs. `StoreInboundMessage`
+also recovers duplicate-key races between workers: active duplicates skip storage and can safely
+re-run inbound rules, while soft-deleted duplicates are ignored so locally hidden messages are not
+re-imported.
+
 Sending email is intentionally not part of this API slice. Outbound email must wait for the shared
 send-email component so tickets, inbox, contacts, and future modules use the same sending flow.
