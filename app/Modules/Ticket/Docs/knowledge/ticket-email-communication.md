@@ -51,6 +51,11 @@ Customer replies:
 - Can include attachments.
 - Stamp `first_responded_at` the first time a technician sends a public reply.
 
+The CC field accepts manually entered email addresses and shows contact suggestions. Suggestions are
+ordered with active contacts from the same client first, grouped by site where available, then global
+Contact domain entries. Clicking a suggestion appends that email to the CC field without removing
+manually entered addresses.
+
 The queued job is `SendTicketReplyEmail`.
 
 ## Internal Notes

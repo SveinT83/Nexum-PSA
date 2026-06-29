@@ -13,6 +13,7 @@ use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Contact\Models\Contact;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
@@ -2087,6 +2088,83 @@ class TicketModuleTest extends TestCase
         $ticket->refresh();
         $this->assertFalse($ticket->is_unread);
         $this->assertNotNull($ticket->first_responded_at);
+    }
+
+    #[Test]
+    public function ticket_reply_cc_field_suggests_client_contacts_before_global_contacts(): void
+    {
+        $client = Client::factory()->create(['name' => 'CC Client']);
+        $alphaSite = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Alpha Site']);
+        $betaSite = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Beta Site']);
+        $ticketContact = ClientUser::factory()->create([
+            'client_site_id' => $betaSite->id,
+            'name' => 'Ticket Contact',
+            'email' => 'ticket.contact@example.com',
+        ]);
+        ClientUser::factory()->create([
+            'client_site_id' => $betaSite->id,
+            'name' => 'Beta Contact',
+            'email' => 'beta.cc@example.com',
+        ]);
+        ClientUser::factory()->create([
+            'client_site_id' => $alphaSite->id,
+            'name' => 'Alpha Contact',
+            'email' => 'alpha.cc@example.com',
+        ]);
+
+        $clientContact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Canonical Client Contact',
+        ]);
+        $clientContact->emails()->create([
+            'label' => 'work',
+            'email' => 'canonical.cc@example.com',
+            'is_primary' => true,
+        ]);
+        $clientContact->relations()->create([
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+            'relation_type' => 'contact',
+            'is_primary' => true,
+        ]);
+
+        $globalContact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Global Contact',
+        ]);
+        $globalContact->emails()->create([
+            'label' => 'work',
+            'email' => 'global.cc@example.com',
+            'is_primary' => true,
+        ]);
+
+        $ticket = $this->createTicket($ticketContact, [
+            'ticket_key' => 'TD-2026-999043',
+            'client_id' => $client->id,
+            'contact_id' => $ticketContact->id,
+            'subject' => 'CC suggestion ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('CC suggestions')
+            ->assertSee('data-cc-email="alpha.cc@example.com"', false)
+            ->assertSee('data-cc-email="beta.cc@example.com"', false)
+            ->assertSee('data-cc-email="canonical.cc@example.com"', false)
+            ->assertSee('data-cc-email="global.cc@example.com"', false)
+            ->assertSeeInOrder([
+                'Client contacts',
+                'Alpha Contact',
+                'Alpha Site',
+                'Beta Contact',
+                'Beta Site',
+                'Canonical Client Contact',
+                'Global contacts',
+                'Global Contact',
+            ]);
     }
 
     #[Test]

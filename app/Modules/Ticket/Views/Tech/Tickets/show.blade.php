@@ -51,6 +51,7 @@
 <div class="container-fluid">
     @php
         $canReplyToContact = $replyContacts->isNotEmpty() && ($ticketActions['customer_reply'] ?? true);
+        $ccSuggestionGroups = $ccContactSuggestions->groupBy('group');
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
         $allowInternalSolutionNotes = $solutionPolicy['allow_internal_solution_notes'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
@@ -513,6 +514,28 @@
                                         <label for="cc" class="form-label">CC</label>
                                         <input id="cc" name="cc" type="text" class="form-control @error('cc') is-invalid @enderror" value="{{ old('cc') }}" placeholder="thirdparty@example.com">
                                         @error('cc')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        @if($ccContactSuggestions->isNotEmpty())
+                                            <div id="cc_contact_suggestions" class="mt-2">
+                                                <div class="small text-muted fw-semibold mb-1">CC suggestions</div>
+                                                @foreach($ccSuggestionGroups as $group => $suggestions)
+                                                    <div class="small text-muted mt-2">{{ $group }}</div>
+                                                    <div class="d-flex flex-wrap gap-1">
+                                                        @foreach($suggestions as $suggestion)
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-sm btn-outline-secondary text-start"
+                                                                data-cc-email="{{ $suggestion['email'] }}"
+                                                                title="{{ $suggestion['name'] }} <{{ $suggestion['email'] }}>">
+                                                                <span>{{ $suggestion['name'] }}</span>
+                                                                @if($suggestion['site'])
+                                                                    <span class="text-muted">({{ $suggestion['site'] }})</span>
+                                                                @endif
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -830,6 +853,7 @@
         const replyShortcut = document.getElementById('ticketReplyShortcut');
         const composer = document.getElementById('ticketComposerCollapse');
         const body = document.getElementById('body');
+        const ccInput = document.getElementById('cc');
         const addTimeModal = document.getElementById('ticketAddTimeModal');
         const shouldShowAddTimeModal = @json((bool) $showAddTimeModal);
         const timeAiDraft = document.getElementById('ticketTimeAiDraft');
@@ -905,6 +929,28 @@
                 composer?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 body?.focus({ preventScroll: true });
             }, 150);
+        });
+
+        document.querySelectorAll('[data-cc-email]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (! ccInput) {
+                    return;
+                }
+
+                const email = this.dataset.ccEmail;
+                const current = ccInput.value
+                    .split(/[;,]+/)
+                    .map((value) => value.trim())
+                    .filter(Boolean);
+                const exists = current.some((value) => value.toLowerCase() === email.toLowerCase());
+
+                if (! exists) {
+                    current.push(email);
+                }
+
+                ccInput.value = current.join(', ');
+                ccInput.focus();
+            });
         });
 
         if (shouldShowAddTimeModal && window.bootstrap && addTimeModal) {

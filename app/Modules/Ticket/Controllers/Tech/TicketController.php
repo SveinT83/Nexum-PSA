@@ -13,6 +13,7 @@ use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiChatResponder;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Knowledge\Queries\ArticleQuery;
+use App\Modules\Contact\Models\Contact;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
 use App\Modules\Ticket\Actions\CloseTicket;
@@ -351,6 +352,7 @@ class TicketController extends Controller
             'categories' => $this->ticketCategories(),
             'technicians' => $this->technicians(),
             'replyContacts' => $this->replyContactOptions($ticket),
+            'ccContactSuggestions' => $this->ccContactSuggestions($ticket),
             'timeRateOptions' => $timeRateOptions->forTicket($ticket),
             'storageItems' => $this->storageItemOptions(),
             'knowledgeSuggestions' => $articleQuery->relevantForTicket($ticket, 3),
@@ -1069,6 +1071,115 @@ class TicketController extends Controller
             ->orderByDesc('is_default_for_client')
             ->orderBy('name')
             ->get(['id', 'client_site_id', 'name', 'email']);
+    }
+
+    private function ccContactSuggestions(Ticket $ticket): Collection
+    {
+        $suggestions = collect();
+        $seenEmails = [];
+
+        $addSuggestion = function (?string $email, ?string $name, string $group, ?string $site = null) use (&$suggestions, &$seenEmails): void {
+            $email = trim((string) $email);
+
+            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return;
+            }
+
+            $key = Str::lower($email);
+
+            if (isset($seenEmails[$key])) {
+                return;
+            }
+
+            $seenEmails[$key] = true;
+            $suggestions->push([
+                'email' => $email,
+                'name' => filled($name) ? $name : $email,
+                'group' => $group,
+                'site' => $site,
+            ]);
+        };
+
+        if ($ticket->client_id) {
+            ClientUser::query()
+                ->with('site:id,name,client_id')
+                ->whereHas('site', fn ($query) => $query->where('client_id', $ticket->client_id))
+                ->where('active', true)
+                ->whereNotNull('email')
+                ->get(['id', 'client_site_id', 'name', 'email'])
+                ->sortBy(fn (ClientUser $contact): string => Str::lower(($contact->site?->name ?? '').'|'.$contact->name.'|'.$contact->email))
+                ->each(fn (ClientUser $contact) => $addSuggestion($contact->email, $contact->name, 'Client contacts', $contact->site?->name));
+
+            $this->clientContactSuggestions($ticket)
+                ->each(function (Contact $contact) use ($addSuggestion): void {
+                    $contact->emails
+                        ->sortByDesc('is_primary')
+                        ->each(fn ($email) => $addSuggestion($email->email, $contact->display_name, 'Client contacts', $contact->metadata['site_name'] ?? null));
+                });
+        }
+
+        Contact::query()
+            ->with(['emails' => fn ($query) => $query->orderByDesc('is_primary')->orderBy('email')])
+            ->where('status', 'active')
+            ->where(fn ($query) => $query->where('do_not_email', false)->orWhereNull('do_not_email'))
+            ->whereHas('emails')
+            ->orderBy('display_name')
+            ->limit(100)
+            ->get()
+            ->each(function (Contact $contact) use ($addSuggestion): void {
+                $contact->emails
+                    ->sortByDesc('is_primary')
+                    ->each(fn ($email) => $addSuggestion($email->email, $contact->display_name, 'Global contacts'));
+            });
+
+        return $suggestions->take(80)->values();
+    }
+
+    private function clientContactSuggestions(Ticket $ticket): Collection
+    {
+        if (! $ticket->client_id) {
+            return collect();
+        }
+
+        $clientType = (new Client())->getMorphClass();
+        $siteType = (new ClientSite())->getMorphClass();
+        $siteNames = ClientSite::query()
+            ->where('client_id', $ticket->client_id)
+            ->pluck('name', 'id');
+
+        return Contact::query()
+            ->with([
+                'emails' => fn ($query) => $query->orderByDesc('is_primary')->orderBy('email'),
+                'relations',
+            ])
+            ->where('status', 'active')
+            ->where(fn ($query) => $query->where('do_not_email', false)->orWhereNull('do_not_email'))
+            ->whereHas('emails')
+            ->whereHas('relations', function ($query) use ($ticket, $clientType, $siteType, $siteNames): void {
+                $query->where(function ($nested) use ($ticket, $clientType, $siteType, $siteNames): void {
+                    $nested->where(function ($clientQuery) use ($ticket, $clientType): void {
+                        $clientQuery->where('related_type', $clientType)
+                            ->where('related_id', $ticket->client_id);
+                    })->orWhere(function ($siteQuery) use ($siteType, $siteNames): void {
+                        $siteQuery->where('related_type', $siteType)
+                            ->whereIn('related_id', $siteNames->keys());
+                    });
+                });
+            })
+            ->orderBy('display_name')
+            ->limit(100)
+            ->get()
+            ->map(function (Contact $contact) use ($siteType, $siteNames): Contact {
+                $siteRelation = $contact->relations
+                    ->where('related_type', $siteType)
+                    ->first();
+
+                $metadata = $contact->metadata ?? [];
+                $metadata['site_name'] = $siteRelation ? $siteNames->get($siteRelation->related_id) : null;
+                $contact->metadata = $metadata;
+
+                return $contact;
+            });
     }
 
     private function contactBelongsToClient(int $contactId, int $clientId): bool
