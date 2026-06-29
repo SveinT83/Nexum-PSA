@@ -2168,6 +2168,73 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function ticket_show_displays_customer_contact_card_with_clickable_contact_details(): void
+    {
+        $client = Client::factory()->create([
+            'name' => 'Customer Card Client',
+            'client_number' => 'C-100',
+            'website' => 'customer.example',
+            'billing_email' => 'billing@customer.example',
+        ]);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Main Office',
+            'address' => 'Serviceveien 1',
+            'zip' => '1234',
+            'city' => 'Oslo',
+        ]);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Ada Lovelace',
+        ]);
+        $contact->emails()->create([
+            'label' => 'support',
+            'email' => 'support@customer.example',
+            'is_primary' => true,
+        ]);
+        $contact->phones()->create([
+            'label' => 'mobile',
+            'phone' => '+47 11 22 33 44',
+            'is_primary' => true,
+        ]);
+        $ticketContact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'role' => 'IT manager',
+            'name' => 'Ada Lovelace',
+            'email' => 'ada@customer.example',
+            'phone' => '+47 99 88 77 66',
+        ]);
+        $ticket = $this->createTicket($ticketContact, [
+            'ticket_key' => 'TD-2026-999044',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $ticketContact->id,
+            'subject' => 'Customer card ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Customer Card Client')
+            ->assertSee('C-100')
+            ->assertSee('href="https://customer.example"', false)
+            ->assertSee('mailto:billing@customer.example', false)
+            ->assertSee('Ada Lovelace')
+            ->assertSee('IT manager')
+            ->assertSee('tel:+4799887766', false)
+            ->assertSee('tel:+4711223344', false)
+            ->assertSee('mailto:ada@customer.example', false)
+            ->assertSee('mailto:support@customer.example', false)
+            ->assertSee(route('tech.clients.show', $client), false)
+            ->assertSee(route('tech.clients.user.show', $ticketContact), false)
+            ->assertSee(route('tech.clients.sites.show', $site), false)
+            ->assertSee('Serviceveien 1')
+            ->assertSee('1234 Oslo');
+    }
+
+    #[Test]
     public function tech_user_can_mark_ticket_as_read(): void
     {
         $ticket = $this->createTicket(null, [

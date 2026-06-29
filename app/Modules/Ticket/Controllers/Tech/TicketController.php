@@ -329,7 +329,7 @@ class TicketController extends Controller
 
         abort_if($ticket->trashed(), 404);
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries']);
         $messageIds = $ticket->messages->pluck('id')->all();
 
         $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);

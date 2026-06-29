@@ -82,7 +82,7 @@ The list supports search, filters, sorting, unread and unassigned views, lifecyc
 
 Ticket show:
 
-The show page is the primary work surface. It contains ticket details, conversation/activity, workflow actions, replies, notes, time registration, cost registration, assignment information, SLA details, and Knowledge suggestions.
+The show page is the primary work surface. It contains ticket details, conversation/activity, workflow actions, replies, notes, time registration, cost registration, assignment information, SLA details, customer contact cards, and Knowledge suggestions. The customer card keeps client, site, contact, email, and clickable phone details visible without leaving the ticket.
 
 Ticket create/edit:
 
