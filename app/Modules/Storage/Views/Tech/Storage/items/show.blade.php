@@ -88,10 +88,19 @@
                 <form method="POST" action="{{ route('tech.storage.items.adjust', $item) }}" class="row g-3 align-items-end">
                     @csrf
                     <div class="col-md-3">
-                        <label for="delta" class="form-label">Delta</label>
-                        <input type="number" id="delta" name="delta" class="form-control" required>
+                        <label for="adjustment_mode" class="form-label">Adjustment</label>
+                        <select id="adjustment_mode" name="adjustment_mode" class="form-select" required>
+                            <option value="set" @selected(old('adjustment_mode', 'set') === 'set')>Set on-hand to</option>
+                            <option value="increase" @selected(old('adjustment_mode') === 'increase')>Increase by</option>
+                            <option value="decrease" @selected(old('adjustment_mode') === 'decrease')>Decrease by</option>
+                        </select>
                     </div>
                     <div class="col-md-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" id="quantity" name="quantity" class="form-control @error('quantity') is-invalid @enderror" min="0" value="{{ old('quantity', $item->qty_on_hand) }}" required>
+                        @error('quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-2">
                         <label for="reason" class="form-label">Reason</label>
                         <select id="reason" name="reason" class="form-select" required>
                             <option value="inventory_correction">Inventory correction</option>
@@ -101,11 +110,11 @@
                             <option value="manual_withdrawal">Manual withdrawal</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="note" class="form-label">Note</label>
                         <input type="text" id="note" name="note" class="form-control">
                     </div>
-                    <div class="col-md-2 d-grid">
+                    <div class="col-md-1 d-grid">
                         <button type="submit" class="btn btn-primary">Apply</button>
                     </div>
                 </form>

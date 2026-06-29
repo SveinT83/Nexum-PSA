@@ -457,6 +457,76 @@ class StorageModuleTest extends TestCase
     }
 
     #[Test]
+    public function tech_user_can_set_increase_and_decrease_stock_from_manual_adjustment_form(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+        ]);
+        $item = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'COUNT-01',
+            'name' => 'Counted Item',
+            'qty_on_hand' => 5,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.items.show', $item))
+            ->assertOk()
+            ->assertSee('name="adjustment_mode"', false)
+            ->assertSee('Set on-hand to')
+            ->assertSee('Increase by')
+            ->assertSee('Decrease by');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.storage.items.adjust', $item), [
+                'adjustment_mode' => 'set',
+                'quantity' => 2,
+                'reason' => 'inventory_correction',
+                'note' => 'Physical count correction.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame(2, $item->refresh()->qty_on_hand);
+        $this->assertSame(-3, Movement::latest('id')->firstOrFail()->qty_delta);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.storage.items.adjust', $item), [
+                'adjustment_mode' => 'increase',
+                'quantity' => 4,
+                'reason' => 'manual_intake',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame(6, $item->refresh()->qty_on_hand);
+        $this->assertSame(4, Movement::latest('id')->firstOrFail()->qty_delta);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.storage.items.adjust', $item), [
+                'adjustment_mode' => 'decrease',
+                'quantity' => 2,
+                'reason' => 'manual_withdrawal',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame(4, $item->refresh()->qty_on_hand);
+        $this->assertSame(-2, Movement::latest('id')->firstOrFail()->qty_delta);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.storage.items.adjust', $item), [
+                'adjustment_mode' => 'set',
+                'quantity' => 4,
+                'reason' => 'inventory_correction',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('quantity');
+    }
+
+    #[Test]
     public function tech_user_can_soft_delete_zero_stock_storage_item(): void
     {
         $warehouse = Warehouse::create([
