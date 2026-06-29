@@ -77,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
             'system' => 'System',
             'taxonomy' => 'Taxonomy',
             'task' => 'Task',
+            'telephony' => 'Telephony',
             'ticket' => 'Ticket',
             'usermanagement' => 'UserManagement',
             'warroom' => 'Warroom',

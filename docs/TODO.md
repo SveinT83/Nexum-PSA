@@ -22,6 +22,7 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Area | Status | Owner | Notes |
 | --- | --- | --- | --- |
 | Beta completion | In Progress | Svein / Codex | Finish and harden existing modules before starting large new domains. |
+| Telephony Call Intake v1 | Done | Codex | Discussion #49 implemented with personal provider URL, public token intake, caller matching, call notes, ticket creation/linking, tests, and Knowledge docs. |
 | Technician profile consolidation | In Progress | Codex | UserManagement owns `user_profiles`; Ticket now owns only Ticket Assignment Settings. |
 | Ticket assignment settings split | Done | Codex | Legacy Ticket technician profile tables migrated into explicit assignment settings. |
 | Ticket SLA v1 | Done | Codex | SLA resolution, contract SLA field, ticket show panel, index SLA risk badges, Knowledge docs. |

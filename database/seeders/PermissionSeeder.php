@@ -133,6 +133,8 @@ class PermissionSeeder extends Seeder
             'notification.view_settings',
             'notification.manage_channels',
 
+            'telephony.view',
+
             'sales.view',
             'sales.lead_manage',
             'sales.opportunity_manage',

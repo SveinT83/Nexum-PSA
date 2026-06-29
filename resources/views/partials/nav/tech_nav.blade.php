@@ -43,7 +43,7 @@
     <!-- Work dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.assets*') || request()->routeIs('tech.calendar*');
+        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.telephony*') || request()->routeIs('tech.assets*') || request()->routeIs('tech.calendar*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -77,6 +77,12 @@
             <li class="nav-item">
                 <a class="dropdown-item {{ request()->routeIs('tech.tickets.index') ? 'active' : '' }}" href="{{ route('tech.tickets.index') }}">Tickets</a>
             </li>
+
+            @if(Route::has('tech.telephony.profile'))
+                <li class="nav-item">
+                    <a class="dropdown-item {{ request()->routeIs('tech.telephony*') ? 'active' : '' }}" href="{{ route('tech.telephony.profile') }}">Telephony</a>
+                </li>
+            @endif
 
             <!-- ------------------------------------------------- -->
             <!-- Assets -->

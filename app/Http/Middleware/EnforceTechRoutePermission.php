@@ -157,6 +157,8 @@ class EnforceTechRoutePermission
         'tech.contacts.destroy' => 'contact.delete',
         'tech.contacts.*' => 'contact.view',
 
+        'tech.telephony.*' => 'telephony.view',
+
         'tech.assets.create' => 'asset.create',
         'tech.assets.store' => 'asset.create',
         'tech.assets.edit' => 'asset.update',
