@@ -138,7 +138,13 @@
     <!-- Contracts & Services dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $contractsGroupActive = request()->routeIs('tech.contracts.*') || request()->routeIs('tech.services.*') || request()->routeIs('tech.packages.*') || request()->routeIs('tech.sales.*') || request()->routeIs('tech.lead-intelligence.*');
+        $contractsGroupActive = request()->routeIs('tech.contracts.*')
+            || request()->routeIs('tech.services.*')
+            || request()->routeIs('tech.packages.*')
+            || request()->routeIs('tech.sales.*')
+            || request()->routeIs('tech.lead-intelligence.*')
+            || request()->routeIs('tech.marketing.*')
+            || request()->routeIs('tech.rates.*');
         $economyGroupActive = request()->routeIs('tech.economy.*');
     @endphp
 
@@ -162,6 +168,12 @@
             @if(Route::has('tech.lead-intelligence.segments.index'))
                 <li class="nav-item">
                     <a class="dropdown-item {{ request()->routeIs('tech.lead-intelligence.*') ? 'active' : '' }}" href="{{ route('tech.lead-intelligence.segments.index') }}">Lead Intelligence</a>
+                </li>
+            @endif
+
+            @if(Route::has('tech.marketing.index'))
+                <li class="nav-item">
+                    <a class="dropdown-item {{ request()->routeIs('tech.marketing.*') ? 'active' : '' }}" href="{{ route('tech.marketing.index') }}">Marketing</a>
                 </li>
             @endif
 
@@ -189,6 +201,13 @@
             <!-- Legal - Legal & Terms -->
             <!-- ------------------------------------------------- -->
             <li><a class="dropdown-item {{ request()->routeIs('tech.legal.index') ? 'active' : '' }}" href="{{ route('tech.legal.index') }}">Legal & Terms</a></li>
+
+            <!-- ------------------------------------------------- -->
+            <!-- Rates -->
+            <!-- ------------------------------------------------- -->
+            @if(Route::has('tech.rates.index'))
+                <li><a class="dropdown-item {{ request()->routeIs('tech.rates.*') ? 'active' : '' }}" href="{{ route('tech.rates.index') }}">Rates</a></li>
+            @endif
 
             <!-- ------------------------------------------------- -->
             <!-- SLA -->

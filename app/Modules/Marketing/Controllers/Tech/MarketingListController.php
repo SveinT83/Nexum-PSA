@@ -98,6 +98,7 @@ class MarketingListController extends Controller
         $defaults->handle();
         $settingsPayload = $settings->get();
         $list->loadCount('campaigns');
+        $list->setAttribute('campaign_usage_count', $list->campaignUsageCount());
 
         return view('marketing::Tech.lists.form', [
             'list' => $list,
@@ -134,7 +135,7 @@ class MarketingListController extends Controller
 
     public function destroy(MarketingList $list): RedirectResponse
     {
-        if ($list->campaigns()->exists()) {
+        if ($list->isUsedByCampaigns()) {
             return redirect()
                 ->route('tech.marketing.lists.edit', $list)
                 ->withErrors([

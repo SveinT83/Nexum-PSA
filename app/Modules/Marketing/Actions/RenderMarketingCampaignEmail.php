@@ -61,7 +61,7 @@ class RenderMarketingCampaignEmail
 
     private function variables(MarketingCampaign $campaign, MarketingCampaignEmail $email): array
     {
-        $campaign->loadMissing(['list.members.client']);
+        $campaign->loadMissing(['lists.members.client', 'list.members.client']);
         $member = $this->sampleMember($campaign);
 
         return [
@@ -75,11 +75,8 @@ class RenderMarketingCampaignEmail
 
     private function sampleMember(MarketingCampaign $campaign): ?MarketingListMember
     {
-        $members = $campaign->list?->members;
-
-        if (! $members) {
-            return null;
-        }
+        $members = $campaign->audienceLists()
+            ->flatMap(fn ($list) => $list->members);
 
         return $members->firstWhere('status', 'eligible') ?: $members->first();
     }

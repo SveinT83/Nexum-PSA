@@ -15,6 +15,10 @@ class MarketingCampaignResource extends JsonResource
         return [
             'id' => $this->id,
             'marketing_list_id' => $this->marketing_list_id,
+            'marketing_list_ids' => $this->whenLoaded(
+                'lists',
+                fn () => $this->audienceLists()->pluck('id')->values()
+            ),
             'email_account_id' => $this->email_account_id,
             'name' => $this->name,
             'description' => $this->description,
@@ -42,6 +46,11 @@ class MarketingCampaignResource extends JsonResource
                 'name' => $this->list->name,
                 'audience_type' => $this->list->audience_type,
             ] : null),
+            'lists' => $this->whenLoaded('lists', fn () => $this->audienceLists()->map(fn ($list): array => [
+                'id' => $list->id,
+                'name' => $list->name,
+                'audience_type' => $list->audience_type,
+            ])->values()),
             'email_account' => $this->whenLoaded('emailAccount', fn () => $this->emailAccount ? [
                 'id' => $this->emailAccount->id,
                 'address' => $this->emailAccount->address,

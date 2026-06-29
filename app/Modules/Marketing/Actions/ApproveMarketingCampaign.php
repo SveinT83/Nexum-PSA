@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class ApproveMarketingCampaign
 {
-    public function __construct(private readonly SyncMarketingCampaignRecipients $syncRecipients)
-    {
+    public function __construct(
+        private readonly SyncMarketingCampaignRecipients $syncRecipients,
+        private readonly ResolveMarketingListMembers $resolveListMembers,
+    ) {
     }
 
     public function handle(MarketingCampaign $campaign, User $approver): int
@@ -21,7 +23,15 @@ class ApproveMarketingCampaign
                 'approved_at' => now(),
             ])->save();
 
-            return $this->syncRecipients->handle($campaign->fresh());
+            $campaign = $campaign->fresh(['lists', 'list']);
+
+            foreach ($campaign->audienceLists() as $list) {
+                $this->resolveListMembers->handle($list);
+            }
+
+            return $this->syncRecipients->handle(
+                $campaign->fresh(['emails.recipients', 'lists.members', 'list.members', 'recipients'])
+            );
         });
     }
 }

@@ -93,8 +93,13 @@ class DraftMarketingCampaignPlanWithAi
 
     private function context(MarketingCampaign $campaign, array $input): array
     {
-        $campaign->loadMissing(['list.members.client', 'emails.template']);
-        $members = $campaign->list?->members ?? collect();
+        $campaign->loadMissing(['lists.members.client', 'list.members.client', 'emails.template']);
+        $lists = $campaign->audienceLists();
+        $members = $lists
+            ->flatMap(fn ($list) => $list->members)
+            ->unique(fn ($member): string => mb_strtolower(trim((string) $member->email)))
+            ->values();
+        $primaryList = $lists->first();
 
         return [
             'user_prompt' => $input['prompt'],
@@ -112,10 +117,10 @@ class DraftMarketingCampaignPlanWithAi
                 'track_clicks' => $campaign->track_clicks,
             ],
             'mailing_list' => [
-                'name' => $campaign->list?->name,
-                'description' => Str::limit((string) $campaign->list?->description, 1200),
-                'audience_type' => $campaign->list?->audience_type,
-                'segment_criteria' => $campaign->list?->segment_criteria,
+                'name' => $primaryList?->name,
+                'description' => Str::limit((string) $primaryList?->description, 1200),
+                'audience_type' => $primaryList?->audience_type,
+                'segment_criteria' => $primaryList?->segment_criteria,
                 'member_count' => $members->count(),
                 'sample_members' => $members
                     ->take(10)
@@ -127,6 +132,16 @@ class DraftMarketingCampaignPlanWithAi
                     ->values()
                     ->all(),
             ],
+            'mailing_lists' => $lists
+                ->map(fn ($list): array => [
+                    'name' => $list->name,
+                    'description' => Str::limit((string) $list->description, 1200),
+                    'audience_type' => $list->audience_type,
+                    'segment_criteria' => $list->segment_criteria,
+                    'member_count' => $list->members->count(),
+                ])
+                ->values()
+                ->all(),
             'current_sequence' => $campaign->emails
                 ->sortBy('sequence_order')
                 ->map(fn (MarketingCampaignEmail $email): array => [

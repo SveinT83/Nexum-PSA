@@ -127,6 +127,14 @@
             .page-header {
                 border-bottom-color: var(--nexum-brand-primary) !important;
             }
+
+            .sidebar .bg-light {
+                color: var(--bs-dark);
+            }
+
+            .sidebar .bg-light .text-muted {
+                color: var(--bs-dark) !important;
+            }
         </style>
         @livewireStyles
     </head>

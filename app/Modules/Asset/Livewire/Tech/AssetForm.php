@@ -68,6 +68,12 @@ class AssetForm extends Component
     /** @var string|null Network MAC address */
     public $mac_address;
 
+    /** @var string|null Business/data sensitivity rating */
+    public $sensitivity_level;
+
+    /** @var string|null Operational criticality rating */
+    public $criticality_level;
+
     // =========================================================================
     // SECTION: DATA COLLECTIONS
     // =========================================================================
@@ -191,6 +197,8 @@ class AssetForm extends Component
             'ip_address' => 'nullable|ip',
             'ip_type' => ['required', Rule::in(array_keys(AssetSettings::IP_TYPE_OPTIONS))],
             'mac_address' => 'nullable|string|max:255',
+            'sensitivity_level' => ['nullable', Rule::in(Asset::SENSITIVITY_LEVELS)],
+            'criticality_level' => ['nullable', Rule::in(Asset::CRITICALITY_LEVELS)],
         ]);
 
         if ($this->asset && $this->asset->exists) {

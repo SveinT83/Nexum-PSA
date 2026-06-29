@@ -18,10 +18,10 @@ class SyncMarketingCampaignRecipients
 
     public function handle(MarketingCampaign $campaign): int
     {
-        $campaign->loadMissing(['emails.recipients', 'list.members', 'recipients']);
+        $campaign->loadMissing(['emails.recipients', 'lists.members', 'list.members', 'recipients']);
         $created = 0;
         $emails = $campaign->emails->where('status', 'active')->sortBy('sequence_order')->values();
-        $members = $campaign->list?->members->where('status', 'eligible')->values() ?? collect();
+        $members = $this->eligibleMembers($campaign);
 
         foreach ($members as $memberIndex => $member) {
             $existingForMember = $this->existingRecipientsForMember($campaign->recipients, $member);
@@ -69,9 +69,9 @@ class SyncMarketingCampaignRecipients
 
     public function reschedulePending(MarketingCampaign $campaign): int
     {
-        $campaign->loadMissing(['emails.recipients', 'list.members', 'recipients']);
+        $campaign->loadMissing(['emails.recipients', 'lists.members', 'list.members', 'recipients']);
         $updated = 0;
-        $members = $campaign->list?->members->where('status', 'eligible')->values() ?? collect();
+        $members = $this->eligibleMembers($campaign);
 
         foreach ($members as $memberIndex => $member) {
             $existingForMember = $this->existingRecipientsForMember($campaign->recipients, $member);
@@ -96,8 +96,10 @@ class SyncMarketingCampaignRecipients
 
     private function recipientForMember(MarketingCampaignEmail $campaignEmail, MarketingListMember $member): ?MarketingCampaignRecipient
     {
+        $email = $this->normalizeEmail($member->email);
+
         return $campaignEmail->recipients()
-            ->where(function ($query) use ($member): void {
+            ->where(function ($query) use ($member, $email): void {
                 $query->where('marketing_list_member_id', $member->id);
 
                 if ($member->contact_id) {
@@ -108,7 +110,7 @@ class SyncMarketingCampaignRecipients
                     $query->orWhere('client_user_id', $member->client_user_id);
                 }
 
-                $query->orWhere('email', $member->email);
+                $query->orWhereRaw('lower(email) = ?', [$email]);
             })
             ->first();
     }
@@ -119,8 +121,48 @@ class SyncMarketingCampaignRecipients
             return (int) $recipient->marketing_list_member_id === (int) $member->id
                 || ($member->contact_id && (int) $recipient->contact_id === (int) $member->contact_id)
                 || ($member->client_user_id && (int) $recipient->client_user_id === (int) $member->client_user_id)
-                || strcasecmp($recipient->email, $member->email) === 0;
+                || $this->normalizeEmail($recipient->email) === $this->normalizeEmail($member->email);
         })->values();
+    }
+
+    private function eligibleMembers(MarketingCampaign $campaign): Collection
+    {
+        $seenContactIds = [];
+        $seenClientUserIds = [];
+        $seenEmails = [];
+
+        return $campaign->audienceLists()
+            ->flatMap(fn ($list) => $list->members->whereIn('status', ['eligible', 'active']))
+            ->filter(fn (MarketingListMember $member): bool => filled($member->email))
+            ->filter(function (MarketingListMember $member) use (&$seenContactIds, &$seenClientUserIds, &$seenEmails): bool {
+                $email = $this->normalizeEmail($member->email);
+
+                if (
+                    ($member->contact_id && isset($seenContactIds[(int) $member->contact_id]))
+                    || ($member->client_user_id && isset($seenClientUserIds[(int) $member->client_user_id]))
+                    || isset($seenEmails[$email])
+                ) {
+                    return false;
+                }
+
+                if ($member->contact_id) {
+                    $seenContactIds[(int) $member->contact_id] = true;
+                }
+
+                if ($member->client_user_id) {
+                    $seenClientUserIds[(int) $member->client_user_id] = true;
+                }
+
+                $seenEmails[$email] = true;
+
+                return true;
+            })
+            ->values();
+    }
+
+    private function normalizeEmail(?string $email): string
+    {
+        return mb_strtolower(trim((string) $email));
     }
 
     private function refreshRecipientMemberLink(MarketingCampaignRecipient $recipient, MarketingListMember $member): void

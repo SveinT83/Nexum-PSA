@@ -99,7 +99,7 @@ class MarketingListController extends Controller
 
     public function destroy(MarketingList $list)
     {
-        if ($list->campaigns()->exists()) {
+        if ($list->isUsedByCampaigns()) {
             throw ValidationException::withMessages([
                 'list' => 'This marketing list is used by one or more campaigns and cannot be deleted.',
             ]);

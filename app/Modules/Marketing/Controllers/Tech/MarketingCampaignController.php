@@ -41,7 +41,7 @@ class MarketingCampaignController extends Controller
 
         return view('marketing::Tech.campaigns.index', [
             'campaigns' => MarketingCampaign::query()
-                ->with(['list', 'emailAccount'])
+                ->with(['list', 'lists', 'emailAccount'])
                 ->withCount(['emails', 'recipients'])
                 ->latest('updated_at')
                 ->paginate(25),
@@ -94,7 +94,9 @@ class MarketingCampaignController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'marketing_list_id' => ['required', 'exists:marketing_lists,id'],
+            'marketing_list_id' => ['required_without:marketing_list_ids', 'integer', 'exists:marketing_lists,id'],
+            'marketing_list_ids' => ['required_without:marketing_list_id', 'array', 'min:1'],
+            'marketing_list_ids.*' => ['integer', 'distinct', 'exists:marketing_lists,id'],
             'email_account_id' => ['nullable', 'exists:email_accounts,id'],
             'starts_at' => ['nullable', 'date'],
             'schedule_frequency' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SCHEDULE_FREQUENCIES))],
@@ -112,10 +114,19 @@ class MarketingCampaignController extends Controller
             'track_opens' => ['nullable', 'boolean'],
             'track_clicks' => ['nullable', 'boolean'],
         ]);
+
+        $marketingListIds = $this->campaignListIds($data);
+
+        if ($marketingListIds === []) {
+            return back()
+                ->withErrors(['marketing_list_ids' => 'Select at least one audience list.'])
+                ->withInput();
+        }
+
         $schedule = $this->normalizeSchedulePayload($data);
 
         $campaign = MarketingCampaign::query()->create([
-            'marketing_list_id' => $data['marketing_list_id'],
+            'marketing_list_id' => $marketingListIds[0],
             'email_account_id' => $data['email_account_id'] ?? null,
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
@@ -132,7 +143,12 @@ class MarketingCampaignController extends Controller
             'updated_by' => $request->user()?->id,
         ]);
 
-        $resolve->handle($campaign->list);
+        $campaign->lists()->sync($marketingListIds);
+
+        $campaign->load('lists');
+        foreach ($campaign->lists as $list) {
+            $resolve->handle($list);
+        }
 
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
@@ -168,6 +184,7 @@ class MarketingCampaignController extends Controller
             ->get();
         $campaign = $campaign->load([
             'list',
+            'lists',
             'emailAccount',
             'approver',
             'emails' => fn ($query) => $query
@@ -256,7 +273,7 @@ class MarketingCampaignController extends Controller
             'updated_by' => $request->user()?->id,
         ])->save();
 
-        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
+        $updated = $syncRecipients->reschedulePending($campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients']));
 
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
@@ -307,7 +324,7 @@ class MarketingCampaignController extends Controller
         ]);
 
         $created = in_array($campaign->status, ['approved', 'active'], true)
-            ? $syncRecipients->handle($campaign->fresh(['emails', 'list.members']))
+            ? $syncRecipients->handle($campaign->fresh(['emails', 'lists.members', 'list.members']))
             : 0;
 
         return redirect()
@@ -355,7 +372,7 @@ class MarketingCampaignController extends Controller
             'status' => $data['status'],
         ]))->save();
 
-        $syncRecipients->reschedulePending($campaign->fresh(['emails', 'list.members', 'recipients']));
+        $syncRecipients->reschedulePending($campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients']));
 
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
@@ -525,6 +542,22 @@ class MarketingCampaignController extends Controller
         };
     }
 
+    private function campaignListIds(array $data): array
+    {
+        $ids = collect($data['marketing_list_ids'] ?? []);
+
+        if ($ids->isEmpty() && ! empty($data['marketing_list_id'])) {
+            $ids->push((int) $data['marketing_list_id']);
+        }
+
+        return $ids
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     private function startsAtFromScheduleFields(array $data): ?Carbon
     {
         if (! empty($data['first_send_date'])) {
@@ -599,18 +632,29 @@ class MarketingCampaignController extends Controller
 
     private function previewMember(MarketingCampaign $campaign): ?MarketingListMember
     {
-        if (! $campaign->list) {
-            return null;
+        foreach ($campaign->audienceLists() as $list) {
+            $member = $list->members()
+                ->with('client')
+                ->where('status', 'eligible')
+                ->orderBy('id')
+                ->first();
+
+            if ($member) {
+                return $member;
+            }
         }
 
-        return $campaign->list->members()
-            ->with('client')
-            ->where('status', 'eligible')
-            ->orderBy('id')
-            ->first()
-            ?: $campaign->list->members()
+        foreach ($campaign->audienceLists() as $list) {
+            $member = $list->members()
                 ->with('client')
                 ->orderBy('id')
                 ->first();
+
+            if ($member) {
+                return $member;
+            }
+        }
+
+        return null;
     }
 }

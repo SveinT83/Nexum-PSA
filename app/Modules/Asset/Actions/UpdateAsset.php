@@ -34,6 +34,8 @@ class UpdateAsset
             'ip_address' => 'nullable|ip',
             'ip_type' => ['required', Rule::in(array_keys(AssetSettings::IP_TYPE_OPTIONS))],
             'hostname' => 'nullable|string|max:255',
+            'sensitivity_level' => ['nullable', Rule::in(Asset::SENSITIVITY_LEVELS)],
+            'criticality_level' => ['nullable', Rule::in(Asset::CRITICALITY_LEVELS)],
             'status' => ['nullable', Rule::in($settings->statusValues($asset->status))],
         ]);
 

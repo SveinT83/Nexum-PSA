@@ -1652,7 +1652,7 @@
                             href="{{ route('tech.knowledge.show', $article) }}"
                             target="_blank"
                             rel="noopener"
-                            class="d-block text-decoration-none text-reset border rounded bg-light px-2 py-2 mb-2">
+                            class="d-block text-decoration-none text border rounded bg-light px-2 py-2 mb-2">
                             <div class="d-flex align-items-start justify-content-between gap-2">
                                 <div class="fw-semibold small lh-sm">{{ $article->title }}</div>
                                 <i class="bi bi-box-arrow-up-right text-muted small flex-shrink-0" aria-hidden="true"></i>
@@ -1702,8 +1702,8 @@
                             'default' => 'Default',
                             default => 'Not selected',
                         };
-                        $firstResponseClass = $ticket->first_response_due_at?->isPast() && ! $ticket->first_responded_at ? 'text-danger' : 'text-body';
-                        $resolveClass = $ticket->resolve_due_at?->isPast() && ! $ticket->resolved_at ? 'text-danger' : 'text-body';
+                        $firstResponseClass = $ticket->first_response_due_at?->isPast() && ! $ticket->first_responded_at ? 'text-danger' : 'text';
+                        $resolveClass = $ticket->resolve_due_at?->isPast() && ! $ticket->resolved_at ? 'text-danger' : 'text';
                     @endphp
 
                     <div class="row g-1 small">

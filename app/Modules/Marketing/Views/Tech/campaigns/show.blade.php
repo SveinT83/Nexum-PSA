@@ -1045,10 +1045,17 @@
 @endsection
 
 @section('rightbar')
+    @php($audienceLists = $campaign->audienceLists())
     <x-card.default title="Campaign Settings">
         <dl class="row small mb-0">
-            <dt class="col-6">List</dt>
-            <dd class="col-6 text-end">{{ $campaign->list?->name ?? '—' }}</dd>
+            <dt class="col-5">Audience</dt>
+            <dd class="col-7 text-end">
+                @forelse($audienceLists as $list)
+                    <span class="badge text-bg-light border mb-1">{{ $list->name }}</span>
+                @empty
+                    <span class="text-muted">—</span>
+                @endforelse
+            </dd>
             <dt class="col-6">Sender</dt>
             <dd class="col-6 text-end">{{ $campaign->emailAccount?->address ?? 'Marketing default' }}</dd>
             <dt class="col-6">Batch</dt>

@@ -44,6 +44,104 @@ class MarketingModuleTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function campaigns_can_target_multiple_marketing_lists_and_deduplicate_recipients(): void
+    {
+        foreach ([
+            'marketing.view',
+            'marketing.campaign.create',
+            'marketing.campaign.edit',
+            'marketing.campaign.approve',
+        ] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo([
+            'marketing.view',
+            'marketing.campaign.create',
+            'marketing.campaign.edit',
+            'marketing.campaign.approve',
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Multi List Client AS']);
+        $shared = $this->contactForClient($client, 'Shared Recipient', 'shared@example.test');
+        $firstOnly = $this->contactForClient($client, 'First Only', 'first-only@example.test');
+        $secondOnly = $this->contactForClient($client, 'Second Only', 'second-only@example.test');
+        $duplicateEmail = $this->contactForClient($client, 'Duplicate Email', 'FIRST-ONLY@example.test');
+        $template = $this->marketingTemplate('multi_list_campaign', 'Multi-list campaign');
+
+        $firstList = MarketingList::query()->create([
+            'name' => 'First audience list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$shared->id, $firstOnly->id],
+                'excluded_contact_ids' => [],
+            ],
+        ]);
+        $secondList = MarketingList::query()->create([
+            'name' => 'Second audience list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+            'segment_criteria' => [
+                'audience_type' => 'manual_contacts',
+                'manual_contact_ids' => [$shared->id, $secondOnly->id, $duplicateEmail->id],
+                'excluded_contact_ids' => [],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.store'), [
+                'name' => 'Multi-list campaign',
+                'marketing_list_ids' => [$firstList->id, $secondList->id],
+                'batch_size' => 10,
+                'send_interval_minutes' => 15,
+                'track_opens' => 1,
+                'track_clicks' => 1,
+            ])
+            ->assertRedirect();
+
+        $campaign = MarketingCampaign::query()->firstOrFail();
+
+        $this->assertSame($firstList->id, $campaign->marketing_list_id);
+        $this->assertDatabaseHas('marketing_campaign_marketing_list', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_id' => $firstList->id,
+        ]);
+
+        $this->assertDatabaseHas('marketing_campaign_marketing_list', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_id' => $secondList->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.show', $campaign))
+            ->assertOk()
+            ->assertSee('First audience list')
+            ->assertSee('Second audience list');
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.emails.store', $campaign), [
+                'email_template_id' => $template->id,
+                'email_subject' => 'Hello {{ contact_name }}',
+                'sequence_order' => 1,
+                'delay_minutes' => 0,
+            ])
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.approve', $campaign))
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign))
+            ->assertSessionHas('status', 'Campaign approved with 3 queued recipients.');
+
+        $this->assertSame(3, MarketingCampaignRecipient::query()->where('marketing_campaign_id', $campaign->id)->count());
+        $this->assertSame(1, MarketingCampaignRecipient::query()->where('email', 'shared@example.test')->count());
+        $this->assertSame(1, MarketingCampaignRecipient::query()->whereRaw('lower(email) = ?', ['first-only@example.test'])->count());
+        $this->assertSame(1, MarketingCampaignRecipient::query()->where('email', 'second-only@example.test')->count());
+    }
+
+    #[Test]
     public function marketing_route_is_owned_by_marketing_module(): void
     {
         $this->assertSame(
@@ -110,6 +208,7 @@ class MarketingModuleTest extends TestCase
     public function authenticated_api_user_can_manage_marketing_lists_campaigns_and_settings(): void
     {
         Queue::fake();
+        $this->travelTo(Carbon::parse('2026-06-18 10:00:00'));
 
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $client = Client::factory()->create(['name' => 'API Marketing Client AS']);
@@ -160,10 +259,20 @@ class MarketingModuleTest extends TestCase
             ->assertOk()
             ->assertJsonCount(2, 'data');
 
+        $secondListResponse = $this->postJson(route('api.v1.marketing.lists.store'), [
+            'name' => 'API duplicate audience list',
+            'description' => 'Second list for the same campaign.',
+            'audience_type' => 'manual_contacts',
+            'manual_contact_ids' => [$extraContact->id],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.members_count', 1);
+        $secondListId = $secondListResponse->json('data.id');
+
         $campaignResponse = $this->postJson(route('api.v1.marketing.campaigns.store'), [
             'name' => 'API campaign',
             'description' => 'Campaign from API test.',
-            'marketing_list_id' => $listId,
+            'marketing_list_ids' => [$listId, $secondListId],
             'schedule_frequency' => 'weekly',
             'first_send_date' => '2026-06-19',
             'send_time' => '12:00',
@@ -172,7 +281,10 @@ class MarketingModuleTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('data.status', 'draft')
-            ->assertJsonPath('data.batch_size', 25);
+            ->assertJsonPath('data.batch_size', 25)
+            ->assertJsonPath('data.marketing_list_ids.0', $listId)
+            ->assertJsonPath('data.marketing_list_ids.1', $secondListId)
+            ->assertJsonCount(2, 'data.lists');
 
         $campaignId = $campaignResponse->json('data.id');
 
@@ -197,6 +309,12 @@ class MarketingModuleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.sequence_interval_unit', 'days')
             ->assertJsonPath('data.new_recipient_policy', 'join_current_step');
+
+        $campaign = MarketingCampaign::query()->findOrFail($campaignId);
+        $this->assertSame([$listId, $secondListId], $campaign->audienceLists()->pluck('id')->values()->all());
+        $this->assertSame(2, MarketingList::query()->findOrFail($listId)->members()->count());
+        $this->assertSame(1, MarketingList::query()->findOrFail($secondListId)->members()->count());
+        $this->assertSame(1, $campaign->emails()->where('status', 'active')->count());
 
         $this->postJson(route('api.v1.marketing.campaigns.approve', $campaignId))
             ->assertOk()
@@ -912,15 +1030,22 @@ class MarketingModuleTest extends TestCase
             'status' => 'active',
             'audience_type' => 'manual_contacts',
         ]);
-        MarketingCampaign::query()->create([
+        $pivotOnlyList = MarketingList::query()->create([
+            'name' => 'Pivot used delete list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+        ]);
+        $campaign = MarketingCampaign::query()->create([
             'marketing_list_id' => $usedList->id,
             'name' => 'List history campaign',
             'status' => 'draft',
         ]);
+        $campaign->lists()->sync([$usedList->id, $pivotOnlyList->id]);
 
         $this->actingAs($user)
             ->get(route('tech.marketing.lists.edit', $usedList))
             ->assertOk()
+            ->assertSee('1 campaigns')
             ->assertSee('This list is used by campaigns and cannot be deleted without preserving campaign history first.');
 
         $this->actingAs($user)
@@ -928,10 +1053,26 @@ class MarketingModuleTest extends TestCase
             ->assertRedirect(route('tech.marketing.lists.edit', $usedList))
             ->assertSessionHasErrors('list');
 
+        $this->actingAs($user)
+            ->get(route('tech.marketing.lists.edit', $pivotOnlyList))
+            ->assertOk()
+            ->assertSee('1 campaigns')
+            ->assertSee('This list is used by campaigns and cannot be deleted without preserving campaign history first.');
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.lists.destroy', $pivotOnlyList))
+            ->assertRedirect(route('tech.marketing.lists.edit', $pivotOnlyList))
+            ->assertSessionHasErrors('list');
+
         $this->assertDatabaseHas('marketing_lists', ['id' => $usedList->id]);
+        $this->assertDatabaseHas('marketing_lists', ['id' => $pivotOnlyList->id]);
         $this->assertDatabaseHas('marketing_campaigns', [
             'marketing_list_id' => $usedList->id,
             'name' => 'List history campaign',
+        ]);
+        $this->assertDatabaseHas('marketing_campaign_marketing_list', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_id' => $pivotOnlyList->id,
         ]);
     }
 

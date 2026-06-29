@@ -203,11 +203,11 @@
         <div class="card border-danger mt-3">
             <div class="card-header d-flex align-items-center justify-content-between gap-2">
                 <span class="fw-semibold text-danger">Danger Zone</span>
-                <span class="badge text-bg-light border">{{ $list->campaigns_count ?? 0 }} campaigns</span>
+                <span class="badge text-bg-light border">{{ $list->campaign_usage_count ?? 0 }} campaigns</span>
             </div>
             <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div class="small text-muted">
-                    @if(($list->campaigns_count ?? 0) > 0)
+                    @if(($list->campaign_usage_count ?? 0) > 0)
                         This list is used by campaigns and cannot be deleted without preserving campaign history first.
                     @else
                         Delete this list and its resolved recipients. Contacts are not deleted.
@@ -216,7 +216,7 @@
                 <form method="POST" action="{{ route('tech.marketing.lists.destroy', $list) }}" class="mb-0" onsubmit="return confirm('Delete this marketing list?');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-outline-danger" @disabled(($list->campaigns_count ?? 0) > 0)>
+                    <button type="submit" class="btn btn-sm btn-outline-danger" @disabled(($list->campaign_usage_count ?? 0) > 0)>
                         <i class="bi bi-trash" aria-hidden="true"></i>
                         Delete List
                     </button>
