@@ -157,6 +157,8 @@ class EnforceTechRoutePermission
         'tech.contacts.destroy' => 'contact.delete',
         'tech.contacts.*' => 'contact.view',
 
+        'tech.telephony.*' => 'telephony.view',
+
         'tech.assets.create' => 'asset.create',
         'tech.assets.store' => 'asset.create',
         'tech.assets.edit' => 'asset.update',
@@ -270,6 +272,7 @@ class EnforceTechRoutePermission
         'tech.storage.items.store' => 'storage.item_manage',
         'tech.storage.items.edit' => 'storage.item_manage',
         'tech.storage.items.update' => 'storage.item_manage',
+        'tech.storage.items.destroy' => 'storage.item_manage',
         'tech.storage.boxes.*' => 'storage.item_manage',
         'tech.storage.*' => 'storage.view',
     ];

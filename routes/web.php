@@ -97,6 +97,9 @@ require app_path('Modules/Marketing/routes.php');
 $userManagementPublicRoutes = true;
 require app_path('Modules/UserManagement/routes.php');
 
+$telephonyPublicRoutes = true;
+require app_path('Modules/Telephony/routes.php');
+
 // Dashboard (etter innlogging)
 /*
 Route::middleware('auth')->get('/dashboard', function () {

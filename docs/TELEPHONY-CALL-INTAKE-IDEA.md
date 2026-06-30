@@ -1,8 +1,12 @@
 # Telephony Call Intake Idea
 
-Status: Draft, not implemented.
+Status: Approved direction. Telephony Call Intake v1 is implemented under
+`docs/rfc/2026-06-30-telephony-call-intake-v1.md`; the remaining provider, admin mapping,
+unknown-caller, time-registration, and note-app items stay future scope.
 
-This document captures a future Telephony domain idea for incoming phone calls. The first finished feature should focus on call intake when a technician answers a phone call. Later work may add provider-specific integrations, outbound calling, call transfer, SMS, and contact sync.
+This document captures the Telephony domain direction for incoming phone calls. The first finished
+feature focuses on call intake when a technician answers a phone call. Later work may add
+provider-specific integrations, outbound calling, call transfer, SMS, and contact sync.
 
 ## Problem
 
@@ -266,7 +270,9 @@ Telephony:
 
 ## Initial Implementation Candidate
 
-This is not implemented yet.
+The v1 slice is implemented and formalized in
+`docs/rfc/2026-06-30-telephony-call-intake-v1.md`. The list below remains useful as the broader
+target shape; items outside the v1 RFC are future scope.
 
 Candidate finished feature scope:
 

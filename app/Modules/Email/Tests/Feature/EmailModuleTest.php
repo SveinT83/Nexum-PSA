@@ -12,6 +12,7 @@ use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
 use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\ProcessInboundRules;
+use App\Modules\Email\Jobs\StoreInboundMessage;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAttachment;
 use App\Modules\Email\Models\EmailHealthCheck;
@@ -373,6 +374,64 @@ class EmailModuleTest extends TestCase
             $this->assertTrue(class_exists($legacyClass));
             $this->assertTrue(is_subclass_of($legacyClass, $moduleClass));
         }
+    }
+
+    #[Test]
+    public function store_inbound_message_skips_soft_deleted_duplicate_uid_without_failing_worker(): void
+    {
+        Queue::fake();
+
+        $account = EmailAccount::create([
+            'address' => 'duplicate@example.test',
+            'from_name' => 'Duplicate Inbox',
+            'is_active' => true,
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'duplicate@example.test',
+            'imap_secret' => 'secret',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'duplicate@example.test',
+            'smtp_secret' => 'secret',
+        ]);
+
+        $message = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 804,
+            'message_id' => '<existing-duplicate@example.test>',
+            'subject' => 'Existing hidden message',
+            'from_email' => 'sender@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Already imported once.',
+        ]);
+        $message->delete();
+
+        app()->call([new StoreInboundMessage([
+            'account_id' => $account->id,
+            'imap_uid' => 804,
+            'message_id' => '<new-duplicate@example.test>',
+            'subject' => 'Duplicate hidden message',
+            'from_email' => 'sender@example.test',
+            'received_at' => now(),
+            'is_oversize' => true,
+        ]), 'handle']);
+
+        $this->assertSame(1, EmailMessage::withTrashed()
+            ->where('account_id', $account->id)
+            ->where('mailbox', 'INBOX')
+            ->where('imap_uid', 804)
+            ->count());
+        $this->assertSame(0, EmailMessage::query()
+            ->where('account_id', $account->id)
+            ->where('mailbox', 'INBOX')
+            ->where('imap_uid', 804)
+            ->count());
+
+        Queue::assertNotPushed(ProcessInboundRules::class);
     }
 
     #[Test]

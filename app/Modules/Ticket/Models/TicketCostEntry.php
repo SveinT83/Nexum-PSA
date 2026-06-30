@@ -43,7 +43,7 @@ class TicketCostEntry extends Model
 
     public function storageItem(): BelongsTo
     {
-        return $this->belongsTo(Item::class, 'storage_item_id');
+        return $this->belongsTo(Item::class, 'storage_item_id')->withTrashed();
     }
 
     public function reservation(): BelongsTo

@@ -13,6 +13,7 @@ use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Contact\Models\Contact;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
@@ -168,6 +169,7 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketSettingsController::class . '@storeWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.store')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@editWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.edit')->getActionName());
         $this->assertSame(TicketSettingsController::class . '@updateWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.update')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Api\V1\TicketController::class . '@storeExternalMessage', Route::getRoutes()->getByName('api.v1.tickets.external-messages.store')->getActionName());
     }
 
     #[Test]
@@ -261,6 +263,116 @@ class TicketModuleTest extends TestCase
             'ticket_id' => $ticket->id,
             'type' => 'status_changed',
         ]);
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_sync_external_msp_manager_comments_idempotently(): void
+    {
+        Queue::fake([SendTicketReplyEmail::class]);
+
+        $client = Client::factory()->create(['name' => 'MSP Manager Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999045',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'subject' => 'MSP Manager synced ticket',
+            'is_unread' => false,
+        ]);
+
+        Sanctum::actingAs($this->tech, ['tickets.update']);
+
+        $payload = [
+            'source' => 'msp_manager',
+            'external_id' => 'comment-8842',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'subject' => 'MSP Manager response',
+            'body' => 'Technician answered from MSP Manager.',
+            'author_name' => 'N-able Technician',
+            'author_email' => 'tech@example.test',
+            'occurred_at' => now()->subMinutes(5)->toISOString(),
+        ];
+
+        $this->postJson(route('api.v1.tickets.external-messages.store', $ticket), $payload)
+            ->assertCreated()
+            ->assertJsonPath('created', true)
+            ->assertJsonPath('data.metadata.external_source', 'msp_manager')
+            ->assertJsonPath('data.metadata.external_id', 'comment-8842');
+
+        $this->postJson(route('api.v1.tickets.external-messages.store', $ticket), array_merge($payload, [
+            'body' => 'Technician updated the MSP Manager response.',
+        ]))
+            ->assertOk()
+            ->assertJsonPath('created', false)
+            ->assertJsonPath('data.body', 'Technician updated the MSP Manager response.');
+
+        $this->assertSame(1, TicketMessage::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('metadata->external_source', 'msp_manager')
+            ->where('metadata->external_id', 'comment-8842')
+            ->count());
+
+        $message = TicketMessage::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('metadata->external_id', 'comment-8842')
+            ->firstOrFail();
+
+        $this->assertSame('external', $message->author_type);
+        $this->assertSame('customer_reply', $message->type);
+        $this->assertSame('public', $message->visibility);
+        $this->assertSame('N-able Technician', $message->metadata['external_author_name']);
+        $this->assertTrue($ticket->fresh()->is_unread);
+        $this->assertNotNull($ticket->fresh()->first_responded_at);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'external_message_synced',
+        ]);
+
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
+    }
+
+    #[Test]
+    public function external_message_metadata_cannot_control_ticket_workflow_action(): void
+    {
+        Queue::fake([SendTicketReplyEmail::class]);
+
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999046',
+            'status_id' => $new->id,
+            'subject' => 'External workflow injection guard',
+        ]);
+
+        Sanctum::actingAs($this->tech, ['tickets.update']);
+
+        $this->postJson(route('api.v1.tickets.external-messages.store', $ticket), [
+            'source' => 'msp_manager',
+            'external_id' => 'comment-8843',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Imported reply with untrusted metadata.',
+            'metadata' => [
+                'reply_intent' => TicketAction::SEND_SOLUTION,
+                'is_solution' => true,
+                'external_url' => 'https://example.test/comments/8843',
+            ],
+        ])->assertCreated();
+
+        $message = TicketMessage::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('metadata->external_id', 'comment-8843')
+            ->firstOrFail();
+
+        $this->assertSame($new->id, $ticket->fresh()->status_id);
+        $this->assertArrayNotHasKey('reply_intent', $message->metadata);
+        $this->assertArrayNotHasKey('is_solution', $message->metadata);
+        $this->assertSame('https://example.test/comments/8843', $message->metadata['external_url']);
+
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
     }
 
     #[Test]
@@ -2087,6 +2199,150 @@ class TicketModuleTest extends TestCase
         $ticket->refresh();
         $this->assertFalse($ticket->is_unread);
         $this->assertNotNull($ticket->first_responded_at);
+    }
+
+    #[Test]
+    public function ticket_reply_cc_field_suggests_client_contacts_before_global_contacts(): void
+    {
+        $client = Client::factory()->create(['name' => 'CC Client']);
+        $alphaSite = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Alpha Site']);
+        $betaSite = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Beta Site']);
+        $ticketContact = ClientUser::factory()->create([
+            'client_site_id' => $betaSite->id,
+            'name' => 'Ticket Contact',
+            'email' => 'ticket.contact@example.com',
+        ]);
+        ClientUser::factory()->create([
+            'client_site_id' => $betaSite->id,
+            'name' => 'Beta Contact',
+            'email' => 'beta.cc@example.com',
+        ]);
+        ClientUser::factory()->create([
+            'client_site_id' => $alphaSite->id,
+            'name' => 'Alpha Contact',
+            'email' => 'alpha.cc@example.com',
+        ]);
+
+        $clientContact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Canonical Client Contact',
+        ]);
+        $clientContact->emails()->create([
+            'label' => 'work',
+            'email' => 'canonical.cc@example.com',
+            'is_primary' => true,
+        ]);
+        $clientContact->relations()->create([
+            'related_type' => $client->getMorphClass(),
+            'related_id' => $client->id,
+            'relation_type' => 'contact',
+            'is_primary' => true,
+        ]);
+
+        $globalContact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Global Contact',
+        ]);
+        $globalContact->emails()->create([
+            'label' => 'work',
+            'email' => 'global.cc@example.com',
+            'is_primary' => true,
+        ]);
+
+        $ticket = $this->createTicket($ticketContact, [
+            'ticket_key' => 'TD-2026-999043',
+            'client_id' => $client->id,
+            'contact_id' => $ticketContact->id,
+            'subject' => 'CC suggestion ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('CC suggestions')
+            ->assertSee('data-cc-email="alpha.cc@example.com"', false)
+            ->assertSee('data-cc-email="beta.cc@example.com"', false)
+            ->assertSee('data-cc-email="canonical.cc@example.com"', false)
+            ->assertSee('data-cc-email="global.cc@example.com"', false)
+            ->assertSeeInOrder([
+                'Client contacts',
+                'Alpha Contact',
+                'Alpha Site',
+                'Beta Contact',
+                'Beta Site',
+                'Canonical Client Contact',
+                'Global contacts',
+                'Global Contact',
+            ]);
+    }
+
+    #[Test]
+    public function ticket_show_displays_customer_contact_card_with_clickable_contact_details(): void
+    {
+        $client = Client::factory()->create([
+            'name' => 'Customer Card Client',
+            'client_number' => 'C-100',
+            'website' => 'customer.example',
+            'billing_email' => 'billing@customer.example',
+        ]);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Main Office',
+            'address' => 'Serviceveien 1',
+            'zip' => '1234',
+            'city' => 'Oslo',
+        ]);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Ada Lovelace',
+        ]);
+        $contact->emails()->create([
+            'label' => 'support',
+            'email' => 'support@customer.example',
+            'is_primary' => true,
+        ]);
+        $contact->phones()->create([
+            'label' => 'mobile',
+            'phone' => '+47 11 22 33 44',
+            'is_primary' => true,
+        ]);
+        $ticketContact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'role' => 'IT manager',
+            'name' => 'Ada Lovelace',
+            'email' => 'ada@customer.example',
+            'phone' => '+47 99 88 77 66',
+        ]);
+        $ticket = $this->createTicket($ticketContact, [
+            'ticket_key' => 'TD-2026-999044',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $ticketContact->id,
+            'subject' => 'Customer card ticket',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Customer Card Client')
+            ->assertSee('C-100')
+            ->assertSee('href="https://customer.example"', false)
+            ->assertSee('mailto:billing@customer.example', false)
+            ->assertSee('Ada Lovelace')
+            ->assertSee('IT manager')
+            ->assertSee('tel:+4799887766', false)
+            ->assertSee('tel:+4711223344', false)
+            ->assertSee('mailto:ada@customer.example', false)
+            ->assertSee('mailto:support@customer.example', false)
+            ->assertSee(route('tech.clients.show', $client), false)
+            ->assertSee(route('tech.clients.user.show', $ticketContact), false)
+            ->assertSee(route('tech.clients.sites.show', $site), false)
+            ->assertSee('Serviceveien 1')
+            ->assertSee('1234 Oslo');
     }
 
     #[Test]

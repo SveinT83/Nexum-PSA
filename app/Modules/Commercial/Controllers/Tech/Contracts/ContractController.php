@@ -7,6 +7,9 @@ use App\Modules\Commercial\Actions\BuildContractTermSnapshots;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Mail\ContractLinkSent;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\System\Support\CompanyProfileSettings;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use App\Modules\Email\Models\EmailAccount;
 use Illuminate\Http\Request;
 use App\Models\Clients\Client;
@@ -15,6 +18,7 @@ use App\Modules\Commercial\Requests\ContractsRequest;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 
 /**
  * Class ContractController
@@ -72,6 +76,7 @@ class ContractController extends Controller
             'ready' => $contract->isReady(),
             'has_missing_terms' => $hasMissingTerms,
             'show_readiness_status' => ! in_array($contract->approval_status, ['approved', 'won'], true),
+            'pdf_available' => $this->canDownloadPdf($contract),
         ];
 
         return view('commercial::Tech.cs.contracts.show', [
@@ -79,6 +84,39 @@ class ContractController extends Controller
             'client' => $contract->client,
             'validation' => $validation,
             'defaultSla' => Sla::query()->where('is_default', true)->orderBy('name')->first(),
+        ]);
+    }
+
+    public function pdf(Contracts $contract, CompanyProfileSettings $companyProfile)
+    {
+        $contract->load([
+            'client',
+            'sla',
+            'items.slaPolicy',
+            'items.timeRates',
+        ]);
+
+        if (! $this->canDownloadPdf($contract)) {
+            return back()->with('error', 'Contract is not ready for PDF export. Please add services, terms, and a valid start date first.');
+        }
+
+        $html = view('commercial::Tech.cs.contracts.pdf', [
+            'contract' => $contract,
+            'companyProfile' => $companyProfile->get(),
+        ])->render();
+
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isRemoteEnabled', false);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4');
+        $dompdf->render();
+
+        return response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$this->pdfFileName($contract).'"',
         ]);
     }
 
@@ -635,6 +673,19 @@ class ContractController extends Controller
         ]);
 
         return back()->with('success', 'Contract manually approved and marked as Won.');
+    }
+
+    private function canDownloadPdf(Contracts $contract): bool
+    {
+        return $contract->isReady()
+            || in_array($contract->approval_status, ['sent_quote', 'sent_contract', 'won'], true);
+    }
+
+    private function pdfFileName(Contracts $contract): string
+    {
+        $clientSlug = Str::slug($contract->client?->name ?: 'client');
+
+        return 'contract-'.$contract->id.'-'.$clientSlug.'.pdf';
     }
 
     /**

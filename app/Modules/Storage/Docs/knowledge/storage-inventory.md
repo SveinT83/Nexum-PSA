@@ -79,3 +79,20 @@ readers should initially use `q`, `sku`, or `ean_number` depending on what the d
 
 Stock changes must use `/api/v1/storage/items/{item}/adjust`. Directly changing `qty_on_hand` is not
 allowed because it would bypass the movement history.
+
+Manual web adjustments:
+
+- `Set on-hand to` is for inventory corrections after a physical count. Nexum calculates the delta
+  from the current on-hand quantity.
+- `Increase by` records a positive delta.
+- `Decrease by` records a negative delta and cannot take on-hand quantity below zero.
+- The API endpoint still accepts a raw `delta` for integrations that already calculate the change.
+
+Deleting items:
+
+- Storage items are soft-deleted so historical ticket, order, and invoice references keep their
+  item ID and SKU context.
+- An item can only be deleted when on-hand quantity, reserved quantity, active reservations, and
+  stock unit quantities are all zero.
+- Delete is available from the item detail page and through `DELETE /api/v1/storage/items/{item}`.
+- The API delete route uses the existing `storage.update` scope.

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Economy\Actions\EnsureEconomyDefaults;
 use App\Modules\Storage\Actions\AdjustItemStock;
+use App\Modules\Storage\Actions\DeleteItem;
 use App\Modules\Storage\Actions\StoreItem;
 use App\Modules\Storage\Models\Box;
 use App\Modules\Storage\Models\Item;
@@ -124,18 +125,35 @@ class ItemController extends Controller
     public function adjust(Request $request, Item $item, AdjustItemStock $adjustItemStock): RedirectResponse
     {
         $data = $request->validate([
-            'delta' => 'required|integer|not_in:0',
+            'adjustment_mode' => 'nullable|string|in:set,increase,decrease',
+            'quantity' => 'nullable|required_with:adjustment_mode|integer|min:0',
+            'delta' => 'nullable|required_without:adjustment_mode|integer|not_in:0',
             'reason' => 'required|string|max:100',
             'note' => 'nullable|string|max:1000',
         ]);
 
         try {
-            $adjustItemStock->handle($item, (int) $data['delta'], $data['reason'], $data['note'] ?? null, $request->user());
+            $adjustItemStock->handle($item, $this->adjustmentDelta($item, $data), $data['reason'], $data['note'] ?? null, $request->user());
         } catch (InvalidArgumentException $exception) {
-            return back()->withErrors(['delta' => $exception->getMessage()]);
+            $field = filled($data['adjustment_mode'] ?? null) ? 'quantity' : 'delta';
+
+            return back()->withErrors([$field => $exception->getMessage()]);
         }
 
         return back()->with('success', 'Stock adjusted.');
+    }
+
+    public function destroy(Request $request, Item $item, DeleteItem $deleteItem): RedirectResponse
+    {
+        try {
+            $deleteItem->handle($item, $request->user());
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors(['item' => $exception->getMessage()]);
+        }
+
+        return redirect()
+            ->route('tech.storage.index')
+            ->with('success', 'Storage item deleted.');
     }
 
     private function validatedItem(Request $request): array
@@ -170,6 +188,27 @@ class ItemController extends Controller
             'should_order' => 'boolean',
             'status' => 'required|string|in:active,inactive',
         ]);
+    }
+
+    private function adjustmentDelta(Item $item, array $data): int
+    {
+        if (! filled($data['adjustment_mode'] ?? null)) {
+            return (int) $data['delta'];
+        }
+
+        $quantity = (int) $data['quantity'];
+
+        $delta = match ($data['adjustment_mode']) {
+            'set' => $quantity - (int) $item->qty_on_hand,
+            'increase' => $quantity,
+            'decrease' => -$quantity,
+        };
+
+        if ($delta === 0) {
+            throw new InvalidArgumentException('Stock adjustment must change the on-hand quantity.');
+        }
+
+        return $delta;
     }
 
     private function prepareItemData(array $data): array

@@ -24,6 +24,10 @@ Route::post('storage/items/{item}/adjust', [StorageController::class, 'adjustIte
     ->name('storage.items.adjust')
     ->middleware(CheckAbilities::class.':storage.update');
 
+Route::delete('storage/items/{item}', [StorageController::class, 'destroyItem'])
+    ->name('storage.items.destroy')
+    ->middleware(CheckAbilities::class.':storage.update');
+
 Route::get('storage/warehouses', [StorageController::class, 'warehouses'])
     ->name('storage.warehouses.index')
     ->middleware(CheckAbilities::class.':storage.read');

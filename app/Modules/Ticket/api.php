@@ -19,3 +19,7 @@ Route::get('tickets/{ticket}', [TicketController::class, 'show'])
 Route::match(['put', 'patch'], 'tickets/{ticket}', [TicketController::class, 'update'])
     ->name('tickets.update')
     ->middleware(CheckAbilities::class.':tickets.update');
+
+Route::post('tickets/{ticket}/external-messages', [TicketController::class, 'storeExternalMessage'])
+    ->name('tickets.external-messages.store')
+    ->middleware(CheckAbilities::class.':tickets.update');

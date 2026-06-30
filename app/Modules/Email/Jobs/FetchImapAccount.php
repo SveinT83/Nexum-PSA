@@ -57,8 +57,12 @@ class FetchImapAccount implements ShouldQueue
         ])->save();
 
         foreach ($messages as $payload) {
-            // Dedup check: skip if already stored by unique index (account+mailbox+uid)
-            $exists = $account->messages()->where('imap_uid', $payload['imap_uid'])->where('mailbox', 'INBOX')->exists();
+            // Dedup check: include soft-deleted rows because the DB unique key still reserves the UID.
+            $exists = $account->messages()
+                ->withTrashed()
+                ->where('imap_uid', $payload['imap_uid'])
+                ->where('mailbox', 'INBOX')
+                ->exists();
             if ($exists) {
                 continue;
             }

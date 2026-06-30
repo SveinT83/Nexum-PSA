@@ -107,6 +107,7 @@ Most recent completed work:
 - The Ticket show message composer now keeps message type and reply intent on one row. Customer replies can target any active contact for the same client and include CC recipients. Internal notes can notify a selected technician by email.
 - Ticket show disables blocked workflow buttons and shows the requirement reason instead of allowing technicians to click through unfinished work.
 - Default statuses now include New, In Progress, Waiting Customer, Resolved, and Closed.
+- Ticket show includes a right-side customer card with client, site, contact, email, and clickable phone links sourced from both legacy client users and the Contact domain.
 - Ticket show keeps lifecycle details in the right-side Details card, while full edits happen on `tech.tickets.edit`.
 - Tests now cover missing contact email, missing outbound account, missing email template, and SMTP failure logging.
 - Ticket settings can update `EmailAccount.defaults_for` so the Email module and Ticket module share the same source of truth for the ticket sender account.

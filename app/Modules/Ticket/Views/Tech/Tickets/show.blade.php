@@ -51,6 +51,7 @@
 <div class="container-fluid">
     @php
         $canReplyToContact = $replyContacts->isNotEmpty() && ($ticketActions['customer_reply'] ?? true);
+        $ccSuggestionGroups = $ccContactSuggestions->groupBy('group');
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
         $allowInternalSolutionNotes = $solutionPolicy['allow_internal_solution_notes'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
@@ -513,6 +514,28 @@
                                         <label for="cc" class="form-label">CC</label>
                                         <input id="cc" name="cc" type="text" class="form-control @error('cc') is-invalid @enderror" value="{{ old('cc') }}" placeholder="thirdparty@example.com">
                                         @error('cc')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        @if($ccContactSuggestions->isNotEmpty())
+                                            <div id="cc_contact_suggestions" class="mt-2">
+                                                <div class="small text-muted fw-semibold mb-1">CC suggestions</div>
+                                                @foreach($ccSuggestionGroups as $group => $suggestions)
+                                                    <div class="small text-muted mt-2">{{ $group }}</div>
+                                                    <div class="d-flex flex-wrap gap-1">
+                                                        @foreach($suggestions as $suggestion)
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-sm btn-outline-secondary text-start"
+                                                                data-cc-email="{{ $suggestion['email'] }}"
+                                                                title="{{ $suggestion['name'] }} <{{ $suggestion['email'] }}>">
+                                                                <span>{{ $suggestion['name'] }}</span>
+                                                                @if($suggestion['site'])
+                                                                    <span class="text-muted">({{ $suggestion['site'] }})</span>
+                                                                @endif
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -830,6 +853,7 @@
         const replyShortcut = document.getElementById('ticketReplyShortcut');
         const composer = document.getElementById('ticketComposerCollapse');
         const body = document.getElementById('body');
+        const ccInput = document.getElementById('cc');
         const addTimeModal = document.getElementById('ticketAddTimeModal');
         const shouldShowAddTimeModal = @json((bool) $showAddTimeModal);
         const timeAiDraft = document.getElementById('ticketTimeAiDraft');
@@ -905,6 +929,28 @@
                 composer?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 body?.focus({ preventScroll: true });
             }, 150);
+        });
+
+        document.querySelectorAll('[data-cc-email]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (! ccInput) {
+                    return;
+                }
+
+                const email = this.dataset.ccEmail;
+                const current = ccInput.value
+                    .split(/[;,]+/)
+                    .map((value) => value.trim())
+                    .filter(Boolean);
+                const exists = current.some((value) => value.toLowerCase() === email.toLowerCase());
+
+                if (! exists) {
+                    current.push(email);
+                }
+
+                ccInput.value = current.join(', ');
+                ccInput.focus();
+            });
         });
 
         if (shouldShowAddTimeModal && window.bootstrap && addTimeModal) {
@@ -1462,49 +1508,151 @@
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">
                     @if($ticket->client)
+                        @php
+                            $ticketContact = $ticket->contact;
+                            $contactRecord = $ticketContact?->contact;
+                            $customerSite = $ticket->site ?: $ticketContact?->site;
+                            $clientWebsite = trim((string) $ticket->client->website);
+                            $clientWebsiteUrl = $clientWebsite !== '' && ! preg_match('#^https?://#i', $clientWebsite)
+                                ? 'https://' . $clientWebsite
+                                : $clientWebsite;
+
+                            $contactEmailRows = collect();
+                            if (filled($ticketContact?->email)) {
+                                $contactEmailRows->push([
+                                    'email' => $ticketContact->email,
+                                    'label' => 'Ticket contact',
+                                ]);
+                            }
+                            foreach (($contactRecord?->emails ?? collect())->sortByDesc('is_primary') as $email) {
+                                if (filled($email->email)) {
+                                    $contactEmailRows->push([
+                                        'email' => $email->email,
+                                        'label' => $email->label ?: ($email->is_primary ? 'Primary' : 'Email'),
+                                    ]);
+                                }
+                            }
+                            $contactEmailRows = $contactEmailRows
+                                ->unique(fn ($row) => strtolower($row['email']))
+                                ->values();
+
+                            $contactPhoneRows = collect();
+                            if (filled($ticketContact?->phone)) {
+                                $contactPhoneRows->push([
+                                    'phone' => $ticketContact->phone,
+                                    'label' => 'Ticket contact',
+                                ]);
+                            }
+                            foreach (($contactRecord?->phones ?? collect())->sortByDesc('is_primary') as $phone) {
+                                if (filled($phone->phone)) {
+                                    $contactPhoneRows->push([
+                                        'phone' => $phone->phone,
+                                        'label' => $phone->label ?: ($phone->is_primary ? 'Primary' : 'Phone'),
+                                    ]);
+                                }
+                            }
+                            $contactPhoneRows = $contactPhoneRows
+                                ->unique(fn ($row) => preg_replace('/\D+/', '', $row['phone']) ?: strtolower($row['phone']))
+                                ->values();
+                            $primaryPhone = $contactPhoneRows->first();
+                            $primaryPhoneHref = $primaryPhone
+                                ? preg_replace('/(?!^\+)[^\d]/', '', $primaryPhone['phone'])
+                                : null;
+                        @endphp
                         <div class="small">
                             {{-- Client name and number --}}
-                            <div class="fw-semibold text-truncate mb-1">{{ $ticket->client->name }}</div>
-                            @if($ticket->client->client_number)
-                                <div class="text-muted mb-1">{{ $ticket->client->client_number }}</div>
-                            @endif
-                            @if($ticket->client->website)
+                            <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                <div class="min-w-0">
+                                    <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Client</div>
+                                    <a href="{{ route('tech.clients.show', $ticket->client) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $ticket->client->name }}</a>
+                                    @if($ticket->client->client_number)
+                                        <div class="text-muted">{{ $ticket->client->client_number }}</div>
+                                    @endif
+                                </div>
+                                <a href="{{ route('tech.clients.show', $ticket->client) }}" class="btn btn-sm btn-outline-secondary flex-shrink-0" title="Open client">
+                                    <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                            @if($clientWebsite !== '')
                                 <div class="text-truncate mb-1">
                                     <i class="bi bi-globe small" aria-hidden="true"></i>
-                                    <a href="{{ $ticket->client->website }}" target="_blank" rel="noopener" class="text-decoration-none">{{ preg_replace('#^https?://(www\.)?#', '', $ticket->client->website) }}</a>
+                                    <a href="{{ $clientWebsiteUrl }}" target="_blank" rel="noopener" class="text-decoration-none">{{ preg_replace('#^https?://(www\.)?#', '', $clientWebsite) }}</a>
+                                </div>
+                            @endif
+                            @if($ticket->client->billing_email)
+                                <div class="text-truncate mb-1">
+                                    <i class="bi bi-envelope-at small" aria-hidden="true"></i>
+                                    <a href="mailto:{{ $ticket->client->billing_email }}" class="text-decoration-none">{{ $ticket->client->billing_email }}</a>
                                 </div>
                             @endif
 
                             {{-- Contact person --}}
-                            @if($ticket->contact)
+                            @if($ticketContact)
                                 <div class="border-top mt-2 pt-2">
-                                    <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Contact</div>
-                                    <div class="fw-semibold">{{ $ticket->contact->name }}</div>
-                                    @if($ticket->contact->email)
-                                        <div class="text-truncate">
-                                            <i class="bi bi-envelope small" aria-hidden="true"></i>
-                                            <a href="mailto:{{ $ticket->contact->email }}" class="text-decoration-none">{{ $ticket->contact->email }}</a>
+                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                        <div class="min-w-0">
+                                            <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Contact</div>
+                                            <a href="{{ route('tech.clients.user.show', $ticketContact) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $ticketContact->name }}</a>
+                                            @if($ticketContact->role)
+                                                <div class="text-muted text-truncate">{{ $ticketContact->role }}</div>
+                                            @endif
                                         </div>
+                                        @if($primaryPhoneHref)
+                                            <a href="tel:{{ $primaryPhoneHref }}" class="btn btn-sm btn-outline-primary flex-shrink-0">
+                                                <i class="bi bi-telephone" aria-hidden="true"></i>
+                                                Call
+                                            </a>
+                                        @endif
+                                    </div>
+
+                                    @if($contactPhoneRows->isNotEmpty())
+                                        <div class="d-grid gap-1 mb-2">
+                                            @foreach($contactPhoneRows as $phoneRow)
+                                                @php
+                                                    $phoneHref = preg_replace('/(?!^\+)[^\d]/', '', $phoneRow['phone']);
+                                                @endphp
+                                                <a href="tel:{{ $phoneHref }}" class="d-flex align-items-center gap-2 text-decoration-none">
+                                                    <i class="bi bi-telephone small" aria-hidden="true"></i>
+                                                    <span class="text-truncate">{{ $phoneRow['phone'] }}</span>
+                                                    <span class="badge text-bg-light border ms-auto">{{ $phoneRow['label'] }}</span>
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="text-muted mb-2">No phone number registered.</div>
                                     @endif
-                                    @if($ticket->contact->phone)
-                                        <div>
-                                            <i class="bi bi-telephone small" aria-hidden="true"></i>
-                                            <a href="tel:{{ $ticket->contact->phone }}" class="text-decoration-none">{{ $ticket->contact->phone }}</a>
+
+                                    @if($contactEmailRows->isNotEmpty())
+                                        <div class="d-grid gap-1">
+                                            @foreach($contactEmailRows as $emailRow)
+                                                <a href="mailto:{{ $emailRow['email'] }}" class="d-flex align-items-center gap-2 text-decoration-none">
+                                                    <i class="bi bi-envelope small" aria-hidden="true"></i>
+                                                    <span class="text-truncate">{{ $emailRow['email'] }}</span>
+                                                    <span class="badge text-bg-light border ms-auto">{{ $emailRow['label'] }}</span>
+                                                </a>
+                                            @endforeach
                                         </div>
                                     @endif
                                 </div>
                             @endif
 
                             {{-- Site --}}
-                            @if($ticket->site)
+                            @if($customerSite)
                                 <div class="border-top mt-2 pt-2">
-                                    <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Site</div>
-                                    <div class="fw-semibold">{{ $ticket->site->name }}</div>
-                                    @if($ticket->site->address)
-                                        <div>{{ $ticket->site->address }}</div>
+                                    <div class="d-flex align-items-start justify-content-between gap-2">
+                                        <div class="min-w-0">
+                                            <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Site</div>
+                                            <a href="{{ route('tech.clients.sites.show', $customerSite) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $customerSite->name }}</a>
+                                        </div>
+                                        <a href="{{ route('tech.clients.sites.show', $customerSite) }}" class="btn btn-sm btn-outline-secondary flex-shrink-0" title="Open site">
+                                            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                                        </a>
+                                    </div>
+                                    @if($customerSite->address)
+                                        <div class="mt-1">{{ $customerSite->address }}</div>
                                     @endif
-                                    @if($ticket->site->zip || $ticket->site->city)
-                                        <div>{{ trim(($ticket->site->zip ?? '') . ' ' . ($ticket->site->city ?? '')) }}</div>
+                                    @if($customerSite->zip || $customerSite->city)
+                                        <div>{{ trim(($customerSite->zip ?? '') . ' ' . ($customerSite->city ?? '')) }}</div>
                                     @endif
                                 </div>
                             @endif

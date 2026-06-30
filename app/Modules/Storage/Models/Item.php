@@ -142,4 +142,12 @@ class Item extends Model
 
         return max($suggested, 0);
     }
+
+    public function canBeDeletedFromInventory(): bool
+    {
+        return $this->qty_on_hand <= 0
+            && $this->qty_reserved <= 0
+            && ! $this->reservations()->where('status', 'active')->exists()
+            && ! $this->stockUnits()->where('current_qty', '>', 0)->exists();
+    }
 }

@@ -33,6 +33,9 @@ Route::get('/storage/items/{item}/edit', [ItemController::class, 'edit'])
 Route::patch('/storage/items/{item}', [ItemController::class, 'update'])
     ->name('storage.items.update');
 
+Route::delete('/storage/items/{item}', [ItemController::class, 'destroy'])
+    ->name('storage.items.destroy');
+
 Route::get('/storage/items/{item}', [ItemController::class, 'show'])
     ->name('storage.items.show');
 

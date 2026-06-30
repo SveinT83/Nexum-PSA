@@ -82,11 +82,15 @@ The list supports search, filters, sorting, unread and unassigned views, lifecyc
 
 Ticket show:
 
-The show page is the primary work surface. It contains ticket details, conversation/activity, workflow actions, replies, notes, time registration, cost registration, assignment information, SLA details, and Knowledge suggestions.
+The show page is the primary work surface. It contains ticket details, conversation/activity, workflow actions, replies, notes, time registration, cost registration, assignment information, SLA details, customer contact cards, and Knowledge suggestions. The customer card keeps client, site, contact, email, and clickable phone details visible without leaving the ticket.
 
 Ticket create/edit:
 
 Create and edit forms handle manual ticket creation, client/contact/site/asset scope, lifecycle fields, tags, and core ticket metadata.
+
+Ticket API:
+
+External systems can sync ticket conversation entries through `POST /api/v1/tickets/{ticket}/external-messages`. The endpoint is idempotent by external source and external message ID, stores the message as `author_type = external`, and avoids sending outbound customer email for imported replies. Free-form external metadata is kept for audit context, but workflow-driving fields such as reply intent and solution markers are ignored.
 
 Ticket settings:
 
