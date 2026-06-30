@@ -25,14 +25,18 @@ class SyncExternalTicketMessage
                 ->first();
 
             $created = ! $message;
-            $metadata = array_merge($message?->metadata ?? [], $data['metadata'] ?? [], [
-                'external_source' => $source,
-                'external_id' => $externalId,
-                'external_author_name' => $data['author_name'] ?? null,
-                'external_author_email' => $data['author_email'] ?? null,
-                'external_occurred_at' => $occurredAt->toISOString(),
-                'external_synced_at' => now()->toISOString(),
-            ]);
+            $metadata = array_merge(
+                $this->syncMetadata($message?->metadata ?? []),
+                $this->syncMetadata($data['metadata'] ?? []),
+                [
+                    'external_source' => $source,
+                    'external_id' => $externalId,
+                    'external_author_name' => $data['author_name'] ?? null,
+                    'external_author_email' => $data['author_email'] ?? null,
+                    'external_occurred_at' => $occurredAt->toISOString(),
+                    'external_synced_at' => now()->toISOString(),
+                ]
+            );
 
             if (! $message) {
                 $message = new TicketMessage([
@@ -91,14 +95,23 @@ class SyncExternalTicketMessage
 
     private function workflowActionFor(TicketMessage $message): string
     {
-        if (($message->metadata['reply_intent'] ?? null) === TicketAction::SEND_SOLUTION) {
-            return TicketAction::SEND_SOLUTION;
-        }
-
         if ($message->type !== 'customer_reply') {
             return TicketAction::ADD_INTERNAL_NOTE;
         }
 
-        return $message->metadata['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE;
+        return TicketAction::CUSTOMER_REPLY_RECEIVED;
+    }
+
+    private function syncMetadata(array $metadata): array
+    {
+        unset(
+            $metadata['reply_intent'],
+            $metadata['is_solution'],
+            $metadata['solution_marked_at'],
+            $metadata['solution_marked_by'],
+            $metadata['notify_user_id']
+        );
+
+        return $metadata;
     }
 }

@@ -33,8 +33,9 @@ also uses the linked or legacy `client_users` row so Ticket creation can still p
 
 ## Deduplication
 
-If the provider sends a call ID, Telephony stores a provider call key and updates the existing call
-when the same provider/call ID is received again.
+If the provider sends a call ID, Telephony stores a provider call key scoped to the token owner and
+updates the existing call for that same technician when the same provider/call ID is received again.
+The same provider call ID from another technician creates a separate call record.
 
 If no provider call ID exists, Telephony uses a fallback fingerprint based on technician, caller
 number, and a short time bucket. This keeps page reloads or duplicate provider opens from creating
@@ -47,7 +48,8 @@ The created ticket receives the matched Client, Site, legacy ClientUser contact 
 call metadata.
 
 Linking a call to an existing ticket can copy the call note into an internal ticket message and sets
-the call status to `linked`.
+the call status to `linked`. The token owner must still have the relevant Ticket permissions, and
+the target ticket must match the call's Client, Site, or ClientUser context.
 
 ## Operational Notes
 

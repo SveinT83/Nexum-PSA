@@ -22,7 +22,8 @@ Implemented in v1:
 - Provider payload recording with raw payload audit fields.
 - Phone number normalization for Norwegian numbers, `00` prefixes, and E.164 values.
 - Caller matching against Contact phone numbers and the legacy `client_users` bridge.
-- Call deduplication by provider call ID or a short fallback fingerprint.
+- Call deduplication by provider call ID scoped to the token owner, or by a short fallback
+  fingerprint.
 - Intake view with caller context, related open tickets, recent closed tickets, notes, ticket
   creation, and ticket linking.
 
@@ -47,7 +48,12 @@ Not implemented in v1:
 ## Permissions
 
 The technician profile surface requires `telephony.view`. Public intake routes are authorized by the
-token and only allow access to calls that belong to the token owner.
+token, require the token owner to still have `telephony.view`, and only allow access to calls that
+belong to that owner.
+
+Ticket writes use the existing Ticket permissions. Creating a ticket requires `ticket.create`.
+Linking a call note to an existing ticket requires `ticket.view` and `ticket.note_internal`, and the
+target ticket must match the call's Client, Site, or ClientUser context.
 
 ## Production Setup
 

@@ -335,6 +335,47 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function external_message_metadata_cannot_control_ticket_workflow_action(): void
+    {
+        Queue::fake([SendTicketReplyEmail::class]);
+
+        app(EnsureTicketDefaults::class)->handle();
+        $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999046',
+            'status_id' => $new->id,
+            'subject' => 'External workflow injection guard',
+        ]);
+
+        Sanctum::actingAs($this->tech, ['tickets.update']);
+
+        $this->postJson(route('api.v1.tickets.external-messages.store', $ticket), [
+            'source' => 'msp_manager',
+            'external_id' => 'comment-8843',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Imported reply with untrusted metadata.',
+            'metadata' => [
+                'reply_intent' => TicketAction::SEND_SOLUTION,
+                'is_solution' => true,
+                'external_url' => 'https://example.test/comments/8843',
+            ],
+        ])->assertCreated();
+
+        $message = TicketMessage::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('metadata->external_id', 'comment-8843')
+            ->firstOrFail();
+
+        $this->assertSame($new->id, $ticket->fresh()->status_id);
+        $this->assertArrayNotHasKey('reply_intent', $message->metadata);
+        $this->assertArrayNotHasKey('is_solution', $message->metadata);
+        $this->assertSame('https://example.test/comments/8843', $message->metadata['external_url']);
+
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
+    }
+
+    #[Test]
     public function ticket_read_api_token_cannot_create_tickets(): void
     {
         Sanctum::actingAs($this->tech, ['tickets.read']);

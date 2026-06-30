@@ -54,7 +54,8 @@ class TelephonyIntakeController extends Controller
         Request $request,
         CreateTicketFromTelephonyCall $createTicket,
     ): RedirectResponse {
-        $this->authorizeTokenCall($token, $call);
+        $telephonyToken = $this->authorizeTokenCall($token, $call);
+        $this->authorizeTicketPermission($telephonyToken, 'ticket.create');
 
         $data = $request->validate([
             'subject' => ['nullable', 'string', 'max:255'],
@@ -74,16 +75,16 @@ class TelephonyIntakeController extends Controller
         Request $request,
         LinkTelephonyCallToTicket $linkCall,
     ): RedirectResponse {
-        $this->authorizeTokenCall($token, $call);
+        $telephonyToken = $this->authorizeTokenCall($token, $call);
+        $this->authorizeTicketPermission($telephonyToken, 'ticket.view');
+        $this->authorizeTicketPermission($telephonyToken, 'ticket.note_internal');
 
         $data = $request->validate([
             'ticket_key' => ['required', 'string', 'max:50'],
             'note' => ['nullable', 'string', 'max:10000'],
         ]);
 
-        $ticket = Ticket::query()
-            ->where('ticket_key', $data['ticket_key'])
-            ->firstOrFail();
+        $ticket = $this->scopedTicketByKey($call->refresh(), $data['ticket_key']);
 
         $linkCall->handle($call->refresh(), $ticket, $data['note'] ?? null);
 
@@ -118,11 +119,41 @@ class TelephonyIntakeController extends Controller
         $token = app(EnsureTelephonyToken::class)->findByPlainToken($plainToken);
 
         abort_unless(
-            $token && $token->user?->isActive() && (int) $call->answered_by_user_id === (int) $token->user_id,
+            $token
+                && $token->user?->isActive()
+                && $token->user->can('telephony.view')
+                && (int) $call->answered_by_user_id === (int) $token->user_id,
             404
         );
 
         return $token;
+    }
+
+    private function authorizeTicketPermission(TelephonyToken $token, string $permission): void
+    {
+        abort_unless($token->user?->can($permission), 403);
+    }
+
+    private function scopedTicketByKey(TelephonyCall $call, string $ticketKey): Ticket
+    {
+        abort_unless($call->client_id || $call->client_user_id || $call->site_id, 404);
+
+        return Ticket::query()
+            ->where('ticket_key', $ticketKey)
+            ->where(function ($query) use ($call): void {
+                if ($call->client_id) {
+                    $query->orWhere('client_id', $call->client_id);
+                }
+
+                if ($call->client_user_id) {
+                    $query->orWhere('contact_id', $call->client_user_id);
+                }
+
+                if ($call->site_id) {
+                    $query->orWhere('site_id', $call->site_id);
+                }
+            })
+            ->firstOrFail();
     }
 
     private function relatedTickets(TelephonyCall $call, bool $closed): Collection

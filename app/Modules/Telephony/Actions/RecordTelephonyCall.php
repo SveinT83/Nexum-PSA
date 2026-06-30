@@ -19,7 +19,10 @@ class RecordTelephonyCall
     public function handle(string $plainToken, Request $request): TelephonyCall
     {
         $token = $this->tokens->findByPlainToken($plainToken);
-        abort_unless($token && $token->user?->isActive(), 404);
+        abort_unless(
+            $token && $token->user?->isActive() && $token->user->can('telephony.view'),
+            404
+        );
 
         $payload = $this->payload($request);
         $rawNumber = $this->firstFilled($payload, [
@@ -38,7 +41,7 @@ class RecordTelephonyCall
         $answeredAt = $this->dateTime($this->firstFilled($payload, ['answered_at', 'answeredAt'])) ?? now();
         $startedAt = $this->dateTime($this->firstFilled($payload, ['started_at', 'startedAt', 'start_time']));
         $context = $this->callerContext->handle($normalizedNumber);
-        $providerCallKey = $providerCallId ? hash('sha256', $provider.'|'.$providerCallId) : null;
+        $providerCallKey = $providerCallId ? hash('sha256', $token->user_id.'|'.$provider.'|'.$providerCallId) : null;
         $fallbackNumber = $normalizedNumber ?: (filled($rawNumber) ? (string) $rawNumber : null);
         $fallbackFingerprint = ($providerCallKey || ! $fallbackNumber) ? null : $this->fallbackFingerprint(
             (int) $token->user_id,
@@ -46,7 +49,13 @@ class RecordTelephonyCall
             $answeredAt
         );
 
-        $call = $this->existingCall($providerCallKey, $fallbackFingerprint) ?: new TelephonyCall();
+        $call = $this->existingCall(
+            $providerCallKey,
+            $fallbackFingerprint,
+            (int) $token->user_id,
+            $provider ?: 'generic',
+            $providerCallId
+        ) ?: new TelephonyCall();
         $notes = $this->firstFilled($payload, ['note', 'notes']);
 
         $call->forceFill([
@@ -85,18 +94,37 @@ class RecordTelephonyCall
         return $call->fresh(['answeredBy', 'contact.emails', 'contact.phones', 'clientUser.site.client', 'client', 'site', 'linkedTicket']);
     }
 
-    private function existingCall(?string $providerCallKey, ?string $fallbackFingerprint): ?TelephonyCall
+    private function existingCall(
+        ?string $providerCallKey,
+        ?string $fallbackFingerprint,
+        int $userId,
+        string $provider,
+        ?string $providerCallId,
+    ): ?TelephonyCall
     {
+        $baseQuery = fn () => TelephonyCall::query()->where('answered_by_user_id', $userId);
+
         if ($providerCallKey) {
-            $call = TelephonyCall::query()->where('provider_call_key', $providerCallKey)->first();
+            $call = $baseQuery()->where('provider_call_key', $providerCallKey)->first();
 
             if ($call) {
                 return $call;
             }
+
+            if ($providerCallId) {
+                $call = $baseQuery()
+                    ->where('provider_profile', $provider)
+                    ->where('provider_call_id', $providerCallId)
+                    ->first();
+
+                if ($call) {
+                    return $call;
+                }
+            }
         }
 
         if ($fallbackFingerprint) {
-            return TelephonyCall::query()->where('fallback_fingerprint', $fallbackFingerprint)->first();
+            return $baseQuery()->where('fallback_fingerprint', $fallbackFingerprint)->first();
         }
 
         return null;

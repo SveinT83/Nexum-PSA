@@ -90,7 +90,7 @@ Create and edit forms handle manual ticket creation, client/contact/site/asset s
 
 Ticket API:
 
-External systems can sync ticket conversation entries through `POST /api/v1/tickets/{ticket}/external-messages`. The endpoint is idempotent by external source and external message ID, stores the message as `author_type = external`, and avoids sending outbound customer email for imported replies.
+External systems can sync ticket conversation entries through `POST /api/v1/tickets/{ticket}/external-messages`. The endpoint is idempotent by external source and external message ID, stores the message as `author_type = external`, and avoids sending outbound customer email for imported replies. Free-form external metadata is kept for audit context, but workflow-driving fields such as reply intent and solution markers are ignored.
 
 Ticket settings:
 

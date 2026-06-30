@@ -31,9 +31,12 @@ class TelephonyModuleTest extends TestCase
     {
         parent::setUp();
 
-        $permission = Permission::findOrCreate('telephony.view', 'web');
+        foreach (['telephony.view', 'ticket.view', 'ticket.create', 'ticket.note_internal'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
         $role = Role::findOrCreate('Tech', 'web');
-        $role->givePermissionTo($permission);
+        $role->givePermissionTo(['telephony.view', 'ticket.view', 'ticket.create', 'ticket.note_internal']);
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole($role);
@@ -116,10 +119,57 @@ class TelephonyModuleTest extends TestCase
     }
 
     #[Test]
+    public function provider_call_id_deduplication_is_scoped_to_the_token_user(): void
+    {
+        $otherTech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $otherTech->assignRole('Tech');
+
+        $firstToken = app(EnsureTelephonyToken::class)->handle($this->tech);
+        $secondToken = app(EnsureTelephonyToken::class)->handle($otherTech);
+
+        foreach ([$firstToken, $secondToken] as $token) {
+            $this->get(route('telephony.intake', [
+                'token' => $token->token_value,
+                'caller' => '99999999',
+                'provider' => 'Telia',
+                'call_id' => 'shared-provider-id',
+            ]))->assertOk();
+        }
+
+        $this->assertSame(2, TelephonyCall::query()->where('provider_call_id', 'shared-provider-id')->count());
+
+        $this->get(route('telephony.intake', [
+            'token' => $firstToken->token_value,
+            'caller' => '99999999',
+            'provider' => 'Telia',
+            'call_id' => 'shared-provider-id',
+            'note' => 'First technician update.',
+        ]))->assertOk();
+
+        $this->assertSame(2, TelephonyCall::query()->where('provider_call_id', 'shared-provider-id')->count());
+        $this->assertSame(
+            'First technician update.',
+            TelephonyCall::query()->where('answered_by_user_id', $this->tech->id)->firstOrFail()->notes
+        );
+    }
+
+    #[Test]
     public function public_intake_rejects_invalid_token(): void
     {
         $this->get(route('telephony.intake', [
             'token' => 'not-a-real-token',
+            'caller' => '99999999',
+        ]))->assertNotFound();
+    }
+
+    #[Test]
+    public function public_intake_rejects_tokens_for_users_without_telephony_permission(): void
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $token = app(EnsureTelephonyToken::class)->handle($user);
+
+        $this->get(route('telephony.intake', [
+            'token' => $token->token_value,
             'caller' => '99999999',
         ]))->assertNotFound();
     }
@@ -212,6 +262,65 @@ class TelephonyModuleTest extends TestCase
             'ticket_id' => $ticket->id,
             'body' => 'Second phone call note.',
             'visibility' => 'internal',
+        ]);
+    }
+
+    #[Test]
+    public function public_intake_requires_ticket_create_permission_to_create_ticket(): void
+    {
+        $role = Role::findOrCreate('Telephony Only', 'web');
+        $role->givePermissionTo('telephony.view');
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->assignRole($role);
+
+        $token = app(EnsureTelephonyToken::class)->handle($user);
+
+        $this->get(route('telephony.intake', [
+            'token' => $token->token_value,
+            'caller' => '99999999',
+        ]))->assertOk();
+
+        $call = TelephonyCall::query()->firstOrFail();
+
+        $this->post(route('telephony.intake.calls.ticket', ['token' => $token->token_value, 'call' => $call]), [
+            'subject' => 'Blocked phone ticket',
+        ])->assertForbidden();
+    }
+
+    #[Test]
+    public function public_intake_cannot_link_a_ticket_outside_the_call_context(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+
+        $token = app(EnsureTelephonyToken::class)->handle($this->tech);
+        $this->callerContext();
+
+        $this->get(route('telephony.intake', [
+            'token' => $token->token_value,
+            'caller' => '99999999',
+            'provider_call_id' => 'ticket-call-scope',
+        ]))->assertOk();
+
+        $call = TelephonyCall::query()->where('provider_call_id', 'ticket-call-scope')->firstOrFail();
+        $otherClient = Client::factory()->create(['name' => 'Other Client']);
+        $otherSite = ClientSite::factory()->create(['client_id' => $otherClient->id]);
+        $otherContact = ClientUser::factory()->create(['client_site_id' => $otherSite->id]);
+        $otherTicket = Ticket::factory()->create([
+            'ticket_key' => 'TD-2026-999499',
+            'client_id' => $otherClient->id,
+            'site_id' => $otherSite->id,
+            'contact_id' => $otherContact->id,
+        ]);
+
+        $this->post(route('telephony.intake.calls.link-ticket', ['token' => $token->token_value, 'call' => $call]), [
+            'ticket_key' => $otherTicket->ticket_key,
+            'note' => 'Should not be written.',
+        ])->assertNotFound();
+
+        $this->assertNull($call->refresh()->linked_ticket_id);
+        $this->assertDatabaseMissing('ticket_messages', [
+            'ticket_id' => $otherTicket->id,
+            'body' => 'Should not be written.',
         ]);
     }
 
