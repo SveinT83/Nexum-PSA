@@ -129,17 +129,17 @@ class ApiAbilityCatalog
         ],
         'knowledge.read' => [
             'label' => 'Read knowledge',
-            'description' => 'List and view knowledge shelves, books, chapters, and articles.',
+            'description' => 'List and view knowledge shelves, books, chapters, articles, and documentation records.',
             'domain' => 'Knowledge',
         ],
         'knowledge.create' => [
             'label' => 'Create knowledge',
-            'description' => 'Create knowledge shelves, books, chapters, and articles.',
+            'description' => 'Create knowledge shelves, books, chapters, articles, documentation categories, templates, and records.',
             'domain' => 'Knowledge',
         ],
         'knowledge.update' => [
             'label' => 'Update knowledge',
-            'description' => 'Update or delete knowledge shelves, books, chapters, and articles.',
+            'description' => 'Update or delete knowledge shelves, books, chapters, articles, and documentation records.',
             'domain' => 'Knowledge',
         ],
         'integration.bookstack.read' => [

@@ -38,9 +38,9 @@ Implemented scopes:
 - `tasks.read`: list and view tasks.
 - `tasks.create`: create tasks.
 - `tasks.update`: update task fields and status.
-- `knowledge.read`: list and view knowledge shelves, books, chapters, and articles.
-- `knowledge.create`: create knowledge shelves, books, chapters, and articles.
-- `knowledge.update`: update or delete knowledge shelves, books, chapters, and articles.
+- `knowledge.read`: list and view knowledge shelves, books, chapters, articles, and Documentation records.
+- `knowledge.create`: create knowledge shelves, books, chapters, articles, Documentation categories, templates, and records.
+- `knowledge.update`: update or delete knowledge shelves, books, chapters, articles, and Documentation records.
 - `integration.bookstack.read`: read sanitized BookStack sync status and summaries.
 - `integration.bookstack.run`: test the BookStack connection and run pull or push sync operations.
 - `storage.read`: list and view storage items, warehouses, and boxes.
@@ -496,6 +496,23 @@ Common create fields:
 
 `PUT` and `PATCH /api/v1/knowledge/articles/{article}` update articles through the Knowledge
 `UpdateArticle` action and re-render Markdown to HTML.
+
+Documentation API routes expose the template-based records shown in `/tech/documentations`:
+
+- `GET /api/v1/knowledge/documentations`
+- `POST /api/v1/knowledge/documentations`
+- `GET /api/v1/knowledge/documentations/{documentation}`
+- `PATCH /api/v1/knowledge/documentations/{documentation}`
+- `DELETE /api/v1/knowledge/documentations/{documentation}`
+- `GET /api/v1/knowledge/documentation-categories`
+- `POST /api/v1/knowledge/documentation-categories`
+- `GET /api/v1/knowledge/documentation-templates`
+- `POST /api/v1/knowledge/documentation-templates`
+
+Documentation records accept structured request `data` plus optional free-form `content` or `body`.
+Responses return structured values as `fields` plus `content`/`body`. When a free-form body is
+supplied and the selected template does not already include a `content` field, the API stores a
+content textarea in the document snapshot so the existing Tech UI renders it.
 
 When `sync_to_book_stack` is true, the BookStack integration must be active and two-way sync must be
 enabled. Nexum marks the record and any needed local parent hierarchy as `pending_push` and queues

@@ -41,6 +41,7 @@ This file is the shared coordination list for tdPSA development. Use it to deleg
 | Email Health Check Honesty | Done | Codex | Queued email health checks now reuse the real IMAP/SMTP test service instead of writing unconditional OK results. |
 | BookStack Scheduled Sync Honesty | Done | Codex | Scheduled BookStack pull/push jobs now mark active misconfigured integrations unhealthy instead of returning silently. |
 | BookStack Knowledge API And Sync Hardening | Done | Codex | Approved RFC `docs/rfc/2026-06-16-bookstack-knowledge-api-sync-hardening.md`; implemented API parity for shelves/books/chapters/articles, BookStack pull/push/test/status endpoints, two-way sync diagnostics, tests, and docs. |
+| Knowledge Documentations API | Done | Codex | Approved RFC `docs/rfc/2026-06-30-knowledge-documentations-api.md`; Documentation module exposes Knowledge-scoped API routes for Documentation records, documentation categories, and templates. |
 | Commercial Settings Route Cleanup | Done | Codex | Contract settings URL now uses `/contracts`; legacy `/contacts` typo redirects to the canonical route. |
 | Beta Release Hardening Sweep | Done | Codex | Removed mutating GET routes found in Commercial, made Queue/Worker setup paths environment-aware, and ran all module feature suites. |
 | Asset Settings Slice | Done | Codex | Asset module now owns manual registration defaults and admin settings. |
