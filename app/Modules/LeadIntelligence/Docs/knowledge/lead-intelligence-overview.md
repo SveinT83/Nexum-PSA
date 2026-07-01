@@ -41,14 +41,14 @@ Defaults are conservative. The module stores policy and decisions but does not s
 
 ## Scheduling
 
-Enabling a segment does not run by itself. Automation starts when the segment schedule is enabled, the planner command runs from Plesk Scheduled Tasks or cron, and the normal Laravel queue worker is running:
+Enabling a segment does not run by itself. Automation starts when the segment schedule is enabled, Laravel's scheduler runs every minute, and the normal Laravel queue worker is running:
 
 ```bash
-php artisan lead-intelligence:plan-due-runs
-php artisan queue:work --queue=default --sleep=3 --tries=1 --timeout=1800
+php artisan schedule:run
+php artisan queue:work --queue=default,economy,email --sleep=3 --tries=3 --timeout=120
 ```
 
-The planner command creates queued `lead_research_runs` for due segments and dispatches `ExecuteLeadResearchRunJob`. `Run Now` creates a queued run immediately without changing the future `next_run_at`, then dispatches the same Laravel queue job. The worker then executes the same pipeline used by scheduled automation.
+The scheduler runs `lead-intelligence:plan-due-runs` every minute. The planner command creates queued `lead_research_runs` for due segments and dispatches `ExecuteLeadResearchRunJob`. `Run Now` creates a queued run immediately without changing the future `next_run_at`, then dispatches the same Laravel queue job. The worker then executes the same pipeline used by scheduled automation.
 
 `php artisan lead-intelligence:run-queued-runs --limit=5` remains available as a manual fallback/backfill command for old or stranded queued rows, but it is not the normal worker path.
 

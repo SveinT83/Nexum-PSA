@@ -652,6 +652,24 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function repository_documentation_sync_includes_lead_intelligence_docs(): void
+    {
+        $this->artisan('knowledge:sync-docs', ['--module' => ['LeadIntelligence']])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 1')
+            ->expectsOutput('modules: LeadIntelligence')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'lead-intelligence/lead-intelligence-overview')
+            ->firstOrFail();
+
+        $this->assertSame('Lead Intelligence Overview', $article->title);
+        $this->assertSame('LeadIntelligence', $article->source_payload['module']);
+    }
+
+    #[Test]
     public function tech_user_can_create_chapter_inside_book(): void
     {
         $this->actingAs($this->tech);

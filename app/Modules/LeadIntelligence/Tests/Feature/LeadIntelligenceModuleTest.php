@@ -23,6 +23,7 @@ use App\Modules\LeadIntelligence\Models\LeadSourceEvidence;
 use App\Modules\LeadIntelligence\Models\MarketingSuppressionEntry;
 use App\Modules\LeadIntelligence\Support\LeadIntelligenceSettings;
 use App\Modules\Marketing\Models\MarketingList;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -414,6 +415,18 @@ class LeadIntelligenceModuleTest extends TestCase
 
         $this->assertSame(LeadResearchRun::STATUS_QUEUED, $run->status);
         Queue::assertPushed(ExecuteLeadResearchRunJob::class, fn (ExecuteLeadResearchRunJob $job): bool => $job->runId === $run->id);
+    }
+
+    #[Test]
+    public function due_run_planner_is_registered_in_laravel_scheduler(): void
+    {
+        $event = collect(app(Schedule::class)->events())
+            ->first(fn ($event): bool => $event->description === 'lead_intelligence.plan_due_runs');
+
+        $this->assertNotNull($event);
+        $this->assertStringContainsString('lead-intelligence:plan-due-runs', (string) $event->command);
+        $this->assertSame('* * * * *', $event->expression);
+        $this->assertTrue($event->withoutOverlapping);
     }
 
     #[Test]

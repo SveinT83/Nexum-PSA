@@ -3,6 +3,7 @@
 namespace App\Modules\Economy\Models;
 
 use App\Models\Clients\Client;
+use App\Models\Core\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -48,5 +49,10 @@ class EconomyOrder extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(EconomyOrderLine::class);
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

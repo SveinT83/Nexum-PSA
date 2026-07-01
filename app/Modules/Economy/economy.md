@@ -10,6 +10,7 @@ Current implementation:
 - `/tech/economy` lists orders and exposes manual `Generate orders` for catch-up.
 - `/tech/admin/settings/economy` controls trigger defaults, line text, order prefix, and default VAT.
 - Ready orders can be moved back to draft before approval/export.
+- Ready or approved orders can be marked `manual_invoiced` as a temporary invoiced workflow. This does not mark an external export.
 - Empty draft or ready orders can be deleted. Draft orders are automatically removed when their last line is deleted.
 
 Important ownership boundaries:

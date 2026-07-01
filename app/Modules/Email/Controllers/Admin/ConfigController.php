@@ -4,11 +4,12 @@ namespace App\Modules\Email\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Settings\CommonSetting;
+use App\Modules\Email\Services\EmailSystemHealth;
 use Illuminate\Http\Request;
 
 class ConfigController extends Controller
 {
-    public function index()
+    public function index(EmailSystemHealth $health)
     {
         $settings = CommonSetting::where('type', 'emailhub')->get()->pluck('value', 'name')->toArray();
 
@@ -24,7 +25,10 @@ class ConfigController extends Controller
             'max_failures' => 3,
         ], $settings);
 
-        return view('email::Admin.Config.index', compact('config'));
+        return view('email::Admin.Config.index', [
+            'config' => $config,
+            'health' => $health->snapshot($config),
+        ]);
     }
 
     public function update(Request $request)

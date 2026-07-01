@@ -209,11 +209,13 @@ SMTP:
 	- Production: start a worker, for example:
 
 ```bash
-php artisan queue:work --sleep=3 --tries=3
+php artisan queue:work --queue=default,economy,email --sleep=3 --tries=3 --timeout=120
 ```
 
 Notes:
 - The scheduler dispatches the `PollActiveEmailAccounts` job every minute, which in turn enqueues `FetchImapAccount` per active account.
+- `PollActiveEmailAccounts` updates the `email_last_poll_run` cache heartbeat when a real poll cycle starts.
+- The Email Configuration `System Health` card reads active account count, ingest pause status, latest successful fetch timestamps, account errors, queue table backlog, failed jobs, and the poll heartbeat. If the queue driver is not `database` or the queue tables are unavailable, the card reports monitoring as unavailable instead of guessing.
 - Health checks and retention purges are also scheduled in `routes/console.php`.
 
 ## Manual inbox polling (on-demand)
@@ -235,6 +237,7 @@ Operational notes:
 - UI polling depends on queue processing; for direct troubleshooting use the CLI without `--async`.
 - Safe to click multiple times; duplicate messages are deduped by `account_id + mailbox + imap_uid`.
 - In production, prefer the scheduler + worker for steady-state ingestion; keep the manual button for ad-hoc checks.
+- If automatic fetching stalls, check `/tech/admin/settings/email/config` first. `No heartbeat` means either `schedule:run` is not dispatching the poll job or the default queue worker is not processing it. Stale ready jobs or failed jobs in the health card point to queue-worker issues.
 
 
 ## Extending and reusing components

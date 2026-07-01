@@ -10,13 +10,14 @@ Defaults:
 - `Time grouping`: one order line per time entry.
 - `Line text`: ticket reference plus invoice text.
 - `Order prefix`: `ORD-`.
+- `Default VAT %`: copied from existing economy common settings when available, otherwise `25`.
 
 Important behavior:
 
 - Resolved and closed are separate settings. The default waits for closed tickets.
 - Unresolved period-close billing is off by default because this can invoice work before a ticket is complete.
 - Auto-pick is off by default. Manual picking is safer because it makes stock consumption explicit.
-- Default VAT is copied from existing economy common settings when available, but lines can also carry their own VAT rate.
+- Default VAT is used for generated ticket time, quick timebank overuse, and cost lines that do not carry their own VAT rate. Set it to `0` for no default VAT.
 
 Changing settings affects future generation. Use `Generate orders` after changing settings if existing pending records should be re-evaluated.
 

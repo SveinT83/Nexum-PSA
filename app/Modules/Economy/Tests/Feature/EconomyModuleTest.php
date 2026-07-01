@@ -53,6 +53,7 @@ class EconomyModuleTest extends TestCase
         $this->assertSame(EconomyController::class . '@generate', Route::getRoutes()->getByName('tech.economy.orders.generate')->getActionName());
         $this->assertSame(EconomyController::class . '@markReady', Route::getRoutes()->getByName('tech.economy.orders.ready')->getActionName());
         $this->assertSame(EconomyController::class . '@markDraft', Route::getRoutes()->getByName('tech.economy.orders.draft')->getActionName());
+        $this->assertSame(EconomyController::class . '@markInvoiced', Route::getRoutes()->getByName('tech.economy.orders.invoiced')->getActionName());
         $this->assertSame(EconomyController::class . '@destroyOrder', Route::getRoutes()->getByName('tech.economy.orders.destroy')->getActionName());
         $this->assertSame(EconomySettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.economy')->getActionName());
         $this->assertSame(EconomySettingsController::class . '@update', Route::getRoutes()->getByName('tech.admin.settings.economy.update')->getActionName());
@@ -133,9 +134,14 @@ class EconomyModuleTest extends TestCase
             'line_type' => 'ticket_time',
             'quantity' => 30,
             'line_total_ex_vat' => 600,
+            'vat_rate' => 25,
+            'vat_amount' => 150,
+            'total_inc_vat' => 750,
         ]);
         $this->assertSame('queued', $entry->refresh()->billing_status);
         $this->assertSame('600.00', EconomyOrder::query()->first()->subtotal_ex_vat);
+        $this->assertSame('150.00', EconomyOrder::query()->first()->vat_amount);
+        $this->assertSame('750.00', EconomyOrder::query()->first()->total_inc_vat);
     }
 
     #[Test]
@@ -506,6 +512,70 @@ class EconomyModuleTest extends TestCase
         $order->refresh();
         $this->assertSame('draft', $order->status);
         $this->assertNull($order->ready_at);
+    }
+
+    #[Test]
+    public function ready_order_can_be_marked_manually_invoiced_without_external_export(): void
+    {
+        $client = Client::create(['name' => 'Manual Invoice Client AS', 'active' => true]);
+        $order = EconomyOrder::create([
+            'client_id' => $client->id,
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'status' => 'ready',
+            'ready_at' => now(),
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.economy.orders.show', $order))
+            ->assertOk()
+            ->assertSee('Mark invoiced');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.economy.orders.invoiced', $order))
+            ->assertRedirect(route('tech.economy.orders.show', $order));
+
+        $order->refresh();
+        $this->assertSame('manual_invoiced', $order->status);
+        $this->assertSame($this->tech->id, $order->updated_by);
+        $this->assertNull($order->exported_at);
+    }
+
+    #[Test]
+    public function order_views_show_effective_vat_totals_for_existing_lines_missing_vat(): void
+    {
+        $client = Client::create(['name' => 'Legacy VAT Client AS', 'active' => true]);
+        $order = EconomyOrder::create([
+            'client_id' => $client->id,
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'status' => 'ready',
+            'subtotal_ex_vat' => 100,
+            'vat_amount' => 0,
+            'total_inc_vat' => 100,
+        ]);
+        EconomyOrderLine::create([
+            'economy_order_id' => $order->id,
+            'client_id' => $client->id,
+            'line_type' => 'manual',
+            'description' => 'Legacy line missing VAT',
+            'quantity' => 1,
+            'unit' => 'pcs',
+            'unit_price_ex_vat' => 100,
+            'line_total_ex_vat' => 100,
+            'vat_rate' => null,
+            'vat_amount' => null,
+            'total_inc_vat' => 100,
+            'currency' => 'NOK',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.economy.orders.show', $order))
+            ->assertOk()
+            ->assertSee('Legacy line missing VAT')
+            ->assertSee('25,00')
+            ->assertSee('125,00');
     }
 
     #[Test]

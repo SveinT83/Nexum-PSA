@@ -67,9 +67,10 @@ Order statuses:
 Order line amounts:
 
 - Lines store amounts excluding VAT.
-- Lines may have a VAT rate. If VAT is missing, VAT is not shown for that line.
-- Orders show subtotal excluding VAT, VAT amount for lines with VAT, and total including VAT.
-- VAT defaults should come from existing settings where available, not be hardcoded.
+- Lines may have a VAT rate. If a generated line does not carry its own VAT rate, Economy uses the current default VAT rate.
+- Orders show subtotal excluding VAT, VAT amount, and total including VAT from the effective line totals.
+- Default VAT comes from existing economy settings when available, and otherwise defaults to 25%. Set the Economy default VAT to `0` when a site should generate no VAT by default.
+- `manual_invoiced` marks an order as manually invoiced without claiming that an external accounting export happened.
 
 Implemented first:
 

@@ -22,13 +22,14 @@ class EnsureEconomyDefaults
         $settings = EconomySetting::query()->first();
 
         if ($settings) {
+            if ($settings->default_vat_rate === null) {
+                $settings->forceFill([
+                    'default_vat_rate' => $this->defaultVatRate(),
+                ])->save();
+            }
+
             return $settings;
         }
-
-        $vat = CommonSetting::query()
-            ->where('type', 'economy')
-            ->where('name', 'vat')
-            ->value('value');
 
         return EconomySetting::create([
             'create_orders_from_resolved_ticket_time' => false,
@@ -39,7 +40,17 @@ class EnsureEconomyDefaults
             'time_order_line_grouping' => 'per_entry',
             'order_line_text_format' => 'ticket_date_text',
             'order_prefix' => 'ORD-',
-            'default_vat_rate' => is_numeric($vat) ? (float) $vat : null,
+            'default_vat_rate' => $this->defaultVatRate(),
         ]);
+    }
+
+    private function defaultVatRate(): float
+    {
+        $vat = CommonSetting::query()
+            ->where('type', 'economy')
+            ->where('name', 'vat')
+            ->value('value');
+
+        return is_numeric($vat) ? (float) $vat : 25.0;
     }
 }

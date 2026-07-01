@@ -23,11 +23,12 @@ Order statuses:
 - `ready`: reviewed and ready for billing handoff.
 - `approved`: internally accepted.
 - `exported`: sent to billing or an accounting integration.
+- `manual_invoiced`: manually marked invoiced inside Nexum PSA. No external export is implied.
 - `cancelled`: voided.
 
 Ready orders can be moved back to `draft` when a technician marks one ready by mistake. Approved or exported orders are not moved back by this workflow.
 
-Line amounts are stored excluding VAT. If a VAT rate exists, Economy also stores VAT amount and total including VAT. If VAT is missing, the line shows no VAT.
+Line amounts are stored excluding VAT. Economy stores VAT amount and total including VAT when a line has its own VAT rate or can use the current Economy default VAT. The order list and detail views calculate display totals from active order lines so old lines missing a VAT rate still use the configured default.
 
 Deleting a draft order line unlocks the source record:
 
