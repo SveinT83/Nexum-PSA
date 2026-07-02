@@ -4,11 +4,14 @@ namespace App\Modules\Documentation\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
+use App\Models\Clients\ClientSite;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Documentation\Menus\SideBar\DocumentationsMenu;
 use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Models\DocumentationTemplate;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class DocumentationController extends Controller
 {
@@ -31,7 +34,7 @@ class DocumentationController extends Controller
         $clients = Client::where('active', true)->orderBy('name')->get();
 
         // Initialize query with common relationships
-        $query = Documentation::with(['category', 'client', 'site', 'template']);
+        $query = Documentation::with(['category', 'client', 'workContext', 'site', 'template']);
 
         // Filter by category if specified. 'cat' can be an ID or a Slug for flexibility.
         $selectedCategory = null;
@@ -229,7 +232,7 @@ class DocumentationController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, ResolveWorkContext $workContexts)
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -249,18 +252,15 @@ class DocumentationController extends Controller
         $data = $request->except(['_token', 'category_id', 'client_id', 'site_id', 'title', 'scope_type']);
 
         // Determine the visibility scope based on which fields are populated
-        $scopeType = 'internal';
-        if ($request->site_id) {
-            $scopeType = 'site';
-        } elseif ($request->client_id) {
-            $scopeType = 'client';
-        }
+        [$clientId, $siteId, $scopeType] = $this->scopePayload($request);
+        $workContext = $workContexts->fromClientId($clientId);
 
         $documentation = Documentation::create([
             'template_id' => $template->id,
             'category_id' => $request->category_id,
-            'client_id' => $request->client_id,
-            'site_id' => $request->site_id,
+            'client_id' => $clientId,
+            'work_context_id' => $workContext->id,
+            'site_id' => $siteId,
             'title' => $request->title,
             'scope_type' => $scopeType,
             'template_snapshot_json' => $templateSnapshot, // Essential for rendering if the original template changes later
@@ -282,7 +282,7 @@ class DocumentationController extends Controller
      */
     public function edit($id)
     {
-        $documentation = Documentation::with(['category', 'client', 'site', 'template'])->findOrFail($id);
+        $documentation = Documentation::with(['category', 'client', 'workContext', 'site', 'template'])->findOrFail($id);
         $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
 
         $categories = Category::where('is_active', true)
@@ -323,7 +323,7 @@ class DocumentationController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, ResolveWorkContext $workContexts)
     {
         $documentation = Documentation::findOrFail($id);
 
@@ -337,16 +337,13 @@ class DocumentationController extends Controller
         $data = $request->except(['_token', '_method', 'category_id', 'client_id', 'site_id', 'title', 'scope_type']);
 
         // Recalculate scope if client/site changed
-        $scopeType = 'internal';
-        if ($request->site_id) {
-            $scopeType = 'site';
-        } elseif ($request->client_id) {
-            $scopeType = 'client';
-        }
+        [$clientId, $siteId, $scopeType] = $this->scopePayload($request);
+        $workContext = $workContexts->fromClientId($clientId);
 
         $documentation->update([
-            'client_id' => $request->client_id,
-            'site_id' => $request->site_id,
+            'client_id' => $clientId,
+            'work_context_id' => $workContext->id,
+            'site_id' => $siteId,
             'title' => $request->title,
             'scope_type' => $scopeType,
             'data_json' => $data,
@@ -366,7 +363,7 @@ class DocumentationController extends Controller
      */
     public function show($id)
     {
-        $documentation = Documentation::with(['category', 'client', 'site', 'template'])->findOrFail($id);
+        $documentation = Documentation::with(['category', 'client', 'workContext', 'site', 'template'])->findOrFail($id);
         $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
 
         return view('documentation::Tech.show', [
@@ -388,5 +385,44 @@ class DocumentationController extends Controller
 
         return redirect()->route('tech.documentations.index')
             ->with('success', 'Documentation deleted successfully.');
+    }
+
+    /**
+     * Return a normalized Client/Site scope tuple for Tech create and update.
+     *
+     * @return array{0: int|null, 1: int|null, 2: string}
+     */
+    private function scopePayload(Request $request): array
+    {
+        $clientId = $request->filled('client_id') ? (int) $request->input('client_id') : null;
+        $siteId = $request->filled('site_id') ? (int) $request->input('site_id') : null;
+
+        if ($siteId) {
+            $site = ClientSite::query()->find($siteId);
+
+            if (! $site) {
+                throw ValidationException::withMessages([
+                    'site_id' => 'The selected site was not found.',
+                ]);
+            }
+
+            if ($clientId && (int) $site->client_id !== $clientId) {
+                throw ValidationException::withMessages([
+                    'site_id' => 'The selected site does not belong to the selected client.',
+                ]);
+            }
+
+            $clientId = (int) $site->client_id;
+        }
+
+        if ($siteId) {
+            return [$clientId, $siteId, 'site'];
+        }
+
+        if ($clientId) {
+            return [$clientId, null, 'client'];
+        }
+
+        return [null, null, 'internal'];
     }
 }

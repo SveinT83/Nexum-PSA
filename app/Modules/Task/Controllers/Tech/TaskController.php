@@ -23,6 +23,7 @@ use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Queries\TicketTimeRateOptions;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -122,6 +123,7 @@ class TaskController extends Controller
             'creator',
             'category',
             'client',
+            'workContext',
             'site',
             'tags',
             'parent',
@@ -139,11 +141,12 @@ class TaskController extends Controller
         ]);
     }
 
-    public function update(Request $request, Task $task, TicketTimeRateOptions $timeRateOptions): RedirectResponse
+    public function update(Request $request, Task $task, TicketTimeRateOptions $timeRateOptions, ResolveWorkContext $workContexts): RedirectResponse
     {
         $data = $request->validate($this->taskRules());
         $task->loadMissing('owner');
         $metadata = $task->metadata ?? [];
+        $clientId = $data['client_id'] ?? null;
 
         if ($task->owner instanceof Ticket) {
             if (filled($data['ticket_rate_key'] ?? null)) {
@@ -171,8 +174,9 @@ class TaskController extends Controller
             'queue_id' => $data['queue_id'] ?? null,
             'priority_id' => $data['priority_id'] ?? null,
             'category_id' => $data['category_id'] ?? null,
-            'client_id' => $data['client_id'] ?? null,
-            'site_id' => $data['site_id'] ?? null,
+            'client_id' => $clientId,
+            'work_context_id' => $workContexts->fromClientId($clientId)->id,
+            'site_id' => $clientId ? ($data['site_id'] ?? null) : null,
             'due_at' => $data['due_at'] ?? null,
             'scheduled_start_at' => $data['scheduled_start_at'] ?? null,
             'scheduled_end_at' => $data['scheduled_end_at'] ?? null,

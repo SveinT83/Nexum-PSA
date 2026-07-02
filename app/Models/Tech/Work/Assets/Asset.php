@@ -5,6 +5,7 @@ namespace App\Models\Tech\Work\Assets;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\System\Integrations\ClientRmmLink;
+use App\Modules\WorkContext\Models\WorkContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -49,6 +50,7 @@ class Asset extends Model
 
     protected $fillable = [
         'client_id',
+        'work_context_id',
         'site_id',
         'user_id',
         'name',
@@ -79,6 +81,11 @@ class Asset extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function workContext(): BelongsTo
+    {
+        return $this->belongsTo(WorkContext::class, 'work_context_id');
     }
 
     public function site(): BelongsTo

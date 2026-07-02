@@ -3,6 +3,7 @@
 namespace App\Modules\Economy\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Economy\Actions\CalculateOrderTotals;
 use App\Modules\Economy\Actions\EnsureEconomyDefaults;
 use App\Modules\Economy\Actions\DeleteOrderLine;
 use App\Modules\Economy\Actions\GenerateOrders;
@@ -15,29 +16,33 @@ use Illuminate\View\View;
 
 class EconomyController extends Controller
 {
-    public function index(EnsureEconomyDefaults $defaults): View
+    public function index(EnsureEconomyDefaults $defaults, CalculateOrderTotals $totals): View
     {
         $defaults->handle();
+        $orders = EconomyOrder::query()
+            ->with(['client', 'lines'])
+            ->latest()
+            ->paginate(20);
 
         return view('economy::Tech.Orders.index', [
-            'orders' => EconomyOrder::query()
-                ->with(['client', 'lines'])
-                ->latest()
-                ->paginate(20),
+            'orders' => $orders,
+            'orderTotals' => $totals->forOrders($orders->getCollection()),
             'stats' => [
                 'draft' => EconomyOrder::query()->where('status', 'draft')->count(),
                 'ready' => EconomyOrder::query()->where('status', 'ready')->count(),
                 'approved' => EconomyOrder::query()->where('status', 'approved')->count(),
+                'manual_invoiced' => EconomyOrder::query()->where('status', 'manual_invoiced')->count(),
             ],
         ]);
     }
 
-    public function show(EconomyOrder $order): View
+    public function show(EconomyOrder $order, CalculateOrderTotals $totals): View
     {
-        $order->load(['client', 'lines.ticket']);
+        $order->load(['client', 'lines.ticket', 'updatedBy']);
 
         return view('economy::Tech.Orders.show', [
             'order' => $order,
+            'orderTotals' => $totals->forOrder($order),
         ]);
     }
 
@@ -82,6 +87,19 @@ class EconomyController extends Controller
 
         return redirect()->route('tech.economy.orders.show', $order)
             ->with('success', 'Order moved back to draft.');
+    }
+
+    public function markInvoiced(Request $request, EconomyOrder $order): RedirectResponse
+    {
+        abort_unless(in_array($order->status, ['ready', 'approved'], true), 422);
+
+        $order->forceFill([
+            'status' => 'manual_invoiced',
+            'updated_by' => $request->user()?->id,
+        ])->save();
+
+        return redirect()->route('tech.economy.orders.show', $order)
+            ->with('success', 'Order marked manually invoiced. No external export was sent.');
     }
 
     public function destroyOrder(EconomyOrder $order): RedirectResponse

@@ -208,7 +208,13 @@
                             <td class="{{ blank($task->queue?->name) ? 'text-muted' : '' }}">{{ $missing($task->queue?->name) }}</td>
                             <td class="{{ blank($task->priority?->name) ? 'text-muted' : '' }}">{{ $missing($task->priority?->name) }}</td>
                             <td>
-                                <div class="{{ blank($task->client?->name) ? 'text-muted' : '' }}">{{ $missing($task->client?->name) }}</div>
+                                @if($task->client)
+                                    <div>{{ $task->client->name }}</div>
+                                @elseif($task->workContext?->isInternal())
+                                    <div><span class="badge text-bg-light border">Internal</span></div>
+                                @else
+                                    <div class="text-muted">Unscoped</div>
+                                @endif
                                 <div class="small {{ blank($task->site?->name) ? 'text-muted' : '' }}">{{ $missing($task->site?->name) }}</div>
                             </td>
                             <td class="{{ blank($task->due_at) ? 'text-muted' : '' }}">{{ $task->due_at?->format('Y-m-d H:i') ?? '—' }}</td>

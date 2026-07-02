@@ -21,6 +21,7 @@ use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Resources\Api\V1\TicketResource;
 use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -42,6 +43,8 @@ class TicketController extends Controller
         parameters: [
             new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'client_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'work_context_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'context_type', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['internal', 'client'])),
             new OA\Parameter(name: 'status_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'owner_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
@@ -57,7 +60,7 @@ class TicketController extends Controller
         $defaults->handle();
 
         $query = Ticket::query()
-            ->with(['queue', 'status', 'priority', 'client', 'owner'])
+            ->with(['queue', 'status', 'priority', 'client', 'workContext', 'owner'])
             ->latest('updated_at');
 
         if ($request->filled('q')) {
@@ -73,6 +76,14 @@ class TicketController extends Controller
             if ($request->filled($filter)) {
                 $query->where($filter, $request->integer($filter));
             }
+        }
+
+        if ($request->filled('work_context_id')) {
+            $query->where('work_context_id', $request->integer('work_context_id'));
+        }
+
+        if ($request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))) {
+            $query->whereHas('workContext', fn ($context) => $context->where('type', $request->input('context_type')));
         }
 
         if ($request->input('lifecycle', 'all') === 'open') {
@@ -352,8 +363,21 @@ class TicketController extends Controller
 
         if (! empty($data['asset_id'])) {
             $asset = Asset::query()->findOrFail($data['asset_id']);
+            $clientId = $data['client_id'] ?? null;
 
-            if (! empty($data['client_id']) && (int) $asset->client_id !== (int) $data['client_id']) {
+            if ($asset->client_id && ! $clientId) {
+                throw ValidationException::withMessages([
+                    'asset_id' => 'Select the asset client before selecting this asset.',
+                ]);
+            }
+
+            if (! $asset->client_id && $clientId) {
+                throw ValidationException::withMessages([
+                    'asset_id' => 'Internal assets cannot be attached to client-scoped tickets.',
+                ]);
+            }
+
+            if ($asset->client_id && (int) $asset->client_id !== (int) $clientId) {
                 throw ValidationException::withMessages([
                     'asset_id' => 'The selected asset does not belong to the selected client.',
                 ]);
@@ -369,6 +393,6 @@ class TicketController extends Controller
 
     private function loadTicket(Ticket $ticket): Ticket
     {
-        return $ticket->load(['queue', 'status', 'priority', 'client', 'site', 'contact', 'owner', 'asset']);
+        return $ticket->load(['queue', 'status', 'priority', 'client', 'workContext', 'site', 'contact', 'owner', 'asset']);
     }
 }

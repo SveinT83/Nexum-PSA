@@ -3,6 +3,7 @@
 namespace App\Modules\Risk\Actions;
 
 use App\Models\Risk\RiskAssessment;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 
 /**
  * Updates assessment metadata without touching scoring or history.
@@ -13,15 +14,22 @@ use App\Models\Risk\RiskAssessment;
  */
 class UpdateRiskAssessment
 {
+    public function __construct(private readonly ResolveWorkContext $workContexts)
+    {
+    }
+
     /**
      * Apply validated metadata changes to an existing assessment.
      */
     public function handle(RiskAssessment $assessment, array $data): RiskAssessment
     {
+        $clientId = $data['scope'] === 'internal' ? null : ($data['client_id'] ?? null);
+
         $assessment->update([
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
-            'client_id' => $data['scope'] === 'internal' ? null : ($data['client_id'] ?? null),
+            'client_id' => $clientId,
+            'work_context_id' => $this->workContexts->fromClientId($clientId)->id,
         ]);
 
         return $assessment;

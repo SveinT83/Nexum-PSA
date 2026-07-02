@@ -6,12 +6,17 @@ use App\Models\Core\User;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Models\CalendarEventSeries;
 use App\Modules\Calendar\Models\CalendarParticipant;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class StoreCalendarEvent
 {
+    public function __construct(private readonly ResolveWorkContext $workContexts)
+    {
+    }
+
     public function handle(array $data, User $actor): CalendarEvent
     {
         $timezone = $data['timezone'] ?? 'Europe/Oslo';
@@ -23,6 +28,7 @@ class StoreCalendarEvent
         $event = CalendarEvent::query()->create([
             'uuid' => (string) Str::uuid(),
             'calendar_id' => $data['calendar_id'],
+            'work_context_id' => $data['work_context_id'] ?? $this->workContexts->internal()->id,
             'series_id' => $series?->id,
             'title' => $data['title'],
             'description' => $data['description'] ?? null,

@@ -3,6 +3,7 @@
 namespace App\Modules\Calendar\Models;
 
 use App\Models\Core\User;
+use App\Modules\WorkContext\Models\WorkContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,6 +16,7 @@ class CalendarEvent extends Model
     protected $fillable = [
         'uuid',
         'calendar_id',
+        'work_context_id',
         'series_id',
         'title',
         'description',
@@ -53,6 +55,11 @@ class CalendarEvent extends Model
     public function calendar(): BelongsTo
     {
         return $this->belongsTo(Calendar::class);
+    }
+
+    public function workContext(): BelongsTo
+    {
+        return $this->belongsTo(WorkContext::class, 'work_context_id');
     }
 
     public function series(): BelongsTo

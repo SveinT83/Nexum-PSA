@@ -18,8 +18,14 @@ Category and tags use the global taxonomy system. Use them for sorting,
 filtering, Knowledge suggestions, and future AI context. Categories should be
 used for stable groupings; tags can be used for more flexible labels.
 
-Client and Site are reporting shortcuts. A task can still be owned by another
-record, but these fields make it easier to sort operational work by customer.
+Work Context records whether the task belongs to the owning organization or to a
+Client. Client and Site remain reporting shortcuts. A task can still be owned by
+another record, but these fields make it easier to sort operational work by
+customer.
+
+When a new task is saved without a Client, it becomes internal work and `client_id`
+stays empty. When a task is created for a Ticket, it inherits the Ticket Work
+Context unless the form or API payload explicitly selects a Client.
 
 Due is the expected completion time. Scheduled start and scheduled end are for
 calendar-style planning.

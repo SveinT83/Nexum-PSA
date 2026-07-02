@@ -168,6 +168,11 @@ class PermissionSeeder extends Seeder
             'integration.bookstack_manage',
             'integration.rmm_manage',
 
+            'relationships.view',
+            'relationships.manage',
+            'relationships.escalate',
+            'relationships.sync',
+
             'nextcloud.view',
             'nextcloud.connection_manage',
             'nextcloud.sync',

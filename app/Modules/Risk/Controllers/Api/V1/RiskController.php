@@ -13,6 +13,7 @@ use App\Modules\Risk\Actions\UpdateRiskItem;
 use App\Modules\Risk\Resources\Api\V1\RiskAssessmentResource;
 use App\Modules\Risk\Resources\Api\V1\RiskItemResource;
 use App\Modules\Risk\Resources\Api\V1\RiskItemUpdateResource;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -38,7 +39,7 @@ class RiskController extends Controller
     public function assessments(Request $request)
     {
         $query = RiskAssessment::query()
-            ->with(['client'])
+            ->with(['client', 'workContext'])
             ->withCount('items')
             ->latest('updated_at');
 
@@ -56,6 +57,14 @@ class RiskController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('work_context_id')) {
+            $query->where('work_context_id', $request->integer('work_context_id'));
+        }
+
+        if ($request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))) {
+            $query->whereHas('workContext', fn ($context) => $context->where('type', $request->input('context_type')));
         }
 
         return RiskAssessmentResource::collection($query->paginate($request->integer('per_page') ?: 15));
@@ -289,11 +298,11 @@ class RiskController extends Controller
 
     private function loadAssessment(RiskAssessment $assessment): RiskAssessment
     {
-        return $assessment->load(['client', 'items.category', 'items.updates']);
+        return $assessment->load(['client', 'workContext', 'items.category', 'items.updates']);
     }
 
     private function loadItem(RiskItem $item): RiskItem
     {
-        return $item->load(['assessment.client', 'category', 'updates']);
+        return $item->load(['assessment.client', 'assessment.workContext', 'category', 'updates']);
     }
 }

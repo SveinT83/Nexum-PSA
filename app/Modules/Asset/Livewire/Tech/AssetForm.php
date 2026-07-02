@@ -8,6 +8,7 @@ use App\Models\Clients\ClientUser;
 use App\Modules\Documentation\Models\Vendor;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Asset\Support\AssetSettings;
+use App\Modules\Asset\Support\AssetWorkContextPayload;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -184,7 +185,7 @@ class AssetForm extends Component
     public function save()
     {
         $validated = $this->validate([
-            'client_id' => 'required|exists:clients,id',
+            'client_id' => 'nullable|exists:clients,id',
             'site_id' => 'nullable|exists:client_sites,id',
             'user_id' => 'nullable|exists:client_users,id',
             'name' => 'required|string|max:255',
@@ -200,6 +201,11 @@ class AssetForm extends Component
             'sensitivity_level' => ['nullable', Rule::in(Asset::SENSITIVITY_LEVELS)],
             'criticality_level' => ['nullable', Rule::in(Asset::CRITICALITY_LEVELS)],
         ]);
+        $validated = app(AssetWorkContextPayload::class)->normalize(
+            $validated,
+            $this->asset && $this->asset->exists ? $this->asset : null,
+            ! ($this->asset && $this->asset->exists),
+        );
 
         if ($this->asset && $this->asset->exists) {
             // Update existing record

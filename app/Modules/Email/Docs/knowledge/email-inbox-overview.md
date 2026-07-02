@@ -85,6 +85,12 @@ The API does not expose raw storage paths or email account secrets.
 `POST /api/v1/email/inbox/poll` queues `FetchImapAccount` jobs for active accounts. It does not run
 IMAP polling inside the HTTP request.
 
+Automatic fetching is scheduled through Laravel's scheduler. The scheduled `email.poll` job queues
+account fetch jobs and records the `email_last_poll_run` heartbeat when it starts a real poll cycle.
+The Email Configuration page shows active account count, ingest pause state, latest successful fetch,
+account errors, database queue backlog, failed jobs, and scheduler heartbeat so operators can
+distinguish account, scheduler, and queue-worker problems.
+
 Inbound storage is idempotent by `account_id`, mailbox, and IMAP UID. Polling checks soft-deleted
 messages too, because the database unique key still reserves those UIDs. `StoreInboundMessage`
 also recovers duplicate-key races between workers: active duplicates skip storage and can safely

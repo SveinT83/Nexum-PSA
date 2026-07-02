@@ -1,5 +1,10 @@
 Tasks have their own time entries for internal effort and workload reporting.
 
+Task Work Context keeps internal effort separate from customer-scoped task work.
+Standalone tasks without a Client are internal work. Ticket-owned tasks inherit
+the Ticket Work Context so customer billable work still flows through Ticket
+time rules.
+
 Manual time entries can be added when actual work time is known.
 
 Estimated time can be used for fast completion. If a task is completed and no

@@ -1,5 +1,8 @@
 Ticket cost entries let technicians capture material and expense costs before billing has been built.
 
+Cost billing remains client-gated. Internal Tickets have no `client_id`, so picked cost entries on
+internal work are kept for operational tracking and are not selected for Economy order generation.
+
 Technicians use the `Add cost` action beside `Add time` on the ticket show page. The form supports two modes:
 
 - `Storage item` reserves an active Storage item for the ticket.

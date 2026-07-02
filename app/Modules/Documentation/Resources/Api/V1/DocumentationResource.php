@@ -21,6 +21,7 @@ class DocumentationResource extends JsonResource
             'category_id' => $this->category_id,
             'template_id' => $this->template_id,
             'client_id' => $this->client_id,
+            'work_context_id' => $this->work_context_id,
             'site_id' => $this->site_id,
             'fields' => $data,
             'content' => $data['content'] ?? null,
@@ -38,6 +39,11 @@ class DocumentationResource extends JsonResource
             'client' => $this->whenLoaded('client', fn () => [
                 'id' => $this->client?->id,
                 'name' => $this->client?->name,
+            ]),
+            'work_context' => $this->whenLoaded('workContext', fn () => [
+                'id' => $this->workContext?->id,
+                'type' => $this->workContext?->type,
+                'name' => $this->workContext?->name,
             ]),
             'site' => $this->whenLoaded('site', fn () => [
                 'id' => $this->site?->id,

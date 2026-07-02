@@ -29,6 +29,11 @@ Articles store:
 
 Articles edited inside Nexum are saved locally first. If they belong to a BookStack-backed hierarchy and two-way sync is enabled, the page is marked for push.
 
+Knowledge visibility is separate from Work Context. `internal`, `client-wide`, and `public` decide
+who can read an article. They do not mean that the article itself owns internal or client work.
+Client-wide articles may use `client_scope_id`, while public and internal articles clear that
+client-specific scope.
+
 ## API
 
 Knowledge API routes are available under `/api/v1/knowledge`.
@@ -75,6 +80,16 @@ the BookStack push worker. API-created articles under BookStack-backed books or 
 marked for push, matching the Tech UI.
 
 BookStack-owned records cannot be edited through the API unless two-way sync is enabled.
+
+## Nexum Relationship Sync
+
+Knowledge articles can be exchanged with another Nexum installation through the
+Relationship module when the relationship has Knowledge sync enabled.
+
+Only non-internal articles are eligible. Client-wide articles keep their
+`client_scope_id` locally, while the receiving installation stores its own local
+article row and remote identity link. Incoming remote updates are marked as
+conflicts when the local article has diverged since the last synced checksum.
 
 ## Repository Documentation
 

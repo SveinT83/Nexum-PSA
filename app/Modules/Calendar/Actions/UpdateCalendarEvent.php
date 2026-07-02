@@ -5,16 +5,22 @@ namespace App\Modules\Calendar\Actions;
 use App\Models\Core\User;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Models\CalendarParticipant;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Support\Carbon;
 
 class UpdateCalendarEvent
 {
+    public function __construct(private readonly ResolveWorkContext $workContexts)
+    {
+    }
+
     public function handle(CalendarEvent $event, array $data, User $actor): CalendarEvent
     {
         $timezone = $data['timezone'] ?? $event->timezone;
 
         $event->forceFill([
             'calendar_id' => $data['calendar_id'] ?? $event->calendar_id,
+            'work_context_id' => $data['work_context_id'] ?? $event->work_context_id ?? $this->workContexts->internal()->id,
             'title' => $data['title'] ?? $event->title,
             'description' => $data['description'] ?? null,
             'location' => $data['location'] ?? null,

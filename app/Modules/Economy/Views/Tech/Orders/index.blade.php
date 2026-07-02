@@ -17,22 +17,28 @@
     <!-- Order Status Summary -->
     <!-- ------------------------------------------------- -->
     <div class="row g-2 mb-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="border rounded bg-light p-2">
                 <div class="text-muted small text-uppercase">Draft</div>
                 <div class="h5 mb-0">{{ $stats['draft'] }}</div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="border rounded bg-light p-2">
                 <div class="text-muted small text-uppercase">Ready</div>
                 <div class="h5 mb-0">{{ $stats['ready'] }}</div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="border rounded bg-light p-2">
                 <div class="text-muted small text-uppercase">Approved</div>
                 <div class="h5 mb-0">{{ $stats['approved'] }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="border rounded bg-light p-2">
+                <div class="text-muted small text-uppercase">Manually invoiced</div>
+                <div class="h5 mb-0">{{ $stats['manual_invoiced'] }}</div>
             </div>
         </div>
     </div>
@@ -78,6 +84,17 @@
                 </thead>
                 <tbody>
                     @forelse($orders as $order)
+                        @php
+                            $totals = $orderTotals[$order->id] ?? [
+                                'subtotal_ex_vat' => (float) $order->subtotal_ex_vat,
+                                'vat_amount' => (float) $order->vat_amount,
+                                'total_inc_vat' => (float) $order->total_inc_vat,
+                            ];
+                            $statusLabel = match($order->status) {
+                                'manual_invoiced' => 'Manually invoiced',
+                                default => ucfirst(str_replace('_', ' ', $order->status)),
+                            };
+                        @endphp
                         <tr class="cursor-pointer" data-href="{{ route('tech.economy.orders.show', $order) }}" onclick="window.location.href = this.dataset.href">
                             <td>
                                 <a href="{{ route('tech.economy.orders.show', $order) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">
@@ -86,11 +103,11 @@
                             </td>
                             <td>{{ $order->client?->name ?? 'Unknown client' }}</td>
                             <td>{{ $order->period_start?->format('Y-m-d') }} - {{ $order->period_end?->format('Y-m-d') }}</td>
-                            <td><span class="badge text-bg-light border">{{ ucfirst($order->status) }}</span></td>
+                            <td><span class="badge text-bg-light border">{{ $statusLabel }}</span></td>
                             <td class="text-end">{{ $order->lines->count() }}</td>
-                            <td class="text-end">{{ number_format((float) $order->subtotal_ex_vat, 2, ',', ' ') }}</td>
-                            <td class="text-end">{{ number_format((float) $order->vat_amount, 2, ',', ' ') }}</td>
-                            <td class="text-end fw-semibold">{{ number_format((float) $order->total_inc_vat, 2, ',', ' ') }}</td>
+                            <td class="text-end">{{ number_format((float) $totals['subtotal_ex_vat'], 2, ',', ' ') }}</td>
+                            <td class="text-end">{{ number_format((float) $totals['vat_amount'], 2, ',', ' ') }}</td>
+                            <td class="text-end fw-semibold">{{ number_format((float) $totals['total_inc_vat'], 2, ',', ' ') }}</td>
                         </tr>
                     @empty
                         <tr>

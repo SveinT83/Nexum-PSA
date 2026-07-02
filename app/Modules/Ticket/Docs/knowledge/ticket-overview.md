@@ -46,6 +46,17 @@ SLA:
 
 Service policy applied to the ticket. SLA can come from a Ticket Rule, active contract, or global default SLA.
 
+Work Context:
+
+Tickets store `work_context_id` in addition to the existing `client_id`. When a new Ticket is
+created with a Client, the Ticket uses that Client's Work Context and keeps `client_id`, site,
+contact, and asset behavior unchanged. When a new Ticket is created without a Client, the Ticket is
+internal work for the owning organization.
+
+Historical Tickets that already had a real `client_id` are backfilled to the matching Client Work
+Context. Historical Tickets with `client_id = null` remain unscoped until they are edited or handled
+by a later cleanup slice.
+
 Assignment:
 
 Ownership can be set explicitly by assignment rules or scored from ticket assignment settings plus User Management profile availability.
@@ -62,6 +73,7 @@ The main `tickets` table stores:
 - Type and ticket type.
 - Queue, status, priority, category, workflow, and SLA.
 - Client, site, contact, and asset links.
+- Work Context.
 - Owner and creator/updater user references.
 - Channel.
 - Subject and description.
@@ -84,6 +96,12 @@ Ticket show:
 
 The show page is the primary work surface. It contains ticket details, conversation/activity, workflow actions, replies, notes, time registration, cost registration, assignment information, SLA details, customer contact cards, and Knowledge suggestions. The customer card keeps client, site, contact, email, and clickable phone details visible without leaving the ticket.
 
+When an active Nexum relationship is available, the show page also displays a
+Nexum relationship panel. The panel shows existing remote sync links and allows
+authorized technicians to escalate the ticket to a real configured relationship.
+The panel is hidden when there is no existing link and no active relationship
+target, so the UI does not imply unfinished sync behavior.
+
 Ticket create/edit:
 
 Create and edit forms handle manual ticket creation, client/contact/site/asset scope, lifecycle fields, tags, and core ticket metadata.
@@ -91,6 +109,15 @@ Create and edit forms handle manual ticket creation, client/contact/site/asset s
 Ticket API:
 
 External systems can sync ticket conversation entries through `POST /api/v1/tickets/{ticket}/external-messages`. The endpoint is idempotent by external source and external message ID, stores the message as `author_type = external`, and avoids sending outbound customer email for imported replies. Free-form external metadata is kept for audit context, but workflow-driving fields such as reply intent and solution markers are ignored.
+
+Nexum-to-Nexum ticket exchange is owned by the Relationship module. Relationship
+sync uses signed endpoints under `/api/v1/nexum/relationships/*`, stores local
+and remote ticket identities in `nexum_sync_links`, and records audit events in
+`nexum_sync_events`.
+
+Ticket API create, list, and show responses expose `work_context_id` and `work_context`. Existing
+`client_id` filters remain client-only. The list endpoint also supports `work_context_id` and
+`context_type` filters for `internal` and `client`.
 
 Ticket settings:
 
@@ -101,5 +128,9 @@ Admin surface for queues, types, statuses, priorities, rules, workflows, assignm
 Tickets are for actionable work. Not every inbound email should become a ticket. Email Rules, not-ticket behavior, future Operational Signals, and future custom fields should keep noise out of the ticket queue.
 
 Ticket state changes should go through shared actions and workflow runtime checks. Avoid bypassing `ChangeTicketStatus`, `TicketActionGuard`, `TicketWorkflowRuntime`, or the existing action classes.
+
+Relationship status sync also uses `ChangeTicketStatus`. Inbound remote statuses
+are mapped through relationship policy and do not receive arbitrary access to
+local workflow transitions.
 
 Ticket UI must not expose unfinished controls. If a setting or button is visible, the underlying behavior must be implemented, tested, and honest about what it does.

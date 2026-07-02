@@ -288,8 +288,10 @@
                                     @if($ticket->client->client_number)
                                         <div class="small text-muted">{{ $ticket->client->client_number }}</div>
                                     @endif
+                                @elseif($ticket->workContext?->isInternal())
+                                    <span class="badge text-bg-light border">Internal</span>
                                 @else
-                                    <span class="text-muted">Unassigned</span>
+                                    <span class="text-muted">Unscoped</span>
                                 @endif
                             </td>
                             <td>

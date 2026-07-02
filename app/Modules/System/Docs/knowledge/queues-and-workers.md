@@ -18,7 +18,7 @@ Current queue overview:
 
 | Queue | Required | Used by | Notes |
 | --- | --- | --- | --- |
-| `default` | Yes | Scheduled jobs, normal queued jobs, AI chat cleanup, integrations, email polling, sales emails, ticket emails, RMM sync jobs, BookStack sync jobs | This is the main Laravel queue. Most jobs use this unless code explicitly chooses another queue. |
+| `default` | Yes | Scheduled jobs, normal queued jobs, AI chat cleanup, integrations, email polling, Lead Intelligence research runs, sales emails, ticket emails, RMM sync jobs, BookStack sync jobs | This is the main Laravel queue. Most jobs use this unless code explicitly chooses another queue. |
 | `economy` | Yes | Economy order generation after ticket close | Ticket close dispatches `GenerateEconomyOrdersJob` to this queue. A worker that only listens to `default` will not process these jobs. |
 | `email` | Optional but supported | Manual async email polling and manual async inbound rule processing | CLI commands can dispatch `email:poll --async` and `email:process-inbound-rules --async` to this queue. Keep it in the worker list so those commands work when used. |
 

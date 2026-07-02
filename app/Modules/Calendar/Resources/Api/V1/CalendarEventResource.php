@@ -16,6 +16,7 @@ class CalendarEventResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'calendar_id' => $this->calendar_id,
+            'work_context_id' => $this->work_context_id,
             'series_id' => $this->series_id,
             'title' => $this->title,
             'description' => $this->description,
@@ -39,6 +40,11 @@ class CalendarEventResource extends JsonResource
                 'id' => $this->calendar?->id,
                 'name' => $this->calendar?->name,
                 'color' => $this->calendar?->color,
+            ]),
+            'work_context' => $this->whenLoaded('workContext', fn () => [
+                'id' => $this->workContext?->id,
+                'type' => $this->workContext?->type,
+                'name' => $this->workContext?->name,
             ]),
             'participants' => $this->whenLoaded('participants', fn () => $this->participants->map(fn ($participant) => [
                 'id' => $participant->id,

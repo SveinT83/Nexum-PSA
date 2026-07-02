@@ -27,6 +27,11 @@ not have access to private details.
 APIs and UI code must use the Calendar visibility services and overlay query rather than building
 their own privacy rules.
 
+Calendar events also store `work_context_id`. Current Calendar events resolve to the default
+internal Work Context because event visibility and access are still controlled by calendar ownership,
+participants, and Calendar Access. The Work Context field exists so overlays, reports, and
+integrations can filter internal calendar work consistently as other domains adopt the contract.
+
 ## API
 
 Calendar exposes API routes under `/api/v1` for trusted integrations and AI-assisted technician
@@ -51,6 +56,9 @@ Implemented routes:
 
 `GET /api/v1/calendar/events` uses the Calendar overlay query so visibility and recurring event
 expansion match the Tech UI.
+
+The event list supports `work_context_id` and `context_type` filters. Event responses include
+`work_context_id`, `work_context_type`, and the loaded `work_context` object when available.
 
 Common event fields:
 

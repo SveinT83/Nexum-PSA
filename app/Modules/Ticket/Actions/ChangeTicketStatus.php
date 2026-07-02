@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Actions;
 use App\Models\Core\User;
 use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
 use App\Modules\Notification\Notifications\TicketStatusChanged;
+use App\Modules\Relationship\Actions\SyncTicketStatusToRelationship;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -14,9 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class ChangeTicketStatus
 {
-    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime)
-    {
-    }
+    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -28,37 +27,23 @@ class ChangeTicketStatus
     | inbound email handlers all get the same lifecycle behavior.
     |
     */
-    public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null): Ticket
+    public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null, bool $enforceWorkflow = true, bool $syncRelationship = true): Ticket
     {
-        return DB::transaction(function () use ($ticket, $status, $actor) {
-            if ($status->is_closed && $this->hasUnresolvedTasks($ticket)) {
-                $reason = 'Ticket cannot be closed while it has unresolved tasks.';
+        if ($status->is_closed && $this->hasUnresolvedTasks($ticket)) {
+            $reason = 'Ticket cannot be closed while it has unresolved tasks.';
 
-                TicketEvent::create([
-                    'ticket_id' => $ticket->id,
-                    'actor_id' => $actor?->id,
-                    'type' => 'ticket_close_blocked',
-                    'message' => $reason,
-                    'before' => ['status_id' => $ticket->status_id],
-                    'after' => ['status_id' => $status->id],
-                ]);
+            $this->recordBlockedStatusChange($ticket, $status, $actor, 'ticket_close_blocked', $reason);
 
-                throw ValidationException::withMessages(['status_id' => $reason]);
-            }
+            throw ValidationException::withMessages(['status_id' => $reason]);
+        }
 
-            if ($reason = $this->workflowRuntime->blockedReason($ticket, $status)) {
-                TicketEvent::create([
-                    'ticket_id' => $ticket->id,
-                    'actor_id' => $actor?->id,
-                    'type' => 'workflow_transition_blocked',
-                    'message' => $reason,
-                    'before' => ['status_id' => $ticket->status_id],
-                    'after' => ['status_id' => $status->id],
-                ]);
+        if ($enforceWorkflow && $reason = $this->workflowRuntime->blockedReason($ticket, $status)) {
+            $this->recordBlockedStatusChange($ticket, $status, $actor, 'workflow_transition_blocked', $reason);
 
-                throw ValidationException::withMessages(['status_id' => $reason]);
-            }
+            throw ValidationException::withMessages(['status_id' => $reason]);
+        }
 
+        return DB::transaction(function () use ($ticket, $status, $actor, $syncRelationship) {
             if ((int) $ticket->status_id !== (int) $status->id) {
                 app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'status_changed');
             }
@@ -100,7 +85,7 @@ class ChangeTicketStatus
                     'type' => 'status_changed',
                     'before' => $before,
                     'after' => $after,
-                    'message' => 'Ticket status changed to ' . $status->name . '.',
+                    'message' => 'Ticket status changed to '.$status->name.'.',
                 ]);
 
                 // Notify the ticket owner if they didn't change the status themselves
@@ -124,10 +109,26 @@ class ChangeTicketStatus
                         $actor?->id,
                     )->onQueue('economy')->afterCommit();
                 }
+
+                if ($syncRelationship) {
+                    DB::afterCommit(fn () => app(SyncTicketStatusToRelationship::class)->handle($ticket->id));
+                }
             }
 
             return $ticket;
         });
+    }
+
+    private function recordBlockedStatusChange(Ticket $ticket, TicketStatus $status, ?User $actor, string $type, string $reason): void
+    {
+        TicketEvent::create([
+            'ticket_id' => $ticket->id,
+            'actor_id' => $actor?->id,
+            'type' => $type,
+            'message' => $reason,
+            'before' => ['status_id' => $ticket->status_id],
+            'after' => ['status_id' => $status->id],
+        ]);
     }
 
     private function hasUnresolvedTasks(Ticket $ticket): bool

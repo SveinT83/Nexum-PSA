@@ -11,6 +11,7 @@ use App\Modules\Email\Controllers\Admin\AccountsController;
 use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
 use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\FetchImapAccount;
+use App\Modules\Email\Jobs\PollActiveEmailAccounts;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Jobs\StoreInboundMessage;
 use App\Modules\Email\Models\EmailAccount;
@@ -42,10 +43,14 @@ use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Database\Seeders\EmailTemplateSeeder;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -339,6 +344,126 @@ class EmailModuleTest extends TestCase
 
         Queue::assertPushed(FetchImapAccount::class, 1);
         Queue::assertPushed(FetchImapAccount::class, fn (FetchImapAccount $job) => $job->batchSize === 20 && $job->syncStore === false);
+    }
+
+    #[Test]
+    public function automatic_email_polling_is_registered_in_laravel_scheduler(): void
+    {
+        $event = collect(app(Schedule::class)->events())
+            ->first(fn ($event): bool => $event->description === 'email.poll');
+
+        $this->assertNotNull($event);
+        $this->assertSame('* * * * *', $event->expression);
+        $this->assertTrue($event->withoutOverlapping);
+    }
+
+    #[Test]
+    public function automatic_email_poll_job_queues_fetch_jobs_for_active_accounts(): void
+    {
+        Queue::fake();
+        Cache::forget('email_last_poll_run');
+
+        EmailAccount::create($this->emailAccountPayload([
+            'address' => 'automatic@example.test',
+            'is_active' => true,
+        ]));
+        EmailAccount::create($this->emailAccountPayload([
+            'address' => 'disabled-automatic@example.test',
+            'is_active' => false,
+        ]));
+
+        app()->call([new PollActiveEmailAccounts(), 'handle']);
+
+        Queue::assertPushed(FetchImapAccount::class, 1);
+        Queue::assertPushed(FetchImapAccount::class, fn (FetchImapAccount $job): bool => $job->batchSize === 20);
+        $this->assertNotNull(Cache::get('email_last_poll_run'));
+    }
+
+    #[Test]
+    public function email_config_health_card_reports_no_active_accounts(): void
+    {
+        Cache::forget('email_last_poll_run');
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.email.config'))
+            ->assertOk()
+            ->assertSee('System Health')
+            ->assertSee('0 active')
+            ->assertSee('No active email accounts are enabled for automatic polling.')
+            ->assertSee('No email poll heartbeat has been recorded.');
+    }
+
+    #[Test]
+    public function email_config_health_card_reports_fresh_fetch_activity(): void
+    {
+        config(['queue.default' => 'database']);
+        Cache::put('email_last_poll_run', now()->subMinute());
+        EmailAccount::create($this->emailAccountPayload([
+            'address' => 'fresh@example.test',
+            'is_active' => true,
+            'last_successful_fetch_at' => now()->subMinute(),
+        ]));
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.email.config'))
+            ->assertOk()
+            ->assertSee('1 active')
+            ->assertSee('Latest successful fetch was')
+            ->assertSee('Ready: none. Reserved: none. Failed: 0.');
+    }
+
+    #[Test]
+    public function email_config_health_card_reports_missing_scheduler_heartbeat(): void
+    {
+        Cache::forget('email_last_poll_run');
+        EmailAccount::create($this->emailAccountPayload([
+            'address' => 'stale-scheduler@example.test',
+            'is_active' => true,
+            'last_successful_fetch_at' => now(),
+        ]));
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.email.config'))
+            ->assertOk()
+            ->assertSee('No heartbeat')
+            ->assertSee('Confirm cron runs schedule:run');
+    }
+
+    #[Test]
+    public function email_config_health_card_reports_pending_and_failed_queue_jobs(): void
+    {
+        config(['queue.default' => 'database']);
+        Cache::put('email_last_poll_run', now());
+        EmailAccount::create($this->emailAccountPayload([
+            'address' => 'queue@example.test',
+            'is_active' => true,
+            'last_successful_fetch_at' => now(),
+        ]));
+
+        DB::table('jobs')->insert([
+            'queue' => 'default',
+            'payload' => '{}',
+            'attempts' => 0,
+            'reserved_at' => null,
+            'available_at' => now()->subMinutes(10)->timestamp,
+            'created_at' => now()->subMinutes(10)->timestamp,
+        ]);
+        DB::table('failed_jobs')->insert([
+            'uuid' => (string) Str::uuid(),
+            'connection' => 'database',
+            'queue' => 'email',
+            'payload' => '{}',
+            'exception' => 'Test failure',
+            'failed_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.email.config'))
+            ->assertOk()
+            ->assertSee('Queue worker')
+            ->assertSee('Error')
+            ->assertSee('Failed: 1')
+            ->assertSee('Stale ready jobs on default/email: default=1');
     }
 
     #[Test]

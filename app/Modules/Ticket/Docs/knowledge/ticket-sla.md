@@ -76,6 +76,9 @@ Ticket SLA reporting is available from Reports -> Ticket SLA.
 
 The first report uses stored ticket timestamps only. It intentionally does not recalculate business hours or historical SLA policy rules, because the goal is to report the operational state that technicians already see on ticket list and ticket show.
 
+The report defaults to client work only. Internal Tickets are excluded unless the technician
+explicitly switches the Context filter to `Internal work` or `All work`.
+
 The report shows:
 
 - Response overdue.

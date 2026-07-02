@@ -19,6 +19,9 @@ Route::post('/economy/orders/{order}/ready', [EconomyController::class, 'markRea
 Route::post('/economy/orders/{order}/draft', [EconomyController::class, 'markDraft'])
     ->name('economy.orders.draft');
 
+Route::post('/economy/orders/{order}/invoiced', [EconomyController::class, 'markInvoiced'])
+    ->name('economy.orders.invoiced');
+
 Route::delete('/economy/orders/{order}', [EconomyController::class, 'destroyOrder'])
     ->name('economy.orders.destroy');
 

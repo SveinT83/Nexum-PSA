@@ -125,7 +125,7 @@ class TaskFormContext extends Component
 
     public function selectTicket(int $ticketId): void
     {
-        $ticket = Ticket::query()->with(['client', 'site'])->find($ticketId);
+        $ticket = Ticket::query()->with(['client', 'workContext', 'site'])->find($ticketId);
 
         if (! $ticket) {
             return;
@@ -209,7 +209,7 @@ class TaskFormContext extends Component
         }
 
         return Ticket::query()
-            ->with(['client:id,name', 'site:id,name'])
+            ->with(['client:id,name', 'workContext:id,type,name', 'site:id,name'])
             ->when($this->clientId, fn ($query) => $query->where('client_id', $this->clientId))
             ->when($this->siteId, fn ($query) => $query->where('site_id', $this->siteId))
             ->when($this->ticketSearch, function ($query) {

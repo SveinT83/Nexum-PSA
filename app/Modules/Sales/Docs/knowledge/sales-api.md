@@ -15,6 +15,10 @@ Required scopes:
 
 `GET /api/v1/sales/opportunities` lists opportunities.
 
+Sales remains client-only under the Work Context rollout. Opportunities require a real Client and do
+not accept internal Work Context records. Internal work should be tracked in Ticket, Task, Calendar,
+Asset, Risk, or Documentation instead of becoming a sales opportunity.
+
 Supported filters:
 
 - `q`: searches opportunity title, opportunity key, and client name.

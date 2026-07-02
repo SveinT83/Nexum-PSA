@@ -58,6 +58,17 @@ manually entered addresses.
 
 The queued job is `SendTicketReplyEmail`.
 
+## Nexum Relationship Public Replies
+
+When a ticket is linked to an active Nexum relationship, public customer replies
+are also sent to the remote Nexum ticket through the Relationship module after
+the local database commit. The normal ticket email job still runs, so customer
+email delivery remains the fallback communication path if remote API sync fails.
+
+Relationship sync sends only public reply content and selected attachments
+allowed by the relationship attachment policy. It does not send internal notes,
+assignment, workflow internals, time, cost, or margin data.
+
 ## Internal Notes
 
 Internal notes are visible to technicians and can be used for internal coordination.

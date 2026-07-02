@@ -6,6 +6,7 @@ The Documentation module owns the internal and client-scoped documentation syste
 
 - Documentation index, create, edit, show, and delete screens.
 - Documentation context selection for internal, client, and site scopes.
+- Work Context alignment for internal and client-scoped documentation.
 - Documentation template model used by category-driven document forms.
 - Sidebar menu data for documentation categories.
 - Sanctum API endpoints for Documentation records, documentation categories, and documentation
@@ -48,3 +49,7 @@ Documentation create/update accepts structured request `data` and optional free-
 `body`. Responses return structured values as `fields` plus `content`/`body`. If content is provided
 and the selected template does not already include a `content` field, the API adds a textarea field
 to the stored snapshot so the Tech UI renders the content.
+
+Documentation records expose `work_context_id` and `work_context`. The list endpoint supports
+`work_context_id` and `context_type` filters in addition to the existing `client_id`, `site_id`, and
+`scope_type` filters.

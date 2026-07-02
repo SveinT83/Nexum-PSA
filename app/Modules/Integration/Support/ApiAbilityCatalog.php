@@ -152,6 +152,16 @@ class ApiAbilityCatalog
             'description' => 'Test the BookStack connection and run pull or push sync operations.',
             'domain' => 'Integration',
         ],
+        'relationships.read' => [
+            'label' => 'Read Nexum relationships',
+            'description' => 'Read Nexum relationship configuration and sync health.',
+            'domain' => 'Relationships',
+        ],
+        'relationships.sync' => [
+            'label' => 'Run Nexum relationship sync',
+            'description' => 'Exchange signed ticket, status, documentation, and knowledge sync payloads between Nexum installations.',
+            'domain' => 'Relationships',
+        ],
         'storage.read' => [
             'label' => 'Read storage',
             'description' => 'List and view storage items, warehouses, and boxes.',

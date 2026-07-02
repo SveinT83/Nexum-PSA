@@ -21,6 +21,7 @@ class AssetResource extends JsonResource
         return [
             'id' => $this->id,
             'client_id' => $this->client_id,
+            'work_context_id' => $this->work_context_id,
             'site_id' => $this->site_id,
             'user_id' => $this->user_id,
             'vendor_id' => $this->vendor_id,
@@ -44,11 +45,16 @@ class AssetResource extends JsonResource
             'status' => $this->status,
             'last_seen_at' => $this->last_seen_at,
             'metadata' => $this->metadata,
+            'work_context' => $this->whenLoaded('workContext', fn () => [
+                'id' => $this->workContext?->id,
+                'type' => $this->workContext?->type,
+                'name' => $this->workContext?->name,
+            ]),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'links' => [
                 'self' => route('api.v1.assets.show', $this->id),
-                'client' => route('api.v1.clients.show', $this->client_id),
+                'client' => $this->client_id ? route('api.v1.clients.show', $this->client_id) : null,
             ]
         ];
     }

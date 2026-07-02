@@ -2,12 +2,14 @@
 
 namespace App\Modules\Risk\Tests\Feature;
 
+use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Models\Risk\RiskAssessment;
 use App\Models\Risk\RiskItem;
 use App\Models\Risk\RiskItemUpdate;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Taxonomy\Models\Category;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
@@ -143,9 +145,25 @@ class RiskSystemTest extends TestCase
 
         $assessmentResponse->assertCreated()
             ->assertJsonPath('data.title', 'API Assessment')
-            ->assertJsonPath('data.status', 'open');
+            ->assertJsonPath('data.status', 'open')
+            ->assertJsonPath('data.work_context.type', WorkContextType::INTERNAL);
 
         $assessmentId = $assessmentResponse->json('data.id');
+
+        $client = Client::factory()->create(['name' => 'Risk API Client']);
+        $clientAssessmentResponse = $this->postJson(route('api.v1.risk.assessments.store'), [
+            'title' => 'API Client Assessment',
+            'scope' => 'client',
+            'client_id' => $client->id,
+        ]);
+
+        $clientAssessmentResponse->assertCreated()
+            ->assertJsonPath('data.client_id', $client->id)
+            ->assertJsonPath('data.work_context.type', WorkContextType::CLIENT);
+
+        $this->getJson(route('api.v1.risk.assessments.index', ['context_type' => WorkContextType::CLIENT]))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $clientAssessmentResponse->json('data.id'));
 
         $itemResponse = $this->postJson(route('api.v1.risk.assessments.items.store', $assessmentId), [
             'title' => 'API Risk Item',

@@ -23,7 +23,7 @@ class SyncRepositoryKnowledgeDocs
     ) {}
 
     /**
-     * @param array<int, string> $onlyModules
+     * @param  array<int, string>  $onlyModules
      * @return array{chapters: int, articles: int, skipped: int, modules: array<int, string>}
      */
     public function handle(array $onlyModules = []): array
@@ -51,6 +51,7 @@ class SyncRepositoryKnowledgeDocs
 
             if (! is_dir($path)) {
                 $summary['skipped']++;
+
                 continue;
             }
 
@@ -58,6 +59,7 @@ class SyncRepositoryKnowledgeDocs
 
             if ($files === []) {
                 $summary['skipped']++;
+
                 continue;
             }
 
@@ -109,13 +111,16 @@ class SyncRepositoryKnowledgeDocs
             'Clients' => $this->definition('clients', 'Clients', 190),
             'Commercial' => $this->definition('commercial', 'Commercial', 700),
             'Contact' => $this->definition('contacts', 'Contacts', 200),
+            'Documentation' => $this->definition('documentation', 'Documentation', 540),
             'Economy' => $this->definition('economy', 'Economy', 800),
             'Email' => $this->definition('email', 'Email', 810),
             'Integration' => $this->definition('integrations', 'Integrations', 850),
             'Knowledge' => $this->definition('knowledge', 'Knowledge', 860),
+            'LeadIntelligence' => $this->definition('lead-intelligence', 'Lead Intelligence', 820),
             'Nextcloud' => $this->definition('nextcloud', 'Nextcloud', 870),
             'Notification' => $this->definition('notifications', 'Notifications', 880),
             'Report' => $this->definition('reports', 'Reports', 890),
+            'Relationship' => $this->definition('relationships', 'Nexum Relationships', 845),
             'Risk' => $this->definition('risk', 'Risk', 550),
             'Sales' => $this->definition('sales', 'Sales', 750),
             'Storage' => $this->definition('storage', 'Storage', 600),
@@ -125,6 +130,7 @@ class SyncRepositoryKnowledgeDocs
             'Ticket' => $this->definition('tickets', 'Tickets', 400),
             'UserManagement' => $this->definition('user-management', 'User Management', 300),
             'Warroom' => $this->definition('warroom', 'Warroom', 100),
+            'WorkContext' => $this->definition('work-context', 'Work Context', 830),
         ];
     }
 
@@ -146,7 +152,11 @@ class SyncRepositoryKnowledgeDocs
     {
         return match ($name) {
             'Clients' => 'Clients',
+            'Lead Intelligence' => 'LeadIntelligence',
+            'Nexum Relationships' => 'Relationship',
+            'Sales' => 'Sales',
             'User Management' => 'UserManagement',
+            'Work Context' => 'WorkContext',
             default => str_replace(' ', '', Str::singular($name)),
         };
     }
@@ -212,6 +222,9 @@ class SyncRepositoryKnowledgeDocs
                 '03-users-groups-calendars' => ['title' => 'Nextcloud Users Groups And Calendars', 'slug' => 'nextcloud-users-groups-and-calendars'],
                 '04-sso-future-plan' => ['title' => 'Nextcloud SSO Future Plan', 'slug' => 'nextcloud-sso-future-plan'],
                 '05-talk-bot' => ['title' => 'Nextcloud Talk Bot', 'slug' => 'nextcloud-talk-bot'],
+            ],
+            'relationships' => [
+                'two-instance-test-plan' => ['title' => 'Nexum Relationship Two-Instance Test Plan', 'slug' => 'nexum-relationship-two-instance-test-plan'],
             ],
             'storage' => [
                 'storage-vendors-suppliers' => ['title' => 'Storage Vendors And Suppliers', 'slug' => 'storage-vendors-and-suppliers'],

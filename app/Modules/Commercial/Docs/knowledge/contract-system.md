@@ -4,6 +4,11 @@ The contract system controls how client agreements are assembled from services, 
 
 Contracts are the agreement boundary between Nexum and a client. They collect the commercial and operational terms that apply to a client relationship, including selected services, negotiated prices, SLA expectations, DPA/legal content, and service-specific terms.
 
+Commercial remains client-only under the Work Context rollout. Contracts, contract lines, SLA
+commercial terms, timebank consumption, and quick Client timebank registration require a real Client.
+Internal work can be tracked operationally in Ticket, Task, Calendar, Asset, and Risk, but it does
+not create internal contracts or customer-billable commercial records in this RFC.
+
 The contract must not depend directly on mutable service defaults after it has been prepared or sent. Service data is used as a template, then copied into contract snapshots where the agreement can be reviewed and adjusted.
 
 ## Core Flow

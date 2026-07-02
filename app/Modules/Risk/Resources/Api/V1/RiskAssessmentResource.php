@@ -15,6 +15,7 @@ class RiskAssessmentResource extends JsonResource
         return [
             'id' => $this->id,
             'client_id' => $this->client_id,
+            'work_context_id' => $this->work_context_id,
             'title' => $this->title,
             'description' => $this->description,
             'status' => $this->status,
@@ -26,6 +27,11 @@ class RiskAssessmentResource extends JsonResource
             'client' => $this->whenLoaded('client', fn () => [
                 'id' => $this->client?->id,
                 'name' => $this->client?->name,
+            ]),
+            'work_context' => $this->whenLoaded('workContext', fn () => [
+                'id' => $this->workContext?->id,
+                'type' => $this->workContext?->type,
+                'name' => $this->workContext?->name,
             ]),
             'items' => RiskItemResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at,

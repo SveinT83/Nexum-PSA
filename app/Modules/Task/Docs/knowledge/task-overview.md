@@ -8,6 +8,7 @@ smaller pieces without creating a full ticket.
 Core task concepts:
 
 - Owner: the record or user that owns the task.
+- Work Context: whether the task belongs to the owning organization or an external Client.
 - Assignee: the person expected to do the work.
 - Queue: the operational team or work queue.
 - Priority: the urgency of the task.
@@ -19,8 +20,9 @@ Core task concepts:
 - Dependencies: rules that block start or completion until another task is done.
 
 Standalone tasks are owned by the creator. They can still be assigned to another
-technician. This keeps personal or delegated work visible without forcing it into
-a ticket.
+technician. When no Client is selected, standalone tasks are internal work for
+the owning organization. This keeps personal or delegated work visible without
+forcing it into a ticket.
 
 Tasks are internal in the beta version. They are not sent to customers and do not
 replace ticket replies.
@@ -52,4 +54,7 @@ Supported API owner context:
 - `owner_type: ticket` with `owner_id`.
 
 When a task is created for a Ticket, the API inherits queue, priority, category, client, site, and
-assignee context from the Ticket unless the payload overrides those fields.
+assignee context from the Ticket unless the payload overrides those fields. It also inherits the
+Ticket Work Context. API responses expose `work_context_id` and `work_context` alongside the
+existing `client_id`. The list endpoint supports `work_context_id` and `context_type` filters for
+`internal` and `client`.

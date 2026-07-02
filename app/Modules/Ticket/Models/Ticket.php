@@ -8,16 +8,18 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Relationship\Models\NexumSyncLink;
+use App\Modules\Task\Models\Task;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
-use App\Modules\Task\Models\Task;
+use App\Modules\WorkContext\Models\WorkContext;
 use Database\Factories\Ticket\TicketFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ticket extends Model
@@ -39,6 +41,7 @@ class Ticket extends Model
         'workflow_id',
         'category_id',
         'client_id',
+        'work_context_id',
         'site_id',
         'contact_id',
         'asset_id',
@@ -124,6 +127,11 @@ class Ticket extends Model
         return $this->belongsTo(Client::class, 'client_id');
     }
 
+    public function workContext(): BelongsTo
+    {
+        return $this->belongsTo(WorkContext::class, 'work_context_id');
+    }
+
     public function contact(): BelongsTo
     {
         return $this->belongsTo(ClientUser::class, 'contact_id');
@@ -184,5 +192,12 @@ class Ticket extends Model
     public function tasks(): MorphMany
     {
         return $this->morphMany(Task::class, 'owner');
+    }
+
+    public function syncLinks(): HasMany
+    {
+        return $this->hasMany(NexumSyncLink::class, 'local_id')
+            ->where('local_type', self::class)
+            ->where('domain', 'ticket');
     }
 }

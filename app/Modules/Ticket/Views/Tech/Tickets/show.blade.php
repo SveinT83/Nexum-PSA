@@ -122,6 +122,12 @@
                 </div>
             </div>
 
+            @include('relationship::Tech.Tickets.panel', [
+                'ticket' => $ticket,
+                'relationshipSyncLinks' => $relationshipSyncLinks ?? collect(),
+                'availableRelationships' => $availableRelationships ?? collect(),
+            ])
+
             <div class="card mb-3">
                 <div class="card-header">Activity</div>
                 <div class="card-body">
@@ -1657,6 +1663,8 @@
                                 </div>
                             @endif
                         </div>
+                    @elseif($ticket->workContext?->isInternal())
+                        <p class="text-muted small mb-0">Internal work. No customer context is attached.</p>
                     @else
                         <p class="text-muted small mb-0">No client assigned.</p>
                     @endif

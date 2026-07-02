@@ -143,6 +143,7 @@ class CustomFieldModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->put(route('tech.clients.settings.update', $client), [
+                'name' => $client->name,
                 'custom_fields' => [
                     'msp_manager_id' => 'MSP-123',
                 ],

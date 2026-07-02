@@ -83,6 +83,8 @@ class CalendarVisibility
             'calendar_id' => $event->calendar_id,
             'calendar_name' => $event->calendar?->name,
             'calendar_color' => $event->calendar?->color,
+            'work_context_id' => $event->work_context_id,
+            'work_context_type' => $event->workContext?->type,
             'title' => $canViewDetails ? $event->title : 'Busy',
             'description' => $canViewDetails ? $event->description : null,
             'location' => $canViewDetails ? $event->location : null,

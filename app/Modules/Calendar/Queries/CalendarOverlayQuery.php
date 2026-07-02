@@ -7,6 +7,7 @@ use App\Modules\Calendar\Models\Calendar;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Services\CalendarRecurrenceExpander;
 use App\Modules\Calendar\Services\CalendarVisibility;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -56,7 +57,14 @@ class CalendarOverlayQuery
         return $owned;
     }
 
-    public function eventsForRange(User $viewer, Carbon $startsAt, Carbon $endsAt, array $calendarIds = []): Collection
+    public function eventsForRange(
+        User $viewer,
+        Carbon $startsAt,
+        Carbon $endsAt,
+        array $calendarIds = [],
+        ?int $workContextId = null,
+        ?string $contextType = null,
+    ): Collection
     {
         $visibleCalendarIds = $this->visibleCalendars($viewer)->pluck('id');
         $requestedIds = collect($calendarIds)->map(fn ($id) => (int) $id)->filter();
@@ -69,8 +77,10 @@ class CalendarOverlayQuery
         }
 
         $events = collect(CalendarEvent::query()
-            ->with(['calendar', 'participants', 'links.linkable'])
+            ->with(['calendar', 'workContext', 'participants', 'links.linkable'])
             ->whereIn('calendar_id', $ids)
+            ->when($workContextId, fn (Builder $query) => $query->where('work_context_id', $workContextId))
+            ->when($contextType, fn (Builder $query) => $query->whereHas('workContext', fn (Builder $context) => $context->where('type', $contextType)))
             ->whereNull('series_id')
             ->where('starts_at', '<', $endsAt->copy()->utc())
             ->where('ends_at', '>', $startsAt->copy()->utc())
@@ -81,15 +91,26 @@ class CalendarOverlayQuery
             ->all());
 
         return $events
-            ->merge($this->recurringEventsForRange($viewer, $ids->all(), $startsAt, $endsAt))
+            ->merge($this->recurringEventsForRange($viewer, $ids->all(), $startsAt, $endsAt, $workContextId, $contextType))
             ->sortBy('starts_at')
             ->values();
     }
 
-    private function recurringEventsForRange(User $viewer, array $calendarIds, Carbon $startsAt, Carbon $endsAt): Collection
+    private function recurringEventsForRange(
+        User $viewer,
+        array $calendarIds,
+        Carbon $startsAt,
+        Carbon $endsAt,
+        ?int $workContextId = null,
+        ?string $contextType = null,
+    ): Collection
     {
         return $this->recurrenceExpander
             ->visibleOccurrences($calendarIds, $startsAt, $endsAt)
+            ->when($workContextId, fn (Collection $occurrences) => $occurrences
+                ->filter(fn (array $occurrence) => (int) $occurrence['event']->work_context_id === $workContextId))
+            ->when($contextType, fn (Collection $occurrences) => $occurrences
+                ->filter(fn (array $occurrence) => $occurrence['event']->workContext?->type === $contextType))
             ->map(fn (array $occurrence) => $this->visibility->maskEventOccurrence(
                     $occurrence['event'],
                     $viewer,

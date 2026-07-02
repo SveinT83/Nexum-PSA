@@ -21,6 +21,10 @@ Example:
 - `Ticket` owns the Ticket SLA report query and detail view.
 - `Report` lists the Ticket SLA report on `/tech/reports`.
 
+Work Context filtering for report results belongs in the owning domain query. The shared Report hub
+must not mix internal records into client-safe reports unless the report explicitly exposes that
+choice.
+
 ## Adding A Report
 
 To add a report:

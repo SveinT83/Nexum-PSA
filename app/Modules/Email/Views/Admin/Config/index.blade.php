@@ -5,7 +5,6 @@
         <h1>Email Configuration</h1>
         <div class="d-flex gap-2">
             <button type="submit" form="config-form" class="btn btn-primary">Save Changes</button>
-            <button type="button" class="btn btn-outline-secondary">Run Health Test</button>
         </div>
     </div>
 @endsection
@@ -102,22 +101,41 @@
             <div class="col-lg-4">
                 <div class="card border-info mb-4 shadow-sm">
                     <div class="card-header bg-info text-white">
-                        <h5 class="mb-0">System Health</h5>
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <h5 class="mb-0">System Health</h5>
+                            @php
+                                $overallClass = match($health['overall'] ?? 'warning') {
+                                    'ok' => 'bg-success',
+                                    'error' => 'bg-danger',
+                                    default => 'bg-warning text-dark',
+                                };
+                                $overallLabel = match($health['overall'] ?? 'warning') {
+                                    'ok' => 'OK',
+                                    'error' => 'Error',
+                                    default => 'Warning',
+                                };
+                            @endphp
+                            <span class="badge {{ $overallClass }}">{{ $overallLabel }}</span>
+                        </div>
                     </div>
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Active Accounts
-                                <span class="badge bg-success rounded-pill">OK</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Queue Worker
-                                <span class="badge bg-warning text-dark rounded-pill">Unknown</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center text-muted small">
-                                Last Sync
-                                <span>{{ now()->diffForHumans() }}</span>
-                            </li>
+                            @foreach($health['items'] ?? [] as $item)
+                                @php
+                                    $badgeClass = match($item['status']) {
+                                        'ok' => 'bg-success',
+                                        'error' => 'bg-danger',
+                                        default => 'bg-warning text-dark',
+                                    };
+                                @endphp
+                                <li class="list-group-item d-flex justify-content-between align-items-start gap-3">
+                                    <div>
+                                        <div class="fw-semibold">{{ $item['label'] }}</div>
+                                        <div class="text-muted small">{{ $item['detail'] }}</div>
+                                    </div>
+                                    <span class="badge {{ $badgeClass }} rounded-pill text-nowrap">{{ $item['badge'] }}</span>
+                                </li>
+                            @endforeach
                         </ul>
                     </div>
                 </div>

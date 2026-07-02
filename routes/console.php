@@ -83,6 +83,13 @@ Schedule::job(new GenerateEconomyOrdersJob())
     ->name('economy.orders.generate')
     ->withoutOverlapping();
 
+// Lead Intelligence schedule planner. The command owns due-segment decisions
+// and dispatches queued research-run jobs for eligible segments.
+Schedule::command('lead-intelligence:plan-due-runs')
+    ->everyMinute()
+    ->name('lead_intelligence.plan_due_runs')
+    ->withoutOverlapping();
+
 // Marketing campaign automation. Campaign settings and recipient due_at control
 // whether this run performs work.
 Schedule::job(new SendDueMarketingCampaignEmails())

@@ -23,7 +23,7 @@ class RiskAssessmentQuery
      */
     public function paginateForCurrentContext(int $perPage = 20): LengthAwarePaginator
     {
-        $query = RiskAssessment::query()->with(['client', 'items']);
+        $query = RiskAssessment::query()->with(['client', 'workContext', 'items']);
 
         if (session('only_internal')) {
             $query->whereNull('client_id');

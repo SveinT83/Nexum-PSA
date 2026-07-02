@@ -119,14 +119,14 @@ Schedule controls:
 - `next_run_at`
 - `last_run_at`
 
-Use this command from Plesk Scheduled Tasks or cron, and run the normal Laravel queue worker:
+Laravel's scheduler registers this planner every minute. Run the normal scheduler cron and queue worker:
 
 ```bash
-php artisan lead-intelligence:plan-due-runs
-php artisan queue:work --queue=default --sleep=3 --tries=1 --timeout=1800
+php artisan schedule:run
+php artisan queue:work --queue=default,economy,email --sleep=3 --tries=3 --timeout=120
 ```
 
-The planner command creates queued runs until the segment reaches its period target, token budget, or max-run limit, then dispatches `ExecuteLeadResearchRunJob` to Laravel's queue. The Laravel worker executes queued runs, including runs created by `Run Now`. If `token_budget_unlimited` is enabled, tokens do not block planning before the lead target or max-run limit is reached.
+The scheduled `lead-intelligence:plan-due-runs` command creates queued runs until the segment reaches its period target, token budget, or max-run limit, then dispatches `ExecuteLeadResearchRunJob` to Laravel's queue. The Laravel worker executes queued runs, including runs created by `Run Now`. If `token_budget_unlimited` is enabled, tokens do not block planning before the lead target or max-run limit is reached.
 
 `php artisan lead-intelligence:run-queued-runs --limit=5` remains available as a manual fallback/backfill command for old or stranded queued rows, but it is not the normal worker path.
 

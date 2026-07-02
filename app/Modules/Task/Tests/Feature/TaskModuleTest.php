@@ -19,9 +19,11 @@ use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiProvider;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -95,13 +97,27 @@ class TaskModuleTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.title', 'API Created Task')
             ->assertJsonPath('data.client_id', $client->id)
+            ->assertJsonPath('data.work_context.type', WorkContextType::CLIENT)
             ->assertJsonPath('data.assigned_to', $assignee->id);
 
-        $task = Task::query()->where('title', 'API Created Task')->firstOrFail();
+        $task = Task::query()->where('title', 'API Created Task')->firstOrFail()->load('workContext');
+        $this->assertSame(WorkContextType::CLIENT, $task->workContext?->type);
 
         $this->getJson(route('api.v1.tasks.index', ['q' => 'API Created']))
             ->assertOk()
             ->assertJsonPath('data.0.id', $task->id);
+
+        $this->getJson(route('api.v1.tasks.index', ['context_type' => WorkContextType::CLIENT]))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $task->id);
+
+        $this->getJson(route('api.v1.tasks.index', ['work_context_id' => $task->work_context_id]))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $task->id);
+
+        $this->getJson(route('api.v1.tasks.index', ['q' => 'API Created', 'context_type' => WorkContextType::INTERNAL]))
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
 
         $this->getJson(route('api.v1.tasks.show', $task))
             ->assertOk()
@@ -122,6 +138,37 @@ class TaskModuleTest extends TestCase
             'type' => 'updated',
             'body' => 'Task updated through API.',
         ]);
+    }
+
+    #[Test]
+    public function standalone_task_without_client_uses_internal_work_context(): void
+    {
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Review internal backup policy',
+        ], $this->tech);
+
+        $task->load('workContext');
+
+        $this->assertNull($task->client_id);
+        $this->assertSame(WorkContextType::INTERNAL, $task->workContext?->type);
+    }
+
+    #[Test]
+    public function ticket_owned_task_inherits_internal_ticket_work_context(): void
+    {
+        $ticket = app(StoreTicket::class)->handle([
+            'subject' => 'Internal platform work',
+        ], $this->tech);
+
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Document platform change',
+        ], $this->tech, $ticket);
+
+        $task->load('workContext');
+
+        $this->assertNull($task->client_id);
+        $this->assertSame($ticket->work_context_id, $task->work_context_id);
+        $this->assertSame(WorkContextType::INTERNAL, $task->workContext?->type);
     }
 
     #[Test]
