@@ -43,6 +43,8 @@ Implemented scopes:
 - `knowledge.update`: update or delete knowledge shelves, books, chapters, articles, and Documentation records.
 - `integration.bookstack.read`: read sanitized BookStack sync status and summaries.
 - `integration.bookstack.run`: test the BookStack connection and run pull or push sync operations.
+- `relationships.read`: read Nexum relationship configuration and sync health.
+- `relationships.sync`: exchange signed ticket, status, documentation, and Knowledge payloads between Nexum installations.
 - `storage.read`: list and view storage items, warehouses, and boxes.
 - `storage.create`: create storage items, warehouses, and boxes.
 - `storage.update`: update storage records and adjust stock.
@@ -179,6 +181,11 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/integrations/book-stack/test`
 - `POST /api/v1/integrations/book-stack/pull`
 - `POST /api/v1/integrations/book-stack/push`
+- `POST /api/v1/nexum/relationships/tickets`
+- `POST /api/v1/nexum/relationships/tickets/{remoteTicketId}/messages`
+- `POST /api/v1/nexum/relationships/tickets/{remoteTicketId}/status`
+- `POST /api/v1/nexum/relationships/documentation`
+- `POST /api/v1/nexum/relationships/knowledge/articles`
 - `GET /api/v1/storage/items`
 - `GET /api/v1/storage/items/{item}`
 - `POST /api/v1/storage/items`

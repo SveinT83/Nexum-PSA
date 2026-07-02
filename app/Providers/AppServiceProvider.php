@@ -14,21 +14,21 @@ use App\Modules\Commercial\Livewire\Tech\ServicePicker as CommercialServicePicke
 use App\Modules\Commercial\Livewire\Tech\ServicePricing as CommercialServicePricing;
 use App\Modules\Contact\Livewire\Tech\ContactForm as ContactContactForm;
 use App\Modules\Documentation\Livewire\Admin\TemplateForm as DocumentationTemplateForm;
-use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\NAbleRmmSync as IntegrationNAbleRmmSync;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\AiSettings as IntegrationAiSettings;
+use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\NAbleRmmSync as IntegrationNAbleRmmSync;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\TacticalRmmSync as IntegrationTacticalRmmSync;
 use App\Modules\Integration\Livewire\Tech\Ai\ContextChat as IntegrationContextChat;
 use App\Modules\Knowledge\Livewire\ArticleForm as KnowledgeArticleForm;
 use App\Modules\Notification\Livewire\NotificationBell;
-use App\Modules\Taxonomy\Livewire\TagManager as TaxonomyTagManager;
 use App\Modules\Task\Livewire\Tech\TaskChecklistEditor;
 use App\Modules\Task\Livewire\Tech\TaskFormContext;
+use App\Modules\Taxonomy\Livewire\TagManager as TaxonomyTagManager;
 use App\Modules\Ticket\Livewire\Admin\WorkflowEditor as TicketWorkflowEditor;
 use App\Modules\UserManagement\Livewire\Roles\RolePermissions as UserManagementRolePermissions;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
@@ -70,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
             'nextcloud' => 'Nextcloud',
             'notification' => 'Notification',
             'report' => 'Report',
+            'relationship' => 'Relationship',
             'risk' => 'Risk',
             'sales' => 'Sales',
             'signal' => 'Signal',

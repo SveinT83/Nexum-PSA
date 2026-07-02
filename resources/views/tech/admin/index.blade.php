@@ -153,6 +153,7 @@
             'description' => 'External systems, API access, AI providers, and sync connections.',
             'links' => [
                 ['label' => 'All integrations', 'route' => route('tech.admin.system.integrations.index')],
+                ['label' => 'Nexum relationships', 'route' => route('tech.admin.system.relationships.index')],
                 ['label' => 'N-able RMM', 'route' => route('tech.admin.system.integrations.nable_rmm.settings')],
                 ['label' => 'Tactical RMM', 'route' => route('tech.admin.system.integrations.tactical_rmm.settings')],
                 ['label' => 'BookStack', 'route' => route('tech.admin.system.integrations.book_stack.settings')],

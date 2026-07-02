@@ -735,6 +735,37 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function repository_documentation_sync_includes_relationship_docs_and_can_queue_bookstack_push(): void
+    {
+        Queue::fake();
+
+        $this->artisan('knowledge:sync-docs', ['--module' => ['Relationship'], '--push' => true])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 2')
+            ->expectsOutput('modules: Relationship')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'relationships/nexum-relationships')
+            ->firstOrFail();
+
+        $this->assertSame('Nexum Relationships', $article->title);
+        $this->assertSame('Relationship', $article->source_payload['module']);
+        $this->assertSame('pending_push', $article->sync_status);
+
+        $testPlan = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'relationships/two-instance-test-plan')
+            ->firstOrFail();
+
+        $this->assertSame('Nexum Relationship Two-Instance Test Plan', $testPlan->title);
+        $this->assertSame('Relationship', $testPlan->source_payload['module']);
+        $this->assertSame('pending_push', $testPlan->sync_status);
+        Queue::assertPushed(PushPendingKnowledgeToBookStack::class);
+    }
+
+    #[Test]
     public function repository_documentation_sync_includes_sales_docs(): void
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Sales']])

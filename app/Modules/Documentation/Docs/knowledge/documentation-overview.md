@@ -45,3 +45,10 @@ Responses include `work_context_id` and the loaded `work_context` object when av
 Documentation visibility and structure remain owned by the Documentation and Knowledge modules.
 Work Context only describes whether a document belongs to the owning organization or to a Client. It
 does not make internal documentation customer-facing and does not change BookStack ownership rules.
+
+Relationship sync can exchange Documentation records with another Nexum
+installation only when the record is non-internal and the selected relationship
+has documentation sync enabled. Incoming updates are linked through
+`nexum_sync_links`; if the local copy has changed since the last remote checksum,
+the relationship link is marked as a conflict for review instead of overwriting
+local documentation.

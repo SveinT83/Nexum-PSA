@@ -13,6 +13,8 @@ $tdpsaLoadingPublicApiRoutes = true;
 require app_path('Modules/Nextcloud/api.php');
 unset($tdpsaLoadingPublicApiRoutes);
 
+require app_path('Modules/Relationship/api-public.php');
+
 Route::prefix('v1')->name('api.v1.')->group(function () {
 
     // ------------------------------------------------------------------------------------------

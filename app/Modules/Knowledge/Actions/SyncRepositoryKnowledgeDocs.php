@@ -23,7 +23,7 @@ class SyncRepositoryKnowledgeDocs
     ) {}
 
     /**
-     * @param array<int, string> $onlyModules
+     * @param  array<int, string>  $onlyModules
      * @return array{chapters: int, articles: int, skipped: int, modules: array<int, string>}
      */
     public function handle(array $onlyModules = []): array
@@ -51,6 +51,7 @@ class SyncRepositoryKnowledgeDocs
 
             if (! is_dir($path)) {
                 $summary['skipped']++;
+
                 continue;
             }
 
@@ -58,6 +59,7 @@ class SyncRepositoryKnowledgeDocs
 
             if ($files === []) {
                 $summary['skipped']++;
+
                 continue;
             }
 
@@ -118,6 +120,7 @@ class SyncRepositoryKnowledgeDocs
             'Nextcloud' => $this->definition('nextcloud', 'Nextcloud', 870),
             'Notification' => $this->definition('notifications', 'Notifications', 880),
             'Report' => $this->definition('reports', 'Reports', 890),
+            'Relationship' => $this->definition('relationships', 'Nexum Relationships', 845),
             'Risk' => $this->definition('risk', 'Risk', 550),
             'Sales' => $this->definition('sales', 'Sales', 750),
             'Storage' => $this->definition('storage', 'Storage', 600),
@@ -150,6 +153,7 @@ class SyncRepositoryKnowledgeDocs
         return match ($name) {
             'Clients' => 'Clients',
             'Lead Intelligence' => 'LeadIntelligence',
+            'Nexum Relationships' => 'Relationship',
             'Sales' => 'Sales',
             'User Management' => 'UserManagement',
             'Work Context' => 'WorkContext',
@@ -218,6 +222,9 @@ class SyncRepositoryKnowledgeDocs
                 '03-users-groups-calendars' => ['title' => 'Nextcloud Users Groups And Calendars', 'slug' => 'nextcloud-users-groups-and-calendars'],
                 '04-sso-future-plan' => ['title' => 'Nextcloud SSO Future Plan', 'slug' => 'nextcloud-sso-future-plan'],
                 '05-talk-bot' => ['title' => 'Nextcloud Talk Bot', 'slug' => 'nextcloud-talk-bot'],
+            ],
+            'relationships' => [
+                'two-instance-test-plan' => ['title' => 'Nexum Relationship Two-Instance Test Plan', 'slug' => 'nexum-relationship-two-instance-test-plan'],
             ],
             'storage' => [
                 'storage-vendors-suppliers' => ['title' => 'Storage Vendors And Suppliers', 'slug' => 'storage-vendors-and-suppliers'],

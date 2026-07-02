@@ -23,8 +23,8 @@ operations:
 - Build services, contracts, contract items, SLA defaults, time rates, stock
   reservations, ticket costs, and economy order drafts for billing.
 - Sync and use integrations such as Nextcloud, Nextcloud Talk notifications,
-  BookStack knowledge sync, IMAP/SMTP email, AI providers, queues, and health
-  tooling.
+  BookStack knowledge sync, Nexum-to-Nexum relationships, IMAP/SMTP email, AI
+  providers, queues, and health tooling.
 - Give technicians a Warroom dashboard for a fast cross-module overview.
 
 The system is intentionally modular. Each business domain owns its controllers,
@@ -47,6 +47,8 @@ The current beta contains working foundations for:
 - Notifications with mail, database, and Nextcloud Talk delivery
 - Nextcloud connections, folder/user/group/calendar mapping, and sync logs
 - BookStack knowledge synchronization
+- Nexum relationships for signed ticket, documentation, and Knowledge exchange
+  between independent Nexum installations
 - AI provider/agent setup and right-side contextual AI chat
 - User management, roles, permissions, invites, preferences, and 2FA enforcement
 - Queue worker operations and security headers
@@ -103,6 +105,7 @@ architecture and UI standards in `docs/`.
 | `Email` | IMAP ingestion, outbound SMTP, templates, health checks, and email rules. |
 | `Knowledge` | Internal knowledge base, shelves, books, chapters, articles, and tags. |
 | `Integration` | API, AI, BookStack, and integration settings. |
+| `Relationship` | Nexum-to-Nexum relationship configuration, signed sync, health, and audit. |
 | `Nextcloud` | Nextcloud connections, mappings, sync, and Talk bot configuration. |
 | `Notification` | User notification settings and channel delivery. |
 | `Sales` | Leads, opportunities, activity timeline, quotes, and sales settings. |
@@ -214,7 +217,9 @@ Project documentation lives in `docs/`.
   under `docs/`.
 
 Knowledge documentation for completed or materially changed domains should be
-updated so it can be synced to BookStack.
+updated so it can be synced to BookStack. Repository-owned module
+documentation is published into Knowledge with `php artisan knowledge:sync-docs`
+and can be marked for BookStack push with `php artisan knowledge:sync-docs --push`.
 
 ## License
 

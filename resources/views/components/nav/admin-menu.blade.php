@@ -146,7 +146,7 @@
         'integrations' => [
             'name' => 'Integrations',
             'route' => 'tech.admin.system.integrations.index',
-            'pattern' => 'tech.admin.system.integrations.*',
+            'pattern' => ['tech.admin.system.integrations.*', 'tech.admin.system.relationships.*'],
             'icon' => 'bi-plug',
         ],
     ];
@@ -229,6 +229,7 @@
         ],
         'integrations' => [
             ['name' => 'All integrations', 'route' => 'tech.admin.system.integrations.index', 'pattern' => 'tech.admin.system.integrations.index'],
+            ['name' => 'Nexum relationships', 'route' => 'tech.admin.system.relationships.index', 'pattern' => 'tech.admin.system.relationships.*'],
             ['name' => 'N-able RMM', 'route' => 'tech.admin.system.integrations.nable_rmm.settings', 'pattern' => 'tech.admin.system.integrations.nable_rmm.*'],
             ['name' => 'Tactical RMM', 'route' => 'tech.admin.system.integrations.tactical_rmm.settings', 'pattern' => 'tech.admin.system.integrations.tactical_rmm.*'],
             ['name' => 'BookStack', 'route' => 'tech.admin.system.integrations.book_stack.settings', 'pattern' => 'tech.admin.system.integrations.book_stack.*'],

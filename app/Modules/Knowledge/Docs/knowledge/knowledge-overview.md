@@ -81,6 +81,16 @@ marked for push, matching the Tech UI.
 
 BookStack-owned records cannot be edited through the API unless two-way sync is enabled.
 
+## Nexum Relationship Sync
+
+Knowledge articles can be exchanged with another Nexum installation through the
+Relationship module when the relationship has Knowledge sync enabled.
+
+Only non-internal articles are eligible. Client-wide articles keep their
+`client_scope_id` locally, while the receiving installation stores its own local
+article row and remote identity link. Incoming remote updates are marked as
+conflicts when the local article has diverged since the last synced checksum.
+
 ## Repository Documentation
 
 Code-owned documentation lives under:

@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Actions;
 use App\Models\Core\User;
 use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
 use App\Modules\Notification\Notifications\TicketStatusChanged;
+use App\Modules\Relationship\Actions\SyncTicketStatusToRelationship;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -14,9 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class ChangeTicketStatus
 {
-    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime)
-    {
-    }
+    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -28,7 +27,7 @@ class ChangeTicketStatus
     | inbound email handlers all get the same lifecycle behavior.
     |
     */
-    public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null, bool $enforceWorkflow = true): Ticket
+    public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null, bool $enforceWorkflow = true, bool $syncRelationship = true): Ticket
     {
         if ($status->is_closed && $this->hasUnresolvedTasks($ticket)) {
             $reason = 'Ticket cannot be closed while it has unresolved tasks.';
@@ -44,7 +43,7 @@ class ChangeTicketStatus
             throw ValidationException::withMessages(['status_id' => $reason]);
         }
 
-        return DB::transaction(function () use ($ticket, $status, $actor) {
+        return DB::transaction(function () use ($ticket, $status, $actor, $syncRelationship) {
             if ((int) $ticket->status_id !== (int) $status->id) {
                 app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'status_changed');
             }
@@ -86,7 +85,7 @@ class ChangeTicketStatus
                     'type' => 'status_changed',
                     'before' => $before,
                     'after' => $after,
-                    'message' => 'Ticket status changed to ' . $status->name . '.',
+                    'message' => 'Ticket status changed to '.$status->name.'.',
                 ]);
 
                 // Notify the ticket owner if they didn't change the status themselves
@@ -109,6 +108,10 @@ class ChangeTicketStatus
                         $ticket->closed_at?->copy()->endOfMonth()->toDateString(),
                         $actor?->id,
                     )->onQueue('economy')->afterCommit();
+                }
+
+                if ($syncRelationship) {
+                    DB::afterCommit(fn () => app(SyncTicketStatusToRelationship::class)->handle($ticket->id));
                 }
             }
 

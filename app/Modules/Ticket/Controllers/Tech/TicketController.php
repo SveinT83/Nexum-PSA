@@ -8,35 +8,39 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Contact\Models\Contact;
+use App\Modules\Email\Models\EmailLog;
 use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiChatResponder;
-use App\Modules\Email\Models\EmailLog;
 use App\Modules\Knowledge\Queries\ArticleQuery;
-use App\Modules\Contact\Models\Contact;
+use App\Modules\Relationship\Models\NexumRelationship;
+use App\Modules\Relationship\Support\RelationshipDirection;
+use App\Modules\Storage\Models\Item as StorageItem;
+use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
 use App\Modules\Ticket\Actions\CloseTicket;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\MarkTicketAsNotTicket;
 use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
-use App\Modules\Ticket\Actions\MarkTicketAsNotTicket;
 use App\Modules\Ticket\Actions\MergeTickets;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
-use App\Modules\Ticket\Actions\StoreTicket;
-use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\ReserveTicketStorageItem;
+use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
+use App\Modules\Ticket\Actions\StoreTicket;
+use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Actions\UpdateTicketStorageReservation;
 use App\Modules\Ticket\Actions\UpdateTicketTimeEntry;
-use App\Modules\Ticket\Actions\UpdateTicketFields;
-use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketEvent;
-use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketMergeSuggestionDismissal;
+use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -45,16 +49,14 @@ use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Queries\TicketIndexQuery;
 use App\Modules\Ticket\Queries\TicketTimeRateOptions;
-use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketActionGuard;
+use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketMergeSuggestionService;
-use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Ticket\Support\TicketSolutionPolicy;
-use App\Modules\Ticket\Services\TicketWorkflowRuntime;
-use App\Modules\Taxonomy\Models\Tag;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -73,8 +75,7 @@ class TicketController extends Controller
         TicketIndexQuery $query,
         EnsureTicketDefaults $defaults,
         TicketMergeSuggestionService $mergeSuggestionService
-    ): View
-    {
+    ): View {
         $defaults->handle();
 
         $filters = $request->only([
@@ -222,7 +223,7 @@ class TicketController extends Controller
                 ->get(['id', 'name', 'email', 'phone'])
                 ->map(fn (ClientUser $contact) => [
                     'id' => $contact->id,
-                    'label' => $contact->name . ($contact->email ? ' - ' . $contact->email : ''),
+                    'label' => $contact->name.($contact->email ? ' - '.$contact->email : ''),
                 ])
                 ->values(),
             'assets' => $this->assetOptions($client->id, $contact?->id, $resolvedSiteId)
@@ -246,7 +247,7 @@ class TicketController extends Controller
                     'updated' => $ticket->updated_at?->diffForHumans(),
                     'status' => $ticket->status?->name,
                     'priority' => $ticket->priority
-                        ? 'P' . $ticket->priority->level . ' ' . $ticket->priority->name
+                        ? 'P'.$ticket->priority->level.' '.$ticket->priority->name
                         : null,
                 ])
                 ->values(),
@@ -267,7 +268,7 @@ class TicketController extends Controller
             'site_id' => 'nullable|exists:client_sites,id',
             'contact_id' => 'nullable|exists:client_users,id',
             'asset_id' => 'nullable|exists:assets,id',
-            'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
+            'owner_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')],
             'tag_names' => 'nullable|array',
             'tag_names.*' => 'nullable|string|max:80',
             'type' => 'nullable|string|max:50',
@@ -321,7 +322,7 @@ class TicketController extends Controller
         $ticket = $storeTicket->handle($data, $request->user());
 
         return redirect()->route('tech.tickets.show', $ticket)
-            ->with('success', 'Ticket ' . $ticket->ticket_key . ' created.');
+            ->with('success', 'Ticket '.$ticket->ticket_key.' created.');
     }
 
     public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions, TicketSolutionPolicy $solutionPolicy): View|RedirectResponse
@@ -335,8 +336,25 @@ class TicketController extends Controller
 
         abort_if($ticket->trashed(), 404);
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
         $messageIds = $ticket->messages->pluck('id')->all();
+        $relationshipSyncLinks = $ticket->syncLinks;
+        $availableRelationships = request()->user()?->can('relationships.escalate')
+            ? NexumRelationship::query()
+                ->active()
+                ->ticketCapable()
+                ->whereNotIn('id', $relationshipSyncLinks->pluck('relationship_id')->all())
+                ->where(function ($query) use ($ticket): void {
+                    $query->where('direction', RelationshipDirection::WE_USE_PROVIDER)
+                        ->orWhere(function ($providerQuery) use ($ticket): void {
+                            $providerQuery
+                                ->where('direction', RelationshipDirection::WE_ARE_PROVIDER)
+                                ->where('client_id', $ticket->client_id);
+                        });
+                })
+                ->orderBy('name')
+                ->get()
+            : collect();
 
         $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);
         $closeTransition = $workflowTransitions->first(fn (TicketWorkflowTransition $transition) => (bool) $transition->toStatus?->is_closed);
@@ -362,6 +380,8 @@ class TicketController extends Controller
             'timeRateOptions' => $timeRateOptions->forTicket($ticket),
             'storageItems' => $this->storageItemOptions(),
             'knowledgeSuggestions' => $articleQuery->relevantForTicket($ticket, 3),
+            'relationshipSyncLinks' => $relationshipSyncLinks,
+            'availableRelationships' => $availableRelationships,
             'emailLogsByMessageId' => EmailLog::query()
                 ->where('direction', 'outbound')
                 ->where('scope', 'tickets')
@@ -406,7 +426,7 @@ class TicketController extends Controller
             'reply_intent' => 'nullable|string|in:customer_update,request_customer_input,send_solution',
             'reply_contact_id' => 'nullable|integer|exists:client_users,id',
             'cc' => 'nullable|string|max:1000',
-            'notify_user_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
+            'notify_user_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
             'visibility' => 'required|string|in:internal,public',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|max:20480',
@@ -665,7 +685,7 @@ class TicketController extends Controller
             'contact_id' => 'nullable|exists:client_users,id',
             'site_id' => 'nullable|exists:client_sites,id',
             'asset_id' => 'nullable|exists:assets,id',
-            'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
+            'owner_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')],
             'tag_names' => 'nullable|array',
             'tag_names.*' => 'nullable|string|max:80',
         ]);
@@ -1002,11 +1022,11 @@ class TicketController extends Controller
             ->get()
             ->map(fn (StorageItem $item) => [
                 'id' => $item->id,
-                'label' => $item->name . ($item->sku ? ' (' . $item->sku . ')' : ''),
+                'label' => $item->name.($item->sku ? ' ('.$item->sku.')' : ''),
                 'available' => $item->qty_available,
                 'sale_price' => $item->sale_price,
                 'short_description' => $item->short_description,
-                'location' => trim(($item->warehouse?->name ?? 'No warehouse') . ($item->box ? ' / ' . $item->box->code_human : '')),
+                'location' => trim(($item->warehouse?->name ?? 'No warehouse').($item->box ? ' / '.$item->box->code_human : '')),
             ]);
     }
 
@@ -1147,8 +1167,8 @@ class TicketController extends Controller
             return collect();
         }
 
-        $clientType = (new Client())->getMorphClass();
-        $siteType = (new ClientSite())->getMorphClass();
+        $clientType = (new Client)->getMorphClass();
+        $siteType = (new ClientSite)->getMorphClass();
         $siteNames = ClientSite::query()
             ->where('client_id', $ticket->client_id)
             ->pluck('name', 'id');
@@ -1301,7 +1321,7 @@ class TicketController extends Controller
         return [
             'id' => $asset->id,
             'group' => $group,
-            'label' => $asset->name . ($details ? ' - ' . implode(' / ', $details) : ''),
+            'label' => $asset->name.($details ? ' - '.implode(' / ', $details) : ''),
         ];
     }
 

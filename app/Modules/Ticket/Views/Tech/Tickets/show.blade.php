@@ -122,6 +122,12 @@
                 </div>
             </div>
 
+            @include('relationship::Tech.Tickets.panel', [
+                'ticket' => $ticket,
+                'relationshipSyncLinks' => $relationshipSyncLinks ?? collect(),
+                'availableRelationships' => $availableRelationships ?? collect(),
+            ])
+
             <div class="card mb-3">
                 <div class="card-header">Activity</div>
                 <div class="card-body">
