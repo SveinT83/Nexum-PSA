@@ -17,7 +17,11 @@ future AI agents that need to work with asset records.
 - `PUT /api/v1/assets/{asset}`
 - `PATCH /api/v1/assets/{asset}`
 
-`GET /api/v1/assets` supports `client_id` as a filter.
+`GET /api/v1/assets` supports these ownership filters:
+
+- `client_id`
+- `work_context_id`
+- `context_type` with `client` or `internal`
 
 ## Create Payload
 
@@ -26,11 +30,11 @@ future AI agents that need to work with asset records.
 
 Required fields:
 
-- `client_id`
 - `name`
 
 Common optional fields:
 
+- `client_id`
 - `site_id`
 - `user_id`
 - `vendor_id`
@@ -44,16 +48,24 @@ Common optional fields:
 - `hostname`
 - `status`
 
-When `site_id` is supplied, Nexum validates that the Site belongs to the selected Client.
+When `client_id` is omitted, Nexum creates an internal Asset for the owning organization. Internal
+Assets must not include `site_id` or `user_id`.
+
+When `client_id` is supplied, Nexum resolves the Client Work Context and validates that any supplied
+`site_id` or `user_id` belongs to that Client.
 
 ## Update Payload
 
 `PUT` and `PATCH /api/v1/assets/{asset}` support partial updates.
 
-If `client_id` is changed without a new `site_id`, Nexum clears the existing Site relation. This
-prevents an Asset from remaining linked to a Site under the wrong Client.
+If `client_id` is changed without a new `site_id`, Nexum clears the existing Site and Client User
+relations. This prevents an Asset from remaining linked to a Site or user under the wrong Client.
 
-When `site_id` is supplied during update, Nexum validates that the Site belongs to the final Client.
+Changing an Asset to internal clears `client_id`, `site_id`, and `user_id`, then stores the default
+internal Work Context. Internal Assets are excluded from client-specific RMM sync behavior.
+
+When `site_id` or `user_id` is supplied during update, Nexum validates that the selected relation
+belongs to the final Client.
 
 ## Example
 
@@ -65,6 +77,17 @@ When `site_id` is supplied during update, Nexum validates that the Site belongs 
   "type": "laptop",
   "serial_number": "SN-123",
   "hostname": "reception-laptop",
+  "status": "in_service"
+}
+```
+
+Internal Asset example:
+
+```json
+{
+  "name": "Office Firewall",
+  "type": "network",
+  "hostname": "office-fw",
   "status": "in_service"
 }
 ```

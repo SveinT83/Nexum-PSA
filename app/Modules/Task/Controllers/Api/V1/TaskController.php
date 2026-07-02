@@ -14,6 +14,8 @@ use App\Modules\Task\Models\TaskStatus;
 use App\Modules\Task\Resources\Api\V1\TaskResource;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Models\Ticket;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -36,6 +38,8 @@ class TaskController extends Controller
         parameters: [
             new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'client_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'work_context_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'context_type', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['internal', 'client'])),
             new OA\Parameter(name: 'assigned_to', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'status_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
@@ -51,7 +55,7 @@ class TaskController extends Controller
         $defaults->handle();
 
         $query = Task::query()
-            ->with(['status', 'queue', 'priority', 'assignee', 'client', 'site'])
+            ->with(['status', 'queue', 'priority', 'assignee', 'client', 'workContext', 'site'])
             ->latest('updated_at');
 
         if ($request->filled('q')) {
@@ -66,6 +70,14 @@ class TaskController extends Controller
             if ($request->filled($filter)) {
                 $query->where($filter, $request->integer($filter));
             }
+        }
+
+        if ($request->filled('work_context_id')) {
+            $query->where('work_context_id', $request->integer('work_context_id'));
+        }
+
+        if ($request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))) {
+            $query->whereHas('workContext', fn ($context) => $context->where('type', $request->input('context_type')));
         }
 
         if ($request->boolean('open')) {
@@ -179,7 +191,7 @@ class TaskController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
-    public function update(Request $request, Task $task)
+    public function update(Request $request, Task $task, ResolveWorkContext $workContexts)
     {
         $data = $this->validateUpdatePayload($request);
         $this->validateSiteContext(array_merge([
@@ -188,6 +200,14 @@ class TaskController extends Controller
         ], $data));
 
         if ($data !== []) {
+            if (array_key_exists('client_id', $data)) {
+                $data['work_context_id'] = $workContexts->fromClientId($data['client_id'])->id;
+
+                if (empty($data['client_id'])) {
+                    $data['site_id'] = null;
+                }
+            }
+
             $task->forceFill($data)->save();
 
             TaskActivity::query()->create([
@@ -300,6 +320,6 @@ class TaskController extends Controller
 
     private function loadTask(Task $task): Task
     {
-        return $task->load(['status', 'queue', 'priority', 'assignee', 'creator', 'client', 'site', 'owner', 'checklistItems']);
+        return $task->load(['status', 'queue', 'priority', 'assignee', 'creator', 'client', 'workContext', 'site', 'owner', 'checklistItems']);
     }
 }

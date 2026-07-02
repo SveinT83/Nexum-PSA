@@ -7,13 +7,14 @@
                 <h5 class="mb-3 border-bottom pb-2">Ownership & Location</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="client_id" class="form-label">Client *</label>
-                        <select wire:model.live="client_id" id="client_id" class="form-select @error('client_id') is-invalid @enderror" required>
-                            <option value="">Select Client</option>
+                        <label for="client_id" class="form-label">Client</label>
+                        <select wire:model.live="client_id" id="client_id" class="form-select @error('client_id') is-invalid @enderror">
+                            <option value="">Internal asset</option>
                             @foreach($clients as $client)
                                 <option value="{{ $client->id }}">{{ $client->name }}</option>
                             @endforeach
                         </select>
+                        <div class="form-text">Leave blank for company-owned/internal assets.</div>
                         @error('client_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-6">

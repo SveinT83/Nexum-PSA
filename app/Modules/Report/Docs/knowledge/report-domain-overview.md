@@ -49,6 +49,10 @@ Current registered report:
 
 - Ticket SLA Report.
 
+The Ticket SLA Report is Work Context aware. It defaults to client work so customer/SLA reporting
+does not mix in internal Tickets. Technicians can explicitly switch the report to internal work or
+all work when they need an operational view.
+
 ## Permissions
 
 Opening the Report hub requires:
@@ -64,6 +68,8 @@ Individual reports may later require more specific permissions such as export or
 Future Report work should add:
 
 - Shared date range filters.
+- Shared Work Context filters for report results after each domain exposes safe context-aware
+  queries.
 - Export support.
 - Saved report views.
 - Custom report builder.

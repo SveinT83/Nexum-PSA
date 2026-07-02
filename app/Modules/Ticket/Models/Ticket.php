@@ -11,6 +11,7 @@ use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Task\Models\Task;
+use App\Modules\WorkContext\Models\WorkContext;
 use Database\Factories\Ticket\TicketFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -39,6 +40,7 @@ class Ticket extends Model
         'workflow_id',
         'category_id',
         'client_id',
+        'work_context_id',
         'site_id',
         'contact_id',
         'asset_id',
@@ -122,6 +124,11 @@ class Ticket extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    public function workContext(): BelongsTo
+    {
+        return $this->belongsTo(WorkContext::class, 'work_context_id');
     }
 
     public function contact(): BelongsTo

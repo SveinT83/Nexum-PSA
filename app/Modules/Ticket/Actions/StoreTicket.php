@@ -13,6 +13,7 @@ use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketRuleEngine;
 use App\Modules\Ticket\Services\TicketSlaResolver;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Support\Facades\DB;
 
 class StoreTicket
@@ -22,6 +23,7 @@ class StoreTicket
         private readonly TicketRuleEngine $ticketRuleEngine,
         private readonly TicketAssignmentEngine $ticketAssignmentEngine,
         private readonly TicketSlaResolver $ticketSlaResolver,
+        private readonly ResolveWorkContext $workContexts,
     ) {}
 
     public function handle(array $data, ?User $actor = null): Ticket
@@ -37,6 +39,7 @@ class StoreTicket
             $ticketType = TicketType::find($data['ticket_type_id'] ?? null) ?? $defaults['type'];
             $priority = TicketPriority::find($data['priority_id'] ?? null) ?? $defaults['priority'];
             $sla = $this->ticketSlaResolver->resolve($data, $priority);
+            $workContext = $this->workContexts->fromClientId($data['client_id'] ?? null);
 
             $ticket = Ticket::create([
                 'ticket_key' => $this->nextTicketKey(),
@@ -52,6 +55,7 @@ class StoreTicket
                 'workflow_id' => $data['workflow_id'] ?? TicketWorkflow::query()->where('is_active', true)->where('is_default', true)->value('id'),
                 'category_id' => $data['category_id'] ?? null,
                 'client_id' => $data['client_id'] ?? null,
+                'work_context_id' => $workContext->id,
                 'site_id' => $data['site_id'] ?? null,
                 'contact_id' => $data['contact_id'] ?? null,
                 'asset_id' => $data['asset_id'] ?? null,

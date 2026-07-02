@@ -26,6 +26,7 @@ class TaskResource extends JsonResource
             'priority_id' => $this->priority_id,
             'category_id' => $this->category_id,
             'client_id' => $this->client_id,
+            'work_context_id' => $this->work_context_id,
             'site_id' => $this->site_id,
             'visibility' => $this->visibility,
             'source_type' => $this->source_type,
@@ -50,6 +51,11 @@ class TaskResource extends JsonResource
             'client' => $this->whenLoaded('client', fn () => [
                 'id' => $this->client?->id,
                 'name' => $this->client?->name,
+            ]),
+            'work_context' => $this->whenLoaded('workContext', fn () => [
+                'id' => $this->workContext?->id,
+                'type' => $this->workContext?->type,
+                'name' => $this->workContext?->name,
             ]),
             'checklist_items' => $this->whenLoaded('checklistItems', fn () => $this->checklistItems->map(fn ($item) => [
                 'id' => $item->id,

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Resources\Api\V1\DocumentationResource;
 use App\Modules\Documentation\Support\DocumentationApiPayload;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,7 @@ class DocumentationController extends Controller
     public function index(Request $request)
     {
         $query = Documentation::query()
-            ->with(['category', 'template', 'client', 'site'])
+            ->with(['category', 'template', 'client', 'workContext', 'site'])
             ->latest('updated_at');
 
         if ($request->filled('q')) {
@@ -41,6 +42,14 @@ class DocumentationController extends Controller
             if ($request->filled($field)) {
                 $query->where($field, $request->input($field));
             }
+        }
+
+        if ($request->filled('work_context_id')) {
+            $query->where('work_context_id', $request->integer('work_context_id'));
+        }
+
+        if ($request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))) {
+            $query->whereHas('workContext', fn ($context) => $context->where('type', $request->input('context_type')));
         }
 
         return DocumentationResource::collection($query->paginate($request->integer('per_page') ?: 15));
@@ -94,6 +103,6 @@ class DocumentationController extends Controller
 
     private function loadDocumentation(Documentation $documentation): Documentation
     {
-        return $documentation->load(['category', 'template', 'client', 'site']);
+        return $documentation->load(['category', 'template', 'client', 'workContext', 'site']);
     }
 }

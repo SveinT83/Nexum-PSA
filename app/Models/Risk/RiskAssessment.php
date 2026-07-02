@@ -4,6 +4,7 @@ namespace App\Models\Risk;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Modules\WorkContext\Models\WorkContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class RiskAssessment extends Model
 
     protected $fillable = [
         'client_id',
+        'work_context_id',
         'title',
         'description',
         'status',
@@ -120,6 +122,11 @@ class RiskAssessment extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function workContext(): BelongsTo
+    {
+        return $this->belongsTo(WorkContext::class, 'work_context_id');
     }
 
     /**

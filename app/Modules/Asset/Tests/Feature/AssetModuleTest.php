@@ -9,6 +9,7 @@ use App\Models\Settings\CommonSetting;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Asset\Controllers\Admin\AssetSettingsController;
 use App\Modules\Asset\Support\AssetSettings;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
@@ -160,6 +161,7 @@ class AssetModuleTest extends TestCase
         $this->assertSame('laptop', $asset->type);
         $this->assertSame('fixed', $asset->ip_type);
         $this->assertSame('in_service', $asset->status);
+        $this->assertSame(WorkContextType::CLIENT, $asset->workContext?->type);
     }
 
     #[Test]
@@ -212,6 +214,27 @@ class AssetModuleTest extends TestCase
         $response->assertRedirect(route('tech.assets.show', $asset));
         $this->assertSame('Reception Laptop', $asset->name);
         $this->assertSame($client->id, $asset->client_id);
+        $this->assertSame(WorkContextType::CLIENT, $asset->workContext?->type);
+    }
+
+    #[Test]
+    public function tech_user_can_store_internal_asset_through_http_fallback(): void
+    {
+        $response = $this->actingAs($this->tech)
+            ->post(route('tech.assets.store'), [
+                'name' => 'Internal Backup NAS',
+                'type' => 'server',
+                'ip_type' => 'fixed',
+                'hostname' => 'internal-nas',
+            ]);
+
+        $asset = Asset::firstOrFail()->load('workContext');
+
+        $response->assertRedirect(route('tech.assets.show', $asset));
+        $this->assertSame('Internal Backup NAS', $asset->name);
+        $this->assertNull($asset->client_id);
+        $this->assertNull($asset->site_id);
+        $this->assertSame(WorkContextType::INTERNAL, $asset->workContext?->type);
     }
 
     #[Test]
@@ -254,6 +277,7 @@ class AssetModuleTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('data.name', 'API Created Laptop')
+            ->assertJsonPath('data.work_context.type', WorkContextType::CLIENT)
             ->assertJsonPath('data.site_id', $site->id)
             ->assertJsonPath('data.serial_number', 'SN-API-001');
 
@@ -270,6 +294,30 @@ class AssetModuleTest extends TestCase
             ->assertJsonPath('data.ip_address', '10.0.0.25')
             ->assertJsonPath('data.is_managed', true)
             ->assertJsonPath('data.metadata.source_note', 'n8n');
+    }
+
+    #[Test]
+    public function authenticated_api_user_can_create_and_filter_internal_asset(): void
+    {
+        Sanctum::actingAs($this->tech, ['assets.read', 'assets.create']);
+
+        $this->postJson(route('api.v1.assets.store'), [
+            'name' => 'API Internal Firewall',
+            'type' => 'firewall',
+            'ip_type' => 'fixed',
+            'hostname' => 'internal-fw',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API Internal Firewall')
+            ->assertJsonPath('data.client_id', null)
+            ->assertJsonPath('data.work_context.type', WorkContextType::INTERNAL)
+            ->assertJsonPath('data.links.client', null);
+
+        $asset = Asset::query()->where('name', 'API Internal Firewall')->firstOrFail();
+
+        $this->getJson(route('api.v1.assets.index', ['context_type' => WorkContextType::INTERNAL]))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $asset->id);
     }
 
     #[Test]

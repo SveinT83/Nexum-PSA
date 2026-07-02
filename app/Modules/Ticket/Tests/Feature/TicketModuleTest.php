@@ -27,6 +27,7 @@ use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Task\Models\TaskStatus;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\AddTicketMessage;
+use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
@@ -49,6 +50,8 @@ use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
@@ -234,14 +237,28 @@ class TicketModuleTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.subject', 'API Created Ticket')
             ->assertJsonPath('data.client_id', $client->id)
+            ->assertJsonPath('data.work_context.type', WorkContextType::CLIENT)
             ->assertJsonPath('data.site_id', $site->id)
             ->assertJsonPath('data.asset_id', $asset->id);
 
-        $ticket = Ticket::query()->where('subject', 'API Created Ticket')->firstOrFail();
+        $ticket = Ticket::query()->where('subject', 'API Created Ticket')->firstOrFail()->load('workContext');
+        $this->assertSame(WorkContextType::CLIENT, $ticket->workContext?->type);
 
         $this->getJson(route('api.v1.tickets.index', ['q' => $ticket->ticket_key]))
             ->assertOk()
             ->assertJsonPath('data.0.ticket_key', $ticket->ticket_key);
+
+        $this->getJson(route('api.v1.tickets.index', ['context_type' => WorkContextType::CLIENT]))
+            ->assertOk()
+            ->assertJsonPath('data.0.ticket_key', $ticket->ticket_key);
+
+        $this->getJson(route('api.v1.tickets.index', ['work_context_id' => $ticket->work_context_id]))
+            ->assertOk()
+            ->assertJsonPath('data.0.ticket_key', $ticket->ticket_key);
+
+        $this->getJson(route('api.v1.tickets.index', ['q' => $ticket->ticket_key, 'context_type' => WorkContextType::INTERNAL]))
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
 
         $this->getJson(route('api.v1.tickets.show', $ticket))
             ->assertOk()
@@ -263,6 +280,69 @@ class TicketModuleTest extends TestCase
             'ticket_id' => $ticket->id,
             'type' => 'status_changed',
         ]);
+    }
+
+    #[Test]
+    public function ticket_created_without_client_uses_internal_work_context(): void
+    {
+        $ticket = app(StoreTicket::class)->handle([
+            'subject' => 'Internal maintenance window',
+        ], $this->tech);
+
+        $ticket->load('workContext');
+
+        $this->assertNull($ticket->client_id);
+        $this->assertSame(WorkContextType::INTERNAL, $ticket->workContext?->type);
+    }
+
+    #[Test]
+    public function ticket_api_keeps_internal_and_client_assets_in_their_own_context(): void
+    {
+        $workContexts = app(ResolveWorkContext::class);
+        $client = Client::factory()->create(['name' => 'Ticket Asset Boundary Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $internalAsset = Asset::create([
+            'name' => 'Internal spare laptop',
+            'type' => 'laptop',
+            'ip_type' => 'dhcp',
+            'status' => 'online',
+            'work_context_id' => $workContexts->internal()->id,
+        ]);
+        $clientAsset = Asset::create([
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'name' => 'Client workstation',
+            'type' => 'desktop',
+            'ip_type' => 'dhcp',
+            'status' => 'online',
+            'work_context_id' => $workContexts->client($client)->id,
+        ]);
+
+        Sanctum::actingAs($this->tech, ['tickets.create']);
+
+        $this->postJson(route('api.v1.tickets.store'), [
+            'subject' => 'Internal asset support',
+            'asset_id' => $internalAsset->id,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.asset_id', $internalAsset->id)
+            ->assertJsonPath('data.client_id', null)
+            ->assertJsonPath('data.work_context.type', WorkContextType::INTERNAL);
+
+        $this->postJson(route('api.v1.tickets.store'), [
+            'subject' => 'Internal asset on client ticket',
+            'client_id' => $client->id,
+            'asset_id' => $internalAsset->id,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('asset_id');
+
+        $this->postJson(route('api.v1.tickets.store'), [
+            'subject' => 'Client asset on internal ticket',
+            'asset_id' => $clientAsset->id,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('asset_id');
     }
 
     #[Test]
@@ -1021,7 +1101,7 @@ class TicketModuleTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->tech)
-            ->get(route('tech.reports.tickets.sla', ['period' => 'all']))
+            ->get(route('tech.reports.tickets.sla', ['period' => 'all', 'context' => 'all']))
             ->assertOk()
             ->assertViewIs('ticket::Tech.Reports.sla')
             ->assertSee('Ticket SLA Report')
@@ -1038,6 +1118,49 @@ class TicketModuleTest extends TestCase
         $this->assertSame(1, $summary['resolve_overdue']);
         $this->assertSame(2, $summary['responded_within_sla']);
         $this->assertSame(1, $summary['resolved_within_sla']);
+
+        Carbon::setTestNow();
+    }
+
+    #[Test]
+    public function ticket_sla_report_excludes_internal_work_by_default(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-15 10:00:00'));
+
+        $client = Client::factory()->create(['name' => 'SLA Report Client']);
+        $workContexts = app(ResolveWorkContext::class);
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999037',
+            'subject' => 'Internal SLA risk',
+            'client_id' => null,
+            'work_context_id' => $workContexts->internal()->id,
+            'first_response_due_at' => now()->subHour(),
+            'first_responded_at' => null,
+        ]);
+
+        $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999038',
+            'subject' => 'Client SLA risk',
+            'client_id' => $client->id,
+            'work_context_id' => $workContexts->client($client)->id,
+            'first_response_due_at' => now()->subHour(),
+            'first_responded_at' => null,
+        ]);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.reports.tickets.sla', ['period' => 'all']))
+            ->assertOk()
+            ->assertSee('TD-2026-999038')
+            ->assertDontSee('TD-2026-999037');
+
+        $this->assertSame(1, $response->viewData('summary')['response_overdue']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.reports.tickets.sla', ['period' => 'all', 'context' => 'internal']))
+            ->assertOk()
+            ->assertSee('TD-2026-999037')
+            ->assertDontSee('TD-2026-999038');
 
         Carbon::setTestNow();
     }
@@ -1794,9 +1917,10 @@ class TicketModuleTest extends TestCase
             ])
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
-        $ticket->refresh();
+        $ticket->refresh()->load('workContext');
 
         $this->assertSame($client->id, $ticket->client_id);
+        $this->assertSame(WorkContextType::CLIENT, $ticket->workContext?->type);
         $this->assertSame($site->id, $ticket->site_id);
         $this->assertSame($contact->id, $ticket->contact_id);
         $this->assertDatabaseHas('ticket_events', [

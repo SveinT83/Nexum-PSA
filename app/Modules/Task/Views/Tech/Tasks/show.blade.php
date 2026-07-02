@@ -62,7 +62,15 @@
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted">Client</div>
-                    <div class="fw-semibold">{{ $task->client?->name ?? '—' }}</div>
+                    <div class="fw-semibold">
+                        @if($task->client)
+                            {{ $task->client->name }}
+                        @elseif($task->workContext?->isInternal())
+                            Internal
+                        @else
+                            —
+                        @endif
+                    </div>
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted">Site</div>

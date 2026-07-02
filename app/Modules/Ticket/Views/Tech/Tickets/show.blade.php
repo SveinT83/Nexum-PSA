@@ -1657,6 +1657,8 @@
                                 </div>
                             @endif
                         </div>
+                    @elseif($ticket->workContext?->isInternal())
+                        <p class="text-muted small mb-0">Internal work. No customer context is attached.</p>
                     @else
                         <p class="text-muted small mb-0">No client assigned.</p>
                     @endif

@@ -21,6 +21,7 @@ class TicketResource extends JsonResource
             'status_id' => $this->status_id,
             'priority_id' => $this->priority_id,
             'client_id' => $this->client_id,
+            'work_context_id' => $this->work_context_id,
             'site_id' => $this->site_id,
             'contact_id' => $this->contact_id,
             'asset_id' => $this->asset_id,
@@ -55,6 +56,11 @@ class TicketResource extends JsonResource
                 'id' => $this->client?->id,
                 'name' => $this->client?->name,
                 'client_number' => $this->client?->client_number,
+            ]),
+            'work_context' => $this->whenLoaded('workContext', fn () => [
+                'id' => $this->workContext?->id,
+                'type' => $this->workContext?->type,
+                'name' => $this->workContext?->name,
             ]),
             'owner' => $this->whenLoaded('owner', fn () => [
                 'id' => $this->owner?->id,

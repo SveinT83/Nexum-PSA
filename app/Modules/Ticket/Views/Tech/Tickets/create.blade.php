@@ -93,7 +93,7 @@
                             class="form-control @error('client_id') is-invalid @enderror"
                             value="{{ $selectedClientLabel }}"
                             list="client_suggestions"
-                            placeholder="Search and select client"
+                            placeholder="Search client or leave blank for internal"
                             autocomplete="off"
                         >
                         <input id="client_id" name="client_id" type="hidden" value="{{ old('client_id', request('client_id')) }}">

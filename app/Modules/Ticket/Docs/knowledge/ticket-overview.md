@@ -46,6 +46,17 @@ SLA:
 
 Service policy applied to the ticket. SLA can come from a Ticket Rule, active contract, or global default SLA.
 
+Work Context:
+
+Tickets store `work_context_id` in addition to the existing `client_id`. When a new Ticket is
+created with a Client, the Ticket uses that Client's Work Context and keeps `client_id`, site,
+contact, and asset behavior unchanged. When a new Ticket is created without a Client, the Ticket is
+internal work for the owning organization.
+
+Historical Tickets that already had a real `client_id` are backfilled to the matching Client Work
+Context. Historical Tickets with `client_id = null` remain unscoped until they are edited or handled
+by a later cleanup slice.
+
 Assignment:
 
 Ownership can be set explicitly by assignment rules or scored from ticket assignment settings plus User Management profile availability.
@@ -62,6 +73,7 @@ The main `tickets` table stores:
 - Type and ticket type.
 - Queue, status, priority, category, workflow, and SLA.
 - Client, site, contact, and asset links.
+- Work Context.
 - Owner and creator/updater user references.
 - Channel.
 - Subject and description.
@@ -91,6 +103,10 @@ Create and edit forms handle manual ticket creation, client/contact/site/asset s
 Ticket API:
 
 External systems can sync ticket conversation entries through `POST /api/v1/tickets/{ticket}/external-messages`. The endpoint is idempotent by external source and external message ID, stores the message as `author_type = external`, and avoids sending outbound customer email for imported replies. Free-form external metadata is kept for audit context, but workflow-driving fields such as reply intent and solution markers are ignored.
+
+Ticket API create, list, and show responses expose `work_context_id` and `work_context`. Existing
+`client_id` filters remain client-only. The list endpoint also supports `work_context_id` and
+`context_type` filters for `internal` and `client`.
 
 Ticket settings:
 

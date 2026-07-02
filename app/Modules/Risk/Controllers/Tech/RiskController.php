@@ -96,7 +96,7 @@ class RiskController extends Controller
      */
     public function show(RiskAssessment $risk): View
     {
-        $risk->load(['items.category', 'client', 'approver']);
+        $risk->load(['items.category', 'client', 'workContext', 'approver']);
         $settings = app(RiskSettings::class);
 
         return view('risk::Tech.show', [
@@ -197,7 +197,7 @@ class RiskController extends Controller
      */
     public function showItem(RiskItem $item): View
     {
-        $item->load(['assessment.client', 'updates.creator', 'links.linkable', 'category']);
+        $item->load(['assessment.client', 'assessment.workContext', 'updates.creator', 'links.linkable', 'category']);
 
         return view('risk::Tech.items.show', [
             'item' => $item,
@@ -269,7 +269,7 @@ class RiskController extends Controller
      */
     public function exportPdf(RiskAssessment $risk): Response
     {
-        $risk->load(['items.category', 'items.updates.creator', 'client', 'approver']);
+        $risk->load(['items.category', 'items.updates.creator', 'client', 'workContext', 'approver']);
 
         $groupedItems = $risk->items
             ->groupBy(fn (RiskItem $item) => $item->category?->name ?? 'Uncategorized')

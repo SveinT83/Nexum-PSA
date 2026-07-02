@@ -109,6 +109,7 @@ class SyncRepositoryKnowledgeDocs
             'Clients' => $this->definition('clients', 'Clients', 190),
             'Commercial' => $this->definition('commercial', 'Commercial', 700),
             'Contact' => $this->definition('contacts', 'Contacts', 200),
+            'Documentation' => $this->definition('documentation', 'Documentation', 540),
             'Economy' => $this->definition('economy', 'Economy', 800),
             'Email' => $this->definition('email', 'Email', 810),
             'Integration' => $this->definition('integrations', 'Integrations', 850),
@@ -126,6 +127,7 @@ class SyncRepositoryKnowledgeDocs
             'Ticket' => $this->definition('tickets', 'Tickets', 400),
             'UserManagement' => $this->definition('user-management', 'User Management', 300),
             'Warroom' => $this->definition('warroom', 'Warroom', 100),
+            'WorkContext' => $this->definition('work-context', 'Work Context', 830),
         ];
     }
 
@@ -148,7 +150,9 @@ class SyncRepositoryKnowledgeDocs
         return match ($name) {
             'Clients' => 'Clients',
             'Lead Intelligence' => 'LeadIntelligence',
+            'Sales' => 'Sales',
             'User Management' => 'UserManagement',
+            'Work Context' => 'WorkContext',
             default => str_replace(' ', '', Str::singular($name)),
         };
     }

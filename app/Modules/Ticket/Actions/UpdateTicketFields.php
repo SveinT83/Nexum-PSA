@@ -5,10 +5,15 @@ namespace App\Modules\Ticket\Actions;
 use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Support\Facades\DB;
 
 class UpdateTicketFields
 {
+    public function __construct(private readonly ResolveWorkContext $workContexts)
+    {
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Editable ticket fields
@@ -34,6 +39,16 @@ class UpdateTicketFields
                 if ((string) $ticket->{$field} !== (string) $normalizedValue) {
                     $before[$field] = $ticket->{$field};
                     $after[$field] = $normalizedValue;
+                }
+            }
+
+            if (array_key_exists('client_id', $updates)) {
+                $normalizedClientId = $updates['client_id'] === '' ? null : $updates['client_id'];
+                $workContext = $this->workContexts->fromClientId($normalizedClientId);
+
+                if ((string) $ticket->work_context_id !== (string) $workContext->id) {
+                    $before['work_context_id'] = $ticket->work_context_id;
+                    $after['work_context_id'] = $workContext->id;
                 }
             }
 

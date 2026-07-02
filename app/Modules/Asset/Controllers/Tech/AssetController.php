@@ -87,7 +87,7 @@ class AssetController extends Controller
     public function show(Asset $asset, $tab = 'summary')
     {
         // Load the relations needed by summary, ownership, vendor, and alert tabs.
-        $asset->load(['client', 'site', 'user', 'vendorRelation', 'alerts']);
+        $asset->load(['client', 'workContext', 'site', 'user', 'vendorRelation', 'alerts']);
 
         // Existing view code expects this variable name for alert/outage output.
         $outages = $asset->alerts;

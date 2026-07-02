@@ -9,6 +9,7 @@ The module covers:
 - Global asset listing.
 - Client-scoped asset listing.
 - Manual asset creation and editing.
+- Internal company-owned assets without a Client.
 - Asset detail pages.
 - Asset documentation view.
 - Asset API list and detail endpoints.
@@ -68,6 +69,8 @@ This protects existing RMM polymorphic links. The `client_rmm_links.linkable_typ
 - `Queries/AssetQuery.php`: UI filter and pagination query.
 - `Actions/StoreAsset.php`: Plain HTTP create fallback.
 - `Actions/UpdateAsset.php`: Plain HTTP update fallback.
+- `Support/AssetWorkContextPayload.php`: Client/internal Work Context validation and payload
+  normalization.
 - `Livewire/Tech/AssetForm.php`: Create/edit form.
 - `Livewire/Tech/AssetAlerts.php`: Asset detail alert widget.
 - `Livewire/Tech/ClientAlertsSummary.php`: Client/global alert summary.

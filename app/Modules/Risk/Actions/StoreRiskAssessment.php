@@ -4,6 +4,7 @@ namespace App\Modules\Risk\Actions;
 
 use App\Models\Risk\RiskAssessment;
 use App\Modules\Risk\Support\RiskSettings;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 
 /**
  * Creates a new risk assessment from validated controller input.
@@ -14,7 +15,10 @@ use App\Modules\Risk\Support\RiskSettings;
  */
 class StoreRiskAssessment
 {
-    public function __construct(private readonly RiskSettings $settings)
+    public function __construct(
+        private readonly RiskSettings $settings,
+        private readonly ResolveWorkContext $workContexts,
+    )
     {
     }
 
@@ -33,6 +37,9 @@ class StoreRiskAssessment
             'description' => $data['description'] ?? null,
             'status' => $data['status'],
             'client_id' => $data['scope'] === 'internal' ? null : ($data['client_id'] ?? null),
+            'work_context_id' => $this->workContexts
+                ->fromClientId($data['scope'] === 'internal' ? null : ($data['client_id'] ?? null))
+                ->id,
         ]);
     }
 }

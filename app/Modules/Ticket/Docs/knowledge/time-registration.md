@@ -1,5 +1,8 @@
 Ticket time registration records technician time on a ticket without immediately consuming a contract timebank or creating invoice lines.
 
+Ticket billing remains client-gated. Internal Tickets have no `client_id`, so their time entries can
+still record operational effort but are not selected for Economy order generation.
+
 Technicians add time from the ticket show page using the `Add time` action near `Reply`. The form captures the work date, minutes, time rate, invoice text, and an optional internal note. The invoice text is the customer-facing billing description that later billing can reuse.
 
 The Time widget in the ticket rightbar includes a local per-ticket stopwatch. Technicians can start the timer, pause or resume it with the same button, and stop it when the work is ready to register. Stopping the timer opens the Add time modal with elapsed minutes prefilled. The timer is local browser draft state and does not create a database record until the modal is saved.

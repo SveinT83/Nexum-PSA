@@ -19,9 +19,9 @@ class TicketSlaReportQuery
     | SLA state already visible on ticket list and show screens.
     |
     */
-    public function summary(?Carbon $from = null, ?Carbon $to = null): array
+    public function summary(?Carbon $from = null, ?Carbon $to = null, string $context = 'client'): array
     {
-        $base = $this->baseQuery($from, $to);
+        $base = $this->baseQuery($from, $to, $context);
         $openBase = $this->openTickets($base);
 
         return [
@@ -61,9 +61,9 @@ class TicketSlaReportQuery
         ];
     }
 
-    public function overdueTickets(int $limit = 15): Collection
+    public function overdueTickets(int $limit = 15, string $context = 'client'): Collection
     {
-        return $this->openTickets(Ticket::query())
+        return $this->openTickets($this->applyContext(Ticket::query(), $context))
             ->with(['client', 'priority', 'status', 'owner'])
             ->where(function ($query): void {
                 $query
@@ -90,11 +90,20 @@ class TicketSlaReportQuery
             ->get();
     }
 
-    private function baseQuery(?Carbon $from = null, ?Carbon $to = null): Builder
+    private function baseQuery(?Carbon $from = null, ?Carbon $to = null, string $context = 'client'): Builder
     {
-        return Ticket::query()
+        return $this->applyContext(Ticket::query(), $context)
             ->when($from, fn ($query) => $query->where('created_at', '>=', $from))
             ->when($to, fn ($query) => $query->where('created_at', '<=', $to));
+    }
+
+    private function applyContext(Builder $query, string $context): Builder
+    {
+        return match ($context) {
+            'all' => $query,
+            'internal' => $query->whereHas('workContext', fn (Builder $contextQuery) => $contextQuery->where('type', 'internal')),
+            default => $query->whereNotNull('client_id'),
+        };
     }
 
     private function openTickets(Builder $query): Builder

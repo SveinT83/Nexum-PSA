@@ -57,7 +57,15 @@
         <div class="card-body">
             <form action="{{ $client ? route('tech.clients.assets.index', $client->id) : route('tech.assets.index') }}" method="GET" class="row g-3">
                 @if(!$client)
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label for="context_type" class="form-label text-muted small fw-bold text-uppercase">Context</label>
+                        <select name="context_type" id="context_type" class="form-select">
+                            <option value="">All Contexts</option>
+                            <option value="client" {{ request('context_type') === 'client' ? 'selected' : '' }}>Client</option>
+                            <option value="internal" {{ request('context_type') === 'internal' ? 'selected' : '' }}>Internal</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label for="client_id" class="form-label text-muted small fw-bold text-uppercase">Client</label>
                         <select name="client_id" id="client_id" class="form-select">
                             <option value="">All Clients</option>
@@ -190,9 +198,11 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div>{{ $asset->client->name }}</div>
+                                    <div>{{ $asset->client?->name ?? 'Internal' }}</div>
                                     @if($asset->site)
                                         <div class="small text-muted">{{ $asset->site->name }}</div>
+                                    @elseif(! $asset->client_id)
+                                        <div class="small text-muted">Own organization</div>
                                     @else
                                         <div class="small text-muted">—</div>
                                     @endif

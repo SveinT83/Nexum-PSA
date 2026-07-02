@@ -1,6 +1,6 @@
 # Feature Slice: Work Context Audit And Contract
 
-Status: Draft
+Status: Done
 Date: 2026-07-01
 Parent: `docs/rfc/2026-07-01-work-context-organization-scope.md`
 Owner: Codex
@@ -65,7 +65,7 @@ No production data is changed.
 Documentation touched:
 
 - The parent RFC.
-- A new audit document under `docs/audits/`.
+- `docs/audits/2026-07-01-work-context-audit.md`.
 - The next feature-slice document under `docs/feature-slices/`.
 - `docs/TODO.md` if implementation readiness or blockers change.
 

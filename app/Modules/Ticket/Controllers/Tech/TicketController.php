@@ -178,7 +178,13 @@ class TicketController extends Controller
             return response()->json([
                 'sites' => [],
                 'contacts' => [],
-                'assets' => [],
+                'assets' => $this->assetOptions(null)
+                    ->map(fn (array $asset) => [
+                        'id' => $asset['id'],
+                        'group' => $asset['group'],
+                        'label' => $asset['label'],
+                    ])
+                    ->values(),
                 'openTickets' => [],
             ]);
         }
@@ -329,7 +335,7 @@ class TicketController extends Controller
 
         abort_if($ticket->trashed(), 404);
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries']);
         $messageIds = $ticket->messages->pluck('id')->all();
 
         $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);
@@ -371,7 +377,7 @@ class TicketController extends Controller
         app(EnsureTicketDefaults::class)->handle();
 
         return view('ticket::Tech.Tickets.edit', [
-            'ticket' => $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'site', 'contact.site', 'owner', 'asset', 'tags']),
+            'ticket' => $ticket->load(['queue', 'status', 'priority', 'category', 'client', 'workContext', 'site', 'contact.site', 'owner', 'asset', 'tags']),
             'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
@@ -1246,7 +1252,12 @@ class TicketController extends Controller
     private function assetOptions(?int $clientId, ?int $contactId = null, ?int $siteId = null)
     {
         if (! $clientId) {
-            return collect();
+            return Asset::query()
+                ->whereNull('client_id')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Asset $asset) => $this->assetOption($asset, 'Internal assets'))
+                ->values();
         }
 
         if ($contactId) {
@@ -1296,7 +1307,19 @@ class TicketController extends Controller
 
     private function validateAssetScope(int $assetId, ?int $clientId, ?int $contactId = null, ?int $siteId = null): Asset
     {
-        $asset = Asset::where('client_id', $clientId)->findOrFail($assetId);
+        $asset = Asset::query()->findOrFail($assetId);
+
+        if ($asset->client_id && ! $clientId) {
+            abort(422, 'Select the asset client before selecting this asset.');
+        }
+
+        if (! $asset->client_id && $clientId) {
+            abort(422, 'Internal assets cannot be attached to client tickets.');
+        }
+
+        if ($asset->client_id && (int) $asset->client_id !== (int) $clientId) {
+            abort(422, 'The selected asset does not belong to the selected client.');
+        }
 
         if ($contactId) {
             $contact = ClientUser::with('site')->findOrFail($contactId);

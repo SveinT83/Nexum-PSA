@@ -4,6 +4,7 @@ namespace App\Modules\Asset\Actions;
 
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Asset\Support\AssetSettings;
+use App\Modules\Asset\Support\AssetWorkContextPayload;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -16,12 +17,16 @@ use Illuminate\Validation\Rule;
  */
 class UpdateAsset
 {
+    public function __construct(private readonly AssetWorkContextPayload $contextPayload)
+    {
+    }
+
     public function handle(Request $request, Asset $asset): Asset
     {
         $settings = app(AssetSettings::class);
 
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
+            'client_id' => 'nullable|exists:clients,id',
             'site_id' => 'nullable|exists:client_sites,id',
             'user_id' => 'nullable|exists:client_users,id',
             'vendor_id' => 'nullable|exists:vendors,id',
@@ -39,7 +44,7 @@ class UpdateAsset
             'status' => ['nullable', Rule::in($settings->statusValues($asset->status))],
         ]);
 
-        $asset->update($validated);
+        $asset->update($this->contextPayload->normalize($validated, $asset));
 
         return $asset;
     }

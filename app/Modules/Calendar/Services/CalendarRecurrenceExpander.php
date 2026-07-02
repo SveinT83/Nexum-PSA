@@ -87,7 +87,7 @@ class CalendarRecurrenceExpander
         }
 
         return CalendarEventSeries::query()
-            ->with(['calendar', 'exceptions', 'events' => fn ($query) => $query->with(['calendar', 'participants', 'links.linkable'])->where('status', '!=', 'cancelled')->oldest('starts_at')])
+            ->with(['calendar', 'exceptions', 'events' => fn ($query) => $query->with(['calendar', 'workContext', 'participants', 'links.linkable'])->where('status', '!=', 'cancelled')->oldest('starts_at')])
             ->whereIn('calendar_id', $calendarIds)
             ->where('recurrence_starts_at', '<', $rangeEndsAt->copy()->utc())
             ->where(function ($query) use ($rangeStartsAt) {

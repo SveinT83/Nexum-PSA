@@ -12,6 +12,7 @@ use App\Modules\Calendar\Queries\CalendarOverlayQuery;
 use App\Modules\Calendar\Resources\Api\V1\CalendarEventResource;
 use App\Modules\Calendar\Resources\Api\V1\CalendarResource;
 use App\Modules\Calendar\Services\CalendarVisibility;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -65,9 +66,19 @@ class CalendarController extends Controller
         $startsAt = Carbon::parse($request->input('from', now($timezone)->startOfDay()), $timezone);
         $endsAt = Carbon::parse($request->input('to', now($timezone)->addDays(30)->endOfDay()), $timezone);
         $calendarIds = $request->filled('calendar_id') ? [$request->integer('calendar_id')] : [];
+        $contextType = $request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))
+            ? $request->input('context_type')
+            : null;
 
         return response()->json([
-            'data' => $overlayQuery->eventsForRange($request->user(), $startsAt, $endsAt, $calendarIds)
+            'data' => $overlayQuery->eventsForRange(
+                $request->user(),
+                $startsAt,
+                $endsAt,
+                $calendarIds,
+                $request->filled('work_context_id') ? $request->integer('work_context_id') : null,
+                $contextType,
+            )
                 ->map(fn (array $event) => $this->eventArray($event))
                 ->values(),
         ]);
@@ -243,6 +254,8 @@ class CalendarController extends Controller
             'calendar_id' => $event['calendar_id'],
             'calendar_name' => $event['calendar_name'],
             'calendar_color' => $event['calendar_color'],
+            'work_context_id' => $event['work_context_id'],
+            'work_context_type' => $event['work_context_type'],
             'title' => $event['title'],
             'description' => $event['description'],
             'location' => $event['location'],
@@ -263,6 +276,6 @@ class CalendarController extends Controller
 
     private function loadEvent(CalendarEvent $event): CalendarEvent
     {
-        return $event->load(['calendar', 'participants']);
+        return $event->load(['calendar', 'workContext', 'participants']);
     }
 }

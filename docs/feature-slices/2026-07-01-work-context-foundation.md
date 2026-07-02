@@ -1,6 +1,6 @@
 # Feature Slice: Work Context Foundation
 
-Status: Draft
+Status: Done
 Date: 2026-07-01
 Parent: `docs/rfc/2026-07-01-work-context-organization-scope.md`
 Owner: Codex
@@ -8,6 +8,8 @@ Owner: Codex
 ## Goal
 
 Create the shared WorkContext foundation after the audit slice and RFC approval.
+
+Audit source: `docs/audits/2026-07-01-work-context-audit.md`.
 
 ## User-Visible Behavior
 
@@ -42,7 +44,9 @@ no Client selected becomes internal work.
 
 No new user-facing permissions are required for this foundation slice.
 
-Future slices may add internal work permissions for Ticket, Task, Reporting, or API context filters.
+Future permission work may add separate internal-work abilities if client-facing or restricted
+technician surfaces require it. Current module API context filters are implemented in later completed
+adoption slices.
 
 ## Tests
 

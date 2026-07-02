@@ -15,7 +15,7 @@
             wire:key="task-client-search-{{ $clientId ?? 'none' }}"
             wire:focus="openClientPicker"
             wire:model.live.debounce.250ms="clientSearch"
-            placeholder="Search client">
+            placeholder="Search client or leave blank for internal">
         @if($clientResults->isNotEmpty())
         <div class="dropdown-menu show w-100 mt-1 shadow-sm" style="max-height: 16rem; overflow-y: auto; z-index: 1050;">
             @foreach($clientResults as $client)
@@ -71,7 +71,9 @@
                 <button type="button" class="dropdown-item small" wire:key="task-ticket-result-{{ $ticket->id }}" wire:mousedown.prevent="selectTicket({{ $ticket->id }})">
                     <span class="fw-semibold">{{ $ticket->ticket_key }}</span>
                     <span>{{ $ticket->subject }}</span>
-                    <span class="d-block text-muted">{{ $ticket->client?->name }}{{ $ticket->site ? ' / '.$ticket->site->name : '' }}</span>
+                    <span class="d-block text-muted">
+                        {{ $ticket->client?->name ?? ($ticket->workContext?->isInternal() ? 'Internal' : 'Unscoped') }}{{ $ticket->site ? ' / '.$ticket->site->name : '' }}
+                    </span>
                 </button>
             @endforeach
         </div>

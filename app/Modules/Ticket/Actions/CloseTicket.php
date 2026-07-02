@@ -40,6 +40,11 @@ class CloseTicket
                 'sort_order' => 50,
             ]);
 
-        return $this->changeTicketStatus->handle($ticket, $closedStatus, $actor);
+        return $this->changeTicketStatus->handle(
+            $ticket,
+            $closedStatus,
+            $actor,
+            enforceWorkflow: filled($ticket->workflow_id)
+        );
     }
 }

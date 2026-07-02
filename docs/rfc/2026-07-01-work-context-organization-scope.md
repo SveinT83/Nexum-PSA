@@ -1,6 +1,6 @@
 # RFC: Work Context And Organization Scope
 
-Status: Draft
+Status: Approved
 Date: 2026-07-01
 Owner: Codex
 
@@ -246,13 +246,19 @@ Rollback:
   - First slice. Audits current assumptions and produces the implementation contract.
 - `docs/feature-slices/2026-07-01-work-context-foundation.md`
   - Creates the WorkContext module foundation after the audit and RFC approval.
-- Future slice: Ticket and Task internal creation behavior.
-- Future slice: Internal cost reporting guardrails.
-- Future slice: Documentation/Knowledge context alignment.
-- Future slice: Asset internal ownership.
-- Future slice: Risk/Calendar alignment.
-- Future slice: Report and API context filters.
-- Future slice: Legacy self-client cleanup or hiding.
+- `docs/feature-slices/2026-07-02-work-context-ticket-task-internal-creation.md`
+  - Adopts Work Context for new Ticket and Task records and preserves Economy billing guardrails.
+- `docs/feature-slices/2026-07-02-work-context-documentation-risk-calendar-alignment.md`
+  - Aligns Documentation, Knowledge vocabulary, Risk, and Calendar with the shared context
+    contract.
+- `docs/feature-slices/2026-07-02-work-context-asset-internal-ownership.md`
+  - Allows internal company-owned Assets while keeping client/RMM asset behavior client-safe.
+- `docs/feature-slices/2026-07-02-work-context-report-api-guardrails.md`
+  - Adds adopted-module API filters, makes Ticket SLA reporting client-safe by default, and
+    documents Commercial, Economy, and Sales as client-only under this RFC.
+- Future cleanup: legacy self-client cleanup or hiding. This remains outside this RFC's completed
+  behavior because the RFC explicitly does not migrate, delete, or hide historical self-client
+  records.
 
 ## Open Questions
 
@@ -267,8 +273,8 @@ Non-blocking decisions for later slices:
 
 ## Approval
 
-Pending approval.
+Approved by Svein in conversation on 2026-07-01 when starting work from GitHub Discussion #149.
 
-Implementation must not start until this RFC is marked `Approved` or Svein explicitly approves it in
-conversation. The accompanying ADR is proposed in
-`docs/adr/2026-07-01-own-organization-is-not-a-client.md`.
+The accompanying ADR is accepted in
+`docs/adr/2026-07-01-own-organization-is-not-a-client.md`. The first implementation step remains the
+documentation-only audit slice before any schema, UI, or module behavior changes.

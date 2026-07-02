@@ -28,37 +28,23 @@ class ChangeTicketStatus
     | inbound email handlers all get the same lifecycle behavior.
     |
     */
-    public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null): Ticket
+    public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null, bool $enforceWorkflow = true): Ticket
     {
+        if ($status->is_closed && $this->hasUnresolvedTasks($ticket)) {
+            $reason = 'Ticket cannot be closed while it has unresolved tasks.';
+
+            $this->recordBlockedStatusChange($ticket, $status, $actor, 'ticket_close_blocked', $reason);
+
+            throw ValidationException::withMessages(['status_id' => $reason]);
+        }
+
+        if ($enforceWorkflow && $reason = $this->workflowRuntime->blockedReason($ticket, $status)) {
+            $this->recordBlockedStatusChange($ticket, $status, $actor, 'workflow_transition_blocked', $reason);
+
+            throw ValidationException::withMessages(['status_id' => $reason]);
+        }
+
         return DB::transaction(function () use ($ticket, $status, $actor) {
-            if ($status->is_closed && $this->hasUnresolvedTasks($ticket)) {
-                $reason = 'Ticket cannot be closed while it has unresolved tasks.';
-
-                TicketEvent::create([
-                    'ticket_id' => $ticket->id,
-                    'actor_id' => $actor?->id,
-                    'type' => 'ticket_close_blocked',
-                    'message' => $reason,
-                    'before' => ['status_id' => $ticket->status_id],
-                    'after' => ['status_id' => $status->id],
-                ]);
-
-                throw ValidationException::withMessages(['status_id' => $reason]);
-            }
-
-            if ($reason = $this->workflowRuntime->blockedReason($ticket, $status)) {
-                TicketEvent::create([
-                    'ticket_id' => $ticket->id,
-                    'actor_id' => $actor?->id,
-                    'type' => 'workflow_transition_blocked',
-                    'message' => $reason,
-                    'before' => ['status_id' => $ticket->status_id],
-                    'after' => ['status_id' => $status->id],
-                ]);
-
-                throw ValidationException::withMessages(['status_id' => $reason]);
-            }
-
             if ((int) $ticket->status_id !== (int) $status->id) {
                 app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'status_changed');
             }
@@ -128,6 +114,18 @@ class ChangeTicketStatus
 
             return $ticket;
         });
+    }
+
+    private function recordBlockedStatusChange(Ticket $ticket, TicketStatus $status, ?User $actor, string $type, string $reason): void
+    {
+        TicketEvent::create([
+            'ticket_id' => $ticket->id,
+            'actor_id' => $actor?->id,
+            'type' => $type,
+            'message' => $reason,
+            'before' => ['status_id' => $ticket->status_id],
+            'after' => ['status_id' => $status->id],
+        ]);
     }
 
     private function hasUnresolvedTasks(Ticket $ticket): bool

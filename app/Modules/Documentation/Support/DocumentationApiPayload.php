@@ -6,10 +6,15 @@ use App\Models\Clients\ClientSite;
 use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Models\DocumentationTemplate;
 use App\Modules\Taxonomy\Models\Category;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Validation\ValidationException;
 
 class DocumentationApiPayload
 {
+    public function __construct(private readonly ResolveWorkContext $workContexts)
+    {
+    }
+
     public function createPayload(array $data): array
     {
         $category = $this->categoryFromPayload($data);
@@ -138,6 +143,7 @@ class DocumentationApiPayload
 
             return [
                 'client_id' => $site->client_id,
+                'work_context_id' => $this->workContexts->fromClientId($site->client_id)->id,
                 'site_id' => $site->id,
                 'scope_type' => 'site',
             ];
@@ -146,6 +152,7 @@ class DocumentationApiPayload
         if ($clientId) {
             return [
                 'client_id' => $clientId,
+                'work_context_id' => $this->workContexts->fromClientId($clientId)->id,
                 'site_id' => null,
                 'scope_type' => 'client',
             ];
@@ -153,6 +160,7 @@ class DocumentationApiPayload
 
         return [
             'client_id' => null,
+            'work_context_id' => $this->workContexts->internal()->id,
             'site_id' => null,
             'scope_type' => 'internal',
         ];

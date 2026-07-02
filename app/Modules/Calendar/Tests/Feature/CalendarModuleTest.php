@@ -13,6 +13,8 @@ use App\Modules\Calendar\Models\CalendarAccess;
 use App\Modules\Calendar\Models\CalendarAvailabilityRule;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
+use App\Modules\WorkContext\Support\WorkContextType;
 use App\Modules\UserManagement\Models\UserPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -95,6 +97,7 @@ class CalendarModuleTest extends TestCase
         $createResponse->assertCreated()
             ->assertJsonPath('data.title', 'API planning')
             ->assertJsonPath('data.calendar.id', $calendar->id)
+            ->assertJsonPath('data.work_context.type', WorkContextType::INTERNAL)
             ->assertJsonPath('data.participants.0.email', 'client@example.test');
 
         $eventId = $createResponse->json('data.id');
@@ -106,6 +109,7 @@ class CalendarModuleTest extends TestCase
         ]))
             ->assertOk()
             ->assertJsonPath('data.0.id', $eventId)
+            ->assertJsonPath('data.0.work_context_type', WorkContextType::INTERNAL)
             ->assertJsonPath('data.0.title', 'API planning');
 
         $this->patchJson(route('api.v1.calendar.events.update', $eventId), [
@@ -209,6 +213,7 @@ class CalendarModuleTest extends TestCase
 
         $this->assertDatabaseHas('calendar_events', [
             'calendar_id' => $calendar->id,
+            'work_context_id' => app(ResolveWorkContext::class)->internal()->id,
             'title' => 'Customer planning meeting',
             'timezone' => 'Europe/Oslo',
             'visibility' => 'public',

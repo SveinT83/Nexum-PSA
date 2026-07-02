@@ -56,6 +56,10 @@ Examples:
 
 The default workflow avoids quick-closing directly from open states. Tickets should normally move through Resolved before Closed.
 
+The dedicated Close shortcut still uses `ChangeTicketStatus`. Tickets with an assigned workflow must
+follow the workflow transition rules before closing. Older or imported tickets without an assigned
+workflow can be closed directly after action guards and unresolved-task checks pass.
+
 ## Automatic Action Triggers
 
 Workflow transitions can be linked to ticket actions. When the action completes, the workflow can auto-advance if all transition requirements are satisfied.
@@ -108,7 +112,9 @@ Tickets track important lifecycle timestamps:
 - `resolved_at`
 - `closed_at`
 
-`ChangeTicketStatus` owns resolved and closed timestamp behavior. The first public technician reply stamps `first_responded_at`.
+`ChangeTicketStatus` owns resolved and closed timestamp behavior. It also records blocked close or
+workflow attempts before returning validation errors, so the audit trail keeps failed lifecycle
+attempts. The first public technician reply stamps `first_responded_at`.
 
 These fields support SLA reporting, ticket history, and future Intelligence features.
 

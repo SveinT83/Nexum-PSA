@@ -69,9 +69,14 @@
                         <div class="row mb-3">
                             <div class="col-sm-3 fw-bold">Client:</div>
                             <div class="col-sm-9">
-                                <a href="{{ route('tech.clients.show', $asset->client_id) }}">
-                                    {{ $asset->client->name }}
-                                </a>
+                                @if($asset->client_id)
+                                    <a href="{{ route('tech.clients.show', $asset->client_id) }}">
+                                        {{ $asset->client?->name }}
+                                    </a>
+                                @else
+                                    <span class="badge text-bg-light border">Internal</span>
+                                    <span class="text-muted small ms-1">Own organization</span>
+                                @endif
                             </div>
                         </div>
 
@@ -362,16 +367,16 @@
                                 @if($rmmIntegration)
                                     <button type="button"
                                             class="btn btn-sm btn-outline-primary"
-                                            @if(!$canSyncNable) disabled title="Client not linked to N-able RMM" @endif
-                                            onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
+                                            @if(!$canSyncNable) disabled title="{{ $asset->client_id ? 'Client not linked to N-able RMM' : 'Internal assets are not synced through client RMM' }}" @endif
+                                            onclick="Livewire.dispatch('startTargetedSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id ?? 'null' }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
                                         <i class="bi bi-arrow-repeat me-1"></i> Sync N-able
                                     </button>
                                 @endif
                                 @if($tacticalIntegration)
                                     <button type="button"
                                             class="btn btn-sm btn-outline-info"
-                                            @if(!$canSyncTactical) disabled title="Client not linked to Tactical RMM" @endif
-                                            onclick="Livewire.dispatch('startTargetedTacticalSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
+                                            @if(!$canSyncTactical) disabled title="{{ $asset->client_id ? 'Client not linked to Tactical RMM' : 'Internal assets are not synced through client RMM' }}" @endif
+                                            onclick="Livewire.dispatch('startTargetedTacticalSync', { params: { type: 'assets_from', client_id: {{ $asset->client_id ?? 'null' }}, site_id: {{ $asset->site_id ?: 'null' }} } })">
                                         <i class="bi bi-arrow-repeat me-1"></i> Sync Tactical
                                     </button>
                                 @endif

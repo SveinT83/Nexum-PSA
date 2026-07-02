@@ -10,6 +10,7 @@ use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Models\DocumentationTemplate;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Taxonomy\Models\Category;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
@@ -156,6 +157,7 @@ class DocumentationModuleTest extends TestCase
             ->assertJsonPath('data.category_id', $category->id)
             ->assertJsonPath('data.template_id', $template->id)
             ->assertJsonPath('data.client_id', $client->id)
+            ->assertJsonPath('data.work_context.type', WorkContextType::CLIENT)
             ->assertJsonPath('data.site_id', $site->id)
             ->assertJsonPath('data.fields.platform', 'Microsoft 365')
             ->assertJsonPath('data.content', 'SPF, DKIM and DMARC notes.');
@@ -167,6 +169,22 @@ class DocumentationModuleTest extends TestCase
         $this->getJson(route('api.v1.knowledge.documentations.index', ['q' => 'Tronder Service']))
             ->assertOk()
             ->assertJsonPath('data.0.id', $documentation->id);
+
+        $this->postJson(route('api.v1.knowledge.documentations.store'), [
+            'category_slug' => 'email',
+            'title' => 'Internal Mail Runbook',
+            'content' => 'Internal mail operations.',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.scope_type', 'internal')
+            ->assertJsonPath('data.client_id', null)
+            ->assertJsonPath('data.work_context.type', WorkContextType::INTERNAL);
+
+        $internalDocumentation = Documentation::query()->where('title', 'Internal Mail Runbook')->firstOrFail();
+
+        $this->getJson(route('api.v1.knowledge.documentations.index', ['context_type' => WorkContextType::INTERNAL]))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $internalDocumentation->id);
 
         $this->getJson(route('api.v1.knowledge.documentation-categories.index', ['q' => 'Email']))
             ->assertOk()

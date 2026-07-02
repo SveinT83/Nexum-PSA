@@ -18,6 +18,7 @@ use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -142,6 +143,53 @@ class EconomyModuleTest extends TestCase
         $this->assertSame('600.00', EconomyOrder::query()->first()->subtotal_ex_vat);
         $this->assertSame('150.00', EconomyOrder::query()->first()->vat_amount);
         $this->assertSame('750.00', EconomyOrder::query()->first()->total_inc_vat);
+    }
+
+    #[Test]
+    public function internal_ticket_time_and_cost_do_not_generate_customer_order_lines(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+        $ticket = app(StoreTicket::class)->handle([
+            'subject' => 'Internal platform maintenance',
+            'status_id' => $closed->id,
+        ], $this->tech);
+
+        $timeEntry = TicketTimeEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'work_date' => now()->toDateString(),
+            'minutes' => 45,
+            'billable' => true,
+            'billing_status' => 'pending',
+            'timebank_status' => 'pending',
+            'billing_basis' => 'without_contract',
+            'invoice_text' => 'Internal maintenance',
+            'rate_name' => 'Without contract',
+            'rate_amount_ex_vat' => 1200,
+            'rate_currency' => 'NOK',
+        ]);
+        $costEntry = TicketCostEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'quantity' => 1,
+            'item_name' => 'Internal replacement part',
+            'unit_price_ex_vat' => 250,
+            'currency' => 'NOK',
+            'status' => 'picked',
+            'billing_status' => 'pending',
+            'invoice_text' => 'Internal replacement part',
+        ]);
+
+        $summary = app(GenerateOrders::class)->handle(now()->startOfMonth(), now()->endOfMonth(), $this->tech);
+
+        $this->assertSame(0, $summary['lines_created']);
+        $this->assertSame(0, $summary['time_entries_seen']);
+        $this->assertSame(0, $summary['cost_entries_seen']);
+        $this->assertFalse(EconomyOrderLine::query()->where('source_type', $timeEntry->getMorphClass())->where('source_id', $timeEntry->id)->exists());
+        $this->assertFalse(EconomyOrderLine::query()->where('source_type', $costEntry->getMorphClass())->where('source_id', $costEntry->id)->exists());
+        $this->assertSame('pending', $timeEntry->refresh()->billing_status);
+        $this->assertSame('pending', $costEntry->refresh()->billing_status);
     }
 
     #[Test]

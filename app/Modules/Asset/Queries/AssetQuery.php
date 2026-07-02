@@ -4,6 +4,7 @@ namespace App\Modules\Asset\Queries;
 
 use App\Models\Clients\Client;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class AssetQuery
 
     private function baseDisplayQuery(): Builder
     {
-        return Asset::query()->with(['client', 'site', 'user', 'vendorRelation']);
+        return Asset::query()->with(['client', 'workContext', 'site', 'user', 'vendorRelation']);
     }
 
     private function applyClientContext(Builder $query, ?Client $client): void
@@ -47,6 +48,14 @@ class AssetQuery
     {
         if ($request->filled('client_id')) {
             $query->where('client_id', $request->client_id);
+        }
+
+        if ($request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))) {
+            $query->whereHas('workContext', fn (Builder $context) => $context->where('type', $request->input('context_type')));
+        }
+
+        if ($request->filled('work_context_id')) {
+            $query->where('work_context_id', $request->integer('work_context_id'));
         }
 
         if ($request->filled('type')) {

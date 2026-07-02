@@ -3,14 +3,14 @@
 namespace App\Modules\Asset\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Clients\ClientSite;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Asset\Actions\StoreAsset;
 use App\Modules\Asset\Resources\Api\V1\AssetResource;
 use App\Modules\Asset\Support\AssetSettings;
+use App\Modules\Asset\Support\AssetWorkContextPayload;
+use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(
@@ -22,7 +22,7 @@ class AssetController extends Controller
     #[OA\Get(
         path: "/api/v1/assets",
         operationId: "getAssetList",
-        description: "Returns list of assets with pagination. Can be filtered by client_id.",
+        description: "Returns list of assets with pagination. Can be filtered by client_id or Work Context.",
         summary: "Get list of assets",
         security: [["bearerAuth" => []]],
         tags: ["Assets"],
@@ -45,10 +45,18 @@ class AssetController extends Controller
         // Keep the API query intentionally small: callers may request all assets
         // or scope the list to one client. Additional filters should be added to
         // a module query object when the API surface grows.
-        $query = Asset::query();
+        $query = Asset::query()->with(['workContext']);
 
         if ($request->has('client_id')) {
             $query->where('client_id', $request->client_id);
+        }
+
+        if ($request->filled('work_context_id')) {
+            $query->where('work_context_id', $request->integer('work_context_id'));
+        }
+
+        if ($request->filled('context_type') && WorkContextType::isSupported($request->input('context_type'))) {
+            $query->whereHas('workContext', fn ($context) => $context->where('type', $request->input('context_type')));
         }
 
         return AssetResource::collection($query->paginate());
@@ -81,7 +89,7 @@ class AssetController extends Controller
         // Route-model binding still resolves the existing Asset model namespace.
         // The model is not moved yet because RMM polymorphic links store that
         // class name in `client_rmm_links.linkable_type`.
-        return new AssetResource($asset);
+        return new AssetResource($asset->load('workContext', 'rmmLinks'));
     }
 
     #[OA\Post(
@@ -94,9 +102,9 @@ class AssetController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["client_id", "name"],
+                required: ["name"],
                 properties: [
-                    new OA\Property(property: "client_id", type: "integer"),
+                    new OA\Property(property: "client_id", type: "integer", nullable: true),
                     new OA\Property(property: "site_id", type: "integer", nullable: true),
                     new OA\Property(property: "name", type: "string"),
                     new OA\Property(property: "type", type: "string", nullable: true),
@@ -122,7 +130,7 @@ class AssetController extends Controller
     {
         $asset = $storeAsset->handle($request);
 
-        return (new AssetResource($asset->load('rmmLinks')))
+        return (new AssetResource($asset->load('workContext', 'rmmLinks')))
             ->response()
             ->setStatusCode(201);
     }
@@ -163,19 +171,18 @@ class AssetController extends Controller
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
-    public function update(Request $request, Asset $asset)
+    public function update(Request $request, Asset $asset, AssetWorkContextPayload $contextPayload)
     {
         $validated = $this->validateAssetUpdate($request, $asset);
 
         if (array_key_exists('client_id', $validated) && ! array_key_exists('site_id', $validated)) {
             $validated['site_id'] = null;
+            $validated['user_id'] = null;
         }
 
-        $this->ensureSiteBelongsToClient($validated, $asset);
+        $asset->forceFill($contextPayload->normalize($validated, $asset))->save();
 
-        $asset->forceFill($validated)->save();
-
-        return new AssetResource($asset->refresh()->load('rmmLinks'));
+        return new AssetResource($asset->refresh()->load('workContext', 'rmmLinks'));
     }
 
     private function validateAssetUpdate(Request $request, Asset $asset): array
@@ -183,7 +190,7 @@ class AssetController extends Controller
         $settings = app(AssetSettings::class);
 
         return $request->validate([
-            'client_id' => ['sometimes', 'required', Rule::exists('clients', 'id')],
+            'client_id' => ['sometimes', 'nullable', Rule::exists('clients', 'id')],
             'site_id' => ['sometimes', 'nullable', Rule::exists('client_sites', 'id')],
             'user_id' => ['sometimes', 'nullable', Rule::exists('client_users', 'id')],
             'vendor_id' => ['sometimes', 'nullable', Rule::exists('vendors', 'id')],
@@ -202,24 +209,5 @@ class AssetController extends Controller
             'last_seen_at' => ['sometimes', 'nullable', 'date'],
             'metadata' => ['sometimes', 'nullable', 'array'],
         ]);
-    }
-
-    private function ensureSiteBelongsToClient(array $data, Asset $asset): void
-    {
-        if (! array_key_exists('site_id', $data) || empty($data['site_id'])) {
-            return;
-        }
-
-        $clientId = $data['client_id'] ?? $asset->client_id;
-        $siteBelongsToClient = ClientSite::query()
-            ->whereKey($data['site_id'])
-            ->where('client_id', $clientId)
-            ->exists();
-
-        if (! $siteBelongsToClient) {
-            throw ValidationException::withMessages([
-                'site_id' => 'The selected site does not belong to the selected client.',
-            ]);
-        }
     }
 }

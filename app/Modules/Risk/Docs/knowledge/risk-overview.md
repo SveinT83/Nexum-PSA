@@ -16,6 +16,8 @@ Risk assessment routes live under `/tech/risk`.
 ## Current Model
 
 - **Risk Assessment** is the container for a risk analysis. It may be internal or linked to a Client.
+  Assessments also store `work_context_id` so internal and client-scoped risk can be filtered
+  consistently across reports and integrations.
 - **Risk Item** is the current snapshot of one identified risk.
 - **Risk Item Update** is the history timeline for score and status changes.
 
@@ -50,6 +52,14 @@ Implemented routes:
 - `POST /api/v1/risk/items/{item}/updates`
 
 API create and update operations use the same action classes as the Tech UI.
+
+Assessment list responses expose `work_context_id` and `work_context`. `GET /api/v1/risk/assessments`
+supports `client_id`, `work_context_id`, and `context_type` filters. `context_type=internal` returns
+assessments with the internal Work Context, while `context_type=client` returns client-scoped
+assessments.
+
+Creating or updating an assessment with no `client_id` creates internal risk work. Supplying
+`client_id` resolves that Client's Work Context and keeps the existing client relation.
 
 `PUT` and `PATCH /api/v1/risk/items/{item}` are for descriptive fields such as title, description,
 recommended actions, conclusion, category, and next review date.

@@ -16,6 +16,7 @@ Calendar owns:
 - free/busy and availability calculations
 - event privacy and visibility masking
 - links between calendar events and other tdPSA records
+- Work Context metadata for filtering internal/client-aware operational views
 - calendar-level access control
 - timezone behavior for calendars, users, and events
 - sync metadata needed by future integrations
@@ -28,6 +29,7 @@ Integration modules such as Nextcloud and Proton will later own provider-specifi
 
 Operational Knowledge pages live with the module so they can be synced to BookStack:
 
+- `app/Modules/Calendar/Docs/knowledge/calendar-overview.md`
 - `app/Modules/Calendar/Docs/legacy-view-specs/Tech/calendar.md`
 - `app/Modules/Calendar/Docs/legacy-view-specs/Tech/availability-and-privacy.md`
 - `app/Modules/Calendar/Docs/legacy-view-specs/Admin/calendar-settings.md`

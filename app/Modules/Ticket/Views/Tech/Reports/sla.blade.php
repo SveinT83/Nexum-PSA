@@ -15,14 +15,26 @@
     <!-- ------------------------------------------------- -->
     <form method="GET" action="{{ route('tech.reports.tickets.sla') }}" class="card mb-3">
         <div class="card-body">
-            <label for="period" class="form-label small text-muted text-uppercase fw-semibold">Period</label>
-            <div class="input-group input-group-sm">
-                <select id="period" name="period" class="form-select">
-                    @foreach(['7' => 'Last 7 days', '30' => 'Last 30 days', '90' => 'Last 90 days', 'all' => 'All time'] as $value => $label)
-                        <option value="{{ $value }}" @selected($period === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-                <button type="submit" class="btn btn-outline-secondary">Apply</button>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label for="period" class="form-label small text-muted text-uppercase fw-semibold">Period</label>
+                    <select id="period" name="period" class="form-select form-select-sm">
+                        @foreach(['7' => 'Last 7 days', '30' => 'Last 30 days', '90' => 'Last 90 days', 'all' => 'All time'] as $value => $label)
+                            <option value="{{ $value }}" @selected($period === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="context" class="form-label small text-muted text-uppercase fw-semibold">Context</label>
+                    <select id="context" name="context" class="form-select form-select-sm">
+                        <option value="client" @selected($context === 'client')>Client work</option>
+                        <option value="internal" @selected($context === 'internal')>Internal work</option>
+                        <option value="all" @selected($context === 'all')>All work</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Apply</button>
+                </div>
             </div>
         </div>
     </form>
@@ -98,7 +110,7 @@
 @section('rightbar')
     <x-card.default title="Scope">
         <p class="small text-muted mb-0">
-            This report uses stored SLA timestamps on tickets. Business-hours recalculation is intentionally out of scope for this foundation.
+            Client work is shown by default so internal tickets do not mix into customer-oriented SLA reporting unless explicitly selected.
         </p>
     </x-card.default>
 @endsection

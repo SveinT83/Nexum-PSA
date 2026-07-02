@@ -29,6 +29,11 @@ Articles store:
 
 Articles edited inside Nexum are saved locally first. If they belong to a BookStack-backed hierarchy and two-way sync is enabled, the page is marked for push.
 
+Knowledge visibility is separate from Work Context. `internal`, `client-wide`, and `public` decide
+who can read an article. They do not mean that the article itself owns internal or client work.
+Client-wide articles may use `client_scope_id`, while public and internal articles clear that
+client-specific scope.
+
 ## API
 
 Knowledge API routes are available under `/api/v1/knowledge`.

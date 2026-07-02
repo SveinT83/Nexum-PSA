@@ -2,6 +2,7 @@
 
 namespace App\Modules\Knowledge\Tests\Feature;
 
+use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
@@ -106,6 +107,34 @@ class KnowledgeArticleTest extends TestCase
             ->assertJsonPath('data.title', 'API Knowledge Article Updated')
             ->assertJsonPath('data.status', 'needs_review')
             ->assertJsonPath('data.body_html', "<p>Updated body.</p>\n");
+    }
+
+    #[Test]
+    public function knowledge_visibility_scope_remains_separate_from_work_context(): void
+    {
+        Sanctum::actingAs($this->tech, ['knowledge.create']);
+
+        $client = Client::factory()->create(['name' => 'Knowledge Scope Client']);
+
+        $this->postJson(route('api.v1.knowledge.articles.store'), [
+            'title' => 'Client Visible Runbook',
+            'body_markdown' => 'Client scoped content.',
+            'visibility' => 'client-wide',
+            'client_scope_id' => $client->id,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.visibility', 'client-wide')
+            ->assertJsonPath('data.client_scope_id', $client->id);
+
+        $this->postJson(route('api.v1.knowledge.articles.store'), [
+            'title' => 'Public Runbook',
+            'body_markdown' => 'Public content.',
+            'visibility' => 'public',
+            'client_scope_id' => $client->id,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.visibility', 'public')
+            ->assertJsonPath('data.client_scope_id', null);
     }
 
     #[Test]
@@ -667,6 +696,60 @@ class KnowledgeArticleTest extends TestCase
 
         $this->assertSame('Lead Intelligence Overview', $article->title);
         $this->assertSame('LeadIntelligence', $article->source_payload['module']);
+    }
+
+    #[Test]
+    public function repository_documentation_sync_includes_work_context_docs(): void
+    {
+        $this->artisan('knowledge:sync-docs', ['--module' => ['WorkContext']])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 1')
+            ->expectsOutput('modules: WorkContext')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'work-context/work-context-foundation')
+            ->firstOrFail();
+
+        $this->assertSame('Work Context Foundation', $article->title);
+        $this->assertSame('WorkContext', $article->source_payload['module']);
+    }
+
+    #[Test]
+    public function repository_documentation_sync_includes_documentation_docs(): void
+    {
+        $this->artisan('knowledge:sync-docs', ['--module' => ['Documentation']])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 1')
+            ->expectsOutput('modules: Documentation')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'documentation/documentation-overview')
+            ->firstOrFail();
+
+        $this->assertSame('Documentation Overview', $article->title);
+        $this->assertSame('Documentation', $article->source_payload['module']);
+    }
+
+    #[Test]
+    public function repository_documentation_sync_includes_sales_docs(): void
+    {
+        $this->artisan('knowledge:sync-docs', ['--module' => ['Sales']])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 1')
+            ->expectsOutput('modules: Sales')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'sales/sales-api')
+            ->firstOrFail();
+
+        $this->assertSame('Sales API', $article->title);
+        $this->assertSame('Sales', $article->source_payload['module']);
     }
 
     #[Test]

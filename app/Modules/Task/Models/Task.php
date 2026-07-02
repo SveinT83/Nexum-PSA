@@ -9,6 +9,7 @@ use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
+use App\Modules\WorkContext\Models\WorkContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +38,7 @@ class Task extends Model
         'priority_id',
         'category_id',
         'client_id',
+        'work_context_id',
         'site_id',
         'visibility',
         'source_type',
@@ -118,6 +120,11 @@ class Task extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    public function workContext(): BelongsTo
+    {
+        return $this->belongsTo(WorkContext::class, 'work_context_id');
     }
 
     public function site(): BelongsTo

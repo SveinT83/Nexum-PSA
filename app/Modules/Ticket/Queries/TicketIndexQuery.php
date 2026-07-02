@@ -16,7 +16,7 @@ class TicketIndexQuery
     public function paginate(array $filters = [], int $perPage = 25): LengthAwarePaginator
     {
         $query = Ticket::query()
-            ->with(['queue', 'status', 'priority', 'sla', 'category', 'client', 'owner'])
+            ->with(['queue', 'status', 'priority', 'sla', 'category', 'client', 'workContext', 'owner'])
             ->when($filters['q'] ?? null, function ($query, string $search) {
                 $query->where(function ($nested) use ($search) {
                     $nested->where('ticket_key', 'like', '%' . $search . '%')

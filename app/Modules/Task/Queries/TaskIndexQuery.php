@@ -19,7 +19,7 @@ class TaskIndexQuery
         $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
 
         $query = Task::query()
-            ->with(['status', 'queue', 'priority', 'assignee', 'creator', 'category', 'client', 'site', 'tags'])
+            ->with(['status', 'queue', 'priority', 'assignee', 'creator', 'category', 'client', 'workContext', 'site', 'tags'])
             ->withCount(['children', 'checklistItems', 'dependencies']);
 
         if ($search = trim((string) $request->input('q'))) {

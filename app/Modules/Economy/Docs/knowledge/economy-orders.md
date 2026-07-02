@@ -17,6 +17,11 @@ Current flow:
 
 Orders are grouped as one draft order per client per billing period. A client does not get an empty order; the order is created only when the first billable line is added.
 
+Economy remains client-only under the Work Context rollout. Ticket time, ticket costs, quick
+timebank overuse, and other generated order lines must have a real Client before Economy can create
+or attach them to an order. Internal Tickets, Tasks, Assets, and Calendar work are operational records
+only and must not become customer order lines.
+
 Order statuses:
 
 - `draft`: open order that can receive automatic lines.

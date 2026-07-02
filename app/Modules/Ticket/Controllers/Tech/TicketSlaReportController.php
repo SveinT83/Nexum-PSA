@@ -12,6 +12,9 @@ class TicketSlaReportController extends Controller
     public function index(Request $request, TicketSlaReportQuery $report): View
     {
         $period = $request->input('period', '30');
+        $context = in_array($request->input('context', 'client'), ['client', 'internal', 'all'], true)
+            ? $request->input('context', 'client')
+            : 'client';
         $from = match ($period) {
             '7' => now()->subDays(7),
             '90' => now()->subDays(90),
@@ -21,8 +24,9 @@ class TicketSlaReportController extends Controller
 
         return view('ticket::Tech.Reports.sla', [
             'period' => $period,
-            'summary' => $report->summary($from),
-            'overdueTickets' => $report->overdueTickets(),
+            'context' => $context,
+            'summary' => $report->summary($from, context: $context),
+            'overdueTickets' => $report->overdueTickets(context: $context),
         ]);
     }
 }

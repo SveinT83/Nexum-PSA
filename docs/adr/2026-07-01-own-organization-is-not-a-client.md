@@ -1,6 +1,6 @@
 # ADR: Own Organization Is Not A Client
 
-Status: Proposed
+Status: Accepted
 Date: 2026-07-01
 Decision Makers: Svein Tore Ramstad / Codex
 
@@ -84,8 +84,7 @@ Negative:
 
 ## Follow-Up
 
-- Approve or revise RFC `docs/rfc/2026-07-01-work-context-organization-scope.md`.
 - Complete feature slice `docs/feature-slices/2026-07-01-work-context-audit-and-contract.md`.
-- Create the WorkContext module foundation after RFC approval.
+- Create the WorkContext module foundation after the audit slice.
 - Decide in a later cleanup slice when the legacy self-client should be hidden, blocked for new
   work, archived, or deleted.

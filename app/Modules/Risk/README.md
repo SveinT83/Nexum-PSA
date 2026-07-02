@@ -21,6 +21,7 @@ A `RiskAssessment` answers:
 
 - What scope is being assessed?
 - Is the assessment internal or linked to a client?
+- Which Work Context owns the assessment?
 - What is the current lifecycle status?
 - Is every risk item addressed so the assessment can be approved?
 - What is the aggregate risk score for reporting?
@@ -125,6 +126,7 @@ Important model behavior:
 4. `StoreRiskAssessment` creates the record.
 5. New assessments always start with status `new`.
 6. Internal assessments store `client_id = null`; client assessments store the selected client id.
+7. The assessment stores `work_context_id` for internal/client API and report filtering.
 
 ### Assessment Listing
 

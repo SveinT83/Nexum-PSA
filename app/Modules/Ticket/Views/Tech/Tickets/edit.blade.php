@@ -49,7 +49,7 @@
                 <div class="col-md-6">
                     <label for="client_id" class="form-label">Client</label>
                     <select id="client_id" name="client_id" class="form-select @error('client_id') is-invalid @enderror">
-                        <option value="">Unassigned</option>
+                        <option value="">Internal work</option>
                         @foreach ($clients as $client)
                             <option value="{{ $client->id }}" @selected(old('client_id', $ticket->client_id) == $client->id)>
                                 {{ $client->name }}@if($client->client_number) ({{ $client->client_number }})@endif
