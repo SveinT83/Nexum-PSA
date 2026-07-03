@@ -55,6 +55,8 @@ class NexumRelationshipHttpClient
         }
 
         $relationship->markSyncSuccess();
+        $link?->markSynced();
+
         $this->events->handle($relationship, [
             'sync_link_id' => $link?->id,
             'direction' => 'outbound',
