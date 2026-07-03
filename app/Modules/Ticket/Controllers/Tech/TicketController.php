@@ -698,6 +698,7 @@ class TicketController extends Controller
             : $this->ticketCategoryId((int) $data['category_id']);
         $clientId = $data['client_id'] ?? null;
         $contactId = $data['contact_id'] ?? null;
+        $clientChanged = (string) ($ticket->client_id ?? '') !== (string) ($clientId ?? '');
 
         if ($contactId && ! $clientId) {
             return back()
@@ -709,6 +710,16 @@ class TicketController extends Controller
             return back()
                 ->withErrors(['contact_id' => 'The selected contact does not belong to the selected client.'])
                 ->withInput();
+        }
+
+        if ($clientChanged) {
+            if (! empty($data['site_id']) && (! $clientId || ! ClientSite::where('client_id', $clientId)->whereKey($data['site_id'])->exists())) {
+                $data['site_id'] = null;
+            }
+
+            if (! empty($data['asset_id']) && (! $clientId || ! Asset::where('client_id', $clientId)->whereKey($data['asset_id'])->exists())) {
+                $data['asset_id'] = null;
+            }
         }
 
         $siteId = $this->resolveSiteId($clientId, $data['site_id'] ?? null, $contactId, $data['asset_id'] ?? null);

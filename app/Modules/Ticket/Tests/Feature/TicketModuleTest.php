@@ -6,13 +6,13 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
-use App\Models\Settings\CommonSetting;
 use App\Models\Knowledge\Article;
+use App\Models\Settings\CommonSetting;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
-use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
@@ -25,18 +25,22 @@ use App\Modules\Storage\Models\Reservation as StorageReservation;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Task\Models\TaskStatus;
-use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\AddTicketMessage;
+use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
+use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
+use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketAttachment;
-use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\Ticket\Models\TicketAssignmentRule;
-use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketAssignmentSetting;
+use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketMergeSuggestionDismissal;
+use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketRule;
@@ -44,20 +48,16 @@ use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
-use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
-use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\UserManagement\Models\UserProfile;
-use App\Modules\Taxonomy\Models\Category;
-use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -138,41 +138,41 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function ticket_routes_are_owned_by_ticket_module(): void
     {
-        $this->assertSame(TicketController::class . '@index', Route::getRoutes()->getByName('tech.tickets.index')->getActionName());
-        $this->assertSame(TicketSlaReportController::class . '@index', Route::getRoutes()->getByName('tech.reports.tickets.sla')->getActionName());
-        $this->assertSame(TicketController::class . '@show', Route::getRoutes()->getByName('tech.tickets.show')->getActionName());
-        $this->assertSame(TicketController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.edit')->getActionName());
-        $this->assertSame(TicketController::class . '@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
-        $this->assertSame(TicketController::class . '@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
-        $this->assertSame(TicketController::class . '@requestDocumentation', Route::getRoutes()->getByName('tech.tickets.documentation-request')->getActionName());
-        $this->assertSame(TicketController::class . '@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
-        $this->assertSame(TicketController::class . '@storeTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.store')->getActionName());
-        $this->assertSame(TicketController::class . '@draftTimeEntryInvoiceText', Route::getRoutes()->getByName('tech.tickets.time-entries.draft')->getActionName());
-        $this->assertSame(TicketController::class . '@updateTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.update')->getActionName());
-        $this->assertSame(TicketController::class . '@storeCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.store')->getActionName());
-        $this->assertSame(TicketController::class . '@updateCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.update')->getActionName());
-        $this->assertSame(TicketController::class . '@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
-        $this->assertSame(TicketController::class . '@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
-        $this->assertSame(TicketController::class . '@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
-        $this->assertSame(TicketController::class . '@mergeSelected', Route::getRoutes()->getByName('tech.tickets.merge')->getActionName());
-        $this->assertSame(TicketController::class . '@dismissMergeSuggestion', Route::getRoutes()->getByName('tech.tickets.merge-suggestions.dismiss')->getActionName());
-        $this->assertSame(TicketController::class . '@markNotTicket', Route::getRoutes()->getByName('tech.tickets.not-ticket')->getActionName());
-        $this->assertSame(TicketController::class . '@destroy', Route::getRoutes()->getByName('tech.tickets.destroy')->getActionName());
-        $this->assertSame(TicketController::class . '@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@updateMergeSettings', Route::getRoutes()->getByName('tech.admin.settings.tickets.merge-settings.update')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@updateSolutionPolicy', Route::getRoutes()->getByName('tech.admin.settings.tickets.solution-policy.update')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@storePriority', Route::getRoutes()->getByName('tech.admin.settings.tickets.priorities.store')->getActionName());
-        $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController::class . '@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
-        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\TicketAssignmentSettingsAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.technicians')->getActionName());
-        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.assignment-rules')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@workflows', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@createWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.create')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@storeWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.store')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@editWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.edit')->getActionName());
-        $this->assertSame(TicketSettingsController::class . '@updateWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.update')->getActionName());
-        $this->assertSame(\App\Modules\Ticket\Controllers\Api\V1\TicketController::class . '@storeExternalMessage', Route::getRoutes()->getByName('api.v1.tickets.external-messages.store')->getActionName());
+        $this->assertSame(TicketController::class.'@index', Route::getRoutes()->getByName('tech.tickets.index')->getActionName());
+        $this->assertSame(TicketSlaReportController::class.'@index', Route::getRoutes()->getByName('tech.reports.tickets.sla')->getActionName());
+        $this->assertSame(TicketController::class.'@show', Route::getRoutes()->getByName('tech.tickets.show')->getActionName());
+        $this->assertSame(TicketController::class.'@edit', Route::getRoutes()->getByName('tech.tickets.edit')->getActionName());
+        $this->assertSame(TicketController::class.'@update', Route::getRoutes()->getByName('tech.tickets.update')->getActionName());
+        $this->assertSame(TicketController::class.'@close', Route::getRoutes()->getByName('tech.tickets.close')->getActionName());
+        $this->assertSame(TicketController::class.'@requestDocumentation', Route::getRoutes()->getByName('tech.tickets.documentation-request')->getActionName());
+        $this->assertSame(TicketController::class.'@markRead', Route::getRoutes()->getByName('tech.tickets.read')->getActionName());
+        $this->assertSame(TicketController::class.'@storeTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.store')->getActionName());
+        $this->assertSame(TicketController::class.'@draftTimeEntryInvoiceText', Route::getRoutes()->getByName('tech.tickets.time-entries.draft')->getActionName());
+        $this->assertSame(TicketController::class.'@updateTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.update')->getActionName());
+        $this->assertSame(TicketController::class.'@storeCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.store')->getActionName());
+        $this->assertSame(TicketController::class.'@updateCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.update')->getActionName());
+        $this->assertSame(TicketController::class.'@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
+        $this->assertSame(TicketController::class.'@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
+        $this->assertSame(TicketController::class.'@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
+        $this->assertSame(TicketController::class.'@mergeSelected', Route::getRoutes()->getByName('tech.tickets.merge')->getActionName());
+        $this->assertSame(TicketController::class.'@dismissMergeSuggestion', Route::getRoutes()->getByName('tech.tickets.merge-suggestions.dismiss')->getActionName());
+        $this->assertSame(TicketController::class.'@markNotTicket', Route::getRoutes()->getByName('tech.tickets.not-ticket')->getActionName());
+        $this->assertSame(TicketController::class.'@destroy', Route::getRoutes()->getByName('tech.tickets.destroy')->getActionName());
+        $this->assertSame(TicketController::class.'@downloadAttachment', Route::getRoutes()->getByName('tech.tickets.attachments.download')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@index', Route::getRoutes()->getByName('tech.admin.settings.tickets')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@updateMergeSettings', Route::getRoutes()->getByName('tech.admin.settings.tickets.merge-settings.update')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@updateSolutionPolicy', Route::getRoutes()->getByName('tech.admin.settings.tickets.solution-policy.update')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@storeStatus', Route::getRoutes()->getByName('tech.admin.settings.tickets.statuses.store')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@storePriority', Route::getRoutes()->getByName('tech.admin.settings.tickets.priorities.store')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController::class.'@edit', Route::getRoutes()->getByName('tech.tickets.profile.edit')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\TicketAssignmentSettingsAdminController::class.'@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.technicians')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController::class.'@index', Route::getRoutes()->getByName('tech.admin.settings.tickets.assignment-rules')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@workflows', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@createWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.create')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@storeWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.store')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@editWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.edit')->getActionName());
+        $this->assertSame(TicketSettingsController::class.'@updateWorkflow', Route::getRoutes()->getByName('tech.admin.settings.tickets.workflows.update')->getActionName());
+        $this->assertSame(\App\Modules\Ticket\Controllers\Api\V1\TicketController::class.'@storeExternalMessage', Route::getRoutes()->getByName('api.v1.tickets.external-messages.store')->getActionName());
     }
 
     #[Test]
@@ -1192,7 +1192,7 @@ class TicketModuleTest extends TestCase
 
         $ticket = Ticket::firstOrFail();
 
-        $this->assertStringStartsWith('TD-' . now()->format('Y') . '-', $ticket->ticket_key);
+        $this->assertStringStartsWith('TD-'.now()->format('Y').'-', $ticket->ticket_key);
         $this->assertSame('Printer cannot scan', $ticket->subject);
         $this->assertSame($category->id, $ticket->category_id);
         $this->assertSame($this->tech->id, $ticket->owner_id);
@@ -1262,7 +1262,7 @@ class TicketModuleTest extends TestCase
                 '_time_entry_form' => '1',
                 'work_date' => '2026-05-19',
                 'minutes' => 45,
-                'rate_key' => 'global:' . $rate->id,
+                'rate_key' => 'global:'.$rate->id,
                 'invoice_text' => 'Bluetooth troubleshooting and driver follow-up.',
             ])
             ->assertRedirect(route('tech.tickets.show', $ticket));
@@ -1324,7 +1324,7 @@ class TicketModuleTest extends TestCase
                 '_time_entry_form' => '1',
                 'work_date' => '2026-05-19',
                 'minutes' => 45,
-                'rate_key' => 'global:' . $originalRate->id,
+                'rate_key' => 'global:'.$originalRate->id,
                 'invoice_text' => 'Initial technical work.',
             ])
             ->assertRedirect(route('tech.tickets.show', $ticket));
@@ -1335,7 +1335,7 @@ class TicketModuleTest extends TestCase
             ->patch(route('tech.tickets.time-entries.update', [$ticket, $entry]), [
                 'work_date' => '2026-05-20',
                 'minutes' => 30,
-                'rate_key' => 'global:' . $updatedRate->id,
+                'rate_key' => 'global:'.$updatedRate->id,
                 'invoice_text' => 'Kjoring til kunde.',
                 'note' => 'Adjusted from timer.',
             ])
@@ -1402,7 +1402,7 @@ class TicketModuleTest extends TestCase
                 '_time_entry_form' => '1',
                 'work_date' => '2026-05-19',
                 'minutes' => 30,
-                'rate_key' => 'contract:' . $rate->id,
+                'rate_key' => 'contract:'.$rate->id,
                 'invoice_text' => 'Remote support according to active agreement.',
             ])
             ->assertRedirect(route('tech.tickets.show', $ticket));
@@ -1886,7 +1886,7 @@ class TicketModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Reassign Client')
             ->assertSee('Reassign Contact')
-            ->assertSee('data-client-id="' . $client->id . '"', false)
+            ->assertSee('data-client-id="'.$client->id.'"', false)
             ->assertSee('const syncContactOptions', false)
             ->assertSee('contactSelect.disabled = selectedClientId ===', false);
 
@@ -1927,6 +1927,59 @@ class TicketModuleTest extends TestCase
             'ticket_id' => $ticket->id,
             'type' => 'fields_updated',
         ]);
+    }
+
+    #[Test]
+    public function changing_ticket_client_ignores_stale_site_and_asset_from_previous_client(): void
+    {
+        $oldClient = Client::factory()->create(['name' => 'Old Ticket Client']);
+        $oldSite = ClientSite::factory()->create([
+            'client_id' => $oldClient->id,
+            'name' => 'Old Default Site',
+            'is_default' => true,
+        ]);
+        $oldAsset = Asset::create([
+            'client_id' => $oldClient->id,
+            'site_id' => $oldSite->id,
+            'name' => 'Old Client Laptop',
+            'type' => Asset::TYPE_LAPTOP,
+        ]);
+        $newClient = Client::factory()->create([
+            'name' => 'Internal Tronder Data',
+            'client_number' => '00000',
+        ]);
+        $newSite = ClientSite::factory()->create([
+            'client_id' => $newClient->id,
+            'name' => 'New Default Site',
+            'is_default' => true,
+        ]);
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999065',
+            'client_id' => $oldClient->id,
+            'site_id' => $oldSite->id,
+            'asset_id' => $oldAsset->id,
+            'subject' => 'Ticket with stale client context',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.update', $ticket), [
+                'subject' => 'Ticket with new client context',
+                'description' => null,
+                'queue_id' => $ticket->queue_id,
+                'status_id' => $ticket->status_id,
+                'priority_id' => $ticket->priority_id,
+                'client_id' => $newClient->id,
+                'site_id' => $oldSite->id,
+                'asset_id' => $oldAsset->id,
+                'owner_id' => $this->tech->id,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $ticket->refresh();
+
+        $this->assertSame($newClient->id, $ticket->client_id);
+        $this->assertSame($newSite->id, $ticket->site_id);
+        $this->assertNull($ticket->asset_id);
     }
 
     #[Test]
@@ -3250,8 +3303,7 @@ class TicketModuleTest extends TestCase
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
             $mock->shouldReceive('send')
                 ->once()
-                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments = []) =>
-                    $resolvedAccount->is($account)
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments = []) => $resolvedAccount->is($account)
                     && $toEmail === 'ada@example.com'
                     && $toName === 'Ada Contact'
                     && $subject === '[TD-2026-999004] SMTP job ticket'
@@ -3330,8 +3382,7 @@ class TicketModuleTest extends TestCase
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
             $mock->shouldReceive('send')
                 ->once()
-                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments) =>
-                    $resolvedAccount->is($account)
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments) => $resolvedAccount->is($account)
                     && $toEmail === 'attach@example.com'
                     && $toName === 'Attachment Contact'
                     && $subject === '[TD-2026-999024] Attachment reply ticket'
@@ -3401,8 +3452,7 @@ class TicketModuleTest extends TestCase
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
             $mock->shouldReceive('send')
                 ->once()
-                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments, $ccRecipients) =>
-                    $resolvedAccount->is($account)
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments, $ccRecipients) => $resolvedAccount->is($account)
                     && $toEmail === 'correct@example.com'
                     && $toName === 'Correct Contact'
                     && $ccRecipients === [['email' => 'thirdparty@example.com', 'name' => '']]
@@ -3455,8 +3505,7 @@ class TicketModuleTest extends TestCase
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
             $mock->shouldReceive('send')
                 ->once()
-                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text) =>
-                    $resolvedAccount->is($account)
+                ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text) => $resolvedAccount->is($account)
                     && $toEmail === 'notify-tech@example.com'
                     && $toName === 'Notify Tech'
                     && $subject === '[TD-2026-999043] Internal note notification'
