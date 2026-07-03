@@ -1161,7 +1161,7 @@ class TicketController extends Controller
             ->where(fn ($query) => $query->where('do_not_email', false)->orWhereNull('do_not_email'))
             ->whereHas('emails')
             ->orderBy('display_name')
-            ->limit(100)
+            ->limit(40)
             ->get()
             ->each(function (Contact $contact) use ($addSuggestion): void {
                 $contact->emails
@@ -1169,7 +1169,7 @@ class TicketController extends Controller
                     ->each(fn ($email) => $addSuggestion($email->email, $contact->display_name, 'Global contacts'));
             });
 
-        return $suggestions->take(80)->values();
+        return $suggestions->take(40)->values();
     }
 
     private function clientContactSuggestions(Ticket $ticket): Collection

@@ -2438,6 +2438,7 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
+            ->assertSee('id="cc_contact_suggestions" class="mt-2 d-none" aria-hidden="true"', false)
             ->assertSee('CC suggestions')
             ->assertSee('data-cc-email="alpha.cc@example.com"', false)
             ->assertSee('data-cc-email="beta.cc@example.com"', false)

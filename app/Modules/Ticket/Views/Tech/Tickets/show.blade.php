@@ -521,7 +521,7 @@
                                         <input id="cc" name="cc" type="text" class="form-control @error('cc') is-invalid @enderror" value="{{ old('cc') }}" placeholder="thirdparty@example.com">
                                         @error('cc')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         @if($ccContactSuggestions->isNotEmpty())
-                                            <div id="cc_contact_suggestions" class="mt-2">
+                                            <div id="cc_contact_suggestions" @class(['mt-2', 'd-none' => blank(old('cc'))]) aria-hidden="{{ blank(old('cc')) ? 'true' : 'false' }}">
                                                 <div class="small text-muted fw-semibold mb-1">CC suggestions</div>
                                                 @foreach($ccSuggestionGroups as $group => $suggestions)
                                                     <div class="small text-muted mt-2">{{ $group }}</div>
@@ -937,11 +937,26 @@
             }, 150);
         });
 
+        const ccSuggestions = document.getElementById('cc_contact_suggestions');
+        const showCcSuggestions = function () {
+            if (! ccSuggestions) {
+                return;
+            }
+
+            ccSuggestions.classList.remove('d-none');
+            ccSuggestions.setAttribute('aria-hidden', 'false');
+        };
+
+        ccInput?.addEventListener('focus', showCcSuggestions);
+        ccInput?.addEventListener('click', showCcSuggestions);
+
         document.querySelectorAll('[data-cc-email]').forEach(function (button) {
             button.addEventListener('click', function () {
                 if (! ccInput) {
                     return;
                 }
+
+                showCcSuggestions();
 
                 const email = this.dataset.ccEmail;
                 const current = ccInput.value
