@@ -3,8 +3,12 @@
 namespace App\Modules\Notification\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Contact\Models\Contact;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
+use App\Modules\Notification\Actions\SendTransactionalSms;
 use App\Modules\Notification\Models\NotificationChannel;
+use App\Modules\Notification\Models\NotificationSmsMessage;
+use App\Modules\Notification\Models\NotificationSmsTemplate;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +53,8 @@ class NotificationChannelController extends Controller
             'nextcloudConnections' => $nextcloudConnections,
             'nextcloudConnection' => $nextcloudConnection,
             'nextcloudReady' => (bool) $nextcloudConnection,
+            'smsTemplates' => $channel->driver === 'sms' ? $this->activeSmsTemplates() : collect(),
+            'smsTestContacts' => $channel->driver === 'sms' ? $this->smsTestContacts() : collect(),
         ]);
     }
 
@@ -59,6 +65,10 @@ class NotificationChannelController extends Controller
     {
         if ($channel->driver === 'nextcloud_talk') {
             return $this->updateNextcloudTalkChannel($request, $channel);
+        }
+
+        if ($channel->driver === 'sms') {
+            return $this->updateSmsChannel($request, $channel);
         }
 
         $validated = $request->validate([
@@ -81,6 +91,35 @@ class NotificationChannelController extends Controller
         }
 
         $channel->save();
+
+        return redirect()->route('tech.admin.notification-channels.edit', $channel)
+            ->with('success', "Notification channel '{$channel->label}' updated.");
+    }
+
+    /**
+     * Update dry-run SMS settings.
+     */
+    private function updateSmsChannel(Request $request, NotificationChannel $channel): RedirectResponse
+    {
+        $validated = $request->validate([
+            'is_enabled' => ['nullable', 'boolean'],
+            'config' => ['nullable', 'array'],
+            'config.provider' => ['required', 'string', Rule::in(['dry_run'])],
+            'config.sender_name' => ['nullable', 'string', 'max:40'],
+            'config.default_country_code' => ['required', 'string', 'max:8', 'regex:/^\+[0-9]{1,7}$/'],
+        ]);
+
+        $config = array_merge($channel->config ?? [], [
+            'provider' => $validated['config']['provider'],
+            'sender_name' => trim((string) ($validated['config']['sender_name'] ?? '')) ?: 'Nexum',
+            'default_country_code' => $validated['config']['default_country_code'],
+        ]);
+
+        $channel->forceFill([
+            'is_enabled' => $request->boolean('is_enabled'),
+            'config' => $config,
+            'secrets' => null,
+        ])->save();
 
         return redirect()->route('tech.admin.notification-channels.edit', $channel)
             ->with('success', "Notification channel '{$channel->label}' updated.");
@@ -140,9 +179,9 @@ class NotificationChannelController extends Controller
     /**
      * Test the connection to a notification channel.
      */
-    public function test(NotificationChannel $channel): RedirectResponse
+    public function test(Request $request, NotificationChannel $channel): RedirectResponse
     {
-        $result = $this->testChannelConnection($channel);
+        $result = $this->testChannelConnection($channel, $request);
 
         $channel->last_tested_at = now();
         $channel->last_test_result = $result['success'] ? 'OK' : $result['message'];
@@ -160,8 +199,12 @@ class NotificationChannelController extends Controller
     /**
      * Send a test notification to the channel.
      */
-    protected function testChannelConnection(NotificationChannel $channel): array
+    protected function testChannelConnection(NotificationChannel $channel, Request $request): array
     {
+        if ($channel->driver === 'sms') {
+            return $this->testSmsChannel($request);
+        }
+
         if ($channel->driver === 'nextcloud_talk') {
             if (! $this->selectedNextcloudConnection($channel)) {
                 return ['success' => false, 'message' => 'Nextcloud integration is not configured.'];
@@ -189,6 +232,31 @@ class NotificationChannelController extends Controller
         }
 
         return ['success' => false, 'message' => 'No test available for this channel driver.'];
+    }
+
+    /**
+     * Log a dry-run SMS test send to a selected Contact.
+     */
+    private function testSmsChannel(Request $request): array
+    {
+        $validated = $request->validate([
+            'test_contact_id' => ['required', 'integer', Rule::exists('contacts', 'id')],
+            'test_template_key' => ['required', 'string', Rule::exists('notification_sms_templates', 'key')->where('is_active', true)],
+        ]);
+
+        $contact = Contact::query()->with('phones')->findOrFail($validated['test_contact_id']);
+        $message = app(SendTransactionalSms::class)->handle(
+            contact: $contact,
+            templateKey: $validated['test_template_key'],
+            actor: $request->user(),
+            sourceType: 'notification_channel_test',
+        );
+
+        if ($message->status === NotificationSmsMessage::STATUS_DRY_RUN) {
+            return ['success' => true, 'message' => 'Dry-run SMS logged.'];
+        }
+
+        return ['success' => false, 'message' => $message->failure_reason ?: 'SMS test was blocked.'];
     }
 
     /**
@@ -236,5 +304,24 @@ class NotificationChannelController extends Controller
             ->orderByRaw("case when scope = 'global' then 1 else 0 end desc")
             ->orderBy('name')
             ->first();
+    }
+
+    private function activeSmsTemplates()
+    {
+        return NotificationSmsTemplate::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function smsTestContacts()
+    {
+        return Contact::query()
+            ->with('phones')
+            ->where('status', 'active')
+            ->whereHas('phones')
+            ->orderBy('display_name')
+            ->limit(100)
+            ->get();
     }
 }

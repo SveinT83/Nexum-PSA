@@ -26,7 +26,10 @@
                         {{ $event['ends_at']->timezone($timezone)->format('D M j, H:i') }}
                     </div>
                     <div class="col-md-7">
-                        <div class="fw-semibold">{{ $event['title'] }}</div>
+                        <div class="d-flex align-items-start justify-content-between gap-2">
+                            <div class="fw-semibold">{{ $event['title'] }}</div>
+                            <span class="badge text-bg-light border flex-shrink-0">{{ $event['ownership_badge'] }}</span>
+                        </div>
                         <div class="small text-muted">{{ $event['calendar_name'] }} · {{ ucfirst($event['visibility']) }} · {{ str_replace('_', ' ', $event['transparency']) }}</div>
                         @if($event['description'])
                             <div class="small mt-1">{{ $event['description'] }}</div>

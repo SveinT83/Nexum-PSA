@@ -34,8 +34,8 @@ class ReserveTicketStorageItem
                 throw new InvalidArgumentException('Quantity must be at least 1.');
             }
 
-            if ($item->qty_available < $quantity) {
-                throw new InvalidArgumentException('Not enough available stock to reserve this item.');
+            if (! $item->can_be_ordered && $item->qty_available < $quantity) {
+                throw new InvalidArgumentException('This item cannot be ordered, so only available stock can be reserved.');
             }
 
             $reservation = Reservation::create([

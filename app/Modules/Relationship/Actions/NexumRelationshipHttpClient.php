@@ -10,7 +10,9 @@ use Illuminate\Support\Str;
 
 class NexumRelationshipHttpClient
 {
-    public function __construct(private readonly RecordSyncEvent $events) {}
+    public function __construct(private readonly RecordSyncEvent $events)
+    {
+    }
 
     public function post(
         NexumRelationship $relationship,

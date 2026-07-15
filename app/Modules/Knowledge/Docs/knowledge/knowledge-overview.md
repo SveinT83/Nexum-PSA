@@ -34,6 +34,17 @@ who can read an article. They do not mean that the article itself owns internal 
 Client-wide articles may use `client_scope_id`, while public and internal articles clear that
 client-specific scope.
 
+## Customer Portal
+
+The Customer Portal can show Knowledge articles that are safe for customer access:
+
+- `published` articles with `public` visibility.
+- `published` articles with `client-wide` visibility when `client_scope_id` matches the active
+  portal Client.
+
+Draft, archived, internal, and other-client articles are hidden from portal routes. Portal article
+views increment the normal article view count.
+
 ## API
 
 Knowledge API routes are available under `/api/v1/knowledge`.

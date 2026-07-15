@@ -59,6 +59,32 @@
         </form>
     </x-card.default>
 
+    <!-- Customer portal policy: controls how manually created client tickets start their customer-facing lifecycle. -->
+    <x-card.default title="Customer Portal">
+        <form method="POST" action="{{ route('tech.admin.settings.tickets.portal-policy.update') }}">
+            @csrf
+
+            @php
+                $selectedPortalDefault = old('default_customer_visibility', $portalPolicy['default_customer_visibility'] ?? \App\Modules\Ticket\Support\TicketPortalPolicy::VISIBILITY_UNPUBLISHED);
+            @endphp
+
+            <div class="mb-3">
+                <label for="default_customer_visibility" class="form-label">Default visibility for new client tickets</label>
+                <select id="default_customer_visibility" name="default_customer_visibility" class="form-select @error('default_customer_visibility') is-invalid @enderror">
+                    @foreach(\App\Modules\Ticket\Support\TicketPortalPolicy::visibilityOptions() as $value => $label)
+                        <option value="{{ $value }}" @selected($selectedPortalDefault === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                @error('default_customer_visibility')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <div class="form-text">
+                    Unpublished keeps manually created client tickets silent until a technician publishes them. Published makes them customer-visible immediately.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save customer portal policy</button>
+        </form>
+    </x-card.default>
+
     <!-- Ticket merge settings: manual merge is always available; automation and suggestions are explicitly controlled. -->
     <x-card.default title="Ticket Merging">
         <form method="POST" action="{{ route('tech.admin.settings.tickets.merge-settings.update') }}">

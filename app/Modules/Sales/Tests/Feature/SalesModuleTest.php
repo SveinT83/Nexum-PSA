@@ -12,6 +12,9 @@ use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\Marketing\Models\MarketingCampaignEvent;
+use App\Modules\Marketing\Models\MarketingInterestAssignment;
+use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Sales\Controllers\Admin\SalesSettingsController;
 use App\Modules\Sales\Controllers\PublicQuoteController;
 use App\Modules\Sales\Controllers\Tech\LeadsController;
@@ -349,6 +352,53 @@ class SalesModuleTest extends TestCase
             ->assertSee('Group')
             ->assertSee('Start sales process')
             ->assertDontSee('Clients without active contracts, ready to start a sales process.');
+    }
+
+    #[Test]
+    public function sales_leads_show_marketing_engagement_without_separate_call_lists(): void
+    {
+        $lead = Client::create([
+            'name' => 'Marketing Warm Lead AS',
+            'active' => true,
+            'lead_temperature' => 3,
+        ]);
+        $interest = MarketingInterestTag::query()->create([
+            'key' => 'clicked-website',
+            'name' => 'Clicked website content',
+            'is_active' => true,
+        ]);
+        $event = MarketingCampaignEvent::query()->create([
+            'client_id' => $lead->id,
+            'type' => 'click',
+            'url' => 'https://example.test/wordpress-hosting',
+            'metadata' => ['interest_tag_keys' => ['clicked-website']],
+            'occurred_at' => now(),
+        ]);
+        MarketingCampaignEvent::query()->create([
+            'client_id' => $lead->id,
+            'type' => 'open',
+            'occurred_at' => now(),
+        ]);
+        MarketingInterestAssignment::query()->create([
+            'marketing_interest_tag_id' => $interest->id,
+            'client_id' => $lead->id,
+            'first_event_id' => $event->id,
+            'last_event_id' => $event->id,
+            'first_seen_at' => now(),
+            'last_seen_at' => now(),
+            'event_count' => 2,
+            'engagement_score' => 20,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.sales.leads.index'))
+            ->assertOk()
+            ->assertSee('Marketing Warm Lead AS')
+            ->assertSee('Marketing:')
+            ->assertSee('20')
+            ->assertSee('1 opens')
+            ->assertSee('1 clicks')
+            ->assertDontSee('Call list');
     }
 
     #[Test]

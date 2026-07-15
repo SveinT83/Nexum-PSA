@@ -28,6 +28,25 @@ Avoid:
 - Inconsistent button sizes, colors, and action labels.
 - Page sections that exist only to look balanced but do not help the workflow.
 
+## Responsive And PWA Direction
+
+Nexum should be one responsive application and one PWA across desktop and
+mobile. Do not design or describe a separate mobile version, reduced
+"mini-Nexum", or alternate mobile-only workflow.
+
+Mobile and small-screen layouts should keep the same modules, URLs,
+permissions, and business behavior while adapting the shell and surfaces:
+sidebar navigation becomes hamburger/offcanvas navigation, tables and panels
+become mobile-friendly, and touch targets stay usable. Customer Portal may have
+its own scoped customer access, but it should follow the same responsive/PWA
+principle rather than becoming a separate product.
+
+PWA behavior is online-first unless a workflow has an approved offline-write
+slice with conflict handling, queued sync status, and tests. Service workers may
+cache static assets and show a static offline page for failed navigations, but
+they must not present private HTML, API responses, or submitted writes as
+durable offline data by default.
+
 ## Layout Shell
 
 The main tech layout is `resources/views/layouts/default_tech.blade.php`.

@@ -57,6 +57,16 @@ when a Client/Site relation should be created.
 
 Do not build new long-term person workflows on `client_users`.
 
+## Customer Portal Memberships
+
+Customer Portal access is granted to a Contact for an explicit Client or Site scope. Client-wide
+membership covers the Client, while Site membership limits the portal context to that Site.
+
+The foundation release only proves identity, invitation, account activation, membership switching,
+and access boundaries. Tickets, contracts, documents, billing, and other Client data must not be
+exposed in the portal until those domains add explicit portal slices with their own permissions and
+tests.
+
 ## API Usage
 
 Client API routes are available under `/api/v1`.

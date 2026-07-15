@@ -42,7 +42,11 @@
                             Enable {{ $channel->label }}
                         </label>
                         <p class="text-muted small mt-1">
-                            When enabled, users can choose to receive notifications through this channel.
+                            @if($channel->driver === 'sms')
+                                When enabled, approved workflows can log transactional SMS through the configured provider.
+                            @else
+                                When enabled, users can choose to receive notifications through this channel.
+                            @endif
                         </p>
                     </div>
 
@@ -128,6 +132,74 @@
                             <li>Enable the channel and click <strong>Test Connection</strong>.</li>
                             <li>Users can also set their own webhook URL in their <strong>Notification Preferences</strong> to receive personal notifications.</li>
                         </ol>
+                    </div>
+                </div>
+            @endif
+
+            @if($channel->driver === 'sms')
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header py-2">
+                        <h5 class="mb-0">SMS Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="smsProvider" class="form-label">Provider</label>
+                                <select name="config[provider]" id="smsProvider" class="form-select @error('config.provider') is-invalid @enderror">
+                                    <option value="dry_run" @selected(($channel->config['provider'] ?? 'dry_run') === 'dry_run')>Dry-run</option>
+                                </select>
+                                @error('config.provider')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Dry-run logs messages without sending to an external provider.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="smsSenderName" class="form-label">Sender name</label>
+                                <input type="text" name="config[sender_name]" id="smsSenderName" class="form-control @error('config.sender_name') is-invalid @enderror" value="{{ old('config.sender_name', $channel->config['sender_name'] ?? 'Nexum') }}" maxlength="40">
+                                @error('config.sender_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label for="smsDefaultCountryCode" class="form-label">Default country code</label>
+                                <input type="text" name="config[default_country_code]" id="smsDefaultCountryCode" class="form-control @error('config.default_country_code') is-invalid @enderror" value="{{ old('config.default_country_code', $channel->config['default_country_code'] ?? '+47') }}" placeholder="+47">
+                                @error('config.default_country_code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Used when a stored phone number is local format.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header py-2">
+                        <h5 class="mb-0">Dry-Run Test</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-lg-7">
+                                <label for="smsTestContactId" class="form-label">Contact</label>
+                                <select name="test_contact_id" id="smsTestContactId" form="notification-channel-test-form" class="form-select">
+                                    <option value="">Select contact with phone</option>
+                                    @foreach($smsTestContacts as $contact)
+                                        @php($phone = $contact->phones->firstWhere('is_primary', true) ?: $contact->phones->first())
+                                        <option value="{{ $contact->id }}">
+                                            {{ $contact->display_name }} @if($phone) - {{ $phone->phone }}{{ $phone->sms_allowed ? ' (SMS allowed)' : ' (SMS not allowed)' }} @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="form-text">The send action still blocks contacts without SMS permission.</div>
+                            </div>
+                            <div class="col-lg-5">
+                                <label for="smsTestTemplateKey" class="form-label">Template</label>
+                                <select name="test_template_key" id="smsTestTemplateKey" form="notification-channel-test-form" class="form-select">
+                                    @foreach($smsTemplates as $template)
+                                        <option value="{{ $template->key }}">{{ $template->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             @endif

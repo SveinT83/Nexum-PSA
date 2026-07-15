@@ -40,6 +40,7 @@ class StorageItemResource extends JsonResource
             'needs_reorder' => $this->needs_reorder,
             'suggested_order_qty' => $this->suggested_order_qty,
             'should_order' => $this->should_order,
+            'can_be_ordered' => $this->can_be_ordered,
             'status' => $this->status,
             'warehouse_id' => $this->warehouse_id,
             'room_id' => $this->room_id,

@@ -100,14 +100,14 @@
               <div class="col-md-5">
                 <label class="form-label" for="action_type_{{ $index }}">Action</label>
                 <select id="action_type_{{ $index }}" name="actions[{{ $index }}][type]" class="form-select">
-                  @foreach(['link_ticket_by_subject_token' => 'Link to ticket by subject token', 'create_ticket' => 'Create ticket from inbound email', 'archive' => 'Archive / hide from inbox', 'tag' => 'Apply tag'] as $value => $label)
+                  @foreach(['link_ticket_by_subject_token' => 'Link to ticket by subject token', 'create_ticket' => 'Create ticket from inbound email', 'archive' => 'Archive / hide from inbox', 'tag' => 'Apply tag', 'emit_signal' => 'Emit Signal'] as $value => $label)
                     <option value="{{ $value }}" @selected(($action['type'] ?? '') === $value)>{{ $label }}</option>
                   @endforeach
                 </select>
               </div>
               <div class="col-md-7">
-                <label class="form-label" for="action_value_{{ $index }}">Value</label>
-                <input id="action_value_{{ $index }}" name="actions[{{ $index }}][value]" class="form-control" value="{{ $action['value'] ?? '' }}" placeholder="Tag name, queue id, or queue slug if action uses one" list="email-rule-tag-suggestions">
+                <label class="form-label" for="action_value_{{ $index }}">Value / signal type</label>
+                <input id="action_value_{{ $index }}" name="actions[{{ $index }}][value]" class="form-control" value="{{ $action['value'] ?? $action['signal_type'] ?? '' }}" placeholder="Tag name, queue id, queue slug, or signal_type" list="email-rule-tag-suggestions">
               </div>
             </div>
           @endforeach
@@ -134,5 +134,6 @@
     <p class="small text-muted mb-2">Spam filter: from domain contains bad-domain.example, action archive, stop processing.</p>
     <p class="small text-muted">Ticket replies: has ticket key present, action link to ticket by subject token.</p>
     <p class="small text-muted">New inbound tickets: recipient or mailbox condition, action create ticket from inbound email. Optional value can be a queue id or slug.</p>
+    <p class="small text-muted mb-0">Signal handoff: choose Emit Signal and set the value to a signal type such as <code>security_notice</code>. Signal rules decide any cross-module follow-up.</p>
   </div>
 @endsection

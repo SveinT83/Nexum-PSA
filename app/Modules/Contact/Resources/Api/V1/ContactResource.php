@@ -26,6 +26,7 @@ class ContactResource extends JsonResource
             'job_title' => $this->job_title,
             'primary_email' => $primaryEmail?->email,
             'primary_phone' => $primaryPhone?->phone,
+            'primary_phone_sms_allowed' => (bool) $primaryPhone?->sms_allowed,
             'preferred_language' => $this->preferred_language,
             'communication_language' => $this->communication_language,
             'timezone' => $this->timezone,
@@ -43,6 +44,7 @@ class ContactResource extends JsonResource
                 'label' => $phone->label,
                 'phone' => $phone->phone,
                 'is_primary' => (bool) $phone->is_primary,
+                'sms_allowed' => (bool) $phone->sms_allowed,
             ])->values()),
             'relations' => $this->whenLoaded('relations', fn () => $this->relations->map(fn ($relation) => [
                 'id' => $relation->id,

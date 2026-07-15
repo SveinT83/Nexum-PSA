@@ -47,6 +47,35 @@ class NotificationSetting extends Model
         'asset_alert_resolved' => 'Asset Alert Resolved',
         'invitation_sent' => 'Invitation Sent',
         'system_announcement' => 'System Announcement',
+        'portal_ticket_created' => 'Portal Ticket Created',
+        'portal_ticket_reply' => 'Portal Ticket Reply',
+        'portal_ticket_status_changed' => 'Portal Ticket Status Changed',
+        'portal_document_published' => 'Portal Document Published',
+        'portal_document_updated' => 'Portal Document Updated',
+        'portal_knowledge_published' => 'Portal Knowledge Published',
+        'portal_knowledge_updated' => 'Portal Knowledge Updated',
+        'portal_quote_sent' => 'Portal Quote Sent',
+        'portal_quote_accepted' => 'Portal Quote Accepted',
+        'portal_contract_sent' => 'Portal Contract Sent',
+        'portal_contract_accepted' => 'Portal Contract Accepted',
+        'portal_order_published' => 'Portal Order Published',
+        'portal_order_status_changed' => 'Portal Order Status Changed',
+    ];
+
+    public const CUSTOMER_PORTAL_TYPES = [
+        'portal_ticket_created' => 'Ticket created',
+        'portal_ticket_reply' => 'Ticket replies',
+        'portal_ticket_status_changed' => 'Ticket status changes',
+        'portal_document_published' => 'New documents',
+        'portal_document_updated' => 'Document updates',
+        'portal_knowledge_published' => 'New knowledge articles',
+        'portal_knowledge_updated' => 'Knowledge article updates',
+        'portal_quote_sent' => 'New quotes',
+        'portal_quote_accepted' => 'Quote acceptance',
+        'portal_contract_sent' => 'New contracts',
+        'portal_contract_accepted' => 'Contract acceptance',
+        'portal_order_published' => 'New orders',
+        'portal_order_status_changed' => 'Order status changes',
     ];
 
     /**

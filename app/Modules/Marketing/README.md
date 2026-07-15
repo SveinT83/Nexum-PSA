@@ -42,17 +42,22 @@ The implemented foundation now covers:
   recipient batch throttling, and safe removal/deactivation.
 - AI-assisted campaign email drafting through active Integration AI agents. AI suggestions update
   the editable form only and must still be saved by the technician.
+- Campaign completion policy for stopping after a completed sequence or repeating the sequence on a
+  configured interval with cycle-aware recipient rows.
+- WordPress content pull on campaign detail pages. Cached post titles, excerpts, links, and content
+  snippets are included as AI context for campaign planning and email drafting.
+- Suppression hardening for list resolution, unsubscribe, and final pre-SMTP checks.
+- Marketing engagement context on the existing Sales Leads screen.
 - Open, click, and unsubscribe tracking endpoints.
 - Admin settings UI for consent policy, unsubscribe behavior, active-contract eligibility, tracking
   defaults, quiet hours, and default send batching.
 - Sanctum API routes for mailing lists, list members, campaigns, campaign emails, approval,
   due-send queueing, AI assists, and Marketing settings.
 
-The hub intentionally exposes only implemented actions. WordPress pull, Google integrations,
-social publishing, and richer AI/content tooling are follow-up feature slices under the approved
-RFC and should only become visible when the underlying integration or workflow exists. Marketing
-must not grow a separate engagement/call-list workflow; marketing interest should feed Lead Heat
-and classification in the Sales/Leads module.
+The hub intentionally exposes only implemented actions. Google integrations, social publishing, and
+the shared drag/drop HTML content editor are follow-up feature slices and should only become visible
+when the underlying integration or workflow exists. Marketing must not grow a separate
+engagement/call-list workflow; marketing interest feeds the existing Sales/Leads module.
 
 ## Mailing Lists
 
@@ -83,6 +88,8 @@ Recipients are eligible when they are active, have an email address, and are not
 `do_not_email`. The default Marketing setting is opt-out, so existing business contacts are included
 unless they have opted out. If the setting is changed to explicit opt-in, Contacts must have
 `marketing_consent=true` to be included.
+Suppression entries by email, domain, Contact, or Client are applied during list refresh for
+automatic, manual, legacy client user, and Lead Intelligence sources.
 
 Manual contacts use the same eligibility rules as automatic segments. If a selected Contact later
 opts out, is inactive, or loses its email address, list refresh keeps the manual criterion but does
@@ -125,6 +132,8 @@ event count, score, first event, and last event. The campaign detail page shows 
 interest signal counts.
 
 Unsubscribe links mark linked Contacts as `do_not_email` and clear marketing consent.
+They also create or update a suppression entry so the same email is blocked if it appears through
+another audience source later.
 
 Marketing settings live under `/tech/admin/settings/marketing`. Quiet hours pause due sending
 without failing recipients. Active-contract eligibility is applied during list refresh, and
@@ -154,6 +163,11 @@ campaign email with sent recipients deactivates it and cancels pending recipient
 deleting history. Adding a new active email to an approved or active campaign queues recipients for
 the existing list members according to the campaign schedule.
 
+When the active sequence has no pending recipients, the campaign completion policy runs. Stop marks
+the campaign `completed`. Repeat increments `current_cycle`, calculates `next_cycle_at`, and queues
+the same ordered campaign emails for the next cycle. Recipient uniqueness includes `cycle_number` so
+repeat campaigns preserve historical sends and still queue the same audience again later.
+
 Campaign email preview is rendered in the browser from the editable HTML body. Test-send uses the
 current editor fields and sends through the campaign sender account or the default `marketing`
 account. The test recipient defaults to the current technician email address and can be overwritten.
@@ -161,11 +175,11 @@ AI is exposed as a compact icon on the campaign and email editor surfaces; the p
 when the technician expands that assist control. A seeded Marketing Campaign Agent is used when it
 can be attached to an active Integration AI provider. Without an active provider/agent, the assist
 controls stay visible but disabled inside the opened panel. AI uses campaign context, audience-list context,
-and current email content, then returns editable fields; it does not send, approve, or save the
-campaign by itself. AI-generated marketing emails are expected to include `unsubscribe_url` in the
-editable body so operators can see the unsubscribe footer in preview. External website fetching is
-not implemented yet. URLs in prompts are treated as destination links or brand hints only until a
-future content-source integration fetches and stores that content.
+current email content, and cached WordPress content sources, then returns editable fields; it does
+not send, approve, or save the campaign by itself. AI-generated marketing emails are expected to
+include `unsubscribe_url` in the editable body so operators can see the unsubscribe footer in
+preview. External website URLs in prompts are treated as destination links or brand hints unless the
+content has been pulled and stored as a campaign content source.
 
 ## API
 

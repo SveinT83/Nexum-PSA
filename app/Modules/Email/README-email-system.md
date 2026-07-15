@@ -110,6 +110,11 @@ Basic sanitizer that removes risky tags/handlers. Intended to be replaced with H
 6) `ProcessInboundRules` first asks `InboundEmailSignalClassifier` to detect machine replies, delivery failures, and recognized vendor notifications. Hard bounces, soft bounces, auto replies, out-of-office replies, unsubscribe requests, and QNAP-style firmware/security notices become Signal records and are archived before normal ticket routing.
 7) Human messages continue through async rules on persisted messages (tagging, triage, linking to tickets, etc.).
 
+Selected Email Rules can explicitly emit a Signal with the `emit_signal` action. This is for
+admin-approved handoff cases such as vendor notices, monitoring messages, or security alerts. Email
+still owns message parsing, tagging, archiving, thread linking, and ticket ingress. Signal owns
+cross-module automation after the explicit handoff creates the normalized Signal.
+
 ### Job catalog (paths referenced in codebase)
 - `app/Modules/Email/Jobs/PollActiveEmailAccounts.php` — iterates active accounts; schedule every minute. (Dispatcher/entry job.)
 - `app/Modules/Email/Jobs/FetchImapAccount.php` — connect via `ImapClient`, fetch unseen plus recent messages, dedupe by `account+mailbox+uid`, and dispatch `StoreInboundMessage` with a payload (marks oversize if > size limit).
@@ -244,6 +249,8 @@ Operational notes:
 
 Common extension points:
 - Rules engine: implement rule definitions and runners in `ProcessInboundRules`. Keep them idempotent and fast; operate on stored `EmailMessage` records.
+- Signal handoff: use Email Rule `emit_signal` only for selected messages that should become
+  cross-module operational events. Keep broad email routing local to Email and Ticket.
 - Signal classification: extend `InboundEmailSignalClassifier` when new inbound e-post signal types should be detected before ticket routing. Keep matching conservative so real customer requests are not archived accidentally.
 - Sanitizer: replace `HtmlSanitizer` with a robust library (HTMLPurifier) and add CID image rewriting to signed URLs for inline display.
 - Multi-mailbox: extend `ImapClient` to take mailbox names and update jobs to iterate folders beyond INBOX.

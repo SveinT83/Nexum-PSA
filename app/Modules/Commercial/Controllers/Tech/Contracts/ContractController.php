@@ -7,6 +7,7 @@ use App\Modules\Commercial\Actions\BuildContractTermSnapshots;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Mail\ContractLinkSent;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -523,18 +524,36 @@ class ContractController extends Controller
      * Send the contract as a quote.
      * Sets status to 'sent_quote' and generates access token.
      */
-    public function sendQuote(Request $request, Contracts $contract)
+    public function sendQuote(Request $request, Contracts $contract, SendCustomerPortalNotification $portalNotifications)
     {
         if (!$contract->isReady()) {
             return back()->with('error', 'Contract is not ready to be sent. Please check items and terms.');
         }
 
+        $previousStatus = $contract->approval_status;
         $contract->generateSecureToken();
         $contract->update([
             'approval_status' => 'sent_quote',
             'sent_at' => now(),
             'cc_email' => $request->cc_email,
         ]);
+
+        if ($previousStatus !== 'sent_quote' && $contract->client_id) {
+            $portalNotifications->handle(
+                type: 'portal_contract_sent',
+                clientId: (int) $contract->client_id,
+                siteId: null,
+                title: 'New contract quote available',
+                body: $contract->description,
+                url: route('customer-portal.contracts.show', $contract),
+                sourceType: Contracts::class,
+                sourceId: $contract->id,
+                metadata: [
+                    'contract_id' => $contract->id,
+                    'approval_status' => 'sent_quote',
+                ],
+            );
+        }
 
         // Send email to billing_email if available
         if ($contract->client && $contract->client->billing_email) {
@@ -548,18 +567,36 @@ class ContractController extends Controller
      * Send the contract as a binding contract.
      * Sets status to 'sent_contract' and generates access token.
      */
-    public function sendContract(Request $request, Contracts $contract)
+    public function sendContract(Request $request, Contracts $contract, SendCustomerPortalNotification $portalNotifications)
     {
         if (!$contract->isReady()) {
             return back()->with('error', 'Contract is not ready to be sent. Please check items and terms.');
         }
 
+        $previousStatus = $contract->approval_status;
         $contract->generateSecureToken();
         $contract->update([
             'approval_status' => 'sent_contract',
             'sent_at' => now(),
             'cc_email' => $request->cc_email,
         ]);
+
+        if ($previousStatus !== 'sent_contract' && $contract->client_id) {
+            $portalNotifications->handle(
+                type: 'portal_contract_sent',
+                clientId: (int) $contract->client_id,
+                siteId: null,
+                title: 'New contract available',
+                body: $contract->description,
+                url: route('customer-portal.contracts.show', $contract),
+                sourceType: Contracts::class,
+                sourceId: $contract->id,
+                metadata: [
+                    'contract_id' => $contract->id,
+                    'approval_status' => 'sent_contract',
+                ],
+            );
+        }
 
         // Send email to billing_email if available
         if ($contract->client && $contract->client->billing_email) {

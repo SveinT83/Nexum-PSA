@@ -40,6 +40,11 @@ Future Operational Signals should extend this idea for machine-generated emails 
 
 Technicians can send customer replies from the ticket show page.
 
+Client tickets must be Published before a technician can use `Reply to contact`.
+Unpublished client tickets are intentionally silent externally: technicians can add internal notes,
+but Nexum does not queue outbound customer reply email from the normal ticket composer until the
+ticket has been Published.
+
 Customer replies:
 
 - Are saved as ticket messages.
@@ -64,6 +69,10 @@ When a ticket is linked to an active Nexum relationship, public customer replies
 are also sent to the remote Nexum ticket through the Relationship module after
 the local database commit. The normal ticket email job still runs, so customer
 email delivery remains the fallback communication path if remote API sync fails.
+
+Tickets must be Published before they can be escalated to a Nexum relationship, and relationship
+message/status sync checks the Published state before sending outbound updates. This keeps
+Unpublished tickets from being pushed to an external Nexum portal.
 
 Relationship sync sends only public reply content and selected attachments
 allowed by the relationship attachment policy. It does not send internal notes,

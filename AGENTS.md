@@ -22,15 +22,18 @@ agent-specific file conflicts with this file, this file wins.
 5. Read `docs/TODO.md` before planning or implementing work. If the current
    change touches an area with related future work, account for that future
    direction so new code does not create avoidable rework.
-6. Use `README.md` for project overview and developer setup context only.
-7. Check `docs/` for task-relevant plans, assessments, integration notes,
+6. Read `docs/human-review.md` before preparing a merge, migration, deployment,
+   release, or completion handoff for a large update. It is the source of truth
+   for what still requires human verification and what a human has approved.
+7. Use `README.md` for project overview and developer setup context only.
+8. Check `docs/` for task-relevant plans, assessments, integration notes,
    security notes, beta checklists, RFCs, ADRs, and feature slices before
    changing an affected domain.
-8. Treat old MVP/version-1 planning as historical context only. Nexum PSA is
+9. Treat old MVP/version-1 planning as historical context only. Nexum PSA is
    past MVP planning: beta is live, and current work prioritizes finishing,
    hardening, documenting, and polishing the existing product before starting
    new systems.
-9. Treat `AGENT.md`, `CLAUDE.md`, `docs/CLAUDE.md`,
+10. Treat `AGENT.md`, `CLAUDE.md`, `docs/CLAUDE.md`,
    `.github/copilot-instructions.md`, and `docs/juneGuidelines.md` as
    compatibility entry files. They must point back to this file and must not
    override it.
@@ -51,6 +54,10 @@ agent-specific file conflicts with this file, this file wins.
 
 - Current work is beta completion toward the finished Nexum PSA product, not
   MVP/version-1 exploration.
+- When the user asks to plan an idea, RFC, or future module as the final or
+  ultimate version, describe the full target behavior first. Use Feature
+  Slices only after the target state is agreed, and do not present MVP/v1 as
+  the product plan unless the user explicitly asks for that.
 - Before proposing or implementing new systems, first improve existing modules
   so they work reliably, have required settings, are documented, have tests,
   and are prepared for planned future capabilities.
@@ -74,6 +81,31 @@ agent-specific file conflicts with this file, this file wins.
   test affected modules, and create an ADR when an architectural decision is
   made.
 
+## Human Review Tracking
+
+- `docs/human-review.md` is the authoritative, persistent record of manual
+  verification for large updates.
+- A large update includes every Level 2 or Level 3 change, completed Feature
+  Slice, migration or data change, permission or integration change,
+  cross-module change, substantial user-visible workflow, and broad
+  merge/release candidate. Add Level 1 work when its user-facing risk makes
+  manual verification useful.
+- Before handing off a large update, add or update one review entry with a
+  stable ID, scope, affected pages/workflows, concrete checks, expected results,
+  relevant migrations/deploy actions, risks, and status.
+- The final handoff must name the review ID, state which checks remain, and ask
+  the user to perform the human review. Automated tests support this gate but
+  never replace or complete it.
+- Only explicit confirmation from a named human reviewer may change an entry to
+  `Reviewed`. An AI agent must not infer approval from passing tests, a merge,
+  deployment, silence, or an ambiguous reply.
+- When the reviewer reports partial progress or defects, update the same entry
+  and preserve unchecked or failed items. Use `In Review` or `Rework Needed`
+  until the remaining checks are explicitly resolved.
+- Before a merge, migration, deployment, or release, read the file and report
+  all relevant entries that are not `Reviewed`. Do not delete reviewed history;
+  retain it as the durable record of who reviewed what and when.
+
 ## RFC, ADR, And Feature Slices
 
 - RFC means Request For Change. Use `docs/processes/rfc-process.md`.
@@ -87,6 +119,16 @@ agent-specific file conflicts with this file, this file wins.
   decisions.
 - Feature Slices are required when an approved RFC or beta-completion item is
   too large to implement safely in one pass.
+- For GitHub idea work, search existing docs and Discussions before creating a
+  new item. If GitHub Discussions cannot be posted from the current session,
+  save the approved text in a pending publication file under `docs/plans/` and
+  do not substitute a GitHub Issue unless the user explicitly changes the
+  process.
+- When a GitHub comment, review, or Discussion is about product direction,
+  privacy policy, settings, or another conceptual decision and the user has not
+  clearly asked for implementation, treat "address this" as a discussion and
+  response-drafting task first. Ask focused clarification questions, draft the
+  reply, and only update files or post externally after explicit confirmation.
 
 ## Pre-Implementation Analysis
 
@@ -182,11 +224,62 @@ affected code and tests.
   for affected modules, not only the module where the code was edited.
 - Run the narrow relevant test set before handoff. For broad or release-oriented
   changes, run `HOME=/tmp php artisan test` when practical.
+- If relevant verification uncovers failing tests or runtime errors, do not
+  call the work fully complete and move on just because the failures look
+  pre-existing. Fix them, log an explicit approved deferral, or report the
+  blocker; the user preference is to handle known verification failures before
+  starting the next feature.
+- Before pushing to `Dev`, run the relevant test set on the development server.
+  Do not push code changes to `Dev` after unverified runtime work. If tests
+  cannot be run because the Dev server, database, queue, or another dependency
+  is unavailable, stop and report the blocker instead of pushing unless the user
+  explicitly approves an untested push.
 - If tests are not run, the final response must state that clearly with the
   reason.
+- Passing automated tests does not mark a large update as human-reviewed. Keep
+  the corresponding `docs/human-review.md` entry open until a named human
+  reviewer explicitly confirms the listed checks.
 
 ## Local Tooling And Networked Services
 
+- For Nexum implementation work, use the SSH development server as the normal
+  work target unless the user explicitly asks for local-only work, the task is
+  documentation/planning-only, or the server is unreachable.
+- Before changing or syncing code on the development server, read the remote
+  `/var/Projects/tdPSA/AGENTS.md`, verify the active branch/state, and do not
+  assume the local Windows workspace is synced with remote `Dev`.
+- Use the development server as the default runtime for Laravel verification:
+  PHP, Composer, Artisan, migrations, scheduler, queue, and Laravel tests should
+  normally run on the Dev server, not through local Windows PHP.
+- For production Nexum email or notification checks, verify users' current
+  notification settings before sending tests or changing preferences. Report
+  which notification types were already enabled or changed, keep test
+  tickets/messages clearly internal, and state that inbox receipt still needs
+  confirmation unless the mailbox can be verified.
+- When sending commands from Windows PowerShell through SSH, keep remote
+  one-liners simple. For PHP/Tinker checks or commands with shell-sensitive
+  quoting, prefer a temporary script under `/tmp` on the development server and
+  delete it after verification.
+- When syncing code to the Dev server with `scp`, `rsync`, or similar tools,
+  verify that new directories and files are readable by the web/PHP-FPM
+  process, not only by the SSH user. New `scp`-created directories may inherit
+  restrictive `700` permissions and make Laravel report misleading container or
+  autoload errors such as `Target class ... does not exist`. After syncing new
+  module trees or support classes, normalize permissions to match the existing
+  repository style, for example directories `2755` and files `0644` owned by the
+  project user/group, then run `php artisan optimize:clear` and perform a web
+  HTTP smoke test for affected pages. Passing CLI tests as the SSH user is not
+  sufficient when the browser path is affected.
+- Do not run local Windows PHP/Composer for Laravel runtime verification unless
+  the PHP version, required extensions, `vendor/`, built assets, and database
+  access are already confirmed to match the project. If local PHP fails because
+  of version, extension, `vendor`, Vite manifest, or database mismatches, stop
+  and switch to the Dev server instead of retrying with platform-override
+  workarounds.
+- Local commands are still appropriate for read-only inspection, Git operations,
+  text search, and targeted syntax checks that do not depend on Laravel runtime
+  services. If the Dev server is unreachable and runtime tests cannot be run
+  safely, report that clearly in the handoff.
 - The Codex command sandbox may block raw sockets and outbound network access
   even when the web application can reach the same service normally.
 - If a Laravel CLI command fails with a connection-level error against an
@@ -203,7 +296,8 @@ affected code and tests.
 ## Multi-Agent Handover
 
 - When finishing work, report files changed, behavior changed, tests run,
-  deploy commands required, known risks, and follow-up TODO items.
+  deploy commands required, known risks, follow-up TODO items, and the relevant
+  human-review ID/status for every large update.
 - Do not overwrite or revert work from another contributor unless the user
   explicitly asks for it.
 - If another contributor's changes affect the current task, work with those

@@ -190,6 +190,16 @@
                                         <span class="d-inline-block rounded {{ $i <= $client->lead_temperature ? 'bg-danger' : 'bg-secondary-subtle' }}" style="width: 1.1rem; height: .35rem;"></span>
                                     @endfor
                                 </div>
+                                @php($marketingEngagement = $client->marketing_engagement_summary ?? [])
+                                @if(($marketingEngagement['score'] ?? 0) > 0 || ($marketingEngagement['opens'] ?? 0) > 0 || ($marketingEngagement['clicks'] ?? 0) > 0)
+                                    <div class="small text-muted mt-2">
+                                        Marketing:
+                                        <span class="fw-semibold">{{ $marketingEngagement['score'] ?? 0 }}</span>
+                                        score,
+                                        {{ $marketingEngagement['opens'] ?? 0 }} opens,
+                                        {{ $marketingEngagement['clicks'] ?? 0 }} clicks
+                                    </div>
+                                @endif
                             </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-2">

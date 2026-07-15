@@ -39,6 +39,8 @@ Route::get('/marketing/campaigns/{campaign}', [MarketingCampaignController::clas
     ->name('marketing.campaigns.show');
 Route::post('/marketing/campaigns/{campaign}/ai-plan', [MarketingCampaignController::class, 'draftPlanWithAi'])
     ->name('marketing.campaigns.ai-plan');
+Route::post('/marketing/campaigns/{campaign}/content-sources/wordpress', [MarketingCampaignController::class, 'pullWordPressContent'])
+    ->name('marketing.campaigns.content-sources.wordpress');
 Route::put('/marketing/campaigns/{campaign}/schedule', [MarketingCampaignController::class, 'updateSchedule'])
     ->name('marketing.campaigns.schedule.update');
 Route::post('/marketing/campaigns/{campaign}/emails', [MarketingCampaignController::class, 'storeEmail'])

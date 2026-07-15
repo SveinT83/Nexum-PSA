@@ -6,6 +6,7 @@ use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
 use App\Modules\Knowledge\Support\KnowledgeSettings;
+use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -21,6 +22,7 @@ class StoreArticle
     public function __construct(
         private readonly RenderArticleBody $renderer,
         private readonly KnowledgeSettings $settings,
+        private readonly SendCustomerPortalNotification $portalNotifications,
     ) {}
 
     /**
@@ -43,7 +45,32 @@ class StoreArticle
         $article->body_html = $this->renderer->handle($data['body_markdown']);
         $article->save();
 
+        $this->notifyPortalWhenClientWide($article, 'portal_knowledge_published', 'New knowledge article');
+
         return $article;
+    }
+
+    private function notifyPortalWhenClientWide(Article $article, string $type, string $title): void
+    {
+        if ($article->status !== 'published' || $article->visibility !== 'client-wide' || ! $article->client_scope_id) {
+            return;
+        }
+
+        $this->portalNotifications->handle(
+            type: $type,
+            clientId: (int) $article->client_scope_id,
+            siteId: null,
+            title: $title,
+            body: $article->title,
+            url: route('customer-portal.knowledge.show', $article),
+            sourceType: Article::class,
+            sourceId: $article->id,
+            clientWideVisibleToSiteMembers: true,
+            metadata: [
+                'article_id' => $article->id,
+                'visibility' => $article->visibility,
+            ],
+        );
     }
 
     /**

@@ -12,6 +12,7 @@ class SignalRule extends Model
         'description',
         'is_active',
         'priority',
+        'stop_processing',
         'conditions',
         'actions',
         'created_by',
@@ -20,6 +21,7 @@ class SignalRule extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'stop_processing' => 'boolean',
         'conditions' => 'array',
         'actions' => 'array',
     ];

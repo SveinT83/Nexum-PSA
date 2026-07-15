@@ -81,6 +81,8 @@ Duplicate prevention is strict for primary communication details:
 - The same normalized phone number cannot be saved on two Contacts.
 - Norwegian phone variants such as `0047`, `+47`, and plain local numbers are normalized before
   duplicate matching.
+- Contact phone numbers can be marked as allowing transactional SMS. SMS permission is stored on
+  the phone record, not on Marketing consent, and `do_not_call` blocks transactional SMS attempts.
 
 Organization entry searches Clients. Selecting a matching Client creates the Contact relation and
 shows the site selector. If no Client matches, the value remains plain organization text for later
@@ -219,6 +221,16 @@ upgrade steps.
   vendors, opportunities, contracts, or future records.
 - External systems such as MSP Manager should use `contact_external_refs` for source IDs and sync
   metadata.
+
+## Customer Portal Identity
+
+Customer Portal access uses Contact as the canonical external identity. A portal user must be linked
+through `user_management.contact_id`, and the Contact must have an active Client or Site relation
+before portal membership can be granted.
+
+Portal membership does not make `client_users` authoritative. `client_users` remains a compatibility
+bridge for older modules, while Customer Portal reads Contact relations and the explicit portal
+membership tables for access decisions.
 
 ## Out Of Scope For Phase 1
 

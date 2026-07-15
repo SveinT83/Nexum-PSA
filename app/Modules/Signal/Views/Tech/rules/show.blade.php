@@ -5,7 +5,10 @@
 @section('pageHeader')
     <div class="d-flex align-items-center justify-content-between gap-3">
         <h1 class="h4 mb-0">{{ $rule->name }}</h1>
-        <a href="{{ route('tech.admin.system.signals.rules.index') }}" class="btn btn-sm btn-outline-secondary">Rules</a>
+        <a href="{{ route('tech.admin.system.signals.rules.index') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            Back
+        </a>
     </div>
 @endsection
 
@@ -58,4 +61,8 @@
 
 @section('sidebar')
     <x-nav.admin-menu group="system" />
+@endsection
+
+@section('rightbar')
+    @include('signal::Tech.rules.partials.reference')
 @endsection

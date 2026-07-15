@@ -4,11 +4,6 @@ The contract system controls how client agreements are assembled from services, 
 
 Contracts are the agreement boundary between Nexum and a client. They collect the commercial and operational terms that apply to a client relationship, including selected services, negotiated prices, SLA expectations, DPA/legal content, and service-specific terms.
 
-Commercial remains client-only under the Work Context rollout. Contracts, contract lines, SLA
-commercial terms, timebank consumption, and quick Client timebank registration require a real Client.
-Internal work can be tracked operationally in Ticket, Task, Calendar, Asset, and Risk, but it does
-not create internal contracts or customer-billable commercial records in this RFC.
-
 The contract must not depend directly on mutable service defaults after it has been prepared or sent. Service data is used as a template, then copied into contract snapshots where the agreement can be reviewed and adjusted.
 
 ## Core Flow
@@ -41,6 +36,34 @@ Rows are clickable and open the contract detail view. The client name remains a 
 The contract show action card exposes `Download PDF` through `tech.contracts.pdf`. The export renders a PDF-specific Blade view with internal CSS through Dompdf, so it does not depend on external CDN assets. The PDF includes contract metadata, client identity, service lines, negotiated time rates, SLA snapshots, terms, DPA/legal snapshots, and acceptance details for won contracts.
 
 PDF export is available when the contract is ready for sending, or when it has already been sent as a quote, sent as a binding contract, or won. Incomplete drafts keep the PDF button disabled.
+
+## Customer Portal
+
+The Customer Portal can show customer-safe contract summaries for a Client. Contracts are visible in
+the portal when their `approval_status` is `sent_quote`, `sent_contract`, `approved`, or `won`.
+
+Portal contract pages show:
+
+- Contract status and period.
+- Included service lines, quantities, billing interval, unit price, and line total.
+- Contract monthly total.
+- SLA label.
+- Customer-facing terms and legal snapshots when they exist.
+
+Portal users can accept `sent_quote` and `sent_contract` contracts. Acceptance marks the contract as
+`won`, stores the existing accepted name/IP/user-agent fields, and binds the contract to the
+authenticated portal account, membership, and Contact through:
+
+- `portal_accepted_account_id`
+- `portal_accepted_membership_id`
+- `portal_accepted_contact_id`
+
+The portal acceptance also writes a CustomerPortal audit event.
+
+Portal contract pages do not show internal margin/profit calculations, technician workflow details,
+draft/negotiation/lost contracts, other-client contracts, or internal Commercial settings. Commercial
+contracts are currently client-level records, so site-scoped portal memberships do not see contract
+summaries until Commercial owns a site-level contract split.
 
 ## Service Snapshots
 

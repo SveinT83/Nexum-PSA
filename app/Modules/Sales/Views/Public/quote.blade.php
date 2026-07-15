@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $version->quote->quote_key }} - Quote</title>
+    @PwaHead
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -114,5 +115,6 @@
         <div class="alert alert-info">This quote is {{ $version->status }}.</div>
     @endif
 </main>
+@RegisterServiceWorkerScript
 </body>
 </html>

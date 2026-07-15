@@ -3,6 +3,9 @@
 namespace App\Modules\Sales\Models;
 
 use App\Models\Core\User;
+use App\Modules\Contact\Models\Contact;
+use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
+use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -36,6 +39,9 @@ class SalesQuoteVersion extends Model
         'accepted_by_name',
         'accepted_ip',
         'accepted_ua',
+        'portal_accepted_account_id',
+        'portal_accepted_membership_id',
+        'portal_accepted_contact_id',
         'rejected_at',
         'created_by',
         'updated_by',
@@ -70,6 +76,21 @@ class SalesQuoteVersion extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function portalAcceptedAccount(): BelongsTo
+    {
+        return $this->belongsTo(CustomerPortalAccount::class, 'portal_accepted_account_id');
+    }
+
+    public function portalAcceptedMembership(): BelongsTo
+    {
+        return $this->belongsTo(CustomerPortalMembership::class, 'portal_accepted_membership_id');
+    }
+
+    public function portalAcceptedContact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'portal_accepted_contact_id');
     }
 
     public function isEditable(): bool

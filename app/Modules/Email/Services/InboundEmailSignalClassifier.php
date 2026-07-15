@@ -5,8 +5,10 @@ namespace App\Modules\Email\Services;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Signal\Actions\ClassifySignalContextWithAi;
 use App\Modules\Signal\Actions\RecordSignal;
 use App\Modules\Signal\Models\Signal;
+use App\Modules\Signal\Support\SignalSettings;
 
 class InboundEmailSignalClassifier
 {
@@ -19,8 +21,11 @@ class InboundEmailSignalClassifier
         'vendor_notification',
     ];
 
-    public function __construct(private readonly RecordSignal $signals)
-    {
+    public function __construct(
+        private readonly RecordSignal $signals,
+        private readonly ClassifySignalContextWithAi $aiClassifier,
+        private readonly SignalSettings $settings,
+    ) {
     }
 
     public function classifyAndRecord(EmailMessage $message): ?Signal
@@ -65,10 +70,21 @@ class InboundEmailSignalClassifier
 
     public function shouldStopTicketRouting(?Signal $signal): bool
     {
-        return $signal && in_array($signal->signal_type, self::MACHINE_SIGNAL_TYPES, true);
+        $stopTypes = array_values(array_unique([
+            ...self::MACHINE_SIGNAL_TYPES,
+            ...($this->settings->get()['ai_stop_ticket_routing_types'] ?? []),
+        ]));
+
+        return $signal && in_array($signal->signal_type, $stopTypes, true);
     }
 
     private function classify(EmailMessage $message): ?array
+    {
+        return $this->classifyDeterministically($message)
+            ?: $this->classifyWithAi($message);
+    }
+
+    private function classifyDeterministically(EmailMessage $message): ?array
     {
         $subject = mb_strtolower((string) $message->subject);
         $body = mb_strtolower((string) $message->body_text);
@@ -144,6 +160,22 @@ class InboundEmailSignalClassifier
         }
 
         return null;
+    }
+
+    private function classifyWithAi(EmailMessage $message): ?array
+    {
+        return $this->aiClassifier->handle([
+            'source_domain' => 'email',
+            'source_type' => $message->getMorphClass(),
+            'source_id' => $message->id,
+            'subject' => $message->subject,
+            'from_email' => $message->from_email,
+            'from_name' => $message->from_name,
+            'to' => $message->to_json,
+            'headers' => $message->headers_json,
+            'body_text' => str((string) $message->body_text)->limit(12000, '')->toString(),
+            'received_at' => $message->received_at?->toDateTimeString(),
+        ]);
     }
 
     private function looksLikeBounce(string $content): bool

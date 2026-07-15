@@ -181,6 +181,13 @@
                                 <label class="form-check-label" for="should_order">Manual should-order flag</label>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                <input type="hidden" name="can_be_ordered" value="0">
+                                <input class="form-check-input" type="checkbox" id="can_be_ordered" name="can_be_ordered" value="1" @checked(old('can_be_ordered', '1'))>
+                                <label class="form-check-label" for="can_be_ordered">Can be ordered when stock is short</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

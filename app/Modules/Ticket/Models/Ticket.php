@@ -9,17 +9,17 @@ use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Relationship\Models\NexumSyncLink;
-use App\Modules\Task\Models\Task;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\Task\Models\Task;
 use App\Modules\WorkContext\Models\WorkContext;
 use Database\Factories\Ticket\TicketFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ticket extends Model
@@ -63,6 +63,8 @@ class Ticket extends Model
         'merged_by',
         'merged_at',
         'metadata',
+        'portal_visible_at',
+        'portal_visible_by',
     ];
 
     protected $casts = [
@@ -75,6 +77,7 @@ class Ticket extends Model
         'resolved_at' => 'datetime',
         'closed_at' => 'datetime',
         'merged_at' => 'datetime',
+        'portal_visible_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string
@@ -145,6 +148,16 @@ class Ticket extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function portalVisibleBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'portal_visible_by');
+    }
+
+    public function isPortalVisible(): bool
+    {
+        return $this->portal_visible_at !== null;
     }
 
     public function mergedInto(): BelongsTo

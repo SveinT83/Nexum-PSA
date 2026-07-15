@@ -26,6 +26,8 @@ class EconomyOrder extends Model
         'approved_at',
         'exported_at',
         'cancelled_at',
+        'portal_visible_at',
+        'portal_visible_by',
     ];
 
     protected $casts = [
@@ -39,6 +41,7 @@ class EconomyOrder extends Model
         'approved_at' => 'datetime',
         'exported_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'portal_visible_at' => 'datetime',
     ];
 
     public function client(): BelongsTo
@@ -54,5 +57,15 @@ class EconomyOrder extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function portalVisibleBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'portal_visible_by');
+    }
+
+    public function isPortalVisible(): bool
+    {
+        return $this->portal_visible_at !== null;
     }
 }

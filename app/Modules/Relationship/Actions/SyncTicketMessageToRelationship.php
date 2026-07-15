@@ -3,13 +3,16 @@
 namespace App\Modules\Relationship\Actions;
 
 use App\Modules\Relationship\Models\NexumRelationship;
+use App\Modules\Relationship\Models\NexumSyncLink;
 use App\Modules\Relationship\Support\RelationshipCapability;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Support\Facades\Storage;
 
 class SyncTicketMessageToRelationship
 {
-    public function __construct(private readonly NexumRelationshipHttpClient $client) {}
+    public function __construct(private readonly NexumRelationshipHttpClient $client)
+    {
+    }
 
     public function handle(int $messageId): void
     {
@@ -18,6 +21,10 @@ class SyncTicketMessageToRelationship
             ->find($messageId);
 
         if (! $message || $message->type !== 'customer_reply' || $message->visibility !== 'public') {
+            return;
+        }
+
+        if (! $message->ticket?->isPortalVisible()) {
             return;
         }
 

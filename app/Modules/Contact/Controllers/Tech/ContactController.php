@@ -103,6 +103,7 @@ class ContactController extends Controller
             'job_title' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:100'],
+            'sms_allowed' => ['nullable', 'boolean'],
             'preferred_language' => ['nullable', 'string', 'max:10'],
             'relation_type' => ['nullable', Rule::in($settings->enabledRelationValues($request->string('relation_type')->toString()))],
             'client_id' => ['nullable', Rule::exists('clients', 'id')],

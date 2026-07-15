@@ -28,7 +28,10 @@
                         {{ $event['ends_at']->timezone($timezone)->format('H:i') }}
                     </div>
                     <div class="flex-grow-1 border-start ps-3" style="border-color: {{ $event['calendar_color'] }} !important;">
-                        <div class="fw-semibold">{{ $event['title'] }}</div>
+                        <div class="d-flex align-items-start justify-content-between gap-2">
+                            <div class="fw-semibold">{{ $event['title'] }}</div>
+                            <span class="badge text-bg-light border flex-shrink-0">{{ $event['ownership_badge'] }}</span>
+                        </div>
                         <div class="small text-muted">{{ $event['calendar_name'] }} · {{ str_replace('_', ' ', $event['transparency']) }}</div>
                         @if($event['description'])
                             <div class="small mt-1">{{ $event['description'] }}</div>

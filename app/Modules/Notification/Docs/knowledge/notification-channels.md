@@ -1,5 +1,57 @@
 Notification channels define how Nexum delivers system notifications outside the in-app notification bell.
 
+## Transactional SMS
+
+SMS is an approved transactional notification channel, but the first implementation uses the
+`dry_run` provider only. Dry-run records the exact SMS attempt in Nexum without sending anything to
+Telia, Twilio, or another external provider.
+
+The SMS channel is configured under Admin > Notification channels > SMS.
+
+First-slice SMS behavior:
+
+- Provider is `dry_run`.
+- Admins can enable or disable the channel.
+- Admins can set sender name and default country code.
+- Admins can send a manual dry-run test to a Contact with a phone number.
+- Each allowed or blocked attempt creates a `notification_sms_messages` audit record.
+- No Booking reminder, quote follow-up, invoice reminder, on-my-way message, or other workflow sends
+  SMS until that workflow adopts SMS in a later approved slice.
+
+SMS consent and blocking:
+
+- The selected Contact phone must have `sms_allowed=true`.
+- A Contact with `do_not_call=true` is blocked from transactional SMS.
+- Missing or invalid phone numbers are blocked.
+- Marketing consent does not grant transactional SMS permission, and transactional SMS does not
+  create Marketing campaign membership.
+
+Dry-run logs store the rendered SMS body, selected provider, status, normalized recipient phone,
+source reference, actor, and block reason when applicable. Production provider credentials and
+delivery callbacks are intentionally outside this first slice.
+
+## Customer Portal Notifications
+
+Customer portal notifications use the same Laravel database notification table and user preference
+model as internal notifications, but the Notification module sends them with portal-specific event
+types and CustomerPortal-safe URLs.
+
+Portal users read notifications from `/portal/notifications`. The portal notification center shows
+only `CustomerPortalNotification` records owned by the authenticated portal user. Opening a
+notification marks it read and redirects only to `/portal` URLs.
+
+Current portal notification types cover implemented portal workflows:
+
+- Portal ticket created, reply, and status changed.
+- Portal document published and updated.
+- Portal client-wide Knowledge article published and updated.
+- Portal quote sent and accepted.
+- Portal contract sent and accepted.
+- Portal order published and status changed.
+
+Customer portal notifications support email and in-app delivery preferences. Nextcloud Talk, SMS,
+web push, and native app delivery are not part of this portal slice.
+
 ## Nextcloud Talk
 
 Nextcloud Talk notifications support two delivery modes:

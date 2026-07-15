@@ -17,6 +17,7 @@ class MarketingCampaignRecipientResource extends JsonResource
             'marketing_campaign_id' => $this->marketing_campaign_id,
             'marketing_campaign_email_id' => $this->marketing_campaign_email_id,
             'marketing_list_member_id' => $this->marketing_list_member_id,
+            'cycle_number' => $this->cycle_number,
             'contact_id' => $this->contact_id,
             'client_user_id' => $this->client_user_id,
             'client_id' => $this->client_id,

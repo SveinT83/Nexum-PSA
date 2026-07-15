@@ -13,6 +13,7 @@ use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Clients\Actions\CreateClientWithDefaults;
 use App\Modules\Clients\Actions\SuggestClientNumber;
+use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Sales\Actions\EnsureSalesDefaults;
 use App\Modules\Sales\Actions\RecalculateSalesQuoteVersion;
 use App\Modules\Sales\Actions\StoreSalesOpportunity;
@@ -503,7 +504,7 @@ class SalesController extends Controller
             ->with('open_quote_modal', true);
     }
 
-    public function sendQuote(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate): RedirectResponse
+    public function sendQuote(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate, SendCustomerPortalNotification $portalNotifications): RedirectResponse
     {
         $version = $sale->currentQuoteVersion()->with('quote')->firstOrFail();
 
@@ -541,6 +542,24 @@ class SalesController extends Controller
                 'body' => 'Quote '.$version->quote->quote_key.' v'.$version->version_number.' was marked as sent.',
                 'metadata' => ['quote_version_id' => $version->id],
             ]);
+
+            if ($sale->client_id) {
+                $portalNotifications->handle(
+                    type: 'portal_quote_sent',
+                    clientId: (int) $sale->client_id,
+                    siteId: null,
+                    title: 'New quote available',
+                    body: $version->title ?: $sale->title,
+                    url: route('customer-portal.quotes.show', $version),
+                    sourceType: SalesQuoteVersion::class,
+                    sourceId: $version->id,
+                    metadata: [
+                        'quote_key' => $version->quote->quote_key,
+                        'version_number' => $version->version_number,
+                        'opportunity_id' => $sale->id,
+                    ],
+                );
+            }
         }
 
         $sale->loadMissing('primaryContact');

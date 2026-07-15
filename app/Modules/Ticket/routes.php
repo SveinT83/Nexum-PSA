@@ -3,10 +3,28 @@
 use App\Modules\Ticket\Controllers\Admin\TicketAssignmentSettingsAdminController;
 use App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
+use App\Modules\Ticket\Controllers\Portal\PortalTicketController;
 use App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use Illuminate\Support\Facades\Route;
+
+if (($ticketPortalRoutes ?? false) === true) {
+    Route::middleware(['auth', EnsureCustomerPortalAccess::class])
+        ->prefix('portal/tickets')
+        ->name('customer-portal.tickets.')
+        ->group(function (): void {
+            Route::get('/', [PortalTicketController::class, 'index'])->name('index');
+            Route::get('/create', [PortalTicketController::class, 'create'])->name('create');
+            Route::post('/', [PortalTicketController::class, 'store'])->name('store');
+            Route::get('/{ticket}', [PortalTicketController::class, 'show'])->name('show');
+            Route::post('/{ticket}/messages', [PortalTicketController::class, 'reply'])->name('messages.store');
+            Route::get('/{ticket}/attachments/{attachment}/download', [PortalTicketController::class, 'downloadAttachment'])->name('attachments.download');
+        });
+
+    return;
+}
 
 Route::get('/reports/tickets/sla', [TicketSlaReportController::class, 'index'])
     ->name('reports.tickets.sla');
@@ -87,6 +105,9 @@ Route::get('/tickets/{ticket}/attachments/{attachment}/download', [TicketControl
 Route::post('/tickets/{ticket}/read', [TicketController::class, 'markRead'])
     ->name('tickets.read');
 
+Route::post('/tickets/{ticket}/portal-visibility', [TicketController::class, 'updatePortalVisibility'])
+    ->name('tickets.portal-visibility.update');
+
 Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])
     ->name('tickets.assign');
 
@@ -103,6 +124,8 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.tickets.default-email-account.update');
     Route::post('/admin/settings/tickets/solution-policy', [TicketSettingsController::class, 'updateSolutionPolicy'])
         ->name('admin.settings.tickets.solution-policy.update');
+    Route::post('/admin/settings/tickets/portal-policy', [TicketSettingsController::class, 'updatePortalPolicy'])
+        ->name('admin.settings.tickets.portal-policy.update');
     Route::post('/admin/settings/tickets/merge-settings', [TicketSettingsController::class, 'updateMergeSettings'])
         ->name('admin.settings.tickets.merge-settings.update');
     Route::post('/admin/settings/tickets/queues', [TicketSettingsController::class, 'storeQueue'])

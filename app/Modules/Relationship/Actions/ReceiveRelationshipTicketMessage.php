@@ -16,7 +16,8 @@ class ReceiveRelationshipTicketMessage
     public function __construct(
         private readonly RecordSyncEvent $events,
         private readonly ResolveRelationshipTicketSyncLink $links,
-    ) {}
+    ) {
+    }
 
     public function handle(NexumRelationship $relationship, string $remoteTicketId, array $data): array
     {

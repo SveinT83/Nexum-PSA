@@ -104,15 +104,34 @@ class RulesController extends Controller
             'conditions.*.operator' => 'required|string|in:contains,equals,not_equals,starts_with,ends_with,regex,present',
             'conditions.*.value' => 'nullable|string|max:1000',
             'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string|in:link_ticket_by_subject_token,create_ticket,archive,tag',
+            'actions.*.type' => 'required|string|in:link_ticket_by_subject_token,create_ticket,archive,tag,emit_signal',
             'actions.*.value' => 'nullable|string|max:255',
+            'actions.*.severity' => 'nullable|string|in:info,warning,error,critical',
+            'actions.*.confidence' => 'nullable|integer|min:0|max:100',
+            'actions.*.summary' => 'nullable|string|max:255',
+            'actions.*.payload_note' => 'nullable|string|max:1000',
         ]);
 
         $actions = collect($data['actions'])
-            ->map(fn (array $action) => [
-                'type' => $action['type'],
-                'value' => $action['value'] ?? '',
-            ])
+            ->map(function (array $action): array {
+                $mapped = [
+                    'type' => $action['type'],
+                    'value' => $action['type'] === 'emit_signal'
+                        ? $this->normalizeSignalType($action['value'] ?? '')
+                        : ($action['value'] ?? ''),
+                ];
+
+                if ($action['type'] === 'emit_signal') {
+                    $mapped['signal_type'] = $mapped['value'];
+                    foreach (['severity', 'confidence', 'summary', 'payload_note'] as $field) {
+                        if (array_key_exists($field, $action) && filled($action[$field])) {
+                            $mapped[$field] = $action[$field];
+                        }
+                    }
+                }
+
+                return $mapped;
+            })
             ->values()
             ->all();
 
@@ -156,6 +175,12 @@ class RulesController extends Controller
                 }
             }
 
+            if ($type === 'emit_signal' && $this->normalizeSignalType($value) === '') {
+                throw ValidationException::withMessages([
+                    'actions' => 'Emit Signal action requires a signal type.',
+                ]);
+            }
+
             if ($type !== 'tag' || $value === '') {
                 continue;
             }
@@ -177,6 +202,15 @@ class RulesController extends Controller
             ->where('active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
+    }
+
+    private function normalizeSignalType(mixed $value): string
+    {
+        return str((string) $value)
+            ->trim()
+            ->lower()
+            ->replace([' ', '-'], '_')
+            ->toString();
     }
 
     private function systemRules(): array

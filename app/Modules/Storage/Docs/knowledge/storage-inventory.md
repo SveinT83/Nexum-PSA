@@ -16,6 +16,7 @@ Core concepts:
 - **Movement** is the immutable audit log for stock changes.
 - **Reservation** holds stock for a source such as a ticket without immediately removing it from on-hand quantity.
 - **Picking** consumes reserved stock and makes it ready for billing through Economy.
+- **Can be ordered** controls whether an active item may be reserved beyond current available stock.
 
 Default warehouse:
 
@@ -44,6 +45,9 @@ Stock math:
 - On-hand is the current physical quantity.
 - Reserved is the quantity promised to tickets or future order flows.
 - Available is on-hand minus reserved, clamped to zero in the UI.
+- Active items that can be ordered may be over-reserved from a Ticket. The item then appears in the
+  `Should order` view and the picking queue waits for stock before it can be picked.
+- Active items marked as not orderable can only be reserved up to available quantity.
 - Initial quantity on item creation creates a stock movement so the first stock count is auditable.
 
 ## API

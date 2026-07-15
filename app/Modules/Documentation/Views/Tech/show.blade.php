@@ -23,6 +23,16 @@
         </div>
 
         <div class="d-flex gap-2">
+            @if($documentation->client_id)
+                <form action="{{ route('tech.documentations.portal-visibility.update', $documentation) }}" method="POST" class="d-inline">
+                    @csrf
+                    <input type="hidden" name="portal_visible" value="{{ $documentation->isPortalVisible() ? 0 : 1 }}">
+                    <button type="submit" class="btn btn-sm {{ $documentation->isPortalVisible() ? 'btn-outline-secondary' : 'btn-outline-success' }} d-flex align-items-center px-3">
+                        <i class="bi {{ $documentation->isPortalVisible() ? 'bi-eye-slash' : 'bi-eye' }} me-2" aria-hidden="true"></i>
+                        {{ $documentation->isPortalVisible() ? 'Hide from portal' : 'Show in portal' }}
+                    </button>
+                </form>
+            @endif
             <a href="{{ route('tech.documentations.edit', $documentation->id) }}" class="btn btn-sm btn-outline-primary d-flex align-items-center px-3">
                 <i class="bi bi-pencil me-2"></i> Edit
             </a>

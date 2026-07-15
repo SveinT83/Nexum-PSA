@@ -67,6 +67,7 @@ class AiAgentResolver
             'tasks' => 'Tasks',
             'marketing' => 'Marketing',
             'lead_intelligence' => 'Lead Intelligence',
+            'signal' => 'Signal',
             'system' => 'System/Admin',
         ];
     }

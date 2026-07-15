@@ -6,6 +6,8 @@ use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Models\Knowledge\Article;
 use App\Modules\Documentation\Models\Documentation;
+use App\Modules\Documentation\Models\DocumentationTemplate;
+use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Relationship\Models\NexumRelationship;
 use App\Modules\Relationship\Models\NexumSyncLink;
 use App\Modules\Relationship\Support\RelationshipCapability;
@@ -13,6 +15,7 @@ use App\Modules\Relationship\Support\RelationshipDirection;
 use App\Modules\Relationship\Support\RelationshipHealthStatus;
 use App\Modules\Relationship\Support\RelationshipStatus;
 use App\Modules\Relationship\Support\RelationshipType;
+use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -29,9 +32,7 @@ class RelationshipModuleTest extends TestCase
     use RefreshDatabase;
 
     private User $manager;
-
     private User $viewer;
-
     private User $limited;
 
     protected function setUp(): void
@@ -176,7 +177,11 @@ class RelationshipModuleTest extends TestCase
         $relationship = $this->activeRelationship($client, [
             RelationshipCapability::TICKET_SYNC => true,
         ]);
-        $ticket = Ticket::factory()->create(['client_id' => $client->id]);
+        $ticket = Ticket::factory()->create([
+            'client_id' => $client->id,
+            'portal_visible_at' => now(),
+            'portal_visible_by' => $this->manager->id,
+        ]);
         NexumSyncLink::query()->create([
             'relationship_id' => $relationship->id,
             'domain' => 'ticket',

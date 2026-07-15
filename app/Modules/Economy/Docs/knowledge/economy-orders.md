@@ -12,15 +12,12 @@ Current flow:
 - Ticket Storage costs are first reserved. A reserved item does not create an order line.
 - When a technician clicks `Pick` on a reserved ticket cost, Storage reduces on-hand and reserved stock, creates a movement, marks the cost as picked, and Economy creates the order line.
 - Manual `Generate orders` in Economy runs the same generation logic for a selected period.
+- `Export ready orders` sends ready and approved orders through the Data Exchange Economy Orders
+  profile and stores the generated CSV/JSON/XLSX file in Data Exchange run history.
 - Closing a ticket queues Economy order generation for the ticket's billing period.
 - A daily scheduled Economy job runs as catch-up so picked costs and closed-ticket time do not pile up until month-end.
 
 Orders are grouped as one draft order per client per billing period. A client does not get an empty order; the order is created only when the first billable line is added.
-
-Economy remains client-only under the Work Context rollout. Ticket time, ticket costs, quick
-timebank overuse, and other generated order lines must have a real Client before Economy can create
-or attach them to an order. Internal Tickets, Tasks, Assets, and Calendar work are operational records
-only and must not become customer order lines.
 
 Order statuses:
 
@@ -42,3 +39,40 @@ Deleting a draft order line unlocks the source record:
 - The source record can then be corrected and included again by `Generate orders`.
 
 Empty draft or ready orders can be deleted. When the last line is deleted from a draft order, Economy removes the empty order automatically.
+
+## Customer Portal
+
+Economy orders are hidden from the Customer Portal by default. A technician can publish or hide an
+order from the Economy order show page.
+
+Portal order pages show:
+
+- Order number.
+- Period.
+- Customer-safe status label.
+- Active order lines.
+- Quantity, unit, unit price, ex. VAT, VAT, and total including VAT.
+
+Portal order pages do not show internal generation diagnostics, deletion actions, source edit links,
+margin data, accounting export internals, or payment controls. Economy orders are currently
+client-level records, so site-scoped portal memberships do not see order summaries until Economy owns
+a site-level order split.
+
+Publishing or hiding an order writes a CustomerPortal audit event. Published orders are summaries for
+customer review, not provider-backed invoices or payment requests.
+
+## Data Exchange Export
+
+Economy does not own a standalone accounting export path. Economy Orders export uses the shared Data
+Exchange runtime.
+
+The default profile exports one row per order line and repeats the order/client fields needed for
+billing review:
+
+- order number, period, status, and order totals;
+- client number, client name, organization number, and billing email;
+- line date, type, description, quantity, unit, price, VAT, total, currency, and ticket key.
+
+Generated files are visible from Admin -> Data Exchange with status, checksum, retention date, and
+download action. Future Tripletex and PowerOffice profiles should reuse Data Exchange profiles
+instead of adding a separate Economy export workflow.

@@ -5,6 +5,7 @@ namespace App\Modules\Knowledge\Actions;
 use App\Models\Knowledge\Article;
 use App\Models\Knowledge\Book;
 use App\Models\Knowledge\Chapter;
+use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -17,7 +18,10 @@ use Illuminate\Support\Str;
  */
 class UpdateArticle
 {
-    public function __construct(private readonly RenderArticleBody $renderer) {}
+    public function __construct(
+        private readonly RenderArticleBody $renderer,
+        private readonly SendCustomerPortalNotification $portalNotifications,
+    ) {}
 
     /**
      * Apply validated changes to an existing article.
@@ -40,7 +44,32 @@ class UpdateArticle
         $article->body_html = $this->renderer->handle($data['body_markdown']);
         $article->save();
 
+        $this->notifyPortalWhenClientWide($article);
+
         return $article;
+    }
+
+    private function notifyPortalWhenClientWide(Article $article): void
+    {
+        if ($article->status !== 'published' || $article->visibility !== 'client-wide' || ! $article->client_scope_id) {
+            return;
+        }
+
+        $this->portalNotifications->handle(
+            type: 'portal_knowledge_updated',
+            clientId: (int) $article->client_scope_id,
+            siteId: null,
+            title: 'Knowledge article updated',
+            body: $article->title,
+            url: route('customer-portal.knowledge.show', $article),
+            sourceType: Article::class,
+            sourceId: $article->id,
+            clientWideVisibleToSiteMembers: true,
+            metadata: [
+                'article_id' => $article->id,
+                'visibility' => $article->visibility,
+            ],
+        );
     }
 
     /**

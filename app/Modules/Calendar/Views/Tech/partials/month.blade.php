@@ -33,6 +33,7 @@
                     data-visibility="{{ $event['visibility'] }}"
                     data-details-visible="{{ $event['details_visible'] ? '1' : '0' }}"
                     data-is-recurring="{{ $event['is_recurring'] ? '1' : '0' }}">
+                    <span class="badge text-bg-light border me-1">{{ $event['ownership_badge'] }}</span>
                     {{ $event['starts_at']->timezone($timezone)->format('H:i') }} {{ $event['title'] }}
                 </button>
             @endforeach

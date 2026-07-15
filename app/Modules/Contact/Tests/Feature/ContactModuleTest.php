@@ -252,6 +252,7 @@ class ContactModuleTest extends TestCase
             'job_title' => 'Operations',
             'email' => 'n8n.contact@example.test',
             'phone' => '+47 11 22 33 44',
+            'sms_allowed' => true,
             'do_not_email' => false,
             'marketing_consent' => true,
             'client_id' => $client->id,
@@ -259,6 +260,7 @@ class ContactModuleTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.display_name', 'N8N Contact')
             ->assertJsonPath('data.primary_email', 'n8n.contact@example.test')
+            ->assertJsonPath('data.primary_phone_sms_allowed', true)
             ->assertJsonPath('data.do_not_email', false)
             ->assertJsonPath('data.marketing_consent', true)
             ->assertJsonPath('meta.created', true);
@@ -289,6 +291,7 @@ class ContactModuleTest extends TestCase
             'job_title' => 'Service Desk',
             'email' => 'n8n.contact@example.test',
             'phone' => '+47 22 33 44 55',
+            'sms_allowed' => false,
             'do_not_email' => true,
             'marketing_consent' => false,
             'client_id' => $client->id,
@@ -297,6 +300,7 @@ class ContactModuleTest extends TestCase
             ->assertJsonPath('data.id', $contact->id)
             ->assertJsonPath('data.display_name', 'N8N Contact Updated')
             ->assertJsonPath('data.primary_phone', '+47 22 33 44 55')
+            ->assertJsonPath('data.primary_phone_sms_allowed', false)
             ->assertJsonPath('data.do_not_email', true)
             ->assertJsonPath('data.marketing_consent', false)
             ->assertJsonPath('meta.upserted', true);

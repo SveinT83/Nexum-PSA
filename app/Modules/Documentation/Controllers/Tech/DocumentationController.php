@@ -4,14 +4,15 @@ namespace App\Modules\Documentation\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
-use App\Models\Clients\ClientSite;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Documentation\Menus\SideBar\DocumentationsMenu;
 use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Models\DocumentationTemplate;
-use App\Modules\WorkContext\Actions\ResolveWorkContext;
+use App\Modules\CustomerPortal\Actions\RecordCustomerPortalAudit;
+use App\Modules\Notification\Actions\SendCustomerPortalNotification;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class DocumentationController extends Controller
 {
@@ -34,7 +35,7 @@ class DocumentationController extends Controller
         $clients = Client::where('active', true)->orderBy('name')->get();
 
         // Initialize query with common relationships
-        $query = Documentation::with(['category', 'client', 'workContext', 'site', 'template']);
+        $query = Documentation::with(['category', 'client', 'site', 'template']);
 
         // Filter by category if specified. 'cat' can be an ID or a Slug for flexibility.
         $selectedCategory = null;
@@ -232,7 +233,7 @@ class DocumentationController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request, ResolveWorkContext $workContexts)
+    public function store(Request $request)
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -252,15 +253,18 @@ class DocumentationController extends Controller
         $data = $request->except(['_token', 'category_id', 'client_id', 'site_id', 'title', 'scope_type']);
 
         // Determine the visibility scope based on which fields are populated
-        [$clientId, $siteId, $scopeType] = $this->scopePayload($request);
-        $workContext = $workContexts->fromClientId($clientId);
+        $scopeType = 'internal';
+        if ($request->site_id) {
+            $scopeType = 'site';
+        } elseif ($request->client_id) {
+            $scopeType = 'client';
+        }
 
         $documentation = Documentation::create([
             'template_id' => $template->id,
             'category_id' => $request->category_id,
-            'client_id' => $clientId,
-            'work_context_id' => $workContext->id,
-            'site_id' => $siteId,
+            'client_id' => $request->client_id,
+            'site_id' => $request->site_id,
             'title' => $request->title,
             'scope_type' => $scopeType,
             'template_snapshot_json' => $templateSnapshot, // Essential for rendering if the original template changes later
@@ -282,7 +286,7 @@ class DocumentationController extends Controller
      */
     public function edit($id)
     {
-        $documentation = Documentation::with(['category', 'client', 'workContext', 'site', 'template'])->findOrFail($id);
+        $documentation = Documentation::with(['category', 'client', 'site', 'template'])->findOrFail($id);
         $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
 
         $categories = Category::where('is_active', true)
@@ -323,7 +327,7 @@ class DocumentationController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, $id, ResolveWorkContext $workContexts)
+    public function update(Request $request, $id, SendCustomerPortalNotification $portalNotifications)
     {
         $documentation = Documentation::findOrFail($id);
 
@@ -337,17 +341,37 @@ class DocumentationController extends Controller
         $data = $request->except(['_token', '_method', 'category_id', 'client_id', 'site_id', 'title', 'scope_type']);
 
         // Recalculate scope if client/site changed
-        [$clientId, $siteId, $scopeType] = $this->scopePayload($request);
-        $workContext = $workContexts->fromClientId($clientId);
+        $scopeType = 'internal';
+        if ($request->site_id) {
+            $scopeType = 'site';
+        } elseif ($request->client_id) {
+            $scopeType = 'client';
+        }
 
         $documentation->update([
-            'client_id' => $clientId,
-            'work_context_id' => $workContext->id,
-            'site_id' => $siteId,
+            'client_id' => $request->client_id,
+            'site_id' => $request->site_id,
             'title' => $request->title,
             'scope_type' => $scopeType,
             'data_json' => $data,
         ]);
+
+        if ($documentation->isPortalVisible() && $documentation->client_id) {
+            $portalNotifications->handle(
+                type: 'portal_document_updated',
+                clientId: (int) $documentation->client_id,
+                siteId: $documentation->site_id ? (int) $documentation->site_id : null,
+                title: 'Document updated',
+                body: $documentation->title,
+                url: route('customer-portal.documents.show', $documentation),
+                sourceType: Documentation::class,
+                sourceId: $documentation->id,
+                clientWideVisibleToSiteMembers: true,
+                metadata: [
+                    'documentation_id' => $documentation->id,
+                ],
+            );
+        }
 
         return redirect()->route('tech.documentations.show', $documentation->id)
             ->with('success', 'Documentation updated successfully.');
@@ -363,13 +387,70 @@ class DocumentationController extends Controller
      */
     public function show($id)
     {
-        $documentation = Documentation::with(['category', 'client', 'workContext', 'site', 'template'])->findOrFail($id);
+        $documentation = Documentation::with(['category', 'client', 'site', 'template'])->findOrFail($id);
         $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
 
         return view('documentation::Tech.show', [
             'sidebarMenuItems' => $sidebarMenuItems,
             'documentation' => $documentation,
         ]);
+    }
+
+    public function updatePortalVisibility(Request $request, Documentation $documentation, RecordCustomerPortalAudit $audit, SendCustomerPortalNotification $portalNotifications): RedirectResponse
+    {
+        $request->validate([
+            'portal_visible' => ['required', 'boolean'],
+        ]);
+
+        if ($request->boolean('portal_visible') && ! $documentation->client_id) {
+            return back()->withErrors(['portal_visible' => 'Only client-scoped documentation can be shown in the customer portal.']);
+        }
+
+        DB::transaction(function () use ($request, $documentation, $audit, $portalNotifications): void {
+            $wasVisible = $documentation->isPortalVisible();
+            $isVisible = $request->boolean('portal_visible');
+
+            $documentation->forceFill([
+                'portal_visible_at' => $isVisible ? ($documentation->portal_visible_at ?: now()) : null,
+                'portal_visible_by' => $isVisible ? $request->user()?->id : null,
+            ])->save();
+
+            $audit->handle(
+                $isVisible ? 'portal_documentation_visibility_enabled' : 'portal_documentation_visibility_disabled',
+                null,
+                $request->user(),
+                null,
+                $documentation->client,
+                $documentation->site,
+                [
+                    'documentation_id' => $documentation->id,
+                    'title' => $documentation->title,
+                    'scope_type' => $documentation->scope_type,
+                ],
+                $request,
+            );
+
+            if (! $wasVisible && $isVisible && $documentation->client_id) {
+                $portalNotifications->handle(
+                    type: 'portal_document_published',
+                    clientId: (int) $documentation->client_id,
+                    siteId: $documentation->site_id ? (int) $documentation->site_id : null,
+                    title: 'New document published',
+                    body: $documentation->title,
+                    url: route('customer-portal.documents.show', $documentation),
+                    sourceType: Documentation::class,
+                    sourceId: $documentation->id,
+                    clientWideVisibleToSiteMembers: true,
+                    metadata: [
+                        'documentation_id' => $documentation->id,
+                        'scope_type' => $documentation->scope_type,
+                    ],
+                );
+            }
+        });
+
+        return redirect()->route('tech.documentations.show', $documentation->refresh())
+            ->with('success', $documentation->isPortalVisible() ? 'Documentation is visible in the customer portal.' : 'Documentation is hidden from the customer portal.');
     }
 
     /**
@@ -385,44 +466,5 @@ class DocumentationController extends Controller
 
         return redirect()->route('tech.documentations.index')
             ->with('success', 'Documentation deleted successfully.');
-    }
-
-    /**
-     * Return a normalized Client/Site scope tuple for Tech create and update.
-     *
-     * @return array{0: int|null, 1: int|null, 2: string}
-     */
-    private function scopePayload(Request $request): array
-    {
-        $clientId = $request->filled('client_id') ? (int) $request->input('client_id') : null;
-        $siteId = $request->filled('site_id') ? (int) $request->input('site_id') : null;
-
-        if ($siteId) {
-            $site = ClientSite::query()->find($siteId);
-
-            if (! $site) {
-                throw ValidationException::withMessages([
-                    'site_id' => 'The selected site was not found.',
-                ]);
-            }
-
-            if ($clientId && (int) $site->client_id !== $clientId) {
-                throw ValidationException::withMessages([
-                    'site_id' => 'The selected site does not belong to the selected client.',
-                ]);
-            }
-
-            $clientId = (int) $site->client_id;
-        }
-
-        if ($siteId) {
-            return [$clientId, $siteId, 'site'];
-        }
-
-        if ($clientId) {
-            return [$clientId, null, 'client'];
-        }
-
-        return [null, null, 'internal'];
     }
 }

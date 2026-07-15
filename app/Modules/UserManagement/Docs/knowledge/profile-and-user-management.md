@@ -39,6 +39,16 @@ The Ticket module stores ticket assignment settings, including assignability, ca
 category matching, ticket tag matching, and assignment notes. User Management owns timezone, work
 hours, availability, and general profile notes.
 
+## Customer Portal Users
+
+Customer Portal uses the existing `user_management` authentication table so customer contacts can
+sign in with the same account lifecycle, password hashing, and active/disabled status checks.
+
+Portal-only users must not receive internal Spatie roles or direct permissions. Their portal access
+comes from Customer Portal account and membership records linked to `user_management.contact_id`.
+Dual users may have both internal roles and Customer Portal memberships, but the two authorization
+models remain separate.
+
 ## Data Migration
 
 Production upgrades must migrate existing users into `user_profiles`.

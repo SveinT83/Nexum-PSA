@@ -90,6 +90,13 @@ Schedule::command('lead-intelligence:plan-due-runs')
     ->name('lead_intelligence.plan_due_runs')
     ->withoutOverlapping();
 
+// Data Exchange schedules queue due profile runs. Delivery attempts are
+// recorded by the Data Exchange runtime after a generated file exists.
+Schedule::command('data-exchange:run-due')
+    ->everyMinute()
+    ->name('data_exchange.run_due')
+    ->withoutOverlapping();
+
 // Marketing campaign automation. Campaign settings and recipient due_at control
 // whether this run performs work.
 Schedule::job(new SendDueMarketingCampaignEmails())

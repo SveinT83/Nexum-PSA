@@ -21,6 +21,8 @@
                         <h5 class="mb-1">
                             @if($channel->driver === 'nextcloud_talk')
                                 <i class="bi bi-chat-dots me-2"></i>
+                            @elseif($channel->driver === 'sms')
+                                <i class="bi bi-phone me-2"></i>
                             @else
                                 <i class="bi bi-broadcast me-2"></i>
                             @endif
