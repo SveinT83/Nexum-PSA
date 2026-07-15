@@ -45,6 +45,15 @@ return new class extends Migration
                 if (! Schema::hasColumn('marketing_campaign_recipients', 'cycle_number')) {
                     $table->unsignedInteger('cycle_number')->default(1)->after('marketing_list_member_id');
                 }
+
+                // MySQL may use the old composite unique index to support the email foreign key.
+                // Keep a dedicated supporting index in place before replacing that unique index.
+                if (! Schema::hasIndex('marketing_campaign_recipients', 'marketing_campaign_recipients_email_index')) {
+                    $table->index(
+                        'marketing_campaign_email_id',
+                        'marketing_campaign_recipients_email_index'
+                    );
+                }
             });
 
             Schema::table('marketing_campaign_recipients', function (Blueprint $table): void {
