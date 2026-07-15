@@ -149,6 +149,30 @@
             'pattern' => ['tech.admin.system.integrations.*', 'tech.admin.system.relationships.*'],
             'icon' => 'bi-plug',
         ],
+        'customer-portal' => [
+            'name' => 'Customer Portal',
+            'route' => 'tech.admin.system.customer-portal.index',
+            'pattern' => 'tech.admin.system.customer-portal.*',
+            'icon' => 'bi-door-open',
+        ],
+        'intake' => [
+            'name' => 'Intake',
+            'route' => 'tech.admin.system.intake.index',
+            'pattern' => 'tech.admin.system.intake.*',
+            'icon' => 'bi-inboxes',
+        ],
+        'booking' => [
+            'name' => 'Booking',
+            'route' => 'tech.admin.system.booking.index',
+            'pattern' => 'tech.admin.system.booking.*',
+            'icon' => 'bi-calendar-check',
+        ],
+        'data-exchange' => [
+            'name' => 'Data Exchange',
+            'route' => 'tech.admin.system.data-exchange.index',
+            'pattern' => 'tech.admin.system.data-exchange.*',
+            'icon' => 'bi-arrow-left-right',
+        ],
     ];
 
     $localGroups = [
@@ -226,6 +250,7 @@
             ['name' => 'Notification channels', 'route' => 'tech.admin.notification-channels.index', 'pattern' => 'tech.admin.notification-channels.*'],
             ['name' => 'Signal feed', 'route' => 'tech.admin.system.signals.index', 'pattern' => ['tech.admin.system.signals.index', 'tech.admin.system.signals.show']],
             ['name' => 'Signal rules', 'route' => 'tech.admin.system.signals.rules.index', 'pattern' => 'tech.admin.system.signals.rules.*'],
+            ['name' => 'Signal settings', 'route' => 'tech.admin.system.signals.settings.edit', 'pattern' => 'tech.admin.system.signals.settings.*'],
         ],
         'integrations' => [
             ['name' => 'All integrations', 'route' => 'tech.admin.system.integrations.index', 'pattern' => 'tech.admin.system.integrations.index'],
@@ -236,6 +261,20 @@
             ['name' => 'API management', 'route' => 'tech.admin.system.integrations.api.index', 'pattern' => 'tech.admin.system.integrations.api.*'],
             ['name' => 'AI settings', 'route' => 'tech.admin.system.integrations.ai.index', 'pattern' => 'tech.admin.system.integrations.ai.*'],
             ['name' => 'Nextcloud', 'route' => 'tech.admin.nextcloud.connections.index', 'pattern' => 'tech.admin.nextcloud.*'],
+        ],
+        'customer-portal' => [
+            ['name' => 'Access management', 'route' => 'tech.admin.system.customer-portal.index', 'pattern' => 'tech.admin.system.customer-portal.*'],
+        ],
+        'intake' => [
+            ['name' => 'Forms and submissions', 'route' => 'tech.admin.system.intake.index', 'pattern' => 'tech.admin.system.intake.index'],
+            ['name' => 'New form', 'route' => 'tech.admin.system.intake.forms.create', 'pattern' => 'tech.admin.system.intake.forms.create'],
+        ],
+        'booking' => [
+            ['name' => 'Services and requests', 'route' => 'tech.admin.system.booking.index', 'pattern' => 'tech.admin.system.booking.index'],
+            ['name' => 'New booking service', 'route' => 'tech.admin.system.booking.settings.create', 'pattern' => 'tech.admin.system.booking.settings.create'],
+        ],
+        'data-exchange' => [
+            ['name' => 'Profiles and runs', 'route' => 'tech.admin.system.data-exchange.index', 'pattern' => 'tech.admin.system.data-exchange.*'],
         ],
     ];
 

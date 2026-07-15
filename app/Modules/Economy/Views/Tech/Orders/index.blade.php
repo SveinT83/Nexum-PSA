@@ -52,21 +52,32 @@
                 <h2 class="h5 mb-0">Orders</h2>
                 <span class="badge text-bg-light border">{{ $orders->total() }}</span>
             </div>
-            <form method="POST" action="{{ route('tech.economy.orders.generate') }}" class="d-flex flex-wrap align-items-end gap-2">
-                @csrf
-                <div>
-                    <label for="period_start" class="form-label small mb-1">From</label>
-                    <input id="period_start" name="period_start" type="date" class="form-control form-control-sm" value="{{ now()->startOfMonth()->toDateString() }}">
-                </div>
-                <div>
-                    <label for="period_end" class="form-label small mb-1">To</label>
-                    <input id="period_end" name="period_end" type="date" class="form-control form-control-sm" value="{{ now()->endOfMonth()->toDateString() }}">
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-                    Generate orders
-                </button>
-            </form>
+            <div class="d-flex flex-wrap align-items-end gap-2">
+                @can('data_exchange.run')
+                    <form method="POST" action="{{ route('tech.economy.orders.export') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-download" aria-hidden="true"></i>
+                            Export ready orders
+                        </button>
+                    </form>
+                @endcan
+                <form method="POST" action="{{ route('tech.economy.orders.generate') }}" class="d-flex flex-wrap align-items-end gap-2">
+                    @csrf
+                    <div>
+                        <label for="period_start" class="form-label small mb-1">From</label>
+                        <input id="period_start" name="period_start" type="date" class="form-control form-control-sm" value="{{ now()->startOfMonth()->toDateString() }}">
+                    </div>
+                    <div>
+                        <label for="period_end" class="form-label small mb-1">To</label>
+                        <input id="period_end" name="period_end" type="date" class="form-control form-control-sm" value="{{ now()->endOfMonth()->toDateString() }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                        Generate orders
+                    </button>
+                </form>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">

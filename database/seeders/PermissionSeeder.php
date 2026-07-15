@@ -168,6 +168,27 @@ class PermissionSeeder extends Seeder
             'integration.bookstack_manage',
             'integration.rmm_manage',
 
+            'data_exchange.view',
+            'data_exchange.manage',
+            'data_exchange.run',
+            'data_exchange.download',
+            'data_exchange.import',
+            'data_exchange.approve_import',
+            'data_exchange.schedule',
+            'data_exchange.delivery',
+
+            'customer_portal.view',
+            'customer_portal.manage',
+            'customer_portal.invite',
+
+            'intake.view',
+            'intake.manage',
+            'intake.submission_review',
+
+            'booking.view',
+            'booking.manage',
+            'booking.request_review',
+
             'relationships.view',
             'relationships.manage',
             'relationships.escalate',

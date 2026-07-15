@@ -244,6 +244,7 @@ class StorageModuleTest extends TestCase
         $this->assertSame(5, $item->qty_on_hand);
         $this->assertSame(0, $item->qty_reserved);
         $this->assertSame(5, $item->qty_available);
+        $this->assertTrue($item->can_be_ordered);
         $this->assertFalse($item->needs_reorder);
 
         $movement = Movement::firstOrFail();
@@ -305,12 +306,14 @@ class StorageModuleTest extends TestCase
             'initial_quantity' => 4,
             'reorder_point' => 2,
             'target_level' => 8,
+            'can_be_ordered' => false,
             'status' => 'active',
         ]);
 
         $itemResponse->assertCreated()
             ->assertJsonPath('data.sku', 'API-ROUTER')
             ->assertJsonPath('data.qty_on_hand', 4)
+            ->assertJsonPath('data.can_be_ordered', false)
             ->assertJsonPath('data.box.id', $boxId);
 
         $itemId = $itemResponse->json('data.id');
@@ -322,10 +325,12 @@ class StorageModuleTest extends TestCase
         $this->patchJson(route('api.v1.storage.items.update', $itemId), [
             'name' => 'API Router Updated',
             'should_order' => true,
+            'can_be_ordered' => true,
         ])
             ->assertOk()
             ->assertJsonPath('data.name', 'API Router Updated')
-            ->assertJsonPath('data.should_order', true);
+            ->assertJsonPath('data.should_order', true)
+            ->assertJsonPath('data.can_be_ordered', true);
 
         $this->postJson(route('api.v1.storage.items.adjust', $itemId), [
             'delta' => -1,

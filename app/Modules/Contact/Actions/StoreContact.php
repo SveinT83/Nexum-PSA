@@ -45,7 +45,12 @@ class StoreContact
             }
 
             $this->syncEmail($contact, $data['email'] ?? null, $updateExisting);
-            $this->syncPhone($contact, $data['phone'] ?? null, $updateExisting);
+            $this->syncPhone(
+                $contact,
+                $data['phone'] ?? null,
+                $updateExisting,
+                array_key_exists('sms_allowed', $data) ? (bool) $data['sms_allowed'] : null,
+            );
 
             if ($updateExisting) {
                 $this->replaceClientContext($contact);
@@ -190,7 +195,7 @@ class StoreContact
         ]);
     }
 
-    private function syncPhone(Contact $contact, ?string $phone, bool $replacePrimary = false): void
+    private function syncPhone(Contact $contact, ?string $phone, bool $replacePrimary = false, ?bool $smsAllowed = null): void
     {
         $phone = trim((string) $phone);
 
@@ -211,6 +216,13 @@ class StoreContact
             ->contains(fn ($contactPhone) => $this->normalizePhone($contactPhone->phone) === $normalizedPhone);
 
         if ($alreadyExists) {
+            if ($smsAllowed !== null) {
+                $contact->phones
+                    ->first(fn ($contactPhone) => $this->normalizePhone($contactPhone->phone) === $normalizedPhone)
+                    ?->forceFill(['sms_allowed' => $smsAllowed])
+                    ->save();
+            }
+
             return;
         }
 
@@ -221,6 +233,7 @@ class StoreContact
                 $primaryPhone->forceFill([
                     'phone' => $phone,
                     'is_primary' => true,
+                    'sms_allowed' => $smsAllowed ?? $primaryPhone->sms_allowed,
                 ])->save();
 
                 return;
@@ -231,6 +244,7 @@ class StoreContact
             'label' => 'mobile',
             'phone' => $phone,
             'is_primary' => ! $contact->phones()->where('is_primary', true)->exists(),
+            'sms_allowed' => (bool) $smsAllowed,
         ]);
     }
 

@@ -468,6 +468,7 @@ class StorageController extends Controller
             'moq' => ['sometimes', 'nullable', 'integer', 'min:1'],
             'initial_quantity' => [$creating ? 'sometimes' : 'prohibited', 'nullable', 'integer', 'min:0'],
             'should_order' => ['sometimes', 'boolean'],
+            'can_be_ordered' => ['sometimes', 'boolean'],
             'status' => [$creating ? 'sometimes' : 'sometimes', 'string', Rule::in(['active', 'inactive'])],
         ]);
     }

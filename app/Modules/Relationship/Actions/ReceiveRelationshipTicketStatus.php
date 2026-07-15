@@ -3,7 +3,6 @@
 namespace App\Modules\Relationship\Actions;
 
 use App\Modules\Relationship\Models\NexumRelationship;
-use App\Modules\Relationship\Models\NexumSyncLink;
 use App\Modules\Relationship\Support\RelationshipCapability;
 use App\Modules\Relationship\Support\SyncStatus;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
@@ -13,7 +12,11 @@ use Illuminate\Validation\ValidationException;
 
 class ReceiveRelationshipTicketStatus
 {
-    public function __construct(private readonly RecordSyncEvent $events) {}
+    public function __construct(
+        private readonly RecordSyncEvent $events,
+        private readonly ResolveRelationshipTicketSyncLink $links,
+    ) {
+    }
 
     public function handle(NexumRelationship $relationship, string $remoteTicketId, array $data): Ticket
     {
@@ -21,12 +24,7 @@ class ReceiveRelationshipTicketStatus
             throw ValidationException::withMessages(['relationship' => 'Status sync is not enabled for this relationship.']);
         }
 
-        $link = NexumSyncLink::query()
-            ->where('relationship_id', $relationship->id)
-            ->where('domain', 'ticket')
-            ->where('remote_type', 'ticket')
-            ->where('remote_id', $remoteTicketId)
-            ->firstOrFail();
+        $link = $this->links->handle($relationship, $remoteTicketId);
 
         $ticket = Ticket::query()->findOrFail($link->local_id);
         $remoteStatus = (string) $data['status'];

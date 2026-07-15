@@ -7,6 +7,7 @@
         <h1 class="h4 mb-0">Signal Rules</h1>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('tech.admin.system.signals.index') }}" class="btn btn-sm btn-outline-secondary">Signals</a>
+            <a href="{{ route('tech.admin.system.signals.settings.edit') }}" class="btn btn-sm btn-outline-secondary">Settings</a>
             @can('signal.rule.manage')
                 <a href="{{ route('tech.admin.system.signals.rules.create') }}" class="btn btn-sm btn-primary">
                     <i class="bi bi-plus-lg" aria-hidden="true"></i>
@@ -29,6 +30,7 @@
                         <th>Name</th>
                         <th>Status</th>
                         <th>Priority</th>
+                        <th>After success</th>
                         <th>Executions</th>
                     </tr>
                 </thead>
@@ -41,11 +43,12 @@
                             </td>
                             <td><span class="badge text-bg-{{ $rule->is_active ? 'success' : 'light' }} border">{{ $rule->is_active ? 'Active' : 'Inactive' }}</span></td>
                             <td>{{ $rule->priority }}</td>
+                            <td>{{ $rule->stop_processing ? 'Stop lower-priority rules' : 'Continue' }}</td>
                             <td>{{ $rule->executions_count }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4">No signal rules exist.</td>
+                            <td colspan="5" class="text-center text-muted py-4">No signal rules exist.</td>
                         </tr>
                     @endforelse
                 </tbody>

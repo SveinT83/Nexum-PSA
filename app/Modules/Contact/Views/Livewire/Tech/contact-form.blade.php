@@ -90,6 +90,10 @@
                         <label for="phone" class="form-label">Phone</label>
                         <input id="phone" type="text" class="form-control @error('phone') is-invalid @enderror" wire:model.live.debounce.300ms="phone">
                         @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-check mt-2">
+                            <input id="sms_allowed" type="checkbox" class="form-check-input" wire:model="sms_allowed">
+                            <label for="sms_allowed" class="form-check-label">Allow transactional SMS</label>
+                        </div>
                     </div>
                     <div class="col-md-6 position-relative">
                         <label for="job_title" class="form-label">Role or title</label>

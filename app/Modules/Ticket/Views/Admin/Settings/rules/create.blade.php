@@ -92,14 +92,14 @@
                         <div class="col-md-5">
                             <label class="form-label" for="action_type_{{ $index }}">Action</label>
                             <select id="action_type_{{ $index }}" name="actions[{{ $index }}][type]" class="form-select">
-                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority', 'set_sla' => 'Set SLA', 'set_category' => 'Set category', 'add_tag' => 'Add tag'] as $value => $label)
+                                @foreach(['set_ticket_type' => 'Set ticket type', 'set_queue' => 'Set queue', 'set_priority' => 'Set priority', 'set_sla' => 'Set SLA', 'set_category' => 'Set category', 'add_tag' => 'Add tag', 'emit_signal' => 'Emit Signal'] as $value => $label)
                                     <option value="{{ $value }}" @selected(($action['type'] ?? '') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-7">
-                            <label class="form-label" for="action_value_{{ $index }}">Value ID</label>
-                            <input id="action_value_{{ $index }}" name="actions[{{ $index }}][value]" class="form-control" value="{{ $action['value'] ?? '' }}" list="ticket-rule-action-values" required>
+                            <label class="form-label" for="action_value_{{ $index }}">Value ID / signal type</label>
+                            <input id="action_value_{{ $index }}" name="actions[{{ $index }}][value]" class="form-control" value="{{ $action['value'] ?? $action['signal_type'] ?? '' }}" list="ticket-rule-action-values" placeholder="Related record id or signal_type" required>
                         </div>
                     </div>
                 @endforeach
@@ -156,6 +156,7 @@
 @section('rightbar')
     <x-card.default title="Examples">
         <p class="small text-muted mb-2">Known client with no active contract: condition <code>client_has_active_contract equals 0</code>, action set ticket type to Lead.</p>
-        <p class="small text-muted mb-0">Support mailbox: condition <code>channel equals email</code>, action set queue to Support.</p>
+        <p class="small text-muted mb-2">Support mailbox: condition <code>channel equals email</code>, action set queue to Support.</p>
+        <p class="small text-muted mb-0">Signal handoff: choose Emit Signal and set the value to a signal type such as <code>security_escalation</code>. Signal-created tickets skip this handoff to avoid loops.</p>
     </x-card.default>
 @endsection

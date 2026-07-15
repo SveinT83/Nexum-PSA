@@ -15,7 +15,8 @@ class ReceiveRelationshipTicket
     public function __construct(
         private readonly EnsureRelationshipTicketQueue $queues,
         private readonly RecordSyncEvent $events,
-    ) {}
+    ) {
+    }
 
     public function handle(NexumRelationship $relationship, array $data): array
     {
@@ -49,6 +50,11 @@ class ReceiveRelationshipTicket
                 'subject' => $data['subject'],
                 'description' => $data['description'] ?? null,
             ]);
+
+            $ticket->forceFill([
+                'portal_visible_at' => now(),
+                'portal_visible_by' => null,
+            ])->save();
 
             $link = NexumSyncLink::query()->create([
                 'relationship_id' => $relationship->id,

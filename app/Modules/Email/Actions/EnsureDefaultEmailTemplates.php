@@ -74,6 +74,17 @@ class EnsureDefaultEmailTemplates
                 'is_active' => true,
             ],
             [
+                'scope' => 'system',
+                'key' => 'customer_portal_invite',
+                'name' => 'Customer portal invitation',
+                'subject' => 'Customer portal access for {{ client_name }}',
+                'body_html' => '<p>Hello {{ contact_name }},</p><p>You have been invited to access the customer portal for <strong>{{ client_name }}</strong>.</p><p>Scope: {{ site_name }}</p><p><a href="{{ portal_invite_url }}">Activate portal access</a></p><p>This invitation link expires in {{ expires_hours }} hours.</p><p>If you did not expect this invitation, contact your service provider.</p>',
+                'body_text' => "Hello {{ contact_name }},\n\nYou have been invited to access the customer portal for {{ client_name }}.\n\nScope: {{ site_name }}\n\nActivate portal access:\n{{ portal_invite_url }}\n\nThis invitation link expires in {{ expires_hours }} hours.\n\nIf you did not expect this invitation, contact your service provider.",
+                'variables' => ['app_name', 'contact_name', 'contact_email', 'client_name', 'site_name', 'portal_invite_url', 'expires_hours'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            [
                 'scope' => 'sales',
                 'key' => 'sales_activity_email',
                 'name' => 'Sales activity email',

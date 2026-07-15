@@ -317,6 +317,31 @@ class ApiAbilityCatalog
             'description' => 'Delete empty economy orders and draft order lines.',
             'domain' => 'Economy',
         ],
+        'data_exchange.read' => [
+            'label' => 'Read Data Exchange',
+            'description' => 'List Data Exchange profiles and inspect run status.',
+            'domain' => 'Data Exchange',
+        ],
+        'data_exchange.run' => [
+            'label' => 'Run Data Exchange profiles',
+            'description' => 'Trigger implemented Data Exchange export profiles.',
+            'domain' => 'Data Exchange',
+        ],
+        'data_exchange.download' => [
+            'label' => 'Download Data Exchange files',
+            'description' => 'Download generated Data Exchange files.',
+            'domain' => 'Data Exchange',
+        ],
+        'data_exchange.import' => [
+            'label' => 'Preview Data Exchange imports',
+            'description' => 'Start import dry-runs for approved Data Exchange import targets.',
+            'domain' => 'Data Exchange',
+        ],
+        'data_exchange.approve_import' => [
+            'label' => 'Commit Data Exchange imports',
+            'description' => 'Commit valid import previews through approved module-owned targets.',
+            'domain' => 'Data Exchange',
+        ],
         'report.read' => [
             'label' => 'Read reports',
             'description' => 'List and view available report definitions.',

@@ -93,7 +93,7 @@
                             class="form-control @error('client_id') is-invalid @enderror"
                             value="{{ $selectedClientLabel }}"
                             list="client_suggestions"
-                            placeholder="Search client or leave blank for internal"
+                            placeholder="Search and select client"
                             autocomplete="off"
                         >
                         <input id="client_id" name="client_id" type="hidden" value="{{ old('client_id', request('client_id')) }}">
@@ -265,6 +265,26 @@
                             @endforeach
                         </select>
                         @error('owner_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </x-card.default>
+
+                <!-- Customer visibility: manually created client tickets can be kept silent until they are published. -->
+                <x-card.default title="Customer Visibility">
+                    @php
+                        $selectedCustomerVisibility = old('customer_portal_visibility', $defaultCustomerVisibility ?? \App\Modules\Ticket\Support\TicketPortalPolicy::VISIBILITY_UNPUBLISHED);
+                    @endphp
+
+                    <div class="mb-0">
+                        <label for="customer_portal_visibility" class="form-label">Customer portal</label>
+                        <select id="customer_portal_visibility" name="customer_portal_visibility" class="form-select @error('customer_portal_visibility') is-invalid @enderror">
+                            @foreach(\App\Modules\Ticket\Support\TicketPortalPolicy::visibilityOptions() as $value => $label)
+                                <option value="{{ $value }}" @selected($selectedCustomerVisibility === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('customer_portal_visibility')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">
+                            Unpublished keeps client tickets silent externally. Published makes client tickets visible in the customer portal immediately.
+                        </div>
                     </div>
                 </x-card.default>
             </div>

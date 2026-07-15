@@ -52,3 +52,19 @@ has documentation sync enabled. Incoming updates are linked through
 `nexum_sync_links`; if the local copy has changed since the last remote checksum,
 the relationship link is marked as a conflict for review instead of overwriting
 local documentation.
+
+## Customer Portal
+
+Documentation records are hidden from the Customer Portal by default. Technicians can publish or hide
+client-scoped Documentation from the Documentation show page.
+
+Portal document visibility is explicit:
+
+- Internal documentation is never shown in the portal.
+- Client-scoped documentation is visible only to portal memberships for that Client.
+- Site-scoped documentation is visible only to matching Site memberships, while client-wide portal
+  memberships can also see it for the Client.
+- Hidden documentation, other-client documentation, and unrelated Site documentation return 404 from
+  portal routes.
+
+Publishing or hiding a document writes a CustomerPortal audit event.

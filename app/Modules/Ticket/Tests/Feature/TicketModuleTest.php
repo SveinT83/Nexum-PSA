@@ -20,6 +20,9 @@ use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\Signal\Actions\RecordSignal;
+use App\Modules\Signal\Models\Signal;
+use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Storage\Models\Reservation as StorageReservation;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
@@ -1488,6 +1491,142 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function tech_user_can_reserve_orderable_storage_item_when_stock_is_short(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999148',
+            'owner_id' => $this->tech->id,
+        ]);
+        $warehouse = StorageWarehouse::create([
+            'name' => 'Order Warehouse',
+            'code' => 'ORDER',
+        ]);
+        $item = StorageItem::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'ORDERABLE-PART',
+            'name' => 'Orderable Part',
+            'short_description' => 'Part to order for ticket.',
+            'sale_price' => 249,
+            'qty_on_hand' => 0,
+            'qty_reserved' => 0,
+            'can_be_ordered' => true,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'storage_item_id' => $item->id,
+                'quantity' => 2,
+                'invoice_text' => 'Part to order for ticket.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $reservation = StorageReservation::firstOrFail();
+
+        $this->assertSame(2, $item->refresh()->qty_reserved);
+        $this->assertTrue($item->needs_reorder);
+        $this->assertSame(2, $item->suggested_order_qty);
+        $this->assertDatabaseHas('ticket_cost_entries', [
+            'ticket_id' => $ticket->id,
+            'storage_item_id' => $item->id,
+            'storage_reservation_id' => $reservation->id,
+            'quantity' => 2,
+            'status' => 'reserved',
+        ]);
+    }
+
+    #[Test]
+    public function not_orderable_storage_item_cannot_be_reserved_beyond_available_stock(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999149',
+            'owner_id' => $this->tech->id,
+        ]);
+        $warehouse = StorageWarehouse::create([
+            'name' => 'Limited Warehouse',
+            'code' => 'LIMIT',
+        ]);
+        $item = StorageItem::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'LIMITED-PART',
+            'name' => 'Limited Part',
+            'sale_price' => 199,
+            'qty_on_hand' => 1,
+            'qty_reserved' => 0,
+            'can_be_ordered' => false,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'storage_item_id' => $item->id,
+                'quantity' => 2,
+            ])
+            ->assertSessionHasErrors('storage_item_id');
+
+        $this->assertSame(0, StorageReservation::count());
+        $this->assertSame(0, $item->refresh()->qty_reserved);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'storage_item_id' => $item->id,
+                'quantity' => 1,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame(1, $item->refresh()->qty_reserved);
+    }
+
+    #[Test]
+    public function storage_reservation_updates_allow_shortage_only_when_item_can_be_ordered(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999150',
+            'owner_id' => $this->tech->id,
+        ]);
+        $warehouse = StorageWarehouse::create([
+            'name' => 'Update Warehouse',
+            'code' => 'UPDATE',
+        ]);
+        $item = StorageItem::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'UPDATE-PART',
+            'name' => 'Update Part',
+            'sale_price' => 99,
+            'qty_on_hand' => 1,
+            'qty_reserved' => 0,
+            'can_be_ordered' => false,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'storage_item_id' => $item->id,
+                'quantity' => 1,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $entry = $ticket->costEntries()->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.cost-entries.update', [$ticket, $entry]), [
+                'quantity' => 2,
+            ])
+            ->assertSessionHasErrors('cost_entry');
+
+        $item->forceFill(['can_be_ordered' => true])->save();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.cost-entries.update', [$ticket, $entry]), [
+                'quantity' => 2,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame(2, $item->refresh()->qty_reserved);
+        $this->assertSame(2, $entry->refresh()->quantity);
+    }
+
+    #[Test]
     public function tech_user_can_add_manual_ticket_cost_without_storage_item(): void
     {
         $ticket = $this->createTicket(null, [
@@ -2362,6 +2501,8 @@ class TicketModuleTest extends TestCase
             'channel' => 'manual',
             'subject' => 'Reply queue ticket',
             'is_unread' => false,
+            'portal_visible_at' => now(),
+            'portal_visible_by' => $this->tech->id,
         ]);
 
         $this->actingAs($this->tech)
@@ -4266,6 +4407,36 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function admin_can_create_ticket_rule_that_emits_signal(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.rules.store'), [
+                'name' => 'Emit security signal',
+                'description' => 'Hand selected tickets to Signal.',
+                'weight' => 15,
+                'is_active' => '1',
+                'stop_processing' => '0',
+                'conditions' => [
+                    ['field' => 'subject', 'operator' => 'contains', 'value' => 'security'],
+                ],
+                'actions' => [
+                    ['type' => 'emit_signal', 'value' => 'Security Escalation'],
+                ],
+            ])
+            ->assertRedirect(route('tech.admin.settings.tickets.rules'));
+
+        $rule = TicketRule::query()->where('name', 'Emit security signal')->firstOrFail();
+
+        $this->assertSame('emit_signal', $rule->actions_json[0]['type']);
+        $this->assertSame('security_escalation', $rule->actions_json[0]['signal_type']);
+        $this->assertSame('security_escalation', $rule->actions_json[0]['value']);
+    }
+
+    #[Test]
     public function ticket_create_rules_can_set_type_queue_and_priority(): void
     {
         $defaults = app(EnsureTicketDefaults::class)->handle();
@@ -4311,6 +4482,111 @@ class TicketModuleTest extends TestCase
         $this->assertSame($salesQueue->id, $ticket->queue_id);
         $this->assertSame($high->id, $ticket->priority_id);
         $this->assertNotSame($defaults['queue']->id, $ticket->queue_id);
+    }
+
+    #[Test]
+    public function ticket_create_rule_emit_signal_records_signal_with_ticket_context(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $client = Client::factory()->create(['name' => 'Ticket Signal Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Ticket Signal Contact',
+        ]);
+        $clientUser = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'contact_id' => $contact->id,
+            'email' => 'ticket-signal@example.test',
+        ]);
+        $tag = Tag::create([
+            'name' => 'Signal Tag',
+            'slug' => 'signal-tag',
+            'active' => true,
+        ]);
+
+        TicketRule::create([
+            'name' => 'Security signal handoff',
+            'trigger' => TicketRule::TRIGGER_CREATE,
+            'weight' => 1,
+            'is_active' => true,
+            'stop_processing' => false,
+            'conditions_json' => [
+                ['field' => 'subject', 'operator' => 'contains', 'value' => 'Security'],
+            ],
+            'actions_json' => [
+                ['type' => 'add_tag', 'value' => (string) $tag->id],
+                ['type' => 'emit_signal', 'value' => 'security_escalation'],
+            ],
+        ]);
+
+        $ticket = app(StoreTicket::class)->handle([
+            'subject' => 'Security review needed',
+            'channel' => 'email',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $clientUser->id,
+        ], $this->tech);
+
+        $signal = Signal::query()
+            ->where('source_domain', 'ticket')
+            ->where('source_type', Ticket::class)
+            ->where('source_id', $ticket->id)
+            ->firstOrFail();
+
+        $this->assertSame('security_escalation', $signal->signal_type);
+        $this->assertSame($client->id, $signal->client_id);
+        $this->assertSame($contact->id, $signal->contact_id);
+        $this->assertSame($ticket->ticket_key, $signal->payload['ticket_key']);
+        $this->assertSame('Security signal handoff', $signal->payload['ticket_rule_name']);
+        $this->assertSame(['Signal Tag'], $signal->payload['tags']);
+    }
+
+    #[Test]
+    public function ticket_emit_signal_rule_skips_signal_created_tickets_to_avoid_loops(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+
+        TicketRule::create([
+            'name' => 'Emit from all signal tickets',
+            'trigger' => TicketRule::TRIGGER_CREATE,
+            'weight' => 1,
+            'is_active' => true,
+            'stop_processing' => false,
+            'conditions_json' => [
+                ['field' => 'channel', 'operator' => 'equals', 'value' => 'signal'],
+            ],
+            'actions_json' => [
+                ['type' => 'emit_signal', 'value' => 'recursive_ticket_signal'],
+            ],
+        ]);
+        SignalRule::query()->create([
+            'name' => 'Create ticket from signal',
+            'is_active' => true,
+            'priority' => 10,
+            'conditions' => [
+                'source_domain' => ['email'],
+                'signal_type' => ['vendor_notice'],
+            ],
+            'actions' => [
+                ['type' => 'ticket_follow_up', 'subject' => 'Investigate vendor notice'],
+            ],
+        ]);
+
+        app(RecordSignal::class)->handle([
+            'source_domain' => 'email',
+            'signal_type' => 'vendor_notice',
+            'severity' => 'warning',
+            'confidence' => 100,
+            'summary' => 'Vendor notice needs a ticket.',
+            'payload' => ['vendor' => 'example'],
+            'occurred_at' => now(),
+        ]);
+
+        $this->assertSame(1, Ticket::query()->where('channel', 'signal')->count());
+        $this->assertSame(0, Signal::query()->where('source_domain', 'ticket')->count());
+        $this->assertSame(1, Signal::query()->where('source_domain', 'email')->where('signal_type', 'vendor_notice')->count());
     }
 
     #[Test]

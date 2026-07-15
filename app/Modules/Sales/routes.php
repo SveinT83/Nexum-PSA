@@ -1,10 +1,26 @@
 <?php
 
 use App\Modules\Sales\Controllers\Admin\SalesSettingsController;
+use App\Modules\Sales\Controllers\Portal\PortalSalesQuoteController;
 use App\Modules\Sales\Controllers\PublicQuoteController;
 use App\Modules\Sales\Controllers\Tech\LeadsController;
 use App\Modules\Sales\Controllers\Tech\SalesController;
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use Illuminate\Support\Facades\Route;
+
+if (($salesPortalRoutes ?? false) === true) {
+    Route::middleware(['auth', EnsureCustomerPortalAccess::class])
+        ->prefix('portal/quotes')
+        ->name('customer-portal.quotes.')
+        ->group(function (): void {
+            Route::get('/', [PortalSalesQuoteController::class, 'index'])->name('index');
+            Route::get('/{quote}', [PortalSalesQuoteController::class, 'show'])->name('show');
+            Route::post('/{quote}/accept', [PortalSalesQuoteController::class, 'accept'])->name('accept');
+            Route::post('/{quote}/question', [PortalSalesQuoteController::class, 'question'])->name('question');
+        });
+
+    return;
+}
 
 if (($salesPublicRoutes ?? false) === true) {
     Route::get('/quote/view/{token}', [PublicQuoteController::class, 'view'])

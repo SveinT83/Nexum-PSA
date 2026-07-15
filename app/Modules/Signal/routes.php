@@ -2,6 +2,7 @@
 
 use App\Modules\Signal\Controllers\Tech\SignalController;
 use App\Modules\Signal\Controllers\Tech\SignalRuleController;
+use App\Modules\Signal\Controllers\Tech\SignalSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/admin/system/signals', [SignalController::class, 'index'])
@@ -18,8 +19,15 @@ Route::get('/admin/system/signals/rules/{rule}', [SignalRuleController::class, '
 Route::put('/admin/system/signals/rules/{rule}', [SignalRuleController::class, 'update'])
     ->name('admin.system.signals.rules.update');
 
+Route::get('/admin/system/signals/settings', [SignalSettingsController::class, 'edit'])
+    ->name('admin.system.signals.settings.edit');
+Route::put('/admin/system/signals/settings', [SignalSettingsController::class, 'update'])
+    ->name('admin.system.signals.settings.update');
+
 Route::get('/admin/system/signals/{signal}', [SignalController::class, 'show'])
     ->name('admin.system.signals.show');
+Route::post('/admin/system/signals/{signal}/executions/{execution}/retry', [SignalController::class, 'retryExecution'])
+    ->name('admin.system.signals.executions.retry');
 
 Route::get('/signals', [SignalController::class, 'index'])
     ->name('signals.index');
@@ -35,3 +43,5 @@ Route::put('/signals/rules/{rule}', [SignalRuleController::class, 'update'])
     ->name('signals.rules.update');
 Route::get('/signals/{signal}', [SignalController::class, 'show'])
     ->name('signals.show');
+Route::post('/signals/{signal}/executions/{execution}/retry', [SignalController::class, 'retryExecution'])
+    ->name('signals.executions.retry');

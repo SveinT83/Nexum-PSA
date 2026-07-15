@@ -62,8 +62,8 @@
                                             @foreach((array) $rule->actions_json as $action)
                                                 <div class="small">
                                                     <code>{{ str_replace('_', ' ', $action['type'] ?? '') }}</code>
-                                                    @if(($action['value'] ?? '') !== '')
-                                                        <code>{{ $action['value'] }}</code>
+                                                    @if(($action['value'] ?? $action['signal_type'] ?? '') !== '')
+                                                        <code>{{ $action['value'] ?? $action['signal_type'] }}</code>
                                                     @endif
                                                 </div>
                                             @endforeach

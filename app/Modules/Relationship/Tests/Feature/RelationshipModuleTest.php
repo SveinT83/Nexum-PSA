@@ -6,6 +6,8 @@ use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Models\Knowledge\Article;
 use App\Modules\Documentation\Models\Documentation;
+use App\Modules\Documentation\Models\DocumentationTemplate;
+use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Relationship\Models\NexumRelationship;
 use App\Modules\Relationship\Models\NexumSyncLink;
 use App\Modules\Relationship\Support\RelationshipCapability;
@@ -13,8 +15,10 @@ use App\Modules\Relationship\Support\RelationshipDirection;
 use App\Modules\Relationship\Support\RelationshipHealthStatus;
 use App\Modules\Relationship\Support\RelationshipStatus;
 use App\Modules\Relationship\Support\RelationshipType;
+use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketStatus;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -28,9 +32,7 @@ class RelationshipModuleTest extends TestCase
     use RefreshDatabase;
 
     private User $manager;
-
     private User $viewer;
-
     private User $limited;
 
     protected function setUp(): void
@@ -175,7 +177,11 @@ class RelationshipModuleTest extends TestCase
         $relationship = $this->activeRelationship($client, [
             RelationshipCapability::TICKET_SYNC => true,
         ]);
-        $ticket = Ticket::factory()->create(['client_id' => $client->id]);
+        $ticket = Ticket::factory()->create([
+            'client_id' => $client->id,
+            'portal_visible_at' => now(),
+            'portal_visible_by' => $this->manager->id,
+        ]);
         NexumSyncLink::query()->create([
             'relationship_id' => $relationship->id,
             'domain' => 'ticket',
@@ -184,7 +190,8 @@ class RelationshipModuleTest extends TestCase
             'remote_type' => 'ticket',
             'remote_id' => 'remote-ticket-1',
             'direction' => 'outbound',
-            'sync_status' => 'synced',
+            'sync_status' => 'failed',
+            'last_error' => 'Previous remote lookup failed.',
         ]);
 
         $message = TicketMessage::query()->create([
@@ -205,6 +212,87 @@ class RelationshipModuleTest extends TestCase
         $this->assertDatabaseHas('nexum_sync_events', [
             'relationship_id' => $relationship->id,
             'event_type' => 'ticket_message_synced',
+            'outcome' => 'synced',
+        ]);
+        $this->assertDatabaseHas('nexum_sync_links', [
+            'relationship_id' => $relationship->id,
+            'domain' => 'ticket',
+            'local_id' => $ticket->id,
+            'sync_status' => 'synced',
+            'last_error' => null,
+        ]);
+    }
+
+    #[Test]
+    public function inbound_ticket_reply_can_match_an_outbound_link_by_local_ticket_id(): void
+    {
+        $client = Client::factory()->create(['name' => 'Ticket Client']);
+        $relationship = $this->activeRelationship($client, [
+            RelationshipCapability::TICKET_SYNC => true,
+        ]);
+        $ticket = Ticket::factory()->create(['client_id' => $client->id]);
+
+        NexumSyncLink::query()->create([
+            'relationship_id' => $relationship->id,
+            'domain' => 'ticket',
+            'local_type' => Ticket::class,
+            'local_id' => $ticket->id,
+            'remote_type' => 'ticket',
+            'remote_id' => 'TD-2026-000079',
+            'direction' => 'outbound',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->signedJson('post', '/api/v1/nexum/relationships/tickets/'.$ticket->id.'/messages', $relationship, 'inbound-token', 'webhook-secret', [
+            'source_message_id' => 'provider-message-1',
+            'source_ticket_key' => 'TD-2026-000079',
+            'body' => 'Reply from provider.',
+            'author_name' => 'Provider Tech',
+            'author_email' => 'provider@example.test',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('ticket_messages', [
+            'ticket_id' => $ticket->id,
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Reply from provider.',
+        ]);
+        $this->assertDatabaseHas('nexum_sync_events', [
+            'relationship_id' => $relationship->id,
+            'event_type' => 'ticket_message_received',
+            'outcome' => 'synced',
+        ]);
+    }
+
+    #[Test]
+    public function inbound_ticket_status_can_match_an_inbound_link_by_local_ticket_key(): void
+    {
+        $client = Client::factory()->create(['name' => 'Ticket Client']);
+        $relationship = $this->activeRelationship($client, [
+            RelationshipCapability::STATUS_SYNC => true,
+        ]);
+        $ticket = Ticket::factory()->create(['client_id' => $client->id, 'ticket_key' => 'TD-2026-000079']);
+        $targetStatus = TicketStatus::query()->where('slug', 'in-progress')->firstOrFail();
+
+        NexumSyncLink::query()->create([
+            'relationship_id' => $relationship->id,
+            'domain' => 'ticket',
+            'local_type' => Ticket::class,
+            'local_id' => $ticket->id,
+            'remote_type' => 'ticket',
+            'remote_id' => 'remote-ticket-1',
+            'direction' => 'inbound',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->signedJson('post', '/api/v1/nexum/relationships/tickets/'.$ticket->ticket_key.'/status', $relationship, 'inbound-token', 'webhook-secret', [
+            'status' => 'in-progress',
+        ])->assertOk();
+
+        $this->assertSame($targetStatus->id, $ticket->refresh()->status_id);
+        $this->assertDatabaseHas('nexum_sync_events', [
+            'relationship_id' => $relationship->id,
+            'event_type' => 'ticket_status_received',
             'outcome' => 'synced',
         ]);
     }

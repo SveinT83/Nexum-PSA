@@ -98,9 +98,11 @@ The show page is the primary work surface. It contains ticket details, conversat
 
 When an active Nexum relationship is available, the show page also displays a
 Nexum relationship panel. The panel shows existing remote sync links and allows
-authorized technicians to escalate the ticket to a real configured relationship.
-The panel is hidden when there is no existing link and no active relationship
-target, so the UI does not imply unfinished sync behavior.
+authorized technicians to escalate a Published ticket to a real configured
+relationship. Unpublished client tickets cannot be escalated to a Nexum
+relationship because they are still externally silent. The panel is hidden when
+there is no existing link and no active relationship target, so the UI does not
+imply unfinished sync behavior.
 
 Ticket create/edit:
 
@@ -119,9 +121,28 @@ Ticket API create, list, and show responses expose `work_context_id` and `work_c
 `client_id` filters remain client-only. The list endpoint also supports `work_context_id` and
 `context_type` filters for `internal` and `client`.
 
+Customer Portal:
+
+Tickets are hidden from the Customer Portal until they are explicitly Published, or until they are
+created from the portal. Portal users can list, create, view, and reply to visible tickets for their
+active Client/Site membership. The portal shows customer-safe status labels and public ticket
+messages only. Internal notes, internal attachments, assignment details, time entries, cost entries,
+SLA internals, workflow internals, and technician audit details stay inside the technician workspace.
+
+Ticket Settings controls whether manually created client tickets default to Unpublished or
+Published. The create form can override the default for the new ticket. Unpublished client tickets
+stay silent externally: they are not visible in the Customer Portal, do not send customer-facing
+portal notifications, do not allow `Reply to contact`, and cannot be escalated to a Nexum
+relationship. Internal notes remain available, and the ticket remains available for reporting.
+
+Technicians can publish an Unpublished ticket in the Customer Portal from the ticket show page.
+Published tickets cannot be unpublished from the normal ticket page. Portal replies are stored as
+public customer messages and trigger the customer-reply workflow without sending the customer's own
+reply back to the customer as an outbound email.
+
 Ticket settings:
 
-Admin surface for queues, types, statuses, priorities, rules, workflows, assignment rules, ticket assignment settings, email defaults, and merge settings.
+Admin surface for queues, types, statuses, priorities, rules, workflows, assignment rules, ticket assignment settings, email defaults, customer portal defaults, solution policy, and merge settings.
 
 ## Important Design Rules
 

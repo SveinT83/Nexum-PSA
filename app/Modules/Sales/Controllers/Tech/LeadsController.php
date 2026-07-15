@@ -5,6 +5,8 @@ namespace App\Modules\Sales\Controllers\Tech;
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Modules\Marketing\Models\MarketingCampaignEvent;
+use App\Modules\Marketing\Models\MarketingInterestAssignment;
 use App\Modules\Sales\Actions\EnsureSalesDefaults;
 use App\Modules\Sales\Actions\StoreSalesOpportunity;
 use App\Modules\Sales\Models\SalesOpportunity;
@@ -65,6 +67,8 @@ class LeadsController extends Controller
             ->when(! in_array($sort, ['name', 'temperature', 'contacts', 'assets', 'status'], true), fn ($query) => $query->orderBy('name'))
             ->paginate(25)
             ->withQueryString();
+
+        $this->attachMarketingEngagement($clients->getCollection());
 
         $leadCandidateIds = (clone $leadCandidateQuery)->pluck('clients.id');
         $usedCategoryIds = (clone $leadCandidateQuery)
@@ -204,6 +208,42 @@ class LeadsController extends Controller
         }
 
         return ['All leads' => $clients];
+    }
+
+    private function attachMarketingEngagement($clients): void
+    {
+        $clientIds = $clients->pluck('id')->filter()->values();
+
+        if ($clientIds->isEmpty()) {
+            return;
+        }
+
+        $interestScores = MarketingInterestAssignment::query()
+            ->whereIn('client_id', $clientIds)
+            ->selectRaw('client_id, SUM(engagement_score) as score, SUM(event_count) as events, MAX(last_seen_at) as last_seen_at')
+            ->groupBy('client_id')
+            ->get()
+            ->keyBy('client_id');
+        $eventCounts = MarketingCampaignEvent::query()
+            ->whereIn('client_id', $clientIds)
+            ->selectRaw("client_id, SUM(CASE WHEN type = 'open' THEN 1 ELSE 0 END) as opens, SUM(CASE WHEN type = 'click' THEN 1 ELSE 0 END) as clicks, SUM(CASE WHEN type = 'unsubscribe' THEN 1 ELSE 0 END) as unsubscribes, MAX(occurred_at) as last_event_at")
+            ->groupBy('client_id')
+            ->get()
+            ->keyBy('client_id');
+
+        $clients->each(function (Client $client) use ($interestScores, $eventCounts): void {
+            $score = $interestScores->get($client->id);
+            $events = $eventCounts->get($client->id);
+
+            $client->setAttribute('marketing_engagement_summary', [
+                'score' => (int) ($score?->score ?? 0),
+                'interest_events' => (int) ($score?->events ?? 0),
+                'opens' => (int) ($events?->opens ?? 0),
+                'clicks' => (int) ($events?->clicks ?? 0),
+                'unsubscribes' => (int) ($events?->unsubscribes ?? 0),
+                'last_seen_at' => $score?->last_seen_at ?: $events?->last_event_at,
+            ]);
+        });
     }
 
     private function resolveSalesTagIds(array $tagNames): array

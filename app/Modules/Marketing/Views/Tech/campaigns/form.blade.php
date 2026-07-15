@@ -21,6 +21,9 @@
         $monthDay = old('month_day', $campaign->scheduleMonthDay());
         $customIntervalValue = old('custom_interval_value', $campaign->sequence_interval_value ?: 1);
         $customIntervalUnit = old('custom_interval_unit', $campaign->sequence_interval_unit ?: 'days');
+        $completionBehavior = old('completion_behavior', $campaign->completion_behavior ?: 'stop');
+        $repeatIntervalValue = old('repeat_interval_value', $campaign->repeat_interval_value ?: 1);
+        $repeatIntervalUnit = old('repeat_interval_unit', $campaign->repeat_interval_unit ?: 'months');
     @endphp
 
     <!-- ------------------------------------------------- -->
@@ -129,6 +132,29 @@
                         <div class="form-text">Use “join current schedule” for newsletters so new contacts do not get old emails.</div>
                         @error('new_recipient_policy')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    <div class="col-lg-4">
+                        <label for="completion_behavior" class="form-label">When Sequence Completes</label>
+                        <select id="completion_behavior" name="completion_behavior" class="form-select @error('completion_behavior') is-invalid @enderror" data-completion-behavior>
+                            @foreach($completionBehaviors as $value => $label)
+                                <option value="{{ $value }}" @selected($completionBehavior === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('completion_behavior')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-2" data-repeat-field>
+                        <label for="repeat_interval_value" class="form-label">Repeat Every</label>
+                        <input type="number" min="1" max="999" id="repeat_interval_value" name="repeat_interval_value" class="form-control @error('repeat_interval_value') is-invalid @enderror" value="{{ $repeatIntervalValue }}">
+                        @error('repeat_interval_value')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-2" data-repeat-field>
+                        <label for="repeat_interval_unit" class="form-label">Repeat Unit</label>
+                        <select id="repeat_interval_unit" name="repeat_interval_unit" class="form-select @error('repeat_interval_unit') is-invalid @enderror">
+                            @foreach($sequenceIntervalUnits as $value => $label)
+                                <option value="{{ $value }}" @selected($repeatIntervalUnit === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('repeat_interval_unit')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                 </div>
             </div>
         </div>
@@ -196,6 +222,8 @@
                 const weeklyFields = form.querySelectorAll('[data-schedule-weekly]');
                 const monthlyFields = form.querySelectorAll('[data-schedule-monthly]');
                 const customFields = form.querySelectorAll('[data-schedule-custom]');
+                const completionBehavior = form.querySelector('[data-completion-behavior]');
+                const repeatFields = form.querySelectorAll('[data-repeat-field]');
 
                 const syncScheduleFields = function () {
                     const value = frequency ? frequency.value : 'daily';
@@ -209,9 +237,13 @@
                     customFields.forEach(function (field) {
                         field.classList.toggle('d-none', value !== 'custom');
                     });
+                    repeatFields.forEach(function (field) {
+                        field.classList.toggle('d-none', (completionBehavior?.value || 'stop') !== 'repeat');
+                    });
                 };
 
                 frequency?.addEventListener('change', syncScheduleFields);
+                completionBehavior?.addEventListener('change', syncScheduleFields);
                 syncScheduleFields();
             });
         });

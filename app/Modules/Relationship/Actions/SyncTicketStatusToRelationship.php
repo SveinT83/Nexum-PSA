@@ -7,7 +7,9 @@ use App\Modules\Ticket\Models\Ticket;
 
 class SyncTicketStatusToRelationship
 {
-    public function __construct(private readonly NexumRelationshipHttpClient $client) {}
+    public function __construct(private readonly NexumRelationshipHttpClient $client)
+    {
+    }
 
     public function handle(int $ticketId): void
     {
@@ -15,7 +17,7 @@ class SyncTicketStatusToRelationship
             ->with(['status', 'syncLinks.relationship'])
             ->find($ticketId);
 
-        if (! $ticket || ! $ticket->status) {
+        if (! $ticket || ! $ticket->status || ! $ticket->isPortalVisible()) {
             return;
         }
 

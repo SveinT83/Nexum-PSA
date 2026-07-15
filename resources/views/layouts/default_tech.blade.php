@@ -37,6 +37,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ $companyProfile['company_name'] ?? config('app.name', 'Nexum PSA') }}</title>
+        @PwaHead
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,6 +136,41 @@
             .sidebar .bg-light .text-muted {
                 color: var(--bs-dark) !important;
             }
+
+            .tech-shell-mobile-toggle {
+                width: 2.5rem;
+                height: 2.5rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .tech-shell-content {
+                min-width: 0;
+            }
+
+            .min-w-0 {
+                min-width: 0 !important;
+            }
+
+            @media (max-width: 767.98px) {
+                header .container-fluid {
+                    padding-bottom: .5rem !important;
+                }
+
+                .tech-shell-content {
+                    border-left: 0 !important;
+                    border-right: 0 !important;
+                }
+
+                .tech-shell-side-panel {
+                    border-top: 1px solid var(--bs-border-color);
+                }
+
+                .content > .container {
+                    padding-inline: .5rem;
+                }
+            }
         </style>
         @livewireStyles
     </head>
@@ -146,6 +182,12 @@
         <header class="sticky-top">
             <div class="container-fluid pb-3">
                 <div class="row align-items-center g-2">
+                    <div class="col-auto d-md-none">
+                        <button class="btn btn-outline-secondary tech-shell-mobile-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#techMobileNav" aria-controls="techMobileNav" aria-label="Open navigation">
+                            <i class="bi bi-list" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
                     <div class="col-auto">
                         <a href="{{ route('tech.dashboard') }}" class="tech-shell-brand d-inline-flex align-items-center gap-2 text-decoration-none py-2">
                             @if($brandLogoUrl)
@@ -160,10 +202,20 @@
                         </a>
                     </div>
 
-                    <div class="col">
+                    <div class="col d-none d-md-block">
                         @include('partials.nav.tech_nav')
                     </div>
 
+                </div>
+            </div>
+
+            <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="techMobileNav" aria-labelledby="techMobileNavLabel">
+                <div class="offcanvas-header">
+                    <h2 class="offcanvas-title h5" id="techMobileNavLabel">{{ $companyProfile['company_name'] ?? config('app.name', 'Nexum PSA') }}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body">
+                    @include('partials.nav.tech_nav', ['mobile' => true])
                 </div>
             </div>
         </header>
@@ -178,7 +230,7 @@
                 <div class="row">
 
                     <!-- Sidebar (left) -->
-                    <div class="col-md-2 pt-3 sidebar">
+                    <div class="col-12 col-md-2 pt-3 sidebar tech-shell-side-panel order-2 order-md-1">
 
                         <!-- ------------------------------------------------- -->
                         <!-- More sidebar content from page file -->
@@ -187,7 +239,7 @@
                     </div>
 
                     <!-- Main content (center) -->
-                    <div class="col-md-8 border-start border-end">
+                    <div class="col-12 col-md-8 border-start border-end tech-shell-content order-1 order-md-2">
 
                         <!-- Page header -->
                         <div class="row page-header py-2 align-items-center justify-content-between border-bottom border-primary">
@@ -232,7 +284,7 @@
                     </div>
 
                     <!-- Right sidebar (right) -->
-                    <div class="col-md-2 pt-3 sidebar">
+                    <div class="col-12 col-md-2 pt-3 sidebar tech-shell-side-panel order-3">
                         @yield('rightbar')
 
                         @auth
@@ -284,5 +336,6 @@
 
         @livewireScripts
         @yield('scripts')
+        @RegisterServiceWorkerScript
     </body>
 </html>

@@ -14,6 +14,7 @@ use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiChatResponder;
 use App\Modules\Knowledge\Queries\ArticleQuery;
+use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Relationship\Models\NexumRelationship;
 use App\Modules\Relationship\Support\RelationshipDirection;
 use App\Modules\Storage\Models\Item as StorageItem;
@@ -54,6 +55,7 @@ use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketMergeSuggestionService;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\Ticket\Support\TicketPortalPolicy;
 use App\Modules\Ticket\Support\TicketSolutionPolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -114,7 +116,7 @@ class TicketController extends Controller
         ]);
     }
 
-    public function create(Request $request, EnsureTicketDefaults $defaults): View
+    public function create(Request $request, EnsureTicketDefaults $defaults, TicketPortalPolicy $portalPolicy): View
     {
         $defaults->handle();
 
@@ -158,6 +160,7 @@ class TicketController extends Controller
             'selectedClient' => $selectedClient,
             'selectedContact' => $selectedContact,
             'selectedSite' => $selectedSite,
+            'defaultCustomerVisibility' => $portalPolicy->defaultCustomerVisibility(),
             'openClientTickets' => $selectedClient
                 ? Ticket::with(['status', 'priority'])
                     ->where('client_id', $selectedClient->id)
@@ -254,7 +257,7 @@ class TicketController extends Controller
         ]);
     }
 
-    public function store(Request $request, StoreTicket $storeTicket): RedirectResponse
+    public function store(Request $request, StoreTicket $storeTicket, TicketPortalPolicy $portalPolicy, SendCustomerPortalNotification $portalNotifications): RedirectResponse
     {
         $data = $request->validate([
             'subject' => 'required|string|max:255',
@@ -274,6 +277,7 @@ class TicketController extends Controller
             'type' => 'nullable|string|max:50',
             'impact' => 'nullable|integer|min:1|max:5',
             'urgency' => 'nullable|integer|min:1|max:5',
+            'customer_portal_visibility' => ['nullable', 'string', Rule::in(array_keys(TicketPortalPolicy::visibilityOptions()))],
         ]);
 
         if (! empty($data['contact_id']) && empty($data['client_id'])) {
@@ -317,9 +321,16 @@ class TicketController extends Controller
             $this->validateAssetScope($data['asset_id'], $data['client_id'] ?? null, $data['contact_id'] ?? null, $data['site_id'] ?? null);
         }
 
+        $customerPortalVisibility = $data['customer_portal_visibility'] ?? $portalPolicy->defaultCustomerVisibility();
+        unset($data['customer_portal_visibility']);
+
         $data['channel'] = 'manual';
 
         $ticket = $storeTicket->handle($data, $request->user());
+
+        if (! empty($data['client_id']) && $customerPortalVisibility === TicketPortalPolicy::VISIBILITY_PUBLISHED) {
+            $this->publishTicketToCustomerPortal($ticket, $request, $portalNotifications);
+        }
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Ticket '.$ticket->ticket_key.' created.');
@@ -339,7 +350,7 @@ class TicketController extends Controller
         $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
         $messageIds = $ticket->messages->pluck('id')->all();
         $relationshipSyncLinks = $ticket->syncLinks;
-        $availableRelationships = request()->user()?->can('relationships.escalate')
+        $availableRelationships = ($ticket->isPortalVisible() && request()->user()?->can('relationships.escalate'))
             ? NexumRelationship::query()
                 ->active()
                 ->ticketCapable()
@@ -451,6 +462,13 @@ class TicketController extends Controller
                 ? ($data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE)
                 : null;
         }
+
+        if ($data['type'] === 'customer_reply' && $ticket->client_id && ! $ticket->isPortalVisible()) {
+            return back()
+                ->withErrors(['type' => 'Publish the ticket before replying to the customer.'])
+                ->withInput();
+        }
+
         $action = $data['type'] === 'customer_reply' ? TicketAction::CUSTOMER_REPLY : TicketAction::ADD_INTERNAL_NOTE;
 
         if ($reason = $actionGuard->reason($ticket, $action, $request->user())) {
@@ -806,6 +824,69 @@ class TicketController extends Controller
             ->with('success', 'Ticket marked as read.');
     }
 
+    public function updatePortalVisibility(Request $request, Ticket $ticket, SendCustomerPortalNotification $portalNotifications): RedirectResponse
+    {
+        $request->validate([
+            'portal_visible' => ['required', 'boolean'],
+        ]);
+
+        if (! $request->boolean('portal_visible')) {
+            return back()->withErrors(['portal_visible' => 'Published tickets cannot be unpublished from the normal ticket page.']);
+        }
+
+        if ($ticket->isPortalVisible()) {
+            return redirect()->route('tech.tickets.show', $ticket)
+                ->with('success', 'Ticket is already published in the customer portal.');
+        }
+
+        if (! $ticket->client_id) {
+            return back()->withErrors(['portal_visible' => 'Only client-scoped tickets can be shown in the customer portal.']);
+        }
+
+        $this->publishTicketToCustomerPortal($ticket, $request, $portalNotifications);
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Ticket is published in the customer portal.');
+    }
+
+    private function publishTicketToCustomerPortal(Ticket $ticket, Request $request, SendCustomerPortalNotification $portalNotifications): void
+    {
+        if (! $ticket->client_id || $ticket->isPortalVisible()) {
+            return;
+        }
+
+        DB::transaction(function () use ($ticket, $request, $portalNotifications): void {
+            $ticket->forceFill([
+                'portal_visible_at' => $ticket->portal_visible_at ?: now(),
+                'portal_visible_by' => $request->user()?->id,
+            ])->save();
+
+            TicketEvent::query()->create([
+                'ticket_id' => $ticket->id,
+                'actor_id' => $request->user()?->id,
+                'type' => 'portal_visibility_enabled',
+                'message' => 'Ticket published in customer portal.',
+                'after' => [
+                    'portal_visible' => true,
+                ],
+            ]);
+
+            $portalNotifications->handle(
+                type: 'portal_ticket_created',
+                clientId: (int) $ticket->client_id,
+                siteId: $ticket->site_id ? (int) $ticket->site_id : null,
+                title: 'Ticket '.$ticket->ticket_key.' is available',
+                body: $ticket->subject,
+                url: route('customer-portal.tickets.show', $ticket),
+                sourceType: Ticket::class,
+                sourceId: $ticket->id,
+                metadata: [
+                    'ticket_key' => $ticket->ticket_key,
+                ],
+            );
+        });
+    }
+
     public function markMessageRead(Request $request, Ticket $ticket, TicketMessage $message): RedirectResponse
     {
         abort_unless((int) $message->ticket_id === (int) $ticket->id, 404);
@@ -817,9 +898,9 @@ class TicketController extends Controller
                 $message->forceFill(['read_at' => now()])->save();
             }
 
-            // Keep the ticket unread until every customer/contact reply has been handled.
+            // Keep the ticket unread until every customer-authored reply has been handled.
             $hasUnreadCustomerReplies = $ticket->messages()
-                ->where('author_type', 'contact')
+                ->whereIn('author_type', ['contact', 'portal_user'])
                 ->whereNull('read_at')
                 ->exists();
 
@@ -1035,6 +1116,7 @@ class TicketController extends Controller
                 'id' => $item->id,
                 'label' => $item->name.($item->sku ? ' ('.$item->sku.')' : ''),
                 'available' => $item->qty_available,
+                'can_be_ordered' => $item->can_be_ordered,
                 'sale_price' => $item->sale_price,
                 'short_description' => $item->short_description,
                 'location' => trim(($item->warehouse?->name ?? 'No warehouse').($item->box ? ' / '.$item->box->code_human : '')),

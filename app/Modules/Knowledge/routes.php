@@ -1,7 +1,9 @@
 <?php
 
 use App\Modules\Knowledge\Controllers\Admin\KnowledgeSettingsController;
+use App\Modules\Knowledge\Controllers\Portal\PortalKnowledgeController;
 use App\Modules\Knowledge\Controllers\Tech\KnowledgeController;
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +16,18 @@ use Illuminate\Support\Facades\Route;
 | Laravel's default route files.
 |
 */
+
+if (($knowledgePortalRoutes ?? false) === true) {
+    Route::middleware(['auth', EnsureCustomerPortalAccess::class])
+        ->prefix('portal/knowledge')
+        ->name('customer-portal.knowledge.')
+        ->group(function (): void {
+            Route::get('/', [PortalKnowledgeController::class, 'index'])->name('index');
+            Route::get('/{article}', [PortalKnowledgeController::class, 'show'])->name('show');
+        });
+
+    return;
+}
 
 Route::get('/admin/settings/knowledge', [KnowledgeSettingsController::class, 'edit'])->name('admin.settings.knowledge');
 Route::put('/admin/settings/knowledge', [KnowledgeSettingsController::class, 'update'])->name('admin.settings.knowledge.update');

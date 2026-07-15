@@ -54,6 +54,11 @@ Technicians with `relationships.escalate` can escalate an eligible ticket from
 the ticket page when an active ticket-capable relationship exists. The remote
 ticket identity is stored in the sync link table to prevent duplicates.
 
+A ticket must be Published before it can be escalated to a Nexum relationship.
+Unpublished tickets are externally silent and are not pushed to remote Nexum
+portals. Outbound public reply sync and status sync also check the Published
+state before sending updates.
+
 Public customer replies are sent to the linked remote ticket. Internal notes,
 assignment, local workflow details, time, cost, and margin are not sent.
 

@@ -16,10 +16,20 @@ Rules can evaluate conditions and apply actions such as:
 - Set category.
 - Add tags.
 - Set SLA.
+- Emit a Signal for explicit cross-module automation handoff.
 
 Rules are useful for deterministic routing based on channel, inbound email context, tags, queue, customer context, or other supported fields.
 
 Ticket Rules run before assignment so the final queue, category, priority, type, tags, and SLA can influence owner selection.
+
+The Signal handoff action is opt-in. Use it when ticket creation itself should become a normalized
+cross-module event, such as a security escalation or vendor/monitoring incident. Ticket Rules should
+still handle ticket-local classification and routing. Signal Rules should handle follow-up outside
+the ticket classification layer, such as tasks, sales follow-up, portal invitations, webhooks, or
+derived signals.
+
+Tickets created by Signal automation still pass through Ticket Rules for field routing, but Ticket
+Rule Signal handoff is skipped for those `signal` channel tickets to avoid recursive automation.
 
 ## Rule Ordering
 
@@ -100,6 +110,9 @@ Open unassigned tickets are also claimed automatically by the active technician 
 Use Email Rules for raw email classification.
 
 Use Ticket Rules for ticket field routing.
+
+Use explicit Ticket Rule Signal handoff only when ticket creation should trigger cross-module
+automation.
 
 Use Assignment Rules for explicit ownership.
 

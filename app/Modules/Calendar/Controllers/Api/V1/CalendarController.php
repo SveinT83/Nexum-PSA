@@ -254,6 +254,7 @@ class CalendarController extends Controller
             'calendar_id' => $event['calendar_id'],
             'calendar_name' => $event['calendar_name'],
             'calendar_color' => $event['calendar_color'],
+            'ownership_badge' => $event['ownership_badge'],
             'work_context_id' => $event['work_context_id'],
             'work_context_type' => $event['work_context_type'],
             'title' => $event['title'],

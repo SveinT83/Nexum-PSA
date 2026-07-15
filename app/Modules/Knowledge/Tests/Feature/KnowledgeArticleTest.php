@@ -614,7 +614,7 @@ class KnowledgeArticleTest extends TestCase
 
         $this->artisan('knowledge:sync-docs', ['--module' => ['System'], '--push' => true])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 3')
+            ->expectsOutput('articles: 4')
             ->assertSuccessful();
 
         $article = Article::where('source_system', 'nexum')
@@ -717,6 +717,24 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function repository_documentation_sync_includes_signal_docs(): void
+    {
+        $this->artisan('knowledge:sync-docs', ['--module' => ['Signal']])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 1')
+            ->expectsOutput('modules: Signal')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'signals/signal-domain-overview')
+            ->firstOrFail();
+
+        $this->assertSame('Signal Domain Overview', $article->title);
+        $this->assertSame('Signal', $article->source_payload['module']);
+    }
+
+    #[Test]
     public function repository_documentation_sync_includes_documentation_docs(): void
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Documentation']])
@@ -770,7 +788,7 @@ class KnowledgeArticleTest extends TestCase
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Sales']])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 1')
+            ->expectsOutput('articles: 2')
             ->expectsOutput('modules: Sales')
             ->assertSuccessful();
 
@@ -781,6 +799,14 @@ class KnowledgeArticleTest extends TestCase
 
         $this->assertSame('Sales API', $article->title);
         $this->assertSame('Sales', $article->source_payload['module']);
+
+        $overview = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'sales/sales-overview')
+            ->firstOrFail();
+
+        $this->assertSame('Sales Overview', $overview->title);
+        $this->assertSame('Sales', $overview->source_payload['module']);
     }
 
     #[Test]

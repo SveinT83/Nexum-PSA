@@ -2,6 +2,9 @@
 
 namespace App\Modules\Commercial\Models\Contracts;
 
+use App\Modules\Contact\Models\Contact;
+use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
+use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Commercial\Models\Sla\Sla;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +40,9 @@ class Contracts extends Model
         'accepted_by_name',
         'accepted_ip',
         'accepted_ua',
+        'portal_accepted_account_id',
+        'portal_accepted_membership_id',
+        'portal_accepted_contact_id',
         'viewed_at',
         'viewed_ip',
         'viewed_ua',
@@ -84,6 +90,21 @@ class Contracts extends Model
     public function items()
     {
         return $this->hasMany(ContractItem::class, 'contract_id');
+    }
+
+    public function portalAcceptedAccount(): BelongsTo
+    {
+        return $this->belongsTo(CustomerPortalAccount::class, 'portal_accepted_account_id');
+    }
+
+    public function portalAcceptedMembership(): BelongsTo
+    {
+        return $this->belongsTo(CustomerPortalMembership::class, 'portal_accepted_membership_id');
+    }
+
+    public function portalAcceptedContact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'portal_accepted_contact_id');
     }
 
     public function getTotalMonthlyAmountAttribute(): float

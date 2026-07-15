@@ -1,8 +1,10 @@
 <?php
 
 use App\Modules\Documentation\Controllers\Admin\TemplateManagementController;
+use App\Modules\Documentation\Controllers\Portal\PortalDocumentationController;
 use App\Modules\Documentation\Controllers\Tech\DocumentationController;
 use App\Modules\Documentation\Controllers\Tech\VendorController;
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +18,18 @@ use Illuminate\Support\Facades\Route;
 | implementation lives in the singular Documentation module.
 |
 */
+
+if (($documentationPortalRoutes ?? false) === true) {
+    Route::middleware(['auth', EnsureCustomerPortalAccess::class])
+        ->prefix('portal/documents')
+        ->name('customer-portal.documents.')
+        ->group(function (): void {
+            Route::get('/', [PortalDocumentationController::class, 'index'])->name('index');
+            Route::get('/{documentation}', [PortalDocumentationController::class, 'show'])->name('show');
+        });
+
+    return;
+}
 
 Route::post('/context/set', [DocumentationController::class, 'setContext'])
     ->name('context.set');
@@ -64,6 +78,9 @@ Route::post('/documentations/create', [DocumentationController::class, 'store'])
 
 Route::get('/documentations/show/{documentation}', [DocumentationController::class, 'show'])
     ->name('documentations.show');
+
+Route::post('/documentations/{documentation}/portal-visibility', [DocumentationController::class, 'updatePortalVisibility'])
+    ->name('documentations.portal-visibility.update');
 
 Route::get('/documentations/edit/{documentation}', [DocumentationController::class, 'edit'])
     ->name('documentations.edit');

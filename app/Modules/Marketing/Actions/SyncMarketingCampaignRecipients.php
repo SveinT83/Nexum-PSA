@@ -27,15 +27,16 @@ class SyncMarketingCampaignRecipients
         $created = 0;
         $emails = $campaign->emails->where('status', 'active')->sortBy('sequence_order')->values();
         $members = $this->eligibleMembers($campaign);
+        $cycle = max(1, (int) ($campaign->current_cycle ?: 1));
 
         foreach ($members as $memberIndex => $member) {
-            $existingForMember = $this->existingRecipientsForMember($campaign->recipients, $member);
+            $existingForMember = $this->existingRecipientsForMember($campaign->recipients, $member, $cycle);
             $policy = $campaign->new_recipient_policy ?: 'start_at_first_email';
             $skipPastSequence = $policy === 'join_current_step';
-            $journeyStart = $this->journeyStart($campaign, $existingForMember, ! $skipPastSequence);
+            $journeyStart = $this->journeyStart($campaign, $existingForMember, ! $skipPastSequence, $cycle);
 
             foreach ($emails as $campaignEmail) {
-                $recipient = $this->recipientForMember($campaignEmail, $member);
+                $recipient = $this->recipientForMember($campaignEmail, $member, $cycle);
 
                 if ($recipient) {
                     $this->refreshRecipientMemberLink($recipient, $member);
@@ -51,6 +52,7 @@ class SyncMarketingCampaignRecipients
                 $campaignEmail->recipients()->create([
                     'marketing_campaign_id' => $campaign->id,
                     'marketing_list_member_id' => $member->id,
+                    'cycle_number' => $cycle,
                     'contact_id' => $member->contact_id,
                     'client_user_id' => $member->client_user_id,
                     'client_id' => $member->client_id,
@@ -62,6 +64,7 @@ class SyncMarketingCampaignRecipients
                     'metadata' => [
                         'list_member_source_type' => $member->source_type,
                         'list_member_source_id' => $member->source_id,
+                        'campaign_cycle' => $cycle,
                     ],
                 ]);
 
@@ -77,10 +80,11 @@ class SyncMarketingCampaignRecipients
         $campaign->loadMissing(['emails.recipients', 'lists.members', 'list.members', 'recipients']);
         $updated = 0;
         $members = $this->eligibleMembers($campaign);
+        $cycle = max(1, (int) ($campaign->current_cycle ?: 1));
 
         foreach ($members as $memberIndex => $member) {
-            $existingForMember = $this->existingRecipientsForMember($campaign->recipients, $member);
-            $journeyStart = $this->journeyStart($campaign, $existingForMember, false);
+            $existingForMember = $this->existingRecipientsForMember($campaign->recipients, $member, $cycle);
+            $journeyStart = $this->journeyStart($campaign, $existingForMember, false, $cycle);
 
             foreach ($existingForMember->where('status', 'pending') as $recipient) {
                 $email = $campaign->emails->firstWhere('id', $recipient->marketing_campaign_email_id);
@@ -99,11 +103,12 @@ class SyncMarketingCampaignRecipients
         return $updated;
     }
 
-    private function recipientForMember(MarketingCampaignEmail $campaignEmail, MarketingListMember $member): ?MarketingCampaignRecipient
+    private function recipientForMember(MarketingCampaignEmail $campaignEmail, MarketingListMember $member, int $cycle): ?MarketingCampaignRecipient
     {
         $email = $this->normalizeEmail($member->email);
 
         return $campaignEmail->recipients()
+            ->where('cycle_number', $cycle)
             ->where(function ($query) use ($member, $email): void {
                 $query->where('marketing_list_member_id', $member->id);
 
@@ -120,13 +125,14 @@ class SyncMarketingCampaignRecipients
             ->first();
     }
 
-    private function existingRecipientsForMember(Collection $recipients, MarketingListMember $member): Collection
+    private function existingRecipientsForMember(Collection $recipients, MarketingListMember $member, int $cycle): Collection
     {
-        return $recipients->filter(function (MarketingCampaignRecipient $recipient) use ($member): bool {
-            return (int) $recipient->marketing_list_member_id === (int) $member->id
+        return $recipients->filter(function (MarketingCampaignRecipient $recipient) use ($member, $cycle): bool {
+            return (int) ($recipient->cycle_number ?: 1) === $cycle
+                && ((int) $recipient->marketing_list_member_id === (int) $member->id
                 || ($member->contact_id && (int) $recipient->contact_id === (int) $member->contact_id)
                 || ($member->client_user_id && (int) $recipient->client_user_id === (int) $member->client_user_id)
-                || $this->normalizeEmail($recipient->email) === $this->normalizeEmail($member->email);
+                || $this->normalizeEmail($recipient->email) === $this->normalizeEmail($member->email));
         })->values();
     }
 
@@ -167,7 +173,7 @@ class SyncMarketingCampaignRecipients
         return $dueAt->addMinutes($this->batchOffsetMinutes($campaign, $memberIndex));
     }
 
-    private function journeyStart(MarketingCampaign $campaign, $existingForMember, bool $newRecipientsStartNow = true): Carbon
+    private function journeyStart(MarketingCampaign $campaign, $existingForMember, bool $newRecipientsStartNow = true, int $cycle = 1): Carbon
     {
         $firstSent = collect($existingForMember)
             ->where('status', 'sent')
@@ -176,6 +182,10 @@ class SyncMarketingCampaignRecipients
 
         if ($firstSent?->sent_at) {
             return $firstSent->sent_at->copy();
+        }
+
+        if ($cycle > 1 && $campaign->next_cycle_at) {
+            return $campaign->next_cycle_at->copy();
         }
 
         if ($newRecipientsStartNow && (! $campaign->starts_at || $campaign->starts_at->isPast())) {

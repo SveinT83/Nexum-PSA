@@ -29,8 +29,14 @@ The first slices create the Marketing and Email foundation:
   campaign-level send rhythm, optional extra delay, editable email subject/body snapshots, preview,
   test-send, new-contact policy, recipient batch throttling, and active-campaign recipient queue
   sync.
+- Campaign completion policy for stopping when the current sequence is done or repeating the
+  sequence on a configured interval with cycle-aware recipient rows.
+- WordPress content pull on campaign detail pages. Pulled posts are cached as campaign content
+  sources and included as grounded AI context for campaign planning and email drafting.
+- Suppression hardening for list resolution, unsubscribe, and final pre-SMTP send checks. Suppressed
+  recipients are marked `suppressed` and are not sent.
 - AI-assisted campaign planning from campaign, list, available template, and current sequence
-  context when an active AI agent is available.
+  context, including cached WordPress content sources, when an active AI agent is available.
 - AI-assisted campaign email drafting from campaign, list, and current email context when an active
   AI agent is available.
 - Dashboard summaries for campaigns, recipients, mailing lists, sender setup, templates, queue, and
@@ -39,13 +45,15 @@ The first slices create the Marketing and Email foundation:
   hours, and send batching.
 - Sanctum API endpoints for mailing lists, list members, campaigns, campaign emails, approval,
   due-send queueing, AI assists, and Marketing settings.
+- Sales Leads consumes Marketing events and interest assignments as engagement context on the
+  existing Leads screen. Marketing does not create seller call lists.
 
 The Email foundation slices add the `marketing` sender scope, `marketing` Email template scope,
 brand-aware HTML rendering, template preview, and a seeded default marketing campaign template.
 
-WordPress content pull, Google integrations, social publishing, and richer content tooling are
-planned follow-up slices. Separate Marketing engagement/call lists are intentionally out of scope;
-marketing interest should be consumed by Sales/Leads sorting, Lead Heat, and classification.
+Google integrations, social publishing, and the shared drag/drop HTML content editor remain
+separate follow-up slices. Separate Marketing engagement/call lists are intentionally out of scope;
+marketing interest is consumed by Sales/Leads context, Lead Heat, and classification.
 
 ## Mailing Lists
 
@@ -69,6 +77,8 @@ List resolution includes:
 - Selected manual legacy `client_users`, when the list has manual client contact criteria.
 - Contacts removed from this specific list are excluded from future refreshes until they are added
   again.
+- Suppression entries by email, domain, Contact, or Client. Suppressed recipients are not
+  materialized from automatic, manual, or Lead Intelligence list sources.
 
 List membership is materialized in `marketing_list_members`. This gives campaigns a stable recipient
 snapshot and lets operators refresh the list when Contacts change. Duplicate email addresses are
@@ -135,6 +145,13 @@ subscribers do not receive old campaign emails. Sent recipient history is kept. 
 email is removed, the email is deactivated and pending recipients are cancelled; unsent sequence
 emails are deleted with their pending queue rows.
 
+Campaign completion policy controls what happens after the current active sequence has no pending
+recipients. `Stop when sequence is complete` marks the campaign `completed` and preserves history.
+`Repeat sequence` increments `current_cycle`, calculates `next_cycle_at` from the repeat interval,
+and queues a new set of pending recipient rows for the next cycle. Recipient uniqueness includes
+`cycle_number`, so the same Contact can receive the same ordered email again in a later cycle without
+overwriting historical send state.
+
 Campaign emails send from their stored snapshot, not from the live Email template. This means an
 administrator can later change a reusable Marketing template without silently changing draft,
 approved, active, or historical campaign emails that were already created from it.
@@ -159,11 +176,15 @@ actions are audited as AI chats, and the technician still decides whether to sav
 AI-generated marketing emails are expected to include `unsubscribe_url` in HTML and plaintext so
 operators can see the unsubscribe footer in preview. The send job appends a fallback unsubscribe
 footer only when the rendered email does not already contain the recipient unsubscribe URL.
-External website fetching is not implemented yet. URLs in prompts are treated as destination links
-or brand hints only until a future content-source integration fetches and stores that content.
+Campaign detail pages can pull recent WordPress posts from a site URL or WordPress REST posts URL.
+Marketing stores the post title, excerpt, content HTML, source URL, published date, and fetched time
+as `marketing_content_sources`. Campaign planning and email drafting include those cached sources
+as grounded `wordpress_content`. Other external website URLs in prompts are still treated as
+destination links or brand hints unless they have been pulled and stored as content sources.
 
-The scheduled Marketing job runs every minute and sends due recipients in batches. The manual command
-is:
+The scheduled Marketing job runs every minute and sends due recipients in batches. Before SMTP, the
+job re-checks Contact opt-out, explicit consent mode, and suppression entries. Suppressed recipients
+are marked `suppressed`, logged as `MARKETING_EMAIL_SUPPRESSED`, and skipped. The manual command is:
 
 ```bash
 php artisan marketing:send-due
@@ -180,7 +201,8 @@ Matching interest is stored in `marketing_interest_assignments` for the linked C
 Each assignment keeps first and last event references, event count, engagement score, and last
 matched URL. Campaign detail pages show interest signal counts for tracked events in that campaign.
 
-Unsubscribe records the event and marks linked Contacts as `do_not_email`.
+Unsubscribe records the event, creates or updates a Marketing suppression entry, and marks linked
+Contacts as `do_not_email` with `marketing_consent=false`.
 
 Marketing campaign events also write normalized records to the Signal domain. Signal rules can tag
 Contacts or Clients, suppress marketing email, emit derived signals, or call webhooks. Marketing

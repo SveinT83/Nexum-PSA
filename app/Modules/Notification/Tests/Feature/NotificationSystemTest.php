@@ -3,10 +3,14 @@
 namespace App\Modules\Notification\Tests\Feature;
 
 use App\Models\Core\User;
+use App\Modules\Contact\Models\Contact;
+use App\Modules\Notification\Actions\SendTransactionalSms;
 use App\Modules\Notification\Livewire\NotificationBell;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Models\NotificationSmsMessage;
+use App\Modules\Notification\Models\NotificationSmsTemplate;
 use App\Modules\Notification\Notifications\TicketAssigned;
 use App\Modules\Notification\Notifications\TicketStatusChanged;
 use App\Modules\Notification\Notifications\TicketCommentAdded;
@@ -41,6 +45,30 @@ class NotificationSystemTest extends TestCase
                 'driver' => 'nextcloud_talk',
                 'is_enabled' => false,
                 'config' => ['default_webhook_url' => ''],
+            ]
+        );
+
+        NotificationChannel::updateOrCreate(
+            ['name' => 'sms'],
+            [
+                'label' => 'SMS',
+                'driver' => 'sms',
+                'is_enabled' => false,
+                'config' => [
+                    'provider' => 'dry_run',
+                    'sender_name' => 'Nexum',
+                    'default_country_code' => '+47',
+                ],
+            ]
+        );
+
+        NotificationSmsTemplate::query()->firstOrCreate(
+            ['key' => 'sms_test'],
+            [
+                'name' => 'SMS test message',
+                'body' => 'Test SMS from {{ company_name }} to {{ contact_name }}.',
+                'variables' => ['company_name', 'contact_name'],
+                'is_active' => true,
             ]
         );
     }
@@ -342,6 +370,178 @@ class NotificationSystemTest extends TestCase
         $response->assertSee('https://cloud.example.com');
         $response->assertDontSee('Nextcloud Base URL');
         $response->assertDontSee('API Token');
+    }
+
+    #[Test]
+    public function admin_can_configure_sms_dry_run_channel(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        Role::firstOrCreate(['name' => 'Admin']);
+        $admin->assignRole('Admin');
+
+        $channel = NotificationChannel::where('driver', 'sms')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('tech.admin.notification-channels.update', $channel), [
+                'is_enabled' => '1',
+                'config' => [
+                    'provider' => 'dry_run',
+                    'sender_name' => 'Nexum SMS',
+                    'default_country_code' => '+47',
+                ],
+            ])
+            ->assertRedirect(route('tech.admin.notification-channels.edit', $channel))
+            ->assertSessionHas('success');
+
+        $channel->refresh();
+
+        $this->assertTrue($channel->is_enabled);
+        $this->assertSame('dry_run', $channel->config['provider']);
+        $this->assertSame('Nexum SMS', $channel->config['sender_name']);
+        $this->assertSame('+47', $channel->config['default_country_code']);
+        $this->assertNull($channel->secrets);
+    }
+
+    #[Test]
+    public function admin_can_log_sms_dry_run_test_message(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        Role::firstOrCreate(['name' => 'Admin']);
+        $admin->assignRole('Admin');
+
+        $channel = NotificationChannel::where('driver', 'sms')->firstOrFail();
+        $channel->forceFill([
+            'is_enabled' => true,
+            'config' => [
+                'provider' => 'dry_run',
+                'sender_name' => 'Nexum',
+                'default_country_code' => '+47',
+            ],
+        ])->save();
+
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'SMS Test Contact',
+        ]);
+        $contact->phones()->create([
+            'label' => 'mobile',
+            'phone' => '99 88 77 66',
+            'is_primary' => true,
+            'sms_allowed' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.notification-channels.test', $channel), [
+                'test_contact_id' => $contact->id,
+                'test_template_key' => 'sms_test',
+            ])
+            ->assertRedirect(route('tech.admin.notification-channels.edit', $channel))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('notification_sms_messages', [
+            'contact_id' => $contact->id,
+            'status' => NotificationSmsMessage::STATUS_DRY_RUN,
+            'provider' => 'dry_run',
+            'normalized_recipient_phone' => '+4799887766',
+            'source_type' => 'notification_channel_test',
+        ]);
+
+        $this->assertSame('OK', $channel->fresh()->last_test_result);
+    }
+
+    #[Test]
+    public function transactional_sms_blocks_when_channel_is_disabled(): void
+    {
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Blocked SMS Contact',
+        ]);
+        $contact->phones()->create([
+            'label' => 'mobile',
+            'phone' => '+47 11 22 33 44',
+            'is_primary' => true,
+            'sms_allowed' => true,
+        ]);
+
+        $message = app(SendTransactionalSms::class)->handle($contact, 'sms_test');
+
+        $this->assertSame(NotificationSmsMessage::STATUS_BLOCKED, $message->status);
+        $this->assertSame('SMS channel is disabled.', $message->failure_reason);
+    }
+
+    #[Test]
+    public function transactional_sms_blocks_without_sms_consent(): void
+    {
+        NotificationChannel::where('driver', 'sms')->firstOrFail()
+            ->forceFill([
+                'is_enabled' => true,
+                'config' => [
+                    'provider' => 'dry_run',
+                    'sender_name' => 'Nexum',
+                    'default_country_code' => '+47',
+                ],
+            ])
+            ->save();
+
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'No Consent SMS Contact',
+        ]);
+        $contact->phones()->create([
+            'label' => 'mobile',
+            'phone' => '+47 22 33 44 55',
+            'is_primary' => true,
+            'sms_allowed' => false,
+        ]);
+
+        $message = app(SendTransactionalSms::class)->handle($contact, 'sms_test');
+
+        $this->assertSame(NotificationSmsMessage::STATUS_BLOCKED, $message->status);
+        $this->assertSame('Transactional SMS is not allowed for this phone number.', $message->failure_reason);
+    }
+
+    #[Test]
+    public function transactional_sms_renders_template_variables_in_dry_run_log(): void
+    {
+        NotificationChannel::where('driver', 'sms')->firstOrFail()
+            ->forceFill([
+                'is_enabled' => true,
+                'config' => [
+                    'provider' => 'dry_run',
+                    'sender_name' => 'Nexum',
+                    'default_country_code' => '+47',
+                ],
+            ])
+            ->save();
+
+        NotificationSmsTemplate::query()->create([
+            'key' => 'sms_custom',
+            'name' => 'Custom SMS',
+            'body' => 'Hei {{ contact_name }}, kode {{ code }}.',
+            'variables' => ['contact_name', 'code'],
+            'is_active' => true,
+        ]);
+
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Template Contact',
+        ]);
+        $contact->phones()->create([
+            'label' => 'mobile',
+            'phone' => '+47 33 44 55 66',
+            'is_primary' => true,
+            'sms_allowed' => true,
+        ]);
+
+        $message = app(SendTransactionalSms::class)->handle($contact, 'sms_custom', ['code' => '1234']);
+
+        $this->assertSame(NotificationSmsMessage::STATUS_DRY_RUN, $message->status);
+        $this->assertSame('Hei Template Contact, kode 1234.', $message->body);
+        $this->assertSame('dry_run-'.$message->id, $message->provider_message_id);
     }
 
     #[Test]

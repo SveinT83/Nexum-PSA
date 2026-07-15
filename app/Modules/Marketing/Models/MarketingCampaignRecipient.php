@@ -14,6 +14,7 @@ class MarketingCampaignRecipient extends Model
         'marketing_campaign_id',
         'marketing_campaign_email_id',
         'marketing_list_member_id',
+        'cycle_number',
         'contact_id',
         'client_user_id',
         'client_id',
@@ -32,6 +33,7 @@ class MarketingCampaignRecipient extends Model
     protected $casts = [
         'due_at' => 'datetime',
         'sent_at' => 'datetime',
+        'cycle_number' => 'integer',
         'metadata' => 'array',
     ];
 

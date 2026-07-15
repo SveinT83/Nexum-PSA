@@ -42,6 +42,11 @@ class MarketingCampaign extends Model
         'join_current_step' => 'Join current schedule',
     ];
 
+    public const COMPLETION_BEHAVIORS = [
+        'stop' => 'Stop when sequence is complete',
+        'repeat' => 'Repeat sequence',
+    ];
+
     protected $fillable = [
         'marketing_list_id',
         'email_account_id',
@@ -54,6 +59,13 @@ class MarketingCampaign extends Model
         'sequence_interval_value',
         'sequence_interval_unit',
         'new_recipient_policy',
+        'completion_behavior',
+        'repeat_interval_value',
+        'repeat_interval_unit',
+        'current_cycle',
+        'next_cycle_at',
+        'last_cycle_completed_at',
+        'completed_at',
         'track_opens',
         'track_clicks',
         'approved_by',
@@ -66,6 +78,11 @@ class MarketingCampaign extends Model
         'starts_at' => 'datetime',
         'approved_at' => 'datetime',
         'sequence_interval_value' => 'integer',
+        'repeat_interval_value' => 'integer',
+        'current_cycle' => 'integer',
+        'next_cycle_at' => 'datetime',
+        'last_cycle_completed_at' => 'datetime',
+        'completed_at' => 'datetime',
         'track_opens' => 'boolean',
         'track_clicks' => 'boolean',
     ];
@@ -114,6 +131,11 @@ class MarketingCampaign extends Model
     public function events(): HasMany
     {
         return $this->hasMany(MarketingCampaignEvent::class);
+    }
+
+    public function contentSources(): HasMany
+    {
+        return $this->hasMany(MarketingContentSource::class);
     }
 
     public function approver(): BelongsTo
@@ -179,5 +201,25 @@ class MarketingCampaign extends Model
     {
         return self::NEW_RECIPIENT_POLICIES[$this->new_recipient_policy ?: 'start_at_first_email']
             ?? self::NEW_RECIPIENT_POLICIES['start_at_first_email'];
+    }
+
+    public function completionBehaviorLabel(): string
+    {
+        return self::COMPLETION_BEHAVIORS[$this->completion_behavior ?: 'stop']
+            ?? self::COMPLETION_BEHAVIORS['stop'];
+    }
+
+    public function repeatIntervalLabel(): string
+    {
+        $value = max(1, (int) ($this->repeat_interval_value ?: 1));
+        $unit = $this->repeat_interval_unit ?: 'months';
+        $label = self::SEQUENCE_INTERVAL_UNITS[$unit] ?? self::SEQUENCE_INTERVAL_UNITS['months'];
+        $unitLabel = strtolower($label);
+
+        if ($value === 1) {
+            $unitLabel = rtrim($unitLabel, 's');
+        }
+
+        return 'Every '.$value.' '.$unitLabel;
     }
 }

@@ -76,6 +76,11 @@ Implemented scopes:
 - `economy.create`: generate economy orders from billable ticket time and picked ticket costs.
 - `economy.update`: move economy orders between draft and ready states.
 - `economy.delete`: delete empty economy orders and draft order lines.
+- `data_exchange.read`: list Data Exchange profiles and inspect run status.
+- `data_exchange.run`: trigger implemented Data Exchange export profiles.
+- `data_exchange.download`: download generated Data Exchange files.
+- `data_exchange.import`: start import dry-runs for approved Data Exchange import targets.
+- `data_exchange.approve_import`: commit valid Data Exchange import previews through approved targets.
 - `report.read`: list and view available report definitions.
 - `users.read`: list and view users, roles, and user profile metadata.
 - `users.create`: create users and queue invitations for pending users.
@@ -281,6 +286,12 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/economy/orders/{order}/draft`
 - `DELETE /api/v1/economy/orders/{order}`
 - `DELETE /api/v1/economy/orders/{order}/lines/{line}`
+- `GET /api/v1/data-exchange/profiles`
+- `POST /api/v1/data-exchange/profiles/{profile}/runs`
+- `GET /api/v1/data-exchange/runs/{run}`
+- `GET /api/v1/data-exchange/files/{file}/download`
+- `POST /api/v1/data-exchange/imports/dry-run`
+- `POST /api/v1/data-exchange/imports/{preview}/commit`
 - `GET /api/v1/reports`
 - `GET /api/v1/reports/{reportKey}`
 - `GET /api/v1/users`
@@ -322,6 +333,7 @@ Common payload fields:
 - `job_title`
 - `email`
 - `phone`
+- `sms_allowed`
 - `preferred_language`
 - `do_not_call`
 - `do_not_email`
@@ -347,6 +359,9 @@ Important Contact fields for Marketing:
 
 - `do_not_email`: excludes the Contact from Marketing list resolution.
 - `marketing_consent`: required for list resolution when Marketing settings use explicit opt-in.
+
+Transactional SMS uses Contact phone `sms_allowed` and `do_not_call`; Marketing consent does not
+grant transactional SMS permission.
 
 Mailing list endpoints use these common fields:
 
@@ -680,6 +695,27 @@ Draft orders can be marked ready. Ready orders can be moved back to draft.
 
 Empty draft or ready orders can be deleted. Draft order lines can be deleted, and deleting generated
 lines unlocks their ticket time or ticket cost source records for recalculation.
+
+## Data Exchange API
+
+Data Exchange API routes expose the implemented profile runtime for trusted automation.
+
+`GET /api/v1/data-exchange/profiles` returns configured profiles with direction, format, status, run
+count, and file count.
+
+`POST /api/v1/data-exchange/profiles/{profile}/runs` triggers an export profile and returns the run
+and generated file ID. Import profiles must use dry-run and commit endpoints.
+
+`GET /api/v1/data-exchange/runs/{run}` returns run status, summary, error message, and generated file
+metadata.
+
+`GET /api/v1/data-exchange/files/{file}/download` downloads a generated file from protected storage.
+
+`POST /api/v1/data-exchange/imports/dry-run` accepts `profile_id` and uploaded `file` for CSV, JSON,
+or XLSX preview. The response includes valid/invalid row counts and row errors.
+
+`POST /api/v1/data-exchange/imports/{preview}/commit` commits a valid preview through the
+module-approved import target. Previews with invalid rows are rejected.
 
 ## Report API
 

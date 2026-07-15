@@ -19,6 +19,7 @@ use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\Ticket\Support\TicketPortalPolicy;
 use App\Modules\Ticket\Support\TicketSolutionPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ use Illuminate\View\View;
 
 class TicketSettingsController extends Controller
 {
-    public function index(TicketSolutionPolicy $solutionPolicy): View
+    public function index(TicketSolutionPolicy $solutionPolicy, TicketPortalPolicy $portalPolicy): View
     {
         $emailAccounts = EmailAccount::query()
             ->where('is_active', true)
@@ -42,6 +43,7 @@ class TicketSettingsController extends Controller
             ),
             'mergeSettings' => $this->ticketMergeSettings(),
             'solutionPolicy' => $solutionPolicy->settings(),
+            'portalPolicy' => $portalPolicy->settings(),
             'queues' => TicketQueue::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'types' => TicketType::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
@@ -204,6 +206,17 @@ class TicketSettingsController extends Controller
         ]);
 
         return back()->with('success', 'Ticket solution policy updated.');
+    }
+
+    public function updatePortalPolicy(Request $request, TicketPortalPolicy $portalPolicy): RedirectResponse
+    {
+        $data = $request->validate([
+            'default_customer_visibility' => ['required', 'string', 'in:' . implode(',', array_keys(TicketPortalPolicy::visibilityOptions()))],
+        ]);
+
+        $portalPolicy->update($data);
+
+        return back()->with('success', 'Ticket customer portal policy updated.');
     }
 
     public function updateMergeSettings(Request $request): RedirectResponse
@@ -657,15 +670,34 @@ class TicketSettingsController extends Controller
             'conditions.*.operator' => 'required|string|in:contains,equals,not_equals,starts_with,ends_with,regex,present',
             'conditions.*.value' => 'nullable|string|max:1000',
             'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string|in:set_ticket_type,set_queue,set_priority,set_sla,set_category,add_tag',
+            'actions.*.type' => 'required|string|in:set_ticket_type,set_queue,set_priority,set_sla,set_category,add_tag,emit_signal',
             'actions.*.value' => 'required|string|max:255',
+            'actions.*.severity' => 'nullable|string|in:info,warning,error,critical',
+            'actions.*.confidence' => 'nullable|integer|min:0|max:100',
+            'actions.*.summary' => 'nullable|string|max:255',
+            'actions.*.payload_note' => 'nullable|string|max:1000',
         ]);
 
         $actions = collect($data['actions'])
-            ->map(fn (array $action) => [
-                'type' => $action['type'],
-                'value' => $action['value'],
-            ])
+            ->map(function (array $action): array {
+                $mapped = [
+                    'type' => $action['type'],
+                    'value' => $action['type'] === 'emit_signal'
+                        ? $this->normalizeSignalType($action['value'])
+                        : $action['value'],
+                ];
+
+                if ($action['type'] === 'emit_signal') {
+                    $mapped['signal_type'] = $mapped['value'];
+                    foreach (['severity', 'confidence', 'summary', 'payload_note'] as $field) {
+                        if (array_key_exists($field, $action) && filled($action[$field])) {
+                            $mapped[$field] = $action[$field];
+                        }
+                    }
+                }
+
+                return $mapped;
+            })
             ->values()
             ->all();
 
@@ -699,15 +731,27 @@ class TicketSettingsController extends Controller
                 'set_sla' => Sla::whereKey($action['value'])->exists(),
                 'set_category' => Category::forTickets()->active()->whereKey($action['value'])->exists(),
                 'add_tag' => Tag::where('active', true)->whereKey($action['value'])->exists(),
+                'emit_signal' => $this->normalizeSignalType($action['value']) !== '',
                 default => false,
             };
 
             if (! $exists) {
                 throw ValidationException::withMessages([
-                    'actions' => 'Rule action target does not exist.',
+                    'actions' => $action['type'] === 'emit_signal'
+                        ? 'Emit Signal action requires a signal type.'
+                        : 'Rule action target does not exist.',
                 ]);
             }
         }
+    }
+
+    private function normalizeSignalType(mixed $value): string
+    {
+        return str((string) $value)
+            ->trim()
+            ->lower()
+            ->replace([' ', '-'], '_')
+            ->toString();
     }
 
     private function ensureSingleDefaultQueue(?TicketQueue $defaultQueue = null): void

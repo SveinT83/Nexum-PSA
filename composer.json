@@ -9,6 +9,7 @@
         "php": "^8.2",
         "darkaonline/l5-swagger": "^11.0",
         "dompdf/dompdf": "^3.1",
+        "erag/laravel-pwa": "*",
         "erusev/parsedown": "^1.0",
         "laravel/fortify": "*",
         "laravel/framework": "^12.0",

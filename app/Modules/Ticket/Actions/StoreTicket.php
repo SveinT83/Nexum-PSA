@@ -4,6 +4,8 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
 use App\Modules\Notification\Notifications\TicketAssigned;
+use App\Modules\Signal\Actions\RecordSignal;
+use App\Modules\Signal\Models\Signal;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
@@ -24,11 +26,14 @@ class StoreTicket
         private readonly TicketAssignmentEngine $ticketAssignmentEngine,
         private readonly TicketSlaResolver $ticketSlaResolver,
         private readonly ResolveWorkContext $workContexts,
+        private readonly RecordSignal $recordSignal,
     ) {}
 
     public function handle(array $data, ?User $actor = null): Ticket
     {
-        return DB::transaction(function () use ($data, $actor) {
+        $signalEmissions = [];
+
+        $ticket = DB::transaction(function () use ($data, $actor, &$signalEmissions) {
             $defaults = $this->defaults->handle();
             $data = $this->ticketRuleEngine->apply('on_create', array_merge([
                 'channel' => 'manual',
@@ -36,10 +41,12 @@ class StoreTicket
                 'queue_id' => $defaults['queue']->id,
                 'priority_id' => $defaults['priority']->id,
             ], $data));
+            $signalEmissions = $data['_signal_emissions'] ?? [];
             $ticketType = TicketType::find($data['ticket_type_id'] ?? null) ?? $defaults['type'];
             $priority = TicketPriority::find($data['priority_id'] ?? null) ?? $defaults['priority'];
             $sla = $this->ticketSlaResolver->resolve($data, $priority);
-            $workContext = $this->workContexts->fromClientId($data['client_id'] ?? null);
+            $clientId = $data['client_id'] ?? null;
+            $workContext = $this->workContexts->fromClientId($clientId);
 
             $ticket = Ticket::create([
                 'ticket_key' => $this->nextTicketKey(),
@@ -54,7 +61,7 @@ class StoreTicket
                 'sla_snapshot' => $sla['sla_snapshot'],
                 'workflow_id' => $data['workflow_id'] ?? TicketWorkflow::query()->where('is_active', true)->where('is_default', true)->value('id'),
                 'category_id' => $data['category_id'] ?? null,
-                'client_id' => $data['client_id'] ?? null,
+                'client_id' => $clientId === '' ? null : $clientId,
                 'work_context_id' => $workContext->id,
                 'site_id' => $data['site_id'] ?? null,
                 'contact_id' => $data['contact_id'] ?? null,
@@ -121,6 +128,70 @@ class StoreTicket
 
             return $ticket->fresh(['tags']);
         });
+
+        $this->recordTicketRuleSignals($ticket, $signalEmissions);
+
+        return $ticket->fresh(['tags']);
+    }
+
+    private function recordTicketRuleSignals(Ticket $ticket, array $emissions): void
+    {
+        if (empty($emissions)) {
+            return;
+        }
+
+        $ticket->loadMissing(['tags', 'contact']);
+        $contactId = $ticket->contact?->contact_id;
+
+        foreach ($emissions as $emission) {
+            $signalType = (string) ($emission['signal_type'] ?? '');
+
+            if ($signalType === '') {
+                continue;
+            }
+
+            $existing = Signal::query()
+                ->where('source_domain', 'ticket')
+                ->where('source_type', $ticket->getMorphClass())
+                ->where('source_id', $ticket->id)
+                ->where('signal_type', $signalType)
+                ->where('payload->ticket_rule_id', $emission['ticket_rule_id'] ?? null)
+                ->where('payload->ticket_rule_action_index', $emission['ticket_rule_action_index'] ?? null)
+                ->first();
+
+            if ($existing) {
+                continue;
+            }
+
+            $this->recordSignal->handle([
+                'source_domain' => 'ticket',
+                'source_type' => $ticket->getMorphClass(),
+                'source_id' => $ticket->id,
+                'contact_id' => $contactId,
+                'client_id' => $ticket->client_id,
+                'signal_type' => $signalType,
+                'severity' => $emission['severity'] ?? 'info',
+                'confidence' => $emission['confidence'] ?? 100,
+                'summary' => $emission['summary'] ?? 'Ticket rule signal: '.str_replace('_', ' ', $signalType),
+                'payload' => [
+                    'ticket_id' => $ticket->id,
+                    'ticket_key' => $ticket->ticket_key,
+                    'ticket_rule_id' => $emission['ticket_rule_id'] ?? null,
+                    'ticket_rule_name' => $emission['ticket_rule_name'] ?? null,
+                    'ticket_rule_action_index' => $emission['ticket_rule_action_index'] ?? null,
+                    'channel' => $ticket->channel,
+                    'queue_id' => $ticket->queue_id,
+                    'ticket_type_id' => $ticket->ticket_type_id,
+                    'priority_id' => $ticket->priority_id,
+                    'category_id' => $ticket->category_id,
+                    'sla_id' => $ticket->sla_id,
+                    'sla_source' => $ticket->sla_source,
+                    'tags' => $ticket->tags->pluck('name')->values()->all(),
+                    'note' => $emission['payload_note'] ?? null,
+                ],
+                'occurred_at' => $ticket->created_at ?: now(),
+            ]);
+        }
     }
 
     private function normalizeTagIds(mixed $tagIds): array

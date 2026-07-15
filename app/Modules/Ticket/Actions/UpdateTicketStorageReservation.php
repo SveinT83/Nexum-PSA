@@ -35,8 +35,8 @@ class UpdateTicketStorageReservation
             $delta = $newQuantity - $oldQuantity;
             $availableIncludingCurrentReservation = $item->qty_available + $oldQuantity;
 
-            if ($newQuantity > $availableIncludingCurrentReservation) {
-                throw new InvalidArgumentException('Not enough available stock to reserve this quantity.');
+            if (! $item->can_be_ordered && $newQuantity > $availableIncludingCurrentReservation) {
+                throw new InvalidArgumentException('This item cannot be ordered, so only available stock can be reserved.');
             }
 
             $item->forceFill([

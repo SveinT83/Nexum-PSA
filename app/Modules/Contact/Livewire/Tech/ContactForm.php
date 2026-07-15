@@ -29,6 +29,8 @@ class ContactForm extends Component
 
     public ?string $phone = null;
 
+    public bool $sms_allowed = false;
+
     public ?string $job_title = null;
 
     public string $relation_type = 'contact';
@@ -86,7 +88,9 @@ class ContactForm extends Component
         $this->display_name = $contact->display_name;
         $this->organization_name = $client?->name ?: $contact->organization_name;
         $this->email = $contact->emails->firstWhere('is_primary', true)?->email ?: $contact->emails->first()?->email;
-        $this->phone = $contact->phones->firstWhere('is_primary', true)?->phone ?: $contact->phones->first()?->phone;
+        $primaryPhone = $contact->phones->firstWhere('is_primary', true) ?: $contact->phones->first();
+        $this->phone = $primaryPhone?->phone;
+        $this->sms_allowed = (bool) $primaryPhone?->sms_allowed;
         $this->job_title = $contact->job_title;
         $this->client_id = $client?->id;
         $this->selected_organization_client_id = $client?->id;
@@ -167,7 +171,9 @@ class ContactForm extends Component
         $this->organization_name = $client?->name ?: $contact->organization_name ?: $this->organization_name;
         $this->job_title = $contact->job_title ?: $this->job_title;
         $this->email = $contact->emails->firstWhere('is_primary', true)?->email ?: $contact->emails->first()?->email ?: $this->email;
-        $this->phone = $contact->phones->firstWhere('is_primary', true)?->phone ?: $contact->phones->first()?->phone ?: $this->phone;
+        $primaryPhone = $contact->phones->firstWhere('is_primary', true) ?: $contact->phones->first();
+        $this->phone = $primaryPhone?->phone ?: $this->phone;
+        $this->sms_allowed = (bool) ($primaryPhone?->sms_allowed ?? $this->sms_allowed);
         $this->client_id = $client?->id;
         $this->selected_organization_client_id = $client?->id;
         $this->selected_organization_client_name = $client?->name;
@@ -182,6 +188,7 @@ class ContactForm extends Component
             'organization_name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:100'],
+            'sms_allowed' => ['boolean'],
             'job_title' => ['nullable', 'string', 'max:255'],
             'relation_type' => ['required', Rule::in(array_keys($this->relationOptions()))],
             'client_id' => ['nullable', Rule::exists('clients', 'id')],

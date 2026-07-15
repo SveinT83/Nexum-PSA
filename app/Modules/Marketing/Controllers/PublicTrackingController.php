@@ -3,6 +3,7 @@
 namespace App\Modules\Marketing\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Marketing\Actions\MarketingSuppressionGuard;
 use App\Modules\Marketing\Actions\RecordMarketingCampaignEvent;
 use App\Modules\Marketing\Models\MarketingCampaignRecipient;
 use Illuminate\Http\RedirectResponse;
@@ -43,7 +44,12 @@ class PublicTrackingController extends Controller
         return redirect()->away($target);
     }
 
-    public function unsubscribe(string $token, Request $request, RecordMarketingCampaignEvent $events): Response
+    public function unsubscribe(
+        string $token,
+        Request $request,
+        RecordMarketingCampaignEvent $events,
+        MarketingSuppressionGuard $suppressionGuard,
+    ): Response
     {
         $recipient = MarketingCampaignRecipient::query()
             ->where('tracking_token', $token)
@@ -51,6 +57,7 @@ class PublicTrackingController extends Controller
 
         if ($recipient) {
             $events->handle($recipient, 'unsubscribe', null, $request);
+            $suppressionGuard->suppressRecipient($recipient, 'unsubscribe', 'Recipient unsubscribed from marketing email.');
             $recipient->contact?->forceFill([
                 'do_not_email' => true,
                 'marketing_consent' => false,

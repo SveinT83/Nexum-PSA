@@ -1,7 +1,21 @@
-<ul class="nav nav-tabs align-items-center">
+@php
+    $isMobileNav = $mobile ?? false;
+    $navClass = $isMobileNav ? 'nav nav-pills flex-column gap-1 w-100' : 'nav nav-tabs align-items-center flex-wrap';
+    $dropdownMenuClass = $isMobileNav ? 'dropdown-menu position-static show border-0 shadow-none ps-3' : 'dropdown-menu';
+    $profileDropdownMenuClass = $isMobileNav ? $dropdownMenuClass : 'dropdown-menu dropdown-menu-end';
+    $logoutFormId = $isMobileNav ? 'logout-form-mobile' : 'logout-form';
+@endphp
+
+<ul class="{{ $navClass }}">
     <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('tech.dashboard') ? 'active' : '' }}" aria-current="page" href="{{ route('tech.dashboard') }}">Dashboard</a>
     </li>
+
+    @if(Route::has('tech.my-day.index'))
+        <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('tech.my-day.*') ? 'active' : '' }}" aria-current="page" href="{{ route('tech.my-day.index') }}">My Day</a>
+        </li>
+    @endif
 
     @php
         $adminGroupActive = request()->routeIs('tech.admin*');
@@ -23,8 +37,8 @@
     @endphp
 
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle {{ $clientsGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Clients</a>
-        <ul class="dropdown-menu">
+        <a class="nav-link dropdown-toggle {{ $clientsGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="{{ $isMobileNav ? 'true' : 'false' }}">Clients</a>
+        <ul class="{{ $dropdownMenuClass }}">
             <li>
                 <a class="dropdown-item {{ request()->routeIs('tech.clients.index') ? 'active' : '' }}" href="{{ route('tech.clients.index') }}">Clients</a>
             </li>
@@ -47,8 +61,8 @@
     @endphp
 
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle {{ $workGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Work</a>
-        <ul class="dropdown-menu">
+        <a class="nav-link dropdown-toggle {{ $workGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="{{ $isMobileNav ? 'true' : 'false' }}">Work</a>
+        <ul class="{{ $dropdownMenuClass }}">
 
             <!-- ------------------------------------------------- -->
             <!-- Risk -->
@@ -111,8 +125,8 @@
     @endphp
 
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle {{ $knowledgeGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Knowledge</a>
-        <ul class="dropdown-menu">
+        <a class="nav-link dropdown-toggle {{ $knowledgeGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="{{ $isMobileNav ? 'true' : 'false' }}">Knowledge</a>
+        <ul class="{{ $dropdownMenuClass }}">
 
             <!-- ------------------------------------------------- -->
             <!-- Documentations -->
@@ -155,8 +169,8 @@
     @endphp
 
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle {{ $contractsGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Sales</a>
-        <ul class="dropdown-menu">
+        <a class="nav-link dropdown-toggle {{ $contractsGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="{{ $isMobileNav ? 'true' : 'false' }}">Sales</a>
+        <ul class="{{ $dropdownMenuClass }}">
 
             <!-- ------------------------------------------------- -->
             <!-- Sales -->
@@ -226,8 +240,8 @@
     <!-- Economy dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle {{ $economyGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Economy</a>
-        <ul class="dropdown-menu">
+        <a class="nav-link dropdown-toggle {{ $economyGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="{{ $isMobileNav ? 'true' : 'false' }}">Economy</a>
+        <ul class="{{ $dropdownMenuClass }}">
 
             <!-- ------------------------------------------------- -->
             <!-- Orders -->
@@ -253,8 +267,8 @@
     @endphp
 
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle {{ $storageGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Storage</a>
-        <ul class="dropdown-menu">
+        <a class="nav-link dropdown-toggle {{ $storageGroupActive ? 'active' : '' }}" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="{{ $isMobileNav ? 'true' : 'false' }}">Storage</a>
+        <ul class="{{ $dropdownMenuClass }}">
             <li>
                 <a class="dropdown-item {{ request()->routeIs('tech.storage.index') ? 'active' : '' }}" href="{{ route('tech.storage.index') }}">Inventory</a>
             </li>
@@ -270,13 +284,13 @@
     <!-- Profile dropdown -->
     <!-- ------------------------------------------------- -->
     <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="{{ $isMobileNav ? 'true' : 'false' }}">
             <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name ?? 'User' }}
         </a>
-        <ul class="dropdown-menu dropdown-menu-end">
+        <ul class="{{ $profileDropdownMenuClass }}">
             <li><a class="dropdown-item" href="{{ route('tech.profile.index') }}"><i class="bi bi-person-badge me-2"></i>Profile</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            <li><a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('{{ $logoutFormId }}').submit();"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
         </ul>
     </li>
 
@@ -287,6 +301,6 @@
         </div>
     </li>
 
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+    <form id="{{ $logoutFormId }}" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
 
 </ul>

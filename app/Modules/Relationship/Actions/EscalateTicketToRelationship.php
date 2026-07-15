@@ -14,10 +14,18 @@ use Illuminate\Validation\ValidationException;
 
 class EscalateTicketToRelationship
 {
-    public function __construct(private readonly NexumRelationshipHttpClient $client) {}
+    public function __construct(private readonly NexumRelationshipHttpClient $client)
+    {
+    }
 
     public function handle(Ticket $ticket, NexumRelationship $relationship, ?User $actor = null): NexumSyncLink
     {
+        if (! $ticket->isPortalVisible()) {
+            throw ValidationException::withMessages([
+                'relationship_id' => 'Publish the ticket before escalating it to a Nexum relationship.',
+            ]);
+        }
+
         if (! $relationship->isActive() || ! $relationship->supports(RelationshipCapability::TICKET_SYNC)) {
             throw ValidationException::withMessages([
                 'relationship_id' => 'The selected relationship is not active for ticket sync.',

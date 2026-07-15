@@ -4,6 +4,7 @@ namespace App\Modules\Documentation\Models;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
+use App\Models\Core\User;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\WorkContext\Models\WorkContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,11 +26,14 @@ class Documentation extends Model
         'scope_type',
         'template_snapshot_json',
         'data_json',
+        'portal_visible_at',
+        'portal_visible_by',
     ];
 
     protected $casts = [
         'template_snapshot_json' => 'array',
         'data_json' => 'array',
+        'portal_visible_at' => 'datetime',
     ];
 
     public function template(): BelongsTo
@@ -55,5 +59,15 @@ class Documentation extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(ClientSite::class, 'site_id');
+    }
+
+    public function portalVisibleBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'portal_visible_by');
+    }
+
+    public function isPortalVisible(): bool
+    {
+        return $this->portal_visible_at !== null;
     }
 }

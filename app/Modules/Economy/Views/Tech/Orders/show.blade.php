@@ -6,6 +6,16 @@
     <div class="d-flex justify-content-between align-items-center">
         <h1>{{ $order->order_number ?? ('Order #' . $order->id) }}</h1>
         <div class="d-flex gap-2">
+            @if($order->client_id)
+                <form method="POST" action="{{ route('tech.economy.orders.portal-visibility.update', $order) }}">
+                    @csrf
+                    <input type="hidden" name="portal_visible" value="{{ $order->isPortalVisible() ? 0 : 1 }}">
+                    <button type="submit" class="btn btn-sm {{ $order->isPortalVisible() ? 'btn-outline-secondary' : 'btn-outline-success' }}">
+                        <i class="bi {{ $order->isPortalVisible() ? 'bi-eye-slash' : 'bi-eye' }}" aria-hidden="true"></i>
+                        {{ $order->isPortalVisible() ? 'Hide from portal' : 'Show in portal' }}
+                    </button>
+                </form>
+            @endif
             @if($order->status === 'draft')
                 <form method="POST" action="{{ route('tech.economy.orders.ready', $order) }}">
                     @csrf

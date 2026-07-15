@@ -23,7 +23,7 @@ class SyncRepositoryKnowledgeDocs
     ) {}
 
     /**
-     * @param  array<int, string>  $onlyModules
+     * @param array<int, string> $onlyModules
      * @return array{chapters: int, articles: int, skipped: int, modules: array<int, string>}
      */
     public function handle(array $onlyModules = []): array
@@ -51,7 +51,6 @@ class SyncRepositoryKnowledgeDocs
 
             if (! is_dir($path)) {
                 $summary['skipped']++;
-
                 continue;
             }
 
@@ -59,7 +58,6 @@ class SyncRepositoryKnowledgeDocs
 
             if ($files === []) {
                 $summary['skipped']++;
-
                 continue;
             }
 
@@ -111,6 +109,8 @@ class SyncRepositoryKnowledgeDocs
             'Clients' => $this->definition('clients', 'Clients', 190),
             'Commercial' => $this->definition('commercial', 'Commercial', 700),
             'Contact' => $this->definition('contacts', 'Contacts', 200),
+            'CustomerPortal' => $this->definition('customer-portal', 'Customer Portal', 840),
+            'DataExchange' => $this->definition('data-exchange', 'Data Exchange', 855),
             'Documentation' => $this->definition('documentation', 'Documentation', 540),
             'Economy' => $this->definition('economy', 'Economy', 800),
             'Email' => $this->definition('email', 'Email', 810),
@@ -123,6 +123,7 @@ class SyncRepositoryKnowledgeDocs
             'Relationship' => $this->definition('relationships', 'Nexum Relationships', 845),
             'Risk' => $this->definition('risk', 'Risk', 550),
             'Sales' => $this->definition('sales', 'Sales', 750),
+            'Signal' => $this->definition('signals', 'Signal', 825),
             'Storage' => $this->definition('storage', 'Storage', 600),
             'System' => $this->definition('system', 'System', 900),
             'Task' => $this->definition('tasks', 'Tasks', 500),
@@ -154,6 +155,7 @@ class SyncRepositoryKnowledgeDocs
             'Clients' => 'Clients',
             'Lead Intelligence' => 'LeadIntelligence',
             'Nexum Relationships' => 'Relationship',
+            'Data Exchange' => 'DataExchange',
             'Sales' => 'Sales',
             'User Management' => 'UserManagement',
             'Work Context' => 'WorkContext',

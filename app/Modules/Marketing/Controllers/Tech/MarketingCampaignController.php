@@ -13,6 +13,7 @@ use App\Modules\Marketing\Actions\CountMarketingCampaignAudienceRecipients;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignEmailWithAi;
 use App\Modules\Marketing\Actions\DraftMarketingCampaignPlanWithAi;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
+use App\Modules\Marketing\Actions\PullWordPressContentSources;
 use App\Modules\Marketing\Actions\ResolveMarketingListMembers;
 use App\Modules\Marketing\Actions\SendMarketingCampaignEmailTest;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
@@ -86,6 +87,10 @@ class MarketingCampaignController extends Controller
                 'status' => 'draft',
                 'track_opens' => $settings->get()['open_tracking_enabled'],
                 'track_clicks' => $settings->get()['click_tracking_enabled'],
+                'completion_behavior' => 'stop',
+                'repeat_interval_value' => 1,
+                'repeat_interval_unit' => 'months',
+                'current_cycle' => 1,
             ]),
             'lists' => $lists,
             'accounts' => EmailAccount::query()->where('is_active', true)->orderBy('address')->get(),
@@ -94,6 +99,7 @@ class MarketingCampaignController extends Controller
             'sequenceIntervalUnits' => MarketingCampaign::SEQUENCE_INTERVAL_UNITS,
             'weekdays' => MarketingCampaign::WEEKDAYS,
             'newRecipientPolicies' => MarketingCampaign::NEW_RECIPIENT_POLICIES,
+            'completionBehaviors' => MarketingCampaign::COMPLETION_BEHAVIORS,
         ]);
     }
 
@@ -119,6 +125,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
             'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'new_recipient_policy' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
+            'completion_behavior' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::COMPLETION_BEHAVIORS))],
+            'repeat_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'repeat_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'track_opens' => ['nullable', 'boolean'],
             'track_clicks' => ['nullable', 'boolean'],
         ]);
@@ -145,6 +154,10 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => $schedule['sequence_interval_value'],
             'sequence_interval_unit' => $schedule['sequence_interval_unit'],
             'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
+            'completion_behavior' => $data['completion_behavior'] ?? 'stop',
+            'repeat_interval_value' => $data['repeat_interval_value'] ?? 1,
+            'repeat_interval_unit' => $data['repeat_interval_unit'] ?? 'months',
+            'current_cycle' => 1,
             'track_opens' => $request->boolean('track_opens'),
             'track_clicks' => $request->boolean('track_clicks'),
             'created_by' => $request->user()?->id,
@@ -205,6 +218,7 @@ class MarketingCampaignController extends Controller
                     'events as click_events_count' => fn ($query) => $query->where('type', 'click'),
                 ])
                 ->orderBy('sequence_order'),
+            'contentSources' => fn ($query) => $query->where('status', 'active')->latest('published_at')->latest('id'),
         ])->loadCount(['emails', 'recipients', 'events']);
         $campaign->setAttribute('audience_recipients_count', $audienceCounter->handle($campaign));
         $previewMember = $this->previewMember($campaign);
@@ -246,6 +260,7 @@ class MarketingCampaignController extends Controller
             'sequenceIntervalUnits' => MarketingCampaign::SEQUENCE_INTERVAL_UNITS,
             'weekdays' => MarketingCampaign::WEEKDAYS,
             'newRecipientPolicies' => MarketingCampaign::NEW_RECIPIENT_POLICIES,
+            'completionBehaviors' => MarketingCampaign::COMPLETION_BEHAVIORS,
         ]);
     }
 
@@ -270,6 +285,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
             'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'new_recipient_policy' => ['required', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
+            'completion_behavior' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::COMPLETION_BEHAVIORS))],
+            'repeat_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'repeat_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
         ]);
         $schedule = $this->normalizeSchedulePayload($data);
 
@@ -280,6 +298,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => $schedule['sequence_interval_value'],
             'sequence_interval_unit' => $schedule['sequence_interval_unit'],
             'new_recipient_policy' => $data['new_recipient_policy'],
+            'completion_behavior' => $data['completion_behavior'] ?? ($campaign->completion_behavior ?: 'stop'),
+            'repeat_interval_value' => $data['repeat_interval_value'] ?? ($campaign->repeat_interval_value ?: 1),
+            'repeat_interval_unit' => $data['repeat_interval_unit'] ?? ($campaign->repeat_interval_unit ?: 'months'),
             'updated_by' => $request->user()?->id,
         ])->save();
 
@@ -512,6 +533,31 @@ class MarketingCampaignController extends Controller
         return redirect()
             ->route('tech.marketing.campaigns.show', $campaign)
             ->with('status', 'Due campaign email send job queued.');
+    }
+
+    public function pullWordPressContent(
+        MarketingCampaign $campaign,
+        Request $request,
+        PullWordPressContentSources $pullContent,
+    ): RedirectResponse {
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign content sources can only be changed before completion.');
+
+        $data = $request->validate([
+            'wordpress_url' => ['required', 'url', 'max:2048'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:10'],
+        ]);
+
+        try {
+            $count = $pullContent->handle($campaign, $data['wordpress_url'], (int) ($data['limit'] ?? 5));
+        } catch (RuntimeException $exception) {
+            return back()
+                ->withErrors(['wordpress_url' => $exception->getMessage()])
+                ->withInput();
+        }
+
+        return redirect()
+            ->route('tech.marketing.campaigns.show', $campaign)
+            ->with('status', "{$count} WordPress content items were pulled into this campaign.");
     }
 
     private function attachAudienceRecipientCounts(iterable $campaigns, CountMarketingCampaignAudienceRecipients $audienceCounter): void

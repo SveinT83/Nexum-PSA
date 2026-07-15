@@ -1,0 +1,18 @@
+{
+    "name": "Nexum PSA",
+    "short_name": "Nexum",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "description": "Nexum PSA operational workspace for technicians, admins, and customers.",
+    "theme_color": "#FF6D1F",
+    "scope": "/",
+    "start_url": "/",
+    "icons": [
+        {
+            "src": "logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

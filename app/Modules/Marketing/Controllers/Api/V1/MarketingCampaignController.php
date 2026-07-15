@@ -41,6 +41,9 @@ class MarketingCampaignController extends Controller
         'sequence_interval_value',
         'sequence_interval_unit',
         'new_recipient_policy',
+        'completion_behavior',
+        'repeat_interval_value',
+        'repeat_interval_unit',
     ];
 
     public function __construct(
@@ -111,6 +114,10 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => $schedule['sequence_interval_value'],
             'sequence_interval_unit' => $schedule['sequence_interval_unit'],
             'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
+            'completion_behavior' => $data['completion_behavior'] ?? 'stop',
+            'repeat_interval_value' => $data['repeat_interval_value'] ?? 1,
+            'repeat_interval_unit' => $data['repeat_interval_unit'] ?? 'months',
+            'current_cycle' => 1,
             'track_opens' => $request->boolean('track_opens', $settingsPayload['open_tracking_enabled']),
             'track_clicks' => $request->boolean('track_clicks', $settingsPayload['click_tracking_enabled']),
             'created_by' => $request->user()?->id,
@@ -176,6 +183,9 @@ class MarketingCampaignController extends Controller
                 'sequence_interval_value' => $schedule['sequence_interval_value'],
                 'sequence_interval_unit' => $schedule['sequence_interval_unit'],
                 'new_recipient_policy' => $scheduleData['new_recipient_policy'] ?? 'start_at_first_email',
+                'completion_behavior' => $scheduleData['completion_behavior'] ?? 'stop',
+                'repeat_interval_value' => $scheduleData['repeat_interval_value'] ?? 1,
+                'repeat_interval_unit' => $scheduleData['repeat_interval_unit'] ?? 'months',
             ]);
         }
 
@@ -227,6 +237,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => $schedule['sequence_interval_value'],
             'sequence_interval_unit' => $schedule['sequence_interval_unit'],
             'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
+            'completion_behavior' => $data['completion_behavior'] ?? 'stop',
+            'repeat_interval_value' => $data['repeat_interval_value'] ?? 1,
+            'repeat_interval_unit' => $data['repeat_interval_unit'] ?? 'months',
             'updated_by' => $request->user()?->id,
         ])->save();
 
@@ -474,6 +487,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
             'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'new_recipient_policy' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
+            'completion_behavior' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::COMPLETION_BEHAVIORS))],
+            'repeat_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'repeat_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'track_opens' => ['nullable', 'boolean'],
             'track_clicks' => ['nullable', 'boolean'],
         ]);
@@ -511,6 +527,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
             'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'new_recipient_policy' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
+            'completion_behavior' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::COMPLETION_BEHAVIORS))],
+            'repeat_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'repeat_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
         ]);
     }
 
@@ -548,6 +567,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => $campaign->sequence_interval_value ?: 1,
             'sequence_interval_unit' => $campaign->sequence_interval_unit ?: 'days',
             'new_recipient_policy' => $campaign->new_recipient_policy ?: 'start_at_first_email',
+            'completion_behavior' => $campaign->completion_behavior ?: 'stop',
+            'repeat_interval_value' => $campaign->repeat_interval_value ?: 1,
+            'repeat_interval_unit' => $campaign->repeat_interval_unit ?: 'months',
         ];
     }
 

@@ -4,6 +4,7 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
 use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
+use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Notification\Notifications\TicketStatusChanged;
 use App\Modules\Relationship\Actions\SyncTicketStatusToRelationship;
 use App\Modules\Ticket\Models\Ticket;
@@ -15,7 +16,9 @@ use Illuminate\Validation\ValidationException;
 
 class ChangeTicketStatus
 {
-    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime) {}
+    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime)
+    {
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -85,7 +88,7 @@ class ChangeTicketStatus
                     'type' => 'status_changed',
                     'before' => $before,
                     'after' => $after,
-                    'message' => 'Ticket status changed to '.$status->name.'.',
+                    'message' => 'Ticket status changed to ' . $status->name . '.',
                 ]);
 
                 // Notify the ticket owner if they didn't change the status themselves
@@ -100,6 +103,26 @@ class ChangeTicketStatus
                             changedBy: $actor?->name,
                         ));
                     }
+                }
+
+                if ($ticket->isPortalVisible() && $ticket->client_id) {
+                    $oldStatusName = TicketStatus::find($before['status_id'])?->name ?? 'Previous status';
+
+                    app(SendCustomerPortalNotification::class)->handle(
+                        type: 'portal_ticket_status_changed',
+                        clientId: (int) $ticket->client_id,
+                        siteId: $ticket->site_id ? (int) $ticket->site_id : null,
+                        title: 'Ticket '.$ticket->ticket_key.' status changed',
+                        body: $oldStatusName.' changed to '.$status->name.' for '.$ticket->subject.'.',
+                        url: route('customer-portal.tickets.show', $ticket),
+                        sourceType: Ticket::class,
+                        sourceId: $ticket->id,
+                        metadata: [
+                            'ticket_key' => $ticket->ticket_key,
+                            'old_status' => $oldStatusName,
+                            'new_status' => $status->name,
+                        ],
+                    );
                 }
 
                 if ($status->is_closed) {

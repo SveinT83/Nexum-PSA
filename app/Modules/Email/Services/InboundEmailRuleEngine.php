@@ -3,11 +3,15 @@
 namespace App\Modules\Email\Services;
 
 use App\Models\Clients\ClientUser;
+use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailRuleLog;
 use App\Modules\Email\Services\BodyNormalizer;
+use App\Modules\Signal\Actions\RecordSignal;
+use App\Modules\Signal\Models\Signal;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Taxonomy\Models\Tag;
@@ -25,6 +29,7 @@ class InboundEmailRuleEngine
     public function __construct(
         private readonly LinkInboundEmailToTicket $linkInboundEmailToTicket,
         private readonly CreateTicketFromInboundEmail $createTicketFromInboundEmail,
+        private readonly RecordSignal $recordSignal,
     ) {}
 
     public function process(EmailMessage $message): void
@@ -64,7 +69,7 @@ class InboundEmailRuleEngine
                     return null;
                 }
 
-                $this->executeActions($message, $rule->actions_json ?? []);
+                $this->executeActions($message, $rule, $rule->actions_json ?? []);
 
                 $rule->forceFill([
                     'last_hit_at' => now(),
@@ -164,9 +169,9 @@ class InboundEmailRuleEngine
         };
     }
 
-    private function executeActions(EmailMessage $message, array $actions): void
+    private function executeActions(EmailMessage $message, EmailRule $rule, array $actions): void
     {
-        foreach ($actions as $action) {
+        foreach ($actions as $index => $action) {
             $type = $action['type'] ?? '';
             $value = $action['value'] ?? null;
 
@@ -176,9 +181,62 @@ class InboundEmailRuleEngine
                 'create_ticket' => $this->createTicket($message, (string) $value),
                 'archive' => $message->forceFill(['state' => 'archived'])->save(),
                 'tag' => $this->tag($message, (string) $value),
+                'emit_signal' => $this->emitSignal($message, $rule, $action, (int) $index),
                 default => null,
             };
         }
+    }
+
+    private function emitSignal(EmailMessage $message, EmailRule $rule, array $action, int $actionIndex): ?Signal
+    {
+        $signalType = $this->normalizeSignalType($action['signal_type'] ?? $action['value'] ?? '');
+
+        if ($signalType === '') {
+            return null;
+        }
+
+        $existing = Signal::query()
+            ->where('source_domain', 'email')
+            ->where('source_type', $message->getMorphClass())
+            ->where('source_id', $message->id)
+            ->where('signal_type', $signalType)
+            ->where('payload->email_rule_id', $rule->id)
+            ->where('payload->email_rule_action_index', $actionIndex)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $contact = $this->contactFromEmailAddress($message->from_email);
+        $message->loadMissing('tags');
+
+        return $this->recordSignal->handle([
+            'source_domain' => 'email',
+            'source_type' => $message->getMorphClass(),
+            'source_id' => $message->id,
+            'subject_type' => $contact?->getMorphClass(),
+            'subject_id' => $contact?->id,
+            'contact_id' => $contact?->id,
+            'client_id' => $this->clientIdForContact($contact),
+            'signal_type' => $signalType,
+            'severity' => $action['severity'] ?? 'info',
+            'confidence' => max(0, min(100, (int) ($action['confidence'] ?? 100))),
+            'summary' => $action['summary'] ?? 'Email rule signal: '.str_replace('_', ' ', $signalType),
+            'payload' => [
+                'email_message_id' => $message->id,
+                'email_rule_id' => $rule->id,
+                'email_rule_name' => $rule->name,
+                'email_rule_action_index' => $actionIndex,
+                'from_email' => $message->from_email,
+                'subject' => $message->subject,
+                'state' => $message->state,
+                'ticket_id' => $message->fresh()->ticket_id,
+                'tags' => $message->tags->pluck('name')->values()->all(),
+                'note' => $action['payload_note'] ?? null,
+            ],
+            'occurred_at' => $message->received_at ?: now(),
+        ]);
     }
 
     private function recipientFieldValue(array $recipients): string
@@ -445,6 +503,35 @@ class InboundEmailRuleEngine
         if (! $message->tags()->where('tags.id', $tagModel->id)->exists()) {
             $message->tags()->attach($tagModel->id, ['module' => 'email']);
         }
+    }
+
+    private function contactFromEmailAddress(?string $email): ?Contact
+    {
+        if (! $email) {
+            return null;
+        }
+
+        return ContactEmail::query()
+            ->with('contact.relations')
+            ->where('email', $email)
+            ->first()
+            ?->contact;
+    }
+
+    private function clientIdForContact(?Contact $contact): ?int
+    {
+        return $contact?->relations
+            ->first(fn ($relation): bool => str_contains((string) $relation->related_type, 'Client'))
+            ?->related_id;
+    }
+
+    private function normalizeSignalType(mixed $value): string
+    {
+        return str((string) $value)
+            ->trim()
+            ->lower()
+            ->replace([' ', '-'], '_')
+            ->toString();
     }
 
     private function queueFromRecipients(EmailMessage $message): ?TicketQueue

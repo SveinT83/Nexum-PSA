@@ -6,6 +6,8 @@ use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\Marketing\Actions\AdvanceMarketingCampaignLifecycle;
+use App\Modules\Marketing\Actions\MarketingSuppressionGuard;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
 use App\Modules\Marketing\Models\MarketingCampaign;
 use App\Modules\Marketing\Models\MarketingCampaignEmail;
@@ -35,6 +37,8 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         SmtpAccountMailer $mailer,
         MarketingSettings $settings,
         SyncMarketingCampaignRecipients $syncRecipients,
+        MarketingSuppressionGuard $suppressionGuard,
+        AdvanceMarketingCampaignLifecycle $lifecycle,
     ): void {
         $campaigns = MarketingCampaign::query()
             ->with(['emailAccount', 'emails.template', 'lists.members', 'list.members'])
@@ -44,7 +48,8 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
 
         foreach ($campaigns as $campaign) {
             $syncRecipients->handle($campaign);
-            $this->sendCampaignDueRecipients($campaign->fresh(['emailAccount']), $accountResolver, $renderer, $mailer, $settings);
+            $this->sendCampaignDueRecipients($campaign->fresh(['emailAccount']), $accountResolver, $renderer, $mailer, $settings, $suppressionGuard);
+            $lifecycle->handle($campaign);
         }
     }
 
@@ -54,6 +59,7 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         EmailTemplateRenderer $renderer,
         SmtpAccountMailer $mailer,
         MarketingSettings $settings,
+        MarketingSuppressionGuard $suppressionGuard,
     ): void {
         $account = $campaign->emailAccount ?: $accountResolver->forScope('marketing');
 
@@ -72,7 +78,7 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         $limit = $campaign->batch_size ?: $settingsPayload['default_batch_size'];
 
         MarketingCampaignRecipient::query()
-            ->with(['campaignEmail.template', 'campaign.list'])
+            ->with(['campaignEmail.template', 'campaign.list', 'contact'])
             ->where('marketing_campaign_id', $campaign->id)
             ->where('status', 'pending')
             ->where('due_at', '<=', now())
@@ -80,7 +86,14 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
             ->orderBy('id')
             ->limit($limit)
             ->get()
-            ->each(function (MarketingCampaignRecipient $recipient) use ($campaign, $account, $renderer, $mailer, $settingsPayload): void {
+            ->each(function (MarketingCampaignRecipient $recipient) use ($campaign, $account, $renderer, $mailer, $settingsPayload, $suppressionGuard): void {
+                $suppressionReason = $suppressionGuard->reasonForRecipient($recipient, $settingsPayload);
+
+                if ($suppressionReason !== null) {
+                    $this->markSuppressed($recipient, $suppressionReason);
+                    return;
+                }
+
                 $campaignEmail = $recipient->campaignEmail;
                 $template = $campaignEmail?->renderableTemplate();
 
@@ -249,6 +262,19 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         ])->save();
 
         $this->log(null, $recipient->marketing_campaign_id, $recipient->marketing_campaign_email_id, $recipient->id, 'error', $code, $message);
+    }
+
+    private function markSuppressed(MarketingCampaignRecipient $recipient, string $message): void
+    {
+        $recipient->forceFill([
+            'status' => 'suppressed',
+            'attempts' => $recipient->attempts + 1,
+            'last_error' => $message,
+        ])->save();
+
+        $this->log(null, $recipient->marketing_campaign_id, $recipient->marketing_campaign_email_id, $recipient->id, 'info', 'MARKETING_EMAIL_SUPPRESSED', $message, [
+            'to' => $recipient->email,
+        ]);
     }
 
     private function log(?int $accountId, int $campaignId, ?int $campaignEmailId, ?int $recipientId, string $level, string $code, string $message, array $context = [], ?string $rfcMessageId = null): void

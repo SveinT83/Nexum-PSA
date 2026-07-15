@@ -3,13 +3,15 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Notification\Notifications\TicketCommentAdded;
-use App\Modules\Relationship\Actions\SyncTicketMessageToRelationship;
-use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
-use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
+use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
+use App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger;
+use App\Modules\Relationship\Actions\SyncTicketMessageToRelationship;
 use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
 
@@ -49,7 +51,7 @@ class AddTicketMessage
                 'ticket_id' => $ticket->id,
                 'actor_id' => $actor?->id,
                 'type' => 'message_added',
-                'message' => ucfirst(str_replace('_', ' ', $message->type)).' added.',
+                'message' => ucfirst(str_replace('_', ' ', $message->type)) . ' added.',
                 'after' => [
                     'message_id' => $message->id,
                     'type' => $message->type,
@@ -63,6 +65,28 @@ class AddTicketMessage
                 DB::afterCommit(fn () => app(SyncTicketMessageToRelationship::class)->handle($message->id));
             } elseif (! empty($message->metadata['notify_user_id'])) {
                 SendTicketInternalNotificationEmail::dispatch($message->id)->afterCommit();
+            }
+
+            if (
+                $message->type === 'customer_reply'
+                && $message->visibility === 'public'
+                && $ticket->isPortalVisible()
+                && $ticket->client_id
+            ) {
+                app(SendCustomerPortalNotification::class)->handle(
+                    type: 'portal_ticket_reply',
+                    clientId: (int) $ticket->client_id,
+                    siteId: $ticket->site_id ? (int) $ticket->site_id : null,
+                    title: 'New reply on '.$ticket->ticket_key,
+                    body: ($actor?->name ?: 'Support').' replied to '.$ticket->subject.'.',
+                    url: route('customer-portal.tickets.show', $ticket),
+                    sourceType: Ticket::class,
+                    sourceId: $ticket->id,
+                    metadata: [
+                        'ticket_key' => $ticket->ticket_key,
+                        'message_id' => $message->id,
+                    ],
+                );
             }
 
             // Svein's workflow trigger (from Dev branch)

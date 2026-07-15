@@ -101,6 +101,7 @@ class ItemController extends Controller
             'lead_time_days' => 'nullable|integer|min:0',
             'moq' => 'nullable|integer|min:1',
             'should_order' => 'boolean',
+            'can_be_ordered' => 'boolean',
             'status' => 'required|string|in:active,inactive',
         ]);
 
@@ -111,6 +112,7 @@ class ItemController extends Controller
         $itemData['box_id'] = $itemData['box_id'] ?: null;
         $itemData['has_serials'] = $request->boolean('has_serials');
         $itemData['should_order'] = $request->boolean('should_order');
+        $itemData['can_be_ordered'] = $request->boolean('can_be_ordered');
         $itemData['updated_by'] = $request->user()?->id;
 
         DB::transaction(function () use ($item, $itemData, $supplierData) {
@@ -186,6 +188,7 @@ class ItemController extends Controller
             'moq' => 'nullable|integer|min:1',
             'initial_quantity' => 'nullable|integer|min:0',
             'should_order' => 'boolean',
+            'can_be_ordered' => 'boolean',
             'status' => 'required|string|in:active,inactive',
         ]);
     }

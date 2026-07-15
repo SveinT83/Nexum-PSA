@@ -16,8 +16,10 @@ use Illuminate\Support\Facades\DB;
 
 class ResolveMarketingListMembers
 {
-    public function __construct(private readonly MarketingSettings $settings)
-    {
+    public function __construct(
+        private readonly MarketingSettings $settings,
+        private readonly MarketingSuppressionGuard $suppressionGuard,
+    ) {
     }
 
     public function handle(MarketingList $list): int
@@ -29,7 +31,12 @@ class ResolveMarketingListMembers
             ->concat($this->manualClientUserRecipients($settings, $criteria))
             ->concat($this->contactRecipients($settings, $criteria))
             ->concat($this->legacyClientUserRecipients($settings, $criteria))
-            ->concat($this->leadIntelligenceRecipients($settings, $criteria, $list));
+            ->concat($this->leadIntelligenceRecipients($settings, $criteria, $list))
+            ->reject(fn (array $recipient): bool => $this->suppressionGuard->reasonForTarget(
+                $recipient['email'] ?? null,
+                $recipient['contact_id'] ?? null,
+                $recipient['client_id'] ?? null,
+            ) !== null);
 
         return DB::transaction(function () use ($list, $resolved, $criteria): int {
             $preservedMembers = $this->preservedExternalMembers($list, $criteria);
@@ -69,6 +76,10 @@ class ResolveMarketingListMembers
             ->get()
             ->filter(function (MarketingListMember $member) use ($excludedContactIds): bool {
                 if (($member->metadata['source'] ?? null) !== 'lead_intelligence') {
+                    return false;
+                }
+
+                if ($this->suppressionGuard->reasonForTarget($member->email, $member->contact_id, $member->client_id) !== null) {
                     return false;
                 }
 

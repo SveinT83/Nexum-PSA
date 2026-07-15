@@ -10,7 +10,9 @@ use Illuminate\Support\Str;
 
 class NexumRelationshipHttpClient
 {
-    public function __construct(private readonly RecordSyncEvent $events) {}
+    public function __construct(private readonly RecordSyncEvent $events)
+    {
+    }
 
     public function post(
         NexumRelationship $relationship,
@@ -55,6 +57,8 @@ class NexumRelationshipHttpClient
         }
 
         $relationship->markSyncSuccess();
+        $link?->markSynced();
+
         $this->events->handle($relationship, [
             'sync_link_id' => $link?->id,
             'direction' => 'outbound',

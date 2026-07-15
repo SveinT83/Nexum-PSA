@@ -12,7 +12,9 @@ use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiProvider;
+use App\Modules\Integration\Models\AiChatMessage;
 use App\Modules\LeadIntelligence\Models\ContactMarketingEligibility;
+use App\Modules\LeadIntelligence\Models\MarketingSuppressionEntry;
 use App\Modules\Marketing\Controllers\Tech\MarketingController;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
@@ -24,6 +26,7 @@ use App\Modules\Marketing\Models\MarketingCampaign;
 use App\Modules\Marketing\Models\MarketingCampaignEvent;
 use App\Modules\Marketing\Models\MarketingCampaignRecipient;
 use App\Modules\Marketing\Models\MarketingConsentCategory;
+use App\Modules\Marketing\Models\MarketingContentSource;
 use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Marketing\Models\MarketingList;
 use App\Modules\Marketing\Models\MarketingListMember;
@@ -1522,6 +1525,264 @@ class MarketingModuleTest extends TestCase
             ->assertSee('1 opened')
             ->assertSee('1 click')
             ->assertSee('Clicked security content');
+    }
+
+    #[Test]
+    public function suppressed_recipients_are_not_sent_and_campaign_can_complete(): void
+    {
+        $this->travelTo(Carbon::parse('2026-06-20 10:00:00'));
+
+        $client = Client::factory()->create(['name' => 'Suppressed Client AS']);
+        $contact = $this->contactForClient($client, 'Suppressed Contact', 'suppressed@example.test');
+        $account = $this->marketingAccount();
+        $template = $this->marketingTemplate('suppressed_send_template', 'Suppressed Send Template');
+
+        $list = MarketingList::query()->create([
+            'name' => 'Suppression list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+        ]);
+        $member = $list->members()->create([
+            'source_type' => 'manual_contact',
+            'source_id' => $contact->id,
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'email' => 'suppressed@example.test',
+            'name' => 'Suppressed Contact',
+            'status' => 'eligible',
+        ]);
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'email_account_id' => $account->id,
+            'name' => 'Suppressed campaign',
+            'status' => 'active',
+            'completion_behavior' => 'stop',
+            'current_cycle' => 1,
+            'batch_size' => 10,
+            'send_interval_minutes' => 15,
+        ]);
+        $email = $campaign->emails()->create([
+            'email_template_id' => $template->id,
+            'template_snapshot_name' => $template->name,
+            'subject_snapshot' => 'Suppressed subject',
+            'body_html_snapshot' => '<p>Suppressed body</p>',
+            'body_text_snapshot' => 'Suppressed body',
+            'sequence_order' => 1,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+        $recipient = $email->recipients()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_member_id' => $member->id,
+            'cycle_number' => 1,
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'email' => 'suppressed@example.test',
+            'name' => 'Suppressed Contact',
+            'status' => 'pending',
+            'due_at' => now()->subMinute(),
+            'tracking_token' => 'suppressed-token',
+        ]);
+        MarketingSuppressionEntry::query()->create([
+            'email' => 'suppressed@example.test',
+            'reason' => 'Hard bounce from provider.',
+            'source' => 'bounce',
+            'suppressed_at' => now(),
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock): void {
+            $mock->shouldReceive('send')->never();
+        });
+
+        SendDueMarketingCampaignEmails::dispatchSync($campaign->id);
+
+        $this->assertSame('suppressed', $recipient->fresh()->status);
+        $this->assertSame('completed', $campaign->fresh()->status);
+        $this->assertDatabaseHas('email_logs', [
+            'scope' => 'marketing',
+            'code' => 'MARKETING_EMAIL_SUPPRESSED',
+        ]);
+    }
+
+    #[Test]
+    public function repeat_campaigns_queue_the_next_cycle_after_current_sequence_finishes(): void
+    {
+        $this->travelTo(Carbon::parse('2026-06-20 10:00:00'));
+
+        $client = Client::factory()->create(['name' => 'Repeat Client AS']);
+        $contact = $this->contactForClient($client, 'Repeat Contact', 'repeat@example.test');
+        $account = $this->marketingAccount();
+        $template = $this->marketingTemplate('repeat_send_template', 'Repeat Send Template');
+        $list = MarketingList::query()->create([
+            'name' => 'Repeat list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+        ]);
+        $member = $list->members()->create([
+            'source_type' => 'manual_contact',
+            'source_id' => $contact->id,
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'email' => 'repeat@example.test',
+            'name' => 'Repeat Contact',
+            'status' => 'eligible',
+        ]);
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'email_account_id' => $account->id,
+            'name' => 'Repeat campaign',
+            'status' => 'active',
+            'completion_behavior' => 'repeat',
+            'repeat_interval_value' => 1,
+            'repeat_interval_unit' => 'days',
+            'current_cycle' => 1,
+            'batch_size' => 10,
+            'send_interval_minutes' => 15,
+        ]);
+        $email = $campaign->emails()->create([
+            'email_template_id' => $template->id,
+            'template_snapshot_name' => $template->name,
+            'subject_snapshot' => 'Repeat subject',
+            'body_html_snapshot' => '<p>Repeat body</p>',
+            'body_text_snapshot' => 'Repeat body',
+            'sequence_order' => 1,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+        $email->recipients()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_member_id' => $member->id,
+            'cycle_number' => 1,
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'email' => 'repeat@example.test',
+            'name' => 'Repeat Contact',
+            'status' => 'pending',
+            'due_at' => now()->subMinute(),
+            'tracking_token' => 'repeat-token-cycle-1',
+        ]);
+
+        $this->mock(SmtpAccountMailer::class, function ($mock): void {
+            $mock->shouldReceive('send')->once()->andReturn('<repeat@example.test>');
+        });
+
+        SendDueMarketingCampaignEmails::dispatchSync($campaign->id);
+
+        $campaign->refresh();
+
+        $this->assertSame('active', $campaign->status);
+        $this->assertSame(2, $campaign->current_cycle);
+        $this->assertSame('2026-06-21 10:00', $campaign->next_cycle_at->format('Y-m-d H:i'));
+        $this->assertDatabaseHas('marketing_campaign_recipients', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_campaign_email_id' => $email->id,
+            'cycle_number' => 1,
+            'status' => 'sent',
+        ]);
+        $this->assertDatabaseHas('marketing_campaign_recipients', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_campaign_email_id' => $email->id,
+            'cycle_number' => 2,
+            'status' => 'pending',
+        ]);
+    }
+
+    #[Test]
+    public function wordpress_content_can_be_pulled_and_used_as_ai_campaign_context(): void
+    {
+        foreach (['marketing.view', 'marketing.campaign.edit'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.campaign.edit']);
+        $provider = AiProvider::query()->create([
+            'name' => 'OpenAI WordPress test',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-test',
+            'status' => 'active',
+        ]);
+        $provider->setSecret('api_key', 'test-key');
+        $provider->save();
+        AiAgent::query()->create([
+            'ai_provider_id' => $provider->id,
+            'name' => 'Marketing WordPress Planner',
+            'slug' => 'marketing-wordpress-planner',
+            'instructions' => 'Plan marketing campaigns.',
+            'default_domains' => ['marketing'],
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://blog.example.test/wp-json/wp/v2/posts*' => Http::response([
+                [
+                    'id' => 42,
+                    'link' => 'https://blog.example.test/security-guide',
+                    'title' => ['rendered' => 'Security guide'],
+                    'excerpt' => ['rendered' => '<p>Practical security advice.</p>'],
+                    'content' => ['rendered' => '<p>Use MFA and backups.</p>'],
+                    'date' => '2026-06-20T08:00:00',
+                    'status' => 'publish',
+                    'type' => 'post',
+                ],
+            ]),
+            'https://api.openai.test/*' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'campaign_name' => 'Security guide campaign',
+                            'campaign_description' => 'Use cached WordPress content.',
+                            'emails' => [],
+                        ]),
+                    ],
+                ]],
+            ]),
+        ]);
+
+        $list = MarketingList::query()->create([
+            'name' => 'WordPress list',
+            'status' => 'active',
+            'audience_type' => 'all_business_contacts',
+        ]);
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'name' => 'WordPress campaign',
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.content-sources.wordpress', $campaign), [
+                'wordpress_url' => 'https://blog.example.test',
+                'limit' => 3,
+            ])
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
+
+        $this->assertDatabaseHas('marketing_content_sources', [
+            'marketing_campaign_id' => $campaign->id,
+            'source_type' => 'wordpress',
+            'external_id' => '42',
+            'title' => 'Security guide',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('tech.marketing.campaigns.ai-plan', $campaign), [
+                'prompt' => 'Plan from pulled WordPress content.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('campaign_name', 'Security guide campaign');
+
+        $contextMessage = AiChatMessage::query()
+            ->where('role', 'user')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertStringContainsString('wordpress_content', $contextMessage->body);
+        $this->assertStringContainsString('Security guide', $contextMessage->body);
+        $this->assertStringContainsString('blog.example.test', $contextMessage->body);
+        $this->assertStringContainsString('security-guide', $contextMessage->body);
+        $this->assertSame(1, MarketingContentSource::query()->count());
     }
 
     #[Test]

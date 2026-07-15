@@ -3,6 +3,7 @@
 use App\Modules\Commercial\Controllers\Admin\ClientTimebankPolicyController;
 use App\Modules\Commercial\Controllers\Admin\TimeRateController;
 use App\Modules\Commercial\Controllers\Admin\UnitsController;
+use App\Modules\Commercial\Controllers\Portal\PortalContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ClientTimebankConsumptionController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\PublicContractController;
@@ -12,6 +13,7 @@ use App\Modules\Commercial\Controllers\Tech\Package\PackageController;
 use App\Modules\Commercial\Controllers\Tech\Rates\TimeRateController as TechTimeRateController;
 use App\Modules\Commercial\Controllers\Tech\Services\ServiceController;
 use App\Modules\Commercial\Controllers\Tech\Sla\SlaController;
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +26,19 @@ use Illuminate\Support\Facades\Route;
 | - routes/tech.php inside the authenticated /tech group for Commercial UI.
 |
 */
+
+if (($commercialPortalRoutes ?? false) === true) {
+    Route::middleware(['auth', EnsureCustomerPortalAccess::class])
+        ->prefix('portal/contracts')
+        ->name('customer-portal.contracts.')
+        ->group(function (): void {
+            Route::get('/', [PortalContractController::class, 'index'])->name('index');
+            Route::get('/{contract}', [PortalContractController::class, 'show'])->name('show');
+            Route::post('/{contract}/accept', [PortalContractController::class, 'accept'])->name('accept');
+        });
+
+    return;
+}
 
 if (($commercialPublicRoutes ?? false) === true) {
     Route::get('/contract/view/{token}', [PublicContractController::class, 'view'])

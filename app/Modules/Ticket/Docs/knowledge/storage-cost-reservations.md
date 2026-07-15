@@ -1,8 +1,5 @@
 Ticket cost entries let technicians capture material and expense costs before billing has been built.
 
-Cost billing remains client-gated. Internal Tickets have no `client_id`, so picked cost entries on
-internal work are kept for operational tracking and are not selected for Economy order generation.
-
 Technicians use the `Add cost` action beside `Add time` on the ticket show page. The form supports two modes:
 
 - `Storage item` reserves an active Storage item for the ticket.
@@ -10,6 +7,11 @@ Technicians use the `Add cost` action beside `Add time` on the ticket show page.
   expenses that should not be mapped to warehouse stock.
 
 Storage-backed costs create a pending `ticket_cost_entries` record and a linked `storage_reservations` record. The reservation increments the Storage item's `qty_reserved` value. It does not reduce `qty_on_hand`, does not create an invoice line, and does not decide whether the item is contract-covered or directly billable. Billing will settle that later.
+
+Active Storage items that can be ordered may be reserved even when available quantity is zero or
+lower than the requested ticket quantity. This intentionally over-reserves the item so Storage shows
+that stock must be ordered. Items marked as not orderable can still be reserved while enough stock is
+available, but they cannot be reserved beyond available quantity.
 
 Manual costs create a pending `ticket_cost_entries` record without a Storage item or Storage reservation. Manual costs do not appear in the Storage picking list and do not alter stock counts.
 

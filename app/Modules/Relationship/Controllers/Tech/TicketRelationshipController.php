@@ -15,6 +15,10 @@ class TicketRelationshipController extends Controller
 {
     public function __invoke(Request $request, Ticket $ticket, EscalateTicketToRelationship $escalate): RedirectResponse
     {
+        if (! $ticket->isPortalVisible()) {
+            return back()->withErrors(['relationship_id' => 'Publish the ticket before escalating it to a Nexum relationship.']);
+        }
+
         $data = $request->validate([
             'relationship_id' => ['required', Rule::exists('nexum_relationships', 'id')->where('status', RelationshipStatus::ACTIVE)],
         ]);

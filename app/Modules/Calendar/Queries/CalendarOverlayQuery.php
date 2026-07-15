@@ -77,7 +77,7 @@ class CalendarOverlayQuery
         }
 
         $events = collect(CalendarEvent::query()
-            ->with(['calendar', 'workContext', 'participants', 'links.linkable'])
+            ->with(['calendar.owner', 'workContext', 'participants', 'links.linkable'])
             ->whereIn('calendar_id', $ids)
             ->when($workContextId, fn (Builder $query) => $query->where('work_context_id', $workContextId))
             ->when($contextType, fn (Builder $query) => $query->whereHas('workContext', fn (Builder $context) => $context->where('type', $contextType)))

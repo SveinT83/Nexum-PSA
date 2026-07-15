@@ -83,6 +83,25 @@ there may be no customer contact or where a customer-visible RMM reply would be 
 When disabled, only public technician replies marked as solution satisfy workflow solution
 requirements. Internal notes remain available, but they do not count as selected solutions.
 
+## Customer Portal Policy
+
+Ticket Settings controls the default customer visibility for manually created client tickets.
+
+The default can be:
+
+- Unpublished.
+- Published.
+
+Unpublished is the safe default. A manually created client ticket stays silent externally until a
+technician publishes it from the ticket show page. While it is Unpublished, the ticket is still
+available internally and included in reporting, but it is not visible in the Customer Portal, does
+not send customer-facing portal notifications, does not allow `Reply to contact`, and cannot be
+escalated to a Nexum relationship.
+
+Published makes a new manually created client ticket visible in the Customer Portal immediately and
+enables customer replies. After a ticket is Published, the normal ticket page does not allow it to
+be unpublished.
+
 ## Merge Settings
 
 Merge settings include:

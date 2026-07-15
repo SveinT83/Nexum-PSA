@@ -30,7 +30,7 @@ class TicketRuleEngine
                     return null;
                 }
 
-                $this->executeActions($context, $rule->actions_json ?? []);
+                $this->executeActions($context, $rule, $rule->actions_json ?? []);
 
                 $rule->forceFill([
                     'last_hit_at' => now(),
@@ -80,9 +80,9 @@ class TicketRuleEngine
         };
     }
 
-    private function executeActions(array &$context, array $actions): void
+    private function executeActions(array &$context, TicketRule $rule, array $actions): void
     {
-        foreach ($actions as $action) {
+        foreach ($actions as $index => $action) {
             $type = $action['type'] ?? '';
             $value = $action['value'] ?? null;
 
@@ -93,9 +93,36 @@ class TicketRuleEngine
                 'set_sla' => $context['sla_id'] = (int) $value,
                 'set_category' => $context['category_id'] = (int) $value,
                 'add_tag' => $context['tag_ids'] = $this->appendTagId($context['tag_ids'] ?? [], $value),
+                'emit_signal' => $this->appendSignalEmission($context, $rule, $action, (int) $index),
                 default => null,
             };
         }
+    }
+
+    private function appendSignalEmission(array &$context, TicketRule $rule, array $action, int $actionIndex): void
+    {
+        // Signal-created tickets still need field routing, but must not create recursive signals.
+        if (($context['channel'] ?? 'manual') === 'signal') {
+            return;
+        }
+
+        $signalType = $this->normalizeSignalType($action['signal_type'] ?? $action['value'] ?? '');
+
+        if ($signalType === '') {
+            return;
+        }
+
+        $context['_signal_emissions'] ??= [];
+        $context['_signal_emissions'][] = [
+            'ticket_rule_id' => $rule->id,
+            'ticket_rule_name' => $rule->name,
+            'ticket_rule_action_index' => $actionIndex,
+            'signal_type' => $signalType,
+            'severity' => $action['severity'] ?? 'info',
+            'confidence' => max(0, min(100, (int) ($action['confidence'] ?? 100))),
+            'summary' => $action['summary'] ?? null,
+            'payload_note' => $action['payload_note'] ?? null,
+        ];
     }
 
     private function appendTagId(mixed $tagIds, mixed $value): array
@@ -107,5 +134,14 @@ class TicketRuleEngine
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function normalizeSignalType(mixed $value): string
+    {
+        return str((string) $value)
+            ->trim()
+            ->lower()
+            ->replace([' ', '-'], '_')
+            ->toString();
     }
 }

@@ -112,6 +112,54 @@
         </div>
     @endif
 
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center justify-content-between gap-2">
+            <span class="fw-semibold">WordPress Content Context</span>
+            <span class="badge text-bg-light border">{{ $campaign->contentSources->count() }} items</span>
+        </div>
+        <div class="card-body">
+            @can('marketing.campaign.edit')
+                <form method="POST" action="{{ route('tech.marketing.campaigns.content-sources.wordpress', $campaign) }}" class="row g-2 align-items-end mb-3">
+                    @csrf
+                    <div class="col-lg-8">
+                        <label for="wordpress_url" class="form-label">WordPress URL</label>
+                        <input type="url" id="wordpress_url" name="wordpress_url" class="form-control form-control-sm @error('wordpress_url') is-invalid @enderror" value="{{ old('wordpress_url') }}" placeholder="https://example.com">
+                        @error('wordpress_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-2">
+                        <label for="limit" class="form-label">Posts</label>
+                        <input type="number" min="1" max="10" id="limit" name="limit" class="form-control form-control-sm @error('limit') is-invalid @enderror" value="{{ old('limit', 5) }}">
+                        @error('limit')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-lg-2 d-grid">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-cloud-download" aria-hidden="true"></i>
+                            Pull
+                        </button>
+                    </div>
+                </form>
+            @endcan
+
+            @if($campaign->contentSources->isNotEmpty())
+                <div class="list-group list-group-flush border rounded">
+                    @foreach($campaign->contentSources as $source)
+                        <a href="{{ $source->source_url }}" target="_blank" rel="noopener" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                <div>
+                                    <div class="fw-semibold">{{ $source->title ?: $source->source_url }}</div>
+                                    <div class="small text-muted">{{ $source->excerpt ?: parse_url($source->source_url, PHP_URL_HOST) }}</div>
+                                </div>
+                                <span class="badge text-bg-light border">{{ $source->published_at?->format('Y-m-d') ?? $source->fetched_at?->format('Y-m-d') }}</span>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-muted small">No WordPress content is cached for this campaign.</div>
+            @endif
+        </div>
+    </div>
+
     @php
         $scheduleFrequency = old('schedule_frequency', $campaign->scheduleFrequency());
         $firstSendDate = old('first_send_date', $campaign->starts_at?->format('Y-m-d'));
@@ -120,6 +168,9 @@
         $monthDay = old('month_day', $campaign->scheduleMonthDay());
         $customIntervalValue = old('custom_interval_value', $campaign->sequence_interval_value ?: 1);
         $customIntervalUnit = old('custom_interval_unit', $campaign->sequence_interval_unit ?: 'days');
+        $completionBehavior = old('completion_behavior', $campaign->completion_behavior ?: 'stop');
+        $repeatIntervalValue = old('repeat_interval_value', $campaign->repeat_interval_value ?: 1);
+        $repeatIntervalUnit = old('repeat_interval_unit', $campaign->repeat_interval_unit ?: 'months');
         $scheduleErrorFields = [
             'starts_at',
             'schedule_frequency',
@@ -134,6 +185,9 @@
             'sequence_interval_value',
             'sequence_interval_unit',
             'new_recipient_policy',
+            'completion_behavior',
+            'repeat_interval_value',
+            'repeat_interval_unit',
         ];
         $schedulePanelOpen = collect($scheduleErrorFields)->contains(fn (string $field): bool => $errors->has($field));
     @endphp
@@ -213,6 +267,29 @@
                                 </select>
                                 @error('new_recipient_policy')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
+                            <div class="col-lg-3">
+                                <label for="completion_behavior" class="form-label">When Sequence Completes</label>
+                                <select id="completion_behavior" name="completion_behavior" class="form-select form-select-sm @error('completion_behavior') is-invalid @enderror" data-completion-behavior>
+                                    @foreach($completionBehaviors as $value => $label)
+                                        <option value="{{ $value }}" @selected($completionBehavior === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('completion_behavior')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-lg-1" data-repeat-field>
+                                <label for="repeat_interval_value" class="form-label">Repeat</label>
+                                <input type="number" min="1" max="999" id="repeat_interval_value" name="repeat_interval_value" class="form-control form-control-sm @error('repeat_interval_value') is-invalid @enderror" value="{{ $repeatIntervalValue }}">
+                                @error('repeat_interval_value')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-lg-2" data-repeat-field>
+                                <label for="repeat_interval_unit" class="form-label">Repeat Unit</label>
+                                <select id="repeat_interval_unit" name="repeat_interval_unit" class="form-select form-select-sm @error('repeat_interval_unit') is-invalid @enderror">
+                                    @foreach($sequenceIntervalUnits as $value => $label)
+                                        <option value="{{ $value }}" @selected($repeatIntervalUnit === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('repeat_interval_unit')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
                             <div class="col-lg-1">
                                 <label for="batch_size" class="form-label">Batch</label>
                                 <input type="number" min="1" max="1000" id="batch_size" name="batch_size" class="form-control form-control-sm @error('batch_size') is-invalid @enderror" value="{{ old('batch_size', $campaign->batch_size ?: $settings['default_batch_size']) }}">
@@ -242,6 +319,13 @@
                         <dd class="col-md-9">{{ $campaign->sendRhythmLabel() }}</dd>
                         <dt class="col-md-3">New contacts</dt>
                         <dd class="col-md-9">{{ $campaign->newRecipientPolicyLabel() }}</dd>
+                        <dt class="col-md-3">Completion</dt>
+                        <dd class="col-md-9">
+                            {{ $campaign->completionBehaviorLabel() }}
+                            @if(($campaign->completion_behavior ?: 'stop') === 'repeat')
+                                <span class="text-muted">({{ $campaign->repeatIntervalLabel() }})</span>
+                            @endif
+                        </dd>
                         <dt class="col-md-3">Recipient throttle</dt>
                         <dd class="col-md-9">{{ $campaign->batch_size ?: $settings['default_batch_size'] }} per batch, {{ $campaign->send_interval_minutes ?: $settings['default_send_interval_minutes'] }} minutes between batches</dd>
                     </dl>
@@ -629,6 +713,8 @@
                 const weeklyFields = form.querySelectorAll('[data-schedule-weekly]');
                 const monthlyFields = form.querySelectorAll('[data-schedule-monthly]');
                 const customFields = form.querySelectorAll('[data-schedule-custom]');
+                const completionBehavior = form.querySelector('[data-completion-behavior]');
+                const repeatFields = form.querySelectorAll('[data-repeat-field]');
 
                 const syncScheduleFields = function () {
                     const value = frequency ? frequency.value : 'daily';
@@ -642,9 +728,13 @@
                     customFields.forEach(function (field) {
                         field.classList.toggle('d-none', value !== 'custom');
                     });
+                    repeatFields.forEach(function (field) {
+                        field.classList.toggle('d-none', (completionBehavior?.value || 'stop') !== 'repeat');
+                    });
                 };
 
                 frequency?.addEventListener('change', syncScheduleFields);
+                completionBehavior?.addEventListener('change', syncScheduleFields);
                 syncScheduleFields();
             });
 
@@ -1068,6 +1158,14 @@
             <dd class="col-6 text-end">{{ $campaign->emailAccount?->address ?? 'Marketing default' }}</dd>
             <dt class="col-6">Batch</dt>
             <dd class="col-6 text-end">{{ $campaign->batch_size ?: $settings['default_batch_size'] }}</dd>
+            <dt class="col-6">Cycle</dt>
+            <dd class="col-6 text-end">{{ $campaign->current_cycle ?: 1 }}</dd>
+            <dt class="col-6">Completion</dt>
+            <dd class="col-6 text-end">{{ ($campaign->completion_behavior ?: 'stop') === 'repeat' ? $campaign->repeatIntervalLabel() : 'Stop' }}</dd>
+            @if($campaign->next_cycle_at)
+                <dt class="col-6">Next Cycle</dt>
+                <dd class="col-6 text-end">{{ $campaign->next_cycle_at->format('Y-m-d H:i') }}</dd>
+            @endif
             <dt class="col-6">Tracking</dt>
             <dd class="col-6 text-end">{{ $campaign->track_opens ? 'Open' : 'No open' }} / {{ $campaign->track_clicks ? 'Click' : 'No click' }}</dd>
         </dl>

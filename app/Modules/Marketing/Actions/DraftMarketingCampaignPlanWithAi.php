@@ -86,14 +86,15 @@ class DraftMarketingCampaignPlanWithAi
             'Use clear editable HTML that can be pasted into the current campaign email editor.',
             'Make body_text match body_html content in plain text.',
             'Use the same language as the prompt or current campaign when obvious.',
-            'External website fetching is not available in this slice. If the prompt includes URLs, treat them only as user-provided destination links or brand hints; do not claim that you visited or read them.',
-            'WordPress content is a future context source. Do not claim that WordPress content was pulled unless WordPress content is provided in the context.',
+            'External website fetching is not available during planning. If the prompt includes URLs, treat them only as user-provided destination links or brand hints; do not claim that you visited or read them.',
+            'If wordpress_content is present, you may use those cached WordPress titles, excerpts, snippets, and source URLs as grounded campaign context.',
+            'Do not invent WordPress post data beyond the provided wordpress_content array.',
         ]);
     }
 
     private function context(MarketingCampaign $campaign, array $input): array
     {
-        $campaign->loadMissing(['lists.members.client', 'list.members.client', 'emails.template']);
+        $campaign->loadMissing(['lists.members.client', 'list.members.client', 'emails.template', 'contentSources']);
         $lists = $campaign->audienceLists();
         $members = $lists
             ->flatMap(fn ($list) => $list->members)
@@ -169,15 +170,33 @@ class DraftMarketingCampaignPlanWithAi
                     'variables' => (array) $template->variables,
                 ])
                 ->all(),
-            'future_content_sources' => [
-                'external_websites' => 'Not available in this slice. URLs in the prompt are destination links or brand hints only; do not claim that external website content was read.',
-                'wordpress' => 'Not available in this slice. Do not invent WordPress post data. When available later, WordPress posts, excerpts, source URLs, and links can be included here.',
+            'wordpress_content' => $this->wordpressContent($campaign),
+            'external_content_sources' => [
+                'external_websites' => 'Not fetched during planning. URLs in the prompt are destination links or brand hints only.',
             ],
             'link_tracking' => [
                 'enabled_for_campaign' => $campaign->track_clicks,
                 'rule' => 'Use normal destination URLs. Nexum PSA records clicks by rewriting http and https links at send time.',
             ],
         ];
+    }
+
+    private function wordpressContent(MarketingCampaign $campaign): array
+    {
+        return $campaign->contentSources
+            ->where('source_type', 'wordpress')
+            ->where('status', 'active')
+            ->sortByDesc('published_at')
+            ->take(10)
+            ->map(fn ($source): array => [
+                'title' => $source->title,
+                'excerpt' => Str::limit((string) $source->excerpt, 1200),
+                'source_url' => $source->source_url,
+                'published_at' => $source->published_at?->toDateString(),
+                'content_snippet' => Str::limit(strip_tags((string) $source->content_html), 2000),
+            ])
+            ->values()
+            ->all();
     }
 
     private function decodeJson(string $reply): array

@@ -39,6 +39,12 @@ are recorded as Signal records, archived locally, and skipped by normal ticket r
 can then suppress marketing email, tag contacts or clients, create follow-up tickets, emit derived
 signals, or call webhooks.
 
+Email Rules can also use an explicit `emit_signal` action for selected inbound messages. This is
+opt-in and should be used only when the email itself is a useful operational event, such as a vendor
+notice, monitoring alert, or security notification. Email remains responsible for parsing, tagging,
+archiving, linking replies, and deciding whether a normal message becomes a ticket. Signal owns the
+cross-module follow-up after the explicit handoff has created a normalized Signal record.
+
 Technicians can mark an inbox message as spam. This:
 
 - Tags the message with `spam`.

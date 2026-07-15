@@ -42,6 +42,35 @@
                     <button type="button" class="btn btn-outline-secondary" disabled title="{{ $closeDisabledReason }}">Close</button>
                 @endif
             @endif
+            @if($ticket->client_id && ($ticketActions['update_fields'] ?? true))
+                <!-- Customer portal visibility is one-way from unpublished to published during normal ticket handling. -->
+                @php
+                    $portalPublished = $ticket->isPortalVisible();
+                @endphp
+                @if($portalPublished)
+                    <span
+                        class="btn btn-outline-success disabled"
+                        aria-disabled="true"
+                        title="This ticket is published in the customer portal.">
+                        <i class="bi bi-eye" aria-hidden="true"></i>
+                        Published
+                    </span>
+                @else
+                    <form method="POST" action="{{ route('tech.tickets.portal-visibility.update', $ticket) }}">
+                        @csrf
+                        <input type="hidden" name="portal_visible" value="1">
+                        <button
+                            type="submit"
+                            class="btn btn-outline-secondary"
+                            title="Publish to customer portal and enable customer replies"
+                            aria-label="Publish ticket to customer portal"
+                        >
+                            <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                            Unpublished
+                        </button>
+                    </form>
+                @endif
+            @endif
             <a href="{{ route('tech.tickets.index') }}" class="btn btn-light">Back</a>
         </div>
     </div>
@@ -50,12 +79,17 @@
 @section('content')
 <div class="container-fluid">
     @php
-        $canReplyToContact = $replyContacts->isNotEmpty() && ($ticketActions['customer_reply'] ?? true);
+        $portalPublished = $ticket->isPortalVisible();
+        $customerReplyBlockedByPortal = $ticket->client_id && ! $portalPublished;
+        $canReplyToContact = $portalPublished && $replyContacts->isNotEmpty() && ($ticketActions['customer_reply'] ?? true);
         $ccSuggestionGroups = $ccContactSuggestions->groupBy('group');
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
         $allowInternalSolutionNotes = $solutionPolicy['allow_internal_solution_notes'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
         $selectedMessageType = old('type', $defaultMessageType);
+        if (($selectedMessageType === 'customer_reply' && ! $canReplyToContact) || ($selectedMessageType === 'internal_solution' && ! $allowInternalSolutionNotes)) {
+            $selectedMessageType = $defaultMessageType;
+        }
         $selectedReplyIntent = old('reply_intent', \App\Modules\Ticket\Support\TicketAction::CUSTOMER_UPDATE);
         $selectedReplyContactId = old('reply_contact_id', $ticket->contact_id);
         $selectedNotifyUserId = old('notify_user_id');
@@ -328,19 +362,20 @@
 
                                 @php
                                     $latestEmailLog = $emailLogsByMessageId->get($message->id)?->first();
-                                    // Only customer/contact authored messages are unread workflow items for technicians.
-                                    $isUnreadMessage = $message->author_type === 'contact' && blank($message->read_at);
+                                    // Only customer-authored messages are unread workflow items for technicians.
+                                    $isCustomerAuthoredMessage = in_array($message->author_type, ['contact', 'portal_user'], true);
+                                    $isUnreadMessage = $isCustomerAuthoredMessage && blank($message->read_at);
                                     $messageTypeLabel = $message->type === 'customer_reply' && $message->author_type === 'user'
                                         ? 'Technician reply'
                                         : ucfirst(str_replace('_', ' ', $message->type));
                                     $messageExcerpt = \Illuminate\Support\Str::limit(preg_replace('/\s+/', ' ', trim($message->body)), 120);
-                                    $senderName = $message->author_type === 'contact'
+                                    $senderName = $isCustomerAuthoredMessage
                                         ? (iconv_mime_decode((string) ($message->metadata['from_name'] ?? ''), ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8') ?: $ticket->contact?->name ?? 'Customer')
                                         : ($message->author?->name ?? 'Technician');
                                     $senderEmail = $message->author_type === 'contact'
                                         ? ($message->metadata['from_email'] ?? $ticket->contact?->email)
                                         : null;
-                                    $participantLine = $message->author_type === 'contact'
+                                    $participantLine = $isCustomerAuthoredMessage
                                         ? ($senderEmail ?: $senderName)
                                         : $senderName;
                                     $messageCollapseId = 'ticketMessageCollapse' . $message->id;
@@ -504,7 +539,7 @@
                                     </div>
                                 </div>
 
-                                <div id="reply_recipient_group" class="row g-2 mb-3 @if ($selectedMessageType === 'internal_note') d-none @endif">
+                                <div id="reply_recipient_group" class="row g-2 mb-3 @if (in_array($selectedMessageType, ['internal_note', 'internal_solution'], true)) d-none @endif">
                                     <div class="col-md-6">
                                         <label for="reply_contact_id" class="form-label">Contact</label>
                                         <select id="reply_contact_id" name="reply_contact_id" class="form-select @error('reply_contact_id') is-invalid @enderror">
@@ -545,7 +580,11 @@
                                     </div>
                                 </div>
 
-                                @if (! $canReplyToContact && $allowInternalSolutionNotes)
+                                @if($customerReplyBlockedByPortal)
+                                    <div class="alert alert-secondary">
+                                        Customer replies are disabled while this ticket is Unpublished. Internal notes are still available.
+                                    </div>
+                                @elseif (! $canReplyToContact && $allowInternalSolutionNotes)
                                     <div class="alert alert-warning">
                                         This ticket has no contact with an email address. Use an internal solution to document the fix without sending email.
                                     </div>
@@ -736,18 +775,28 @@
                             @error('storage_item_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             <div id="cost_storage_item_suggestions" class="list-group mt-2" style="max-height: 14rem; overflow-y: auto;">
                                 @foreach($storageItems as $storageItem)
+                                    @php
+                                        $canSelectStorageItem = $storageItem['available'] > 0 || $storageItem['can_be_ordered'];
+                                    @endphp
                                     <button
                                         type="button"
-                                        class="list-group-item list-group-item-action py-2 cost-storage-suggestion @if($storageItem['available'] < 1) disabled @endif"
+                                        class="list-group-item list-group-item-action py-2 cost-storage-suggestion @unless($canSelectStorageItem) disabled @endunless"
                                         data-id="{{ $storageItem['id'] }}"
                                         data-label="{{ $storageItem['label'] }}"
                                         data-price="{{ $storageItem['sale_price'] }}"
                                         data-invoice-text="{{ $storageItem['short_description'] }}"
                                         data-search="{{ \Illuminate\Support\Str::lower($storageItem['label'] . ' ' . $storageItem['location']) }}"
-                                        @disabled($storageItem['available'] < 1)>
+                                        @disabled(! $canSelectStorageItem)>
                                         <span class="d-flex justify-content-between gap-2">
                                             <span class="fw-semibold text-truncate">{{ $storageItem['label'] }}</span>
-                                            <span class="small text-muted flex-shrink-0">Available: {{ $storageItem['available'] }}</span>
+                                            <span class="small text-muted flex-shrink-0">
+                                                Available: {{ $storageItem['available'] }}
+                                                @if($storageItem['available'] < 1 && $storageItem['can_be_ordered'])
+                                                    &middot; order needed
+                                                @elseif($storageItem['available'] < 1)
+                                                    &middot; cannot order
+                                                @endif
+                                            </span>
                                         </span>
                                         @if(filled($storageItem['location']))
                                             <span class="small text-muted d-block text-truncate">{{ $storageItem['location'] }}</span>

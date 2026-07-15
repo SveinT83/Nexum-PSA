@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\Core\User;
+use App\Modules\CustomerPortal\Support\CustomerPortalContextResolver;
 use Illuminate\Support\Facades\Log;
 
 Route::get('/', function (Request $request) {
@@ -16,6 +17,10 @@ Route::get('/', function (Request $request) {
 
         if ($user?->isActive() && ($user->roles()->exists() || $user->permissions()->exists())) {
             return redirect()->route('tech.dashboard');
+        }
+
+        if ($user?->isActive() && app(CustomerPortalContextResolver::class)->resolveForUser($user)) {
+            return redirect()->route('customer-portal.dashboard');
         }
     }
 
@@ -99,6 +104,50 @@ require app_path('Modules/UserManagement/routes.php');
 
 $telephonyPublicRoutes = true;
 require app_path('Modules/Telephony/routes.php');
+
+$intakePublicRoutes = true;
+require app_path('Modules/Intake/routes.php');
+
+$bookingPublicRoutes = true;
+require app_path('Modules/Booking/routes.php');
+
+$customerPortalPublicRoutes = true;
+require app_path('Modules/CustomerPortal/routes.php');
+
+$salesPortalRoutes = true;
+require app_path('Modules/Sales/routes.php');
+
+$ticketPortalRoutes = true;
+require app_path('Modules/Ticket/routes.php');
+
+$documentationPortalRoutes = true;
+require app_path('Modules/Documentation/routes.php');
+
+$knowledgePortalRoutes = true;
+require app_path('Modules/Knowledge/routes.php');
+
+$commercialPortalRoutes = true;
+require app_path('Modules/Commercial/routes.php');
+
+$economyPortalRoutes = true;
+require app_path('Modules/Economy/routes.php');
+
+unset(
+    $commercialPublicRoutes,
+    $salesPublicRoutes,
+    $marketingPublicRoutes,
+    $userManagementPublicRoutes,
+    $telephonyPublicRoutes,
+    $intakePublicRoutes,
+    $bookingPublicRoutes,
+    $customerPortalPublicRoutes,
+    $salesPortalRoutes,
+    $ticketPortalRoutes,
+    $documentationPortalRoutes,
+    $knowledgePortalRoutes,
+    $commercialPortalRoutes,
+    $economyPortalRoutes,
+);
 
 // Dashboard (etter innlogging)
 /*

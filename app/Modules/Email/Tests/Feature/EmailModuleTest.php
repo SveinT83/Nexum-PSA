@@ -29,6 +29,7 @@ use App\Modules\Email\Services\HtmlSanitizer;
 use App\Modules\Email\Controllers\Tech\InboxController;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
+use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\Signal\Models\Signal;
 use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
@@ -1984,6 +1985,126 @@ class EmailModuleTest extends TestCase
             'name' => 'Create inbound sales ticket',
             'weight' => 20,
         ]);
+    }
+
+    #[Test]
+    public function admin_can_create_inbound_email_rule_that_emits_signal(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.email.rules.store'), [
+                'name' => 'Emit vendor signal',
+                'description' => 'Hand selected inbound mail to Signal.',
+                'weight' => 5,
+                'is_active' => '1',
+                'stop_processing' => '1',
+                'conditions' => [
+                    ['field' => 'from_domain', 'operator' => 'equals', 'value' => 'vendor.example'],
+                ],
+                'actions' => [
+                    ['type' => 'emit_signal', 'value' => 'Vendor Notice'],
+                ],
+            ])
+            ->assertRedirect(route('tech.admin.settings.email.rules'));
+
+        $rule = EmailRule::query()->where('name', 'Emit vendor signal')->firstOrFail();
+
+        $this->assertSame('emit_signal', $rule->actions_json[0]['type']);
+        $this->assertSame('vendor_notice', $rule->actions_json[0]['signal_type']);
+        $this->assertSame('vendor_notice', $rule->actions_json[0]['value']);
+    }
+
+    #[Test]
+    public function inbound_email_rule_emit_signal_records_one_signal_and_runs_signal_rules(): void
+    {
+        $client = Client::factory()->create(['name' => 'Signal Client']);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Signal Sender',
+        ]);
+        ContactEmail::query()->create([
+            'contact_id' => $contact->id,
+            'label' => 'work',
+            'email' => 'sender@vendor.example',
+            'is_primary' => true,
+        ]);
+        ContactRelation::query()->create([
+            'contact_id' => $contact->id,
+            'related_type' => Client::class,
+            'related_id' => $client->id,
+            'relation_type' => 'customer',
+            'is_primary' => true,
+        ]);
+        SignalRule::query()->create([
+            'name' => 'Tag vendor notices',
+            'is_active' => true,
+            'priority' => 10,
+            'conditions' => [
+                'source_domain' => ['email'],
+                'signal_type' => ['vendor_notice'],
+            ],
+            'actions' => [
+                ['type' => 'tag_contact', 'tag' => 'Vendor notice'],
+            ],
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'post@example.test',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'post@example.test',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'post@example.test',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 505,
+            'message_id' => '<vendor-notice@example.test>',
+            'subject' => 'Vendor maintenance notice',
+            'from_email' => 'sender@vendor.example',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Planned maintenance notice.',
+        ]);
+        EmailRule::create([
+            'name' => 'Emit vendor notice',
+            'trigger' => EmailRule::TRIGGER_INBOUND,
+            'weight' => 1,
+            'is_active' => true,
+            'stop_processing' => true,
+            'conditions_json' => [
+                ['field' => 'from_domain', 'operator' => 'equals', 'value' => 'vendor.example'],
+            ],
+            'actions_json' => [
+                ['type' => 'emit_signal', 'value' => 'vendor_notice'],
+                ['type' => 'archive', 'value' => ''],
+            ],
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $signal = Signal::query()
+            ->where('source_domain', 'email')
+            ->where('source_type', EmailMessage::class)
+            ->where('source_id', $email->id)
+            ->firstOrFail();
+
+        $this->assertSame('vendor_notice', $signal->signal_type);
+        $this->assertSame($contact->id, $signal->contact_id);
+        $this->assertSame($client->id, $signal->client_id);
+        $this->assertSame('Emit vendor notice', $signal->payload['email_rule_name']);
+        $this->assertSame('archived', $email->fresh()->state);
+        $this->assertSame(1, $signal->executions()->count());
+        $this->assertSame(1, Signal::query()->where('source_domain', 'email')->where('source_id', $email->id)->count());
+        $this->assertSame(1, $contact->fresh()->tags()->where('slug', 'vendor-notice')->count());
     }
 
     #[Test]

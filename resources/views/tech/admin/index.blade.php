@@ -145,6 +145,7 @@
                 ['label' => 'Notification channels', 'route' => route('tech.admin.notification-channels.index')],
                 ['label' => 'Signal feed', 'route' => route('tech.admin.system.signals.index')],
                 ['label' => 'Signal rules', 'route' => route('tech.admin.system.signals.rules.index')],
+                ['label' => 'Signal settings', 'route' => route('tech.admin.system.signals.settings.edit')],
             ],
         ],
         [
@@ -160,6 +161,40 @@
                 ['label' => 'Nextcloud', 'route' => route('tech.admin.nextcloud.connections.index')],
                 ['label' => 'API management', 'route' => route('tech.admin.system.integrations.api.index')],
                 ['label' => 'AI settings', 'route' => route('tech.admin.system.integrations.ai.index')],
+            ],
+        ],
+        [
+            'title' => 'Customer Portal',
+            'icon' => 'bi-door-open',
+            'description' => 'Manage customer contact portal invitations, memberships, and access scope.',
+            'links' => [
+                ['label' => 'Access management', 'route' => route('tech.admin.system.customer-portal.index')],
+            ],
+        ],
+        [
+            'title' => 'Intake',
+            'icon' => 'bi-inboxes',
+            'description' => 'Configure public inquiry forms, review submissions, attachments, and Sales routing.',
+            'links' => [
+                ['label' => 'Forms and submissions', 'route' => route('tech.admin.system.intake.index')],
+                ['label' => 'New form', 'route' => route('tech.admin.system.intake.forms.create')],
+            ],
+        ],
+        [
+            'title' => 'Booking',
+            'icon' => 'bi-calendar-check',
+            'description' => 'Configure bookable services, public slot requests, staff confirmation, and Calendar handoff.',
+            'links' => [
+                ['label' => 'Services and requests', 'route' => route('tech.admin.system.booking.index')],
+                ['label' => 'New booking service', 'route' => route('tech.admin.system.booking.settings.create')],
+            ],
+        ],
+        [
+            'title' => 'Data Exchange',
+            'icon' => 'bi-arrow-left-right',
+            'description' => 'Reusable import/export profiles, run history, generated files, and safe data source registration.',
+            'links' => [
+                ['label' => 'Profiles and runs', 'route' => route('tech.admin.system.data-exchange.index')],
             ],
         ],
     ];
