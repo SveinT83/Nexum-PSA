@@ -15,7 +15,8 @@ use Illuminate\Support\Str;
 class SendCustomerPortalNotification
 {
     /**
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
+     * @param  array<int, string>|null  $channels
      */
     public function handle(
         string $type,
@@ -28,6 +29,7 @@ class SendCustomerPortalNotification
         ?int $sourceId = null,
         bool $clientWideVisibleToSiteMembers = false,
         array $metadata = [],
+        ?array $channels = null,
     ): int {
         $payload = [
             'type' => $type,
@@ -43,7 +45,7 @@ class SendCustomerPortalNotification
 
         $recipients = $this->recipients($clientId, $siteId, $clientWideVisibleToSiteMembers);
 
-        $recipients->each(fn (User $user) => $user->notify(new CustomerPortalNotification($payload)));
+        $recipients->each(fn (User $user) => $user->notify(new CustomerPortalNotification($payload, $channels)));
 
         return $recipients->count();
     }

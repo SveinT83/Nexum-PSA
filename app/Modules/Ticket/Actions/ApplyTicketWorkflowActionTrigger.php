@@ -10,7 +10,7 @@ class ApplyTicketWorkflowActionTrigger
 {
     public function __construct(
         private readonly TicketWorkflowRuntime $workflowRuntime,
-        private readonly ChangeTicketStatus $changeTicketStatus,
+        private readonly TransitionTicketWorkflow $transitionTicketWorkflow,
     ) {}
 
     /*
@@ -24,14 +24,26 @@ class ApplyTicketWorkflowActionTrigger
     */
     public function handle(Ticket $ticket, string $action, ?User $actor = null): ?Ticket
     {
-        $transition = $this->workflowRuntime->transitionForAction($ticket, $action);
+        foreach ($this->workflowRuntime->transitionsForAction($ticket, $action) as $transition) {
+            $decision = $this->workflowRuntime->transitionDecision($ticket, $transition);
+            if (! $decision['allowed'] || (bool) data_get($decision, 'target_state.is_terminal', false)) {
+                continue;
+            }
 
-        if (! $transition || $this->workflowRuntime->transitionBlockedReason($ticket, $transition)) {
-            return null;
+            try {
+                return $this->transitionTicketWorkflow->handle(
+                    $ticket,
+                    (string) $transition['transition_key'],
+                    $actor,
+                    enforceActionGuard: false,
+                    allowTerminal: false,
+                );
+            } catch (\Illuminate\Validation\ValidationException) {
+                // The source state may have changed between decision and lock.
+                return null;
+            }
         }
 
-        $transition->loadMissing('toStatus');
-
-        return $this->changeTicketStatus->handle($ticket, $transition->toStatus, $actor);
+        return null;
     }
 }

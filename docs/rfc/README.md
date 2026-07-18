@@ -10,6 +10,7 @@ RFCs are required before Level 3 changes and recommended for unclear Level 2 cha
 
 Approved:
 
+- `2026-07-17-ticket-workflow-v3-conditional-actions-and-escalation.md`
 - `2026-07-04-customer-portal-foundation.md`
 - `2026-07-04-notification-sms-channel-automation.md`
 - `2026-07-04-online-booking-calendar-availability.md`

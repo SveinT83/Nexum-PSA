@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Ticket\Support\TicketSolutionPolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -75,7 +76,12 @@ class MarkTicketMessageSolution
                 'after' => ['message_id' => $message->id],
             ]);
 
-            app(AutoAdvanceTicketWorkflow::class)->handle($ticket->refresh(), $actor);
+            $advanced = app(ApplyTicketWorkflowActionTrigger::class)->handle(
+                $ticket->refresh(),
+                TicketAction::SEND_SOLUTION,
+                $actor,
+            );
+            $advanced ?? app(AutoAdvanceTicketWorkflow::class)->handle($ticket->refresh(), $actor);
 
             return $message->refresh();
         });

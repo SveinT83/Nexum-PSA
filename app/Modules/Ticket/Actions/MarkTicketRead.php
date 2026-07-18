@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Actions;
 use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
 
 class MarkTicketRead
@@ -21,7 +22,8 @@ class MarkTicketRead
     */
     public function handle(Ticket $ticket, ?User $actor = null): void
     {
-        DB::transaction(function () use ($ticket, $actor) {
+        $changed = false;
+        DB::transaction(function () use ($ticket, $actor, &$changed) {
             $wasUnread = $ticket->is_unread;
 
             $ticket->messages()
@@ -34,6 +36,7 @@ class MarkTicketRead
             ])->save();
 
             if ($wasUnread) {
+                $changed = true;
                 TicketEvent::create([
                     'ticket_id' => $ticket->id,
                     'actor_id' => $actor?->id,
@@ -45,5 +48,9 @@ class MarkTicketRead
                 ]);
             }
         });
+
+        if ($changed) {
+            app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::MARK_READ, $actor);
+        }
     }
 }

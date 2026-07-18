@@ -2,30 +2,63 @@
 
 namespace App\Modules\Ticket\Services;
 
+use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\Ticket\Models\TicketAssignmentRule;
+use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\Ticket\Models\TicketEvent;
 use Illuminate\Support\Facades\Schema;
 
 class TicketAssignmentEngine
 {
-    public function assign(Ticket $ticket, bool $force = false): ?int
+    public function assign(Ticket $ticket, bool $force = false, ?array $eligibleUserIds = null): ?int
     {
-        if ($ticket->owner_id && ! $force) {
+        $policy = app(TicketWorkflowRuntime::class)->currentState($ticket)['assignment_policy'] ?? [];
+        $eligibleUserIds ??= $this->eligibleUserIds($policy);
+        $strategy = (string) ($policy['strategy'] ?? 'keep_if_eligible');
+
+        if ($strategy === 'unassigned') {
+            if ($ticket->owner_id) {
+                $ticket->forceFill(['owner_id' => null])->save();
+            }
+
+            return null;
+        }
+
+        if ($ticket->owner_id && ! $force && ($eligibleUserIds === null || in_array((int) $ticket->owner_id, $eligibleUserIds, true))) {
             return $ticket->owner_id;
         }
 
-        $ruleOwnerId = $this->assignByRule($ticket);
+        if ($ticket->owner_id && $eligibleUserIds !== null && ! in_array((int) $ticket->owner_id, $eligibleUserIds, true)) {
+            $ticket->forceFill(['owner_id' => null])->save();
+        }
+
+        $ruleOwnerId = $this->assignByRule($ticket, $eligibleUserIds);
 
         if ($ruleOwnerId) {
             return $ruleOwnerId;
         }
 
-        return $this->assignByProfileScore($ticket);
+        return $this->assignByProfileScore($ticket, $eligibleUserIds);
     }
 
-    private function assignByRule(Ticket $ticket): ?int
+    /** @param array<string, mixed> $policy */
+    private function eligibleUserIds(array $policy): ?array
+    {
+        $configured = collect($policy['eligible_user_ids'] ?? [])->map(fn ($id) => (int) $id)->filter()->unique();
+        $required = array_values(array_filter($policy['required_permissions'] ?? []));
+        if ($configured->isEmpty() && $required === []) {
+            return null;
+        }
+
+        return User::query()->where('status', User::STATUS_ACTIVE)
+            ->when($configured->isNotEmpty(), fn ($query) => $query->whereIn('id', $configured))
+            ->get()
+            ->filter(fn (User $user) => collect($required)->every(fn (string $permission) => $user->can($permission)))
+            ->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+    }
+
+    private function assignByRule(Ticket $ticket, ?array $eligibleUserIds = null): ?int
     {
         if (! Schema::hasTable('ticket_assignment_rules')) {
             return null;
@@ -41,7 +74,11 @@ class TicketAssignmentEngine
             }
 
             $ownerId = (int) $rule->action_value;
-            $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment rule: ' . $rule->name, [
+
+            if ($eligibleUserIds !== null && ! in_array($ownerId, $eligibleUserIds, true)) {
+                continue;
+            }
+            $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment rule: '.$rule->name, [
                 'assignment_rule_id' => $rule->id,
             ]);
 
@@ -56,7 +93,7 @@ class TicketAssignmentEngine
         return null;
     }
 
-    private function assignByProfileScore(Ticket $ticket): ?int
+    private function assignByProfileScore(Ticket $ticket, ?array $eligibleUserIds = null): ?int
     {
         if (! Schema::hasTable('ticket_assignment_settings')) {
             return null;
@@ -67,6 +104,7 @@ class TicketAssignmentEngine
         $profiles = TicketAssignmentSetting::query()
             ->with(['categories', 'tags', 'user.profile'])
             ->where('is_assignable', true)
+            ->when($eligibleUserIds !== null, fn ($query) => $query->whereIn('user_id', $eligibleUserIds))
             ->get()
             ->map(function (TicketAssignmentSetting $profile) use ($ticket) {
                 $openTickets = Ticket::query()

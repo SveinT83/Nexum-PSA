@@ -52,6 +52,17 @@ class EnsureDefaultEmailTemplates
                 'is_active' => true,
             ],
             [
+                'scope' => 'tickets',
+                'key' => 'ticket_status_update',
+                'name' => 'Ticket status update',
+                'subject' => '[{{ ticket_key }}] Status update: {{ ticket_subject }}',
+                'body_html' => '<p>Hello {{ contact_name }},</p><p>We have updated your Ticket.</p><p><strong>{{ ticket_subject }}</strong><br>Previous status: {{ previous_status }}<br>Current status: <strong>{{ current_status }}</strong></p><p>{{ status_message }}</p><p>Regards,<br>{{ technician_name }}</p><p style="margin-top:24px;color:#6c757d;font-size:12px;">--- Please reply above this line ---</p>',
+                'body_text' => "Hello {{ contact_name }},\n\nWe have updated your Ticket.\n\n{{ ticket_subject }}\nPrevious status: {{ previous_status }}\nCurrent status: {{ current_status }}\n\n{{ status_message }}\n\nRegards,\n{{ technician_name }}\n\n--- Please reply above this line ---",
+                'variables' => ['ticket_key', 'ticket_subject', 'contact_name', 'previous_status', 'current_status', 'status_message', 'technician_name'],
+                'is_default' => true,
+                'is_active' => true,
+            ],
+            [
                 'scope' => 'system',
                 'key' => 'system_notification',
                 'name' => 'System notification',

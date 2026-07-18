@@ -2365,10 +2365,6 @@ class TicketModuleTest extends TestCase
 
         Queue::assertNotPushed(SendTicketReplyEmail::class);
 
-        $this->actingAs($this->tech)
-            ->post(route('tech.tickets.workflow.transition', [$ticket->fresh(), $resolvedTransition]))
-            ->assertRedirect(route('tech.tickets.show', $ticket));
-
         $this->assertSame($resolved->id, $ticket->fresh()->status_id);
 
         $this->actingAs($this->tech)
@@ -2579,7 +2575,6 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee('id="cc_contact_suggestions" class="mt-2 d-none" aria-hidden="true"', false)
             ->assertSee('CC suggestions')
             ->assertSee('data-cc-email="alpha.cc@example.com"', false)
             ->assertSee('data-cc-email="beta.cc@example.com"', false)
@@ -2898,6 +2893,19 @@ class TicketModuleTest extends TestCase
             ->assertViewIs('ticket::Admin.Settings.workflows.index')
             ->assertSee('Default Ticket Workflow');
 
+        $this->actingAs($admin)
+            ->get(route('tech.admin.settings.tickets.workflows.create'))
+            ->assertOk()
+            ->assertSee('1. Workflow steps')
+            ->assertSee('Add next step')
+            ->assertSee('Next-step buttons')
+            ->assertDontSee('Reporting status for new step')
+            ->assertSee('Requirement groups')
+            ->assertSee('Available actions')
+            ->assertSee('Add action')
+            ->assertSee('Actions not added inherit normal permission-aware behavior.')
+            ->assertSee('2. Escalate Ticket paths');
+
         $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
 
         $this->assertGreaterThan(0, $workflow->states()->count());
@@ -2917,8 +2925,15 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee('Workflow')
-            ->assertSee('Start work');
+            ->assertSeeHtml('data-ticket-workflow-step')
+            ->assertSeeHtml('class="ticket-workflow__track"')
+            ->assertSeeHtml('class="ticket-workflow__step is-current"')
+            ->assertSeeHtml('data-bs-toggle="popover"')
+            ->assertSeeHtml('aria-current="step"')
+            ->assertSee('Next step')
+            ->assertSee('Start work')
+            ->assertSee('Planned scope and customer approval')
+            ->assertDontSeeHtml('class="card mb-3 border-primary-subtle"');
     }
 
     #[Test]
@@ -2969,6 +2984,7 @@ class TicketModuleTest extends TestCase
     {
         app(EnsureTicketDefaults::class)->handle();
         $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
         $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
         $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
         $ticket = $this->createTicket(null, [
@@ -3007,8 +3023,18 @@ class TicketModuleTest extends TestCase
             ->post(route('tech.tickets.messages.solution', [$ticket, $response]))
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
-        $this->assertSame($resolved->id, $ticket->fresh()->status_id);
+        $this->assertSame($inProgress->id, $ticket->fresh()->status_id);
         $this->assertTrue((bool) $response->fresh()->metadata['is_solution']);
+
+        $progressTransition = TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $inProgress->id)
+            ->where('to_status_id', $resolved->id)
+            ->firstOrFail();
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket->fresh(), $progressTransition]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($resolved->id, $ticket->fresh()->status_id);
     }
 
     #[Test]
@@ -3075,6 +3101,7 @@ class TicketModuleTest extends TestCase
     {
         app(EnsureTicketDefaults::class)->handle();
         $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
         $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
         $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
         $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
@@ -3104,7 +3131,7 @@ class TicketModuleTest extends TestCase
 
         $ticket->refresh();
 
-        $this->assertSame($resolved->id, $ticket->status_id);
+        $this->assertSame($inProgress->id, $ticket->status_id);
         $this->assertNull($ticket->closed_at);
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\CustomerPortal\Actions\RecordCustomerPortalAudit;
 use App\Modules\CustomerPortal\Support\CustomerPortalContext;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
+use App\Modules\Sales\Actions\AcceptSalesQuote;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesQuoteVersion;
 use App\Modules\Sales\Support\PortalSalesQuoteAccess;
@@ -50,7 +51,7 @@ class PortalSalesQuoteController extends Controller
         ]);
     }
 
-    public function accept(Request $request, SalesQuoteVersion $quote, PortalSalesQuoteAccess $access, RecordCustomerPortalAudit $audit, SendCustomerPortalNotification $portalNotifications): RedirectResponse
+    public function accept(Request $request, SalesQuoteVersion $quote, PortalSalesQuoteAccess $access, RecordCustomerPortalAudit $audit, SendCustomerPortalNotification $portalNotifications, AcceptSalesQuote $acceptQuote): RedirectResponse
     {
         $context = $this->context($request);
         $quote->load(['quote.opportunity.client']);
@@ -65,43 +66,17 @@ class PortalSalesQuoteController extends Controller
             'confirm' => ['required', 'accepted'],
         ]);
 
-        DB::transaction(function () use ($request, $quote, $context, $audit, $portalNotifications, $data): void {
+        DB::transaction(function () use ($request, $quote, $context, $audit, $portalNotifications, $data, $acceptQuote): void {
             $opportunity = $quote->quote->opportunity;
 
-            $quote->forceFill([
-                'status' => 'accepted',
-                'accepted_at' => now(),
-                'accepted_by_name' => $data['name'],
-                'accepted_ip' => $request->ip(),
-                'accepted_ua' => $request->userAgent(),
-                'portal_accepted_account_id' => $context->account->id,
-                'portal_accepted_membership_id' => $context->membership->id,
-                'portal_accepted_contact_id' => $context->contact->id,
-            ])->save();
-            $quote->quote->forceFill(['status' => 'accepted'])->save();
-
-            $opportunity->forceFill([
-                'status' => 'won',
-                'probability_percent' => 100,
-                'estimated_value_ex_vat' => $quote->total_ex_vat,
-                'weighted_value_ex_vat' => $quote->total_ex_vat,
-                'won_quote_version_id' => $quote->id,
-                'won_at' => now(),
-            ])->save();
-
-            SalesActivity::query()->create([
-                'opportunity_id' => $opportunity->id,
-                'type' => 'quote_accepted',
-                'direction' => 'inbound',
-                'subject' => 'Quote accepted in customer portal',
-                'body' => $data['name'].' accepted quote '.$quote->quote->quote_key.' v'.$quote->version_number.' in the customer portal.',
-                'metadata' => [
-                    'quote_version_id' => $quote->id,
-                    'customer_portal_account_id' => $context->account->id,
-                    'customer_portal_membership_id' => $context->membership->id,
-                    'contact_id' => $context->contact->id,
-                    'accepted_ip' => $request->ip(),
-                ],
+            $acceptQuote->handle($quote, [
+                'name' => $data['name'],
+                'method' => 'customer_portal',
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'portal_account_id' => $context->account->id,
+                'portal_membership_id' => $context->membership->id,
+                'portal_contact_id' => $context->contact->id,
             ]);
 
             $audit->handle(

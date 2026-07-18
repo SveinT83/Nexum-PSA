@@ -8,14 +8,18 @@ use App\Modules\Storage\Models\Movement;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketEvent;
+use App\Modules\Ticket\Services\TicketActionGuard;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 class PickTicketStorageReservation
 {
-    public function __construct(private readonly GenerateOrders $generateOrders)
-    {
-    }
+    public function __construct(
+        private readonly GenerateOrders $generateOrders,
+        private readonly TicketActionGuard $guard,
+    ) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -30,7 +34,11 @@ class PickTicketStorageReservation
     {
         abort_unless((int) $costEntry->ticket_id === (int) $ticket->id, 404);
 
-        return DB::transaction(function () use ($ticket, $costEntry, $actor): TicketCostEntry {
+        if ($reason = $this->guard->reason($ticket, TicketAction::PICK_ITEM, $actor)) {
+            throw ValidationException::withMessages(['storage_item' => $reason]);
+        }
+
+        $entry = DB::transaction(function () use ($ticket, $costEntry, $actor): TicketCostEntry {
             $costEntry->loadMissing(['storageItem', 'reservation']);
 
             if ($costEntry->status !== 'reserved') {
@@ -104,5 +112,9 @@ class PickTicketStorageReservation
 
             return $costEntry->refresh();
         });
+
+        app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::PICK_ITEM, $actor);
+
+        return $entry;
     }
 }

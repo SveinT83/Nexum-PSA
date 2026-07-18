@@ -9,6 +9,9 @@ class TicketWorkflowTransition extends Model
 {
     protected $fillable = [
         'ticket_workflow_id',
+        'transition_key',
+        'from_state_key',
+        'to_state_key',
         'from_status_id',
         'to_status_id',
         'label',
@@ -19,6 +22,8 @@ class TicketWorkflowTransition extends Model
         'requires_response',
         'requires_resolution',
         'requires_knowledge_update',
+        'requirements',
+        'customer_notification',
         'sort_order',
     ];
 
@@ -31,6 +36,8 @@ class TicketWorkflowTransition extends Model
         'requires_resolution' => 'boolean',
         'requires_knowledge_update' => 'boolean',
         'sort_order' => 'integer',
+        'requirements' => 'array',
+        'customer_notification' => 'array',
     ];
 
     public function workflow(): BelongsTo

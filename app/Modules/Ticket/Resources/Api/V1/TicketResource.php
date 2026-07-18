@@ -26,6 +26,11 @@ class TicketResource extends JsonResource
             'contact_id' => $this->contact_id,
             'asset_id' => $this->asset_id,
             'owner_id' => $this->owner_id,
+            'workflow_id' => $this->workflow_id,
+            'workflow_version_id' => $this->workflow_version_id,
+            'workflow_state_key' => $this->workflow_state_key,
+            'close_outcome' => $this->close_outcome,
+            'close_reason' => $this->close_reason,
             'channel' => $this->channel,
             'subject' => $this->subject,
             'description' => $this->description,
@@ -66,11 +71,22 @@ class TicketResource extends JsonResource
                 'id' => $this->owner?->id,
                 'name' => $this->owner?->name,
             ]),
+            'workflow' => $this->whenLoaded('workflow', fn () => [
+                'id' => $this->workflow?->id,
+                'name' => $this->workflow?->name,
+                'slug' => $this->workflow?->slug,
+            ]),
+            'workflow_version' => $this->whenLoaded('workflowVersion', fn () => [
+                'id' => $this->workflowVersion?->id,
+                'version' => $this->workflowVersion?->version,
+                'status' => $this->workflowVersion?->status,
+            ]),
             'metadata' => $this->metadata,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'links' => [
                 'self' => route('api.v1.tickets.show', $this->ticket_key),
+                'workflow_decisions' => route('api.v1.tickets.workflow-decisions.show', $this->ticket_key),
             ],
         ];
     }

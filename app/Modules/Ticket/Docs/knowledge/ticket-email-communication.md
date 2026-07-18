@@ -63,6 +63,28 @@ manually entered addresses.
 
 The queued job is `SendTicketReplyEmail`.
 
+## Workflow Status Updates
+
+A workflow next-step transition can optionally notify the customer after the transition succeeds.
+The workflow administrator chooses Email, Customer portal, or both and may enter a short
+customer-facing message. Email uses the selected active Ticket template; the default is
+`tickets/ticket_status_update`.
+
+Only Published Tickets can produce these customer updates. If a transition succeeds while the
+Ticket is Unpublished, the Ticket remains in its new step but the notification is recorded as
+skipped. It is not sent later merely because the Ticket becomes Published.
+
+The public status-update message contains the previous and current reporting status plus the
+configured customer message. It does not expose internal note content, internal workflow step
+names, requirement details, costs, or other internal context. Updates triggered by an internal
+note therefore tell the customer only the approved status information.
+
+The queued job is `SendTicketWorkflowCustomerUpdate`. It records Email delivery in the normal
+Email logs and delivery metadata on the public Ticket message. Missing contact data, Email account,
+template, or SMTP service is logged without rolling back the workflow transition. Repeated API
+idempotency keys do not create or queue another update. Customer portal delivery is database-only
+inside this workflow path so selecting both channels cannot send two Emails.
+
 ## Nexum Relationship Public Replies
 
 When a ticket is linked to an active Nexum relationship, public customer replies
@@ -107,12 +129,14 @@ Customer reply attachments are sent with outbound SMTP. Ticket-owned attachment 
 
 ## Email Template
 
-Ticket replies use the Email template:
+Ticket customer communication uses these Email templates:
 
-- Scope: `tickets`
-- Key: `ticket_reply`
+- `tickets/ticket_reply` for a technician-authored customer reply.
+- `tickets/ticket_status_update` for a workflow-generated customer status update.
 
-The template receives variables such as ticket key, ticket subject, contact name, message body, and technician name.
+The reply template receives variables such as Ticket key, Ticket subject, contact name, message
+body, and technician name. The status-update template receives Ticket key, Ticket subject, contact
+name, previous status, current status, optional status message, and technician name.
 
 ## Implementation References
 
@@ -125,4 +149,6 @@ Important files:
 - `app/Modules/Ticket/Actions/MarkTicketAsNotTicket.php`
 - `app/Modules/Ticket/Jobs/SendTicketReplyEmail.php`
 - `app/Modules/Ticket/Jobs/SendTicketInternalNotificationEmail.php`
+- `app/Modules/Ticket/Jobs/SendTicketWorkflowCustomerUpdate.php`
+- `app/Modules/Ticket/Support/TicketWorkflowCustomerNotificationPolicy.php`
 - `app/Modules/Ticket/Actions/UpdateDefaultTicketEmailAccount.php`

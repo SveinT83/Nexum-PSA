@@ -5,14 +5,13 @@ namespace App\Modules\Ticket\Actions;
 use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
+use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Support\Facades\DB;
 
 class UpdateTicketFields
 {
-    public function __construct(private readonly ResolveWorkContext $workContexts)
-    {
-    }
+    public function __construct(private readonly ResolveWorkContext $workContexts) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -27,7 +26,8 @@ class UpdateTicketFields
     */
     public function handle(Ticket $ticket, array $data, ?User $actor = null): Ticket
     {
-        return DB::transaction(function () use ($ticket, $data, $actor) {
+        $changed = false;
+        $result = DB::transaction(function () use ($ticket, $data, $actor, &$changed) {
             $fields = ['subject', 'description', 'queue_id', 'priority_id', 'category_id', 'client_id', 'site_id', 'contact_id', 'asset_id', 'owner_id'];
             $updates = array_intersect_key($data, array_flip($fields));
             $before = [];
@@ -57,6 +57,7 @@ class UpdateTicketFields
             }
 
             $wasUnassigned = blank($ticket->owner_id);
+            $changed = true;
             $ownerWasSubmitted = array_key_exists('owner_id', $updates);
 
             $ticket->forceFill(array_merge($after, [
@@ -76,7 +77,17 @@ class UpdateTicketFields
                 'message' => 'Ticket fields updated.',
             ]);
 
+            if (array_intersect(array_keys($after), ['client_id', 'site_id', 'contact_id', 'asset_id', 'category_id', 'queue_id', 'owner_id']) !== []) {
+                app(InvalidateTicketWorkflowReviews::class)->handle($ticket, 'Material Ticket fields changed.', $actor);
+            }
+
             return $ticket->refresh();
         });
+
+        if ($changed) {
+            app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::UPDATE_FIELDS, $actor);
+        }
+
+        return $result;
     }
 }

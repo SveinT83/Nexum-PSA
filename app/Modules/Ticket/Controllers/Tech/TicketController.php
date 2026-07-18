@@ -21,7 +21,6 @@ use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\AddTicketMessage;
-use App\Modules\Ticket\Actions\ChangeTicketStatus;
 use App\Modules\Ticket\Actions\CloseTicket;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\MarkTicketAsNotTicket;
@@ -33,6 +32,7 @@ use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\ReserveTicketStorageItem;
 use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
 use App\Modules\Ticket\Actions\StoreTicket;
+use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Actions\UpdateTicketStorageReservation;
 use App\Modules\Ticket\Actions\UpdateTicketTimeEntry;
@@ -347,7 +347,7 @@ class TicketController extends Controller
 
         abort_if($ticket->trashed(), 404);
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'workflowVersion', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'attachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'plannedLines.storageItem', 'plannedLines.approvedQuoteVersion', 'plannedLines.convertedCostEntry', 'plannedLines.purchaseOrderLine.purchaseOrder', 'salesContext.opportunity.currentQuoteVersion.quote', 'salesContext.opportunity.currentQuoteVersion.lines', 'workflowReviews.requester', 'workflowReviews.assignedReviewer', 'workflowReviews.reviewer', 'workflowEvidence.creator', 'workflowHistory.actor', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
         $messageIds = $ticket->messages->pluck('id')->all();
         $relationshipSyncLinks = $ticket->syncLinks;
         $availableRelationships = ($ticket->isPortalVisible() && request()->user()?->can('relationships.escalate'))
@@ -367,15 +367,18 @@ class TicketController extends Controller
                 ->get()
             : collect();
 
-        $workflowTransitions = $workflowRuntime->availableTransitionsWithRequirements($ticket);
-        $closeTransition = $workflowTransitions->first(fn (TicketWorkflowTransition $transition) => (bool) $transition->toStatus?->is_closed);
+        $workflowTransitionDecisions = $workflowRuntime->availableTransitionDecisions($ticket);
+        $workflowEscalationDecisions = $workflowRuntime->escalationDecisions($ticket);
 
         return view('ticket::Tech.Tickets.show', [
             'ticket' => $ticket,
             'ticketActions' => $actionGuard->map($ticket, request()->user()),
+            'ticketActionDecisions' => $actionGuard->decisionMap($ticket, request()->user()),
             'solutionPolicy' => $solutionPolicy->settings(),
-            'workflowTransitions' => $workflowTransitions,
-            'closeTransition' => $closeTransition,
+            'workflowTransitionDecisions' => $workflowTransitionDecisions,
+            'workflowEscalationDecisions' => $workflowEscalationDecisions,
+            'workflowCurrentState' => $workflowRuntime->currentState($ticket),
+            'workflowSteps' => $workflowRuntime->stateProgress($ticket, $workflowTransitionDecisions),
             'latestAssignmentEvent' => $ticket->events
                 ->where('type', 'assigned')
                 ->sortByDesc('created_at')
@@ -386,6 +389,7 @@ class TicketController extends Controller
             'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'categories' => $this->ticketCategories(),
             'technicians' => $this->technicians(),
+            'seniorReviewers' => $this->technicians()->filter(fn (User $user) => $user->can('ticket.review_senior'))->values(),
             'replyContacts' => $this->replyContactOptions($ticket),
             'ccContactSuggestions' => $this->ccContactSuggestions($ticket),
             'timeRateOptions' => $timeRateOptions->forTicket($ticket),
@@ -686,7 +690,7 @@ class TicketController extends Controller
         return Storage::disk($disk)->download($attachment->path, $attachment->filename);
     }
 
-    public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, ChangeTicketStatus $changeTicketStatus, TicketActionGuard $actionGuard): RedirectResponse
+    public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, TransitionTicketWorkflow $transitionWorkflow, TicketActionGuard $actionGuard): RedirectResponse
     {
         if ($reason = $actionGuard->reason($ticket, TicketAction::UPDATE_FIELDS, $request->user())) {
             return back()->withErrors(['ticket' => $reason])->withInput();
@@ -717,6 +721,11 @@ class TicketController extends Controller
         $clientId = $data['client_id'] ?? null;
         $contactId = $data['contact_id'] ?? null;
         $clientChanged = (string) ($ticket->client_id ?? '') !== (string) ($clientId ?? '');
+
+        if ((int) ($data['owner_id'] ?? 0) !== (int) ($ticket->owner_id ?? 0)
+            && ($reason = $actionGuard->reason($ticket, TicketAction::ASSIGN_OTHER, $request->user()))) {
+            return back()->withErrors(['owner_id' => $reason])->withInput();
+        }
 
         if ($contactId && ! $clientId) {
             return back()
@@ -758,7 +767,7 @@ class TicketController extends Controller
             'asset_id' => $assetId,
         ], $request->user());
 
-        $changeTicketStatus->handle($ticket->refresh(), $status, $request->user());
+        $transitionWorkflow->handleToStatus($ticket->refresh(), $status, $request->user());
         $ticket->tags()->syncWithPivotValues($this->resolveTagIds($data['tag_names'] ?? []), ['module' => 'ticket']);
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
@@ -771,23 +780,42 @@ class TicketController extends Controller
             return back()->withErrors(['ticket' => $reason]);
         }
 
-        $closeTicket->handle($ticket, $request->user());
+        $data = $request->validate([
+            'outcome' => ['nullable', Rule::in(['completed', 'customer_declined', 'cancelled', 'no_sale'])],
+            'reason' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $closeTicket->handle(
+            $ticket,
+            $request->user(),
+            $data['outcome'] ?? 'completed',
+            $data['reason'] ?? null,
+        );
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Ticket closed.');
     }
 
-    public function transition(Request $request, Ticket $ticket, TicketWorkflowTransition $transition, ChangeTicketStatus $changeTicketStatus, TicketWorkflowRuntime $workflowRuntime): RedirectResponse
+    public function transition(Request $request, Ticket $ticket, TicketWorkflowTransition $transition, TransitionTicketWorkflow $transitionWorkflow, TicketWorkflowRuntime $workflowRuntime): RedirectResponse
     {
-        abort_unless((int) $transition->from_status_id === (int) $ticket->status_id, 404);
+        abort_unless((int) $transition->ticket_workflow_id === (int) $ticket->workflow_id, 404);
+        $definition = $workflowRuntime->transitionDefinition($ticket, (string) $transition->transition_key);
+        abort_unless($definition, 404);
+        $decision = $workflowRuntime->transitionDecision($ticket, $definition);
 
-        $transition->loadMissing('toStatus');
+        if ((bool) data_get($decision, 'target_state.is_terminal', false)) {
+            return back()->withErrors(['status_id' => 'Use Close Ticket and choose an explicit close outcome.']);
+        }
 
-        if ($reason = $workflowRuntime->manualBlockedReason($ticket, $transition)) {
+        if ($reason = $workflowRuntime->manualBlockedReason($ticket, $definition)) {
             return back()->withErrors(['status_id' => $reason]);
         }
 
-        $changeTicketStatus->handle($ticket, $transition->toStatus, $request->user());
+        try {
+            $transitionWorkflow->handle($ticket, (string) $definition['transition_key'], $request->user());
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            return back()->withErrors(['status_id' => collect($exception->errors())->flatten()->first()]);
+        }
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Workflow transition completed.');
@@ -811,6 +839,7 @@ class TicketController extends Controller
                 'source' => 'ticket_show',
             ],
         ]);
+        app(\App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::REQUEST_KNOWLEDGE_UPDATE, $request->user());
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Documentation follow-up was created.');
@@ -889,6 +918,7 @@ class TicketController extends Controller
 
     public function markMessageRead(Request $request, Ticket $ticket, TicketMessage $message): RedirectResponse
     {
+        $messageWasUnread = blank($message->read_at);
         abort_unless((int) $message->ticket_id === (int) $ticket->id, 404);
 
         DB::transaction(function () use ($ticket, $message, $request) {
@@ -923,6 +953,10 @@ class TicketController extends Controller
             }
         });
 
+        if ($messageWasUnread) {
+            app(\App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::MARK_READ, $request->user());
+        }
+
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Reply marked as read.');
     }
@@ -943,6 +977,10 @@ class TicketController extends Controller
 
         $previousOwnerId = $ticket->owner_id;
         $ownerId = $assignmentEngine->assign($ticket, force: true);
+
+        if ($ownerId && (int) $previousOwnerId !== (int) $ownerId) {
+            app(\App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::ASSIGN_OWNER, $request->user());
+        }
 
         if (! $ownerId) {
             return redirect()->route('tech.tickets.show', $ticket->refresh())
@@ -1243,7 +1281,7 @@ class TicketController extends Controller
             ->where(fn ($query) => $query->where('do_not_email', false)->orWhereNull('do_not_email'))
             ->whereHas('emails')
             ->orderBy('display_name')
-            ->limit(40)
+            ->limit(100)
             ->get()
             ->each(function (Contact $contact) use ($addSuggestion): void {
                 $contact->emails
@@ -1251,7 +1289,7 @@ class TicketController extends Controller
                     ->each(fn ($email) => $addSuggestion($email->email, $contact->display_name, 'Global contacts'));
             });
 
-        return $suggestions->take(40)->values();
+        return $suggestions->take(80)->values();
     }
 
     private function clientContactSuggestions(Ticket $ticket): Collection

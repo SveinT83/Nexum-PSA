@@ -9,6 +9,7 @@ use App\Modules\Calendar\Models\CalendarEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SalesOpportunity extends Model
@@ -114,5 +115,10 @@ class SalesOpportunity extends Model
     public function wonQuoteVersion(): BelongsTo
     {
         return $this->belongsTo(SalesQuoteVersion::class, 'won_quote_version_id');
+    }
+
+    public function ticketSalesContext(): HasOne
+    {
+        return $this->hasOne(\App\Modules\Ticket\Models\TicketSalesContext::class, 'opportunity_id');
     }
 }

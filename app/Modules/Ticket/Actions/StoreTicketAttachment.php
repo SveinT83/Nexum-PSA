@@ -12,6 +12,30 @@ use Illuminate\Support\Str;
 
 class StoreTicketAttachment
 {
+    public function fromContent(TicketMessage $message, string $filename, string $content, string $contentType, ?User $actor = null, string $source = 'generated'): TicketAttachment
+    {
+        $ticket = $message->ticket;
+        $disk = 'local';
+        $safeFilename = $this->safeFilename($filename);
+        $path = $this->path($ticket->id, $message->id, $safeFilename);
+
+        Storage::disk($disk)->put($path, $content);
+
+        return TicketAttachment::create([
+            'ticket_id' => $ticket->id,
+            'ticket_message_id' => $message->id,
+            'uploaded_by' => $actor?->id,
+            'source' => $source,
+            'filename' => $safeFilename,
+            'original_filename' => $filename,
+            'content_type' => $contentType,
+            'size_bytes' => strlen($content),
+            'disk' => $disk,
+            'path' => $path,
+            'checksum_sha1' => sha1($content),
+        ]);
+    }
+
     public function fromUpload(TicketMessage $message, UploadedFile $file, ?User $actor = null): TicketAttachment
     {
         $ticket = $message->ticket;
@@ -90,7 +114,7 @@ class StoreTicketAttachment
 
     private function path(int $ticketId, int $messageId, string $filename): string
     {
-        return 'ticket/attachments/' . $ticketId . '/' . $messageId . '/' . Str::uuid() . '-' . $filename;
+        return 'ticket/attachments/'.$ticketId.'/'.$messageId.'/'.Str::uuid().'-'.$filename;
     }
 
     private function safeFilename(string $filename): string

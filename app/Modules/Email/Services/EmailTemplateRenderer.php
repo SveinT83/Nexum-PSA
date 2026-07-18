@@ -17,9 +17,7 @@ class EmailTemplateRenderer
     | without changing outbound jobs.
     |
     */
-    public function __construct(private readonly CompanyProfileSettings $companyProfile)
-    {
-    }
+    public function __construct(private readonly CompanyProfileSettings $companyProfile) {}
 
     public function render(EmailTemplate $template, array $variables): array
     {
@@ -44,6 +42,7 @@ class EmailTemplateRenderer
             'client_name' => 'Example Client AS',
             'contact_email' => 'contact@example.test',
             'contact_name' => 'Ola Nordmann',
+            'current_status' => 'In Progress',
             'expires_at' => now()->addDays(14)->format('Y-m-d'),
             'expires_hours' => '48',
             'invite_url' => url('/invite/example'),
@@ -55,10 +54,12 @@ class EmailTemplateRenderer
             'opportunity_key' => 'OPP-2026-0001',
             'opportunity_title' => 'Managed services proposal',
             'portal_invite_url' => url('/portal/invitations/example'),
+            'previous_status' => 'New',
             'quote_key' => 'Q-2026-0001',
             'quote_url' => url('/quote/view/example'),
             'seller_name' => 'Sales User',
             'site_name' => 'Main Office',
+            'status_message' => 'We have started working on your Ticket.',
             'support_email' => $branding['support_email'] ?: 'support@example.test',
             'technician_name' => 'Technician User',
             'ticket_key' => 'TD-2026-0001',
@@ -83,8 +84,8 @@ class EmailTemplateRenderer
     private function replace(string $content, array $variables): string
     {
         foreach ($variables as $key => $value) {
-            $content = str_replace('{{ ' . $key . ' }}', (string) $value, $content);
-            $content = str_replace('{{' . $key . '}}', (string) $value, $content);
+            $content = str_replace('{{ '.$key.' }}', (string) $value, $content);
+            $content = str_replace('{{'.$key.'}}', (string) $value, $content);
         }
 
         return $content;

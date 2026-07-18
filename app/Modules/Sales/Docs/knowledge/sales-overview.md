@@ -17,6 +17,14 @@ Public quote links remain available for token-based customer access:
 Accepting a quote marks the quote version and quote as accepted, marks the opportunity as won, stores
 accepted name/IP/user agent, and records a `quote_accepted` Sales activity.
 
+## Ticket-Owned Quote Work
+
+A Ticket with planned commercial scope can create a quote through the same Sales engine and editor. Nexum creates or reuses a linked Sales Opportunity, but the Ticket remains the technician's operating surface. The current quote can be opened in the Sales editor from the Ticket.
+
+Sending from a published Ticket creates an immutable PDF snapshot and a public Ticket reply with the PDF and secure acceptance link. After a sent version, further edits create a new draft version so the customer evidence never changes underneath an acceptance.
+
+Secure-link, Customer Portal, and staff-confirmed inbound-email acceptance all use the same acceptance action. Acceptance marks the Opportunity won and approves only the Ticket planned lines present in that accepted version. Workflow can require quote creation, sent state, accepted state, accepted amount, or implementation lines before the Ticket continues.
+
 ## Customer Portal
 
 The Customer Portal can show existing sent and accepted quote versions for the active Client scope.

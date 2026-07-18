@@ -1,5 +1,7 @@
 Ticket cost entries let technicians capture material and expense costs before billing has been built.
 
+Workflow-controlled planned lines come before actual costs when customer approval is required. A planned line does not reserve stock, create a purchase order, or become billable. It can be copied into a Ticket-linked Sales quote and becomes approved scope only when that immutable quote version is accepted.
+
 Technicians use the `Add cost` action beside `Add time` on the ticket show page. The form supports two modes:
 
 - `Storage item` reserves an active Storage item for the ticket.
@@ -25,3 +27,5 @@ Important status fields:
 - `storage_reservations.status = active` means Storage still treats the item as reserved.
 
 Later billing should read pending ticket cost entries together with pending time entries. At that point it can decide whether to invoice the item, include it in a contract, convert the reservation to a stock movement, or release it if the work is cancelled.
+
+After quote acceptance, an authorized technician or API client can convert an approved equipment line to a reservation/pending cost, convert an approved custom line to a pending manual cost, or create a draft purchase need for an orderable Storage item. Repeating a conversion or purchase request returns the existing downstream record rather than creating a duplicate. A purchase need never sends a vendor order automatically.

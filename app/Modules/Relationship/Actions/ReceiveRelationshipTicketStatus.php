@@ -5,7 +5,7 @@ namespace App\Modules\Relationship\Actions;
 use App\Modules\Relationship\Models\NexumRelationship;
 use App\Modules\Relationship\Support\RelationshipCapability;
 use App\Modules\Relationship\Support\SyncStatus;
-use App\Modules\Ticket\Actions\ChangeTicketStatus;
+use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketStatus;
 use Illuminate\Validation\ValidationException;
@@ -15,8 +15,7 @@ class ReceiveRelationshipTicketStatus
     public function __construct(
         private readonly RecordSyncEvent $events,
         private readonly ResolveRelationshipTicketSyncLink $links,
-    ) {
-    }
+    ) {}
 
     public function handle(NexumRelationship $relationship, string $remoteTicketId, array $data): Ticket
     {
@@ -59,7 +58,38 @@ class ReceiveRelationshipTicketStatus
             return $ticket;
         }
 
-        app(ChangeTicketStatus::class)->handle($ticket, $status, null, enforceWorkflow: false, syncRelationship: false);
+        try {
+            app(TransitionTicketWorkflow::class)->handleToStatus(
+                $ticket,
+                $status,
+                actor: null,
+                enforceActionGuard: false,
+                syncRelationship: false,
+            );
+        } catch (ValidationException $exception) {
+            $message = (string) collect($exception->errors())->flatten()->first();
+            $link->forceFill([
+                'sync_status' => SyncStatus::SKIPPED,
+                'last_error' => $message,
+            ])->save();
+
+            $this->events->handle($relationship, [
+                'sync_link_id' => $link->id,
+                'direction' => 'inbound',
+                'capability' => RelationshipCapability::STATUS_SYNC,
+                'local_type' => Ticket::class,
+                'local_id' => $ticket->id,
+                'remote_type' => 'ticket',
+                'remote_id' => $remoteTicketId,
+                'event_type' => 'ticket_status_received',
+                'outcome' => 'skipped',
+                'error_code' => 'workflow_blocked',
+                'error_message' => $message,
+            ]);
+
+            return $ticket;
+        }
+
         $link->markSynced();
 
         $this->events->handle($relationship, [

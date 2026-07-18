@@ -8,13 +8,14 @@ use App\Models\Clients\ClientFormat;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Modules\Clients\Actions\CreateClientWithDefaults;
+use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Commercial\Models\Packages\Package;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\TimeRate;
-use App\Modules\Clients\Actions\CreateClientWithDefaults;
-use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Sales\Actions\EnsureSalesDefaults;
+use App\Modules\Sales\Actions\EnsureSalesQuoteDraft;
 use App\Modules\Sales\Actions\RecalculateSalesQuoteVersion;
 use App\Modules\Sales\Actions\StoreSalesOpportunity;
 use App\Modules\Sales\Actions\SyncOpportunityFollowUpCalendar;
@@ -258,7 +259,7 @@ class SalesController extends Controller
             'recipient_contact_id' => 'nullable|exists:client_users,id',
             'to_email' => 'nullable|email|max:255',
             'cc' => 'nullable|string|max:1000',
-            'notify_user_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
+            'notify_user_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')],
         ]);
 
         $metadata = [];
@@ -371,17 +372,17 @@ class SalesController extends Controller
         return back()->with('success', 'Stakeholder added.');
     }
 
-    public function ensureQuote(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate): RedirectResponse
+    public function ensureQuote(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate, EnsureSalesQuoteDraft $ensureDraft): RedirectResponse
     {
-        $version = $this->ensureDraftQuoteVersion($sale, $request->user());
+        $version = $ensureDraft->handle($sale, $request->user());
         $recalculate->handle($version);
 
         return back()->with('success', 'Quote draft ready.');
     }
 
-    public function addQuoteLine(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate): RedirectResponse
+    public function addQuoteLine(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate, EnsureSalesQuoteDraft $ensureDraft): RedirectResponse
     {
-        $version = $this->ensureDraftQuoteVersion($sale, $request->user());
+        $version = $ensureDraft->handle($sale, $request->user());
 
         abort_unless($version->isEditable(), 422);
 
@@ -471,7 +472,7 @@ class SalesController extends Controller
             ->with('open_quote_modal', true);
     }
 
-    public function reviseQuote(Request $request, SalesOpportunity $sale): RedirectResponse
+    public function reviseQuote(Request $request, SalesOpportunity $sale, EnsureSalesQuoteDraft $ensureDraft, RecalculateSalesQuoteVersion $recalculate): RedirectResponse
     {
         $version = $sale->currentQuoteVersion()->with('quote')->firstOrFail();
 
@@ -479,28 +480,22 @@ class SalesController extends Controller
             return back()->with('warning', 'Only sent quotes in negotiation can be revised.');
         }
 
-        $version->forceFill([
-            'status' => 'draft',
-            'updated_by' => $request->user()->id,
-        ])->save();
-        $version->quote->forceFill([
-            'status' => 'draft',
-            'current_version_id' => $version->id,
-        ])->save();
+        $newVersion = $ensureDraft->handle($sale, $request->user());
+        $recalculate->handle($newVersion);
 
         SalesActivity::query()->create([
             'opportunity_id' => $sale->id,
             'actor_id' => $request->user()->id,
             'type' => 'quote_revised',
             'subject' => 'Quote moved back to draft',
-            'body' => 'Quote '.$version->quote->quote_key.' v'.$version->version_number.' was moved back to draft for negotiation changes.',
+            'body' => 'Quote '.$version->quote->quote_key.' v'.$version->version_number.' remains immutable. Version '.$newVersion->version_number.' was created as a new draft.',
             'is_unread' => false,
             'read_at' => now(),
-            'metadata' => ['quote_version_id' => $version->id],
+            'metadata' => ['previous_quote_version_id' => $version->id, 'quote_version_id' => $newVersion->id],
         ]);
 
         return back()
-            ->with('success', 'Quote moved back to draft. Edit the quote and send it again when ready.')
+            ->with('success', 'A new draft quote version was created. The sent version remains unchanged.')
             ->with('open_quote_modal', true);
     }
 
@@ -570,13 +565,13 @@ class SalesController extends Controller
             SalesActivity::query()->create([
                 'opportunity_id' => $sale->id,
                 'actor_id' => $request->user()->id,
-            'type' => 'quote_email_queued',
-            'subject' => 'Quote email queued',
-            'body' => 'Quote '.$version->quote->quote_key.' v'.$version->version_number.' was queued for email delivery to '.$sale->primaryContact->email.'.',
-            'is_unread' => false,
-            'read_at' => now(),
-            'metadata' => ['quote_version_id' => $version->id, 'to_email' => $sale->primaryContact->email],
-        ]);
+                'type' => 'quote_email_queued',
+                'subject' => 'Quote email queued',
+                'body' => 'Quote '.$version->quote->quote_key.' v'.$version->version_number.' was queued for email delivery to '.$sale->primaryContact->email.'.',
+                'is_unread' => false,
+                'read_at' => now(),
+                'metadata' => ['quote_version_id' => $version->id, 'to_email' => $sale->primaryContact->email],
+            ]);
 
             return back()->with('success', $wasDraft ? 'Quote marked as sent and queued for email delivery.' : 'Quote email queued for delivery.');
         }
@@ -595,7 +590,7 @@ class SalesController extends Controller
         return $request->validate([
             'client_id' => [$create ? 'required' : 'sometimes', 'exists:clients,id'],
             'primary_contact_id' => 'nullable|exists:client_users,id',
-            'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')],
+            'owner_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')],
             'title' => [$create ? 'required' : 'sometimes', 'string', 'max:255'],
             'type' => [$create ? 'required' : 'sometimes', 'string', 'max:100'],
             'status' => 'nullable|string|max:100',
@@ -801,6 +796,7 @@ class SalesController extends Controller
 
         if ($data['source_type'] === 'time_rate' && ! empty($data['source_id'])) {
             $rate = TimeRate::findOrFail($data['source_id']);
+
             return array_merge($base, [
                 'name' => ($data['name'] ?? null) ?: $rate->name,
                 'description' => $data['description'] ?? $rate->description,
@@ -812,6 +808,7 @@ class SalesController extends Controller
 
         if ($data['source_type'] === 'storage_item' && ! empty($data['source_id'])) {
             $item = StorageItem::findOrFail($data['source_id']);
+
             return array_merge($base, [
                 'name' => ($data['name'] ?? null) ?: $item->name,
                 'sku' => $item->sku,

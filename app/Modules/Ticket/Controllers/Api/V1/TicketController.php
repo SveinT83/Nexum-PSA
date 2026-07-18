@@ -8,14 +8,12 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Taxonomy\Models\Category;
-use App\Modules\Ticket\Actions\ChangeTicketStatus;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\SyncExternalTicketMessage;
+use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketPriority;
-use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Resources\Api\V1\TicketResource;
@@ -208,7 +206,7 @@ class TicketController extends Controller
         Request $request,
         Ticket $ticket,
         UpdateTicketFields $updateTicketFields,
-        ChangeTicketStatus $changeTicketStatus,
+        TransitionTicketWorkflow $transitionWorkflow,
         TicketActionGuard $actionGuard
     ) {
         if ($reason = $actionGuard->reason($ticket, TicketAction::UPDATE_FIELDS, $request->user())) {
@@ -232,13 +230,19 @@ class TicketController extends Controller
             'asset_id',
         ]));
 
+        if (array_key_exists('owner_id', $fieldData)
+            && (int) ($fieldData['owner_id'] ?? 0) !== (int) ($ticket->owner_id ?? 0)
+            && ($reason = $actionGuard->reason($ticket, TicketAction::ASSIGN_OTHER, $request->user()))) {
+            throw ValidationException::withMessages(['owner_id' => $reason]);
+        }
+
         if ($fieldData !== []) {
             $updateTicketFields->handle($ticket, $fieldData, $request->user());
         }
 
         if (! empty($data['status_id']) && (int) $data['status_id'] !== (int) $ticket->refresh()->status_id) {
             $status = TicketStatus::query()->where('is_active', true)->findOrFail($data['status_id']);
-            $changeTicketStatus->handle($ticket->refresh(), $status, $request->user());
+            $transitionWorkflow->handleToStatus($ticket->refresh(), $status, $request->user());
         }
 
         return new TicketResource($this->loadTicket($ticket->refresh()));
@@ -291,13 +295,13 @@ class TicketController extends Controller
             'queue_id' => ['nullable', Rule::exists('ticket_queues', 'id')->where('is_active', true)],
             'status_id' => ['nullable', Rule::exists('ticket_statuses', 'id')->where('is_active', true)],
             'priority_id' => ['nullable', Rule::exists('ticket_priorities', 'id')->where('is_active', true)],
-            'category_id' => ['nullable', Rule::exists((new Category())->getTable(), 'id')->where('type', 'ticket')],
+            'category_id' => ['nullable', Rule::exists((new Category)->getTable(), 'id')->where('type', 'ticket')],
             'ticket_type_id' => ['nullable', Rule::exists('ticket_types', 'id')->where('is_active', true)],
             'client_id' => ['nullable', Rule::exists('clients', 'id')],
             'site_id' => ['nullable', Rule::exists('client_sites', 'id')],
             'contact_id' => ['nullable', Rule::exists('client_users', 'id')],
             'asset_id' => ['nullable', Rule::exists('assets', 'id')],
-            'owner_id' => ['nullable', Rule::exists((new User())->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
+            'owner_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
             'channel' => ['nullable', 'string', 'max:50'],
             'impact' => ['nullable', 'integer', 'min:1', 'max:5'],
             'urgency' => ['nullable', 'integer', 'min:1', 'max:5'],
@@ -312,8 +316,8 @@ class TicketController extends Controller
             'queue_id' => ['sometimes', 'required', Rule::exists('ticket_queues', 'id')->where('is_active', true)],
             'status_id' => ['sometimes', 'required', Rule::exists('ticket_statuses', 'id')->where('is_active', true)],
             'priority_id' => ['sometimes', 'required', Rule::exists('ticket_priorities', 'id')->where('is_active', true)],
-            'category_id' => ['sometimes', 'nullable', Rule::exists((new Category())->getTable(), 'id')->where('type', 'ticket')],
-            'owner_id' => ['sometimes', 'nullable', Rule::exists((new User())->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
+            'category_id' => ['sometimes', 'nullable', Rule::exists((new Category)->getTable(), 'id')->where('type', 'ticket')],
+            'owner_id' => ['sometimes', 'nullable', Rule::exists((new User)->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
             'site_id' => ['sometimes', 'nullable', Rule::exists('client_sites', 'id')],
             'asset_id' => ['sometimes', 'nullable', Rule::exists('assets', 'id')],
         ]);
@@ -393,6 +397,6 @@ class TicketController extends Controller
 
     private function loadTicket(Ticket $ticket): Ticket
     {
-        return $ticket->load(['queue', 'status', 'priority', 'client', 'workContext', 'site', 'contact', 'owner', 'asset']);
+        return $ticket->load(['queue', 'status', 'priority', 'client', 'workContext', 'site', 'contact', 'owner', 'asset', 'workflow', 'workflowVersion']);
     }
 }

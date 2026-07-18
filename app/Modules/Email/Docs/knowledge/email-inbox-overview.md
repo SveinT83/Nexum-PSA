@@ -15,6 +15,14 @@ Email templates are owned by the Email domain and managed from the Templates hub
 the `marketing` scope so campaign emails can reuse the shared renderer instead of storing separate
 template copies in Marketing.
 
+Ticket workflows use the same Email template system. The default
+`tickets/ticket_status_update` template is available for customer-facing workflow status changes
+and receives Ticket key, subject, contact, previous status, current status, the configured customer
+message, and technician name. Workflow administrators choose an active Ticket template on each
+transition. Delivery is queued only after a successful transition, and only when the Ticket is
+Published. Missing contact/account/template data and SMTP failures are recorded in Email logs
+without rolling back the Ticket transition.
+
 The renderer injects company branding variables such as `company_name`, `company_logo_url`,
 `brand_primary`, `brand_secondary`, `brand_accent`, `support_email`, and `website`. HTML bodies are
 wrapped in a simple brand-aware email layout unless the template already contains a complete HTML

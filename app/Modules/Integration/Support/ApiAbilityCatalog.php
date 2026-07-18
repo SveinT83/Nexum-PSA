@@ -112,6 +112,26 @@ class ApiAbilityCatalog
             'description' => 'Update ticket fields and status.',
             'domain' => 'Tickets',
         ],
+        'tickets.actions' => [
+            'label' => 'Execute ticket actions',
+            'description' => 'Run workflow-governed Ticket transitions, escalation, review, evidence, quote, fulfilment, and close actions.',
+            'domain' => 'Tickets',
+        ],
+        'tickets.workflow.read' => [
+            'label' => 'Read ticket workflow decisions',
+            'description' => 'Read current workflow state, available actions, transitions, escalations, and blocked reasons.',
+            'domain' => 'Tickets',
+        ],
+        'tickets.workflow.manage' => [
+            'label' => 'Manage ticket workflow drafts',
+            'description' => 'Create and update Ticket workflow draft definitions.',
+            'domain' => 'Tickets',
+        ],
+        'tickets.workflow.publish' => [
+            'label' => 'Publish ticket workflows',
+            'description' => 'Publish immutable Ticket workflow versions.',
+            'domain' => 'Tickets',
+        ],
         'tasks.read' => [
             'label' => 'Read tasks',
             'description' => 'List and view task records.',
