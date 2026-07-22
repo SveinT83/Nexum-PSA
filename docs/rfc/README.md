@@ -11,12 +11,15 @@ RFCs are required before Level 3 changes and recommended for unclear Level 2 cha
 Approved:
 
 - `2026-07-17-ticket-workflow-v3-conditional-actions-and-escalation.md`
+- `2026-07-16-version-and-github-update-status.md`
+- `2026-07-14-organization-controlled-ai-data-access.md`
 - `2026-07-04-customer-portal-foundation.md`
 - `2026-07-04-notification-sms-channel-automation.md`
 - `2026-07-04-online-booking-calendar-availability.md`
 
 Drafts:
 
+- `2026-07-16-cloudfactory-partner-integration.md`
 - `2026-07-04-accounting-dashboard-client-accounting-workspace.md`
 - `2026-07-04-accounting-integration-framework.md`
 - `2026-07-04-asset-service-intake-maintenance-extension.md`

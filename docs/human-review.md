@@ -27,11 +27,295 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-07-22-001 | CloudFactory versioned legal documents and portal licence ordering | Pending | 2026-07-22 |  |  |
+| HR-2026-07-21-001 | Ticket Storage reservation release and quantity-zero removal | Pending | 2026-07-21 |  |  |
+| HR-2026-07-20-001 | CloudFactory two-way Client, catalogue, licence, contract, and Economy integration | Pending | 2026-07-20 |  |  |
 | HR-2026-07-17-001 | Ticket Workflow v3 conditional actions, escalation, review, and commercial approval | In Review | 2026-07-17 | Svein Tore |  |
+| HR-2026-07-16-001 | Automatic release metadata and Admin GitHub version status | Pending | 2026-07-16 |  |  |
 | HR-2026-07-15-002 | Signal feed, rule builder, execution recovery, and retry | Pending | 2026-07-15 |  |  |
 | HR-2026-07-15-001 | Main and Dev pre-merge user-interface review | In Review | 2026-07-15 | Svein Tore |  |
 
 ## Open Reviews
+
+### HR-2026-07-22-001 - CloudFactory Versioned Legal Documents And Portal Licence Ordering
+
+Status: Pending
+Added: 2026-07-22
+Environment: Dev
+Related: `docs/rfc/2026-07-16-cloudfactory-partner-integration.md`,
+`docs/adr/2026-07-22-versioned-legal-documents-and-transaction-acceptance.md`, and
+`docs/feature-slices/2026-07-22-cloudfactory-legal-documents-and-portal-ordering.md`
+
+Scope: immutable Nexum and provider legal-document versions; conservative CloudFactory catalogue
+extraction and monthly checks; offer/Service links; provider read-only and additional Nexum term UI;
+contract version snapshots; version-aware contract acceptance; Customer-admin-only portal licence
+ordering for exact contract-covered variants; and explicit issue, quantity, and renewal evidence.
+
+Deployment actions: deploy the code; run `php artisan migrate --force`; run
+`php artisan optimize:clear`; keep the ordinary scheduler and queue worker running. No new secret,
+permission seeder, frontend build, or provider write setting is required.
+
+Risks: CloudFactory does not guarantee legal-document fields for every product family; an extractor
+must not mistake a short commercial term for legal text; accepted versions must never change
+retroactively; portal products must not escape Client/contract scope; and a confirmation must be
+recorded even when the provider operation later fails.
+
+Automated verification: PHP syntax, portal licence route registration, immutable provider-version
+replacement/removal behavior, Customer-admin authorization, exact contracted-offer ordering, legal
+evidence hashing, and submitted CloudFactory operation linkage pass in targeted Dev tests. The full
+Integration and Customer Portal suites pass with 90 tests and 876 assertions; the affected
+Commercial and portal run passes with 63 tests and 686 assertions; Blade compilation and diff checks
+pass. Migration batch 50 ran on Dev and backfilled all 6 existing Terms to 6 current immutable
+versions with no missing current version. A live catalogue run completed for all 10,898 offers. The
+current catalogue product payload returned no supported legal-document, Terms of Service, agreement,
+or EULA field, so Dev correctly created no provider document and reports Not supplied by provider.
+
+Human checks:
+
+- [ ] Open a CloudFactory-managed Service and confirm **Provider terms** is English, read-only, and
+  shows issuer, version, status, source link, and last check without full inline editing.
+- [ ] Confirm **Additional Nexum terms** can add/remove an approved Nexum library document while the
+  provider document cannot be removed from the Service.
+- [ ] Change a provider document in a sanitized test payload and confirm a new current version is
+  created while the older version remains unchanged.
+- [ ] Remove that document from the next payload and confirm it remains stored with
+  **Not returned in latest sync** rather than being deleted.
+- [ ] Confirm a CloudFactory Service whose payload has no legal document says
+  **Not supplied by provider** and does not display invented legal text.
+- [ ] Send a test contract and confirm its portal view lists exact legal document versions and source
+  links in addition to the existing text snapshots.
+- [ ] Accept the test contract and confirm one `contract_acceptance` legal evidence row records the
+  portal account/membership and captured version IDs.
+- [ ] As a Viewer or site-scoped portal member, confirm Licences is hidden and the route returns 403.
+- [ ] As a client-level Customer admin, confirm Licences lists only exact variants already present on
+  a won, active contract and respects the Integration Client write scope.
+- [ ] Order one allowlisted test licence and confirm the explicit legal checkbox, product, quantity,
+  price, commitment, current versions, submitted operation, IP address, and user agent are retained.
+- [ ] Confirm quantity and renewal changes each require a new explicit confirmation and record their
+  previous/current quantity or renewal action.
+- [ ] Confirm a provider validation/MCA failure marks the acceptance-linked operation failed without
+  deleting the customer's confirmation evidence.
+
+### HR-2026-07-21-001 - Ticket Storage Reservation Release And Quantity-Zero Removal
+
+Status: Pending
+Added: 2026-07-21
+Environment: Dev
+Related: `docs/rfc/2026-07-21-ticket-storage-reservation-release.md`
+
+Scope: release a pending Storage-backed Ticket cost through a compact confirmed trash action or by
+updating quantity to zero; atomically reduce reserved stock, mark reservation and cost history as
+released/cancelled, remove the row from normal Ticket activity and the Storage Picking List, retain
+a Ticket event audit snapshot, restore linked approved planned lines for conversion again, and
+serialize update/pick/release state changes with database row locks.
+
+Deployment actions: deploy the code; run `php artisan optimize:clear`. No migration, seeder, queue,
+scheduler, or frontend build action is required. Knowledge documentation must be synchronized after
+deployment according to the ordinary Knowledge process.
+
+Risks: incorrect stock release could understate reserved inventory; stale requests could otherwise
+both pick and release the same cost; released costs must not enter Economy; linked approved planned
+lines must become convertible again; and the compact destructive control must remain clear and
+accessible.
+
+Automated verification: the complete affected Dev suites pass with 168 tests and 1,354 assertions
+across Ticket, Ticket Workflow v3, Storage, and Economy. PHP syntax and targeted diff checks pass.
+A browser check on Dev confirmed the explanatory confirmation, quantity-zero help text, and
+quantity-zero redirection to the same confirmation flow; the real Dev reservation was left unchanged.
+Rendered-view assertions confirm the final `Delete reservation` control is inside Edit cost and the
+Activity row no longer exposes a separate trash control.
+
+Human checks:
+
+- [ ] Open a Ticket with a reserved Storage cost, click `Edit`, and confirm a subtle
+  `Delete reservation` button appears inside the Edit cost modal rather than on the Activity row.
+- [ ] Click `Delete reservation`, confirm the next modal clearly explains that stock and Picking
+  List work will be released, then cancel and verify nothing changes.
+- [ ] Confirm removal on a Dev test reservation and verify the cost row disappears from normal
+  Activity, the Picking List row disappears, and the Storage item's reserved quantity decreases by
+  exactly the released quantity.
+- [ ] Confirm the Ticket Events accordion records `Storage reservation released` with a clear
+  message.
+- [ ] On a second Dev reservation, edit quantity to `0`, confirm the same removal modal appears,
+  and verify the same release result.
+- [ ] Confirm a picked cost does not expose the removal action and cannot be released by a stale
+  request.
+- [ ] If using an accepted planned Storage line, release its converted reservation and confirm the
+  approved line can be converted again.
+
+### HR-2026-07-20-001 - CloudFactory Two-Way Client, Catalogue, Licence, Contract, And Economy Integration
+
+Status: Pending
+Added: 2026-07-20
+Environment: Dev and allowlisted CloudFactory production test customer
+Related: `docs/rfc/2026-07-16-cloudfactory-partner-integration.md`
+
+Scope: encrypted dedicated Portal-service-account connection; automatic token exchange and safe
+revocation; role and health discovery; deterministic two-way Client/customer matching with manual
+fallback; Vendor, catalogue, Service-source and settings-driven price synchronization; Client
+licence workspace; Microsoft and Adobe provider operations; contract/commitment gates; append-only
+licence changes; confirmed recurring Economy billing; scheduled polling and authenticated
+notification webhooks; deterministic webhook retry deduplication; reconciliation, operation
+idempotency, conflicts, audit, permissions, Knowledge documentation, and a production-only fictitious
+Client validation gate.
+
+Deployment actions: deploy the complete change; run `php artisan migrate --force`; run
+`php artisan db:seed --class=PermissionSeeder --force` and
+`php artisan db:seed --class=RoleSeeder --force`; run `php artisan optimize:clear`; keep the
+ordinary queue worker and scheduler running. Configure a dedicated CloudFactory Portal service
+account, enter its refresh token only through the masked settings field, verify the discovered roles,
+select the default Service unit, enable notification registrations only when Partner Admin is
+available, and leave writes limited to the fictitious allowlisted Client until the checks below pass.
+
+Risks: CloudFactory has no sandbox and every provider call reaches production; ambiguous customer
+matching must not merge records; retries must not duplicate licence orders; price and quantity
+changes can affect contractual commitments and invoices; direct CloudFactory customer-portal changes
+must reconcile back into Nexum; Microsoft MCA acceptance remains an interactive customer step; and
+CloudFactory webhooks rely on a shared `X-API-KEY` over HTTPS rather than a cryptographic signature.
+Polling therefore remains mandatory even when webhooks are enabled.
+
+Automated verification: implementation and all three migrations completed on Dev. The dedicated
+CloudFactory feature suite passed with 22 tests and 211 assertions; the latest Integration module
+suite passed with 64 tests and 535 assertions; and the latest complete application suite passed with
+849 tests and 6,378 assertions. PHP syntax, Blade compilation, route registration, `X-API-KEY`
+rejection, old legitimate retry acceptance, deterministic deduplication, registration/removal,
+queued reconciliation, durable per-category progress, canonical Vendor reuse without a duplicate
+Microsoft, unresolved generic-category protection, audited manual Vendor propagation, and legacy
+serialized-job compatibility passed. Authenticated HTTP smoke tests returned 200 for the CloudFactory
+settings and catalogue pages, Services, contract creation, the Client licence workspace, and the
+sanitized progress endpoint. The settings response verifies both collapsed sections and all four
+nested operational cards. The rendered pages are regression-tested as valid UTF-8, with ASCII-safe
+source escapes for the live progress separators. Rendered progress JavaScript passed syntax
+validation.
+
+The 2026-07-21 managed-Cost follow-up migration completed on Dev. CloudFactory raw commitment totals
+now remain on each offer while the linked Commercial Cost and Service use a normalized monthly,
+quarterly, yearly, or one-time amount. One default variant contributes provider cost per Service;
+alternative variants remain synchronized without being summed, and manual Nexum Costs remain linked.
+Draft contract lines select and snapshot the exact offer, normalized total cost, currency, and raw
+term metadata. The CloudFactory suite passed 25 tests / 268 assertions, Commercial passed 32 / 272,
+and Sales plus Economy passed 32 / 289. A final combined CloudFactory and Commercial run passed 57
+tests / 540 assertions, including server-side replacement of a manipulated contract cost, catalogue
+term filtering and sorting, and omission of the redundant catalogue Source column. Blade compilation
+also passed. The live Dev catalogue has no
+enabled or Service-linked offers yet, so the new Cost rows require the human catalogue checks below.
+Commercial and Integration Knowledge synchronization processed two chapters and eleven articles;
+the queued BookStack push completed without a failed job.
+
+The later 2026-07-21 variant-Service decision supersedes the default-variant model above. Migration
+`2026_07_21_190000_enforce_cloudfactory_service_variants` completed on Dev: every commitment and
+billing offer now owns one deterministic variant SKU, one Service, and one managed Cost. Contract
+selection stores the Service's exact offer automatically, licence issue requires that exact pair,
+and inbound subscription synchronization resolves a shared provider SKU by commitment and billing.
+The focused CloudFactory, Commercial, Sales, and Economy run passed 90 tests / 842 assertions.
+Visual catalogue, Service, Cost, and contract verification remains pending below.
+
+Migration `2026_07_21_200000_link_commercial_records_to_integrations` completed on Dev. CloudFactory
+Services and Costs now store the same generic source Integration and remain connected through the
+ordinary Commercial Cost relation. Active ownership locks Service and Cost changes through the UI,
+direct requests, Commercial API, and Service pricing component. Revocation, disable, and Integration
+deletion preserve and release the rows; a released Service uses its retained Cost on a new contract
+without attaching the inactive CloudFactory offer. The focused Commercial and CloudFactory run
+passed 59 tests / 603 assertions, and the complete application suite passed 851 tests / 6,461
+assertions. The Dev backfill found no currently Service-linked CloudFactory offers, so no existing
+commercial rows required conversion. Commercial and Integration Knowledge sync processed two
+chapters and eleven articles with no skips; the queued BookStack push completed with the Integration
+active, healthy, and without a recorded error. Visual active/released-state review remains pending.
+
+Role discovery was corrected to use CloudFactory's authenticated `/Authenticate/Roles` endpoint
+instead of token claims. The connected Dev account was refreshed without replacing its stored
+refresh token and returned 18 roles. Customers/catalogue, Microsoft/MCA, invoices, notifications,
+and activity log were enabled; Adobe remained unavailable because the account did not return the
+Adobe role. Manual capability refresh and automatic refresh during token renewal passed tests.
+
+A real queued Everything run completed with 26 of 26 Clients, 10,898 of 10,898 catalogue products,
+and 0 of 0 licences. It recorded no conflicts and no failed queue jobs. A pre-existing serialized
+CloudFactory job then completed in 29 seconds using the deployment-compatibility defaults. The
+Integration Knowledge synchronization processed 1 chapter and 4 articles, and the BookStack push
+completed. The Dev worker had only been switched off; production already uses the managed worker system.
+
+A later live catalogue backfill created sixteen stable category mappings and linked 10,883 of 10,898
+offers to canonical Nexum Vendors. Fifteen categories mapped automatically. All 10,638 Microsoft
+offers across NCE, CSP, SPLA, software subscription, perpetual, and Azure category identities reuse
+the existing Microsoft Vendor ID 1, and the Vendor register still contains one Microsoft. The generic
+IaaS category and its fifteen offers remain intentionally unmapped with one open manual-review conflict.
+The remaining product checks require live webhook registration and the allowlisted fictitious
+Client because CloudFactory provides no sandbox.
+
+Human checks:
+
+- [ ] Confirm Automation, pricing, and write safety and Conflicts and recent activity are collapsed
+  by default, and expanding the activity section shows the four separate conflict, sync-run,
+  provider-operation, and notification-webhook cards.
+- [ ] Select Everything and confirm the modal opens immediately, shows separate Clients, Catalogue
+  and prices, and Licences rows, and advances real item counters while the queued job runs.
+- [ ] Close the progress modal during a run, confirm the job continues, and use View current sync to
+  resume watching the same run.
+- [ ] Confirm the CloudFactory settings page never displays a stored refresh or access token.
+- [ ] Confirm the right-sidebar setup links open CloudFactory's refresh-token flow and official API
+  guide, and that the guide clearly instructs the administrator to paste the Refresh Token rather
+  than the Access Token.
+- [ ] Confirm API verified is understood as the last successful verification or sync, not a new request on each page view.
+- [ ] Select Refresh capabilities without replacing the stored token. Confirm Customers/catalogue,
+  Microsoft/MCA, Invoices, Notifications, and Activity log show Available, Adobe shows Missing role,
+  and the discovered-role list and last-checked time are visible.
+- [ ] Enable notification webhooks, confirm event registrations are shown without displaying the
+  shared key, and verify one real provider delivery reaches a processed receipt.
+- [ ] Resend or retry the identical provider delivery and confirm it is accepted without creating a
+  second receipt or synchronization job.
+- [ ] Run customer sync and confirm a strong match links correctly while an ambiguous match is parked
+  for manual linking without modifying either customer.
+- [ ] Confirm an inbound CloudFactory-only customer creates one Nexum Client and repeat sync is
+  idempotent.
+- [ ] Confirm catalogue offers can be excluded or enabled, and Services sort/filter correctly by
+  Vendor and source. Confirm the Cloud Factory catalogue itself shows Vendor without a redundant
+  Source column, while the resulting ordinary Service still shows Cloud Factory as its source.
+- [ ] Confirm each offer is compact by default, shows Catalogue only and Not in Services before
+  activation, and expands settings only for the selected row. Enable For sale on a test offer and
+  confirm the resulting Service appears in the ordinary Services list.
+- [ ] Confirm Vendor mappings shows fifteen automatic mappings and one IaaS mapping needing review;
+  open a Microsoft mapping and verify it points to the existing Microsoft Vendor rather than a copy.
+- [ ] After the correct canonical Vendor for IaaS is decided, link it manually and confirm the choice
+  updates all fifteen IaaS offers and any already linked Services without changing the Cloud Factory
+  source identity.
+- [ ] Confirm the catalogue filter is labelled Vendor, not Nexum Vendor.
+- [ ] Search for Microsoft 365 Business Basic, filter separately by Commitment term and Billing
+  term, and confirm otherwise identical offers show their distinct combinations: monthly/monthly,
+  annual/monthly, and annual/annual. Select the Commitment and Billing headings in both directions
+  and confirm sorting preserves the active search and filters.
+- [ ] Enable one annual-commitment/monthly-billing Business Basic test offer and confirm Cost and
+  MSRP show both the raw annual source total and the normalized monthly Nexum amount.
+- [ ] Open the generated Service and Cost and confirm both are marked Cloud Factory and Managed,
+  the source badge links to the active Cloud Factory Integration, both use the Microsoft Vendor,
+  neither record can be edited or deleted, and the Cost appears through the ordinary linked Costs
+  section on the Service.
+- [ ] Enable annual-commitment/monthly-billing and annual-commitment/annual-billing variants of the
+  same product. Confirm Nexum creates two separate Services with distinct SKUs ending in
+  `-C12-B1` and `-C12-B12`, without a Make default or manual Service-link control.
+- [ ] Confirm each variant Service has only its own Cloud Factory managed Cost. Add a manual Nexum
+  Cost to one variant and confirm it is preserved there without appearing on the other variant.
+- [ ] Add each variant-specific Service to a draft contract. Confirm there is no additional
+  commitment selector and that displayed sale price, cost, interval, yearly profit, and the saved
+  contract line use the exact offer owned by the selected Service.
+- [ ] Confirm catalogue offers can still be excluded or enabled after Vendor mapping.
+- [ ] Confirm MSRP, MSRP markup, cost markup, and manual price modes behave as configured and a
+  monthly refresh does not overwrite a manual price.
+- [ ] Confirm licence issue is blocked for a Client without an eligible contract.
+- [ ] On the allowlisted fictitious Client, create/link the CloudFactory customer and perform one
+  reversible low-risk licence operation; confirm provider state reconciles into the Client licence
+  workspace.
+- [ ] Confirm provider activation creates the expected contract amendment and Economy draft billing
+  line once, with no duplicate after a repeated sync/generation run.
+- [ ] Make a permitted direct CloudFactory/customer-portal change and confirm it reconciles into
+  Nexum with origin and audit history.
+- [ ] Disable webhooks and confirm provider registrations are removed before the shared key is
+  deleted; re-enable them for continued validation if required.
+- [ ] For the controlled test Service and Cost, record their IDs and normal relation, then
+  revoke/disconnect. Confirm webhook registrations, scheduled sync, and writes stop without exposing
+  a secret.
+- [ ] Confirm the same Service, Cost, relation, accepted contract data, and accounting basis remain
+  after disconnect, both rows show Released to Nexum and are editable, and selecting the Service on
+  a new draft contract uses the retained Cost without attaching the inactive Cloud Factory offer.
 
 ### HR-2026-07-17-001 - Ticket Workflow v3 Conditional Actions, Escalation, Review, And Commercial Approval
 
@@ -353,6 +637,51 @@ Reviewer:
 Reviewed date:
 Result / notes:
 
+### HR-2026-07-16-001 - Automatic Release Metadata And Admin GitHub Version Status
+
+Status: Pending
+Added: 2026-07-16
+Environment: Dev, followed by GitHub `main` for the release workflow
+Related: `docs/rfc/2026-07-16-version-and-github-update-status.md`
+
+Scope: automatic `version.txt` and Composer commit identity, Release Please configuration, footer
+version display, deferred GitHub release/branch comparison in the Admin header, and the move of the
+Admin landing route/view into the System module.
+
+Deployment actions: run Composer before Laravel configuration caching, set
+`APP_UPDATE_BRANCH=Dev` on the development server, clear Laravel caches, and rebuild frontend
+assets only if the deployment process requires it. There are no migrations or queue actions.
+
+Risks: GitHub status may be cached or unavailable; an installation that skips the Composer
+metadata refresh can show a stale or unknown commit; and the Release Please workflow cannot create
+its first release pull request until it reaches `main` with repository Action permissions enabled.
+
+Automated Dev verification completed 2026-07-16: PHP syntax and release configuration passed;
+System 31 tests / 197 assertions passed; Blade templates compiled; Composer metadata reported
+repository HEAD `42a08a7` after `composer install`; a live read-only GitHub query reported
+`v0.2.0-beta`, the existing release, and 7 commits behind configured branch `main`; and the HTTPS
+Admin smoke check redirected unauthenticated access to login. Automated visual inspection was
+blocked by the internal Dev certificate, so it does not replace the checks below.
+
+- [ ] The shared technician footer shows only the installed version and the text is readable in
+  both light and dark appearance.
+- [ ] `/tech/admin` opens without waiting for GitHub and keeps the expected Admin cards and links.
+- [ ] The right side of the Admin header shows the installed version and short commit ID.
+- [ ] After loading, the header reports the latest GitHub release and the correct distance from the
+  environment's configured update branch.
+- [ ] Narrow/mobile layout wraps the status without covering the Admin title or breadcrumb.
+- [ ] A temporary GitHub failure shows an honest unavailable or cached state and does not break the
+  Admin page.
+- [ ] A user without `system.view` cannot read the version-status endpoint.
+- [ ] After the workflow first reaches `main`, GitHub creates or updates the Release Please pull
+  request without publishing a release prematurely.
+- [ ] Merging a future generated Release Please pull request updates `version.txt` and
+  `CHANGELOG.md`, then creates the expected semantic beta tag and GitHub release.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
 ### HR-2026-07-15-002 - Signal Feed, Rule Builder, Execution Recovery, And Retry
 
 Status: Pending
@@ -536,6 +865,13 @@ normalized events and cross-module automation.
 - [x] Every new Admin menu destination is hidden or denied for roles without permission.
 
 #### Review Result
+
+**Automated release-candidate verification (2026-07-22):** the full Dev suite passes with 853 tests
+and 6,494 assertions. PHP syntax, Composer validation, Release Please JSON/build-metadata checks,
+route registration, Blade compilation, migration status, secret-pattern scanning, and Git diff
+checks pass. All seven new migrations are applied on Dev. Twenty-five untracked patch backups and
+four command-output artifacts were removed before staging; no application source or database data
+was removed. Main was deliberately left unchanged.
 
 **Review notes:** Review started by Svein Tore on 2026-07-15. Intake was reported as looking very
 good. Svein Tore then explicitly approved every checklist item not mentioned in the review feedback.
