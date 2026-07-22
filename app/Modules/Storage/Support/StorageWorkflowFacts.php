@@ -28,7 +28,9 @@ class StorageWorkflowFacts implements WorkflowFactProvider
         $approvedCount = (clone $approved)->count();
 
         $value = match ($fact) {
-            'storage.approved_lines_reserved' => $approvedCount === 0 || (clone $approved)->whereNotNull('converted_cost_entry_id')->count() === $approvedCount,
+            'storage.approved_lines_reserved' => $approvedCount === 0 || (clone $approved)
+                ->whereHas('convertedCostEntry', fn ($query) => $query->whereIn('status', ['reserved', 'picked']))
+                ->count() === $approvedCount,
             'storage.approved_lines_picked' => $approvedCount === 0 || (clone $approved)
                 ->whereHas('convertedCostEntry', fn ($query) => $query->where('status', 'picked'))
                 ->count() === $approvedCount,

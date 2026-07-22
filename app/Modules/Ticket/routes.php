@@ -119,6 +119,9 @@ Route::post('/tickets/{ticket}/cost-entries', [TicketController::class, 'storeCo
 Route::patch('/tickets/{ticket}/cost-entries/{costEntry}', [TicketController::class, 'updateCostEntry'])
     ->name('tickets.cost-entries.update');
 
+Route::delete('/tickets/{ticket}/cost-entries/{costEntry}', [TicketController::class, 'destroyCostEntry'])
+    ->name('tickets.cost-entries.destroy');
+
 Route::post('/tickets/{ticket}/cost-entries/{costEntry}/pick', [TicketController::class, 'pickCostEntry'])
     ->name('tickets.cost-entries.pick');
 

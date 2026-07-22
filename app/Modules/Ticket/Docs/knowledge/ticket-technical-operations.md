@@ -44,6 +44,7 @@ Important actions:
 - `RegisterTicketTimeEntry`
 - `ReserveTicketStorageItem`
 - `UpdateTicketStorageReservation`
+- `ReleaseTicketStorageReservation`
 - `UpdateTicketTimeEntry`
 - `ApplyTicketSla`
 

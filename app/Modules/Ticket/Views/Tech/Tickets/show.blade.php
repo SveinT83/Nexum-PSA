@@ -102,7 +102,9 @@
         $activityItems = $ticket->messages
             ->map(fn ($message) => ['type' => 'message', 'date' => $message->created_at, 'record' => $message])
             ->concat($ticket->timeEntries->map(fn ($entry) => ['type' => 'time', 'date' => $entry->created_at, 'record' => $entry]))
-            ->concat($ticket->costEntries->map(fn ($entry) => ['type' => 'cost', 'date' => $entry->created_at, 'record' => $entry]))
+            ->concat($ticket->costEntries
+                ->reject(fn ($entry) => in_array($entry->status, ['released', 'cancelled'], true))
+                ->map(fn ($entry) => ['type' => 'cost', 'date' => $entry->created_at, 'record' => $entry]))
             ->sortByDesc('date')
             ->values();
     @endphp
@@ -245,6 +247,7 @@
                                                             data-bs-target="#ticketEditCostModal"
                                                             data-action="{{ route('tech.tickets.cost-entries.update', [$ticket, $costEntry]) }}"
                                                             data-quantity="{{ $costEntry->quantity }}"
+                                                            data-delete-action="{{ route('tech.tickets.cost-entries.destroy', [$ticket, $costEntry]) }}"
                                                             data-invoice-text="{{ $costEntry->invoice_text }}"
                                                             data-note="{{ $costEntry->note }}"
                                                             data-item-label="{{ $costEntry->item_name }}{{ $costEntry->item_sku ? ' (' . $costEntry->item_sku . ')' : '' }}">
@@ -895,7 +898,8 @@
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label for="edit_cost_quantity" class="form-label">Quantity</label>
-                            <input id="edit_cost_quantity" name="quantity" type="number" min="1" step="1" class="form-control" required>
+                            <input id="edit_cost_quantity" name="quantity" type="number" min="0" step="1" class="form-control" required>
+                            <div class="form-text">Set quantity to 0 to remove the reservation.</div>
                         </div>
                         <div class="col-12">
                             <label for="edit_cost_invoice_text" class="form-label">Invoice text</label>
@@ -908,8 +912,37 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-danger me-auto" id="ticketDeleteCost">
+                        <i class="bi bi-trash me-1" aria-hidden="true"></i>
+                        Delete reservation
+                    </button>
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Update reservation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- One confirmation surface is reused by every removable Storage cost row. --}}
+<div class="modal fade" id="ticketRemoveCostModal" tabindex="-1" aria-labelledby="ticketRemoveCostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="ticketRemoveCostForm" method="POST" action="#">
+                @csrf
+                @method('DELETE')
+
+                <div class="modal-header">
+                    <h2 class="modal-title h6 text-danger" id="ticketRemoveCostModalLabel">Remove reservation</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Remove <strong id="removeCostItemLabel"></strong> from this Ticket?</p>
+                    <p class="text-muted small mb-0">Reserved stock will be released and the entry will disappear from the Picking List. The release remains in the Ticket event history.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-danger">Remove reservation</button>
                 </div>
             </form>
         </div>
@@ -952,7 +985,12 @@
         const editCostQuantity = document.getElementById('edit_cost_quantity');
         const editCostInvoiceText = document.getElementById('edit_cost_invoice_text');
         const editCostNote = document.getElementById('edit_cost_note');
+        const removeCostModal = document.getElementById('ticketRemoveCostModal');
+        const editCostModal = document.getElementById('ticketEditCostModal');
+        const removeCostForm = document.getElementById('ticketRemoveCostForm');
+        const removeCostItemLabel = document.getElementById('removeCostItemLabel');
         const costItemSearch = document.getElementById('cost_storage_item_search');
+        const deleteCostButton = document.getElementById('ticketDeleteCost');
         const costItemId = document.getElementById('cost_storage_item_id');
         const costItemSuggestions = document.getElementById('cost_storage_item_suggestions');
         const costItemNoResults = document.getElementById('cost_storage_item_no_results');
@@ -1365,14 +1403,41 @@
         syncCostPreview(false);
         syncCostMode();
 
+        const openRemoveCostConfirmation = function () {
+            if (! window.bootstrap?.Modal || ! removeCostModal || ! removeCostForm) {
+                return;
+            }
+
+            const showRemoveCostModal = function () {
+                window.bootstrap.Modal.getOrCreateInstance(removeCostModal).show();
+            };
+
+            if (editCostModal?.classList.contains('show')) {
+                editCostModal.addEventListener('hidden.bs.modal', showRemoveCostModal, { once: true });
+                window.bootstrap.Modal.getOrCreateInstance(editCostModal).hide();
+
+                return;
+            }
+
+            showRemoveCostModal();
+        };
+
         document.querySelectorAll('.ticket-edit-cost').forEach(function (button) {
             button.addEventListener('click', function () {
                 if (editCostForm) {
                     editCostForm.action = button.dataset.action || '#';
                 }
 
+                if (removeCostForm) {
+                    removeCostForm.action = button.dataset.deleteAction || '#';
+                }
+
                 if (editCostItemLabel) {
                     editCostItemLabel.textContent = button.dataset.itemLabel || '';
+                }
+
+                if (removeCostItemLabel) {
+                    removeCostItemLabel.textContent = button.dataset.itemLabel || '';
                 }
 
                 if (editCostQuantity) {
@@ -1388,6 +1453,19 @@
                 }
             });
         });
+
+        editCostForm?.addEventListener('submit', function (event) {
+            if (Number(editCostQuantity?.value || 0) !== 0) {
+                return;
+            }
+
+            event.preventDefault();
+            removeCostForm.action = editCostForm.action;
+            removeCostItemLabel.textContent = editCostItemLabel?.textContent || '';
+            openRemoveCostConfirmation();
+        });
+
+        deleteCostButton?.addEventListener('click', openRemoveCostConfirmation);
 
         document.querySelectorAll('.ticket-edit-time').forEach(function (button) {
             button.addEventListener('click', function () {

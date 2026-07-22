@@ -28,6 +28,7 @@ use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\MergeTickets;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
+use App\Modules\Ticket\Actions\ReleaseTicketStorageReservation;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\ReserveTicketStorageItem;
 use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
@@ -589,15 +590,24 @@ class TicketController extends Controller
             ->with('success', 'Time entry updated.');
     }
 
-    public function updateCostEntry(Request $request, Ticket $ticket, TicketCostEntry $costEntry, UpdateTicketStorageReservation $updateReservation): RedirectResponse
-    {
+    public function updateCostEntry(
+        Request $request,
+        Ticket $ticket,
+        TicketCostEntry $costEntry,
+        UpdateTicketStorageReservation $updateReservation,
+        ReleaseTicketStorageReservation $releaseReservation,
+    ): RedirectResponse {
         abort_unless((int) $costEntry->ticket_id === (int) $ticket->id, 404);
 
         $data = $request->validate([
-            'quantity' => 'required|integer|min:1|max:100000',
+            'quantity' => 'required|integer|min:0|max:100000',
             'invoice_text' => 'nullable|string|max:2000',
             'note' => 'nullable|string|max:2000',
         ]);
+
+        if ((int) $data['quantity'] === 0) {
+            return $this->releaseCostEntry($request, $ticket, $costEntry, $releaseReservation);
+        }
 
         try {
             $updateReservation->handle($ticket, $costEntry, $data, $request->user());
@@ -609,6 +619,33 @@ class TicketController extends Controller
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Storage reservation updated.');
+    }
+
+    public function destroyCostEntry(
+        Request $request,
+        Ticket $ticket,
+        TicketCostEntry $costEntry,
+        ReleaseTicketStorageReservation $releaseReservation,
+    ): RedirectResponse {
+        abort_unless((int) $costEntry->ticket_id === (int) $ticket->id, 404);
+
+        return $this->releaseCostEntry($request, $ticket, $costEntry, $releaseReservation);
+    }
+
+    private function releaseCostEntry(
+        Request $request,
+        Ticket $ticket,
+        TicketCostEntry $costEntry,
+        ReleaseTicketStorageReservation $releaseReservation,
+    ): RedirectResponse {
+        try {
+            $releaseReservation->handle($ticket, $costEntry, $request->user());
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['cost_entry' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('tech.tickets.show', $ticket->refresh())
+            ->with('success', 'Storage reservation removed and stock released.');
     }
 
     public function pickCostEntry(Request $request, Ticket $ticket, TicketCostEntry $costEntry, PickTicketStorageReservation $pickReservation): RedirectResponse

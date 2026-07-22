@@ -131,16 +131,27 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                <form method="POST" action="{{ route('tech.storage.picking.pick', $entry) }}">
-                                    @csrf
-                                    <button
-                                        type="submit"
-                                        class="btn btn-sm btn-outline-success"
-                                        @disabled(! $canPick)
-                                        title="{{ $canPick ? 'Pick item from stock and send it to Economy.' : 'Not enough on-hand stock to pick this item.' }}">
-                                        Pick
-                                    </button>
-                                </form>
+                                <div class="d-inline-flex justify-content-end gap-2">
+                                    @if($ticket)
+                                        <a
+                                            href="{{ route('tech.tickets.show', $ticket) }}"
+                                            class="btn btn-sm btn-outline-primary text-nowrap"
+                                            aria-label="Open ticket {{ $ticket->ticket_key }}"
+                                            title="Open the ticket to edit this reservation before picking.">
+                                            <i class="bi bi-ticket-perforated me-1" aria-hidden="true"></i>Open ticket
+                                        </a>
+                                    @endif
+                                    <form method="POST" action="{{ route('tech.storage.picking.pick', $entry) }}" class="mb-0">
+                                        @csrf
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-success"
+                                            @disabled(! $canPick)
+                                            title="{{ $canPick ? 'Pick item from stock and send it to Economy.' : 'Not enough on-hand stock to pick this item.' }}">
+                                            Pick
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

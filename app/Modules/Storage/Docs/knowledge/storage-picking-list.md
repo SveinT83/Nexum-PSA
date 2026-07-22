@@ -15,7 +15,7 @@ The row shows:
 - **Reserved**: how many units the ticket needs.
 - **On-hand**: how many units are physically in stock.
 - **Status**: whether the row can be picked now.
-- **Action**: the `Pick` button.
+- **Action**: `Open ticket` for reviewing or editing the reservation, and `Pick` for consuming the stock.
 
 ## Ready And Waiting
 
@@ -51,6 +51,20 @@ When `Pick` is clicked, Storage:
 - Creates a `ticket_pick` stock movement for audit history.
 - Leaves the picked cost ready for Economy order generation.
 
+## Removing An Incorrect Reservation
+
+Use `Open ticket` when a Picking List row is no longer needed or the reserved quantity is wrong.
+On the Ticket, open Edit on the reserved Storage cost and either use `Delete reservation` or set its
+quantity to `0`. Both paths ask for confirmation and then:
+
+- Release the reserved quantity back to Storage.
+- Remove the cost from normal Ticket activity.
+- Remove the row from the Picking List.
+- Preserve a Ticket event and released reservation state for audit.
+
+Only reserved costs can be removed this way. A picked cost has already consumed stock and requires a
+separate correction workflow.
+
 ## If Pick Is Disabled
 
 Pick is disabled when there is not enough on-hand stock.
@@ -65,6 +79,7 @@ Typical next steps:
 ## Practical Notes
 
 - Do not click `Pick` before the item has actually been taken from stock.
+- Use `Open ticket` when the reservation must be reviewed or edited before picking.
 - If the wrong item was reserved on the ticket, fix the ticket cost line instead of picking it.
 - If an item requires serial numbers, record the serial workflow when the consuming flow asks for it.
 - The movement history on the item is the audit trail for what happened.

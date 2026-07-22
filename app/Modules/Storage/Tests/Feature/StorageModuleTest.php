@@ -773,6 +773,15 @@ class StorageModuleTest extends TestCase
             'sale_price' => 500,
             'status' => 'active',
         ]);
+        $releaseItem = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'RELEASE-MOUSE',
+            'name' => 'Released Mouse',
+            'qty_on_hand' => 1,
+            'qty_reserved' => 1,
+            'sale_price' => 250,
+            'status' => 'active',
+        ]);
         $reservation = Reservation::create([
             'item_id' => $readyItem->id,
             'warehouse_id' => $warehouse->id,
@@ -810,19 +819,58 @@ class StorageModuleTest extends TestCase
             'billing_status' => 'pending',
             'invoice_text' => 'Waiting Dock',
         ]);
+        $releaseReservation = Reservation::create([
+            'item_id' => $releaseItem->id,
+            'warehouse_id' => $warehouse->id,
+            'qty' => 1,
+            'source_type' => 'ticket',
+            'source_id' => (string) $ticket->id,
+            'strength' => 'hard',
+            'status' => 'active',
+            'created_by' => $this->tech->id,
+        ]);
+        $releaseEntry = TicketCostEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'storage_item_id' => $releaseItem->id,
+            'storage_reservation_id' => $releaseReservation->id,
+            'quantity' => 1,
+            'item_name' => $releaseItem->name,
+            'item_sku' => $releaseItem->sku,
+            'unit_price_ex_vat' => 250,
+            'currency' => 'NOK',
+            'status' => 'reserved',
+            'billing_status' => 'pending',
+            'invoice_text' => 'Released Mouse',
+        ]);
 
         $this->actingAs($this->tech)
             ->get(route('tech.storage.picking'))
             ->assertOk()
             ->assertViewIs('storage::Tech.Storage.picking')
             ->assertSeeInOrder(['READY-USB', 'WAIT-DOCK'])
+            ->assertSee('RELEASE-MOUSE')
             ->assertSee('data-bs-target="#pickingFiltersCollapse"', false)
             ->assertSee('bi bi-funnel')
             ->assertSee('How to use the Picking List')
+            ->assertSee('Open ticket')
+            ->assertSee('aria-label="Open ticket TD-2026-999301"', false)
             ->assertSee(route('tech.storage.picking.docs'), false)
             ->assertDontSee('Reserved ticket items, sorted by what can be picked now.')
             ->assertSee('Ready')
             ->assertSee('Waiting for stock');
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.tickets.cost-entries.destroy', [$ticket, $releaseEntry]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame(0, $releaseItem->refresh()->qty_reserved);
+        $this->assertSame('released', $releaseReservation->refresh()->status);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.picking'))
+            ->assertOk()
+            ->assertDontSee('RELEASE-MOUSE');
 
         $this->actingAs($this->tech)
             ->get(route('tech.storage.picking.docs'))
