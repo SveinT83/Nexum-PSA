@@ -15,6 +15,11 @@ class CommercialServiceResource extends JsonResource
         return [
             'id' => $this->id,
             'sku' => $this->sku,
+            'vendor_id' => $this->vendor_id,
+            'source' => $this->source,
+            'source_integration_id' => $this->source_integration_id,
+            'managed_externally' => $this->managed_externally,
+            'integration_managed' => $this->isIntegrationManaged(),
             'name' => $this->name,
             'unit_id' => $this->unitId,
             'sla_id' => $this->sla_id,
@@ -46,6 +51,11 @@ class CommercialServiceResource extends JsonResource
                 'id' => $this->sla?->id,
                 'name' => $this->sla?->name,
                 'is_default' => $this->sla?->is_default,
+            ]),
+            'source_integration' => $this->whenLoaded('sourceIntegration', fn () => [
+                'id' => $this->sourceIntegration?->id,
+                'name' => $this->sourceIntegration?->name,
+                'type' => $this->sourceIntegration?->type,
             ]),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

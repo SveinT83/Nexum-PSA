@@ -35,6 +35,10 @@ Implemented scopes:
 - `tickets.read`: list and view tickets.
 - `tickets.create`: create tickets through the ticket engine.
 - `tickets.update`: update ticket fields and status.
+- `tickets.actions`: perform workflow-approved Ticket actions such as transition, escalation, close, planned scope, quote, review, evidence, conversion, and purchase need.
+- `tickets.workflow.read`: inspect the current state, missing requirements, available actions, transitions, and escalation paths.
+- `tickets.workflow.manage`: create and edit draft workflow definitions and preview active-Ticket migration.
+- `tickets.workflow.publish`: publish immutable workflow versions and apply an authorized active-Ticket migration.
 - `tasks.read`: list and view tasks.
 - `tasks.create`: create tasks.
 - `tasks.update`: update task fields and status.
@@ -153,6 +157,31 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/tickets`
 - `PUT /api/v1/tickets/{ticket}`
 - `PATCH /api/v1/tickets/{ticket}`
+- `POST /api/v1/tickets/{ticket}/timer/start`
+- `POST /api/v1/tickets/{ticket}/time-entries`
+- `POST /api/v1/tickets/{ticket}/cost-entries`
+- `GET /api/v1/tickets/{ticket}/workflow-decisions`
+- `POST /api/v1/tickets/{ticket}/workflow-transitions/{transitionKey}`
+- `POST /api/v1/tickets/{ticket}/workflow-escalations/{pathKey}`
+- `POST /api/v1/tickets/{ticket}/close`
+- `POST /api/v1/tickets/{ticket}/planned-lines`
+- `DELETE /api/v1/tickets/{ticket}/planned-lines/{plannedLine}`
+- `POST /api/v1/tickets/{ticket}/planned-lines/{plannedLine}/convert`
+- `POST /api/v1/tickets/{ticket}/planned-lines/{plannedLine}/purchase`
+- `POST /api/v1/tickets/{ticket}/sales-quote`
+- `POST /api/v1/tickets/{ticket}/sales-quote/send`
+- `POST /api/v1/tickets/{ticket}/messages/{message}/quote-versions/{version}/accept`
+- `POST /api/v1/tickets/{ticket}/workflow-reviews`
+- `POST /api/v1/tickets/{ticket}/workflow-reviews/{review}/decision`
+- `POST /api/v1/tickets/{ticket}/workflow-evidence`
+- `GET /api/v1/ticket-workflow-catalog`
+- `GET /api/v1/ticket-workflows`
+- `POST /api/v1/ticket-workflows`
+- `GET /api/v1/ticket-workflows/{workflow}`
+- `PUT /api/v1/ticket-workflows/{workflow}`
+- `POST /api/v1/ticket-workflows/{workflow}/publish`
+- `POST /api/v1/ticket-workflows/{workflow}/migration-preview`
+- `POST /api/v1/ticket-workflows/{workflow}/migrations`
 - `GET /api/v1/tasks`
 - `GET /api/v1/tasks/{task}`
 - `POST /api/v1/tasks`

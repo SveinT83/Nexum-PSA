@@ -19,10 +19,10 @@ use App\Modules\Sales\Controllers\Admin\SalesSettingsController;
 use App\Modules\Sales\Controllers\PublicQuoteController;
 use App\Modules\Sales\Controllers\Tech\LeadsController;
 use App\Modules\Sales\Controllers\Tech\SalesController;
-use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Jobs\SendSalesActivityEmail;
 use App\Modules\Sales\Jobs\SendSalesInternalNotificationEmail;
 use App\Modules\Sales\Jobs\SendSalesQuoteEmail;
+use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Sales\Models\SalesQuoteLine;
 use App\Modules\Sales\Models\SalesQuoteVersion;
@@ -42,6 +42,7 @@ class SalesModuleTest extends TestCase
     use RefreshDatabase;
 
     private User $tech;
+
     private User $admin;
 
     protected function setUp(): void
@@ -167,7 +168,7 @@ class SalesModuleTest extends TestCase
     {
         $route = Route::getRoutes()->getByName('tech.sales.index');
 
-        $this->assertSame(SalesController::class . '@index', $route->getActionName());
+        $this->assertSame(SalesController::class.'@index', $route->getActionName());
 
         $this->actingAs($this->tech)
             ->get(route('tech.sales.index'))
@@ -183,7 +184,7 @@ class SalesModuleTest extends TestCase
         $route = Route::getRoutes()->getByName('tech.sales.clients.quick-store');
         $format = ClientFormat::query()->where('code', 'AS')->firstOrFail();
 
-        $this->assertSame(SalesController::class . '@quickStoreClient', $route->getActionName());
+        $this->assertSame(SalesController::class.'@quickStoreClient', $route->getActionName());
 
         $this->actingAs($this->tech)
             ->get(route('tech.sales.create'))
@@ -329,7 +330,7 @@ class SalesModuleTest extends TestCase
     {
         $route = Route::getRoutes()->getByName('tech.sales.leads.index');
 
-        $this->assertSame(LeadsController::class . '@index', $route->getActionName());
+        $this->assertSame(LeadsController::class.'@index', $route->getActionName());
 
         Client::create(['name' => 'Lead Candidate AS', 'active' => true]);
 
@@ -414,7 +415,7 @@ class SalesModuleTest extends TestCase
 
         $route = Route::getRoutes()->getByName('tech.sales.leads.show');
 
-        $this->assertSame(LeadsController::class . '@show', $route->getActionName());
+        $this->assertSame(LeadsController::class.'@show', $route->getActionName());
 
         $this->actingAs($this->tech)
             ->get(route('tech.sales.leads.show', $lead))
@@ -512,8 +513,8 @@ class SalesModuleTest extends TestCase
         $rulesRoute = Route::getRoutes()->getByName('tech.admin.settings.sales.rules');
         $workflowsRoute = Route::getRoutes()->getByName('tech.admin.settings.sales.workflows');
 
-        $this->assertSame(SalesSettingsController::class . '@rules', $rulesRoute->getActionName());
-        $this->assertSame(SalesSettingsController::class . '@workflows', $workflowsRoute->getActionName());
+        $this->assertSame(SalesSettingsController::class.'@rules', $rulesRoute->getActionName());
+        $this->assertSame(SalesSettingsController::class.'@workflows', $workflowsRoute->getActionName());
 
         $this->actingAs($this->admin)
             ->get(route('tech.admin.settings.sales.rules'))
@@ -529,9 +530,9 @@ class SalesModuleTest extends TestCase
     #[Test]
     public function sales_opportunity_quote_public_acceptance_flow_works(): void
     {
-        $this->assertSame(SalesController::class . '@store', Route::getRoutes()->getByName('tech.sales.store')->getActionName());
-        $this->assertSame(PublicQuoteController::class . '@view', Route::getRoutes()->getByName('sales.quotes.public.view')->getActionName());
-        $this->assertSame(PublicQuoteController::class . '@accept', Route::getRoutes()->getByName('sales.quotes.public.accept')->getActionName());
+        $this->assertSame(SalesController::class.'@store', Route::getRoutes()->getByName('tech.sales.store')->getActionName());
+        $this->assertSame(PublicQuoteController::class.'@view', Route::getRoutes()->getByName('sales.quotes.public.view')->getActionName());
+        $this->assertSame(PublicQuoteController::class.'@accept', Route::getRoutes()->getByName('sales.quotes.public.accept')->getActionName());
 
         Queue::fake();
 
@@ -662,14 +663,17 @@ class SalesModuleTest extends TestCase
             ->assertSessionHas('open_quote_modal', true);
 
         $version->refresh();
-        $this->assertSame('draft', $version->status);
-        $this->assertSame('draft', $version->quote->fresh()->status);
+        $this->assertSame('sent', $version->status);
+        $draftVersion = $opportunity->refresh()->currentQuoteVersion()->with('quote')->firstOrFail();
+        $this->assertNotSame($version->id, $draftVersion->id);
+        $this->assertSame('draft', $draftVersion->status);
+        $this->assertSame('draft', $draftVersion->quote->fresh()->status);
 
         $this->actingAs($this->tech)
             ->post(route('tech.sales.quote.send', $opportunity->refresh()))
             ->assertRedirect();
 
-        $version->refresh();
+        $version = $draftVersion->refresh();
         $this->assertSame('sent', $version->status);
 
         $this->post(route('sales.quotes.public.accept', $version->secure_token), [
@@ -797,7 +801,8 @@ class SalesModuleTest extends TestCase
             'smtp_auth_type' => 'password',
         ]);
 
-        app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer {
+        app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer
+        {
             public function send(\App\Modules\Email\Models\EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = []): string
             {
                 app()->instance('sales_activity_email_payload', compact('subject', 'html', 'text'));
@@ -871,8 +876,8 @@ class SalesModuleTest extends TestCase
             'received_at' => now(),
             'state' => 'untriaged',
             'body_text' => "Nei. Kan du sende linken igjen?\n\n"
-                . "tor. 21. mai 2026 kl. 21:13 skrev Svein Tore <post@tronderdata.no>:\n\n"
-                . "> Hello Svein Tore,\n>\n> Hei. Har du fått sett på tilbudet?\n>\n> Regards,\n> Admin User\n>\n> --- Please reply above this line ---",
+                ."tor. 21. mai 2026 kl. 21:13 skrev Svein Tore <post@tronderdata.no>:\n\n"
+                ."> Hello Svein Tore,\n>\n> Hei. Har du fått sett på tilbudet?\n>\n> Regards,\n> Admin User\n>\n> --- Please reply above this line ---",
         ]);
 
         app()->call([new ProcessInboundRules($email->id), 'handle']);

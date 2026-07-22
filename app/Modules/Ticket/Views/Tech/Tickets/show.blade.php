@@ -7,8 +7,8 @@
 @endsection
 
 @section('pageHeader')
-    <div class="d-flex justify-content-between align-items-start">
-        <div>
+    <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 w-100">
+        <div class="flex-shrink-0">
             <div class="d-flex align-items-center gap-2 mb-1">
                 <h1 class="mb-0">{{ $ticket->ticket_key }}</h1>
                 @if ($ticket->is_unread)
@@ -17,7 +17,11 @@
             </div>
             <p class="text-muted mb-0">{{ $ticket->subject }}</p>
         </div>
-        <div class="d-flex gap-2">
+
+        @include('ticket::Tech.Tickets.partials.workflow-stepper')
+
+        <!-- Ticket-level actions stay visually separate from workflow progress. -->
+        <div class="d-flex flex-wrap gap-2 flex-shrink-0 ms-xl-auto">
             @if ($ticket->is_unread && ($ticketActions['mark_read'] ?? true))
                 <!-- Marks the ticket and its current messages as read without changing ticket status or ownership. -->
                 <form method="POST" action="{{ route('tech.tickets.read', $ticket) }}">
@@ -27,18 +31,15 @@
             @endif
             @if (! $ticket->status?->is_closed)
                 @php
-                    $closeDisabledReason = $closeTransition
-                        ? $closeTransition->disabled_reason
-                        : 'Ticket must be marked as solved before it can be closed.';
-                    $canUseCloseAction = ($ticketActions['close'] ?? true) && $closeTransition && ! $closeDisabledReason;
+                    $closeDecision = $ticketActionDecisions['close'] ?? ['visible' => true, 'allowed' => true, 'reason' => null];
+                    $terminalTransition = collect($workflowTransitionDecisions ?? [])->first(fn ($decision) => (bool) data_get($decision, 'target_state.is_terminal'));
+                    $closeDisabledReason = $closeDecision['reason'] ?? ($terminalTransition['disabled_reason'] ?? null);
+                    $canUseCloseAction = $closeDecision['allowed'] && (! $ticket->workflow_version_id || ($terminalTransition['allowed'] ?? false));
                 @endphp
                 <!-- Close remains visible, but workflow requirements decide whether it can be used. -->
-                @if ($canUseCloseAction)
-                    <form method="POST" action="{{ route('tech.tickets.close', $ticket) }}">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-secondary">Close</button>
-                    </form>
-                @else
+                @if ($closeDecision['visible'] && $canUseCloseAction)
+                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#ticketCloseOutcomeModal">Close</button>
+                @elseif($closeDecision['visible'])
                     <button type="button" class="btn btn-outline-secondary" disabled title="{{ $closeDisabledReason }}">Close</button>
                 @endif
             @endif
@@ -95,12 +96,15 @@
         $selectedNotifyUserId = old('notify_user_id');
         $showAddMessage = old('_message_form') || old('body') || old('type');
         $showAddTimeModal = old('_time_entry_form');
+        $actionDecision = fn (string $key) => $ticketActionDecisions[$key] ?? ['visible' => true, 'allowed' => true, 'reason' => null];
         $defaultTimeRateKey = old('rate_key', $timeRateOptions->first()['key'] ?? null);
         // Activity combines conversation and time records into one technician-facing timeline.
         $activityItems = $ticket->messages
             ->map(fn ($message) => ['type' => 'message', 'date' => $message->created_at, 'record' => $message])
             ->concat($ticket->timeEntries->map(fn ($entry) => ['type' => 'time', 'date' => $entry->created_at, 'record' => $entry]))
-            ->concat($ticket->costEntries->map(fn ($entry) => ['type' => 'cost', 'date' => $entry->created_at, 'record' => $entry]))
+            ->concat($ticket->costEntries
+                ->reject(fn ($entry) => in_array($entry->status, ['released', 'cancelled'], true))
+                ->map(fn ($entry) => ['type' => 'cost', 'date' => $entry->created_at, 'record' => $entry]))
             ->sortByDesc('date')
             ->values();
     @endphp
@@ -137,24 +141,38 @@
                         <i class="bi bi-reply" aria-hidden="true"></i>
                         Reply
                     </button>
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#ticketAddTimeModal">
-                        <i class="bi bi-clock" aria-hidden="true"></i>
-                        Add time
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#ticketAddCostModal">
-                        <i class="bi bi-box-seam" aria-hidden="true"></i>
-                        Add cost
-                    </button>
+                    @if($actionDecision('register_time')['visible'])
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#ticketAddTimeModal"
+                            @disabled(! $actionDecision('register_time')['allowed'])
+                            title="{{ $actionDecision('register_time')['reason'] }}">
+                            <i class="bi bi-clock" aria-hidden="true"></i>
+                            Add time
+                        </button>
+                    @endif
+                    @php
+                        $canShowActualCost = $actionDecision('add_actual_cost')['visible'] || $actionDecision('reserve_item')['visible'];
+                        $canAddActualCost = $actionDecision('add_actual_cost')['allowed'] || $actionDecision('reserve_item')['allowed'];
+                    @endphp
+                    @if($canShowActualCost)
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#ticketAddCostModal"
+                            @disabled(! $canAddActualCost)
+                            title="{{ $actionDecision('add_actual_cost')['reason'] ?: $actionDecision('reserve_item')['reason'] }}">
+                            <i class="bi bi-box-seam" aria-hidden="true"></i>
+                            Add actual cost
+                        </button>
+                    @endif
                 </div>
             </div>
+
+            @include('ticket::Tech.Tickets.partials.workflow-v3-panel')
 
             @include('relationship::Tech.Tickets.panel', [
                 'ticket' => $ticket,
@@ -229,6 +247,7 @@
                                                             data-bs-target="#ticketEditCostModal"
                                                             data-action="{{ route('tech.tickets.cost-entries.update', [$ticket, $costEntry]) }}"
                                                             data-quantity="{{ $costEntry->quantity }}"
+                                                            data-delete-action="{{ route('tech.tickets.cost-entries.destroy', [$ticket, $costEntry]) }}"
                                                             data-invoice-text="{{ $costEntry->invoice_text }}"
                                                             data-note="{{ $costEntry->note }}"
                                                             data-item-label="{{ $costEntry->item_name }}{{ $costEntry->item_sku ? ' (' . $costEntry->item_sku . ')' : '' }}">
@@ -367,11 +386,13 @@
                                     $isUnreadMessage = $isCustomerAuthoredMessage && blank($message->read_at);
                                     $messageTypeLabel = $message->type === 'customer_reply' && $message->author_type === 'user'
                                         ? 'Technician reply'
-                                        : ucfirst(str_replace('_', ' ', $message->type));
+                                        : ($message->type === 'status_update' ? 'Customer status update' : ucfirst(str_replace('_', ' ', $message->type)));
                                     $messageExcerpt = \Illuminate\Support\Str::limit(preg_replace('/\s+/', ' ', trim($message->body)), 120);
                                     $senderName = $isCustomerAuthoredMessage
                                         ? (iconv_mime_decode((string) ($message->metadata['from_name'] ?? ''), ICONV_MIME_DECODE_CONTINUE_ON_ERROR, 'UTF-8') ?: $ticket->contact?->name ?? 'Customer')
-                                        : ($message->author?->name ?? 'Technician');
+                                        : ($message->author_type === 'system'
+                                            ? 'Support'
+                                            : ($message->author?->name ?? 'Technician'));
                                     $senderEmail = $message->author_type === 'contact'
                                         ? ($message->metadata['from_email'] ?? $ticket->contact?->email)
                                         : null;
@@ -438,7 +459,7 @@
                                                     </form>
                                                 </div>
                                             @endif
-                                            @if ($message->type === 'customer_reply' && $latestEmailLog)
+                                            @if (in_array($message->type, ['customer_reply', 'status_update'], true) && $latestEmailLog)
                                                 <!-- Shows the latest outbound email status for this ticket message so technicians can see delivery problems without opening email logs. -->
                                                 <div class="small {{ $latestEmailLog->level === 'error' ? 'text-danger' : 'text-success' }} mb-2">
                                                     {{ $latestEmailLog->level === 'error' ? 'Email failed' : 'Email sent' }}:
@@ -447,7 +468,7 @@
                                                         <span class="text-muted">({{ $latestEmailLog->rfc_message_id }})</span>
                                                     @endif
                                                 </div>
-                                            @elseif ($message->type === 'customer_reply' && $message->author_type === 'user')
+                                            @elseif (in_array($message->type, ['customer_reply', 'status_update'], true) && in_array($message->author_type, ['user', 'system'], true))
                                                 <div class="small text-muted mb-2">Email queued or waiting for delivery log.</div>
                                             @endif
                                             <div style="white-space: pre-wrap;">{{ $message->body }}</div>
@@ -556,7 +577,7 @@
                                         <input id="cc" name="cc" type="text" class="form-control @error('cc') is-invalid @enderror" value="{{ old('cc') }}" placeholder="thirdparty@example.com">
                                         @error('cc')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         @if($ccContactSuggestions->isNotEmpty())
-                                            <div id="cc_contact_suggestions" @class(['mt-2', 'd-none' => blank(old('cc'))]) aria-hidden="{{ blank(old('cc')) ? 'true' : 'false' }}">
+                                            <div id="cc_contact_suggestions" class="mt-2 d-none" aria-hidden="true">
                                                 <div class="small text-muted fw-semibold mb-1">CC suggestions</div>
                                                 @foreach($ccSuggestionGroups as $group => $suggestions)
                                                     <div class="small text-muted mt-2">{{ $group }}</div>
@@ -877,7 +898,8 @@
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label for="edit_cost_quantity" class="form-label">Quantity</label>
-                            <input id="edit_cost_quantity" name="quantity" type="number" min="1" step="1" class="form-control" required>
+                            <input id="edit_cost_quantity" name="quantity" type="number" min="0" step="1" class="form-control" required>
+                            <div class="form-text">Set quantity to 0 to remove the reservation.</div>
                         </div>
                         <div class="col-12">
                             <label for="edit_cost_invoice_text" class="form-label">Invoice text</label>
@@ -890,6 +912,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-danger me-auto" id="ticketDeleteCost">
+                        <i class="bi bi-trash me-1" aria-hidden="true"></i>
+                        Delete reservation
+                    </button>
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Update reservation</button>
                 </div>
@@ -898,8 +924,39 @@
     </div>
 </div>
 
+{{-- One confirmation surface is reused by every removable Storage cost row. --}}
+<div class="modal fade" id="ticketRemoveCostModal" tabindex="-1" aria-labelledby="ticketRemoveCostModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="ticketRemoveCostForm" method="POST" action="#">
+                @csrf
+                @method('DELETE')
+
+                <div class="modal-header">
+                    <h2 class="modal-title h6 text-danger" id="ticketRemoveCostModalLabel">Remove reservation</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Remove <strong id="removeCostItemLabel"></strong> from this Ticket?</p>
+                    <p class="text-muted small mb-0">Reserved stock will be released and the entry will disappear from the Picking List. The release remains in the Ticket event history.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-danger">Remove reservation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-ticket-workflow-step]').forEach(function (step) {
+            if (window.bootstrap?.Popover) {
+                bootstrap.Popover.getOrCreateInstance(step, { container: 'body' });
+            }
+        });
+
         const type = document.getElementById('type');
         const visibility = document.getElementById('visibility');
         const replyRecipientGroup = document.getElementById('reply_recipient_group');
@@ -928,7 +985,12 @@
         const editCostQuantity = document.getElementById('edit_cost_quantity');
         const editCostInvoiceText = document.getElementById('edit_cost_invoice_text');
         const editCostNote = document.getElementById('edit_cost_note');
+        const removeCostModal = document.getElementById('ticketRemoveCostModal');
+        const editCostModal = document.getElementById('ticketEditCostModal');
+        const removeCostForm = document.getElementById('ticketRemoveCostForm');
+        const removeCostItemLabel = document.getElementById('removeCostItemLabel');
         const costItemSearch = document.getElementById('cost_storage_item_search');
+        const deleteCostButton = document.getElementById('ticketDeleteCost');
         const costItemId = document.getElementById('cost_storage_item_id');
         const costItemSuggestions = document.getElementById('cost_storage_item_suggestions');
         const costItemNoResults = document.getElementById('cost_storage_item_no_results');
@@ -986,26 +1048,11 @@
             }, 150);
         });
 
-        const ccSuggestions = document.getElementById('cc_contact_suggestions');
-        const showCcSuggestions = function () {
-            if (! ccSuggestions) {
-                return;
-            }
-
-            ccSuggestions.classList.remove('d-none');
-            ccSuggestions.setAttribute('aria-hidden', 'false');
-        };
-
-        ccInput?.addEventListener('focus', showCcSuggestions);
-        ccInput?.addEventListener('click', showCcSuggestions);
-
         document.querySelectorAll('[data-cc-email]').forEach(function (button) {
             button.addEventListener('click', function () {
                 if (! ccInput) {
                     return;
                 }
-
-                showCcSuggestions();
 
                 const email = this.dataset.ccEmail;
                 const current = ccInput.value
@@ -1078,7 +1125,8 @@
             stopwatchControls?.classList.toggle('d-none', elapsed <= 0);
 
             if (stopwatchStart) {
-                stopwatchStart.disabled = stopwatch.running;
+                const actionAllowed = stopwatchStart.dataset.actionAllowed === '1';
+                stopwatchStart.disabled = ! actionAllowed || stopwatch.running;
                 stopwatchStart.innerHTML = '<i class="bi bi-play-fill" aria-hidden="true"></i> Start';
             }
 
@@ -1115,14 +1163,45 @@
         syncStopwatchUi();
         window.setInterval(syncStopwatchUi, 1000);
 
-        stopwatchStart?.addEventListener('click', function () {
-            stopwatch = {
-                elapsedMs: 0,
-                startedAt: Date.now(),
-                running: true,
-            };
-            saveStopwatch();
-            syncStopwatchUi();
+        stopwatchStart?.addEventListener('click', async function () {
+            if (this.dataset.actionAllowed !== '1' || ! this.dataset.startUrl) {
+                return;
+            }
+
+            this.disabled = true;
+
+            try {
+                const response = await fetch(this.dataset.startUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': @json(csrf_token()),
+                    },
+                    body: JSON.stringify({}),
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (! response.ok) {
+                    const validationMessage = Object.values(payload.errors || {}).flat()[0];
+                    throw new Error(validationMessage || payload.message || 'The timer could not be started.');
+                }
+
+                stopwatch = {
+                    elapsedMs: 0,
+                    startedAt: Date.now(),
+                    running: true,
+                };
+                saveStopwatch();
+                syncStopwatchUi();
+
+                if (payload.data?.transitioned) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                window.alert(error.message || 'The timer could not be started.');
+                syncStopwatchUi();
+            }
         });
 
         stopwatchToggle?.addEventListener('click', function () {
@@ -1324,14 +1403,41 @@
         syncCostPreview(false);
         syncCostMode();
 
+        const openRemoveCostConfirmation = function () {
+            if (! window.bootstrap?.Modal || ! removeCostModal || ! removeCostForm) {
+                return;
+            }
+
+            const showRemoveCostModal = function () {
+                window.bootstrap.Modal.getOrCreateInstance(removeCostModal).show();
+            };
+
+            if (editCostModal?.classList.contains('show')) {
+                editCostModal.addEventListener('hidden.bs.modal', showRemoveCostModal, { once: true });
+                window.bootstrap.Modal.getOrCreateInstance(editCostModal).hide();
+
+                return;
+            }
+
+            showRemoveCostModal();
+        };
+
         document.querySelectorAll('.ticket-edit-cost').forEach(function (button) {
             button.addEventListener('click', function () {
                 if (editCostForm) {
                     editCostForm.action = button.dataset.action || '#';
                 }
 
+                if (removeCostForm) {
+                    removeCostForm.action = button.dataset.deleteAction || '#';
+                }
+
                 if (editCostItemLabel) {
                     editCostItemLabel.textContent = button.dataset.itemLabel || '';
+                }
+
+                if (removeCostItemLabel) {
+                    removeCostItemLabel.textContent = button.dataset.itemLabel || '';
                 }
 
                 if (editCostQuantity) {
@@ -1347,6 +1453,19 @@
                 }
             });
         });
+
+        editCostForm?.addEventListener('submit', function (event) {
+            if (Number(editCostQuantity?.value || 0) !== 0) {
+                return;
+            }
+
+            event.preventDefault();
+            removeCostForm.action = editCostForm.action;
+            removeCostItemLabel.textContent = editCostItemLabel?.textContent || '';
+            openRemoveCostConfirmation();
+        });
+
+        deleteCostButton?.addEventListener('click', openRemoveCostConfirmation);
 
         document.querySelectorAll('.ticket-edit-time').forEach(function (button) {
             button.addEventListener('click', function () {
@@ -1407,16 +1526,28 @@
                 aria-labelledby="ticketTimeHeading"
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">
-                    <!-- The stopwatch is local draft state. Saving still happens through the Add time modal. -->
+                    <!-- Timer start is audited by the server; elapsed draft time stays local until Add time is saved. -->
                     <div class="text-center border rounded bg-light px-2 py-3">
                         <div id="ticketStopwatchDisplay" class="fw-semibold font-monospace" style="font-size: 1.75rem;">00:00:00</div>
                         <div id="ticketStopwatchState" class="small text-muted mt-1">Not running</div>
                     </div>
                     <div id="ticketStopwatchStartGroup" class="d-grid gap-2 mt-3">
-                        <button id="ticketStopwatchStart" type="button" class="btn btn-sm btn-primary">
-                            <i class="bi bi-play-fill" aria-hidden="true"></i>
-                            Start
-                        </button>
+                        @php
+                            $startTimerDecision = $actionDecision('start_timer');
+                        @endphp
+                        @if($startTimerDecision['visible'])
+                            <button
+                                id="ticketStopwatchStart"
+                                type="button"
+                                class="btn btn-sm btn-primary"
+                                data-start-url="{{ route('tech.tickets.timer.start', $ticket) }}"
+                                data-action-allowed="{{ $startTimerDecision['allowed'] ? '1' : '0' }}"
+                                @disabled(! $startTimerDecision['allowed'])
+                                title="{{ $startTimerDecision['reason'] }}">
+                                <i class="bi bi-play-fill" aria-hidden="true"></i>
+                                Start
+                            </button>
+                        @endif
                     </div>
                     <div id="ticketStopwatchControls" class="row g-2 mt-3 d-none">
                         <div class="col-6">
@@ -1496,58 +1627,93 @@
         </div>
 
         <div class="accordion-item border rounded mb-2 overflow-hidden">
-            <h2 class="accordion-header" id="ticketWorkflowHeading">
+            <h2 class="accordion-header" id="ticketNextStepHeading">
                 <button
                     class="accordion-button collapsed py-2 px-3"
                     type="button"
                     data-bs-toggle="collapse"
-                    data-bs-target="#ticketWorkflowCollapse"
+                    data-bs-target="#ticketNextStepCollapse"
                     aria-expanded="false"
-                    aria-controls="ticketWorkflowCollapse">
+                    aria-controls="ticketNextStepCollapse">
                     <span class="d-flex align-items-center gap-2">
-                        <i class="bi bi-diagram-3" aria-hidden="true"></i>
-                        <span>Workflow</span>
-                        @if($ticket->workflow)
-                            <span class="badge text-bg-light border">{{ $ticket->workflow->name }}</span>
-                        @endif
+                        <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
+                        <span>Next step</span>
+                        <span class="badge text-bg-light border">{{ $workflowCurrentState['name'] ?? $ticket->status?->name ?? 'Current' }}</span>
                     </span>
                 </button>
             </h2>
             <div
-                id="ticketWorkflowCollapse"
+                id="ticketNextStepCollapse"
                 class="accordion-collapse collapse"
-                aria-labelledby="ticketWorkflowHeading"
+                aria-labelledby="ticketNextStepHeading"
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">
-                    <div class="small mb-2">
-                        <div class="text-muted text-uppercase" style="font-size: .68rem;">Current state</div>
-                        <div class="fw-semibold">{{ $ticket->status?->name ?? '-' }}</div>
-                    </div>
+                    @php
+                        $changeStateDecision = $ticketActionDecisions['change_status'] ?? ['visible' => true, 'allowed' => true, 'reason' => null];
+                        $escalateDecision = $ticketActionDecisions['escalate'] ?? ['visible' => true, 'allowed' => true, 'reason' => null];
+                        $nonTerminalTransitions = collect($workflowTransitionDecisions)->reject(fn ($decision) => (bool) data_get($decision, 'target_state.is_terminal'));
+                    @endphp
 
                     <div class="d-grid gap-2">
-                        @forelse($workflowTransitions as $transition)
-                            @php
-                                $disabledReason = $transition->disabled_reason;
-                            @endphp
-                            <form method="POST" action="{{ route('tech.tickets.workflow.transition', [$ticket, $transition]) }}">
-                                @csrf
-                                <button
-                                    type="submit"
-                                    class="btn btn-sm {{ $disabledReason ? 'btn-outline-secondary' : 'btn-outline-primary' }} w-100 text-start"
-                                    @disabled($disabledReason)
-                                    @if($disabledReason) title="{{ $disabledReason }}" @endif>
-                                    <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
-                                    {{ $transition->label }}
-                                    <span class="text-muted">to {{ $transition->toStatus?->name }}</span>
-                                </button>
-                                @if($disabledReason)
-                                    <div class="small text-muted mt-1">{{ $disabledReason }}</div>
-                                @endif
-                            </form>
-                        @empty
-                            <p class="text-muted small mb-0">No workflow transitions available.</p>
-                        @endforelse
+                        @if($changeStateDecision['visible'])
+                            @forelse($nonTerminalTransitions as $transition)
+                                @php
+                                    $transitionAllowed = $changeStateDecision['allowed'] && ($transition['allowed'] ?? false);
+                                    $transitionReason = $changeStateDecision['reason'] ?: ($transition['disabled_reason'] ?? null);
+                                @endphp
+                                <form method="POST" action="{{ route('tech.tickets.workflow-v3.transition', [$ticket, $transition['transition_key']]) }}">
+                                    @csrf
+                                    <input type="hidden" name="idempotency_key" value="web-{{ $ticket->id }}-{{ $transition['transition_key'] }}-{{ now()->format('YmdHi') }}">
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm {{ $transitionAllowed ? 'btn-outline-primary' : 'btn-outline-secondary' }} w-100 text-start"
+                                        @disabled(! $transitionAllowed)
+                                        title="{{ $transitionReason }}"
+                                    >
+                                        <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+                                        {{ $transition['label'] }}
+                                        <span class="text-muted">to {{ data_get($transition, 'target_state.name') }}</span>
+                                    </button>
+                                    @if(! $transitionAllowed && $transitionReason)
+                                        <div class="small text-danger mt-1">{{ $transitionReason }}</div>
+                                    @endif
+                                </form>
+                            @empty
+                                <p class="text-muted small mb-0">No manual next step is configured from this state.</p>
+                            @endforelse
+                        @endif
                     </div>
+
+                    @if($escalateDecision['visible'] && collect($workflowEscalationDecisions)->isNotEmpty())
+                        <hr>
+                        <div class="small fw-semibold mb-2">Escalate Ticket</div>
+                        <div class="d-grid gap-2">
+                            @foreach($workflowEscalationDecisions as $escalation)
+                                @php
+                                    $escalationAllowed = $escalateDecision['allowed'] && ($escalation['allowed'] ?? false);
+                                    $escalationReason = $escalateDecision['reason'] ?: ($escalation['disabled_reason'] ?? null);
+                                @endphp
+                                <form method="POST" action="{{ route('tech.tickets.workflow-v3.escalate', [$ticket, $escalation['path_key']]) }}" class="border rounded p-2">
+                                    @csrf
+                                    <div class="small fw-semibold">{{ $escalation['label'] ?? 'Escalate to another workflow' }}</div>
+                                    <div class="small text-muted mb-2">{{ ($escalation['mode'] ?? 'optional') === 'required' ? 'Required before protected actions' : 'Optional technician choice' }}</div>
+                                    @if(($escalation['assignment_strategy'] ?? '') === 'manual')
+                                        <select name="owner_id" class="form-select form-select-sm mb-2" @disabled(! $escalationAllowed)>
+                                            <option value="">Leave unassigned</option>
+                                            @foreach($technicians as $technician)
+                                                <option value="{{ $technician->id }}">{{ $technician->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                    <input name="reason" class="form-control form-control-sm mb-2" placeholder="Reason">
+                                    <button class="btn btn-sm btn-outline-warning w-100" @disabled(! $escalationAllowed) title="{{ $escalationReason }}">Escalate</button>
+                                    @if(! $escalationAllowed && $escalationReason)
+                                        <div class="small text-danger mt-1">{{ $escalationReason }}</div>
+                                    @endif
+                                </form>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

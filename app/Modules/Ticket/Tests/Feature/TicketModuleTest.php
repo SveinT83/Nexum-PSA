@@ -26,6 +26,7 @@ use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Storage\Models\Reservation as StorageReservation;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
+use App\Modules\Storage\Support\StorageWorkflowFacts;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Task\Models\TaskStatus;
 use App\Modules\Taxonomy\Models\Category;
@@ -42,8 +43,10 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAssignmentRule;
 use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\Ticket\Models\TicketAttachment;
+use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketMergeSuggestionDismissal;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Models\TicketPlannedLine;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketRule;
@@ -154,6 +157,7 @@ class TicketModuleTest extends TestCase
         $this->assertSame(TicketController::class.'@updateTimeEntry', Route::getRoutes()->getByName('tech.tickets.time-entries.update')->getActionName());
         $this->assertSame(TicketController::class.'@storeCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.store')->getActionName());
         $this->assertSame(TicketController::class.'@updateCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.update')->getActionName());
+        $this->assertSame(TicketController::class.'@destroyCostEntry', Route::getRoutes()->getByName('tech.tickets.cost-entries.destroy')->getActionName());
         $this->assertSame(TicketController::class.'@markMessageRead', Route::getRoutes()->getByName('tech.tickets.messages.read')->getActionName());
         $this->assertSame(TicketController::class.'@markMessageSolution', Route::getRoutes()->getByName('tech.tickets.messages.solution')->getActionName());
         $this->assertSame(TicketController::class.'@assign', Route::getRoutes()->getByName('tech.tickets.assign')->getActionName());
@@ -1491,6 +1495,122 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function tech_user_can_remove_reserved_storage_cost_and_release_picking(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999151',
+            'owner_id' => $this->tech->id,
+        ]);
+        $records = $this->createReservedStorageCost($ticket, 'RELEASE-ROUTER', 2);
+        $item = $records['item'];
+        $reservation = $records['reservation'];
+        $entry = $records['entry'];
+        $plannedLine = TicketPlannedLine::create([
+            'ticket_id' => $ticket->id,
+            'line_type' => 'equipment',
+            'source_type' => 'custom',
+            'storage_item_id' => $item->id,
+            'sku' => $item->sku,
+            'name' => $item->name,
+            'quantity' => 2,
+            'status' => 'converted',
+            'converted_cost_entry_id' => $entry->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee(route('tech.tickets.cost-entries.destroy', [$ticket, $entry]), false)
+            ->assertSee('id="ticketDeleteCost"', false)
+            ->assertSee('Delete reservation')
+            ->assertDontSee('ticket-remove-cost', false)
+            ->assertSee('Set quantity to 0 to remove the reservation.');
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.tickets.cost-entries.destroy', [$ticket, $entry]))
+            ->assertRedirect(route('tech.tickets.show', $ticket))
+            ->assertSessionHas('success', 'Storage reservation removed and stock released.');
+
+        $this->assertSame(0, $item->refresh()->qty_reserved);
+        $this->assertSame('released', $reservation->refresh()->status);
+        $this->assertSame('released', $entry->refresh()->status);
+        $this->assertSame('cancelled', $entry->billing_status);
+        $this->assertSame('approved', $plannedLine->refresh()->status);
+        $this->assertNull($plannedLine->converted_cost_entry_id);
+        $this->assertFalse(app(StorageWorkflowFacts::class)->resolve($ticket, 'storage.approved_lines_reserved')['value']);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $this->tech->id,
+            'type' => 'storage_reservation_released',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertDontSee('ticketCostEntryCollapse'.$entry->id)
+            ->assertSee('Storage reservation removed from Ticket and released.');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.picking'))
+            ->assertOk()
+            ->assertDontSee('RELEASE-ROUTER');
+    }
+
+    #[Test]
+    public function updating_reserved_storage_cost_to_zero_uses_the_release_flow(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999152',
+            'owner_id' => $this->tech->id,
+        ]);
+        $records = $this->createReservedStorageCost($ticket, 'ZERO-ROUTER', 1);
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.tickets.cost-entries.update', [$ticket, $records['entry']]), [
+                'quantity' => 0,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket))
+            ->assertSessionHas('success', 'Storage reservation removed and stock released.');
+
+        $this->assertSame(0, $records['item']->refresh()->qty_reserved);
+        $this->assertSame('released', $records['reservation']->refresh()->status);
+        $this->assertSame('released', $records['entry']->refresh()->status);
+        $this->assertSame('cancelled', $records['entry']->billing_status);
+    }
+
+    #[Test]
+    public function storage_reservation_release_rejects_other_ticket_and_picked_costs(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999153',
+            'owner_id' => $this->tech->id,
+        ]);
+        $otherTicket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999154',
+            'owner_id' => $this->tech->id,
+        ]);
+        $records = $this->createReservedStorageCost($ticket, 'PICKED-ROUTER', 1);
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.tickets.cost-entries.destroy', [$otherTicket, $records['entry']]))
+            ->assertNotFound();
+
+        $records['item']->forceFill(['qty_reserved' => 0])->save();
+        $records['reservation']->forceFill(['status' => 'fulfilled'])->save();
+        $records['entry']->forceFill(['status' => 'picked'])->save();
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.tickets.cost-entries.destroy', [$ticket, $records['entry']]))
+            ->assertSessionHasErrors('cost_entry');
+
+        $this->assertSame('picked', $records['entry']->refresh()->status);
+        $this->assertSame('fulfilled', $records['reservation']->refresh()->status);
+        $this->assertSame(0, $records['item']->refresh()->qty_reserved);
+    }
+
+    #[Test]
     public function tech_user_can_reserve_orderable_storage_item_when_stock_is_short(): void
     {
         $ticket = $this->createTicket(null, [
@@ -2365,10 +2485,6 @@ class TicketModuleTest extends TestCase
 
         Queue::assertNotPushed(SendTicketReplyEmail::class);
 
-        $this->actingAs($this->tech)
-            ->post(route('tech.tickets.workflow.transition', [$ticket->fresh(), $resolvedTransition]))
-            ->assertRedirect(route('tech.tickets.show', $ticket));
-
         $this->assertSame($resolved->id, $ticket->fresh()->status_id);
 
         $this->actingAs($this->tech)
@@ -2579,7 +2695,6 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee('id="cc_contact_suggestions" class="mt-2 d-none" aria-hidden="true"', false)
             ->assertSee('CC suggestions')
             ->assertSee('data-cc-email="alpha.cc@example.com"', false)
             ->assertSee('data-cc-email="beta.cc@example.com"', false)
@@ -2898,6 +3013,19 @@ class TicketModuleTest extends TestCase
             ->assertViewIs('ticket::Admin.Settings.workflows.index')
             ->assertSee('Default Ticket Workflow');
 
+        $this->actingAs($admin)
+            ->get(route('tech.admin.settings.tickets.workflows.create'))
+            ->assertOk()
+            ->assertSee('1. Workflow steps')
+            ->assertSee('Add next step')
+            ->assertSee('Next-step buttons')
+            ->assertDontSee('Reporting status for new step')
+            ->assertSee('Requirement groups')
+            ->assertSee('Available actions')
+            ->assertSee('Add action')
+            ->assertSee('Actions not added inherit normal permission-aware behavior.')
+            ->assertSee('2. Escalate Ticket paths');
+
         $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
 
         $this->assertGreaterThan(0, $workflow->states()->count());
@@ -2917,8 +3045,15 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee('Workflow')
-            ->assertSee('Start work');
+            ->assertSeeHtml('data-ticket-workflow-step')
+            ->assertSeeHtml('class="ticket-workflow__track"')
+            ->assertSeeHtml('class="ticket-workflow__step is-current"')
+            ->assertSeeHtml('data-bs-toggle="popover"')
+            ->assertSeeHtml('aria-current="step"')
+            ->assertSee('Next step')
+            ->assertSee('Start work')
+            ->assertSee('Planned scope and customer approval')
+            ->assertDontSeeHtml('class="card mb-3 border-primary-subtle"');
     }
 
     #[Test]
@@ -2969,6 +3104,7 @@ class TicketModuleTest extends TestCase
     {
         app(EnsureTicketDefaults::class)->handle();
         $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
         $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
         $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
         $ticket = $this->createTicket(null, [
@@ -3007,8 +3143,18 @@ class TicketModuleTest extends TestCase
             ->post(route('tech.tickets.messages.solution', [$ticket, $response]))
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
-        $this->assertSame($resolved->id, $ticket->fresh()->status_id);
+        $this->assertSame($inProgress->id, $ticket->fresh()->status_id);
         $this->assertTrue((bool) $response->fresh()->metadata['is_solution']);
+
+        $progressTransition = TicketWorkflowTransition::where('ticket_workflow_id', $workflow->id)
+            ->where('from_status_id', $inProgress->id)
+            ->where('to_status_id', $resolved->id)
+            ->firstOrFail();
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.workflow.transition', [$ticket->fresh(), $progressTransition]))
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $this->assertSame($resolved->id, $ticket->fresh()->status_id);
     }
 
     #[Test]
@@ -3075,6 +3221,7 @@ class TicketModuleTest extends TestCase
     {
         app(EnsureTicketDefaults::class)->handle();
         $new = TicketStatus::where('slug', 'new')->firstOrFail();
+        $inProgress = TicketStatus::where('slug', 'in-progress')->firstOrFail();
         $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
         $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
         $workflow = TicketWorkflow::where('is_default', true)->firstOrFail();
@@ -3104,7 +3251,7 @@ class TicketModuleTest extends TestCase
 
         $ticket->refresh();
 
-        $this->assertSame($resolved->id, $ticket->status_id);
+        $this->assertSame($inProgress->id, $ticket->status_id);
         $this->assertNull($ticket->closed_at);
     }
 
@@ -4761,6 +4908,49 @@ class TicketModuleTest extends TestCase
             ->assertSessionHasErrors('type');
 
         $this->assertDatabaseHas('ticket_types', ['id' => $type->id]);
+    }
+
+    private function createReservedStorageCost(Ticket $ticket, string $sku, int $quantity): array
+    {
+        $warehouse = StorageWarehouse::create([
+            'name' => 'Release Warehouse',
+            'code' => 'REL-'.$ticket->id,
+        ]);
+        $item = StorageItem::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => $sku,
+            'name' => 'Release Test Item',
+            'sale_price' => 500,
+            'qty_on_hand' => 5,
+            'qty_reserved' => $quantity,
+            'status' => 'active',
+        ]);
+        $reservation = StorageReservation::create([
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse->id,
+            'qty' => $quantity,
+            'source_type' => 'ticket',
+            'source_id' => (string) $ticket->id,
+            'strength' => 'hard',
+            'status' => 'active',
+            'created_by' => $this->tech->id,
+        ]);
+        $entry = TicketCostEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'storage_item_id' => $item->id,
+            'storage_reservation_id' => $reservation->id,
+            'quantity' => $quantity,
+            'item_name' => $item->name,
+            'item_sku' => $item->sku,
+            'unit_price_ex_vat' => $item->sale_price,
+            'currency' => 'NOK',
+            'status' => 'reserved',
+            'billing_status' => 'pending',
+            'invoice_text' => $item->name,
+        ]);
+
+        return compact('item', 'reservation', 'entry');
     }
 
     private function emailAccountData(array $overrides = []): array

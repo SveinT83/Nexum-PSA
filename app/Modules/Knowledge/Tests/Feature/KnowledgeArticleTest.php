@@ -614,7 +614,7 @@ class KnowledgeArticleTest extends TestCase
 
         $this->artisan('knowledge:sync-docs', ['--module' => ['System'], '--push' => true])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 4')
+            ->expectsOutput('articles: 5')
             ->assertSuccessful();
 
         $article = Article::where('source_system', 'nexum')

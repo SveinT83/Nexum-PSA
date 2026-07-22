@@ -1,5 +1,7 @@
 Ticket cost entries let technicians capture material and expense costs before billing has been built.
 
+Workflow-controlled planned lines come before actual costs when customer approval is required. A planned line does not reserve stock, create a purchase order, or become billable. It can be copied into a Ticket-linked Sales quote and becomes approved scope only when that immutable quote version is accepted.
+
 Technicians use the `Add cost` action beside `Add time` on the ticket show page. The form supports two modes:
 
 - `Storage item` reserves an active Storage item for the ticket.
@@ -17,11 +19,18 @@ Manual costs create a pending `ticket_cost_entries` record without a Storage ite
 
 Saved cost entries appear in the ticket Activity timeline as their own rows. Storage-backed rows are labeled `Storage cost`; manual rows are labeled `Manual cost`. Storage-backed reserved rows can be edited before picking. Editing quantity updates both the ticket cost entry and the linked Storage reservation, and adjusts the Storage item's reserved quantity by the difference.
 
+A reserved Storage cost can be removed before picking with the subtle `Delete reservation` button inside its Edit cost modal. Setting its quantity to `0` in the same modal uses the same confirmed release flow. Releasing reduces the item's reserved quantity, removes the cost from normal Ticket activity and the Storage Picking List, restores a linked approved planned line for conversion again, and writes a Ticket event for audit. It does not hard-delete the historical records.
+
 Important status fields:
 
 - `ticket_cost_entries.status = reserved` means the item is currently held for the ticket.
+- `ticket_cost_entries.status = released` means the reservation was removed before picking.
 - `ticket_cost_entries.status = manual` means the entry is a non-stock cost with no picking step.
 - `ticket_cost_entries.billing_status = pending` means billing has not settled the item yet.
+- `ticket_cost_entries.billing_status = cancelled` means the released cost is excluded from billing.
 - `storage_reservations.status = active` means Storage still treats the item as reserved.
+- `storage_reservations.status = released` preserves reservation history without holding stock.
 
 Later billing should read pending ticket cost entries together with pending time entries. At that point it can decide whether to invoice the item, include it in a contract, convert the reservation to a stock movement, or release it if the work is cancelled.
+
+After quote acceptance, an authorized technician or API client can convert an approved equipment line to a reservation/pending cost, convert an approved custom line to a pending manual cost, or create a draft purchase need for an orderable Storage item. Repeating a conversion or purchase request returns the existing downstream record rather than creating a duplicate. A purchase need never sends a vendor order automatically.

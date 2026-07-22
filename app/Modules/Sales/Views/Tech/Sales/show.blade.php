@@ -966,7 +966,7 @@
 
             editCancel?.addEventListener('click', resetLineForm);
 
-            @if(session('open_quote_modal') || $errors->any())
+            @if(session('open_quote_modal') || $errors->any() || request()->boolean('open_quote'))
                 const quoteModalElement = document.getElementById('quoteLineModal');
                 if (quoteModalElement && window.bootstrap) {
                     window.bootstrap.Modal.getOrCreateInstance(quoteModalElement).show();

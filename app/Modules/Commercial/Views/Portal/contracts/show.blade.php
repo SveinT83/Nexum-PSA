@@ -70,6 +70,32 @@
                 </div>
             </div>
 
+            @if($contract->termSnapshots->isNotEmpty())
+                <div class="card shadow-sm mt-3">
+                    <div class="card-header bg-body">
+                        <h2 class="h6 mb-0">Versioned legal documents</h2>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @foreach($contract->termSnapshots->unique('term_version_id') as $document)
+                            <div class="list-group-item">
+                                <div class="d-flex flex-wrap justify-content-between gap-2">
+                                    <div>
+                                        <div class="fw-semibold">{{ $document->name }}</div>
+                                        <div class="small text-muted">
+                                            {{ $document->issuer ?: ucfirst($document->origin) }} ? Version {{ $document->version_label ?: 'not stated' }}
+                                        </div>
+                                    </div>
+                                    <span class="badge text-bg-light border">{{ ucfirst($document->type) }}</span>
+                                </div>
+                                @if($document->source_url)
+                                    <a class="small" href="{{ $document->source_url }}" target="_blank" rel="noopener">Open source document</a>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             @foreach([
                 'General terms' => $contract->terms_snapshot,
                 'Data processing agreement' => $contract->dpa_snapshot,
@@ -134,7 +160,7 @@
                             <input id="contract_accept_name" type="text" name="name" class="form-control form-control-sm mb-2" value="{{ old('name', $context->contact->display_name) }}" required>
                             <div class="form-check mb-3">
                                 <input type="checkbox" name="confirm" value="1" id="contract_confirm" class="form-check-input" required>
-                                <label for="contract_confirm" class="form-check-label small">I have read and accept this contract.</label>
+                                <label for="contract_confirm" class="form-check-label small">I have read and accept this contract, including the legal document versions listed above.</label>
                             </div>
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>

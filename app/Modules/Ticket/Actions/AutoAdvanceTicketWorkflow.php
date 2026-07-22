@@ -4,41 +4,50 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 
 class AutoAdvanceTicketWorkflow
 {
     public function __construct(
         private readonly TicketWorkflowRuntime $workflowRuntime,
-        private readonly ChangeTicketStatus $changeTicketStatus,
+        private readonly TransitionTicketWorkflow $transitionTicketWorkflow,
     ) {}
 
     /*
     |--------------------------------------------------------------------------
-    | Requirement-driven workflow advance
+    | Published workflow compatibility
     |--------------------------------------------------------------------------
     |
-    | When a technician completes a required artifact, such as marking a reply
-    | as the solution, the workflow may move forward automatically. Closing a
-    | ticket remains a deliberate manual action.
+    | Workflow definitions published before schema version 3 relied on an
+    | implicit solution requirement trigger. Preserve that pinned behavior,
+    | while every current definition advances only from explicit triggers.
     |
     */
     public function handle(Ticket $ticket, ?User $actor = null): ?Ticket
     {
-        $transition = $this->workflowRuntime->availableTransitions($ticket)
-            ->first(function (TicketWorkflowTransition $transition) use ($ticket) {
-                $transition->loadMissing('toStatus');
+        if (! $this->workflowRuntime->usesImplicitRequirementTriggers($ticket)) {
+            return null;
+        }
 
-                return ! $transition->toStatus?->is_closed
+        $transition = $this->workflowRuntime->availableTransitions($ticket)
+            ->first(function (array $transition) use ($ticket): bool {
+                $decision = $this->workflowRuntime->transitionDecision($ticket, $transition);
+
+                return ! (bool) data_get($decision, 'target_state.is_terminal', false)
                     && $this->workflowRuntime->transitionHasRequirements($transition)
-                    && $this->workflowRuntime->transitionBlockedReason($ticket, $transition) === null;
+                    && $decision['allowed'];
             });
 
         if (! $transition) {
             return null;
         }
 
-        return $this->changeTicketStatus->handle($ticket, $transition->toStatus, $actor);
+        return $this->transitionTicketWorkflow->handle(
+            $ticket,
+            (string) $transition['transition_key'],
+            $actor,
+            enforceActionGuard: false,
+            allowTerminal: false,
+        );
     }
 }

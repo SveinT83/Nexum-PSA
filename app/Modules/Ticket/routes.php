@@ -1,13 +1,14 @@
 <?php
 
-use App\Modules\Ticket\Controllers\Admin\TicketAssignmentSettingsAdminController;
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController;
+use App\Modules\Ticket\Controllers\Admin\TicketAssignmentSettingsAdminController;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Portal\PortalTicketController;
 use App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController;
 use App\Modules\Ticket\Controllers\Tech\TicketController;
 use App\Modules\Ticket\Controllers\Tech\TicketSlaReportController;
-use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
+use App\Modules\Ticket\Controllers\Tech\TicketWorkflowController;
 use Illuminate\Support\Facades\Route;
 
 if (($ticketPortalRoutes ?? false) === true) {
@@ -69,6 +70,34 @@ Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])
 Route::post('/tickets/{ticket}/workflow/{transition}', [TicketController::class, 'transition'])
     ->name('tickets.workflow.transition');
 
+Route::post('/tickets/{ticket}/workflow-v3/transitions/{transitionKey}', [TicketWorkflowController::class, 'transition'])
+    ->name('tickets.workflow-v3.transition');
+Route::post('/tickets/{ticket}/timer/start', [TicketWorkflowController::class, 'startTimer'])
+    ->name('tickets.timer.start');
+
+Route::post('/tickets/{ticket}/workflow-v3/escalations/{pathKey}', [TicketWorkflowController::class, 'escalate'])
+    ->name('tickets.workflow-v3.escalate');
+Route::post('/tickets/{ticket}/planned-lines', [TicketWorkflowController::class, 'storePlannedLine'])
+    ->name('tickets.planned-lines.store');
+Route::delete('/tickets/{ticket}/planned-lines/{plannedLine}', [TicketWorkflowController::class, 'destroyPlannedLine'])
+    ->name('tickets.planned-lines.destroy');
+Route::post('/tickets/{ticket}/planned-lines/{plannedLine}/convert', [TicketWorkflowController::class, 'convertPlannedLine'])
+    ->name('tickets.planned-lines.convert');
+Route::post('/tickets/{ticket}/planned-lines/{plannedLine}/purchase', [TicketWorkflowController::class, 'requestPurchase'])
+    ->name('tickets.planned-lines.purchase');
+Route::post('/tickets/{ticket}/sales-quote', [TicketWorkflowController::class, 'createQuote'])
+    ->name('tickets.sales-quote.create');
+Route::post('/tickets/{ticket}/sales-quote/send', [TicketWorkflowController::class, 'sendQuote'])
+    ->name('tickets.sales-quote.send');
+Route::post('/tickets/{ticket}/messages/{message}/quote-versions/{version}/accept', [TicketWorkflowController::class, 'acceptQuoteFromMessage'])
+    ->name('tickets.sales-quote.accept-message');
+Route::post('/tickets/{ticket}/workflow-reviews', [TicketWorkflowController::class, 'requestReview'])
+    ->name('tickets.workflow-reviews.store');
+Route::post('/tickets/{ticket}/workflow-reviews/{review}/decision', [TicketWorkflowController::class, 'decideReview'])
+    ->name('tickets.workflow-reviews.decide');
+Route::post('/tickets/{ticket}/workflow-evidence', [TicketWorkflowController::class, 'classifyEvidence'])
+    ->name('tickets.workflow-evidence.store');
+
 Route::post('/tickets/{ticket}/documentation-request', [TicketController::class, 'requestDocumentation'])
     ->name('tickets.documentation-request');
 
@@ -89,6 +118,9 @@ Route::post('/tickets/{ticket}/cost-entries', [TicketController::class, 'storeCo
 
 Route::patch('/tickets/{ticket}/cost-entries/{costEntry}', [TicketController::class, 'updateCostEntry'])
     ->name('tickets.cost-entries.update');
+
+Route::delete('/tickets/{ticket}/cost-entries/{costEntry}', [TicketController::class, 'destroyCostEntry'])
+    ->name('tickets.cost-entries.destroy');
 
 Route::post('/tickets/{ticket}/cost-entries/{costEntry}/pick', [TicketController::class, 'pickCostEntry'])
     ->name('tickets.cost-entries.pick');
@@ -196,4 +228,8 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.tickets.workflows.edit');
     Route::put('/admin/settings/tickets/workflows/{workflow}', [TicketSettingsController::class, 'updateWorkflow'])
         ->name('admin.settings.tickets.workflows.update');
+    Route::post('/admin/settings/tickets/workflows/{workflow}/publish', [TicketSettingsController::class, 'publishWorkflow'])
+        ->name('admin.settings.tickets.workflows.publish');
+    Route::post('/admin/settings/tickets/workflows/{workflow}/migrate-tickets', [TicketSettingsController::class, 'migrateWorkflowTickets'])
+        ->name('admin.settings.tickets.workflows.migrate-tickets');
 });

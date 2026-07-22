@@ -1,16 +1,45 @@
 <?php
 
 use App\Modules\Clients\Controllers\Admin\ClientFormatSettingsController;
-use App\Modules\Clients\Controllers\Tech\ClientCustomFieldValueController;
 use App\Modules\Clients\Controllers\Tech\ClientController;
+use App\Modules\Clients\Controllers\Tech\ClientCustomFieldValueController;
 use App\Modules\Clients\Controllers\Tech\ClientTimeUsageController;
+use App\Modules\Clients\Controllers\Tech\CloudFactoryLicenceController;
+use App\Modules\Clients\Controllers\Portal\CloudFactoryLicenceController as PortalCloudFactoryLicenceController;
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use Illuminate\Support\Facades\Route;
+
+if (($clientsPortalRoutes ?? false) === true) {
+    Route::middleware(['auth', EnsureCustomerPortalAccess::class])
+        ->prefix('portal/licenses')
+        ->name('customer-portal.licenses.')
+        ->group(function (): void {
+            Route::get('/', [PortalCloudFactoryLicenceController::class, 'index'])->name('index');
+            Route::post('/', [PortalCloudFactoryLicenceController::class, 'issue'])->name('issue');
+            Route::patch('/{subscription}/quantity', [PortalCloudFactoryLicenceController::class, 'quantity'])->name('quantity');
+            Route::patch('/{subscription}/renewal', [PortalCloudFactoryLicenceController::class, 'renewal'])->name('renewal');
+        });
+
+    return;
+}
 
 Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
 Route::get('/clients/index', [ClientController::class, 'index'])->name('client.index');
 Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
 Route::post('/clients/store', [ClientController::class, 'store'])->name('clients.store');
 Route::get('/clients/show/{client}', [ClientController::class, 'show'])->name('clients.show');
+Route::get('/clients/{client}/licenses', [CloudFactoryLicenceController::class, 'index'])
+    ->name('clients.licenses.index');
+
+Route::post('/clients/{client}/licenses', [CloudFactoryLicenceController::class, 'issue'])
+    ->name('clients.licenses.issue');
+Route::patch('/clients/{client}/licenses/{subscription}/quantity', [CloudFactoryLicenceController::class, 'quantity'])
+    ->name('clients.licenses.quantity');
+Route::patch('/clients/{client}/licenses/{subscription}/renewal', [CloudFactoryLicenceController::class, 'renewal'])
+    ->name('clients.licenses.renewal');
+Route::patch('/clients/{client}/licenses/{subscription}/status', [CloudFactoryLicenceController::class, 'status'])
+    ->name('clients.licenses.status');
+
 Route::patch('/clients/{client}/time-usage/{source}/{entry}', [ClientTimeUsageController::class, 'update'])
     ->whereIn('source', ['quick', 'ticket', 'task'])
     ->name('clients.time-usage.update');

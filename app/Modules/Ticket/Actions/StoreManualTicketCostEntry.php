@@ -6,14 +6,23 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketEvent;
+use App\Modules\Ticket\Services\TicketActionGuard;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 class StoreManualTicketCostEntry
 {
+    public function __construct(private readonly TicketActionGuard $guard) {}
+
     public function handle(Ticket $ticket, array $data, ?User $actor = null): TicketCostEntry
     {
-        return DB::transaction(function () use ($ticket, $data, $actor) {
+        if ($reason = $this->guard->reason($ticket, TicketAction::ADD_ACTUAL_COST, $actor)) {
+            throw ValidationException::withMessages(['cost_entry' => $reason]);
+        }
+
+        $entry = DB::transaction(function () use ($ticket, $data, $actor) {
             $quantity = (int) $data['quantity'];
 
             if ($quantity < 1) {
@@ -53,5 +62,9 @@ class StoreManualTicketCostEntry
 
             return $entry;
         });
+
+        app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::ADD_ACTUAL_COST, $actor);
+
+        return $entry;
     }
 }

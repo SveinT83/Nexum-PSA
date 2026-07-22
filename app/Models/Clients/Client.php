@@ -2,8 +2,8 @@
 
 namespace App\Models\Clients;
 
-use App\Models\Tech\Work\Assets\Asset;
 use App\Models\System\Integrations\ClientRmmLink;
+use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Task\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -51,6 +51,16 @@ class Client extends Model
     public function sites(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(\App\Models\Clients\ClientSite::class);
+    }
+
+    public function cloudFactoryLink()
+    {
+        return $this->hasOne(\App\Modules\Integration\Models\CloudFactory\ClientLink::class);
+    }
+
+    public function cloudFactorySubscriptions()
+    {
+        return $this->hasMany(\App\Modules\Integration\Models\CloudFactory\Subscription::class);
     }
 
     /**
@@ -111,7 +121,7 @@ class Client extends Model
             return null;
         }
 
-        return (int) $this->riskAssessments->sum(function($assessment) {
+        return (int) $this->riskAssessments->sum(function ($assessment) {
             return $assessment->total_score;
         });
     }
@@ -119,8 +129,6 @@ class Client extends Model
     /**
      * Get the top 3 highest-scoring risks for this client across all their assessments.
      * This provides a quick overview of the most critical areas needing attention.
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getTopRisksAttribute(): \Illuminate\Database\Eloquent\Collection
     {
@@ -167,6 +175,7 @@ class Client extends Model
         if ($overallAverage >= 5) {
             return 'text-bg-warning'; // Medium
         }
+
         return 'text-bg-success'; // Low
     }
 }

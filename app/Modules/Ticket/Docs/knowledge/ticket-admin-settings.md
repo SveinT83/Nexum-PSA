@@ -67,9 +67,13 @@ Technicians can maintain their own assignment settings where allowed. Admins can
 
 ## Workflows
 
-Workflow settings define state transitions, requirements, manual buttons, and automatic action triggers.
+Workflow settings use the same visual idea as Signal Rules: states are cards, requirements are grouped conditions, and each state has its own available actions.
 
-The Livewire workflow editor is the primary admin UI for workflow configuration.
+An admin can combine `All` and `Any` groups, create several operational states that share one reporting status, choose hidden/blocked/available/conditional actions, restrict eligible technicians, define senior-review gates, set commercial tolerance, and add optional or required escalation paths to another published workflow.
+
+`Save draft` never changes rules on active Tickets. `Publish` creates a numbered immutable version. New Tickets use the published version. Existing active Tickets can be moved only through migration preview and an explicit selection; closed Tickets are not migrated.
+
+See `Ticket Workflow Rules, Approval And Escalation` for the complete administrator and technician guide.
 
 ## Solution Policy
 

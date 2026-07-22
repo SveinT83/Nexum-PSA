@@ -59,6 +59,7 @@ class EnforceTechRoutePermission
         'tech.marketing.campaigns.send-due' => 'marketing.campaign.send',
         'tech.marketing.*' => 'marketing.view',
 
+        'tech.admin.system.version-status' => 'system.view',
         'tech.admin.index' => 'system.view',
         'tech.admin.notification-channels.*' => 'notification.manage_channels',
 
@@ -112,6 +113,14 @@ class EnforceTechRoutePermission
 
         'tech.admin.system.category.*' => 'taxonomy.manage_categories',
         'tech.admin.system.tag.*' => 'taxonomy.manage_tags',
+        'tech.admin.system.integrations.cloudfactory.connect' => 'integration.cloudfactory_manage',
+        'tech.admin.system.integrations.cloudfactory.update' => 'integration.cloudfactory_manage',
+        'tech.admin.system.integrations.cloudfactory.revoke' => 'integration.cloudfactory_manage',
+        'tech.admin.system.integrations.cloudfactory.sync' => 'integration.cloudfactory_manage',
+        'tech.admin.system.integrations.cloudfactory.validation' => 'integration.cloudfactory_manage',
+        'tech.admin.system.integrations.cloudfactory.catalogue.update' => 'integration.cloudfactory_manage',
+        'tech.admin.system.integrations.cloudfactory.conflicts.*' => 'integration.cloudfactory_manage',
+        'tech.admin.system.integrations.cloudfactory.*' => 'integration.cloudfactory_view',
         'tech.admin.system.integrations.ai.*' => 'integration.ai_manage',
         'tech.admin.system.integrations.api.*' => 'integration.api_manage',
         'tech.admin.system.integrations.book-stack.*' => 'integration.bookstack_manage',
@@ -174,6 +183,11 @@ class EnforceTechRoutePermission
         'tech.admin.system.templatesManagement.doc.*' => 'documentation.manage_templates',
         'tech.admin.system.templatesManagement.*' => 'system.settings_manage',
 
+        'tech.clients.licenses.issue' => 'integration.cloudfactory_write',
+        'tech.clients.licenses.quantity' => 'integration.cloudfactory_write',
+        'tech.clients.licenses.renewal' => 'integration.cloudfactory_write',
+        'tech.clients.licenses.status' => 'integration.cloudfactory_write',
+        'tech.clients.licenses.*' => 'client.view',
         'tech.clients.assets.*' => 'asset.view',
         'tech.clients.contracts.timebank-consumptions.store' => 'commercial.timebank.quick-consume',
         'tech.clients.time-usage.update' => 'client.view',

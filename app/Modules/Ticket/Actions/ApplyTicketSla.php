@@ -7,17 +7,16 @@ use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Services\TicketSlaResolver;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
 
 class ApplyTicketSla
 {
-    public function __construct(private readonly TicketSlaResolver $ticketSlaResolver)
-    {
-    }
+    public function __construct(private readonly TicketSlaResolver $ticketSlaResolver) {}
 
     public function handle(Ticket $ticket, Sla $sla, ?User $actor = null): Ticket
     {
-        return DB::transaction(function () use ($ticket, $sla, $actor) {
+        $result = DB::transaction(function () use ($ticket, $sla, $actor) {
             $ticket->loadMissing('priority');
 
             $before = [
@@ -61,5 +60,9 @@ class ApplyTicketSla
 
             return $ticket;
         });
+
+        app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::APPLY_SLA, $actor);
+
+        return $result;
     }
 }

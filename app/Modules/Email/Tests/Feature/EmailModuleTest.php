@@ -7,8 +7,12 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
+use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Models\ContactEmail;
+use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\Email\Controllers\Admin\AccountsController;
 use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
+use App\Modules\Email\Controllers\Tech\InboxController;
 use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\PollActiveEmailAccounts;
@@ -21,36 +25,32 @@ use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\EmailTestResult;
 use App\Modules\Email\Services\EmailTestService;
-use App\Modules\Email\Services\EmailTemplateRenderer;
-use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\HtmlSanitizer;
-use App\Modules\Email\Controllers\Tech\InboxController;
-use App\Modules\Contact\Models\Contact;
-use App\Modules\Contact\Models\ContactEmail;
-use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\Signal\Models\Signal;
 use App\Modules\Signal\Models\SignalRule;
+use App\Modules\Taxonomy\Models\Category;
+use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketQueue;
-use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketRule;
 use App\Modules\Ticket\Models\TicketStatus;
+use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
-use App\Modules\Taxonomy\Models\Category;
-use App\Modules\Taxonomy\Models\Tag;
 use Database\Seeders\EmailTemplateSeeder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
@@ -62,6 +62,7 @@ class EmailModuleTest extends TestCase
     use RefreshDatabase;
 
     private User $tech;
+
     private User $admin;
 
     protected function setUp(): void
@@ -83,8 +84,8 @@ class EmailModuleTest extends TestCase
     {
         $route = Route::getRoutes()->getByName('tech.inbox.index');
 
-        $this->assertSame(InboxController::class . '@index', $route->getActionName());
-        $this->assertSame(InboxController::class . '@markSpam', Route::getRoutes()->getByName('tech.inbox.spam')->getActionName());
+        $this->assertSame(InboxController::class.'@index', $route->getActionName());
+        $this->assertSame(InboxController::class.'@markSpam', Route::getRoutes()->getByName('tech.inbox.spam')->getActionName());
         $account = EmailAccount::create([
             'address' => 'support@example.test',
             'from_name' => 'Support',
@@ -373,7 +374,7 @@ class EmailModuleTest extends TestCase
             'is_active' => false,
         ]));
 
-        app()->call([new PollActiveEmailAccounts(), 'handle']);
+        app()->call([new PollActiveEmailAccounts, 'handle']);
 
         Queue::assertPushed(FetchImapAccount::class, 1);
         Queue::assertPushed(FetchImapAccount::class, fn (FetchImapAccount $job): bool => $job->batchSize === 20);
@@ -472,7 +473,7 @@ class EmailModuleTest extends TestCase
     {
         $route = Route::getRoutes()->getByName('tech.admin.settings.email.accounts');
 
-        $this->assertSame(AccountsController::class . '@index', $route->getActionName());
+        $this->assertSame(AccountsController::class.'@index', $route->getActionName());
 
         $this->actingAs($this->admin)
             ->get(route('tech.admin.settings.email.accounts'))
@@ -494,8 +495,8 @@ class EmailModuleTest extends TestCase
         ];
 
         foreach ($jobs as $job) {
-            $legacyClass = 'App\\Domain\\Email\\Jobs\\' . $job;
-            $moduleClass = 'App\\Modules\\Email\\Jobs\\' . $job;
+            $legacyClass = 'App\\Domain\\Email\\Jobs\\'.$job;
+            $moduleClass = 'App\\Modules\\Email\\Jobs\\'.$job;
 
             $this->assertTrue(class_exists($legacyClass));
             $this->assertTrue(is_subclass_of($legacyClass, $moduleClass));
@@ -658,7 +659,7 @@ class EmailModuleTest extends TestCase
             'smtp_secret' => 'secret',
             'smtp_auth_type' => 'password',
         ]);
-        $result = new EmailTestResult();
+        $result = new EmailTestResult;
         $result->imap_ok = true;
         $result->smtp_ok = false;
         $result->imap_ms = 12.4;
@@ -689,7 +690,7 @@ class EmailModuleTest extends TestCase
     {
         $route = Route::getRoutes()->getByName('tech.admin.system.templatesManagement.email.index');
 
-        $this->assertSame(EmailTemplateController::class . '@index', $route->getActionName());
+        $this->assertSame(EmailTemplateController::class.'@index', $route->getActionName());
 
         $this->actingAs($this->admin)
             ->get(route('tech.admin.system.templatesManagement.index'))
@@ -803,6 +804,13 @@ class EmailModuleTest extends TestCase
             'scope' => 'tickets',
             'key' => 'ticket_reply',
             'is_default' => true,
+        ]);
+
+        $this->assertDatabaseHas('email_templates', [
+            'scope' => 'tickets',
+            'key' => 'ticket_status_update',
+            'is_default' => true,
+            'is_active' => true,
         ]);
 
         $this->assertDatabaseHas('email_templates', [
@@ -1298,8 +1306,8 @@ class EmailModuleTest extends TestCase
             'received_at' => now(),
             'state' => 'untriaged',
             'body_text' => "Det går bare bra. Jeg har ingen oppdateringer enda.\n\n"
-                . "tor. 14. mai 2026 kl. 13:51 skrev Svein Tore <post@example.com>:\n\n"
-                . "> Hello Svein Tore,\n>\n> Hei hvordan går det med deg?",
+                ."tor. 14. mai 2026 kl. 13:51 skrev Svein Tore <post@example.com>:\n\n"
+                ."> Hello Svein Tore,\n>\n> Hei hvordan går det med deg?",
         ]);
 
         app()->call([new ProcessInboundRules($email->id), 'handle']);
@@ -1351,8 +1359,8 @@ class EmailModuleTest extends TestCase
             'received_at' => now(),
             'state' => 'untriaged',
             'body_text' => "This is the only new text.\n\n"
-                . "--- Please reply above this line ---\n\n"
-                . "Hello Customer,\n\nOld technician message.",
+                ."--- Please reply above this line ---\n\n"
+                ."Hello Customer,\n\nOld technician message.",
         ]);
 
         app()->call([new ProcessInboundRules($email->id), 'handle']);

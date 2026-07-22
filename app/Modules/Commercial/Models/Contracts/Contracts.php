@@ -2,10 +2,12 @@
 
 namespace App\Modules\Commercial\Models\Contracts;
 
+use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Commercial\Models\Terms\ContractTermSnapshot;
+use App\Modules\Commercial\Models\Terms\LegalAcceptanceEvent;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
-use App\Modules\Commercial\Models\Sla\Sla;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,6 +27,10 @@ class Contracts extends Model
         'renewal_months',
         'allow_indexing_during_binding',
         'allow_decrease_during_binding',
+        'allow_license_additions',
+        'allow_license_increases',
+        'allow_license_decreases',
+        'allow_license_price_updates',
         'max_index_pct_binding',
         'post_binding_index_pct',
         'approval_status',
@@ -63,6 +69,10 @@ class Contracts extends Model
 
             'allow_indexing_during_binding' => 'boolean',
             'allow_decrease_during_binding' => 'boolean',
+            'allow_license_additions' => 'boolean',
+            'allow_license_increases' => 'boolean',
+            'allow_license_decreases' => 'boolean',
+            'allow_license_price_updates' => 'boolean',
 
             'max_index_pct_binding' => 'decimal:2',
             'post_binding_index_pct' => 'decimal:2',
@@ -92,6 +102,26 @@ class Contracts extends Model
         return $this->hasMany(ContractItem::class, 'contract_id');
     }
 
+    public function termSnapshots()
+    {
+        return $this->hasMany(ContractTermSnapshot::class, 'contract_id');
+    }
+
+    public function legalAcceptanceEvents()
+    {
+        return $this->hasMany(LegalAcceptanceEvent::class, 'contract_id');
+    }
+
+    public function cloudFactorySubscriptions()
+    {
+        return $this->hasMany(\App\Modules\Integration\Models\CloudFactory\Subscription::class, 'contract_id');
+    }
+
+    public function cloudFactoryAmendments()
+    {
+        return $this->hasMany(\App\Modules\Integration\Models\CloudFactory\LicenceAmendment::class, 'contract_id');
+    }
+
     public function portalAcceptedAccount(): BelongsTo
     {
         return $this->belongsTo(CustomerPortalAccount::class, 'portal_accepted_account_id');
@@ -115,6 +145,7 @@ class Contracts extends Model
                 $total += $item->line_total;
             }
         }
+
         return (float) $total;
     }
 
@@ -123,7 +154,10 @@ class Contracts extends Model
         $annualProfit = 0;
         foreach ($this->items->loadMissing('service.costRelations.cost') as $item) {
             $revenuePerPeriod = $item->line_total;
-            $costPerPeriod = (float)($item->service ? $item->service->costRelations->sum(fn($cr) => $cr->cost->cost ?? 0) : 0) * (int)$item->quantity;
+            $unitCost = $item->cost_unit_price !== null
+                ? (float) $item->cost_unit_price
+                : (float) ($item->service ? $item->service->costRelations->sum(fn ($cr) => $cr->cost->cost ?? 0) : 0);
+            $costPerPeriod = $unitCost * (int) $item->quantity;
 
             $multiplier = match ($item->billing_interval) {
                 'monthly' => 12,
@@ -134,6 +168,7 @@ class Contracts extends Model
 
             $annualProfit += ($revenuePerPeriod - $costPerPeriod) * $multiplier;
         }
+
         return (float) $annualProfit;
     }
 
@@ -146,6 +181,7 @@ class Contracts extends Model
             $this->secure_token = \Illuminate\Support\Str::random(64);
             $this->save();
         }
+
         return $this->secure_token;
     }
 
@@ -163,7 +199,7 @@ class Contracts extends Model
     public function isReady(): bool
     {
         return $this->items()->count() > 0
-            && !empty($this->terms_snapshot)
+            && ! empty($this->terms_snapshot)
             && $this->start_date
             && $this->start_date->isFuture();
     }

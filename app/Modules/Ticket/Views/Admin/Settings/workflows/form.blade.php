@@ -64,13 +64,57 @@
             'triggerActions' => $triggerActions,
             'oldStates' => old('states'),
             'oldTransitions' => old('transitions'),
+            'oldEscalationPaths' => old('escalation_paths'),
+            'workflowId' => $workflow->exists ? $workflow->id : null,
         ])
 
         <div class="d-flex justify-content-end gap-2">
             <a href="{{ route('tech.admin.settings.tickets.workflows') }}" class="btn btn-outline-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">{{ $mode === 'edit' ? 'Save workflow' : 'Create workflow' }}</button>
+            <button type="submit" class="btn btn-primary">{{ $mode === 'edit' ? 'Save draft' : 'Create workflow draft' }}</button>
         </div>
     </form>
+
+    @if($mode === 'edit' && ($migrationPreview['target_version'] ?? null) && collect($migrationPreview['tickets'] ?? [])->isNotEmpty())
+        <!-- Active Ticket migration is explicit and separate from draft save/publish. -->
+        <x-card.default title="Migrate active Tickets to published version {{ $migrationPreview['target_version']->version }}">
+            <p class="small text-muted mb-2">Publishing never changes active Tickets. Nexum evaluates every Ticket independently against the new workflow's step requirements. Select only the Tickets you intentionally want to move.</p>
+            <div class="alert alert-info py-2 small">Target steps are automatically determined. If a proposal is wrong or blocked, adjust the new workflow's step requirements and publish a corrected version before migrating.</div>
+            @can('ticket.workflow_migrate')
+                <form method="POST" action="{{ route('tech.admin.settings.tickets.workflows.migrate-tickets', $workflow) }}">
+                    @csrf
+                    <input type="hidden" name="target_version_id" value="{{ $migrationPreview['target_version']->id }}">
+
+                    <div class="table-responsive border rounded mb-3">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead><tr><th></th><th>Ticket</th><th>Current</th><th>Automatically proposed</th><th>Owner</th></tr></thead>
+                            <tbody>
+                            @foreach($migrationPreview['tickets'] as $row)
+                                <tr>
+                                    <td><input type="checkbox" name="ticket_ids[]" value="{{ $row['ticket_id'] }}" class="form-check-input" @disabled($row['blocked_reason'])></td>
+                                    <td><strong>{{ $row['ticket_key'] }}</strong><div class="small text-muted">{{ $row['subject'] }}</div></td>
+                                    <td>v{{ $row['from_version'] }} · {{ $row['from_state_name'] }}</td>
+                                    <td>
+                                        @if($row['target_state_name'])
+                                            <strong>{{ $row['target_state_name'] }}</strong>
+                                            <span class="badge text-bg-light border ms-1">Automatic</span>
+                                            <div class="small text-muted">{{ $row['placement_reason'] }}</div>
+                                        @else
+                                            <strong class="text-danger">Blocked</strong><div class="small text-danger">{{ $row['blocked_reason'] }}</div>
+                                        @endif
+                                    </td>
+                                    <td>{{ $row['owner'] ?: 'Unassigned' }}</td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-warning">Migrate selected active Tickets</button>
+                </form>
+            @else
+                <div class="alert alert-secondary mb-0">You can preview this migration, but the dedicated workflow migration permission is required to apply it.</div>
+            @endcan
+        </x-card.default>
+    @endif
 @endsection
 
 @section('sidebar')
@@ -79,7 +123,17 @@
 
 @section('rightbar')
     <x-card.default title="Workflow editor">
-        <p class="small text-muted mb-2">Use existing ticket statuses as states. Transitions define which status moves are available on Ticket show.</p>
-        <p class="small text-muted mb-0">Transition requirements are enforced on Ticket show and by the server-side workflow runtime.</p>
+        <p class="small text-muted mb-2">Build plain-language groups: all groups or at least one group, then all or at least one requirement inside each group.</p>
+        <p class="small text-muted mb-2">Saving changes only updates the draft. Existing Tickets stay pinned to their published workflow version.</p>
+        @if($workflow->exists)
+            <div class="small mb-2"><strong>Draft:</strong> {{ ucfirst($workflow->definition_status ?? 'draft') }}</div>
+            <div class="small mb-3"><strong>Published version:</strong> {{ $workflow->publishedVersion?->version ?? 'None' }}</div>
+            @can('ticket.workflow_publish')
+                <form method="POST" action="{{ route('tech.admin.settings.tickets.workflows.publish', $workflow) }}">
+                    @csrf
+                    <button class="btn btn-sm btn-success w-100">Validate and publish new version</button>
+                </form>
+            @endcan
+        @endif
     </x-card.default>
 @endsection

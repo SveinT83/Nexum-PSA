@@ -4,124 +4,121 @@ namespace App\Modules\Commercial\Livewire\Tech;
 
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Terms\terms;
-use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 
-/**
- * ServiceLegal er en Livewire-komponent som håndterer valg og visning av juridiske betingelser (Terms)
- * knyttet til en tjeneste (Service). Den fungerer som en "picker" hvor man kan legge til
- * eller fjerne betingelser fra en liste.
- */
 class ServiceLegal extends Component
 {
-    // Egenskapen $service holder på den nåværende tjenesten hvis den eksisterer.
     public ?Services $service = null;
 
-    // En liste over ID-ene til de valgte betingelsene. Lagres som strenger for konsistens.
     public array $selectedTermIds = [];
 
-    // En status-streng som kan brukes til å styre om komponenten er aktiv eller ikke (standard: 'enabled').
     public string $enabled = 'enabled';
 
-    /**
-     * mount-metoden kjøres når komponenten initialiseres for første gang.
-     * Den tar inn en valgfri tjeneste og en status.
-     */
     public function mount(?Services $service = null, string $enabled = 'enabled'): void
     {
         $this->service = $service;
         $this->enabled = $enabled;
 
-        // Hvis en tjeneste er sendt med og den eksisterer i databasen,
-        // henter we ut ID-ene til betingelsene som allerede er knyttet til denne tjenesten.
-        if ($this->service && $this->service->exists) {
-            if (method_exists($this->service, 'serviceTerms')) {
-                 $this->selectedTermIds = $this->service->serviceTerms()
-                    ->pluck('terms.id')
-                    ->map(fn($id) => (string) $id)
-                    ->toArray();
-            }
+        if ($this->service?->exists) {
+            $this->selectedTermIds = $this->service->serviceTerms()
+                ->pluck('terms.id')
+                ->map(fn ($id) => (string) $id)
+                ->all();
         }
     }
 
-    /**
-     * Henter alle tilgjengelige betingelser fra databasen, sortert etter navn.
-     * #[Computed] gjør at resultatet caches i samme forespørsel, slik at databasen ikke spørres unødig.
-     */
     #[Computed]
     public function allTerms()
     {
-        return terms::orderBy('name')->get();
+        return terms::query()
+            ->where('origin', 'nexum')
+            ->where('managed_externally', false)
+            ->with('currentVersion')
+            ->orderBy('name')
+            ->get();
     }
 
-    /**
-     * Henter de faktiske modell-objektene for de betingelsene som er valgt.
-     * Resultatet sorteres i samme rekkefølge som ID-ene ligger i $selectedTermIds arrayen.
-     */
     #[Computed]
     public function selectedTerms()
     {
-        return terms::whereIn('id', $this->selectedTermIds)
+        return terms::query()
+            ->whereIn('id', $this->selectedTermIds)
+            ->with('currentVersion')
             ->get()
-            ->sortBy(function($term) {
-                // Sørger for at rekkefølgen i visningen matcher rekkefølgen de ble valgt i.
-                return array_search((string)$term->id, $this->selectedTermIds);
-            });
+            ->sortBy(fn ($term) => array_search((string) $term->id, $this->selectedTermIds, true));
     }
 
-    /**
-     * Legger til eller fjerner en betingelse fra listen over valgte ID-er.
-     * Hvis den finnes fra før fjernes den, hvis ikke legges den til.
-     */
+    #[Computed]
+    public function providerTerms()
+    {
+        return $this->selectedTerms
+            ->filter(fn (terms $term): bool => $term->isProviderManaged());
+    }
+
+    #[Computed]
+    public function selectedNexumTerms()
+    {
+        return $this->selectedTerms
+            ->reject(fn (terms $term): bool => $term->isProviderManaged());
+    }
+
     public function toggleTerm($termId): void
     {
         if ($this->enabled === 'disabled') {
             return;
         }
 
-        $termId = (string) $termId;
-        if (in_array($termId, $this->selectedTermIds)) {
-            // Hvis ID-en finnes, fjern den ved å filtrere arrayen.
-            $this->selectedTermIds = array_values(array_diff($this->selectedTermIds, [$termId]));
-        } else {
-            // Hvis ID-en ikke finnes, legg den til i slutten av listen.
-            $this->selectedTermIds[] = $termId;
+        $term = terms::query()->findOrFail($termId);
+        if ($term->isProviderManaged()) {
+            return;
         }
+
+        $termId = (string) $term->id;
+        $this->selectedTermIds = in_array($termId, $this->selectedTermIds, true)
+            ? array_values(array_diff($this->selectedTermIds, [$termId]))
+            : [...$this->selectedTermIds, $termId];
 
         $this->syncServiceTerms();
     }
 
-    /**
-     * Fjerner en spesifikk betingelse fra listen over valgte ID-er.
-     */
     public function removeTerm($termId): void
     {
         if ($this->enabled === 'disabled') {
             return;
         }
 
-        $this->selectedTermIds = array_values(array_diff($this->selectedTermIds, [(string) $termId]));
+        $term = terms::query()->findOrFail($termId);
+        if ($term->isProviderManaged()) {
+            return;
+        }
+
+        $this->selectedTermIds = array_values(array_diff($this->selectedTermIds, [(string) $term->id]));
         $this->syncServiceTerms();
     }
 
-    /**
-     * Persist term changes immediately when editing an existing service.
-     *
-     * The service form still renders hidden terms[] inputs for create flows, but edit
-     * should not depend on Livewire-managed inputs surviving a classic form submit.
-     */
     private function syncServiceTerms(): void
     {
-        if (! $this->service || ! $this->service->exists) {
+        if (! $this->service?->exists) {
             return;
         }
+
+        $providerIds = $this->service->serviceTerms()
+            ->where(fn ($query) => $query
+                ->where('origin', 'provider')
+                ->orWhere('managed_externally', true))
+            ->pluck('terms.id')
+            ->map(fn ($id) => (string) $id);
+
+        $this->selectedTermIds = collect($this->selectedTermIds)
+            ->merge($providerIds)
+            ->unique()
+            ->values()
+            ->all();
 
         $this->service->serviceTerms()->sync($this->selectedTermIds);
     }
 
-    /**
-     * Definerer hvilken Blade-visning (view) som skal brukes for denne komponenten.
-     */
     public function render()
     {
         return view('commercial::Livewire.Tech.service-legal');

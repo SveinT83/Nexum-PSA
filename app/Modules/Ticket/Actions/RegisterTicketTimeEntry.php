@@ -6,10 +6,15 @@ use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketTimeEntry;
+use App\Modules\Ticket\Services\TicketActionGuard;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class RegisterTicketTimeEntry
 {
+    public function __construct(private readonly TicketActionGuard $guard) {}
+
     /*
     |--------------------------------------------------------------------------
     | Time registration is billable intent, not immediate billing
@@ -22,7 +27,11 @@ class RegisterTicketTimeEntry
     */
     public function handle(Ticket $ticket, array $data, array $rateOption, ?User $actor = null): TicketTimeEntry
     {
-        return DB::transaction(function () use ($ticket, $data, $rateOption, $actor) {
+        if ($reason = $this->guard->reason($ticket, TicketAction::REGISTER_TIME, $actor)) {
+            throw ValidationException::withMessages(['time_entry' => $reason]);
+        }
+
+        $entry = DB::transaction(function () use ($ticket, $data, $rateOption, $actor) {
             $entry = TicketTimeEntry::create([
                 'ticket_id' => $ticket->id,
                 'user_id' => $actor?->id,
@@ -66,5 +75,9 @@ class RegisterTicketTimeEntry
 
             return $entry;
         });
+
+        app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::REGISTER_TIME, $actor);
+
+        return $entry;
     }
 }

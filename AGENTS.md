@@ -176,6 +176,10 @@ affected code and tests.
 - Use Bootstrap, not Tailwind.
 - Reuse global Blade components from `resources/views/components` wherever
   practical before creating module-specific markup or components.
+- The authenticated layout loads Livewire 3 through `@livewireScripts`, and
+  Livewire owns the single Alpine runtime on those pages. Do not separately
+  import or start `alpinejs` from `resources/js/app.js`; duplicate Alpine
+  runtimes can leave visible `wire:click` controls disconnected.
 - Prefer shared components for buttons, cards, form controls, navigation, and
   repeated layout patterns.
 - Blade views should use visible section/block comments for major layout areas,
@@ -242,15 +246,30 @@ affected code and tests.
 
 ## Local Tooling And Networked Services
 
-- For Nexum implementation work, use the SSH development server as the normal
-  work target unless the user explicitly asks for local-only work, the task is
-  documentation/planning-only, or the server is unreachable.
+- The SSH development server is an isolated development environment, and
+  `/var/Projects/tdPSA` is the authoritative working copy for Nexum coding.
+- ALL ordinary code implementation and code editing MUST happen directly in
+  that Dev working copy. Do not implement in the local Windows workspace and
+  copy or sync the result to Dev afterward.
+- If the Dev server is unreachable, stop implementation and report the blocker.
+  Do not fall back to local coding. Local work remains appropriate for
+  read-only inspection and documentation/planning-only tasks.
+- The only coding exception is an explicitly agreed special experiment that
+  needs isolation. Use a dedicated branch/worktree, normally with the
+  `codex/` prefix, and keep it separate from the ordinary Dev working copy.
 - Before changing or syncing code on the development server, read the remote
   `/var/Projects/tdPSA/AGENTS.md`, verify the active branch/state, and do not
   assume the local Windows workspace is synced with remote `Dev`.
 - Use the development server as the default runtime for Laravel verification:
   PHP, Composer, Artisan, migrations, scheduler, queue, and Laravel tests should
   normally run on the Dev server, not through local Windows PHP.
+- Compiled Blade views under `storage/framework/views` must remain
+  group-writable by the PHP-FPM group (normally files `0664`). Keep the
+  directory's default group-write ACL, and set `umask 0002` before Artisan
+  commands run as the SSH project user when they may render or rebuild views,
+  including `php artisan view:cache` and view-rendering tests. Read-only
+  compiled views can make Livewire actions return a server error while their
+  buttons appear to do nothing.
 - For production Nexum email or notification checks, verify users' current
   notification settings before sending tests or changing preferences. Report
   which notification types were already enabled or changed, keep test

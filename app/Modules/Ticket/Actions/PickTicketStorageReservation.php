@@ -4,18 +4,24 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
 use App\Modules\Economy\Actions\GenerateOrders;
+use App\Modules\Storage\Models\Item;
 use App\Modules\Storage\Models\Movement;
+use App\Modules\Storage\Models\Reservation;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketEvent;
+use App\Modules\Ticket\Services\TicketActionGuard;
+use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 class PickTicketStorageReservation
 {
-    public function __construct(private readonly GenerateOrders $generateOrders)
-    {
-    }
+    public function __construct(
+        private readonly GenerateOrders $generateOrders,
+        private readonly TicketActionGuard $guard,
+    ) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -30,14 +36,26 @@ class PickTicketStorageReservation
     {
         abort_unless((int) $costEntry->ticket_id === (int) $ticket->id, 404);
 
-        return DB::transaction(function () use ($ticket, $costEntry, $actor): TicketCostEntry {
-            $costEntry->loadMissing(['storageItem', 'reservation']);
+        if ($reason = $this->guard->reason($ticket, TicketAction::PICK_ITEM, $actor)) {
+            throw ValidationException::withMessages(['storage_item' => $reason]);
+        }
+
+        $entry = DB::transaction(function () use ($ticket, $costEntry, $actor): TicketCostEntry {
+            $costEntry = TicketCostEntry::query()
+                ->lockForUpdate()
+                ->findOrFail($costEntry->id);
+            abort_unless((int) $costEntry->ticket_id === (int) $ticket->id, 404);
+
+            $item = Item::withTrashed()
+                ->lockForUpdate()
+                ->find($costEntry->storage_item_id);
+            $reservation = $costEntry->storage_reservation_id
+                ? Reservation::query()->lockForUpdate()->find($costEntry->storage_reservation_id)
+                : null;
 
             if ($costEntry->status !== 'reserved') {
                 throw new InvalidArgumentException('Only reserved ticket costs can be picked.');
             }
-
-            $item = $costEntry->storageItem;
 
             if (! $item) {
                 throw new InvalidArgumentException('The reserved storage item no longer exists.');
@@ -58,8 +76,8 @@ class PickTicketStorageReservation
                 'updated_by' => $actor?->id,
             ])->save();
 
-            if ($costEntry->reservation) {
-                $costEntry->reservation->forceFill(['status' => 'fulfilled'])->save();
+            if ($reservation) {
+                $reservation->forceFill(['status' => 'fulfilled'])->save();
             }
 
             Movement::create([
@@ -104,5 +122,9 @@ class PickTicketStorageReservation
 
             return $costEntry->refresh();
         });
+
+        app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::PICK_ITEM, $actor);
+
+        return $entry;
     }
 }

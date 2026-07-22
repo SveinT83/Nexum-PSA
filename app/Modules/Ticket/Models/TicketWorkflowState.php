@@ -9,6 +9,7 @@ class TicketWorkflowState extends Model
 {
     protected $fillable = [
         'ticket_workflow_id',
+        'state_key',
         'ticket_status_id',
         'name',
         'is_initial',
@@ -17,6 +18,10 @@ class TicketWorkflowState extends Model
         'requires_response',
         'requires_resolution',
         'requires_knowledge_update',
+        'requirements',
+        'action_policy',
+        'assignment_policy',
+        'commercial_policy',
         'sort_order',
     ];
 
@@ -28,6 +33,10 @@ class TicketWorkflowState extends Model
         'requires_resolution' => 'boolean',
         'requires_knowledge_update' => 'boolean',
         'sort_order' => 'integer',
+        'requirements' => 'array',
+        'action_policy' => 'array',
+        'assignment_policy' => 'array',
+        'commercial_policy' => 'array',
     ];
 
     public function workflow(): BelongsTo

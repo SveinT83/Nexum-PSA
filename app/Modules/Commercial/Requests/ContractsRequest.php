@@ -12,7 +12,7 @@ class ContractsRequest extends FormRequest
         return [
             'client_id' => ['required', 'exists:clients,id'],
             'sla_id' => ['nullable', 'exists:sla,id'],
-            'created_by' => ['required', 'exists:' . (new User())->getTable() . ',id'],
+            'created_by' => ['required', 'exists:'.(new User)->getTable().',id'],
 
             'description' => ['nullable', 'string'],
 
@@ -25,6 +25,10 @@ class ContractsRequest extends FormRequest
 
             'allow_indexing_during_binding' => ['boolean'],
             'allow_decrease_during_binding' => ['boolean'],
+            'allow_license_additions' => ['boolean'],
+            'allow_license_increases' => ['boolean'],
+            'allow_license_decreases' => ['boolean'],
+            'allow_license_price_updates' => ['boolean'],
 
             'max_index_pct_binding' => ['nullable', 'numeric'],
             'post_binding_index_pct' => ['nullable', 'numeric'],

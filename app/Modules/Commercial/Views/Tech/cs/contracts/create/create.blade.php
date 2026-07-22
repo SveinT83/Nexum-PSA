@@ -179,6 +179,35 @@
             </div>
         </x-card.default>
 
+        <!-- ------------------------------------------------- -->
+        <!-- Third-party licence change policy -->
+        <!-- Controls automated Cloud Factory writes and imported portal changes. -->
+        <!-- ------------------------------------------------- -->
+        <x-card.default title="Licence change policy">
+            <p class="text-muted">
+                These rules apply to licences managed through integrations such as Cloud Factory.
+                A won and active contract with the relevant Service line is always required.
+            </p>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <x-forms.checkbox name="allow_license_additions" labelName="Allow new licences" id="allow_license_additions" checked="{{ old('allow_license_additions', $contract->allow_license_additions ?? true) ? 'checked' : '' }}"/>
+                </div>
+                <div class="col-md-6">
+                    <x-forms.checkbox name="allow_license_increases" labelName="Allow quantity increases" id="allow_license_increases" checked="{{ old('allow_license_increases', $contract->allow_license_increases ?? true) ? 'checked' : '' }}"/>
+                </div>
+                <div class="col-md-6">
+                    <x-forms.checkbox name="allow_license_decreases" labelName="Allow quantity decreases" id="allow_license_decreases" checked="{{ old('allow_license_decreases', $contract->allow_license_decreases ?? false) ? 'checked' : '' }}"/>
+                </div>
+                <div class="col-md-6">
+                    <x-forms.checkbox name="allow_license_price_updates" labelName="Allow automatic price updates" id="allow_license_price_updates" checked="{{ old('allow_license_price_updates', $contract->allow_license_price_updates ?? true) ? 'checked' : '' }}"/>
+                </div>
+            </div>
+            <div class="alert alert-info mt-3 mb-0">
+                Supplier and currency prices may change automatically according to Integration settings.
+                Portal changes that conflict with this policy are imported for visibility, but are held from contract and billing updates until resolved.
+            </div>
+        </x-card.default>
+
         <!-- Row whit button -->
         <div class="row mt-3">
             <div class="col-md-12">

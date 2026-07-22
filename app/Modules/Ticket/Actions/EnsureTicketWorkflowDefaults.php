@@ -4,7 +4,9 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketWorkflow;
+use App\Modules\Ticket\Services\TicketWorkflowDefinitionService;
 use App\Modules\Ticket\Support\TicketAction;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class EnsureTicketWorkflowDefaults
@@ -37,14 +39,29 @@ class EnsureTicketWorkflowDefaults
             ->where('is_default', true)
             ->update(['is_default' => false]);
 
+        // Once a workflow has states it is administrator-owned. Defaults must never
+        // rewrite custom steps, action policies, or stable keys during page loads.
+        if (! $workflow->wasRecentlyCreated && $workflow->states()->exists()) {
+            if (Schema::hasTable('ticket_workflow_versions') && ! $workflow->published_version_id) {
+                app(TicketWorkflowDefinitionService::class)->publish($workflow);
+            }
+
+            return $workflow->fresh(['states.status', 'transitions.fromStatus', 'transitions.toStatus', 'publishedVersion']);
+        }
+
         foreach ($statuses as $index => $status) {
             $workflow->states()->updateOrCreate(
                 ['ticket_status_id' => $status->id],
                 [
+                    'state_key' => $status->slug,
                     'name' => $status->name,
                     'is_initial' => (bool) $status->is_default,
                     'is_terminal' => (bool) $status->is_closed,
                     'sort_order' => ($index + 1) * 10,
+                    'requirements' => ['match' => 'all', 'groups' => []],
+                    'action_policy' => [],
+                    'assignment_policy' => [],
+                    'commercial_policy' => [],
                 ]
             );
         }
@@ -61,9 +78,18 @@ class EnsureTicketWorkflowDefaults
         $this->ensureTransition($workflow, 'waiting-customer', 'in-progress', 'Resume work', 30, triggerActions: [
             TicketAction::CUSTOMER_REPLY_RECEIVED,
         ]);
-        $this->ensureTransition($workflow, 'in-progress', 'resolved', 'Mark as solved', 40, requiresResponse: true, requiresResolution: true);
-        $this->ensureTransition($workflow, 'new', 'resolved', 'Mark as solved', 45, requiresResponse: true, requiresResolution: true);
-        $this->ensureTransition($workflow, 'waiting-customer', 'resolved', 'Mark as solved', 46, requiresResponse: true, requiresResolution: true);
+        $this->ensureTransition(
+            $workflow, 'in-progress', 'resolved', 'Mark as solved', 40,
+            requiresResolution: true, triggerActions: [TicketAction::SEND_SOLUTION],
+        );
+        $this->ensureTransition(
+            $workflow, 'new', 'resolved', 'Mark as solved', 45,
+            requiresResolution: true, triggerActions: [TicketAction::SEND_SOLUTION],
+        );
+        $this->ensureTransition(
+            $workflow, 'waiting-customer', 'resolved', 'Mark as solved', 46,
+            requiresResolution: true, triggerActions: [TicketAction::SEND_SOLUTION],
+        );
         $this->ensureTransition($workflow, 'resolved', 'closed', 'Close', 50);
         $this->ensureTransition($workflow, 'closed', 'in-progress', 'Reopen', 60);
 
@@ -80,7 +106,13 @@ class EnsureTicketWorkflowDefaults
             }
         }
 
-        return $workflow->fresh(['states.status', 'transitions.fromStatus', 'transitions.toStatus']);
+        $workflow->refresh();
+
+        if (Schema::hasTable('ticket_workflow_versions') && ! $workflow->published_version_id) {
+            app(TicketWorkflowDefinitionService::class)->publish($workflow);
+        }
+
+        return $workflow->fresh(['states.status', 'transitions.fromStatus', 'transitions.toStatus', 'publishedVersion']);
     }
 
     private function ensureTransition(TicketWorkflow $workflow, string $fromSlug, string $toSlug, string $label, int $sortOrder, bool $requiresResponse = false, bool $requiresResolution = false, bool $manualEnabled = true, array $triggerActions = []): void
@@ -102,10 +134,16 @@ class EnsureTicketWorkflowDefaults
             'to_status_id' => $to->id,
         ]);
 
+        $fromState = $workflow->states()->where('ticket_status_id', $from->id)->first();
+        $toState = $workflow->states()->where('ticket_status_id', $to->id)->first();
+
         $transition->fill([
             'label' => $transition->exists ? $transition->label : ($label ?: Str::headline($to->slug)),
             'is_active' => true,
             'sort_order' => $transition->exists ? $transition->sort_order : $sortOrder,
+            'transition_key' => $transition->transition_key ?: $from->slug.'-to-'.$to->slug,
+            'from_state_key' => $fromState?->state_key,
+            'to_state_key' => $toState?->state_key,
         ]);
 
         if (! $transition->exists) {
@@ -114,6 +152,16 @@ class EnsureTicketWorkflowDefaults
                 'trigger_actions' => $triggerActions,
                 'requires_response' => $requiresResponse,
                 'requires_resolution' => $requiresResolution,
+                'requirements' => [
+                    'match' => 'all',
+                    'groups' => array_values(array_filter([[
+                        'match' => 'all',
+                        'conditions' => array_values(array_filter([
+                            $requiresResponse ? ['fact' => 'ticket.technician_response', 'operator' => 'is_true', 'value' => null] : null,
+                            $requiresResolution ? ['fact' => 'ticket.solution', 'operator' => 'is_true', 'value' => null] : null,
+                        ])),
+                    ]], fn (array $group) => $group['conditions'] !== [])),
+                ],
             ]);
         }
 

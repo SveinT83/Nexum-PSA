@@ -18,6 +18,8 @@
         $activeFilterCount = collect([
             filled($filters['status'] ?? null),
             filled($filters['billing_cycle'] ?? null),
+            filled($filters['vendor_id'] ?? null),
+            filled($filters['source'] ?? null),
             filled($filters['audience'] ?? null),
             filled($filters['orderable'] ?? null),
         ])->filter()->count();
@@ -68,7 +70,7 @@
 
             <div id="serviceFiltersCollapse" class="collapse {{ $filtersOpen ? 'show' : '' }} mt-3">
                 <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="service_status" class="form-label small text-muted mb-1">Status</label>
                         <select id="service_status" name="status" class="form-select form-select-sm">
                             <option value="">All statuses</option>
@@ -77,7 +79,25 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label for="service_vendor" class="form-label small text-muted mb-1">Vendor</label>
+                        <select id="service_vendor" name="vendor_id" class="form-select form-select-sm">
+                            <option value="">All vendors</option>
+                            @foreach($vendors as $vendor)
+                                <option value="{{ $vendor->id }}" @selected((string) ($filters['vendor_id'] ?? '') === (string) $vendor->id)>{{ $vendor->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="service_source" class="form-label small text-muted mb-1">Source</label>
+                        <select id="service_source" name="source" class="form-select form-select-sm">
+                            <option value="">All sources</option>
+                            @foreach($sources as $source)
+                                <option value="{{ $source }}" @selected(($filters['source'] ?? '') === $source)>{{ $source === 'cloudfactory' ? 'Cloud Factory' : ucfirst($source) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label for="service_billing_cycle" class="form-label small text-muted mb-1">Billing cycle</label>
                         <select id="service_billing_cycle" name="billing_cycle" class="form-select form-select-sm">
                             <option value="">All cycles</option>
@@ -86,7 +106,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="service_audience" class="form-label small text-muted mb-1">Audience</label>
                         <select id="service_audience" name="audience" class="form-select form-select-sm">
                             <option value="">All audiences</option>
@@ -95,7 +115,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-1">
                         <label for="service_orderable" class="form-label small text-muted mb-1">Orderable</label>
                         <select id="service_orderable" name="orderable" class="form-select form-select-sm">
                             <option value="">Any</option>
@@ -137,6 +157,16 @@
                             </a>
                         </th>
                         <th>
+                            <a href="{{ $sortLink('vendor') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
+                                Vendor <i class="bi {{ $sortIcon('vendor') }}"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ $sortLink('source') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
+                                Source <i class="bi {{ $sortIcon('source') }}"></i>
+                            </a>
+                        </th>
+                        <th>
                             <a href="{{ $sortLink('price', 'desc') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
                                 Price <i class="bi {{ $sortIcon('price') }}"></i>
                             </a>
@@ -169,7 +199,16 @@
                                     {{ $service->name }}
                                 </a>
                             </td>
-                            <td>{{ number_format((float) $service->price_ex_vat, 2, ',', '.') }} kr</td>
+                            <td>{{ $service->vendor?->name ?: '—' }}</td>
+                            <td>
+                                <x-integration.source-ownership :record="$service" />
+                            </td>
+                            <td>
+                                <div>{{ number_format((float) $service->price_ex_vat, 2, ',', '.') }} kr</div>
+                                @if($service->source === 'cloudfactory' && $service->cost_price !== null)
+                                    <div class="small text-muted">Cost {{ number_format((float) $service->cost_price, 2, ',', '.') }} {{ $service->price_currency ?? 'NOK' }}</div>
+                                @endif
+                            </td>
                             <td>{{ ucfirst(str_replace('_', ' ', $service->billing_cycle ?? 'monthly')) }}</td>
                             <td>{{ ucfirst($service->availability_audience ?? 'all') }}</td>
                             <td>
@@ -186,7 +225,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-4">No services found.</td>
+                            <td colspan="10" class="text-center py-4">No services found.</td>
                         </tr>
                     @endforelse
                 </tbody>

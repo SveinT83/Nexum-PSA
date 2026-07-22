@@ -12,6 +12,7 @@ class Integration extends Model
     use HasFactory;
 
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -49,7 +50,7 @@ class Integration extends Model
      */
     public function getSecret($key)
     {
-        if (!isset($this->secrets[$key])) {
+        if (! isset($this->secrets[$key])) {
             return null;
         }
 
@@ -68,5 +69,15 @@ class Integration extends Model
         $secrets = $this->secrets ?? [];
         $secrets[$key] = Crypt::encryptString($value);
         $this->secrets = $secrets;
+    }
+
+    public function cloudFactoryClientLinks()
+    {
+        return $this->hasMany(\App\Modules\Integration\Models\CloudFactory\ClientLink::class);
+    }
+
+    public function cloudFactoryOffers()
+    {
+        return $this->hasMany(\App\Modules\Integration\Models\CloudFactory\Offer::class);
     }
 }

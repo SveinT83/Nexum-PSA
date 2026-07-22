@@ -15,11 +15,13 @@ class CustomerPortalNotification extends Notification
     use Queueable;
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, string>|null  $channelOverride
      */
-    public function __construct(private readonly array $payload)
-    {
-    }
+    public function __construct(
+        private readonly array $payload,
+        private readonly ?array $channelOverride = null,
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -32,6 +34,10 @@ class CustomerPortalNotification extends Notification
 
         if ($setting->mail_enabled) {
             $channels[] = 'mail';
+        }
+
+        if ($this->channelOverride !== null) {
+            $channels = array_values(array_intersect($channels, $this->channelOverride));
         }
 
         return $channels;

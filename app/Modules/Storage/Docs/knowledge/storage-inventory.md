@@ -17,6 +17,7 @@ Core concepts:
 - **Reservation** holds stock for a source such as a ticket without immediately removing it from on-hand quantity.
 - **Picking** consumes reserved stock and makes it ready for billing through Economy.
 - **Can be ordered** controls whether an active item may be reserved beyond current available stock.
+- **Ticket purchase need** is a draft Purchase Order line created from customer-approved Ticket scope. It is not a vendor order.
 
 Default warehouse:
 
@@ -83,6 +84,8 @@ readers should initially use `q`, `sku`, or `ean_number` depending on what the d
 
 Stock changes must use `/api/v1/storage/items/{item}/adjust`. Directly changing `qty_on_hand` is not
 allowed because it would bypass the movement history.
+
+Ticket Workflow operations use the Ticket API rather than the generic Storage API. An approved planned line can be converted with `/api/v1/tickets/{ticket}/planned-lines/{plannedLine}/convert` or turned into a draft purchase need with `/api/v1/tickets/{ticket}/planned-lines/{plannedLine}/purchase`. Both operations enforce the Ticket's current workflow and user permissions.
 
 Manual web adjustments:
 

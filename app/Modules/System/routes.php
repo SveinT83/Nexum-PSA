@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\System\Controllers\Admin\AdminDashboardController;
+use App\Modules\System\Controllers\Admin\ApplicationVersionStatusController;
 use App\Modules\System\Controllers\Admin\CompanyProfileController;
 use App\Modules\System\Controllers\Admin\QueueWorkerController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +17,15 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('admin')->group(function () {
+    // -------------------------------------------------
+    // Admin hub and deferred application status
+    // -------------------------------------------------
+    Route::get('/admin', AdminDashboardController::class)
+        ->name('admin.index');
+
+    Route::get('/admin/system/version-status', ApplicationVersionStatusController::class)
+        ->name('admin.system.version-status');
+
     // -------------------------------------------------
     // Company profile and app branding
     // -------------------------------------------------

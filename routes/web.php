@@ -129,6 +129,9 @@ require app_path('Modules/Knowledge/routes.php');
 $commercialPortalRoutes = true;
 require app_path('Modules/Commercial/routes.php');
 
+$clientsPortalRoutes = true;
+require app_path('Modules/Clients/routes.php');
+
 $economyPortalRoutes = true;
 require app_path('Modules/Economy/routes.php');
 
@@ -146,6 +149,7 @@ unset(
     $documentationPortalRoutes,
     $knowledgePortalRoutes,
     $commercialPortalRoutes,
+    $clientsPortalRoutes,
     $economyPortalRoutes,
 );
 

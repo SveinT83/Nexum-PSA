@@ -23,7 +23,7 @@ class SyncRepositoryKnowledgeDocs
     ) {}
 
     /**
-     * @param array<int, string> $onlyModules
+     * @param  array<int, string>  $onlyModules
      * @return array{chapters: int, articles: int, skipped: int, modules: array<int, string>}
      */
     public function handle(array $onlyModules = []): array
@@ -51,6 +51,7 @@ class SyncRepositoryKnowledgeDocs
 
             if (! is_dir($path)) {
                 $summary['skipped']++;
+
                 continue;
             }
 
@@ -58,6 +59,7 @@ class SyncRepositoryKnowledgeDocs
 
             if ($files === []) {
                 $summary['skipped']++;
+
                 continue;
             }
 
@@ -236,6 +238,7 @@ class SyncRepositoryKnowledgeDocs
                 'ticket-email-communication' => ['title' => 'Ticket Email And Communication', 'slug' => 'ticket-email-and-communication'],
                 'ticket-lifecycle-workflows' => ['title' => 'Ticket Lifecycle And Workflows', 'slug' => 'ticket-lifecycle-and-workflows'],
                 'ticket-rules-assignment' => ['title' => 'Ticket Rules And Assignment', 'slug' => 'ticket-rules-and-assignment'],
+                'ticket-workflow-v3' => ['title' => 'Ticket Workflow Rules, Approval And Escalation', 'slug' => 'ticket-workflow-rules-approval-and-escalation'],
                 'ticket-sla' => ['title' => 'Ticket SLA', 'slug' => 'ticket-sla'],
                 'time-registration' => ['title' => 'Ticket Time Registration', 'slug' => 'ticket-time-registration'],
             ],

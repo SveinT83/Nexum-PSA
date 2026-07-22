@@ -40,7 +40,7 @@ Shared tags stored through the `taggables` table. Tags can be added manually and
 
 Workflow:
 
-The configured lifecycle model that controls valid transitions, requirements, manual buttons, and automatic action triggers.
+The versioned lifecycle model that controls operational states, grouped requirements, available actions, assignment, review gates, escalation, Sales approval, Storage fulfilment, and close outcomes.
 
 SLA:
 
@@ -84,7 +84,7 @@ The main `tickets` table stores:
 - Merge metadata.
 - Metadata JSON.
 
-Related tables store messages, attachments, events, time entries, cost entries, assignment rules, ticket assignment settings, rules, workflow configuration, merge suggestion dismissals, and time allocation records.
+Related tables store messages, attachments, events, time entries, actual and planned cost lines, Sales context, workflow versions/history/reviews/evidence, assignment rules, ticket assignment settings, rules, merge suggestion dismissals, and time allocation records.
 
 ## User-Facing Surfaces
 
@@ -94,7 +94,7 @@ The list supports search, filters, sorting, unread and unassigned views, lifecyc
 
 Ticket show:
 
-The show page is the primary work surface. It contains ticket details, conversation/activity, workflow actions, replies, notes, time registration, cost registration, assignment information, SLA details, customer contact cards, and Knowledge suggestions. The customer card keeps client, site, contact, email, and clickable phone details visible without leaving the ticket.
+The show page is the primary work surface. It contains ticket details, conversation/activity, a workflow cockpit, missing requirements, next steps, escalation, reviews and evidence, planned commercial scope, linked Sales quote, Storage/purchase conversion, replies, notes, time and actual cost registration, assignment, SLA details, customer contact cards, and Knowledge suggestions. Buttons are shown, disabled, or hidden from the current workflow decision.
 
 When an active Nexum relationship is available, the show page also displays a
 Nexum relationship panel. The panel shows existing remote sync links and allows
@@ -111,6 +111,12 @@ Create and edit forms handle manual ticket creation, client/contact/site/asset s
 Ticket API:
 
 External systems can sync ticket conversation entries through `POST /api/v1/tickets/{ticket}/external-messages`. The endpoint is idempotent by external source and external message ID, stores the message as `author_type = external`, and avoids sending outbound customer email for imported replies. Free-form external metadata is kept for audit context, but workflow-driving fields such as reply intent and solution markers are ignored.
+
+Workflow API routes expose the same decisions and operations as the Ticket page, including transitions, escalation, close outcome, planned scope, quotes, acceptance evidence, review, Storage conversion, purchase need, workflow definition publishing, and explicit version migration. API calls pass through the same permission and workflow guards as browser actions.
+
+Timer start, time registration, and actual-cost registration also have API routes. They use the same
+Ticket actions as the browser and therefore evaluate the same specific or **Any technician
+activity** automatic transition after the business record has been saved.
 
 Nexum-to-Nexum ticket exchange is owned by the Relationship module. Relationship
 sync uses signed endpoints under `/api/v1/nexum/relationships/*`, stores local
@@ -147,6 +153,12 @@ Admin surface for queues, types, statuses, priorities, rules, workflows, assignm
 ## Important Design Rules
 
 Tickets are for actionable work. Not every inbound email should become a ticket. Email Rules, not-ticket behavior, future Operational Signals, and future custom fields should keep noise out of the ticket queue.
+
+Operational events that affect service delivery, customer environments, internal production systems,
+security posture, availability, billing readiness, or required follow-up must be traceable as an
+internal Ticket or Task. Use a Ticket when the event needs ownership, lifecycle, communication,
+time/cost, billing, or reporting history. Use a Task for smaller internal follow-up that does not
+need a full Ticket lifecycle.
 
 Ticket state changes should go through shared actions and workflow runtime checks. Avoid bypassing `ChangeTicketStatus`, `TicketActionGuard`, `TicketWorkflowRuntime`, or the existing action classes.
 

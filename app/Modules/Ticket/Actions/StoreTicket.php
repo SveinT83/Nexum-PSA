@@ -11,10 +11,10 @@ use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketType;
-use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketRuleEngine;
 use App\Modules\Ticket\Services\TicketSlaResolver;
+use App\Modules\Ticket\Services\TicketWorkflowDefinitionService;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Support\Facades\DB;
 
@@ -25,6 +25,7 @@ class StoreTicket
         private readonly TicketRuleEngine $ticketRuleEngine,
         private readonly TicketAssignmentEngine $ticketAssignmentEngine,
         private readonly TicketSlaResolver $ticketSlaResolver,
+        private readonly TicketWorkflowDefinitionService $workflowDefinitions,
         private readonly ResolveWorkContext $workContexts,
         private readonly RecordSignal $recordSignal,
     ) {}
@@ -47,19 +48,25 @@ class StoreTicket
             $sla = $this->ticketSlaResolver->resolve($data, $priority);
             $clientId = $data['client_id'] ?? null;
             $workContext = $this->workContexts->fromClientId($clientId);
+            $workflowState = $this->workflowDefinitions->initialTicketState(
+                isset($data['workflow_id']) ? (int) $data['workflow_id'] : null,
+                isset($data['status_id']) ? (int) $data['status_id'] : (int) $defaults['status']->id,
+            );
 
             $ticket = Ticket::create([
                 'ticket_key' => $this->nextTicketKey(),
                 'type' => $ticketType->slug,
                 'ticket_type_id' => $ticketType->id,
                 'queue_id' => $data['queue_id'] ?? $defaults['queue']->id,
-                'status_id' => $data['status_id'] ?? $defaults['status']->id,
+                'status_id' => $workflowState['status_id'] ?? $data['status_id'] ?? $defaults['status']->id,
                 'priority_id' => $priority->id,
                 'sla_id' => $sla['sla_id'],
                 'sla_source' => $sla['sla_source'],
                 'sla_source_id' => $sla['sla_source_id'],
                 'sla_snapshot' => $sla['sla_snapshot'],
-                'workflow_id' => $data['workflow_id'] ?? TicketWorkflow::query()->where('is_active', true)->where('is_default', true)->value('id'),
+                'workflow_id' => $workflowState['workflow_id'],
+                'workflow_version_id' => $workflowState['workflow_version_id'],
+                'workflow_state_key' => $workflowState['workflow_state_key'],
                 'category_id' => $data['category_id'] ?? null,
                 'client_id' => $clientId === '' ? null : $clientId,
                 'work_context_id' => $workContext->id,
@@ -206,11 +213,11 @@ class StoreTicket
 
     private function nextTicketKey(): string
     {
-        $prefix = 'TD-' . now()->format('Y') . '-';
-        $next = (int) Ticket::withTrashed()->where('ticket_key', 'like', $prefix . '%')->count() + 1;
+        $prefix = 'TD-'.now()->format('Y').'-';
+        $next = (int) Ticket::withTrashed()->where('ticket_key', 'like', $prefix.'%')->count() + 1;
 
         do {
-            $key = $prefix . str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+            $key = $prefix.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
             $next++;
         } while (Ticket::withTrashed()->where('ticket_key', $key)->exists());
 

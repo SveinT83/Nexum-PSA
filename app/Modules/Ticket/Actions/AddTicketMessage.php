@@ -5,13 +5,12 @@ namespace App\Modules\Ticket\Actions;
 use App\Models\Core\User;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Notification\Notifications\TicketCommentAdded;
+use App\Modules\Relationship\Actions\SyncTicketMessageToRelationship;
+use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
+use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
-use App\Modules\Ticket\Jobs\SendTicketInternalNotificationEmail;
-use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
-use App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger;
-use App\Modules\Relationship\Actions\SyncTicketMessageToRelationship;
 use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
 
@@ -51,7 +50,7 @@ class AddTicketMessage
                 'ticket_id' => $ticket->id,
                 'actor_id' => $actor?->id,
                 'type' => 'message_added',
-                'message' => ucfirst(str_replace('_', ' ', $message->type)) . ' added.',
+                'message' => ucfirst(str_replace('_', ' ', $message->type)).' added.',
                 'after' => [
                     'message_id' => $message->id,
                     'type' => $message->type,
@@ -89,12 +88,17 @@ class AddTicketMessage
                 );
             }
 
-            // Svein's workflow trigger (from Dev branch)
-            app(ApplyTicketWorkflowActionTrigger::class)->handle(
-                $ticket->refresh(),
-                $this->workflowActionFor($message),
-                $actor
-            );
+            if (! ($data['suppress_workflow_trigger'] ?? false)) {
+                $advanced = app(ApplyTicketWorkflowActionTrigger::class)->handle(
+                    $ticket->refresh(),
+                    $this->workflowActionFor($message),
+                    $actor
+                );
+
+                if (! $advanced && (bool) ($message->metadata['is_solution'] ?? false)) {
+                    app(AutoAdvanceTicketWorkflow::class)->handle($ticket->refresh(), $actor);
+                }
+            }
 
             // Notify the ticket owner (if not the comment author)
             if ($ticket->owner_id && $ticket->owner_id !== $actor?->id) {

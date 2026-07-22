@@ -9,17 +9,18 @@ use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Relationship\Models\NexumSyncLink;
+use App\Modules\Task\Models\Task;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
-use App\Modules\Task\Models\Task;
 use App\Modules\WorkContext\Models\WorkContext;
 use Database\Factories\Ticket\TicketFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ticket extends Model
@@ -39,6 +40,8 @@ class Ticket extends Model
         'sla_source_id',
         'sla_snapshot',
         'workflow_id',
+        'workflow_version_id',
+        'workflow_state_key',
         'category_id',
         'client_id',
         'work_context_id',
@@ -59,6 +62,8 @@ class Ticket extends Model
         'first_responded_at',
         'resolved_at',
         'closed_at',
+        'close_outcome',
+        'close_reason',
         'merged_into_ticket_id',
         'merged_by',
         'merged_at',
@@ -118,6 +123,11 @@ class Ticket extends Model
     public function workflow(): BelongsTo
     {
         return $this->belongsTo(TicketWorkflow::class, 'workflow_id');
+    }
+
+    public function workflowVersion(): BelongsTo
+    {
+        return $this->belongsTo(TicketWorkflowVersion::class, 'workflow_version_id');
     }
 
     public function category(): BelongsTo
@@ -193,6 +203,31 @@ class Ticket extends Model
     public function costEntries(): HasMany
     {
         return $this->hasMany(TicketCostEntry::class);
+    }
+
+    public function plannedLines(): HasMany
+    {
+        return $this->hasMany(TicketPlannedLine::class);
+    }
+
+    public function workflowHistory(): HasMany
+    {
+        return $this->hasMany(TicketWorkflowHistory::class)->latest();
+    }
+
+    public function workflowReviews(): HasMany
+    {
+        return $this->hasMany(TicketWorkflowReview::class)->latest();
+    }
+
+    public function workflowEvidence(): HasMany
+    {
+        return $this->hasMany(TicketWorkflowEvidence::class)->latest();
+    }
+
+    public function salesContext(): HasOne
+    {
+        return $this->hasOne(TicketSalesContext::class);
     }
 
     public function tags(): MorphToMany

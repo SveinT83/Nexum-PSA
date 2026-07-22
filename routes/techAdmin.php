@@ -1,4 +1,5 @@
 <?php
+
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 // Use Domain Architecture rout file in the module folder, Read module-architecture.md for more info.
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -17,29 +18,22 @@ use Illuminate\Support\Facades\Route;
 // ------------------------------------------------------------------------------------------
 Route::middleware(['auth', 'tech', 'admin', 'tech.permission'])->group(function () {
 
-        // ------------------------------------------------------------------------------------------
-        // Admin Settings routes
-        // ------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------
+    // Admin Settings routes
+    // ------------------------------------------------------------------------------------------
 
-        // -----------------------------------------
-        // Admin Page
-        // -----------------------------------------
-        Route::get('/admin', function () {
-            return view('tech.admin.index');
-        })->name('admin.index');
+    // -----------------------------------------
+    // Contracts & Services Settings
+    // -----------------------------------------
+    Route::redirect('/admin/settings/cs/contacts', '/tech/admin/settings/cs/contracts')
+        ->name('admin.settings.cs.contracts.legacy');
 
-        // -----------------------------------------
-        // Contracts & Services Settings
-        // -----------------------------------------
-        Route::redirect('/admin/settings/cs/contacts', '/tech/admin/settings/cs/contracts')
-            ->name('admin.settings.cs.contracts.legacy');
+    Route::get('/admin/settings/cs/contracts', function () {
+        return view('tech.admin.settings.cs.contracts');
+    })->name('admin.settings.cs.contracts');
 
-        Route::get('/admin/settings/cs/contracts', function () {
-            return view('tech.admin.settings.cs.contracts');
-        })->name('admin.settings.cs.contracts');
+    Route::get('/admin/settings/cs/services', function () {
+        return view('tech.admin.settings.cs.services');
+    })->name('admin.settings.cs.services');
 
-        Route::get('/admin/settings/cs/services', function () {
-            return view('tech.admin.settings.cs.services');
-        })->name('admin.settings.cs.services');
-
-    });
+});

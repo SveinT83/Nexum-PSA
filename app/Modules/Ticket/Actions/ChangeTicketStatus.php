@@ -16,9 +16,7 @@ use Illuminate\Validation\ValidationException;
 
 class ChangeTicketStatus
 {
-    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime)
-    {
-    }
+    public function __construct(private readonly TicketWorkflowRuntime $workflowRuntime) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -30,23 +28,11 @@ class ChangeTicketStatus
     | inbound email handlers all get the same lifecycle behavior.
     |
     */
-    public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null, bool $enforceWorkflow = true, bool $syncRelationship = true): Ticket
+    public function handle(Ticket $ticket, TicketStatus $status, ?User $actor = null, bool $enforceWorkflow = true, bool $syncRelationship = true, bool $notifyCustomerPortal = true): Ticket
     {
-        if ($status->is_closed && $this->hasUnresolvedTasks($ticket)) {
-            $reason = 'Ticket cannot be closed while it has unresolved tasks.';
+        $this->assertCanChange($ticket, $status, $actor, $enforceWorkflow);
 
-            $this->recordBlockedStatusChange($ticket, $status, $actor, 'ticket_close_blocked', $reason);
-
-            throw ValidationException::withMessages(['status_id' => $reason]);
-        }
-
-        if ($enforceWorkflow && $reason = $this->workflowRuntime->blockedReason($ticket, $status)) {
-            $this->recordBlockedStatusChange($ticket, $status, $actor, 'workflow_transition_blocked', $reason);
-
-            throw ValidationException::withMessages(['status_id' => $reason]);
-        }
-
-        return DB::transaction(function () use ($ticket, $status, $actor, $syncRelationship) {
+        return DB::transaction(function () use ($ticket, $status, $actor, $syncRelationship, $notifyCustomerPortal) {
             if ((int) $ticket->status_id !== (int) $status->id) {
                 app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'status_changed');
             }
@@ -88,7 +74,7 @@ class ChangeTicketStatus
                     'type' => 'status_changed',
                     'before' => $before,
                     'after' => $after,
-                    'message' => 'Ticket status changed to ' . $status->name . '.',
+                    'message' => 'Ticket status changed to '.$status->name.'.',
                 ]);
 
                 // Notify the ticket owner if they didn't change the status themselves
@@ -105,7 +91,7 @@ class ChangeTicketStatus
                     }
                 }
 
-                if ($ticket->isPortalVisible() && $ticket->client_id) {
+                if ($notifyCustomerPortal && $ticket->isPortalVisible() && $ticket->client_id) {
                     $oldStatusName = TicketStatus::find($before['status_id'])?->name ?? 'Previous status';
 
                     app(SendCustomerPortalNotification::class)->handle(
@@ -125,7 +111,7 @@ class ChangeTicketStatus
                     );
                 }
 
-                if ($status->is_closed) {
+                if ($status->is_closed && ! in_array($ticket->close_outcome, ['customer_declined', 'cancelled', 'no_sale'], true)) {
                     GenerateEconomyOrdersJob::dispatch(
                         $ticket->closed_at?->copy()->startOfMonth()->toDateString(),
                         $ticket->closed_at?->copy()->endOfMonth()->toDateString(),
@@ -140,6 +126,27 @@ class ChangeTicketStatus
 
             return $ticket;
         });
+    }
+
+    /**
+     * Run lifecycle validation before callers open a wider transaction.
+     * This keeps blocked-attempt audit events durable when a caller aborts.
+     */
+    public function assertCanChange(Ticket $ticket, TicketStatus $status, ?User $actor = null, bool $enforceWorkflow = true): void
+    {
+        if ($status->is_closed && $this->hasUnresolvedTasks($ticket)) {
+            $reason = 'Ticket cannot be closed while it has unresolved tasks.';
+
+            $this->recordBlockedStatusChange($ticket, $status, $actor, 'ticket_close_blocked', $reason);
+
+            throw ValidationException::withMessages(['status_id' => $reason]);
+        }
+
+        if ($enforceWorkflow && $reason = $this->workflowRuntime->blockedReason($ticket, $status)) {
+            $this->recordBlockedStatusChange($ticket, $status, $actor, 'workflow_transition_blocked', $reason);
+
+            throw ValidationException::withMessages(['status_id' => $reason]);
+        }
     }
 
     private function recordBlockedStatusChange(Ticket $ticket, TicketStatus $status, ?User $actor, string $type, string $reason): void

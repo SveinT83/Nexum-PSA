@@ -5,26 +5,28 @@ namespace App\Modules\Commercial\Tests\Feature;
 use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
-use App\Modules\Documentation\Models\Vendor;
-use App\Modules\Commercial\Models\Cost;
-use App\Modules\Commercial\Models\Contracts\ContractItem;
-use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Models\System\Integrations\Integration;
 use App\Modules\Commercial\Controllers\Admin\UnitsController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\PublicContractController;
 use App\Modules\Commercial\Controllers\Tech\Costs\CostController;
 use App\Modules\Commercial\Controllers\Tech\Package\PackageController;
 use App\Modules\Commercial\Controllers\Tech\Rates\TimeRateController;
-use App\Modules\Commercial\Controllers\Tech\Sla\SlaController;
 use App\Modules\Commercial\Controllers\Tech\Services\ServiceController;
+use App\Modules\Commercial\Controllers\Tech\Sla\SlaController;
 use App\Modules\Commercial\Livewire\Tech\Contracts\ContractItemsEditor;
 use App\Modules\Commercial\Livewire\Tech\ServiceLegal;
+use App\Modules\Commercial\Models\Contracts\ContractItem;
+use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Commercial\Models\Cost;
+use App\Modules\Commercial\Models\CostRelations;
 use App\Modules\Commercial\Models\Economy\Units;
 use App\Modules\Commercial\Models\Packages\Package;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\Terms\terms as CommercialTerm;
 use App\Modules\Commercial\Models\TimeRate;
+use App\Modules\Documentation\Models\Vendor;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +41,7 @@ class CommercialModuleTest extends TestCase
     use RefreshDatabase;
 
     private User $tech;
+
     private User $admin;
 
     protected function setUp(): void
@@ -199,22 +202,22 @@ class CommercialModuleTest extends TestCase
     public function tech_commercial_routes_are_owned_by_commercial_module(): void
     {
         $this->assertSame(
-            ContractController::class . '@index',
+            ContractController::class.'@index',
             Route::getRoutes()->getByName('tech.contracts.index')->getActionName()
         );
 
         $this->assertSame(
-            ServiceController::class . '@index',
+            ServiceController::class.'@index',
             Route::getRoutes()->getByName('tech.services.index')->getActionName()
         );
 
         $this->assertSame(
-            PackageController::class . '@index',
+            PackageController::class.'@index',
             Route::getRoutes()->getByName('tech.packages.index')->getActionName()
         );
 
         $this->assertSame(
-            CostController::class . '@index',
+            CostController::class.'@index',
             Route::getRoutes()->getByName('tech.costs.index')->getActionName()
         );
 
@@ -693,7 +696,7 @@ class CommercialModuleTest extends TestCase
     public function admin_commercial_units_route_is_owned_by_commercial_module(): void
     {
         $this->assertSame(
-            UnitsController::class . '@index',
+            UnitsController::class.'@index',
             Route::getRoutes()->getByName('tech.admin.settings.economy.units')->getActionName()
         );
 
@@ -776,10 +779,241 @@ class CommercialModuleTest extends TestCase
     }
 
     #[Test]
+    public function externally_managed_cost_is_visible_but_cannot_be_edited_or_deleted(): void
+    {
+        $integration = Integration::query()->create([
+            'name' => 'Cloud Factory',
+            'type' => 'cloudfactory',
+            'status' => 'active',
+        ]);
+        $unit = Units::query()->create(['name' => 'Licence', 'short' => 'lic']);
+        $vendor = Vendor::query()->create(['name' => 'Microsoft']);
+        $cost = Cost::query()->create([
+            'source' => 'cloudfactory',
+            'external_reference' => 'offer-reference',
+            'managed_externally' => true,
+            'source_integration_id' => $integration->id,
+            'name' => 'Microsoft 365 Business Basic',
+            'cost' => 63.3562,
+            'currency' => 'NOK',
+            'unitId' => $unit->id,
+            'recurrence' => 'month',
+            'vendor_id' => $vendor->id,
+            'note' => 'Synchronized source Cost.',
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.costs.index'))
+            ->assertOk()
+            ->assertSee('Cloud Factory')
+            ->assertSee('Managed')
+            ->assertSee(route('tech.admin.system.integrations.cloudfactory.index'))
+            ->assertSee('63,36');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.costs.show', $cost))
+            ->assertOk()
+            ->assertSee('owned and updated')
+            ->assertDontSee('>Edit<', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.costs.edit', $cost))
+            ->assertForbidden();
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.costs.delete', $cost))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('costs', ['id' => $cost->id]);
+    }
+
+    #[Test]
+    public function disabled_integration_releases_retained_service_and_cost_to_nexum(): void
+    {
+        $integration = Integration::query()->create([
+            'name' => 'Cloud Factory',
+            'type' => 'cloudfactory',
+            'status' => 'active',
+        ]);
+        $unit = Units::query()->create(['name' => 'Licence', 'short' => 'lic']);
+        $vendor = Vendor::query()->create(['name' => 'Microsoft']);
+        $service = Services::query()->create([
+            'sku' => 'CF-RETAINED-C12-B1',
+            'name' => 'Retained Cloud Service',
+            'unitId' => $unit->id,
+            'vendor_id' => $vendor->id,
+            'source' => 'cloudfactory',
+            'source_integration_id' => $integration->id,
+            'managed_externally' => true,
+            'status' => 'Active',
+            'availability_audience' => 'business',
+            'orderable' => true,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 120,
+            'price_including_tax' => 150,
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+        $cost = Cost::query()->create([
+            'source' => 'cloudfactory',
+            'external_reference' => 'retained-offer',
+            'source_integration_id' => $integration->id,
+            'managed_externally' => true,
+            'name' => 'Retained Cloud Cost',
+            'cost' => 70,
+            'currency' => 'NOK',
+            'unitId' => $unit->id,
+            'recurrence' => 'month',
+            'vendor_id' => $vendor->id,
+            'note' => 'Retained provider Cost.',
+            'created_by_user_id' => $this->tech->id,
+            'updated_by_user_id' => $this->tech->id,
+        ]);
+        CostRelations::query()->create(['serviceId' => $service->id, 'costId' => $cost->id]);
+        \App\Modules\Integration\Models\CloudFactory\Offer::query()->create([
+            'integration_id' => $integration->id,
+            'external_product_id' => 'retained-offer',
+            'sku' => $service->sku,
+            'name' => $service->name,
+            'vendor_id' => $vendor->id,
+            'recurrence_term' => 1,
+            'billing_term' => 1,
+            'cost' => 70,
+            'msrp' => 120,
+            'currency' => 'NOK',
+            'sell_enabled' => true,
+            'service_id' => $service->id,
+            'cost_id' => $cost->id,
+        ]);
+
+        $this->assertTrue($service->load('sourceIntegration')->isIntegrationManaged());
+        $this->assertTrue($cost->load('sourceIntegration')->isIntegrationManaged());
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.services.index'))
+            ->assertOk()
+            ->assertSee('Cloud Factory')
+            ->assertSee('Managed')
+            ->assertSee(route('tech.admin.system.integrations.cloudfactory.index'));
+        $this->actingAs($this->tech)
+            ->get(route('tech.services.edit', $service))
+            ->assertForbidden();
+        $this->actingAs($this->tech)
+            ->delete(route('tech.services.destroy', $service))
+            ->assertForbidden();
+
+        Sanctum::actingAs($this->tech, ['commercial.read', 'commercial.update']);
+        $this->getJson(route('api.v1.commercial.services.show', $service))
+            ->assertOk()
+            ->assertJsonPath('data.integration_managed', true)
+            ->assertJsonPath('data.source_integration.name', 'Cloud Factory');
+
+        $this->patchJson(route('api.v1.commercial.services.update', $service), [
+            'name' => 'API must not change this Service',
+        ])->assertForbidden();
+
+        Livewire::actingAs($this->tech)
+            ->test(\App\Modules\Commercial\Livewire\Tech\ServicePricing::class, ['service' => $service])
+            ->call('remove', $cost->id)
+            ->assertSet('selected', [(string) $cost->id]);
+
+        $integration->forceFill(['status' => 'disabled'])->save();
+        $service->refresh();
+        $cost->refresh();
+
+        $this->assertFalse($service->isIntegrationManaged());
+        $this->assertFalse($cost->isIntegrationManaged());
+        $this->assertDatabaseHas('cost_relations', [
+            'serviceId' => $service->id,
+            'costId' => $cost->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.services.index'))
+            ->assertOk()
+            ->assertSee('Released to Nexum');
+        $this->actingAs($this->tech)->get(route('tech.services.edit', $service))->assertOk();
+        $this->actingAs($this->tech)->get(route('tech.costs.edit', $cost))->assertOk();
+
+        $this->actingAs($this->tech)->post(route('tech.costs.update', $cost), [
+            'name' => 'Retained Cloud Cost updated',
+            'cost' => 75,
+            'unitId' => $unit->id,
+            'recurrence' => 'month',
+            'vendor_id' => $vendor->id,
+            'note' => 'Now maintained by Nexum.',
+        ])->assertRedirect(route('tech.costs.show', $cost));
+
+        $this->actingAs($this->tech)->post(route('tech.services.update', $service), [
+            'sku' => $service->sku,
+            'name' => 'Retained Cloud Service updated',
+            'unitId' => $unit->id,
+            'price_ex_vat' => 130,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+        ])->assertRedirect(route('tech.services.show', $service));
+
+        $this->assertDatabaseHas('services', [
+            'id' => $service->id,
+            'name' => 'Retained Cloud Service updated',
+            'source_integration_id' => $integration->id,
+        ]);
+        $this->assertDatabaseHas('costs', [
+            'id' => $cost->id,
+            'name' => 'Retained Cloud Cost updated',
+            'source_integration_id' => $integration->id,
+        ]);
+        $client = Client::factory()->create();
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'Retained provider data contract.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'binding_end_date' => now()->addYear()->toDateString(),
+            'auto_renew' => true,
+            'renewal_months' => 12,
+            'approval_status' => 'draft',
+            'created_by' => $this->tech->id,
+        ]);
+        Livewire::actingAs($this->tech)
+            ->test(ContractItemsEditor::class, ['contract' => $contract])
+            ->call('addItem')
+            ->set('items.0.service_id', $service->id)
+            ->assertSet('items.0.cloudfactory_offer_id', null);
+        $this->assertDatabaseHas('contract_items', [
+            'contract_id' => $contract->id,
+            'service_id' => $service->id,
+            'cloudfactory_offer_id' => null,
+            'cost_unit_price' => 75,
+        ]);
+        $integration->delete();
+        $service->refresh();
+        $cost->refresh();
+        $this->assertNull($service->source_integration_id);
+        $this->assertNull($cost->source_integration_id);
+        $this->assertDatabaseHas('cost_relations', [
+            'serviceId' => $service->id,
+            'costId' => $cost->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->delete(route('tech.services.destroy', $service))
+            ->assertRedirect(route('tech.services.index'));
+        $this->actingAs($this->tech)
+            ->delete(route('tech.costs.delete', $cost))
+            ->assertRedirect(route('tech.costs.index'));
+        $this->assertDatabaseMissing('services', ['id' => $service->id]);
+        $this->assertDatabaseMissing('costs', ['id' => $cost->id]);
+    }
+
+    #[Test]
     public function tech_user_can_manage_time_rates_from_sales_workspace(): void
     {
         $this->assertSame(
-            TimeRateController::class . '@index',
+            TimeRateController::class.'@index',
             Route::getRoutes()->getByName('tech.rates.index')->getActionName()
         );
 
@@ -1147,7 +1381,7 @@ class CommercialModuleTest extends TestCase
     public function public_contract_route_is_owned_by_commercial_module(): void
     {
         $this->assertSame(
-            PublicContractController::class . '@view',
+            PublicContractController::class.'@view',
             Route::getRoutes()->getByName('contracts.public.view')->getActionName()
         );
     }
@@ -1156,7 +1390,7 @@ class CommercialModuleTest extends TestCase
     public function contract_pdf_route_is_owned_by_commercial_module(): void
     {
         $this->assertSame(
-            ContractController::class . '@pdf',
+            ContractController::class.'@pdf',
             Route::getRoutes()->getByName('tech.contracts.pdf')->getActionName()
         );
     }
@@ -1232,7 +1466,7 @@ class CommercialModuleTest extends TestCase
     public function tech_user_can_open_sla_show_view(): void
     {
         $this->assertSame(
-            SlaController::class . '@show',
+            SlaController::class.'@show',
             Route::getRoutes()->getByName('tech.sla.show')->getActionName()
         );
 

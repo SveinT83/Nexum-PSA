@@ -2,26 +2,28 @@
 
 namespace App\Modules\Commercial\Controllers\Tech\Services;
 
-//Use service
+// Use service
 use App\Http\Controllers\Controller;
 use App\Modules\Commercial\Models\CostRelations;
-use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\ServiceTimeRate;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\TimeRate;
-use Illuminate\Http\Request;
 use App\Modules\Commercial\Requests\ServiceStoreRequest;
+use App\Modules\Documentation\Models\Vendor;
+use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
-
     // -----------------------------------------
     // Show - Displays a single service
     // -----------------------------------------
     public function show(Services $service)
     {
-        //Get all Units for option
+        $service->loadMissing('sourceIntegration');
+
+        // Get all Units for option
         $units = Units::orderBy('name')->get();
 
         return view('commercial::Tech.cs.services.show', [
@@ -38,11 +40,11 @@ class ServiceController extends Controller
     public function create()
     {
 
-        //Get all Units for option
+        // Get all Units for option
         $units = Units::orderBy('name')->get();
 
         return view('commercial::Tech.cs.services.create', [
-            'service' => new Services(),
+            'service' => new Services,
             'units' => $units,
             'slas' => $this->availableSlas(),
             'timeRates' => TimeRate::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
@@ -54,8 +56,10 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function edit(Services $service)
     {
+        $service->loadMissing('sourceIntegration');
+        abort_if($service->isIntegrationManaged(), 403, 'This Service is owned by its active source Integration.');
 
-        //Get all Units for option
+        // Get all Units for option
         $units = Units::orderBy('name')->get();
 
         return view('commercial::Tech.cs.services.edit', [
@@ -107,7 +111,7 @@ class ServiceController extends Controller
         ]);
 
         // Save costs relations
-        if (!empty($data['costs'])) {
+        if (! empty($data['costs'])) {
             foreach ($data['costs'] as $costId) {
                 CostRelations::create([
                     'serviceId' => $service->id,
@@ -130,6 +134,9 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function update(ServiceStoreRequest $request, Services $service)
     {
+        $service->loadMissing('sourceIntegration');
+        abort_if($service->isIntegrationManaged(), 403, 'This Service is owned by its active source Integration.');
+
         // Validate request via FormRequest
         $data = $request->validated();
 
@@ -206,13 +213,14 @@ class ServiceController extends Controller
     {
         $sort = $request->input('sort', 'name');
         $direction = $request->input('direction') === 'desc' ? 'desc' : 'asc';
-        $sortableColumns = ['sku', 'name', 'price', 'billing_cycle', 'status', 'updated_at'];
+        $sortableColumns = ['sku', 'name', 'vendor', 'source', 'price', 'billing_cycle', 'status', 'updated_at'];
 
         if (! in_array($sort, $sortableColumns, true)) {
             $sort = 'name';
         }
 
         $query = Services::query()
+            ->with(['vendor', 'sourceIntegration'])
             ->when($request->filled('q'), function ($query) use ($request): void {
                 $search = '%'.$request->string('q')->trim()->toString().'%';
 
@@ -225,11 +233,16 @@ class ServiceController extends Controller
             })
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
             ->when($request->filled('billing_cycle'), fn ($query) => $query->where('billing_cycle', $request->input('billing_cycle')))
+            ->when($request->filled('vendor_id'), fn ($query) => $query->where('vendor_id', $request->integer('vendor_id')))
+            ->when($request->filled('source'), fn ($query) => $query->where('source', $request->input('source')))
             ->when($request->filled('audience'), fn ($query) => $query->where('availability_audience', $request->input('audience')))
             ->when($request->filled('orderable'), fn ($query) => $query->where('orderable', $request->input('orderable') === 'yes'));
 
         if ($sort === 'price') {
             $query->orderBy('price_ex_vat', $direction)->orderBy('name');
+        } elseif ($sort === 'vendor') {
+            $query->orderBy(Vendor::query()->select('name')->whereColumn('vendors.id', 'services.vendor_id'), $direction)
+                ->orderBy('name');
         } else {
             $query->orderBy($sort, $direction)->orderBy('name');
         }
@@ -241,7 +254,9 @@ class ServiceController extends Controller
             'statuses' => Services::query()->distinct()->orderBy('status')->pluck('status')->filter()->values(),
             'billingCycles' => Services::query()->distinct()->orderBy('billing_cycle')->pluck('billing_cycle')->filter()->values(),
             'audiences' => Services::query()->distinct()->orderBy('availability_audience')->pluck('availability_audience')->filter()->values(),
-            'filters' => $request->only(['q', 'status', 'billing_cycle', 'audience', 'orderable', 'sort', 'direction']),
+            'vendors' => Vendor::query()->whereHas('services')->orderBy('name')->get(['id', 'name']),
+            'sources' => Services::query()->distinct()->orderBy('source')->pluck('source')->filter()->values(),
+            'filters' => $request->only(['q', 'status', 'billing_cycle', 'vendor_id', 'source', 'audience', 'orderable', 'sort', 'direction']),
         ]);
     }
 
@@ -250,9 +265,12 @@ class ServiceController extends Controller
     // -----------------------------------------
     public function destroy(Services $service)
     {
+        $service->loadMissing('sourceIntegration');
+        abort_if($service->isIntegrationManaged(), 403, 'This Service is owned by its active source Integration and cannot be deleted.');
+
         // Relatertet rows in poviot tables Will be deleted from databasen migrations files.
 
-        //Delete the service
+        // Delete the service
         $service->delete();
 
         return redirect()

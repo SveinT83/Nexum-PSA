@@ -3,6 +3,8 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Storage\Models\Item;
+use App\Modules\Storage\Models\Reservation;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketEvent;
@@ -14,8 +16,15 @@ class UpdateTicketStorageReservation
     public function handle(Ticket $ticket, TicketCostEntry $entry, array $data, ?User $actor = null): TicketCostEntry
     {
         return DB::transaction(function () use ($ticket, $entry, $data, $actor) {
-            $entry->loadMissing(['storageItem', 'reservation']);
-            $item = $entry->storageItem;
+            $entry = TicketCostEntry::query()
+                ->lockForUpdate()
+                ->findOrFail($entry->id);
+            $item = Item::withTrashed()
+                ->lockForUpdate()
+                ->find($entry->storage_item_id);
+            $reservation = $entry->storage_reservation_id
+                ? Reservation::query()->lockForUpdate()->find($entry->storage_reservation_id)
+                : null;
 
             if (! $item || (int) $entry->ticket_id !== (int) $ticket->id) {
                 throw new InvalidArgumentException('The selected cost entry does not belong to this ticket.');
@@ -44,8 +53,8 @@ class UpdateTicketStorageReservation
                 'updated_by' => $actor?->id,
             ])->save();
 
-            if ($entry->reservation) {
-                $entry->reservation->forceFill([
+            if ($reservation) {
+                $reservation->forceFill([
                     'qty' => $newQuantity,
                     'status' => 'active',
                 ])->save();

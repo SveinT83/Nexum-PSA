@@ -3,11 +3,13 @@
 namespace App\Modules\Sales\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Sales\Actions\AcceptSalesQuote;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesQuoteVersion;
 use Dompdf\Dompdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class PublicQuoteController extends Controller
 {
@@ -26,6 +28,16 @@ class PublicQuoteController extends Controller
     public function pdf(string $token): Response
     {
         $version = $this->version($token);
+
+        if ($version->pdf_snapshot_disk && $version->pdf_snapshot_path
+            && Storage::disk($version->pdf_snapshot_disk)->exists($version->pdf_snapshot_path)) {
+            return response(Storage::disk($version->pdf_snapshot_disk)->get($version->pdf_snapshot_path), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.$version->quote->quote_key.'-v'.$version->version_number.'.pdf"',
+                'ETag' => '"'.$version->pdf_snapshot_sha256.'"',
+            ]);
+        }
+
         $html = view('sales::Public.quote-pdf', [
             'version' => $version,
             'opportunity' => $version->quote->opportunity,
@@ -42,7 +54,7 @@ class PublicQuoteController extends Controller
         ]);
     }
 
-    public function accept(Request $request, string $token)
+    public function accept(Request $request, string $token, AcceptSalesQuote $acceptQuote)
     {
         $version = $this->version($token);
 
@@ -59,35 +71,11 @@ class PublicQuoteController extends Controller
             'confirm' => 'required|accepted',
         ]);
 
-        $opportunity = $version->quote->opportunity;
-
-        $version->forceFill([
-            'status' => 'accepted',
-            'accepted_at' => now(),
-            'accepted_by_name' => $data['name'],
-            'accepted_ip' => $request->ip(),
-            'accepted_ua' => $request->userAgent(),
-        ])->save();
-        $version->quote->forceFill(['status' => 'accepted'])->save();
-        $opportunity->forceFill([
-            'status' => 'won',
-            'probability_percent' => 100,
-            'estimated_value_ex_vat' => $version->total_ex_vat,
-            'weighted_value_ex_vat' => $version->total_ex_vat,
-            'won_quote_version_id' => $version->id,
-            'won_at' => now(),
-        ])->save();
-
-        SalesActivity::query()->create([
-            'opportunity_id' => $opportunity->id,
-            'type' => 'quote_accepted',
-            'direction' => 'inbound',
-            'subject' => 'Quote accepted',
-            'body' => $data['name'].' accepted quote '.$version->quote->quote_key.' v'.$version->version_number.'.',
-            'metadata' => [
-                'quote_version_id' => $version->id,
-                'accepted_ip' => $request->ip(),
-            ],
+        $acceptQuote->handle($version, [
+            'name' => $data['name'],
+            'method' => 'public_link',
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
         return back()->with('success', 'Quote accepted. Thank you.');

@@ -1,14 +1,59 @@
 <?php
 
-use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
+use App\Modules\Integration\Controllers\Admin\ApiController;
+use App\Modules\Integration\Controllers\Admin\CloudFactoryController;
 use App\Modules\Integration\Controllers\Admin\IntegrationsController;
+use App\Modules\Integration\Controllers\Public\CloudFactoryWebhookController;
 use App\Modules\Integration\Controllers\Tech\AiChatController;
 use Illuminate\Support\Facades\Route;
+
+if (($tdpsaLoadingCloudFactoryPublicRoutes ?? false) === true) {
+    Route::post('v1/integrations/cloudfactory/webhook/{integration}', CloudFactoryWebhookController::class)
+        ->middleware('throttle:60,1')
+        ->name('api.v1.integrations.cloudfactory.webhook');
+
+    return;
+}
 
 Route::middleware('admin')->group(function () {
     Route::get('/admin/system/integrations', [IntegrationsController::class, 'index'])
         ->name('admin.system.integrations.index');
+
+    Route::get('/admin/system/integrations/cloudfactory', [CloudFactoryController::class, 'index'])
+        ->name('admin.system.integrations.cloudfactory.index');
+    Route::post('/admin/system/integrations/cloudfactory/connect', [CloudFactoryController::class, 'connect'])
+        ->name('admin.system.integrations.cloudfactory.connect');
+    Route::post('/admin/system/integrations/cloudfactory/capabilities/refresh', [CloudFactoryController::class, 'refreshCapabilities'])
+        ->name('admin.system.integrations.cloudfactory.capabilities.refresh');
+    Route::put('/admin/system/integrations/cloudfactory/settings', [CloudFactoryController::class, 'update'])
+        ->name('admin.system.integrations.cloudfactory.update');
+    Route::post('/admin/system/integrations/cloudfactory/revoke', [CloudFactoryController::class, 'revoke'])
+        ->name('admin.system.integrations.cloudfactory.revoke');
+    Route::post('/admin/system/integrations/cloudfactory/sync', [CloudFactoryController::class, 'sync'])
+        ->name('admin.system.integrations.cloudfactory.sync');
+    Route::get('/admin/system/integrations/cloudfactory/sync/{run}', [CloudFactoryController::class, 'syncStatus'])
+        ->name('admin.system.integrations.cloudfactory.sync.status');
+    Route::post('/admin/system/integrations/cloudfactory/webhooks/enable', [CloudFactoryController::class, 'enableWebhooks'])
+        ->name('admin.system.integrations.cloudfactory.webhooks.enable');
+    Route::post('/admin/system/integrations/cloudfactory/webhooks/disable', [CloudFactoryController::class, 'disableWebhooks'])
+        ->name('admin.system.integrations.cloudfactory.webhooks.disable');
+    Route::post('/admin/system/integrations/cloudfactory/validation', [CloudFactoryController::class, 'completeValidation'])
+        ->name('admin.system.integrations.cloudfactory.validation');
+    Route::get('/admin/system/integrations/cloudfactory/catalogue', [CloudFactoryController::class, 'catalogue'])
+        ->name('admin.system.integrations.cloudfactory.catalogue');
+    Route::patch(
+        '/admin/system/integrations/cloudfactory/catalogue/vendors/{vendorLink}',
+        [CloudFactoryController::class, 'updateVendorLink']
+    )->name('admin.system.integrations.cloudfactory.catalogue.vendors.update');
+    Route::patch(
+        '/admin/system/integrations/cloudfactory/catalogue/{offer}',
+        [CloudFactoryController::class, 'updateOffer']
+    )->name('admin.system.integrations.cloudfactory.catalogue.update');
+    Route::post(
+        '/admin/system/integrations/cloudfactory/conflicts/{conflict}/link-client',
+        [CloudFactoryController::class, 'linkClient']
+    )->name('admin.system.integrations.cloudfactory.conflicts.link-client');
 
     Route::post('/admin/system/integrations/toggle', [IntegrationsController::class, 'toggle'])
         ->name('admin.system.integrations.toggle');
