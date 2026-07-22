@@ -172,6 +172,28 @@ Clear Laravel caches after configuration or deployment changes:
 php artisan optimize:clear
 ```
 
+## Version And Release Automation
+
+Normal commits and merges do not require a manual version edit. Nexum keeps product releases and
+exact build identity separate:
+
+- `version.txt` contains the installed product version.
+- Composer records the checked-out root-package commit during `composer install`.
+- The Admin page compares that commit with the configured update branch.
+- Optional `APP_VERSION` and `APP_COMMIT_SHA` values override automatic metadata only for packaged
+  deployments that need them.
+
+Pushes to `main` run Release Please. Conventional Commits such as `fix:`, `feat:`, and `feat!:` are
+collected into one generated release pull request. Merging that pull request updates
+`version.txt` and `CHANGELOG.md`, creates the semantic `v...` tag, and publishes the GitHub release.
+No contributor or deployer calculates the next version manually.
+
+Development installs should set `APP_UPDATE_BRANCH=Dev`; production defaults to `main`. The public
+repository works without a GitHub token, while `APP_GITHUB_TOKEN` is an optional read-only override
+for higher API limits or future private-repository use. Run `composer install` after checking out
+the deployed commit and before Laravel configuration is cached; `composer dump-autoload` alone does
+not refresh Composer's root-package source reference.
+
 Run pending migrations:
 
 ```bash

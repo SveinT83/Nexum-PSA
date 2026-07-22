@@ -47,6 +47,15 @@ Existing settings surfaces include:
 - Ticket technician assignment settings.
 - Ticket assignment rules.
 
+## Application Version Status
+
+The Admin header owns the detailed application version status. It shows the installed release and
+commit immediately, then loads the cached GitHub release and branch comparison without delaying the
+Admin page. The shared footer intentionally shows only the installed product version.
+
+See `Application Version And Update Status` for the release policy, environment settings, cache
+behavior, and failure states.
+
 ## Future Settings Work
 
 Some active modules still need settings ownership decisions before they get admin routes.

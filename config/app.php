@@ -1,5 +1,26 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| Automatic Build Metadata
+|--------------------------------------------------------------------------
+|
+| Release Please owns version.txt. Composer install records the exact root-
+| package source reference during a normal deployment. Environment values remain
+| optional overrides for packaged builds that do not include those sources.
+|
+*/
+
+$versionFile = dirname(__DIR__).DIRECTORY_SEPARATOR.'version.txt';
+$sourceVersion = is_readable($versionFile) ? trim((string) file_get_contents($versionFile)) : '';
+$sourceVersion = $sourceVersion !== '' ? $sourceVersion : '0.1.0';
+$composerRoot = class_exists(\Composer\InstalledVersions::class)
+    ? \Composer\InstalledVersions::getRootPackage()
+    : [];
+$composerReference = is_string($composerRoot['reference'] ?? null)
+    ? $composerRoot['reference']
+    : null;
+
 return [
 
     /*
@@ -20,13 +41,22 @@ return [
     | Application Version
     |--------------------------------------------------------------------------
     |
-    | This value is the current version of Nexum PSA. It is used by the API
-    | (Swagger/OpenAPI), the Talk bot, the admin footer, and deployment checks.
-    | Update APP_VERSION in .env when releasing a new version.
+    | This value is the current version of Nexum PSA. Release Please updates
+    | version.txt, while APP_VERSION remains an optional deployment override.
+    | Composer's root reference identifies the exact deployed build.
     |
     */
 
-    'version' => env('APP_VERSION', '0.1.0'),
+    'version' => env('APP_VERSION', $sourceVersion),
+
+    'commit' => env('APP_COMMIT_SHA', $composerReference),
+
+    'update' => [
+        'branch' => env('APP_UPDATE_BRANCH', 'main'),
+        'github_repository' => env('APP_GITHUB_REPOSITORY', 'SveinT83/Nexum-PSA'),
+        'github_token' => env('APP_GITHUB_TOKEN'),
+        'include_prereleases' => env('APP_UPDATE_PRERELEASES', true),
+    ],
 
     /*
     |--------------------------------------------------------------------------
