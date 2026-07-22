@@ -12,7 +12,7 @@ class BuildContractTermSnapshots
      */
     public function handle(Contracts $contract): array
     {
-        $contract->load(['sla', 'items.slaPolicy', 'items.service.serviceTerms']);
+        $contract->load(['sla', 'items.slaPolicy', 'items.service.serviceTerms.currentVersion']);
 
         $termsByType = $this->groupTermsByType($contract);
 
@@ -30,7 +30,7 @@ class BuildContractTermSnapshots
      */
     public function groupTermsByType(Contracts $contract): array
     {
-        $contract->load(['items.service.serviceTerms']);
+        $contract->load(['items.service.serviceTerms.currentVersion']);
 
         $termsByType = [
             'terms' => collect(),
@@ -65,13 +65,22 @@ class BuildContractTermSnapshots
     {
         return $terms
             ->map(function ($term) {
-                $content = trim((string) $term->content);
+                $version = $term->currentVersion;
+                $content = trim((string) ($version?->content ?? $term->content));
+                $sourceUrl = $version?->source_url ?? $term->source_url;
 
-                if ($content === '') {
+                if ($content === '' && blank($sourceUrl)) {
                     return null;
                 }
 
-                return trim((string) $term->name)."\n".$content;
+                $header = trim((string) ($version?->name ?? $term->name));
+                if (filled($version?->version_label)) {
+                    $header .= ' (version '.$version->version_label.')';
+                }
+
+                return collect([$header, $content, filled($sourceUrl) ? 'Source: '.$sourceUrl : null])
+                    ->filter()
+                    ->implode("\n");
             })
             ->filter()
             ->unique()

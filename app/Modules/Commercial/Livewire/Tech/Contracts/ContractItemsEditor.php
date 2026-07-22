@@ -9,18 +9,25 @@ use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\TimeRate;
+use App\Modules\Integration\Models\CloudFactory\Offer;
+use App\Modules\Integration\Services\CloudFactory\CloudFactoryServiceManager;
 use Livewire\Component;
 
 class ContractItemsEditor extends Component
 {
     public $contract;
+
     public $items = [];
+
     public $availableServices = [];
+
     public $availableSlas = [];
+
     public $isEditable = false;
 
     protected $rules = [
         'items.*.service_id' => 'required|exists:services,id',
+        'items.*.cloudfactory_offer_id' => 'nullable|exists:cloudfactory_offers,id',
         'items.*.name' => 'required|string',
         'items.*.sku' => 'nullable|string',
         'items.*.unit_price' => 'required|numeric',
@@ -55,7 +62,9 @@ class ContractItemsEditor extends Component
             ->map(function ($item) {
                 $data = $item->toArray();
                 $data['tax_rate'] = $item->service->taxable ?? 0;
-                $data['item_cost'] = $item->service ? $item->service->costRelations->sum(fn($cr) => $cr->cost->cost ?? 0) : 0;
+                $data['item_cost'] = $item->cost_unit_price !== null
+                    ? (float) $item->cost_unit_price
+                    : ($item->service ? $item->service->costRelations->sum(fn ($cr) => $cr->cost->cost ?? 0) : 0);
                 $data['uses_contract_default_sla'] = (bool) ($item->uses_contract_default_sla ?? true);
                 $data['sla_label'] = $item->uses_contract_default_sla
                     ? ($this->contract->sla?->name ? 'Contract default: '.$this->contract->sla->name : 'Contract default')
@@ -74,13 +83,14 @@ class ContractItemsEditor extends Component
                     ])
                     ->values()
                     ->toArray();
+
                 return $data;
             })->toArray();
     }
 
     public function addItem()
     {
-        if (!$this->isEditable) {
+        if (! $this->isEditable) {
             return;
         }
 
@@ -88,9 +98,13 @@ class ContractItemsEditor extends Component
             'contract_id' => $this->contract->id,
             'service_id' => null,
             'name' => '',
+            'source' => 'nexum',
+            'cloudfactory_offer_id' => null,
+            'cost_currency' => 'NOK',
             'sku' => '',
             'unit_price' => 0,
             'quantity' => 1,
+            'cost_unit_price' => 0,
             'unit' => '',
             'billing_interval' => 'monthly',
             'discount_value' => 0,
@@ -108,7 +122,7 @@ class ContractItemsEditor extends Component
 
     public function updatedItems($value, $key)
     {
-        if (!$this->isEditable) {
+        if (! $this->isEditable) {
             return;
         }
 
@@ -118,7 +132,14 @@ class ContractItemsEditor extends Component
         $field = $parts[1];
 
         if ($field === 'service_id' && $value) {
-            $service = Services::with(['unit', 'sla', 'serviceTimeRates.timeRate'])->find($value);
+            $service = Services::with([
+                'unit',
+                'sla',
+                'serviceTimeRates.timeRate',
+                'costRelations.cost',
+                'cloudFactoryOffer',
+                'sourceIntegration',
+            ])->find($value);
             if ($service) {
                 $this->items[$index]['name'] = $service->name;
                 $this->items[$index]['sku'] = $service->sku;
@@ -136,8 +157,17 @@ class ContractItemsEditor extends Component
                     ? $service->sla->name
                     : ($this->contract->sla?->name ? 'Contract default: '.$this->contract->sla->name : 'Contract default');
 
-                // Calculate item cost
-                $this->items[$index]['item_cost'] = $service->costRelations->sum(fn($cr) => $cr->cost->cost ?? 0);
+                $this->items[$index]['item_cost'] = (float) $service->costRelations
+                    ->sum(fn ($relation) => $relation->cost->cost ?? 0);
+                $this->items[$index]['cost_unit_price'] = $this->items[$index]['item_cost'];
+                $this->items[$index]['cost_currency'] = $service->price_currency ?: 'NOK';
+                $this->items[$index]['source'] = $service->source ?: 'nexum';
+                $this->items[$index]['cloudfactory_offer_id'] = null;
+                $this->items[$index]['licence_metadata'] = null;
+
+                if ($service->isIntegrationManaged() && $service->cloudFactoryOffer) {
+                    $this->applyCloudFactoryOffer($index, $service->cloudFactoryOffer);
+                }
 
                 // Magic quantity calculation
                 $this->items[$index]['quantity'] = $this->calculateQuantity($service);
@@ -145,13 +175,63 @@ class ContractItemsEditor extends Component
             }
         }
 
+        if ($field === 'cloudfactory_offer_id' && $value) {
+            $offer = Offer::query()->with(['integration', 'service.sourceIntegration'])->find($value);
+            if (
+                ! $offer
+                || (int) $offer->service_id !== (int) ($this->items[$index]['service_id'] ?? 0)
+                || ! $offer->service?->isIntegrationManaged()
+                || (string) $offer->integration_id !== (string) $offer->service->source_integration_id
+            ) {
+                $this->items[$index]['cloudfactory_offer_id'] = null;
+                $this->addError('items.'.$index.'.cloudfactory_offer_id', 'Select an offer that belongs to this Service.');
+
+                return;
+            }
+
+            $this->applyCloudFactoryOffer($index, $offer);
+        }
+
         $this->saveItem($index);
+    }
+
+    private function applyCloudFactoryOffer(int $index, Offer $offer): void
+    {
+        $service = Services::with('costRelations.cost')->find($offer->service_id);
+        if (! $service) {
+            return;
+        }
+
+        $internalCost = (float) $service->costRelations
+            ->filter(fn ($relation) => ! ($relation->cost?->managed_externally ?? false))
+            ->sum(fn ($relation) => $relation->cost?->cost ?? 0);
+        $providerCost = (float) ($offer->normalizedCost() ?? 0);
+
+        $this->items[$index]['cloudfactory_offer_id'] = $offer->id;
+        $this->items[$index]['source'] = 'cloudfactory';
+        $this->items[$index]['unit_price'] = round(
+            app(CloudFactoryServiceManager::class)->calculatedSalePrice($offer, $service),
+            2
+        );
+        $this->items[$index]['billing_interval'] = $offer->commercialBillingInterval();
+        $this->items[$index]['item_cost'] = $internalCost + $providerCost;
+        $this->items[$index]['cost_unit_price'] = $internalCost + $providerCost;
+        $this->items[$index]['cost_currency'] = $offer->currency ?: 'NOK';
+        $this->items[$index]['licence_metadata'] = array_replace(
+            $this->items[$index]['licence_metadata'] ?? [],
+            [
+                'cloudfactory_raw_cost' => $offer->cost,
+                'cloudfactory_raw_msrp' => $offer->msrp,
+                'cloudfactory_commitment_term' => $offer->recurrence_term,
+                'cloudfactory_billing_term' => $offer->billing_term,
+            ]
+        );
     }
 
     public function calculateLineTotals($index)
     {
         $item = $this->items[$index] ?? null;
-        if (!$item) {
+        if (! $item) {
             return [
                 'total' => '0,00 kr',
                 'discount_total' => 0,
@@ -159,10 +239,10 @@ class ContractItemsEditor extends Component
             ];
         }
 
-        $priceExVat = (float)($item['unit_price'] ?? 0) * (int)($item['quantity'] ?? 1);
-        $discountValue = (float)($item['discount_value'] ?? 0);
+        $priceExVat = (float) ($item['unit_price'] ?? 0) * (int) ($item['quantity'] ?? 1);
+        $discountValue = (float) ($item['discount_value'] ?? 0);
         $discountType = $item['discount_type'] ?? 'percent';
-        $taxRate = (float)($item['tax_rate'] ?? 0);
+        $taxRate = (float) ($item['tax_rate'] ?? 0);
 
         $discountTotal = 0;
         if ($discountType === 'percent') {
@@ -176,7 +256,7 @@ class ContractItemsEditor extends Component
         $total = $subtotal + $taxTotal;
 
         return [
-            'total' => number_format($total, 2, ',', ' ') . ' kr',
+            'total' => number_format($total, 2, ',', ' ').' kr',
             'discount_total' => $discountTotal,
             'total_numeric' => $total,
         ];
@@ -202,17 +282,54 @@ class ContractItemsEditor extends Component
 
     public function saveItem($index)
     {
-        if (!$this->isEditable) {
+        if (! $this->isEditable) {
             return;
+        }
+
+        if (empty($this->items[$index]['service_id'])) {
+            return;
+        }
+
+        $service = Services::with([
+            'costRelations.cost',
+            'sourceIntegration',
+        ])->find($this->items[$index]['service_id']);
+        if (! $service) {
+            return;
+        }
+
+        $offerId = $this->items[$index]['cloudfactory_offer_id'] ?? null;
+        $serviceOffer = $service->isIntegrationManaged()
+            ? Offer::query()
+                ->where('service_id', $service->id)
+                ->where('integration_id', $service->source_integration_id)
+                ->first()
+            : null;
+        if ($serviceOffer) {
+            if ($offerId && $offerId !== $serviceOffer->id) {
+                $this->addError('items.'.$index.'.cloudfactory_offer_id', 'Select an offer that belongs to this Service.');
+
+                return;
+            }
+
+            $this->applyCloudFactoryOffer($index, $serviceOffer);
+        } elseif ($offerId) {
+            $this->addError(
+                'items.'.$index.'.cloudfactory_offer_id',
+                'This Service is not linked to that Cloud Factory offer.'
+            );
+
+            return;
+        } else {
+            $this->items[$index]['item_cost'] = (float) $service->costRelations
+                ->sum(fn ($relation) => $relation->cost?->cost ?? 0);
+            $this->items[$index]['cost_unit_price'] = $this->items[$index]['item_cost'];
+            $this->items[$index]['cost_currency'] = $service->price_currency ?: 'NOK';
         }
 
         $itemData = $this->items[$index];
         $timeRates = $itemData['time_rates'] ?? [];
         unset($itemData['time_rates'], $itemData['service']);
-
-        if (empty($itemData['service_id'])) {
-            return;
-        }
 
         if (! empty($itemData['uses_contract_default_sla'])) {
             $itemData['sla_id'] = null;
@@ -223,7 +340,7 @@ class ContractItemsEditor extends Component
         }
 
         // Ensure numeric fields are correctly handled (null or numeric)
-        $numericFields = ['unit_price', 'quantity', 'discount_value', 'setup_fee'];
+        $numericFields = ['unit_price', 'cost_unit_price', 'quantity', 'discount_value', 'setup_fee'];
         foreach ($numericFields as $field) {
             if (isset($itemData[$field]) && ($itemData[$field] === '' || $itemData[$field] === null)) {
                 $itemData[$field] = 0;
@@ -244,7 +361,7 @@ class ContractItemsEditor extends Component
 
     public function removeItem($index)
     {
-        if (!$this->isEditable) {
+        if (! $this->isEditable) {
             return;
         }
 
@@ -263,10 +380,10 @@ class ContractItemsEditor extends Component
     {
         $totalCost = 0;
         foreach ($this->items as $item) {
-            $totalCost += (float)($item['item_cost'] ?? 0) * (int)($item['quantity'] ?? 1);
+            $totalCost += (float) ($item['item_cost'] ?? 0) * (int) ($item['quantity'] ?? 1);
         }
 
-        return number_format($totalCost, 2, ',', ' ') . ' kr';
+        return number_format($totalCost, 2, ',', ' ').' kr';
     }
 
     public function calculateTotalDiscount()
@@ -277,7 +394,7 @@ class ContractItemsEditor extends Component
             $totalDiscount += $totals['discount_total'] ?? 0;
         }
 
-        return number_format($totalDiscount, 2, ',', ' ') . ' kr';
+        return number_format($totalDiscount, 2, ',', ' ').' kr';
     }
 
     public function calculateTotalAmount()
@@ -288,7 +405,7 @@ class ContractItemsEditor extends Component
             $totalAmount += $totals['total_numeric'] ?? 0;
         }
 
-        return number_format($totalAmount, 2, ',', ' ') . ' kr';
+        return number_format($totalAmount, 2, ',', ' ').' kr';
     }
 
     public function calculateAnnualProfit()
@@ -298,7 +415,7 @@ class ContractItemsEditor extends Component
         foreach ($this->items as $index => $item) {
             $totals = $this->calculateLineTotals($index);
             $revenuePerPeriod = $totals['total_numeric'] ?? 0;
-            $costPerPeriod = (float)($item['item_cost'] ?? 0) * (int)($item['quantity'] ?? 1);
+            $costPerPeriod = (float) ($item['item_cost'] ?? 0) * (int) ($item['quantity'] ?? 1);
 
             $billingInterval = $item['billing_interval'] ?? 'monthly';
             $multiplier = 0;
@@ -322,7 +439,7 @@ class ContractItemsEditor extends Component
             $annualProfit += ($revenuePerPeriod - $costPerPeriod) * $multiplier;
         }
 
-        return number_format($annualProfit, 2, ',', ' ') . ' kr';
+        return number_format($annualProfit, 2, ',', ' ').' kr';
     }
 
     protected function timeRatesForService(Services $service): array

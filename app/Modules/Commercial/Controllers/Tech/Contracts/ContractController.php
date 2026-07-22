@@ -3,22 +3,23 @@
 namespace App\Modules\Commercial\Controllers\Tech\Contracts;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Commercial\Actions\BuildContractTermSnapshots;
-use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Mail\ContractLinkSent;
+use App\Models\Clients\Client;
+use App\Models\Core\User;
+use App\Modules\Commercial\Actions\BuildContractTermSnapshots;
+use App\Modules\Commercial\Actions\CaptureContractTermVersions;
+use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Commercial\Requests\ContractsRequest;
+use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use App\Modules\Email\Models\EmailAccount;
 use Illuminate\Http\Request;
-use App\Models\Clients\Client;
-use App\Models\Core\User;
-use App\Modules\Commercial\Requests\ContractsRequest;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
@@ -33,7 +34,6 @@ use Illuminate\Support\Str;
  */
 class ContractController extends Controller
 {
-
     /**
      * SHOW - Display a detailed preview of a specific Contract.
      *
@@ -45,7 +45,6 @@ class ContractController extends Controller
      *    - A future-dated start date.
      * 3. Detection of "Stale Terms": Checks if services with terms were added after the last snapshot was taken.
      *
-     * @param Contracts $contract
      * @return \Illuminate\View\View
      */
     public function show(Contracts $contract)
@@ -72,7 +71,7 @@ class ContractController extends Controller
         // Readiness logic for the UI to enable/disable approval and export actions.
         $validation = [
             'has_items' => $contract->items->count() > 0,
-            'has_terms' => !empty($contract->terms_snapshot) || !empty($contract->dpa_snapshot) || !empty($contract->legal_snapshot),
+            'has_terms' => ! empty($contract->terms_snapshot) || ! empty($contract->dpa_snapshot) || ! empty($contract->legal_snapshot),
             'future_start_date' => $contract->start_date && $contract->start_date->isFuture(),
             'ready' => $contract->isReady(),
             'has_missing_terms' => $hasMissingTerms,
@@ -106,7 +105,7 @@ class ContractController extends Controller
             'companyProfile' => $companyProfile->get(),
         ])->render();
 
-        $options = new Options();
+        $options = new Options;
         $options->set('defaultFont', 'DejaVu Sans');
         $options->set('isRemoteEnabled', false);
 
@@ -223,11 +222,14 @@ class ContractController extends Controller
                     (
                         {$this->contractItemLineTotalExpression('contract_items')}
                         - (
-                            (
-                                SELECT COALESCE(SUM(costs.cost), 0)
-                                FROM cost_relations
-                                INNER JOIN costs ON costs.id = cost_relations.costId
-                                WHERE cost_relations.serviceId = contract_items.service_id
+                            COALESCE(
+                                contract_items.cost_unit_price,
+                                (
+                                    SELECT COALESCE(SUM(costs.cost), 0)
+                                    FROM cost_relations
+                                    INNER JOIN costs ON costs.id = cost_relations.costId
+                                    WHERE cost_relations.serviceId = contract_items.service_id
+                                )
                             ) * contract_items.quantity
                         )
                     )
@@ -292,7 +294,7 @@ class ContractController extends Controller
         $requestedRoles = ['service.admin', 'tech.admin', 'Superuser', 'service.create', 'service.view'];
         $existingRoles = \Spatie\Permission\Models\Role::whereIn('name', $requestedRoles)->pluck('name')->toArray();
 
-        if (!empty($existingRoles)) {
+        if (! empty($existingRoles)) {
             $technicians = User::role($existingRoles)->get();
         } else {
             $technicians = collect();
@@ -327,7 +329,6 @@ class ContractController extends Controller
      * - Converts localized decimal strings (comma) to DB-friendly floats (dot).
      * - Sets initial 'draft' status.
      *
-     * @param ContractsRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(ContractsRequest $request)
@@ -338,6 +339,10 @@ class ContractController extends Controller
         $validatedData['auto_renew'] = $request->boolean('auto_renew');
         $validatedData['allow_indexing_during_binding'] = $request->boolean('allow_indexing_during_binding');
         $validatedData['allow_decrease_during_binding'] = $request->boolean('allow_decrease_during_binding');
+        $validatedData['allow_license_additions'] = $request->boolean('allow_license_additions');
+        $validatedData['allow_license_increases'] = $request->boolean('allow_license_increases');
+        $validatedData['allow_license_decreases'] = $request->boolean('allow_license_decreases');
+        $validatedData['allow_license_price_updates'] = $request->boolean('allow_license_price_updates');
 
         // Number Formatting (Comma -> Dot)
         if ($request->max_index_pct_binding) {
@@ -356,7 +361,7 @@ class ContractController extends Controller
         ]);
 
         return redirect()->route('tech.contracts.services.edit', [
-            'contract' => $contract->id
+            'contract' => $contract->id,
         ]);
     }
 
@@ -365,7 +370,6 @@ class ContractController extends Controller
      *
      * Reuses the 'create' view but pre-populates with existing contract data.
      *
-     * @param Contracts $contract
      * @return \Illuminate\View\View
      */
     public function edit(Contracts $contract)
@@ -376,7 +380,7 @@ class ContractController extends Controller
         $requestedRoles = ['service.admin', 'tech.admin', 'Superuser', 'service.create', 'service.view'];
         $existingRoles = \Spatie\Permission\Models\Role::whereIn('name', $requestedRoles)->pluck('name')->toArray();
 
-        if (!empty($existingRoles)) {
+        if (! empty($existingRoles)) {
             $technicians = User::role($existingRoles)->get();
         } else {
             $technicians = collect();
@@ -397,8 +401,6 @@ class ContractController extends Controller
     /**
      * UPDATE - Save changes to contract metadata.
      *
-     * @param ContractsRequest $request
-     * @param Contracts $contract
      * @return \Illuminate\Http\RedirectResponse
      */
     public function update(ContractsRequest $request, Contracts $contract)
@@ -408,6 +410,10 @@ class ContractController extends Controller
         $validatedData['auto_renew'] = $request->boolean('auto_renew');
         $validatedData['allow_indexing_during_binding'] = $request->boolean('allow_indexing_during_binding');
         $validatedData['allow_decrease_during_binding'] = $request->boolean('allow_decrease_during_binding');
+        $validatedData['allow_license_additions'] = $request->boolean('allow_license_additions');
+        $validatedData['allow_license_increases'] = $request->boolean('allow_license_increases');
+        $validatedData['allow_license_decreases'] = $request->boolean('allow_license_decreases');
+        $validatedData['allow_license_price_updates'] = $request->boolean('allow_license_price_updates');
 
         if ($request->max_index_pct_binding) {
             $validatedData['max_index_pct_binding'] = str_replace(',', '.', $request->max_index_pct_binding);
@@ -420,7 +426,7 @@ class ContractController extends Controller
         $contract->update($validatedData);
 
         return redirect()->route('tech.contracts.services.edit', [
-            'contract' => $contract->id
+            'contract' => $contract->id,
         ])->with('success', 'Contract details updated successfully.');
     }
 
@@ -429,7 +435,6 @@ class ContractController extends Controller
      *
      * The actual line-item management is handled by a Livewire component embedded in this view.
      *
-     * @param Contracts $contract
      * @return \Illuminate\View\View
      */
     public function servicesEdit(Contracts $contract)
@@ -438,15 +443,13 @@ class ContractController extends Controller
 
         return view('commercial::Tech.cs.contracts.services.edit', [
             'contract' => $contract,
-            'client' => $contract->client
+            'client' => $contract->client,
         ]);
     }
 
     /**
      * Store the services for a contract. (Placeholder for non-Livewire fallbacks if needed).
      *
-     * @param Request $request
-     * @param Contracts $contract
      * @return \Illuminate\Http\RedirectResponse
      */
     public function servicesUpdate(Request $request, Contracts $contract)
@@ -465,8 +468,6 @@ class ContractController extends Controller
      * 4. Auto-fills snapshots if they are empty, creating a point-in-time legal baseline.
      * 5. Supports 'refreshing' snapshots if the service list has changed.
      *
-     * @param Contracts $contract
-     * @param Request $request
      * @return \Illuminate\View\View
      */
     public function terms(Contracts $contract, Request $request)
@@ -492,7 +493,7 @@ class ContractController extends Controller
         return view('commercial::Tech.cs.contracts.terms.terms', [
             'contract' => $contract,
             'client' => $contract->client,
-            'termsByType' => $termsByType
+            'termsByType' => $termsByType,
         ]);
     }
 
@@ -502,8 +503,6 @@ class ContractController extends Controller
      * Once saved, these snapshots become the legal foundation for the contract,
      * independent of future updates to the master service terms.
      *
-     * @param Request $request
-     * @param Contracts $contract
      * @return \Illuminate\Http\RedirectResponse
      */
     public function termsUpdate(Request $request, Contracts $contract)
@@ -526,11 +525,12 @@ class ContractController extends Controller
      */
     public function sendQuote(Request $request, Contracts $contract, SendCustomerPortalNotification $portalNotifications)
     {
-        if (!$contract->isReady()) {
+        if (! $contract->isReady()) {
             return back()->with('error', 'Contract is not ready to be sent. Please check items and terms.');
         }
 
         $previousStatus = $contract->approval_status;
+        app(CaptureContractTermVersions::class)->replace($contract);
         $contract->generateSecureToken();
         $contract->update([
             'approval_status' => 'sent_quote',
@@ -569,11 +569,12 @@ class ContractController extends Controller
      */
     public function sendContract(Request $request, Contracts $contract, SendCustomerPortalNotification $portalNotifications)
     {
-        if (!$contract->isReady()) {
+        if (! $contract->isReady()) {
             return back()->with('error', 'Contract is not ready to be sent. Please check items and terms.');
         }
 
         $previousStatus = $contract->approval_status;
+        app(CaptureContractTermVersions::class)->replace($contract);
         $contract->generateSecureToken();
         $contract->update([
             'approval_status' => 'sent_contract',
@@ -637,11 +638,14 @@ class ContractController extends Controller
         $to = $contract->client->billing_email;
         $cc = $contract->cc_email;
 
-        if (!$emailAccount) {
+        if (! $emailAccount) {
             Log::info('No global default email account found. Using system default mailer.');
             $mail = Mail::to($to);
-            if ($cc) $mail->cc($cc);
+            if ($cc) {
+                $mail->cc($cc);
+            }
             $mail->send(new ContractLinkSent($contract, $type));
+
             return;
         }
 
@@ -665,7 +669,7 @@ class ContractController extends Controller
                     'username' => $user,
                     'password' => $pass,
                     'timeout' => null,
-                ]
+                ],
             ]);
 
             $mailable = new ContractLinkSent($contract, $type);
@@ -678,7 +682,9 @@ class ContractController extends Controller
             }
 
             $mail = Mail::mailer('dynamic_smtp')->to($to);
-            if ($cc) $mail->cc($cc);
+            if ($cc) {
+                $mail->cc($cc);
+            }
             $mail->send($mailable);
 
             $emailAccount->update(['last_successful_send_at' => now()]);
@@ -687,12 +693,14 @@ class ContractController extends Controller
             Log::error('Failed to send contract email via custom account', [
                 'account_id' => $emailAccount->id,
                 'contract_id' => $contract->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             // Final fallback to system mailer if custom one fails
             $mail = Mail::to($to);
-            if ($cc) $mail->cc($cc);
+            if ($cc) {
+                $mail->cc($cc);
+            }
             $mail->send(new ContractLinkSent($contract, $type));
         }
     }

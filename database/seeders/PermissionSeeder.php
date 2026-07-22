@@ -176,6 +176,9 @@ class PermissionSeeder extends Seeder
             'integration.ai_manage',
             'integration.bookstack_manage',
             'integration.rmm_manage',
+            'integration.cloudfactory_view',
+            'integration.cloudfactory_manage',
+            'integration.cloudfactory_write',
 
             'data_exchange.view',
             'data_exchange.manage',

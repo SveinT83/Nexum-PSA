@@ -9,6 +9,8 @@ use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Economy\Models\EconomyOrder;
 use App\Modules\Economy\Models\EconomyOrderLine;
+use App\Modules\Integration\Models\CloudFactory\BillingPeriod;
+use App\Modules\Integration\Services\CloudFactory\EnsureCloudFactoryBillingPeriods;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use App\Modules\Ticket\Models\TicketTimeEntry;
 use App\Modules\Ticket\Models\TicketTimeEntryAllocation;
@@ -18,9 +20,10 @@ use Illuminate\Support\Facades\DB;
 
 class GenerateOrders
 {
-    public function __construct(private readonly EnsureEconomyDefaults $defaults)
-    {
-    }
+    public function __construct(
+        private readonly EnsureEconomyDefaults $defaults,
+        private readonly EnsureCloudFactoryBillingPeriods $cloudFactoryBillingPeriods,
+    ) {}
 
     public function handle(?CarbonInterface $periodStart = null, ?CarbonInterface $periodEnd = null, ?User $actor = null): array
     {
@@ -39,6 +42,8 @@ class GenerateOrders
                 'cost_entries_ordered' => 0,
                 'quick_timebank_entries_seen' => 0,
                 'quick_timebank_entries_ordered' => 0,
+                'cloudfactory_periods_seen' => 0,
+                'cloudfactory_periods_ordered' => 0,
             ];
 
             if ($settings->create_orders_from_closed_ticket_time || $settings->create_orders_from_resolved_ticket_time || $settings->include_unresolved_ticket_time_in_period_close) {
@@ -50,6 +55,8 @@ class GenerateOrders
             }
 
             $this->generateQuickTimebankLines($periodStart, $periodEnd, $actor, $settings, $summary);
+            $this->cloudFactoryBillingPeriods->handle($periodStart, $periodEnd);
+            $this->generateCloudFactoryLines($periodStart, $periodEnd, $actor, $settings, $summary);
 
             return $summary;
         });
@@ -86,6 +93,7 @@ class GenerateOrders
                     'billing_status' => 'covered',
                     'timebank_status' => 'covered',
                 ])->save();
+
                 return;
             }
 
@@ -470,6 +478,81 @@ class GenerateOrders
             });
     }
 
+    private function generateCloudFactoryLines(
+        CarbonInterface $periodStart,
+        CarbonInterface $periodEnd,
+        ?User $actor,
+        $settings,
+        array &$summary,
+    ): void {
+        BillingPeriod::query()
+            ->with(['subscription.offer', 'contractItem'])
+            ->where('status', 'confirmed')
+            ->whereDate('period_start', $periodStart->toDateString())
+            ->whereDate('period_end', $periodEnd->toDateString())
+            ->orderBy('client_id')
+            ->orderBy('id')
+            ->get()
+            ->each(function (BillingPeriod $period) use ($periodStart, $periodEnd, $actor, $settings, &$summary): void {
+                $summary['cloudfactory_periods_seen']++;
+                $order = $this->draftOrder($period->client_id, $periodStart, $periodEnd, $actor, $settings);
+                $lineTotal = round((float) $period->quantity * (float) $period->unit_price_ex_vat, 2);
+                $vatRate = $settings->default_vat_rate !== null ? (float) $settings->default_vat_rate : null;
+                $vatAmount = $vatRate === null ? null : round($lineTotal * ($vatRate / 100), 2);
+                $line = EconomyOrderLine::query()
+                    ->where('source_type', $period->getMorphClass())
+                    ->where('source_id', $period->id)
+                    ->first();
+
+                if ($line && $line->order?->status !== 'draft') {
+                    return;
+                }
+
+                $line ??= new EconomyOrderLine([
+                    'source_type' => $period->getMorphClass(),
+                    'source_id' => $period->id,
+                ]);
+                $wasNew = ! $line->exists;
+                $subscription = $period->subscription;
+                $name = $period->contractItem?->name
+                    ?: $subscription?->name
+                    ?: 'Cloud Factory licence';
+
+                $line->forceFill([
+                    'economy_order_id' => $order->id,
+                    'client_id' => $period->client_id,
+                    'ticket_id' => null,
+                    'work_date' => $period->period_start,
+                    'line_type' => 'cloudfactory_licence',
+                    'description' => $name,
+                    'quantity' => $period->quantity,
+                    'unit' => 'licence',
+                    'unit_price_ex_vat' => $period->unit_price_ex_vat,
+                    'line_total_ex_vat' => $lineTotal,
+                    'vat_rate' => $vatRate,
+                    'vat_amount' => $vatAmount,
+                    'total_inc_vat' => $lineTotal + ($vatAmount ?? 0),
+                    'currency' => $period->currency,
+                    'status' => 'active',
+                    'metadata' => array_replace($period->metadata ?? [], [
+                        'subscription_id' => $period->subscription_id,
+                        'contract_item_id' => $period->contract_item_id,
+                        'provider_family' => $subscription?->provider_family,
+                    ]),
+                ])->save();
+
+                $period->forceFill(['status' => 'queued'])->save();
+                $summary['cloudfactory_periods_ordered']++;
+
+                if ($wasNew) {
+                    $summary['lines_created']++;
+                }
+
+                $summary['orders_touched']++;
+                $this->recalculate($order);
+            });
+    }
+
     private function timeEntryIsEligible(TicketTimeEntry $entry, $settings): bool
     {
         if ($settings->include_unresolved_ticket_time_in_period_close) {
@@ -501,7 +584,7 @@ class GenerateOrders
 
         if (blank($order->order_number)) {
             $order->forceFill([
-                'order_number' => $settings->order_prefix . str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
+                'order_number' => $settings->order_prefix.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
             ])->save();
         }
 
@@ -522,12 +605,12 @@ class GenerateOrders
 
     private function timeDescription(TicketTimeEntry $entry): string
     {
-        return trim(($entry->ticket?->ticket_key ? $entry->ticket->ticket_key . ' - ' : '') . ($entry->invoice_text ?: $entry->rate_name ?: 'Ticket time'));
+        return trim(($entry->ticket?->ticket_key ? $entry->ticket->ticket_key.' - ' : '').($entry->invoice_text ?: $entry->rate_name ?: 'Ticket time'));
     }
 
     private function costDescription(TicketCostEntry $entry): string
     {
-        return trim(($entry->ticket?->ticket_key ? $entry->ticket->ticket_key . ' - ' : '') . ($entry->invoice_text ?: $entry->item_name));
+        return trim(($entry->ticket?->ticket_key ? $entry->ticket->ticket_key.' - ' : '').($entry->invoice_text ?: $entry->item_name));
     }
 
     private function quickTimebankDescription(ClientContractTimeConsumption $entry): string

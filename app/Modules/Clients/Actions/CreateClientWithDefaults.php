@@ -40,6 +40,12 @@ class CreateClientWithDefaults
             $site = ClientSite::query()->create([
                 'client_id' => $client->id,
                 'name' => $data['site_name'],
+                'address' => $data['site_address'] ?? null,
+                'co_address' => $data['site_co_address'] ?? null,
+                'zip' => $data['site_zip'] ?? null,
+                'city' => $data['site_city'] ?? null,
+                'county' => $data['site_county'] ?? null,
+                'country' => $data['site_country'] ?? null,
                 'is_default' => true,
             ]);
 

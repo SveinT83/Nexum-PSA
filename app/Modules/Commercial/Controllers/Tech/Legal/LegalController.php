@@ -5,6 +5,8 @@ namespace App\Modules\Commercial\Controllers\Tech\Legal;
 use App\Http\Controllers\Controller;
 use App\Modules\Commercial\Requests\termsRequest;
 use App\Modules\Commercial\Models\Terms\terms;
+use App\Modules\Commercial\Services\LegalDocumentVersioning;
+use Illuminate\Support\Facades\DB;
 
 class LegalController extends Controller
 {
@@ -16,6 +18,7 @@ class LegalController extends Controller
 
         $terms = terms::query()
             ->select('terms.*')
+            ->with('currentVersion')
             ->orderBy('terms.id') // stabil sortering
             ->get();
 
@@ -35,15 +38,20 @@ class LegalController extends Controller
     // -----------------------------------------
     // STORE - Save the new legal or term
     // -----------------------------------------
-    public function store(termsRequest $request)
+    public function store(termsRequest $request, LegalDocumentVersioning $versions)
     {
-        // Validate request via FormRequest
         $data = $request->validated();
 
-        //Save the form to DB
-        $legal = terms::create($data);
+        DB::transaction(function () use ($data, $versions): void {
+            $term = terms::query()->create([
+                ...$data,
+                'origin' => 'nexum',
+                'managed_externally' => false,
+            ]);
+            $versions->record($term, $data);
+        });
 
-        //Redirect wiew whit message
+        // Redirect with message
         return redirect()->route('tech.legal.index')
             ->with('success', 'Legal or Term created successfully.');
     }
@@ -53,7 +61,7 @@ class LegalController extends Controller
     // -----------------------------------------
     public function show(terms $term)
     {
-        $term->load('services');
+        $term->load(['services', 'currentVersion', 'versions']);
         // $term kommer fra route model binding
         return view('commercial::Tech.cs.legal.form', [
             'term' => $term,
@@ -65,7 +73,7 @@ class LegalController extends Controller
     // -----------------------------------------
     public function edit(terms $term)
     {
-        $term->load('services');
+        $term->load(['services', 'currentVersion', 'versions']);
         return view('commercial::Tech.cs.legal.form', [
             'term' => $term,
         ]);
@@ -74,16 +82,20 @@ class LegalController extends Controller
     // -----------------------------------------
     // UPDATE - Update a legal or term
     // -----------------------------------------
-    public function update(termsRequest $request, terms $term)
+    public function update(termsRequest $request, terms $term, LegalDocumentVersioning $versions)
     {
+        if ($term->isProviderManaged()) {
+            return back()->with('error', 'Provider-managed legal documents are read-only and must be updated by synchronization.');
+        }
 
-        //Validate data
         $data = $request->validated();
 
-        //Update the term in the database
-        $term->update($data);
+        DB::transaction(function () use ($term, $data, $versions): void {
+            $term->update($data);
+            $versions->record($term, $data);
+        });
 
-        //Redirect with message
+        // Redirect with message
         return redirect()->route('tech.legal.index')
             ->with('success', 'Legal or Term updated successfully.');
     }
@@ -93,6 +105,11 @@ class LegalController extends Controller
     // -----------------------------------------
     public function delete(terms $term)
     {
+        if ($term->isProviderManaged()) {
+            return redirect()->route('tech.legal.show', $term)
+                ->with('error', 'Provider-managed legal documents cannot be deleted manually.');
+        }
+
         if ($term->isInUse()) {
             return redirect()->route('tech.legal.show', $term)
                 ->with('error', 'This legal or term cannot be deleted because it is currently in use.');

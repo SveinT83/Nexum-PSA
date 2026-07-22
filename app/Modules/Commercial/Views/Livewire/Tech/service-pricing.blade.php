@@ -49,15 +49,24 @@
                             @foreach($linked as $item)
                                 @if ($item->cost)
                                     <tr>
-                                        <td>{{ $item->cost->name ?? ""}}</td>
+                                        <td>
+                                            {{ $item->cost->name ?? ""}}
+                                            @if($item->cost->managed_externally && $item->cost->source !== 'nexum')
+                                                <x-integration.source-ownership :record="$item->cost" />
+                                            @endif
+                                        </td>
                                         <td>{{ $item->cost->vendor->name ?? '-' }}</td>
                                         <td class="text-end">{{ number_format($item->cost->cost, 2)}}</td>
                                         <td>{{ $item->cost->unit->name ?? '-'}}</td>
                                         @if($enabled !== 'disabled')
                                             <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-danger" wire:click="remove('{{ $item->costId }}')">
-                                                    <i class="fas fa-trash-alt"></i> Remove
-                                                </button>
+                                                @if($item->cost->isIntegrationManaged())
+                                                    <span class="small text-muted">Change in integration catalogue</span>
+                                                @else
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" wire:click="remove('{{ $item->costId }}')">
+                                                        <i class="fas fa-trash-alt"></i> Remove
+                                                    </button>
+                                                @endif
                                             </td>
                                         @endif
                                     </tr>

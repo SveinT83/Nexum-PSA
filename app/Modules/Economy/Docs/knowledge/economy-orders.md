@@ -12,6 +12,11 @@ Current flow:
 - Ticket Storage costs are first reserved. A reserved item does not create an order line.
 - When a technician clicks `Pick` on a reserved ticket cost, Storage reduces on-hand and reserved stock, creates a movement, marks the cost as picked, and Economy creates the order line.
 - Manual `Generate orders` in Economy runs the same generation logic for a selected period.
+- Active Cloud Factory subscriptions linked to an eligible contract create one confirmed billing
+  period per subscription and month. Economy converts each period into one
+  `cloudfactory_licence` order line using the synchronized quantity, sale price, and currency.
+- Repeated licence synchronization and order generation update the same source-backed line instead
+  of duplicating the charge.
 - `Export ready orders` sends ready and approved orders through the Data Exchange Economy Orders
   profile and stores the generated CSV/JSON/XLSX file in Data Exchange run history.
 - Closing a ticket queues Economy order generation for the ticket's billing period.

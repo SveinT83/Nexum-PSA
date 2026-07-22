@@ -47,7 +47,7 @@
 
             <label for="cost_search" class="form-label text-muted small fw-bold text-uppercase">Search</label>
             <div class="input-group input-group-sm">
-                <input id="cost_search" type="search" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" placeholder="Cost name, vendor, recurrence, or note">
+                <input id="cost_search" type="search" name="q" value="{{ $filters['q'] ?? '' }}" class="form-control" placeholder="Cost name, source, vendor, recurrence, or note">
                 <button type="submit" class="btn btn-outline-secondary">Search</button>
                 <button
                     class="btn btn-outline-secondary"
@@ -113,6 +113,11 @@
                             </a>
                         </th>
                         <th>
+                            <a href="{{ $sortLink('source') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
+                                Source <i class="bi {{ $sortIcon('source') }}"></i>
+                            </a>
+                        </th>
+                        <th>
                             <a href="{{ $sortLink('cost', 'desc') }}" class="text-decoration-none text-body d-inline-flex align-items-center gap-1">
                                 Cost <i class="bi {{ $sortIcon('cost') }}"></i>
                             </a>
@@ -143,7 +148,10 @@
                                     {{ $cost->name }}
                                 </a>
                             </td>
-                            <td>{{ number_format((float) $cost->cost, 2, ',', '.') }} kr</td>
+                            <td>
+                                <x-integration.source-ownership :record="$cost" />
+                            </td>
+                            <td>{{ number_format((float) $cost->cost, 2, ',', '.') }} {{ $cost->currency }}</td>
                             <td>{{ $cost->unit->name ?? '—' }}</td>
                             <td>{{ ucfirst($cost->recurrence) }}</td>
                             <td>{{ $cost->vendor->name ?? '—' }}</td>
@@ -151,7 +159,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-4">No costs found.</td>
+                            <td colspan="7" class="text-center py-4">No costs found.</td>
                         </tr>
                     @endforelse
                 </tbody>

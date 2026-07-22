@@ -10,8 +10,8 @@ class ClientsMenu
     /**
      * Generates the sidebar menu for the clients section.
      *
-     * @param mixed $clients Optional client model or ID
-     * @param mixed $sites Optional site model or ID
+     * @param  mixed  $clients  Optional client model or ID
+     * @param  mixed  $sites  Optional site model or ID
      * @return array A structured list of sidebar menu items
      */
     public function ClientsMenu($clients = null, $sites = null): array
@@ -44,6 +44,15 @@ class ClientsMenu
             'params' => $clientParam,
             'icon' => 'bi-pc-display',
         ];
+
+        if ($clientParam) {
+            $sidebarMenuItems[] = [
+                'name' => 'Licences',
+                'route' => 'tech.clients.licenses.index',
+                'params' => $clientParam,
+                'icon' => 'bi-key',
+            ];
+        }
 
         $sidebarMenuItems[] = [
             'name' => 'Contacts',
@@ -82,7 +91,7 @@ class ClientsMenu
                 'icon' => 'bi-file-earmark-text',
                 'params' => [
                     'cat' => $category->slug,
-                    'exclude_internal' => 1 // Ensures internal documents are hidden in client context
+                    'exclude_internal' => 1, // Ensures internal documents are hidden in client context
                 ],
             ];
         }

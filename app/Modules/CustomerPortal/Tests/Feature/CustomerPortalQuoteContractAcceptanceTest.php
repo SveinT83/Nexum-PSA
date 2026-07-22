@@ -179,6 +179,12 @@ class CustomerPortalQuoteContractAcceptanceTest extends TestCase
             'contact_id' => $contact->id,
             'client_id' => $client->id,
         ]);
+        $this->assertDatabaseHas('legal_acceptance_events', [
+            'action' => 'contract_acceptance',
+            'contract_id' => $sentContract->id,
+            'customer_portal_account_id' => $account->id,
+            'customer_portal_membership_id' => $membership->id,
+        ]);
 
         foreach ([$draftContract, $otherContract] as $contract) {
             $this->actingAs($portalUser)

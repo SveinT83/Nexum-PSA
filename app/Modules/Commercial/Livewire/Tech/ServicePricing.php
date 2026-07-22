@@ -2,28 +2,35 @@
 
 namespace App\Modules\Commercial\Livewire\Tech;
 
-use App\Modules\Commercial\Models\CostRelations;
 use App\Modules\Commercial\Models\Cost;
+use App\Modules\Commercial\Models\CostRelations;
 use App\Modules\Commercial\Models\Services\Services;
 use Livewire\Component;
 
 class ServicePricing extends Component
 {
     public ?Services $service = null;
+
     public array $selected = [];
+
     public string $enabled = 'enabled';
 
     public $price_ex_vat = 0;
+
     public $taxable = 0;
+
     public $billing_cycle = 'monthly';
+
     public $one_time_fee = 0;
+
     public $recurrence_value_x = null;
+
     public $one_time_fee_recurrence = '';
 
     public function mount(?Services $service = null, string $enabled = 'enabled'): void
     {
         $this->enabled = $enabled;
-        if (!$service || !$service->exists) {
+        if (! $service || ! $service->exists) {
             $routeService = request()->route('service');
             if ($routeService instanceof Services) {
                 $this->service = $routeService;
@@ -37,7 +44,7 @@ class ServicePricing extends Component
         if ($this->service) {
             $this->selected = CostRelations::where('serviceId', $this->service->id)
                 ->pluck('costId')
-                ->map(fn($id) => (string) $id)
+                ->map(fn ($id) => (string) $id)
                 ->all();
 
             $this->price_ex_vat = $this->service->price_ex_vat;
@@ -81,26 +88,51 @@ class ServicePricing extends Component
 
     public function updatedSelected(): void
     {
+        if ($this->integrationOwnsService()) {
+            $this->restoreSelectedCosts();
+
+            return;
+        }
         $this->checkRecommendedPrice();
-        if (!$this->service || !$this->service->exists) {
+        if (! $this->service || ! $this->service->exists) {
             $this->dispatch('costsUpdated', $this->selected);
+
             return;
         }
 
-        $keep = $this->selected;
+        $managed = CostRelations::query()
+            ->where('serviceId', $this->service->id)
+            ->whereHas('cost', fn ($query) => $query->integrationManaged())
+            ->pluck('costId')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+        $manual = Cost::query()
+            ->whereIn('id', $this->selected)
+            ->editableInNexum()
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+        $keep = array_values(array_unique(array_merge($managed, $manual)));
+        $this->selected = $keep;
 
         CostRelations::where('serviceId', $this->service->id)
+            ->whereHas('cost', fn ($query) => $query->editableInNexum())
             ->whereNotIn('costId', $keep)
             ->delete();
 
         $existing = CostRelations::where('serviceId', $this->service->id)
             ->pluck('costId')
-            ->map(fn($id) => (string) $id)
+            ->map(fn ($id) => (string) $id)
             ->all();
 
         $toInsert = array_diff($keep, $existing);
 
-        foreach ($toInsert as $costId) {
+        $manualToInsert = Cost::query()
+            ->whereIn('id', $toInsert)
+            ->editableInNexum()
+            ->pluck('id');
+
+        foreach ($manualToInsert as $costId) {
             CostRelations::create([
                 'serviceId' => $this->service->id,
                 'costId' => $costId,
@@ -112,6 +144,14 @@ class ServicePricing extends Component
 
     public function remove($costId): void
     {
+        if ($this->integrationOwnsService()) {
+            return;
+        }
+
+        if (Cost::query()->whereKey($costId)->integrationManaged()->exists()) {
+            return;
+        }
+
         $this->selected = array_values(array_diff($this->selected, [(string) $costId]));
         $this->updatedSelected();
     }
@@ -121,14 +161,14 @@ class ServicePricing extends Component
         $linked = collect([]);
 
         if ($this->service && $this->service->exists) {
-            $linked = CostRelations::with(['cost.vendor'])
+            $linked = CostRelations::with(['cost.vendor', 'cost.sourceIntegration'])
                 ->where('serviceId', $this->service->id)
                 ->get();
         } else {
             // For new services, show costs from memory ($this->selected)
             $costs = Cost::with('vendor')->whereIn('id', $this->selected)->get();
             foreach ($costs as $cost) {
-                $item = new CostRelations();
+                $item = new CostRelations;
                 $item->costId = $cost->id;
                 $item->setRelation('cost', $cost);
                 $linked->push($item);
@@ -136,8 +176,35 @@ class ServicePricing extends Component
         }
 
         return view('commercial::Livewire.Tech.service-pricing', [
-            'allCosts' => Cost::with('vendor')->orderBy('name')->get(),
-            'linked'   => $linked,
+            'allCosts' => Cost::with(['vendor', 'sourceIntegration'])
+                ->editableInNexum()
+                ->orderBy('name')
+                ->get(),
+            'linked' => $linked,
         ]);
+    }
+
+    private function integrationOwnsService(): bool
+    {
+        if (! $this->service || ! $this->service->exists) {
+            return false;
+        }
+
+        $this->service->loadMissing('sourceIntegration');
+
+        return $this->service->isIntegrationManaged();
+    }
+
+    private function restoreSelectedCosts(): void
+    {
+        if (! $this->service || ! $this->service->exists) {
+            return;
+        }
+
+        $this->selected = CostRelations::query()
+            ->where('serviceId', $this->service->id)
+            ->pluck('costId')
+            ->map(fn ($id) => (string) $id)
+            ->all();
     }
 }

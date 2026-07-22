@@ -15,6 +15,11 @@ unset($tdpsaLoadingPublicApiRoutes);
 
 require app_path('Modules/Relationship/api-public.php');
 
+// Cloud Factory notifications use a provider-managed shared header key.
+$tdpsaLoadingCloudFactoryPublicRoutes = true;
+require app_path('Modules/Integration/routes.php');
+unset($tdpsaLoadingCloudFactoryPublicRoutes);
+
 Route::prefix('v1')->name('api.v1.')->group(function () {
 
     // ------------------------------------------------------------------------------------------

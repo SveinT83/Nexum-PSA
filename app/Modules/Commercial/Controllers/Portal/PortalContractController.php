@@ -3,6 +3,7 @@
 namespace App\Modules\Commercial\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Commercial\Actions\RecordLegalAcceptance;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Support\PortalContractAccess;
 use App\Modules\CustomerPortal\Actions\RecordCustomerPortalAudit;
@@ -36,7 +37,7 @@ class PortalContractController extends Controller
         $context = $this->context($request);
         abort_unless($access->canView($context, $contract), 404);
 
-        $contract->load(['client', 'sla', 'items.slaPolicy', 'items.timeRates']);
+        $contract->load(['client', 'sla', 'items.slaPolicy', 'items.timeRates', 'termSnapshots']);
 
         return view('commercial::Portal.contracts.show', [
             'context' => $context,
@@ -45,7 +46,7 @@ class PortalContractController extends Controller
         ]);
     }
 
-    public function accept(Request $request, Contracts $contract, PortalContractAccess $access, RecordCustomerPortalAudit $audit, SendCustomerPortalNotification $portalNotifications): RedirectResponse
+    public function accept(Request $request, Contracts $contract, PortalContractAccess $access, RecordCustomerPortalAudit $audit, SendCustomerPortalNotification $portalNotifications, RecordLegalAcceptance $legalAcceptance): RedirectResponse
     {
         $context = $this->context($request);
         abort_unless($access->canView($context, $contract), 404);
@@ -59,7 +60,7 @@ class PortalContractController extends Controller
             'confirm' => ['required', 'accepted'],
         ]);
 
-        DB::transaction(function () use ($request, $contract, $context, $audit, $portalNotifications, $data): void {
+        DB::transaction(function () use ($request, $contract, $context, $audit, $portalNotifications, $legalAcceptance, $data): void {
             $contract->forceFill([
                 'approval_status' => 'won',
                 'accepted_at' => now(),
@@ -70,6 +71,8 @@ class PortalContractController extends Controller
                 'portal_accepted_membership_id' => $context->membership->id,
                 'portal_accepted_contact_id' => $context->contact->id,
             ])->save();
+
+            $legalAcceptance->forContract($request, $context, $contract, $data['name']);
 
             $audit->handle(
                 'portal_contract_accepted',

@@ -40,6 +40,9 @@
                 <tr>
                     <th>Name</th>
                     <th>Type</th>
+                    <th>Origin</th>
+                    <th>Version</th>
+                    <th>Status</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -51,10 +54,17 @@
                                 </a>
                             </td>
                             <td><span class="badge text-bg-light border">{{ ucfirst($term->type) }}</span></td>
+                            <td><span class="badge text-bg-{{ $term->isProviderManaged() ? 'info' : 'light' }} border">{{ $term->isProviderManaged() ? 'Provider' : 'Nexum' }}</span></td>
+                            <td>{{ $term->currentVersion?->version_label ?: '1' }}</td>
+                            <td>
+                                <span class="badge text-bg-{{ $term->sync_status === 'current' ? 'success' : 'warning' }}">
+                                    {{ ucfirst(str_replace('_', ' ', $term->sync_status ?: 'current')) }}
+                                </span>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="text-center py-4">No terms and legals found.</td>
+                            <td colspan="5" class="text-center py-4">No terms and legals found.</td>
                         </tr>
                     @endforelse
                 </tbody>

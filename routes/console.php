@@ -1,29 +1,30 @@
 <?php
 
+use App\Jobs\Integrations\NAbleRmmSyncJob;
+use App\Modules\Contact\Actions\MigrateClientUsersToContacts;
+use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
+use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
+use App\Modules\Email\Jobs\EmailRetentionPurgeJob;
+use App\Modules\Email\Jobs\FetchImapAccount;
+use App\Modules\Email\Jobs\PollActiveEmailAccounts;
+use App\Modules\Email\Jobs\ProcessInboundRules;
+use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Integration\Jobs\CleanupAiChats;
+use App\Modules\Integration\Jobs\CloudFactorySyncJob;
+use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
+use App\Modules\Integration\Services\AiChatCleanup;
+use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use App\Modules\Email\Jobs\PollActiveEmailAccounts;
-use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
-use App\Modules\Email\Jobs\EmailRetentionPurgeJob;
-use App\Modules\Email\Models\EmailAccount;
-use App\Modules\Email\Models\EmailMessage;
-use App\Modules\Email\Jobs\FetchImapAccount;
-use App\Modules\Email\Jobs\ProcessInboundRules;
-use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
-use App\Modules\Integration\Jobs\CleanupAiChats;
-use App\Modules\Integration\Services\AiChatCleanup;
-use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
-use App\Modules\Contact\Actions\MigrateClientUsersToContacts;
-use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
-use App\Jobs\Integrations\NAbleRmmSyncJob;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
 // Email polling every minute
-Schedule::job(new PollActiveEmailAccounts())
+Schedule::job(new PollActiveEmailAccounts)
     ->everyMinute()
     ->name('email.poll')
     ->withoutOverlapping();
@@ -38,17 +39,24 @@ Schedule::call(function () {
             }
         });
 })->everyFiveMinutes()
-  ->name('email.health');
+    ->name('email.health');
 
 // Monthly retention purge (default 24 months)
 Schedule::job(new EmailRetentionPurgeJob(24))
-        ->monthlyOn(1, '03:00')
-        ->name('email.retention.purge');
+    ->monthlyOn(1, '03:00')
+    ->name('email.retention.purge');
 
 // N-able RMM Sync every hour
-Schedule::job(new NAbleRmmSyncJob())
+Schedule::job(new NAbleRmmSyncJob)
     ->hourly()
     ->name('integrations.nable_rmm.sync')
+    ->withoutOverlapping();
+
+// Cloud Factory checks its settings-controlled customer, subscription, and
+// monthly catalogue intervals before starting a provider synchronization.
+Schedule::job(new CloudFactorySyncJob)
+    ->everyFiveMinutes()
+    ->name('integrations.cloudfactory.sync')
     ->withoutOverlapping();
 
 // RMM Alert Sync every 15 minutes
@@ -65,20 +73,20 @@ Schedule::command('integrations:tactical-rmm-sync')
 
 // BookStack Knowledge pull. The job checks the configured interval itself,
 // defaulting to one pull per hour.
-Schedule::job(new PullBookStackToKnowledge())
+Schedule::job(new PullBookStackToKnowledge)
     ->everyMinute()
     ->name('integrations.book_stack.pull')
     ->withoutOverlapping();
 
 // AI chat retention cleanup. Settings determine whether the job performs work.
-Schedule::job(new CleanupAiChats())
+Schedule::job(new CleanupAiChats)
     ->weeklyOn(1, '03:30')
     ->name('ai.chats.cleanup')
     ->withoutOverlapping();
 
 // Economy order generation catch-up. Manual Generate orders uses the same
 // action, while this keeps picked costs and closed-ticket time from piling up.
-Schedule::job(new GenerateEconomyOrdersJob())
+Schedule::job(new GenerateEconomyOrdersJob)
     ->dailyAt('02:15')
     ->name('economy.orders.generate')
     ->withoutOverlapping();
@@ -99,7 +107,7 @@ Schedule::command('data-exchange:run-due')
 
 // Marketing campaign automation. Campaign settings and recipient due_at control
 // whether this run performs work.
-Schedule::job(new SendDueMarketingCampaignEmails())
+Schedule::job(new SendDueMarketingCampaignEmails)
     ->everyMinute()
     ->name('marketing.campaigns.send_due')
     ->withoutOverlapping();
@@ -124,13 +132,14 @@ Artisan::command('email:poll {--account=} {--async}', function () {
     $async = (bool) $this->option('async');
 
     $query = EmailAccount::query()->where('is_active', true);
-    if (!empty($accountId)) {
+    if (! empty($accountId)) {
         $query->whereKey($accountId);
     }
 
     $accounts = $query->get();
     if ($accounts->isEmpty()) {
         $this->info('No active accounts to poll.');
+
         return 0;
     }
 
@@ -144,7 +153,8 @@ Artisan::command('email:poll {--account=} {--async}', function () {
         $count++;
     }
 
-    $this->info(($async ? 'Queued poll for ' : 'Checked now for ') . $count . ' account' . ($count>1?'s':''));
+    $this->info(($async ? 'Queued poll for ' : 'Checked now for ').$count.' account'.($count > 1 ? 's' : ''));
+
     return 0;
 })->purpose('Fetch new mail for active accounts (optionally one account)');
 
@@ -168,6 +178,7 @@ Artisan::command('email:process-inbound-rules {--message=} {--limit=100} {--asyn
 
     if ($messageIds->isEmpty()) {
         $this->info('No unlinked inbound email messages to process.');
+
         return 0;
     }
 
@@ -179,7 +190,8 @@ Artisan::command('email:process-inbound-rules {--message=} {--limit=100} {--asyn
         }
     }
 
-    $this->info(($async ? 'Queued rules for ' : 'Processed rules for ') . $messageIds->count() . ' message' . ($messageIds->count() > 1 ? 's' : '') . '.');
+    $this->info(($async ? 'Queued rules for ' : 'Processed rules for ').$messageIds->count().' message'.($messageIds->count() > 1 ? 's' : '').'.');
+
     return 0;
 })->purpose('Process stored inbound email messages through routing rules');
 

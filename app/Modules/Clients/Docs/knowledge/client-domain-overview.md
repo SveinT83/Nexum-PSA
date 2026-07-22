@@ -35,6 +35,14 @@ rows can be corrected by the technician who owns the entry or by users with the 
 permission. Quick Client and Ticket rows can also have their time rate changed before they are
 ordered; Task time does not currently store a billing rate snapshot.
 
+The `Licences` tab is the Client-level workspace for Cloud Factory subscriptions. It shows provider,
+Vendor, Service, quantity, renewal, binding dates, contract link, billing state, and recent
+operations. Users with `integration.cloudfactory_write` can issue supported licences or change
+supported quantities, renewal, and Microsoft status. Nexum requires a won active contract with the
+relevant Service line before a provider write. Cloud Factory Client Portal changes are synchronized
+back into this tab automatically; contract-policy conflicts stay visible and blocked from billing
+until resolved.
+
 The Client index has a compact search row and an advanced filter panel behind the funnel icon.
 Technicians can filter by active status, Client format, contract presence, won contracts, and RMM
 link state when RMM is configured. Client index filters are remembered in the technician session for

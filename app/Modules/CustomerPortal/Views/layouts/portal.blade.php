@@ -115,6 +115,15 @@
                                     Contracts
                                 </a>
                             @endif
+                            @if(Route::has('customer-portal.licenses.index')
+                                && isset($context)
+                                && $context->site === null
+                                && $context->membership->role === \App\Modules\CustomerPortal\Models\CustomerPortalMembership::ROLE_CUSTOMER_ADMIN)
+                                <a href="{{ route('customer-portal.licenses.index') }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-key me-1" aria-hidden="true"></i>
+                                    Licences
+                                </a>
+                            @endif
                             @if(Route::has('customer-portal.orders.index'))
                                 <a href="{{ route('customer-portal.orders.index') }}" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-receipt me-1" aria-hidden="true"></i>

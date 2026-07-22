@@ -27,7 +27,7 @@ class CommercialController extends Controller
     public function services(Request $request)
     {
         $query = Services::query()
-            ->with(['unit', 'sla'])
+            ->with(['unit', 'sla', 'sourceIntegration'])
             ->orderBy('name');
 
         if ($request->filled('q')) {
@@ -75,6 +75,9 @@ class CommercialController extends Controller
     #[OA\Patch(path: '/api/v1/commercial/services/{service}', operationId: 'updateCommercialService', summary: 'Update commercial service', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'service', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Service updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateService(Request $request, Services $service)
     {
+        $service->loadMissing('sourceIntegration');
+        abort_if($service->isIntegrationManaged(), 403, 'This Service is owned by its active source Integration.');
+
         $data = array_merge($this->servicePayload($service), $this->validatedService($request, $service));
         $data['updated_by_user_id'] = $request->user()->id;
 
@@ -283,7 +286,7 @@ class CommercialController extends Controller
         return $request->validate([
             'client_id' => [$contract ? 'sometimes' : 'required', Rule::exists('clients', 'id')],
             'sla_id' => ['sometimes', 'nullable', Rule::exists('sla', 'id')],
-            'created_by' => ['sometimes', Rule::exists((new User())->getTable(), 'id')],
+            'created_by' => ['sometimes', Rule::exists((new User)->getTable(), 'id')],
             'description' => ['sometimes', 'nullable', 'string'],
             'start_date' => [$contract ? 'sometimes' : 'required', 'date'],
             'end_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:start_date'],
@@ -380,7 +383,7 @@ class CommercialController extends Controller
 
     private function loadService(Services $service): Services
     {
-        return $service->load(['unit', 'sla']);
+        return $service->load(['unit', 'sla', 'sourceIntegration']);
     }
 
     private function loadContract(Contracts $contract): Contracts

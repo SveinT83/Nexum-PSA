@@ -254,6 +254,7 @@
         ],
         'integrations' => [
             ['name' => 'All integrations', 'route' => 'tech.admin.system.integrations.index', 'pattern' => 'tech.admin.system.integrations.index'],
+            ['name' => 'Cloud Factory', 'route' => 'tech.admin.system.integrations.cloudfactory.index', 'pattern' => 'tech.admin.system.integrations.cloudfactory.*'],
             ['name' => 'Nexum relationships', 'route' => 'tech.admin.system.relationships.index', 'pattern' => 'tech.admin.system.relationships.*'],
             ['name' => 'N-able RMM', 'route' => 'tech.admin.system.integrations.nable_rmm.settings', 'pattern' => 'tech.admin.system.integrations.nable_rmm.*'],
             ['name' => 'Tactical RMM', 'route' => 'tech.admin.system.integrations.tactical_rmm.settings', 'pattern' => 'tech.admin.system.integrations.tactical_rmm.*'],

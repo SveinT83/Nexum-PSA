@@ -32,6 +32,15 @@
                 'disabledHelp' => 'Enable the integration to configure BookStack API credentials.',
             ],
             [
+                'title' => 'Cloud Factory',
+                'icon' => 'bi-cloud-check',
+                'description' => 'Two-way Clients, catalogue, Microsoft/Adobe licences, contracts, and billing.',
+                'type' => 'cloudfactory',
+                'name' => 'Cloud Factory',
+                'settingsRoute' => 'tech.admin.system.integrations.cloudfactory.index',
+                'disabledHelp' => 'Enable the integration before connecting its dedicated Portal service account.',
+            ],
+            [
                 'title' => 'Tactical RMM',
                 'icon' => 'bi-router',
                 'description' => 'Sync clients, sites, and assets from Tactical RMM.',

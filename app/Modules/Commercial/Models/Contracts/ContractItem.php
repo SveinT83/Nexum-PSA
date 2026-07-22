@@ -13,9 +13,19 @@ class ContractItem extends Model
     protected $fillable = [
         'contract_id',
         'service_id',
+        'source',
+        'provider_subscription_id',
+        'cloudfactory_offer_id',
+        'commitment_start_date',
+        'commitment_end_date',
+        'cancellation_deadline',
+        'billing_effective_at',
+        'licence_metadata',
         'name',
         'sku',
         'unit_price',
+        'cost_unit_price',
+        'cost_currency',
         'quantity',
         'unit',
         'billing_interval',
@@ -31,6 +41,7 @@ class ContractItem extends Model
 
     protected $casts = [
         'unit_price' => 'decimal:2',
+        'cost_unit_price' => 'decimal:4',
         'quantity' => 'integer',
         'unit' => 'string',
         'discount_value' => 'decimal:2',
@@ -38,6 +49,11 @@ class ContractItem extends Model
         'uses_contract_default_sla' => 'boolean',
         'sla_snapshot' => 'array',
         'caps' => 'integer',
+        'commitment_start_date' => 'date',
+        'commitment_end_date' => 'date',
+        'cancellation_deadline' => 'date',
+        'billing_effective_at' => 'datetime',
+        'licence_metadata' => 'array',
     ];
 
     // -----------------------------
@@ -54,6 +70,11 @@ class ContractItem extends Model
         return $this->belongsTo(\App\Modules\Commercial\Models\Services\Services::class);
     }
 
+    public function cloudFactoryOffer(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Integration\Models\CloudFactory\Offer::class, 'cloudfactory_offer_id');
+    }
+
     public function slaPolicy(): BelongsTo
     {
         return $this->belongsTo(Sla::class, 'sla_id');
@@ -62,6 +83,11 @@ class ContractItem extends Model
     public function timeRates()
     {
         return $this->hasMany(ContractItemTimeRate::class, 'contract_item_id')->orderBy('sort_order')->orderBy('name');
+    }
+
+    public function cloudFactorySubscription()
+    {
+        return $this->hasOne(\App\Modules\Integration\Models\CloudFactory\Subscription::class, 'contract_item_id');
     }
 
     // -----------------------------

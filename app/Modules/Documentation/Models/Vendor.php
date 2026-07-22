@@ -37,4 +37,9 @@ class Vendor extends Model
         'is_manufacturer' => 'boolean',
         'is_active' => 'boolean',
     ];
+
+    public function services()
+    {
+        return $this->hasMany(\App\Modules\Commercial\Models\Services\Services::class);
+    }
 }

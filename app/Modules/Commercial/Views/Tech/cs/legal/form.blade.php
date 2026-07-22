@@ -4,7 +4,8 @@
 @php
     $isEdit = isset($term) && !request()->routeIs('tech.legal.show');
     $isShow = request()->routeIs('tech.legal.show');
-    $disabled = $isShow ? 'disabled' : null;
+    $providerManaged = isset($term) && $term->isProviderManaged();
+    $disabled = ($isShow || $providerManaged) ? 'disabled' : null;
 @endphp
 
 @section('pageHeader')
@@ -13,7 +14,7 @@
 
         <div>
             <!-- Edit button -->
-            @if($isShow && isset($term))
+            @if($isShow && isset($term) && ! $providerManaged)
                 <x-buttons.editlink url="{{ route('tech.legal.edit', $term) }}" class="mb-0">Edit</x-buttons.editlink>
             @endif
 
@@ -24,13 +25,19 @@
 @endsection
 
 @section('content')
+    @if($providerManaged)
+        <div class="alert alert-info">
+            <div class="fw-semibold">Provider-managed document</div>
+            <div class="small">This version is synchronized from Cloud Factory and is read-only in Nexum.</div>
+        </div>
+    @endif
 
     <!-- ------------------------------------------------- -->
     <!-- Form -->
     <!-- ------------------------------------------------- -->
 
     <x-forms.form-card
-        title="Term og /and Legal"
+        title="{{ $providerManaged ? 'Provider legal document' : 'Nexum legal document' }}"
         action="{{ $isShow
         ? route('tech.legal.edit', $term ?? null)
         : ($isEdit ? route('tech.legal.update', $term ?? null) : route('tech.legal.store')) }}"
@@ -76,7 +83,7 @@
 
     </x-forms.form-card>
 
-    @if($isShow && isset($term))
+    @if($isShow && isset($term) && ! $providerManaged)
         <div class="card mt-3 border-danger">
             <div class="card-header text-danger fw-bold">
                 Danger zone
@@ -115,6 +122,23 @@
     <!-- ------------------------------------------------- -->
     <!-- Services -->
     <!-- ------------------------------------------------- -->
+    @if(isset($term))
+        <x-card.default title="Document version">
+            <dl class="row small mb-0">
+                <dt class="col-5 text-muted">Origin</dt>
+                <dd class="col-7">{{ $providerManaged ? 'Provider' : 'Nexum' }}</dd>
+                <dt class="col-5 text-muted">Version</dt>
+                <dd class="col-7">{{ $term->currentVersion?->version_label ?: '1' }}</dd>
+                <dt class="col-5 text-muted">Status</dt>
+                <dd class="col-7">{{ ucfirst(str_replace('_', ' ', $term->sync_status ?: 'current')) }}</dd>
+                @if($term->last_checked_at)
+                    <dt class="col-5 text-muted">Last checked</dt>
+                    <dd class="col-7">{{ $term->last_checked_at->format('Y-m-d H:i') }}</dd>
+                @endif
+            </dl>
+        </x-card.default>
+    @endif
+
     <x-card.default title="Connected Services">
         @if(isset($term) && $term->services->count() > 0)
             <ul class="list-group list-group-flush">

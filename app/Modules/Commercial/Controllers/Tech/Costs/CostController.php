@@ -3,15 +3,14 @@
 namespace App\Modules\Commercial\Controllers\Tech\Costs;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Commercial\Requests\StoreCostRequest;
 use App\Modules\Commercial\Models\Cost;
-use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Commercial\Models\Economy\Units;
+use App\Modules\Commercial\Requests\StoreCostRequest;
+use App\Modules\Documentation\Models\Vendor;
 use Illuminate\Http\Request;
 
 class CostController extends Controller
 {
-
     // -----------------------------------------
     // INDEX - Show a list of all costs
     // -----------------------------------------
@@ -25,6 +24,7 @@ class CostController extends Controller
             'cost' => 'costs.cost',
             'recurrence' => 'costs.recurrence',
             'vendor' => 'vendors.name',
+            'source' => 'costs.source',
             'updated_at' => 'costs.updated_at',
         ];
         $sortColumn = $allowed[$sort] ?? $allowed['name'];
@@ -32,7 +32,7 @@ class CostController extends Controller
         $costs = Cost::query()
             ->leftJoin('vendors', 'vendors.id', '=', 'costs.vendor_id')
             ->select('costs.*')
-            ->with(['creator', 'updater', 'vendor', 'unit'])
+            ->with(['creator', 'updater', 'vendor', 'unit', 'sourceIntegration'])
             ->when($request->filled('q'), function ($query) use ($request): void {
                 $search = '%'.$request->string('q')->trim()->toString().'%';
 
@@ -40,6 +40,7 @@ class CostController extends Controller
                     $query->where('costs.name', 'like', $search)
                         ->orWhere('costs.note', 'like', $search)
                         ->orWhere('costs.recurrence', 'like', $search)
+                        ->orWhere('costs.source', 'like', $search)
                         ->orWhere('vendors.name', 'like', $search);
                 });
             })
@@ -66,9 +67,11 @@ class CostController extends Controller
     public function show(Cost $cost)
     {
 
+        $cost->loadMissing(['vendor', 'unit', 'sourceIntegration']);
+
         $vendors = Vendor::orderBy('name')->get();
 
-        //Return the view whit
+        // Return the view whit
         return view('commercial::Tech.cs.costs.show', [
             'cost' => $cost,
             'vendors' => $vendors,
@@ -81,13 +84,13 @@ class CostController extends Controller
     public function create()
     {
 
-        //Get all vendors fore a option
+        // Get all vendors fore a option
         $vendors = Vendor::orderBy('name')->get();
 
-        //Get all Units for option
+        // Get all Units for option
         $units = Units::orderBy('name')->get();
 
-        //Render
+        // Render
         return view('commercial::Tech.cs.costs.form', [
             'vendors' => $vendors,
             'units' => $units,
@@ -121,9 +124,11 @@ class CostController extends Controller
     // -----------------------------------------
     public function edit(Cost $cost)
     {
+        abort_if($cost->isIntegrationManaged(), 403, 'This Cost is owned by its active source Integration.');
+
         $vendors = Vendor::orderBy('name')->get();
 
-        //Get all Units for option
+        // Get all Units for option
         $units = Units::orderBy('name')->get();
 
         return view('commercial::Tech.cs.costs.form', [
@@ -138,6 +143,8 @@ class CostController extends Controller
     // -----------------------------------------
     public function update(StoreCostRequest $request, Cost $cost)
     {
+        abort_if($cost->isIntegrationManaged(), 403, 'This Cost is owned by its active source Integration.');
+
         $data = $request->validated();
 
         $cost->update([
@@ -158,6 +165,8 @@ class CostController extends Controller
     // -----------------------------------------
     public function delete(Cost $cost)
     {
+        abort_if($cost->isIntegrationManaged(), 403, 'This Cost is owned by its active source Integration and cannot be deleted.');
+
         $cost->delete();
 
         return redirect()->route('tech.costs.index')->with('success', 'Cost deleted successfully');
