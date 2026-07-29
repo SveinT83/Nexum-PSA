@@ -2,9 +2,15 @@
 
 namespace App\Modules\Task\Tests\Feature;
 
-use App\Models\Core\User;
 use App\Models\Clients\Client;
+use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
+use App\Modules\Commercial\Models\TimeRate;
+use App\Modules\Integration\Models\AiAgent;
+use App\Modules\Integration\Models\AiDataEgressPolicy;
+use App\Modules\Integration\Models\AiModelGovernancePolicy;
+use App\Modules\Integration\Models\AiProvider;
+use App\Modules\Integration\Models\AiProviderGovernanceProfile;
 use App\Modules\Task\Actions\CompleteTask;
 use App\Modules\Task\Actions\EnsureTaskDefaults;
 use App\Modules\Task\Actions\StoreTask;
@@ -12,12 +18,8 @@ use App\Modules\Task\Controllers\Tech\TaskController;
 use App\Modules\Task\Models\Task;
 use App\Modules\Task\Models\TaskDependency;
 use App\Modules\Task\Models\TaskStatus;
-use App\Modules\Task\Models\TaskTimeEntry;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
-use App\Modules\Commercial\Models\TimeRate;
-use App\Modules\Integration\Models\AiAgent;
-use App\Modules\Integration\Models\AiProvider;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Models\Ticket;
@@ -49,6 +51,14 @@ class TaskModuleTest extends TestCase
             'status' => User::STATUS_ACTIVE,
         ]);
         $this->tech->assignRole('Tech');
+
+        AiDataEgressPolicy::installation()->update([
+            'ai_enabled' => true,
+            'external_processing_enabled' => true,
+            'privacy_gateway_enabled' => true,
+            'allowed_processing_modes' => ['privacy_relay'],
+            'maximum_data_profile' => 'full_context',
+        ]);
     }
 
     #[Test]
@@ -56,7 +66,7 @@ class TaskModuleTest extends TestCase
     {
         $route = Route::getRoutes()->getByName('tech.tasks.index');
 
-        $this->assertSame(TaskController::class . '@index', $route->getActionName());
+        $this->assertSame(TaskController::class.'@index', $route->getActionName());
 
         $this->actingAs($this->tech)
             ->get(route('tech.tasks.index'))
@@ -493,7 +503,7 @@ class TaskModuleTest extends TestCase
                 'description' => 'Ask about delivery.',
                 'due_at' => now()->addDay()->format('Y-m-d H:i:s'),
                 'estimated_minutes' => 40,
-                'ticket_rate_key' => 'global:' . $rate->id,
+                'ticket_rate_key' => 'global:'.$rate->id,
             ])
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
@@ -507,7 +517,7 @@ class TaskModuleTest extends TestCase
         $this->assertSame($category->id, $task->category_id);
         $this->assertSame(['VIP'], $task->tags()->pluck('name')->all());
         $this->assertSame(40, $task->estimated_minutes);
-        $this->assertSame('global:' . $rate->id, $task->metadata['ticket_rate_key']);
+        $this->assertSame('global:'.$rate->id, $task->metadata['ticket_rate_key']);
         $this->assertSame('Quick task support', $task->metadata['ticket_rate_label']);
     }
 
@@ -593,7 +603,7 @@ class TaskModuleTest extends TestCase
                 'description' => 'Undersøk driverfeil og vurder tiltak.',
                 'assigned_to' => $this->tech->id,
                 'estimated_minutes' => 35,
-                'ticket_rate_key' => 'global:' . $rate->id,
+                'ticket_rate_key' => 'global:'.$rate->id,
                 'checklist_text' => "Sjekk driver\nTest utskrift",
             ]))
             ->assertOk()
@@ -677,7 +687,7 @@ class TaskModuleTest extends TestCase
             ->post(route('tech.tasks.complete', $task), [
                 'work_date' => '2026-05-26',
                 'minutes' => 25,
-                'rate_key' => 'global:' . $rate->id,
+                'rate_key' => 'global:'.$rate->id,
                 'invoice_text' => 'Completed assigned ticket task.',
                 'note' => 'Done from task completion.',
             ])
@@ -775,6 +785,7 @@ class TaskModuleTest extends TestCase
         ]);
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
+        $this->approveExternalProvider($provider);
         AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Task Assistant',
@@ -857,6 +868,7 @@ class TaskModuleTest extends TestCase
         ]);
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
+        $this->approveExternalProvider($provider);
         AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Task Assistant',
@@ -888,7 +900,7 @@ class TaskModuleTest extends TestCase
                 'ticket_id' => $ticket->id,
             ])
             ->assertOk()
-            ->assertJsonPath('suggestions.ticket_rate_key', 'global:' . $rate->id);
+            ->assertJsonPath('suggestions.ticket_rate_key', 'global:'.$rate->id);
     }
 
     #[Test]
@@ -944,6 +956,7 @@ class TaskModuleTest extends TestCase
         ]);
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
+        $this->approveExternalProvider($provider);
         AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Task Assistant',
@@ -1013,5 +1026,39 @@ class TaskModuleTest extends TestCase
         $this->expectExceptionMessage('Task has child tasks that are not complete.');
 
         app(CompleteTask::class)->handle($parent, $this->tech);
+    }
+
+    private function approveExternalProvider(AiProvider $provider): void
+    {
+        AiProviderGovernanceProfile::query()->create([
+            'ai_provider_id' => $provider->id,
+            'purpose' => 'Synthetic Task AI test.',
+            'recipient_name' => $provider->name,
+            'processing_regions' => ['EEA'],
+            'support_regions' => ['EEA'],
+            'dpa_status' => 'approved',
+            'dpa_reference' => 'test-dpa',
+            'subprocessor_notes' => 'Reviewed for test.',
+            'transfer_assessment' => 'No unreviewed transfer.',
+            'retention_declaration' => 'No retained test data.',
+            'training_declaration' => 'No training on test data.',
+            'dpia_status' => 'not_required',
+            'dpia_rationale' => 'Synthetic data only.',
+            'allowed_processing_modes' => ['privacy_relay'],
+            'maximum_data_profile' => 'full_context',
+            'is_approved' => true,
+            'is_active' => true,
+            'reviewed_by' => $this->tech->id,
+            'reviewed_at' => now(),
+        ]);
+        AiModelGovernancePolicy::query()->create([
+            'ai_provider_id' => $provider->id,
+            'model' => $provider->default_model,
+            'processing_mode' => 'privacy_relay',
+            'maximum_data_profile' => 'full_context',
+            'is_approved' => true,
+            'reviewed_by' => $this->tech->id,
+            'reviewed_at' => now(),
+        ]);
     }
 }

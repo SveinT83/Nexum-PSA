@@ -10,6 +10,7 @@ use App\Modules\Email\Jobs\PollActiveEmailAccounts;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Integration\Jobs\CleanupAiAccessData;
 use App\Modules\Integration\Jobs\CleanupAiChats;
 use App\Modules\Integration\Jobs\CloudFactorySyncJob;
 use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
@@ -82,6 +83,12 @@ Schedule::job(new PullBookStackToKnowledge)
 Schedule::job(new CleanupAiChats)
     ->weeklyOn(1, '03:30')
     ->name('ai.chats.cleanup')
+    ->withoutOverlapping();
+
+// AI/coordinator audit and optional encrypted payload retention cleanup.
+Schedule::job(new CleanupAiAccessData)
+    ->dailyAt('03:45')
+    ->name('ai.access.cleanup')
     ->withoutOverlapping();
 
 // Economy order generation catch-up. Manual Generate orders uses the same

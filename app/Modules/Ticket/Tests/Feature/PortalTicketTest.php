@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
@@ -34,6 +35,66 @@ class PortalTicketTest extends TestCase
 
         Role::firstOrCreate(['name' => 'Tech']);
         app(EnsureTicketDefaults::class)->handle();
+    }
+
+    #[Test]
+    public function portal_policy_defaults_to_published_and_preserves_valid_admin_choices(): void
+    {
+        $policy = app(TicketPortalPolicy::class);
+
+        $this->assertSame(TicketPortalPolicy::VISIBILITY_PUBLISHED, $policy->defaultCustomerVisibility());
+
+        $invalidJson = json_encode(['default_customer_visibility' => 'unsupported']);
+        CommonSetting::query()->create([
+            'type' => TicketPortalPolicy::SETTING_TYPE,
+            'name' => TicketPortalPolicy::SETTING_NAME,
+            'description' => 'Invalid policy fixture.',
+            'json' => $invalidJson,
+        ]);
+
+        $this->assertSame(TicketPortalPolicy::VISIBILITY_PUBLISHED, $policy->defaultCustomerVisibility());
+        $this->assertSame(
+            $invalidJson,
+            CommonSetting::query()
+                ->where('type', TicketPortalPolicy::SETTING_TYPE)
+                ->where('name', TicketPortalPolicy::SETTING_NAME)
+                ->value('json')
+        );
+
+        $policy->update(['default_customer_visibility' => TicketPortalPolicy::VISIBILITY_UNPUBLISHED]);
+        $this->assertSame(TicketPortalPolicy::VISIBILITY_UNPUBLISHED, $policy->defaultCustomerVisibility());
+
+        $policy->update(['default_customer_visibility' => TicketPortalPolicy::VISIBILITY_PUBLISHED]);
+        $this->assertSame(TicketPortalPolicy::VISIBILITY_PUBLISHED, $policy->defaultCustomerVisibility());
+    }
+
+    #[Test]
+    public function manual_ticket_form_preselects_the_policy_default_and_preserves_an_override(): void
+    {
+        $tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $tech->assignRole('Tech');
+
+        $this->actingAs($tech)
+            ->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertSee('Customer Visibility')
+            ->assertSee('Published makes a client ticket visible')
+            ->assertSee('value="published" selected', false);
+
+        $this->actingAs($tech)
+            ->from(route('tech.tickets.create'))
+            ->post(route('tech.tickets.store'), [
+                'description' => 'Missing subject on purpose.',
+                'customer_portal_visibility' => TicketPortalPolicy::VISIBILITY_UNPUBLISHED,
+            ])
+            ->assertRedirect(route('tech.tickets.create'))
+            ->assertSessionHasErrors('subject')
+            ->assertSessionHasInput('customer_portal_visibility', TicketPortalPolicy::VISIBILITY_UNPUBLISHED);
+
+        $this->actingAs($tech)
+            ->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertSee('value="unpublished" selected', false);
     }
 
     #[Test]
@@ -95,21 +156,22 @@ class PortalTicketTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('tech.admin.settings.tickets.portal-policy.update'), [
-                'default_customer_visibility' => TicketPortalPolicy::VISIBILITY_PUBLISHED,
+                'default_customer_visibility' => TicketPortalPolicy::VISIBILITY_UNPUBLISHED,
             ])
             ->assertRedirect()
             ->assertSessionHas('success', 'Ticket customer portal policy updated.');
 
         $this->assertSame(
-            TicketPortalPolicy::VISIBILITY_PUBLISHED,
+            TicketPortalPolicy::VISIBILITY_UNPUBLISHED,
             app(TicketPortalPolicy::class)->defaultCustomerVisibility()
         );
     }
 
     #[Test]
-    public function manual_client_ticket_defaults_to_unpublished_and_blocks_customer_reply(): void
+    public function manual_client_ticket_can_override_the_published_default_as_unpublished(): void
     {
         Queue::fake();
+        Notification::fake();
 
         [$client, $site, $contact, $portalUser] = $this->portalFixture('manual-unpublished@example.test');
         $clientUser = ClientUser::factory()->create([
@@ -127,6 +189,7 @@ class PortalTicketTest extends TestCase
                 'client_id' => $client->id,
                 'site_id' => $site->id,
                 'contact_id' => $clientUser->id,
+                'customer_portal_visibility' => TicketPortalPolicy::VISIBILITY_UNPUBLISHED,
             ])
             ->assertRedirect();
 
@@ -164,12 +227,14 @@ class PortalTicketTest extends TestCase
             'visibility' => 'internal',
             'body' => 'Internal preparation note.',
         ]);
+        Notification::assertNotSentTo($portalUser, CustomerPortalNotification::class);
     }
 
     #[Test]
-    public function manual_client_ticket_can_be_created_as_published(): void
+    public function manual_client_ticket_defaults_to_published_without_customer_reply_email(): void
     {
         Notification::fake();
+        Queue::fake();
 
         [$client, $site, $contact, $portalUser] = $this->portalFixture('manual-published@example.test');
         $clientUser = ClientUser::factory()->create([
@@ -187,13 +252,23 @@ class PortalTicketTest extends TestCase
                 'client_id' => $client->id,
                 'site_id' => $site->id,
                 'contact_id' => $clientUser->id,
-                'customer_portal_visibility' => TicketPortalPolicy::VISIBILITY_PUBLISHED,
             ])
             ->assertRedirect();
 
         $ticket = Ticket::query()->where('subject', 'Manual published ticket')->firstOrFail();
         $this->assertNotNull($ticket->portal_visible_at);
         $this->assertSame($tech->id, $ticket->portal_visible_by);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'portal_visibility_enabled',
+        ]);
+        $this->assertDatabaseHas('ticket_messages', [
+            'ticket_id' => $ticket->id,
+            'type' => 'internal_note',
+            'visibility' => 'internal',
+            'body' => 'Visible from create.',
+        ]);
+        $this->assertDatabaseMissing('ticket_messages', ['ticket_id' => $ticket->id, 'visibility' => 'public']);
 
         $this->actingAs($portalUser)
             ->get(route('customer-portal.tickets.index'))
@@ -201,6 +276,36 @@ class PortalTicketTest extends TestCase
             ->assertSee('Manual published ticket');
 
         Notification::assertSentTo($portalUser, CustomerPortalNotification::class);
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
+    }
+
+    #[Test]
+    public function internal_ticket_cannot_be_published_even_when_visibility_is_forced(): void
+    {
+        Notification::fake();
+        Queue::fake();
+
+        $tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $tech->assignRole('Tech');
+
+        $this->actingAs($tech)
+            ->post(route('tech.tickets.store'), [
+                'subject' => 'Internal operations ticket',
+                'description' => 'Keep this work inside Nexum.',
+                'customer_portal_visibility' => TicketPortalPolicy::VISIBILITY_PUBLISHED,
+            ])
+            ->assertRedirect();
+
+        $ticket = Ticket::query()->where('subject', 'Internal operations ticket')->firstOrFail();
+        $this->assertNull($ticket->client_id);
+        $this->assertNull($ticket->portal_visible_at);
+        $this->assertNull($ticket->portal_visible_by);
+        $this->assertDatabaseMissing('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'type' => 'portal_visibility_enabled',
+        ]);
+        Notification::assertNothingSent();
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
     }
 
     #[Test]

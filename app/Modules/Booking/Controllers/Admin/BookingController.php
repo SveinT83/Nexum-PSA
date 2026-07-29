@@ -13,7 +13,7 @@ class BookingController extends Controller
     {
         return view('booking::Admin.index', [
             'settings' => BookingServiceSetting::query()
-                ->with(['service', 'assignedUser'])
+                ->with(['service', 'assignedUser', 'eligibleUsers'])
                 ->withCount('requests')
                 ->orderBy('public_name')
                 ->get(),

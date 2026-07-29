@@ -9,15 +9,20 @@ use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\PublishTicketToCustomerPortal;
+use App\Modules\Ticket\Actions\StoreIdempotentTicketCustomerReply;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\SyncExternalTicketMessage;
 use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
+use App\Modules\Ticket\Exceptions\TicketMessageIdempotencyConflict;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
+use App\Modules\Ticket\Resources\Api\V1\TicketMessageResource;
 use App\Modules\Ticket\Resources\Api\V1\TicketResource;
 use App\Modules\Ticket\Services\TicketActionGuard;
+use App\Modules\Ticket\Services\TicketReplyContactResolver;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Http\Request;
@@ -285,6 +290,133 @@ class TicketController extends Controller
             ],
             'created' => $created,
         ], $created ? 201 : 200);
+    }
+
+    #[OA\Post(
+        path: '/api/v1/tickets/{ticket}/portal-visibility',
+        operationId: 'publishTicketToCustomerPortal',
+        description: 'Publishes an eligible client Ticket to the Customer Portal. Repeated calls are safe.',
+        summary: 'Publish Ticket to Customer Portal',
+        security: [['bearerAuth' => []]],
+        tags: ['Tickets'],
+        parameters: [
+            new OA\Parameter(name: 'ticket', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['portal_visible'],
+                properties: [new OA\Property(property: 'portal_visible', type: 'boolean', example: true)],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Published or already published'),
+            new OA\Response(response: 403, description: 'Missing tickets.portal.publish ability or ticket.update permission'),
+            new OA\Response(response: 422, description: 'Ticket is not eligible for portal publication'),
+        ]
+    )]
+    public function publishPortal(
+        Request $request,
+        Ticket $ticket,
+        PublishTicketToCustomerPortal $publishToPortal,
+        TicketReplyContactResolver $contactResolver,
+    ) {
+        $data = $request->validate(['portal_visible' => ['required', 'boolean']]);
+
+        if (! $data['portal_visible']) {
+            throw ValidationException::withMessages([
+                'portal_visible' => 'Published tickets cannot be unpublished through the API.',
+            ]);
+        }
+
+        $publishToPortal->authorize($request->user());
+
+        if (! $ticket->client_id || ! $contactResolver->resolve($ticket, $ticket->contact_id)) {
+            throw ValidationException::withMessages([
+                'contact_id' => 'Portal publication through the API requires an active Ticket contact with an email address in the Ticket client.',
+            ]);
+        }
+
+        $result = $publishToPortal->handle($ticket, $request->user());
+
+        return response()->json([
+            'data' => (new TicketResource($this->loadTicket($result['ticket'])))->resolve($request),
+            'published_now' => $result['published_now'],
+        ]);
+    }
+
+    #[OA\Post(
+        path: '/api/v1/tickets/{ticket}/messages',
+        operationId: 'createTicketCustomerReply',
+        description: 'Creates one idempotent public technician reply and runs the normal customer email, portal notification, and Ticket workflow side effects.',
+        summary: 'Reply to Ticket customer',
+        security: [['bearerAuth' => []]],
+        tags: ['Tickets'],
+        parameters: [
+            new OA\Parameter(name: 'ticket', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['body', 'idempotency_key'],
+                properties: [
+                    new OA\Property(property: 'body', type: 'string'),
+                    new OA\Property(property: 'idempotency_key', type: 'string', maxLength: 100),
+                    new OA\Property(property: 'reply_intent', type: 'string', enum: ['customer_update', 'request_customer_input', 'send_solution']),
+                    new OA\Property(property: 'reply_contact_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'cc', type: 'string', nullable: true),
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Customer reply created'),
+            new OA\Response(response: 200, description: 'Matching idempotent replay'),
+            new OA\Response(response: 403, description: 'Missing tickets.reply_customer ability or ticket.reply_customer permission'),
+            new OA\Response(response: 409, description: 'Idempotency key conflict'),
+            new OA\Response(response: 422, description: 'Validation or workflow action error'),
+        ]
+    )]
+    public function storeMessage(Request $request, Ticket $ticket, StoreIdempotentTicketCustomerReply $storeReply)
+    {
+        $data = $request->validate([
+            'type' => ['sometimes', Rule::in(['customer_reply'])],
+            'body' => ['required', 'string'],
+            'idempotency_key' => ['required', 'string', 'max:100'],
+            'reply_intent' => ['nullable', Rule::in([
+                TicketAction::CUSTOMER_UPDATE,
+                TicketAction::REQUEST_CUSTOMER_INPUT,
+                TicketAction::SEND_SOLUTION,
+            ])],
+            'reply_contact_id' => ['nullable', 'integer', Rule::exists('client_users', 'id')],
+            'cc' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $invalidCc = collect(preg_split('/[,;\s]+/', (string) ($data['cc'] ?? '')))
+            ->filter()
+            ->first(fn ($email) => ! filter_var($email, FILTER_VALIDATE_EMAIL));
+
+        if ($invalidCc) {
+            throw ValidationException::withMessages(['cc' => 'Every CC recipient must be a valid email address.']);
+        }
+
+        try {
+            $result = $storeReply->handle($ticket, $data, $request->user());
+        } catch (TicketMessageIdempotencyConflict $exception) {
+            return response()->json(['message' => $exception->getMessage()], 409);
+        }
+
+        $message = $result['message'];
+        $message->setRelation('ticket', $ticket);
+
+        return response()->json([
+            'data' => [
+                'message' => (new TicketMessageResource($message))->resolve($request),
+                'ticket' => (new TicketResource($this->loadTicket($ticket->refresh())))->resolve($request),
+            ],
+            'created' => $result['created'],
+        ], $result['created'] ? 201 : 200);
     }
 
     private function validateStorePayload(Request $request): array

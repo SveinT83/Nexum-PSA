@@ -699,6 +699,24 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function repository_documentation_sync_includes_booking_docs(): void
+    {
+        $this->artisan('knowledge:sync-docs', ['--module' => ['Booking']])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 1')
+            ->expectsOutput('modules: Booking')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'booking/booking-overview')
+            ->firstOrFail();
+
+        $this->assertSame('Booking Overview', $article->title);
+        $this->assertSame('Booking', $article->source_payload['module']);
+    }
+
+    #[Test]
     public function repository_documentation_sync_includes_work_context_docs(): void
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['WorkContext']])

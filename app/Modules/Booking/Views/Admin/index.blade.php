@@ -86,8 +86,18 @@
                                     {{ $setting->isBookable() ? 'Bookable' : ucfirst($setting->status) }}
                                 </span>
                             </td>
-                            <td>{{ $setting->assignedUser?->name ?? 'Not assigned' }}</td>
-                            <td>{{ $setting->durationLabel() }}</td>
+                            <td>
+                                <div>{{ $setting->routingModeLabel() }}</div>
+                                <div class="small text-muted">
+                                    {{ $setting->usesFixedTechnician()
+                                        ? ($setting->assignedUser?->name ?? 'Not assigned')
+                                        : $setting->eligibleUsers->where('status', \App\Models\Core\User::STATUS_ACTIVE)->count().' eligible' }}
+                                </div>
+                            </td>
+                            <td>
+                                <div>{{ $setting->durationLabel() }}</div>
+                                <div class="small text-muted">{{ $setting->openingWindowLabel() }}</div>
+                            </td>
                             <td class="text-end">{{ $setting->requests_count }}</td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">

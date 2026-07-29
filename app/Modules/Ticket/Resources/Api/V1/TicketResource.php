@@ -37,6 +37,9 @@ class TicketResource extends JsonResource
             'impact' => $this->impact,
             'urgency' => $this->urgency,
             'is_unread' => (bool) $this->is_unread,
+            'portal_visible' => $this->isPortalVisible(),
+            'portal_visible_at' => $this->portal_visible_at,
+            'portal_visible_by' => $this->portal_visible_by,
             'first_response_due_at' => $this->first_response_due_at,
             'resolve_due_at' => $this->resolve_due_at,
             'resolved_at' => $this->resolved_at,
@@ -87,6 +90,8 @@ class TicketResource extends JsonResource
             'links' => [
                 'self' => route('api.v1.tickets.show', $this->ticket_key),
                 'workflow_decisions' => route('api.v1.tickets.workflow-decisions.show', $this->ticket_key),
+                'portal_visibility' => route('api.v1.tickets.portal-visibility.store', $this->ticket_key),
+                'customer_reply' => route('api.v1.tickets.messages.store', $this->ticket_key),
             ],
         ];
     }

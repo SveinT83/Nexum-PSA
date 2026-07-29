@@ -24,7 +24,7 @@ A transition may define:
 - Target status.
 - Manual availability.
 - Required internal note.
-- Required public technician response, or an internal solution when internal solution notes are enabled.
+- Required public technician response, or a solution-marked internal note when the policy allows it.
 - Required selected solution response.
 - Required documentation follow-up.
 - Ticket actions that can trigger the transition automatically.
@@ -88,8 +88,12 @@ Public technician replies can be marked as the solution. Workflows can require a
 
 This prevents tickets from being resolved without a clear answer visible in the conversation.
 
-Ticket Settings can also allow internal solution notes. When enabled, `Internal solution` records a
-technician-only fix and can satisfy response/solution requirements without sending customer email. Existing internal notes can also be marked as the solution. This is the default beta behavior for RMM and asset-driven tickets. When disabled, internal notes can still be added, but only public technician solution replies satisfy workflow solution requirements.
+Ticket Settings can also allow internal solution notes. When enabled, select `Internal note` and
+turn on `Mark as solution` to record a technician-only fix that can satisfy response/solution
+requirements without sending customer email. The switch is off by default, and Notify technician
+remains available. Existing internal notes can also be marked as the solution from the timeline.
+This is the default beta behavior for RMM and asset-driven tickets. When disabled, internal notes
+can still be added, but only public technician solution replies satisfy workflow solution requirements.
 
 ## Action Guard
 

@@ -3,8 +3,10 @@
 namespace App\Modules\Warroom\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Storage\Queries\StorageIndexQuery;
 use App\Modules\Warroom\Support\WarroomSettings;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -16,7 +18,7 @@ class WarroomController extends Controller
     /**
      * Show the fixed v1 operations dashboard.
      */
-    public function __invoke(WarroomSettings $settings): View
+    public function __invoke(Request $request, WarroomSettings $settings, StorageIndexQuery $storageIndexQuery): View
     {
         $dashboardSettings = $settings->get();
         $openTickets = $this->count('tickets', fn (Builder $query) => $query->whereNull('closed_at'));
@@ -28,6 +30,9 @@ class WarroomController extends Controller
             ->whereNull('closed_at')
             ->whereNotNull('resolve_due_at')
             ->whereBetween('resolve_due_at', [now(), now()->addHours($dashboardSettings['due_soon_hours'])]));
+
+        $canViewStorage = (bool) $request->user()?->can('storage.view');
+        $storageShouldOrderCount = $canViewStorage ? $storageIndexQuery->shouldOrderCount() : 0;
 
         $warroom = [
             'generated_at' => now(),
@@ -105,6 +110,11 @@ class WarroomController extends Controller
                     'href' => $this->routeUrl('tech.knowledge.index'),
                     'icon' => 'bi-journal-text',
                 ],
+            ],
+            'storage_should_order' => [
+                'count' => $storageShouldOrderCount,
+                'visible' => $storageShouldOrderCount > 0,
+                'href' => $storageShouldOrderCount > 0 ? $this->routeUrl('tech.storage.index', ['availability' => 'should_order']) : null,
             ],
             'system' => [
                 'integrations_total' => $this->count('integrations'),
@@ -233,8 +243,8 @@ class WarroomController extends Controller
     /**
      * Resolve optional dashboard links without making route existence a render-time risk.
      */
-    private function routeUrl(string $route): ?string
+    private function routeUrl(string $route, array $parameters = []): ?string
     {
-        return Route::has($route) ? route($route) : null;
+        return Route::has($route) ? route($route, $parameters) : null;
     }
 }

@@ -23,6 +23,13 @@
 
 @section('content')
     <div class="container-fluid">
+        @if($tokensRequiringReview->isNotEmpty())
+            <div class="alert alert-warning" role="status">
+                <div class="fw-semibold">{{ $tokensRequiringReview->count() }} broad API {{ Str::plural('key', $tokensRequiringReview->count()) }} require review</div>
+                <div class="small">Existing keys were not changed. Confirm their need, then rotate or revoke them deliberately.</div>
+            </div>
+        @endif
+
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
@@ -46,6 +53,9 @@
                                         <tr>
                                             <td>
                                                 <strong>{{ $key->name }}</strong>
+                                                @if($abilityCatalog->requiresReview($key->abilities ?? []))
+                                                    <span class="badge text-bg-warning ms-1">Review broad access</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 @foreach($key->abilities ?? [] as $ability)
@@ -82,7 +92,7 @@
 
     <!-- Create API Key Modal -->
     <div class="modal fade" id="createApiKeyModal" tabindex="-1" aria-labelledby="createApiKeyModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <form action="{{ route('tech.admin.system.integrations.api.store') }}" method="POST">
                 @csrf
                 <div class="modal-content">
@@ -103,13 +113,20 @@
                                 <input class="form-check-input" type="checkbox" id="full_access" name="full_access" value="1">
                                 <label class="form-check-label" for="full_access">Full access</label>
                             </div>
+                            <div class="form-check mb-3 ms-4">
+                                <input class="form-check-input" type="checkbox" id="confirm_full_access" name="confirm_full_access" value="1">
+                                <label class="form-check-label" for="confirm_full_access">
+                                    I understand that full access grants every current and future API ability.
+                                </label>
+                            </div>
 
                             <div class="border rounded p-2">
                                 @foreach($abilities as $ability => $details)
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="ability_{{ str_replace('.', '_', $ability) }}" name="abilities[]" value="{{ $ability }}" checked>
+                                        <input class="form-check-input" type="checkbox" id="ability_{{ str_replace('.', '_', $ability) }}" name="abilities[]" value="{{ $ability }}">
                                         <label class="form-check-label" for="ability_{{ str_replace('.', '_', $ability) }}">
                                             <span class="fw-semibold">{{ $details['label'] }}</span>
+                                            <span class="badge text-bg-{{ $details['access'] === 'read' ? 'info' : 'warning' }} ms-1">{{ ucfirst($details['access']) }}</span>
                                             <span class="text-muted small d-block">{{ $details['description'] }}</span>
                                         </label>
                                     </div>
@@ -134,7 +151,7 @@
         </div>
         <div class="card-body">
             <p class="small text-muted">
-                <i class="bi bi-info-circle"></i> API keys provide full access to the system based on their permissions. Never share them.
+                <i class="bi bi-info-circle"></i> API keys grant only deliberately selected scopes. Never share them.
             </p>
             <div class="alert alert-warning py-2 small mb-0">
                 API scopes are enforced by Sanctum token abilities on protected API routes.

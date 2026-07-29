@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Integration\Http\Middleware\EnforceCoordinatorWorkload;
+use App\Modules\Ticket\Controllers\Api\V1\StaleTicketController;
 use App\Modules\Ticket\Controllers\Api\V1\TicketController;
 use App\Modules\Ticket\Controllers\Api\V1\TicketWorkflowActionController;
 use App\Modules\Ticket\Controllers\Api\V1\TicketWorkflowDefinitionController;
@@ -9,6 +11,10 @@ use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 Route::get('tickets', [TicketController::class, 'index'])
     ->name('tickets.index')
     ->middleware(CheckAbilities::class.':tickets.read');
+
+Route::get('tickets/stale', [StaleTicketController::class, 'index'])
+    ->name('tickets.stale.index')
+    ->middleware(EnforceCoordinatorWorkload::class.':pseudonymized,tickets.read');
 
 Route::post('tickets', [TicketController::class, 'store'])
     ->name('tickets.store')
@@ -25,6 +31,14 @@ Route::match(['put', 'patch'], 'tickets/{ticket}', [TicketController::class, 'up
 Route::post('tickets/{ticket}/external-messages', [TicketController::class, 'storeExternalMessage'])
     ->name('tickets.external-messages.store')
     ->middleware(CheckAbilities::class.':tickets.update');
+
+Route::post('tickets/{ticket}/portal-visibility', [TicketController::class, 'publishPortal'])
+    ->name('tickets.portal-visibility.store')
+    ->middleware(CheckAbilities::class.':tickets.portal.publish');
+
+Route::post('tickets/{ticket}/messages', [TicketController::class, 'storeMessage'])
+    ->name('tickets.messages.store')
+    ->middleware(CheckAbilities::class.':tickets.reply_customer');
 
 Route::post('tickets/{ticket}/timer/start', [TicketWorkflowActionController::class, 'startTimer'])
     ->name('tickets.timer.start')

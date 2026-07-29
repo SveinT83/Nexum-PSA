@@ -96,9 +96,10 @@ note exists OR Technician reply exists**, so a false optional alternative is not
 
 **Solution is marked** is a separate solution requirement. It passes when a public technician reply
 is marked as the solution, or when an internal note is marked as the solution and Ticket Settings
-allows internal solution notes. A manual transition becomes clickable
-when this requirement passes; it moves automatically only when the transition also has a matching
-**Automatic after action** trigger.
+allows internal solution notes. In the composer, select `Internal note` and enable
+`Mark as solution`; the note remains internal and can still notify a selected technician. A manual
+transition becomes clickable when this requirement passes; it moves automatically only when the
+transition also has a matching **Automatic after action** trigger.
 
 ## Available Actions
 
@@ -243,6 +244,13 @@ The version 1 API provides the same workflow operations as the Ticket page:
 - Create, edit, inspect, publish, preview, and migrate workflow definitions.
 
 API tokens need the relevant `tickets.actions`, `tickets.workflow.read`, `tickets.workflow.manage`, or `tickets.workflow.publish` ability. The authenticated user also needs the same domain permission as a user performing the action in the browser.
+
+API coordinators can also publish an eligible client Ticket with `tickets.portal.publish` and send
+one idempotent public technician reply with `tickets.reply_customer`. A `send_solution` reply writes
+the same response and solution facts as the Ticket page. The coordinator must then use
+`workflow-decisions` and an allowed transition to reach Resolved before calling Close; the reply
+endpoint does not skip requirements or auto-close. The authenticated user remains subject to the
+normal Ticket domain permissions and action guard in addition to the token ability.
 
 ## Safe Administration
 

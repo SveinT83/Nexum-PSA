@@ -9,10 +9,13 @@ use App\Modules\Notification\Actions\SendTransactionalSms;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSmsMessage;
 use App\Modules\Notification\Models\NotificationSmsTemplate;
+use App\Modules\Notification\Models\WebPushSubscription;
+use App\Modules\Notification\Support\WebPushReadiness;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -27,12 +30,18 @@ class NotificationChannelController extends Controller
     /**
      * Show all notification channels and their status.
      */
-    public function index(): View
+    public function index(WebPushReadiness $webPushReadiness): View
     {
         $channels = NotificationChannel::orderBy('name')->get();
+        $webPushTableExists = Schema::connection(config('webpush.database_connection'))
+            ->hasTable(config('webpush.table_name'));
 
         return view('notification::Admin.channels.index', [
             'channels' => $channels,
+            'webPushReadiness' => $webPushReadiness->toArray(),
+            'webPushDeviceCount' => $webPushTableExists
+                ? WebPushSubscription::query()->count()
+                : 0,
         ]);
     }
 
@@ -86,7 +95,7 @@ class NotificationChannelController extends Controller
             $channel->config = array_merge($channel->config ?? [], $validated['config']);
         }
 
-        if (isset($validated['secrets']['api_token']) && !empty($validated['secrets']['api_token'])) {
+        if (isset($validated['secrets']['api_token']) && ! empty($validated['secrets']['api_token'])) {
             $channel->setSecret('api_token', $validated['secrets']['api_token']);
         }
 

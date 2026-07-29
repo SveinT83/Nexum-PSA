@@ -19,7 +19,9 @@
         $clientTasks = $clientTasks->sortByDesc('updated_at')->values();
         $missing = fn ($value) => filled($value) ? $value : '—';
         $contacts = ($contacts ?? collect())->sortBy('name')->values();
-        $availableTabs = ['assets', 'sites', 'contacts', 'contracts', 'time-usage', 'signals', 'tasks', 'custom-fields'];
+        $availableTabs = ($canViewTickets ?? false)
+            ? ['assets', 'sites', 'contacts', 'tickets', 'tasks', 'time-usage', 'contracts', 'signals', 'custom-fields']
+            : ['assets', 'sites', 'contacts', 'tasks', 'time-usage', 'contracts', 'signals', 'custom-fields'];
         $activeClientTab = in_array(request('tab'), $availableTabs, true) ? request('tab') : 'assets';
         $formatMinutes = function (int $minutes): string {
             $hours = intdiv($minutes, 60);
@@ -61,18 +63,49 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-0">
-                        <dt class="col-sm-3">Name</dt><dd class="col-sm-9">{{ $client->name }}</dd>
-                        <dt class="col-sm-3">Org No</dt><dd class="col-sm-9">{{ $client->org_no ?? '—' }}</dd>
-                        <dt class="col-sm-3">Format</dt><dd class="col-sm-9">{{ $client->clientFormat?->name ?? '—' }}</dd>
-                        <dt class="col-sm-3">Billing Email</dt><dd class="col-sm-9">{{ $client->billing_email ?? '—' }}</dd>
-                        <dt class="col-sm-3">Status</dt><dd class="col-sm-9">@if($client->active)<span class="badge bg-success">Active</span>@else<span class="badge bg-secondary">Inactive</span>@endif</dd>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="small text-body-secondary">Client number</div>
+                            <div class="fw-semibold">{{ $missing($client->client_number) }}</div>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="small text-body-secondary">Name</div>
+                            <div class="fw-semibold">{{ $client->name }}</div>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="small text-body-secondary">Org No</div>
+                            <div>{{ $missing($client->org_no) }}</div>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="small text-body-secondary">Format</div>
+                            <div>{{ $missing($client->clientFormat?->name) }}</div>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="small text-body-secondary">Billing Email</div>
+                            <div>
+                                @if(filled($client->billing_email))
+                                    <a href="mailto:{{ $client->billing_email }}">{{ $client->billing_email }}</a>
+                                @else
+                                    {{ $missing(null) }}
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="small text-body-secondary">Status</div>
+                            <div>
+                                @if($client->active)
+                                    <span class="badge bg-success">Active</span>
+                                @else
+                                    <span class="badge bg-secondary">Inactive</span>
+                                @endif
+                            </div>
+                        </div>
                         @php
                             $rmmIntegration = \App\Models\System\Integrations\Integration::where('type', 'rmm')->first();
                         @endphp
                         @if($rmmIntegration && $rmmIntegration->status === 'active')
-                            <dt class="col-sm-3">N-able RMM</dt>
-                            <dd class="col-sm-9">
+                            <div class="col-12 col-md-6 col-xl-4">
+                                <div class="small text-body-secondary">N-able RMM</div>
                                 @php
                                     $clientLink = $client->rmmLinks()->where('integration_id', $rmmIntegration->id)->first();
                                 @endphp
@@ -81,9 +114,12 @@
                                 @else
                                     <span class="badge bg-warning text-dark">Not Linked</span>
                                 @endif
-                            </dd>
+                            </div>
                         @endif
-                        <dt class="col-sm-3">Notes</dt><dd class="col-sm-9">{{ $client->notes ?? '—' }}</dd>
+
+                        <div class="col-12 pt-3 border-top">
+                            <livewire:tech.clients.notes-autosave :client="$client" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -109,9 +145,16 @@
                         Contacts <span class="badge text-bg-light border ms-1">{{ $contacts->count() }}</span>
                     </button>
                 </li>
+                @if($canViewTickets)
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {{ $activeClientTab === 'tickets' ? 'active ' : '' }}text-body border border-bottom-0" id="client-tickets-tab" data-bs-toggle="tab" data-bs-target="#client-tickets-pane" type="button" role="tab" aria-controls="client-tickets-pane" aria-selected="{{ $activeClientTab === 'tickets' ? 'true' : 'false' }}">
+                            Tickets <span class="badge text-bg-light border ms-1">{{ $clientTickets->count() }}</span>
+                        </button>
+                    </li>
+                @endif
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link {{ $activeClientTab === 'contracts' ? 'active ' : '' }}text-body border border-bottom-0" id="client-contracts-tab" data-bs-toggle="tab" data-bs-target="#client-contracts-pane" type="button" role="tab" aria-controls="client-contracts-pane" aria-selected="{{ $activeClientTab === 'contracts' ? 'true' : 'false' }}">
-                        Contracts <span class="badge text-bg-light border ms-1">{{ $contracts->count() }}</span>
+                    <button class="nav-link {{ $activeClientTab === 'tasks' ? 'active ' : '' }}text-body border border-bottom-0" id="client-tasks-tab" data-bs-toggle="tab" data-bs-target="#client-tasks-pane" type="button" role="tab" aria-controls="client-tasks-pane" aria-selected="{{ $activeClientTab === 'tasks' ? 'true' : 'false' }}">
+                        Tasks <span class="badge text-bg-light border ms-1">{{ $clientTasks->count() }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -120,13 +163,13 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link {{ $activeClientTab === 'signals' ? 'active ' : '' }}text-body border border-bottom-0" id="client-signals-tab" data-bs-toggle="tab" data-bs-target="#client-signals-pane" type="button" role="tab" aria-controls="client-signals-pane" aria-selected="{{ $activeClientTab === 'signals' ? 'true' : 'false' }}">
-                        Signals <span class="badge text-bg-light border ms-1">{{ $signals->count() }}</span>
+                    <button class="nav-link {{ $activeClientTab === 'contracts' ? 'active ' : '' }}text-body border border-bottom-0" id="client-contracts-tab" data-bs-toggle="tab" data-bs-target="#client-contracts-pane" type="button" role="tab" aria-controls="client-contracts-pane" aria-selected="{{ $activeClientTab === 'contracts' ? 'true' : 'false' }}">
+                        Contracts <span class="badge text-bg-light border ms-1">{{ $contracts->count() }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link {{ $activeClientTab === 'tasks' ? 'active ' : '' }}text-body border border-bottom-0" id="client-tasks-tab" data-bs-toggle="tab" data-bs-target="#client-tasks-pane" type="button" role="tab" aria-controls="client-tasks-pane" aria-selected="{{ $activeClientTab === 'tasks' ? 'true' : 'false' }}">
-                        Tasks <span class="badge text-bg-light border ms-1">{{ $clientTasks->count() }}</span>
+                    <button class="nav-link {{ $activeClientTab === 'signals' ? 'active ' : '' }}text-body border border-bottom-0" id="client-signals-tab" data-bs-toggle="tab" data-bs-target="#client-signals-pane" type="button" role="tab" aria-controls="client-signals-pane" aria-selected="{{ $activeClientTab === 'signals' ? 'true' : 'false' }}">
+                        Signals <span class="badge text-bg-light border ms-1">{{ $signals->count() }}</span>
                     </button>
                 </li>
                 @if(($customFields ?? collect())->isNotEmpty())
@@ -259,6 +302,71 @@
                         </div>
                     </div>
                 </div>
+
+                @if($canViewTickets)
+                    <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'tickets']) id="client-tickets-pane" role="tabpanel" aria-labelledby="client-tickets-tab" tabindex="0">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex align-items-center gap-2">
+                                <span class="fw-semibold">Tickets</span>
+                                <span class="badge text-bg-light border">{{ $clientTickets->count() }}</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Ticket</th>
+                                            <th>Subject</th>
+                                            <th>Status</th>
+                                            <th>Priority</th>
+                                            <th>Queue</th>
+                                            <th>Owner</th>
+                                            <th>Updated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($clientTickets as $ticket)
+                                            <tr class="cursor-pointer" data-href="{{ route('tech.tickets.show', $ticket) }}" onclick="window.location.href = this.dataset.href">
+                                                <td>
+                                                    <a href="{{ route('tech.tickets.show', $ticket) }}" class="fw-semibold text-decoration-none" onclick="event.stopPropagation()">
+                                                        {{ $ticket->ticket_key }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ \Illuminate\Support\Str::limit($ticket->subject, 90) }}</td>
+                                                <td>{{ $ticket->status?->name ?? 'Unknown' }}</td>
+                                                <td>
+                                                    @if($ticket->priority)
+                                                        P{{ $ticket->priority->level }} {{ $ticket->priority->name }}
+                                                    @else
+                                                        <span class="text-muted">&mdash;</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($ticket->queue)
+                                                        {{ $ticket->queue->name }}
+                                                    @else
+                                                        <span class="text-muted">&mdash;</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $ticket->owner?->name ?? 'Unassigned' }}</td>
+                                                <td>
+                                                    @if($ticket->updated_at)
+                                                        {{ $ticket->updated_at->format('Y-m-d H:i') }}
+                                                    @else
+                                                        <span class="text-muted">&mdash;</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted py-4">No tickets registered for this client.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 <div @class(['tab-pane fade', 'show active' => $activeClientTab === 'contracts']) id="client-contracts-pane" role="tabpanel" aria-labelledby="client-contracts-tab" tabindex="0">
                     @if($canViewTimebank)

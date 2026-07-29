@@ -16,6 +16,7 @@ use App\Modules\Storage\Models\Item;
 use App\Modules\Storage\Models\Movement;
 use App\Modules\Storage\Models\Reservation;
 use App\Modules\Storage\Models\Warehouse;
+use App\Modules\Storage\Queries\StorageIndexQuery;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
@@ -31,6 +32,7 @@ class StorageModuleTest extends TestCase
     use RefreshDatabase;
 
     private User $tech;
+
     private User $admin;
 
     protected function setUp(): void
@@ -52,8 +54,8 @@ class StorageModuleTest extends TestCase
     {
         $route = Route::getRoutes()->getByName('tech.storage.index');
 
-        $this->assertSame(StorageController::class . '@index', $route->getActionName());
-        $this->assertSame(StorageController::class . '@docs', Route::getRoutes()->getByName('tech.storage.docs')->getActionName());
+        $this->assertSame(StorageController::class.'@index', $route->getActionName());
+        $this->assertSame(StorageController::class.'@docs', Route::getRoutes()->getByName('tech.storage.docs')->getActionName());
 
         $this->actingAs($this->tech)
             ->get(route('tech.storage.index'))
@@ -69,7 +71,7 @@ class StorageModuleTest extends TestCase
             ->assertSee('Documentation')
             ->assertSee('Quick Stats')
             ->assertSee('data-bs-target="#storageQuickStatsCollapse"', false)
-            ->assertDontSee('href="' . route('tech.admin.settings.storage.inventory') . '"', false);
+            ->assertDontSee('href="'.route('tech.admin.settings.storage.inventory').'"', false);
 
         $this->actingAs($this->tech)
             ->get(route('tech.storage.docs'))
@@ -78,17 +80,82 @@ class StorageModuleTest extends TestCase
     }
 
     #[Test]
+    public function storage_should_order_count_matches_the_reorder_focused_index(): void
+    {
+        $warehouse = Warehouse::query()->create(['name' => 'Main Warehouse', 'code' => 'MAIN']);
+
+        foreach ([
+            [
+                'sku' => 'MANUAL',
+                'name' => 'Manual reorder item',
+                'qty_on_hand' => 10,
+                'qty_reserved' => 0,
+                'reorder_point' => 2,
+                'should_order' => true,
+            ],
+            [
+                'sku' => 'EMPTY',
+                'name' => 'Empty stock item',
+                'qty_on_hand' => 0,
+                'qty_reserved' => 0,
+                'reorder_point' => 0,
+                'should_order' => false,
+            ],
+            [
+                'sku' => 'RESERVED',
+                'name' => 'Over-reserved item',
+                'qty_on_hand' => 2,
+                'qty_reserved' => 3,
+                'reorder_point' => 0,
+                'should_order' => false,
+            ],
+            [
+                'sku' => 'LOW',
+                'name' => 'Low stock item',
+                'qty_on_hand' => 2,
+                'qty_reserved' => 0,
+                'reorder_point' => 2,
+                'should_order' => false,
+            ],
+            [
+                'sku' => 'HEALTHY',
+                'name' => 'Healthy stock item',
+                'qty_on_hand' => 10,
+                'qty_reserved' => 1,
+                'reorder_point' => 2,
+                'should_order' => false,
+            ],
+        ] as $item) {
+            Item::query()->create($item + [
+                'warehouse_id' => $warehouse->id,
+                'status' => 'active',
+            ]);
+        }
+
+        $this->assertSame(4, app(StorageIndexQuery::class)->shouldOrderCount());
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.index', ['availability' => 'should_order']))
+            ->assertOk()
+            ->assertSee('Manual reorder item')
+            ->assertSee('Empty stock item')
+            ->assertSee('Over-reserved item')
+            ->assertSee('Low stock item')
+            ->assertDontSee('Healthy stock item');
+    }
+
+    #[Test]
     public function admin_can_open_inventory_settings_and_create_warehouse(): void
     {
         $route = Route::getRoutes()->getByName('tech.admin.settings.storage.inventory');
 
-        $this->assertSame(InventoryController::class . '@index', $route->getActionName());
+        $this->assertSame(InventoryController::class.'@index', $route->getActionName());
         $this->assertSame(
-            InventoryController::class . '@storeWarehouse',
+            InventoryController::class.'@storeWarehouse',
             Route::getRoutes()->getByName('tech.admin.settings.storage.inventory.warehouses.store')->getActionName()
         );
         $this->assertSame(
-            InventoryController::class . '@updateDefaultWarehouse',
+            InventoryController::class.'@updateDefaultWarehouse',
             Route::getRoutes()->getByName('tech.admin.settings.storage.inventory.default-warehouse.update')->getActionName()
         );
 
@@ -149,13 +216,13 @@ class StorageModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.storage.items.create'))
             ->assertOk()
-            ->assertSee('value="' . $van->id . '" selected', false)
+            ->assertSee('value="'.$van->id.'" selected', false)
             ->assertSee('Technician Van');
 
         $this->actingAs($this->tech)
             ->get(route('tech.storage.boxes.create'))
             ->assertOk()
-            ->assertSee('value="' . $van->id . '" selected', false)
+            ->assertSee('value="'.$van->id.'" selected', false)
             ->assertSee('Technician Van');
 
         $this->assertNotSame($company->id, $van->id);
@@ -649,14 +716,14 @@ class StorageModuleTest extends TestCase
     #[Test]
     public function storage_item_and_box_show_routes_are_module_owned(): void
     {
-        $this->assertSame(ItemController::class . '@show', Route::getRoutes()->getByName('tech.storage.items.show')->getActionName());
-        $this->assertSame(ItemController::class . '@edit', Route::getRoutes()->getByName('tech.storage.items.edit')->getActionName());
-        $this->assertSame(ItemController::class . '@update', Route::getRoutes()->getByName('tech.storage.items.update')->getActionName());
-        $this->assertSame(ItemController::class . '@destroy', Route::getRoutes()->getByName('tech.storage.items.destroy')->getActionName());
-        $this->assertSame(BoxController::class . '@show', Route::getRoutes()->getByName('tech.storage.boxes.show')->getActionName());
-        $this->assertSame(StorageController::class . '@picking', Route::getRoutes()->getByName('tech.storage.picking')->getActionName());
-        $this->assertSame(StorageController::class . '@pickingDocs', Route::getRoutes()->getByName('tech.storage.picking.docs')->getActionName());
-        $this->assertSame(StorageController::class . '@pick', Route::getRoutes()->getByName('tech.storage.picking.pick')->getActionName());
+        $this->assertSame(ItemController::class.'@show', Route::getRoutes()->getByName('tech.storage.items.show')->getActionName());
+        $this->assertSame(ItemController::class.'@edit', Route::getRoutes()->getByName('tech.storage.items.edit')->getActionName());
+        $this->assertSame(ItemController::class.'@update', Route::getRoutes()->getByName('tech.storage.items.update')->getActionName());
+        $this->assertSame(ItemController::class.'@destroy', Route::getRoutes()->getByName('tech.storage.items.destroy')->getActionName());
+        $this->assertSame(BoxController::class.'@show', Route::getRoutes()->getByName('tech.storage.boxes.show')->getActionName());
+        $this->assertSame(StorageController::class.'@picking', Route::getRoutes()->getByName('tech.storage.picking')->getActionName());
+        $this->assertSame(StorageController::class.'@pickingDocs', Route::getRoutes()->getByName('tech.storage.picking.docs')->getActionName());
+        $this->assertSame(StorageController::class.'@pick', Route::getRoutes()->getByName('tech.storage.picking.pick')->getActionName());
     }
 
     #[Test]

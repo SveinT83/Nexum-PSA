@@ -8,6 +8,7 @@ use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Sales\Models\SalesQuoteVersion;
+use App\Modules\Sales\Support\SalesQuotePresentation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -35,9 +36,10 @@ class SendSalesQuoteEmail implements ShouldQueue
         DefaultEmailAccountResolver $accountResolver,
         EmailTemplateRenderer $renderer,
         SmtpAccountMailer $mailer,
+        SalesQuotePresentation $quotePresentation,
     ): void {
         $version = SalesQuoteVersion::query()
-            ->with(['quote.opportunity.client', 'quote.opportunity.primaryContact', 'quote.opportunity.owner'])
+            ->with(['quote.opportunity.client', 'quote.opportunity.primaryContact', 'quote.opportunity.owner', 'lines'])
             ->find($this->salesQuoteVersionId);
 
         if (! $version) {
@@ -49,6 +51,7 @@ class SendSalesQuoteEmail implements ShouldQueue
 
         if (! $recipient?->email || ! filter_var($recipient->email, FILTER_VALIDATE_EMAIL)) {
             $this->log(null, $version->id, 'error', 'SALES_QUOTE_NO_RECIPIENT', 'Sales quote has no valid primary contact recipient.');
+
             return;
         }
 
@@ -56,6 +59,7 @@ class SendSalesQuoteEmail implements ShouldQueue
 
         if (! $account) {
             $this->log(null, $version->id, 'error', 'SALES_QUOTE_NO_ACCOUNT', 'No active sales outbound email account is configured.');
+
             return;
         }
 
@@ -67,10 +71,12 @@ class SendSalesQuoteEmail implements ShouldQueue
 
         if (! $template) {
             $this->log($account->id, $version->id, 'error', 'SALES_QUOTE_NO_TEMPLATE', 'No active sales_quote_send template exists.');
+
             return;
         }
 
         try {
+            $presentation = $quotePresentation->forVersion($version);
             $rendered = $renderer->render($template, [
                 'opportunity_key' => $opportunity->opportunity_key,
                 'opportunity_title' => $opportunity->title,
@@ -80,6 +86,10 @@ class SendSalesQuoteEmail implements ShouldQueue
                 'quote_url' => route('sales.quotes.public.view', $version->secure_token),
                 'total_ex_vat' => number_format((float) $version->total_ex_vat, 2, '.', ' '),
                 'total_inc_vat' => number_format((float) $version->total_inc_vat, 2, '.', ' '),
+                'quote_summary_html' => $presentation['summary_html'],
+                'quote_summary_text' => $presentation['summary_text'],
+                'quote_customer_copy_html' => $presentation['customer_copy_html'],
+                'quote_customer_copy_text' => $presentation['customer_copy_text'],
                 'expires_at' => $version->expires_at?->toDateString() ?? '',
                 'seller_name' => $opportunity->owner?->name ?? 'Sales',
             ]);

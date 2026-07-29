@@ -7,6 +7,9 @@ The Documentation module owns the internal and client-scoped documentation syste
 - Documentation index, create, edit, show, and delete screens.
 - Documentation context selection for internal, client, and site scopes.
 - Work Context alignment for internal and client-scoped documentation.
+- Category-driven template selection: one active template is automatic, while several active
+  templates require an explicit technician choice before the dynamic fields are rendered and
+  snapshotted.
 - Documentation template model used by category-driven document forms.
 - Sidebar menu data for documentation categories.
 - Sanctum API endpoints for Documentation records, documentation categories, and documentation

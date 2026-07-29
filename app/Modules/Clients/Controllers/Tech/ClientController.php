@@ -6,17 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tech\Clients\ClientRequest;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientFormat;
+use App\Models\Core\User;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Clients\Actions\BuildClientTimeUsageEntries;
 use App\Modules\Clients\Actions\CreateClientWithDefaults;
 use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\Clients\Menus\SideBar\ClientsMenu;
-use App\Models\Core\User;
-use App\Modules\Clients\Actions\BuildClientTimeUsageEntries;
 use App\Modules\Commercial\Actions\CalculateClientTimebankBalances;
 use App\Modules\Commercial\Support\ClientTimebankQuickPolicy;
 use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Modules\Signal\Queries\RelatedSignals;
 use App\Modules\Task\Models\Task;
+use App\Modules\Ticket\Queries\ClientTicketListQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,6 +25,7 @@ use Illuminate\View\View;
 class ClientController extends Controller
 {
     private const CLIENT_FILTER_SESSION_KEY = 'clients.index.filters';
+
     private const CLIENT_FILTER_TTL_MINUTES = 120;
 
     /**
@@ -32,7 +34,6 @@ class ClientController extends Controller
      * This method resets any active client or site context in the session
      * and allows searching for clients by name, organization number, or email.
      *
-     * @param Request $request
      * @return View
      */
     public function index(Request $request): View|RedirectResponse
@@ -80,7 +81,7 @@ class ClientController extends Controller
             ->withCount(['sites', 'contacts', 'contracts']);
 
         if ($search = $filters['search']) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('clients.name', 'like', "%$search%");
                 $q->orWhere('clients.client_number', 'like', "%$search%");
                 $q->orWhere('clients.org_no', 'like', "%$search%");
@@ -158,7 +159,7 @@ class ClientController extends Controller
             'clientFormats' => ClientFormat::activeOptions(),
             'activeFilterCount' => $activeFilterCount,
             'rmmIntegration' => $rmmIntegration,
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu(null),
+            'sidebarMenuItems' => (new ClientsMenu)->ClientsMenu(null),
         ]);
     }
 
@@ -168,9 +169,6 @@ class ClientController extends Controller
      * This method sets the client as the "active client" in the session,
      * eager-loads risk assessment data for the rightbar widget,
      * and prepares the sidebar menu based on this client context.
-     *
-     * @param Client $client
-     * @return View
      */
     public function show(
         Client $client,
@@ -180,6 +178,7 @@ class ClientController extends Controller
         ClientTimebankQuickPolicy $timebankPolicy,
         BuildClientTimeUsageEntries $timeUsageEntries,
         RelatedSignals $signals,
+        ClientTicketListQuery $clientTickets,
     ): View {
         // -----------------------------------------
         // Set the active client ID in session
@@ -212,7 +211,7 @@ class ClientController extends Controller
             ->pluck('id');
 
         if ($ticketIds->isNotEmpty()) {
-            $ticket = new \App\Modules\Ticket\Models\Ticket();
+            $ticket = new \App\Modules\Ticket\Models\Ticket;
             $clientTaskOwners[] = [$ticket->getMorphClass(), $ticketIds->all()];
         }
 
@@ -237,7 +236,10 @@ class ClientController extends Controller
         // -----------------------------------------
         // Array of sidebar menu items
         // -----------------------------------------
-        $sidebarMenuItems = (new ClientsMenu())->ClientsMenu($client);
+        $sidebarMenuItems = (new ClientsMenu)->ClientsMenu($client);
+
+        $canViewTickets = $request->user()?->can('ticket.view') ?? false;
+        $accessibleClientTickets = $clientTickets->forClient($client, $request->user());
 
         return view('clients::Tech.show', [
             'client' => $client,
@@ -254,6 +256,8 @@ class ClientController extends Controller
             'canOverconsumeTimebank' => $request->user()?->can('commercial.timebank.overconsume') ?? false,
             'clientTimeUsageEntries' => $timeUsageEntries->handle($client, $request->user()),
             'signals' => $signals->forClient($client),
+            'canViewTickets' => $canViewTickets,
+            'clientTickets' => $accessibleClientTickets,
 
         ]);
     }
@@ -262,8 +266,6 @@ class ClientController extends Controller
      * Show the form for creating a new client.
      *
      * Provides suggested client numbers and default configuration options.
-     *
-     * @return View
      */
     public function create(SuggestClientNumber $suggestClientNumber): View
     {
@@ -281,7 +283,7 @@ class ClientController extends Controller
             'roles' => $roles,
             'countries' => $countries,
             'nableActive' => $nableActive,
-            'sidebarMenuItems' => (new ClientsMenu())->ClientsMenu(null),
+            'sidebarMenuItems' => (new ClientsMenu)->ClientsMenu(null),
         ]);
     }
 
@@ -290,9 +292,6 @@ class ClientController extends Controller
      *
      * This operation is wrapped in a transaction to ensure that the client,
      * its default site, and its default user are all created successfully.
-     *
-     * @param ClientRequest $request
-     * @return RedirectResponse
      */
     public function store(ClientRequest $request, CreateClientWithDefaults $createClient): RedirectResponse
     {

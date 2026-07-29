@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Actions;
 use App\Models\Core\User;
 use App\Modules\Sales\Actions\RecalculateSalesQuoteVersion;
 use App\Modules\Sales\Models\SalesActivity;
+use App\Modules\Sales\Support\SalesQuotePresentation;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Services\TicketActionGuard;
@@ -21,6 +22,7 @@ class SendTicketSalesQuote
         private readonly RecalculateSalesQuoteVersion $recalculate,
         private readonly AddTicketMessage $addMessage,
         private readonly StoreTicketAttachment $attachments,
+        private readonly SalesQuotePresentation $quotePresentation,
     ) {}
 
     public function handle(Ticket $ticket, array $data, User $actor)
@@ -134,6 +136,7 @@ class SendTicketSalesQuote
         $html = view('sales::Public.quote-pdf', [
             'version' => $version,
             'opportunity' => $version->quote->opportunity,
+            'quotePresentation' => $this->quotePresentation->forVersion($version),
         ])->render();
         $dompdf = new Dompdf(['isRemoteEnabled' => true]);
         $dompdf->loadHtml($html);

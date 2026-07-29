@@ -16,7 +16,9 @@ use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Sales\Actions\EnsureSalesDefaults;
 use App\Modules\Sales\Actions\EnsureSalesQuoteDraft;
+use App\Modules\Sales\Actions\MarkSalesOpportunityLost;
 use App\Modules\Sales\Actions\RecalculateSalesQuoteVersion;
+use App\Modules\Sales\Actions\ReopenSalesOpportunity;
 use App\Modules\Sales\Actions\StoreSalesOpportunity;
 use App\Modules\Sales\Actions\SyncOpportunityFollowUpCalendar;
 use App\Modules\Sales\Jobs\SendSalesActivityEmail;
@@ -29,6 +31,7 @@ use App\Modules\Sales\Models\SalesQuote;
 use App\Modules\Sales\Models\SalesQuoteLine;
 use App\Modules\Sales\Models\SalesQuoteVersion;
 use App\Modules\Sales\Models\SalesSetting;
+use App\Modules\Sales\Support\SalesQuotePresentation;
 use App\Modules\Storage\Models\Item as StorageItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +39,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class SalesController extends Controller
@@ -46,6 +50,7 @@ class SalesController extends Controller
 
         $opportunities = SalesOpportunity::query()
             ->with(['client', 'owner', 'currentQuoteVersion'])
+            ->when(! $request->filled('status') && ! $request->filled('q'), fn ($query) => $query->where('status', '!=', 'lost'))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when($request->filled('owner'), fn ($query) => $query->where('owner_id', $request->integer('owner')))
             ->when($request->filled('q'), function ($query) use ($request): void {
@@ -57,7 +62,7 @@ class SalesController extends Controller
                 });
             })
             ->orderByDesc('is_unread')
-            ->orderByRaw('CASE WHEN next_follow_up_at IS NOT NULL AND next_follow_up_at < NOW() THEN 0 ELSE 1 END')
+            ->orderByRaw('CASE WHEN next_follow_up_at IS NOT NULL AND next_follow_up_at < ? THEN 0 ELSE 1 END', [now()])
             ->latest('updated_at')
             ->paginate(20)
             ->withQueryString();
@@ -193,8 +198,11 @@ class SalesController extends Controller
             ->with('success', 'Sales opportunity created.');
     }
 
-    public function show(SalesOpportunity $sale, EnsureSalesDefaults $defaults): View
-    {
+    public function show(
+        SalesOpportunity $sale,
+        EnsureSalesDefaults $defaults,
+        SalesQuotePresentation $quotePresentation
+    ): View {
         $defaults->handle();
         $sale->load([
             'client.contacts',
@@ -210,6 +218,11 @@ class SalesController extends Controller
         return view('sales::Tech.Sales.show', [
             'sale' => $sale,
             'statuses' => EnsureSalesDefaults::STATUSES,
+            'reopenStatuses' => ReopenSalesOpportunity::REOPEN_STATUSES,
+            'quotePresentation' => $sale->currentQuoteVersion
+                ? $quotePresentation->forVersion($sale->currentQuoteVersion)
+                : null,
+            'quoteCadences' => SalesQuotePresentation::CADENCES,
             'types' => EnsureSalesDefaults::TYPES,
             'owners' => User::query()->where('status', User::STATUS_ACTIVE)->orderBy('name')->get(['id', 'name']),
             'nextActions' => EnsureSalesDefaults::NEXT_ACTIONS,
@@ -233,6 +246,7 @@ class SalesController extends Controller
     public function update(Request $request, SalesOpportunity $sale, SyncOpportunityFollowUpCalendar $syncCalendar): RedirectResponse
     {
         $data = $this->opportunityData($request, false);
+        $this->assertLostWorkflowIsNotBypassed($sale, $request->input('status'));
         $clientId = (int) ($data['client_id'] ?? $sale->client_id);
         $this->assertPrimaryContactBelongsToClient($data['primary_contact_id'] ?? null, $clientId);
 
@@ -248,6 +262,34 @@ class SalesController extends Controller
         $syncCalendar->handle($sale, $request->user());
 
         return back()->with('success', 'Opportunity updated.');
+    }
+
+    public function markLost(Request $request, SalesOpportunity $sale, MarkSalesOpportunityLost $markLost): RedirectResponse
+    {
+        $data = $request->validate([
+            'lost_reason' => ['required', 'string', 'max:4000'],
+            'internal_note' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $markLost->handle(
+            $sale,
+            $data['lost_reason'],
+            $data['internal_note'] ?? null,
+            $request->user()
+        );
+
+        return back()->with('success', 'Opportunity marked as lost.');
+    }
+
+    public function reopen(Request $request, SalesOpportunity $sale, ReopenSalesOpportunity $reopen): RedirectResponse
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in(ReopenSalesOpportunity::REOPEN_STATUSES)],
+        ]);
+
+        $reopen->handle($sale, $data['status'], $request->user());
+
+        return back()->with('success', 'Opportunity reopened. Add a new follow-up when needed.');
     }
 
     public function storeActivity(Request $request, SalesOpportunity $sale): RedirectResponse
@@ -380,8 +422,37 @@ class SalesController extends Controller
         return back()->with('success', 'Quote draft ready.');
     }
 
-    public function addQuoteLine(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate, EnsureSalesQuoteDraft $ensureDraft): RedirectResponse
+    public function updateQuoteDetails(Request $request, SalesOpportunity $sale): RedirectResponse
     {
+        $version = $sale->currentQuoteVersion()->firstOrFail();
+        abort_unless($version->isEditable(), 422, 'Only a draft quote can be edited.');
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'expires_at' => ['nullable', 'date'],
+            'intro_text' => ['nullable', 'string', 'max:20000'],
+            'scope_text' => ['nullable', 'string', 'max:20000'],
+            'assumptions_text' => ['nullable', 'string', 'max:20000'],
+            'exclusions_text' => ['nullable', 'string', 'max:20000'],
+            'next_steps_text' => ['nullable', 'string', 'max:20000'],
+        ]);
+
+        $version->fill(array_merge($data, [
+            'updated_by' => $request->user()->id,
+        ]))->save();
+
+        return back()
+            ->with('success', 'Quote presentation updated.')
+            ->with('open_quote_modal', true);
+    }
+
+    public function addQuoteLine(
+        Request $request,
+        SalesOpportunity $sale,
+        RecalculateSalesQuoteVersion $recalculate,
+        EnsureSalesQuoteDraft $ensureDraft,
+        SalesQuotePresentation $quotePresentation
+    ): RedirectResponse {
         $version = $ensureDraft->handle($sale, $request->user());
 
         abort_unless($version->isEditable(), 422);
@@ -391,6 +462,7 @@ class SalesController extends Controller
             'source_id' => 'required_unless:source_type,custom|nullable|integer',
             'section' => 'required|string|max:100',
             'downstream_type' => 'required|string|max:100',
+            'billing_cadence' => ['nullable', Rule::in(array_keys(SalesQuotePresentation::CADENCES))],
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:4000',
             'quantity' => 'required|numeric|min:0.01|max:100000',
@@ -408,6 +480,11 @@ class SalesController extends Controller
             'quote_version_id' => $version->id,
             'section' => $data['section'],
             'downstream_type' => $data['downstream_type'],
+            'billing_cadence' => $quotePresentation->normalizeCadence(
+                $data['billing_cadence'] ?? null,
+                $data['section'],
+                $data['downstream_type']
+            ),
             'quantity' => $data['quantity'],
             'unit_price_ex_vat' => $data['unit_price_ex_vat'] ?? $lineData['unit_price_ex_vat'],
             'unit_cost_ex_vat' => $data['unit_cost_ex_vat'] ?? $lineData['unit_cost_ex_vat'],
@@ -439,14 +516,20 @@ class SalesController extends Controller
             ->with('open_quote_modal', true);
     }
 
-    public function updateQuoteLine(Request $request, SalesOpportunity $sale, SalesQuoteLine $line, RecalculateSalesQuoteVersion $recalculate): RedirectResponse
-    {
+    public function updateQuoteLine(
+        Request $request,
+        SalesOpportunity $sale,
+        SalesQuoteLine $line,
+        RecalculateSalesQuoteVersion $recalculate,
+        SalesQuotePresentation $quotePresentation
+    ): RedirectResponse {
         abort_unless((int) $line->quoteVersion->quote->opportunity_id === (int) $sale->id, 404);
         abort_unless($line->quoteVersion->isEditable(), 422);
 
         $data = $request->validate([
             'section' => 'required|string|max:100',
             'downstream_type' => 'required|string|max:100',
+            'billing_cadence' => ['nullable', Rule::in(array_keys(SalesQuotePresentation::CADENCES))],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:4000',
             'quantity' => 'required|numeric|min:0.01|max:100000',
@@ -459,6 +542,11 @@ class SalesController extends Controller
         ]);
 
         $line->fill(array_merge($data, [
+            'billing_cadence' => $quotePresentation->normalizeCadence(
+                $data['billing_cadence'] ?? null,
+                $data['section'],
+                $data['downstream_type']
+            ),
             'unit_cost_ex_vat' => $data['unit_cost_ex_vat'] ?? 0,
             'discount_value' => $data['discount_value'] ?? 0,
             'vat_rate' => $data['vat_rate'] ?? 25,
@@ -608,6 +696,21 @@ class SalesController extends Controller
             'next_follow_up_type' => ['nullable', Rule::in(array_keys(EnsureSalesDefaults::NEXT_ACTIONS))],
             'next_follow_up_note' => 'nullable|string|max:2000',
         ]);
+    }
+
+    private function assertLostWorkflowIsNotBypassed(SalesOpportunity $opportunity, mixed $requestedStatus): void
+    {
+        if ($requestedStatus === 'lost' && $opportunity->status !== 'lost') {
+            throw ValidationException::withMessages([
+                'status' => 'Use Mark as lost so the reason and follow-up cleanup are recorded.',
+            ]);
+        }
+
+        if ($opportunity->status === 'lost' && filled($requestedStatus) && $requestedStatus !== 'lost') {
+            throw ValidationException::withMessages([
+                'status' => 'Use Reopen so the lost transition is reversed safely.',
+            ]);
+        }
     }
 
     private function assertPrimaryContactBelongsToClient(?int $contactId, int $clientId): void

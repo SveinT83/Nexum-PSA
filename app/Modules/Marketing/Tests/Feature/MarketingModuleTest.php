@@ -7,21 +7,21 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
+use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Models\ContactEmail;
+use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Integration\Models\AiAgent;
-use App\Modules\Integration\Models\AiProvider;
 use App\Modules\Integration\Models\AiChatMessage;
+use App\Modules\Integration\Models\AiProvider;
 use App\Modules\LeadIntelligence\Models\ContactMarketingEligibility;
 use App\Modules\LeadIntelligence\Models\MarketingSuppressionEntry;
-use App\Modules\Marketing\Controllers\Tech\MarketingController;
-use App\Modules\Contact\Models\Contact;
-use App\Modules\Contact\Models\ContactEmail;
-use App\Modules\Contact\Models\ContactRelation;
-use App\Modules\Commercial\Models\Contracts\Contracts;
-use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
+use App\Modules\Marketing\Controllers\Tech\MarketingController;
+use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Marketing\Models\MarketingCampaign;
 use App\Modules\Marketing\Models\MarketingCampaignEvent;
 use App\Modules\Marketing\Models\MarketingCampaignRecipient;
@@ -42,10 +42,12 @@ use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Tests\Concerns\ApprovesExternalAiForTests;
 use Tests\TestCase;
 
 class MarketingModuleTest extends TestCase
 {
+    use ApprovesExternalAiForTests;
     use RefreshDatabase;
 
     #[Test]
@@ -1705,7 +1707,7 @@ class MarketingModuleTest extends TestCase
         ]);
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
-        AiAgent::query()->create([
+        $agent = AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Marketing WordPress Planner',
             'slug' => 'marketing-wordpress-planner',
@@ -1714,6 +1716,7 @@ class MarketingModuleTest extends TestCase
             'is_default' => true,
             'is_active' => true,
         ]);
+        $this->approveExternalAiForTest($provider, $agent, $user);
 
         Http::fake([
             'https://blog.example.test/wp-json/wp/v2/posts*' => Http::response([
@@ -2279,7 +2282,7 @@ class MarketingModuleTest extends TestCase
         ]);
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
-        AiAgent::query()->create([
+        $agent = AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Marketing Assistant',
             'slug' => 'marketing-assistant',
@@ -2288,6 +2291,7 @@ class MarketingModuleTest extends TestCase
             'is_default' => true,
             'is_active' => true,
         ]);
+        $this->approveExternalAiForTest($provider, $agent, $user);
 
         Http::fake([
             'https://api.openai.test/*' => Http::response([
@@ -2388,7 +2392,7 @@ class MarketingModuleTest extends TestCase
         ]);
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
-        AiAgent::query()->create([
+        $agent = AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Marketing Planner',
             'slug' => 'marketing-planner',
@@ -2397,6 +2401,7 @@ class MarketingModuleTest extends TestCase
             'is_default' => true,
             'is_active' => true,
         ]);
+        $this->approveExternalAiForTest($provider, $agent, $user);
 
         Http::fake([
             'https://api.openai.test/*' => Http::response([

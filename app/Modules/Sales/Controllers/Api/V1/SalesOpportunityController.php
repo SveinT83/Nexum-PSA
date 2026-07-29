@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Modules\Sales\Actions\EnsureSalesDefaults;
+use App\Modules\Sales\Actions\MarkSalesOpportunityLost;
+use App\Modules\Sales\Actions\ReopenSalesOpportunity;
 use App\Modules\Sales\Actions\StoreSalesOpportunity;
 use App\Modules\Sales\Actions\SyncOpportunityFollowUpCalendar;
 use App\Modules\Sales\Models\SalesActivity;
@@ -15,6 +17,7 @@ use App\Modules\Sales\Resources\Api\V1\SalesOpportunityResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(
@@ -135,7 +138,9 @@ class SalesOpportunityController extends Controller
         EnsureSalesDefaults $defaults
     ) {
         $defaults->handle();
-        $data = array_merge($this->payloadFromOpportunity($opportunity), $this->validatedOpportunity($request, creating: false));
+        $validated = $this->validatedOpportunity($request, creating: false);
+        $this->assertLostWorkflowIsNotBypassed($opportunity, $request->input('status'));
+        $data = array_merge($this->payloadFromOpportunity($opportunity), $validated);
         $clientId = (int) $data['client_id'];
         $this->assertPrimaryContactBelongsToClient($data['primary_contact_id'] ?? null, $clientId);
 
@@ -149,6 +154,70 @@ class SalesOpportunityController extends Controller
         ]))->save();
 
         $syncCalendar->handle($opportunity, $request->user());
+
+        return new SalesOpportunityResource($this->loadOpportunity($opportunity));
+    }
+
+    #[OA\Post(
+        path: '/api/v1/sales/opportunities/{opportunity}/lost',
+        operationId: 'markSalesOpportunityLost',
+        summary: 'Mark a sales opportunity as lost',
+        security: [['bearerAuth' => []]],
+        tags: ['Sales'],
+        parameters: [
+            new OA\Parameter(name: 'opportunity', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Opportunity marked as lost'),
+            new OA\Response(response: 403, description: 'Missing sales.update scope'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    public function markLost(
+        Request $request,
+        SalesOpportunity $opportunity,
+        MarkSalesOpportunityLost $markLost
+    ) {
+        $data = $request->validate([
+            'lost_reason' => ['required', 'string', 'max:4000'],
+            'internal_note' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $markLost->handle(
+            $opportunity,
+            $data['lost_reason'],
+            $data['internal_note'] ?? null,
+            $request->user()
+        );
+
+        return new SalesOpportunityResource($this->loadOpportunity($opportunity));
+    }
+
+    #[OA\Post(
+        path: '/api/v1/sales/opportunities/{opportunity}/reopen',
+        operationId: 'reopenSalesOpportunity',
+        summary: 'Reopen a lost sales opportunity',
+        security: [['bearerAuth' => []]],
+        tags: ['Sales'],
+        parameters: [
+            new OA\Parameter(name: 'opportunity', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Opportunity reopened'),
+            new OA\Response(response: 403, description: 'Missing sales.update scope'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    public function reopen(
+        Request $request,
+        SalesOpportunity $opportunity,
+        ReopenSalesOpportunity $reopen
+    ) {
+        $data = $request->validate([
+            'status' => ['required', Rule::in(ReopenSalesOpportunity::REOPEN_STATUSES)],
+        ]);
+
+        $reopen->handle($opportunity, $data['status'], $request->user());
 
         return new SalesOpportunityResource($this->loadOpportunity($opportunity));
     }
@@ -238,7 +307,7 @@ class SalesOpportunityController extends Controller
         return $request->validate([
             'client_id' => [$creating ? 'required' : 'sometimes', Rule::exists('clients', 'id')],
             'primary_contact_id' => ['sometimes', 'nullable', Rule::exists('client_users', 'id')],
-            'owner_id' => ['sometimes', 'nullable', Rule::exists((new User())->getTable(), 'id')],
+            'owner_id' => ['sometimes', 'nullable', Rule::exists((new User)->getTable(), 'id')],
             'title' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
             'type' => [$creating ? 'required' : 'sometimes', 'string', Rule::in(array_keys(EnsureSalesDefaults::TYPES))],
             'status' => ['sometimes', 'nullable', 'string', Rule::in(array_keys(EnsureSalesDefaults::STATUSES))],
@@ -297,6 +366,21 @@ class SalesOpportunityController extends Controller
             422,
             'Sales contact must belong to the selected client.'
         );
+    }
+
+    private function assertLostWorkflowIsNotBypassed(SalesOpportunity $opportunity, mixed $requestedStatus): void
+    {
+        if ($requestedStatus === 'lost' && $opportunity->status !== 'lost') {
+            throw ValidationException::withMessages([
+                'status' => 'Use the lost action so the reason and follow-up cleanup are recorded.',
+            ]);
+        }
+
+        if ($opportunity->status === 'lost' && filled($requestedStatus) && $requestedStatus !== 'lost') {
+            throw ValidationException::withMessages([
+                'status' => 'Use the reopen action so the lost transition is reversed safely.',
+            ]);
+        }
     }
 
     private function loadOpportunity(SalesOpportunity $opportunity): SalesOpportunity

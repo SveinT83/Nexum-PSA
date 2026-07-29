@@ -83,13 +83,19 @@
         $portalPublished = $ticket->isPortalVisible();
         $customerReplyBlockedByPortal = $ticket->client_id && ! $portalPublished;
         $canReplyToContact = $portalPublished && $replyContacts->isNotEmpty() && ($ticketActions['customer_reply'] ?? true);
-        $ccSuggestionGroups = $ccContactSuggestions->groupBy('group');
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
         $allowInternalSolutionNotes = $solutionPolicy['allow_internal_solution_notes'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
         $selectedMessageType = old('type', $defaultMessageType);
-        if (($selectedMessageType === 'customer_reply' && ! $canReplyToContact) || ($selectedMessageType === 'internal_solution' && ! $allowInternalSolutionNotes)) {
+        $selectedMarkAsSolution = (bool) old('mark_as_solution', $selectedMessageType === 'internal_solution');
+        if ($selectedMessageType === 'internal_solution') {
+            $selectedMessageType = 'internal_note';
+        }
+        if ($selectedMessageType === 'customer_reply' && ! $canReplyToContact) {
             $selectedMessageType = $defaultMessageType;
+        }
+        if (! $allowInternalSolutionNotes) {
+            $selectedMarkAsSolution = false;
         }
         $selectedReplyIntent = old('reply_intent', \App\Modules\Ticket\Support\TicketAction::CUSTOMER_UPDATE);
         $selectedReplyContactId = old('reply_contact_id', $ticket->contact_id);
@@ -521,7 +527,7 @@
                                 @csrf
 
                                 <input type="hidden" name="_message_form" value="1">
-                                <input id="visibility" name="visibility" type="hidden" value="{{ in_array($selectedMessageType, ['internal_note', 'internal_solution'], true) ? 'internal' : 'public' }}">
+                                <input id="visibility" name="visibility" type="hidden" value="{{ $selectedMessageType === 'internal_note' ? 'internal' : 'public' }}">
 
                                 <div class="row g-2 mb-3">
                                     <div class="col-md-6">
@@ -532,14 +538,11 @@
                                             @endif
                                             @if($canAddInternalNote)
                                                 <option value="internal_note" @selected($selectedMessageType === 'internal_note')>Internal note</option>
-                                                @if($allowInternalSolutionNotes)
-                                                    <option value="internal_solution" @selected($selectedMessageType === 'internal_solution')>Internal solution</option>
-                                                @endif
                                             @endif
                                         </select>
                                         @error('type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
-                                    <div id="reply_intent_group" class="col-md-6 @if (in_array($selectedMessageType, ['internal_note', 'internal_solution'], true)) d-none @endif">
+                                    <div id="reply_intent_group" class="col-md-6 @if ($selectedMessageType === 'internal_note') d-none @endif">
                                         <label for="reply_intent" class="form-label">Reply intent</label>
                                         <select id="reply_intent" name="reply_intent" class="form-select @error('reply_intent') is-invalid @enderror">
                                             <option value="customer_update" @selected($selectedReplyIntent === 'customer_update')>Update customer</option>
@@ -558,14 +561,37 @@
                                         </select>
                                         @error('notify_user_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
+                                    @if($allowInternalSolutionNotes)
+                                        <div id="mark_internal_solution_group" class="col-12 @if ($selectedMessageType !== 'internal_note') d-none @endif">
+                                            <input type="hidden" name="mark_as_solution" value="0">
+                                            <div class="form-check form-switch mt-1">
+                                                <input
+                                                    class="form-check-input @error('mark_as_solution') is-invalid @enderror"
+                                                    type="checkbox"
+                                                    role="switch"
+                                                    id="mark_as_solution"
+                                                    name="mark_as_solution"
+                                                    value="1"
+                                                    @checked($selectedMarkAsSolution)
+                                                >
+                                                <label class="form-check-label" for="mark_as_solution">Mark as solution</label>
+                                                <div class="form-text">
+                                                    The note stays internal and never sends customer email.
+                                                </div>
+                                                @error('mark_as_solution')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
-                                <div id="reply_recipient_group" class="row g-2 mb-3 @if (in_array($selectedMessageType, ['internal_note', 'internal_solution'], true)) d-none @endif">
+                                <div id="reply_recipient_group" class="row g-2 mb-3 @if ($selectedMessageType === 'internal_note') d-none @endif">
                                     <div class="col-md-6">
                                         <label for="reply_contact_id" class="form-label">Contact</label>
                                         <select id="reply_contact_id" name="reply_contact_id" class="form-select @error('reply_contact_id') is-invalid @enderror">
                                             @foreach($replyContacts as $replyContact)
-                                                <option value="{{ $replyContact->id }}" @selected((string) $selectedReplyContactId === (string) $replyContact->id)>
+                                                <option value="{{ $replyContact->id }}" data-reply-email="{{ $replyContact->email }}" @selected((string) $selectedReplyContactId === (string) $replyContact->id)>
                                                     {{ $replyContact->name }} &lt;{{ $replyContact->email }}&gt;
                                                 </option>
                                             @endforeach
@@ -577,25 +603,20 @@
                                         <input id="cc" name="cc" type="text" class="form-control @error('cc') is-invalid @enderror" value="{{ old('cc') }}" placeholder="thirdparty@example.com">
                                         @error('cc')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         @if($ccContactSuggestions->isNotEmpty())
-                                            <div id="cc_contact_suggestions" class="mt-2 d-none" aria-hidden="true">
-                                                <div class="small text-muted fw-semibold mb-1">CC suggestions</div>
-                                                @foreach($ccSuggestionGroups as $group => $suggestions)
-                                                    <div class="small text-muted mt-2">{{ $group }}</div>
-                                                    <div class="d-flex flex-wrap gap-1">
-                                                        @foreach($suggestions as $suggestion)
-                                                            <button
-                                                                type="button"
-                                                                class="btn btn-sm btn-outline-secondary text-start"
-                                                                data-cc-email="{{ $suggestion['email'] }}"
-                                                                title="{{ $suggestion['name'] }} <{{ $suggestion['email'] }}>">
-                                                                <span>{{ $suggestion['name'] }}</span>
-                                                                @if($suggestion['site'])
-                                                                    <span class="text-muted">({{ $suggestion['site'] }})</span>
-                                                                @endif
-                                                            </button>
-                                                        @endforeach
-                                                    </div>
-                                                @endforeach
+                                            <div id="cc_contact_suggestions" class="mt-1 border rounded bg-body shadow-sm d-none" aria-hidden="true">
+                                                <div class="small text-muted fw-semibold px-2 pt-2 pb-1">Other client contacts</div>
+                                                <div class="list-group list-group-flush overflow-auto" style="max-height: 12rem;">
+                                                    @foreach($ccContactSuggestions as $suggestion)
+                                                        <button
+                                                            type="button"
+                                                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-2 py-1 px-2"
+                                                            data-cc-email="{{ $suggestion['email'] }}"
+                                                            title="{{ $suggestion['name'] }} <{{ $suggestion['email'] }}>">
+                                                            <span class="text-truncate">{{ $suggestion['name'] }}</span>
+                                                            <span class="small text-muted text-nowrap">{{ $suggestion['site'] ?: $suggestion['email'] }}</span>
+                                                        </button>
+                                                    @endforeach
+                                                </div>
                                             </div>
                                         @endif
                                     </div>
@@ -607,11 +628,11 @@
                                     </div>
                                 @elseif (! $canReplyToContact && $allowInternalSolutionNotes)
                                     <div class="alert alert-warning">
-                                        This ticket has no contact with an email address. Use an internal solution to document the fix without sending email.
+                                        This ticket has no contact with an email address. Add an Internal note and mark it as the solution to document the fix without sending email.
                                     </div>
                                 @elseif(! $canReplyToContact)
                                     <div class="alert alert-warning">
-                                        This ticket has no contact with an email address. Internal solution notes are disabled by Ticket settings.
+                                        This ticket has no contact with an email address. Mark as solution for Internal notes is disabled by Ticket settings.
                                     </div>
                                 @endif
 
@@ -960,12 +981,15 @@
         const type = document.getElementById('type');
         const visibility = document.getElementById('visibility');
         const replyRecipientGroup = document.getElementById('reply_recipient_group');
+        const replyContactSelect = document.getElementById('reply_contact_id');
         const replyIntentGroup = document.getElementById('reply_intent_group');
         const notifyTechnicianGroup = document.getElementById('notify_technician_group');
+        const markInternalSolutionGroup = document.getElementById('mark_internal_solution_group');
         const replyShortcut = document.getElementById('ticketReplyShortcut');
         const composer = document.getElementById('ticketComposerCollapse');
         const body = document.getElementById('body');
         const ccInput = document.getElementById('cc');
+        const ccSuggestions = document.getElementById('cc_contact_suggestions');
         const addTimeModal = document.getElementById('ticketAddTimeModal');
         const shouldShowAddTimeModal = @json((bool) $showAddTimeModal);
         const timeAiDraft = document.getElementById('ticketTimeAiDraft');
@@ -1020,13 +1044,13 @@
                 type.value = value;
             }
 
-            const isInternal = type.value === 'internal_note' || type.value === 'internal_solution';
-            const isInternalSolution = type.value === 'internal_solution';
+            const isInternal = type.value === 'internal_note';
 
             visibility.value = isInternal ? 'internal' : 'public';
             replyRecipientGroup.classList.toggle('d-none', isInternal);
             replyIntentGroup.classList.toggle('d-none', isInternal);
-            notifyTechnicianGroup.classList.toggle('d-none', ! isInternal || isInternalSolution);
+            notifyTechnicianGroup.classList.toggle('d-none', ! isInternal);
+            markInternalSolutionGroup?.classList.toggle('d-none', ! isInternal);
         };
 
         type.addEventListener('change', function () {
@@ -1048,7 +1072,56 @@
             }, 150);
         });
 
-        document.querySelectorAll('[data-cc-email]').forEach(function (button) {
+        const ccSuggestionButtons = Array.from(document.querySelectorAll('[data-cc-email]'));
+
+        const setCcSuggestionsVisible = function (visible) {
+            if (! ccSuggestions) {
+                return;
+            }
+
+            const hasVisibleSuggestions = ccSuggestionButtons.some((button) => ! button.classList.contains('d-none'));
+            const shouldShow = visible && hasVisibleSuggestions;
+
+            ccSuggestions.classList.toggle('d-none', ! shouldShow);
+            ccSuggestions.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+        };
+
+        const syncCcSuggestionRecipients = function () {
+            const selectedReplyEmail = replyContactSelect?.selectedOptions[0]?.dataset.replyEmail
+                ?.trim()
+                .toLowerCase() || '';
+
+            ccSuggestionButtons.forEach(function (button) {
+                const suggestionEmail = button.dataset.ccEmail?.trim().toLowerCase() || '';
+                button.classList.toggle('d-none', suggestionEmail === selectedReplyEmail);
+            });
+
+            if (! ccSuggestions?.classList.contains('d-none')) {
+                setCcSuggestionsVisible(true);
+            }
+        };
+
+        const hideCcSuggestionsAfterFocusChange = function () {
+            window.setTimeout(function () {
+                if (document.activeElement !== ccInput && ! ccSuggestions?.contains(document.activeElement)) {
+                    setCcSuggestionsVisible(false);
+                }
+            }, 150);
+        };
+
+        ccInput?.addEventListener('focus', function () {
+            syncCcSuggestionRecipients();
+            setCcSuggestionsVisible(true);
+        });
+        ccInput?.addEventListener('click', function () {
+            syncCcSuggestionRecipients();
+            setCcSuggestionsVisible(true);
+        });
+        ccInput?.addEventListener('blur', hideCcSuggestionsAfterFocusChange);
+        ccSuggestions?.addEventListener('focusout', hideCcSuggestionsAfterFocusChange);
+        replyContactSelect?.addEventListener('change', syncCcSuggestionRecipients);
+
+        ccSuggestionButtons.forEach(function (button) {
             button.addEventListener('click', function () {
                 if (! ccInput) {
                     return;
@@ -1067,6 +1140,7 @@
 
                 ccInput.value = current.join(', ');
                 ccInput.focus();
+                setCcSuggestionsVisible(false);
             });
         });
 

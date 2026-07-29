@@ -24,6 +24,8 @@ class TicketMessage extends Model
         'body',
         'attachments',
         'metadata',
+        'idempotency_key',
+        'idempotency_fingerprint',
         'read_at',
     ];
 

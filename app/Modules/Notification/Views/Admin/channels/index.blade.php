@@ -15,6 +15,35 @@
         </p>
 
         <div class="list-group">
+            {{-- Environment-owned Web Push channel --}}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1">
+                        <i class="bi bi-bell-fill me-2"></i>
+                        Web Push
+                    </h5>
+                    <p class="mb-1 text-muted small">
+                        {{ $webPushReadiness['message'] }}
+                        {{ $webPushDeviceCount }} registered {{ $webPushDeviceCount === 1 ? 'device' : 'devices' }}.
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    @if($webPushReadiness['ready'])
+                        <span class="badge bg-success">Ready</span>
+                    @else
+                        <span class="badge bg-secondary">Unavailable</span>
+                    @endif
+
+                    <a
+                        href="{{ route('tech.admin.notification-channels.web-push.devices.index') }}"
+                        class="btn btn-sm btn-outline-primary"
+                    >
+                        <i class="bi bi-phone me-1"></i>
+                        Manage devices
+                    </a>
+                </div>
+            </div>
+
             @foreach($channels as $channel)
                 <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                     <div>

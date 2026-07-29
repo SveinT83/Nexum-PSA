@@ -4,6 +4,19 @@ site-specific client work.
 The Tech UI is available under `/tech/documentations`. API routes live under `/api/v1/knowledge`
 because Documentation records are part of the broader Knowledge API surface.
 
+## Choosing A Template
+
+Creating Documentation starts with a category. When that category has one active template, Nexum
+selects it automatically and opens the document form without another click.
+
+When several active templates belong to the category, Nexum asks you to choose the schema before
+showing the document fields. The create form displays both the selected category and template so you
+can confirm the structure before entering content.
+
+The chosen template is copied into the Documentation record as a snapshot when you save. Later
+template edits therefore do not rewrite existing documents. An inactive template or a template from
+another category cannot be used through the create request.
+
 ## Scope And Work Context
 
 Documentation keeps its existing local `scope_type` values:

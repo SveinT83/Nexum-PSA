@@ -8,6 +8,8 @@ use App\Modules\Calendar\Models\CalendarEvent;
 
 class CalendarVisibility
 {
+    public function __construct(private CalendarOwnershipMetadata $ownership) {}
+
     public function canManageCalendar(User $user, Calendar $calendar): bool
     {
         if ($user->hasRole('Admin') || $user->hasRole('Superuser')) {
@@ -74,6 +76,7 @@ class CalendarVisibility
     public function maskEventOccurrence(CalendarEvent $event, User $viewer, $startsAt, $endsAt, ?string $occurrenceKey = null): array
     {
         $canViewDetails = $this->canViewPrivateDetails($viewer, $event);
+        $ownership = $this->ownership->forCalendar($event->calendar, $viewer);
 
         return [
             'id' => $event->id,
@@ -82,8 +85,17 @@ class CalendarVisibility
             'is_recurring' => (bool) $event->series_id,
             'calendar_id' => $event->calendar_id,
             'calendar_name' => $event->calendar?->name,
-            'calendar_color' => $event->calendar?->color,
-            'ownership_badge' => $this->ownershipBadge($event->calendar),
+            'calendar_color' => $ownership['calendar_color'],
+            'calendar_type' => $ownership['calendar_type'],
+            'calendar_type_label' => $ownership['calendar_type_label'],
+            'owner_kind' => $ownership['owner_kind'],
+            'owner_id' => $ownership['owner_id'],
+            'owner_label' => $ownership['owner_label'],
+            'owner_initials' => $ownership['owner_initials'],
+            'owner_badge' => $ownership['owner_badge'],
+            'ownership_badge' => $ownership['owner_badge'],
+            'ownership_group' => $ownership['ownership_group'],
+            'is_owned_by_viewer' => $ownership['is_owned_by_viewer'],
             'work_context_id' => $event->work_context_id,
             'work_context_type' => $event->workContext?->type,
             'title' => $canViewDetails ? $event->title : 'Busy',
@@ -102,32 +114,5 @@ class CalendarVisibility
             'participants' => $canViewDetails ? $event->participants : collect(),
             'links' => $canViewDetails ? $event->links : collect(),
         ];
-    }
-
-    private function ownershipBadge(?Calendar $calendar): string
-    {
-        if (! $calendar) {
-            return 'ALL';
-        }
-
-        if ($calendar->is_default || $calendar->type === 'global') {
-            return 'ALL';
-        }
-
-        if (in_array($calendar->type, ['team', 'rmm'], true)) {
-            return strtoupper($calendar->type);
-        }
-
-        $owner = $calendar->owner;
-
-        if ($owner instanceof User) {
-            return collect(explode(' ', trim($owner->name)))
-                ->filter()
-                ->map(fn (string $part) => mb_substr($part, 0, 1))
-                ->take(2)
-                ->implode('');
-        }
-
-        return strtoupper(mb_substr((string) ($calendar->type ?: $calendar->name), 0, 4));
     }
 }

@@ -10,6 +10,13 @@ RFCs are required before Level 3 changes and recommended for unclear Level 2 cha
 
 Approved:
 
+- `2026-07-29-ticket-api-customer-completion-flow.md`
+- `2026-07-28-manual-client-ticket-published-default.md`
+- `2026-07-28-ticket-internal-note-solution-toggle.md`
+- `2026-07-28-client-summary-notes-autosave.md`
+- `2026-07-28-client-workspace-tickets-tab.md`
+- `2026-07-27-ai-model-usage-and-cost-telemetry.md`
+- `2026-07-23-web-push-inbound-email-alerts.md`
 - `2026-07-17-ticket-workflow-v3-conditional-actions-and-escalation.md`
 - `2026-07-16-version-and-github-update-status.md`
 - `2026-07-14-organization-controlled-ai-data-access.md`

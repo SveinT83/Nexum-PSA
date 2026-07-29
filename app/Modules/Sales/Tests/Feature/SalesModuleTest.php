@@ -7,6 +7,7 @@ use App\Models\Clients\ClientFormat;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
@@ -26,6 +27,7 @@ use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Sales\Models\SalesQuoteLine;
 use App\Modules\Sales\Models\SalesQuoteVersion;
+use App\Modules\Sales\Support\SalesQuotePresentation;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use Database\Seeders\EmailTemplateSeeder;
@@ -525,6 +527,344 @@ class SalesModuleTest extends TestCase
             ->get(route('tech.admin.settings.sales.workflows'))
             ->assertOk()
             ->assertViewIs('sales::Admin.Settings.workflows.index');
+    }
+
+    #[Test]
+    public function technician_can_mark_an_opportunity_lost_and_reopen_it_safely(): void
+    {
+        $client = Client::create(['name' => 'Lost Workflow Client AS', 'active' => true]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'Lost workflow opportunity',
+                'type' => 'service_agreement',
+                'status' => 'contacted',
+                'estimated_value_ex_vat' => 12000,
+                'probability_percent' => 20,
+                'next_follow_up_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+                'next_follow_up_type' => 'call',
+                'next_follow_up_note' => 'Call about the quote.',
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()->where('title', 'Lost workflow opportunity')->firstOrFail();
+        $calendarEventId = $opportunity->follow_up_calendar_event_id;
+        $this->assertNotNull($calendarEventId);
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.sales.update', $opportunity), ['status' => 'lost'])
+            ->assertSessionHasErrors('status');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.lost', $opportunity), [])
+            ->assertSessionHasErrors('lost_reason');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.lost', $opportunity), [
+                'lost_reason' => 'Customer selected another supplier.',
+                'internal_note' => 'Revisit the account next year.',
+            ])
+            ->assertRedirect();
+
+        $opportunity->refresh();
+        $this->assertSame('lost', $opportunity->status);
+        $this->assertSame(0, $opportunity->probability_percent);
+        $this->assertSame('0.00', $opportunity->weighted_value_ex_vat);
+        $this->assertNotNull($opportunity->lost_at);
+        $this->assertSame('Customer selected another supplier.', $opportunity->lost_reason);
+        $this->assertNull($opportunity->won_at);
+        $this->assertNull($opportunity->next_follow_up_at);
+        $this->assertNull($opportunity->next_follow_up_type);
+        $this->assertNull($opportunity->next_follow_up_note);
+        $this->assertNull($opportunity->follow_up_calendar_event_id);
+        $this->assertNotNull(CalendarEvent::withTrashed()->findOrFail($calendarEventId)->deleted_at);
+
+        $this->assertDatabaseHas('sales_activities', [
+            'opportunity_id' => $opportunity->id,
+            'type' => 'opportunity_lost',
+            'subject' => 'Opportunity marked as lost',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.sales.index'))
+            ->assertOk()
+            ->assertDontSee('Lost workflow opportunity');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.sales.index', ['status' => 'lost']))
+            ->assertOk()
+            ->assertSee('Lost workflow opportunity');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.sales.index', ['q' => 'Lost workflow']))
+            ->assertOk()
+            ->assertSee('Lost workflow opportunity');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.sales.show', $opportunity))
+            ->assertOk()
+            ->assertSee('Customer selected another supplier.')
+            ->assertSee('Reopen opportunity')
+            ->assertDontSee('Mark as lost');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.reopen', $opportunity), ['status' => 'won'])
+            ->assertSessionHasErrors('status');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.reopen', $opportunity), ['status' => 'contacted'])
+            ->assertRedirect();
+
+        $opportunity->refresh();
+        $this->assertSame('contacted', $opportunity->status);
+        $this->assertSame(20, $opportunity->probability_percent);
+        $this->assertSame('2400.00', $opportunity->weighted_value_ex_vat);
+        $this->assertNull($opportunity->lost_at);
+        $this->assertNull($opportunity->lost_reason);
+        $this->assertNull($opportunity->next_follow_up_at);
+        $this->assertNull($opportunity->follow_up_calendar_event_id);
+
+        $this->assertDatabaseHas('sales_activities', [
+            'opportunity_id' => $opportunity->id,
+            'type' => 'opportunity_reopened',
+            'subject' => 'Opportunity reopened',
+        ]);
+    }
+
+    #[Test]
+    public function sales_api_uses_the_same_lost_workflow_and_preserves_non_generated_events(): void
+    {
+        $client = Client::create(['name' => 'API Lost Client AS', 'active' => true]);
+        Sanctum::actingAs($this->tech, ['sales.read', 'sales.create', 'sales.update']);
+
+        $created = $this->postJson(route('api.v1.sales.opportunities.store'), [
+            'client_id' => $client->id,
+            'owner_id' => $this->tech->id,
+            'title' => 'API lost workflow',
+            'type' => 'service_agreement',
+            'status' => 'new_lead',
+            'estimated_value_ex_vat' => 8000,
+            'next_follow_up_at' => now()->addDays(3)->format('Y-m-d H:i:s'),
+            'next_follow_up_type' => 'email',
+        ])->assertCreated();
+
+        $opportunity = SalesOpportunity::query()
+            ->where('opportunity_key', $created->json('data.opportunity_key'))
+            ->firstOrFail();
+        $calendarEvent = CalendarEvent::query()->findOrFail($opportunity->follow_up_calendar_event_id);
+        $calendarEvent->forceFill(['source' => 'local'])->save();
+
+        $this->patchJson(route('api.v1.sales.opportunities.update', $opportunity), ['status' => 'lost'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->postJson(route('api.v1.sales.opportunities.lost', $opportunity), [
+            'lost_reason' => 'Budget was withdrawn.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'lost')
+            ->assertJsonPath('data.probability_percent', 0)
+            ->assertJsonPath('data.lost_reason', 'Budget was withdrawn.');
+
+        $this->assertNotNull(CalendarEvent::query()->find($calendarEvent->id));
+
+        $this->postJson(route('api.v1.sales.opportunities.reopen', $opportunity), [
+            'status' => 'needs_discovery',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'needs_discovery')
+            ->assertJsonPath('data.probability_percent', 30)
+            ->assertJsonPath('data.lost_at', null)
+            ->assertJsonPath('data.lost_reason', null);
+
+        Sanctum::actingAs($this->tech, ['sales.read']);
+
+        $this->postJson(route('api.v1.sales.opportunities.lost', $opportunity), [
+            'lost_reason' => 'Should not be accepted.',
+        ])->assertForbidden();
+    }
+
+    #[Test]
+    public function quote_cadence_and_customer_copy_are_consistent_across_surfaces_and_versions(): void
+    {
+        Queue::fake();
+        $this->seed(EmailTemplateSeeder::class);
+
+        $client = Client::create(['name' => 'Cadence Quote Client AS', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Cadence Buyer',
+            'email' => 'cadence-buyer@example.test',
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'primary_contact_id' => $contact->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'Cadence-safe managed services',
+                'type' => 'service_agreement',
+                'status' => 'quote_ready',
+                'estimated_value_ex_vat' => 0,
+                'probability_percent' => 40,
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()->where('title', 'Cadence-safe managed services')->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.ensure', $opportunity))
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.sales.quote.details.update', $opportunity), [
+                'title' => 'Managed services proposal',
+                'expires_at' => now()->addDays(21)->toDateString(),
+                'intro_text' => 'Customer introduction before prices.',
+                'scope_text' => 'The solution combines installation and managed support.',
+                'assumptions_text' => 'Customer provides building access.',
+                'exclusions_text' => 'Electrical work is excluded.',
+                'next_steps_text' => 'Accept the quote to schedule installation.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('open_quote_modal', true);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.lines.store', $opportunity), [
+                'source_type' => 'custom',
+                'section' => 'implementation',
+                'downstream_type' => 'implementation',
+                'billing_cadence' => 'one_time',
+                'name' => 'One-time installation',
+                'quantity' => 1,
+                'unit_price_ex_vat' => 5200,
+                'unit_cost_ex_vat' => 2000,
+                'discount_value' => 0,
+                'discount_type' => 'amount',
+                'vat_rate' => 25,
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.lines.store', $opportunity), [
+                'source_type' => 'custom',
+                'section' => 'monthly_services',
+                'downstream_type' => 'recurring_contract',
+                'billing_cadence' => 'monthly',
+                'name' => 'Managed support',
+                'quantity' => 1,
+                'unit_price_ex_vat' => 551,
+                'unit_cost_ex_vat' => 200,
+                'discount_value' => 0,
+                'discount_type' => 'amount',
+                'vat_rate' => 25,
+            ])
+            ->assertRedirect();
+
+        $version = $opportunity->refresh()->currentQuoteVersion()->with(['quote', 'lines'])->firstOrFail();
+        $presentation = app(SalesQuotePresentation::class)->forVersion($version);
+
+        $this->assertSame('5751.00', $version->total_ex_vat);
+        $this->assertSame(['one_time', 'monthly'], $presentation['groups']->pluck('key')->all());
+        $this->assertSame(5200.0, $presentation['groups'][0]['total_ex_vat']);
+        $this->assertSame(1300.0, $presentation['groups'][0]['vat_total']);
+        $this->assertSame(551.0, $presentation['groups'][1]['total_ex_vat']);
+        $this->assertSame(137.75, $presentation['groups'][1]['vat_total']);
+        $this->assertStringContainsString('One-time: 5 200,00 NOK ex VAT', $presentation['summary_text']);
+        $this->assertStringContainsString('Recurring monthly: 551,00 NOK/month ex VAT', $presentation['summary_text']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.sales.show', $opportunity))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Customer introduction before prices.',
+                'One-time charges',
+                '5 200,00 NOK',
+                'Monthly recurring charges',
+                '551,00 NOK/month',
+                'Customer provides building access.',
+            ])
+            ->assertSee('Billing cadence')
+            ->assertSee('Save quote text');
+
+        $this->get(route('sales.quotes.public.view', $version->secure_token))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Customer introduction before prices.',
+                'One-time charges',
+                'Monthly recurring charges',
+                'Customer provides building access.',
+            ])
+            ->assertSee('5 200,00 NOK')
+            ->assertSee('551,00 NOK/month')
+            ->assertDontSee('Subtotal ex VAT');
+
+        $pdfHtml = view('sales::Public.quote-pdf', [
+            'version' => $version,
+            'opportunity' => $opportunity,
+            'quotePresentation' => $presentation,
+        ])->render();
+        $this->assertStringContainsString('One-time charges', $pdfHtml);
+        $this->assertStringContainsString('Monthly recurring charges', $pdfHtml);
+        $this->assertStringContainsString('Customer provides building access.', $pdfHtml);
+
+        EmailAccount::create([
+            'address' => 'sales@example.test',
+            'from_name' => 'Sales',
+            'is_active' => true,
+            'defaults_for' => ['sales'],
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'sales@example.test',
+            'imap_secret' => 'encrypted',
+            'imap_auth_type' => 'password',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'sales@example.test',
+            'smtp_secret' => 'encrypted',
+            'smtp_auth_type' => 'password',
+        ]);
+
+        app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer
+        {
+            public function send(\App\Modules\Email\Models\EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = []): string
+            {
+                app()->instance('sales_quote_email_payload', compact('subject', 'html', 'text'));
+
+                return '<cadence-quote@example.test>';
+            }
+        });
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.send', $opportunity))
+            ->assertRedirect();
+
+        $version->refresh();
+        app()->call([new SendSalesQuoteEmail($version->id), 'handle']);
+        $emailPayload = app('sales_quote_email_payload');
+        $this->assertStringContainsString('One-time: 5 200,00 NOK ex VAT', $emailPayload['text']);
+        $this->assertStringContainsString('Recurring monthly: 551,00 NOK/month ex VAT', $emailPayload['text']);
+        $this->assertStringContainsString('Customer introduction before prices.', $emailPayload['text']);
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.sales.quote.details.update', $opportunity), ['title' => 'Must remain immutable'])
+            ->assertUnprocessable();
+
+        $opportunity->forceFill(['status' => 'negotiation'])->save();
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.revise', $opportunity))
+            ->assertRedirect();
+
+        $draft = $opportunity->refresh()->currentQuoteVersion()->with('lines')->firstOrFail();
+        $this->assertSame('Customer introduction before prices.', $draft->intro_text);
+        $this->assertSame('Customer provides building access.', $draft->assumptions_text);
+        $this->assertSame(['one_time', 'monthly'], $draft->lines->pluck('billing_cadence')->all());
     }
 
     #[Test]

@@ -7,8 +7,8 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
-use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\CustomerPortal\Jobs\SendCustomerPortalInvitationEmail;
 use App\Modules\CustomerPortal\Models\CustomerPortalInvitation;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
@@ -43,10 +43,12 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
+use Tests\Concerns\ApprovesExternalAiForTests;
 use Tests\TestCase;
 
 class SignalModuleTest extends TestCase
 {
+    use ApprovesExternalAiForTests;
     use RefreshDatabase;
 
     #[Test]
@@ -661,8 +663,8 @@ class SignalModuleTest extends TestCase
                     'severity' => ['warning'],
                     'min_confidence' => 85,
                     'has_client' => '1',
-                    'payload_equals' => "vendor=qnap",
-                    'payload_contains' => "title=firmware",
+                    'payload_equals' => 'vendor=qnap',
+                    'payload_contains' => 'title=firmware',
                 ],
                 'actions' => [
                     ['type' => 'tag_client', 'tag' => 'Firmware notice'],
@@ -755,7 +757,7 @@ class SignalModuleTest extends TestCase
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
 
-        AiAgent::query()->create([
+        $agent = AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Signal Classification Agent',
             'slug' => 'signal-classification-agent',
@@ -764,6 +766,8 @@ class SignalModuleTest extends TestCase
             'default_domains' => ['signal'],
             'is_active' => true,
         ]);
+
+        $this->approveExternalAiForTest($provider, $agent);
 
         $account = EmailAccount::query()->create([
             'address' => 'support@example.test',

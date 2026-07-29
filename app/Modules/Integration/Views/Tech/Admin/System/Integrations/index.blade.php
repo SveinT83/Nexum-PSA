@@ -66,6 +66,7 @@
                 'badge' => ['label' => 'Config', 'class' => 'text-bg-light border'],
                 'actions' => [
                     ['label' => 'AI Settings', 'icon' => 'bi-cpu', 'route' => 'tech.admin.system.integrations.ai.index'],
+                    ['label' => 'Privacy & Coordinator', 'icon' => 'bi-shield-check', 'route' => 'tech.admin.system.integrations.ai.privacy.index'],
                 ],
             ],
         ];

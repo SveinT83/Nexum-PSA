@@ -12,12 +12,17 @@ use App\Modules\Contact\Controllers\Tech\ContactController;
 use App\Modules\Contact\Livewire\Tech\ContactForm;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Support\ContactSettings;
+use App\Modules\CustomerPortal\Jobs\SendCustomerPortalInvitationEmail;
+use App\Modules\CustomerPortal\Models\CustomerPortalInvitation;
+use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Signal\Models\Signal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -32,6 +37,7 @@ class ContactModuleTest extends TestCase
         parent::setUp();
 
         Role::create(['name' => 'Tech']);
+        Permission::findOrCreate('customer_portal.invite', 'web');
 
         $this->techUser = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
@@ -54,12 +60,15 @@ class ContactModuleTest extends TestCase
     #[Test]
     public function admin_can_manage_contact_settings(): void
     {
+        $this->assertFalse(app(ContactSettings::class)->get()['send_portal_invitation_by_default']);
+
         $this->actingAs($this->techUser)
             ->get(route('tech.admin.settings.contacts'))
             ->assertOk()
             ->assertViewIs('contact::Admin.Settings.edit')
             ->assertSee('Contact Settings')
             ->assertSee('Contact Defaults')
+            ->assertSee('Customer Portal Invitations')
             ->assertSee('Relation Types');
 
         $this->actingAs($this->techUser)
@@ -68,6 +77,7 @@ class ContactModuleTest extends TestCase
                 'default_status' => 'inactive',
                 'enabled_relation_types' => ['contact', 'billing_contact'],
                 'default_relation_type' => 'billing_contact',
+                'send_portal_invitation_by_default' => '1',
             ])
             ->assertRedirect(route('tech.admin.settings.contacts'))
             ->assertSessionHas('success');
@@ -83,6 +93,7 @@ class ContactModuleTest extends TestCase
         $this->assertSame('inactive', $payload['default_status']);
         $this->assertSame(['contact', 'billing_contact'], $payload['enabled_relation_types']);
         $this->assertSame('billing_contact', $payload['default_relation_type']);
+        $this->assertTrue($payload['send_portal_invitation_by_default']);
     }
 
     #[Test]
@@ -117,6 +128,164 @@ class ContactModuleTest extends TestCase
             'related_id' => $client->id,
             'relation_type' => 'billing_contact',
         ]);
+    }
+
+    #[Test]
+    public function contact_create_uses_global_portal_invitation_default_but_can_override_it_off(): void
+    {
+        Queue::fake();
+        $this->techUser->givePermissionTo('customer_portal.invite');
+        app(ContactSettings::class)->update([
+            'send_portal_invitation_by_default' => true,
+        ]);
+
+        $client = Client::factory()->create(['name' => 'No Invite Client', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'No Invite Site']);
+
+        Livewire::actingAs($this->techUser)
+            ->test(ContactForm::class, ['activeClientId' => $client->id, 'activeSiteId' => $site->id])
+            ->assertSet('send_customer_portal_invitation', true)
+            ->assertSee('Send customer portal invitation')
+            ->set('send_customer_portal_invitation', false)
+            ->set('display_name', 'No Portal Invite')
+            ->set('email', 'no.portal.invite@example.test')
+            ->call('save');
+
+        $this->assertDatabaseHas('contacts', ['display_name' => 'No Portal Invite']);
+        $this->assertDatabaseCount('customer_portal_invitations', 0);
+        Queue::assertNotPushed(SendCustomerPortalInvitationEmail::class);
+    }
+
+    #[Test]
+    public function contact_create_can_override_global_portal_invitation_default_on(): void
+    {
+        Queue::fake();
+        $this->techUser->givePermissionTo('customer_portal.invite');
+        app(ContactSettings::class)->update([
+            'send_portal_invitation_by_default' => false,
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Invite Client', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Invite Site']);
+
+        Livewire::actingAs($this->techUser)
+            ->test(ContactForm::class, ['activeClientId' => $client->id, 'activeSiteId' => $site->id])
+            ->assertSet('send_customer_portal_invitation', false)
+            ->set('send_customer_portal_invitation', true)
+            ->set('display_name', 'Portal Invite Contact')
+            ->set('email', 'portal.invite.contact@example.test')
+            ->call('save');
+
+        $contact = Contact::query()->where('display_name', 'Portal Invite Contact')->firstOrFail();
+        $invitation = CustomerPortalInvitation::query()->firstOrFail();
+
+        $this->assertSame($contact->id, $invitation->contact_id);
+        $this->assertSame($client->id, $invitation->client_id);
+        $this->assertSame($site->id, $invitation->site_id);
+        $this->assertSame(CustomerPortalMembership::ROLE_VIEWER, $invitation->role);
+        $this->assertSame('contact_create', $invitation->metadata['created_from']);
+        Queue::assertPushed(
+            SendCustomerPortalInvitationEmail::class,
+            fn (SendCustomerPortalInvitationEmail $job): bool => $job->invitationId === $invitation->id,
+        );
+    }
+
+    #[Test]
+    public function ordinary_contact_edit_never_resends_portal_invitation(): void
+    {
+        Queue::fake();
+        $this->techUser->givePermissionTo('customer_portal.invite');
+        app(ContactSettings::class)->update([
+            'send_portal_invitation_by_default' => true,
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Existing Portal Client', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Existing Portal Site']);
+        $contact = Contact::query()->create([
+            'type' => 'person',
+            'status' => 'active',
+            'display_name' => 'Existing Portal Contact',
+        ]);
+        $contact->emails()->create([
+            'label' => 'work',
+            'email' => 'existing.portal.contact@example.test',
+            'is_primary' => true,
+        ]);
+        foreach ([$client, $site] as $related) {
+            $contact->relations()->create([
+                'related_type' => $related->getMorphClass(),
+                'related_id' => $related->id,
+                'relation_type' => 'contact',
+                'is_primary' => true,
+            ]);
+        }
+
+        Livewire::actingAs($this->techUser)
+            ->test(ContactForm::class, ['contactId' => $contact->id])
+            ->assertSet('send_customer_portal_invitation', false)
+            ->assertDontSee('Send customer portal invitation')
+            ->set('display_name', 'Edited Portal Contact')
+            ->call('save');
+
+        $this->assertSame('Edited Portal Contact', $contact->fresh()->display_name);
+        $this->assertDatabaseCount('customer_portal_invitations', 0);
+        Queue::assertNotPushed(SendCustomerPortalInvitationEmail::class);
+    }
+
+    #[Test]
+    public function contact_create_cannot_send_portal_invitation_without_portal_invite_permission(): void
+    {
+        Queue::fake();
+        app(ContactSettings::class)->update([
+            'send_portal_invitation_by_default' => true,
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Protected Invite Client', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Protected Invite Site']);
+
+        Livewire::actingAs($this->techUser)
+            ->test(ContactForm::class, ['activeClientId' => $client->id, 'activeSiteId' => $site->id])
+            ->assertSet('send_customer_portal_invitation', false)
+            ->assertDontSee('Send customer portal invitation')
+            ->set('send_customer_portal_invitation', true)
+            ->set('display_name', 'Unauthorized Portal Invite')
+            ->set('email', 'unauthorized.portal.invite@example.test')
+            ->call('save')
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('contacts', ['display_name' => 'Unauthorized Portal Invite']);
+        $this->assertDatabaseCount('customer_portal_invitations', 0);
+        Queue::assertNotPushed(SendCustomerPortalInvitationEmail::class);
+    }
+
+    #[Test]
+    public function invalid_portal_invitation_site_scope_rolls_back_contact_create(): void
+    {
+        Queue::fake();
+        $this->techUser->givePermissionTo('customer_portal.invite');
+        app(ContactSettings::class)->update([
+            'send_portal_invitation_by_default' => false,
+        ]);
+
+        $activeClient = Client::factory()->create(['name' => 'Active Scope Client', 'active' => true]);
+        $otherClient = Client::factory()->create(['name' => 'Other Scope Client', 'active' => true]);
+        $otherSite = ClientSite::factory()->create([
+            'client_id' => $otherClient->id,
+            'name' => 'Other Scope Site',
+        ]);
+
+        Livewire::actingAs($this->techUser)
+            ->test(ContactForm::class, ['activeClientId' => $activeClient->id])
+            ->set('site_id', $otherSite->id)
+            ->set('send_customer_portal_invitation', true)
+            ->set('display_name', 'Invalid Scope Portal Contact')
+            ->set('email', 'invalid.scope.portal@example.test')
+            ->call('save')
+            ->assertHasErrors(['site_id']);
+
+        $this->assertDatabaseMissing('contacts', ['display_name' => 'Invalid Scope Portal Contact']);
+        $this->assertDatabaseCount('customer_portal_invitations', 0);
+        Queue::assertNotPushed(SendCustomerPortalInvitationEmail::class);
     }
 
     #[Test]
@@ -1261,10 +1430,10 @@ class ContactModuleTest extends TestCase
             ->withSession(['active_client_id' => $client->id, 'active_site_id' => $site->id])
             ->post(route('tech.contacts.store'), [
                 'display_name' => 'New Context Contact',
-            'email' => 'new.context@example.test',
-            'phone' => '+4711111111',
-            'job_title' => 'Technical Contact',
-            'relation_type' => 'technical_contact',
+                'email' => 'new.context@example.test',
+                'phone' => '+4711111111',
+                'job_title' => 'Technical Contact',
+                'relation_type' => 'technical_contact',
             ]);
 
         $contact = Contact::query()->where('display_name', 'New Context Contact')->firstOrFail();

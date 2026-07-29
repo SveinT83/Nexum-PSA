@@ -4,10 +4,15 @@ namespace App\Modules\Contact\Livewire\Tech;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
+use App\Models\Core\User;
 use App\Modules\Contact\Actions\StoreContact;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Support\ContactSettings;
+use App\Modules\CustomerPortal\Actions\CreateCustomerPortalInvitation;
+use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -31,6 +36,8 @@ class ContactForm extends Component
 
     public bool $sms_allowed = false;
 
+    public bool $send_customer_portal_invitation = false;
+
     public ?string $job_title = null;
 
     public string $relation_type = 'contact';
@@ -48,7 +55,11 @@ class ContactForm extends Component
         $this->contactId = $contactId;
         $this->activeClientId = $activeClientId;
         $this->activeSiteId = $activeSiteId;
-        $this->relation_type = app(ContactSettings::class)->get()['default_relation_type'];
+        $settings = app(ContactSettings::class)->get();
+        $this->relation_type = $settings['default_relation_type'];
+        $this->send_customer_portal_invitation = ! $contactId
+            && $this->canSendPortalInvitation()
+            && $settings['send_portal_invitation_by_default'];
 
         if ($contactId) {
             $this->hydrateFromContact($contactId);
@@ -180,18 +191,25 @@ class ContactForm extends Component
         $this->site_id = $site?->id;
     }
 
-    public function save(StoreContact $storeContact)
+    public function save(StoreContact $storeContact, CreateCustomerPortalInvitation $createPortalInvitation)
     {
+        $shouldSendPortalInvitation = ! $this->contactId && $this->send_customer_portal_invitation;
+        $actor = auth()->user();
+
+        if ($shouldSendPortalInvitation && (! $actor instanceof User || ! $this->canSendPortalInvitation())) {
+            throw new AuthorizationException('You are not authorized to send customer portal invitations.');
+        }
+
         $validated = $this->validate([
             'existing_contact_id' => ['nullable', Rule::exists('contacts', 'id')],
             'display_name' => ['required', 'string', 'max:255'],
             'organization_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => [$shouldSendPortalInvitation ? 'required' : 'nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:100'],
             'sms_allowed' => ['boolean'],
             'job_title' => ['nullable', 'string', 'max:255'],
             'relation_type' => ['required', Rule::in(array_keys($this->relationOptions()))],
-            'client_id' => ['nullable', Rule::exists('clients', 'id')],
+            'client_id' => [$shouldSendPortalInvitation ? 'required' : 'nullable', Rule::exists('clients', 'id')],
             'site_id' => ['nullable', Rule::exists('client_sites', 'id')],
         ]);
         $validated['update_existing'] = (bool) $this->contactId;
@@ -208,9 +226,30 @@ class ContactForm extends Component
             $validated['client_id'] = $this->activeClientId;
         }
 
-        $contact = $storeContact->handle($validated);
+        $contact = DB::transaction(function () use ($actor, $createPortalInvitation, $shouldSendPortalInvitation, $storeContact, $validated): Contact {
+            $contact = $storeContact->handle($validated);
 
-        session()->flash('status', 'Contact saved.');
+            if ($shouldSendPortalInvitation && $actor instanceof User) {
+                $client = Client::query()->findOrFail($validated['client_id']);
+                $site = filled($validated['site_id'] ?? null)
+                    ? ClientSite::query()->findOrFail($validated['site_id'])
+                    : null;
+
+                $createPortalInvitation->handle(
+                    $actor,
+                    $contact,
+                    $client,
+                    $site,
+                    CustomerPortalMembership::ROLE_VIEWER,
+                    $validated['email'],
+                    'contact_create',
+                );
+            }
+
+            return $contact;
+        });
+
+        session()->flash('status', $shouldSendPortalInvitation ? 'Contact saved and portal invitation queued.' : 'Contact saved.');
 
         return redirect()->route('tech.contacts.show', $contact);
     }
@@ -329,6 +368,7 @@ class ContactForm extends Component
             'selectedClient' => $selectedClient,
             'selectedSite' => $selectedSite,
             'showSiteField' => (bool) ($selectedClient || $selectedSite || $this->activeClientId || $this->activeSiteId),
+            'canSendPortalInvitation' => $this->canSendPortalInvitation(),
         ]);
     }
 
@@ -356,6 +396,11 @@ class ContactForm extends Component
         $clientName = Client::query()->whereKey($this->client_id)->value('name');
 
         return $clientName && mb_strtolower($clientName) === mb_strtolower(trim((string) $this->organization_name));
+    }
+
+    private function canSendPortalInvitation(): bool
+    {
+        return auth()->user()?->can('customer_portal.invite') === true;
     }
 
     private function defaultSiteIdForClient(Client $client): ?int

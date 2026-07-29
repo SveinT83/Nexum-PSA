@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
+use App\Modules\Integration\Controllers\Admin\AiPrivacyController;
 use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\CloudFactoryController;
 use App\Modules\Integration\Controllers\Admin\IntegrationsController;
@@ -124,6 +125,23 @@ Route::middleware('admin')->group(function () {
     Route::delete('/admin/system/integrations/ai/agents/{agent}', [AiIntegrationController::class, 'destroyAgent'])
         ->name('admin.system.integrations.ai.agents.destroy');
 
+    Route::get('/admin/system/integrations/ai/privacy', [AiPrivacyController::class, 'index'])
+        ->name('admin.system.integrations.ai.privacy.index');
+    Route::put('/admin/system/integrations/ai/privacy/policy', [AiPrivacyController::class, 'updatePolicy'])
+        ->name('admin.system.integrations.ai.privacy.policy.update');
+    Route::put('/admin/system/integrations/ai/privacy/providers/{provider}', [AiPrivacyController::class, 'updateProvider'])
+        ->name('admin.system.integrations.ai.privacy.providers.update');
+    Route::put('/admin/system/integrations/ai/privacy/providers/{provider}/models', [AiPrivacyController::class, 'updateModel'])
+        ->name('admin.system.integrations.ai.privacy.models.update');
+    Route::put('/admin/system/integrations/ai/privacy/agents/{agent}', [AiPrivacyController::class, 'updateAgent'])
+        ->name('admin.system.integrations.ai.privacy.agents.update');
+    Route::post('/admin/system/integrations/ai/privacy/workloads', [AiPrivacyController::class, 'storeWorkload'])
+        ->name('admin.system.integrations.ai.privacy.workloads.store');
+    Route::post('/admin/system/integrations/ai/privacy/workloads/{workload}/tokens', [AiPrivacyController::class, 'storeToken'])
+        ->name('admin.system.integrations.ai.privacy.workloads.tokens.store');
+    Route::delete('/admin/system/integrations/ai/privacy/token-bindings/{binding}', [AiPrivacyController::class, 'revokeToken'])
+        ->name('admin.system.integrations.ai.privacy.bindings.revoke');
+
     Route::get('/admin/system/integrations/api', [ApiController::class, 'index'])
         ->name('admin.system.integrations.api.index');
 
@@ -145,3 +163,6 @@ Route::post('/knowledge/ai/chats', [AiChatController::class, 'store'])
 
 Route::post('/knowledge/ai/chats/{chat}/messages', [AiChatController::class, 'message'])
     ->name('ai.chats.messages.store');
+
+Route::bind('workload', fn (string $value) => \App\Modules\Integration\Models\AiWorkloadProfile::query()->findOrFail($value));
+Route::bind('binding', fn (string $value) => \App\Modules\Integration\Models\AiWorkloadTokenBinding::query()->findOrFail($value));

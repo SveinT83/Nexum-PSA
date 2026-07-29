@@ -1,5 +1,71 @@
 Notification channels define how Nexum delivers system notifications outside the in-app notification bell.
 
+## Web Push
+
+Web Push uses the existing Nexum PWA and shared service worker to show visible browser
+notifications. The channel foundation currently supports internal users and a generic
+current-device test. Business-event delivery remains off until an approved event slice supplies a
+payload and exposes its preference.
+
+### Register a device
+
+1. Open Profile > Notifications.
+2. Find Web Push devices.
+3. Select Enable on this device.
+4. Accept the browser or operating-system notification prompt.
+5. Use Send test to this device to verify the current device.
+
+Nexum requests permission only after the user selects Enable. If permission is denied, change the
+site notification permission in the browser or operating-system settings before trying again.
+
+On iPhone and iPad, first add Nexum to the Home Screen, open the installed app, and then enable Web
+Push inside that installed app.
+
+Registering a device does not automatically enable Web Push for ticket, email, or another business
+event. Event preferences remain user-owned and default to off.
+
+### Manage devices
+
+Profile > Notifications lists the signed-in user's registered devices. The list contains only a
+generated device label, browser/platform family, registration time, and last-seen time. A user may
+revoke the current device or another device they own. Revoking the current device also asks the
+browser to unsubscribe it locally.
+
+Signing out does not revoke a registered device. This allows a deliberate registration to continue
+after the next sign-in. Disabling the Nexum user removes every registered Web Push device for that
+user.
+
+Administrators with `notification.manage_channels` can open Admin > Notification channels > Web
+Push devices to search the privacy-safe inventory and revoke a lost or obsolete device.
+Administrators cannot register a device or enable an event for another user.
+
+Nexum does not display push endpoints, encryption keys, authentication tokens, or VAPID secrets in
+user/admin inventories or lifecycle audits.
+
+### Availability and troubleshooting
+
+Web Push registration requires:
+
+- the environment-wide Web Push switch to be enabled;
+- complete VAPID configuration;
+- HTTPS and the shared Nexum service worker;
+- a browser that supports Service Worker, Push Manager, and Notifications;
+- a running Laravel queue worker for test delivery.
+
+The status panel distinguishes an environment that is unavailable, an insecure or unsupported
+browser, denied permission, an unregistered browser, and a registered current device.
+
+If a generic test is queued but not received:
+
+1. Confirm the device still appears in Profile > Notifications.
+2. Confirm site notifications are allowed in both browser and operating-system settings.
+3. Confirm the queue worker is running and Web Push is ready in Admin > Notification channels.
+4. Revoke and register the current device again if the browser subscription was reset.
+
+Expired provider endpoints are removed automatically. Temporary provider failures use bounded
+queue retries. All accepted pushes remain visible, and clicking one focuses an existing Nexum
+window when possible or opens Nexum in a new window.
+
 ## Transactional SMS
 
 SMS is an approved transactional notification channel, but the first implementation uses the

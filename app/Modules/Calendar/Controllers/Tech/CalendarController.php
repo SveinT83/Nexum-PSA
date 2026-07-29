@@ -13,6 +13,7 @@ use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Models\CalendarEventException;
 use App\Modules\Calendar\Models\CalendarSetting;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
+use App\Modules\Calendar\Services\CalendarOwnershipMetadata;
 use App\Modules\Calendar\Services\CalendarVisibility;
 use App\Modules\UserManagement\Models\UserPreference;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,7 @@ use Illuminate\View\View;
 
 class CalendarController extends Controller
 {
-    public function index(Request $request, CalendarOverlayQuery $query, EnsureCalendarDefaults $defaults, FindAvailableSlots $findAvailableSlots): View
+    public function index(Request $request, CalendarOverlayQuery $query, EnsureCalendarDefaults $defaults, FindAvailableSlots $findAvailableSlots, CalendarOwnershipMetadata $ownershipMetadata): View
     {
         $user = $request->user();
         $defaults->handle($user);
@@ -35,18 +36,58 @@ class CalendarController extends Controller
         [$startsAt, $endsAt, $title] = $this->rangeFor($view, $anchor, $timezone);
 
         $calendars = $query->visibleCalendars($user);
+        $calendarOptions = $calendars->map(fn (Calendar $calendar): array => [
+            'calendar' => $calendar,
+            'ownership' => $ownershipMetadata->forCalendar($calendar, $user),
+        ]);
+        $ownershipGroupLabels = $ownershipMetadata->groupLabels();
+        $ownershipGroupCounts = $calendarOptions->countBy(
+            fn (array $option): string => $option['ownership']['ownership_group'],
+        );
+        $selectedOwnershipGroups = collect($request->input('ownership_groups', []))
+            ->filter(fn (mixed $group): bool => is_string($group))
+            ->map(fn (string $group): string => trim($group))
+            ->filter(fn (string $group): bool => array_key_exists($group, $ownershipGroupLabels))
+            ->unique()
+            ->values()
+            ->all();
+        $onlyMine = $request->boolean('only_mine');
+        if ($onlyMine) {
+            $selectedOwnershipGroups = [];
+        }
+        $activeOwnershipGroups = $onlyMine ? ['mine'] : $selectedOwnershipGroups;
+        $ownershipFilterActive = $activeOwnershipGroups !== [];
         $calendarIds = collect($request->input('calendars', []))
             ->map(fn ($id) => (int) $id)
             ->filter()
+            ->unique()
             ->values()
             ->all();
-        $events = $query->eventsForRange($user, $startsAt, $endsAt, $calendarIds);
+        $eventCalendarIds = $calendarIds;
+        if ($ownershipFilterActive) {
+            $ownershipCalendarIds = $calendarOptions
+                ->filter(fn (array $option): bool => in_array(
+                    $option['ownership']['ownership_group'],
+                    $activeOwnershipGroups,
+                    true,
+                ))
+                ->pluck('calendar.id');
+            $eventCalendarIds = $calendarIds === []
+                ? $ownershipCalendarIds->values()->all()
+                : $ownershipCalendarIds->intersect($calendarIds)->values()->all();
+        }
+        $events = $ownershipFilterActive && $eventCalendarIds === []
+            ? collect()
+            : $query->eventsForRange($user, $startsAt, $endsAt, $eventCalendarIds);
         $eventSearch = trim((string) $request->input('event_search', ''));
         $eventSort = $request->input('event_sort', 'starts_at');
         $eventDirection = $request->input('event_direction') === 'desc' ? 'desc' : 'asc';
         $events = $this->filterAndSortEvents($events, $eventSearch, $eventSort, $eventDirection);
         [$previousDate, $nextDate] = $this->navigationDates($view, $anchor, $timezone);
-        $defaultCalendar = $calendars->firstWhere('owner_id', $user->id) ?: $calendars->first();
+        $defaultCalendar = $calendars->first(
+            fn (Calendar $calendar): bool => $calendar->owner_type === $user::class
+                && (int) $calendar->owner_id === (int) $user->id,
+        ) ?: $calendars->first();
         $availabilityUser = User::query()->find($request->integer('availability_user_id')) ?: $user;
         $availabilityDuration = max(15, min(480, $request->integer('availability_duration', 60)));
         $availableSlots = $findAvailableSlots->handle(
@@ -59,8 +100,14 @@ class CalendarController extends Controller
 
         return view('calendar::Tech.index', [
             'calendars' => $calendars,
+            'calendarOptions' => $calendarOptions,
             'events' => $events,
             'selectedCalendarIds' => $calendarIds,
+            'ownershipGroupLabels' => $ownershipGroupLabels,
+            'ownershipGroupCounts' => $ownershipGroupCounts,
+            'selectedOwnershipGroups' => $selectedOwnershipGroups,
+            'onlyMine' => $onlyMine,
+            'ownershipFilterActive' => $ownershipFilterActive,
             'viewMode' => in_array($view, ['day', 'week', 'month', 'list'], true) ? $view : 'week',
             'anchor' => $anchor,
             'rangeStartsAt' => $startsAt,

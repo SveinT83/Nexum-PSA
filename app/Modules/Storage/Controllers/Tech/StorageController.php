@@ -11,8 +11,8 @@ use App\Modules\Storage\Queries\PickingListQuery;
 use App\Modules\Storage\Queries\StorageIndexQuery;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Models\TicketCostEntry;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class StorageController extends Controller
@@ -29,12 +29,7 @@ class StorageController extends Controller
             'stats' => [
                 'total_items' => Item::count(),
                 'out_of_stock' => Item::where('qty_on_hand', '<=', 0)->count(),
-                'should_order' => Item::query()
-                    ->where('should_order', true)
-                    ->orWhere('qty_on_hand', '<=', 0)
-                    ->orWhereColumn('qty_reserved', '>=', 'qty_on_hand')
-                    ->orWhereColumn('qty_on_hand', '<=', 'reorder_point')
-                    ->count(),
+                'should_order' => $query->shouldOrderCount(),
                 'reserved' => Item::sum('qty_reserved'),
             ],
             'filters' => $filters,

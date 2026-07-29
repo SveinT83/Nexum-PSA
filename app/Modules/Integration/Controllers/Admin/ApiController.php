@@ -5,9 +5,9 @@ namespace App\Modules\Integration\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Modules\Integration\Support\ApiAbilityCatalog;
 use Illuminate\Http\Request;
-use Laravel\Sanctum\PersonalAccessToken;
-use L5Swagger\ConfigFactory;
 use Illuminate\Support\Facades\Request as RequestFacade;
+use L5Swagger\ConfigFactory;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ApiController extends Controller
 {
@@ -17,9 +17,11 @@ class ApiController extends Controller
     public function index(ApiAbilityCatalog $abilityCatalog)
     {
         $apiKeys = PersonalAccessToken::all();
+        $tokensRequiringReview = $apiKeys->filter(fn (PersonalAccessToken $token): bool => $abilityCatalog->requiresReview($token->abilities ?? []));
 
         return view('integration::Tech.Admin.System.Integrations.api.index', [
             'apiKeys' => $apiKeys,
+            'tokensRequiringReview' => $tokensRequiringReview,
             'abilityCatalog' => $abilityCatalog,
             'abilities' => $abilityCatalog->all(),
         ]);
@@ -56,21 +58,22 @@ class ApiController extends Controller
      */
     public function store(Request $request, ApiAbilityCatalog $abilityCatalog)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'abilities' => 'nullable|array',
-            'abilities.*' => 'string|in:'.implode(',', $abilityCatalog->values()),
-            'full_access' => 'nullable|boolean',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'abilities' => ['exclude_if:full_access,1', 'required_unless:full_access,1', 'array', 'min:1'],
+            'abilities.*' => ['string', 'in:'.implode(',', $abilityCatalog->values())],
+            'full_access' => ['nullable', 'boolean'],
+            'confirm_full_access' => ['exclude_unless:full_access,1', 'required_if:full_access,1', 'accepted'],
         ]);
 
         $user = auth()->user();
         $abilities = $abilityCatalog->normalize(
-            (array) $request->input('abilities', []),
+            (array) ($validated['abilities'] ?? []),
             $request->boolean('full_access'),
         );
-        $token = $user->createToken($request->name, $abilities);
+        $token = $user->createToken($validated['name'], $abilities);
 
-        return back()->with('success', 'API Key created: ' . $token->plainTextToken . '. Please save it now, as it will not be shown again.');
+        return back()->with('success', 'API Key created: '.$token->plainTextToken.'. Please save it now, as it will not be shown again.');
     }
 
     /**
@@ -79,6 +82,7 @@ class ApiController extends Controller
     public function destroy(PersonalAccessToken $apiKey)
     {
         $apiKey->delete();
+
         return back()->with('success', 'API Key revoked.');
     }
 }

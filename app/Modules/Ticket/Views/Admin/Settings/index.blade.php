@@ -51,7 +51,7 @@
                     Allow internal notes to be marked as ticket solutions
                 </label>
                 <div class="form-text">
-                    Enables Internal solution in the ticket composer for RMM and asset-driven tickets where no customer email should be sent.
+                    Enables Mark as solution for Internal notes on RMM and asset-driven tickets where no customer email should be sent.
                 </div>
             </div>
 
@@ -65,7 +65,7 @@
             @csrf
 
             @php
-                $selectedPortalDefault = old('default_customer_visibility', $portalPolicy['default_customer_visibility'] ?? \App\Modules\Ticket\Support\TicketPortalPolicy::VISIBILITY_UNPUBLISHED);
+                $selectedPortalDefault = old('default_customer_visibility', $portalPolicy['default_customer_visibility'] ?? \App\Modules\Ticket\Support\TicketPortalPolicy::DEFAULT_CUSTOMER_VISIBILITY);
             @endphp
 
             <div class="mb-3">
@@ -77,7 +77,7 @@
                 </select>
                 @error('default_customer_visibility')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 <div class="form-text">
-                    Unpublished keeps manually created client tickets silent until a technician publishes them. Published makes them customer-visible immediately.
+                    Published is the installation fallback and makes manually created client tickets customer-visible immediately. Choose Unpublished to keep them internal until a technician publishes them.
                 </div>
             </div>
 

@@ -9,13 +9,11 @@ use App\Modules\Calendar\Actions\FindAvailableSlots;
 use App\Modules\Calendar\Controllers\Admin\CalendarSettingsController;
 use App\Modules\Calendar\Controllers\Tech\CalendarController;
 use App\Modules\Calendar\Models\Calendar;
-use App\Modules\Calendar\Models\CalendarAccess;
-use App\Modules\Calendar\Models\CalendarAvailabilityRule;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Calendar\Queries\CalendarOverlayQuery;
+use App\Modules\UserManagement\Models\UserPreference;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use App\Modules\WorkContext\Support\WorkContextType;
-use App\Modules\UserManagement\Models\UserPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
@@ -80,7 +78,13 @@ class CalendarModuleTest extends TestCase
 
         $this->getJson(route('api.v1.calendars.index'))
             ->assertOk()
-            ->assertJsonPath('data.0.id', $calendar->id);
+            ->assertJsonPath('data.0.id', $calendar->id)
+            ->assertJsonPath('data.0.owner_kind', 'user')
+            ->assertJsonPath('data.0.owner_label', 'Ada Tech')
+            ->assertJsonPath('data.0.owner_badge', 'AT')
+            ->assertJsonPath('data.0.calendar_type', 'personal')
+            ->assertJsonPath('data.0.ownership_group', 'mine')
+            ->assertJsonPath('data.0.is_owned_by_viewer', true);
 
         $createResponse = $this->postJson(route('api.v1.calendar.events.store'), [
             'calendar_id' => $calendar->id,
@@ -110,7 +114,11 @@ class CalendarModuleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.id', $eventId)
             ->assertJsonPath('data.0.work_context_type', WorkContextType::INTERNAL)
-            ->assertJsonPath('data.0.title', 'API planning');
+            ->assertJsonPath('data.0.title', 'API planning')
+            ->assertJsonPath('data.0.owner_label', 'Ada Tech')
+            ->assertJsonPath('data.0.owner_badge', 'AT')
+            ->assertJsonPath('data.0.ownership_group', 'mine')
+            ->assertJsonPath('data.0.is_owned_by_viewer', true);
 
         $this->patchJson(route('api.v1.calendar.events.update', $eventId), [
             'title' => 'API planning updated',
@@ -406,6 +414,46 @@ class CalendarModuleTest extends TestCase
     }
 
     #[Test]
+    public function availability_finder_accepts_explicit_weekly_windows_and_still_excludes_conflicts(): void
+    {
+        $calendar = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
+        CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $calendar->id,
+            'title' => 'Busy inside explicit window',
+            'starts_at' => Carbon::parse('2026-05-18 10:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 11:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => 'public',
+            'created_by' => $this->tech->id,
+        ]);
+
+        $slots = app(FindAvailableSlots::class)->handle(
+            $this->tech,
+            Carbon::parse('2026-05-18 08:00', 'Europe/Oslo'),
+            Carbon::parse('2026-05-18 13:00', 'Europe/Oslo'),
+            60,
+            10,
+            [
+                'timezone' => 'Europe/Oslo',
+                'weekdays' => [
+                    1 => [
+                        ['start' => '10:00', 'end' => '12:00'],
+                    ],
+                ],
+            ],
+        );
+
+        $this->assertCount(1, $slots);
+        $this->assertSame('11:00', $slots->first()['starts_at']->format('H:i'));
+        $this->assertFalse($slots->contains(
+            fn (array $slot): bool => $slot['starts_at']->format('H:i') === '10:00',
+        ));
+    }
+
+    #[Test]
     public function calendar_uses_user_preferences_for_defaults(): void
     {
         UserPreference::query()->create([
@@ -459,6 +507,383 @@ class CalendarModuleTest extends TestCase
             'can_view_private_details' => true,
         ]);
         $this->assertTrue(app(CalendarOverlayQuery::class)->visibleCalendars($this->tech)->contains('id', $calendar->id));
+    }
+
+    #[Test]
+    public function ownership_metadata_uses_calendar_owner_instead_of_event_creator(): void
+    {
+        $viewer = User::factory()->create(['status' => User::STATUS_ACTIVE, 'name' => 'Bob Builder']);
+        $viewer->assignRole('Tech');
+        $personalCalendar = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
+        $personalEvent = CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $personalCalendar->id,
+            'title' => 'Created by another technician',
+            'starts_at' => Carbon::parse('2026-05-18 09:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 10:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => 'public',
+            'created_by' => $viewer->id,
+        ]);
+        $teamCalendar = Calendar::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'name' => 'Dispatch team',
+            'slug' => 'dispatch-team-metadata-test',
+            'type' => 'team',
+            'color' => '#0f766e',
+            'timezone' => 'Europe/Oslo',
+            'is_visible_by_default' => true,
+        ]);
+        $teamEvent = CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $teamCalendar->id,
+            'title' => 'Team handoff',
+            'starts_at' => Carbon::parse('2026-05-18 11:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 12:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => 'public',
+            'created_by' => $viewer->id,
+        ]);
+        $hiddenCalendar = Calendar::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'name' => 'Hidden operations',
+            'slug' => 'hidden-operations-metadata-test',
+            'type' => 'shared',
+            'color' => '#6c757d',
+            'timezone' => 'Europe/Oslo',
+            'is_visible_by_default' => false,
+        ]);
+        $hiddenEvent = CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $hiddenCalendar->id,
+            'title' => 'Hidden event',
+            'starts_at' => Carbon::parse('2026-05-18 13:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 14:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => 'public',
+            'created_by' => $viewer->id,
+        ]);
+
+        $events = app(CalendarOverlayQuery::class)->eventsForRange(
+            $viewer,
+            Carbon::parse('2026-05-18 00:00', 'Europe/Oslo'),
+            Carbon::parse('2026-05-19 00:00', 'Europe/Oslo'),
+        );
+        $personalMetadata = $events->firstWhere('id', $personalEvent->id);
+        $teamMetadata = $events->firstWhere('id', $teamEvent->id);
+
+        $this->assertNotNull($personalMetadata);
+        $this->assertSame('user', $personalMetadata['owner_kind']);
+        $this->assertSame($this->tech->id, $personalMetadata['owner_id']);
+        $this->assertSame('Ada Tech', $personalMetadata['owner_label']);
+        $this->assertSame('AT', $personalMetadata['owner_initials']);
+        $this->assertSame('AT', $personalMetadata['owner_badge']);
+        $this->assertSame('personal', $personalMetadata['calendar_type']);
+        $this->assertSame('people', $personalMetadata['ownership_group']);
+        $this->assertFalse($personalMetadata['is_owned_by_viewer']);
+        $this->assertNotNull($teamMetadata);
+        $this->assertSame('none', $teamMetadata['owner_kind']);
+        $this->assertNull($teamMetadata['owner_id']);
+        $this->assertSame('Dispatch team', $teamMetadata['owner_label']);
+        $this->assertSame('TEAM', $teamMetadata['owner_badge']);
+        $this->assertSame('team', $teamMetadata['calendar_type']);
+        $this->assertSame('team', $teamMetadata['ownership_group']);
+        $this->assertFalse($events->contains('id', $hiddenEvent->id));
+
+        $ownerEvents = app(CalendarOverlayQuery::class)->eventsForRange(
+            $this->tech,
+            Carbon::parse('2026-05-18 00:00', 'Europe/Oslo'),
+            Carbon::parse('2026-05-19 00:00', 'Europe/Oslo'),
+        );
+        $ownerMetadata = $ownerEvents->firstWhere('id', $personalEvent->id);
+        $this->assertSame('mine', $ownerMetadata['ownership_group']);
+        $this->assertTrue($ownerMetadata['is_owned_by_viewer']);
+    }
+
+    #[Test]
+    public function calendar_views_render_accessible_owner_badges_without_leaking_private_details(): void
+    {
+        $viewer = User::factory()->create(['status' => User::STATUS_ACTIVE, 'name' => 'Bob Builder']);
+        $viewer->assignRole('Tech');
+        $calendar = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
+        $calendar->update(['color' => '#7c3aed']);
+
+        CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $calendar->id,
+            'title' => 'Visible schedule',
+            'starts_at' => Carbon::parse('2026-05-18 09:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 10:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => 'public',
+            'created_by' => $viewer->id,
+        ]);
+        CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $calendar->id,
+            'title' => 'Doctor appointment',
+            'description' => 'Sensitive diagnosis',
+            'location' => 'Private clinic',
+            'starts_at' => Carbon::parse('2026-05-18 11:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 12:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => 'private',
+            'created_by' => $this->tech->id,
+        ]);
+
+        foreach (['day', 'week', 'month', 'list'] as $viewMode) {
+            $response = $this->actingAs($viewer)->get(route('tech.calendar.index', [
+                'view' => $viewMode,
+                'date' => '2026-05-18',
+            ]));
+
+            $response
+                ->assertOk()
+                ->assertSee('Visible schedule')
+                ->assertSee('Busy')
+                ->assertSee('data-calendar-owner-badge="AT"', false)
+                ->assertSee('aria-label="Owner: Ada Tech. Personal calendar."', false)
+                ->assertSee('calendar-owner-swatch', false)
+                ->assertSee('--owner-color: #7c3aed', false)
+                ->assertSee('calendar-event-title', false)
+                ->assertDontSee('Doctor appointment')
+                ->assertDontSee('Sensitive diagnosis')
+                ->assertDontSee('Private clinic');
+        }
+
+        $this->actingAs($viewer)
+            ->get(route('tech.calendar.index', [
+                'view' => 'list',
+                'date' => '2026-05-18',
+            ]))
+            ->assertOk()
+            ->assertSee('calendar-calendar-identity', false)
+            ->assertSee('aria-label="Calendar: Ada Tech work calendar"', false);
+    }
+
+    #[Test]
+    public function calendar_views_distinguish_non_personal_calendar_types_without_leaking_private_details(): void
+    {
+        $other = User::factory()->create(['status' => User::STATUS_ACTIVE, 'name' => 'Private Owner']);
+        $other->assignRole('Tech');
+
+        $calendars = collect([
+            'Team rotation' => $this->createVisibleCalendar('Team rotation', 'team', '#0f766e'),
+            'Shared delivery' => $this->createVisibleCalendar('Shared delivery', 'shared', '#7c3aed'),
+            'Company all hands' => $this->createVisibleCalendar('Company all hands', 'company', '#b45309'),
+            'Meeting room' => $this->createVisibleCalendar('Meeting room', 'resource', '#be123c'),
+            'External feed' => $this->createVisibleCalendar('External feed', 'external', '#0369a1'),
+        ]);
+
+        foreach ($calendars as $title => $calendar) {
+            $this->createCalendarEvent($calendar, $title);
+        }
+
+        $this->createCalendarEvent(
+            $calendars['Meeting room'],
+            'Confidential resource booking',
+            '14:00',
+            'private',
+            $other,
+        );
+
+        $response = $this->actingAs($this->tech)->get(route('tech.calendar.index', [
+            'view' => 'list',
+            'date' => '2026-05-18',
+        ]));
+
+        $response
+            ->assertOk()
+            ->assertSee('data-calendar-type="team"', false)
+            ->assertSee('data-calendar-type="shared"', false)
+            ->assertSee('data-calendar-type="company"', false)
+            ->assertSee('data-calendar-type="resource"', false)
+            ->assertSee('data-calendar-type="external"', false)
+            ->assertSee('aria-label="Calendar type: Team"', false)
+            ->assertSee('aria-label="Calendar type: Global"', false)
+            ->assertSee('>TM</span>', false)
+            ->assertSee('>GLB</span>', false)
+            ->assertSee('>RES</span>', false)
+            ->assertSee('Busy')
+            ->assertDontSee('Confidential resource booking');
+    }
+
+    #[Test]
+    public function ownership_filters_use_visible_calendar_ownership_and_only_mine_ignores_event_creator(): void
+    {
+        $other = User::factory()->create(['status' => User::STATUS_ACTIVE, 'name' => 'Other Technician']);
+        $other->assignRole('Tech');
+        $mine = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
+        $theirs = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($other);
+        $team = $this->createVisibleCalendar('Team board', 'team');
+        $resource = $this->createVisibleCalendar('Workshop bay', 'resource');
+        $hiddenTeam = $this->createVisibleCalendar('Hidden team', 'team');
+        $hiddenTeam->update(['is_visible_by_default' => false]);
+
+        $this->createCalendarEvent($mine, 'Owned calendar event');
+        $this->createCalendarEvent($theirs, 'Other person event', '10:00');
+        $this->createCalendarEvent($team, 'Created by me on team calendar', '11:00', 'public', $this->tech);
+        $this->createCalendarEvent($resource, 'Resource booking', '12:00');
+        $this->createCalendarEvent($hiddenTeam, 'Unauthorized hidden event', '13:00');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.calendar.index', [
+                'view' => 'list',
+                'date' => '2026-05-18',
+                'only_mine' => 1,
+            ]))
+            ->assertOk()
+            ->assertSee('Owned calendar event')
+            ->assertDontSee('Other person event')
+            ->assertDontSee('Created by me on team calendar')
+            ->assertDontSee('Resource booking')
+            ->assertSee('name="only_mine" value="1"', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.calendar.index', [
+                'view' => 'list',
+                'date' => '2026-05-18',
+                'ownership_groups' => ['team', 'resources'],
+            ]))
+            ->assertOk()
+            ->assertSee('Created by me on team calendar')
+            ->assertSee('Resource booking')
+            ->assertDontSee('Owned calendar event')
+            ->assertDontSee('Other person event')
+            ->assertDontSee('Unauthorized hidden event')
+            ->assertSee('name="ownership_groups[]" value="team"', false)
+            ->assertSee('name="ownership_groups[]" value="resources"', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.calendar.index', [
+                'view' => 'list',
+                'date' => '2026-05-18',
+                'ownership_groups' => ['team'],
+                'calendars' => [$resource->id],
+            ]))
+            ->assertOk()
+            ->assertSee('No events match the selected ownership filters in this range.')
+            ->assertDontSee('Created by me on team calendar')
+            ->assertDontSee('Resource booking');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.calendar.index', [
+                'view' => 'list',
+                'date' => '2026-05-18',
+                'ownership_groups' => ['team'],
+                'calendars' => [$hiddenTeam->id],
+            ]))
+            ->assertOk()
+            ->assertSee('No events match the selected ownership filters in this range.')
+            ->assertDontSee('Unauthorized hidden event');
+    }
+
+    #[Test]
+    public function dense_month_view_limits_events_and_preserves_filter_state_in_more_link(): void
+    {
+        $calendar = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
+        $events = collect();
+
+        foreach (['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00'] as $index => $time) {
+            $events->push($this->createCalendarEvent($calendar, 'Dense event '.($index + 1), $time));
+        }
+
+        $response = $this->actingAs($this->tech)->get(route('tech.calendar.index', [
+            'view' => 'month',
+            'date' => '2026-05-18',
+            'calendars' => [$calendar->id],
+            'only_mine' => 1,
+            'event_search' => 'Dense',
+            'event_sort' => 'starts_at',
+            'event_direction' => 'asc',
+        ]));
+
+        $response
+            ->assertOk()
+            ->assertSee('role="region" tabindex="0"', false)
+            ->assertSee('min-width: 56rem;', false)
+            ->assertSee('aria-label="2 more events on 2026-05-18"', false)
+            ->assertSee('+2 more')
+            ->assertSee('view=day', false)
+            ->assertSee('only_mine=1', false)
+            ->assertDontSee('data-event-id="'.$events[5]->id.'"', false)
+            ->assertDontSee('data-event-id="'.$events[6]->id.'"', false);
+
+        $this->assertSame(5, substr_count($response->getContent(), 'data-event-id='));
+    }
+
+    #[Test]
+    public function single_event_api_masks_private_details_and_keeps_safe_ownership_metadata(): void
+    {
+        $viewer = User::factory()->create(['status' => User::STATUS_ACTIVE, 'name' => 'Bob Builder']);
+        $viewer->assignRole('Tech');
+        $calendar = app(EnsureCalendarDefaults::class)->ensurePersonalCalendar($this->tech);
+        $event = CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $calendar->id,
+            'title' => 'Private customer meeting',
+            'description' => 'Sensitive agenda',
+            'location' => 'Private office',
+            'meeting_url' => 'https://meet.example.test/private',
+            'starts_at' => Carbon::parse('2026-05-18 15:00', 'Europe/Oslo')->utc(),
+            'ends_at' => Carbon::parse('2026-05-18 16:00', 'Europe/Oslo')->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => 'private',
+            'created_by' => $this->tech->id,
+            'source' => 'external',
+            'external_uid' => 'private-external-uid',
+        ]);
+        $event->participants()->create([
+            'participant_type' => 'email',
+            'name' => 'Secret Participant',
+            'email' => 'secret@example.test',
+            'role' => 'required',
+            'response_status' => 'accepted',
+        ]);
+
+        Sanctum::actingAs($viewer, ['calendar.read']);
+
+        $this->getJson(route('api.v1.calendar.events.show', $event))
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Busy')
+            ->assertJsonPath('data.description', null)
+            ->assertJsonPath('data.location', null)
+            ->assertJsonPath('data.meeting_url', null)
+            ->assertJsonPath('data.details_visible', false)
+            ->assertJsonPath('data.source', null)
+            ->assertJsonPath('data.external_uid', null)
+            ->assertJsonPath('data.created_by', null)
+            ->assertJsonPath('data.owner_kind', 'user')
+            ->assertJsonPath('data.owner_id', $this->tech->id)
+            ->assertJsonPath('data.owner_label', 'Ada Tech')
+            ->assertJsonPath('data.owner_badge', 'AT')
+            ->assertJsonPath('data.calendar_type', 'personal')
+            ->assertJsonPath('data.ownership_group', 'people')
+            ->assertJsonPath('data.is_owned_by_viewer', false)
+            ->assertJsonCount(0, 'data.participants');
+
+        Sanctum::actingAs($this->tech, ['calendar.read']);
+
+        $this->getJson(route('api.v1.calendar.events.show', $event))
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Private customer meeting')
+            ->assertJsonPath('data.description', 'Sensitive agenda')
+            ->assertJsonPath('data.details_visible', true)
+            ->assertJsonPath('data.participants.0.email', 'secret@example.test')
+            ->assertJsonPath('data.ownership_group', 'mine')
+            ->assertJsonPath('data.is_owned_by_viewer', true);
     }
 
     #[Test]
@@ -518,6 +943,45 @@ class CalendarModuleTest extends TestCase
             'name' => 'On-call',
             'type' => 'shift',
             'is_visible_by_default' => true,
+        ]);
+    }
+
+    private function createVisibleCalendar(string $name, string $type, string $color = '#2563eb'): Calendar
+    {
+        return Calendar::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'name' => $name,
+            'slug' => \Illuminate\Support\Str::slug($name).'-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(6)),
+            'type' => $type,
+            'color' => $color,
+            'timezone' => 'Europe/Oslo',
+            'is_active' => true,
+            'is_visible_by_default' => true,
+            'visibility_default' => 'public',
+            'transparency_default' => 'busy',
+        ]);
+    }
+
+    private function createCalendarEvent(
+        Calendar $calendar,
+        string $title,
+        string $time = '09:00',
+        string $visibility = 'public',
+        ?User $creator = null,
+    ): CalendarEvent {
+        $startsAt = Carbon::parse('2026-05-18 '.$time, 'Europe/Oslo');
+
+        return CalendarEvent::query()->create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'calendar_id' => $calendar->id,
+            'title' => $title,
+            'starts_at' => $startsAt->copy()->utc(),
+            'ends_at' => $startsAt->copy()->addHour()->utc(),
+            'timezone' => 'Europe/Oslo',
+            'status' => 'confirmed',
+            'transparency' => 'busy',
+            'visibility' => $visibility,
+            'created_by' => ($creator ?? $this->tech)->id,
         ]);
     }
 }

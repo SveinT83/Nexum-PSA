@@ -254,7 +254,16 @@ class CalendarController extends Controller
             'calendar_id' => $event['calendar_id'],
             'calendar_name' => $event['calendar_name'],
             'calendar_color' => $event['calendar_color'],
+            'calendar_type' => $event['calendar_type'],
+            'calendar_type_label' => $event['calendar_type_label'],
+            'owner_kind' => $event['owner_kind'],
+            'owner_id' => $event['owner_id'],
+            'owner_label' => $event['owner_label'],
+            'owner_initials' => $event['owner_initials'],
+            'owner_badge' => $event['owner_badge'],
             'ownership_badge' => $event['ownership_badge'],
+            'ownership_group' => $event['ownership_group'],
+            'is_owned_by_viewer' => $event['is_owned_by_viewer'],
             'work_context_id' => $event['work_context_id'],
             'work_context_type' => $event['work_context_type'],
             'title' => $event['title'],
@@ -277,6 +286,6 @@ class CalendarController extends Controller
 
     private function loadEvent(CalendarEvent $event): CalendarEvent
     {
-        return $event->load(['calendar', 'workContext', 'participants']);
+        return $event->load(['calendar.owner', 'workContext', 'participants']);
     }
 }

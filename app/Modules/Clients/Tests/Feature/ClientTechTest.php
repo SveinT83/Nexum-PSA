@@ -8,21 +8,22 @@ use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Clients\Actions\SuggestClientNumber;
+use App\Modules\Clients\Controllers\Admin\ClientFormatSettingsController;
+use App\Modules\Commercial\Models\Contracts\ClientContractTimeConsumption;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Economy\Units;
 use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\TimeRate;
-use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
-use App\Modules\Commercial\Models\Contracts\ClientContractTimeConsumption;
 use App\Modules\Economy\Models\EconomyOrder;
 use App\Modules\Economy\Models\EconomyOrderLine;
 use App\Modules\Signal\Models\Signal;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Clients\Controllers\Admin\ClientFormatSettingsController;
+use App\Modules\Ticket\Models\TicketStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
@@ -36,6 +37,7 @@ class ClientTechTest extends TestCase
     use RefreshDatabase;
 
     protected User $techUser;
+
     protected User $adminUser;
 
     protected function setUp(): void
@@ -246,7 +248,13 @@ class ClientTechTest extends TestCase
     #[Test]
     public function it_can_show_a_client()
     {
-        $client = Client::factory()->create(['name' => 'Compact Client AS']);
+        $client = Client::factory()->create([
+            'client_number' => 'CL-00189',
+            'name' => 'Compact Client AS',
+            'org_no' => '987654321',
+            'billing_email' => 'billing@compact-client.test',
+            'notes' => 'Editable client summary note',
+        ]);
         $site = ClientSite::factory()->create([
             'client_id' => $client->id,
             'name' => 'Main Office',
@@ -291,6 +299,9 @@ class ClientTechTest extends TestCase
             'summary' => 'Clicked website campaign link.',
             'occurred_at' => now(),
         ]);
+        Permission::findOrCreate('ticket.view', 'web');
+        Permission::findOrCreate('client.update', 'web');
+        $this->techUser->givePermissionTo(['ticket.view', 'client.update']);
 
         $response = $this->actingAs($this->techUser)
             ->get(route('tech.clients.show', $client));
@@ -300,10 +311,21 @@ class ClientTechTest extends TestCase
         $response->assertViewHas('client');
         $response->assertSee('<h1>Compact Client AS</h1>', false);
         $response->assertSee('Back');
+        $response->assertSee('Client number');
+        $response->assertSee('CL-00189');
+        $response->assertSee('Org No');
+        $response->assertSee('987654321');
+        $response->assertSee('billing@compact-client.test');
+        $response->assertSee('col-12 col-md-6 col-xl-4', false);
+        $response->assertSee('class="col-12 pt-3 border-top"', false);
+        $response->assertSee('wire:model.live.debounce.750ms="notes"', false);
+        $response->assertSee('id="client_notes"', false);
+        $response->assertSee(route('tech.clients.settings.edit', $client), false);
         $response->assertSee('clientWorkspaceTabs', false);
         $response->assertSee('data-bs-target="#client-assets-pane"', false);
         $response->assertSee('data-bs-target="#client-sites-pane"', false);
         $response->assertSee('data-bs-target="#client-contacts-pane"', false);
+        $response->assertSee('data-bs-target="#client-tickets-pane"', false);
         $response->assertSee('data-bs-target="#client-contracts-pane"', false);
         $response->assertSee('data-bs-target="#client-signals-pane"', false);
         $response->assertSee('data-bs-target="#client-tasks-pane"', false);
@@ -318,6 +340,9 @@ class ClientTechTest extends TestCase
         $response->assertSee('Review client backup');
         $response->assertSee('Ticket task visible on client');
         $response->assertSee('Clicked website campaign link.');
+        $response->assertSee('Client linked ticket');
+        $response->assertSee(route('tech.tickets.show', $ticket), false);
+        $response->assertSee('Tickets <span class="badge text-bg-light border ms-1">1</span>', false);
         $response->assertSee('clientTaskQuickCreateModal', false);
         $response->assertSee('clientTaskQuickViewModal'.$task->id, false);
         $response->assertDontSee('Client Sites');
@@ -329,6 +354,92 @@ class ClientTechTest extends TestCase
             ->assertOk()
             ->assertSee('id="client-contacts-pane"', false)
             ->assertSee('show active', false);
+    }
+
+    #[Test]
+    public function client_tickets_tab_is_ordered_scoped_counted_and_permission_protected(): void
+    {
+        Permission::findOrCreate('ticket.view', 'web');
+        $this->techUser->givePermissionTo('ticket.view');
+
+        $client = Client::factory()->create(['name' => 'Ticket Workspace Client AS']);
+        $otherClient = Client::factory()->create(['name' => 'Other Ticket Client AS']);
+        $closedStatus = TicketStatus::query()->create([
+            'name' => 'Client Workspace Closed',
+            'slug' => 'client-workspace-closed',
+            'state' => 'closed',
+            'is_default' => false,
+            'is_closed' => true,
+            'is_active' => true,
+            'sort_order' => 900,
+        ]);
+
+        $openTicket = Ticket::factory()->create([
+            'ticket_key' => 'TD-2026-188001',
+            'client_id' => $client->id,
+            'owner_id' => $this->techUser->id,
+            'subject' => 'Visible open client ticket',
+            'updated_at' => now()->subHour(),
+        ]);
+        $closedTicket = Ticket::factory()->create([
+            'ticket_key' => 'TD-2026-188002',
+            'client_id' => $client->id,
+            'status_id' => $closedStatus->id,
+            'subject' => 'Visible closed client ticket',
+            'updated_at' => now(),
+        ]);
+        Ticket::factory()->create([
+            'ticket_key' => 'TD-2026-188003',
+            'client_id' => $otherClient->id,
+            'subject' => 'Other client hidden ticket',
+        ]);
+        $deletedTicket = Ticket::factory()->create([
+            'ticket_key' => 'TD-2026-188004',
+            'client_id' => $client->id,
+            'subject' => 'Deleted client hidden ticket',
+        ]);
+        $deletedTicket->delete();
+
+        $response = $this->actingAs($this->techUser)
+            ->get(route('tech.clients.show', ['client' => $client, 'tab' => 'tickets']))
+            ->assertOk()
+            ->assertSee('id="client-tickets-tab"', false)
+            ->assertSee('id="client-tickets-pane"', false)
+            ->assertSee('Visible open client ticket')
+            ->assertSee('Visible closed client ticket')
+            ->assertSee(route('tech.tickets.show', $openTicket), false)
+            ->assertSee(route('tech.tickets.show', $closedTicket), false)
+            ->assertSee('Tickets <span class="badge text-bg-light border ms-1">2</span>', false)
+            ->assertDontSee('Other client hidden ticket')
+            ->assertDontSee('Deleted client hidden ticket');
+
+        $html = $response->getContent();
+        $contactsPosition = strpos($html, 'id="client-contacts-tab"');
+        $ticketsPosition = strpos($html, 'id="client-tickets-tab"');
+        $tasksPosition = strpos($html, 'id="client-tasks-tab"');
+        $timePosition = strpos($html, 'id="client-time-usage-tab"');
+
+        $this->assertIsInt($contactsPosition);
+        $this->assertIsInt($ticketsPosition);
+        $this->assertIsInt($tasksPosition);
+        $this->assertIsInt($timePosition);
+        $this->assertLessThan($ticketsPosition, $contactsPosition);
+        $this->assertLessThan($tasksPosition, $ticketsPosition);
+        $this->assertLessThan($timePosition, $tasksPosition);
+        $this->assertLessThan(
+            strpos($html, 'Visible open client ticket'),
+            strpos($html, 'Visible closed client ticket'),
+        );
+
+        $unauthorizedTech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $unauthorizedTech->assignRole('Tech');
+
+        $this->actingAs($unauthorizedTech)
+            ->get(route('tech.clients.show', ['client' => $client, 'tab' => 'tickets']))
+            ->assertOk()
+            ->assertDontSee('id="client-tickets-tab"', false)
+            ->assertDontSee('Visible open client ticket')
+            ->assertDontSee('Visible closed client ticket');
     }
 
     #[Test]

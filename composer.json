@@ -11,6 +11,7 @@
         "dompdf/dompdf": "^3.1",
         "erag/laravel-pwa": "*",
         "erusev/parsedown": "^1.0",
+        "laravel-notification-channels/webpush": "^11.0",
         "laravel/fortify": "*",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",

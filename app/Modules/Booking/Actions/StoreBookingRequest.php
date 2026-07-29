@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class StoreBookingRequest
@@ -20,6 +21,7 @@ class StoreBookingRequest
 
     public function handle(Request $request, BookingServiceSetting $setting): BookingRequest
     {
+        $setting->loadMissing(['service', 'assignedUser', 'eligibleUsers']);
         abort_unless($setting->isBookable(), 404);
 
         $honeypotField = $setting->spam_honeypot_field ?: 'booking_website';
@@ -37,6 +39,11 @@ class StoreBookingRequest
             'message' => ['nullable', 'string', 'max:2000'],
             'slot_starts_at' => ['required', 'date'],
             'timezone' => ['required', 'timezone'],
+            'technician_id' => [
+                'nullable',
+                Rule::requiredIf($setting->allowsCustomerTechnicianChoice()),
+                'integer',
+            ],
             'privacy_acknowledged' => ['accepted'],
             $honeypotField => ['nullable', 'max:0'],
         ]);
@@ -45,18 +52,33 @@ class StoreBookingRequest
         $startsAt = Carbon::parse($validated['slot_starts_at'], $timezone);
         $endsAt = $startsAt->copy()->addMinutes((int) $setting->duration_minutes);
 
-        if (! $this->slots->isSlotAvailable($setting, $startsAt, $endsAt)) {
+        $requestedUserId = isset($validated['technician_id']) ? (int) $validated['technician_id'] : null;
+        if ($setting->allowsCustomerTechnicianChoice()
+            && ! $setting->eligibleUsers->contains('id', $requestedUserId)) {
+            throw ValidationException::withMessages([
+                'technician_id' => 'Choose an available technician for this service.',
+            ]);
+        }
+
+        $assignedUser = $this->slots->resolveUserForRequest(
+            $setting,
+            $startsAt,
+            $endsAt,
+            $requestedUserId,
+        );
+
+        if (! $assignedUser) {
             throw ValidationException::withMessages([
                 'slot_starts_at' => 'The selected booking time is no longer available.',
             ]);
         }
 
-        $bookingRequest = DB::transaction(function () use ($request, $setting, $validated, $startsAt, $endsAt, $timezone): BookingRequest {
+        $bookingRequest = DB::transaction(function () use ($request, $setting, $validated, $startsAt, $endsAt, $timezone, $assignedUser): BookingRequest {
             $bookingRequest = BookingRequest::query()->create([
                 'booking_key' => $this->uniqueBookingKey(),
                 'booking_service_setting_id' => $setting->id,
                 'service_id' => $setting->service_id,
-                'assigned_user_id' => $setting->assigned_user_id,
+                'assigned_user_id' => $assignedUser->id,
                 'status' => BookingRequest::STATUS_REQUESTED,
                 'booking_mode' => $setting->booking_mode,
                 'company_name' => $validated['company_name'] ?? null,
@@ -80,6 +102,13 @@ class StoreBookingRequest
                     'message' => $validated['message'] ?? null,
                     'slot_starts_at' => $validated['slot_starts_at'],
                     'timezone' => $timezone,
+                    'technician_id' => $setting->allowsCustomerTechnicianChoice()
+                        ? $assignedUser->id
+                        : null,
+                ],
+                'metadata' => [
+                    'technician_routing_mode' => $setting->technician_routing_mode,
+                    'working_hours_source' => $setting->working_hours_source,
                 ],
             ]);
 
@@ -89,6 +118,8 @@ class StoreBookingRequest
                 'metadata' => [
                     'booking_service_setting_id' => $setting->id,
                     'service_id' => $setting->service_id,
+                    'assigned_user_id' => $assignedUser->id,
+                    'technician_routing_mode' => $setting->technician_routing_mode,
                 ],
             ]);
 
@@ -125,7 +156,10 @@ class StoreBookingRequest
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'raw_payload' => $request->except(['_token']),
-            'metadata' => ['honeypot_value' => $honeypot],
+            'metadata' => [
+                'honeypot_value' => $honeypot,
+                'technician_routing_mode' => $setting->technician_routing_mode,
+            ],
         ]);
 
         $bookingRequest->events()->create([

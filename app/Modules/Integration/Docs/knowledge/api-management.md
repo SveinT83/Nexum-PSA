@@ -9,6 +9,13 @@ Authorization: Bearer {token}
 Accept: application/json
 ```
 
+API-key creation is least-privilege. No scope is selected by default, an ordinary key requires at
+least one explicit scope, and full access requires a separate confirmation. Existing broad keys are
+flagged for review but are never changed automatically.
+
+Coordinator tokens are created from AI Privacy & Coordinator Governance. They bind to an approved
+workload, contain read abilities only, expire, and are policy-checked on every request.
+
 ## Scopes
 
 API keys are created with explicit scopes.
@@ -35,6 +42,8 @@ Implemented scopes:
 - `tickets.read`: list and view tickets.
 - `tickets.create`: create tickets through the ticket engine.
 - `tickets.update`: update ticket fields and status.
+- `tickets.portal.publish`: publish an eligible client Ticket through the one-way Customer Portal action.
+- `tickets.reply_customer`: send an idempotent public technician reply through normal Ticket email and workflow behavior.
 - `tickets.actions`: perform workflow-approved Ticket actions such as transition, escalation, close, planned scope, quote, review, evidence, conversion, and purchase need.
 - `tickets.workflow.read`: inspect the current state, missing requirements, available actions, transitions, and escalation paths.
 - `tickets.workflow.manage`: create and edit draft workflow definitions and preview active-Ticket migration.
@@ -86,6 +95,8 @@ Implemented scopes:
 - `data_exchange.import`: start import dry-runs for approved Data Exchange import targets.
 - `data_exchange.approve_import`: commit valid Data Exchange import previews through approved targets.
 - `report.read`: list and view available report definitions.
+- `worklog.read`: read aggregate or pseudonymized technician worklog summaries.
+- `time-entries.read`: read minimized time entries without names, titles, or notes.
 - `users.read`: list and view users, roles, and user profile metadata.
 - `users.create`: create users and queue invitations for pending users.
 - `users.update`: update user profiles, statuses, roles, and resend invitations.
@@ -157,6 +168,9 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/tickets`
 - `PUT /api/v1/tickets/{ticket}`
 - `PATCH /api/v1/tickets/{ticket}`
+- `POST /api/v1/tickets/{ticket}/external-messages`
+- `POST /api/v1/tickets/{ticket}/portal-visibility`
+- `POST /api/v1/tickets/{ticket}/messages`
 - `POST /api/v1/tickets/{ticket}/timer/start`
 - `POST /api/v1/tickets/{ticket}/time-entries`
 - `POST /api/v1/tickets/{ticket}/cost-entries`
@@ -487,6 +501,33 @@ Common create fields:
 - `urgency`
 
 The `{ticket}` route parameter is the public ticket key, for example `TD-2026-000001`.
+
+### Customer Portal Publication And Technician Replies
+
+`POST /api/v1/tickets/{ticket}/portal-visibility` accepts `portal_visible: true`. It requires the
+`tickets.portal.publish` token ability, an active internal user with `ticket.update`, a client-scoped
+Ticket, and the Ticket's active client Contact with an email address. Publication is one-way and
+idempotent: the first call returns `published_now: true`; a repeat returns `false` without another
+event or portal notification.
+
+`POST /api/v1/tickets/{ticket}/messages` creates only public technician `customer_reply` messages.
+It requires `tickets.reply_customer`, `ticket.reply_customer`, a Published Ticket, and a valid
+same-client reply Contact. Required fields are `body` and an integration-chosen `idempotency_key`
+of at most 100 characters. Optional fields are `reply_intent`, `reply_contact_id`, and `cc`.
+
+Supported reply intents are `customer_update`, `request_customer_input`, and `send_solution`.
+`send_solution` records the established solution facts; the coordinator then reads
+`workflow-decisions`, performs an allowed Resolved transition, and uses the existing close endpoint.
+
+The first successful reply returns HTTP 201 with `created: true`. Retrying the same Ticket, actor,
+key, and normalized payload returns the original message with HTTP 200 and `created: false`.
+Reusing the key for another payload or actor, or after soft deletion, returns HTTP 409. A replay
+never repeats customer email, portal notification, relationship synchronization, Ticket events, or
+workflow triggers.
+
+The external-message endpoint remains an inbound synchronization boundary. It stores external
+authorship, does not queue the normal technician customer email, and cannot inject reply intent or
+solution metadata.
 
 ## Task API
 

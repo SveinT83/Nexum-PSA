@@ -60,6 +60,28 @@
             </div>
         </div>
 
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Customer Portal Invitations</h2>
+            </div>
+            <div class="card-body">
+                <input type="hidden" name="send_portal_invitation_by_default" value="0">
+                <div class="form-check form-switch">
+                    <input
+                        id="send_portal_invitation_by_default"
+                        name="send_portal_invitation_by_default"
+                        type="checkbox"
+                        value="1"
+                        class="form-check-input @error('send_portal_invitation_by_default') is-invalid @enderror"
+                        @checked((bool) old('send_portal_invitation_by_default', $settings['send_portal_invitation_by_default']))
+                    >
+                    <label for="send_portal_invitation_by_default" class="form-check-label">Send customer portal invitation by default</label>
+                    <div class="form-text">Authorized technicians can override this for each new Contact. Invitations still require an active client relation and a valid email address.</div>
+                    @error('send_portal_invitation_by_default') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+            </div>
+        </div>
+
         <div class="card shadow-sm">
             <div class="card-header">
                 <h2 class="h6 mb-0">Relation Types</h2>
@@ -115,7 +137,7 @@
                 Duplicate protection by email and phone remains mandatory. These settings only control defaults and relation choices.
             </p>
             <p class="mb-0">
-                Language defaults will be added after the system-wide language settings decision.
+                Portal invitations use Customer Portal scope, duplicate-access, and email safety guards. Ordinary Contact edits never resend an invitation.
             </p>
         </div>
     </div>

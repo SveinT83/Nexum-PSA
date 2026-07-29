@@ -57,11 +57,33 @@ Customer replies:
 - Stamp `first_responded_at` the first time a technician sends a public reply.
 
 The CC field accepts manually entered email addresses and shows contact suggestions. Suggestions are
-ordered with active contacts from the same client first, grouped by site where available, then global
-Contact domain entries. Clicking a suggestion appends that email to the CC field without removing
-manually entered addresses.
+limited to other active contacts connected to the Ticket client. The Ticket contact and the currently
+selected reply recipient are omitted, and changing the reply recipient updates the compact suggestion
+list. Suggestions stay hidden until the CC field is focused or clicked. Clicking a suggestion appends
+that email without removing manually entered addresses or adding a duplicate.
 
 The queued job is `SendTicketReplyEmail`.
+
+### Customer Reply API
+
+Trusted coordinators can use `POST /api/v1/tickets/{ticket}/messages` with the dedicated
+`tickets.reply_customer` ability. The authenticated user must also be active and hold the normal
+`ticket.reply_customer` domain permission. The Ticket must already be Published, and the selected
+reply Contact must be active, have an email address, and belong to the Ticket Client.
+
+Every request requires a Ticket-scoped `idempotency_key`. The first successful request stores one
+public, user-authored `customer_reply`, queues one `SendTicketReplyEmail`, and runs the established
+portal notification, relationship sync, event, first-response, and workflow behavior. An identical
+retry by the same actor returns the original message without repeating those side effects. Reusing
+the key for another payload or actor, or after deleting the original message, returns HTTP 409.
+
+`reply_intent: send_solution` marks the public technician reply with the established solution
+metadata. It does not bypass workflow decisions: the coordinator still reads the allowed
+transitions, moves the Ticket to Resolved, and calls the guarded close endpoint.
+
+`external-messages` is not an alternative outbound path. It remains reserved for inbound external
+synchronization, records external authorship, suppresses the normal reply email, and strips
+untrusted solution or reply-intent metadata.
 
 ## Workflow Status Updates
 

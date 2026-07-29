@@ -52,7 +52,9 @@ Contact Settings is available from `Admin -> Clients -> Contact settings` at
 Access requires the `contact.manage_settings` permission.
 
 Admins can configure the default contact type, default contact status, default relation type, and
-which relation types are shown in the Contact form.
+which relation types are shown in the Contact form. They can also choose whether authorized Contact
+create forms select `Send customer portal invitation` by default. This invitation default is off on
+installations without an explicit saved setting.
 
 Duplicate protection by email and normalized phone remains mandatory and cannot be disabled from
 settings. This protects the Contact Domain from accidental duplicate records while still allowing
@@ -98,6 +100,17 @@ compatibility record so older ticket and client workflows continue to work durin
 The Role or title field suggests values that already exist on Contacts. The relation selector uses
 controlled values such as Contact, Primary contact, Technical contact, Billing contact, Site
 contact, Decision maker, Emergency contact, Manager, and CEO.
+
+Users with `customer_portal.invite` see a `Send customer portal invitation` switch while creating a
+Contact. Its initial state follows Contact Settings, but it can be changed for that Contact before
+save. The switch requires a valid email and an active Client relation. When it is selected, Contact
+saves the Contact and relation first, then CustomerPortal applies its existing Client/Site scope,
+email identity, active-access, pending-invitation, audit, and queued-email safeguards in the same
+transaction. The invitation grants the Customer Portal `Viewer` role for the selected scope.
+
+The switch is not rendered while editing a Contact, and ordinary edits never resend portal
+invitations. Users without `customer_portal.invite` cannot reveal or submit the option by changing
+the Livewire request.
 
 ## API Usage
 
@@ -231,6 +244,10 @@ before portal membership can be granted.
 Portal membership does not make `client_users` authoritative. `client_users` remains a compatibility
 bridge for older modules, while Customer Portal reads Contact relations and the explicit portal
 membership tables for access decisions.
+
+Authorized Contact creation can request a portal invitation explicitly. Contact owns only the
+create-form default and checkbox. CustomerPortal still owns invitation validation, audit, delivery,
+acceptance, accounts, and memberships.
 
 ## Out Of Scope For Phase 1
 

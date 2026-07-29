@@ -23,7 +23,7 @@ class ConfirmBookingRequest
 
     public function handle(BookingRequest $bookingRequest, User $actor): BookingRequest
     {
-        $bookingRequest->loadMissing(['setting.service', 'setting.assignedUser', 'service', 'assignedUser']);
+        $bookingRequest->loadMissing(['setting.service', 'setting.assignedUser', 'setting.eligibleUsers', 'service', 'assignedUser']);
 
         if (! $bookingRequest->isRequested()) {
             throw ValidationException::withMessages([
@@ -33,30 +33,35 @@ class ConfirmBookingRequest
 
         $setting = $bookingRequest->setting;
 
-        if (! $setting || ! $setting->assignedUser) {
-            throw ValidationException::withMessages([
-                'assigned_user_id' => 'The booking service needs an assigned technician before it can be confirmed.',
-            ]);
-        }
-
         if (! $bookingRequest->requested_starts_at || ! $bookingRequest->requested_ends_at) {
             throw ValidationException::withMessages([
                 'requested_starts_at' => 'The booking request does not have a selected slot.',
             ]);
         }
 
-        if (! $this->slots->isSlotAvailable(
-            $setting,
-            $bookingRequest->requested_starts_at->copy()->timezone($bookingRequest->timezone),
-            $bookingRequest->requested_ends_at->copy()->timezone($bookingRequest->timezone),
-        )) {
+        if (! $setting) {
             throw ValidationException::withMessages([
-                'requested_starts_at' => 'The selected booking time is no longer available.',
+                'booking_service_setting_id' => 'The booking service setting no longer exists.',
             ]);
         }
 
-        $bookingRequest = DB::transaction(function () use ($bookingRequest, $actor, $setting): BookingRequest {
-            $calendar = $this->calendarDefaults->ensurePersonalCalendar($setting->assignedUser);
+        $assignedUser = $this->slots->resolveUserForConfirmation(
+            $setting,
+            $bookingRequest->assignedUser,
+            $bookingRequest->requested_starts_at->copy()->timezone($bookingRequest->timezone),
+            $bookingRequest->requested_ends_at->copy()->timezone($bookingRequest->timezone),
+        );
+
+        if (! $assignedUser) {
+            throw ValidationException::withMessages([
+                'requested_starts_at' => 'No eligible technician is still available for the selected booking time.',
+            ]);
+        }
+
+        $previousAssignedUserId = $bookingRequest->assigned_user_id;
+
+        $bookingRequest = DB::transaction(function () use ($bookingRequest, $actor, $setting, $assignedUser, $previousAssignedUserId): BookingRequest {
+            $calendar = $this->calendarDefaults->ensurePersonalCalendar($assignedUser);
             $timezone = $bookingRequest->timezone ?: ($calendar->timezone ?: 'Europe/Oslo');
 
             $event = $this->storeCalendarEvent->handle([
@@ -83,6 +88,7 @@ class ConfirmBookingRequest
                     'booking_request_id' => $bookingRequest->id,
                     'booking_key' => $bookingRequest->booking_key,
                     'service_id' => $bookingRequest->service_id,
+                    'assigned_user_id' => $assignedUser->id,
                 ],
             ], $actor);
 
@@ -93,7 +99,7 @@ class ConfirmBookingRequest
             $bookingRequest->forceFill([
                 'status' => BookingRequest::STATUS_CONFIRMED,
                 'calendar_event_id' => $event->id,
-                'assigned_user_id' => $setting->assigned_user_id,
+                'assigned_user_id' => $assignedUser->id,
                 'confirmed_at' => now(),
                 'confirmed_by' => $actor->id,
             ])->save();
@@ -102,7 +108,11 @@ class ConfirmBookingRequest
                 'actor_id' => $actor->id,
                 'type' => 'confirmed',
                 'message' => 'Booking request confirmed and Calendar event created.',
-                'metadata' => ['calendar_event_id' => $event->id],
+                'metadata' => [
+                    'calendar_event_id' => $event->id,
+                    'assigned_user_id' => $assignedUser->id,
+                    'reassigned_from_user_id' => $previousAssignedUserId !== $assignedUser->id ? $previousAssignedUserId : null,
+                ],
             ]);
 
             return $bookingRequest->refresh();

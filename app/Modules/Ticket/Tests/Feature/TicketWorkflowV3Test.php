@@ -302,7 +302,7 @@ class TicketWorkflowV3Test extends TestCase
     }
 
     #[Test]
-    public function internal_solution_uses_the_ticket_pinned_workflow_version_and_records_the_step(): void
+    public function solution_marked_internal_note_uses_the_ticket_pinned_workflow_version_and_records_the_step(): void
     {
         $new = \App\Modules\Ticket\Models\TicketStatus::query()->where('slug', 'new')->firstOrFail();
         $inProgress = \App\Modules\Ticket\Models\TicketStatus::query()->where('slug', 'in-progress')->firstOrFail();
@@ -341,7 +341,8 @@ class TicketWorkflowV3Test extends TestCase
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.messages.store', $ticket), [
-                'type' => 'internal_solution',
+                'type' => 'internal_note',
+                'mark_as_solution' => '1',
                 'visibility' => 'internal',
                 'body' => 'The verified fix is documented internally.',
             ])
@@ -395,7 +396,8 @@ class TicketWorkflowV3Test extends TestCase
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.messages.store', $ticket), [
-                'type' => 'internal_solution',
+                'type' => 'internal_note',
+                'mark_as_solution' => '1',
                 'visibility' => 'internal',
                 'body' => 'Solution is ready, but this workflow requires a manual step.',
             ])

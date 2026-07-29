@@ -19,16 +19,16 @@
                 data-transparency="{{ $event['transparency'] }}"
                 data-visibility="{{ $event['visibility'] }}"
                 data-details-visible="{{ $event['details_visible'] ? '1' : '0' }}"
-                    data-is-recurring="{{ $event['is_recurring'] ? '1' : '0' }}">
+                data-is-recurring="{{ $event['is_recurring'] ? '1' : '0' }}">
                 <div class="row g-2 align-items-start">
                     <div class="col-md-3 small text-muted">
                         {{ $event['starts_at']->timezone($timezone)->format('D M j, H:i') }}<br>
                         {{ $event['ends_at']->timezone($timezone)->format('D M j, H:i') }}
                     </div>
-                    <div class="col-md-7">
+                    <div class="calendar-event-content col-md-7">
                         <div class="d-flex align-items-start justify-content-between gap-2">
-                            <div class="fw-semibold">{{ $event['title'] }}</div>
-                            <span class="badge text-bg-light border flex-shrink-0">{{ $event['ownership_badge'] }}</span>
+                            <div class="calendar-event-title fw-semibold">{{ $event['title'] }}</div>
+                            @include('calendar::Tech.partials.event-identity', ['event' => $event])
                         </div>
                         <div class="small text-muted">{{ $event['calendar_name'] }} · {{ ucfirst($event['visibility']) }} · {{ str_replace('_', ' ', $event['transparency']) }}</div>
                         @if($event['description'])
@@ -36,7 +36,10 @@
                         @endif
                     </div>
                     <div class="col-md-2 text-md-end">
-                        <span class="badge" style="background: {{ $event['calendar_color'] }}">{{ $event['calendar_name'] }}</span>
+                        <span class="calendar-calendar-identity badge border" aria-label="Calendar: {{ $event['calendar_name'] }}">
+                            <span class="calendar-owner-swatch" style="--owner-color: {{ $event['calendar_color'] }}" aria-hidden="true"></span>
+                            <span>{{ $event['calendar_name'] }}</span>
+                        </span>
                     </div>
                 </div>
             </button>

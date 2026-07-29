@@ -14,6 +14,7 @@ class SalesQuoteLine extends Model
         'source_type',
         'source_id',
         'downstream_type',
+        'billing_cadence',
         'is_optional',
         'sku',
         'name',
@@ -47,6 +48,18 @@ class SalesQuoteLine extends Model
         'margin_percent' => 'decimal:2',
         'snapshot' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (SalesQuoteLine $line): void {
+            if (! filled($line->billing_cadence)) {
+                $line->billing_cadence = $line->downstream_type === 'recurring_contract'
+                    || $line->section === 'monthly_services'
+                    ? 'monthly'
+                    : 'one_time';
+            }
+        });
+    }
 
     public function quoteVersion(): BelongsTo
     {

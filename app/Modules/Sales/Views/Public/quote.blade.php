@@ -29,53 +29,24 @@
             </div>
         </div>
 
-        @foreach(['intro_text', 'scope_text', 'assumptions_text', 'exclusions_text', 'next_steps_text'] as $field)
-            @if(filled($version->{$field}))
-                <div class="mt-4">
-                    <h2 class="h5">{{ ucwords(str_replace('_', ' ', str_replace('_text', '', $field))) }}</h2>
-                    <p class="mb-0">{!! nl2br(e($version->{$field})) !!}</p>
-                </div>
-            @endif
+        @foreach($quotePresentation['before_copy'] as $section)
+            <div class="mt-4">
+                <h2 class="h5">{{ $section['label'] }}</h2>
+                <p class="mb-0">{!! nl2br(e($section['text'])) !!}</p>
+            </div>
         @endforeach
     </div>
 
     <div class="bg-white border rounded p-4 mb-4">
         <h2 class="h5">Quote Lines</h2>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead>
-                <tr>
-                    <th>Description</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Unit ex VAT</th>
-                    <th class="text-end">Total ex VAT</th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach($version->lines as $line)
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">{{ $line->name }}</div>
-                            <div class="text-muted small">{{ $line->description }}</div>
-                        </td>
-                        <td class="text-end">{{ $line->quantity }}</td>
-                        <td class="text-end">{{ number_format((float) $line->unit_price_ex_vat, 2, ',', ' ') }}</td>
-                        <td class="text-end">{{ number_format((float) $line->line_total_ex_vat, 2, ',', ' ') }}</td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
-        <div class="d-flex justify-content-end">
-            <dl class="row mb-0 text-end" style="min-width: 22rem;">
-                <dt class="col-7">Subtotal ex VAT</dt>
-                <dd class="col-5">{{ number_format((float) $version->total_ex_vat, 2, ',', ' ') }}</dd>
-                <dt class="col-7">VAT</dt>
-                <dd class="col-5">{{ number_format((float) $version->vat_total, 2, ',', ' ') }}</dd>
-                <dt class="col-7">Total inc VAT</dt>
-                <dd class="col-5 fw-semibold">{{ number_format((float) $version->total_inc_vat, 2, ',', ' ') }}</dd>
-            </dl>
-        </div>
+        @include('sales::Partials.quote-groups', ['quotePresentation' => $quotePresentation])
+
+        @foreach($quotePresentation['after_copy'] as $section)
+            <div class="mt-4">
+                <h2 class="h5">{{ $section['label'] }}</h2>
+                <p class="mb-0">{!! nl2br(e($section['text'])) !!}</p>
+            </div>
+        @endforeach
     </div>
 
     @if($version->status === 'sent')

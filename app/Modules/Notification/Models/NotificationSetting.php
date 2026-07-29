@@ -23,6 +23,8 @@ class NotificationSetting extends Model
         'notification_type',
         'mail_enabled',
         'database_enabled',
+        'web_push_enabled',
+        'web_push_preview_enabled',
         'nextcloud_talk_enabled',
         'nextcloud_talk_webhook_url',
     ];
@@ -30,6 +32,8 @@ class NotificationSetting extends Model
     protected $casts = [
         'mail_enabled' => 'boolean',
         'database_enabled' => 'boolean',
+        'web_push_enabled' => 'boolean',
+        'web_push_preview_enabled' => 'boolean',
         'nextcloud_talk_enabled' => 'boolean',
     ];
 
@@ -84,6 +88,8 @@ class NotificationSetting extends Model
     public const DEFAULTS = [
         'mail_enabled' => true,
         'database_enabled' => true,
+        'web_push_enabled' => false,
+        'web_push_preview_enabled' => false,
         'nextcloud_talk_enabled' => false,
     ];
 

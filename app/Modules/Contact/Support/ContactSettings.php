@@ -53,6 +53,7 @@ class ContactSettings
         'default_relation_type' => 'contact',
         'default_contact_type' => 'person',
         'default_status' => 'active',
+        'send_portal_invitation_by_default' => false,
     ];
 
     public function get(): array
@@ -142,6 +143,7 @@ class ContactSettings
             'default_relation_type' => $defaultRelation,
             'default_contact_type' => $defaultType,
             'default_status' => $defaultStatus,
+            'send_portal_invitation_by_default' => (bool) $payload['send_portal_invitation_by_default'],
         ];
     }
 }

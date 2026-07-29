@@ -32,15 +32,26 @@
 
 @section('content')
 
-    @if($formView)
+    @if($selectedTemplate)
 
         <div class="card mt-4">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span class="fw-semibold">Document details</span>
+                <span class="small text-muted">
+                    Category: {{ $selectedCategory->name }} · Template: {{ $selectedTemplate->name }}
+                </span>
+            </div>
             <div class="card-body">
                 <form action="{{ route('tech.documentations.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="category_id" value="{{ $cat }}">
+                    <input type="hidden" name="template_id" value="{{ $selectedTemplate->id }}">
                     <input type="hidden" name="client_id" value="{{ session('active_client_id') }}">
                     <input type="hidden" name="site_id" value="{{ session('active_site_id') }}">
+
+                    @error('template_id')
+                        <div class="alert alert-danger py-2">{{ $message }}</div>
+                    @enderror
 
                     <div class="row">
                         <div class="col-md-12 mb-4">
@@ -121,6 +132,38 @@
                 </form>
             </div>
         </div>
+    @elseif($selectedCategory && $templates->count() > 1)
+        {{-- Template Selection --}}
+        <div class="card mt-3">
+            <div class="card-header">
+                <span class="fw-semibold">Choose template</span>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    {{ $selectedCategory->name }} has several active templates. Choose the schema for this document.
+                </p>
+
+                <form class="row g-3 align-items-end" action="{{ route('tech.documentations.create') }}" method="GET">
+                    <input type="hidden" name="cat" value="{{ $selectedCategory->id }}">
+
+                    <div class="col-md-8">
+                        <x-forms.select name="template_id" labelName="Template">
+                            <option value="">Choose a template...</option>
+                            @foreach($templates as $template)
+                                <option value="{{ $template->id }}" @selected((string) old('template_id') === (string) $template->id)>
+                                    {{ $template->name }}
+                                </option>
+                            @endforeach
+                        </x-forms.select>
+                        @error('template_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <button class="btn btn-primary" type="submit">Continue</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     @else
         {{-- Fallback: No category/template selected yet. Show the category picker. --}}
         <div class="alert alert-info mt-3">
@@ -129,24 +172,24 @@
         </div>
 
         <div class="row mt-3 mb-3">
-            <h2 class="col-12">Choose Category</h2>
+            <h2 class="h5 col-12">Choose category</h2>
         </div>
 
-        <form class="row align-items-center mt-3" action="{{ route('tech.documentations.create')  }}">
+        <form class="row g-3 align-items-end mt-3" action="{{ route('tech.documentations.create') }}" method="GET">
 
-            <div class="col-6">
-                <x-forms.select name="cat" >
-                    <option value="">Velg en kategori...</option>
+            <div class="col-md-8">
+                <x-forms.select name="cat" labelName="Category">
+                    <option value="">Choose a category...</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" {{ $cat == $category->slug ? 'selected' : '' }}>
+                        <option value="{{ $category->id }}" @selected((string) $cat === (string) $category->id)>
                             {{ $category->name }}
                         </option>
                     @endforeach
                 </x-forms.select>
             </div>
 
-            <div class="col-6">
-                <button class="btn btn-primary">Processed</button>
+            <div class="col-md-4">
+                <button class="btn btn-primary" type="submit">Continue</button>
             </div>
 
         </form>

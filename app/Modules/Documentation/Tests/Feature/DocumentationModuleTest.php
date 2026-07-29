@@ -48,7 +48,7 @@ class DocumentationModuleTest extends TestCase
     {
         $route = Route::getRoutes()->getByName('tech.documentations.index');
 
-        $this->assertSame(DocumentationController::class . '@index', $route->getActionName());
+        $this->assertSame(DocumentationController::class.'@index', $route->getActionName());
 
         $response = $this->actingAs($this->tech)
             ->get(route('tech.documentations.index', ['cat' => 'all']));
@@ -103,6 +103,160 @@ class DocumentationModuleTest extends TestCase
             ->assertSee('data-href="'.route('tech.documentations.show', Documentation::query()->where('title', 'Firewall Runbook')->first()).'"', false)
             ->assertDontSee('View</a>', false)
             ->assertDontSee('Edit</a>', false);
+    }
+
+    #[Test]
+    public function create_flow_automatically_uses_the_only_active_template_for_a_category(): void
+    {
+        $category = Category::query()->create([
+            'name' => 'Network',
+            'slug' => 'network',
+            'type' => 'documentation',
+            'is_active' => true,
+        ]);
+        $template = DocumentationTemplate::query()->create([
+            'category_id' => $category->id,
+            'name' => 'Network Overview',
+            'fields' => [
+                ['Name' => 'subnet', 'labelName' => 'Subnet', 'type' => 'text'],
+            ],
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.documentations.create', ['cat' => $category->id]))
+            ->assertOk()
+            ->assertViewHas('selectedTemplate', fn ($selected) => $selected?->is($template))
+            ->assertSee('Category: Network')
+            ->assertSee('Template: Network Overview')
+            ->assertSee('name="template_id" value="'.$template->id.'"', false)
+            ->assertSee('name="subnet"', false);
+
+        // Preserve the old single-template POST contract while the UI now sends the hidden ID.
+        $this->actingAs($this->tech)
+            ->post(route('tech.documentations.store'), [
+                'category_id' => $category->id,
+                'title' => 'Main network',
+                'subnet' => '10.20.0.0/24',
+            ])
+            ->assertRedirect();
+
+        $documentation = Documentation::query()->where('title', 'Main network')->firstOrFail();
+
+        $this->assertSame($template->id, $documentation->template_id);
+        $this->assertSame($template->fields, $documentation->template_snapshot_json);
+        $this->assertSame('10.20.0.0/24', $documentation->data_json['subnet']);
+    }
+
+    #[Test]
+    public function create_flow_requires_and_persists_a_selected_template_when_a_category_has_several(): void
+    {
+        $category = Category::query()->create([
+            'name' => 'Operations',
+            'slug' => 'operations-templates',
+            'type' => 'documentation',
+            'is_active' => true,
+        ]);
+        $runbook = DocumentationTemplate::query()->create([
+            'category_id' => $category->id,
+            'name' => 'Runbook',
+            'fields' => [
+                ['Name' => 'procedure', 'labelName' => 'Procedure', 'type' => 'textarea'],
+            ],
+            'is_active' => true,
+        ]);
+        $maintenance = DocumentationTemplate::query()->create([
+            'category_id' => $category->id,
+            'name' => 'Maintenance Window',
+            'fields' => [
+                ['Name' => 'window', 'labelName' => 'Maintenance Window', 'type' => 'text'],
+            ],
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.documentations.create', ['cat' => $category->id]))
+            ->assertOk()
+            ->assertViewHas('selectedTemplate', null)
+            ->assertSee('Choose template')
+            ->assertSee($runbook->name)
+            ->assertSee($maintenance->name)
+            ->assertDontSee('name="title"', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.documentations.create', [
+                'cat' => $category->id,
+                'template_id' => $maintenance->id,
+            ]))
+            ->assertOk()
+            ->assertViewHas('selectedTemplate', fn ($selected) => $selected?->is($maintenance))
+            ->assertSee('name="template_id" value="'.$maintenance->id.'"', false)
+            ->assertSee('name="window"', false)
+            ->assertDontSee('name="procedure"', false);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.documentations.store'), [
+                'category_id' => $category->id,
+                'template_id' => $maintenance->id,
+                'title' => 'Monthly maintenance',
+                'window' => 'First Sunday 02:00',
+            ])
+            ->assertRedirect();
+
+        $documentation = Documentation::query()->where('title', 'Monthly maintenance')->firstOrFail();
+
+        $this->assertSame($maintenance->id, $documentation->template_id);
+        $this->assertSame($maintenance->fields, $documentation->template_snapshot_json);
+        $this->assertSame('First Sunday 02:00', $documentation->data_json['window']);
+    }
+
+    #[Test]
+    public function store_rejects_a_template_that_is_inactive_or_belongs_to_another_category(): void
+    {
+        $category = Category::query()->create([
+            'name' => 'Customer',
+            'slug' => 'customer-docs',
+            'type' => 'documentation',
+            'is_active' => true,
+        ]);
+        DocumentationTemplate::query()->create([
+            'category_id' => $category->id,
+            'name' => 'Active Customer Template',
+            'fields' => [],
+            'is_active' => true,
+        ]);
+        $otherCategory = Category::query()->create([
+            'name' => 'Supplier',
+            'slug' => 'supplier-docs',
+            'type' => 'documentation',
+            'is_active' => true,
+        ]);
+        $wrongTemplate = DocumentationTemplate::query()->create([
+            'category_id' => $otherCategory->id,
+            'name' => 'Wrong Category Template',
+            'fields' => [],
+            'is_active' => true,
+        ]);
+        $inactiveTemplate = DocumentationTemplate::query()->create([
+            'category_id' => $category->id,
+            'name' => 'Inactive Customer Template',
+            'fields' => [],
+            'is_active' => false,
+        ]);
+
+        foreach ([$wrongTemplate, $inactiveTemplate] as $template) {
+            $this->actingAs($this->tech)
+                ->from(route('tech.documentations.create', ['cat' => $category->id]))
+                ->post(route('tech.documentations.store'), [
+                    'category_id' => $category->id,
+                    'template_id' => $template->id,
+                    'title' => 'Rejected document '.$template->id,
+                ])
+                ->assertRedirect(route('tech.documentations.create', ['cat' => $category->id]))
+                ->assertSessionHasErrors('template_id');
+        }
+
+        $this->assertSame(0, Documentation::query()->where('title', 'like', 'Rejected document%')->count());
     }
 
     #[Test]

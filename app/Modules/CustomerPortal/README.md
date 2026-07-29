@@ -36,6 +36,17 @@ Admin routes are loaded through the normal `/tech` module route glob:
 
 - `/tech/admin/system/customer-portal`
 
+## Invitation Sources
+
+Admins can create invitations from the Customer Portal admin page. An authorized Contact create
+form can also request an invitation when the technician leaves `Send customer portal invitation`
+selected. Contact owns the configurable create-form default; CustomerPortal owns the invitation.
+
+Every source uses `CreateCustomerPortalInvitation`, which enforces active Contact and Client state,
+Contact-to-Client/Site scope, email identity, existing active access, pending-invitation replacement,
+audit, and queued email delivery. Contact create uses the `Viewer` portal role. Ordinary Contact
+edits never create or resend an invitation.
+
 ## First Slice Behavior
 
 The foundation slice creates access and scope only. The portal dashboard intentionally shows no

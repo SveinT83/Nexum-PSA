@@ -12,6 +12,12 @@ Administrators configure the ticket system from Ticket Settings. The current set
 
 Inbound email can create new tickets or link messages to existing tickets. Ticket Rules and Assignment Rules then classify, route, and assign the work.
 
+Trusted API coordinators can complete the same customer-facing flow: publish an eligible Ticket,
+send one idempotent public technician reply, inspect workflow decisions, transition to Resolved,
+and close. Dedicated token abilities and the signed-in user's normal Ticket permissions both apply.
+Retries return the original reply without sending another customer email or rerunning workflow and
+portal side effects.
+
 ## Core Concepts
 
 Ticket Type:
@@ -88,6 +94,14 @@ Related tables store messages, attachments, events, time entries, actual and pla
 
 ## User-Facing Surfaces
 
+Client workspace Tickets tab:
+
+Technicians with both Client access and `ticket.view` can open a Client profile and use its Tickets
+tab to see all non-deleted Tickets linked directly to that Client. The compact list includes Ticket
+key, subject, status, priority, queue, owner, and last update. Its count badge uses the same result
+set as the rows, and every Ticket key opens the existing Ticket show page. Open and closed Tickets
+are both included; soft-deleted Tickets and Tickets from other Clients are never included.
+
 Ticket list:
 
 The list supports search, filters, sorting, unread and unassigned views, lifecycle filtering, SLA risk badges, owner display, bulk selection, merge controls, and merge suggestions.
@@ -129,22 +143,31 @@ Ticket API create, list, and show responses expose `work_context_id` and `work_c
 
 Customer Portal:
 
-Tickets are hidden from the Customer Portal until they are explicitly Published, or until they are
-created from the portal. Portal users can list, create, view, and reply to visible tickets for their
-active Client/Site membership. The portal shows customer-safe status labels and public ticket
-messages only. Internal notes, internal attachments, assignment details, time entries, cost entries,
-SLA internals, workflow internals, and technician audit details stay inside the technician workspace.
+Existing Tickets remain hidden from the Customer Portal until they are explicitly Published, and
+Tickets created from the portal are visible automatically. Portal users can list, create, view, and
+reply to visible tickets for their active Client/Site membership. The portal shows customer-safe
+status labels and public ticket messages only. Internal notes, internal attachments, assignment
+details, time entries, cost entries, SLA internals, workflow internals, and technician audit details
+stay inside the technician workspace.
 
-Ticket Settings controls whether manually created client tickets default to Unpublished or
-Published. The create form can override the default for the new ticket. Unpublished client tickets
-stay silent externally: they are not visible in the Customer Portal, do not send customer-facing
-portal notifications, do not allow `Reply to contact`, and cannot be escalated to a Nexum
-relationship. Internal notes remain available, and the ticket remains available for reporting.
+Ticket Settings controls whether manually created client tickets default to Published or
+Unpublished. Published is the clean-install and missing-setting fallback, while a valid saved
+administrator choice remains authoritative. The create form visibly shows both options, preselects
+the configured default, retains the selection after validation errors, and lets the technician
+override it for one Ticket. Tickets without a Client remain internal regardless of the submitted
+visibility.
 
-Technicians can publish an Unpublished ticket in the Customer Portal from the ticket show page.
-Published tickets cannot be unpublished from the normal ticket page. Portal replies are stored as
-public customer messages and trigger the customer-reply workflow without sending the customer's own
-reply back to the customer as an outbound email.
+A new Published client Ticket records `portal_visible_at` and the publishing technician, emits the
+existing Customer Portal notification, and becomes available for customer replies. Its initial
+description remains an internal note and does not queue a customer-reply email. Unpublished client
+Tickets stay silent externally: they are not visible in the Customer Portal, do not emit portal
+notifications, do not allow `Reply to contact`, and cannot be escalated to a Nexum relationship.
+Internal notes and reporting remain available.
+
+Technicians can publish an Unpublished Ticket from the Ticket show page. Published Tickets cannot be
+unpublished from the normal Ticket page. Portal replies are stored as public customer messages and
+trigger the customer-reply workflow without sending the customer's own reply back to the customer as
+an outbound email.
 
 Ticket settings:
 

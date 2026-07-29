@@ -32,10 +32,12 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
+use Tests\Concerns\ApprovesExternalAiForTests;
 use Tests\TestCase;
 
 class LeadIntelligenceModuleTest extends TestCase
 {
+    use ApprovesExternalAiForTests;
     use RefreshDatabase;
 
     private User $user;
@@ -460,7 +462,7 @@ class LeadIntelligenceModuleTest extends TestCase
         ]);
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
-        AiAgent::query()->create([
+        $agent = AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Lead Intelligence Agent',
             'slug' => 'lead-intelligence-agent',
@@ -469,6 +471,7 @@ class LeadIntelligenceModuleTest extends TestCase
             'default_domains' => ['lead_intelligence'],
             'is_active' => true,
         ]);
+        $this->approveExternalAiForTest($provider, $agent, $this->user);
 
         $this->actingAs($this->user)
             ->postJson(route('tech.lead-intelligence.segments.ai-draft'), [
@@ -1898,7 +1901,7 @@ class LeadIntelligenceModuleTest extends TestCase
         $provider->setSecret('api_key', 'test-key');
         $provider->save();
 
-        return AiAgent::query()->create([
+        $agent = AiAgent::query()->create([
             'ai_provider_id' => $provider->id,
             'name' => 'Lead Intelligence Agent',
             'slug' => 'lead-intelligence-agent',
@@ -1907,5 +1910,9 @@ class LeadIntelligenceModuleTest extends TestCase
             'default_domains' => ['lead_intelligence'],
             'is_active' => true,
         ]);
+
+        $this->approveExternalAiForTest($provider, $agent, $this->user);
+
+        return $agent;
     }
 }

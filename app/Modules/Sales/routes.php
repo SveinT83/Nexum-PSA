@@ -1,11 +1,11 @@
 <?php
 
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use App\Modules\Sales\Controllers\Admin\SalesSettingsController;
 use App\Modules\Sales\Controllers\Portal\PortalSalesQuoteController;
 use App\Modules\Sales\Controllers\PublicQuoteController;
 use App\Modules\Sales\Controllers\Tech\LeadsController;
 use App\Modules\Sales\Controllers\Tech\SalesController;
-use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use Illuminate\Support\Facades\Route;
 
 if (($salesPortalRoutes ?? false) === true) {
@@ -68,6 +68,12 @@ Route::get('/sales/{sale}', [SalesController::class, 'show'])
 Route::patch('/sales/{sale}', [SalesController::class, 'update'])
     ->name('sales.update');
 
+Route::post('/sales/{sale}/lost', [SalesController::class, 'markLost'])
+    ->name('sales.lost');
+
+Route::post('/sales/{sale}/reopen', [SalesController::class, 'reopen'])
+    ->name('sales.reopen');
+
 Route::post('/sales/{sale}/activities', [SalesController::class, 'storeActivity'])
     ->name('sales.activities.store');
 
@@ -82,6 +88,9 @@ Route::post('/sales/{sale}/stakeholders', [SalesController::class, 'storeStakeho
 
 Route::post('/sales/{sale}/quote', [SalesController::class, 'ensureQuote'])
     ->name('sales.quote.ensure');
+
+Route::patch('/sales/{sale}/quote/details', [SalesController::class, 'updateQuoteDetails'])
+    ->name('sales.quote.details.update');
 
 Route::post('/sales/{sale}/quote/lines', [SalesController::class, 'addQuoteLine'])
     ->name('sales.quote.lines.store');

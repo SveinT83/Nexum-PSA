@@ -27,7 +27,9 @@ class ContactSettingsController extends Controller
             'enabled_relation_types' => ['required', 'array', 'min:1'],
             'enabled_relation_types.*' => ['string', Rule::in(array_keys(ContactSettings::RELATION_OPTIONS))],
             'default_relation_type' => ['required', 'string', Rule::in((array) $request->input('enabled_relation_types', []))],
+            'send_portal_invitation_by_default' => ['nullable', 'boolean'],
         ]);
+        $validated['send_portal_invitation_by_default'] = $request->boolean('send_portal_invitation_by_default');
 
         $settings->update($validated);
 
