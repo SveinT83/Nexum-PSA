@@ -48,7 +48,7 @@ class BookStackClient
             $response = $this->getWithRateLimit('/api/books', [
                 'count' => 1,
             ]);
-        } catch (ConnectionException $exception) {
+        } catch (ConnectionException|RuntimeException $exception) {
             return [
                 'success' => false,
                 'message' => $exception->getMessage(),
@@ -119,7 +119,7 @@ class BookStackClient
     /**
      * Create a shelf in BookStack.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function createShelf(array $payload): array
@@ -134,7 +134,7 @@ class BookStackClient
     /**
      * Update shelf metadata or book membership in BookStack.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function updateShelf(int|string $shelfId, array $payload): array
@@ -159,7 +159,7 @@ class BookStackClient
     /**
      * Create a book in BookStack.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function createBook(array $payload): array
@@ -174,7 +174,7 @@ class BookStackClient
     /**
      * Update an existing book in BookStack.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function updateBook(int|string $bookId, array $payload): array
@@ -240,7 +240,7 @@ class BookStackClient
     /**
      * Create a chapter in BookStack.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function createChapter(array $payload): array
@@ -255,7 +255,7 @@ class BookStackClient
     /**
      * Update an existing chapter in BookStack.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function updateChapter(int|string $chapterId, array $payload): array
@@ -330,7 +330,7 @@ class BookStackClient
     /**
      * Create a page in BookStack.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function createPage(array $payload): array
@@ -345,7 +345,7 @@ class BookStackClient
     /**
      * Update an existing page in BookStack.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function updatePage(int|string $pageId, array $payload): array
@@ -392,7 +392,6 @@ class BookStackClient
      *
      * @param  string  $path  API endpoint path (e.g. '/api/pages')
      * @param  array<string,mixed>  $query  Query parameters
-     * @return Response
      *
      * @throws RuntimeException On non-2xx responses after exhausting retries
      * @throws ConnectionException On network failures
@@ -407,7 +406,6 @@ class BookStackClient
      *
      * @param  string  $path  API endpoint path
      * @param  array<string,mixed>  $payload  JSON body
-     * @return Response
      *
      * @throws RuntimeException On non-2xx responses after exhausting retries
      * @throws ConnectionException On network failures
@@ -422,7 +420,6 @@ class BookStackClient
      *
      * @param  string  $path  API endpoint path
      * @param  array<string,mixed>  $payload  JSON body
-     * @return Response
      *
      * @throws RuntimeException On non-2xx responses after exhausting retries
      * @throws ConnectionException On network failures
@@ -436,7 +433,6 @@ class BookStackClient
      * Send a DELETE request with inter-request delay and 429 retry/backoff.
      *
      * @param  string  $path  API endpoint path
-     * @return Response
      *
      * @throws RuntimeException On non-2xx responses after exhausting retries
      * @throws ConnectionException On network failures
@@ -451,7 +447,7 @@ class BookStackClient
      *
      * Enforces a minimum delay between requests (DEFAULT_REQUEST_DELAY_SECONDS)
      * to stay under BookStack's 180 req/min rate limit. On HTTP 429, retries
-     * with exponential backoff up to maxRetries attempts.
+     * with exponential backoff up to maxRetries retries.
      *
      * @param  'GET'|'POST'|'PUT'|'DELETE'  $method
      * @param  string  $path  API endpoint path
@@ -465,6 +461,7 @@ class BookStackClient
     {
         $url = $this->endpoint($path);
         $attempts = 0;
+        $retryCount = 0;
 
         while (true) {
             $this->paceRequest();
@@ -481,24 +478,25 @@ class BookStackClient
             $attempts++;
 
             if ($response->status() === 429) {
-                if ($attempts >= $this->maxRetries) {
+                if ($retryCount >= $this->maxRetries) {
                     $retryAfter = $response->header('Retry-After');
-                    $waited = self::RETRY_BASE_DELAY_SECONDS * (2 ** $this->maxRetries);
+                    $attemptLabel = $attempts === 1 ? 'attempt' : 'attempts';
                     throw new RuntimeException(
-                        "BookStack API rate limit exceeded after {$attempts} attempts"
-                        ." (waited ~{$waited}s total). Consider increasing sync_interval_minutes"
-                        ." or reducing the number of synced pages."
+                        "BookStack API rate limit exceeded after {$attempts} {$attemptLabel}."
+                        .' Consider increasing sync_interval_minutes'
+                        .' or reducing the number of synced pages.'
                         .($retryAfter ? " Retry-After header: {$retryAfter}s." : '')
                     );
                 }
 
-                $backoffSeconds = self::RETRY_BASE_DELAY_SECONDS * (2 ** ($attempts - 1));
+                $backoffSeconds = self::RETRY_BASE_DELAY_SECONDS * (2 ** $retryCount);
                 $retryAfter = $response->header('Retry-After');
 
                 if ($retryAfter && is_numeric($retryAfter)) {
                     $backoffSeconds = max($backoffSeconds, (float) $retryAfter);
                 }
 
+                $retryCount++;
                 Sleep::for($backoffSeconds)->seconds();
 
                 continue;
