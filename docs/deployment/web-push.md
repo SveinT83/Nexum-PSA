@@ -18,6 +18,10 @@ Production rollout remains blocked until named human browser/device review is co
 - Stable VAPID keys and a stable HTTPS or `mailto:` subject can be stored in the environment's
   approved secret store.
 
+For Dev browser verification, use a real trusted HTTPS vhost and the checklist in
+`docs/deployment/dev-https-pwa-vhost.md`. Service Worker registration and Web Push permission checks
+are not valid final acceptance when the browser rejects the certificate.
+
 The VAPID private key is a long-lived signing secret. Do not print it in terminals captured by
 automation, commit it, copy it into documentation, or rotate it during a routine deploy. Replacing
 the VAPID key pair invalidates existing browser subscriptions and requires users to register again.

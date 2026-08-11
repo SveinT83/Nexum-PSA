@@ -27,6 +27,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-11-003 | One responsive Nexum PWA final browser acceptance | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-001 | Intake final routing and review completion | Pending | 2026-08-11 |  |  |
 | HR-2026-07-29-013 | Production Ticket external-message API route | Pending | 2026-07-29 |  |  |
@@ -149,6 +150,67 @@ Reviewed date: 2026-07-28
 Result / notes: Approved by Svein Tore in the Codex task after reviewing the completed work.
 
 ## Open Reviews
+
+### HR-2026-08-11-003 - One Responsive Nexum PWA Final Browser Acceptance
+
+Status: Pending
+Added: 2026-08-11
+Environment: trusted HTTPS Dev vhost, then production beta before final release
+Related: GitHub Discussion #169, `docs/rfc/2026-07-04-one-responsive-nexum-pwa.md`,
+`docs/deployment/dev-https-pwa-vhost.md`, `HR-2026-07-24-001`, and `HR-2026-08-11-002`
+
+Scope: final human acceptance for Nexum as one responsive installable PWA. The implemented code
+foundation covers one shared Tech shell with mobile offcanvas navigation, PWA metadata on internal,
+portal, and public entry surfaces, online-first service-worker behavior, static offline fallback,
+mobile My Day, and Notification-owned Web Push/read-sync slices. This review does not approve
+offline writes, native apps, a separate mobile frontend, or unfinished workflow controls.
+
+Deployment actions: create a trusted HTTPS Dev vhost for `/var/Projects/tdPSA/public`, align
+`APP_URL` and secure-session settings with that host, run `php artisan optimize:clear`, restart queue
+workers, verify `/sw.js`, `/manifest.json`, and `/offline.html` over HTTPS, and then run the browser
+checks below. Use `docs/deployment/dev-https-pwa-vhost.md` for the exact vhost checklist.
+
+Risks: browser PWA behavior cannot be accepted from an untrusted certificate; mobile layout defects
+can hide required actions even when desktop tests pass; Service Worker scope or cache mistakes can
+break navigation or cache private data; and Web Push checks must still respect the narrower privacy
+and lifecycle reviews in `HR-2026-07-24-001` and `HR-2026-08-11-002`.
+
+Automated verification: the System PWA platform contract test passes with 3 tests and 34 assertions.
+It verifies PWA head and viewport coverage across the Tech shell, guest shell, Customer Portal,
+Booking, Intake, public quote, and public contract entry surfaces; the Tech shell's shared desktop
+and mobile navigation contract; and the shared online-first service worker's fetch, push, click, and
+message handlers. The combined PWA/My Day/Web Push foundation run passes with 23 tests and 179
+assertions, and the System security header suite passes with 3 tests and 19 assertions.
+Browser/device verification remains blocked until the trusted HTTPS Dev vhost is available.
+
+Human checks:
+
+- [ ] Open the new HTTPS Dev host in Chrome/Edge desktop and confirm the certificate is trusted and
+  the page has no mixed-content errors.
+- [ ] Confirm `/sw.js`, `/manifest.json`, and `/offline.html` load over HTTPS without
+  authentication.
+- [ ] Install Nexum as a PWA where the browser supports it and confirm the app name, icon, start URL,
+  standalone display, and theme color are coherent.
+- [ ] At desktop width, confirm the Tech shell keeps ordinary sidebar/workspace navigation and the
+  existing routes.
+- [ ] At 360x780, 390x844, 430x932, 768x1024, 1024x768, and desktop widths, confirm the Tech shell
+  has no incoherent text/action overlap and the mobile hamburger/offcanvas navigation is usable.
+- [ ] Confirm notifications, user/profile controls, breadcrumbs/page title context, and primary
+  page actions remain reachable on mobile.
+- [ ] Open `/tech/my-day` on mobile width and confirm assigned Tickets, Tasks, and Calendar items are
+  visible, link to the same ordinary routes, and do not expose an offline-write promise.
+- [ ] Open representative Customer Portal, Booking, Intake, public quote, and public contract pages
+  and confirm they keep viewport/PWA behavior without exposing internal navigation or data.
+- [ ] After loading the app once, simulate offline navigation and confirm Nexum shows only the static
+  offline fallback for failed navigations and does not show cached private application pages.
+- [ ] Confirm no separate mobile Nexum route, mobile-only permission bypass, native-app prompt, or
+  unfinished offline/sync workflow is exposed as finished behavior.
+- [ ] Complete or reference the Web Push device lifecycle checks in `HR-2026-07-24-001`.
+- [ ] Complete or reference the inbound Email/customer-reply delivery checks in `HR-2026-08-11-002`.
+
+Reviewer:
+Reviewed date:
+Result / notes:
 
 ### HR-2026-08-11-002 - Inbound Email Web Push Delivery And Source Read-Sync
 
@@ -1312,6 +1374,9 @@ Review notes:
 - 2026-08-11, Codex: inbound Email/customer-reply Web Push and source read-sync were implemented as
   separate completed slices under `HR-2026-08-11-002`. This entry remains focused on browser/device
   lifecycle and service-worker foundation checks.
+- 2026-08-11, Svein Tore: Dev will get a new real-domain HTTPS vhost because browser Service Worker
+  and Web Push tests cannot be accepted against the old untrusted Dev certificate. Retest this entry
+  on that trusted HTTPS Dev vhost before production enablement.
 
 Human checks:
 
