@@ -27,6 +27,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-001 | Intake final routing and review completion | Pending | 2026-08-11 |  |  |
 | HR-2026-07-29-013 | Production Ticket external-message API route | Pending | 2026-07-29 |  |  |
 | HR-2026-07-29-012 | AI privacy governance and coordinator worklog API | Pending | 2026-07-29 |  |  |
@@ -148,6 +149,71 @@ Reviewed date: 2026-07-28
 Result / notes: Approved by Svein Tore in the Codex task after reviewing the completed work.
 
 ## Open Reviews
+
+### HR-2026-08-11-002 - Inbound Email Web Push Delivery And Source Read-Sync
+
+Status: Pending
+Added: 2026-08-11
+Environment: Dev
+Related: GitHub Discussion #169, `docs/rfc/2026-07-23-web-push-inbound-email-alerts.md`,
+`docs/feature-slices/2026-07-23-web-push-internal-email-alerts.md`, and
+`docs/feature-slices/2026-07-24-web-push-read-sync-rollout-hardening.md`
+
+Scope: Notification now owns canonical per-EmailMessage/user delivery identities, the two finished
+event types Customer reply on my Tickets and New inbound Email, explicit Web Push preferences for
+implemented payloads, default-off Web Push and preview controls, privacy-safe push payloads,
+extension-ready account/queue subscription scopes, Notification-owned open redirects, source read
+synchronization from authorized Ticket and Email views, and shared service-worker closure of visible
+notifications by validated Nexum tags.
+
+Deployment actions: deploy the code, run `php artisan migrate --force`, run `php artisan
+optimize:clear`, restart queue workers, and keep `WEBPUSH_ENABLED=false` in production until browser
+and end-to-end review passes. Verify the `email,default` queue worker and the active Email poller or
+scheduler path in the target environment before enabling inbound Web Push.
+
+Risks: inbound notification retries must not duplicate alerts; Ticket owner and inbox subscriber
+paths must not broadcast to unauthorized users; lock-screen payloads must not expose bodies,
+attachments, client identity, or full sender addresses; push/read-sync must never mark Ticket,
+TicketMessage, or Email operational unread state; and visible service-worker notification closure
+must not accept arbitrary cross-origin or malformed tags.
+
+Automated verification: focused Notification inbound Web Push tests pass with 6 tests and 33
+assertions. Web Push foundation tests pass with 19 tests and 135 assertions. Notification system
+tests pass with 20 tests and 71 assertions. Email inbound automation tests pass with 13 tests and 74
+assertions. The complete Email feature file passes with 46 tests and 287 assertions, and the Email
+IMAP unit tests pass with 2 tests and 5 assertions. The complete Ticket feature file passes with 112
+tests and 810 assertions. Migration `2026_08_11_130000_add_inbound_email_notification_delivery_identity`
+ran on Dev in batch 66; `optimize:clear`, Pint, PHP syntax checks, `git diff --check`, and
+Knowledge sync for Email, Notification, and System completed. The queued BookStack push job was
+processed, and no `PushPendingKnowledgeToBookStack` job or failed job remained.
+
+Human checks:
+
+- [ ] Register one supported browser/PWA device and confirm the Web Push device inventory still
+  exposes only safe device summary fields.
+- [ ] Enable Web Push for Customer reply on my Tickets and confirm no browser permission prompt
+  appears until the device Enable action is clicked.
+- [ ] Send or process one safe inbound customer reply that links to a Ticket owned by the reviewer;
+  confirm exactly one in-app notification and one browser push are created.
+- [ ] Re-run the same inbound processing path and confirm no duplicate notification or push appears.
+- [ ] Click the push and confirm Nexum focuses or opens the linked Ticket after normal auth.
+- [ ] Open the linked Ticket directly after ignoring a push and confirm the matching notification is
+  marked read without clearing `tickets.is_unread` or `ticket_messages.read_at`.
+- [ ] Enable New inbound Email for an authorized inbox reviewer, process one unlinked inbound Email,
+  and confirm the push opens the Email inbox detail.
+- [ ] Link that inbox Email to a Ticket after the notification exists, click the old notification,
+  and confirm it redirects to the linked Ticket and marks only the matching notification read.
+- [ ] Confirm an unauthorized user or user without the relevant setting does not receive the Ticket
+  owner or inbox/triage notification.
+- [ ] Confirm default push text is generic, preview shows only sender display name plus truncated
+  subject when enabled, and no body, attachment name, client identity, full email address, endpoint,
+  key, token, or VAPID secret appears.
+- [ ] Confirm existing PWA install, ordinary navigation, static-asset caching, and offline fallback
+  still work after the service-worker message-handler update.
+
+Reviewer:
+Reviewed date:
+Result / notes:
 
 ### HR-2026-08-11-001 - Intake Final Routing And Review Completion
 
@@ -1200,7 +1266,8 @@ Scope: globally guarded standards-based Web Push transport; stable VAPID configu
 shared service worker; explicit current-device registration; privacy-safe own-device inventory;
 current-device generic self-test; user and permission-guarded administrator revocation; durable
 secret-free subscription lifecycle audit; automatic disabled-user cleanup; and default-off
-Notification preference fields that do not expose unsupported business-event controls.
+Notification preference fields. Later Slice 2 now exposes Web Push controls only for implemented
+business-event payloads.
 
 Deployment actions: install the locked Composer dependencies; configure stable
 `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT`; keep production
@@ -1242,6 +1309,9 @@ Review notes:
   to the real production beta domain, which already has trusted SSL. The Dev certificate will not
   be treated as a Slice 1 code defect. This deferral is not approval; all relevant browser,
   installation, privacy, and delivery checks remain open until production-beta verification.
+- 2026-08-11, Codex: inbound Email/customer-reply Web Push and source read-sync were implemented as
+  separate completed slices under `HR-2026-08-11-002`. This entry remains focused on browser/device
+  lifecycle and service-worker foundation checks.
 
 Human checks:
 

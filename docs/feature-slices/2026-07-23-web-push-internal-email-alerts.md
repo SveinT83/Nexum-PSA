@@ -1,11 +1,26 @@
 # Feature Slice 2: Inbound Email Web Push Delivery
 
-Status: Draft
+Status: Done
 Date: 2026-07-23
 Parent: `docs/rfc/2026-07-23-web-push-inbound-email-alerts.md`
 ADR: `docs/adr/2026-07-23-notification-owned-web-push-channel.md`
 Prerequisite: `docs/feature-slices/2026-07-24-web-push-channel-device-foundation.md`
 Owner: Svein / Codex
+
+## Implementation Progress
+
+Implemented on Dev on 2026-08-11. Notification now owns canonical inbound Email notification
+delivery identities, recipient resolution, per-type Web Push preferences, privacy-safe payloads,
+and delivery fan-out through the existing shared Web Push channel.
+
+The implementation creates at most one canonical notification per EmailMessage/user, keeps the two
+new event types defaulted to in-app/database with extra channels off, supports explicit
+inbox/triage subscribers, keeps the Ticket owner path independent from the all-inbound Email path,
+and stores the underlying account/queue scope model for later UI filtering. Web Push payloads are
+generic by default and may include only sender display name plus truncated subject when the user
+enables preview.
+
+Human delivery/browser review is tracked separately in `HR-2026-08-11-002`.
 
 ## Goal
 
@@ -45,8 +60,9 @@ When a non-spam inbound Email finishes classification and routing:
 - Add type-specific defaults: database/in-app on; email, Nextcloud Talk, SMS, and Web Push off.
 - Keep all existing notification-type defaults unchanged.
 - Add the default-off, per-user/per-type limited-preview preference behavior.
-- Add Notification-owned scope persistence supporting `all`, selected Email accounts, and selected
-  Ticket queues. Feature Slice 2 exposes only the global/all inbox choice.
+- Add Notification-owned scope persistence supporting all authorized Email by default and selected
+  Email accounts or Ticket queues when scope rows exist. Feature Slice 2 exposes only the global/all
+  inbox choice.
 - Emit one domain event only after Email classification and routing complete.
 - Suppress spam and hard-stop archived messages.
 - Include linked/new Tickets and non-archived unlinked inbox/triage messages.
@@ -155,5 +171,6 @@ Manual:
 - Each EmailMessage/user produces at most one canonical notification.
 - Payloads and logs contain no prohibited private content or subscription secrets.
 - Push failures do not duplicate or roll back Email/Ticket state.
-- Focused Dev tests and end-to-end Email-to-push checks pass.
+- Focused Dev tests pass; end-to-end Email-to-push browser delivery remains a
+  named human review check.
 - Human review remains Pending until a named reviewer completes the slice checks.

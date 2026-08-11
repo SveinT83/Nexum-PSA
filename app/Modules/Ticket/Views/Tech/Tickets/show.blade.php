@@ -1570,6 +1570,7 @@
         });
     });
 </script>
+@include('partials.notification-close-tags', ['closedNotificationTags' => $closedNotificationTags ?? []])
 @endsection
 
 @section('sidebar')

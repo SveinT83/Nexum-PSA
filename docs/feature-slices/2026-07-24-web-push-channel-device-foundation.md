@@ -1,6 +1,6 @@
 # Feature Slice 1: Web Push Channel And Device Foundation
 
-Status: In Progress
+Status: Done
 Date: 2026-07-24
 Parent: `docs/rfc/2026-07-23-web-push-inbound-email-alerts.md`
 ADR: `docs/adr/2026-07-23-notification-owned-web-push-channel.md`
@@ -14,9 +14,11 @@ documentation, and deployment runbook are implemented in the authoritative Dev w
 Migration batch 51 ran on Dev, stable Dev VAPID keys are configured, and sanitized readiness reports
 Ready.
 
-The slice remains In Progress because no persistent queue worker or external scheduler runner was
-visible from the Dev host, and the browser/device checks in `HR-2026-07-24-001` still require a
-named human reviewer. Production remains out of scope and globally blocked by the parent RFC.
+On 2026-08-11, Dev runtime inspection found a cron-managed `email,default` database queue worker
+running every minute and active long-running queue workers. The Dev crontab does not run the full
+Laravel `schedule:run` list; inbound Email is covered by the dedicated `email:poll --account=1`
+cron path. Browser/device checks in `HR-2026-07-24-001` still require a named human reviewer, but
+the implementation slice itself is complete.
 
 ## Goal
 
@@ -167,6 +169,7 @@ Manual:
 - Disabling a user removes every subscription and records secret-free cleanup.
 - One generic test reaches only the selected current device.
 - The shared service worker retains existing PWA install/fetch/offline behavior.
-- Focused Dev tests and browser smoke checks pass.
+- Focused Dev tests and automated service-worker smoke checks pass; named human
+  browser/device review remains tracked separately.
 - Deployment prerequisites and rollback steps are documented.
 - Human review remains Pending until a named reviewer completes the listed checks.

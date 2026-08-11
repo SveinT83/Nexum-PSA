@@ -5,6 +5,7 @@ namespace App\Modules\Email\Jobs;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Services\InboundEmailRuleEngine;
 use App\Modules\Email\Services\InboundEmailSignalClassifier;
+use App\Modules\Notification\Actions\DispatchInboundEmailNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,19 +20,34 @@ class ProcessInboundRules implements ShouldQueue
 
     public function __construct(public int $emailMessageId) {}
 
-    public function handle(InboundEmailRuleEngine $ruleEngine, InboundEmailSignalClassifier $classifier): void
-    {
+    public function handle(
+        InboundEmailRuleEngine $ruleEngine,
+        InboundEmailSignalClassifier $classifier,
+        DispatchInboundEmailNotification $dispatchInboundEmailNotification,
+    ): void {
         $message = EmailMessage::find($this->emailMessageId);
-        if (! $message || $message->ticket_id !== null) {
+        if (! $message) {
+            return;
+        }
+
+        if ($message->ticket_id !== null) {
+            $dispatchInboundEmailNotification->handle($message);
+
             return;
         }
 
         if ($ruleEngine->processPreclassification($message)) {
+            if ($fresh = $message->fresh()) {
+                $dispatchInboundEmailNotification->handle($fresh);
+            }
+
             return;
         }
 
         $message->refresh();
         if ($message->ticket_id !== null) {
+            $dispatchInboundEmailNotification->handle($message);
+
             return;
         }
 
@@ -44,5 +60,9 @@ class ProcessInboundRules implements ShouldQueue
         }
 
         $ruleEngine->process($message);
+
+        if ($fresh = $message->fresh()) {
+            $dispatchInboundEmailNotification->handle($fresh);
+        }
     }
 }

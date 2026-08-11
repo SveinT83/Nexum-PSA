@@ -59,6 +59,16 @@ Ticket routing. `preclassification` is opt-in for narrow, deterministic handoffs
 the generic classifier. A matching preclassification rule can stop later classification and Ticket
 routing; nonmatching messages continue through the unchanged normal flow.
 
+After inbound classification and routing completes, Email calls the Notification-owned inbound
+alert dispatcher. Notification decides whether the linked Ticket owner or explicit inbox/triage
+subscribers receive Customer reply on my Tickets or New inbound Email alerts. That dispatcher is
+idempotent by EmailMessage and user, so repeated rule processing does not create duplicate
+notifications.
+
+Email remains responsible for message storage, state, spam/archive behavior, rule execution, and
+Ticket routing. Notification owns channel preferences, Web Push payloads, device delivery,
+canonical notification read state, and source read synchronization.
+
 ## Trusted Sender Authentication
 
 A visible `From` address is untrusted input and is never sufficient evidence for automatic supplier

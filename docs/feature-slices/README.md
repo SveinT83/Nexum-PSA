@@ -30,8 +30,9 @@ optional budget slices. Create each detailed slice before implementing it.
 
 ## Web Push And Inbound Email Alerts
 
-1. `2026-07-24-web-push-channel-device-foundation.md` (In Progress: implemented on Dev; queue runtime and human browser review pending)
-2. `2026-07-23-web-push-internal-email-alerts.md` (Draft)
-3. `2026-07-24-web-push-read-sync-rollout-hardening.md` (Draft)
+1. `2026-07-24-web-push-channel-device-foundation.md` (Done; human browser/device review remains open)
+2. `2026-07-23-web-push-internal-email-alerts.md` (Done)
+3. `2026-07-24-web-push-read-sync-rollout-hardening.md` (Done)
 
-Implement in order after RFC approval; do not enable production inbound Web Push between slices.
+Do not enable production inbound Web Push until the named human checks in `HR-2026-07-24-001` and
+`HR-2026-08-11-002` are complete.

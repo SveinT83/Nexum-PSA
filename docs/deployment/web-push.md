@@ -1,10 +1,10 @@
 # Web Push Deployment And Operations
 
-This runbook covers the Notification-owned Web Push channel and device foundation from Feature
-Slice 1. It does not enable inbound Email, Ticket reply, or another business-event push.
+This runbook covers the Notification-owned Web Push channel, device foundation, inbound Email
+business-event delivery, and source read-sync slices.
 
-Production rollout remains blocked until all Web Push RFC slices and named human review are
-complete. Keep `WEBPUSH_ENABLED=false` until the environment checks below pass.
+Production rollout remains blocked until named human browser/device review is complete. Keep
+`WEBPUSH_ENABLED=false` until the environment checks below pass.
 
 ## Prerequisites
 
@@ -13,7 +13,8 @@ complete. Keep `WEBPUSH_ENABLED=false` until the environment checks below pass.
 - The database is backed up and migrations can run normally.
 - The existing shared `/sw.js` is reachable without authentication.
 - A Laravel queue worker is running and can be restarted after deploy.
-- The external once-per-minute `php artisan schedule:run` runner is verified separately.
+- The external once-per-minute Email poller/scheduler path and the queue that handles `email` and
+  `default` jobs are verified separately.
 - Stable VAPID keys and a stable HTTPS or `mailto:` subject can be stored in the environment's
   approved secret store.
 
@@ -80,8 +81,9 @@ switch false during migration and initial verification.
 10. Clear configuration cache and restart queue workers again.
 11. Confirm the admin readiness view reports Ready without exposing any private key.
 
-No business-event preference is enabled by this deployment. The two new notification-setting
-columns default to false.
+Inbound Email and Ticket customer-reply event rows default to in-app/database delivery. Email,
+Nextcloud Talk, and Web Push remain disabled until each user explicitly enables the channel for the
+event type.
 
 ## Dev Smoke Test
 
@@ -98,6 +100,17 @@ Use a dedicated internal test user and supported browser:
    removed.
 9. Test the existing offline navigation fallback after the service-worker update.
 
+For inbound Email/Ticket reply delivery:
+
+1. Enable Web Push for Customer reply on my Tickets on one registered owner device.
+2. Send a safe inbound reply that links to a Ticket owned by that user.
+3. Confirm one in-app notification and one visible browser push are created.
+4. Repeat the same Email rule/job path and confirm no duplicate notification appears.
+5. Open the push or the Ticket directly and confirm only the matching canonical notification is
+   marked read.
+6. Confirm `tickets.is_unread`, `ticket_messages.read_at`, and Email workflow state are unchanged.
+7. Enable New inbound Email for an authorized inbox subscriber and repeat with one unlinked Email.
+
 Review queue logs only through normal sanitized application output. Push endpoints, subscription
 keys, auth tokens, private VAPID material, and payload bodies must not be logged.
 
@@ -110,9 +123,9 @@ Readiness requires all of these configuration values:
 - non-empty `VAPID_PUBLIC_KEY`
 - non-empty `VAPID_PRIVATE_KEY`
 
-A queued test also requires a running queue worker. Future inbound-email delivery additionally
-depends on the external scheduler runner, Email fetch/processing queues, routing, and recipient
-resolution; `schedule:list` alone does not prove the scheduler runner is active.
+A queued test requires a running queue worker. Inbound Email delivery additionally depends on the
+Email poller/scheduler path, Email fetch/processing queues, routing, and recipient resolution;
+`schedule:list` alone does not prove the runtime is active.
 
 Provider handling:
 
@@ -146,10 +159,12 @@ php artisan queue:restart
 ```
 
 That rollback deletes registered subscriptions and their lifecycle audit records and removes the
-two Web Push preference columns. Record explicit approval and a backup before using it.
+Web Push preference columns. A later rollback step removes canonical delivery identities and inbound
+Email scope rows. Record explicit approval and a backup before using it.
 
 ## Human Review
 
-Feature Slice 1 is tracked as `HR-2026-07-24-001` in `docs/human-review.md`. Automated tests do not
-close that review. A named reviewer must complete the listed browser, privacy, lifecycle, and
-offline checks before its status changes to Reviewed.
+The browser/device review is tracked as `HR-2026-07-24-001` and inbound Email delivery/read-sync
+review is tracked as `HR-2026-08-11-002` in `docs/human-review.md`. Automated tests do not close
+those reviews. A named reviewer must complete the listed browser, privacy, lifecycle, delivery, and
+offline checks before their status changes to Reviewed.

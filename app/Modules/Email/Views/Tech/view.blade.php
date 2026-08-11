@@ -68,3 +68,8 @@
 @section('sidebar')
     <x-nav.work-menu />
 @endsection
+
+@section('scripts')
+@parent
+    @include('partials.notification-close-tags', ['closedNotificationTags' => $closedNotificationTags ?? []])
+@endsection

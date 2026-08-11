@@ -40,6 +40,8 @@
                         'ticket_assigned' => 'bi-person-check',
                         'ticket_status_changed' => 'bi-arrow-left-right',
                         'ticket_comment_added' => 'bi-chat-left-text',
+                        'ticket_customer_reply_received' => 'bi-reply',
+                        'inbound_email_received' => 'bi-inbox',
                         'ticket_sla_warning' => 'bi-clock-history',
                         'asset_alert' => 'bi-exclamation-triangle',
                         'asset_alert_resolved' => 'bi-check-circle',
@@ -50,6 +52,8 @@
                         'ticket_assigned' => 'primary',
                         'ticket_status_changed' => 'info',
                         'ticket_comment_added' => 'secondary',
+                        'ticket_customer_reply_received' => 'primary',
+                        'inbound_email_received' => 'info',
                         'ticket_sla_warning' => 'warning',
                         'asset_alert' => 'danger',
                         'asset_alert_resolved' => 'success',
@@ -66,7 +70,7 @@
                         <i class="bi {{ $icon }} text-{{ $color }} mt-1"></i>
                         <div class="flex-grow-1">
                             <div class="small fw-bold">
-                                {{ $data['ticket_subject'] ?? $data['alert_title'] ?? $data['type'] ?? 'Notification' }}
+                                {{ $data['title'] ?? $data['ticket_subject'] ?? $data['alert_title'] ?? $data['type'] ?? 'Notification' }}
                             </div>
                             <div class="small text-muted">
                                 @switch($data['type'] ?? '')
@@ -78,6 +82,12 @@
                                         @break
                                     @case('ticket_comment_added')
                                         {{ $data['comment_author'] ?? 'Someone' }} commented
+                                        @break
+                                    @case('ticket_customer_reply_received')
+                                        {{ $data['ticket_key'] ?? 'Ticket' }} customer reply
+                                        @break
+                                    @case('inbound_email_received')
+                                        {{ $data['source_label'] ?? 'Inbound email' }}
                                         @break
                                     @case('ticket_sla_warning')
                                         {{ ucfirst($data['severity'] ?? 'warning') }} — {{ ucfirst($data['sla_type'] ?? '') }} SLA

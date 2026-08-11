@@ -2,6 +2,7 @@
 
 use App\Modules\Notification\Controllers\Admin\NotificationChannelController;
 use App\Modules\Notification\Controllers\Admin\WebPushDeviceController as AdminWebPushDeviceController;
+use App\Modules\Notification\Controllers\NotificationOpenController;
 use App\Modules\Notification\Controllers\NotificationSettingsController;
 use App\Modules\Notification\Controllers\WebPushSelfTestController;
 use App\Modules\Notification\Controllers\WebPushSubscriptionController;
@@ -22,6 +23,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('profile.notifications');
     Route::post('/profile/notifications', [NotificationSettingsController::class, 'update'])
         ->name('profile.notifications.update');
+    Route::get('/profile/notifications/open/{notification}', NotificationOpenController::class)
+        ->name('profile.notifications.open');
 
     Route::prefix('/profile/notifications/web-push')
         ->name('profile.notifications.web-push.')
