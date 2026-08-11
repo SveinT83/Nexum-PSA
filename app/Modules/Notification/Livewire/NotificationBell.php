@@ -2,6 +2,7 @@
 
 namespace App\Modules\Notification\Livewire;
 
+use App\Modules\Notification\Notifications\InboundEmailRoutedNotification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -13,6 +14,7 @@ use Livewire\Component;
 class NotificationBell extends Component
 {
     public int $unreadCount = 0;
+
     public $notifications;
 
     public function mount()
@@ -23,9 +25,10 @@ class NotificationBell extends Component
     public function loadNotifications()
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             $this->unreadCount = 0;
             $this->notifications = collect();
+
             return;
         }
 
@@ -48,16 +51,21 @@ class NotificationBell extends Component
     public function openNotification(string $notificationId)
     {
         $notification = Auth::user()->notifications()->findOrFail($notificationId);
-        $url = $notification->data['url'] ?? null;
 
-        $notification->markAsRead();
-        $this->loadNotifications();
+        if ($notification->type !== InboundEmailRoutedNotification::class) {
+            $url = $notification->data['url'] ?? null;
 
-        if (filled($url) && $url !== '#') {
-            return redirect()->to($url);
+            $notification->markAsRead();
+            $this->loadNotifications();
+
+            if (filled($url) && $url !== '#') {
+                return redirect()->to($url);
+            }
+
+            return null;
         }
 
-        return null;
+        return redirect()->route('tech.profile.notifications.open', $notification);
     }
 
     public function markAllAsRead()

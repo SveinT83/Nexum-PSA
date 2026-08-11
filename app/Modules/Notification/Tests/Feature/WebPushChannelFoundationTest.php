@@ -75,8 +75,10 @@ class WebPushChannelFoundationTest extends TestCase
         $response->assertSee('Notification.requestPermission()', false);
         $response->assertSee(route('tech.profile.notifications.web-push.devices.store'), false);
         $response->assertDontSee('private-vapid-test-key', false);
-        $response->assertDontSee('web_push_enabled', false);
-        $response->assertDontSee('web_push_preview_enabled', false);
+        $response->assertSee('Customer reply on my Tickets');
+        $response->assertSee('New inbound Email');
+        $response->assertSee('web_push_enabled', false);
+        $response->assertSee('web_push_preview_enabled', false);
     }
 
     #[Test]
@@ -431,6 +433,8 @@ class WebPushChannelFoundationTest extends TestCase
         $this->assertStringContainsString('self.addEventListener("push"', $serviceWorker);
         $this->assertStringContainsString('showNotification', $serviceWorker);
         $this->assertStringContainsString('self.addEventListener("notificationclick"', $serviceWorker);
+        $this->assertStringContainsString('self.addEventListener("message"', $serviceWorker);
+        $this->assertStringContainsString('nexum-close-notifications', $serviceWorker);
         $this->assertStringContainsString('url.origin !== self.location.origin', $serviceWorker);
         $this->assertStringContainsString('NOTIFICATION_FALLBACK_URL', $serviceWorker);
     }

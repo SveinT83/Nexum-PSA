@@ -113,6 +113,10 @@ Basic sanitizer that removes risky tags/handlers. Intended to be replaced with H
 6) Explicit `preclassification` Email rules run first. They are opt-in and can stop later classification for narrow trusted handoffs.
 7) `InboundEmailSignalClassifier` detects machine replies, delivery failures, and recognized vendor notifications. Matching messages become Signal records and are archived before normal ticket routing.
 8) Remaining messages continue through `normal` Email rules and existing Ticket routing.
+9) After routing completes, Email calls the Notification-owned inbound alert dispatcher. Notification
+   creates at most one canonical notification per EmailMessage/user, handles Web Push fan-out for
+   opted-in users, and owns source read synchronization without changing Email state or Ticket
+   operational unread state.
 
 Selected Email Rules can explicitly emit a Signal with the `emit_signal` action. This is for
 admin-approved handoff cases such as vendor notices, monitoring messages, or security alerts. Email
@@ -123,7 +127,7 @@ cross-module automation after the explicit handoff creates the normalized Signal
 - `app/Modules/Email/Jobs/PollActiveEmailAccounts.php` — iterates active accounts; schedule every minute. (Dispatcher/entry job.)
 - `app/Modules/Email/Jobs/FetchImapAccount.php` — serialize fetches per account, establish/verify the forward-only UID namespace, select the oldest bounded new-UID batch, remove stored/soft-deleted UIDs, and dispatch `StoreInboundMessage` with a payload (marks oversize if > size limit). A changed `UIDVALIDITY` stops ingest and records an account error until an explicit re-baseline.
 - `app/Modules/Email/Jobs/StoreInboundMessage.php` - refetch full message by UID, write raw EML, sanitize body HTML, upsert `EmailMessage`, and persist policy-accepted attachment metadata/checksums before queuing rules.
-- `app/Modules/Email/Jobs/ProcessInboundRules.php` - run opt-in preclassification rules, machine/vendor classification, then normal Email/Ticket routing in that order.
+- `app/Modules/Email/Jobs/ProcessInboundRules.php` - run opt-in preclassification rules, machine/vendor classification, normal Email/Ticket routing, and the Notification-owned post-routing inbound alert dispatcher in that order.
 - `app/Modules/Email/Jobs/EmailAccountHealthCheckJob.php` — runs connectivity checks and writes `EmailHealthCheck` rows.
 - `app/Modules/Email/Jobs/EmailRetentionPurgeJob.php` — deletes old data past retention policy and cleans orphan files.
 
@@ -255,6 +259,9 @@ Operational notes:
 
 Common extension points:
 - Rules engine: implement rule definitions and runners in `ProcessInboundRules`. Keep them idempotent and fast; operate on stored `EmailMessage` records.
+- Inbound notifications: keep Email's responsibility to one post-routing call into
+  `DispatchInboundEmailNotification`. Notification owns recipient resolution, channel preferences,
+  Web Push payloads, canonical notification identity, and read synchronization.
 - Signal handoff: use Email Rule `emit_signal` only for selected messages that should become
   cross-module operational events. Keep broad email routing local to Email and Ticket.
 - Signal classification: extend `InboundEmailSignalClassifier` when new inbound e-post signal types should be detected before ticket routing. Keep matching conservative so real customer requests are not archived accidentally.

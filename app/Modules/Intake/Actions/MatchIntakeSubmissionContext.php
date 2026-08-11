@@ -5,6 +5,7 @@ namespace App\Modules\Intake\Actions;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
+use App\Modules\Intake\Models\IntakeForm;
 use App\Modules\Contact\Models\Contact;
 
 class MatchIntakeSubmissionContext
@@ -12,12 +13,20 @@ class MatchIntakeSubmissionContext
     /**
      * @return array{matched_client_id:int|null,matched_site_id:int|null,matched_contact_id:int|null,matched_client_user_id:int|null,match_method:string|null}
      */
-    public function handle(array $normalized): array
+    public function handle(array $normalized, ?IntakeForm $form = null): array
     {
         $email = $this->clean($normalized['contact_email'] ?? null);
         $orgNo = $this->digits($normalized['org_no'] ?? null);
         $website = $this->host($normalized['website'] ?? null);
         $companyName = $this->clean($normalized['company_name'] ?? null);
+
+        if ($form?->scopeType() === IntakeForm::SCOPE_CLIENT && $form->scopeClientId()) {
+            $client = Client::query()->find($form->scopeClientId());
+
+            if ($client) {
+                return $this->scopedClientResult($client, $email);
+            }
+        }
 
         if ($email !== '') {
             $clientUser = ClientUser::query()
@@ -89,6 +98,45 @@ class MatchIntakeSubmissionContext
         }
 
         return $this->result(null, null, null, null, null);
+    }
+
+    private function scopedClientResult(Client $client, string $email): array
+    {
+        if ($email !== '') {
+            $clientUser = ClientUser::query()
+                ->with(['site.client', 'contact'])
+                ->where('email', $email)
+                ->whereHas('site', fn ($query) => $query->where('client_id', $client->id))
+                ->first();
+
+            if ($clientUser) {
+                return $this->result(
+                    $client,
+                    $clientUser->site,
+                    $clientUser->contact,
+                    $clientUser,
+                    'form_scope_client_user_email',
+                );
+            }
+
+            $contact = Contact::query()
+                ->with(['clientUser.site'])
+                ->whereHas('emails', fn ($query) => $query->where('email', $email))
+                ->whereHas('clientUser.site', fn ($query) => $query->where('client_id', $client->id))
+                ->first();
+
+            if ($contact) {
+                return $this->result(
+                    $client,
+                    $contact->clientUser?->site,
+                    $contact,
+                    $contact->clientUser,
+                    'form_scope_contact_email',
+                );
+            }
+        }
+
+        return $this->result($client, $this->defaultSite($client), null, null, 'form_scope_client');
     }
 
     private function result(

@@ -253,7 +253,7 @@ Read synchronization follows these rules:
   resolution;
 - opening a Ticket directly marks that user's unread `ticket_customer_reply_received` and linked
   `inbound_email_received` notifications as read only for TicketMessage source IDs rendered on the
-  page;
+  page, plus EmailMessage source IDs stored in those rendered TicketMessage metadata records;
 - opening an unlinked Email inbox message directly applies the same rule to its exact
   `email_message_id`;
 - unrelated notifications for the same Ticket, another message, or another user remain unchanged;
@@ -393,7 +393,8 @@ Automated:
 - opening a push target marks only the authenticated user's matching database notification as read;
 - a signed-out or unauthorized target attempt does not mark the notification before successful
   authentication and authorization;
-- directly viewing a Ticket marks only notifications whose TicketMessage source IDs are rendered;
+- directly viewing a Ticket marks only notifications whose TicketMessage source IDs are rendered, or
+  whose EmailMessage source IDs are stored in those rendered TicketMessage metadata records;
 - directly viewing an unlinked Email message marks only notifications with its exact EmailMessage
   source ID;
 - direct source viewing does not change `tickets.is_unread`, `ticket_messages.read_at`, or Email
@@ -523,3 +524,14 @@ Feature Slices on 2026-07-23 and 2026-07-24.
 On 2026-07-24 the product owner explicitly approved the RFC for implementation, accepted the ADR,
 requested that GitHub Discussion #169 move from In review to In progress, and authorized coding to
 start. Implementation begins with Feature Slice 1 on the authoritative Dev working copy.
+
+## Implementation
+
+Implemented on Dev on 2026-08-11 across all three Feature Slices. The delivery uses one
+Notification-owned Web Push channel, one shared service worker, explicit internal device
+registration, canonical per-EmailMessage/user notification identities, inbound Email/customer-reply
+recipient resolution, privacy-safe payloads, and source read synchronization from Ticket and Email
+views without changing Ticket or Email operational read state.
+
+Production enablement still requires the named browser/device and end-to-end checks in
+`HR-2026-07-24-001` and `HR-2026-08-11-002`.

@@ -1,17 +1,19 @@
 <?php
+
 namespace App\Modules\Email\Controllers\Tech;
 
 use App\Modules\Email\Actions\MarkEmailAsSpam;
-use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAttachment;
-use App\Modules\Email\Jobs\FetchImapAccount;
+use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Services\ImapClient;
+use App\Modules\Notification\Actions\MarkNotificationsReadBySource;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InboxController extends Controller
@@ -25,12 +27,12 @@ class InboxController extends Controller
             ->whereNull('ticket_id');
 
         // Basic search across subject, from_email and body_text snippet
-        if ($term = trim((string)$request->get('q'))) {
-            $query->where(function($q) use ($term) {
-                $like = '%' . str_replace(['%','_'], ['\%','\_'], $term) . '%';
+        if ($term = trim((string) $request->get('q'))) {
+            $query->where(function ($q) use ($term) {
+                $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $term).'%';
                 $q->where('subject', 'like', $like)
-                  ->orWhere('from_email', 'like', $like)
-                  ->orWhere('body_text', 'like', $like);
+                    ->orWhere('from_email', 'like', $like)
+                    ->orWhere('body_text', 'like', $like);
             });
         }
 
@@ -40,7 +42,7 @@ class InboxController extends Controller
 
         return view('email::Tech.index', [
             'messages' => $messages,
-            'search' => $request->get('q')
+            'search' => $request->get('q'),
         ]);
     }
 
@@ -53,7 +55,7 @@ class InboxController extends Controller
         try {
             $settings = \App\Models\Settings\CommonSetting::where('type', 'emailhub')
                 ->get()->pluck('value', 'name')->toArray();
-            $batchSize = (int)($settings['batch_size'] ?? 20);
+            $batchSize = (int) ($settings['batch_size'] ?? 20);
 
             $accounts = EmailAccount::query()->where('is_active', true)->get();
 
@@ -74,10 +76,10 @@ class InboxController extends Controller
         }
 
         return redirect()->route('tech.inbox.index')
-            ->with('status', $dispatched ? ("Inbox check queued for {$dispatched} account" . ($dispatched > 1 ? 's' : '') . '.') : 'No active accounts to poll.');
+            ->with('status', $dispatched ? ("Inbox check queued for {$dispatched} account".($dispatched > 1 ? 's' : '').'.') : 'No active accounts to poll.');
     }
 
-    public function show(EmailMessage $message)
+    public function show(EmailMessage $message, MarkNotificationsReadBySource $markNotificationsReadBySource)
     {
         // Only allow access to unrouted messages in Inbox context
         if ($message->ticket_id !== null) {
@@ -85,9 +87,16 @@ class InboxController extends Controller
         }
 
         $message->load(['attachments']);
+        $notificationReadSync = $markNotificationsReadBySource->handle(
+            request()->user(),
+            MarkNotificationsReadBySource::SOURCE_EMAIL_MESSAGE,
+            [$message->id],
+        );
+
         return view('email::Tech.view', [
             'message' => $message,
-            'search' => request('q')
+            'search' => request('q'),
+            'closedNotificationTags' => $notificationReadSync['web_push_tags'],
         ]);
     }
 
@@ -148,12 +157,13 @@ class InboxController extends Controller
     public function download(EmailAttachment $attachment): StreamedResponse
     {
         $message = $attachment->message;
-        if (!$message || $message->ticket_id !== null) {
+        if (! $message || $message->ticket_id !== null) {
             abort(404);
         }
         $disk = $attachment->disk ?: 'local';
         abort_unless($attachment->path && Storage::disk($disk)->exists($attachment->path), 404);
         $filename = $attachment->filename ?: basename($attachment->path);
+
         return Storage::disk($disk)->download($attachment->path, $filename);
     }
 }

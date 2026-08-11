@@ -30,6 +30,8 @@
                             <th>Event</th>
                             <th class="text-center"><i class="bi bi-envelope me-1"></i> Email</th>
                             <th class="text-center"><i class="bi bi-app-indicator me-1"></i> In-App</th>
+                            <th class="text-center"><i class="bi bi-phone-vibrate me-1"></i> Web Push</th>
+                            <th class="text-center"><i class="bi bi-card-text me-1"></i> Preview</th>
                             @if($talkEnabled)
                                 <th class="text-center"><i class="bi bi-chat-dots me-1"></i> Nextcloud Talk</th>
                                 <th>Talk Webhook URL</th>
@@ -42,6 +44,10 @@
                                 $s = $settings[$type] ?? null;
                                 $mailOn = $s->mail_enabled ?? true;
                                 $dbOn = $s->database_enabled ?? true;
+                                $pushSupported = \App\Modules\Notification\Models\NotificationSetting::supportsWebPush($type);
+                                $pushPreviewSupported = \App\Modules\Notification\Models\NotificationSetting::supportsWebPushPreview($type);
+                                $pushOn = $pushSupported && ($s->web_push_enabled ?? false);
+                                $pushPreviewOn = $pushPreviewSupported && ($s->web_push_preview_enabled ?? false);
                                 $talkOn = $s->nextcloud_talk_enabled ?? false;
                                 $talkUrl = $s->nextcloud_talk_webhook_url ?? '';
                             @endphp
@@ -63,6 +69,28 @@
                                                class="form-check-input" id="db_{{ $type }}"
                                                {{ $dbOn ? 'checked' : '' }}>
                                     </div>
+                                </td>
+                                <td class="text-center">
+                                    @if($pushSupported)
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input type="checkbox" name="settings[{{ $loop->index }}][web_push_enabled]" value="1"
+                                                   class="form-check-input" id="push_{{ $type }}"
+                                                   {{ $pushOn ? 'checked' : '' }}>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    @if($pushPreviewSupported)
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input type="checkbox" name="settings[{{ $loop->index }}][web_push_preview_enabled]" value="1"
+                                                   class="form-check-input" id="push_preview_{{ $type }}"
+                                                   {{ $pushPreviewOn ? 'checked' : '' }}>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
                                 </td>
                                 @if($talkEnabled)
                                     <td class="text-center">
@@ -101,6 +129,7 @@
     <ul class="small text-muted">
         <li>In-app notifications appear instantly in the header bell icon.</li>
         <li>Email notifications are sent immediately for high-priority events.</li>
+        <li>Web Push is available only for event types with a finished browser payload.</li>
         @if($talkEnabled)
             <li>Nextcloud Talk messages are sent via webhook — you can use a per-user URL or the system default.</li>
         @endif

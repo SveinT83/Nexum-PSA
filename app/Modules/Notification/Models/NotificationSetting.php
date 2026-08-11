@@ -46,6 +46,8 @@ class NotificationSetting extends Model
         'ticket_updated' => 'Ticket Updated',
         'ticket_status_changed' => 'Ticket Status Changed',
         'ticket_comment_added' => 'Comment Added on Ticket',
+        'ticket_customer_reply_received' => 'Customer reply on my Tickets',
+        'inbound_email_received' => 'New inbound Email',
         'ticket_sla_warning' => 'SLA Warning',
         'asset_alert' => 'Asset Alert',
         'asset_alert_resolved' => 'Asset Alert Resolved',
@@ -95,6 +97,35 @@ class NotificationSetting extends Model
         'nextcloud_talk_enabled' => false,
     ];
 
+    public const TYPE_DEFAULTS = [
+        'ticket_customer_reply_received' => [
+            'mail_enabled' => false,
+            'database_enabled' => true,
+            'web_push_enabled' => false,
+            'web_push_preview_enabled' => false,
+            'nextcloud_talk_enabled' => false,
+        ],
+        'inbound_email_received' => [
+            'mail_enabled' => false,
+            'database_enabled' => true,
+            'web_push_enabled' => false,
+            'web_push_preview_enabled' => false,
+            'nextcloud_talk_enabled' => false,
+        ],
+    ];
+
+    public const WEB_PUSH_SUPPORTED_TYPES = [
+        'ticket_customer_reply_received',
+        'inbound_email_received',
+        'storage_purchase_import_exception',
+        'storage_purchase_import_digest',
+    ];
+
+    public const WEB_PUSH_PREVIEW_TYPES = [
+        'ticket_customer_reply_received',
+        'inbound_email_received',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -113,7 +144,7 @@ class NotificationSetting extends Model
     {
         return static::firstOrCreate(
             ['user_id' => $user->id, 'notification_type' => $type],
-            array_merge(self::DEFAULTS, ['user_id' => $user->id, 'notification_type' => $type])
+            array_merge(self::defaultsForType($type), ['user_id' => $user->id, 'notification_type' => $type])
         );
     }
 
@@ -132,12 +163,30 @@ class NotificationSetting extends Model
                 $settings[$type] = $existing[$type];
             } else {
                 $settings[$type] = (object) array_merge(
-                    self::DEFAULTS,
+                    self::defaultsForType($type),
                     ['notification_type' => $type, 'user_id' => $user->id]
                 );
             }
         }
 
         return $settings;
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    public static function defaultsForType(string $type): array
+    {
+        return array_merge(self::DEFAULTS, self::TYPE_DEFAULTS[$type] ?? []);
+    }
+
+    public static function supportsWebPush(string $type): bool
+    {
+        return in_array($type, self::WEB_PUSH_SUPPORTED_TYPES, true);
+    }
+
+    public static function supportsWebPushPreview(string $type): bool
+    {
+        return in_array($type, self::WEB_PUSH_PREVIEW_TYPES, true);
     }
 }

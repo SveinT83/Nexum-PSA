@@ -27,12 +27,9 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
-| HR-2026-08-10-003 | Simplified automatic Storage Supplier Order AI and profile bootstrap | In Review | 2026-08-10 | Svein Tore |  |
-| HR-2026-08-10-002 | Storage incoming Purchase Order quantity visibility | Pending | 2026-08-10 |  |  |
-| HR-2026-08-10-001 | Unified Storage Supplier Orders list | Pending | 2026-08-10 |  |  |
-| HR-2026-08-04-003 | Supplier email-to-Purchase Order automation implementation | Pending | 2026-08-04 |  |  |
-| HR-2026-08-04-002 | Sortable Storage Inventory queues, Admin lists, and detail history | Pending | 2026-08-04 |  |  |
-| HR-2026-08-04-001 | Supplier purchase orders, shipping, and goods receiving | Pending | 2026-08-04 |  |  |
+| HR-2026-08-11-003 | One responsive Nexum PWA final browser acceptance | Pending | 2026-08-11 |  |  |
+| HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Pending | 2026-08-11 |  |  |
+| HR-2026-08-11-001 | Intake final routing and review completion | Pending | 2026-08-11 |  |  |
 | HR-2026-07-29-013 | Production Ticket external-message API route | Pending | 2026-07-29 |  |  |
 | HR-2026-07-29-012 | AI privacy governance and coordinator worklog API | Pending | 2026-07-29 |  |  |
 | HR-2026-07-29-011 | Quote billing cadence and customer copy | Pending | 2026-07-29 |  |  |
@@ -154,850 +151,186 @@ Result / notes: Approved by Svein Tore in the Codex task after reviewing the com
 
 ## Open Reviews
 
-### HR-2026-08-10-003 - Simplified Automatic Storage Supplier Order AI And Profile Bootstrap
-
-Status: In Review
-Added: 2026-08-10
-Environment: Dev
-Related: `docs/rfc/2026-08-10-simplified-storage-supplier-order-ai.md`,
-`docs/rfc/2026-08-11-operational-supplier-order-automation-setup.md`,
-`docs/rfc/2026-08-11-automatic-ai-supplier-profile-bootstrap.md`,
-`docs/adr/2026-08-10-managed-domain-ai-and-system-actor.md`, the three linked 2026-08-10 Feature
-Slices, `docs/feature-slices/2026-08-11-storage-operational-supplier-order-setup.md`, and
-`docs/feature-slices/2026-08-11-storage-automatic-ai-profile-bootstrap.md`.
-
-Scope: Supplier Order Automation selects an existing Storage-domain agent and enables AI fallback
-without manual workload, capability-empty-agent, or human automation-user setup. Integration
-creates a capability-isolated managed structured workload. User Management provides one protected,
-non-login Nexum system actor with exact direct permissions. The ordinary form now exposes only
-plain-language order handling, warehouse, unknown-supplier/Item behavior, AI use, one Storage agent,
-business limits, and notifications. Nexum derives the outcome and replaces technical browser values
-with a complete safe preset. Storage keeps every existing source, evidence, identity, arithmetic,
-warehouse, Item, finalization, idempotency, lifecycle, and no-receipt guard.
-
-A trusted valid email with no matching profile may now create or reuse one active Supplier, activate
-a Supplier-linked immutable profile from a protected machine-verified fixture, create distinct
-active/orderable Items within the configured cap, and create one editable `ordered` Purchase Order.
-Later matching messages use the deterministic profile. Retry and close first-message paths reuse the
-same identities. Genuine trust, evidence, candidate, ambiguity, duplicate, provider, or business-
-limit failures remain exceptions. No email path receives goods or changes stock.
-
-Deployment actions: the original two migrations already ran in Dev batch 64. This follow-up needs
-code, optimized-cache clearing, and Storage Knowledge sync only. No migration, permission seeder,
-frontend build, scheduler change, or persistent worker restart is required; the isolated Supplier
-Orders runner starts a fresh process each minute. Dev policy revision 11 is current with automatic
-profile-or-AI handling, fallback, active Supplier/Item creation, max 250 new Items, one verified
-bootstrap sample, warehouse 2, and standard `gpt-5.5`. Existing pinned imports are unchanged.
-
-Risks: broad agent capabilities could leak into extraction; domain-scoped external AI could send
-broader data than intended; the system actor could become login-capable or human-editable; or a
-managed workload could remain active after policy changes. Hidden or forged learning, consensus,
-cost, timeout, retry, or JSON values could also make the simple form unsafe or unusable. Capability
-isolation, forced privacy relay/pseudonymized profile, server-owned defaults, auth/user-management
-guards, stable keys, deactivation, and tests are required mitigations.
-
-Automatic profile bootstrap also risks noisy master data, an overly broad scope, retry duplicates,
-or equal-priority profiles. Mitigations are immutable trusted source, exact evidence, server-owned
-account/mailbox/recipient/sender/authenticated-domain scope, constrained declarative definitions,
-protected replay and canonical reproduction, Supplier/SKU identity, a Supplier-row lock with matcher
-recheck, pinned-policy verification, retry idempotency, and Supplier/Item/order caps.
-
-Commercial numbers that resemble personal data are additionally replaced with opaque request-local
-tokens and restored only in memory after the response; the provider never receives the originals
-and mappings are not persisted.
-
-Automated verification: the earlier managed-agent/actor verification remains valid. Focused
-Integration, UI, policy, boundary, pipeline, and AI automation passes 94 tests / 971 assertions.
-After Pint corrected three style issues, the final Integration/AI/policy rerun passes 57 / 579. The
-complete Storage suite passes 257 / 2,775 with the existing opt-in MariaDB contract skipped. Blade
-cache compilation and Storage Knowledge sync pass. A controlled real-provider transaction on the
-selected agent using standard `gpt-5.5` completed in about 21 seconds and proved valid evidence,
-valid Storage-owned profile candidate, active Supplier/profile/Item, and one ordered Purchase Order.
-It rolled back with zero persistent receipt, Movement, Stock Unit, or inventory delta. Policy save
-then created revision 11 with zero import, Item, Purchase Order, receipt, Movement, or Stock Unit
-delta. The in-app browser cannot resolve the local `.local` hostname, so named human visual and real-
-email review remain required. Automated tests never complete this review.
-The isolated cron entries are present, scheduler and worker heartbeats are healthy at about 21
-seconds old, queue latency is zero, and there are no stale processing rows, open operational alerts,
-failed alert deliveries, or failed queue jobs. Operational state remains warning only because nine
-existing calibration imports are intentionally waiting in `needs_attention` for separate review.
-
-Human checks:
-
-- [ ] Open **Admin > Storage > Supplier Order Automation** and confirm the page shows only Order
-  handling, warehouse, unknown suppliers/Items, AI assistance, order limits, and notifications.
-- [ ] Confirm there is no Default outcome or Advanced settings control and no learning, consensus,
-  workload, confidence, timeout, token, cost, retry, circuit-breaker, retention, or JSON field.
-- [ ] Confirm **Register automatically after supplier profile or AI verification**, fallback, the
-  existing Storage agent, and the intended warehouse/supplier/Item choices remain selected. Save and
-  confirm the page reports ready without visiting Integration Privacy/Workloads.
-- [ ] Confirm User Management does not list a human-editable or login-capable automation account,
-  while an automated import audit names **Nexum Supplier Order Automation**.
-- [ ] Run a synthetic supplier-order fallback and verify access audit identifies the selected agent,
-  provider/model, managed workload, privacy relay, and pseudonymized profile without raw email.
-- [ ] Confirm the selected agent's ordinary chat tools, data sources, roles, API scopes, and action
-  setting are unavailable to the structured extraction call.
-- [ ] Forward one controlled confirmation from a trusted supplier with **no existing profile**.
-  Confirm AI is fallback after profile matching, exactly one active Supplier is present, one
-  Supplier-linked active profile/version and protected bootstrap fixture exist, distinct Items and
-  Supplier mappings are active/orderable, and one editable `ordered` Purchase Order includes its
-  Email Copy. Confirm there is no receipt, Movement, Stock Unit, on-hand change, or supplier-order
-  submission.
-- [ ] Forward a later matching controlled confirmation and confirm it reuses the same Supplier,
-  profile/version, and Item mappings with deterministic extraction and no second profile or order
-  identity conflict.
-- [ ] If practical, run one invalid/untrusted controlled sample and confirm it stops with an
-  explainable exception before Item or Purchase Order writes.
-- [ ] Change agent and turn AI off. Confirm the old managed workload cannot execute and deterministic
-  processing remains available.
-- [ ] Check the policy at desktop and narrow/mobile widths, including labels, help text, keyboard
-  access, validation messages, and the Change history table.
-
-Reviewer: Svein Tore
-Reviewed date:
-Result / notes: Svein Tore reported during review on 2026-08-11 that the remaining Advanced settings
-panel was too complex and could require an unexplained second workload. The form and server contract
-have been reworked. He then explicitly requested no routine manual approvals and automatic creation
-of a missing Supplier profile. The implementation and machine/provider checks pass; awaiting his
-explicit recheck of the revised Dev page and controlled real-email bootstrap/reuse behavior.
-
-### HR-2026-08-10-002 - Storage Incoming Purchase Quantity Visibility
+### HR-2026-08-11-003 - One Responsive Nexum PWA Final Browser Acceptance
 
 Status: Pending
-Added: 2026-08-10
-Environment: Dev
-Related: `docs/rfc/2026-08-10-storage-incoming-purchase-quantity-visibility.md`
+Added: 2026-08-11
+Environment: trusted HTTPS Dev vhost, then production beta before final release
+Related: GitHub Discussion #169, `docs/rfc/2026-07-04-one-responsive-nexum-pwa.md`,
+`docs/deployment/dev-https-pwa-vhost.md`, `HR-2026-07-24-001`, and `HR-2026-08-11-002`
 
-Scope: The Inventory Items queue now exposes a sortable **Incoming** quantity calculated from
-positive outstanding quantities on non-deleted Purchase Orders in `ordered` or
-`partially_received`. Received and cancelled line quantities are subtracted. Draft, received,
-closed, cancelled, deleted, and fully balanced orders do not count. A row with positive incoming
-quantity shows **On order** ahead of the existing **Should order** state. Incoming remains planning
-information and does not increase on-hand or available stock before an authorized goods receipt.
-Inventory users see only the aggregate quantity; Purchase Order identity, cost, tracking, receipt
-history, and actions retain their existing permissions and pages.
+Scope: final human acceptance for Nexum as one responsive installable PWA. The implemented code
+foundation covers one shared Tech shell with mobile offcanvas navigation, PWA metadata on internal,
+portal, and public entry surfaces, online-first service-worker behavior, static offline fallback,
+mobile My Day, and Notification-owned Web Push/read-sync slices. This review does not approve
+offline writes, native apps, a separate mobile frontend, or unfinished workflow controls.
 
-Deployment actions: deploy the code and run `php artisan optimize:clear`. No migration, seeder,
-backfill, queue restart, scheduler change, permission change, API update, external connector setup,
-or frontend build is required.
+Deployment actions: create a trusted HTTPS Dev vhost for `/var/Projects/tdPSA/public`, align
+`APP_URL` and secure-session settings with that host, run `php artisan optimize:clear`, restart queue
+workers, verify `/sw.js`, `/manifest.json`, and `/offline.html` over HTTPS, and then run the browser
+checks below. Use `docs/deployment/dev-https-pwa-vhost.md` for the exact vhost checklist.
 
-Risks: historical or inactive orders could inflate incoming quantity; receipt/cancellation progress
-could be counted twice; an incoming number could be mistaken for usable stock; or a Storage-only
-user could gain Purchase Order details. The query counts only positive line balances on active
-placed-order statuses, the table keeps On-hand, Available, and Incoming separate, receipt posting
-remains unchanged, and only the aggregate is rendered on Inventory.
+Risks: browser PWA behavior cannot be accepted from an untrusted certificate; mobile layout defects
+can hide required actions even when desktop tests pass; Service Worker scope or cache mistakes can
+break navigation or cache private data; and Web Push checks must still respect the narrower privacy
+and lifecycle reviews in `HR-2026-07-24-001` and `HR-2026-08-11-002`.
 
-Automated verification: the focused Storage module suite proves active ordered and partially
-received aggregation, received/cancelled subtraction, exclusion of draft/received/closed/cancelled
-and soft-deleted orders, aggregate-only permission behavior, the **On order** badge, and ascending
-and descending Incoming sorting with current view preservation. It passes 23 tests / 360 assertions.
-The full Storage suite passes 251 tests / 2,600 assertions with the dedicated MariaDB identity
-contract skipped because its opt-in credentials are not configured. Pint and Blade compilation
-pass. A read-only Dev-data check confirms item `IMP-18-1324745-5BA90BDA` projects on-hand 0,
-reserved 0, available 0, incoming 1, and display status `on_order`. Automated checks do not complete
-this review.
+Automated verification: the System PWA platform contract test passes with 3 tests and 34 assertions.
+It verifies PWA head and viewport coverage across the Tech shell, guest shell, Customer Portal,
+Booking, Intake, public quote, and public contract entry surfaces; the Tech shell's shared desktop
+and mobile navigation contract; and the shared online-first service worker's fetch, push, click, and
+message handlers. The combined PWA/My Day/Web Push foundation run passes with 23 tests and 179
+assertions, and the System security header suite passes with 3 tests and 19 assertions.
+Browser/device verification remains blocked until the trusted HTTPS Dev vhost is available.
 
 Human checks:
 
-- [ ] Open **Storage > Inventory** in the default reorder-focused view and confirm
-  `IMP-18-1324745-5BA90BDA` shows **Incoming = 1** and status **On order**, not only **Should order**.
-- [ ] Confirm On-hand and Available remain 0 before receipt, and that Inventory does not imply the
-  incoming unit can be picked or used.
-- [ ] Open the authorized Supplier Order/Purchase Order view and confirm the related active order has
-  one outstanding unit. Repeat as a Storage-only user and confirm Inventory exposes no order number,
-  cost, tracking, receipt history, or Purchase Order action.
-- [ ] In a controlled test order, partially receive and separately cancel line quantity. Confirm
-  Incoming decreases by exactly those quantities and On-hand increases only for accepted receipt
-  quantity.
-- [ ] Confirm draft, received, closed, cancelled, deleted, and fully balanced orders contribute zero
-  Incoming quantity.
-- [ ] Sort Incoming ascending and descending with search and filters active. Confirm the current view
-  is preserved and equal values remain stable.
-- [ ] Review the Inventory table at desktop and narrow/mobile widths, including horizontal scrolling,
-  keyboard focus, readable badges, and alignment of numeric columns.
+- [ ] Open the new HTTPS Dev host in Chrome/Edge desktop and confirm the certificate is trusted and
+  the page has no mixed-content errors.
+- [ ] Confirm `/sw.js`, `/manifest.json`, and `/offline.html` load over HTTPS without
+  authentication.
+- [ ] Install Nexum as a PWA where the browser supports it and confirm the app name, icon, start URL,
+  standalone display, and theme color are coherent.
+- [ ] At desktop width, confirm the Tech shell keeps ordinary sidebar/workspace navigation and the
+  existing routes.
+- [ ] At 360x780, 390x844, 430x932, 768x1024, 1024x768, and desktop widths, confirm the Tech shell
+  has no incoherent text/action overlap and the mobile hamburger/offcanvas navigation is usable.
+- [ ] Confirm notifications, user/profile controls, breadcrumbs/page title context, and primary
+  page actions remain reachable on mobile.
+- [ ] Open `/tech/my-day` on mobile width and confirm assigned Tickets, Tasks, and Calendar items are
+  visible, link to the same ordinary routes, and do not expose an offline-write promise.
+- [ ] Open representative Customer Portal, Booking, Intake, public quote, and public contract pages
+  and confirm they keep viewport/PWA behavior without exposing internal navigation or data.
+- [ ] After loading the app once, simulate offline navigation and confirm Nexum shows only the static
+  offline fallback for failed navigations and does not show cached private application pages.
+- [ ] Confirm no separate mobile Nexum route, mobile-only permission bypass, native-app prompt, or
+  unfinished offline/sync workflow is exposed as finished behavior.
+- [ ] Complete or reference the Web Push device lifecycle checks in `HR-2026-07-24-001`.
+- [ ] Complete or reference the inbound Email/customer-reply delivery checks in `HR-2026-08-11-002`.
 
 Reviewer:
 Reviewed date:
-Result / notes: Awaiting explicit named human review on Dev.
+Result / notes:
 
-### HR-2026-08-10-001 - Unified Storage Supplier Orders List
+### HR-2026-08-11-002 - Inbound Email Web Push Delivery And Source Read-Sync
 
 Status: Pending
-Added: 2026-08-10
+Added: 2026-08-11
 Environment: Dev
-Related: `docs/rfc/2026-08-10-storage-unified-supplier-order-list.md`
+Related: GitHub Discussion #169, `docs/rfc/2026-07-23-web-push-inbound-email-alerts.md`,
+`docs/feature-slices/2026-07-23-web-push-internal-email-alerts.md`, and
+`docs/feature-slices/2026-07-24-web-push-read-sync-rollout-hardening.md`
 
-Scope: Storage now presents Supplier Order Imports, canonical Purchase Orders, and receiving work in
-one permission-aware **Supplier Orders** list. An unlinked import is one incoming row. Once an import
-links to a visible Purchase Order, the import remains available through an audit link inside the
-single canonical order row instead of becoming a duplicate work item. Open receiving progress,
-control-slip access, and the authorized Receive action are shown on that same row. Import detail,
-Purchase Order detail, receiving forms, receipt posting, inventory effects, APIs, routes, and
-permissions keep their existing boundaries. Manual and email-created orders use the same canonical
-detail structure. An email-created order adds only a permission-protected **Email Copy** card with
-sanitized header fields and body as the final main-content section after Shipments and Receipt
-History. Technical import evidence remains on the import audit page, while trusted authentication
-evidence remains internal and is not presented on either detail page.
+Scope: Notification now owns canonical per-EmailMessage/user delivery identities, the two finished
+event types Customer reply on my Tickets and New inbound Email, explicit Web Push preferences for
+implemented payloads, default-off Web Push and preview controls, privacy-safe push payloads,
+extension-ready account/queue subscription scopes, Notification-owned open redirects, source read
+synchronization from authorized Ticket and Email views, and shared service-worker closure of visible
+notifications by validated Nexum tags.
 
-Deployment actions: deploy the code, run `php artisan optimize:clear`, and sync the updated Storage
-Knowledge sources when this change is released. No migration, seeder, queue restart, scheduler
-change, external connector setup, or frontend build is required.
+Deployment actions: deploy the code, run `php artisan migrate --force`, run `php artisan
+optimize:clear`, restart queue workers, and keep `WEBPUSH_ENABLED=false` in production until browser
+and end-to-end review passes. Verify the `email,default` queue worker and the active Email poller or
+scheduler path in the target environment before enabling inbound Web Push.
 
-Risks: linked imports could appear twice; an import-only or receiving-only user could gain Purchase
-Order visibility; mixed-row search, filters, sorts, or pagination could omit work; and a Receive
-button could imply that an import changes stock. The shared query deduplicates only against Purchase
-Orders visible in the same list, controllers pass explicit permission scopes, mutation routes remain
-unchanged, and the UI states that imports never update stock. The email card could expose technical
-governance data or make an email order look like a separate workflow; the canonical order now shows
-only the sanitized email copy, under the existing import-view permission.
+Risks: inbound notification retries must not duplicate alerts; Ticket owner and inbox subscriber
+paths must not broadcast to unauthorized users; lock-screen payloads must not expose bodies,
+attachments, client identity, or full sender addresses; push/read-sync must never mark Ticket,
+TicketMessage, or Email operational unread state; and visible service-worker notification closure
+must not accept arbitrary cross-origin or malformed tags.
 
-Automated verification: focused coverage proves one-row deduplication, full-workflow, import-only,
-and receiving-only visibility, legacy index-route rendering, receiving filtering/action visibility,
-permission denial, identical manual/email order structure, permission-protected email content and
-bottom placement after operational sections, absence of SPF, DKIM, DMARC, and authentication status
-from both detail pages, plus absence of policy, profile, and AI controls from the operational order.
-The focused import UI suite passes 7 tests / 130 assertions. The full Storage suite passes 250 tests / 2,588
-assertions with the dedicated MariaDB contract skipped because its opt-in credentials are not
-configured. Blade compilation, Pint, and diff checks pass. Automated tests do not complete this
-review.
+Automated verification: focused Notification inbound Web Push tests pass with 6 tests and 33
+assertions. Web Push foundation tests pass with 19 tests and 135 assertions. Notification system
+tests pass with 20 tests and 71 assertions. Email inbound automation tests pass with 13 tests and 74
+assertions. The complete Email feature file passes with 46 tests and 287 assertions, and the Email
+IMAP unit tests pass with 2 tests and 5 assertions. The complete Ticket feature file passes with 112
+tests and 810 assertions. Migration `2026_08_11_130000_add_inbound_email_notification_delivery_identity`
+ran on Dev in batch 66; `optimize:clear`, Pint, PHP syntax checks, `git diff --check`, and
+Knowledge sync for Email, Notification, and System completed. The queued BookStack push job was
+processed, and no `PushPendingKnowledgeToBookStack` job or failed job remained.
 
 Human checks:
 
-- [ ] With Purchase Order, import, and receive permissions, open **Storage > Supplier Orders** and
-  confirm the sidebar contains one Supplier Orders entry rather than three separate list entries.
-- [ ] Confirm one unresolved import appears as an incoming row. Open it and verify the full safe
-  import audit/retry workflow still works.
-- [ ] Confirm an import linked to a Purchase Order produces one order row, with one Import audit link
-  and no duplicate incoming row.
-- [ ] Open one manual order and one email-created or email-confirmed order. Confirm Order Details,
-  Order Lines, Shipments/tracking, Receipt History, and actions have the same layout. Confirm only the
-  email order adds an Email Copy with subject, sender, recipients, received time, and readable body,
-  and that this card is the final main-content section after Shipments and Receipt History.
-- [ ] Confirm neither the operational email order nor the supplier-import detail shows Trusted
-  Authentication, SPF, DKIM, DMARC, or authentication alignment. Confirm import profile, policy,
-  extraction, and repair details remain available to an authorized reviewer on the import audit page.
-- [ ] Use All, Needs attention, Incoming, Purchase Orders, Receiving, and Completed plus search,
-  filters, sorting, and pagination. Confirm every visible row remains reachable and the current view
-  is preserved by sort links.
-- [ ] For an open partial order, confirm ordered/received/outstanding progress, control slip, and
-  Receive are in the same row. Post a controlled receipt and verify stock changes only after form
-  confirmation.
-- [ ] Repeat as a Purchase Order view-only user, an import-only user, and a receiving-only user.
-  Confirm each sees only existing permission scope and no unauthorized links or actions.
-- [ ] Check the unified table and filter controls at desktop and mobile widths, including keyboard
-  focus, horizontal scrolling, badges, and next-step actions.
+- [ ] Register one supported browser/PWA device and confirm the Web Push device inventory still
+  exposes only safe device summary fields.
+- [ ] Enable Web Push for Customer reply on my Tickets and confirm no browser permission prompt
+  appears until the device Enable action is clicked.
+- [ ] Send or process one safe inbound customer reply that links to a Ticket owned by the reviewer;
+  confirm exactly one in-app notification and one browser push are created.
+- [ ] Re-run the same inbound processing path and confirm no duplicate notification or push appears.
+- [ ] Click the push and confirm Nexum focuses or opens the linked Ticket after normal auth.
+- [ ] Open the linked Ticket directly after ignoring a push and confirm the matching notification is
+  marked read without clearing `tickets.is_unread` or `ticket_messages.read_at`.
+- [ ] Enable New inbound Email for an authorized inbox reviewer, process one unlinked inbound Email,
+  and confirm the push opens the Email inbox detail.
+- [ ] Link that inbox Email to a Ticket after the notification exists, click the old notification,
+  and confirm it redirects to the linked Ticket and marks only the matching notification read.
+- [ ] Confirm an unauthorized user or user without the relevant setting does not receive the Ticket
+  owner or inbox/triage notification.
+- [ ] Confirm default push text is generic, preview shows only sender display name plus truncated
+  subject when enabled, and no body, attachment name, client identity, full email address, endpoint,
+  key, token, or VAPID secret appears.
+- [ ] Confirm existing PWA install, ordinary navigation, static-asset caching, and offline fallback
+  still work after the service-worker message-handler update.
 
 Reviewer:
 Reviewed date:
-Result / notes: Awaiting explicit named human review on Dev.
+Result / notes:
 
-### HR-2026-08-04-003 - Supplier Email To Purchase Order Automation
-
-Status: Pending
-Added: 2026-08-04
-Environment: Dev, followed by a controlled real-email shadow rollout
-Related: `docs/rfc/2026-08-04-storage-supplier-email-purchase-order-automation.md`,
-`docs/adr/2026-08-04-supplier-email-purchase-import-ownership-and-ai-decision-boundary.md`, and
-the eight linked 2026-08-04 Feature Slices plus
-`docs/feature-slices/2026-08-07-storage-manual-email-supplier-order-identity-reconciliation.md`
-
-Scope: Implemented Level 3 Email, Signal, Storage, Documentation, Integration, Notification,
-permission, database, queue, scheduler, and Knowledge update for supplier order-confirmation
-automation. Email retains the durable source and trusted receiving facts, an explicitly configured
-pre-routing Email rule emits one minimized Signal and suppresses ordinary Ticket ingress for only
-that match, Signal records and retries one stable Storage action, and Storage owns the immutable
-import, policy/profile versions, deterministic extraction, line resolution, hard gates, exception
-workflow, and final Purchase Order action. Documentation owns guarded Supplier bootstrap and
-Integration owns the governed, non-writing, tool-free AI execution boundary.
-
-The approved 2026-08-07 follow-up brings manual and email-created orders under one exact normalized
-identity: supplier plus supplier external order number. The same number at another supplier remains
-distinct, and a blank supplier number has no automatic match. A trusted, materially matching
-confirmation attaches immutable source provenance to an existing active manual PO instead of
-creating another, without replacing its internal number, lines, lifecycle, receipt history, or stock.
-A material mismatch or deleted/cancelled candidate enters `needs_attention` and cannot produce a
-second PO. Manual create/update and import finalization share a database-enforced derived identity,
-including soft-deleted history. The canonical Purchase Orders list shows accessible manual,
-email-created, and manual-then-supplier-confirmed provenance; Supplier Order Imports remains the
-audit/retry/exception queue rather than a competing order list.
-
-The implemented technician surfaces are Supplier Order Imports at
-`/tech/storage/supplier-order-imports`, the import detail/correction workflow, and the immutable
-sanitized **Email Copy** card on the otherwise canonical Purchase Order detail. Technical source and
-import evidence remains on the import detail; trusted authentication evidence remains internal and
-is not displayed. Admin surfaces are Purchase Order
-Automation at `/tech/admin/settings/storage/purchase-order-automation`, Supplier Order Profiles at
-`/tech/admin/settings/storage/supplier-order-profiles`, the existing Email and Signal rule builders,
-Documentation Suppliers, and Integration AI Privacy/workloads. The profile UI supports no-AI
-creation, immutable versions, test/replay, protected fixtures, activation, pause, retire, rollback,
-and import/export. Optional governed AI can extract uncertain documents, repair an eligible import,
-and propose or auto-activate a declarative profile version only after the configured replay/shadow
-gates. The workflow records an order placed elsewhere; it never submits an order and never receives
-goods or changes stock.
-
-Deployment record (2026-08-05; operational and automated evidence, not human approval):
-
-- The complete code and documentation set is deployed in `/var/Projects/tdPSA` with the required
-  Laravel runtime permissions and `umask 0002` for Artisan operations.
-- Migrations `2026_08_05_100000` through `2026_08_05_113000` were reviewed with
-  `migrate --pretend` and applied to the actual Dev schema, including the Email UID live cursor.
-- `PermissionSeeder`, `RoleSeeder`, `VendorSeeder`, `ShippingCarrierSeeder`,
-  `SupplierOrderProfileLibrarySeeder`, `DocumentationKnowledgeDocumentationSeeder`, and
-  `StorageKnowledgeDocumentationSeeder` were run on Dev.
-- Laravel caches were cleared, Blade views were compiled, and the affected Documentation, Storage,
-  Email, Signal, and Integration sources were synced into Nexum Knowledge. The five modules contain
-  17 published articles; their external BookStack push remains pending because the current push
-  worker processes all pending Knowledge content rather than a selected module set.
-- An isolated Supplier Orders runtime is installed for `/var/Projects/tdPSA`: a locked database
-  worker for queue `supplier-orders`, dispatch and heartbeat every minute, health every five
-  minutes, retention daily at 04:10, and digest daily at 07:00. Each task uses a separate `flock`
-  lock and the shared Supplier Orders runtime log.
-- A separate locked inbound Email runtime now polls active account 1 (`support@tronderdata.no`)
-  every minute and runs only the database `email,default` queues. The global Laravel scheduler
-  remains deliberately uninstalled, so unrelated scheduled workloads were not activated.
-- Controlled Itegra calibration was activated on 2026-08-05: global policy revision 3 is `shadow`,
-  warehouse 2 (`Trønder Data`) is pinned, active profile row 1/version row 7 (version 4) passed its
-  protected fixture 1/1, and exact preclassification Email rule 10 and Signal rule 2 are active. The
-  Email rule is limited to inline forwards from `sveintore@tronderdata.no` to
-  `support@tronderdata.no` with the expected subject and Itegra body markers. AI, supplier creation,
-  Item creation, and Purchase Order writes remain disabled in this shadow revision.
-- The first real forward was preserved as EmailMessage 51 and produced exactly one matched Email
-  rule log, Signal 10, Signal execution 2, and import 2. Deterministic extraction found external
-  order 2004138603 and one unresolved line for supplier SKU 1311386, quantity 1, line total 223.20.
-  The import stopped at `needs_attention` / `policy` / `shadow_complete`; it created no Item,
-  Purchase Order, receipt, Stock Unit, Movement, or on-hand change.
-- The normal poll did not originally reach IMAP UID 1447 because more than 100 older unread messages
-  filled the unseen window, so the exact UID was ingested once to complete the shadow trace. The live
-  message also exposed that unsupported Webklex `getHeaders()` access stored an empty `headers_json`.
-  Ordered raw headers are now parsed from `getHeader()->raw`.
-- An intermediate paged-unread correction was unsafe in the established mailbox: its live safety run
-  imported 240 historical messages and created 179 Tickets, 42 Signals, 18 Email rule logs, and one
-  database-only TicketAssigned notification. Notification settings had mail and Nextcloud Talk off,
-  no outbound Email log was created, and failed jobs remained zero. Polling was paused immediately.
-  No accidental EmailMessage, Ticket, Signal, rule-log, or notification row has been deleted; cleanup
-  requires explicit user authorization after exact targets are re-resolved.
-- Migration `2026_08_05_113000` and the final poller correction now persist each account's
-  `UIDVALIDITY`, establish `UIDNEXT - 1` as a forward-only baseline, drain the oldest genuinely new
-  UIDs in bounded batches, ignore historical unread state, serialize account fetches, and fail closed
-  if the UID namespace changes. Baseline, ordinary manual poll, and a scheduled cron cycle were
-  live-verified at UID 1447 / 290 stored messages with no new queue row, message, or failed job.
-- A read-only direct IMAP recheck of UID 1447 found 27 header names, three ordered `Received` values,
-  one `Authentication-Results`, first receiving hop/authserv `plesk.tronderdata.no`, and aligned DKIM
-  for `tronderdata.no`. The already-pinned import remains immutable with its original empty auth
-  snapshot. Trust settings remain empty until an operator confirms that the Plesk boundary removes
-  untrusted inbound authentication headers and a second message proves normal capture end to end.
-
-Mailbox calibration record (2026-08-07; operational and data evidence, not human approval):
-
-- A bounded read-only IMAP review used `EXAMINE` and `BODY.PEEK` after recording mailbox
-  `UIDVALIDITY`, UID, message, and unseen baselines. Relevant order confirmations, including Trash
-  samples, were read without changing mailbox flags or enabling new inbound routing.
-- Itegra profile row 1 received validated candidate version row 8 (version 5). The candidate removed
-  a false HTML spacer-row path and replayed the synthetic fixture, existing forwarded import 2, and
-  three direct confirmations. Active version row 7 (version 4) and its exact shadow routing remain
-  unchanged. The profile now has one synthetic and four protected real fixtures.
-- Five additional profiles were added with validated versions and six protected real fixtures:
-  Dustin, iFixit, MyTrendyPhone, Ecoengros, and IPC-Computer. Every profile remains an inactive
-  `draft` with no active-version pointer, Supplier mapping, automation actor, Email rule, or Signal
-  rule. Their profile overrides remain fail-closed in shadow with AI and master-data creation off.
-- Nine installation-local calibration imports retain 12 reviewed lines in `needs_attention` /
-  `validate`. The guarded transaction and independent count checks recorded no Vendor, Item,
-  Purchase Order, shipment, receipt, Stock Unit, Movement, on-hand, Email-rule, Signal, Ticket,
-  queue, attempt, repair, or failed-job side effect. Calibration imports have no Email, Signal, or
-  Purchase Order links.
-- No passing profile was created for NDI because its order facts are PDF-only, for 3DJake because
-  normalized text omits line prices, or for Allnet because the available sample lacks order lines.
-- Shipment-confirmation messages were retained only as future design corpus. Shipment-email
-  automation is not implemented and requires a separate approved Level 3 RFC, ADR, and Feature
-  Slices before any routing or shipment/tracking mutation.
-
-Remaining controlled-rollout actions:
-
-1. Forward another real Itegra confirmation inline from the exact calibrated forwarding address.
-   Let the ordinary poller ingest it without exact-UID assistance and verify ordered stored headers
-   plus one Email log, one Signal, and one idempotent `shadow_complete` import trace. Preserve it as
-   an additional fixture when it expands current coverage. Historical mailbox calibration does not
-   prove the ordinary authenticated polling path.
-2. Confirm operationally that `plesk.tronderdata.no` strips untrusted inbound
-   `Authentication-Results` before adding its own result. Only then configure both trusted authserv
-   and first receiving-hop identifiers and activate a profile version that requires trusted aligned
-   authentication. Decide whether production uses the exact internal forwarder or direct supplier
-   delivery. Configure a least-privilege automation actor and Item mappings before any write mode.
-3. If AI will be used, configure the effective Integration workload, non-writing agent,
-   provider/model/privacy policy, budget, and recipient governance, then complete a controlled
-   provider smoke before `auto_verified_ai` or automatic profile activation.
-4. Use a module-scoped BookStack push, or explicitly review every unrelated pending Knowledge item
-   before authorizing the current global push worker. Verify the 17 affected articles after push.
-5. Decide whether to authorize recoverable cleanup of the 240 accidental historical Email rows and
-   their 179 Tickets, 42 Signals, 18 rule logs, and one database notification. Re-resolve and preview
-   exact targets before any destructive or hiding action.
-6. Complete authenticated browser and named human review before describing the automation as
-   active or production-ready.
-
-No frontend build is expected for this server-rendered update. Disabling the global policy and
-profiles is the operational rollback. Created imports, attempts, mappings, profile versions, Items,
-and Purchase Orders remain audit history and must not be deleted or schema-rolled back after use.
-
-Current deployment state at this documentation update: the Dev deployment baseline, isolated
-runtimes, exact shadow routing, and first real Email-to-Signal-to-Storage trace are complete. The
-real import reached deterministic `shadow_complete` with one unresolved line and no Item, Purchase
-Order, receipt, Movement, or stock write. Header capture and polling defects discovered by the test
-are corrected with ordered raw-header parsing and a persistent forward-only UID namespace/baseline;
-live baseline, manual poll, and cron checks caused no further historical ingest. The intermediate
-safety test's 240 historical Email rows and linked side effects remain intact pending an explicit
-cleanup decision; it created no outbound email and no failed job. A second ordinary-poll capture,
-broader Itegra fixture coverage for multi-line orders, quantity above one, and freight or discount
-variation, verified/configured Plesk trust boundary, least-privilege actor, Item mapping, controlled
-external BookStack push, optional governed AI provider smoke, authenticated browser QA, broad
-post-fix regression, and named human review remain outstanding. The Codex
-in-app browser could not perform
-authenticated UI verification because the self-signed `nexum-psa.local` certificate is rejected
-with `ERR_CERT_AUTHORITY_INVALID`; this is a browser trust blocker, not evidence that the
-application workflow passed or failed. The installed and enabled Chrome extension also remained
-unavailable because the Browser plugin's native-host manifest and registry entry are missing;
-reinstalling that plugin is required before Chrome control can be retried.
-
-Risks: a forged or misrouted message could create a false commercial record; layout drift or an AI
-error could alter identity, quantity, price, freight, discount, currency, or totals; repeated and
-changed resends could duplicate or conflict with an order; unsafe matching could contaminate Item
-identity; automatic Supplier or Item creation could create master-data noise; AI egress could expose
-purchase or delivery data; an incorrectly activated profile could affect later imports; a disabled
-actor, provider outage, or missing worker could leave a hidden backlog; and notification tests could
-send unexpected messages. Server-enforced trust, evidence, arithmetic, caps, permissions,
-idempotency, immutable versions, fixtures, rollback, circuit breakers, retention, and operational
-health must all remain effective. Before any controlled notification test, verify the current
-recipient notification settings. The open Integration reviews `HR-2026-07-29-012` and
-`HR-2026-07-27-001`, Signal review `HR-2026-07-15-002`, and base purchase/receiving review
-`HR-2026-08-04-001` remain separate and are not completed by this entry.
-
-Final pre-rollout automation verification on 2026-08-05 is green. After the Email header and
-forward-only UID hardening, the full Laravel suite passed 1,206 tests / 10,039 assertions. The final
-focused Email run passed 61 / 366, including baseline initialization, oldest-first new-UID batch
-draining, raw repeated-header preservation, and fail-closed `UIDVALIDITY` change handling; the
-earlier combined affected automation package passed 341 / 3,086. The six changed Email cursor files
-and migration passed syntax/Pint checks, and repository-wide `git diff --check` passed. HTTP smoke
-returned 200 for login and the expected 302 login redirects for protected Purchase Orders and Inbox
-without any 500 response. The isolated runtimes advanced over consecutive minutes with zero Email,
-default, or Supplier Orders failed jobs; live Email polling remained at UID 1447 / 290 stored rows
-with no further historical ingest. Passing automated tests does not complete any human checkbox.
-
-The final pinned-governance/source-card hardening pass is green on the current Dev tree: canonical,
-profile-library, and policy-boundary suites passed 15 tests / 101 assertions; manual correction and
-automation UI passed 15 / 249; and import pipeline plus governed AI passed 20 / 213. This automated
-evidence does not change the `Pending` review status.
-
-The final combined data-integrity regression package is green on the current Dev tree: singleton/
-current guards, append-only attempts, atomic profile health, dispatch claim-CAS, Operations,
-Pipeline, Profile Engine, governed AI, and policy validation pass 81 tests / 644 assertions.
-MariaDB 10.6 probe tables verified the invisible generated unique guard and attempt update/delete
-triggers, then were removed. Migration `112000` was subsequently reviewed with
-`migrate --pretend` and applied to the actual Dev schema together with migrations `100000` through
-`111000`. This records deployment completion only; the database guards, append-only behavior, and
-rollback preflight remain part of the outstanding human verification below.
-The rollback preflight is also covered and stops before removing any guard once append-only start/
-completion history can no longer satisfy the legacy uniqueness constraint.
-The queue regression also proves a duplicate delivery cannot complete a claim already owned by a
-running worker. The Pipeline source fixture now uses only the documented synthetic order, buyer,
-product, SKU, and amounts; a repository search found none of the original commercial fixture values.
-
-The 2026-08-07 mailbox calibration replayed all 11 stored fixtures successfully against their
-intended validated candidate versions, including 5/5 for Itegra version row 8. Focused profile,
-fixture, policy, integrity, and pipeline verification passed 46 tests / 419 assertions. An
-unauthenticated HTTPS smoke returned the expected 302 login redirect without a 500 response. This
-calibration changed installation data and review evidence only; it requires no migration, cache
-clear, frontend build, or Knowledge sync. Passing verification does not complete a human checkbox.
-
-The Admin Storage navigation regression reported on 2026-08-07 is corrected on Dev. The Storage
-card now exposes Inventory settings, Supplier order policy, and Supplier profiles. The focused
-dashboard regression passed 1 test / 12 assertions, and the supplier automation UI suite passed
-7 tests / 108 assertions. Authenticated browser confirmation remains open for the reasons above.
-
-Supplier-order identity reconciliation deployment gate (added 2026-08-07; still pending):
-
-- The sanitized preflight counted one Purchase Order, zero populated supplier-order numbers, and zero
-  normalized collisions across active and soft-deleted history before schema mutation.
-- Migration `2026_08_07_100000_add_supplier_order_identity_to_purchase_orders.php` remains recorded
-  in batch 62. Forward-only compatibility migration
-  `2026_08_07_101000_add_database_generated_supplier_order_identity_key.php` ran in batch 63. The
-  authoritative boundary is now a database-generated normalized key with a composite supplier/key
-  unique index; the former hash unique index is removed. The existing blank identity remains `NULL`.
-  The obsolete nullable hash column remains unindexed only for an explicit later cleanup after the
-  human-review/rollback window.
-- A live MariaDB 10.6.23 contract used two independent connections and verified supplier scoping,
-  blank references, raw insert and raw update rejection, database-consistent Unicode case handling,
-  a stale REPEATABLE READ plain read, and a current locking read that sees the committed race winner.
-  The temporary contract table was removed. Manual create/update, import finalization, source
-  projection, soft-deleted history, material totals, and atomic pre-history AI repair are covered.
-- Focused identity/import verification passes 27 tests / 192 assertions; the affected AI, integrity,
-  policy, and purchase package passes 71 / 622; and the complete Storage suite passes 247 / 2,528
-  with the dedicated opt-in MariaDB PHPUnit contract skipped only because separate contract
-  credentials are not configured. The equivalent live MariaDB contract above passed. The remaining
-  application modules pass in three bounded groups: 978 tests / 7,619 assertions. Combined verified
-  coverage is 1,225 passing tests / 10,147 assertions plus the one documented opt-in skip. Two
-  monolithic runs were terminated only by the command time limit at 124 and 304 seconds.
-- `optimize:clear`, Blade compilation, PHP syntax, Pint, three protected-route HTTP smoke checks,
-  and Storage Knowledge sync (one chapter, six articles, zero skipped) pass. Both identity migrations
-  report `Ran`, the queue reports zero failed jobs, and no frontend build is required.
-- The batch-63 migration is intentionally additive/forward-only: its `down()` does not remove an
-  invariant that may be owned by batch 62 on a fresh install. Any future removal of the legacy hash
-  column requires a separate forward migration after review.
-- The isolated worker is a bounded 50-second cron process, so it loads current code on each minute's
-  next cycle and does not require a persistent-worker restart. Its dispatch, heartbeat, health,
-  retention, and digest cron entries remain installed.
-- Authenticated visual QA remains open: the in-app Chrome connector cannot start because the local
-  Codex native-messaging host registration/manifest is absent even though the extension is enabled.
-  Reinstall the Browser plugin through the Codex plugin UI before completing the browser checks.
-  Keep the review `Pending` until a named human confirms the shared identity and no-stock boundary.
-
-Human checks:
-
-- [ ] Open **Admin** and confirm the **Storage** card shows **Inventory settings**, **Supplier order
-  policy**, and **Supplier profiles**. Open the last two links and confirm they reach the policy and
-  profile pages without a dead link or permission error for an authorized administrator.
-- [ ] On the deployed Dev schema, confirm in an authenticated browser that the global policy remains
-  `shadow`, exact Itegra Email rule 10 and Signal rule 2 have not widened, and mailbox calibration
-  imported no historical Email backlog. Confirm active Itegra version row 7 remains unchanged and
-  candidate version row 8 is validated but inactive with one synthetic and four real fixtures.
-  Confirm Dustin, iFixit, MyTrendyPhone, Ecoengros, and IPC-Computer remain inactive drafts without
-  active versions, automation actors, Supplier mappings, Email rules, or Signal rules.
-- [ ] Verify the configured service actor is active and has exactly the required Storage and, when
-  enabled, Documentation permissions. Disable or deauthorize the actor and confirm finalization
-  fails closed with an actionable operational reason.
-- [ ] Verify the installed isolated Supplier Orders runtime is persistent, owned by the intended Dev
-  account, rooted at `/var/Projects/tdPSA`, and distinct from other application workers. Confirm
-  current worker and scheduler heartbeats, one non-overlapping dispatch, bounded retry, stale
-  recovery, health/maintenance, retention, and optional digest execution through the separate
-  `flock` locks and runtime log. Confirm the global Laravel scheduler remains deliberately inactive
-  until the separate cross-application Operations review authorizes it.
-- [ ] Without enabling AI, create or clone a supplier profile, add a protected fixture from a
-  reviewed import, edit an immutable draft version, preview/replay it, activate it, create a later
-  version, roll back, export/import safe configuration, and confirm source email, credentials, and
-  installation-specific secrets are absent from the export.
-- [ ] Edit profile metadata and verify the audit records the actor, changed fields, and exact
-  before/after values while the active version, definition, and checksum remain unchanged. Confirm
-  an invalid selector, duplicate slug, and unauthorized edit are rejected without creating an
-  audit entry.
-- [ ] Review the four protected real Itegra fixtures now present, including the forwarded and direct
-  template paths, then add enough approved confirmations to cover several lines, quantity above one,
-  freight or discount variation, and missing optional references. Keep policy in shadow, confirm
-  every fixture checksum is protected, and review evidence plus arithmetic before approving
-  thresholds or activating candidate version row 8.
-- [ ] Configure an exact pre-routing Email rule and matching Signal action. Ingest one trusted Itegra
-  confirmation and confirm exactly one Signal and one Storage import are created, ordinary Ticket
-  ingress is suppressed only for the configured match, and unrelated email retains normal behavior.
-- [ ] Repeat the message, retry Email/Signal/queue processing, and run concurrent dispatch where
-  practical. Confirm the existing import/PO is reused. Send a changed resend for the same external
-  order and confirm it becomes a visible revision/conflict rather than a second PO.
-- [ ] Register an active manual PO with a supplier order number and reviewed material lines, then
-  process a trusted matching confirmation. Confirm the import links to that exact PO, the canonical
-  list still has one order, and provenance changes from manual to manual-plus-supplier-confirmed.
-  Confirm its internal number, creator, lines, dates, warehouse, currency, status, shipments, and
-  receipts remain unchanged and no Stock Unit, Movement, receipt, or on-hand change occurs.
-- [ ] Repeat with a material line/quantity/Item/SKU/currency/warehouse/price/tax/total mismatch and
-  separately with deleted and cancelled matching candidates. Confirm every case enters
-  `needs_attention` with an actionable candidate/reason and no duplicate, silent overwrite, or
-  historical resurrection.
-- [ ] Try a manual create against an email-created PO identity and update another PO onto an occupied
-  identity, including a soft-deleted owner. Confirm validation rejects each collision. Confirm the
-  same external number is accepted for a different supplier and a blank supplier number remains
-  allowed but unmatched. Confirm surrounding spaces/database case normalize while leading zeros,
-  punctuation, tabs/newlines, and internal spacing remain identity-significant. Confirm ordinary
-  editing cannot change the supplier identity after vendor confirmation.
-- [ ] Inspect the migrated Dev schema/data and confirm every nonblank historical supplier order has
-  the expected database-generated identity, blank identities remain `NULL`, soft-deleted identities
-  stay reserved, the obsolete hash is not indexed, raw insert/update cannot bypass the composite
-  supplier/key constraint, and concurrent manual/import attempts cannot produce more than one PO for
-  the same domain identity.
-- [ ] Open Purchase Orders and confirm accessible provenance distinguishes manual, email-created, and
-  manual-then-supplier-confirmed rows in the same list. Confirm the corresponding Supplier Order
-  Import is an audit/provenance row, not a second editable PO, and that its page remains the
-  audit/retry/exception queue.
-- [ ] Confirm the database retains several historical policies/versions but exactly one current
-  policy and one active version per profile. Verify one processed import has separate append-only
-  stage-start/stage-completion attempts, retention leaves those attempts unchanged, and delayed
-  dispatch/job failure callbacks cannot overwrite a completed or newer claim.
-- [ ] Open Supplier Order Imports and exercise search, status/stage/profile filters, sorting,
-  pagination, retry, rejection, and the detail trace. Confirm the safe source snapshot contains no
-  raw EML, unrestricted headers, remote images, active links, credentials, prompt, or raw model
-  response.
-- [ ] On an eligible nonterminal import, use the structured manual correction form for supplier,
-  external order, date, currency, warehouse, lines, prices, tax, charges, and totals. Supply the
-  required reason and confirm immutable source/fingerprint data is unchanged, the correction is
-  audited, and no Vendor, Item, PO, receipt, or stock side effect occurs until an explicit later
-  action permits it.
-- [ ] Resolve one line through an exact existing supplier-SKU mapping, one through a manually chosen
-  Item, and one through the permitted distinct-Item workflow. Confirm mappings are reused, several
-  matches remain ambiguous, leading zeros/punctuation are preserved, name-only similarity never
-  merges Items, and Supplier bootstrap uses Documentation provenance and permissions.
-- [ ] After shadow approval, enable the narrow deterministic review/automatic policy and process one
-  safe order. Confirm exactly one PO is registered as `ordered`, the ordered date uses source data or
-  the documented pinned fallback without substituting today's date, source commercial and delivery
-  facts remain visible on both source cards, the effective-policy checksum/snapshot differs clearly
-  from its global revision, and the PO source card links to the immutable import trace.
-- [ ] Test the original Inbox link with and without Email Inbox permission and after simulated Email
-  retention. Confirm the link is permission-protected while the safe Storage snapshot remains.
-- [ ] With effective Integration governance, run one controlled AI extraction and **Repair with AI**.
-  Confirm the agent has no tools or action authority, output is strict/evidence-backed, every hard
-  Storage gate is recomputed, the repair is auditable, and a proposed profile version cannot become
-  active until required fixture and shadow gates pass. Roll back a passing test version.
-- [ ] In Repair history, confirm the current repair is `Applied`, an earlier repair is `Superseded`,
-  and a guarded proposal is `Blocked`. Confirm blocked proposals expose neither Apply nor Reject,
-  and that **Reprocess** appears only for the current applied, retryable repair when no Purchase
-  Order exists; the resulting Purchase Order link must remain permission-gated.
-- [ ] Inspect the bounded Repair input/output evidence and confirm it contains no address, raw source
-  body, unrestricted header, contact/payment/footer data, embedded instruction, raw prompt, or raw
-  model response. Confirm profile match scope is restored and validated only on the server.
-- [ ] Confirm Repair displays configured budget/limit, spent, remaining, currency, provider cost,
-  consensus evidence, access decision, and checksums without exposing restricted content. Verify
-  candidate reproduction and related links are permission-gated.
-- [ ] Disable AI or make the provider/workload unavailable. Confirm deterministic-safe imports
-  continue, AI-required imports retry or enter a clear exception, no raw-data fallback occurs, and
-  provider/model denial never widens policy.
-- [ ] Verify the sender-authentication boundary with a trusted real receiving path: authentication
-  service evidence alone is rejected, the exact configured first receiving hop plus trusted
-  authentication service succeeds, and a forged or rearranged `Received` header fails closed.
-  Confirm unrelated Email-to-Ticket processing still works.
-- [ ] With more historical unread mailbox messages than the configured batch, forward enough new
-  controlled messages to exceed one poll batch. Confirm the ordinary poller drains only the new UIDs
-  oldest-first over later cycles without exact-UID assistance, while historical unread messages stay
-  untouched. Verify `headers_json` contains separate ordered `received` and
-  `authentication-results` arrays, stored/soft-deleted UIDs remain idempotent, one account cannot have
-  overlapping fetch jobs, and a simulated `UIDVALIDITY` change fails closed with a visible error.
-- [ ] Review the accidental historical-import preview (240 Email rows, 179 Tickets, 42 Signals,
-  18 rule logs, one database notification, no outbound email). Explicitly authorize or decline
-  recoverable cleanup; if authorized, re-resolve exact targets, preserve audit evidence, execute the
-  bounded cleanup, and verify no intended pre-existing record was changed.
-- [ ] Exercise amount, line, quantity, currency, arithmetic, authentication/alignment, warehouse,
-  Item ambiguity, new-master-data cap, and unauthorized-actor failures. Confirm even a reported
-  100% AI confidence cannot bypass one hard gate.
-- [ ] Create shipment/cancellation/receipt history on a separate test PO and confirm manual or AI
-  repair becomes preview-only for locked facts. Confirm no supplier-order email, shadow run, retry,
-  correction, profile replay, or AI path creates a Purchase Receipt, Stock Unit, Movement, or
-  on-hand change; only a later explicit goods receipt may update inventory.
-- [ ] Verify view, resolve, execute, profile-manage, policy-manage, purchase-manage, Email, Signal,
-  Documentation, Integration, and notification permissions independently. No rule builder or read
-  permission may imply Storage or Supplier write access.
-- [ ] Before any Dev UI test, run `PermissionSeeder` and confirm the required permission catalogue
-  rows exist. In a controlled Dev check, verify that an absent required catalogue row returns HTTP
-  403 instead of granting access, then rerun `PermissionSeeder` before continuing the authenticated
-  Supplier Order Automation UI review.
-- [ ] Push the 17 affected published Knowledge articles to BookStack through a module-scoped path,
-  or explicitly review and authorize every unrelated pending Knowledge record before using the
-  current global worker. Confirm the target pages and chapters are synced without changing unrelated
-  documentation.
-- [ ] In a browser that trusts the Dev certificate, review policy, profiles, import queue/detail,
-  manual correction, PO source card, Email/Signal rule configuration, Supplier bootstrap provenance,
-  AI governance, Repair cards/history, and health views on desktop and narrow/mobile widths,
-  including keyboard navigation, errors, disabled reasons, and safe HTML. Record certificate
-  remediation or the trusted-browser method used; the current `ERR_CERT_AUTHORITY_INVALID` block
-  does not satisfy this check.
-- [ ] After the remaining real-email, shadow, optional provider, and manual checks plus any resulting
-  corrections, rerun the focused affected suites, combined Email/Signal/Storage/Integration/
-  Documentation/Notification/permission/receiving regression, full Laravel suite, Blade
-  compilation, route checks, migration status, Knowledge sync status, trusted HTTP/browser smoke,
-  file permissions, and `git diff --check`; record final counts and results here.
-
-Reviewer:
-Reviewed date:
-Result / notes: Dev deployment, migrations, seeders, Knowledge import, isolated runtimes, exact
-Itegra Email/Signal rules, active shadow profile, and one real forwarded shadow trace are complete.
-EmailMessage 51 led to Signal 10 and import 2 with deterministic `shadow_complete`, one unresolved
-SKU line, and no Item, Purchase Order, receipt, Movement, or stock write. Exact ingestion was needed
-because the original poll was pinned by unread backlog, and that row has no stored authentication
-headers. Raw-header capture is fixed, and automatic polling now uses a persisted forward-only
-`UIDVALIDITY`/UID baseline that passed live initialization, ordinary poll, and cron checks without
-further historical ingest. The intermediate safety test imported 240 historical messages and
-created 179 Tickets, 42 Signals, 18 rule logs, and one database-only assignment notification; no
-outbound email or failed job resulted, and no cleanup has been performed without explicit approval.
-Direct IMAP evidence identifies `plesk.tronderdata.no` and aligned DKIM, but trusted settings remain
-empty until the sanitizing boundary and a second ordinary-poll capture are verified. The external
-BookStack push is pending because the worker is global, and authenticated Codex browser QA remains
-blocked by the self-signed Dev certificate (`ERR_CERT_AUTHORITY_INVALID`). The cleanup decision,
-broader Itegra fixture coverage for multi-line, quantity-above-one, and freight or discount
-variation, least-privilege actor, Item mapping, controlled provider smoke if AI is enabled, and
-explicit review by a named human remain outstanding. The 2026-08-07 mailbox calibration added five
-inactive draft profiles with six protected real fixtures plus a validated inactive Itegra version 5
-candidate with four real fixtures. It did not activate routing or produce commercial, inventory,
-Email-rule, Signal, Ticket, queue, or failed-job side effects. NDI, 3DJake, and Allnet remain
-unsupported for the recorded reasons, and shipment confirmations remain future corpus requiring a
-separate Level 3 change. The manual/email identity reconciliation is deployed through batch 63 with
-the database-generated composite guard, two-connection MariaDB race evidence, 1,225 passing tests /
-10,147 assertions across bounded suites, and no receipt or stock side effect. Its generated identity,
-ordinary-edit lock, material comparison, provenance presentation, and no-stock behavior still
-require the unchecked named-human steps above. Keep status `Pending` until a named reviewer begins
-these checks; never infer `In Review` or `Reviewed` from deployment or passing automation.
-
-### HR-2026-08-04-002 - Sortable Storage Inventory Queues, Admin Lists, And Detail History
+### HR-2026-08-11-001 - Intake Final Routing And Review Completion
 
 Status: Pending
-Added: 2026-08-04
+Added: 2026-08-11
 Environment: Dev
-Related: `docs/rfc/2026-08-04-storage-inventory-sortable-tables.md` and its two linked
-2026-08-04 Feature Slices
+Related: GitHub Discussion #166, `docs/rfc/2026-07-04-public-inquiry-forms.md`, and
+`docs/feature-slices/2026-08-11-intake-final-routing-review.md`
 
-Scope: All eleven approved read-only Storage table surfaces now use one accessible sortable-heade
-contract. Inventory Items, Picking List, Purchase Orders, and Receiving use allowlisted server-side
-SQL sorting. Admin warehouses, Item Movement History, Box Contents, Box Events, Purchase Order
-Lines, Shipment Allocation Lines, and Receipt History use typed sorting of already-loaded
-collections with independent parameter names on multi-table pages. Missing optional values stay
-last, computed values match the UI, and stable ties prevent row shuffling. Action columns,
-purchase/shipment/receiving input tables, and the printed control slip remain intentionally fixed.
+Scope: Intake public inquiry forms now support final lifecycle states, form purpose/language/scope,
+explicit routing modes, submission form/field snapshots, client-scoped matching, direct Sales,
+Ticket, and Task handoff through owning module actions, staff review outcomes, and existing-record
+linking. Uploaded files remain Intake-owned and are referenced by target records without silent file
+copying.
 
-Deployment actions: deploy the code, run `php artisan optimize:clear`, and run `php artisan
-knowledge:sync-docs --module=Storage --no-interaction`. No migration, seeding, permission update,
-queue restart, scheduler change, external connector setup, or frontend build is required.
+Deployment actions: deploy the code, run `php artisan migrate --force`, run `php artisan
+optimize:clear`, and sync Intake Knowledge documentation. No permission seed, frontend build, queue
+restart, or scheduler change is required unless the target environment already has stale caches or
+separate Knowledge sync scheduling.
 
-Risks: a sort must never alter stock or workflow data; allowlists must prevent query input from
-becoming SQL; calculated available, progress, status, and outstanding order must match the displayed
-values; missing data must not jump ahead on descending sorts; active filters must survive while a
-new sort leaves stale pagination behind; and sortable controls must not be added to indexed input or
-printed receiving rows.
+Risks: public forms with legacy `active` status must continue to open until migrated to
+`published`; automatic routing must not create target records when the configured policy says manual
+review or known-client-only without a match; client-scoped forms must not match another Client; and
+attachments must stay downloadable from protected Intake while not being copied into Ticket, Task,
+Sales, or Signal payload paths.
 
-Automated verification: the complete Storage suite passes with 95 tests and 1,233 assertions. The
-combined relevant regression package passes with 64 tests and 883 assertions: 55 tests / 736
-assertions for the four operational queues and 9 / 147 for the collection sorter plus seven
-Admin/detail surfaces. All 60 operational queue column/direction expressions execute successfully
-against the configured Dev MySQL database. The complete Laravel suite passes with 1,027 tests and
-8,558 assertions. PHP syntax, targeted Pint, Blade cache compilation, diff/whitespace checks, and
-file permission checks pass.
-
-Human checks:
-
-- [ ] On desktop, open Inventory Items, Picking List, Purchase Orders, and Receiving. Click every
-  linked data heading in both directions and confirm row order, the active arrow, one `aria-sort`
-  state, numeric alignment, missing values last, and stable equal-value ordering.
-- [ ] Apply search and every available filter in each paginated queue, change sorting, and confirm
-  search/filter values remain while the result starts on page one. Remove the explicit sort and
-  confirm each queue returns to its documented default operational order.
-- [ ] In Inventory Items, compare On-hand, Reserved, Available, and Status sorting with the displayed
-  quantities and `Should order`/`OK` badges, including an over-reserved item and an item at its
-  reorder point.
-- [ ] In Picking List, verify Status sorting distinguishes Ready, Waiting for stock, and Requires
-  identified-unit picking exactly as shown, and confirm the Pick/Open ticket action column is not a
-  sort control.
-- [ ] In Purchase Orders and Receiving, verify ordered/expected dates keep missing dates last and
-  that progress, shipment count, received, and outstanding sorts match the displayed aggregates.
-- [ ] Open Admin Inventory, one Item with several movements, and one Box with contents and events.
-  Verify every supported heading in both directions and confirm the two Box tables retain
-  independent sort choices and return to the correct anchor.
-- [ ] Open a Purchase Order with several lines, shipment allocations, and receipt entries. Sort all
-  three table groups independently, confirm one choice does not reorder the others, and verify
-  actions such as Cancel and Reverse remain plain headings.
-- [ ] Open purchase-order edit, shipment registration, goods receiving, and the printable control
-  slip. Confirm no sorting controls appear and the input/print row order is unchanged.
-- [ ] At narrow mobile width, confirm every table remains usable through its responsive horizontal
-  container. Use keyboard navigation on desktop to focus and activate several sort links and confirm
-  the announced label describes the next direction.
-
-Reviewer:
-Reviewed date:
-Result / notes: Automated implementation and Dev verification are complete. Awaiting explicit named
-human review of the visual, responsive, keyboard, and real-data ordering checks above.
-
-### HR-2026-08-04-001 - Supplier Purchase Orders, Shipping, And Goods Receiving
-
-Status: Pending
-Added: 2026-08-04
-Environment: Dev
-Related: `docs/rfc/2026-08-04-storage-purchase-orders-shipping-receiving.md`, the four linked
-2026-08-04 Feature Slices, and the procurement/carrier and immutable-receipt ADRs
-
-Scope: Storage can register supplier orders that were placed outside Nexum, retain compatible
-Ticket-created purchase needs, follow several shipments and tracking identifiers, print a control
-slip, and post accepted or rejected quantities one delivery at a time. Accepted goods update
-inventory through an idempotent immutable receipt ledger; rejected goods remain outstanding for
-replacement. Serial, batch, and expiry units are supported. Reasoned cancellation, separately
-authorized overage, guarded receipt reversal, least-privilege API parity, and a Documentation-owned
-Shipping Carriers register complete the workflow. Nexum still does not submit supplier orders or
-poll carriers.
-
-Deployment actions: deploy the code; run `php artisan migrate --force`; run `php artisan db:seed
---class=PermissionSeeder --force`, `RoleSeeder`, `ShippingCarrierSeeder`,
-`DocumentationKnowledgeDocumentationSeeder`, and `StorageKnowledgeDocumentationSeeder`; run
-`php artisan optimize:clear`; then run `php artisan knowledge:sync-docs --module=Documentation
---no-interaction`, and repeat the sync for `Storage`, `Ticket`, and `Integration`. No queue restart,
-scheduler change, external connector setup, or frontend build is required.
-
-Risks: a repeated receipt must never double-post stock; shipment allocations, rejected replacements,
-cancellations, and reversals must not create false outstanding or received quantities; serial and
-batch history must remain isolated; tracking links must stay on verified HTTPS carrier hosts;
-inactive master data and client-supplied metadata must not bypass action invariants; Ticket identity
-must remain hidden without Ticket permission/scope; and only an eligible, still-available receipt
-may be reversed.
-
-Automated verification: the full feature baseline passes the complete Laravel suite with 1,011 tests
-and 8,246 assertions. The combined affected Documentation, Storage, Integration, and Ticket run
-passes with 167 tests and 1,791 assertions. After the order-date and sortable-index follow-ups, the
-current purchase workflow passes with 24 tests and 262 assertions. The two focused sorting
-regressions pass with 45 assertions across every visible column, both directions, current-view link
-preservation, invalid-direction fallback, date null placement, and aggregate progress, shipment, and
-outstanding sorts. All 16 column/direction combinations also execute successfully against the
-configured Dev database. The final focused backend receipt suite passes with 24 tests and 206
-assertions;
-the API suite passes with 5 tests and 122 assertions; and the Ticket-scope/workflow run passes with
-26 tests and 279 assertions. All 100+ changed PHP files pass syntax and targeted Pint checks, Blade
-cache compilation passes, OpenAPI generation contains all 12 purchase operations, and the 12
-purchase API routes are registered.
-
-Dev deployment verification: the three Storage purchase migrations ran in batch 57 and the carrier
-migration remains applied in batch 56. Permission, role, carrier, Documentation Knowledge, and
-Storage Knowledge seeders all complete successfully. The Storage Knowledge seeder now preserves an
-existing BookStack-owned canonical chapter or article while adding the purchase article; its focused
-regression passes with 1 test and 8 assertions, and the full Knowledge suite passes with 40 tests and
-365 assertions. The resulting Knowledge sync reports Documentation 1 chapter/2 articles, Storage
-1/5, Ticket 1/11, and Integration 1/6, with zero skipped entries in all four modules. The canonical
-Storage chapter and inventory article remain owned by `book_stack` after the compatibility run.
-
-Runtime verification: `optimize:clear` succeeds. HTTPS smoke checks return the expected guest or API
-responses: 302 for Purchase Orders, 302 for Shipping Carriers, and 401 for the unauthenticated
-purchase-order API. Interactive visual verification remains open because the in-app browser refuses
-the Dev environment's self-signed certificate with `ERR_CERT_AUTHORITY_INVALID`; the certificate
-warning was not bypassed. No queue restart, scheduler change, external connector setup, or frontend
-build was required.
+Automated verification: the focused Intake feature suite passes with 21 tests and 168 assertions,
+covering route ownership, form settings, conditional fields, snapshots, scoped matching, Sales,
+Ticket, and Task routing, skipped routing, review outcomes, existing-record linking, spam handling,
+Signal payloads, and attachment ownership. The focused Knowledge repository-doc sync test confirms
+Intake docs are registered. The focused Integration regression confirms BookStack push `last_error`
+messages are truncated safely. Dev BookStack push jobs that failed before the truncation fix were
+retried, and `queue:failed` reports no failed jobs.
 
 Human checks:
 
-- [ ] As a view-only user, confirm Purchase Orders, receipts, shipments, tracking, and the control
-  slip are readable but no manage, receive, overage, or reversal controls appear.
-- [ ] Search or filter the Purchase Orders list, sort every visible heading in both directions, and
-  confirm the indicator, row order, active search/filter values, missing-date placement, and
-  pagination remain correct.
-- [ ] As an authorized manager, open a new purchase order and confirm Ordered date defaults to the
-  current date and remains editable. Register a placed multi-line supplier order and confirm inactive
-  or non-supplier vendors, inactive warehouses, and inactive or non-orderable new items are
-  unavailable and rejected by the server.
-- [ ] Add two partial shipments with several tracking identifiers, append a carrier handoff number,
-  and confirm every earlier identifier remains visible and each clickable link opens only the
-  expected carrier host.
-- [ ] Print the control slip and confirm supplier, order, ordered, previously received, outstanding,
-  and blank count fields are readable on paper or PDF.
-- [ ] Receive one line partially and another line fully, including accepted and rejected quantities,
-  and confirm only accepted quantity increases inventory while the rejected quantity remains
-  outstanding for replacement.
-- [ ] Receive serial-, batch-, and expiry-controlled examples and confirm identifier requirements,
-  duplicate-serial rejection, stock-unit balances, and later receipt history.
-- [ ] Select a specific allocated shipment and confirm only its outstanding allocated lines can be
-  received; then verify an unknown-content shipment follows the unscoped allocation guard.
-- [ ] Confirm normal overage is rejected, then use a user with the separate overage permission and a
-  reason to post the intended exception exactly once.
-- [ ] Retry the same receipt request and confirm no duplicate receipt, movement, or inventory change
-  is created; changing the payload under the same token must be rejected.
-- [ ] Exercise outstanding line cancellation, rejected replacement shipment, shipment cancellation,
-  order close/cancel, and rejected-only reversal, and confirm allocation and order progress remain
-  internally consistent.
-- [ ] Reverse one still-available receipt and confirm compensating movements and reopened outstanding
-  quantity; reserve or consume another received unit and confirm reversal is blocked.
-- [ ] Verify `storage.purchase.read` without `tickets.read` returns no Ticket identifiers, subject, or
-  Ticket-specific metadata; add `tickets.read` and confirm the linked Ticket context appears. Repeat
-  the equivalent Tech page check with and without `ticket.view`.
-- [ ] Check purchase-order detail, shipment entry, receiving, carrier register, and control-slip views
-  at desktop and mobile widths, including validation feedback and print layout.
+- [ ] Create or edit an Intake form, set status `Published`, purpose/language, Client scope, Ticket
+  target, and `Auto-route known clients`; confirm the public URL opens.
+- [ ] Submit the form as a known Client and confirm a Ticket is created, linked from the Intake
+  submission, and contains the submitted values and attachment names.
+- [ ] Submit a similar global form as an unknown Client with `Auto-route known clients`; confirm it
+  stays in Intake as routing skipped and does not create a Ticket.
+- [ ] From a new submission, manually route to Sales and Task and confirm each target link opens.
+- [ ] Link an existing Client and then link an existing Ticket or Sales opportunity; confirm Client
+  matching and target status update are reflected in the submission events.
+- [ ] Mark submissions as reviewed, spam, duplicate, rejected, and archived and confirm the status,
+  reason, reviewer, and event history are clear.
+- [ ] Download an Intake attachment from the protected submission page and confirm no copied
+  attachment appears on the created Ticket/Task/Sales record unless a separate handoff was approved.
+- [ ] Check the form builder and submission detail page at desktop and mobile widths for readable
+  Bootstrap layout and non-overlapping controls.
 
 Reviewer:
 Reviewed date:
-Result / notes: Automated implementation and Dev deployment checks are complete. Awaiting named
-human review on Dev, including the visual checks that could not be completed through the in-app
-browser because of the self-signed certificate.
+Result / notes:
 
 ### HR-2026-07-29-013 - Production Ticket External-Message API Route
 
@@ -1995,7 +1328,8 @@ Scope: globally guarded standards-based Web Push transport; stable VAPID configu
 shared service worker; explicit current-device registration; privacy-safe own-device inventory;
 current-device generic self-test; user and permission-guarded administrator revocation; durable
 secret-free subscription lifecycle audit; automatic disabled-user cleanup; and default-off
-Notification preference fields that do not expose unsupported business-event controls.
+Notification preference fields. Later Slice 2 now exposes Web Push controls only for implemented
+business-event payloads.
 
 Deployment actions: install the locked Composer dependencies; configure stable
 `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT`; keep production
@@ -2037,6 +1371,12 @@ Review notes:
   to the real production beta domain, which already has trusted SSL. The Dev certificate will not
   be treated as a Slice 1 code defect. This deferral is not approval; all relevant browser,
   installation, privacy, and delivery checks remain open until production-beta verification.
+- 2026-08-11, Codex: inbound Email/customer-reply Web Push and source read-sync were implemented as
+  separate completed slices under `HR-2026-08-11-002`. This entry remains focused on browser/device
+  lifecycle and service-worker foundation checks.
+- 2026-08-11, Svein Tore: Dev will get a new real-domain HTTPS vhost because browser Service Worker
+  and Web Push tests cannot be accepted against the old untrusted Dev certificate. Retest this entry
+  on that trusted HTTPS Dev vhost before production enablement.
 
 Human checks:
 

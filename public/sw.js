@@ -64,6 +64,16 @@ self.addEventListener("notificationclick", (event) => {
     event.waitUntil(focusOrOpenTarget(event.notification.data?.url));
 });
 
+self.addEventListener("message", (event) => {
+    const payload = event.data || {};
+
+    if (payload.type !== "nexum-close-notifications" || !Array.isArray(payload.tags)) {
+        return;
+    }
+
+    event.waitUntil(closeNotificationsByTags(payload.tags));
+});
+
 async function showVisiblePushNotification(event) {
     const payload = readPushPayload(event);
     const targetUrl = safeSameOriginUrl(payload.data?.url || payload.url);
@@ -79,6 +89,24 @@ async function showVisiblePushNotification(event) {
         data: {
             url: targetUrl,
         },
+    });
+}
+
+async function closeNotificationsByTags(tags) {
+    const safeTags = tags
+        .filter((tag) => typeof tag === "string")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0 && tag.length <= 120 && /^nexum-[a-z0-9._:-]+$/i.test(tag));
+
+    if (safeTags.length === 0 || !self.registration.getNotifications) {
+        return;
+    }
+
+    const notifications = await self.registration.getNotifications();
+    notifications.forEach((notification) => {
+        if (safeTags.includes(notification.tag)) {
+            notification.close();
+        }
     });
 }
 

@@ -50,19 +50,29 @@ class NotificationSettingsController extends Controller
             'settings.*.notification_type' => 'required|string|in:'.implode(',', array_keys(NotificationSetting::TYPES)),
             'settings.*.mail_enabled' => 'nullable|boolean',
             'settings.*.database_enabled' => 'nullable|boolean',
+            'settings.*.web_push_enabled' => 'nullable|boolean',
+            'settings.*.web_push_preview_enabled' => 'nullable|boolean',
             'settings.*.nextcloud_talk_enabled' => 'nullable|boolean',
             'settings.*.nextcloud_talk_webhook_url' => 'nullable|url|max:500',
         ]);
 
         foreach ($validated['settings'] as $settingData) {
+            $type = $settingData['notification_type'];
+            $webPushEnabled = NotificationSetting::supportsWebPush($type)
+                && (bool) ($settingData['web_push_enabled'] ?? false);
+            $webPushPreviewEnabled = NotificationSetting::supportsWebPushPreview($type)
+                && (bool) ($settingData['web_push_preview_enabled'] ?? false);
+
             NotificationSetting::updateOrCreate(
                 [
                     'user_id' => $user->id,
-                    'notification_type' => $settingData['notification_type'],
+                    'notification_type' => $type,
                 ],
                 [
                     'mail_enabled' => $settingData['mail_enabled'] ?? false,
                     'database_enabled' => $settingData['database_enabled'] ?? false,
+                    'web_push_enabled' => $webPushEnabled,
+                    'web_push_preview_enabled' => $webPushPreviewEnabled,
                     'nextcloud_talk_enabled' => $settingData['nextcloud_talk_enabled'] ?? false,
                     'nextcloud_talk_webhook_url' => $settingData['nextcloud_talk_webhook_url'] ?? null,
                 ]

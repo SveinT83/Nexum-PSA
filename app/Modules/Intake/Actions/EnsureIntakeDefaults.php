@@ -23,6 +23,12 @@ class EnsureIntakeDefaults
                 'max_files' => 5,
                 'max_file_size_kb' => 20480,
                 'allowed_mime_types' => IntakeForm::DEFAULT_ALLOWED_MIME_TYPES,
+                'metadata' => [
+                    'purpose' => 'General public inquiry',
+                    'language' => 'en',
+                    'scope' => ['type' => IntakeForm::SCOPE_GLOBAL],
+                    'routing' => ['mode' => IntakeForm::ROUTING_MODE_MANUAL_REVIEW],
+                ],
             ],
         );
 

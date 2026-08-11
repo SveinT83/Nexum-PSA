@@ -45,8 +45,14 @@ Push payloads and private application responses are not added to the service-wor
 worker uses Nexum-owned icon paths and ignores untrusted icon values in a push payload.
 
 Web Push is best effort. It does not make Nexum offline-capable and does not replace the canonical
-in-app notification. The first channel-foundation slice exposes only a generic current-device
-test; business-event pushes require their own approved slice and explicit user preference.
+in-app notification. Internal users can register devices explicitly and enable only implemented
+event payloads. The current finished event payloads cover inbound Email and customer replies on
+assigned Tickets.
+
+Inbound Email Web Push uses a canonical database notification for each EmailMessage/user pair.
+Opening the push, notification bell item, Ticket, or unlinked Email source can synchronize only that
+current user's matching notification read state. Ticket unread flags, TicketMessage `read_at`, and
+Email workflow state remain owned by their source modules.
 
 When the service worker changes, browsers may keep the previous worker until the update activates.
 The current worker activates immediately, clears older Nexum PWA caches, and retains the existing
@@ -63,6 +69,5 @@ Actions still use the existing domain routes and permissions.
 
 ## Future Scope
 
-Business-event Web Push, offline write queues, conflict handling, photo capture workflows, and
-deeper workflow-specific responsive hardening require separate approved slices before they are
-exposed as finished behavior.
+Offline write queues, conflict handling, photo capture workflows, and deeper workflow-specific
+responsive hardening require separate approved slices before they are exposed as finished behavior.

@@ -117,6 +117,7 @@ class SyncRepositoryKnowledgeDocs
             'Documentation' => $this->definition('documentation', 'Documentation', 540),
             'Economy' => $this->definition('economy', 'Economy', 800),
             'Email' => $this->definition('email', 'Email', 810),
+            'Intake' => $this->definition('intake', 'Intake', 815),
             'Integration' => $this->definition('integrations', 'Integrations', 850),
             'Knowledge' => $this->definition('knowledge', 'Knowledge', 860),
             'LeadIntelligence' => $this->definition('lead-intelligence', 'Lead Intelligence', 820),

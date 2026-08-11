@@ -1,11 +1,30 @@
 # Feature Slice 3: Web Push Read Sync And Rollout Hardening
 
-Status: Draft
+Status: Done
 Date: 2026-07-24
 Parent: `docs/rfc/2026-07-23-web-push-inbound-email-alerts.md`
 ADR: `docs/adr/2026-07-23-notification-owned-web-push-channel.md`
 Prerequisite: `docs/feature-slices/2026-07-23-web-push-internal-email-alerts.md`
 Owner: Svein / Codex
+
+## Implementation Progress
+
+Implemented on Dev on 2026-08-11. Notification now owns source read synchronization for inbound
+Email notifications. The shared notification-open route redirects push and bell opens through the
+canonical database notification, while Ticket and Email source views mark only the current user's
+matching source notifications read after normal route authentication, permission checks, and record
+resolution succeed.
+
+The Ticket source path uses TicketMessage IDs rendered on the page plus source EmailMessage IDs
+stored in those TicketMessage metadata records, so a notification created while an Email was still
+in inbox also follows the Email after it is later linked to a Ticket. The Email source path uses
+only the exact unlinked EmailMessage being shown. Ticket unread flags, TicketMessage `read_at`,
+Email state, and Email workflow state remain unchanged. The shared service worker accepts a
+validated `nexum-close-notifications` message to close still-visible notifications by safe Nexum
+tags.
+
+Human browser/device and end-to-end Email-to-push review is tracked separately in
+`HR-2026-08-11-002`.
 
 ## Goal
 
@@ -36,7 +55,8 @@ database notification remains authoritative.
   allowlisted source type and source ID.
 - Call it only after normal Ticket/Email authentication, work-context, policy, and record resolution
   succeeds.
-- Pass only TicketMessage IDs actually rendered on the Ticket page.
+- Pass only TicketMessage IDs actually rendered on the Ticket page and the EmailMessage IDs stored
+  in those rendered messages' metadata.
 - Sync the exact EmailMessage ID on an authorized Email detail view.
 - Keep notification-bell and push-open behavior on the same action/contract.
 - Post stable tags to the existing service worker for best-effort visible-notification closure.
@@ -77,7 +97,8 @@ database notification remains authoritative.
 Automated:
 
 - push/bell open uses the exact current-user notification;
-- direct Ticket view marks only notifications for rendered TicketMessage IDs;
+- direct Ticket view marks only notifications for rendered TicketMessage IDs or their recorded
+  source EmailMessage IDs;
 - direct Email detail marks only its exact EmailMessage notification;
 - multiple rendered replies mark their matching current-user notifications only;
 - unrelated messages on the same Ticket remain unchanged;
@@ -116,8 +137,10 @@ Manual/operational:
 - Feature Slices 1 and 2 are Done with no unresolved release-blocking defects.
 - Direct source views synchronize only exact current-user canonical notifications.
 - Operational Ticket/Email unread state remains independent.
-- Supported browser/device and service-worker regression checks pass.
+- Automated service-worker regression checks pass; supported browser/device
+  behavior remains a named human review check.
 - External scheduler and queue execution are proven, not inferred from registered schedules.
-- End-to-end linked and unlinked Email push checks pass in a production-like environment.
+- End-to-end linked and unlinked Email push checks remain required in a
+  production-like human review environment.
 - Deploy, rollback, VAPID, worker restart, and cache/service-worker steps are documented.
 - A named human reviewer completes the required review before release is called ready.

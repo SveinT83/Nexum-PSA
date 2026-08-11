@@ -14,6 +14,7 @@ use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiChatResponder;
 use App\Modules\Knowledge\Queries\ArticleQuery;
+use App\Modules\Notification\Actions\MarkNotificationsReadBySource;
 use App\Modules\Relationship\Models\NexumRelationship;
 use App\Modules\Relationship\Support\RelationshipDirection;
 use App\Modules\Storage\Models\Item as StorageItem;
@@ -338,7 +339,7 @@ class TicketController extends Controller
             ->with('success', 'Ticket '.$ticket->ticket_key.' created.');
     }
 
-    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions, TicketSolutionPolicy $solutionPolicy, TicketReplyContactResolver $replyContactResolver): View|RedirectResponse
+    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions, TicketSolutionPolicy $solutionPolicy, TicketReplyContactResolver $replyContactResolver, MarkNotificationsReadBySource $markNotificationsReadBySource): View|RedirectResponse
     {
         app(EnsureTicketDefaults::class)->handle();
 
@@ -351,6 +352,18 @@ class TicketController extends Controller
 
         $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'workflowVersion', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'attachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'plannedLines.storageItem', 'plannedLines.approvedQuoteVersion', 'plannedLines.convertedCostEntry', 'plannedLines.purchaseOrderLine.purchaseOrder', 'salesContext.opportunity.currentQuoteVersion.quote', 'salesContext.opportunity.currentQuoteVersion.lines', 'workflowReviews.requester', 'workflowReviews.assignedReviewer', 'workflowReviews.reviewer', 'workflowEvidence.creator', 'workflowHistory.actor', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
         $messageIds = $ticket->messages->pluck('id')->all();
+        $emailMessageIds = $ticket->messages
+            ->map(fn (TicketMessage $message): int => (int) data_get($message->metadata, 'email_message_id'))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+        $notificationReadSync = $markNotificationsReadBySource->handle(
+            request()->user(),
+            MarkNotificationsReadBySource::SOURCE_TICKET_MESSAGE,
+            $messageIds,
+            $emailMessageIds,
+        );
         $relationshipSyncLinks = $ticket->syncLinks;
         $availableRelationships = ($ticket->isPortalVisible() && request()->user()?->can('relationships.escalate'))
             ? NexumRelationship::query()
@@ -406,6 +419,7 @@ class TicketController extends Controller
                 ->latest()
                 ->get()
                 ->groupBy(fn (EmailLog $log) => (int) ($log->context_json['ticket_message_id'] ?? 0)),
+            'closedNotificationTags' => $notificationReadSync['web_push_tags'],
         ]);
     }
 

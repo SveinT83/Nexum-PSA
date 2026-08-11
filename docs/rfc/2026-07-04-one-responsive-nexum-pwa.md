@@ -98,3 +98,12 @@ separate RFC updates and possibly client-side storage metadata.
 
 Approved by product discussion on 2026-07-05 for implementation of the responsive PWA foundation
 and mobile My Day slice. Offline writes and push notifications remain future slices.
+
+## Implementation
+
+PWA foundation and mobile My Day were implemented before 2026-08-11. The Notification-owned Web Push
+and inbound Email/customer-reply slices were completed on Dev on 2026-08-11 under
+`docs/rfc/2026-07-23-web-push-inbound-email-alerts.md`.
+
+Nexum remains one online-first responsive PWA. Offline writes, background sync, and conflict
+handling are still not exposed because no offline-write workflow has an approved sync/conflict RFC.

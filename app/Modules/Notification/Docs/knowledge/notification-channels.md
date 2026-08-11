@@ -3,9 +3,8 @@ Notification channels define how Nexum delivers system notifications outside the
 ## Web Push
 
 Web Push uses the existing Nexum PWA and shared service worker to show visible browser
-notifications. The channel foundation currently supports internal users and a generic
-current-device test. Business-event delivery remains off until an approved event slice supplies a
-payload and exposes its preference.
+notifications. Internal users can register devices explicitly, send a generic current-device test,
+and enable Web Push only for event types that have implemented browser-safe payloads.
 
 ### Register a device
 
@@ -22,7 +21,7 @@ On iPhone and iPad, first add Nexum to the Home Screen, open the installed app, 
 Push inside that installed app.
 
 Registering a device does not automatically enable Web Push for ticket, email, or another business
-event. Event preferences remain user-owned and default to off.
+event. Event preferences remain user-owned and default to off for Web Push.
 
 ### Manage devices
 
@@ -65,6 +64,52 @@ If a generic test is queued but not received:
 Expired provider endpoints are removed automatically. Temporary provider failures use bounded
 queue retries. All accepted pushes remain visible, and clicking one focuses an existing Nexum
 window when possible or opens Nexum in a new window.
+
+### Inbound Email and Ticket replies
+
+The finished inbound Email Web Push workflow supports two internal notification types:
+
+- Customer reply on my Tickets.
+- New inbound Email.
+
+Both types default to in-app/database delivery. Email, Nextcloud Talk, and Web Push stay disabled
+until the user enables each channel for the event type.
+
+When a non-spam inbound Email completes routing, Notification creates at most one canonical
+database notification for each eligible user and Email message. Retries and repeated rule execution
+reuse the same delivery identity instead of creating duplicate alerts.
+
+Recipient behavior:
+
+- The assigned, active Ticket owner can receive Customer reply on my Tickets when an inbound Email
+  becomes a customer Ticket reply and the owner has Ticket access.
+- Explicit New inbound Email subscribers can receive inbox/triage alerts when they are active and
+  authorized for the target Email inbox or linked Ticket.
+- If the same user is eligible through both paths, Nexum keeps one notification for that Email.
+- Stored account and queue scopes can restrict the inbox subscriber path. No stored scope means all
+  authorized inbound Email for that subscriber.
+
+Privacy behavior:
+
+- Default lock-screen payloads are generic.
+- The optional preview toggle may include sender display name and a truncated subject only.
+- Email bodies, attachment names, client/customer identity, full sender addresses, push endpoints,
+  encryption keys, auth tokens, and VAPID secrets are not exposed in Web Push payloads or device
+  inventories.
+
+Read behavior:
+
+- Opening a push notification or bell item goes through a Notification-owned open route before
+  redirecting to the source Ticket or Email.
+- Directly opening the linked Ticket marks only the current user's matching canonical notifications
+  read for TicketMessage records rendered on the page.
+- Directly opening an unlinked Email message marks only the current user's matching canonical
+  notification read for that EmailMessage.
+- Ticket unread flags, TicketMessage `read_at`, Email state, and Email workflow state are not
+  changed by notification read synchronization.
+
+Web Push remains best effort. Failed browser delivery does not roll back Email, Ticket, or canonical
+database notification persistence.
 
 ## Transactional SMS
 
