@@ -17,19 +17,27 @@
             @endif
 
             <div class="row g-3 mb-4">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="border rounded p-3 h-100">
                         <div class="small text-muted">Duration</div>
                         <div class="fw-semibold">{{ $setting->durationLabel() }}</div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="border rounded p-3 h-100">
-                        <div class="small text-muted">Confirmation</div>
-                        <div class="fw-semibold">Staff confirmed</div>
+                        <div class="small text-muted">Technician</div>
+                        <div class="fw-semibold">
+                            {{ $setting->allowsCustomerTechnicianChoice() ? 'You choose' : ($setting->usesAutomaticAssignment() ? 'Assigned automatically' : 'Assigned service technician') }}
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="small text-muted">Public hours</div>
+                        <div class="fw-semibold">{{ $setting->openingWindowLabel() }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
                     <div class="border rounded p-3 h-100">
                         <div class="small text-muted">Time zone</div>
                         <div class="fw-semibold">{{ $timezone }}</div>
@@ -38,7 +46,19 @@
             </div>
 
             <form method="GET" action="{{ route('booking.services.show', $setting) }}" class="row g-2 align-items-end mb-4">
-                <div class="col-sm-6">
+                @if($setting->allowsCustomerTechnicianChoice())
+                    <div class="col-md-5">
+                        <label for="technician_id" class="form-label">Technician <span class="text-danger">*</span></label>
+                        <select id="technician_id" name="technician_id" class="form-select @error('technician_id') is-invalid @enderror" required>
+                            <option value="">Choose technician</option>
+                            @foreach($eligibleTechnicians as $technician)
+                                <option value="{{ $technician->id }}" @selected((int) $selectedTechnicianId === (int) $technician->id)>{{ $technician->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('technician_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                @endif
+                <div class="{{ $setting->allowsCustomerTechnicianChoice() ? 'col-md-4' : 'col-sm-6' }}">
                     <label for="booking_date" class="form-label">Start date</label>
                     <input type="date" id="booking_date" name="date" value="{{ $selectedDate }}" class="form-control">
                 </div>
@@ -59,6 +79,9 @@
                 </div>
 
                 <input type="hidden" name="timezone" value="{{ $timezone }}">
+                @if($setting->allowsCustomerTechnicianChoice() && $selectedTechnicianId)
+                    <input type="hidden" name="technician_id" value="{{ $selectedTechnicianId }}">
+                @endif
 
                 <div class="mb-4">
                     <label class="form-label">Available times <span class="text-danger">*</span></label>
@@ -78,6 +101,8 @@
                                 </div>
                             @endforeach
                         </div>
+                    @elseif($setting->allowsCustomerTechnicianChoice() && ! $selectedTechnicianId)
+                        <div class="alert alert-info mb-0">Choose a technician and date to see available times.</div>
                     @else
                         <div class="alert alert-warning mb-0">No available times were found in this period.</div>
                     @endif

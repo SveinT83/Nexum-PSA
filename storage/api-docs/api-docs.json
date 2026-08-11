@@ -10,7 +10,7 @@
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "1.0.0"
+        "version": "0.1.0"
     },
     "servers": [
         {
@@ -25,7 +25,7 @@
                     "Assets"
                 ],
                 "summary": "Get list of assets",
-                "description": "Returns list of assets with pagination. Can be filtered by client_id.",
+                "description": "Returns list of assets with pagination. Can be filtered by client_id or Work Context.",
                 "operationId": "getAssetList",
                 "parameters": [
                     {
@@ -65,12 +65,12 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "client_id",
                                     "name"
                                 ],
                                 "properties": {
                                     "client_id": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "nullable": true
                                     },
                                     "site_id": {
                                         "type": "integer",
@@ -1517,6 +1517,18 @@
                                     },
                                     "phone": {
                                         "type": "string",
+                                        "nullable": true
+                                    },
+                                    "sms_allowed": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    },
+                                    "do_not_email": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    },
+                                    "marketing_consent": {
+                                        "type": "boolean",
                                         "nullable": true
                                     },
                                     "client_id": {
@@ -3277,6 +3289,46 @@
                     }
                 ]
             },
+            "delete": {
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Delete zero-stock storage item",
+                "description": "Soft-deletes a storage item when on-hand quantity, reserved quantity, active reservations, and stock unit quantities are all zero.",
+                "operationId": "deleteStorageItem",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Item deleted"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing storage.update scope"
+                    },
+                    "404": {
+                        "description": "Item not found"
+                    },
+                    "422": {
+                        "description": "Item still has stock or reservations"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "patch": {
                 "tags": [
                     "Storage"
@@ -3544,6 +3596,26 @@
                         "required": false,
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "work_context_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "context_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "internal",
+                                "client"
+                            ]
                         }
                     },
                     {
@@ -4180,6 +4252,26 @@
                         }
                     },
                     {
+                        "name": "work_context_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "context_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "internal",
+                                "client"
+                            ]
+                        }
+                    },
+                    {
                         "name": "status_id",
                         "in": "query",
                         "required": false,
@@ -4409,6 +4501,187 @@
                     },
                     "422": {
                         "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tickets/{ticket}/external-messages": {
+            "post": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Sync external ticket message",
+                "description": "Creates or updates an idempotent externally sourced ticket message, such as an N-able MSP Manager comment.",
+                "operationId": "syncExternalTicketMessage",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "External message updated"
+                    },
+                    "201": {
+                        "description": "External message created"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing tickets.update scope"
+                    },
+                    "404": {
+                        "description": "Ticket not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tickets/{ticket}/portal-visibility": {
+            "post": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Publish Ticket to Customer Portal",
+                "description": "Publishes an eligible client Ticket to the Customer Portal. Repeated calls are safe.",
+                "operationId": "publishTicketToCustomerPortal",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "portal_visible"
+                                ],
+                                "properties": {
+                                    "portal_visible": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Published or already published"
+                    },
+                    "403": {
+                        "description": "Missing tickets.portal.publish ability or ticket.update permission"
+                    },
+                    "422": {
+                        "description": "Ticket is not eligible for portal publication"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tickets/{ticket}/messages": {
+            "post": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Reply to Ticket customer",
+                "description": "Creates one idempotent public technician reply and runs the normal customer email, portal notification, and Ticket workflow side effects.",
+                "operationId": "createTicketCustomerReply",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "body",
+                                    "idempotency_key"
+                                ],
+                                "properties": {
+                                    "body": {
+                                        "type": "string"
+                                    },
+                                    "idempotency_key": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "reply_intent": {
+                                        "type": "string",
+                                        "enum": [
+                                            "customer_update",
+                                            "request_customer_input",
+                                            "send_solution"
+                                        ]
+                                    },
+                                    "reply_contact_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "cc": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Customer reply created"
+                    },
+                    "200": {
+                        "description": "Matching idempotent replay"
+                    },
+                    "403": {
+                        "description": "Missing tickets.reply_customer ability or ticket.reply_customer permission"
+                    },
+                    "409": {
+                        "description": "Idempotency key conflict"
+                    },
+                    "422": {
+                        "description": "Validation or workflow action error"
                     }
                 },
                 "security": [

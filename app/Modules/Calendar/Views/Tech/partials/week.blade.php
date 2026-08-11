@@ -34,8 +34,8 @@
                     data-details-visible="{{ $event['details_visible'] ? '1' : '0' }}"
                     data-is-recurring="{{ $event['is_recurring'] ? '1' : '0' }}">
                     <div class="d-flex align-items-start justify-content-between gap-2">
-                        <div class="fw-semibold">{{ $event['title'] }}</div>
-                        <span class="badge text-bg-light border flex-shrink-0">{{ $event['ownership_badge'] }}</span>
+                        <div class="calendar-event-title fw-semibold">{{ $event['title'] }}</div>
+                        @include('calendar::Tech.partials.event-identity', ['event' => $event])
                     </div>
                     <div>{{ $event['starts_at']->timezone($timezone)->format('H:i') }} - {{ $event['ends_at']->timezone($timezone)->format('H:i') }}</div>
                     <div class="text-muted">{{ $event['calendar_name'] }}</div>

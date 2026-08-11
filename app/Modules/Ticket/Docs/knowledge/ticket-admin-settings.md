@@ -79,13 +79,16 @@ See `Ticket Workflow Rules, Approval And Escalation` for the complete administra
 
 Ticket Settings controls whether internal notes may be marked as ticket solutions.
 
-When `Allow internal notes to be marked as ticket solutions` is enabled, technicians can use
-`Internal solution` in the ticket composer. This records the fix without sending customer email and
-can satisfy workflow solution requirements. This is useful for RMM and asset-driven tickets where
-there may be no customer contact or where a customer-visible RMM reply would be noise.
+When `Allow internal notes to be marked as ticket solutions` is enabled, the Ticket composer shows
+`Mark as solution` while `Internal note` is selected. The switch starts off. Enabling it records the
+note as an internal solution without sending customer email and can satisfy workflow solution
+requirements. `Notify technician` remains available for both ordinary and solution-marked internal
+notes. This is useful for RMM and asset-driven tickets where there may be no customer contact or
+where a customer-visible RMM reply would be noise.
 
 When disabled, only public technician replies marked as solution satisfy workflow solution
-requirements. Internal notes remain available, but they do not count as selected solutions.
+requirements. Internal notes remain available, but the Mark as solution switch is absent and a
+manipulated request cannot make an internal note satisfy the policy.
 
 ## Customer Portal Policy
 
@@ -96,15 +99,19 @@ The default can be:
 - Unpublished.
 - Published.
 
-Unpublished is the safe default. A manually created client ticket stays silent externally until a
-technician publishes it from the ticket show page. While it is Unpublished, the ticket is still
-available internally and included in reporting, but it is not visible in the Customer Portal, does
-not send customer-facing portal notifications, does not allow `Reply to contact`, and cannot be
-escalated to a Nexum relationship.
+Published is the clean-install and missing-setting default. A manually created client ticket becomes
+visible in the Customer Portal immediately, records the publishing technician, emits the existing
+portal notification, and enables customer replies. The initial description remains an internal note
+and no customer-reply email is created. After a ticket is Published, the normal ticket page does not
+allow it to be unpublished.
 
-Published makes a new manually created client ticket visible in the Customer Portal immediately and
-enables customer replies. After a ticket is Published, the normal ticket page does not allow it to
-be unpublished.
+A valid administrator choice remains authoritative. Choose Unpublished when manually created client
+tickets must stay internal until a technician publishes them from the ticket show page. While a
+ticket is Unpublished, it remains available internally and in reporting, but it is not visible in
+the Customer Portal, emits no customer-facing portal notification, does not allow `Reply to contact`,
+and cannot be escalated to a Nexum relationship. The create form visibly shows both choices and lets
+the technician override the installation default for one Ticket. Tickets without a Client always
+remain outside the Customer Portal.
 
 ## Merge Settings
 

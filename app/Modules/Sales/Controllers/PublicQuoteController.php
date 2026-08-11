@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Sales\Actions\AcceptSalesQuote;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesQuoteVersion;
+use App\Modules\Sales\Support\SalesQuotePresentation;
 use Dompdf\Dompdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 
 class PublicQuoteController extends Controller
 {
+    public function __construct(private readonly SalesQuotePresentation $quotePresentation) {}
+
     public function view(string $token)
     {
         $version = $this->version($token);
@@ -22,6 +25,7 @@ class PublicQuoteController extends Controller
         return view('sales::Public.quote', [
             'version' => $version,
             'opportunity' => $version->quote->opportunity,
+            'quotePresentation' => $this->quotePresentation->forVersion($version),
         ]);
     }
 
@@ -41,6 +45,7 @@ class PublicQuoteController extends Controller
         $html = view('sales::Public.quote-pdf', [
             'version' => $version,
             'opportunity' => $version->quote->opportunity,
+            'quotePresentation' => $this->quotePresentation->forVersion($version),
         ])->render();
 
         $dompdf = new Dompdf(['isRemoteEnabled' => true]);

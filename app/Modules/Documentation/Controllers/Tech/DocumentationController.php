@@ -4,15 +4,16 @@ namespace App\Modules\Documentation\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
-use App\Modules\Taxonomy\Models\Category;
+use App\Modules\CustomerPortal\Actions\RecordCustomerPortalAudit;
 use App\Modules\Documentation\Menus\SideBar\DocumentationsMenu;
 use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Models\DocumentationTemplate;
-use App\Modules\CustomerPortal\Actions\RecordCustomerPortalAudit;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
+use App\Modules\Taxonomy\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class DocumentationController extends Controller
 {
@@ -23,13 +24,12 @@ class DocumentationController extends Controller
      * and global context (active client, active site, or internal-only scope)
      * stored in the session.
      *
-     * @param Request $request
      * @return \Illuminate\View\View
      */
     public function index(Request $request)
     {
         // Fetch sidebar navigation items based on documentation categories
-        $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
+        $sidebarMenuItems = (new DocumentationsMenu)->DocumentationsMenu();
 
         // Get all active clients to populate the context selector dropdown
         $clients = Client::where('active', true)->orderBy('name')->get();
@@ -104,7 +104,6 @@ class DocumentationController extends Controller
      * carefully preserving existing query parameters (like 'cat') to maintain
      * the user's navigational state.
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function setContext(Request $request)
@@ -151,8 +150,8 @@ class DocumentationController extends Controller
 
         // Clean base URL and re-attach query string
         $redirectUrl = strtok($previousUrl, '?');
-        if (!empty($params)) {
-            $redirectUrl .= '?' . http_build_query($params);
+        if (! empty($params)) {
+            $redirectUrl .= '?'.http_build_query($params);
         }
 
         return redirect($redirectUrl);
@@ -163,7 +162,6 @@ class DocumentationController extends Controller
      *
      * Automatically fetches the appropriate template fields if a category is selected.
      *
-     * @param Request $request
      * @return \Illuminate\View\View
      */
     public function create(Request $request)
@@ -172,7 +170,8 @@ class DocumentationController extends Controller
         $fields = [];
         $formView = null;
 
-        $categories = Category::where('is_active', true)
+        $categories = Category::query()
+            ->where('is_active', true)
             ->whereHas('templates', function ($query) {
                 $query->where('is_active', true);
             })
@@ -186,10 +185,13 @@ class DocumentationController extends Controller
             $sites = \App\Models\Clients\ClientSite::where('client_id', session('active_client_id'))->orderBy('name')->get();
         }
 
-        $cat = $request->cat;
+        $cat = $request->input('cat', old('category_id'));
+        $templates = collect();
+        $selectedTemplate = null;
 
-        // Load the category and its active template to determine which fields to render
-        $selectedCategory = Category::where('is_active', true)
+        // Category and template selection are separate when a category offers several active schemas.
+        $selectedCategory = Category::query()
+            ->where('is_active', true)
             ->where(function ($query) use ($cat) {
                 $query->where('id', $cat)
                     ->orWhere('slug', $cat);
@@ -198,18 +200,25 @@ class DocumentationController extends Controller
         if ($selectedCategory) {
             $cat = $selectedCategory->id;
 
-            // Documentation templatesManagement define the dynamic fields (stored as JSON in the database)
-            $template = DocumentationTemplate::where('category_id', $selectedCategory->id)
+            $templates = DocumentationTemplate::query()
+                ->where('category_id', $selectedCategory->id)
                 ->where('is_active', true)
-                ->first();
+                ->orderBy('name')
+                ->orderBy('id')
+                ->get();
 
-            if ($template) {
-                $fields = $template->fields; // Automatically cast from JSON
-                $formView = "Template: " . $template->name;
+            $requestedTemplateId = (int) $request->input('template_id', old('template_id', 0));
+            $selectedTemplate = $templates->count() === 1
+                ? $templates->first()
+                : $templates->firstWhere('id', $requestedTemplateId);
+
+            if ($selectedTemplate) {
+                $fields = $selectedTemplate->fields ?? [];
+                $formView = 'Template: '.$selectedTemplate->name;
             }
         }
 
-        $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
+        $sidebarMenuItems = (new DocumentationsMenu)->DocumentationsMenu();
 
         return view('documentation::Tech.create', [
             'sidebarMenuItems' => $sidebarMenuItems,
@@ -221,6 +230,9 @@ class DocumentationController extends Controller
             'active_site_id' => session('active_site_id'),
             'formView' => $formView,
             'fields' => $fields,
+            'selectedCategory' => $selectedCategory,
+            'templates' => $templates,
+            'selectedTemplate' => $selectedTemplate,
         ]);
     }
 
@@ -230,27 +242,40 @@ class DocumentationController extends Controller
      * Captures a snapshot of the template fields at the moment of creation.
      * Dynamic data from the form is stored in a JSON column.
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
+            'template_id' => 'nullable|integer',
             'client_id' => 'nullable|exists:clients,id',
             'site_id' => 'nullable|exists:client_sites,id',
             'title' => 'required|string|max:255',
         ]);
 
         // Fetch the template to snapshot its current field definitions
-        $template = DocumentationTemplate::where('category_id', $request->category_id)
+        $templates = DocumentationTemplate::query()
+            ->where('category_id', $validated['category_id'])
             ->where('is_active', true)
-            ->firstOrFail();
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
+
+        $template = filled($validated['template_id'] ?? null)
+            ? $templates->firstWhere('id', (int) $validated['template_id'])
+            : ($templates->count() === 1 ? $templates->first() : null);
+
+        if (! $template) {
+            throw ValidationException::withMessages([
+                'template_id' => 'Select an active template that belongs to the selected category.',
+            ]);
+        }
 
         $templateSnapshot = $template->fields;
 
         // Capture all form inputs as document data, excluding metadata fields
-        $data = $request->except(['_token', 'category_id', 'client_id', 'site_id', 'title', 'scope_type']);
+        $data = $request->except(['_token', 'category_id', 'template_id', 'client_id', 'site_id', 'title', 'scope_type']);
 
         // Determine the visibility scope based on which fields are populated
         $scopeType = 'internal';
@@ -262,10 +287,10 @@ class DocumentationController extends Controller
 
         $documentation = Documentation::create([
             'template_id' => $template->id,
-            'category_id' => $request->category_id,
-            'client_id' => $request->client_id,
-            'site_id' => $request->site_id,
-            'title' => $request->title,
+            'category_id' => $validated['category_id'],
+            'client_id' => $validated['client_id'] ?? null,
+            'site_id' => $validated['site_id'] ?? null,
+            'title' => $validated['title'],
             'scope_type' => $scopeType,
             'template_snapshot_json' => $templateSnapshot, // Essential for rendering if the original template changes later
             'data_json' => $data,
@@ -281,13 +306,13 @@ class DocumentationController extends Controller
      * Uses the captured 'template_snapshot_json' to render the form,
      * ensuring historical data remains editable even if the parent template evolves.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\View\View
      */
     public function edit($id)
     {
         $documentation = Documentation::with(['category', 'client', 'site', 'template'])->findOrFail($id);
-        $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
+        $sidebarMenuItems = (new DocumentationsMenu)->DocumentationsMenu();
 
         $categories = Category::where('is_active', true)
             ->whereHas('templates', function ($query) {
@@ -323,8 +348,7 @@ class DocumentationController extends Controller
      * Note: This only updates metadata and data fields.
      * The template structure (snapshot) is preserved as it was at creation.
      *
-     * @param Request $request
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id, SendCustomerPortalNotification $portalNotifications)
@@ -382,13 +406,13 @@ class DocumentationController extends Controller
      *
      * Uses a dedicated "rendered" view that maps data_json to labels in template_snapshot_json.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\View\View
      */
     public function show($id)
     {
         $documentation = Documentation::with(['category', 'client', 'site', 'template'])->findOrFail($id);
-        $sidebarMenuItems = (new DocumentationsMenu())->DocumentationsMenu();
+        $sidebarMenuItems = (new DocumentationsMenu)->DocumentationsMenu();
 
         return view('documentation::Tech.show', [
             'sidebarMenuItems' => $sidebarMenuItems,
@@ -456,7 +480,7 @@ class DocumentationController extends Controller
     /**
      * Remove the specified documentation record from storage.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy($id)

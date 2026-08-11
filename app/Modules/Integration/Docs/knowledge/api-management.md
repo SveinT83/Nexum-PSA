@@ -9,6 +9,60 @@ Authorization: Bearer {token}
 Accept: application/json
 ```
 
+API-key creation is least-privilege. No scope is selected by default, an ordinary key requires at
+least one explicit scope, and full access requires a separate confirmation. Existing broad keys are
+flagged for review but are never changed automatically.
+
+Coordinator tokens are created from AI Privacy & Coordinator Governance. They bind to an approved
+workload, contain read abilities only, expire, and are policy-checked on every request.
+
+## Internal Model Workloads
+
+An internal model workload is the governed execution boundary for a Nexum feature that needs strict
+structured AI output without granting an AI agent API access. Create it under **Admin > System >
+Integrations > AI Privacy & Coordinator Governance**. It is separate from a coordinator workload and
+cannot issue an API token.
+
+The selected agent and provider must be active. The agent must be non-writing and have no data
+sources, tools, allowed API scopes, or action-execution capability. Its model and agent governance
+policies must be approved, unexpired, and exactly compatible with the workload's processing mode and
+data profile. Installation policy and, for external processing, provider governance must also allow
+the request. These requirements are checked again at execution time; the admin form is not treated
+as a security boundary.
+
+Internal workloads accept a versioned, minimized input contract and require a strict JSON response
+schema. Message content is untrusted data: it cannot add tools, widen fields, change policy, or
+authorize a domain write. Provider output must pass schema validation and the owning domain's normal
+evidence, permission, idempotency, and business-rule checks before anything is persisted.
+
+The supplier-order workflow uses this boundary for the optional **Purchase Order Import Agent**. The
+workload may extract a canonical order, diagnose an import, or propose a declarative profile version.
+It cannot create an Item, Vendor, Purchase Order, receipt, or stock movement directly. Storage owns
+those decisions, and an order-confirmation path never receives inventory.
+
+Choose a processing mode and maximum data profile that cover the source material without exceeding
+installation policy. If the provider, model, agent, workload, or governance approval is missing,
+inactive, expired, or incompatible, execution fails closed. Storage then follows its configured
+provider-outage behavior and records an operational reason instead of falling back to an ungoverned
+call.
+
+Execution telemetry stores bounded policy and usage metadata such as workload, model, processing
+mode, status, duration, and token/cost facts when available. It must not retain the raw supplier
+email, unrestricted prompt or response, credentials, or provider secrets.
+
+Every structured execution also creates a metadata-only AI access event before any provider
+request is sent. If the access event cannot be created, or its terminal result cannot be recorded,
+the workload fails closed and its output cannot authorize a domain write. The access event contains
+the feature, operation, domain, workload and effective data-policy facts, not source content or a
+model response.
+
+A workload request with a cost ceiling must name an ISO currency. The provider must return a cost
+in that currency; an unavailable cost, unavailable currency, mismatch, or amount above the remaining
+ceiling invalidates the result. The owning domain may apply one cumulative budget across extraction,
+secondary verification, and repair. A required consensus uses a separately configured governed
+workload and accepts the primary result only when their material projections agree. These controls
+prevent use of an over-budget or disputed result; they cannot undo a provider charge already incurred.
+
 ## Scopes
 
 API keys are created with explicit scopes.
@@ -35,6 +89,8 @@ Implemented scopes:
 - `tickets.read`: list and view tickets.
 - `tickets.create`: create tickets through the ticket engine.
 - `tickets.update`: update ticket fields and status.
+- `tickets.portal.publish`: publish an eligible client Ticket through the one-way Customer Portal action.
+- `tickets.reply_customer`: send an idempotent public technician reply through normal Ticket email and workflow behavior.
 - `tickets.actions`: perform workflow-approved Ticket actions such as transition, escalation, close, planned scope, quote, review, evidence, conversion, and purchase need.
 - `tickets.workflow.read`: inspect the current state, missing requirements, available actions, transitions, and escalation paths.
 - `tickets.workflow.manage`: create and edit draft workflow definitions and preview active-Ticket migration.
@@ -86,6 +142,8 @@ Implemented scopes:
 - `data_exchange.import`: start import dry-runs for approved Data Exchange import targets.
 - `data_exchange.approve_import`: commit valid Data Exchange import previews through approved targets.
 - `report.read`: list and view available report definitions.
+- `worklog.read`: read aggregate or pseudonymized technician worklog summaries.
+- `time-entries.read`: read minimized time entries without names, titles, or notes.
 - `users.read`: list and view users, roles, and user profile metadata.
 - `users.create`: create users and queue invitations for pending users.
 - `users.update`: update user profiles, statuses, roles, and resend invitations.
@@ -157,6 +215,9 @@ Current API routes are under `/api/v1`:
 - `POST /api/v1/tickets`
 - `PUT /api/v1/tickets/{ticket}`
 - `PATCH /api/v1/tickets/{ticket}`
+- `POST /api/v1/tickets/{ticket}/external-messages`
+- `POST /api/v1/tickets/{ticket}/portal-visibility`
+- `POST /api/v1/tickets/{ticket}/messages`
 - `POST /api/v1/tickets/{ticket}/timer/start`
 - `POST /api/v1/tickets/{ticket}/time-entries`
 - `POST /api/v1/tickets/{ticket}/cost-entries`
@@ -488,6 +549,33 @@ Common create fields:
 
 The `{ticket}` route parameter is the public ticket key, for example `TD-2026-000001`.
 
+### Customer Portal Publication And Technician Replies
+
+`POST /api/v1/tickets/{ticket}/portal-visibility` accepts `portal_visible: true`. It requires the
+`tickets.portal.publish` token ability, an active internal user with `ticket.update`, a client-scoped
+Ticket, and the Ticket's active client Contact with an email address. Publication is one-way and
+idempotent: the first call returns `published_now: true`; a repeat returns `false` without another
+event or portal notification.
+
+`POST /api/v1/tickets/{ticket}/messages` creates only public technician `customer_reply` messages.
+It requires `tickets.reply_customer`, `ticket.reply_customer`, a Published Ticket, and a valid
+same-client reply Contact. Required fields are `body` and an integration-chosen `idempotency_key`
+of at most 100 characters. Optional fields are `reply_intent`, `reply_contact_id`, and `cc`.
+
+Supported reply intents are `customer_update`, `request_customer_input`, and `send_solution`.
+`send_solution` records the established solution facts; the coordinator then reads
+`workflow-decisions`, performs an allowed Resolved transition, and uses the existing close endpoint.
+
+The first successful reply returns HTTP 201 with `created: true`. Retrying the same Ticket, actor,
+key, and normalized payload returns the original message with HTTP 200 and `created: false`.
+Reusing the key for another payload or actor, or after soft deletion, returns HTTP 409. A replay
+never repeats customer email, portal notification, relationship synchronization, Ticket events, or
+workflow triggers.
+
+The external-message endpoint remains an inbound synchronization boundary. It stores external
+authorship, does not queue the normal technician customer email, and cannot inject reply intent or
+solution metadata.
+
 ## Task API
 
 Task API routes expose the core task workflow for trusted automation and future AI agents.
@@ -605,7 +693,10 @@ automation, N8N workflows, and future barcode flows.
 creates a stock movement so the first stock count remains auditable.
 
 `POST /api/v1/storage/items/{item}/adjust` adjusts stock through the Storage adjustment action. The
-API rejects adjustments that would make on-hand quantity negative.
+API rejects adjustments that would make on-hand quantity negative. The generic adjustment endpoint
+is also blocked when the item has serial, batch, or expiry tracking enabled, or when it has a
+positive `StockUnit` ledger balance. Identified stock must instead use a unit-aware receipt, picking,
+or reversal workflow so its quantities and identifiers remain consistent.
 
 Storage also exposes:
 
@@ -613,6 +704,53 @@ Storage also exposes:
 - `PUT` and `PATCH /api/v1/storage/warehouses/{warehouse}`
 - `GET` and `POST /api/v1/storage/boxes`
 - `PUT` and `PATCH /api/v1/storage/boxes/{box}`
+
+Purchase workflows use separate least-privilege abilities from general inventory:
+
+- `storage.purchase.read`: list and inspect orders, lines, shipments, tracking, and receipt history.
+- `storage.purchase.manage`: create/update orders and manage line cancellations, lifecycle,
+  shipments, and tracking identifiers.
+- `storage.purchase.receive`: post normal goods receipts.
+- `storage.purchase.receive_overage`: authorize explained over-deliveries when combined with
+  `storage.purchase.receive`.
+- `storage.purchase.reverse`: create guarded receipt reversals.
+
+Purchase-order endpoints are:
+
+- `GET` and `POST /api/v1/storage/purchase-orders`
+- `GET` and `PUT /api/v1/storage/purchase-orders/{purchaseOrder}`
+- `POST /api/v1/storage/purchase-orders/{purchaseOrder}/lines/{purchaseOrderLine}/cancel`
+- `POST /api/v1/storage/purchase-orders/{purchaseOrder}/close`
+- `POST /api/v1/storage/purchase-orders/{purchaseOrder}/cancel`
+- `POST /api/v1/storage/purchase-orders/{purchaseOrder}/shipments`
+- `PATCH /api/v1/storage/purchase-orders/{purchaseOrder}/shipments/{purchaseShipment}/status`
+- `POST /api/v1/storage/purchase-orders/{purchaseOrder}/shipments/{purchaseShipment}/trackings`
+- `POST /api/v1/storage/purchase-orders/{purchaseOrder}/receipts`
+- `POST /api/v1/storage/purchase-orders/{purchaseOrder}/receipts/{purchaseReceipt}/reverse`
+
+`storage.purchase.read` does not grant Ticket visibility. Purchase-line `ticket_id`,
+`ticket_planned_line_id`, nested Ticket identity/subject, and Ticket-specific metadata are omitted
+unless the same token also has `tickets.read`. Neutral Storage-owned origin metadata may remain.
+
+Every mutation uses the same transactional Storage action as the browser workflow. The receipt and
+reversal payloads require an `idempotency_token`; retrying the same token and payload returns the
+existing ledger entry without posting stock again. Reusing a token for different data is rejected.
+Create and update actions also enforce active supplier, warehouse, and orderable-item master data at
+the action boundary. Partially received orders cannot be edited through a direct API request, and
+client metadata cannot replace system-owned lifecycle or shipment-status history.
+
+A receipt line includes `purchase_order_line_id`, `qty_accepted`, `qty_rejected`, and optional
+discrepancy, overage, serial, batch, and expiry data. Accepted quantity updates stock; rejected
+quantity stays outside available stock. Rejected quantity does not satisfy the purchase-order line,
+so it remains part of that line's outstanding replacement quantity. When the receipt is linked to an
+allocated shipment, the shipment allocation separately exposes received, rejected, cancelled, and
+outstanding quantities so every parcel can finish without falsely increasing order-level received
+stock. An over-delivery requires both receive abilities and an
+`over_receipt_reason` on the affected line.
+
+Shipment tracking responses return the carrier-snapshot-derived safe URL. Raw direct URLs are not
+returned, and unsafe or non-allowlisted URLs remain non-clickable. Mutation links in API resources
+are lifecycle-aware and disappear when the related action is no longer valid.
 
 ## Sales API
 

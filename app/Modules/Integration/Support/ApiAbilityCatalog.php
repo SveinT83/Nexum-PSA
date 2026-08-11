@@ -6,6 +6,101 @@ class ApiAbilityCatalog
 {
     public const FULL_ACCESS = '*';
 
+    public const ACCESS_READ = 'read';
+
+    public const ACCESS_WRITE = 'write';
+
+    /**
+     * Access mode is deliberately explicit so progressive read scopes do not depend on their name.
+     */
+    private const ACCESS_MODES = [
+        'clients.read' => self::ACCESS_READ,
+        'clients.create' => self::ACCESS_WRITE,
+        'clients.update' => self::ACCESS_WRITE,
+        'custom-fields.read' => self::ACCESS_READ,
+        'assets.read' => self::ACCESS_READ,
+        'assets.create' => self::ACCESS_WRITE,
+        'assets.update' => self::ACCESS_WRITE,
+        'contacts.read' => self::ACCESS_READ,
+        'contacts.create' => self::ACCESS_WRITE,
+        'contacts.update' => self::ACCESS_WRITE,
+        'contacts.ownership_manage' => self::ACCESS_WRITE,
+        'marketing.read' => self::ACCESS_READ,
+        'marketing.lists.manage' => self::ACCESS_WRITE,
+        'marketing.campaigns.create' => self::ACCESS_WRITE,
+        'marketing.campaigns.update' => self::ACCESS_WRITE,
+        'marketing.campaigns.approve' => self::ACCESS_WRITE,
+        'marketing.campaigns.send' => self::ACCESS_WRITE,
+        'marketing.settings.update' => self::ACCESS_WRITE,
+        'tickets.read' => self::ACCESS_READ,
+        'tickets.create' => self::ACCESS_WRITE,
+        'tickets.update' => self::ACCESS_WRITE,
+        'tickets.portal.publish' => self::ACCESS_WRITE,
+        'tickets.reply_customer' => self::ACCESS_WRITE,
+        'tickets.actions' => self::ACCESS_WRITE,
+        'tickets.workflow.read' => self::ACCESS_READ,
+        'tickets.workflow.manage' => self::ACCESS_WRITE,
+        'tickets.workflow.publish' => self::ACCESS_WRITE,
+        'tasks.read' => self::ACCESS_READ,
+        'tasks.create' => self::ACCESS_WRITE,
+        'tasks.update' => self::ACCESS_WRITE,
+        'knowledge.read' => self::ACCESS_READ,
+        'knowledge.create' => self::ACCESS_WRITE,
+        'knowledge.update' => self::ACCESS_WRITE,
+        'integration.bookstack.read' => self::ACCESS_READ,
+        'integration.bookstack.run' => self::ACCESS_WRITE,
+        'relationships.read' => self::ACCESS_READ,
+        'relationships.sync' => self::ACCESS_WRITE,
+        'storage.read' => self::ACCESS_READ,
+        'storage.create' => self::ACCESS_WRITE,
+        'storage.update' => self::ACCESS_WRITE,
+        'storage.purchase.read' => self::ACCESS_READ,
+        'storage.purchase.manage' => self::ACCESS_WRITE,
+        'storage.purchase.receive' => self::ACCESS_WRITE,
+        'storage.purchase.receive_overage' => self::ACCESS_WRITE,
+        'storage.purchase.reverse' => self::ACCESS_WRITE,
+        'calendar.read' => self::ACCESS_READ,
+        'calendar.create' => self::ACCESS_WRITE,
+        'calendar.update' => self::ACCESS_WRITE,
+        'calendar.delete' => self::ACCESS_WRITE,
+        'risk.read' => self::ACCESS_READ,
+        'risk.create' => self::ACCESS_WRITE,
+        'risk.update' => self::ACCESS_WRITE,
+        'email.read' => self::ACCESS_READ,
+        'email.update' => self::ACCESS_WRITE,
+        'notifications.read' => self::ACCESS_READ,
+        'notifications.update' => self::ACCESS_WRITE,
+        'sales.read' => self::ACCESS_READ,
+        'sales.create' => self::ACCESS_WRITE,
+        'sales.update' => self::ACCESS_WRITE,
+        'lead-intelligence.read' => self::ACCESS_READ,
+        'lead-intelligence.manage' => self::ACCESS_WRITE,
+        'lead-intelligence.run' => self::ACCESS_WRITE,
+        'taxonomy.read' => self::ACCESS_READ,
+        'taxonomy.create' => self::ACCESS_WRITE,
+        'taxonomy.update' => self::ACCESS_WRITE,
+        'taxonomy.delete' => self::ACCESS_WRITE,
+        'commercial.read' => self::ACCESS_READ,
+        'commercial.create' => self::ACCESS_WRITE,
+        'commercial.update' => self::ACCESS_WRITE,
+        'economy.read' => self::ACCESS_READ,
+        'economy.create' => self::ACCESS_WRITE,
+        'economy.update' => self::ACCESS_WRITE,
+        'economy.delete' => self::ACCESS_WRITE,
+        'data_exchange.read' => self::ACCESS_READ,
+        'data_exchange.run' => self::ACCESS_WRITE,
+        'data_exchange.download' => self::ACCESS_READ,
+        'data_exchange.import' => self::ACCESS_WRITE,
+        'data_exchange.approve_import' => self::ACCESS_WRITE,
+        'report.read' => self::ACCESS_READ,
+        'worklog.read' => self::ACCESS_READ,
+        'time-entries.read' => self::ACCESS_READ,
+        'signals.create' => self::ACCESS_WRITE,
+        'users.read' => self::ACCESS_READ,
+        'users.create' => self::ACCESS_WRITE,
+        'users.update' => self::ACCESS_WRITE,
+    ];
+
     private const ABILITIES = [
         'clients.read' => [
             'label' => 'Read clients',
@@ -112,6 +207,16 @@ class ApiAbilityCatalog
             'description' => 'Update ticket fields and status.',
             'domain' => 'Tickets',
         ],
+        'tickets.portal.publish' => [
+            'label' => 'Publish tickets to the customer portal',
+            'description' => 'Publish eligible client tickets through the one-way customer portal visibility action.',
+            'domain' => 'Tickets',
+        ],
+        'tickets.reply_customer' => [
+            'label' => 'Reply to ticket customers',
+            'description' => 'Send idempotent public technician replies through the normal Ticket email and workflow flow.',
+            'domain' => 'Tickets',
+        ],
         'tickets.actions' => [
             'label' => 'Execute ticket actions',
             'description' => 'Run workflow-governed Ticket transitions, escalation, review, evidence, quote, fulfilment, and close actions.',
@@ -195,6 +300,31 @@ class ApiAbilityCatalog
         'storage.update' => [
             'label' => 'Update storage',
             'description' => 'Update storage records, adjust item stock, and soft-delete zero-stock items.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.read' => [
+            'label' => 'Read Storage purchase orders',
+            'description' => 'List and inspect purchase orders, shipments, tracking identifiers, and receipt history.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.manage' => [
+            'label' => 'Manage Storage purchase orders',
+            'description' => 'Create and update purchase orders, line cancellations, shipments, tracking identifiers, and lifecycle states.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.receive' => [
+            'label' => 'Receive Storage purchases',
+            'description' => 'Post idempotent goods receipts and their inventory movements.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.receive_overage' => [
+            'label' => 'Receive Storage purchase overages',
+            'description' => 'Authorize explained accepted-plus-rejected quantities above the remaining order or shipment allocation when combined with receive access.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.reverse' => [
+            'label' => 'Reverse Storage purchase receipts',
+            'description' => 'Create guarded reversal receipts and matching negative inventory movements.',
             'domain' => 'Storage',
         ],
         'calendar.read' => [
@@ -367,6 +497,16 @@ class ApiAbilityCatalog
             'description' => 'List and view available report definitions.',
             'domain' => 'Reports',
         ],
+        'worklog.read' => [
+            'label' => 'Read aggregate technician worklogs',
+            'description' => 'Read policy-filtered aggregate or pseudonymized technician worklog summaries.',
+            'domain' => 'Reports',
+        ],
+        'time-entries.read' => [
+            'label' => 'Read minimized time entries',
+            'description' => 'Read policy-filtered time-entry projections without notes, names, or titles.',
+            'domain' => 'Reports',
+        ],
         'signals.create' => [
             'label' => 'Create signals',
             'description' => 'Record normalized Signal events from integrations and webhooks.',
@@ -391,7 +531,9 @@ class ApiAbilityCatalog
 
     public function all(): array
     {
-        return self::ABILITIES;
+        return collect(self::ABILITIES)
+            ->map(fn (array $ability, string $key): array => array_merge($ability, ['access' => self::ACCESS_MODES[$key]]))
+            ->all();
     }
 
     public function values(): array
@@ -407,7 +549,21 @@ class ApiAbilityCatalog
 
         $selected = array_values(array_intersect(array_map('strval', $abilities), $this->values()));
 
-        return $selected === [] ? $this->values() : $selected;
+        return $selected;
+    }
+
+    public function isReadOnly(string $ability): bool
+    {
+        return (self::ACCESS_MODES[$ability] ?? null) === self::ACCESS_READ;
+    }
+
+    public function requiresReview(array $abilities): bool
+    {
+        if (in_array(self::FULL_ACCESS, $abilities, true)) {
+            return true;
+        }
+
+        return count(array_intersect($abilities, $this->values())) >= (int) ceil(count($this->values()) / 2);
     }
 
     public function labelFor(string $ability): string

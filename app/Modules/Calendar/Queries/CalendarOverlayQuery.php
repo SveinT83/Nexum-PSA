@@ -16,14 +16,13 @@ class CalendarOverlayQuery
     public function __construct(
         private CalendarVisibility $visibility,
         private CalendarRecurrenceExpander $recurrenceExpander,
-    )
-    {
-    }
+    ) {}
 
     public function visibleCalendars(User $user): Collection
     {
         if ($user->hasRole('Admin') || $user->hasRole('Superuser')) {
             return Calendar::query()
+                ->with('owner')
                 ->where('is_active', true)
                 ->orderByDesc('is_default')
                 ->orderBy('type')
@@ -32,6 +31,7 @@ class CalendarOverlayQuery
         }
 
         $owned = Calendar::query()
+            ->with('owner')
             ->where('is_active', true)
             ->where(function ($query) use ($user) {
                 $roleIds = $user->roles()->pluck('id');
@@ -64,8 +64,7 @@ class CalendarOverlayQuery
         array $calendarIds = [],
         ?int $workContextId = null,
         ?string $contextType = null,
-    ): Collection
-    {
+    ): Collection {
         $visibleCalendarIds = $this->visibleCalendars($viewer)->pluck('id');
         $requestedIds = collect($calendarIds)->map(fn ($id) => (int) $id)->filter();
         $ids = $requestedIds->isNotEmpty()
@@ -103,8 +102,7 @@ class CalendarOverlayQuery
         Carbon $endsAt,
         ?int $workContextId = null,
         ?string $contextType = null,
-    ): Collection
-    {
+    ): Collection {
         return $this->recurrenceExpander
             ->visibleOccurrences($calendarIds, $startsAt, $endsAt)
             ->when($workContextId, fn (Collection $occurrences) => $occurrences
@@ -112,11 +110,11 @@ class CalendarOverlayQuery
             ->when($contextType, fn (Collection $occurrences) => $occurrences
                 ->filter(fn (array $occurrence) => $occurrence['event']->workContext?->type === $contextType))
             ->map(fn (array $occurrence) => $this->visibility->maskEventOccurrence(
-                    $occurrence['event'],
-                    $viewer,
-                    $occurrence['starts_at'],
-                    $occurrence['ends_at'],
-                    $occurrence['occurrence_key']
-                ));
+                $occurrence['event'],
+                $viewer,
+                $occurrence['starts_at'],
+                $occurrence['ends_at'],
+                $occurrence['occurrence_key']
+            ));
     }
 }

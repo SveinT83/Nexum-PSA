@@ -271,7 +271,7 @@
                 <!-- Customer visibility: manually created client tickets can be kept silent until they are published. -->
                 <x-card.default title="Customer Visibility">
                     @php
-                        $selectedCustomerVisibility = old('customer_portal_visibility', $defaultCustomerVisibility ?? \App\Modules\Ticket\Support\TicketPortalPolicy::VISIBILITY_UNPUBLISHED);
+                        $selectedCustomerVisibility = old('customer_portal_visibility', $defaultCustomerVisibility ?? \App\Modules\Ticket\Support\TicketPortalPolicy::DEFAULT_CUSTOMER_VISIBILITY);
                     @endphp
 
                     <div class="mb-0">
@@ -283,7 +283,8 @@
                         </select>
                         @error('customer_portal_visibility')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         <div class="form-text">
-                            Unpublished keeps client tickets silent externally. Published makes client tickets visible in the customer portal immediately.
+                            Published makes a client ticket visible in the customer portal immediately. Unpublished keeps it internal until it is published later.
+                            This choice has no portal effect without a selected client.
                         </div>
                     </div>
                 </x-card.default>

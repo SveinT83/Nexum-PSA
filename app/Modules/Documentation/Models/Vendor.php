@@ -2,7 +2,9 @@
 
 namespace App\Modules\Documentation\Models;
 
+use App\Modules\Storage\Models\PurchaseOrderImport;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Canonical partner register for vendors, manufacturers, and suppliers.
@@ -28,6 +30,10 @@ class Vendor extends Model
         'is_supplier',
         'is_manufacturer',
         'is_active',
+        'created_from_purchase_import_id',
+        'supplier_import_identity_hash',
+        'supplier_bootstrap_status',
+        'source_provenance',
     ];
 
     protected $casts = [
@@ -36,10 +42,19 @@ class Vendor extends Model
         'is_supplier' => 'boolean',
         'is_manufacturer' => 'boolean',
         'is_active' => 'boolean',
+        'source_provenance' => 'array',
     ];
 
     public function services()
     {
         return $this->hasMany(\App\Modules\Commercial\Models\Services\Services::class);
+    }
+
+    /**
+     * Return the immutable Storage import that originally bootstrapped this supplier.
+     */
+    public function createdFromPurchaseImport(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderImport::class, 'created_from_purchase_import_id');
     }
 }

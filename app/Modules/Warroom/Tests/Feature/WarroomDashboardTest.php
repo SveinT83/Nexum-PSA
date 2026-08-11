@@ -6,11 +6,14 @@ use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Calendar\Models\Calendar;
 use App\Modules\Calendar\Models\CalendarEvent;
+use App\Modules\Storage\Models\Item;
+use App\Modules\Storage\Models\Warehouse;
 use App\Modules\Warroom\Support\WarroomSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -28,6 +31,7 @@ class WarroomDashboardTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo('warroom.view');
     }
 
     #[Test]
@@ -72,8 +76,105 @@ class WarroomDashboardTest extends TestCase
     }
 
     #[Test]
+    public function dashboard_shows_storage_should_order_warning_for_authorized_users(): void
+    {
+        $this->tech->givePermissionTo(Permission::findOrCreate('storage.view'));
+        $warehouse = Warehouse::query()->create(['name' => 'Main Warehouse', 'code' => 'MAIN']);
+
+        Item::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'MANUAL-ORDER',
+            'name' => 'Manual reorder item',
+            'qty_on_hand' => 10,
+            'qty_reserved' => 0,
+            'reorder_point' => 2,
+            'should_order' => true,
+            'status' => 'active',
+        ]);
+        Item::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'OVER-RESERVED',
+            'name' => 'Over-reserved item',
+            'qty_on_hand' => 1,
+            'qty_reserved' => 2,
+            'reorder_point' => 0,
+            'should_order' => false,
+            'status' => 'active',
+        ]);
+        Item::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'HEALTHY-STOCK',
+            'name' => 'Healthy stock item',
+            'qty_on_hand' => 10,
+            'qty_reserved' => 1,
+            'reorder_point' => 2,
+            'should_order' => false,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.dashboard'))
+            ->assertOk()
+            ->assertSee('Storage needs ordering')
+            ->assertSee('2 items need ordering.')
+            ->assertSee('Open Should order')
+            ->assertSee(route('tech.storage.index', ['availability' => 'should_order']), false);
+    }
+
+    #[Test]
+    public function dashboard_omits_storage_warning_when_no_items_need_ordering(): void
+    {
+        $this->tech->givePermissionTo(Permission::findOrCreate('storage.view'));
+        $warehouse = Warehouse::query()->create(['name' => 'Main Warehouse', 'code' => 'MAIN']);
+
+        Item::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'HEALTHY-STOCK',
+            'name' => 'Healthy stock item',
+            'qty_on_hand' => 10,
+            'qty_reserved' => 1,
+            'reorder_point' => 2,
+            'should_order' => false,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Storage needs ordering')
+            ->assertDontSee('Open Should order');
+    }
+
+    #[Test]
+    public function dashboard_hides_storage_warning_without_storage_view_permission(): void
+    {
+        Permission::findOrCreate('storage.view');
+        $warehouse = Warehouse::query()->create(['name' => 'Main Warehouse', 'code' => 'MAIN']);
+
+        Item::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'PRIVATE-ORDER',
+            'name' => 'Restricted reorder item',
+            'qty_on_hand' => 0,
+            'qty_reserved' => 1,
+            'reorder_point' => 2,
+            'should_order' => true,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Storage needs ordering')
+            ->assertDontSee('Open Should order')
+            ->assertDontSee(route('tech.storage.index', ['availability' => 'should_order']), false);
+    }
+
+    #[Test]
     public function admin_can_update_warroom_settings(): void
     {
+        $this->tech->givePermissionTo('warroom.manage_settings');
+
         $this->actingAs($this->tech)
             ->get(route('tech.admin.settings.warroom'))
             ->assertOk()

@@ -9,12 +9,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, HasPushSubscriptions, HasRoles, Notifiable, TwoFactorAuthenticatable;
 
     /*
    |--------------------------------------------------------------------------
@@ -22,7 +23,9 @@ class User extends Authenticatable
    |--------------------------------------------------------------------------
    */
     const STATUS_PENDING = 'PENDING_INVITE';
+
     const STATUS_ACTIVE = 'ACTIVE';
+
     const STATUS_DISABLED = 'DISABLED';
 
     /*
@@ -38,6 +41,8 @@ class User extends Authenticatable
         'phone_private',
         'password',
         'status',
+        'is_system_actor',
+        'system_actor_key',
     ];
 
     /*
@@ -71,6 +76,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_system_actor' => 'boolean',
         ];
     }
 
@@ -102,6 +108,11 @@ class User extends Authenticatable
     public function isDisabled()
     {
         return $this->status === self::STATUS_DISABLED;
+    }
+
+    public function isSystemActor(): bool
+    {
+        return (bool) $this->is_system_actor;
     }
 
     /*
@@ -148,7 +159,7 @@ class User extends Authenticatable
         }
 
         $secret = decrypt($this->two_factor_secret);
-        $google2fa = new \PragmaRX\Google2FA\Google2FA();
+        $google2fa = new \PragmaRX\Google2FA\Google2FA;
 
         return $google2fa->verifyKey($secret, $code, 8); // 8 = window of 4 steps each way
     }

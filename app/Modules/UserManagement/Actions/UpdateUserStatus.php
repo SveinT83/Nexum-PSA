@@ -3,6 +3,7 @@
 namespace App\Modules\UserManagement\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Notification\Actions\RemoveUserWebPushSubscriptions;
 
 /**
  * Updates the account lifecycle status for an application user.
@@ -13,9 +14,20 @@ use App\Models\Core\User;
  */
 class UpdateUserStatus
 {
+    public function __construct(
+        private readonly RemoveUserWebPushSubscriptions $removeWebPushSubscriptions,
+    ) {}
+
     public function handle(User $user, string $status): User
     {
+        $becameDisabled = $status === User::STATUS_DISABLED
+            && $user->status !== User::STATUS_DISABLED;
+
         $user->update(['status' => $status]);
+
+        if ($becameDisabled) {
+            $this->removeWebPushSubscriptions->handle($user);
+        }
 
         return $user;
     }

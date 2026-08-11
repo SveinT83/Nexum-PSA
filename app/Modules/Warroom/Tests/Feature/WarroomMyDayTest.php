@@ -32,6 +32,7 @@ class WarroomMyDayTest extends TestCase
             'status' => User::STATUS_ACTIVE,
         ]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo('warroom.view');
     }
 
     protected function tearDown(): void

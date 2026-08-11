@@ -20,6 +20,14 @@ Route::match(['put', 'patch'], 'sales/opportunities/{opportunity}', [SalesOpport
     ->name('sales.opportunities.update')
     ->middleware(CheckAbilities::class.':sales.update');
 
+Route::post('sales/opportunities/{opportunity}/lost', [SalesOpportunityController::class, 'markLost'])
+    ->name('sales.opportunities.lost')
+    ->middleware(CheckAbilities::class.':sales.update');
+
+Route::post('sales/opportunities/{opportunity}/reopen', [SalesOpportunityController::class, 'reopen'])
+    ->name('sales.opportunities.reopen')
+    ->middleware(CheckAbilities::class.':sales.update');
+
 Route::post('sales/opportunities/{opportunity}/activities', [SalesOpportunityController::class, 'storeActivity'])
     ->name('sales.opportunities.activities.store')
     ->middleware(CheckAbilities::class.':sales.update');

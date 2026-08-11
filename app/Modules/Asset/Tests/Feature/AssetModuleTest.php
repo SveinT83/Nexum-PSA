@@ -43,6 +43,11 @@ class AssetModuleTest extends TestCase
             'status' => User::STATUS_ACTIVE,
         ]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'asset.view',
+            'asset.create',
+            'asset.manage_settings',
+        ]);
     }
 
     #[Test]

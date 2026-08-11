@@ -9,7 +9,6 @@ use App\Models\Core\User;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\CustomerPortal\Jobs\SendCustomerPortalInvitationEmail;
-use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
 use App\Modules\CustomerPortal\Models\CustomerPortalInvitation;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use Illuminate\Support\Facades\DB;
@@ -18,13 +17,11 @@ use Illuminate\Validation\ValidationException;
 
 class CreateCustomerPortalInvitation
 {
-    public function __construct(private readonly RecordCustomerPortalAudit $audit)
-    {
-    }
+    public function __construct(private readonly RecordCustomerPortalAudit $audit) {}
 
-    public function handle(User $actor, Contact $contact, Client $client, ?ClientSite $site, string $role, ?string $email = null): CustomerPortalInvitation
+    public function handle(User $actor, Contact $contact, Client $client, ?ClientSite $site, string $role, ?string $email = null, string $source = 'customer_portal_admin'): CustomerPortalInvitation
     {
-        return DB::transaction(function () use ($actor, $contact, $client, $site, $role, $email): CustomerPortalInvitation {
+        return DB::transaction(function () use ($actor, $contact, $client, $site, $role, $email, $source): CustomerPortalInvitation {
             $this->validateScope($contact, $client, $site);
 
             if (! array_key_exists($role, CustomerPortalMembership::roleOptions())) {
@@ -61,7 +58,7 @@ class CreateCustomerPortalInvitation
                 'expires_at' => now()->addHours((int) config('auth.invite_expire_hours', 72)),
                 'created_by' => $actor->id,
                 'metadata' => [
-                    'created_from' => 'customer_portal_admin',
+                    'created_from' => $source,
                 ],
             ]);
 
@@ -69,6 +66,7 @@ class CreateCustomerPortalInvitation
                 'invitation_id' => $invitation->id,
                 'email' => $email,
                 'role' => $role,
+                'created_from' => $source,
             ]);
 
             SendCustomerPortalInvitationEmail::dispatch($invitation->id, $rawToken)->afterCommit();

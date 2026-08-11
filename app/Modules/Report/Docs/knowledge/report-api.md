@@ -50,3 +50,24 @@ Commercial, and future reporting queries.
 Work Context filters are exposed by adopted domain APIs instead of the Report API. Current adopted
 domain list endpoints use `work_context_id` and `context_type` where the domain owns the underlying
 records, including Ticket, Task, Asset, Documentation, Risk, and Calendar.
+
+## Coordinator Worklog API
+
+Approved workload-bound coordinator tokens can use:
+
+- `GET /api/v1/worklog/technicians` with `worklog.read`.
+- `GET /api/v1/worklog/time-entries` with `time-entries.read`.
+
+Both accept `date_from` and `date_to`. Time entries also accept `page` and `per_page`. Policy sets
+maximum date range, page size, result count, and request rate.
+
+The technician endpoint returns aliases and aggregate minutes, billable minutes, entry count, and
+active days. The time-entry endpoint returns aliases, source type, work date, minutes, and billable
+state. They omit names, contact details, customer names, titles, descriptions, messages, notes,
+invoice text, attachments, rankings, credentials, and secrets.
+
+Ticket owns `GET /api/v1/tickets/stale`, and Task owns `GET /api/v1/tasks/stale`. Those endpoints use
+the same workload policy and audit path and accept `stale_days`, `page`, and `per_page`.
+
+Every allowed or denied request creates a metadata-only Integration audit event with a stable reason
+code. See the AI Privacy & Coordinator Governance article for policy, token, and retention details.

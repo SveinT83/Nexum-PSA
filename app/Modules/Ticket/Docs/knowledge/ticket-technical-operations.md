@@ -34,6 +34,8 @@ Important actions:
 
 - `StoreTicket`
 - `AddTicketMessage`
+- `PublishTicketToCustomerPortal`
+- `StoreIdempotentTicketCustomerReply`
 - `CreateTicketFromInboundEmail`
 - `LinkInboundEmailToTicket`
 - `ChangeTicketStatus`
@@ -58,6 +60,7 @@ Important services:
 - `TicketWorkflowRuntime`
 - `TicketActionGuard`
 - `TicketMergeSuggestionService`
+- `TicketReplyContactResolver`
 
 These services own reusable business rules. Avoid reimplementing those rules in views or controllers.
 
@@ -107,6 +110,8 @@ Scopes:
 - `tickets.read`
 - `tickets.create`
 - `tickets.update`
+- `tickets.portal.publish`
+- `tickets.reply_customer`
 
 Routes:
 
@@ -116,6 +121,9 @@ Routes:
 - `PUT /api/v1/tickets/{ticket}`
 - `PATCH /api/v1/tickets/{ticket}`
 
+- `POST /api/v1/tickets/{ticket}/portal-visibility`
+- `POST /api/v1/tickets/{ticket}/messages`
+- `POST /api/v1/tickets/{ticket}/external-messages`
 The `{ticket}` route parameter uses the public ticket key, such as `TD-2026-000001`, because the
 Ticket model route key is `ticket_key`.
 
@@ -124,6 +132,15 @@ changes must use `ChangeTicketStatus`. Do not bypass these actions from API cont
 they create events and enforce ticket workflow behavior.
 
 ## Knowledge Documentation
+
+Portal publication must use `PublishTicketToCustomerPortal`, which locks the Ticket row and emits
+the publication event and notification only for the first state change. API customer replies must
+use `StoreIdempotentTicketCustomerReply`; its Ticket-scoped key and database unique index protect
+`AddTicketMessage` and all outbound side effects from duplicate retries. Do not reuse
+`external-messages` for technician replies because it is an inbound synchronization boundary.
+
+Migration `2026_07_29_120000_add_api_idempotency_to_ticket_messages` must run before enabling the
+customer-reply API route.
 
 When the Ticket domain is materially updated, update the Markdown files under:
 

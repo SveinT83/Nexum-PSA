@@ -10,6 +10,7 @@ use App\Modules\Sales\Actions\AcceptSalesQuote;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesQuoteVersion;
 use App\Modules\Sales\Support\PortalSalesQuoteAccess;
+use App\Modules\Sales\Support\SalesQuotePresentation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,8 +34,12 @@ class PortalSalesQuoteController extends Controller
         ]);
     }
 
-    public function show(Request $request, SalesQuoteVersion $quote, PortalSalesQuoteAccess $access): View
-    {
+    public function show(
+        Request $request,
+        SalesQuoteVersion $quote,
+        PortalSalesQuoteAccess $access,
+        SalesQuotePresentation $quotePresentation
+    ): View {
         $context = $this->context($request);
         $quote->load(['quote.opportunity.client', 'lines']);
         abort_unless($access->canView($context, $quote), 404);
@@ -48,6 +53,7 @@ class PortalSalesQuoteController extends Controller
             'version' => $quote,
             'opportunity' => $quote->quote->opportunity,
             'access' => $access,
+            'quotePresentation' => $quotePresentation->forVersion($quote),
         ]);
     }
 

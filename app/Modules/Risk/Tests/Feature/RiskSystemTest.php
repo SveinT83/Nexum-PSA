@@ -57,6 +57,7 @@ class RiskSystemTest extends TestCase
 
         $this->normalUser = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->normalUser->assignRole('Tech');
+        $this->normalUser->givePermissionTo('risk.update');
 
         $this->category = Category::create(['name' => 'IT Security', 'type' => 'risk']);
         $this->assessment = RiskAssessment::create([
@@ -279,7 +280,7 @@ class RiskSystemTest extends TestCase
         $this->actingAs($this->normalUser);
 
         $response = $this->put(route('tech.risk.items.update', $riskItem), [
-            'title' => 'Changed Title'
+            'title' => 'Changed Title',
         ]);
 
         $response->assertSessionHas('error');

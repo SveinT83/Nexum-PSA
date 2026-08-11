@@ -317,6 +317,87 @@ Default behavior for work use:
 - Private busy events still block booking.
 - Personal work calendars are work calendars, not fully private user data.
 
+## Ownership View Metadata Contract
+
+Calendar exposes one privacy-safe metadata contract for overlays, view rendering, and API
+consumers. Ownership always comes from the calendar container's `owner_type` and `owner_id`;
+`calendar_events.created_by` remains creator/audit data.
+
+Stable fields are:
+
+- `owner_kind`: `user`, `role`, `entity`, or `none` without exposing a PHP class as the new contract.
+- `owner_id`, `owner_label`, `owner_initials`, and `owner_badge`.
+- `calendar_color`, `calendar_type`, and `calendar_type_label`.
+- `ownership_group`: `mine`, `people`, `team`, `shared`, `resources`, or `external`.
+- `is_owned_by_viewer`.
+
+Supported types map explicitly: personal User calendars are `mine` or `people`; `team`, `absence`,
+and `shift` use `team`; `shared` and `company` use `shared`; `resource` uses `resources`; and
+`system` plus `external` use `external`. `company` is the company-wide/global type. Ownerless
+calendars use their calendar name and a stable type badge as fallback.
+
+The backend must scope calendars through `CalendarOverlayQuery` before deriving this metadata. The
+current runtime permission contract remains Admin/Superuser, calendar owner, visible-by-default, or
+explicit User/Role Calendar Access. Declared broad permission names such as `calendar.view_all`,
+`calendar.manage_all`, and `calendar.view_private` do not independently broaden that contract in
+this slice. Any future permission-semantic change requires explicit approval and regression tests.
+
+`CalendarVisibility` owns the private-detail decision for both range/list overlays and the
+single-event API. Private/confidential responses may keep safe owner, color, type, time, and busy
+signals while restricted title, description, location, meeting URL, participants, and integration
+identifiers remain masked.
+
+### Owner Badge Rendering
+
+The Tech day, week, month, and list views render the shared
+`Tech/partials/owner-badge.blade.php` partial. Each compact badge combines the stable
+`owner_badge` text with the calendar color swatch and a full accessible owner/type label. Calendar
+color is therefore a redundant identity signal and never the only way to distinguish ownership.
+
+Month event rows keep badge, time, and title in separate flex items so long titles truncate instead
+of overlapping adjacent events. Week, day, and list titles use the same truncation boundary. Month
+and week grids retain readable column widths on narrow screens through horizontal scrolling rather
+than shrinking badges below their usable size.
+
+The badge receives only the privacy-safe metadata produced by `CalendarOverlayQuery`. Private and
+confidential busy blocks may show their owner badge, calendar color, and calendar type through the
+accessible label, but the partial must never derive or render masked event title, description,
+location, participants, meeting links, or integration data.
+
+### Calendar Type Indicators And Ownership Filters
+
+Every non-personal event renders a separate Calendar-type badge beside the owner badge. Compact
+labels are `SHR` (shared), `TM` (team), `GLB` (company/global), `ABS` (absence), `SHF` (shift),
+`RES` (resource), `SYS` (system), `EXT` (external), and `CAL` (other). The full type remains in the
+accessible label and tooltip. Personal events omit the redundant type badge. Owner, type, and color
+therefore remain independent signals, including on privacy-masked `Busy` blocks.
+
+The Tech Calendar sidebar groups currently visible calendars as Mine, People, Team, Shared/global,
+Resources, and External/system. A group filter is offered only when at least one visible calendar
+backs it, and the displayed count is derived from that same server-scoped collection.
+
+`Only mine` means `calendars.owner_type` is the signed-in User class and `owner_id` is that User's ID.
+It does not mean events created by the user, events where the user is a participant, or events on a
+team Calendar. `Only mine` takes priority when submitted with group selections. Group filters and
+explicit `calendars[]` selections are intersected, and a filter with no visible match returns no
+events instead of falling back to all calendars.
+
+Ownership filters persist across view switching, previous/today/next navigation, event search and
+sorting, availability lookup, and dense-month day drill-down. The UI provides a clear action and an
+explicit empty state. URL parameters never broaden Calendar visibility; `CalendarOverlayQuery`
+continues to limit the available Calendar set before filtering.
+
+### Dense Month And Narrow Screens
+
+Month and week views use a keyboard-focusable, horizontally touch-scrollable region with a stable
+minimum column width. Titles, time, owner badge, and type badge keep separate layout boundaries.
+Month cells render the first five ordered events and then an accessible `+N more` link to the same
+date in day view while preserving Calendar, ownership, search, and sort state. Clicking the link or
+another nested control does not trigger the surrounding day-cell create action.
+
+A creator/participant-based `My events` filter, event-level responsibility, saved filter presets,
+drag-and-drop, and provider-specific identity remain out of scope.
+
 ## Privacy Model
 
 Event visibility should behave like this:

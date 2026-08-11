@@ -28,6 +28,8 @@ class AddTicketMessage
                 'subject' => $data['subject'] ?? null,
                 'body' => $data['body'],
                 'metadata' => $this->messageMetadata($data, $actor),
+                'idempotency_key' => $data['idempotency_key'] ?? null,
+                'idempotency_fingerprint' => $data['idempotency_fingerprint'] ?? null,
             ]);
 
             foreach (($data['attachments'] ?? []) as $attachment) {

@@ -12,6 +12,7 @@ use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\RequestTicketPurchase;
 use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\StoreTicketPlannedLine;
@@ -50,6 +51,16 @@ class TicketWorkflowV3Test extends TestCase
         Role::findOrCreate('Admin', 'web');
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'ticket.view',
+            'ticket.update',
+            'ticket.assign',
+            'ticket.reply_customer',
+            'ticket.note_internal',
+            'ticket.register_time',
+            'ticket.close',
+            'ticket.plan_cost',
+        ]);
         app(EnsureTicketDefaults::class)->handle();
     }
 
@@ -302,7 +313,7 @@ class TicketWorkflowV3Test extends TestCase
     }
 
     #[Test]
-    public function internal_solution_uses_the_ticket_pinned_workflow_version_and_records_the_step(): void
+    public function solution_marked_internal_note_uses_the_ticket_pinned_workflow_version_and_records_the_step(): void
     {
         $new = \App\Modules\Ticket\Models\TicketStatus::query()->where('slug', 'new')->firstOrFail();
         $inProgress = \App\Modules\Ticket\Models\TicketStatus::query()->where('slug', 'in-progress')->firstOrFail();
@@ -341,7 +352,8 @@ class TicketWorkflowV3Test extends TestCase
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.messages.store', $ticket), [
-                'type' => 'internal_solution',
+                'type' => 'internal_note',
+                'mark_as_solution' => '1',
                 'visibility' => 'internal',
                 'body' => 'The verified fix is documented internally.',
             ])
@@ -395,7 +407,8 @@ class TicketWorkflowV3Test extends TestCase
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.messages.store', $ticket), [
-                'type' => 'internal_solution',
+                'type' => 'internal_note',
+                'mark_as_solution' => '1',
                 'visibility' => 'internal',
                 'body' => 'Solution is ready, but this workflow requires a manual step.',
             ])
@@ -1356,6 +1369,12 @@ class TicketWorkflowV3Test extends TestCase
     #[Test]
     public function ticket_quote_api_covers_customer_acceptance_conversion_and_purchase_need(): void
     {
+        $this->tech->givePermissionTo([
+            'ticket.approval_record',
+            'sales.quote_manage',
+            'sales.email_send',
+            'storage.purchase_manage',
+        ]);
         Queue::fake();
         Storage::fake('local');
         [$ticket, $client, $site] = $this->ticketWithClient();
@@ -1456,12 +1475,37 @@ class TicketWorkflowV3Test extends TestCase
         $this->assertSame(2, $ticket->plannedLines()->where('status', 'approved')->count());
 
         $routerLine = TicketPlannedLine::query()->where('ticket_id', $ticket->id)->where('storage_item_id', $router->id)->firstOrFail();
-        $this->postJson(route('api.v1.tickets.planned-lines.purchase', [$ticket, $routerLine]))
+        $routerLine->load('storageItem.primaryVendor');
+        $router->delete();
+        try {
+            app(RequestTicketPurchase::class)->handle($ticket, $routerLine, $this->tech);
+            $this->fail('A stale Item relation must not create a purchase need after the Item is deleted.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('planned_line', $exception->errors());
+        }
+        $router->restore();
+
+        $purchaseResponse = $this->postJson(route('api.v1.tickets.planned-lines.purchase', [$ticket, $routerLine]));
+        $purchaseResponse
             ->assertCreated()
             ->assertJsonPath('data.metadata.vendor_order_sent', false);
+        $this->postJson(route('api.v1.tickets.planned-lines.purchase', [$ticket, $routerLine]))
+            ->assertCreated()
+            ->assertJsonPath('data.id', $purchaseResponse->json('data.id'));
+        $this->assertSame(1, $routerLine->purchaseOrderLine()->count());
         $this->assertDatabaseHas('storage_purchase_orders', [
             'status' => 'draft',
             'vendor_id' => $vendor->id,
+            'supplier_name_snapshot' => 'Router Supplier',
+            'currency' => 'NOK',
+            'status_changed_by' => $this->tech->id,
+        ]);
+        $this->assertDatabaseHas('storage_purchase_order_lines', [
+            'ticket_planned_line_id' => $routerLine->id,
+            'item_name_snapshot' => 'Mesh router',
+            'sku_snapshot' => 'MESH-01',
+            'currency' => 'NOK',
+            'created_by' => $this->tech->id,
         ]);
 
         $implementationLine = TicketPlannedLine::query()->where('ticket_id', $ticket->id)->whereNull('storage_item_id')->firstOrFail();

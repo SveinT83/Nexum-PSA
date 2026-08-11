@@ -96,6 +96,8 @@ class EnforceTechRoutePermission
         'tech.admin.settings.warroom' => 'warroom.manage_settings',
         'tech.admin.settings.warroom.*' => 'warroom.manage_settings',
         'tech.admin.settings.sales.*' => 'sales.manage_settings',
+        'tech.admin.settings.storage.purchase-order-automation.*' => 'storage.purchase_import_policy_manage',
+        'tech.admin.settings.storage.supplier-order-profiles.*' => 'storage.purchase_import_profile_manage',
         'tech.admin.settings.storage.*' => 'storage.manage_settings',
         'tech.admin.settings.tickets' => 'ticket.manage_settings',
         'tech.admin.settings.tickets.rules.*' => 'ticket.manage_rules',
@@ -121,6 +123,13 @@ class EnforceTechRoutePermission
         'tech.admin.system.integrations.cloudfactory.catalogue.update' => 'integration.cloudfactory_manage',
         'tech.admin.system.integrations.cloudfactory.conflicts.*' => 'integration.cloudfactory_manage',
         'tech.admin.system.integrations.cloudfactory.*' => 'integration.cloudfactory_view',
+        'tech.admin.system.integrations.ai.privacy.policy.*' => 'integration.ai_policy_manage',
+        'tech.admin.system.integrations.ai.privacy.providers.*' => 'integration.ai_governance_manage',
+        'tech.admin.system.integrations.ai.privacy.models.*' => 'integration.ai_governance_manage',
+        'tech.admin.system.integrations.ai.privacy.agents.*' => 'integration.ai_governance_manage',
+        'tech.admin.system.integrations.ai.privacy.workloads.*' => 'integration.ai_workload_manage',
+        'tech.admin.system.integrations.ai.privacy.bindings.*' => 'integration.ai_workload_manage',
+        'tech.admin.system.integrations.ai.privacy.*' => 'integration.ai_audit_view',
         'tech.admin.system.integrations.ai.*' => 'integration.ai_manage',
         'tech.admin.system.integrations.api.*' => 'integration.api_manage',
         'tech.admin.system.integrations.book-stack.*' => 'integration.bookstack_manage',
@@ -276,6 +285,11 @@ class EnforceTechRoutePermission
         'tech.knowledge.*' => 'knowledge.view',
         'tech.ai.chats.*' => 'integration.ai_manage',
 
+        'tech.documentations.shipping-carriers.create' => 'documentation.carrier_manage',
+        'tech.documentations.shipping-carriers.store' => 'documentation.carrier_manage',
+        'tech.documentations.shipping-carriers.edit' => 'documentation.carrier_manage',
+        'tech.documentations.shipping-carriers.update' => 'documentation.carrier_manage',
+        'tech.documentations.shipping-carriers.*' => 'documentation.view',
         'tech.documentations.create' => 'documentation.create',
         'tech.documentations.store' => 'documentation.create',
         'tech.documentations.edit' => 'documentation.update',
@@ -324,8 +338,33 @@ class EnforceTechRoutePermission
         'tech.sales.create' => 'sales.opportunity_manage',
         'tech.sales.store' => 'sales.opportunity_manage',
         'tech.sales.update' => 'sales.opportunity_manage',
+        'tech.sales.lost' => 'sales.opportunity_manage',
+        'tech.sales.reopen' => 'sales.opportunity_manage',
         'tech.sales.*' => 'sales.view',
 
+        'tech.storage.purchase-order-imports.lines.map' => 'storage.purchase_import_resolve',
+        'tech.storage.purchase-order-imports.correct-manually' => 'storage.purchase_import_resolve',
+        'tech.storage.purchase-order-imports.lines.create-item' => 'storage.purchase_import_execute',
+        'tech.storage.purchase-order-imports.retry' => 'storage.purchase_import_execute',
+        'tech.storage.purchase-order-imports.finalize' => 'storage.purchase_import_execute',
+        'tech.storage.purchase-order-imports.reject' => 'storage.purchase_import_execute',
+        'tech.storage.purchase-order-imports.repair' => 'storage.purchase_import_execute',
+        'tech.storage.purchase-order-imports.*' => 'storage.purchase_import_view',
+        'tech.storage.receipts.reverse' => 'storage.purchase_reverse',
+        'tech.storage.purchase-orders.receipts.store' => 'storage.purchase_receive',
+        'tech.storage.purchase-orders.receive' => 'storage.purchase_receive',
+        'tech.storage.receiving.*' => 'storage.purchase_receive',
+        'tech.storage.purchase-orders.create' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.store' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.edit' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.update' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.lines.cancel' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.close' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.cancel' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.shipments.status.update' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.shipments.trackings.store' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.shipments.*' => 'storage.purchase_manage',
+        'tech.storage.purchase-orders.*' => 'storage.purchase_view',
         'tech.storage.picking.pick' => 'storage.pick',
         'tech.storage.picking*' => 'storage.pick',
         'tech.storage.items.adjust' => 'storage.stock_adjust',
@@ -352,11 +391,11 @@ class EnforceTechRoutePermission
             abort(403, 'No permission rule is defined for this route.');
         }
 
-        if ($this->hasPrivilegedFallbackAccess($request)) {
-            return $next($request);
+        if (! Permission::query()->where('name', $permission)->where('guard_name', 'web')->exists()) {
+            abort(403, 'Required permission is not configured.');
         }
 
-        if (! Permission::query()->where('name', $permission)->where('guard_name', 'web')->exists()) {
+        if ($this->hasPrivilegedFallbackAccess($request)) {
             return $next($request);
         }
 

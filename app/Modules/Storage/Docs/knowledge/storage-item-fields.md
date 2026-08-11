@@ -27,7 +27,9 @@ Vendor & Supplier fields:
 
 Stock & Pricing fields:
 
-- **Initial Quantity** is only used when creating an item and creates the first audited stock movement.
+- **Initial Quantity** is only used when creating an item and creates the first audited stock
+  movement. A serial-, batch-, or expiry-controlled item must start at zero and enter inventory
+  through an identified receiving flow.
 - **Reorder Point** is the quantity where the item should be considered for reorder.
 - **Target Level** is the desired quantity after reorder.
 - **MOQ** is our internal minimum order quantity for reorder suggestions. If supplier MOQ is enough, keep the same value.
@@ -36,7 +38,19 @@ Stock & Pricing fields:
 - **Sale Price** is the price charged onward before VAT.
 - **VAT Rate** defaults from Admin > Economy settings. A specific item can override the default.
 - **Require serials on withdrawal/sale** means technicians must record serial numbers when stock is consumed.
+- **Track batch** means accepted receipt quantity must be assigned to one or more named batches.
+- **Track expiry** means applicable accepted units must carry an expiry date during receiving.
 - **Manual should-order flag** forces the item into reorder attention even when quantity rules have not triggered.
+
+Tracking controls protect the stock-unit ledger. Nexum blocks changing serial, batch, or expiry
+flags while the item has on-hand quantity, reserved quantity, an active reservation, or a positive
+stock-unit quantity. Receive or consume the identified units through their operational workflows
+before changing the tracking policy.
+
+Generic manual stock adjustment is unavailable for a tracked item or an item that still has a
+positive stock-unit ledger. A generic delta cannot say which serial, batch, or expiry unit changed.
+Use purchase receiving for inbound identified units and the dedicated identified-unit correction
+workflow when available.
 
 Master data rule:
 

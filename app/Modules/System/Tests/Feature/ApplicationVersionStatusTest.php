@@ -154,7 +154,7 @@ class ApplicationVersionStatusTest extends TestCase
     #[Test]
     public function user_without_system_view_permission_cannot_read_version_status(): void
     {
-        Permission::create(['name' => 'system.view']);
+        Permission::findOrCreate('system.view', 'web');
         $technicianRole = Role::create(['name' => 'Technician']);
         $technician = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $technician->assignRole($technicianRole);

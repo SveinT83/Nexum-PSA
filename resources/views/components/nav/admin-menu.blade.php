@@ -218,6 +218,8 @@
         ],
         'storage' => [
             ['name' => 'Inventory settings', 'route' => 'tech.admin.settings.storage.inventory', 'pattern' => 'tech.admin.settings.storage.inventory*'],
+            ['name' => 'Supplier order automation', 'route' => 'tech.admin.settings.storage.purchase-order-automation.edit', 'pattern' => 'tech.admin.settings.storage.purchase-order-automation.*', 'permission' => 'storage.purchase_import_policy_manage'],
+            ['name' => 'Supplier profiles', 'route' => 'tech.admin.settings.storage.supplier-order-profiles.index', 'pattern' => 'tech.admin.settings.storage.supplier-order-profiles.*', 'permission' => 'storage.purchase_import_profile_manage'],
         ],
         'assets' => [
             ['name' => 'Asset settings', 'route' => 'tech.admin.settings.assets', 'pattern' => 'tech.admin.settings.assets*'],
@@ -288,6 +290,7 @@
     $resolvedLocalItems = $localItems ?? ($group && isset($localGroups[$group]) ? $localGroups[$group] : []);
     $resolvedLocalItems = collect($resolvedLocalItems)
         ->filter(fn ($item) => ! empty($item['route']) && Route::has($item['route']))
+        ->filter(fn ($item) => empty($item['permission']) || auth()->user()?->can($item['permission']))
         ->values()
         ->all();
 

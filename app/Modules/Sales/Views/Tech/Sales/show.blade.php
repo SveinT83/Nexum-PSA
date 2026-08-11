@@ -12,17 +12,39 @@
             <h1 class="mb-0">{{ $sale->title }}</h1>
             <p class="text-muted mb-0">{{ $sale->opportunity_key }} / {{ $sale->client?->name }}</p>
         </div>
-        @unless($sale->currentQuoteVersion)
-            <form method="POST" action="{{ route('tech.sales.quote.ensure', $sale) }}">
-                @csrf
-                <button type="submit" class="btn btn-primary"><i class="bi bi-file-earmark-text"></i> Prepare Quote</button>
-            </form>
-        @endunless
+        <div class="d-flex flex-wrap justify-content-end gap-2">
+            @unless($sale->currentQuoteVersion)
+                <form method="POST" action="{{ route('tech.sales.quote.ensure', $sale) }}">
+                    @csrf
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-file-earmark-text"></i> Prepare Quote</button>
+                </form>
+            @endunless
+            @if($sale->status === 'lost')
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reopenOpportunityModal">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reopen
+                </button>
+            @elseif(! in_array($sale->status, ['won', 'not_qualified', 'no_quote_allowed'], true))
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#markLostModal">
+                    <i class="bi bi-x-circle"></i> Mark as lost
+                </button>
+            @endif
+        </div>
     </div>
 @endsection
 
 @section('content')
     <div class="container-fluid">
+        @if($sale->status === 'lost')
+            {{-- Lost outcome remains visible while the opportunity history and quote records stay intact. --}}
+            <div class="alert alert-warning d-flex flex-wrap justify-content-between gap-3" role="status">
+                <div>
+                    <div class="fw-semibold">Lost {{ $sale->lost_at?->format('d.m.Y H:i') }}</div>
+                    <div style="white-space: pre-wrap;">{{ $sale->lost_reason ?: 'No loss reason was recorded for this legacy opportunity.' }}</div>
+                </div>
+                <div class="small text-muted">Reopening does not restore the previous follow-up.</div>
+            </div>
+        @endif
+
         {{-- Opportunity details and forecast are editable while the sales process is active. --}}
         <div class="card mb-4">
             <div class="card-header d-flex align-items-center justify-content-between gap-3">
@@ -50,10 +72,16 @@
                             <div class="col-md-4">
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-select">
-                                    @foreach($statuses as $key => $status)
-                                        <option value="{{ $key }}" @selected($sale->status === $key)>{{ $status['label'] }}</option>
-                                    @endforeach
+                                    @if($sale->status === 'lost')
+                                        <option value="lost" selected>Lost</option>
+                                    @else
+                                        @foreach($statuses as $key => $status)
+                                            @continue($key === 'lost')
+                                            <option value="{{ $key }}" @selected($sale->status === $key)>{{ $status['label'] }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
+                                <div class="form-text">Use the dedicated lost or reopen action for those transitions.</div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Owner</label>
@@ -143,6 +171,67 @@
             </div>
         </div>
 
+        {{-- Dedicated outcome modals enforce complete, auditable Sales transitions. --}}
+        @if($sale->status === 'lost')
+            <div class="modal fade" id="reopenOpportunityModal" tabindex="-1" aria-labelledby="reopenOpportunityModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form method="POST" action="{{ route('tech.sales.reopen', $sale) }}" class="modal-content">
+                        @csrf
+                        <div class="modal-header">
+                            <h2 class="modal-title h5" id="reopenOpportunityModalLabel">Reopen opportunity</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="reopen_status" class="form-label">Active status</label>
+                                <select id="reopen_status" name="status" class="form-select" required>
+                                    @foreach($reopenStatuses as $statusKey)
+                                        <option value="{{ $statusKey }}">{{ $statuses[$statusKey]['label'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <p class="text-muted small mb-0">
+                                Probability is reset from the selected status. The previous follow-up is not restored.
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Reopen opportunity</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @elseif(! in_array($sale->status, ['won', 'not_qualified', 'no_quote_allowed'], true))
+            <div class="modal fade" id="markLostModal" tabindex="-1" aria-labelledby="markLostModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form method="POST" action="{{ route('tech.sales.lost', $sale) }}" class="modal-content">
+                        @csrf
+                        <div class="modal-header">
+                            <h2 class="modal-title h5" id="markLostModalLabel">Mark opportunity as lost</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="lost_reason" class="form-label">Lost reason</label>
+                                <textarea id="lost_reason" name="lost_reason" class="form-control" rows="3" maxlength="4000" required>{{ old('lost_reason') }}</textarea>
+                            </div>
+                            <div>
+                                <label for="lost_internal_note" class="form-label">Internal note <span class="text-muted">(optional)</span></label>
+                                <textarea id="lost_internal_note" name="internal_note" class="form-control" rows="3" maxlength="4000">{{ old('internal_note') }}</textarea>
+                            </div>
+                            <p class="text-muted small mt-3 mb-0">
+                                Probability becomes 0%. The next follow-up is cleared, and its generated future calendar event is removed.
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Mark as lost</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
+
         <!-- ------------------------------------------------- -->
         <!-- Quick contact modal -->
         <!-- Allows the seller to add the real decision maker while editing the opportunity. -->
@@ -209,8 +298,11 @@
                             $quoteLineCount = $quoteSummaryVersion->lines->count();
                         @endphp
                         <div class="small text-muted">
-                            {{ ucfirst($quoteSummaryVersion->status) }} / {{ $quoteSummaryVersion->lines->count() }} lines / {{ number_format((float) $quoteSummaryVersion->total_ex_vat, 2, ',', ' ') }} ex VAT
+                            {{ ucfirst($quoteSummaryVersion->status) }} / {{ $quoteSummaryVersion->lines->count() }} lines
                         </div>
+                        @foreach($quotePresentation['groups'] as $group)
+                            <div class="small">{{ $group['summary_label'] }}: {{ number_format((float) $group['total_ex_vat'], 2, ',', ' ') }} {{ $group['unit'] }} ex VAT</div>
+                        @endforeach
                     @else
                         <div class="small text-muted">No quote prepared yet.</div>
                     @endif
@@ -262,11 +354,28 @@
                     @php
                         $version = $sale->currentQuoteVersion->loadMissing('lines');
                     @endphp
+                    <h3 class="h6">Customer presentation</h3>
+                    @foreach($quotePresentation['before_copy'] as $section)
+                        <div class="mb-3">
+                            <h4 class="h6">{{ $section['label'] }}</h4>
+                            <div style="white-space: pre-wrap;">{{ $section['text'] }}</div>
+                        </div>
+                    @endforeach
+                    @include('sales::Partials.quote-groups', ['quotePresentation' => $quotePresentation])
+                    @foreach($quotePresentation['after_copy'] as $section)
+                        <div class="mb-3">
+                            <h4 class="h6">{{ $section['label'] }}</h4>
+                            <div style="white-space: pre-wrap;">{{ $section['text'] }}</div>
+                        </div>
+                    @endforeach
+
+                    <h3 class="h6 mt-4">Internal line detail</h3>
                     <div class="table-responsive mb-3">
                         <table class="table table-sm align-middle">
                             <thead>
                             <tr>
                                 <th>Section</th>
+                                <th>Billing</th>
                                 <th>Line</th>
                                 <th class="text-end">Qty</th>
                                 <th class="text-end">Cost</th>
@@ -281,6 +390,7 @@
                             @foreach($version->lines as $line)
                                 <tr>
                                     <td>{{ str_replace('_', ' ', $line->section) }}</td>
+                                    <td>{{ $quoteCadences[$line->billing_cadence]['unit'] ?? $line->billing_cadence }}</td>
                                     <td>
                                         <span class="fw-semibold">{{ $line->name }}</span>
                                         <div class="text-muted small">{{ $line->description }}</div>
@@ -305,16 +415,6 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="d-flex justify-content-end">
-                        <dl class="row mb-0 text-end" style="min-width: 20rem;">
-                            <dt class="col-7">Subtotal ex VAT</dt>
-                            <dd class="col-5">{{ number_format((float) $version->total_ex_vat, 2, ',', ' ') }}</dd>
-                            <dt class="col-7">VAT</dt>
-                            <dd class="col-5">{{ number_format((float) $version->vat_total, 2, ',', ' ') }}</dd>
-                            <dt class="col-7">Total inc VAT</dt>
-                            <dd class="col-5 fw-semibold">{{ number_format((float) $version->total_inc_vat, 2, ',', ' ') }}</dd>
-                        </dl>
-                    </div>
                 @else
                     <p class="text-muted mb-0">Prepare a quote to start adding lines.</p>
                 @endif
@@ -338,6 +438,52 @@
                                 $editableVersion = $sale->currentQuoteVersion->loadMissing('lines');
                             @endphp
                             <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="h6 mb-0">Customer-facing quote text</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form method="POST" action="{{ route('tech.sales.quote.details.update', $sale) }}" class="row g-3">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="col-md-8">
+                                            <label for="quote_title" class="form-label">Quote title</label>
+                                            <input id="quote_title" type="text" name="title" class="form-control" maxlength="255" value="{{ old('title', $editableVersion->title) }}" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="quote_expires_at" class="form-label">Expires</label>
+                                            <input id="quote_expires_at" type="date" name="expires_at" class="form-control" value="{{ old('expires_at', $editableVersion->expires_at?->toDateString()) }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="quote_intro_text" class="form-label">Introduction</label>
+                                            <textarea id="quote_intro_text" name="intro_text" class="form-control" rows="4" maxlength="20000">{{ old('intro_text', $editableVersion->intro_text) }}</textarea>
+                                            <div class="form-text">Shown before the quote lines.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="quote_scope_text" class="form-label">Solution and scope</label>
+                                            <textarea id="quote_scope_text" name="scope_text" class="form-control" rows="4" maxlength="20000">{{ old('scope_text', $editableVersion->scope_text) }}</textarea>
+                                            <div class="form-text">Shown before the quote lines.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="quote_assumptions_text" class="form-label">Assumptions and alternatives</label>
+                                            <textarea id="quote_assumptions_text" name="assumptions_text" class="form-control" rows="4" maxlength="20000">{{ old('assumptions_text', $editableVersion->assumptions_text) }}</textarea>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="quote_exclusions_text" class="form-label">Exclusions</label>
+                                            <textarea id="quote_exclusions_text" name="exclusions_text" class="form-control" rows="4" maxlength="20000">{{ old('exclusions_text', $editableVersion->exclusions_text) }}</textarea>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="quote_next_steps_text" class="form-label">Next steps</label>
+                                            <textarea id="quote_next_steps_text" name="next_steps_text" class="form-control" rows="4" maxlength="20000">{{ old('next_steps_text', $editableVersion->next_steps_text) }}</textarea>
+                                        </div>
+                                        <div class="col-12 d-flex align-items-center justify-content-between gap-3">
+                                            <div class="form-text">Assumptions, exclusions, and next steps appear after the price groups.</div>
+                                            <button type="submit" class="btn btn-primary">Save quote text</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h3 class="h6 mb-0">Quote lines</h3>
                                     <span class="badge text-bg-light border">{{ $editableVersion->lines->count() }}</span>
@@ -360,6 +506,7 @@
                                                     <td>
                                                         <span class="fw-semibold">{{ $line->name }}</span>
                                                         <div class="text-muted small">{{ $line->description }}</div>
+                                                        <div class="small">{{ $quoteCadences[$line->billing_cadence]['label'] ?? $line->billing_cadence }}</div>
                                                     </td>
                                                     <td class="text-end">{{ $line->quantity }}</td>
                                                     <td class="text-end">{{ number_format((float) $line->unit_price_ex_vat, 2, ',', ' ') }}</td>
@@ -374,6 +521,7 @@
                                                                 data-source-id="{{ $line->source_id }}"
                                                                 data-section="{{ $line->section }}"
                                                                 data-downstream-type="{{ $line->downstream_type }}"
+                                                                data-billing-cadence="{{ $line->billing_cadence }}"
                                                                 data-name="{{ $line->name }}"
                                                                 data-description="{{ $line->description }}"
                                                                 data-quantity="{{ $line->quantity }}"
@@ -445,6 +593,14 @@
                                                 <option value="equipment">Equipment</option>
                                                 <option value="implementation">Implementation</option>
                                                 <option value="non_billable">Non-billable</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Billing cadence</label>
+                                            <select name="billing_cadence" class="form-select" id="quoteLineBillingCadence" required>
+                                                @foreach($quoteCadences as $cadenceKey => $cadence)
+                                                    <option value="{{ $cadenceKey }}" @selected($cadenceKey === 'one_time')>{{ $cadence['label'] }} ({{ $cadence['unit'] }})</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                         <div class="col-md-5">
@@ -946,6 +1102,7 @@
 
                     quoteLineForm.querySelector('[name="section"]').value = button.dataset.section || 'monthly_services';
                     quoteLineForm.querySelector('[name="downstream_type"]').value = button.dataset.downstreamType || 'one_time_order';
+                    quoteLineForm.querySelector('[name="billing_cadence"]').value = button.dataset.billingCadence || 'one_time';
                     nameInput.value = button.dataset.name || '';
                     descriptionInput.value = button.dataset.description || '';
                     quantityInput.value = button.dataset.quantity || '1';

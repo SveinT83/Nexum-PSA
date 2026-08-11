@@ -279,8 +279,10 @@ class AiIntegrationController extends Controller
 
     private function normalizeApiScopes(array $scopes, bool $canExecuteActions): array
     {
+        $catalog = app(ApiAbilityCatalog::class);
+
         return collect($scopes)
-            ->when(! $canExecuteActions, fn ($items) => $items->filter(fn ($scope) => Str::endsWith($scope, '.read')))
+            ->when(! $canExecuteActions, fn ($items) => $items->filter(fn ($scope) => $catalog->isReadOnly($scope)))
             ->unique()
             ->values()
             ->all();

@@ -84,6 +84,21 @@ class TicketModuleTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'ticket.view',
+            'ticket.create',
+            'ticket.update',
+            'ticket.delete',
+            'ticket.assign',
+            'ticket.reply_customer',
+            'ticket.note_internal',
+            'ticket.register_time',
+            'ticket.close',
+            'report.view',
+            'storage.view',
+            'storage.reserve',
+            'storage.pick',
+        ]);
     }
 
     #[Test]
@@ -2405,18 +2420,27 @@ class TicketModuleTest extends TestCase
             ])
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
+        $message = TicketMessage::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('body', 'Internal note.')
+            ->firstOrFail();
         $this->assertDatabaseHas('ticket_messages', [
             'ticket_id' => $ticket->id,
             'type' => 'internal_note',
             'visibility' => 'internal',
             'body' => 'Internal note.',
         ]);
+        $this->assertArrayNotHasKey('is_solution', $message->metadata ?? []);
     }
 
     #[Test]
-    public function technician_can_add_internal_solution_when_ticket_has_no_contact_email(): void
+    public function technician_can_mark_internal_note_as_solution_and_notify_a_technician(): void
     {
         Queue::fake();
+        $recipient = User::factory()->create([
+            'name' => 'Solution Review Tech',
+            'status' => User::STATUS_ACTIVE,
+        ]);
 
         $ticket = $this->createTicket(null, [
             'ticket_key' => 'TD-2026-999063',
@@ -2425,21 +2449,30 @@ class TicketModuleTest extends TestCase
             'subject' => 'No contact solution ticket',
         ]);
 
-        $this->actingAs($this->tech)
+        $response = $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee('Internal solution')
-            ->assertSee('Use an internal solution to document the fix without sending email.');
+            ->assertSee('<option value="internal_note"', false)
+            ->assertDontSee('<option value="internal_solution"', false)
+            ->assertSee('id="mark_as_solution"', false)
+            ->assertSee('Mark as solution')
+            ->assertSee('Notify technician')
+            ->assertSee('Add an Internal note and mark it as the solution to document the fix without sending email.');
+
+        $this->assertDoesNotMatchRegularExpression('/<input[^>]*id="mark_as_solution"[^>]*checked/s', $response->getContent());
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.messages.store', $ticket), [
-                'type' => 'internal_solution',
+                'type' => 'internal_note',
+                'mark_as_solution' => '1',
+                'notify_user_id' => $recipient->id,
                 'visibility' => 'internal',
                 'body' => 'Resolved locally without a customer contact.',
             ])
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
         Queue::assertNotPushed(SendTicketReplyEmail::class);
+        Queue::assertPushed(SendTicketInternalNotificationEmail::class);
 
         $message = TicketMessage::query()
             ->where('ticket_id', $ticket->id)
@@ -2450,10 +2483,36 @@ class TicketModuleTest extends TestCase
         $this->assertSame('internal', $message->visibility);
         $this->assertTrue((bool) ($message->metadata['is_solution'] ?? false));
         $this->assertSame(TicketAction::SEND_SOLUTION, $message->metadata['reply_intent'] ?? null);
+        $this->assertSame($recipient->id, $message->metadata['notify_user_id'] ?? null);
     }
 
     #[Test]
-    public function internal_solution_allows_default_workflow_to_solve_and_close_without_customer_email(): void
+    public function legacy_internal_solution_alias_remains_compatible_when_policy_allows_it(): void
+    {
+        Queue::fake();
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999064',
+            'subject' => 'Legacy internal solution compatibility',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_solution',
+                'visibility' => 'public',
+                'body' => 'Legacy form solution note.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        Queue::assertNotPushed(SendTicketReplyEmail::class);
+        $message = $ticket->messages()->where('body', 'Legacy form solution note.')->firstOrFail();
+
+        $this->assertSame('internal_note', $message->type);
+        $this->assertSame('internal', $message->visibility);
+        $this->assertTrue((bool) ($message->metadata['is_solution'] ?? false));
+    }
+
+    #[Test]
+    public function solution_marked_internal_note_allows_default_workflow_to_solve_and_close_without_customer_email(): void
     {
         Queue::fake();
         app(EnsureTicketDefaults::class)->handle();
@@ -2477,7 +2536,8 @@ class TicketModuleTest extends TestCase
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.messages.store', $ticket), [
-                'type' => 'internal_solution',
+                'type' => 'internal_note',
+                'mark_as_solution' => '1',
                 'visibility' => 'internal',
                 'body' => 'Fixed internally without notifying the customer.',
             ])
@@ -2554,7 +2614,7 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
-    public function internal_solution_is_blocked_when_ticket_solution_policy_disallows_it(): void
+    public function solution_switch_and_legacy_alias_are_blocked_when_ticket_solution_policy_disallows_them(): void
     {
         CommonSetting::updateOrCreate(
             ['type' => 'ticket', 'name' => 'solution_policy'],
@@ -2573,21 +2633,36 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
-            ->assertDontSee('value="internal_solution"', false)
-            ->assertSee('Internal solution notes are disabled by Ticket settings.');
+            ->assertDontSee('<option value="internal_solution"', false)
+            ->assertDontSee('id="mark_as_solution"', false)
+            ->assertSee('Mark as solution for Internal notes is disabled by Ticket settings.');
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.tickets.show', $ticket))
+            ->post(route('tech.tickets.messages.store', $ticket), [
+                'type' => 'internal_note',
+                'mark_as_solution' => '1',
+                'visibility' => 'internal',
+                'body' => 'Forced solution switch must be rejected.',
+            ])
+            ->assertSessionHasErrors('mark_as_solution');
 
         $this->actingAs($this->tech)
             ->from(route('tech.tickets.show', $ticket))
             ->post(route('tech.tickets.messages.store', $ticket), [
                 'type' => 'internal_solution',
                 'visibility' => 'internal',
-                'body' => 'Should not be accepted as internal solution.',
+                'body' => 'Legacy solution alias must be rejected.',
             ])
             ->assertSessionHasErrors('type');
 
         $this->assertDatabaseMissing('ticket_messages', [
             'ticket_id' => $ticket->id,
-            'body' => 'Should not be accepted as internal solution.',
+            'body' => 'Forced solution switch must be rejected.',
+        ]);
+        $this->assertDatabaseMissing('ticket_messages', [
+            'ticket_id' => $ticket->id,
+            'body' => 'Legacy solution alias must be rejected.',
         ]);
     }
 
@@ -2636,7 +2711,7 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
-    public function ticket_reply_cc_field_suggests_client_contacts_before_global_contacts(): void
+    public function ticket_reply_cc_field_suggests_only_other_contacts_for_the_ticket_client(): void
     {
         $client = Client::factory()->create(['name' => 'CC Client']);
         $alphaSite = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Alpha Site']);
@@ -2695,20 +2770,21 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
-            ->assertSee('CC suggestions')
+            ->assertSee('Other client contacts')
+            ->assertSee('data-reply-email="ticket.contact@example.com"', false)
+            ->assertSee('data-reply-email="beta.cc@example.com"', false)
             ->assertSee('data-cc-email="alpha.cc@example.com"', false)
             ->assertSee('data-cc-email="beta.cc@example.com"', false)
             ->assertSee('data-cc-email="canonical.cc@example.com"', false)
-            ->assertSee('data-cc-email="global.cc@example.com"', false)
+            ->assertDontSee('data-cc-email="ticket.contact@example.com"', false)
+            ->assertDontSee('data-cc-email="global.cc@example.com"', false)
+            ->assertDontSee('Global contacts')
             ->assertSeeInOrder([
-                'Client contacts',
                 'Alpha Contact',
                 'Alpha Site',
                 'Beta Contact',
                 'Beta Site',
                 'Canonical Client Contact',
-                'Global contacts',
-                'Global Contact',
             ]);
     }
 

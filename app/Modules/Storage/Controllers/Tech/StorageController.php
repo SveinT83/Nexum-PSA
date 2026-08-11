@@ -11,15 +11,22 @@ use App\Modules\Storage\Queries\PickingListQuery;
 use App\Modules\Storage\Queries\StorageIndexQuery;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Models\TicketCostEntry;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class StorageController extends Controller
 {
     public function index(Request $request, StorageIndexQuery $query): View
     {
-        $filters = $request->only(['availability', 'q', 'warehouse_id', 'supplier_id']);
+        $filters = $query->normalizeFilters($request->only([
+            'availability',
+            'q',
+            'warehouse_id',
+            'supplier_id',
+            'sort',
+            'direction',
+        ]));
 
         return view('storage::Tech.Storage.index', [
             'items' => $query->paginate($filters),
@@ -29,12 +36,7 @@ class StorageController extends Controller
             'stats' => [
                 'total_items' => Item::count(),
                 'out_of_stock' => Item::where('qty_on_hand', '<=', 0)->count(),
-                'should_order' => Item::query()
-                    ->where('should_order', true)
-                    ->orWhere('qty_on_hand', '<=', 0)
-                    ->orWhereColumn('qty_reserved', '>=', 'qty_on_hand')
-                    ->orWhereColumn('qty_on_hand', '<=', 'reorder_point')
-                    ->count(),
+                'should_order' => $query->shouldOrderCount(),
                 'reserved' => Item::sum('qty_reserved'),
             ],
             'filters' => $filters,
@@ -43,10 +45,12 @@ class StorageController extends Controller
 
     public function picking(Request $request, PickingListQuery $query): View
     {
+        $filters = $query->normalizeFilters($request->only(['status', 'q', 'sort', 'direction']));
+
         return view('storage::Tech.Storage.picking', [
-            'reservations' => $query->paginate($request),
+            'reservations' => $query->paginate($filters),
             'stats' => $query->stats(),
-            'filters' => $request->only(['status', 'q']),
+            'filters' => $filters,
         ]);
     }
 

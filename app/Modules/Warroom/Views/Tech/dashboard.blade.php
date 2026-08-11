@@ -41,6 +41,26 @@
         </div>
     @endif
 
+    @if($warroom['storage_should_order']['visible'])
+        <!-- Storage reorder pressure stays quiet at zero and is visible only to Storage-authorized users. -->
+        <div class="alert alert-warning d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 py-2 mb-3" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge text-bg-warning rounded-pill">
+                    {{ $warroom['storage_should_order']['count'] }}
+                </span>
+                <div>
+                    <div class="fw-semibold">Storage needs ordering</div>
+                    <div class="small">{{ $warroom['storage_should_order']['count'] }} {{ $warroom['storage_should_order']['count'] === 1 ? 'item needs' : 'items need' }} ordering.</div>
+                </div>
+            </div>
+            @if($warroom['storage_should_order']['href'])
+                <a href="{{ $warroom['storage_should_order']['href'] }}" class="btn btn-sm btn-outline-dark flex-shrink-0">
+                    <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Open Should order
+                </a>
+            @endif
+        </div>
+    @endif
+
     <!-- Main operations grid -->
     <div class="row g-3">
         <div class="col-12 col-xl-8">

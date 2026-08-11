@@ -12,6 +12,10 @@ domains:
 - Integration and system health.
 - My Day personal work focus for the signed-in technician.
 
+When Storage has one or more items in the `Should order` view, Warroom shows a compact reorder
+warning with the current count and a direct link to that filtered Storage list. The warning is
+omitted when no items need ordering and is never shown to a user who lacks `storage.view`.
+
 Warroom is intentionally hardcoded for beta. Technician-custom dashboards are planned later, but the
 current dashboard must remain reliable and simple.
 

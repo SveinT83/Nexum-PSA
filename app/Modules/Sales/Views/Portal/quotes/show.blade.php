@@ -25,13 +25,11 @@
                     <span class="badge text-bg-light border">{{ $access->statusLabel($version) }}</span>
                 </div>
                 <div class="card-body">
-                    @foreach(['intro_text', 'scope_text', 'assumptions_text', 'exclusions_text', 'next_steps_text'] as $field)
-                        @if(filled($version->{$field}))
-                            <div class="{{ $loop->first ? '' : 'mt-3' }}">
-                                <h3 class="h6">{{ ucwords(str_replace('_', ' ', str_replace('_text', '', $field))) }}</h3>
-                                <p class="mb-0 small" style="white-space: pre-wrap;">{{ $version->{$field} }}</p>
-                            </div>
-                        @endif
+                    @foreach($quotePresentation['before_copy'] as $section)
+                        <div class="{{ $loop->first ? '' : 'mt-3' }}">
+                            <h3 class="h6">{{ $section['label'] }}</h3>
+                            <p class="mb-0 small" style="white-space: pre-wrap;">{{ $section['text'] }}</p>
+                        </div>
                     @endforeach
                 </div>
             </div>
@@ -40,36 +38,15 @@
                 <div class="card-header bg-body">
                     <h2 class="h6 mb-0">Quote lines</h2>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Description</th>
-                                <th class="text-end">Qty</th>
-                                <th class="text-end">Unit ex. VAT</th>
-                                <th class="text-end">Total ex. VAT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($version->lines as $line)
-                                <tr>
-                                    <td>
-                                        <div class="fw-semibold">{{ $line->name }}</div>
-                                        @if(filled($line->description))
-                                            <div class="text-muted small">{{ $line->description }}</div>
-                                        @endif
-                                    </td>
-                                    <td class="text-end">{{ number_format((float) $line->quantity, 2, ',', ' ') }}</td>
-                                    <td class="text-end">{{ number_format((float) $line->unit_price_ex_vat, 2, ',', ' ') }}</td>
-                                    <td class="text-end fw-semibold">{{ number_format((float) $line->line_total_ex_vat, 2, ',', ' ') }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">No quote lines are visible.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="card-body">
+                    @include('sales::Partials.quote-groups', ['quotePresentation' => $quotePresentation])
+
+                    @foreach($quotePresentation['after_copy'] as $section)
+                        <div class="mt-3">
+                            <h3 class="h6">{{ $section['label'] }}</h3>
+                            <p class="mb-0 small" style="white-space: pre-wrap;">{{ $section['text'] }}</p>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -77,21 +54,14 @@
         <div class="col-lg-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-body">
-                    <h2 class="h6 mb-0">Totals</h2>
+                    <h2 class="h6 mb-0">Quote status</h2>
                 </div>
                 <div class="card-body">
                     <dl class="row small mb-0">
-                        <dt class="col-7 text-muted">Subtotal ex. VAT</dt>
-                        <dd class="col-5 text-end">{{ number_format((float) $version->total_ex_vat, 2, ',', ' ') }} kr</dd>
-
-                        <dt class="col-7 text-muted">VAT</dt>
-                        <dd class="col-5 text-end">{{ number_format((float) $version->vat_total, 2, ',', ' ') }} kr</dd>
-
-                        <dt class="col-7 text-muted">Total inc. VAT</dt>
-                        <dd class="col-5 text-end fw-semibold">{{ number_format((float) $version->total_inc_vat, 2, ',', ' ') }} kr</dd>
-
                         <dt class="col-7 text-muted">Expires</dt>
                         <dd class="col-5 text-end">{{ $version->expires_at?->format('Y-m-d') ?: '-' }}</dd>
+                        <dt class="col-7 text-muted">Status</dt>
+                        <dd class="col-5 text-end">{{ $access->statusLabel($version) }}</dd>
                     </dl>
                 </div>
             </div>

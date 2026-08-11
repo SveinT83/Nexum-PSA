@@ -64,6 +64,10 @@ class CustomerPortalQuoteContractAcceptanceTest extends TestCase
             ->assertSee('Portal Managed Services')
             ->assertSee('Accept quote')
             ->assertSee('Managed onboarding')
+            ->assertSee('Monthly recurring charges')
+            ->assertSee('2 000,00 NOK/month')
+            ->assertSeeInOrder(['Managed onboarding scope.', 'Monthly recurring charges', 'Customer provides access.'])
+            ->assertDontSee('Subtotal ex. VAT')
             ->assertDontSee('margin');
 
         $this->actingAs($portalUser)
@@ -278,6 +282,7 @@ class CustomerPortalQuoteContractAcceptanceTest extends TestCase
             'title' => $title,
             'intro_text' => 'Customer-facing introduction.',
             'scope_text' => 'Managed onboarding scope.',
+            'assumptions_text' => 'Customer provides access.',
             'expires_at' => now()->addDays(14)->toDateString(),
             'subtotal_ex_vat' => 2000,
             'vat_total' => 500,

@@ -10,14 +10,21 @@ use App\Modules\Email\Jobs\PollActiveEmailAccounts;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Integration\Jobs\CleanupAiAccessData;
 use App\Modules\Integration\Jobs\CleanupAiChats;
 use App\Modules\Integration\Jobs\CloudFactorySyncJob;
 use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
 use App\Modules\Integration\Services\AiChatCleanup;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
+use App\Modules\Storage\Actions\DispatchDueSupplierOrderImports;
+use App\Modules\Storage\Actions\PurgeSupplierOrderImportTroubleshootingData;
+use App\Modules\Storage\Actions\RunSupplierOrderImportOperationsMaintenance;
+use App\Modules\Storage\Actions\SendSupplierOrderImportDailyDigest;
+use App\Modules\Storage\Jobs\RecordSupplierOrderImportQueueHeartbeat;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use Symfony\Component\Console\Command\Command as ConsoleCommand;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -45,6 +52,99 @@ Schedule::call(function () {
 Schedule::job(new EmailRetentionPurgeJob(24))
     ->monthlyOn(1, '03:00')
     ->name('email.retention.purge');
+
+// Supplier-order import dispatch owns a durable scheduler heartbeat and claims
+// due rows before queueing, so overlapping scheduler invocations remain safe.
+Schedule::call(fn () => app(DispatchDueSupplierOrderImports::class)->handle())
+    ->everyMinute()
+    ->name('storage.supplier_order_imports.dispatch_due')
+    ->withoutOverlapping(5);
+
+// A queued heartbeat distinguishes a running scheduler from a healthy worker.
+Schedule::call(fn () => RecordSupplierOrderImportQueueHeartbeat::dispatch())
+    ->everyMinute()
+    ->name('storage.supplier_order_imports.queue_heartbeat')
+    ->withoutOverlapping(5);
+
+// Health maintenance recovers only stale locks and delivers deduplicated
+// exception alerts. Ordinary successful imports remain silent.
+Schedule::call(fn () => app(RunSupplierOrderImportOperationsMaintenance::class)->handle())
+    ->everyFiveMinutes()
+    ->name('storage.supplier_order_imports.health')
+    ->withoutOverlapping(10);
+
+Schedule::call(fn () => app(PurgeSupplierOrderImportTroubleshootingData::class)->handle())
+    ->dailyAt('04:10')
+    ->name('storage.supplier_order_imports.retention')
+    ->withoutOverlapping(120);
+
+Schedule::call(fn () => app(SendSupplierOrderImportDailyDigest::class)->handle())
+    ->dailyAt('07:00')
+    ->name('storage.supplier_order_imports.digest')
+    ->withoutOverlapping(120);
+
+/**
+ * Cron-safe Supplier Order runtime entry point. This intentionally avoids
+ * invoking the global scheduler and exposes only the five owned operations.
+ */
+Artisan::command(
+    'storage:supplier-orders {operation : dispatch, heartbeat, health, retention, or digest}',
+    function () {
+        $operation = strtolower(trim((string) $this->argument('operation')));
+
+        if ($operation === 'dispatch') {
+            $queued = app(DispatchDueSupplierOrderImports::class)->handle();
+            $this->info("Supplier-order dispatch completed: {$queued} import(s) queued.");
+
+            return ConsoleCommand::SUCCESS;
+        }
+
+        if ($operation === 'heartbeat') {
+            RecordSupplierOrderImportQueueHeartbeat::dispatch();
+            $this->info('Supplier-order worker heartbeat queued.');
+
+            return ConsoleCommand::SUCCESS;
+        }
+
+        if ($operation === 'health') {
+            $result = app(RunSupplierOrderImportOperationsMaintenance::class)->handle();
+            $this->info(sprintf(
+                'Supplier-order health completed: %s; %d recovered; %d active alert(s).',
+                (string) data_get($result, 'health.state', 'unknown'),
+                (int) ($result['recovered_count'] ?? 0),
+                (int) ($result['active_alert_count'] ?? 0),
+            ));
+
+            return ConsoleCommand::SUCCESS;
+        }
+
+        if ($operation === 'retention') {
+            $result = app(PurgeSupplierOrderImportTroubleshootingData::class)->handle();
+            $this->info(sprintf(
+                'Supplier-order retention completed: %d day(s); immutable audit records unchanged.',
+                (int) ($result['retention_days'] ?? 0),
+            ));
+
+            return ConsoleCommand::SUCCESS;
+        }
+
+        if ($operation === 'digest') {
+            $alertId = app(SendSupplierOrderImportDailyDigest::class)->handle();
+            $this->info($alertId === null
+                ? 'Supplier-order digest completed: no digest due.'
+                : 'Supplier-order digest completed: digest delivered.');
+
+            return ConsoleCommand::SUCCESS;
+        }
+
+        $this->error(
+            "Invalid supplier-order operation [{$operation}]. "
+            .'Allowed operations: dispatch, heartbeat, health, retention, digest.',
+        );
+
+        return ConsoleCommand::INVALID;
+    },
+)->purpose('Run one isolated Supplier Order operational task without the global scheduler');
 
 // N-able RMM Sync every hour
 Schedule::job(new NAbleRmmSyncJob)
@@ -82,6 +182,12 @@ Schedule::job(new PullBookStackToKnowledge)
 Schedule::job(new CleanupAiChats)
     ->weeklyOn(1, '03:30')
     ->name('ai.chats.cleanup')
+    ->withoutOverlapping();
+
+// AI/coordinator audit and optional encrypted payload retention cleanup.
+Schedule::job(new CleanupAiAccessData)
+    ->dailyAt('03:45')
+    ->name('ai.access.cleanup')
     ->withoutOverlapping();
 
 // Economy order generation catch-up. Manual Generate orders uses the same

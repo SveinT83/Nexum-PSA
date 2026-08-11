@@ -21,16 +21,16 @@
                 data-transparency="{{ $event['transparency'] }}"
                 data-visibility="{{ $event['visibility'] }}"
                 data-details-visible="{{ $event['details_visible'] ? '1' : '0' }}"
-                    data-is-recurring="{{ $event['is_recurring'] ? '1' : '0' }}">
+                data-is-recurring="{{ $event['is_recurring'] ? '1' : '0' }}">
                 <div class="d-flex gap-3">
-                    <div class="text-muted small" style="width: 5rem;">
+                    <div class="text-muted small flex-shrink-0" style="width: 5rem;">
                         {{ $event['starts_at']->timezone($timezone)->format('H:i') }}<br>
                         {{ $event['ends_at']->timezone($timezone)->format('H:i') }}
                     </div>
-                    <div class="flex-grow-1 border-start ps-3" style="border-color: {{ $event['calendar_color'] }} !important;">
+                    <div class="calendar-event-content flex-grow-1 border-start ps-3" style="border-color: {{ $event['calendar_color'] }} !important;">
                         <div class="d-flex align-items-start justify-content-between gap-2">
-                            <div class="fw-semibold">{{ $event['title'] }}</div>
-                            <span class="badge text-bg-light border flex-shrink-0">{{ $event['ownership_badge'] }}</span>
+                            <div class="calendar-event-title fw-semibold">{{ $event['title'] }}</div>
+                            @include('calendar::Tech.partials.event-identity', ['event' => $event])
                         </div>
                         <div class="small text-muted">{{ $event['calendar_name'] }} · {{ str_replace('_', ' ', $event['transparency']) }}</div>
                         @if($event['description'])

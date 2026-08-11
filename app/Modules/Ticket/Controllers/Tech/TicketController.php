@@ -14,7 +14,6 @@ use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiChatResponder;
 use App\Modules\Knowledge\Queries\ArticleQuery;
-use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Relationship\Models\NexumRelationship;
 use App\Modules\Relationship\Support\RelationshipDirection;
 use App\Modules\Storage\Models\Item as StorageItem;
@@ -28,8 +27,9 @@ use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\MergeTickets;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
-use App\Modules\Ticket\Actions\ReleaseTicketStorageReservation;
+use App\Modules\Ticket\Actions\PublishTicketToCustomerPortal;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
+use App\Modules\Ticket\Actions\ReleaseTicketStorageReservation;
 use App\Modules\Ticket\Actions\ReserveTicketStorageItem;
 use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
 use App\Modules\Ticket\Actions\StoreTicket;
@@ -54,6 +54,7 @@ use App\Modules\Ticket\Queries\TicketTimeRateOptions;
 use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketMergeSuggestionService;
+use App\Modules\Ticket\Services\TicketReplyContactResolver;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Ticket\Support\TicketPortalPolicy;
@@ -258,7 +259,7 @@ class TicketController extends Controller
         ]);
     }
 
-    public function store(Request $request, StoreTicket $storeTicket, TicketPortalPolicy $portalPolicy, SendCustomerPortalNotification $portalNotifications): RedirectResponse
+    public function store(Request $request, StoreTicket $storeTicket, TicketPortalPolicy $portalPolicy, PublishTicketToCustomerPortal $publishToPortal): RedirectResponse
     {
         $data = $request->validate([
             'subject' => 'required|string|max:255',
@@ -330,14 +331,14 @@ class TicketController extends Controller
         $ticket = $storeTicket->handle($data, $request->user());
 
         if (! empty($data['client_id']) && $customerPortalVisibility === TicketPortalPolicy::VISIBILITY_PUBLISHED) {
-            $this->publishTicketToCustomerPortal($ticket, $request, $portalNotifications);
+            $publishToPortal->handle($ticket, $request->user());
         }
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Ticket '.$ticket->ticket_key.' created.');
     }
 
-    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions, TicketSolutionPolicy $solutionPolicy): View|RedirectResponse
+    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions, TicketSolutionPolicy $solutionPolicy, TicketReplyContactResolver $replyContactResolver): View|RedirectResponse
     {
         app(EnsureTicketDefaults::class)->handle();
 
@@ -391,7 +392,7 @@ class TicketController extends Controller
             'categories' => $this->ticketCategories(),
             'technicians' => $this->technicians(),
             'seniorReviewers' => $this->technicians()->filter(fn (User $user) => $user->can('ticket.review_senior'))->values(),
-            'replyContacts' => $this->replyContactOptions($ticket),
+            'replyContacts' => $replyContactResolver->options($ticket),
             'ccContactSuggestions' => $this->ccContactSuggestions($ticket),
             'timeRateOptions' => $timeRateOptions->forTicket($ticket),
             'storageItems' => $this->storageItemOptions(),
@@ -434,12 +435,13 @@ class TicketController extends Controller
         ]);
     }
 
-    public function addMessage(Request $request, Ticket $ticket, AddTicketMessage $addTicketMessage, TicketActionGuard $actionGuard, TicketSolutionPolicy $solutionPolicy): RedirectResponse
+    public function addMessage(Request $request, Ticket $ticket, AddTicketMessage $addTicketMessage, TicketActionGuard $actionGuard, TicketSolutionPolicy $solutionPolicy, TicketReplyContactResolver $replyContactResolver): RedirectResponse
     {
         $data = $request->validate([
             'body' => 'required|string',
             'type' => 'required|string|in:internal_note,customer_reply,internal_solution',
             'reply_intent' => 'nullable|string|in:customer_update,request_customer_input,send_solution',
+            'mark_as_solution' => 'nullable|boolean',
             'reply_contact_id' => 'nullable|integer|exists:client_users,id',
             'cc' => 'nullable|string|max:1000',
             'notify_user_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
@@ -448,25 +450,31 @@ class TicketController extends Controller
             'attachments.*' => 'file|max:20480',
         ]);
 
-        $isInternalSolution = $data['type'] === 'internal_solution';
+        $isLegacyInternalSolution = $data['type'] === 'internal_solution';
+        $markInternalAsSolution = $isLegacyInternalSolution
+            || ($data['type'] === 'internal_note' && (bool) ($data['mark_as_solution'] ?? false));
 
-        if ($isInternalSolution) {
+        if ($markInternalAsSolution) {
             if (! $solutionPolicy->allowsInternalSolutionNotes()) {
+                $errorField = $isLegacyInternalSolution ? 'type' : 'mark_as_solution';
+
                 return back()
-                    ->withErrors(['type' => 'Internal solution notes are disabled by Ticket solution policy.'])
+                    ->withErrors([$errorField => 'Marking Internal notes as solutions is disabled by Ticket solution policy.'])
                     ->withInput();
             }
 
+            // Keep the removed UI type as a policy-checked compatibility alias for stale forms.
             $data['type'] = 'internal_note';
             $data['reply_intent'] = TicketAction::SEND_SOLUTION;
         }
 
         $data['visibility'] = $data['type'] === 'internal_note' ? 'internal' : 'public';
-        if (! $isInternalSolution) {
-            $data['reply_intent'] = $data['type'] === 'customer_reply'
-                ? ($data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE)
-                : null;
+        if ($data['type'] === 'customer_reply') {
+            $data['reply_intent'] = $data['reply_intent'] ?? TicketAction::CUSTOMER_UPDATE;
+        } elseif (! $markInternalAsSolution) {
+            $data['reply_intent'] = null;
         }
+        unset($data['mark_as_solution']);
 
         if ($data['type'] === 'customer_reply' && $ticket->client_id && ! $ticket->isPortalVisible()) {
             return back()
@@ -482,7 +490,7 @@ class TicketController extends Controller
 
         if ($data['type'] === 'customer_reply') {
             $replyContactId = $data['reply_contact_id'] ?? $ticket->contact_id;
-            $replyContact = $this->replyContactOptions($ticket)->firstWhere('id', (int) $replyContactId);
+            $replyContact = $replyContactResolver->resolve($ticket, (int) $replyContactId);
 
             if (! $replyContact || blank($replyContact->email)) {
                 return back()->withErrors(['reply_contact_id' => 'Select an active client contact with an email address.'])->withInput();
@@ -890,7 +898,7 @@ class TicketController extends Controller
             ->with('success', 'Ticket marked as read.');
     }
 
-    public function updatePortalVisibility(Request $request, Ticket $ticket, SendCustomerPortalNotification $portalNotifications): RedirectResponse
+    public function updatePortalVisibility(Request $request, Ticket $ticket, PublishTicketToCustomerPortal $publishToPortal): RedirectResponse
     {
         $request->validate([
             'portal_visible' => ['required', 'boolean'],
@@ -909,48 +917,10 @@ class TicketController extends Controller
             return back()->withErrors(['portal_visible' => 'Only client-scoped tickets can be shown in the customer portal.']);
         }
 
-        $this->publishTicketToCustomerPortal($ticket, $request, $portalNotifications);
+        $publishToPortal->handle($ticket, $request->user());
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Ticket is published in the customer portal.');
-    }
-
-    private function publishTicketToCustomerPortal(Ticket $ticket, Request $request, SendCustomerPortalNotification $portalNotifications): void
-    {
-        if (! $ticket->client_id || $ticket->isPortalVisible()) {
-            return;
-        }
-
-        DB::transaction(function () use ($ticket, $request, $portalNotifications): void {
-            $ticket->forceFill([
-                'portal_visible_at' => $ticket->portal_visible_at ?: now(),
-                'portal_visible_by' => $request->user()?->id,
-            ])->save();
-
-            TicketEvent::query()->create([
-                'ticket_id' => $ticket->id,
-                'actor_id' => $request->user()?->id,
-                'type' => 'portal_visibility_enabled',
-                'message' => 'Ticket published in customer portal.',
-                'after' => [
-                    'portal_visible' => true,
-                ],
-            ]);
-
-            $portalNotifications->handle(
-                type: 'portal_ticket_created',
-                clientId: (int) $ticket->client_id,
-                siteId: $ticket->site_id ? (int) $ticket->site_id : null,
-                title: 'Ticket '.$ticket->ticket_key.' is available',
-                body: $ticket->subject,
-                url: route('customer-portal.tickets.show', $ticket),
-                sourceType: Ticket::class,
-                sourceId: $ticket->id,
-                metadata: [
-                    'ticket_key' => $ticket->ticket_key,
-                ],
-            );
-        });
     }
 
     public function markMessageRead(Request $request, Ticket $ticket, TicketMessage $message): RedirectResponse
@@ -1252,27 +1222,18 @@ class TicketController extends Controller
         ])));
     }
 
-    private function replyContactOptions(Ticket $ticket): Collection
-    {
-        if (! $ticket->client_id) {
-            return $ticket->contact ? collect([$ticket->contact]) : collect();
-        }
-
-        return ClientUser::query()
-            ->whereHas('site', fn ($query) => $query->where('client_id', $ticket->client_id))
-            ->where('active', true)
-            ->whereNotNull('email')
-            ->orderByDesc('is_default_for_client')
-            ->orderBy('name')
-            ->get(['id', 'client_site_id', 'name', 'email']);
-    }
-
     private function ccContactSuggestions(Ticket $ticket): Collection
     {
         $suggestions = collect();
         $seenEmails = [];
 
-        $addSuggestion = function (?string $email, ?string $name, string $group, ?string $site = null) use (&$suggestions, &$seenEmails): void {
+        // The Ticket contact is already the primary recipient and must never be repeated as CC.
+        $ticketContactEmail = Str::lower(trim((string) $ticket->contact?->email));
+        if ($ticketContactEmail !== '') {
+            $seenEmails[$ticketContactEmail] = true;
+        }
+
+        $addSuggestion = function (?string $email, ?string $name, ?string $site = null) use (&$suggestions, &$seenEmails): void {
             $email = trim((string) $email);
 
             if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -1289,7 +1250,6 @@ class TicketController extends Controller
             $suggestions->push([
                 'email' => $email,
                 'name' => filled($name) ? $name : $email,
-                'group' => $group,
                 'site' => $site,
             ]);
         };
@@ -1302,29 +1262,15 @@ class TicketController extends Controller
                 ->whereNotNull('email')
                 ->get(['id', 'client_site_id', 'name', 'email'])
                 ->sortBy(fn (ClientUser $contact): string => Str::lower(($contact->site?->name ?? '').'|'.$contact->name.'|'.$contact->email))
-                ->each(fn (ClientUser $contact) => $addSuggestion($contact->email, $contact->name, 'Client contacts', $contact->site?->name));
+                ->each(fn (ClientUser $contact) => $addSuggestion($contact->email, $contact->name, $contact->site?->name));
 
             $this->clientContactSuggestions($ticket)
                 ->each(function (Contact $contact) use ($addSuggestion): void {
                     $contact->emails
                         ->sortByDesc('is_primary')
-                        ->each(fn ($email) => $addSuggestion($email->email, $contact->display_name, 'Client contacts', $contact->metadata['site_name'] ?? null));
+                        ->each(fn ($email) => $addSuggestion($email->email, $contact->display_name, $contact->metadata['site_name'] ?? null));
                 });
         }
-
-        Contact::query()
-            ->with(['emails' => fn ($query) => $query->orderByDesc('is_primary')->orderBy('email')])
-            ->where('status', 'active')
-            ->where(fn ($query) => $query->where('do_not_email', false)->orWhereNull('do_not_email'))
-            ->whereHas('emails')
-            ->orderBy('display_name')
-            ->limit(100)
-            ->get()
-            ->each(function (Contact $contact) use ($addSuggestion): void {
-                $contact->emails
-                    ->sortByDesc('is_primary')
-                    ->each(fn ($email) => $addSuggestion($email->email, $contact->display_name, 'Global contacts'));
-            });
 
         return $suggestions->take(80)->values();
     }

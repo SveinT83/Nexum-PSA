@@ -8,9 +8,9 @@ use App\Modules\UserManagement\Actions\SendUserInvite;
 use App\Modules\UserManagement\Actions\StoreUser;
 use App\Modules\UserManagement\Actions\UpdateUserProfile;
 use App\Modules\UserManagement\Actions\UpdateUserStatus;
+use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\UserManagement\Resources\Api\V1\UserResource;
 use App\Modules\UserManagement\Resources\Api\V1\UserRoleResource;
-use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\UserManagement\Support\UserProfileData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,6 +52,7 @@ class UserManagementController extends Controller
 
         $users = User::query()
             ->with(['roles', 'profile', 'preferences'])
+            ->where('is_system_actor', false)
             ->when($validated['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
             ->when($validated['role'] ?? null, fn ($query, string $role) => $query->role($role))
             ->when($validated['q'] ?? null, function ($query, string $search): void {
@@ -94,7 +95,7 @@ class UserManagementController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:'.(new User())->getTable().',email'],
+            'email' => ['required', 'email', 'max:255', 'unique:'.(new User)->getTable().',email'],
             'status' => ['nullable', Rule::in([User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_DISABLED])],
             'role_id' => ['nullable', 'integer', 'exists:roles,id'],
             'role_ids' => ['nullable', 'array'],
@@ -125,17 +126,20 @@ class UserManagementController extends Controller
     #[OA\Get(path: '/api/v1/users/{user}', operationId: 'getUser', summary: 'View a user', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User')])]
     public function show(User $user): UserResource
     {
+        $this->ensureHumanUser($user);
+
         return UserResource::make($this->loadUser($user));
     }
 
     #[OA\Patch(path: '/api/v1/users/{user}', operationId: 'updateUser', summary: 'Update a user profile', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function update(Request $request, User $user, UpdateUserProfile $updateUserProfile): UserResource
     {
+        $this->ensureHumanUser($user);
         $profile = $this->profileFor($user);
 
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique((new User())->getTable(), 'email')->ignore($user->id)],
+            'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique((new User)->getTable(), 'email')->ignore($user->id)],
             'phone_work' => ['nullable', 'string', 'max:50'],
             'phone_private' => ['nullable', 'string', 'max:50'],
             'timezone' => ['sometimes', 'required', 'timezone'],
@@ -170,6 +174,7 @@ class UserManagementController extends Controller
     #[OA\Post(path: '/api/v1/users/{user}/status', operationId: 'updateUserStatus', summary: 'Update user status', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User status updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateStatus(Request $request, User $user, UpdateUserStatus $updateUserStatus): UserResource
     {
+        $this->ensureHumanUser($user);
         $validated = $request->validate([
             'status' => ['required', Rule::in([User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_DISABLED])],
         ]);
@@ -182,6 +187,7 @@ class UserManagementController extends Controller
     #[OA\Post(path: '/api/v1/users/{user}/roles', operationId: 'updateUserRoles', summary: 'Replace user roles', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User roles updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateRoles(Request $request, User $user): UserResource
     {
+        $this->ensureHumanUser($user);
         $validated = $request->validate([
             'role_ids' => ['nullable', 'array'],
             'role_ids.*' => ['integer', 'exists:roles,id'],
@@ -199,6 +205,7 @@ class UserManagementController extends Controller
     #[OA\Post(path: '/api/v1/users/{user}/invite', operationId: 'sendUserInvite', summary: 'Send or resend a user invite', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Invite queued'), new OA\Response(response: 422, description: 'Only pending users can receive invites')])]
     public function sendInvite(User $user, SendUserInvite $sendUserInvite): JsonResponse
     {
+        $this->ensureHumanUser($user);
         abort_unless($user->isPending(), 422, 'Only pending users can receive invitations.');
 
         $sendUserInvite->handle($user);
@@ -220,6 +227,11 @@ class UserManagementController extends Controller
             'preferences',
             'inviteTokens' => fn ($query) => $query->latest(),
         ]);
+    }
+
+    private function ensureHumanUser(User $user): void
+    {
+        abort_if($user->isSystemActor(), 404);
     }
 
     private function profileFor(User $user): UserProfile

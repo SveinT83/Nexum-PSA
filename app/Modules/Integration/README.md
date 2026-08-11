@@ -12,6 +12,8 @@ clearly owned service namespace.
 - BookStack connection settings and health check.
 - BookStack pull sync into Knowledge and guarded two-way push for shelves, books, chapters, and pages.
 - API key management for tdPSA external access.
+- Provider-neutral AI providers, agents, chat execution, and sanitized attempt-level model usage
+  telemetry.
 
 Routes live in `app/Modules/Integration/routes.php`. Controllers live in
 `app/Modules/Integration/Controllers`. Views live in `app/Modules/Integration/Views`.
@@ -92,5 +94,10 @@ or stale BookStack source metadata.
   blindly to a model.
 - AI responses should be logged with provider, model, agent, context source IDs, and token/cost
   metadata where available.
+- Every outbound request migrated to the shared execution boundary should create one sanitized
+  attempt event. Endpoint fallback attempts must remain individually visible under one logical
+  execution.
+- Usage telemetry must never copy prompts, answers, credentials, headers, or raw provider errors.
+  Missing usage and cost remain null rather than appearing as zero.
 - Retrieval should prefer tdPSA Knowledge and synced BookStack content over arbitrary web access for
   operational answers.

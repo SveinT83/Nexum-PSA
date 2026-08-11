@@ -78,6 +78,9 @@
                   <td>{{ $rule->weight }}</td>
                   <td>
                     <div class="fw-semibold">{{ $rule->name }}</div>
+                    <div class="small mt-1">
+                      <span class="badge text-bg-light">{{ $rule->routing_phase === 'preclassification' ? 'Preclassification' : 'Normal phase' }}</span>
+                    </div>
                     @if($rule->description)
                       <div class="small text-muted">{{ $rule->description }}</div>
                     @endif
@@ -143,6 +146,6 @@
 @section('rightbar')
   <div class="mt-3">
     <h3 class="h6">Rule Order</h3>
-    <p class="small text-muted">Custom rules run by weight first. A stop rule prevents later custom rules and the built-in ticket-token fallback.</p>
+    <p class="small text-muted">Opt-in preclassification rules run first by weight. The existing machine/AI classifier then runs before normal rules. A stop rule prevents the later phases and built-in ticket fallback.</p>
   </div>
 @endsection

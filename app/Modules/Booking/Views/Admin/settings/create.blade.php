@@ -6,6 +6,9 @@
     <div class="col">
         <h1 class="h4 mb-0">New booking service</h1>
     </div>
+    <div class="col-auto">
+        <x-buttons.back :url="route('tech.admin.system.booking.index')" class="mb-0">Back</x-buttons.back>
+    </div>
 @endsection
 
 @section('content')

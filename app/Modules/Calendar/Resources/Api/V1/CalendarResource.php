@@ -2,6 +2,7 @@
 
 namespace App\Modules\Calendar\Resources\Api\V1;
 
+use App\Modules\Calendar\Services\CalendarOwnershipMetadata;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,6 +13,8 @@ class CalendarResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $ownership = app(CalendarOwnershipMetadata::class)->forCalendar($this->resource, $request->user());
+
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
@@ -22,7 +25,15 @@ class CalendarResource extends JsonResource
             'color' => $this->color,
             'timezone' => $this->timezone,
             'owner_type' => $this->owner_type,
-            'owner_id' => $this->owner_id,
+            'owner_kind' => $ownership['owner_kind'],
+            'owner_id' => $ownership['owner_id'],
+            'owner_label' => $ownership['owner_label'],
+            'owner_initials' => $ownership['owner_initials'],
+            'owner_badge' => $ownership['owner_badge'],
+            'calendar_type' => $ownership['calendar_type'],
+            'calendar_type_label' => $ownership['calendar_type_label'],
+            'ownership_group' => $ownership['ownership_group'],
+            'is_owned_by_viewer' => $ownership['is_owned_by_viewer'],
             'is_active' => $this->is_active,
             'is_default' => $this->is_default,
             'is_visible_by_default' => $this->is_visible_by_default,

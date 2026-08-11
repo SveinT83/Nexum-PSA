@@ -19,10 +19,31 @@ The Client show page uses the gear action in the Summary card as the Client edit
 This edit surface updates core Client fields, Client status, the N-able RMM mapping, and editable
 Client custom field values.
 
+The Summary card shows Client number, name, organization number, format, billing email, status, and
+the N-able RMM mapping when that integration is active. Short values use three columns on wide
+screens, two columns on medium screens, and one column on small screens. Notes use the full card
+width below this metadata.
+
+Technicians with `client.update` can edit Notes directly in the Summary card. The textarea waits
+briefly after typing and then saves only the Notes field. `Saving...` means the current text has not
+yet been confirmed by the server; `Saved` appears only after the server has persisted it. If saving
+fails, the text stays in the textarea and an error appears so the technician can try again. Users
+without `client.update` see the same Notes content read-only. The gear action and full Client edit
+form remain available for the other Client fields and can also update Notes.
+
 The Client show page also has workspace tabs for related records. `Sites` shows the Client's
 locations, while `Contacts` shows all Client contacts across all Sites so technicians can verify
 whether a Client has contacts without opening each Site first. The Contacts tab links to the
 existing Client contact detail and create flows.
+
+The `Tickets` tab appears for technicians with `ticket.view`. It lists all non-deleted Tickets
+linked directly to the selected Client, including both open and closed work, and links each row to
+the existing Ticket detail page. The count badge and rows come from the same access-controlled
+collection, so Client access alone never exposes Ticket data.
+
+The related-record tabs are ordered Assets, Sites, Contacts, Tickets, Tasks, Time, Contracts,
+Signals, and Custom Fields. The Custom Fields tab remains hidden when no visible Client fields are
+configured, and Tickets remains hidden when the technician lacks Ticket access.
 
 The `Contracts` tab shows active contract timebanks when the technician has
 `commercial.timebank.view`. Each timebank line displays the current period, included time, used time,

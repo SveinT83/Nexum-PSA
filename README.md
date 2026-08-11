@@ -41,8 +41,9 @@ The current beta contains working foundations for:
   management
 - Commercial service catalog, contracts, SLA policies, time rates, timebank
   handling, and economy order generation
-- Storage inventory with warehouses, rooms, boxes, items, reservations, purchase
-  orders, stock movements, and ticket picking
+- Storage inventory with warehouses, rooms, boxes, items, reservations, externally
+  placed purchase orders, split shipments and tracking, partial receiving, stock
+  movements, and ticket picking
 - Email ingestion and outbound email templates
 - Notifications with mail, database, and Nextcloud Talk delivery
 - Nextcloud connections, folder/user/group/calendar mapping, and sync logs
@@ -101,7 +102,7 @@ architecture and UI standards in `docs/`.
 | `Asset` | Assets and client/site asset visibility. |
 | `Commercial` | Services, contracts, packages, costs, SLA policies, and time rates. |
 | `Economy` | Draft billing/order generation from tickets, contracts, stock, and time. |
-| `Storage` | Inventory, stock units, locations, reservations, picking, and purchase orders. |
+| `Storage` | Inventory, stock units, locations, reservations, picking, supplier orders, shipments, tracking, and partial receiving. |
 | `Email` | IMAP ingestion, outbound SMTP, templates, health checks, and email rules. |
 | `Knowledge` | Internal knowledge base, shelves, books, chapters, articles, and tags. |
 | `Integration` | API, AI, BookStack, and integration settings. |

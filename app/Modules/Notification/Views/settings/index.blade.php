@@ -18,6 +18,8 @@
             In-app notifications appear in the bell icon at the top of the page.
         </p>
 
+        @include('notification::settings.partials.web-push-devices')
+
         <form action="{{ route('tech.profile.notifications.update') }}" method="POST">
             @csrf
 
@@ -105,7 +107,8 @@
     </ul>
 @endsection
 
-@push('scripts')
+@section('scripts')
+@parent
 <script>
     // Enable/disable webhook URL field based on Talk toggle
     document.querySelectorAll('input[name*="nextcloud_talk_enabled"]').forEach(function(checkbox) {
@@ -119,4 +122,4 @@
         });
     });
 </script>
-@endpush
+@endsection

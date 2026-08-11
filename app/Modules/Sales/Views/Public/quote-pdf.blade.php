@@ -20,51 +20,17 @@
     <div class="muted">{{ $version->quote->quote_key }} v{{ $version->version_number }} / {{ $opportunity->client?->name }}</div>
     <div class="muted">Expires {{ $version->expires_at?->format('d.m.Y') ?: 'not set' }}</div>
 
-    @foreach(['intro_text', 'scope_text', 'assumptions_text', 'exclusions_text', 'next_steps_text'] as $field)
-        @if(filled($version->{$field}))
-            <h2>{{ ucwords(str_replace('_', ' ', str_replace('_text', '', $field))) }}</h2>
-            <p>{!! nl2br(e($version->{$field})) !!}</p>
-        @endif
+    @foreach($quotePresentation['before_copy'] as $section)
+        <h2>{{ $section['label'] }}</h2>
+        <p>{!! nl2br(e($section['text'])) !!}</p>
     @endforeach
 
     <h2>Quote Lines</h2>
-    <table>
-        <thead>
-        <tr>
-            <th>Description</th>
-            <th class="right">Qty</th>
-            <th class="right">Unit ex VAT</th>
-            <th class="right">Total ex VAT</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach($version->lines as $line)
-            <tr>
-                <td>
-                    <strong>{{ $line->name }}</strong><br>
-                    <span class="muted">{{ $line->description }}</span>
-                </td>
-                <td class="right">{{ $line->quantity }}</td>
-                <td class="right">{{ number_format((float) $line->unit_price_ex_vat, 2, ',', ' ') }}</td>
-                <td class="right">{{ number_format((float) $line->line_total_ex_vat, 2, ',', ' ') }}</td>
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
+    @include('sales::Partials.quote-groups', ['quotePresentation' => $quotePresentation])
 
-    <table class="summary">
-        <tr>
-            <td>Subtotal ex VAT</td>
-            <td class="right">{{ number_format((float) $version->total_ex_vat, 2, ',', ' ') }}</td>
-        </tr>
-        <tr>
-            <td>VAT</td>
-            <td class="right">{{ number_format((float) $version->vat_total, 2, ',', ' ') }}</td>
-        </tr>
-        <tr>
-            <td><strong>Total inc VAT</strong></td>
-            <td class="right"><strong>{{ number_format((float) $version->total_inc_vat, 2, ',', ' ') }}</strong></td>
-        </tr>
-    </table>
+    @foreach($quotePresentation['after_copy'] as $section)
+        <h2>{{ $section['label'] }}</h2>
+        <p>{!! nl2br(e($section['text'])) !!}</p>
+    @endforeach
 </body>
 </html>

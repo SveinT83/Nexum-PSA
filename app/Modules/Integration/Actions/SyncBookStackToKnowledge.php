@@ -50,7 +50,13 @@ class SyncBookStackToKnowledge
                 $summary[$result]++;
             } catch (\Throwable $exception) {
                 $summary['failed']++;
-                $summary['errors'][] = 'Page '.($pageId ?: 'unknown').': '.$exception->getMessage();
+                $message = $exception->getMessage();
+                if (str_contains($message, 'rate limit') || str_contains($message, '429') || str_contains($message, 'Too Many Attempts')) {
+                    $summary['rate_limited'] = ($summary['rate_limited'] ?? 0) + 1;
+                    $summary['errors'][] = 'Page '.$pageId.': RATE-LIMITED — '.$message;
+                } else {
+                    $summary['errors'][] = 'Page '.$pageId.': '.$message;
+                }
             }
         }
 
@@ -62,7 +68,9 @@ class SyncBookStackToKnowledge
         $this->integration->is_healthy = $summary['failed'] === 0;
         $this->integration->last_error = $summary['failed'] === 0
             ? null
-            : implode("\n", array_slice($summary['errors'], 0, 5));
+            : collect($summary['errors'])
+                ->take(5)
+                ->join("\n");
         $this->integration->save();
 
         return $summary;

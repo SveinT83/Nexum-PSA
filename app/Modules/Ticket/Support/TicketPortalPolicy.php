@@ -8,10 +8,14 @@ use Illuminate\Support\Arr;
 class TicketPortalPolicy
 {
     public const SETTING_TYPE = 'ticket';
+
     public const SETTING_NAME = 'portal_policy';
 
     public const VISIBILITY_UNPUBLISHED = 'unpublished';
+
     public const VISIBILITY_PUBLISHED = 'published';
+
+    public const DEFAULT_CUSTOMER_VISIBILITY = self::VISIBILITY_PUBLISHED;
 
     /**
      * @return array{default_customer_visibility: string}
@@ -24,10 +28,10 @@ class TicketPortalPolicy
             ->value('json');
 
         $payload = json_decode((string) $json, true);
-        $visibility = Arr::get(is_array($payload) ? $payload : [], 'default_customer_visibility', self::VISIBILITY_UNPUBLISHED);
+        $visibility = Arr::get(is_array($payload) ? $payload : [], 'default_customer_visibility', self::DEFAULT_CUSTOMER_VISIBILITY);
 
         if (! array_key_exists($visibility, self::visibilityOptions())) {
-            $visibility = self::VISIBILITY_UNPUBLISHED;
+            $visibility = self::DEFAULT_CUSTOMER_VISIBILITY;
         }
 
         return [
@@ -42,10 +46,10 @@ class TicketPortalPolicy
 
     public function update(array $settings): void
     {
-        $visibility = $settings['default_customer_visibility'] ?? self::VISIBILITY_UNPUBLISHED;
+        $visibility = $settings['default_customer_visibility'] ?? self::DEFAULT_CUSTOMER_VISIBILITY;
 
         if (! array_key_exists($visibility, self::visibilityOptions())) {
-            $visibility = self::VISIBILITY_UNPUBLISHED;
+            $visibility = self::DEFAULT_CUSTOMER_VISIBILITY;
         }
 
         CommonSetting::updateOrCreate(

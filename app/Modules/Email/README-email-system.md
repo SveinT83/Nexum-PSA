@@ -21,7 +21,7 @@ Non-goals (for MVP):
 ## Key components at a glance
 
 - Models: `EmailAccount`, `EmailMessage`, `EmailAttachment`, `EmailHealthCheck`, `EmailLog`
-- Services: `ImapClient`, `EmailTestService`, `EmailTestResult`, `BodyNormalizer`, `HtmlSanitizer`, `InboundEmailSignalClassifier`
+- Services: `ImapClient`, `EmailTestService`, `BodyNormalizer`, `HtmlSanitizer`, `InboundAttachmentPersister`, `InboundEmailSignalClassifier`, `InboundEmailRuleEngine`, `TrustedSenderAuthenticationFacts`
 - Jobs: `PollActiveEmailAccounts`, `FetchImapAccount`, `StoreInboundMessage`, `ProcessInboundRules`, `EmailAccountHealthCheckJob`, `EmailRetentionPurgeJob`
 - Controllers (Admin/Settings): `AccountsController`, `ConfigController`, `RulesController`
 - Routes: declared in `app/Modules/Email/routes.php` under the `tech.admin.settings.email.*` namespace
@@ -74,12 +74,15 @@ Backs `email_logs` (`database/migrations/2025_11_11_000005_create_email_logs_tab
 ### ImapClient — `app/Modules/Email/Services/ImapClient.php`
 A thin wrapper around Webklex to connect to a specific account and interact with a mailbox (currently INBOX).
 - `connect()`: builds a `Client` via `ClientManager`, using `imap_host/port/encryption`, `username`, and decrypted `secret`.
-- `fetchUnseen(limit)`: opens INBOX, fetches unseen messages up to a limit, returns lightweight arrays with header-level info and UID, without heavy parsing.
-- `fetchRecent(limit)`: opens INBOX and fetches recent messages regardless of Seen state, so another mail client or provider cannot make Nexum skip a message by marking it read first.
+- `fetchUnseen(limit, page)`: opens INBOX and returns a bounded unseen page for explicit diagnostics. Automatic polling deliberately does not interpret unread state as backlog work.
+- `fetchRecent(limit)`: opens INBOX and returns the newest messages regardless of Seen state for explicit diagnostics and compatibility.
+- `mailboxState()`: returns INBOX `UIDVALIDITY` and `UIDNEXT` so automatic polling can establish and verify a durable live boundary.
+- `fetchAfterUid(uid, limit)`: fetches the oldest bounded batch after the stored live boundary regardless of Seen state.
 - `fetchByUid(uid)`: loads a specific message by IMAP UID from INBOX for full body/attachments.
 
 Implementation notes:
 - Encryption is passed through as configured (`ssl`|`tls`|`starttls`). Certificate validation is enabled.
+- Header metadata is parsed from Webklex's supported `getHeader()->raw` source. Folded values are unfolded while repeated `Received` and `Authentication-Results` fields retain top-to-bottom order. Missing or malformed authentication evidence remains empty and therefore fails closed.
 
 ### EmailTestService — `app/Modules/Email/Services/EmailTestService.php`
 Runs a live connectivity test for both IMAP and SMTP and updates the account’s health.
@@ -102,13 +105,14 @@ Basic sanitizer that removes risky tags/handlers. Intended to be replaced with H
 
 ### High-level ingest flow
 1) Polling picks active accounts and dispatches fetch jobs.
-2) `FetchImapAccount` connects, pulls unseen message heads, fills the remaining batch with recent INBOX messages regardless of Seen state, and emits work units.
+2) `FetchImapAccount` connects, validates INBOX `UIDVALIDITY`, initializes a forward-only `UIDNEXT - 1` baseline on first activation, and then drains the oldest new UIDs after the greater of that baseline and the highest stored UID. Historical unread state is never automatic work, while bursts larger than one batch drain over later polls without UID gaps.
 3) For each message:
 	 - Oversize messages are flagged; normal-sized messages are handed to `StoreInboundMessage`.
 4) `StoreInboundMessage` re-fetches full content by UID, stores raw EML and attachments, sanitizes/normalizes bodies, and upserts `EmailMessage` (+ attachments).
 5) Optionally, message can be deleted/moved server-side after successful persistence (delete-on-success setting).
-6) `ProcessInboundRules` first asks `InboundEmailSignalClassifier` to detect machine replies, delivery failures, and recognized vendor notifications. Hard bounces, soft bounces, auto replies, out-of-office replies, unsubscribe requests, and QNAP-style firmware/security notices become Signal records and are archived before normal ticket routing.
-7) Human messages continue through async rules on persisted messages (tagging, triage, linking to tickets, etc.).
+6) Explicit `preclassification` Email rules run first. They are opt-in and can stop later classification for narrow trusted handoffs.
+7) `InboundEmailSignalClassifier` detects machine replies, delivery failures, and recognized vendor notifications. Matching messages become Signal records and are archived before normal ticket routing.
+8) Remaining messages continue through `normal` Email rules and existing Ticket routing.
 
 Selected Email Rules can explicitly emit a Signal with the `emit_signal` action. This is for
 admin-approved handoff cases such as vendor notices, monitoring messages, or security alerts. Email
@@ -117,9 +121,9 @@ cross-module automation after the explicit handoff creates the normalized Signal
 
 ### Job catalog (paths referenced in codebase)
 - `app/Modules/Email/Jobs/PollActiveEmailAccounts.php` — iterates active accounts; schedule every minute. (Dispatcher/entry job.)
-- `app/Modules/Email/Jobs/FetchImapAccount.php` — connect via `ImapClient`, fetch unseen plus recent messages, dedupe by `account+mailbox+uid`, and dispatch `StoreInboundMessage` with a payload (marks oversize if > size limit).
-- `app/Modules/Email/Jobs/StoreInboundMessage.php` — refetch full message by UID, write `.eml` + attachments to disk, sanitize body HTML and extract text via `BodyNormalizer`, upsert `EmailMessage`, create `EmailAttachment` rows, enqueue `ProcessInboundRules`.
-- `app/Modules/Email/Jobs/ProcessInboundRules.php` — classifies inbound machine/vendor signals, archives bounce/autoreply/unsubscribe/vendor-notice messages, then runs the inbound rule engine for normal messages.
+- `app/Modules/Email/Jobs/FetchImapAccount.php` — serialize fetches per account, establish/verify the forward-only UID namespace, select the oldest bounded new-UID batch, remove stored/soft-deleted UIDs, and dispatch `StoreInboundMessage` with a payload (marks oversize if > size limit). A changed `UIDVALIDITY` stops ingest and records an account error until an explicit re-baseline.
+- `app/Modules/Email/Jobs/StoreInboundMessage.php` - refetch full message by UID, write raw EML, sanitize body HTML, upsert `EmailMessage`, and persist policy-accepted attachment metadata/checksums before queuing rules.
+- `app/Modules/Email/Jobs/ProcessInboundRules.php` - run opt-in preclassification rules, machine/vendor classification, then normal Email/Ticket routing in that order.
 - `app/Modules/Email/Jobs/EmailAccountHealthCheckJob.php` — runs connectivity checks and writes `EmailHealthCheck` rows.
 - `app/Modules/Email/Jobs/EmailRetentionPurgeJob.php` — deletes old data past retention policy and cleans orphan files.
 
@@ -142,10 +146,10 @@ Views:
 - Create/Edit: unified form, includes a hidden POST form to trigger “Run Full Test” to the `test` action.
 
 ### ConfigController — `app/Modules/Email/Controllers/Admin/ConfigController.php`
-- Simple façade for global settings (poll interval, concurrency, batch size, delete-on-success, size limit, retention). Currently uses in-memory defaults; persistence TBD.
+- Persists global ingest, retention, attachment policy, and trusted sender-authentication settings in `common_settings`.
 
 ### RulesController — `app/Modules/Email/Controllers/Admin/RulesController.php`
-- Placeholder for listing/managing inbound rules once implemented.
+- Manages ordered inbound rules, including the explicit `normal` and `preclassification` routing phases.
 
 
 ## Routes and naming
@@ -168,8 +172,8 @@ Note: The UI relies on these exact names; ensure the `tech.` prefix is present i
 IMAP:
 - Library: Webklex IMAP.
 - Encryption mapping: accepts `ssl`, `tls`, or `starttls`. Certificates validated.
-- Fetch strategy: INBOX only for now, unseen first, then recent messages regardless of Seen state; up to batch size per poll.
-- Dedup: keyed by `account_id + mailbox + imap_uid`.
+- Fetch strategy: INBOX only; first activation establishes a forward-only UID baseline, then each poll fetches the oldest batch strictly after the live high-water mark regardless of Seen state.
+- Dedup: keyed by `account_id + mailbox + imap_uid`, including soft-deleted rows. `UIDVALIDITY` changes fail closed instead of reusing an old UID namespace.
 
 SMTP:
 - Library: Symfony Mailer EsmtpTransport.
@@ -196,8 +200,8 @@ SMTP:
 
 ## Configuration knobs
 
-- See `ConfigController@index()` for current defaults: `poll_interval`, `concurrency`, `batch_size`, `delete_on_success`, `size_limit_mb`, `retention_months`.
-- A persistent settings store can be introduced later; wire jobs to read from it.
+- See `ConfigController@index()` for ingest/retention defaults, attachment count/size/MIME policy, and trusted authserv/receiving-hop configuration.
+- Settings are persisted as Email-owned `common_settings` values.
 
 
 ## Scheduler and cron (server setup)
@@ -241,6 +245,8 @@ Use cases:
 Operational notes:
 - UI polling depends on queue processing; for direct troubleshooting use the CLI without `--async`.
 - Safe to click multiple times; duplicate messages are deduped by `account_id + mailbox + imap_uid`.
+- Existing unread mail is intentionally left untouched. More than one batch of genuinely new UIDs drains oldest-first over later polls; historical import requires a separate, explicit controlled workflow.
+- If a trusted-source workflow reports missing authentication, verify that newly stored `headers_json` contains ordered `received` and `authentication-results` arrays. Nexum intentionally treats missing header evidence as untrusted.
 - In production, prefer the scheduler + worker for steady-state ingestion; keep the manual button for ad-hoc checks.
 - If automatic fetching stalls, check `/tech/admin/settings/email/config` first. `No heartbeat` means either `schedule:run` is not dispatching the poll job or the default queue worker is not processing it. Stale ready jobs or failed jobs in the health card point to queue-worker issues.
 
@@ -285,10 +291,7 @@ Common issues:
 
 ## Roadmap (next steps)
 
-- Implement `EmailAttachment` DB creation in `StoreInboundMessage` and update `attachments_count`.
-- Implement delete/move on success (config-driven).
 - Introduce HTMLPurifier and inline image rewriting.
-- Flesh out the rules engine with a small DSL and async execution.
 - Add index health badges and per-row “Run test”.
 - Add outbound service with provider-specific nuances and logging.
 

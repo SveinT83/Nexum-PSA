@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Storage\Actions\AdjustItemStock;
 use App\Modules\Storage\Actions\DeleteItem;
+use App\Modules\Storage\Actions\GuardItemTrackingConfiguration;
 use App\Modules\Storage\Actions\StoreBox;
 use App\Modules\Storage\Actions\StoreItem;
 use App\Modules\Storage\Actions\StoreWarehouse;
@@ -169,8 +170,11 @@ class StorageController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
-    public function updateItem(Request $request, Item $item)
-    {
+    public function updateItem(
+        Request $request,
+        Item $item,
+        GuardItemTrackingConfiguration $trackingConfiguration
+    ) {
         $data = $this->validatedItem($request, $item);
         $warehouseId = (int) ($data['warehouse_id'] ?? $item->warehouse_id);
         $boxId = array_key_exists('box_id', $data) ? $data['box_id'] : $item->box_id;
@@ -182,11 +186,19 @@ class StorageController extends Controller
         }
         $itemData['updated_by'] = $request->user()?->id;
 
-        DB::transaction(function () use ($item, $itemData, $data): void {
-            $item->update($itemData);
+        $item = DB::transaction(function () use (
+            $item,
+            $itemData,
+            $data,
+            $trackingConfiguration
+        ): Item {
+            $lockedItem = $trackingConfiguration->lockAndValidateUpdate($item, $itemData);
+            $lockedItem->update($itemData);
             if ($this->hasSupplierPayload($data)) {
-                $this->syncPrimarySupplier($item, $this->supplierData($data));
+                $this->syncPrimarySupplier($lockedItem, $this->supplierData($data));
             }
+
+            return $lockedItem;
         });
 
         return new StorageItemResource($this->loadItem($item));

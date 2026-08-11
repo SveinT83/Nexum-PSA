@@ -107,6 +107,7 @@ class SyncRepositoryKnowledgeDocs
     {
         return [
             'Asset' => $this->definition('assets', 'Assets', 180),
+            'Booking' => $this->definition('booking', 'Booking', 585),
             'Calendar' => $this->definition('calendar', 'Calendar', 580),
             'Clients' => $this->definition('clients', 'Clients', 190),
             'Commercial' => $this->definition('commercial', 'Commercial', 700),

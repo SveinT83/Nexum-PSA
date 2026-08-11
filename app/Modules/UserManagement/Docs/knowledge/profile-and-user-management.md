@@ -102,6 +102,35 @@ Supported values:
 `company` inherits the default theme configured in System -> Branding. `system` leaves Bootstrap in
 browser/system mode. `light` and `dark` write `data-bs-theme` on the HTML element.
 
+## User Disablement And Web Push
+
+The canonical User Management status-change action owns the transition to `DISABLED`. When an
+internal user becomes disabled, User Management calls the Notification-owned cleanup action, which
+removes every Web Push subscription belonging to that user.
+
+Cleanup is idempotent and records one secret-free lifecycle audit event per removed device.
+Reapplying the disabled status does not create duplicate cleanup records. The audit contains only
+the actor when applicable, target user, public subscription identifier, coarse device summary,
+action, and timestamp.
+
+Normal sign-out does not remove Web Push subscriptions. Administrators should disable the user for
+offboarding and may separately revoke a lost device from Admin > Notification channels.
+
+## Protected System Actors
+
+Some unattended domain workflows need a stable audit identity without impersonating a human user.
+User Management can hold these identities as protected system actors.
+
+A system actor is disabled for authentication, cannot sign in even if its password or status is
+tampered with, is hidden from ordinary User Management and the user API, and cannot be edited,
+activated, invited or assigned roles through those surfaces. Its permissions are direct,
+least-privilege permissions maintained by the owning workflow.
+
+**Nexum Supplier Order Automation** is the Storage-owned actor for automatic supplier, Item and
+Purchase Order actions. It has no roles and only `storage.purchase_manage`,
+`storage.purchase_import_profile_manage` and `documentation.create`. System actors must not be used
+as technician, customer-portal or API-token accounts.
+
 ## Development Rules
 
 - New general profile features belong in User Management.

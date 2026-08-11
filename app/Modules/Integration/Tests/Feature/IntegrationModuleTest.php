@@ -23,11 +23,15 @@ use App\Modules\Integration\Jobs\PushPendingKnowledgeToBookStack;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Models\AiChatMessage;
+use App\Modules\Integration\Models\AiDataEgressPolicy;
+use App\Modules\Integration\Models\AiModelGovernancePolicy;
 use App\Modules\Integration\Models\AiProvider;
+use App\Modules\Integration\Models\AiProviderGovernanceProfile;
 use App\Modules\Integration\Models\AiSystemSetting;
 use App\Modules\Integration\Services\AiChatCleanup;
 use App\Modules\Integration\Services\AiChatResponder;
 use App\Modules\Integration\Support\AiMessageFormatter;
+use App\Modules\Integration\Support\ApiAbilityCatalog;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
@@ -57,6 +61,14 @@ class IntegrationModuleTest extends TestCase
 
         $this->admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->admin->assignRole('Admin');
+
+        AiDataEgressPolicy::installation()->update([
+            'ai_enabled' => true,
+            'external_processing_enabled' => true,
+            'privacy_gateway_enabled' => true,
+            'allowed_processing_modes' => ['local_only', 'privacy_relay'],
+            'maximum_data_profile' => 'full_context',
+        ]);
     }
 
     #[Test]
@@ -99,6 +111,8 @@ class IntegrationModuleTest extends TestCase
             ->assertSee('Read tickets')
             ->assertSee('Create tickets')
             ->assertSee('Update tickets')
+            ->assertSee('Publish tickets to the customer portal')
+            ->assertSee('Reply to ticket customers')
             ->assertSee('Read tasks')
             ->assertSee('Create tasks')
             ->assertSee('Update tasks')
@@ -155,6 +169,73 @@ class IntegrationModuleTest extends TestCase
 
         $this->assertSame('n8n client sync', $token->name);
         $this->assertSame(['clients.read'], $token->abilities);
+    }
+
+    #[Test]
+    public function api_key_creation_requires_explicit_scopes_or_confirmed_full_access(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.integrations.api.store'), [
+                'name' => 'Empty key',
+            ])
+            ->assertSessionHasErrors('abilities');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.integrations.api.store'), [
+                'name' => 'Unconfirmed full key',
+                'full_access' => '1',
+            ])
+            ->assertSessionHasErrors('confirm_full_access');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.integrations.api.store'), [
+                'name' => 'Confirmed full key',
+                'full_access' => '1',
+                'confirm_full_access' => '1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame(['*'], PersonalAccessToken::query()->firstOrFail()->abilities);
+    }
+
+    #[Test]
+    public function ability_catalog_has_explicit_access_metadata_and_preserves_empty_selection(): void
+    {
+        $catalog = app(ApiAbilityCatalog::class);
+
+        $this->assertSame([], $catalog->normalize([]));
+        $this->assertSame(['*'], $catalog->normalize([], true));
+        $this->assertNotEmpty($catalog->all());
+
+        foreach ($catalog->all() as $ability => $details) {
+            $this->assertContains($details['access'], [ApiAbilityCatalog::ACCESS_READ, ApiAbilityCatalog::ACCESS_WRITE], $ability);
+        }
+
+        $this->assertTrue($catalog->isReadOnly('tickets.workflow.read'));
+        $this->assertTrue($catalog->isReadOnly('data_exchange.download'));
+        $this->assertFalse($catalog->isReadOnly('tickets.create'));
+    }
+
+    #[Test]
+    public function broad_existing_api_keys_are_flagged_without_being_modified(): void
+    {
+        $catalog = app(ApiAbilityCatalog::class);
+        $token = $this->admin->createToken('Existing broad key', $catalog->values())->accessToken;
+        $originalAbilities = $token->abilities;
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.integrations.api.index'))
+            ->assertOk()
+            ->assertSee('Review broad access')
+            ->assertSee('Existing keys were not changed')
+            ->assertDontSee('value="clients.read" checked', false);
+
+        $this->assertSame($originalAbilities, $token->fresh()->abilities);
     }
 
     #[Test]
@@ -707,6 +788,7 @@ class IntegrationModuleTest extends TestCase
             'instructions' => 'Use provider defaults.',
             'is_active' => true,
         ]);
+        $this->approveExternalProvider($provider, $agent);
         $chat = AiChat::create([
             'user_id' => $user->id,
             'ai_agent_id' => $agent->id,
@@ -755,6 +837,7 @@ class IntegrationModuleTest extends TestCase
             'instructions' => 'Use provider defaults.',
             'is_active' => true,
         ]);
+        $this->approveExternalProvider($provider, $agent);
         $chat = AiChat::create([
             'user_id' => $user->id,
             'ai_agent_id' => $agent->id,
@@ -814,6 +897,7 @@ class IntegrationModuleTest extends TestCase
             'is_active' => true,
         ]);
 
+        $this->approveExternalProvider($provider, $agent);
         $reply = app(AiChatResponder::class)->complete($agent, [
             ['role' => 'user', 'content' => 'Hei'],
         ]);
@@ -858,6 +942,7 @@ class IntegrationModuleTest extends TestCase
             'instructions' => 'Use JSON.',
             'is_active' => true,
         ]);
+        $this->approveExternalProvider($provider, $agent);
         $chat = AiChat::create([
             'user_id' => $user->id,
             'ai_agent_id' => $agent->id,
@@ -923,6 +1008,7 @@ class IntegrationModuleTest extends TestCase
             'instructions' => 'Use JSON.',
             'is_active' => true,
         ]);
+        $this->approveExternalProvider($provider, $agent);
         $chat = AiChat::create([
             'user_id' => $user->id,
             'ai_agent_id' => $agent->id,
@@ -1131,6 +1217,7 @@ class IntegrationModuleTest extends TestCase
         $salesRole = Role::create(['name' => 'Sales']);
         $tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $tech->assignRole($techRole);
+        $tech->givePermissionTo('integration.ai_manage');
         $route = Route::getRoutes()->getByName('tech.ai.chats.index');
 
         $this->assertSame(AiChatController::class.'@index', $route->getActionName());
@@ -2619,5 +2706,44 @@ class IntegrationModuleTest extends TestCase
             ->assertSessionHas('warning');
 
         Http::assertNothingSent();
+    }
+
+    private function approveExternalProvider(AiProvider $provider, AiAgent $agent): void
+    {
+        if ($provider->provider_key === 'ollama') {
+            return;
+        }
+
+        AiProviderGovernanceProfile::query()->firstOrCreate(['ai_provider_id' => $provider->id], [
+            'purpose' => 'Automated Integration test.',
+            'recipient_name' => $provider->name,
+            'processing_regions' => ['EEA'],
+            'support_regions' => ['EEA'],
+            'dpa_status' => 'approved',
+            'dpa_reference' => 'test-dpa',
+            'subprocessor_notes' => 'Reviewed for test.',
+            'transfer_assessment' => 'No unreviewed test transfer.',
+            'retention_declaration' => 'No retained test data.',
+            'training_declaration' => 'No training on test data.',
+            'dpia_status' => 'not_required',
+            'dpia_rationale' => 'Synthetic test data only.',
+            'allowed_processing_modes' => ['privacy_relay'],
+            'maximum_data_profile' => 'full_context',
+            'is_approved' => true,
+            'is_active' => true,
+            'reviewed_by' => $this->admin->id,
+            'reviewed_at' => now(),
+        ]);
+        $model = $agent->model ?: $provider->default_model;
+        AiModelGovernancePolicy::query()->firstOrCreate([
+            'ai_provider_id' => $provider->id,
+            'model' => $model,
+        ], [
+            'processing_mode' => 'privacy_relay',
+            'maximum_data_profile' => 'full_context',
+            'is_approved' => true,
+            'reviewed_by' => $this->admin->id,
+            'reviewed_at' => now(),
+        ]);
     }
 }

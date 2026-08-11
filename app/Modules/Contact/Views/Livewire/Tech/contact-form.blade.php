@@ -118,6 +118,22 @@
                         @error('relation_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
+
+                @if(! $contactId && $canSendPortalInvitation)
+                    <div class="border-top mt-3 pt-3">
+                        <div class="form-check form-switch">
+                            <input
+                                id="send_customer_portal_invitation"
+                                type="checkbox"
+                                class="form-check-input"
+                                wire:model="send_customer_portal_invitation"
+                            >
+                            <label for="send_customer_portal_invitation" class="form-check-label fw-semibold">Send customer portal invitation</label>
+                            <div class="form-text">The Contact must have a valid email and be linked to an active Client. This choice applies only to this create action.</div>
+                        </div>
+                        @error('contact_id')<div class="text-danger small mt-2">{{ $message }}</div>@enderror
+                    </div>
+                @endif
             </div>
         </div>
 

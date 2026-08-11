@@ -2,6 +2,14 @@
 
 @section('title', 'Calendar')
 
+@php
+    $ownershipQuery = $onlyMine
+        ? ['only_mine' => 1]
+        : ($selectedOwnershipGroups !== []
+            ? ['ownership_groups' => $selectedOwnershipGroups]
+            : []);
+@endphp
+
 @section('pageHeader')
     <h1>Calendar</h1>
 @endsection
@@ -11,8 +19,11 @@
 
     <!-- Calendar filters -->
     <div class="card mb-3">
-        <div class="card-header py-2">
+        <div class="card-header py-2 d-flex align-items-center justify-content-between gap-2">
             <h2 class="h6 mb-0">Calendars</h2>
+            @if($ownershipFilterActive)
+                <span class="badge text-bg-primary">{{ $onlyMine ? 1 : count($selectedOwnershipGroups) }} active</span>
+            @endif
         </div>
         <div class="card-body p-2">
             <form method="GET" action="{{ route('tech.calendar.index') }}">
@@ -21,17 +32,59 @@
                 <input type="hidden" name="event_search" value="{{ $eventSearch }}">
                 <input type="hidden" name="event_sort" value="{{ $eventSort }}">
                 <input type="hidden" name="event_direction" value="{{ $eventDirection }}">
-                @foreach($calendars as $calendar)
+
+                <fieldset class="mb-2">
+                    <legend class="text-muted small fw-bold text-uppercase mb-1">Ownership</legend>
                     <div class="form-check small mb-1">
-                        <input class="form-check-input" type="checkbox" name="calendars[]" value="{{ $calendar->id }}" id="calendar_filter_{{ $calendar->id }}"
-                            @checked(empty($selectedCalendarIds) || in_array($calendar->id, $selectedCalendarIds, true))>
-                        <label class="form-check-label d-flex align-items-center gap-2" for="calendar_filter_{{ $calendar->id }}">
-                            <span class="rounded-circle d-inline-block" style="width: .75rem; height: .75rem; background: {{ $calendar->color }}"></span>
-                            <span>{{ $calendar->name }}</span>
+                        <input class="form-check-input" type="checkbox" name="only_mine" value="1" id="calendar_only_mine" @checked($onlyMine)>
+                        <label class="form-check-label d-flex justify-content-between gap-2" for="calendar_only_mine">
+                            <span>Only mine</span>
+                            <span class="text-muted">{{ $ownershipGroupCounts->get('mine', 0) }}</span>
                         </label>
                     </div>
-                @endforeach
+                    @foreach($ownershipGroupLabels as $group => $groupLabel)
+                        @continue($group === 'mine' || ! $ownershipGroupCounts->has($group))
+                        <div class="form-check small mb-1">
+                            <input class="form-check-input" type="checkbox" name="ownership_groups[]" value="{{ $group }}" id="calendar_owner_group_{{ $group }}"
+                                @checked(in_array($group, $selectedOwnershipGroups, true))>
+                            <label class="form-check-label d-flex justify-content-between gap-2" for="calendar_owner_group_{{ $group }}">
+                                <span>{{ $groupLabel }}</span>
+                                <span class="text-muted">{{ $ownershipGroupCounts->get($group, 0) }}</span>
+                            </label>
+                        </div>
+                    @endforeach
+                    @if($onlyMine)
+                        <div class="form-text mt-1">Only mine takes priority over other ownership groups.</div>
+                    @endif
+                </fieldset>
+
+                <div class="border-top pt-2">
+                    @foreach($ownershipGroupLabels as $group => $groupLabel)
+                        @php($groupOptions = $calendarOptions->filter(fn (array $option): bool => $option['ownership']['ownership_group'] === $group))
+                        @if($groupOptions->isNotEmpty())
+                            <div class="text-muted small fw-bold text-uppercase mt-2 mb-1">{{ $groupLabel }}</div>
+                            @foreach($groupOptions as $option)
+                                @php($calendar = $option['calendar'])
+                                <div class="form-check small mb-1">
+                                    <input class="form-check-input" type="checkbox" name="calendars[]" value="{{ $calendar->id }}" id="calendar_filter_{{ $calendar->id }}"
+                                        @checked(empty($selectedCalendarIds) || in_array($calendar->id, $selectedCalendarIds, true))>
+                                    <label class="form-check-label d-flex align-items-center gap-2" for="calendar_filter_{{ $calendar->id }}">
+                                        <span class="calendar-owner-swatch" style="--owner-color: {{ $calendar->color }}" aria-hidden="true"></span>
+                                        <span class="text-truncate">{{ $calendar->name }}</span>
+                                        @if($option['ownership']['calendar_type'] !== 'personal')
+                                            <span class="badge text-bg-light border ms-auto" title="{{ $option['ownership']['calendar_type_label'] }} calendar">{{ $option['ownership']['calendar_type_label'] }}</span>
+                                        @endif
+                                    </label>
+                                </div>
+                            @endforeach
+                        @endif
+                    @endforeach
+                </div>
+
                 <button class="btn btn-sm btn-outline-primary w-100 mt-2" type="submit">Apply</button>
+                @if($ownershipFilterActive)
+                    <a class="btn btn-sm btn-link w-100" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => $anchor->toDateString(), 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">Clear ownership filters</a>
+                @endif
             </form>
         </div>
     </div>
@@ -39,7 +92,7 @@
     <!-- View switcher -->
     <div class="list-group small">
         @foreach(['day' => 'Day', 'week' => 'Week', 'month' => 'Month', 'list' => 'List'] as $mode => $label)
-            <a class="list-group-item list-group-item-action {{ $viewMode === $mode ? 'active' : '' }}" href="{{ route('tech.calendar.index', ['view' => $mode, 'date' => $anchor->toDateString(), 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">
+            <a class="list-group-item list-group-item-action {{ $viewMode === $mode ? 'active' : '' }}" href="{{ route('tech.calendar.index', array_merge(['view' => $mode, 'date' => $anchor->toDateString(), 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection], $ownershipQuery)) }}">
                 {{ $label }}
             </a>
         @endforeach
@@ -59,6 +112,13 @@
                 @foreach($selectedCalendarIds as $calendarId)
                     <input type="hidden" name="calendars[]" value="{{ $calendarId }}">
                 @endforeach
+                @if($onlyMine)
+                    <input type="hidden" name="only_mine" value="1">
+                @else
+                    @foreach($selectedOwnershipGroups as $ownershipGroup)
+                        <input type="hidden" name="ownership_groups[]" value="{{ $ownershipGroup }}">
+                    @endforeach
+                @endif
 
                 <div class="col-md-6">
                     <label for="event_search" class="form-label text-muted small fw-bold text-uppercase">Search events</label>
@@ -199,17 +259,23 @@
                     <i class="bi bi-calendar-plus" aria-hidden="true"></i>
                     New
                 </button>
-                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => $previousDate, 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', array_merge(['view' => $viewMode, 'date' => $previousDate, 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection], $ownershipQuery)) }}">
                     <i class="bi bi-chevron-left" aria-hidden="true"></i>
                 </a>
-                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => now($timezone)->toDateString(), 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">Today</a>
-                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => $nextDate, 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', array_merge(['view' => $viewMode, 'date' => now($timezone)->toDateString(), 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection], $ownershipQuery)) }}">Today</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.calendar.index', array_merge(['view' => $viewMode, 'date' => $nextDate, 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection], $ownershipQuery)) }}">
                     <i class="bi bi-chevron-right" aria-hidden="true"></i>
                 </a>
             </div>
         </div>
         <div class="card-body">
-            <div class="calendar-surface">
+            @if($ownershipFilterActive && $events->isEmpty())
+                <div class="alert alert-light border py-2 small d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <span>No events match the selected ownership filters in this range.</span>
+                    <a href="{{ route('tech.calendar.index', ['view' => $viewMode, 'date' => $anchor->toDateString(), 'calendars' => $selectedCalendarIds, 'event_search' => $eventSearch, 'event_sort' => $eventSort, 'event_direction' => $eventDirection]) }}">Clear ownership filters</a>
+                </div>
+            @endif
+            <div class="calendar-surface" role="region" tabindex="0" aria-label="{{ ucfirst($viewMode) }} calendar view. Scroll horizontally on narrow screens.">
                 @if($viewMode === 'month')
                     @include('calendar::Tech.partials.month')
                 @elseif($viewMode === 'day')
@@ -224,16 +290,30 @@
     </div>
 
     <style>
+        .calendar-surface { overflow-x: auto; scrollbar-width: thin; -webkit-overflow-scrolling: touch; overscroll-behavior-inline: contain; }
+        .calendar-surface:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--bs-border-color); border-left: 1px solid var(--bs-border-color); }
         .calendar-cell { min-height: 7rem; border-right: 1px solid var(--bs-border-color); border-bottom: 1px solid var(--bs-border-color); padding: .4rem; background: #fff; }
         .calendar-cell.is-muted { background: #f8f9fa; color: #6c757d; }
-        .calendar-event { display: block; border-left: .25rem solid var(--event-color, #2563eb); background: #f8fafc; padding: .25rem .35rem; margin-top: .25rem; border-radius: .25rem; font-size: .78rem; color: #111827; text-decoration: none; }
+        .calendar-event { display: block; min-height: 2rem; border-left: .25rem solid var(--event-color, #2563eb); background: #f8fafc; padding: .25rem .35rem; margin-top: .25rem; border-radius: .25rem; font-size: .78rem; color: #111827; text-decoration: none; }
         .calendar-event:hover { background: #eef2ff; color: #111827; }
         .calendar-event:focus { outline: 2px solid #2563eb; outline-offset: 2px; }
+        .calendar-event-summary { display: flex; align-items: center; gap: .25rem; min-width: 0; }
+        .calendar-event-title { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .calendar-event-time { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+        .calendar-event-content { min-width: 0; }
+        .calendar-event-identity { display: inline-flex; align-items: center; gap: .2rem; flex: 0 0 auto; }
+        .calendar-owner-badge { display: inline-flex; align-items: center; gap: .25rem; max-width: 100%; padding: .2em .45em; background: #fff; color: #212529; font-size: .68rem; font-weight: 700; line-height: 1.1; letter-spacing: .02em; white-space: nowrap; }
+        .calendar-type-badge { display: inline-flex; align-items: center; padding: .2em .4em; background: #f8f9fa; color: #495057; font-size: .64rem; font-weight: 700; line-height: 1.1; letter-spacing: .02em; white-space: nowrap; }
+        .calendar-owner-swatch { display: inline-block; width: .5rem; height: .5rem; flex: 0 0 auto; border-radius: 50%; background: var(--owner-color, #6c757d); box-shadow: 0 0 0 1px rgba(0, 0, 0, .3); }
+        .calendar-calendar-identity { display: inline-flex; align-items: center; gap: .3rem; max-width: 100%; background: #fff; color: #495057; }
+        .calendar-calendar-identity > span:last-child { overflow: hidden; text-overflow: ellipsis; }
         .calendar-click-target { cursor: pointer; }
         .calendar-click-target:hover { background: #f8fbff; }
         .calendar-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
         .calendar-day-column { min-height: 22rem; border: 1px solid var(--bs-border-color); border-radius: .35rem; background: #fff; padding: .5rem; }
+        .calendar-more-events { display: block; min-height: 2rem; margin-top: .25rem; padding: .3rem .35rem; border-radius: .25rem; color: var(--bs-primary); font-size: .75rem; font-weight: 600; text-decoration: none; }
+        .calendar-grid, .calendar-week { min-width: 56rem; }
         .calendar-collapsible-card > summary { cursor: pointer; list-style: none; }
         .calendar-collapsible-card > summary::-webkit-details-marker { display: none; }
         .calendar-collapsible-icon { transition: transform .15s ease-in-out; }
@@ -390,7 +470,11 @@
             });
 
             document.querySelectorAll('[data-create-date]').forEach(function (target) {
-                target.addEventListener('click', function () {
+                target.addEventListener('click', function (event) {
+                    if (event.target.closest('a, button, input, select, textarea, label')) {
+                        return;
+                    }
+
                     const date = target.dataset.createDate;
                     const startsAt = document.getElementById('starts_at');
                     const endsAt = document.getElementById('ends_at');
@@ -438,6 +522,13 @@
                 @foreach($selectedCalendarIds as $calendarId)
                     <input type="hidden" name="calendars[]" value="{{ $calendarId }}">
                 @endforeach
+                @if($onlyMine)
+                    <input type="hidden" name="only_mine" value="1">
+                @else
+                    @foreach($selectedOwnershipGroups as $ownershipGroup)
+                        <input type="hidden" name="ownership_groups[]" value="{{ $ownershipGroup }}">
+                    @endforeach
+                @endif
                 <label for="availability_user_id" class="form-label small">User</label>
                 <select id="availability_user_id" name="availability_user_id" class="form-select form-select-sm mb-2">
                     @foreach($users as $availableUser)

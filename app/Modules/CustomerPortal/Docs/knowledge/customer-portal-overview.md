@@ -4,6 +4,9 @@ account.
 Current foundation behavior:
 
 - Admins invite existing Contacts from `/tech/admin/system/customer-portal`.
+- Users with `customer_portal.invite` can choose `Send customer portal invitation` while creating a
+  Contact. Contact Settings controls the initial checkbox state, and the user may override it for
+  that create action.
 - Invitations are scoped to one Client and optionally one Site.
 - Invited contacts accept through `/portal/invitations/{token}`.
 - Portal login uses the existing Nexum user account system.
@@ -29,6 +32,12 @@ remain hidden until their owning modules implement explicit customer-visible sli
 Portal access is hidden by default and must be explicitly granted per Contact and Client/Site scope.
 Internal notes, internal documents, private tasks, billing margin data, credentials, assignment
 logic, and technician-only audit details are never exposed by the foundation.
+
+Contact-created invitations use the Customer Portal `Viewer` role and the same active Contact,
+active Client, Site ownership, email identity, existing-access, pending-invitation, audit, and
+queued-email safeguards as the Customer Portal admin form. The Contact option appears only during
+create and only for users with `customer_portal.invite`; ordinary Contact edits cannot resend an
+invitation. The global Contact default is off unless an administrator explicitly enables it.
 
 Customer-visible records are owned by their domain modules:
 

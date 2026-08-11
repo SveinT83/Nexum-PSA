@@ -43,3 +43,15 @@ Expose a safe customer-facing Ticket workflow inside the authenticated Customer 
 - Technician UI can publish an Unpublished ticket; Published tickets cannot be unpublished from the normal ticket page.
 - Unpublished client tickets do not allow customer replies, outbound customer email, portal notifications, or Nexum relationship escalation.
 - Narrow tests pass on the Dev server.
+
+## Follow-Up: Published Installation Default
+
+GitHub issue #191 and the approved RFC
+`docs/rfc/2026-07-28-manual-client-ticket-published-default.md` changed only the clean-install,
+missing-setting, and invalid-setting fallback for new manually created client Tickets to Published.
+A valid administrator choice remains authoritative, the create form keeps the per-Ticket override,
+and internal Tickets without a Client remain outside the portal. Existing Unpublished Tickets are
+not changed retroactively.
+
+Default publication continues through the established portal visibility event and Customer Portal
+notification path. It does not create a public initial message or queue `SendTicketReplyEmail`.
