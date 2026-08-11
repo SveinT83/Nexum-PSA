@@ -8,8 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::connection(config('webpush.database_connection'))
-            ->create(config('webpush.table_name'), function (Blueprint $table): void {
+        $subscriptionConnection = $this->subscriptionConnection();
+        $subscriptionTable = $this->subscriptionTable();
+
+        Schema::connection($subscriptionConnection)
+            ->create($subscriptionTable, function (Blueprint $table): void {
                 $table->bigIncrements('id');
                 $table->uuid('public_id')->unique();
                 $table->morphs('subscribable', 'push_subscriptions_subscribable_morph_idx');
@@ -56,6 +59,9 @@ return new class extends Migration
 
     public function down(): void
     {
+        $subscriptionConnection = $this->subscriptionConnection();
+        $subscriptionTable = $this->subscriptionTable();
+
         Schema::table('notification_settings', function (Blueprint $table): void {
             $table->dropColumn([
                 'web_push_enabled',
@@ -65,7 +71,19 @@ return new class extends Migration
 
         Schema::dropIfExists('web_push_subscription_events');
 
-        Schema::connection(config('webpush.database_connection'))
-            ->dropIfExists(config('webpush.table_name'));
+        Schema::connection($subscriptionConnection)
+            ->dropIfExists($subscriptionTable);
+    }
+
+    private function subscriptionConnection(): string
+    {
+        return trim((string) config('webpush.database_connection'))
+            ?: (string) config('database.default', 'mysql');
+    }
+
+    private function subscriptionTable(): string
+    {
+        return trim((string) config('webpush.table_name'))
+            ?: 'push_subscriptions';
     }
 };
