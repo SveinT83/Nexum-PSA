@@ -420,8 +420,16 @@ class PushKnowledgeToBookStack
         $this->integration->is_healthy = $summary['failed'] === 0 && $summary['skipped'] === 0;
         $this->integration->last_error = $summary['failed'] === 0 && $summary['skipped'] === 0
             ? null
-            : implode("\n", array_slice($summary['errors'], 0, 5));
+            : $this->lastErrorSummary($summary['errors']);
         $this->integration->save();
+    }
+
+    /**
+     * @param  array<int, string>  $errors
+     */
+    private function lastErrorSummary(array $errors): string
+    {
+        return mb_substr(implode("\n", array_slice($errors, 0, 5)), 0, 4000);
     }
 
     /**

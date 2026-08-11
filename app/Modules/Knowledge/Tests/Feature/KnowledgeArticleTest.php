@@ -717,6 +717,24 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function repository_documentation_sync_includes_intake_docs(): void
+    {
+        $this->artisan('knowledge:sync-docs', ['--module' => ['Intake']])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 1')
+            ->expectsOutput('modules: Intake')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'intake/intake-public-inquiry-forms')
+            ->firstOrFail();
+
+        $this->assertSame('Intake Public Inquiry Forms', $article->title);
+        $this->assertSame('Intake', $article->source_payload['module']);
+    }
+
+    #[Test]
     public function repository_documentation_sync_includes_work_context_docs(): void
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['WorkContext']])

@@ -12,6 +12,7 @@ use App\Modules\Contact\Models\Contact;
 use App\Modules\Intake\Models\IntakeForm;
 use App\Modules\Intake\Models\IntakeSubmission;
 use App\Modules\Intake\Models\IntakeSubmissionEvent;
+use App\Modules\Intake\Support\IntakeSubmissionTargetPayload;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
 use Illuminate\Support\Facades\DB;
@@ -23,22 +24,23 @@ class RouteIntakeSubmissionToSales
     public function __construct(
         private readonly StoreContact $storeContact,
         private readonly SuggestClientNumber $suggestClientNumber,
+        private readonly IntakeSubmissionTargetPayload $payload,
     ) {}
 
     public function handle(IntakeSubmission $submission, bool $force = false, ?User $actor = null): ?SalesOpportunity
     {
         $submission->loadMissing(['form', 'attachments', 'matchedClient.sites', 'matchedSite', 'matchedClientUser']);
 
-        if ($submission->status === IntakeSubmission::STATUS_SPAM) {
+        if ($submission->target_type === SalesOpportunity::class && $submission->target_id) {
+            return SalesOpportunity::query()->find($submission->target_id);
+        }
+
+        if ($submission->isClosedForRouting() || $submission->hasTarget()) {
             return null;
         }
 
         if (! $force && $submission->form?->target_type !== IntakeForm::TARGET_SALES_LEAD) {
             return null;
-        }
-
-        if ($submission->target_type === SalesOpportunity::class && $submission->target_id) {
-            return SalesOpportunity::query()->find($submission->target_id);
         }
 
         return DB::transaction(function () use ($submission, $actor): ?SalesOpportunity {
@@ -49,6 +51,7 @@ class RouteIntakeSubmissionToSales
             $clientUser = $submission->matchedClientUser;
             $autoCreatedClient = false;
             $autoCreatedContact = false;
+            $intakeMetadata = $this->payload->metadata($submission, IntakeForm::TARGET_SALES_LEAD);
 
             if (! $client && $form?->auto_create_client) {
                 [$client, $site] = $this->createClient($submission, $normalized);
@@ -92,12 +95,7 @@ class RouteIntakeSubmissionToSales
                 'probability_percent' => 10,
                 'weighted_value_ex_vat' => 0,
                 'is_unread' => true,
-                'metadata' => [
-                    'created_from' => 'intake_submission',
-                    'intake_submission_id' => $submission->id,
-                    'intake_form_id' => $submission->intake_form_id,
-                    'attachment_count' => $submission->attachments->count(),
-                ],
+                'metadata' => $intakeMetadata,
                 'created_by' => $actor?->id,
                 'updated_by' => $actor?->id,
             ]);
@@ -110,14 +108,10 @@ class RouteIntakeSubmissionToSales
                 'subject' => 'Public inquiry received',
                 'body' => $this->activityBody($submission, $normalized),
                 'is_unread' => true,
-                'metadata' => [
-                    'created_from' => 'intake_submission',
-                    'intake_submission_id' => $submission->id,
-                    'attachment_count' => $submission->attachments->count(),
-                ],
+                'metadata' => $intakeMetadata,
             ]);
 
-            $result = [
+            $result = $intakeMetadata + [
                 'action' => 'sales_opportunity_created',
                 'opportunity_id' => $opportunity->id,
                 'opportunity_key' => $opportunity->opportunity_key,

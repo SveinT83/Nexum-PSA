@@ -15,6 +15,9 @@ use App\Modules\Intake\Models\IntakeSubmission;
 use App\Modules\Intake\Models\IntakeSubmissionAttachment;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Signal\Models\Signal;
+use App\Modules\Task\Models\Task;
+use App\Modules\Ticket\Actions\StoreTicket;
+use App\Modules\Ticket\Models\Ticket;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -141,7 +144,8 @@ class IntakeModuleTest extends TestCase
                     ],
                 ],
             ])
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
 
         $form = IntakeForm::query()->where('slug', 'new-technician-onboarding')->firstOrFail();
         $department = $form->fields()->where('key', 'department')->firstOrFail();
@@ -225,7 +229,8 @@ class IntakeModuleTest extends TestCase
                     ],
                 ],
             ])
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
 
         $form = IntakeForm::query()->where('slug', 'conditional-onboarding')->firstOrFail();
         $organizationNumber = $form->fields()->where('key', 'org_number')->firstOrFail();
@@ -423,10 +428,326 @@ class IntakeModuleTest extends TestCase
     }
 
     #[Test]
+    public function admin_can_store_final_form_scope_and_routing_policy(): void
+    {
+        $client = Client::factory()->create(['name' => 'Scoped Client AS']);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.intake.forms.store'), [
+                'name' => 'Scoped support intake',
+                'slug' => 'scoped-support-intake',
+                'description' => null,
+                'status' => IntakeForm::STATUS_PUBLISHED,
+                'success_message' => null,
+                'submit_button_label' => 'Send support request',
+                'purpose' => 'Support',
+                'language' => 'nb',
+                'scope_type' => IntakeForm::SCOPE_CLIENT,
+                'scope_client_id' => $client->id,
+                'target_type' => IntakeForm::TARGET_TICKET,
+                'routing_mode' => IntakeForm::ROUTING_MODE_KNOWN_CLIENT_ONLY,
+                'owner_id' => $this->admin->id,
+                'spam_honeypot_field' => 'intake_website',
+                'max_files' => 5,
+                'max_file_size_kb' => 20480,
+                'allowed_mime_types_text' => "application/pdf\nimage/png",
+                'fields' => [
+                    [
+                        'label' => 'Subject',
+                        'key' => 'subject',
+                        'field_type' => IntakeFormField::TYPE_TEXT,
+                        'maps_to' => IntakeFormField::MAP_SUBJECT,
+                        'is_required' => '1',
+                        'is_active' => '1',
+                    ],
+                ],
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $form = IntakeForm::query()->where('slug', 'scoped-support-intake')->firstOrFail();
+
+        $this->assertTrue($form->isActive());
+        $this->assertSame(IntakeForm::TARGET_TICKET, $form->target_type);
+        $this->assertSame(IntakeForm::ROUTING_MODE_KNOWN_CLIENT_ONLY, $form->routingMode());
+        $this->assertSame(IntakeForm::SCOPE_CLIENT, $form->scopeType());
+        $this->assertSame($client->id, $form->scopeClientId());
+        $this->assertSame('Support', $form->purpose());
+        $this->assertSame('nb', $form->language());
+        $this->assertSame('Send support request', $form->submitButtonLabel());
+    }
+
+    #[Test]
+    public function public_submission_stores_form_snapshot_and_uses_scoped_client_match(): void
+    {
+        $form = app(EnsureIntakeDefaults::class)->handle();
+        $client = Client::factory()->create(['name' => 'Scoped Snapshot AS']);
+        ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Default site', 'is_default' => true]);
+        $form->forceFill([
+            'metadata' => array_replace($form->metadata ?: [], [
+                'purpose' => 'Scoped support',
+                'language' => 'nb',
+                'scope' => [
+                    'type' => IntakeForm::SCOPE_CLIENT,
+                    'client_id' => $client->id,
+                    'service_id' => null,
+                    'campaign_key' => null,
+                ],
+                'routing' => ['mode' => IntakeForm::ROUTING_MODE_MANUAL_REVIEW],
+            ]),
+        ])->save();
+
+        $this->post(route('intake.forms.submit', $form), [
+            'fields' => [
+                'company_name' => 'A different typed company',
+                'contact_name' => 'Ada Scoped',
+                'contact_email' => 'ada.scoped@example.test',
+                'contact_phone' => '+47 222 33 444',
+                'subject' => 'Scoped request',
+                'message' => 'This form is pinned to a client.',
+                'consent' => '1',
+            ],
+        ])->assertRedirect(route('intake.forms.thanks', $form));
+
+        $submission = IntakeSubmission::query()->firstOrFail();
+
+        $this->assertSame($client->id, $submission->matched_client_id);
+        $this->assertSame('form_scope_client', $submission->routing_result['match_method']);
+        $this->assertSame($form->slug, $submission->raw_payload['form_snapshot']['slug']);
+        $this->assertSame(IntakeForm::SCOPE_CLIENT, $submission->raw_payload['form_snapshot']['scope']['type']);
+        $this->assertSame($client->id, $submission->raw_payload['form_snapshot']['scope']['client_id']);
+        $this->assertSame('subject', collect($submission->raw_payload['field_snapshots'])->firstWhere('key', 'subject')['key']);
+    }
+
+    #[Test]
+    public function automatic_ticket_routing_honors_known_client_policy(): void
+    {
+        $form = app(EnsureIntakeDefaults::class)->handle();
+        $client = Client::factory()->create(['name' => 'Known Ticket AS']);
+        ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'HQ', 'is_default' => true]);
+        $form->forceFill([
+            'target_type' => IntakeForm::TARGET_TICKET,
+            'metadata' => array_replace($form->metadata ?: [], [
+                'scope' => [
+                    'type' => IntakeForm::SCOPE_CLIENT,
+                    'client_id' => $client->id,
+                    'service_id' => null,
+                    'campaign_key' => null,
+                ],
+                'routing' => ['mode' => IntakeForm::ROUTING_MODE_KNOWN_CLIENT_ONLY],
+            ]),
+        ])->save();
+
+        $this->post(route('intake.forms.submit', $form), [
+            'fields' => [
+                'company_name' => 'Known Ticket AS',
+                'contact_name' => 'Ada Known',
+                'contact_email' => 'ada.known@example.test',
+                'subject' => 'Create a ticket',
+                'message' => 'This should become a Ticket.',
+                'consent' => '1',
+            ],
+        ])->assertRedirect(route('intake.forms.thanks', $form));
+
+        $submission = IntakeSubmission::query()->firstOrFail();
+        $ticket = Ticket::query()->firstOrFail();
+
+        $this->assertSame(IntakeSubmission::STATUS_ROUTED, $submission->status);
+        $this->assertSame(Ticket::class, $submission->target_type);
+        $this->assertSame($ticket->id, $submission->target_id);
+        $this->assertSame('intake', $ticket->channel);
+        $this->assertSame($client->id, $ticket->client_id);
+        $this->assertSame($submission->id, $ticket->metadata['intake_submission_id']);
+        $this->assertTrue($ticket->is_unread);
+    }
+
+    #[Test]
+    public function automatic_ticket_routing_skips_unknown_clients_when_policy_requires_known_client(): void
+    {
+        $form = app(EnsureIntakeDefaults::class)->handle();
+        $form->forceFill([
+            'target_type' => IntakeForm::TARGET_TICKET,
+            'metadata' => array_replace($form->metadata ?: [], [
+                'scope' => ['type' => IntakeForm::SCOPE_GLOBAL],
+                'routing' => ['mode' => IntakeForm::ROUTING_MODE_KNOWN_CLIENT_ONLY],
+            ]),
+        ])->save();
+
+        $this->post(route('intake.forms.submit', $form), [
+            'fields' => [
+                'company_name' => 'Unknown Ticket AS',
+                'contact_name' => 'Una Unknown',
+                'contact_email' => 'unknown.ticket@example.test',
+                'subject' => 'Should wait',
+                'message' => 'No client exists yet.',
+                'consent' => '1',
+            ],
+        ])->assertRedirect(route('intake.forms.thanks', $form));
+
+        $submission = IntakeSubmission::query()->firstOrFail();
+
+        $this->assertSame(IntakeSubmission::STATUS_ROUTING_SKIPPED, $submission->status);
+        $this->assertSame('known_client_required', $submission->routing_result['reason']);
+        $this->assertDatabaseCount('tickets', 0);
+    }
+
+    #[Test]
+    public function reviewer_can_route_submission_to_ticket_without_copying_intake_files(): void
+    {
+        Storage::fake('local');
+        $form = app(EnsureIntakeDefaults::class)->handle();
+
+        $this->post(route('intake.forms.submit', $form), [
+            'fields' => [
+                'company_name' => 'Manual Ticket AS',
+                'contact_name' => 'Tina Ticket',
+                'contact_email' => 'tina.ticket@example.test',
+                'subject' => 'Manual ticket route',
+                'message' => 'Please route this manually.',
+                'consent' => '1',
+            ],
+            'files' => [
+                'attachments' => [
+                    UploadedFile::fake()->createWithContent('manual-ticket.txt', 'manual ticket'),
+                ],
+            ],
+        ])->assertRedirect(route('intake.forms.thanks', $form));
+
+        $submission = IntakeSubmission::query()->firstOrFail();
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.intake.submissions.route-ticket', $submission))
+            ->assertRedirect(route('tech.admin.system.intake.submissions.show', $submission));
+
+        $submission->refresh();
+        $ticket = Ticket::query()->firstOrFail();
+
+        $this->assertSame(IntakeSubmission::STATUS_ROUTED, $submission->status);
+        $this->assertSame(Ticket::class, $submission->target_type);
+        $this->assertSame($ticket->id, $submission->target_id);
+        $this->assertStringContainsString('manual-ticket.txt', $ticket->description);
+        $this->assertDatabaseCount('intake_submission_attachments', 1);
+        $this->assertDatabaseCount('ticket_attachments', 0);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.intake.submissions.show', $submission))
+            ->assertOk()
+            ->assertSee('Review outcome')
+            ->assertSee($ticket->ticket_key);
+    }
+
+    #[Test]
+    public function reviewer_can_route_submission_to_task(): void
+    {
+        $form = app(EnsureIntakeDefaults::class)->handle();
+        $submission = IntakeSubmission::query()->create([
+            'intake_form_id' => $form->id,
+            'status' => IntakeSubmission::STATUS_NEW,
+            'raw_payload' => ['fields' => ['subject' => 'Create follow-up task']],
+            'normalized_payload' => [
+                'subject' => 'Create follow-up task',
+                'message' => 'Task body',
+            ],
+            'submitted_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.intake.submissions.route-task', $submission))
+            ->assertRedirect(route('tech.admin.system.intake.submissions.show', $submission));
+
+        $submission->refresh();
+        $task = Task::query()->firstOrFail();
+
+        $this->assertSame(IntakeSubmission::STATUS_ROUTED, $submission->status);
+        $this->assertSame(Task::class, $submission->target_type);
+        $this->assertSame($task->id, $submission->target_id);
+        $this->assertSame('intake_submission', $task->source_type);
+        $this->assertSame($submission->id, $task->source_id);
+        $this->assertSame($submission->id, $task->metadata['intake_submission_id']);
+    }
+
+    #[Test]
+    public function reviewer_can_close_submission_and_link_existing_records(): void
+    {
+        $form = app(EnsureIntakeDefaults::class)->handle();
+        $duplicateOf = IntakeSubmission::query()->create([
+            'intake_form_id' => $form->id,
+            'status' => IntakeSubmission::STATUS_REVIEWED,
+            'raw_payload' => ['fields' => ['subject' => 'Original']],
+            'normalized_payload' => ['subject' => 'Original'],
+            'submitted_at' => now(),
+        ]);
+        $submission = IntakeSubmission::query()->create([
+            'intake_form_id' => $form->id,
+            'status' => IntakeSubmission::STATUS_NEW,
+            'raw_payload' => ['fields' => ['subject' => 'Duplicate']],
+            'normalized_payload' => ['subject' => 'Duplicate'],
+            'submitted_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.intake.submissions.outcome', $submission), [
+                'status' => IntakeSubmission::STATUS_DUPLICATE,
+                'duplicate_of_submission_id' => $duplicateOf->id,
+                'reason' => 'Same customer request.',
+            ])
+            ->assertRedirect();
+
+        $submission->refresh();
+        $this->assertSame(IntakeSubmission::STATUS_DUPLICATE, $submission->status);
+        $this->assertDatabaseHas('intake_submission_events', [
+            'intake_submission_id' => $submission->id,
+            'type' => 'marked_duplicate',
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Manual Link AS']);
+        $linkSubmission = IntakeSubmission::query()->create([
+            'intake_form_id' => $form->id,
+            'status' => IntakeSubmission::STATUS_NEW,
+            'raw_payload' => ['fields' => ['subject' => 'Link me']],
+            'normalized_payload' => ['subject' => 'Link me'],
+            'submitted_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.intake.submissions.link-existing', $linkSubmission), [
+                'target_type' => 'client',
+                'reference' => (string) $client->id,
+            ])
+            ->assertRedirect(route('tech.admin.system.intake.submissions.show', $linkSubmission));
+
+        $linkSubmission->refresh();
+        $this->assertSame($client->id, $linkSubmission->matched_client_id);
+        $this->assertNull($linkSubmission->target_type);
+
+        $ticket = app(StoreTicket::class)->handle([
+            'subject' => 'Existing linked ticket',
+            'description' => 'Existing ticket body',
+        ], $this->admin);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.system.intake.submissions.link-existing', $linkSubmission), [
+                'target_type' => 'ticket',
+                'reference' => $ticket->ticket_key,
+            ])
+            ->assertRedirect(route('tech.admin.system.intake.submissions.show', $linkSubmission));
+
+        $linkSubmission->refresh();
+        $this->assertSame(IntakeSubmission::STATUS_ROUTED, $linkSubmission->status);
+        $this->assertSame(Ticket::class, $linkSubmission->target_type);
+        $this->assertSame($ticket->id, $linkSubmission->target_id);
+    }
+
+    #[Test]
     public function sales_target_form_routes_matched_client_submission_to_sales_opportunity(): void
     {
         $form = app(EnsureIntakeDefaults::class)->handle();
-        $form->forceFill(['target_type' => IntakeForm::TARGET_SALES_LEAD])->save();
+        $form->forceFill([
+            'target_type' => IntakeForm::TARGET_SALES_LEAD,
+            'metadata' => array_replace($form->metadata ?: [], [
+                'routing' => ['mode' => IntakeForm::ROUTING_MODE_KNOWN_CLIENT_ONLY],
+            ]),
+        ])->save();
 
         $client = Client::factory()->create(['name' => 'Matched Client AS']);
         $site = ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'HQ']);

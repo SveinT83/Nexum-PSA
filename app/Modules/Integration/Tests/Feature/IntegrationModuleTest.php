@@ -1721,6 +1721,56 @@ class IntegrationModuleTest extends TestCase
     }
 
     #[Test]
+    public function scheduled_book_stack_push_truncates_long_last_error_messages(): void
+    {
+        $longMessage = 'Provider rejected push: '.str_repeat('details ', 9000);
+        Http::fake([
+            'https://docs.example.test/api/pages/123' => Http::response([
+                'message' => $longMessage,
+            ], 500),
+        ]);
+
+        $integration = Integration::create([
+            'name' => 'BookStack',
+            'type' => 'book_stack',
+            'server' => 'https://docs.example.test',
+            'status' => 'active',
+            'is_healthy' => true,
+            'config' => [
+                'two_way_sync_enabled' => true,
+            ],
+        ]);
+        $integration->setSecret('token_id', 'token-id');
+        $integration->setSecret('token_secret', 'token-secret');
+        $integration->save();
+
+        $article = Article::create([
+            'title' => 'Long Error Page',
+            'slug' => 'long-error-page',
+            'body_markdown' => 'Content that cannot be pushed.',
+            'body_html' => '<p>Content that cannot be pushed.</p>',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->admin->id,
+            'created_by' => $this->admin->id,
+            'source_system' => 'book_stack',
+            'source_type' => 'page',
+            'source_id' => '123',
+            'sync_status' => 'pending_push',
+        ]);
+
+        (new PushPendingKnowledgeToBookStack)->handle();
+
+        $integration->refresh();
+
+        $this->assertFalse($integration->is_healthy);
+        $this->assertSame(1, $integration->config['last_push_summary']['failed']);
+        $this->assertStringStartsWith('Page '.$article->id.': Provider rejected push:', $integration->last_error);
+        $this->assertLessThanOrEqual(4000, mb_strlen($integration->last_error));
+        $this->assertGreaterThan(4000, mb_strlen($integration->config['last_push_summary']['errors'][0]));
+    }
+
+    #[Test]
     public function book_stack_sync_api_exposes_sanitized_status_and_requires_run_scope(): void
     {
         $integration = Integration::create([

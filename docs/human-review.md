@@ -27,6 +27,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-11-001 | Intake final routing and review completion | Pending | 2026-08-11 |  |  |
 | HR-2026-07-29-013 | Production Ticket external-message API route | Pending | 2026-07-29 |  |  |
 | HR-2026-07-29-012 | AI privacy governance and coordinator worklog API | Pending | 2026-07-29 |  |  |
 | HR-2026-07-29-011 | Quote billing cadence and customer copy | Pending | 2026-07-29 |  |  |
@@ -147,6 +148,61 @@ Reviewed date: 2026-07-28
 Result / notes: Approved by Svein Tore in the Codex task after reviewing the completed work.
 
 ## Open Reviews
+
+### HR-2026-08-11-001 - Intake Final Routing And Review Completion
+
+Status: Pending
+Added: 2026-08-11
+Environment: Dev
+Related: GitHub Discussion #166, `docs/rfc/2026-07-04-public-inquiry-forms.md`, and
+`docs/feature-slices/2026-08-11-intake-final-routing-review.md`
+
+Scope: Intake public inquiry forms now support final lifecycle states, form purpose/language/scope,
+explicit routing modes, submission form/field snapshots, client-scoped matching, direct Sales,
+Ticket, and Task handoff through owning module actions, staff review outcomes, and existing-record
+linking. Uploaded files remain Intake-owned and are referenced by target records without silent file
+copying.
+
+Deployment actions: deploy the code, run `php artisan migrate --force`, run `php artisan
+optimize:clear`, and sync Intake Knowledge documentation. No permission seed, frontend build, queue
+restart, or scheduler change is required unless the target environment already has stale caches or
+separate Knowledge sync scheduling.
+
+Risks: public forms with legacy `active` status must continue to open until migrated to
+`published`; automatic routing must not create target records when the configured policy says manual
+review or known-client-only without a match; client-scoped forms must not match another Client; and
+attachments must stay downloadable from protected Intake while not being copied into Ticket, Task,
+Sales, or Signal payload paths.
+
+Automated verification: the focused Intake feature suite passes with 21 tests and 168 assertions,
+covering route ownership, form settings, conditional fields, snapshots, scoped matching, Sales,
+Ticket, and Task routing, skipped routing, review outcomes, existing-record linking, spam handling,
+Signal payloads, and attachment ownership. The focused Knowledge repository-doc sync test confirms
+Intake docs are registered. The focused Integration regression confirms BookStack push `last_error`
+messages are truncated safely. Dev BookStack push jobs that failed before the truncation fix were
+retried, and `queue:failed` reports no failed jobs.
+
+Human checks:
+
+- [ ] Create or edit an Intake form, set status `Published`, purpose/language, Client scope, Ticket
+  target, and `Auto-route known clients`; confirm the public URL opens.
+- [ ] Submit the form as a known Client and confirm a Ticket is created, linked from the Intake
+  submission, and contains the submitted values and attachment names.
+- [ ] Submit a similar global form as an unknown Client with `Auto-route known clients`; confirm it
+  stays in Intake as routing skipped and does not create a Ticket.
+- [ ] From a new submission, manually route to Sales and Task and confirm each target link opens.
+- [ ] Link an existing Client and then link an existing Ticket or Sales opportunity; confirm Client
+  matching and target status update are reflected in the submission events.
+- [ ] Mark submissions as reviewed, spam, duplicate, rejected, and archived and confirm the status,
+  reason, reviewer, and event history are clear.
+- [ ] Download an Intake attachment from the protected submission page and confirm no copied
+  attachment appears on the created Ticket/Task/Sales record unless a separate handoff was approved.
+- [ ] Check the form builder and submission detail page at desktop and mobile widths for readable
+  Bootstrap layout and non-overlapping controls.
+
+Reviewer:
+Reviewed date:
+Result / notes:
 
 ### HR-2026-07-29-013 - Production Ticket External-Message API Route
 

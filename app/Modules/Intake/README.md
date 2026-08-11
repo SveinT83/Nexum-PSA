@@ -13,8 +13,9 @@ Intake owns:
 - Admin review and manual routing surfaces.
 - A normalized Signal event after each successful non-spam submission.
 
-Target modules own their own record creation rules. The first implemented target is guarded Sales
-opportunity creation.
+Target modules own their own record creation rules. Intake can hand off to Sales, Ticket, and Task
+through the owning module actions, and can link existing Client, Contact, Ticket, Task, or Sales
+records during staff review.
 
 ## Upload Handling
 
@@ -24,16 +25,32 @@ Ticket, Sales, or other modules.
 
 ## Routing
 
+Forms store purpose, language, scope, target, and routing mode in metadata. New or updated forms use
+the lifecycle states `draft`, `published`, `paused`, and `archived`; legacy `active` rows remain
+readable and are normalized by migration.
+
+Routing modes are:
+
+- Manual review.
+- Auto-route known clients.
+- Auto-route every valid submission.
+
 Sales routing requires a matched Client unless the form explicitly allows client auto-creation.
 Contact creation uses the Contact module action so the legacy `client_users` bridge remains
-consistent.
+consistent. Ticket routing uses the Ticket module action, so defaults, SLA, assignment, rules, and
+work context stay Ticket-owned. Task routing uses the Task module action and requires either a
+reviewing user or form owner as creator.
+
+Client-scoped forms pin matching to the configured Client. This prevents a public submission on a
+client-specific form from being matched to a different Client because of an email or name collision.
 
 ## Post-Submit Automation
 
 Intake does not own a separate after-submit rule engine. Successful non-spam submissions record an
 `intake_submission_received` Signal with form, submission, matched context, visible field values, and
-attachment metadata. Signal rules own follow-up actions such as Ticket creation, Task creation,
-Customer Portal invitation, Sales follow-up, and webhook delivery.
+attachment metadata. Direct Intake routing runs first, so the Signal payload includes any target
+record created during submission handling. Signal rules own extra follow-up actions such as Customer
+Portal invitation, additional tasks, Sales follow-up, and webhook delivery.
 
 Uploaded file contents and storage paths remain Intake-owned and are not copied into Signal payloads.
 

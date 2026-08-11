@@ -18,6 +18,8 @@ class StoreIntakeSubmission
         private readonly StoreIntakeAttachment $storeAttachment,
         private readonly MatchIntakeSubmissionContext $matchContext,
         private readonly RouteIntakeSubmissionToSales $routeToSales,
+        private readonly RouteIntakeSubmissionToTicket $routeToTicket,
+        private readonly RouteIntakeSubmissionToTask $routeToTask,
         private readonly RecordIntakeSubmissionSignal $recordSignal,
     ) {}
 
@@ -42,7 +44,7 @@ class StoreIntakeSubmission
 
         $rawFields = Arr::only($request->input('fields', []), $visibleFields->pluck('key')->all());
         $normalized = $this->normalizedPayload($visibleFields, $rawFields);
-        $match = $this->matchContext->handle($normalized);
+        $match = $this->matchContext->handle($normalized, $form);
 
         $submission = DB::transaction(function () use ($request, $form, $rawFields, $normalized, $match, $visibleFields): IntakeSubmission {
             $submission = IntakeSubmission::query()->create([
@@ -52,7 +54,11 @@ class StoreIntakeSubmission
                 'referrer' => $request->headers->get('referer'),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-                'raw_payload' => ['fields' => $rawFields],
+                'raw_payload' => [
+                    'fields' => $rawFields,
+                    'form_snapshot' => $this->formSnapshot($form),
+                    'field_snapshots' => $this->fieldSnapshots($visibleFields),
+                ],
                 'normalized_payload' => $normalized,
                 'matched_client_id' => $match['matched_client_id'],
                 'matched_site_id' => $match['matched_site_id'],
@@ -77,9 +83,7 @@ class StoreIntakeSubmission
             return $submission;
         });
 
-        if ($form->target_type === IntakeForm::TARGET_SALES_LEAD) {
-            $this->routeToSales->handle($submission);
-        }
+        $this->routeSubmission($submission);
 
         $submission = $submission->refresh();
 
@@ -110,7 +114,11 @@ class StoreIntakeSubmission
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'honeypot_value' => $honeypot,
-            'raw_payload' => ['fields' => $request->input('fields', [])],
+            'raw_payload' => [
+                'fields' => $request->input('fields', []),
+                'form_snapshot' => $this->formSnapshot($form),
+                'field_snapshots' => $this->fieldSnapshots($form->activeFields),
+            ],
             'submitted_at' => now(),
         ]);
 
@@ -120,6 +128,89 @@ class StoreIntakeSubmission
         ]);
 
         return $submission;
+    }
+
+    private function routeSubmission(IntakeSubmission $submission): void
+    {
+        $submission->loadMissing('form');
+        $form = $submission->form;
+
+        if (! $form || $form->target_type === IntakeForm::TARGET_REVIEW_ONLY) {
+            return;
+        }
+
+        if (! $form->shouldAutoRoute($submission)) {
+            if ($form->routingMode() === IntakeForm::ROUTING_MODE_KNOWN_CLIENT_ONLY && ! $submission->matched_client_id) {
+                $this->markRoutingSkipped($submission, 'Routing policy requires an existing client match.', [
+                    'reason' => 'known_client_required',
+                    'routing_mode' => $form->routingMode(),
+                    'target_type' => $form->target_type,
+                ]);
+            }
+
+            return;
+        }
+
+        match ($form->target_type) {
+            IntakeForm::TARGET_SALES_LEAD => $this->routeToSales->handle($submission),
+            IntakeForm::TARGET_TICKET => $this->routeToTicket->handle($submission),
+            IntakeForm::TARGET_TASK => $this->routeToTask->handle($submission),
+            default => null,
+        };
+    }
+
+    private function markRoutingSkipped(IntakeSubmission $submission, string $message, array $metadata): void
+    {
+        $submission->forceFill([
+            'status' => IntakeSubmission::STATUS_ROUTING_SKIPPED,
+            'routing_result' => array_replace($submission->routing_result ?: [], $metadata + ['message' => $message]),
+        ])->save();
+
+        $submission->events()->create([
+            'type' => 'routing_skipped',
+            'message' => $message,
+            'metadata' => $metadata,
+        ]);
+    }
+
+    private function formSnapshot(IntakeForm $form): array
+    {
+        return [
+            'id' => $form->id,
+            'name' => $form->name,
+            'slug' => $form->slug,
+            'status' => $form->status,
+            'target_type' => $form->target_type,
+            'purpose' => $form->purpose(),
+            'language' => $form->language(),
+            'scope' => [
+                'type' => $form->scopeType(),
+                'client_id' => $form->scopeClientId(),
+                'service_id' => $form->scopeServiceId(),
+                'campaign_key' => $form->campaignKey(),
+            ],
+            'routing' => [
+                'mode' => $form->routingMode(),
+            ],
+        ];
+    }
+
+    private function fieldSnapshots($fields): array
+    {
+        return $fields
+            ->map(fn (IntakeFormField $field): array => [
+                'id' => $field->id,
+                'key' => $field->key,
+                'label' => $field->label,
+                'field_type' => $field->field_type,
+                'maps_to' => $field->maps_to,
+                'is_required' => $field->is_required,
+                'sort_order' => $field->sort_order,
+                'layout_width' => $field->layoutWidth(),
+                'visibility' => $field->visibility(),
+            ])
+            ->values()
+            ->all();
     }
 
     private function rules($fields): array

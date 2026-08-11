@@ -4,6 +4,14 @@
     $rows = old('fields', $fieldRows);
     $formMimeTypes = old('allowed_mime_types_text', implode("\n", $form->allowed_mime_types ?: \App\Modules\Intake\Models\IntakeForm::DEFAULT_ALLOWED_MIME_TYPES));
     $submitButtonLabel = old('submit_button_label', $form->submitButtonLabel());
+    $scopeType = old('scope_type', $form->scopeType());
+    $scopeClientId = old('scope_client_id', $form->scopeClientId());
+    $scopeServiceId = old('scope_service_id', $form->scopeServiceId());
+    $scopeCampaignKey = old('scope_campaign_key', $form->campaignKey());
+    $routingMode = old('routing_mode', $form->routingMode());
+    $selectedStatus = old('status', $form->status) === \App\Modules\Intake\Models\IntakeForm::STATUS_LEGACY_ACTIVE
+        ? \App\Modules\Intake\Models\IntakeForm::STATUS_PUBLISHED
+        : old('status', $form->status);
     $settingsErrorFields = [
         'name',
         'slug',
@@ -11,6 +19,13 @@
         'status',
         'success_message',
         'target_type',
+        'purpose',
+        'language',
+        'scope_type',
+        'scope_client_id',
+        'scope_service_id',
+        'scope_campaign_key',
+        'routing_mode',
         'owner_id',
         'spam_honeypot_field',
         'max_files',
@@ -64,8 +79,8 @@
                     <div class="col-md-4">
                         <label for="status" class="form-label">Status</label>
                         <select id="status" name="status" class="form-select @error('status') is-invalid @enderror">
-                            @foreach(['draft' => 'Draft', 'active' => 'Active', 'archived' => 'Archived'] as $value => $label)
-                                <option value="{{ $value }}" @selected(old('status', $form->status) === $value)>{{ $label }}</option>
+                            @foreach(\App\Modules\Intake\Models\IntakeForm::statusLabels() as $value => $label)
+                                <option value="{{ $value }}" @selected($selectedStatus === $value)>{{ $label }}</option>
                             @endforeach
                         </select>
                         @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -73,8 +88,9 @@
                     <div class="col-md-4">
                         <label for="target_type" class="form-label">Target</label>
                         <select id="target_type" name="target_type" class="form-select @error('target_type') is-invalid @enderror">
-                            <option value="review_only" @selected(old('target_type', $form->target_type) === 'review_only')>Review only</option>
-                            <option value="sales_lead" @selected(old('target_type', $form->target_type) === 'sales_lead')>Sales lead</option>
+                            @foreach(\App\Modules\Intake\Models\IntakeForm::targetLabels() as $value => $label)
+                                <option value="{{ $value }}" @selected(old('target_type', $form->target_type) === $value)>{{ $label }}</option>
+                            @endforeach
                         </select>
                         @error('target_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
@@ -87,6 +103,59 @@
                             @endforeach
                         </select>
                         @error('owner_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="routing_mode" class="form-label">Routing mode</label>
+                        <select id="routing_mode" name="routing_mode" class="form-select @error('routing_mode') is-invalid @enderror">
+                            @foreach(\App\Modules\Intake\Models\IntakeForm::routingModeLabels() as $value => $label)
+                                <option value="{{ $value }}" @selected($routingMode === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('routing_mode') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="purpose" class="form-label">Purpose</label>
+                        <input type="text" id="purpose" name="purpose" maxlength="120" class="form-control @error('purpose') is-invalid @enderror" value="{{ old('purpose', $form->purpose()) }}">
+                        @error('purpose') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="language" class="form-label">Language</label>
+                        <input type="text" id="language" name="language" maxlength="20" class="form-control @error('language') is-invalid @enderror" value="{{ old('language', $form->language()) }}">
+                        @error('language') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="scope_type" class="form-label">Scope</label>
+                        <select id="scope_type" name="scope_type" class="form-select @error('scope_type') is-invalid @enderror">
+                            @foreach(\App\Modules\Intake\Models\IntakeForm::scopeLabels() as $value => $label)
+                                <option value="{{ $value }}" @selected($scopeType === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('scope_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="scope_client_id" class="form-label">Scoped client</label>
+                        <select id="scope_client_id" name="scope_client_id" class="form-select @error('scope_client_id') is-invalid @enderror">
+                            <option value="">No client</option>
+                            @foreach($clients as $client)
+                                <option value="{{ $client->id }}" @selected((string) $scopeClientId === (string) $client->id)>{{ $client->name }}{{ $client->client_number ? ' ('.$client->client_number.')' : '' }}</option>
+                            @endforeach
+                        </select>
+                        @error('scope_client_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="scope_service_id" class="form-label">Scoped service</label>
+                        <select id="scope_service_id" name="scope_service_id" class="form-select @error('scope_service_id') is-invalid @enderror">
+                            <option value="">No service</option>
+                            @foreach($services as $service)
+                                <option value="{{ $service->id }}" @selected((string) $scopeServiceId === (string) $service->id)>{{ $service->name }}{{ $service->sku ? ' ('.$service->sku.')' : '' }}</option>
+                            @endforeach
+                        </select>
+                        @error('scope_service_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="scope_campaign_key" class="form-label">Campaign key</label>
+                        <input type="text" id="scope_campaign_key" name="scope_campaign_key" maxlength="120" class="form-control @error('scope_campaign_key') is-invalid @enderror" value="{{ $scopeCampaignKey }}">
+                        @error('scope_campaign_key') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
                         <label for="spam_honeypot_field" class="form-label">Honeypot field</label>
@@ -144,7 +213,7 @@
             </div>
             <div class="card-body py-2">
                 <div class="small text-muted">
-                    Signal rules decide what happens after this form is submitted, such as creating tickets, tasks, portal invitations, Sales follow-up, or webhooks.
+                    Direct target routing uses this form's routing mode. Signal rules can add follow-up work such as portal invitations, extra tasks, Sales follow-up, or webhooks.
                 </div>
             </div>
         </div>

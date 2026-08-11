@@ -34,6 +34,10 @@ Route::middleware('admin')
         Route::post('/forms/{form:slug}/toggle', [AdminIntakeFormController::class, 'toggle'])->name('forms.toggle');
         Route::get('/submissions/{submission}', [AdminIntakeSubmissionController::class, 'show'])->name('submissions.show');
         Route::post('/submissions/{submission}/reviewed', [AdminIntakeSubmissionController::class, 'markReviewed'])->name('submissions.reviewed');
+        Route::post('/submissions/{submission}/outcome', [AdminIntakeSubmissionController::class, 'markOutcome'])->name('submissions.outcome');
+        Route::post('/submissions/{submission}/link-existing', [AdminIntakeSubmissionController::class, 'linkExisting'])->name('submissions.link-existing');
         Route::post('/submissions/{submission}/route-sales', [AdminIntakeSubmissionController::class, 'routeSales'])->name('submissions.route-sales');
+        Route::post('/submissions/{submission}/route-ticket', [AdminIntakeSubmissionController::class, 'routeTicket'])->name('submissions.route-ticket');
+        Route::post('/submissions/{submission}/route-task', [AdminIntakeSubmissionController::class, 'routeTask'])->name('submissions.route-task');
         Route::get('/submissions/{submission}/attachments/{attachment}', [AdminIntakeSubmissionController::class, 'downloadAttachment'])->name('attachments.download');
     });

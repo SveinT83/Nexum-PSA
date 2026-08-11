@@ -5,10 +5,10 @@
 @php
     $statusBadge = static function (string $status): string {
         return match ($status) {
-            'active', 'routed' => 'text-bg-success',
+            'active', 'published', 'routed' => 'text-bg-success',
             'new' => 'text-bg-primary',
             'routing_skipped' => 'text-bg-warning',
-            'spam', 'archived' => 'text-bg-secondary',
+            'paused', 'spam', 'duplicate', 'rejected', 'archived' => 'text-bg-secondary',
             'reviewed' => 'text-bg-light border',
             default => 'text-bg-light border',
         };
@@ -57,10 +57,10 @@
         <div class="col-md-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-body">
-                    <h2 class="h6 mb-0">Active forms</h2>
+                    <h2 class="h6 mb-0">Published forms</h2>
                 </div>
                 <div class="card-body">
-                    <div class="display-6">{{ $forms->where('status', 'active')->count() }}</div>
+                    <div class="display-6">{{ $forms->filter->isActive()->count() }}</div>
                     <div class="text-muted small">Forms that can receive public submissions.</div>
                 </div>
             </div>
@@ -93,8 +93,11 @@
                                 <a href="{{ route('tech.admin.system.intake.forms.edit', $form) }}" class="fw-semibold text-decoration-none">{{ $form->name }}</a>
                                 <div class="small text-muted">/intake/forms/{{ $form->slug }}</div>
                             </td>
-                            <td><span class="badge {{ $statusBadge($form->status) }}">{{ ucfirst($form->status) }}</span></td>
-                            <td>{{ ucfirst(str_replace('_', ' ', $form->target_type)) }}</td>
+                            <td><span class="badge {{ $statusBadge($form->status) }}">{{ \App\Modules\Intake\Models\IntakeForm::statusLabels()[$form->isActive() ? \App\Modules\Intake\Models\IntakeForm::STATUS_PUBLISHED : $form->status] ?? ucfirst($form->status) }}</span></td>
+                            <td>
+                                {{ \App\Modules\Intake\Models\IntakeForm::targetLabels()[$form->target_type] ?? ucfirst(str_replace('_', ' ', $form->target_type)) }}
+                                <div class="small text-muted">{{ \App\Modules\Intake\Models\IntakeForm::routingModeLabels()[$form->routingMode()] ?? ucfirst(str_replace('_', ' ', $form->routingMode())) }}</div>
+                            </td>
                             <td class="text-end">{{ $form->submissions_count }}</td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
@@ -109,7 +112,7 @@
                                     <form method="POST" action="{{ route('tech.admin.system.intake.forms.toggle', $form) }}">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                            {{ $form->isActive() ? 'Disable' : 'Enable' }}
+                                            {{ $form->isActive() ? 'Pause' : 'Publish' }}
                                         </button>
                                     </form>
                                 </div>
@@ -147,7 +150,7 @@
                         <tr>
                             <td class="small">{{ $submission->submitted_at?->format('Y-m-d H:i') }}</td>
                             <td>{{ $submission->form?->name ?? 'Deleted form' }}</td>
-                            <td><span class="badge {{ $statusBadge($submission->status) }}">{{ ucfirst(str_replace('_', ' ', $submission->status)) }}</span></td>
+                            <td><span class="badge {{ $statusBadge($submission->status) }}">{{ \App\Modules\Intake\Models\IntakeSubmission::statusLabels()[$submission->status] ?? ucfirst(str_replace('_', ' ', $submission->status)) }}</span></td>
                             <td>
                                 <a href="{{ route('tech.admin.system.intake.submissions.show', $submission) }}" class="fw-semibold text-decoration-none">
                                     {{ $normalized['subject'] ?? $normalized['company_name'] ?? 'Submission #'.$submission->id }}

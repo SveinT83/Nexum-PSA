@@ -19,6 +19,9 @@ class IntakeSubmission extends Model
     public const STATUS_ROUTED = 'routed';
     public const STATUS_REVIEWED = 'reviewed';
     public const STATUS_ROUTING_SKIPPED = 'routing_skipped';
+    public const STATUS_DUPLICATE = 'duplicate';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_ARCHIVED = 'archived';
 
     protected $fillable = [
         'intake_form_id',
@@ -93,5 +96,34 @@ class IntakeSubmission extends Model
     public function events(): HasMany
     {
         return $this->hasMany(IntakeSubmissionEvent::class, 'intake_submission_id')->latest();
+    }
+
+    public function isClosedForRouting(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_SPAM,
+            self::STATUS_DUPLICATE,
+            self::STATUS_REJECTED,
+            self::STATUS_ARCHIVED,
+        ], true);
+    }
+
+    public function hasTarget(): bool
+    {
+        return $this->target_type !== null && $this->target_id !== null;
+    }
+
+    public static function statusLabels(): array
+    {
+        return [
+            self::STATUS_NEW => 'New',
+            self::STATUS_ROUTING_SKIPPED => 'Routing skipped',
+            self::STATUS_ROUTED => 'Routed',
+            self::STATUS_REVIEWED => 'Reviewed',
+            self::STATUS_SPAM => 'Spam',
+            self::STATUS_DUPLICATE => 'Duplicate',
+            self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_ARCHIVED => 'Archived',
+        ];
     }
 }
