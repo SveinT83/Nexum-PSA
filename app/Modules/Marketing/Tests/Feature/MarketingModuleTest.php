@@ -42,6 +42,7 @@ use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Concerns\ApprovesExternalAiForTests;
 use Tests\TestCase;
 
@@ -526,6 +527,12 @@ class MarketingModuleTest extends TestCase
         $superuser = Role::findOrCreate('Superuser', 'web');
         $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $user->assignRole($superuser);
+
+        Permission::query()
+            ->where('name', 'marketing.list.manage')
+            ->where('guard_name', 'web')
+            ->delete();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $this->assertDatabaseMissing('permissions', ['name' => 'marketing.list.manage']);
 

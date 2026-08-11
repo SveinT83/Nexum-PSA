@@ -3,8 +3,8 @@
 namespace App\Modules\Email\Jobs;
 
 use App\Modules\Email\Models\EmailMessage;
-use App\Modules\Email\Services\InboundEmailSignalClassifier;
 use App\Modules\Email\Services\InboundEmailRuleEngine;
+use App\Modules\Email\Services\InboundEmailSignalClassifier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -26,10 +26,20 @@ class ProcessInboundRules implements ShouldQueue
             return;
         }
 
+        if ($ruleEngine->processPreclassification($message)) {
+            return;
+        }
+
+        $message->refresh();
+        if ($message->ticket_id !== null) {
+            return;
+        }
+
         $signal = $classifier->classifyAndRecord($message);
 
         if ($classifier->shouldStopTicketRouting($signal)) {
             $message->forceFill(['state' => 'archived'])->save();
+
             return;
         }
 

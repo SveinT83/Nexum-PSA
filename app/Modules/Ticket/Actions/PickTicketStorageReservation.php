@@ -60,6 +60,11 @@ class PickTicketStorageReservation
             if (! $item) {
                 throw new InvalidArgumentException('The reserved storage item no longer exists.');
             }
+            if ($item->requiresUnitAwareInventoryMutation()) {
+                throw new InvalidArgumentException(
+                    'Serial, batch, or expiry-tracked stock requires unit-aware picking.'
+                );
+            }
 
             $item->refresh();
 

@@ -1,5 +1,10 @@
 @extends('layouts.default_tech')
 
+@php
+    $trackingConfigurationLocked = $trackingConfigurationLocked
+        ?? ((int) $item->qty_on_hand > 0 || $item->stockUnits()->where('current_qty', '>', 0)->exists());
+@endphp
+
 @section('title', 'Edit ' . $item->sku)
 
 @section('sidebar')
@@ -201,10 +206,48 @@
                             <input type="number" step="0.01" id="vat_rate" name="vat_rate" class="form-control @error('vat_rate') is-invalid @enderror" value="{{ old('vat_rate', $item->vat_rate ?? $defaultVatRate) }}" min="0">
                             @error('vat_rate')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-check form-switch mt-4">
-                                <input class="form-check-input" type="checkbox" id="has_serials" name="has_serials" value="1" @checked(old('has_serials', $item->has_serials))>
-                                <label class="form-check-label" for="has_serials">Require serials on withdrawal/sale</label>
+                                <input type="hidden" name="has_serials" value="{{ $trackingConfigurationLocked ? (int) $item->has_serials : 0 }}">
+                                <input class="form-check-input @error('has_serials') is-invalid @enderror"
+                                       type="checkbox" id="has_serials" name="has_serials" value="1"
+                                       @checked(old('has_serials', $item->has_serials))
+                                       @disabled($trackingConfigurationLocked)>
+                                <label class="form-check-label" for="has_serials">Track individual serial numbers</label>
+                                @error('has_serials')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mt-4">
+                                <input type="hidden" name="track_batch" value="{{ $trackingConfigurationLocked ? (int) $item->track_batch : 0 }}">
+                                <input class="form-check-input @error('track_batch') is-invalid @enderror"
+                                       type="checkbox" id="track_batch" name="track_batch" value="1"
+                                       @checked(old('track_batch', $item->track_batch))
+                                       @disabled($trackingConfigurationLocked)>
+                                <label class="form-check-label" for="track_batch">Track batch / lot numbers</label>
+                                @error('track_batch')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mt-4">
+                                <input type="hidden" name="expiry_enabled" value="{{ $trackingConfigurationLocked ? (int) $item->expiry_enabled : 0 }}">
+                                <input class="form-check-input @error('expiry_enabled') is-invalid @enderror"
+                                       type="checkbox" id="expiry_enabled" name="expiry_enabled" value="1"
+                                       @checked(old('expiry_enabled', $item->expiry_enabled))
+                                       @disabled($trackingConfigurationLocked)>
+                                <label class="form-check-label" for="expiry_enabled">Require expiry dates</label>
+                                @error('expiry_enabled')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert {{ $trackingConfigurationLocked ? 'alert-warning' : 'alert-light border' }} py-2 small mb-0" role="note">
+                                @if($trackingConfigurationLocked)
+                                    Tracking flags are locked while on-hand or identified stock exists. Correct or reverse
+                                    that stock through the unit-aware workflow before changing these settings.
+                                @else
+                                    Tracking settings control the unit details required during goods receiving. Generic
+                                    quantity adjustment and one-click ticket picking are unavailable for tracked items.
+                                @endif
                             </div>
                         </div>
                         <div class="col-md-6">

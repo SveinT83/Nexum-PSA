@@ -35,10 +35,11 @@ class TicketCustomerCompletionApiTest extends TestCase
         Role::firstOrCreate(['name' => 'Tech', 'guard_name' => 'web']);
         Permission::findOrCreate('ticket.update', 'web');
         Permission::findOrCreate('ticket.reply_customer', 'web');
+        Permission::findOrCreate('ticket.close', 'web');
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
-        $this->tech->givePermissionTo(['ticket.update', 'ticket.reply_customer']);
+        $this->tech->givePermissionTo(['ticket.update', 'ticket.reply_customer', 'ticket.close']);
 
         app(EnsureTicketDefaults::class)->handle();
         Queue::fake();

@@ -45,6 +45,9 @@ class Item extends Model
         'qty_reserved',
         'should_order',
         'can_be_ordered',
+        'created_from_import_id',
+        'catalog_review_status',
+        'source_provenance',
         'status',
         'created_by',
         'updated_by',
@@ -61,6 +64,7 @@ class Item extends Model
         'becomes_asset' => 'boolean',
         'should_order' => 'boolean',
         'can_be_ordered' => 'boolean',
+        'source_provenance' => 'array',
         'qty_on_hand' => 'integer',
         'qty_reserved' => 'integer',
         'reorder_point' => 'integer',
@@ -109,6 +113,11 @@ class Item extends Model
         return $this->hasMany(Reservation::class);
     }
 
+    public function createdFromImport(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderImport::class, 'created_from_import_id');
+    }
+
     public function itemVendors(): HasMany
     {
         return $this->hasMany(ItemVendor::class);
@@ -145,11 +154,36 @@ class Item extends Model
         return max($suggested, 0);
     }
 
+    public function usesUnitTracking(): bool
+    {
+        return (bool) $this->has_serials
+            || (bool) $this->track_batch
+            || (bool) $this->expiry_enabled;
+    }
+
+    public function hasPositiveStockUnits(): bool
+    {
+        return $this->stockUnits()->where('current_qty', '>', 0)->exists();
+    }
+
+    public function requiresUnitAwareInventoryMutation(): bool
+    {
+        return $this->usesUnitTracking() || $this->hasPositiveStockUnits();
+    }
+
+    public function trackingConfigurationIsLocked(): bool
+    {
+        return (int) $this->qty_on_hand > 0
+            || (int) $this->qty_reserved > 0
+            || $this->reservations()->where('status', 'active')->exists()
+            || $this->hasPositiveStockUnits();
+    }
+
     public function canBeDeletedFromInventory(): bool
     {
         return $this->qty_on_hand <= 0
             && $this->qty_reserved <= 0
             && ! $this->reservations()->where('status', 'active')->exists()
-            && ! $this->stockUnits()->where('current_qty', '>', 0)->exists();
+            && ! $this->hasPositiveStockUnits();
     }
 }

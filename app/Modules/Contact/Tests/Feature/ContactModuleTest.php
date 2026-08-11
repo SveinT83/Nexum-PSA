@@ -43,6 +43,12 @@ class ContactModuleTest extends TestCase
             'status' => User::STATUS_ACTIVE,
         ]);
         $this->techUser->assignRole('Tech');
+        $this->techUser->givePermissionTo([
+            'contact.view',
+            'contact.create',
+            'contact.update',
+            'contact.manage_settings',
+        ]);
     }
 
     #[Test]

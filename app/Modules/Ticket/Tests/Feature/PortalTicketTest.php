@@ -33,7 +33,14 @@ class PortalTicketTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'Tech']);
+        $techRole = Role::firstOrCreate(['name' => 'Tech']);
+        $techRole->givePermissionTo([
+            'ticket.view',
+            'ticket.create',
+            'ticket.update',
+            'ticket.reply_customer',
+            'ticket.note_internal',
+        ]);
         app(EnsureTicketDefaults::class)->handle();
     }
 

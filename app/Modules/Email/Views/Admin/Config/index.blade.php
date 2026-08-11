@@ -86,7 +86,83 @@
                     </div>
                 </div>
 
-                <!-- 3. Identification & Threading (Read-only) -->
+                <!-- 3. Attachment Policy -->
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Attachment Policy</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="attachment_max_count" class="form-label">Maximum attachments per message</label>
+                                <input type="number" name="attachment_max_count" id="attachment_max_count" class="form-control"
+                                       value="{{ old('attachment_max_count', $config['attachment_max_count'] ?? 20) }}" min="1" max="100">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="attachment_max_size_mb" class="form-label">Maximum size per attachment (MB)</label>
+                                <input type="number" name="attachment_max_size_mb" id="attachment_max_size_mb" class="form-control"
+                                       value="{{ old('attachment_max_size_mb', $config['attachment_max_size_mb'] ?? 10) }}" min="1" max="1024">
+                            </div>
+                            <div class="col-12">
+                                <label for="attachment_allowed_mime_types" class="form-label">Allowed MIME types</label>
+                                <textarea name="attachment_allowed_mime_types" id="attachment_allowed_mime_types" class="form-control font-monospace"
+                                          rows="8">{{ old('attachment_allowed_mime_types', $config['attachment_allowed_mime_types'] ?? '') }}</textarea>
+                                <div class="form-text">
+                                    Enter one type per line or separate values with commas. Exact types and wildcards such as
+                                    <code>image/*</code> are supported. Rejected files are skipped and logged without failing the email import.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Trusted Sender Authentication -->
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Trusted Sender Authentication</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            Both lists are required together. Nexum trusts SPF, DKIM and DMARC facts
+                            only when the <code>Authentication-Results</code> authserv ID is listed
+                            and the first <code>Received</code> header names a configured receiving
+                            hop after <code>by</code>. An authserv ID or visible From address alone
+                            is never sufficient trust evidence. Leave both lists empty to disable
+                            trusted sender authentication.
+                        </p>
+                        <div class="alert alert-warning py-2 small" role="alert">
+                            Only list receiving infrastructure that removes untrusted inbound
+                            <code>Authentication-Results</code> headers and adds its own result.
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="trusted_authserv_ids" class="form-label">Trusted authserv IDs</label>
+                                <textarea name="trusted_authserv_ids" id="trusted_authserv_ids"
+                                          class="form-control font-monospace @error('trusted_authserv_ids') is-invalid @enderror"
+                                          rows="5" placeholder="mx.example.no">{{ old('trusted_authserv_ids', $config['trusted_authserv_ids'] ?? '') }}</textarea>
+                                @error('trusted_authserv_ids')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">One exact hostname per line. Configure the paired receiving-hop list.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="trusted_receiving_hops" class="form-label">Trusted receiving hops</label>
+                                <textarea name="trusted_receiving_hops" id="trusted_receiving_hops"
+                                          class="form-control font-monospace @error('trusted_receiving_hops') is-invalid @enderror"
+                                          rows="5" placeholder="mail-gateway.example.no">{{ old('trusted_receiving_hops', $config['trusted_receiving_hops'] ?? '') }}</textarea>
+                                @error('trusted_receiving_hops')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">
+                                    Required whenever authserv IDs are configured. The first Received
+                                    header must name one of these exact hosts after <code>by</code>.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Identification & Threading (Read-only) -->
                 <div class="card mb-4 bg-light text-muted border-0">
                     <div class="card-header">
                         <h5 class="mb-0">Identification & Threading (Policy)</h5>

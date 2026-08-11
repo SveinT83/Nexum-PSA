@@ -2,19 +2,20 @@
 
 namespace App\Modules\Email\Jobs;
 
-use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailAccount;
-use App\Modules\Email\Services\ImapClient;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
+use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Services\BodyNormalizer;
 use App\Modules\Email\Services\HtmlSanitizer;
+use App\Modules\Email\Services\ImapClient;
+use App\Modules\Email\Services\InboundAttachmentPersister;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class StoreInboundMessage implements ShouldQueue
 {
@@ -23,14 +24,14 @@ class StoreInboundMessage implements ShouldQueue
     public int $timeout = 60;
 
     /**
-     * @param array $payload Structured inbound email data
+     * @param  array  $payload  Structured inbound email data
      */
     public function __construct(public array $payload) {}
 
-    public function handle(): void
+    public function handle(InboundAttachmentPersister $attachmentPersister): void
     {
         $account = EmailAccount::find($this->payload['account_id']);
-        if (!$account) {
+        if (! $account) {
             return;
         }
 
@@ -66,9 +67,9 @@ class StoreInboundMessage implements ShouldQueue
         $html = null;
         $text = null;
         $rawPath = null;
-        $attachmentsCount = 0;
+        $attachments = [];
 
-        if (!($this->payload['is_oversize'] ?? false)) {
+        if (! ($this->payload['is_oversize'] ?? false)) {
             // Fetch full message by UID for body & attachments
             try {
                 $client = new ImapClient($account);
@@ -85,24 +86,13 @@ class StoreInboundMessage implements ShouldQueue
                 // Store raw .eml
                 try {
                     $raw = $message->getRawBody();
-                    $rawPath = 'email/raw/' . $account->id . '/' . $this->payload['imap_uid'] . '.eml';
+                    $rawPath = 'email/raw/'.$account->id.'/'.$this->payload['imap_uid'].'.eml';
                     Storage::disk('local')->put($rawPath, $raw);
                 } catch (\Throwable $e) {
                     Log::warning('Raw save failed', ['uid' => $this->payload['imap_uid'], 'error' => $e->getMessage()]);
                 }
 
-                // Attachments
                 $attachments = $message->getAttachments();
-                foreach ($attachments as $att) {
-                    $path = 'email/attachments/' . $account->id . '/' . $this->payload['imap_uid'] . '/' . $att->getName();
-                    try {
-                        Storage::disk('local')->put($path, $att->getContent());
-                        $attachmentsCount++;
-                        // We could create EmailAttachment records here (future step)
-                    } catch (\Throwable $e) {
-                        Log::warning('Attachment save failed', ['file' => $att->getName(), 'uid' => $this->payload['imap_uid'], 'error' => $e->getMessage()]);
-                    }
-                }
             }
         }
 
@@ -127,12 +117,19 @@ class StoreInboundMessage implements ShouldQueue
             'body_html_sanitized' => $sanitized,
             'body_text' => $textNormalized,
             'raw_path' => $rawPath,
-            'attachments_count' => $attachmentsCount,
+            'attachments_count' => 0,
             'checksum_sha1' => $this->payload['checksum_sha1'] ?? null,
         ]);
 
         if (! $messageModel) {
             return;
+        }
+
+        if ($messageModel->wasRecentlyCreated) {
+            $attachmentsCount = $attachmentPersister->persist($messageModel, $attachments);
+            $messageModel->forceFill([
+                'attachments_count' => $attachmentsCount,
+            ])->save();
         }
 
         // Auto-delete from server if policy is set OR global default is ON

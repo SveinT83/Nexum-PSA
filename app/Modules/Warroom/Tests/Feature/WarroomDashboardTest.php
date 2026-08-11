@@ -31,6 +31,7 @@ class WarroomDashboardTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo('warroom.view');
     }
 
     #[Test]
@@ -172,6 +173,8 @@ class WarroomDashboardTest extends TestCase
     #[Test]
     public function admin_can_update_warroom_settings(): void
     {
+        $this->tech->givePermissionTo('warroom.manage_settings');
+
         $this->actingAs($this->tech)
             ->get(route('tech.admin.settings.warroom'))
             ->assertOk()

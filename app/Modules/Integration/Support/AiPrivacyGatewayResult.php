@@ -9,5 +9,6 @@ final readonly class AiPrivacyGatewayResult
         public int $redactionCount,
         public array $removedFields,
         public string $fingerprint,
+        public array $tokenMap = [],
     ) {}
 }

@@ -23,6 +23,10 @@ The row shows:
 
 **Waiting for stock** means the ticket needs more items than are currently on hand. The `Pick` button is disabled until stock is added.
 
+**Requires identified-unit picking** means the item uses serial, batch, or expiry control, or has
+positive stock-unit ledger quantity. The generic `Pick` button is disabled because it cannot record
+which exact unit left inventory.
+
 ## Searching And Filtering
 
 Use Search to find rows by ticket key, ticket subject, SKU, or item name.
@@ -32,8 +36,21 @@ Use the filter button to show:
 - All reserved items
 - Ready to pick
 - Waiting for stock
+- Requires identified-unit picking
 
 The filter area opens automatically when a status filter is active.
+
+## Sorting The Queue
+
+Click Item, Ticket, Client, Location, Reserved, On-hand, or Status to sort the current Picking List.
+Click the active heading again to reverse the direction. Search and status filters remain selected,
+while changing the sort starts on the first result page. Missing client or location values remain
+at the end in both directions.
+
+With no selected sort, Nexum keeps the operational default: reservations that can be picked now are
+shown first, followed by SKU and reservation age. Status sorting uses the same three states shown in
+the table: Ready, Waiting for stock, and Requires identified-unit picking. The Action column stays
+fixed and is not sortable.
 
 ## How To Pick An Item
 
@@ -67,13 +84,16 @@ separate correction workflow.
 
 ## If Pick Is Disabled
 
-Pick is disabled when there is not enough on-hand stock.
+Pick is disabled when there is not enough on-hand stock or the item requires identified-unit
+picking.
 
 Typical next steps:
 
 - Check if the item is in another box or warehouse.
 - Adjust stock if the on-hand quantity is wrong.
 - Add stock when the item arrives.
+- For a tracked item, keep the reservation open until the dedicated serial/batch/expiry picking flow
+  can identify the units being issued. Do not work around this with a generic stock adjustment.
 - Use the Storage inventory list to filter items that should be ordered.
 
 ## Practical Notes
@@ -81,5 +101,6 @@ Typical next steps:
 - Do not click `Pick` before the item has actually been taken from stock.
 - Use `Open ticket` when the reservation must be reviewed or edited before picking.
 - If the wrong item was reserved on the ticket, fix the ticket cost line instead of picking it.
-- If an item requires serial numbers, record the serial workflow when the consuming flow asks for it.
+- Serial-, batch-, and expiry-controlled items must use a consuming flow that identifies the exact
+  stock units. The generic Ticket Pick action deliberately refuses them.
 - The movement history on the item is the audit trail for what happened.

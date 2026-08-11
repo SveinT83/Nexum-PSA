@@ -3,6 +3,7 @@
 namespace App\Modules\Integration\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -25,6 +26,21 @@ class AiWorkloadTokenBinding extends Model
         'revoked_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $binding): void {
+            $workload = AiWorkloadProfile::query()->find($binding->ai_workload_profile_id);
+
+            if (! $workload) {
+                throw (new ModelNotFoundException)->setModel(AiWorkloadProfile::class, [$binding->ai_workload_profile_id]);
+            }
+
+            if (! $workload->supportsCoordinatorTokens()) {
+                throw new \LogicException('Internal model workloads cannot be bound to coordinator tokens.');
+            }
+        });
+    }
+
     public function token(): BelongsTo
     {
         return $this->belongsTo(PersonalAccessToken::class, 'personal_access_token_id');
@@ -37,6 +53,12 @@ class AiWorkloadTokenBinding extends Model
 
     public function isUsable(): bool
     {
-        return $this->revoked_at === null && $this->expires_at->isFuture();
+        $workload = $this->relationLoaded('workload')
+            ? $this->getRelation('workload')
+            : $this->workload()->first();
+
+        return $this->revoked_at === null
+            && $this->expires_at->isFuture()
+            && $workload?->supportsCoordinatorTokens();
     }
 }

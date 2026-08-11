@@ -251,8 +251,134 @@ class AiPrivacyController extends Controller
         return back()->with('success', 'Approved coordinator workload created.');
     }
 
+    public function storeInternalWorkload(Request $request, AiDataEgressPolicyEvaluator $evaluator): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'purpose' => ['required', 'string', 'max:5000'],
+            'ai_agent_id' => ['required', 'integer', 'exists:ai_agents,id'],
+            'processing_mode' => ['required', Rule::in(AiDataEgressPolicyEvaluator::MODES)],
+            'maximum_data_profile' => ['required', Rule::in(AiDataEgressPolicyEvaluator::PROFILES)],
+            'expires_at' => ['required', 'date', 'after:today'],
+        ]);
+
+        $agent = AiAgent::query()->with('provider')->findOrFail($data['ai_agent_id']);
+        $provider = $agent->provider;
+        if (! $agent->is_active || ! $provider || $provider->status !== 'active') {
+            throw ValidationException::withMessages([
+                'ai_agent_id' => 'The internal workload requires an active agent and provider.',
+            ]);
+        }
+        if (
+            $agent->can_execute_actions
+            || (array) $agent->data_sources !== []
+            || (array) $agent->allowed_tools !== []
+            || (array) $agent->allowed_api_scopes !== []
+        ) {
+            throw ValidationException::withMessages([
+                'ai_agent_id' => 'Internal extraction agents must be non-writing and have no data sources, tools, or API scopes.',
+            ]);
+        }
+
+        $model = $agent->model ?: $provider->default_model;
+        if (blank($model)) {
+            throw ValidationException::withMessages([
+                'ai_agent_id' => 'The selected agent and provider do not define a model.',
+            ]);
+        }
+
+        $modelPolicy = AiModelGovernancePolicy::query()
+            ->where('ai_provider_id', $provider->id)
+            ->where('model', $model)
+            ->first();
+        $agentPolicy = AiAgentGovernancePolicy::query()
+            ->where('ai_agent_id', $agent->id)
+            ->first();
+        if (! $modelPolicy || ! $modelPolicy->is_approved || $modelPolicy->expires_at?->isPast()) {
+            throw ValidationException::withMessages([
+                'ai_agent_id' => 'Approve the selected agent model before creating an internal workload.',
+            ]);
+        }
+        if (! $agentPolicy || ! $agentPolicy->is_approved || $agentPolicy->expires_at?->isPast()) {
+            throw ValidationException::withMessages([
+                'ai_agent_id' => 'Approve the selected agent governance policy before creating an internal workload.',
+            ]);
+        }
+        if (
+            $data['processing_mode'] !== $modelPolicy->processing_mode
+            || $data['processing_mode'] !== $agentPolicy->processing_mode
+            || $data['maximum_data_profile'] !== $agentPolicy->maximum_data_profile
+            || ! $evaluator->profileFits($data['maximum_data_profile'], $modelPolicy->maximum_data_profile)
+        ) {
+            throw ValidationException::withMessages([
+                'processing_mode' => 'The workload mode and data profile must match the approved agent policy and fit the model policy.',
+            ]);
+        }
+
+        $installation = AiDataEgressPolicy::installation();
+        if (
+            ! in_array($data['processing_mode'], $installation->allowed_processing_modes ?? [], true)
+            || ! $evaluator->profileFits($data['maximum_data_profile'], $installation->maximum_data_profile)
+        ) {
+            throw ValidationException::withMessages([
+                'processing_mode' => 'The internal workload cannot exceed the installation policy.',
+            ]);
+        }
+
+        if ($data['processing_mode'] !== 'local_only') {
+            $governance = AiProviderGovernanceProfile::query()
+                ->where('ai_provider_id', $provider->id)
+                ->first();
+            if (
+                ! $installation->external_processing_enabled
+                || ($data['processing_mode'] === 'privacy_relay' && ! $installation->privacy_gateway_enabled)
+                || ($data['processing_mode'] === 'direct_external' && ! $installation->direct_external_enabled)
+                || ! $governance
+                || ! $governance->is_active
+                || ! $governance->is_approved
+                || $governance->expires_at?->isPast()
+                || ! $governance->isComplete()
+                || ! in_array($data['processing_mode'], $governance->allowed_processing_modes ?? [], true)
+                || ! $evaluator->profileFits($data['maximum_data_profile'], $governance->maximum_data_profile)
+            ) {
+                throw ValidationException::withMessages([
+                    'processing_mode' => 'External internal workloads require complete, active provider and installation approval.',
+                ]);
+            }
+        }
+
+        AiWorkloadProfile::query()->create([
+            'name' => $data['name'],
+            'slug' => Str::slug($data['name']).'-'.Str::lower(Str::random(6)),
+            'workload_type' => AiWorkloadProfile::TYPE_INTERNAL_MODEL,
+            'purpose' => $data['purpose'],
+            'ai_provider_id' => $provider->id,
+            'ai_agent_id' => $agent->id,
+            'model' => $model,
+            'processing_mode' => $data['processing_mode'],
+            'maximum_data_profile' => $data['maximum_data_profile'],
+            'abilities' => [],
+            'allowed_client_ids' => [],
+            'allowed_work_context_ids' => [],
+            'is_approved' => true,
+            'is_active' => true,
+            'expires_at' => $data['expires_at'],
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+            'created_by' => $request->user()->id,
+        ]);
+
+        return back()->with('success', 'Approved internal model workload created.');
+    }
+
     public function storeToken(Request $request, AiWorkloadProfile $workload, AiDataEgressPolicyEvaluator $evaluator, ApiAbilityCatalog $catalog): RedirectResponse
     {
+        if (! $workload->supportsCoordinatorTokens()) {
+            throw ValidationException::withMessages([
+                'name' => 'Internal model workloads cannot issue API tokens.',
+            ]);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'expires_at' => ['required', 'date', 'after:today'],

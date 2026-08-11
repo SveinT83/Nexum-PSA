@@ -171,7 +171,13 @@ The customer can accept through the secure link or Customer Portal. If the custo
 
 ## From Approval To Storage, Purchase, And Economy
 
-An approved equipment line may be converted to a real Storage reservation and pending Ticket cost. An approved orderable line may instead create a draft purchase need linked to the Ticket and planned line. Creating the need never sends an order to the vendor.
+An approved equipment line may be converted to a real Storage reservation and pending Ticket cost.
+An approved orderable line may instead create a draft purchase need linked to the Ticket and
+planned line. Creating the need never sends an order to the vendor. After the order has actually
+been placed, a technician completes its supplier reference, commercial snapshots, line quantities,
+shipments, and tracking in Storage Purchase Orders. Each physical delivery is then posted as a
+partial receipt; accepted quantity updates inventory through audited movements and can satisfy the
+waiting reservation, while rejected quantity remains receipt history without entering stock.
 
 Custom approved lines can be converted to pending actual Ticket costs. These operations are idempotent: repeating the same conversion or purchase request does not create duplicate downstream records.
 

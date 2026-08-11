@@ -83,9 +83,11 @@
         [
             'title' => 'Storage',
             'icon' => 'bi-box-seam',
-            'description' => 'Inventory administration, warehouse structure, and stock defaults.',
+            'description' => 'Inventory administration, warehouse structure, stock defaults, and supplier-order automation.',
             'links' => [
                 ['label' => 'Inventory settings', 'route' => route('tech.admin.settings.storage.inventory')],
+                ['label' => 'Supplier order automation', 'route' => route('tech.admin.settings.storage.purchase-order-automation.edit')],
+                ['label' => 'Supplier profiles', 'route' => route('tech.admin.settings.storage.supplier-order-profiles.index')],
             ],
         ],
         [

@@ -27,6 +27,8 @@
                 filled($filters['status'] ?? null),
             ])->filter()->count();
             $pickingFiltersOpen = $pickingActiveFilterCount > 0;
+            $sort = $filters['sort'] ?? null;
+            $direction = $filters['direction'] ?? 'asc';
         @endphp
 
         {{-- Picking filters keep the warehouse queue focused on available work. --}}
@@ -36,6 +38,10 @@
                 <div class="input-group input-group-sm">
                     <input type="search" id="picking_search" name="q" class="form-control" value="{{ $filters['q'] ?? '' }}"
                            placeholder="Ticket, subject, SKU, or item name">
+                    @if($sort)
+                        <input type="hidden" name="sort" value="{{ $sort }}">
+                        <input type="hidden" name="direction" value="{{ $direction }}">
+                    @endif
                     <button type="submit" class="btn btn-outline-secondary">Search</button>
                     <button
                         class="btn btn-outline-secondary"
@@ -60,6 +66,7 @@
                                 <option value="" @selected(($filters['status'] ?? '') === '')>All reserved items</option>
                                 <option value="ready" @selected(($filters['status'] ?? '') === 'ready')>Ready to pick</option>
                                 <option value="waiting" @selected(($filters['status'] ?? '') === 'waiting')>Waiting for stock</option>
+                                <option value="identified" @selected(($filters['status'] ?? '') === 'identified')>Requires identified-unit picking</option>
                             </select>
                         </div>
                         <div class="col-md-2 d-grid">
@@ -76,13 +83,20 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                     <tr>
-                        <th>Item</th>
-                        <th>Ticket</th>
-                        <th>Client</th>
-                        <th>Location</th>
-                        <th class="text-end">Reserved</th>
-                        <th class="text-end">On-hand</th>
-                        <th>Status</th>
+                        <x-tables.sortable-header label="Item" column="item" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
+                        <x-tables.sortable-header label="Ticket" column="ticket" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
+                        <x-tables.sortable-header label="Client" column="client" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
+                        <x-tables.sortable-header label="Location" column="location" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
+                        <x-tables.sortable-header label="Reserved" column="reserved" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" align="end" />
+                        <x-tables.sortable-header label="On-hand" column="on_hand" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" align="end" />
+                        <x-tables.sortable-header label="Status" column="status" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
                         <th class="text-end">Action</th>
                     </tr>
                     </thead>
@@ -91,7 +105,13 @@
                         @php
                             $item = $entry->storageItem;
                             $ticket = $entry->ticket;
-                            $canPick = ($item?->qty_on_hand ?? 0) >= $entry->quantity;
+                            $requiresIdentifiedUnitPicking = $item && (
+                                $item->has_serials
+                                || $item->track_batch
+                                || $item->expiry_enabled
+                                || (int) ($item->positive_stock_units_count ?? 0) > 0
+                            );
+                            $canPick = ! $requiresIdentifiedUnitPicking && ($item?->qty_on_hand ?? 0) >= $entry->quantity;
                             $location = collect([
                                 $item?->warehouse?->name,
                                 $item?->box ? ($item->box->code_human ?: 'Box #' . $item->box->id) : null,
@@ -124,7 +144,9 @@
                             <td class="text-end">{{ $entry->quantity }}</td>
                             <td class="text-end">{{ $item?->qty_on_hand ?? 0 }}</td>
                             <td>
-                                @if($canPick)
+                                @if($requiresIdentifiedUnitPicking)
+                                    <span class="badge text-bg-info">Requires identified-unit picking</span>
+                                @elseif($canPick)
                                     <span class="badge text-bg-success">Ready</span>
                                 @else
                                     <span class="badge text-bg-warning">Waiting for stock</span>
@@ -141,16 +163,26 @@
                                             <i class="bi bi-ticket-perforated me-1" aria-hidden="true"></i>Open ticket
                                         </a>
                                     @endif
-                                    <form method="POST" action="{{ route('tech.storage.picking.pick', $entry) }}" class="mb-0">
-                                        @csrf
+                                    @if($requiresIdentifiedUnitPicking)
                                         <button
-                                            type="submit"
-                                            class="btn btn-sm btn-outline-success"
-                                            @disabled(! $canPick)
-                                            title="{{ $canPick ? 'Pick item from stock and send it to Economy.' : 'Not enough on-hand stock to pick this item.' }}">
-                                            Pick
+                                            type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            disabled
+                                            title="Select concrete serial or batch units in the identified-unit picking workflow.">
+                                            Unit pick required
                                         </button>
-                                    </form>
+                                    @else
+                                        <form method="POST" action="{{ route('tech.storage.picking.pick', $entry) }}" class="mb-0">
+                                            @csrf
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-success"
+                                                @disabled(! $canPick)
+                                                title="{{ $canPick ? 'Pick item from stock and send it to Economy.' : 'Not enough on-hand stock to pick this item.' }}">
+                                                Pick
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -187,6 +219,8 @@
                 <dd class="col-4 text-end">{{ $stats['ready'] }}</dd>
                 <dt class="col-8">Waiting</dt>
                 <dd class="col-4 text-end">{{ $stats['waiting'] }}</dd>
+                <dt class="col-8">Identified unit</dt>
+                <dd class="col-4 text-end">{{ $stats['identified'] }}</dd>
                 <dt class="col-8">Reserved qty</dt>
                 <dd class="col-4 text-end">{{ $stats['reserved_quantity'] }}</dd>
                 <dt class="col-8">Tickets</dt>

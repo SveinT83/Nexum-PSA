@@ -12,10 +12,15 @@ class EmailRule extends Model
 
     public const TRIGGER_INBOUND = 'on_inbound';
 
+    public const ROUTING_PHASE_NORMAL = 'normal';
+
+    public const ROUTING_PHASE_PRECLASSIFICATION = 'preclassification';
+
     protected $fillable = [
         'name',
         'description',
         'trigger',
+        'routing_phase',
         'weight',
         'is_active',
         'stop_processing',
@@ -32,6 +37,7 @@ class EmailRule extends Model
         'stop_processing' => 'boolean',
         'conditions_json' => 'array',
         'actions_json' => 'array',
+        'routing_phase' => 'string',
         'last_hit_at' => 'datetime',
         'hit_count' => 'integer',
     ];

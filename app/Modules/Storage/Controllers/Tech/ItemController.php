@@ -7,17 +7,19 @@ use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Economy\Actions\EnsureEconomyDefaults;
 use App\Modules\Storage\Actions\AdjustItemStock;
 use App\Modules\Storage\Actions\DeleteItem;
+use App\Modules\Storage\Actions\GuardItemTrackingConfiguration;
 use App\Modules\Storage\Actions\StoreItem;
 use App\Modules\Storage\Models\Box;
 use App\Modules\Storage\Models\Item;
 use App\Modules\Storage\Models\ItemVendor;
 use App\Modules\Storage\Models\Warehouse;
+use App\Modules\Storage\Support\CollectionTableSorter;
 use App\Modules\Storage\Support\StorageInventoryDefaults;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 use InvalidArgumentException;
 
@@ -39,6 +41,9 @@ class ItemController extends Controller
     {
         $data = $this->validatedItem($request);
         $itemData = $this->prepareItemData($data);
+        foreach (['has_serials', 'track_batch', 'expiry_enabled'] as $trackingField) {
+            $itemData[$trackingField] = $request->boolean($trackingField);
+        }
         $supplierData = $this->supplierData($data);
 
         $item = DB::transaction(function () use ($itemData, $supplierData, $request, $storeItem) {
@@ -52,17 +57,67 @@ class ItemController extends Controller
             ->with('success', 'Storage item created.');
     }
 
-    public function show(Item $item): View
+    public function show(Request $request, Item $item, CollectionTableSorter $sorter): View
     {
         $item->load(['warehouse', 'box', 'primaryVendor', 'manufacturerVendor', 'itemVendors.vendor', 'movements.actor']);
+        $columns = [
+            'when' => [
+                'type' => CollectionTableSorter::TYPE_DATE,
+                'value' => fn (mixed $movement) => $movement->created_at,
+            ],
+            'type' => [
+                'type' => CollectionTableSorter::TYPE_STRING,
+                'value' => fn (mixed $movement): string => $movement->type,
+            ],
+            'before' => [
+                'type' => CollectionTableSorter::TYPE_NUMBER,
+                'value' => fn (mixed $movement): int => (int) $movement->qty_before,
+            ],
+            'delta' => [
+                'type' => CollectionTableSorter::TYPE_NUMBER,
+                'value' => fn (mixed $movement): int => (int) $movement->qty_delta,
+            ],
+            'after' => [
+                'type' => CollectionTableSorter::TYPE_NUMBER,
+                'value' => fn (mixed $movement): int => (int) $movement->qty_after,
+            ],
+            'reason' => [
+                'type' => CollectionTableSorter::TYPE_STRING,
+                'value' => fn (mixed $movement): ?string => $movement->reason,
+            ],
+            'actor' => [
+                'type' => CollectionTableSorter::TYPE_STRING,
+                'value' => fn (mixed $movement): string => $movement->actor?->name ?? 'System',
+            ],
+        ];
+        $movementSort = $sorter->normalizeColumn($request->query('movement_sort'), $columns);
+        $movementDirection = $sorter->normalizeDirection(
+            $request->query('movement_direction'),
+            $movementSort === 'when' ? 'desc' : 'asc'
+        );
+        $movements = $item->movements->sortByDesc('created_at')->values();
+        $movements = $sorter->sort($movements, $movementSort, $movementDirection, $columns);
+        $movementSortQuery = $movementSort === null ? [] : [
+            'movement_sort' => $movementSort,
+            'movement_direction' => $movementDirection,
+        ];
 
-        return view('storage::Tech.Storage.items.show', compact('item'));
+        return view('storage::Tech.Storage.items.show', [
+            'item' => $item,
+            'movements' => $movements,
+            'movementSort' => $movementSort,
+            'movementDirection' => $movementDirection,
+            'movementSortQuery' => $movementSortQuery,
+            'trackingConfigurationLocked' => $item->trackingConfigurationIsLocked(),
+            'canUseGenericAdjustment' => ! $item->requiresUnitAwareInventoryMutation(),
+        ]);
     }
 
     public function edit(Item $item, EnsureEconomyDefaults $economyDefaults): View
     {
         return view('storage::Tech.Storage.items.edit', [
             'item' => $item,
+            'trackingConfigurationLocked' => $item->trackingConfigurationIsLocked(),
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
             'boxes' => Box::where('is_active', true)->with('warehouse')->orderBy('id')->get(),
             'manufacturers' => Vendor::where('is_active', true)->where('is_manufacturer', true)->orderBy('name')->get(),
@@ -72,8 +127,11 @@ class ItemController extends Controller
         ]);
     }
 
-    public function update(Request $request, Item $item): RedirectResponse
-    {
+    public function update(
+        Request $request,
+        Item $item,
+        GuardItemTrackingConfiguration $trackingConfiguration
+    ): RedirectResponse {
         $data = $request->validate([
             'warehouse_id' => 'required|exists:storage_warehouses,id',
             'box_id' => 'nullable|exists:storage_boxes,id',
@@ -85,7 +143,7 @@ class ItemController extends Controller
             'supplier_lead_time_days' => 'nullable|integer|min:0',
             'supplier_moq' => 'nullable|integer|min:1',
             'supplier_pack_size' => 'nullable|integer|min:1',
-            'sku' => 'required|string|max:100|unique:storage_items,sku,' . $item->id,
+            'sku' => 'required|string|max:100|unique:storage_items,sku,'.$item->id,
             'name' => 'required|string|max:255',
             'short_description' => 'nullable|string',
             'long_description' => 'nullable|string',
@@ -96,6 +154,8 @@ class ItemController extends Controller
             'sale_price' => 'nullable|numeric|min:0',
             'vat_rate' => 'nullable|numeric|min:0',
             'has_serials' => 'boolean',
+            'track_batch' => 'boolean',
+            'expiry_enabled' => 'boolean',
             'reorder_point' => 'nullable|integer|min:0',
             'target_level' => 'nullable|integer|min:0',
             'lead_time_days' => 'nullable|integer|min:0',
@@ -109,15 +169,23 @@ class ItemController extends Controller
         $supplierData = $this->supplierData($data);
 
         $itemData['sku'] = strtoupper($itemData['sku']);
-        $itemData['box_id'] = $itemData['box_id'] ?: null;
-        $itemData['has_serials'] = $request->boolean('has_serials');
+        $itemData['box_id'] = ($itemData['box_id'] ?? null) ?: null;
+        foreach (['has_serials', 'track_batch', 'expiry_enabled'] as $trackingField) {
+            $itemData[$trackingField] = $request->boolean($trackingField);
+        }
         $itemData['should_order'] = $request->boolean('should_order');
         $itemData['can_be_ordered'] = $request->boolean('can_be_ordered');
         $itemData['updated_by'] = $request->user()?->id;
 
-        DB::transaction(function () use ($item, $itemData, $supplierData) {
-            $item->update($itemData);
-            $this->syncPrimarySupplier($item, $supplierData);
+        DB::transaction(function () use (
+            $item,
+            $itemData,
+            $supplierData,
+            $trackingConfiguration
+        ): void {
+            $lockedItem = $trackingConfiguration->lockAndValidateUpdate($item, $itemData);
+            $lockedItem->update($itemData);
+            $this->syncPrimarySupplier($lockedItem, $supplierData);
         });
 
         return redirect()->route('tech.storage.items.show', $item)
@@ -135,7 +203,23 @@ class ItemController extends Controller
         ]);
 
         try {
-            $adjustItemStock->handle($item, $this->adjustmentDelta($item, $data), $data['reason'], $data['note'] ?? null, $request->user());
+            if (($data['adjustment_mode'] ?? null) === 'set') {
+                $adjustItemStock->setOnHand(
+                    $item,
+                    (int) $data['quantity'],
+                    $data['reason'],
+                    $data['note'] ?? null,
+                    $request->user()
+                );
+            } else {
+                $adjustItemStock->handle(
+                    $item,
+                    $this->adjustmentDelta($item, $data),
+                    $data['reason'],
+                    $data['note'] ?? null,
+                    $request->user()
+                );
+            }
         } catch (InvalidArgumentException $exception) {
             $field = filled($data['adjustment_mode'] ?? null) ? 'quantity' : 'delta';
 
@@ -182,6 +266,8 @@ class ItemController extends Controller
             'sale_price' => 'nullable|numeric|min:0',
             'vat_rate' => 'nullable|numeric|min:0',
             'has_serials' => 'boolean',
+            'track_batch' => 'boolean',
+            'expiry_enabled' => 'boolean',
             'reorder_point' => 'nullable|integer|min:0',
             'target_level' => 'nullable|integer|min:0',
             'lead_time_days' => 'nullable|integer|min:0',

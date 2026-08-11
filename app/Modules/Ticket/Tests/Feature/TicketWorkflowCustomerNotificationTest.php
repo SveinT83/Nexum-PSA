@@ -50,6 +50,12 @@ class TicketWorkflowCustomerNotificationTest extends TestCase
         Role::findOrCreate('Tech', 'web');
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'ticket.view',
+            'ticket.update',
+            'ticket.reply_customer',
+            'ticket.note_internal',
+        ]);
         app(EnsureTicketDefaults::class)->handle();
         app(EnsureDefaultEmailTemplates::class)->handle();
     }

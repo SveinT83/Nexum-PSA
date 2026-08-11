@@ -11,12 +11,14 @@ use App\Models\Knowledge\Shelf;
 use App\Models\Settings\CommonSetting;
 use App\Models\System\Integrations\Integration;
 use App\Modules\Integration\Jobs\PushPendingKnowledgeToBookStack;
+use Database\Seeders\StorageKnowledgeDocumentationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -38,7 +40,22 @@ class KnowledgeArticleTest extends TestCase
     {
         parent::setUp();
 
-        Role::create(['name' => 'Tech']);
+        $techRole = Role::create(['name' => 'Tech']);
+        $knowledgePermissions = [
+            'knowledge.view',
+            'knowledge.create',
+            'knowledge.update',
+            'knowledge.delete',
+            'knowledge.publish',
+            'knowledge.sync_bookstack',
+            'knowledge.manage_structure',
+            'knowledge.manage_settings',
+        ];
+        foreach ($knowledgePermissions as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+        $techRole->givePermissionTo($knowledgePermissions);
+
         $this->tech = User::create([
             'name' => 'Knowledge Tech',
             'email' => 'knowledge-tech@example.test',
@@ -681,6 +698,66 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function storage_knowledge_seeder_reuses_book_stack_owned_slugs_without_changing_ownership(): void
+    {
+        $book = Book::create([
+            'name' => 'Nexum PSA',
+            'slug' => 'bookstack-book-nexum-psa-339',
+            'source_system' => 'book_stack',
+            'source_type' => 'book',
+            'source_id' => '339',
+            'sync_status' => 'synced',
+        ]);
+        $chapter = Chapter::create([
+            'book_id' => $book->id,
+            'name' => 'Storage',
+            'slug' => 'storage',
+            'source_system' => 'book_stack',
+            'source_type' => 'chapter',
+            'source_id' => '371',
+            'sync_status' => 'synced',
+        ]);
+        $article = Article::create([
+            'title' => 'Storage Inventory',
+            'slug' => 'storage-inventory',
+            'body_markdown' => 'Existing BookStack body.',
+            'body_html' => '<p>Existing BookStack body.</p>',
+            'visibility' => 'internal',
+            'status' => 'published',
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'knowledge_book_id' => $book->id,
+            'knowledge_chapter_id' => $chapter->id,
+            'source_system' => 'book_stack',
+            'source_type' => 'page',
+            'source_id' => '386',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->seed(StorageKnowledgeDocumentationSeeder::class);
+
+        $chapter->refresh();
+        $article->refresh();
+        $this->assertSame('book_stack', $chapter->source_system);
+        $this->assertSame('chapter', $chapter->source_type);
+        $this->assertSame('371', $chapter->source_id);
+        $this->assertSame('book_stack', $article->source_system);
+        $this->assertSame('page', $article->source_type);
+        $this->assertSame('386', $article->source_id);
+        $this->assertSame(1, Article::query()->where('slug', 'storage-inventory')->count());
+        $this->assertDatabaseHas('articles', [
+            'slug' => 'storage-purchase-orders-and-receiving',
+            'source_system' => 'nexum',
+            'source_type' => 'storage-docs',
+        ]);
+        $this->assertDatabaseHas('articles', [
+            'slug' => 'storage-supplier-order-automation',
+            'source_system' => 'nexum',
+            'source_type' => 'storage-docs',
+        ]);
+    }
+
+    #[Test]
     public function repository_documentation_sync_includes_lead_intelligence_docs(): void
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['LeadIntelligence']])
@@ -757,7 +834,7 @@ class KnowledgeArticleTest extends TestCase
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Documentation']])
             ->expectsOutput('chapters: 1')
-            ->expectsOutput('articles: 1')
+            ->expectsOutput('articles: 3')
             ->expectsOutput('modules: Documentation')
             ->assertSuccessful();
 
@@ -768,6 +845,24 @@ class KnowledgeArticleTest extends TestCase
 
         $this->assertSame('Documentation Overview', $article->title);
         $this->assertSame('Documentation', $article->source_payload['module']);
+
+        $carrierArticle = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'documentation/shipping-carriers')
+            ->firstOrFail();
+
+        $this->assertSame('Shipping Carriers', $carrierArticle->title);
+        $this->assertSame('Documentation', $carrierArticle->source_payload['module']);
+        $supplierBootstrapArticle = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'documentation/supplier-bootstrap-from-purchase-imports')
+            ->firstOrFail();
+
+        $this->assertSame(
+            'Supplier Bootstrap From Purchase Imports',
+            $supplierBootstrapArticle->title,
+        );
+        $this->assertSame('Documentation', $supplierBootstrapArticle->source_payload['module']);
     }
 
     #[Test]

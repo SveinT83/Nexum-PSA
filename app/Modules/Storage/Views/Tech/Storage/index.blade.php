@@ -21,6 +21,8 @@
                 ($filters['availability'] ?? 'should_order') !== 'should_order',
             ])->filter()->count();
             $storageFiltersOpen = $storageActiveFilterCount > 0;
+            $sort = $filters['sort'] ?? null;
+            $direction = $filters['direction'] ?? 'asc';
         @endphp
 
         {{-- Storage filters keep stock triage close to the inventory list. --}}
@@ -30,6 +32,10 @@
                 <div class="input-group input-group-sm">
                     <input type="search" id="storage_search" name="q" class="form-control" value="{{ $filters['q'] ?? '' }}"
                            placeholder="SKU, name, or EAN">
+                    @if($sort)
+                        <input type="hidden" name="sort" value="{{ $sort }}">
+                        <input type="hidden" name="direction" value="{{ $direction }}">
+                    @endif
                     <button type="submit" class="btn btn-outline-secondary">Search</button>
                     <button
                         class="btn btn-outline-secondary"
@@ -107,19 +113,35 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                     <tr>
-                        <th>Item</th>
-                        <th>Warehouse</th>
-                        <th>Supplier</th>
-                        <th>Box</th>
-                        <th class="text-end">On-hand</th>
-                        <th class="text-end">Reserved</th>
-                        <th class="text-end">Available</th>
-                        <th>Status</th>
+                        <x-tables.sortable-header label="Item" column="item" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
+                        <x-tables.sortable-header label="Warehouse" column="warehouse" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
+                        <x-tables.sortable-header label="Supplier" column="supplier" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
+                        <x-tables.sortable-header label="Box" column="box" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
+                        <x-tables.sortable-header label="On-hand" column="on_hand" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" align="end" />
+                        <x-tables.sortable-header label="Reserved" column="reserved" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" align="end" />
+                        <x-tables.sortable-header label="Available" column="available" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" align="end" />
+                        <x-tables.sortable-header label="Incoming" column="incoming" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" align="end" />
+                        <x-tables.sortable-header label="Status" column="status" :current-sort="$sort"
+                                                  :current-direction="$direction" :query="$filters" />
                         <th></th>
                     </tr>
                     </thead>
                     <tbody>
                     @forelse($items as $item)
+                        @php
+                            $incomingQuantity = (int) ($item->qty_incoming ?? 0);
+                            $inventoryStatus = $incomingQuantity > 0
+                                ? 'on_order'
+                                : ($item->needs_reorder ? 'should_order' : 'ok');
+                        @endphp
                         <tr>
                             <td>
                                 <a href="{{ route('tech.storage.items.show', $item) }}" class="fw-semibold text-decoration-none">
@@ -145,8 +167,14 @@
                             <td class="text-end">{{ $item->qty_on_hand }}</td>
                             <td class="text-end">{{ $item->qty_reserved }}</td>
                             <td class="text-end">{{ $item->qty_available }}</td>
-                            <td>
-                                @if($item->needs_reorder)
+                            <td class="text-end {{ $incomingQuantity > 0 ? 'text-primary fw-semibold' : 'text-muted' }}"
+                                data-incoming-quantity="{{ $incomingQuantity }}">
+                                {{ $incomingQuantity }}
+                            </td>
+                            <td data-inventory-status="{{ $inventoryStatus }}">
+                                @if($inventoryStatus === 'on_order')
+                                    <span class="badge text-bg-primary">On order</span>
+                                @elseif($inventoryStatus === 'should_order')
                                     <span class="badge text-bg-warning">Should order</span>
                                 @else
                                     <span class="badge text-bg-success">OK</span>
@@ -158,7 +186,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-5">
+                            <td colspan="10" class="text-center text-muted py-5">
                                 No storage items match this view.
                             </td>
                         </tr>

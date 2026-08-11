@@ -1,10 +1,11 @@
 <?php
 
+use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use App\Modules\Documentation\Controllers\Admin\TemplateManagementController;
 use App\Modules\Documentation\Controllers\Portal\PortalDocumentationController;
 use App\Modules\Documentation\Controllers\Tech\DocumentationController;
+use App\Modules\Documentation\Controllers\Tech\ShippingCarrierController;
 use App\Modules\Documentation\Controllers\Tech\VendorController;
-use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,6 +40,24 @@ Route::get('/documentations', [DocumentationController::class, 'index'])
 
 Route::get('/documentations/create', [DocumentationController::class, 'create'])
     ->name('documentations.create');
+
+Route::get('/documentations/shipping-carriers', [ShippingCarrierController::class, 'index'])
+    ->name('documentations.shipping-carriers.index');
+
+Route::get('/documentations/shipping-carriers/create', [ShippingCarrierController::class, 'create'])
+    ->name('documentations.shipping-carriers.create');
+
+Route::post('/documentations/shipping-carriers', [ShippingCarrierController::class, 'store'])
+    ->name('documentations.shipping-carriers.store');
+
+Route::get('/documentations/shipping-carriers/{shippingCarrier}', [ShippingCarrierController::class, 'show'])
+    ->name('documentations.shipping-carriers.show');
+
+Route::get('/documentations/shipping-carriers/{shippingCarrier}/edit', [ShippingCarrierController::class, 'edit'])
+    ->name('documentations.shipping-carriers.edit');
+
+Route::patch('/documentations/shipping-carriers/{shippingCarrier}', [ShippingCarrierController::class, 'update'])
+    ->name('documentations.shipping-carriers.update');
 
 Route::get('/documentations/vendors', [VendorController::class, 'index'])
     ->defaults('role', 'vendors')

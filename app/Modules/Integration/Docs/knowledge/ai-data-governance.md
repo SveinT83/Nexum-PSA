@@ -35,6 +35,32 @@ records fail closed with a stable reason code.
 Identified technician activity additionally requires purpose and workforce-transparency references
 at installation and workload level. Default coordinator profiles expose no employee names.
 
+## Domain-managed structured workloads
+
+A narrowly allowlisted domain workflow may own a managed structured workload instead of exposing
+the generic workload and governance setup to the user. Supplier Order Automation in Storage is the
+first such workflow.
+
+The Storage policy selects an active Storage-domain agent and reuses only its provider, model and
+instructions. Integration creates one internal-model workload marked `storage_supplier_orders`,
+forces `privacy_relay` and `pseudonymized` for external providers (`local_only` for Ollama), stores
+no abilities, accepts no token binding and always passes the request through the central privacy
+gateway and strict schema executor.
+
+For this managed structured path, commercial values that match personal-data patterns are replaced
+with opaque request-local tokens before an external call and restored only in memory after the
+response. Unknown tokens fail closed. Original values, token mappings and raw model output are not
+persisted.
+
+This exception does not grant the selected agent's tools, data sources, API scopes or action
+capability to Supplier Order Automation. Those capabilities are ignored for this execution path and
+are tested absent from the provider request. The domain policy revision is the explicit approval for
+this bounded purpose; generic coordinator and manually configured internal workloads continue to
+require the ordinary installation, provider, model and agent governance chain.
+
+Turning the feature off or selecting another agent deactivates the prior managed workload. Other
+domains cannot create a managed workload merely by supplying an arbitrary marker.
+
 ## Coordinator workloads and tokens
 
 Create a workload with purpose, mode, maximum profile, finite approval, context restrictions, and
