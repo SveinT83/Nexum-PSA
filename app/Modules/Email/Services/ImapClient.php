@@ -4,8 +4,9 @@ namespace App\Modules\Email\Services;
 
 use App\Modules\Email\Models\EmailAccount;
 use Illuminate\Support\Facades\Crypt;
-use Webklex\PHPIMAP\Client;
 use Webklex\IMAP\Facades\Client as ImapClientFacade;
+use Webklex\PHPIMAP\Client;
+use Webklex\PHPIMAP\Header;
 
 class ImapClient
 {
@@ -16,7 +17,7 @@ class ImapClient
     public function connect(): void
     {
         // Map encryption: starttls -> tls (Webklex expects 'tls')
-        $rawEnc = strtolower((string)$this->account->imap_encryption);
+        $rawEnc = strtolower((string) $this->account->imap_encryption);
         $encryption = match ($rawEnc) {
             'starttls' => 'tls',
             'tls' => 'tls',
@@ -25,14 +26,14 @@ class ImapClient
         };
 
         $this->client = ImapClientFacade::make([
-            'host'          => $this->account->imap_host,
-            'port'          => (int)$this->account->imap_port,
-            'encryption'    => $encryption, // 'ssl'|'tls'|null
+            'host' => $this->account->imap_host,
+            'port' => (int) $this->account->imap_port,
+            'encryption' => $encryption, // 'ssl'|'tls'|null
             'validate_cert' => true,
-            'username'      => $this->account->imap_username,
-            'password'      => Crypt::decryptString($this->account->imap_secret),
-            'protocol'      => 'imap',
-            'timeout'       => 20,
+            'username' => $this->account->imap_username,
+            'password' => Crypt::decryptString($this->account->imap_secret),
+            'protocol' => 'imap',
+            'timeout' => 20,
         ]);
         $this->client->connect();
     }
@@ -41,9 +42,11 @@ class ImapClient
      * Fetch up to $limit unseen messages from INBOX and return lightweight payloads.
      * NOTE: Does not delete/move messages; caller decides after persistence.
      */
-    public function fetchUnseen(int $limit = 20): array
+    public function fetchUnseen(int $limit = 20, int $page = 1): array
     {
-        return $this->payloadsFromMessages($this->inbox()->messages()->unseen()->limit($limit)->get());
+        return $this->payloadsFromMessages(
+            $this->inbox()->messages()->unseen()->limit($limit, max(1, $page))->get(),
+        );
     }
 
     /**
@@ -63,6 +66,42 @@ class ImapClient
     }
 
     /**
+     * Return the immutable UID namespace and the next server UID for INBOX.
+     * Automatic polling uses this state to avoid treating historical unread
+     * messages as a backlog when an established mailbox is activated.
+     *
+     * @return array{uid_validity: int, next_uid: int}
+     */
+    public function mailboxState(): array
+    {
+        $status = $this->inbox()->status();
+
+        return [
+            'uid_validity' => (int) ($status['uidvalidity'] ?? 0),
+            'next_uid' => (int) ($status['uidnext'] ?? 0),
+        ];
+    }
+
+    /**
+     * Fetch the oldest bounded batch strictly after a known UID. Seen state
+     * is irrelevant: UID order is the durable live-feed boundary.
+     */
+    public function fetchAfterUid(int $uid, int $limit = 20): array
+    {
+        $query = $this->inbox()
+            ->messages()
+            ->whereUid((max(0, $uid) + 1).':*');
+
+        if (method_exists($query, 'setFetchOrderAsc')) {
+            $query->setFetchOrderAsc();
+        }
+
+        return $this->payloadsFromMessages(
+            $query->limit(max(1, $limit))->get(),
+        );
+    }
+
+    /**
      * Fetch a single message by IMAP UID from INBOX.
      */
     public function fetchByUid(int $uid)
@@ -79,10 +118,11 @@ class ImapClient
 
         // Fallback: iterate messages
         foreach ($folder->messages()->get() as $m) {
-            if ((int)$m->getUid() === $uid) {
+            if ((int) $m->getUid() === $uid) {
                 return $m;
             }
         }
+
         return null;
     }
 
@@ -93,15 +133,19 @@ class ImapClient
     {
         $message = $this->fetchByUid($uid);
         if ($message) {
-            return (bool)$message->delete();
+            return (bool) $message->delete();
         }
+
         return false;
     }
 
     public function disconnect(): void
     {
         if (isset($this->client)) {
-            try { $this->client->disconnect(); } catch (\Throwable $e) { /* swallow */ }
+            try {
+                $this->client->disconnect();
+            } catch (\Throwable $e) { /* swallow */
+            }
         }
     }
 
@@ -111,7 +155,9 @@ class ImapClient
      */
     private function normalizeAddressList($attr): array
     {
-        if ($attr === null) return [];
+        if ($attr === null) {
+            return [];
+        }
 
         // Convert attribute/collection to array when possible
         if (is_object($attr)) {
@@ -122,31 +168,35 @@ class ImapClient
             }
         }
 
-        if (!is_array($attr)) {
+        if (! is_array($attr)) {
             return [];
         }
 
         $out = [];
         foreach ($attr as $a) {
-            $name = null; $email = null;
+            $name = null;
+            $email = null;
             if (is_array($a)) {
-                $name  = $a['personal'] ?? $a['name'] ?? null;
+                $name = $a['personal'] ?? $a['name'] ?? null;
                 $email = $a['mail'] ?? $a['email'] ?? ($a['address'] ?? null);
-                if (!$email && isset($a['mailbox'], $a['host'])) {
+                if (! $email && isset($a['mailbox'], $a['host'])) {
                     $email = $a['mailbox'].'@'.$a['host'];
                 }
             } elseif (is_object($a)) {
                 // Try common property names and methods
-                $name  = $a->personal ?? $a->name ?? (method_exists($a, 'getName') ? $a->getName() : null);
+                $name = $a->personal ?? $a->name ?? (method_exists($a, 'getName') ? $a->getName() : null);
                 $email = $a->mail ?? $a->email ?? (method_exists($a, 'getAddress') ? $a->getAddress() : null);
-                if (!$email) {
+                if (! $email) {
                     $mailbox = $a->mailbox ?? (method_exists($a, 'getMailbox') ? $a->getMailbox() : null);
-                    $host    = $a->host ?? (method_exists($a, 'getHost') ? $a->getHost() : null);
-                    if ($mailbox && $host) $email = $mailbox.'@'.$host;
+                    $host = $a->host ?? (method_exists($a, 'getHost') ? $a->getHost() : null);
+                    if ($mailbox && $host) {
+                        $email = $mailbox.'@'.$host;
+                    }
                 }
             }
             $out[] = ['name' => $name, 'email' => $email];
         }
+
         return $out;
     }
 
@@ -167,18 +217,18 @@ class ImapClient
             $references = $this->normalizeScalarList($msg->getReferences());
 
             $result[] = [
-                'imap_uid'    => (int)$msg->getUid(),
-                'message_id'  => $this->normalizeString($msg->getMessageId()),
-                'subject'     => $this->normalizeString($msg->getSubject()),
-                'from_name'   => $from['name'] ?? null,
-                'from_email'  => $from['email'] ?? null,
-                'to'          => $this->normalizeAddressList($msg->getTo()),
-                'cc'          => $this->normalizeAddressList($msg->getCc()),
+                'imap_uid' => (int) $msg->getUid(),
+                'message_id' => $this->normalizeString($msg->getMessageId()),
+                'subject' => $this->normalizeString($msg->getSubject()),
+                'from_name' => $from['name'] ?? null,
+                'from_email' => $from['email'] ?? null,
+                'to' => $this->normalizeAddressList($msg->getTo()),
+                'cc' => $this->normalizeAddressList($msg->getCc()),
                 'in_reply_to' => $this->normalizeString($msg->getInReplyTo()),
-                'references'  => implode(' ', $references),
-                'headers'     => $msg->getHeaders()->toArray(),
+                'references' => implode(' ', $references),
+                'headers' => $this->normalizeHeaders($msg->getHeader()),
                 'received_at' => $this->normalizeDate($msg->getDate()),
-                'size_bytes'  => $msg->getSize() ?? null,
+                'size_bytes' => $msg->getSize() ?? null,
             ];
         }
 
@@ -186,12 +236,64 @@ class ImapClient
     }
 
     /**
+     * Parse the original header block instead of Webklex's derived attributes.
+     * Repeated Received and Authentication-Results fields must retain their
+     * top-to-bottom boundaries because the trusted-hop verifier depends on it.
+     */
+    private function normalizeHeaders(?Header $header): array
+    {
+        $raw = $header?->raw ?? '';
+        if ($raw === '') {
+            return [];
+        }
+
+        $headers = [];
+        $currentName = null;
+        $currentIndex = null;
+
+        foreach (preg_split('/\r\n|\n|\r/', $raw) ?: [] as $line) {
+            if ($line === '') {
+                break;
+            }
+
+            if (preg_match('/^[ \t]+(.*)$/', $line, $continuation)) {
+                if ($currentName !== null && $currentIndex !== null) {
+                    $value = trim($continuation[1]);
+                    if ($value !== '') {
+                        $headers[$currentName][$currentIndex] .= ' '.$value;
+                    }
+                }
+
+                continue;
+            }
+
+            if (! preg_match('/^([^:\s]+):[ \t]*(.*)$/', $line, $match)) {
+                $currentName = null;
+                $currentIndex = null;
+
+                continue;
+            }
+
+            $currentName = mb_strtolower($match[1]);
+            $headers[$currentName] ??= [];
+            $headers[$currentName][] = trim($match[2]);
+            $currentIndex = array_key_last($headers[$currentName]);
+        }
+
+        return $headers;
+    }
+
+    /**
      * Normalize scalar list attributes (e.g., References) to a simple array of strings.
      */
     private function normalizeScalarList($attr): array
     {
-        if ($attr === null) return [];
-        if (is_string($attr)) return [$attr];
+        if ($attr === null) {
+            return [];
+        }
+        if (is_string($attr)) {
+            return [$attr];
+        }
         if (is_object($attr)) {
             if (method_exists($attr, 'toArray')) {
                 $attr = $attr->toArray();
@@ -199,6 +301,7 @@ class ImapClient
                 $attr = iterator_to_array($attr);
             }
         }
+
         return is_array($attr) ? $attr : [];
     }
 
@@ -225,18 +328,21 @@ class ImapClient
                     }
                 }
                 if (method_exists($attr, '__toString')) {
-                    $s = (string)$attr;
+                    $s = (string) $attr;
                     $dt = new \DateTimeImmutable($s);
+
                     return $dt->format('Y-m-d H:i:s');
                 }
             }
             if (is_string($attr)) {
                 $dt = new \DateTimeImmutable($attr);
+
                 return $dt->format('Y-m-d H:i:s');
             }
         } catch (\Throwable $e) {
             // fall through
         }
+
         return now()->toDateTimeString();
     }
 
@@ -245,26 +351,35 @@ class ImapClient
      */
     private function normalizeString($attr): ?string
     {
-        if ($attr === null) return null;
-        if (is_string($attr)) return $attr === '' ? null : $attr;
+        if ($attr === null) {
+            return null;
+        }
+        if (is_string($attr)) {
+            return $attr === '' ? null : $attr;
+        }
         if (is_object($attr)) {
             if (method_exists($attr, 'toString')) {
                 $s = $attr->toString();
-                return $s === '' ? null : (string)$s;
+
+                return $s === '' ? null : (string) $s;
             }
             if (method_exists($attr, '__toString')) {
-                $s = (string)$attr;
+                $s = (string) $attr;
+
                 return $s === '' ? null : $s;
             }
             if (method_exists($attr, 'getValue')) {
                 $v = $attr->getValue();
-                return $v === '' ? null : (string)$v;
+
+                return $v === '' ? null : (string) $v;
             }
         }
         if (is_scalar($attr)) {
-            $s = (string)$attr;
+            $s = (string) $attr;
+
             return $s === '' ? null : $s;
         }
+
         return null;
     }
 }

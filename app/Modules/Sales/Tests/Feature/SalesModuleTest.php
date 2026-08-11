@@ -56,6 +56,12 @@ class SalesModuleTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'sales.view',
+            'sales.opportunity_manage',
+            'sales.lead_manage',
+            'sales.quote_manage',
+        ]);
 
         $this->admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->admin->assignRole('Admin');

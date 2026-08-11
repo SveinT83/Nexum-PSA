@@ -53,6 +53,14 @@ class CommercialModuleTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'commercial.contract_manage',
+            'commercial.package_manage',
+            'commercial.service_manage',
+            'commercial.rate_manage',
+            'commercial.cost_manage',
+            'commercial.sla_manage',
+        ]);
 
         $this->admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->admin->assignRole('Admin');

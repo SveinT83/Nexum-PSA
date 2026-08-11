@@ -30,6 +30,11 @@ class DocumentationsMenu
         // Default option to view all documentations
         $menu = [
             ['name' => 'All', 'route' => 'tech.documentations.index', 'params' => ['cat' => 'all']],
+            [
+                'name' => 'Shipping Carriers',
+                'route' => 'tech.documentations.shipping-carriers.index',
+                'params' => [],
+            ],
         ];
 
         // Add each category that has templatesManagement to the menu

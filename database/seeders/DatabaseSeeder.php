@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Core\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -25,10 +24,13 @@ class DatabaseSeeder extends Seeder
             SlaSeeder::class,
             LegalTermsSeeder::class,
             VendorSeeder::class,
+            SupplierOrderProfileLibrarySeeder::class,
+            ShippingCarrierSeeder::class,
             UnitSeeder::class,
             CostServicePackageSeeder::class,
             CommercialKnowledgeDocumentationSeeder::class,
             ContactKnowledgeDocumentationSeeder::class,
+            DocumentationKnowledgeDocumentationSeeder::class,
             EconomyKnowledgeDocumentationSeeder::class,
             NextcloudKnowledgeDocumentationSeeder::class,
             NotificationKnowledgeDocumentationSeeder::class,

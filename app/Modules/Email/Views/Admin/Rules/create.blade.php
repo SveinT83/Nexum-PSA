@@ -42,6 +42,16 @@
               <label for="description" class="form-label">Description</label>
               <textarea id="description" name="description" class="form-control" rows="2">{{ old('description', $rule->description) }}</textarea>
             </div>
+            <div class="col-12">
+              <label for="routing_phase" class="form-label">Routing phase</label>
+              <select id="routing_phase" name="routing_phase" class="form-select @error('routing_phase') is-invalid @enderror" required>
+                <option value="normal" @selected(old('routing_phase', $rule->routing_phase ?? \App\Modules\Email\Models\EmailRule::ROUTING_PHASE_NORMAL) === 'normal')>Normal - after machine and AI classification</option>
+                <option value="preclassification" @selected(old('routing_phase', $rule->routing_phase) === 'preclassification')>Preclassification - before machine and AI classification</option>
+              </select>
+              @error('routing_phase')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              <div class="form-text">Use preclassification only for explicit, narrow handoffs that must run before the generic classifier.</div>
+            </div>
+
             <div class="col-md-6">
               <div class="form-check form-switch">
                 <input type="hidden" name="is_active" value="0">
@@ -137,3 +147,4 @@
     <p class="small text-muted mb-0">Signal handoff: choose Emit Signal and set the value to a signal type such as <code>security_notice</code>. Signal rules decide any cross-module follow-up.</p>
   </div>
 @endsection
+    <p class="small text-muted mb-2">Preclassification rules are opt-in and run before the machine/AI classifier. Normal rules keep the existing order.</p>

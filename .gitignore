@@ -39,6 +39,7 @@ Thumbs.db
 !/storage/framework/testing/.gitignore
 /storage/framework/views/*
 !/storage/framework/views/.gitignore
+/storage/framework/*.lock
 /storage/logs/*
 !/storage/logs/.gitignore
 /storage/pail

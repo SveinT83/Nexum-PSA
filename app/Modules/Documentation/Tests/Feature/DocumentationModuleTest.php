@@ -41,6 +41,10 @@ class DocumentationModuleTest extends TestCase
             'status' => User::STATUS_ACTIVE,
         ]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'documentation.view',
+            'documentation.create',
+        ]);
     }
 
     #[Test]

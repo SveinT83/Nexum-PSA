@@ -27,7 +27,8 @@ class CustomerPortalDocumentCenterTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'Tech']);
+        Role::firstOrCreate(['name' => 'Tech'])
+            ->givePermissionTo('documentation.update');
     }
 
     #[Test]

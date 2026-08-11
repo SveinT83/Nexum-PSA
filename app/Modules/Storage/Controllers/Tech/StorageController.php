@@ -19,7 +19,14 @@ class StorageController extends Controller
 {
     public function index(Request $request, StorageIndexQuery $query): View
     {
-        $filters = $request->only(['availability', 'q', 'warehouse_id', 'supplier_id']);
+        $filters = $query->normalizeFilters($request->only([
+            'availability',
+            'q',
+            'warehouse_id',
+            'supplier_id',
+            'sort',
+            'direction',
+        ]));
 
         return view('storage::Tech.Storage.index', [
             'items' => $query->paginate($filters),
@@ -38,10 +45,12 @@ class StorageController extends Controller
 
     public function picking(Request $request, PickingListQuery $query): View
     {
+        $filters = $query->normalizeFilters($request->only(['status', 'q', 'sort', 'direction']));
+
         return view('storage::Tech.Storage.picking', [
-            'reservations' => $query->paginate($request),
+            'reservations' => $query->paginate($filters),
             'stats' => $query->stats(),
-            'filters' => $request->only(['status', 'q']),
+            'filters' => $filters,
         ]);
     }
 

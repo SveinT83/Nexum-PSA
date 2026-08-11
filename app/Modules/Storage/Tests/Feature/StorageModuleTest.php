@@ -14,13 +14,19 @@ use App\Modules\Storage\Controllers\Tech\StorageController;
 use App\Modules\Storage\Models\Box;
 use App\Modules\Storage\Models\Item;
 use App\Modules\Storage\Models\Movement;
+use App\Modules\Storage\Models\PurchaseOrder;
+use App\Modules\Storage\Models\PurchaseOrderLine;
 use App\Modules\Storage\Models\Reservation;
+use App\Modules\Storage\Models\StockUnit;
 use App\Modules\Storage\Models\Warehouse;
+use App\Modules\Storage\Queries\PickingListQuery;
 use App\Modules\Storage\Queries\StorageIndexQuery;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
@@ -44,6 +50,13 @@ class StorageModuleTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'storage.view',
+            'storage.item_manage',
+            'storage.stock_adjust',
+            'storage.pick',
+            'ticket.update',
+        ]);
 
         $this->admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->admin->assignRole('Admin');
@@ -145,6 +158,94 @@ class StorageModuleTest extends TestCase
     }
 
     #[Test]
+    public function inventory_shows_active_outstanding_purchase_quantity_without_exposing_order_identity(): void
+    {
+        $warehouse = Warehouse::query()->create([
+            'name' => 'Incoming Warehouse',
+            'code' => 'INCOMING',
+        ]);
+        $supplier = Vendor::query()->create([
+            'name' => 'Incoming Supplier',
+            'vendor_code' => 'INCOMING-SUPPLIER',
+            'is_supplier' => true,
+            'is_active' => true,
+        ]);
+        $item = Item::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'primary_vendor_id' => $supplier->id,
+            'sku' => 'INCOMING-ITEM',
+            'name' => 'Incoming visibility item',
+            'qty_on_hand' => 0,
+            'qty_reserved' => 0,
+            'reorder_point' => 0,
+            'status' => 'active',
+        ]);
+
+        $createOrderLine = function (
+            string $suffix,
+            string $status,
+            int $ordered,
+            int $received = 0,
+            int $cancelled = 0
+        ) use ($warehouse, $supplier, $item): PurchaseOrder {
+            $order = PurchaseOrder::query()->create([
+                'po_number' => 'PO-INCOMING-'.$suffix,
+                'vendor_id' => $supplier->id,
+                'supplier_name_snapshot' => $supplier->name,
+                'deliver_to_warehouse_id' => $warehouse->id,
+                'status' => $status,
+                'ordered_at' => '2026-08-10',
+                'currency' => 'NOK',
+                'created_by' => $this->tech->id,
+                'updated_by' => $this->tech->id,
+            ]);
+            PurchaseOrderLine::query()->create([
+                'purchase_order_id' => $order->id,
+                'item_id' => $item->id,
+                'item_name_snapshot' => $item->name,
+                'sku_snapshot' => $item->sku,
+                'qty_ordered' => $ordered,
+                'qty_received' => $received,
+                'qty_cancelled' => $cancelled,
+                'currency' => 'NOK',
+                'created_by' => $this->tech->id,
+                'updated_by' => $this->tech->id,
+            ]);
+
+            return $order;
+        };
+
+        $createOrderLine('ORDERED', PurchaseOrder::STATUS_ORDERED, 5, 1, 1);
+        $createOrderLine('PARTIAL', PurchaseOrder::STATUS_PARTIALLY_RECEIVED, 4, 2);
+        $createOrderLine('DRAFT', PurchaseOrder::STATUS_DRAFT, 9);
+        $createOrderLine('RECEIVED', PurchaseOrder::STATUS_RECEIVED, 9);
+        $createOrderLine('CLOSED', PurchaseOrder::STATUS_CLOSED, 9);
+        $createOrderLine('CANCELLED', PurchaseOrder::STATUS_CANCELLED, 9);
+        $deletedOrder = $createOrderLine('DELETED', PurchaseOrder::STATUS_ORDERED, 9);
+        $deletedOrder->delete();
+
+        $listedItem = app(StorageIndexQuery::class)->paginate([
+            'availability' => 'all',
+            'q' => $item->sku,
+        ])->first();
+
+        $this->assertNotNull($listedItem);
+        $this->assertSame(5, (int) $listedItem->qty_incoming);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.index', [
+                'availability' => 'all',
+                'q' => $item->sku,
+            ]))
+            ->assertOk()
+            ->assertSee('Incoming')
+            ->assertSee('data-incoming-quantity="5"', false)
+            ->assertSee('data-inventory-status="on_order"', false)
+            ->assertSee('On order')
+            ->assertDontSee('PO-INCOMING-ORDERED');
+    }
+
+    #[Test]
     public function admin_can_open_inventory_settings_and_create_warehouse(): void
     {
         $route = Route::getRoutes()->getByName('tech.admin.settings.storage.inventory');
@@ -229,7 +330,7 @@ class StorageModuleTest extends TestCase
     }
 
     #[Test]
-    public function admin_dashboard_links_to_storage_inventory_settings(): void
+    public function admin_dashboard_links_to_all_storage_settings(): void
     {
         $this->actingAs($this->admin)
             ->get(route('tech.admin.index'))
@@ -240,6 +341,10 @@ class StorageModuleTest extends TestCase
             ->assertSee('bi bi-box-seam', false)
             ->assertSee(route('tech.admin.settings.storage.inventory'), false)
             ->assertSee('Inventory settings')
+            ->assertSee(route('tech.admin.settings.storage.purchase-order-automation.edit'), false)
+            ->assertSee('Supplier order automation')
+            ->assertSee(route('tech.admin.settings.storage.supplier-order-profiles.index'), false)
+            ->assertSee('Supplier profiles')
             ->assertSee('btn btn-sm btn-outline-secondary', false);
     }
 
@@ -489,6 +594,197 @@ class StorageModuleTest extends TestCase
             ->assertSee(route('tech.storage.docs'), false)
             ->assertDontSee('Supplier Cost')
             ->assertDontSee('<h5 class="mb-0">Rules</h5>', false);
+    }
+
+    #[Test]
+    public function item_tracking_controls_are_persisted_and_guard_unit_ledger_mutations(): void
+    {
+        $warehouse = Warehouse::create([
+            'name' => 'Tracked Warehouse',
+            'code' => 'TRACKED',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.items.create'))
+            ->assertOk()
+            ->assertSee('name="has_serials"', false)
+            ->assertSee('name="track_batch"', false)
+            ->assertSee('name="expiry_enabled"', false)
+            ->assertSee('Tracked items must start at zero');
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.storage.items.create'))
+            ->post(route('tech.storage.items.store'), [
+                'warehouse_id' => $warehouse->id,
+                'sku' => 'TRACKED-INVALID-INITIAL',
+                'name' => 'Invalid Initial Tracked Item',
+                'initial_quantity' => 2,
+                'track_batch' => 1,
+                'status' => 'active',
+            ])
+            ->assertSessionHasErrors('initial_quantity');
+        $this->assertDatabaseMissing('storage_items', ['sku' => 'TRACKED-INVALID-INITIAL']);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.storage.items.store'), [
+                'warehouse_id' => $warehouse->id,
+                'sku' => 'tracked-safe',
+                'name' => 'Tracked Safe Item',
+                'initial_quantity' => 0,
+                'has_serials' => 1,
+                'track_batch' => 1,
+                'expiry_enabled' => 1,
+                'status' => 'active',
+            ])
+            ->assertRedirect();
+
+        $item = Item::query()->where('sku', 'TRACKED-SAFE')->firstOrFail();
+        $this->assertTrue($item->has_serials);
+        $this->assertTrue($item->track_batch);
+        $this->assertTrue($item->expiry_enabled);
+        $this->assertSame(0, $item->qty_on_hand);
+
+        StockUnit::query()->create([
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse->id,
+            'serial_no' => 'TRACKED-SN-001',
+            'batch_no' => 'TRACKED-BATCH',
+            'expiry_date' => '2028-12-31',
+            'status' => 'available',
+            'current_qty' => 1,
+        ]);
+        $item->forceFill(['qty_on_hand' => 1])->save();
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.items.show', $item))
+            ->assertOk()
+            ->assertSee('Identified stock cannot use generic quantity adjustment.')
+            ->assertDontSee('name="adjustment_mode"', false)
+            ->assertSee('Batch tracking')
+            ->assertSee('Expiry tracking');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.items.edit', $item))
+            ->assertOk()
+            ->assertSee('Tracking flags are locked while on-hand or identified stock exists.')
+            ->assertSee('Track batch / lot numbers')
+            ->assertSee('Require expiry dates');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.storage.items.adjust', $item), [
+                'adjustment_mode' => 'increase',
+                'quantity' => 1,
+                'reason' => 'inventory_correction',
+            ])
+            ->assertSessionHasErrors('quantity');
+        $this->assertSame(1, $item->refresh()->qty_on_hand);
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.storage.items.edit', $item))
+            ->patch(route('tech.storage.items.update', $item), [
+                'warehouse_id' => $warehouse->id,
+                'sku' => $item->sku,
+                'name' => $item->name,
+                'has_serials' => 0,
+                'track_batch' => 0,
+                'expiry_enabled' => 0,
+                'status' => 'active',
+            ])
+            ->assertSessionHasErrors('has_serials');
+
+        $item->refresh();
+        $this->assertTrue($item->has_serials);
+        $this->assertTrue($item->track_batch);
+        $this->assertTrue($item->expiry_enabled);
+        $this->assertSame(0, Movement::query()->where('item_id', $item->id)->count());
+    }
+
+    #[Test]
+    public function identified_units_are_not_exposed_to_generic_ticket_picking(): void
+    {
+        $client = Client::create(['name' => 'Identified Picking Client', 'active' => true]);
+        $ticket = $this->createTicket([
+            'ticket_key' => 'TD-2026-999350',
+            'client_id' => $client->id,
+            'subject' => 'Needs tracked hardware',
+        ]);
+        $warehouse = Warehouse::create([
+            'name' => 'Unit Warehouse',
+            'code' => 'UNIT',
+        ]);
+        $item = Item::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'UNIT-PICK',
+            'name' => 'Serial Unit Pick',
+            'qty_on_hand' => 1,
+            'qty_reserved' => 1,
+            'has_serials' => true,
+            'status' => 'active',
+        ]);
+        StockUnit::query()->create([
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse->id,
+            'serial_no' => 'UNIT-PICK-SN',
+            'status' => 'available',
+            'current_qty' => 1,
+        ]);
+        $reservation = Reservation::create([
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse->id,
+            'qty' => 1,
+            'source_type' => 'ticket',
+            'source_id' => (string) $ticket->id,
+            'strength' => 'hard',
+            'status' => 'active',
+            'created_by' => $this->tech->id,
+        ]);
+        $entry = TicketCostEntry::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->tech->id,
+            'storage_item_id' => $item->id,
+            'storage_reservation_id' => $reservation->id,
+            'quantity' => 1,
+            'item_name' => $item->name,
+            'item_sku' => $item->sku,
+            'unit_price_ex_vat' => 100,
+            'currency' => 'NOK',
+            'status' => 'reserved',
+            'billing_status' => 'pending',
+            'invoice_text' => $item->name,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.picking'))
+            ->assertOk()
+            ->assertSee('UNIT-PICK')
+            ->assertSee('Requires identified-unit picking')
+            ->assertSee('Unit pick required')
+            ->assertDontSee('action="'.route('tech.storage.picking.pick', $entry).'"', false);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.picking', ['status' => 'ready']))
+            ->assertOk()
+            ->assertDontSee('UNIT-PICK');
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.storage.picking', ['status' => 'identified']))
+            ->assertOk()
+            ->assertSee('UNIT-PICK');
+
+        $this->actingAs($this->tech)
+            ->from(route('tech.storage.picking'))
+            ->post(route('tech.storage.picking.pick', $entry))
+            ->assertRedirect(route('tech.storage.picking'))
+            ->assertSessionHasErrors('pick');
+
+        $this->assertSame(1, $item->refresh()->qty_on_hand);
+        $this->assertSame(1, $item->qty_reserved);
+        $this->assertSame('reserved', $entry->refresh()->status);
+        $this->assertSame('active', $reservation->refresh()->status);
+        $this->assertDatabaseMissing('storage_movements', [
+            'item_id' => $item->id,
+            'type' => 'ticket_pick',
+        ]);
     }
 
     #[Test]
@@ -786,7 +1082,6 @@ class StorageModuleTest extends TestCase
                 'target_level' => 5,
                 'lead_time_days' => 2,
                 'moq' => 1,
-                'has_serials' => '1',
                 'status' => 'active',
             ])
             ->assertRedirect(route('tech.storage.items.show', $item));
@@ -801,7 +1096,7 @@ class StorageModuleTest extends TestCase
         $this->assertSame('USB cable for ticket invoice text.', $item->short_description);
         $this->assertSame('Internal catalog notes.', $item->long_description);
         $this->assertSame('149.00', $item->sale_price);
-        $this->assertTrue($item->has_serials);
+        $this->assertFalse($item->has_serials);
         $this->assertDatabaseHas('storage_item_vendors', [
             'item_id' => $item->id,
             'vendor_id' => $supplier->id,
@@ -957,6 +1252,326 @@ class StorageModuleTest extends TestCase
             'type' => 'ticket_pick',
             'qty_delta' => -2,
         ]);
+    }
+
+    #[Test]
+    public function sortable_header_preserves_zero_values_and_uses_independent_parameter_names(): void
+    {
+        $this->app->instance('request', Request::create('/sort-component', 'GET'));
+
+        $html = Blade::render(
+            <<<'BLADE'
+                <table><tr>
+                    <x-tables.sortable-header
+                        label="Quantity"
+                        column="quantity"
+                        :current-sort="$currentSort"
+                        current-direction="desc"
+                        :query="$query"
+                        sort-parameter="item_sort"
+                        direction-parameter="item_direction"
+                        align="end"
+                        fragment="movement-history" />
+                </tr></table>
+            BLADE,
+            [
+                'currentSort' => 'quantity',
+                'query' => [
+                    'page' => 4,
+                    'item_sort' => 'old',
+                    'item_direction' => 'desc',
+                    'zero' => 0,
+                    'disabled' => false,
+                    'empty' => '',
+                    'missing' => null,
+                ],
+            ]
+        );
+
+        $this->assertStringContainsString('scope="col"', $html);
+        $this->assertStringContainsString('class="text-end"', $html);
+        $this->assertStringContainsString('aria-sort="descending"', $html);
+        $this->assertStringContainsString(
+            'href="http://localhost/sort-component?zero=0&amp;disabled=0&amp;item_sort=quantity&amp;item_direction=asc#movement-history"',
+            $html
+        );
+        $this->assertStringContainsString('Sort by Quantity ascending', $html);
+        $this->assertStringNotContainsString('page=', $html);
+        $this->assertStringNotContainsString('item_sort=old', $html);
+    }
+
+    #[Test]
+    public function inventory_queue_sorts_every_data_column_and_preserves_the_current_view(): void
+    {
+        $alphaWarehouse = Warehouse::create(['name' => 'Alpha Warehouse', 'code' => 'SORT-WA']);
+        $bravoWarehouse = Warehouse::create(['name' => 'Bravo Warehouse', 'code' => 'SORT-WB']);
+        $charlieWarehouse = Warehouse::create(['name' => 'Charlie Warehouse', 'code' => 'SORT-WC']);
+        $alphaSupplier = Vendor::create([
+            'name' => 'Alpha Supplier',
+            'vendor_code' => 'SORT-SA',
+            'is_supplier' => true,
+            'is_active' => true,
+        ]);
+        $bravoSupplier = Vendor::create([
+            'name' => 'Bravo Supplier',
+            'vendor_code' => 'SORT-SB',
+            'is_supplier' => true,
+            'is_active' => true,
+        ]);
+        $alphaBox = Box::create([
+            'warehouse_id' => $alphaWarehouse->id,
+            'code_human' => 'SORT-BOX-A',
+            'is_active' => true,
+        ]);
+        $bravoBox = Box::create([
+            'warehouse_id' => $bravoWarehouse->id,
+            'code_human' => 'SORT-BOX-B',
+            'is_active' => true,
+        ]);
+
+        $items = collect([
+            [
+                'warehouse_id' => $alphaWarehouse->id,
+                'primary_vendor_id' => $alphaSupplier->id,
+                'box_id' => $alphaBox->id,
+                'sku' => 'INV-SORT-A',
+                'name' => 'Alpha Item',
+                'qty_on_hand' => 2,
+                'qty_reserved' => 1,
+                'should_order' => true,
+            ],
+            [
+                'warehouse_id' => $bravoWarehouse->id,
+                'primary_vendor_id' => $bravoSupplier->id,
+                'box_id' => $bravoBox->id,
+                'sku' => 'INV-SORT-B',
+                'name' => 'Bravo Item',
+                'qty_on_hand' => 5,
+                'qty_reserved' => 2,
+                'should_order' => false,
+            ],
+            [
+                'warehouse_id' => $charlieWarehouse->id,
+                'primary_vendor_id' => null,
+                'box_id' => null,
+                'sku' => 'INV-SORT-C',
+                'name' => 'Charlie Item',
+                'qty_on_hand' => 9,
+                'qty_reserved' => 3,
+                'should_order' => false,
+            ],
+        ])->map(fn (array $attributes) => Item::create($attributes + [
+            'reorder_point' => 0,
+            'target_level' => 0,
+            'status' => 'active',
+        ]));
+
+        foreach ([0 => 7, 2 => 3] as $itemIndex => $incomingQuantity) {
+            $order = PurchaseOrder::query()->create([
+                'po_number' => 'PO-INV-SORT-'.$itemIndex,
+                'vendor_id' => $alphaSupplier->id,
+                'supplier_name_snapshot' => $alphaSupplier->name,
+                'deliver_to_warehouse_id' => $items[$itemIndex]->warehouse_id,
+                'status' => PurchaseOrder::STATUS_ORDERED,
+                'ordered_at' => '2026-08-10',
+                'currency' => 'NOK',
+                'created_by' => $this->tech->id,
+                'updated_by' => $this->tech->id,
+            ]);
+            PurchaseOrderLine::query()->create([
+                'purchase_order_id' => $order->id,
+                'item_id' => $items[$itemIndex]->id,
+                'item_name_snapshot' => $items[$itemIndex]->name,
+                'sku_snapshot' => $items[$itemIndex]->sku,
+                'qty_ordered' => $incomingQuantity,
+                'qty_received' => 0,
+                'qty_cancelled' => 0,
+                'currency' => 'NOK',
+                'created_by' => $this->tech->id,
+                'updated_by' => $this->tech->id,
+            ]);
+        }
+
+        $assertOrder = function (string $sort, string $direction, array $expected): void {
+            $this->actingAs($this->tech)
+                ->get(route('tech.storage.index', [
+                    'availability' => 'all',
+                    'sort' => $sort,
+                    'direction' => $direction,
+                ]))
+                ->assertOk()
+                ->assertSeeInOrder($expected);
+        };
+
+        foreach (['item', 'warehouse', 'on_hand', 'reserved', 'available'] as $sort) {
+            $assertOrder($sort, 'asc', ['INV-SORT-A', 'INV-SORT-B', 'INV-SORT-C']);
+            $assertOrder($sort, 'desc', ['INV-SORT-C', 'INV-SORT-B', 'INV-SORT-A']);
+        }
+        foreach (['supplier', 'box'] as $sort) {
+            $assertOrder($sort, 'asc', ['INV-SORT-A', 'INV-SORT-B', 'INV-SORT-C']);
+            $assertOrder($sort, 'desc', ['INV-SORT-B', 'INV-SORT-A', 'INV-SORT-C']);
+        }
+        $assertOrder('incoming', 'asc', ['INV-SORT-B', 'INV-SORT-C', 'INV-SORT-A']);
+        $assertOrder('incoming', 'desc', ['INV-SORT-A', 'INV-SORT-C', 'INV-SORT-B']);
+        $assertOrder('status', 'asc', ['INV-SORT-A', 'INV-SORT-B', 'INV-SORT-C']);
+        $assertOrder('status', 'desc', ['INV-SORT-B', 'INV-SORT-C', 'INV-SORT-A']);
+
+        $this->assertSame(
+            ['INV-SORT-A', 'INV-SORT-B', 'INV-SORT-C'],
+            app(StorageIndexQuery::class)->paginate([
+                'availability' => 'all',
+                'sort' => 'item',
+                'direction' => 'invalid',
+            ])->pluck('sku')->all()
+        );
+        $this->assertSame(
+            ['INV-SORT-C', 'INV-SORT-B', 'INV-SORT-A'],
+            app(StorageIndexQuery::class)->paginate([
+                'availability' => 'all',
+                'sort' => 'sku; drop table users',
+                'direction' => 'desc',
+            ])->pluck('sku')->all()
+        );
+
+        $response = $this->actingAs($this->tech)->get(route('tech.storage.index', [
+            'availability' => 'all',
+            'q' => 'INV-SORT',
+            'supplier_id' => $alphaSupplier->id,
+            'sort' => 'item',
+            'direction' => 'asc',
+            'page' => 2,
+        ]));
+        $response->assertOk()
+            ->assertSee('aria-sort="ascending"', false)
+            ->assertSee('name="sort" value="item"', false)
+            ->assertSee('name="direction" value="asc"', false)
+            ->assertSee(e(route('tech.storage.index', [
+                'availability' => 'all',
+                'q' => 'INV-SORT',
+                'supplier_id' => $alphaSupplier->id,
+                'sort' => 'item',
+                'direction' => 'desc',
+            ])), false)
+            ->assertSee(e(route('tech.storage.index', [
+                'availability' => 'all',
+                'q' => 'INV-SORT',
+                'supplier_id' => $alphaSupplier->id,
+                'sort' => 'warehouse',
+                'direction' => 'asc',
+            ])), false);
+        $this->assertSame(1, substr_count($response->getContent(), 'aria-sort='));
+        $this->assertCount(3, $items);
+    }
+
+    #[Test]
+    public function picking_queue_sorts_every_data_column_with_operational_status_semantics(): void
+    {
+        $alphaClient = Client::create(['name' => 'Alpha Picking Client', 'active' => true]);
+        $bravoClient = Client::create(['name' => 'Bravo Picking Client', 'active' => true]);
+        $alphaTicket = $this->createTicket([
+            'ticket_key' => 'TD-2026-991001',
+            'client_id' => $alphaClient->id,
+            'subject' => 'Alpha pick',
+        ]);
+        $bravoTicket = $this->createTicket([
+            'ticket_key' => 'TD-2026-991002',
+            'client_id' => $bravoClient->id,
+            'subject' => 'Bravo pick',
+        ]);
+        $charlieTicket = $this->createTicket([
+            'ticket_key' => 'TD-2026-991003',
+            'client_id' => null,
+            'subject' => 'Charlie pick',
+        ]);
+        $alphaWarehouse = Warehouse::create(['name' => 'Alpha Pick Warehouse', 'code' => 'PICK-WA']);
+        $bravoWarehouse = Warehouse::create(['name' => 'Bravo Pick Warehouse', 'code' => 'PICK-WB']);
+        $charlieWarehouse = Warehouse::create(['name' => 'Charlie Pick Warehouse', 'code' => 'PICK-WC']);
+        $alphaBox = Box::create([
+            'warehouse_id' => $alphaWarehouse->id,
+            'code_human' => 'PICK-BOX-A',
+            'is_active' => true,
+        ]);
+        $bravoBox = Box::create([
+            'warehouse_id' => $bravoWarehouse->id,
+            'code_human' => 'PICK-BOX-B',
+            'is_active' => true,
+        ]);
+        $alphaItem = Item::create([
+            'warehouse_id' => $alphaWarehouse->id,
+            'box_id' => $alphaBox->id,
+            'sku' => 'PICK-SORT-A',
+            'name' => 'Alpha Pick Item',
+            'qty_on_hand' => 5,
+            'qty_reserved' => 1,
+            'status' => 'active',
+        ]);
+        $bravoItem = Item::create([
+            'warehouse_id' => $bravoWarehouse->id,
+            'box_id' => $bravoBox->id,
+            'sku' => 'PICK-SORT-B',
+            'name' => 'Bravo Pick Item',
+            'qty_on_hand' => 0,
+            'qty_reserved' => 2,
+            'status' => 'active',
+        ]);
+        $charlieItem = Item::create([
+            'warehouse_id' => $charlieWarehouse->id,
+            'sku' => 'PICK-SORT-C',
+            'name' => 'Charlie Pick Item',
+            'qty_on_hand' => 10,
+            'qty_reserved' => 3,
+            'has_serials' => true,
+            'status' => 'active',
+        ]);
+
+        foreach ([
+            [$alphaTicket, $alphaItem, 1],
+            [$bravoTicket, $bravoItem, 2],
+            [$charlieTicket, $charlieItem, 3],
+        ] as [$ticket, $item, $quantity]) {
+            TicketCostEntry::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => $this->tech->id,
+                'storage_item_id' => $item->id,
+                'quantity' => $quantity,
+                'item_name' => $item->name,
+                'item_sku' => $item->sku,
+                'currency' => 'NOK',
+                'status' => 'reserved',
+                'billing_status' => 'pending',
+            ]);
+        }
+
+        $assertOrder = function (string $sort, string $direction, array $expected): void {
+            $this->actingAs($this->tech)
+                ->get(route('tech.storage.picking', ['sort' => $sort, 'direction' => $direction]))
+                ->assertOk()
+                ->assertSeeInOrder($expected);
+        };
+
+        foreach (['item', 'ticket', 'location', 'reserved', 'status'] as $sort) {
+            $assertOrder($sort, 'asc', ['PICK-SORT-A', 'PICK-SORT-B', 'PICK-SORT-C']);
+            $assertOrder($sort, 'desc', ['PICK-SORT-C', 'PICK-SORT-B', 'PICK-SORT-A']);
+        }
+        $assertOrder('client', 'asc', ['PICK-SORT-A', 'PICK-SORT-B', 'PICK-SORT-C']);
+        $assertOrder('client', 'desc', ['PICK-SORT-B', 'PICK-SORT-A', 'PICK-SORT-C']);
+        $assertOrder('on_hand', 'asc', ['PICK-SORT-B', 'PICK-SORT-A', 'PICK-SORT-C']);
+        $assertOrder('on_hand', 'desc', ['PICK-SORT-C', 'PICK-SORT-A', 'PICK-SORT-B']);
+
+        $this->assertSame(
+            ['PICK-SORT-A', 'PICK-SORT-B', 'PICK-SORT-C'],
+            app(PickingListQuery::class)->paginate([
+                'sort' => 'item',
+                'direction' => 'invalid',
+            ])->pluck('item_sku')->all()
+        );
+        $this->assertSame(
+            ['PICK-SORT-A', 'PICK-SORT-C', 'PICK-SORT-B'],
+            app(PickingListQuery::class)->paginate([
+                'sort' => 'item; drop table users',
+                'direction' => 'desc',
+            ])->pluck('item_sku')->all()
+        );
     }
 
     private function createTicket(array $overrides = []): Ticket

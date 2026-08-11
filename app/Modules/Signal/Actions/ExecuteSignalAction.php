@@ -2,10 +2,8 @@
 
 namespace App\Modules\Signal\Actions;
 
-use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
-use App\Modules\Contact\Models\Contact;
 use App\Modules\CustomerPortal\Actions\CreateCustomerPortalInvitation;
 use App\Modules\CustomerPortal\Models\CustomerPortalInvitation;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
@@ -39,6 +37,7 @@ class ExecuteSignalAction
             'ticket_follow_up' => $this->createTicketFollowUp($signal, $rule, $action, $idempotencyKey),
             'task_follow_up' => $this->createTaskFollowUp($signal, $rule, $action, $idempotencyKey),
             'portal_invitation' => $this->createPortalInvitation($signal, $rule, $action, $idempotencyKey),
+            'storage_supplier_order_import' => $this->queueStorageSupplierOrderImport($signal, $rule, $action, $idempotencyKey),
             'webhook' => $this->queueWebhook($signal, $rule, $action, $idempotencyKey),
             default => ['type' => $action['type'] ?? 'unknown', 'status' => 'skipped', 'message' => 'Unknown signal action.'],
         };
@@ -488,6 +487,20 @@ class ExecuteSignalAction
         return ClientSite::query()
             ->where('client_id', $signal->client_id)
             ->find($siteId);
+    }
+
+    private function queueStorageSupplierOrderImport(
+        Signal $signal,
+        SignalRule $rule,
+        array $action,
+        string $idempotencyKey,
+    ): array {
+        $action['queue'] = array_key_exists('queue', $action)
+            ? (bool) $action['queue']
+            : true;
+
+        return app(\App\Modules\Storage\Actions\QueueSupplierOrderImport::class)
+            ->handle($signal, $rule, $action, $idempotencyKey);
     }
 
     private function queueWebhook(Signal $signal, SignalRule $rule, array $action, string $idempotencyKey): array

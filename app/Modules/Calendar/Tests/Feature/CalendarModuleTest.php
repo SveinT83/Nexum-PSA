@@ -32,11 +32,17 @@ class CalendarModuleTest extends TestCase
     {
         parent::setUp();
 
-        Role::create(['name' => 'Tech']);
+        $techRole = Role::create(['name' => 'Tech']);
+        $techRole->givePermissionTo('calendar.view');
         Role::create(['name' => 'Admin']);
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE, 'name' => 'Ada Tech']);
-        $this->tech->assignRole('Tech');
+        $this->tech->assignRole($techRole);
+        $this->tech->givePermissionTo([
+            'calendar.create',
+            'calendar.update',
+            'calendar.delete',
+        ]);
     }
 
     #[Test]

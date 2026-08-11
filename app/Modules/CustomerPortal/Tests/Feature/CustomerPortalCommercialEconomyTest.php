@@ -27,7 +27,8 @@ class CustomerPortalCommercialEconomyTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'Tech']);
+        Role::firstOrCreate(['name' => 'Tech'])
+            ->givePermissionTo('economy.order_manage');
     }
 
     #[Test]

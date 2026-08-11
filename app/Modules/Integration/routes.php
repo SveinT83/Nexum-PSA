@@ -137,6 +137,8 @@ Route::middleware('admin')->group(function () {
         ->name('admin.system.integrations.ai.privacy.agents.update');
     Route::post('/admin/system/integrations/ai/privacy/workloads', [AiPrivacyController::class, 'storeWorkload'])
         ->name('admin.system.integrations.ai.privacy.workloads.store');
+    Route::post('/admin/system/integrations/ai/privacy/workloads/internal', [AiPrivacyController::class, 'storeInternalWorkload'])
+        ->name('admin.system.integrations.ai.privacy.workloads.internal.store');
     Route::post('/admin/system/integrations/ai/privacy/workloads/{workload}/tokens', [AiPrivacyController::class, 'storeToken'])
         ->name('admin.system.integrations.ai.privacy.workloads.tokens.store');
     Route::delete('/admin/system/integrations/ai/privacy/token-bindings/{binding}', [AiPrivacyController::class, 'revokeToken'])

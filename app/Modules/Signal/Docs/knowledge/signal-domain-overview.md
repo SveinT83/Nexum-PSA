@@ -20,6 +20,7 @@ Inbound Email currently creates Signal records for:
 - Out-of-office replies.
 - Unsubscribe requests.
 - Recognized vendor notifications such as QNAP firmware/security notices.
+- Explicit supplier-order confirmations selected by preclassification Email rules.
 
 Intake creates Signal records for:
 
@@ -29,6 +30,11 @@ Email and Ticket rules can also create Signal records, but only through explicit
 actions configured by an admin. Email rule handoff is for selected inbound messages that should
 become operational events. Ticket rule handoff is for selected ticket creation cases that should
 trigger cross-module automation after the ticket is persisted.
+
+Supplier-order Email signals carry only Email's canonical `trusted_auth` snapshot. Signal does not
+accept visible `From`, raw headers, or rule matching as proof of sender identity. Failed or unaligned
+facts can be audited, but Storage must require passed and aligned authentication for any active
+automatic gate.
 
 Email machine signals are archived before ticket routing so delivery failures and automatic replies
 do not create customer tickets. Clients and Contacts expose related Signal history directly on their
@@ -108,6 +114,7 @@ Supported actions:
 - Create a Task follow-up.
 - Send a Customer Portal invitation.
 - Queue a webhook delivery.
+- Queue a Storage supplier Purchase Order import.
 
 Signal should be the automation owner after a normalized event exists. Email remains the owner of
 inbound message triage and ticket ingress, while Ticket remains the owner of ticket-local field
@@ -119,6 +126,29 @@ attempt and retry writes a `signal_rule_executions` row with the status of each 
 detail, an operator with `signal.action.execute` can retry only failed/unstarted actions or use the
 warned full-rule rerun. Stable action keys prevent the same side effect from being created twice.
 Webhook attempts are also tracked in `signal_webhook_deliveries`.
+
+### Storage Supplier Order Import Action
+
+`storage_supplier_order_import` hands a matching Signal to Storage's
+`QueueSupplierOrderImport` boundary. The action accepts an optional `profile_id` and a `queue`
+boolean that defaults to `true`. It contains no supplier-specific parser configuration.
+
+Signal passes the Signal, rule, normalized action, and stable action idempotency key unchanged.
+Storage owns supplier/profile selection, source validation, deterministic extraction, approval
+policy, AI fallback, import idempotency, and all Purchase Order decisions. Signal's existing ordered
+execution, failure, and retry audit remains in effect.
+
+Example:
+
+```json
+[
+  {
+    "type": "storage_supplier_order_import",
+    "profile_id": 42,
+    "queue": true
+  }
+]
+```
 
 Example QNAP-style payload condition:
 

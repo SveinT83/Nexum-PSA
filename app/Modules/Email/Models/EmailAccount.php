@@ -22,6 +22,8 @@ class EmailAccount extends Model
         'is_active', 'is_global_default', 'defaults_for', 'delete_policy',
         // IMAP
         'imap_host', 'imap_port', 'imap_encryption', 'imap_username', 'imap_secret', 'imap_auth_type',
+        'imap_uid_validity', 'imap_live_start_uid', 'imap_live_cursor_initialized_at',
+
         // SMTP
         'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_username', 'smtp_secret', 'smtp_auth_type',
         // Health
@@ -33,6 +35,9 @@ class EmailAccount extends Model
         'is_active' => 'boolean',
         'is_global_default' => 'boolean',
         'defaults_for' => 'array',
+        'imap_uid_validity' => 'integer',
+        'imap_live_start_uid' => 'integer',
+        'imap_live_cursor_initialized_at' => 'datetime',
         'last_test_at' => 'datetime',
         'last_successful_fetch_at' => 'datetime',
         'last_successful_send_at' => 'datetime',

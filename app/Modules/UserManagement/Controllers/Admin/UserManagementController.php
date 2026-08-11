@@ -4,17 +4,17 @@ namespace App\Modules\UserManagement\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\User;
+use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\UserManagement\Actions\SendUserInvite;
 use App\Modules\UserManagement\Actions\StoreUser;
 use App\Modules\UserManagement\Actions\UpdateUserProfile;
 use App\Modules\UserManagement\Actions\UpdateUserStatus;
 use App\Modules\UserManagement\Menus\SideBar\UserManagementMenu;
 use App\Modules\UserManagement\Models\UserProfile;
-use App\Modules\UserManagement\Support\UserProfileData;
 use App\Modules\UserManagement\Queries\RoleQuery;
 use App\Modules\UserManagement\Queries\UserQuery;
-use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketAssignmentSetting;
+use App\Modules\UserManagement\Support\UserProfileData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -48,6 +48,7 @@ class UserManagementController extends Controller
 
     public function show(User $user, RoleQuery $roles, UserManagementMenu $menu): View
     {
+        $this->ensureHumanUser($user);
         $user->load(['roles', 'permissions', 'profile', 'inviteTokens' => fn ($query) => $query->latest()]);
         $assignmentSetting = TicketAssignmentSetting::with(['categories', 'tags'])
             ->where('user_id', $user->id)
@@ -70,7 +71,7 @@ class UserManagementController extends Controller
     {
         $action->handle($request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:'.(new User())->getTable().',email',
+            'email' => 'required|email|max:255|unique:'.(new User)->getTable().',email',
             'role' => 'nullable|exists:roles,id',
             'status' => 'nullable|in:'.implode(',', [User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_DISABLED]),
         ]));
@@ -81,13 +82,14 @@ class UserManagementController extends Controller
 
     public function updateProfile(Request $request, User $user, UpdateUserProfile $updateProfile): RedirectResponse
     {
+        $this->ensureHumanUser($user);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => [
                 'required',
                 'email',
                 'max:255',
-                Rule::unique((new User())->getTable(), 'email')->ignore($user->id),
+                Rule::unique((new User)->getTable(), 'email')->ignore($user->id),
             ],
             'phone_work' => 'nullable|string|max:50',
             'phone_private' => 'nullable|string|max:50',
@@ -111,6 +113,7 @@ class UserManagementController extends Controller
 
     public function updateStatus(Request $request, User $user, UpdateUserStatus $action): RedirectResponse
     {
+        $this->ensureHumanUser($user);
         $validated = $request->validate([
             'status' => 'required|in:'.implode(',', [User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_DISABLED]),
         ]);
@@ -123,6 +126,7 @@ class UserManagementController extends Controller
 
     public function updateRoles(Request $request, User $user): RedirectResponse
     {
+        $this->ensureHumanUser($user);
         $validated = $request->validate([
             'roles' => 'nullable|array',
             'roles.*' => 'integer|exists:roles,id',
@@ -143,6 +147,7 @@ class UserManagementController extends Controller
      */
     public function sendInvite(User $user, SendUserInvite $action): RedirectResponse
     {
+        $this->ensureHumanUser($user);
         if (! $user->isPending()) {
             return redirect()->back(302, [], route('tech.admin.user_management.index'))
                 ->with('error', 'Only pending users can receive invitations.');
@@ -152,6 +157,11 @@ class UserManagementController extends Controller
 
         return redirect()->back(302, [], route('tech.admin.user_management.index'))
             ->with('success', "Invitation sent to {$user->email}.");
+    }
+
+    private function ensureHumanUser(User $user): void
+    {
+        abort_if($user->isSystemActor(), 404);
     }
 
     private function profileFor(User $user): UserProfile

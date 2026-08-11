@@ -51,6 +51,8 @@ class NotificationSetting extends Model
         'asset_alert_resolved' => 'Asset Alert Resolved',
         'invitation_sent' => 'Invitation Sent',
         'system_announcement' => 'System Announcement',
+        'storage_purchase_import_exception' => 'Supplier Order Import Exceptions',
+        'storage_purchase_import_digest' => 'Supplier Order Import Daily Digest',
         'portal_ticket_created' => 'Portal Ticket Created',
         'portal_ticket_reply' => 'Portal Ticket Reply',
         'portal_ticket_status_changed' => 'Portal Ticket Status Changed',

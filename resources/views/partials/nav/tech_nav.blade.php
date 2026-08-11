@@ -272,6 +272,26 @@
             <li>
                 <a class="dropdown-item {{ request()->routeIs('tech.storage.index') ? 'active' : '' }}" href="{{ route('tech.storage.index') }}">Inventory</a>
             </li>
+            @php
+                $canViewPurchaseOrders = auth()->user()?->can('storage.purchase_view') ?? false;
+                $canViewSupplierImports = auth()->user()?->can('storage.purchase_import_view') ?? false;
+                $canReceivePurchases = auth()->user()?->can('storage.purchase_receive') ?? false;
+                $supplierOrdersRoute = match (true) {
+                    $canViewPurchaseOrders => 'tech.storage.purchase-orders.index',
+                    $canViewSupplierImports => 'tech.storage.purchase-order-imports.index',
+                    $canReceivePurchases => 'tech.storage.receiving.index',
+                    default => null,
+                };
+            @endphp
+            @if($supplierOrdersRoute !== null && Route::has($supplierOrdersRoute))
+                <li>
+                    <a
+                        class="dropdown-item {{ request()->routeIs('tech.storage.purchase-orders.*', 'tech.storage.purchase-order-imports.*', 'tech.storage.receiving.*', 'tech.storage.receipts.*') ? 'active' : '' }}"
+                        href="{{ route($supplierOrdersRoute) }}">
+                        Supplier Orders
+                    </a>
+                </li>
+            @endif
             @if(Route::has('tech.storage.picking'))
                 <li>
                     <a class="dropdown-item {{ request()->routeIs('tech.storage.picking*') ? 'active' : '' }}" href="{{ route('tech.storage.picking') }}">Picking List</a>

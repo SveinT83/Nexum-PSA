@@ -145,6 +145,26 @@
         </div></div></div>
     </div>
 
+    <!-- Internal structured workloads -->
+    <div class="card mb-4">
+        <div class="card-header"><strong>Create approved internal model workload</strong></div>
+        <form method="POST" action="{{ route('tech.admin.system.integrations.ai.privacy.workloads.internal.store') }}">
+            @csrf
+            <div class="card-body">
+                <p class="text-muted small">For supplier-order extraction and other governed server-side jobs. The selected agent must be active, non-writing, and have no tools, data sources, or API scopes.</p>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Name</label><input class="form-control" name="name" required></div>
+                    <div class="col-md-8"><label class="form-label">Purpose</label><input class="form-control" name="purpose" required></div>
+                    <div class="col-md-4"><label class="form-label">Approved non-writing agent</label><select class="form-select" name="ai_agent_id" required><option value="">Select agent</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }} · {{ $agent->provider?->name ?? 'No provider' }} · {{ $agent->model ?: $agent->provider?->default_model }}</option>@endforeach</select></div>
+                    <div class="col-md-3"><label class="form-label">Mode</label><select class="form-select" name="processing_mode">@foreach($processingModes as $mode)<option value="{{ $mode }}">{{ $mode }}</option>@endforeach</select></div>
+                    <div class="col-md-3"><label class="form-label">Maximum profile</label><select class="form-select" name="maximum_data_profile">@foreach($dataProfiles as $profile)<option value="{{ $profile }}">{{ $profile }}</option>@endforeach</select></div>
+                    <div class="col-md-2"><label class="form-label">Approval expires</label><input class="form-control" type="date" name="expires_at" required></div>
+                </div>
+            </div>
+            <div class="card-footer text-end"><button class="btn btn-primary">Create internal workload</button></div>
+        </form>
+    </div>
+
     <!-- Coordinator workloads and tokens -->
     <div class="row g-4 mb-4">
         <div class="col-xl-5"><form class="card h-100" method="POST" action="{{ route('tech.admin.system.integrations.ai.privacy.workloads.store') }}">
@@ -164,10 +184,14 @@
         <div class="col-xl-7"><div class="card h-100"><div class="card-header"><strong>Workloads and bound tokens</strong></div><div class="card-body">
             @forelse($workloads as $workload)
                 <div class="border rounded p-3 mb-3"><div class="d-flex justify-content-between"><div><strong>{{ $workload->name }}</strong><div class="small text-muted">{{ $workload->purpose }}</div></div><span class="badge text-bg-{{ $workload->is_active ? 'success' : 'secondary' }}">{{ $workload->is_active ? 'Active' : 'Inactive' }}</span></div>
-                    <div class="small mt-2">{{ $workload->processing_mode }} · {{ $workload->maximum_data_profile }} · {{ implode(', ', $workload->abilities ?? []) }}</div>
+                    <div class="small mt-2">{{ $workload->workload_type ?? 'coordinator_api' }} · {{ $workload->processing_mode }} · {{ $workload->maximum_data_profile }}@if($workload->supportsCoordinatorTokens()) · {{ implode(', ', $workload->abilities ?? []) }}@endif</div>
+                    @if($workload->supportsCoordinatorTokens())
                     <form class="row g-2 mt-2" method="POST" action="{{ route('tech.admin.system.integrations.ai.privacy.workloads.tokens.store', $workload) }}">@csrf
                         <div class="col-md-4"><input class="form-control" name="name" placeholder="Token name" required></div><div class="col-md-3"><input class="form-control" type="date" name="expires_at" required></div><div class="col-md-2"><input class="form-control" type="number" name="requests_per_minute" value="30" min="1" max="600" required></div><div class="col-md-3"><button class="btn btn-outline-primary w-100">Create token</button></div>
                     </form>
+                    @else
+                        <div class="small text-muted mt-2">Internal model workloads run only inside Nexum and cannot issue API tokens.</div>
+                    @endif
                     @foreach($workload->bindings as $binding)<div class="d-flex justify-content-between small mt-2"><span>{{ $binding->token?->name ?? 'Revoked token' }} · expires {{ $binding->expires_at->toDateString() }}</span>@if(!$binding->revoked_at && $binding->token)<form method="POST" action="{{ route('tech.admin.system.integrations.ai.privacy.bindings.revoke', $binding) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger">Revoke</button></form>@endif</div>@endforeach
                 </div>
             @empty<p class="mb-0">No coordinator workloads exist.</p>@endforelse

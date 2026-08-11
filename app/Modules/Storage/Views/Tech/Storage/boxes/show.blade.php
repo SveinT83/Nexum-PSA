@@ -45,21 +45,33 @@
             </div>
         </div>
 
-        <div class="card mb-4">
+        <div class="card mb-4" id="box-contents">
             <div class="card-header"><h5 class="mb-0">Contents</h5></div>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                     <tr>
-                        <th>SKU</th>
-                        <th>Name</th>
-                        <th class="text-end">On-hand</th>
-                        <th class="text-end">Reserved</th>
+                        <x-tables.sortable-header label="SKU" column="sku"
+                                                  :current-sort="$boxItemSort" :current-direction="$boxItemDirection"
+                                                  :query="$boxSortQuery" sort-parameter="box_item_sort"
+                                                  direction-parameter="box_item_direction" fragment="box-contents" />
+                        <x-tables.sortable-header label="Name" column="name"
+                                                  :current-sort="$boxItemSort" :current-direction="$boxItemDirection"
+                                                  :query="$boxSortQuery" sort-parameter="box_item_sort"
+                                                  direction-parameter="box_item_direction" fragment="box-contents" />
+                        <x-tables.sortable-header label="On-hand" column="on_hand" align="end"
+                                                  :current-sort="$boxItemSort" :current-direction="$boxItemDirection"
+                                                  :query="$boxSortQuery" sort-parameter="box_item_sort"
+                                                  direction-parameter="box_item_direction" fragment="box-contents" />
+                        <x-tables.sortable-header label="Reserved" column="reserved" align="end"
+                                                  :current-sort="$boxItemSort" :current-direction="$boxItemDirection"
+                                                  :query="$boxSortQuery" sort-parameter="box_item_sort"
+                                                  direction-parameter="box_item_direction" fragment="box-contents" />
                         <th></th>
                     </tr>
                     </thead>
                     <tbody>
-                    @forelse($box->items as $item)
+                    @forelse($boxItems as $item)
                         <tr>
                             <td>{{ $item->sku }}</td>
                             <td>{{ $item->name }}</td>
@@ -77,19 +89,29 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="box-events">
             <div class="card-header"><h5 class="mb-0">Box Events</h5></div>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                     <tr>
-                        <th>When</th>
-                        <th>Type</th>
-                        <th>Actor</th>
+                        <x-tables.sortable-header label="When" column="when"
+                                                  :current-sort="$boxEventSort" :current-direction="$boxEventDirection"
+                                                  :query="$boxSortQuery" sort-parameter="box_event_sort"
+                                                  direction-parameter="box_event_direction" fragment="box-events"
+                                                  default-direction="desc" />
+                        <x-tables.sortable-header label="Type" column="type"
+                                                  :current-sort="$boxEventSort" :current-direction="$boxEventDirection"
+                                                  :query="$boxSortQuery" sort-parameter="box_event_sort"
+                                                  direction-parameter="box_event_direction" fragment="box-events" />
+                        <x-tables.sortable-header label="Actor" column="actor"
+                                                  :current-sort="$boxEventSort" :current-direction="$boxEventDirection"
+                                                  :query="$boxSortQuery" sort-parameter="box_event_sort"
+                                                  direction-parameter="box_event_direction" fragment="box-events" />
                     </tr>
                     </thead>
                     <tbody>
-                    @forelse($box->events->sortByDesc('created_at') as $event)
+                    @forelse($boxEvents as $event)
                         <tr>
                             <td>{{ $event->created_at->format('Y-m-d H:i') }}</td>
                             <td>{{ str_replace('_', ' ', ucfirst($event->type)) }}</td>

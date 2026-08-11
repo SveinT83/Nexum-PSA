@@ -1217,6 +1217,7 @@ class IntegrationModuleTest extends TestCase
         $salesRole = Role::create(['name' => 'Sales']);
         $tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $tech->assignRole($techRole);
+        $tech->givePermissionTo('integration.ai_manage');
         $route = Route::getRoutes()->getByName('tech.ai.chats.index');
 
         $this->assertSame(AiChatController::class.'@index', $route->getActionName());
