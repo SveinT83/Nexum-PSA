@@ -33,6 +33,7 @@ class RulesController extends Controller
         return view('email::Admin.Rules.create', [
             'rule' => new EmailRule([
                 'trigger' => EmailRule::TRIGGER_INBOUND,
+                'routing_phase' => EmailRule::ROUTING_PHASE_NORMAL,
                 'weight' => 10,
                 'is_active' => true,
                 'stop_processing' => false,
@@ -97,6 +98,7 @@ class RulesController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'weight' => 'required|integer|min:0|max:100000',
+            'routing_phase' => 'nullable|string|in:normal,preclassification',
             'is_active' => 'nullable|boolean',
             'stop_processing' => 'nullable|boolean',
             'conditions' => 'required|array|min:1',
@@ -141,6 +143,7 @@ class RulesController extends Controller
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'weight' => $data['weight'],
+            'routing_phase' => $data['routing_phase'] ?? EmailRule::ROUTING_PHASE_NORMAL,
             'is_active' => (bool) ($data['is_active'] ?? false),
             'stop_processing' => (bool) ($data['stop_processing'] ?? false),
             'conditions_json' => collect($data['conditions'])

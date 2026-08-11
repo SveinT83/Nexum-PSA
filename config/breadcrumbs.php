@@ -67,14 +67,14 @@ return [
         ['label' => 'Form'],
     ],
 
-    //Admin User Management
+    // Admin User Management
     'admin.user_management.index' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
         ['label' => 'Admin', 'route' => 'tech.admin.index'],
         ['label' => 'User Management'],
     ],
 
-    //Admin Roles Management
+    // Admin Roles Management
     'admin.user_management.roles.index' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
         ['label' => 'Admin', 'route' => 'tech.admin.index'],
@@ -82,7 +82,7 @@ return [
         ['label' => 'Roles'],
     ],
 
-    //Admin Roles Form
+    // Admin Roles Form
     'admin.user_management.roles.edit' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
         ['label' => 'Admin', 'route' => 'tech.admin.index'],
@@ -99,8 +99,7 @@ return [
         ['label' => 'Edit form'],
     ],
 
-
-    //Admin Permissions Management
+    // Admin Permissions Management
     'admin.user_management.permissions.index' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
         ['label' => 'Admin', 'route' => 'tech.admin.index'],
@@ -108,7 +107,7 @@ return [
         ['label' => 'Permissions'],
     ],
 
-    //Admin Permissions Form
+    // Admin Permissions Form
     'admin.user_management.permissions.edit' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
         ['label' => 'Admin', 'route' => 'tech.admin.index'],
@@ -125,18 +124,46 @@ return [
         ['label' => 'Edit form'],
     ],
 
-
-    //Tech Documentations INDEX
+    // Tech Documentations INDEX
     'documentations.index' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
         ['label' => 'Documentation'],
     ],
 
-    //Tech Documentations CREATE
+    // Tech Documentations CREATE
     'documentations.create' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
         ['label' => 'Documentation', 'route' => 'tech.documentations.index'],
         ['label' => 'Form'],
+    ],
+
+    // Documentation-owned Shipping Carrier register
+    'tech.documentations.shipping-carriers.index' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Documentation', 'route' => 'tech.documentations.index'],
+        ['label' => 'Shipping Carriers'],
+    ],
+
+    'tech.documentations.shipping-carriers.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Documentation', 'route' => 'tech.documentations.index'],
+        ['label' => 'Shipping Carriers', 'route' => 'tech.documentations.shipping-carriers.index'],
+        ['label' => 'New Carrier'],
+    ],
+
+    'tech.documentations.shipping-carriers.show' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Documentation', 'route' => 'tech.documentations.index'],
+        ['label' => 'Shipping Carriers', 'route' => 'tech.documentations.shipping-carriers.index'],
+        ['label' => 'Carrier', 'label_from' => 'shippingCarrier.name'],
+    ],
+
+    'tech.documentations.shipping-carriers.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Documentation', 'route' => 'tech.documentations.index'],
+        ['label' => 'Shipping Carriers', 'route' => 'tech.documentations.shipping-carriers.index'],
+        ['label' => 'Carrier', 'label_from' => 'shippingCarrier.name'],
+        ['label' => 'Edit'],
     ],
 
     // Assets
@@ -271,6 +298,114 @@ return [
         ['label' => 'Tasks', 'route' => 'tech.tasks.index'],
         ['label' => 'Task', 'label_from' => 'task.title'],
         ['label' => 'Edit Task'],
+    ],
+
+    // Storage purchase ordering and receiving
+    'tech.storage.purchase-orders.index' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders'],
+    ],
+
+    'tech.storage.purchase-orders.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders', 'route' => 'tech.storage.purchase-orders.index'],
+        ['label' => 'New Purchase Order'],
+    ],
+
+    'tech.storage.purchase-orders.show' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders', 'route' => 'tech.storage.purchase-orders.index'],
+        ['label' => 'Purchase Order', 'label_from' => 'purchaseOrder.po_number'],
+    ],
+
+    'tech.storage.purchase-orders.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders', 'route' => 'tech.storage.purchase-orders.index'],
+        ['label' => 'Purchase Order', 'label_from' => 'purchaseOrder.po_number'],
+        ['label' => 'Edit'],
+    ],
+
+    'tech.storage.purchase-orders.shipments.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders', 'route' => 'tech.storage.purchase-orders.index'],
+        ['label' => 'Purchase Order', 'label_from' => 'purchaseOrder.po_number'],
+        ['label' => 'Add Shipment'],
+    ],
+
+    'tech.storage.receiving.index' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders'],
+    ],
+
+    'tech.storage.purchase-orders.receive' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders', 'route' => 'tech.storage.receiving.index'],
+        ['label' => 'Purchase Order', 'label_from' => 'purchaseOrder.po_number'],
+        ['label' => 'Receive Goods'],
+    ],
+
+    'tech.storage.purchase-orders.control-slip' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders', 'route' => 'tech.storage.receiving.index'],
+        ['label' => 'Purchase Order', 'label_from' => 'purchaseOrder.po_number'],
+        ['label' => 'Control Slip'],
+    ],
+
+    // Supplier order import review and governed admin settings
+    'tech.storage.purchase-order-imports.index' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders'],
+    ],
+
+    'tech.storage.purchase-order-imports.show' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Storage', 'route' => 'tech.storage.index'],
+        ['label' => 'Supplier Orders', 'route' => 'tech.storage.purchase-order-imports.index'],
+        ['label' => 'Import', 'label_from' => 'purchaseOrderImport.id'],
+    ],
+
+    'tech.admin.settings.storage.purchase-order-automation.edit' => [
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Supplier Order Policy'],
+    ],
+
+    'tech.admin.settings.storage.supplier-order-profiles.index' => [
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Supplier Profiles'],
+    ],
+
+    'tech.admin.settings.storage.supplier-order-profiles.import' => [
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Supplier Profiles', 'route' => 'tech.admin.settings.storage.supplier-order-profiles.index'],
+        ['label' => 'Import'],
+    ],
+
+    'tech.admin.settings.storage.supplier-order-profiles.create' => [
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Supplier Profiles', 'route' => 'tech.admin.settings.storage.supplier-order-profiles.index'],
+        ['label' => 'New Profile'],
+    ],
+
+    'tech.admin.settings.storage.supplier-order-profiles.show' => [
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Supplier Profiles', 'route' => 'tech.admin.settings.storage.supplier-order-profiles.index'],
+        ['label' => 'Profile', 'label_from' => 'purchaseOrderImportProfile.name'],
+    ],
+
+    'tech.admin.settings.storage.supplier-order-profiles.versions.create' => [
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Supplier Profiles', 'route' => 'tech.admin.settings.storage.supplier-order-profiles.index'],
+        ['label' => 'Profile', 'label_from' => 'purchaseOrderImportProfile.name'],
+        ['label' => 'New Version'],
     ],
 
 ];

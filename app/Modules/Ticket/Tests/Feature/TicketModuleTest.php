@@ -84,6 +84,21 @@ class TicketModuleTest extends TestCase
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'ticket.view',
+            'ticket.create',
+            'ticket.update',
+            'ticket.delete',
+            'ticket.assign',
+            'ticket.reply_customer',
+            'ticket.note_internal',
+            'ticket.register_time',
+            'ticket.close',
+            'report.view',
+            'storage.view',
+            'storage.reserve',
+            'storage.pick',
+        ]);
     }
 
     #[Test]

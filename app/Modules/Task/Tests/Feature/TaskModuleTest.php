@@ -51,6 +51,15 @@ class TaskModuleTest extends TestCase
             'status' => User::STATUS_ACTIVE,
         ]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'task.view',
+            'task.create',
+            'task.update',
+            'task.assign',
+            'task.complete',
+            'task.manage_settings',
+            'ticket.register_time',
+        ]);
 
         AiDataEgressPolicy::installation()->update([
             'ai_enabled' => true,

@@ -10,10 +10,15 @@ use Illuminate\Support\Str;
 
 class StoreItem
 {
+    public function __construct(
+        private readonly GuardItemTrackingConfiguration $trackingConfiguration
+    ) {}
+
     public function handle(array $data, ?User $actor = null): Item
     {
         return DB::transaction(function () use ($data, $actor) {
             $initialQuantity = (int) ($data['initial_quantity'] ?? 0);
+            $this->trackingConfiguration->validateNewItem($data, $initialQuantity);
             unset($data['initial_quantity']);
 
             $data['sku'] = Str::upper($data['sku']);

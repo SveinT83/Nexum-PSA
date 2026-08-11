@@ -41,6 +41,8 @@ class User extends Authenticatable
         'phone_private',
         'password',
         'status',
+        'is_system_actor',
+        'system_actor_key',
     ];
 
     /*
@@ -74,6 +76,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_system_actor' => 'boolean',
         ];
     }
 
@@ -105,6 +108,11 @@ class User extends Authenticatable
     public function isDisabled()
     {
         return $this->status === self::STATUS_DISABLED;
+    }
+
+    public function isSystemActor(): bool
+    {
+        return (bool) $this->is_system_actor;
     }
 
     /*

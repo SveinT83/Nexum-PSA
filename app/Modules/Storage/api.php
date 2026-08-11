@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Storage\Controllers\Api\V1\PurchaseOrderController;
 use App\Modules\Storage\Controllers\Api\V1\StorageController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
@@ -51,3 +52,47 @@ Route::post('storage/boxes', [StorageController::class, 'storeBox'])
 Route::match(['put', 'patch'], 'storage/boxes/{box}', [StorageController::class, 'updateBox'])
     ->name('storage.boxes.update')
     ->middleware(CheckAbilities::class.':storage.update');
+
+Route::prefix('storage/purchase-orders')
+    ->name('storage.purchase-orders.')
+    ->group(function (): void {
+        Route::get('/', [PurchaseOrderController::class, 'index'])
+            ->name('index')
+            ->middleware(CheckAbilities::class.':storage.purchase.read');
+        Route::post('/', [PurchaseOrderController::class, 'store'])
+            ->name('store')
+            ->middleware(CheckAbilities::class.':storage.purchase.manage');
+        Route::get('{purchaseOrder}', [PurchaseOrderController::class, 'show'])
+            ->name('show')
+            ->middleware(CheckAbilities::class.':storage.purchase.read');
+        Route::put('{purchaseOrder}', [PurchaseOrderController::class, 'update'])
+            ->name('update')
+            ->middleware(CheckAbilities::class.':storage.purchase.manage');
+
+        Route::post('{purchaseOrder}/lines/{purchaseOrderLine}/cancel', [PurchaseOrderController::class, 'cancelLine'])
+            ->name('lines.cancel')
+            ->middleware(CheckAbilities::class.':storage.purchase.manage');
+        Route::post('{purchaseOrder}/close', [PurchaseOrderController::class, 'close'])
+            ->name('close')
+            ->middleware(CheckAbilities::class.':storage.purchase.manage');
+        Route::post('{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])
+            ->name('cancel')
+            ->middleware(CheckAbilities::class.':storage.purchase.manage');
+
+        Route::post('{purchaseOrder}/shipments', [PurchaseOrderController::class, 'storeShipment'])
+            ->name('shipments.store')
+            ->middleware(CheckAbilities::class.':storage.purchase.manage');
+        Route::patch('{purchaseOrder}/shipments/{purchaseShipment}/status', [PurchaseOrderController::class, 'updateShipmentStatus'])
+            ->name('shipments.status.update')
+            ->middleware(CheckAbilities::class.':storage.purchase.manage');
+        Route::post('{purchaseOrder}/shipments/{purchaseShipment}/trackings', [PurchaseOrderController::class, 'appendTracking'])
+            ->name('shipments.trackings.store')
+            ->middleware(CheckAbilities::class.':storage.purchase.manage');
+
+        Route::post('{purchaseOrder}/receipts', [PurchaseOrderController::class, 'postReceipt'])
+            ->name('receipts.store')
+            ->middleware(CheckAbilities::class.':storage.purchase.receive');
+        Route::post('{purchaseOrder}/receipts/{purchaseReceipt}/reverse', [PurchaseOrderController::class, 'reverseReceipt'])
+            ->name('receipts.reverse')
+            ->middleware(CheckAbilities::class.':storage.purchase.reverse');
+    });

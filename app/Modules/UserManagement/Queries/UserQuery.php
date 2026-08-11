@@ -18,6 +18,7 @@ class UserQuery
     {
         return User::query()
             ->with('roles')
+            ->where('is_system_actor', false)
             ->orderBy('name')
             ->paginate($perPage);
     }

@@ -6,7 +6,6 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
-use App\Models\Knowledge\Article;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Contact\Models\Contact;
@@ -47,7 +46,13 @@ class CustomerPortalNotificationsTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'Tech']);
+        Role::firstOrCreate(['name' => 'Tech'])
+            ->givePermissionTo([
+                'documentation.update',
+                'economy.order_manage',
+                'sales.quote_manage',
+                'commercial.contract_manage',
+            ]);
         app(EnsureTicketDefaults::class)->handle();
     }
 

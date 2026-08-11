@@ -44,14 +44,20 @@ class ClientTechTest extends TestCase
     {
         parent::setUp();
 
-        Role::create(['name' => 'Tech']);
+        $techRole = Role::create(['name' => 'Tech']);
+        $techRole->givePermissionTo('client.view');
         Role::create(['name' => 'Admin']);
 
         $this->techUser = User::factory()->create([
             'status' => User::STATUS_ACTIVE,
         ]);
 
-        $this->techUser->assignRole('Tech');
+        $this->techUser->assignRole($techRole);
+        $this->techUser->givePermissionTo([
+            'client.create',
+            'client.update',
+            'client.manage_settings',
+        ]);
 
         $this->adminUser = User::factory()->create([
             'status' => User::STATUS_ACTIVE,

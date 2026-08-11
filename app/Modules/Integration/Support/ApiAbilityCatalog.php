@@ -54,6 +54,11 @@ class ApiAbilityCatalog
         'storage.read' => self::ACCESS_READ,
         'storage.create' => self::ACCESS_WRITE,
         'storage.update' => self::ACCESS_WRITE,
+        'storage.purchase.read' => self::ACCESS_READ,
+        'storage.purchase.manage' => self::ACCESS_WRITE,
+        'storage.purchase.receive' => self::ACCESS_WRITE,
+        'storage.purchase.receive_overage' => self::ACCESS_WRITE,
+        'storage.purchase.reverse' => self::ACCESS_WRITE,
         'calendar.read' => self::ACCESS_READ,
         'calendar.create' => self::ACCESS_WRITE,
         'calendar.update' => self::ACCESS_WRITE,
@@ -295,6 +300,31 @@ class ApiAbilityCatalog
         'storage.update' => [
             'label' => 'Update storage',
             'description' => 'Update storage records, adjust item stock, and soft-delete zero-stock items.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.read' => [
+            'label' => 'Read Storage purchase orders',
+            'description' => 'List and inspect purchase orders, shipments, tracking identifiers, and receipt history.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.manage' => [
+            'label' => 'Manage Storage purchase orders',
+            'description' => 'Create and update purchase orders, line cancellations, shipments, tracking identifiers, and lifecycle states.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.receive' => [
+            'label' => 'Receive Storage purchases',
+            'description' => 'Post idempotent goods receipts and their inventory movements.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.receive_overage' => [
+            'label' => 'Receive Storage purchase overages',
+            'description' => 'Authorize explained accepted-plus-rejected quantities above the remaining order or shipment allocation when combined with receive access.',
+            'domain' => 'Storage',
+        ],
+        'storage.purchase.reverse' => [
+            'label' => 'Reverse Storage purchase receipts',
+            'description' => 'Create guarded reversal receipts and matching negative inventory movements.',
             'domain' => 'Storage',
         ],
         'calendar.read' => [

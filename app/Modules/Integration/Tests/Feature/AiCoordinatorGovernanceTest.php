@@ -147,6 +147,72 @@ class AiCoordinatorGovernanceTest extends TestCase
     }
 
     #[Test]
+    public function privacy_gateway_can_tokenize_commercial_numbers_without_restoring_configured_identifiers(): void
+    {
+        $result = app(AiPrivacyGateway::class)->sanitize(
+            payload: [
+                'content' => implode(' ', [
+                    'Order 9900000001',
+                    'contact sensitive.tech@example.test',
+                ]),
+            ],
+            allowedFields: ['content'],
+            configuredIdentifiers: ['sensitive.tech@example.test'],
+            tokenizePii: true,
+        );
+
+        $content = $result->payload['content'];
+        $this->assertStringNotContainsString('9900000001', $content);
+        $this->assertStringContainsString('NEXUM_PRIVACY_TOKEN_A', $content);
+        $this->assertStringContainsString('[REDACTED]', $content);
+        $this->assertStringNotContainsString('sensitive.tech@example.test', $content);
+        $this->assertSame(
+            ['NEXUM_PRIVACY_TOKEN_A' => '9900000001'],
+            $result->tokenMap,
+        );
+    }
+
+    #[Test]
+    public function privacy_gateway_preserves_descendants_of_an_explicitly_allowed_object_path(): void
+    {
+        $result = app(AiPrivacyGateway::class)->sanitize(
+            payload: [
+                'tables' => [[
+                    'id' => 't1',
+                    'rows' => [[
+                        'id' => 't1r1',
+                        'cells' => [
+                            ['column' => 'Varenr', 'value' => 'NX-SYN-1001'],
+                            ['column' => 'Antall', 'value' => '1'],
+                        ],
+                        'internal_note' => 'must not leave',
+                    ]],
+                ]],
+                'current' => [
+                    'document' => [
+                        'external_order_number' => 'AI-ORDER-100',
+                        'supplier' => ['name' => 'Itegra'],
+                    ],
+                    'internal_audit' => 'must not leave',
+                ],
+                'expected_scalar' => ['secret_child' => 'must not leave'],
+            ],
+            allowedFields: ['tables.id', 'tables.rows.id', 'tables.rows.cells.column', 'tables.rows.cells.value', 'current.document.*', 'expected_scalar'],
+        );
+
+        $this->assertSame('Varenr', data_get($result->payload, 'tables.0.rows.0.cells.0.column'));
+        $this->assertSame('NX-SYN-1001', data_get($result->payload, 'tables.0.rows.0.cells.0.value'));
+        $this->assertSame('AI-ORDER-100', data_get($result->payload, 'current.document.external_order_number'));
+        $this->assertSame('Itegra', data_get($result->payload, 'current.document.supplier.name'));
+        $this->assertSame([], $result->payload['expected_scalar']);
+        $this->assertArrayNotHasKey('internal_note', $result->payload['tables'][0]['rows'][0]);
+        $this->assertArrayNotHasKey('internal_audit', $result->payload['current']);
+        $this->assertContains('tables.rows.internal_note', $result->removedFields);
+        $this->assertContains('current.internal_audit', $result->removedFields);
+        $this->assertContains('expected_scalar.secret_child', $result->removedFields);
+    }
+
+    #[Test]
     public function bound_read_only_workload_can_read_minimized_worklog_and_is_audited(): void
     {
         [$plainToken, $workload] = $this->coordinatorToken([

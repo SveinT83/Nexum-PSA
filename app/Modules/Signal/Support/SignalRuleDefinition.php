@@ -58,6 +58,7 @@ class SignalRuleDefinition
         'ticket_follow_up' => ['label' => 'Create Ticket follow-up', 'required' => []],
         'task_follow_up' => ['label' => 'Create Task follow-up', 'required' => []],
         'portal_invitation' => ['label' => 'Send portal invitation', 'required' => []],
+        'storage_supplier_order_import' => ['label' => 'Import supplier purchase order', 'required' => []],
         'webhook' => ['label' => 'Queue webhook', 'required' => ['url']],
     ];
 
@@ -68,7 +69,7 @@ class SignalRuleDefinition
         'activity_subject', 'activity_body', 'follow_up_minutes_from_now', 'next_follow_up_type',
         'next_follow_up_note', 'append_to_existing', 'create_if_missing', 'subject', 'description',
         'role', 'email', 'site_id', 'contact_id', 'queue_id', 'ticket_type_id', 'priority_id',
-        'category_id', 'impact', 'urgency', 'due_minutes_from_now', 'estimated_minutes',
+        'category_id', 'impact', 'urgency', 'due_minutes_from_now', 'estimated_minutes', 'profile_id', 'queue',
     ];
 
     public function decodeAndValidate(?string $conditionsJson, string $actionsJson): array
@@ -190,6 +191,7 @@ class SignalRuleDefinition
     {
         if (array_key_exists('groups', $conditions)) {
             $this->validateGroupedConditions($conditions);
+
             return;
         }
 
@@ -337,10 +339,13 @@ class SignalRuleDefinition
                     }
                     $action[$field] = $this->normalizeActionField($field, $row[$field]);
                 }
-                foreach (['append_to_existing', 'create_if_missing'] as $field) {
+                foreach (['append_to_existing', 'create_if_missing', 'queue'] as $field) {
                     if (array_key_exists($field, $row)) {
                         $action[$field] = filter_var($row[$field], FILTER_VALIDATE_BOOLEAN);
                     }
+                }
+                if ($type === 'storage_supplier_order_import' && ! array_key_exists('queue', $action)) {
+                    $action['queue'] = true;
                 }
                 if ($type === 'sales_follow_up') {
                     if (isset($action['subject']) && ! isset($action['activity_subject'])) {
@@ -380,6 +385,7 @@ class SignalRuleDefinition
         }
         if (str_starts_with($text, '{')) {
             $decoded = json_decode($text, true);
+
             return is_array($decoded) ? $decoded : [];
         }
         $map = [];
@@ -397,7 +403,7 @@ class SignalRuleDefinition
 
     private function normalizeActionField(string $field, mixed $value): mixed
     {
-        if (in_array($field, ['confidence', 'actor_id', 'creator_id', 'owner_id', 'assigned_to', 'probability_percent', 'follow_up_minutes_from_now', 'site_id', 'contact_id', 'queue_id', 'ticket_type_id', 'priority_id', 'category_id', 'due_minutes_from_now', 'estimated_minutes'], true)) {
+        if (in_array($field, ['confidence', 'actor_id', 'creator_id', 'owner_id', 'assigned_to', 'probability_percent', 'follow_up_minutes_from_now', 'site_id', 'contact_id', 'queue_id', 'ticket_type_id', 'priority_id', 'category_id', 'due_minutes_from_now', 'estimated_minutes', 'profile_id'], true)) {
             return (int) $value;
         }
         if ($field === 'estimated_value_ex_vat') {
@@ -405,6 +411,7 @@ class SignalRuleDefinition
         }
         if ($field === 'severity') {
             $severity = Str::lower(trim((string) $value));
+
             return array_key_exists($severity, SignalSettings::SEVERITY_OPTIONS) ? $severity : 'info';
         }
 
@@ -431,6 +438,16 @@ class SignalRuleDefinition
             }
             if ($type === 'webhook' && ! filter_var((string) $action['url'], FILTER_VALIDATE_URL)) {
                 throw ValidationException::withMessages(['actions_json' => 'Action #'.($index + 1).' webhook URL must be valid.']);
+            }
+            if ($type === 'storage_supplier_order_import'
+                && array_key_exists('profile_id', $action)
+                && (filter_var($action['profile_id'], FILTER_VALIDATE_INT) === false || (int) $action['profile_id'] < 1)) {
+                throw ValidationException::withMessages(['actions_json' => 'Action #'.($index + 1).' supplier import profile_id must be a positive integer.']);
+            }
+            if ($type === 'storage_supplier_order_import'
+                && array_key_exists('queue', $action)
+                && ! is_bool($action['queue'])) {
+                throw ValidationException::withMessages(['actions_json' => 'Action #'.($index + 1).' supplier import queue must be true or false.']);
             }
         }
     }

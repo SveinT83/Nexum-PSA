@@ -21,6 +21,15 @@ class VendorSeeder extends Seeder
             ['name' => 'Dell', 'email' => 'support@dell.com', 'is_vendor' => true, 'is_manufacturer' => true, 'is_supplier' => true],
             ['name' => 'HP', 'email' => 'support@hp.com', 'is_vendor' => true, 'is_manufacturer' => true],
             ['name' => 'Cisco', 'email' => 'support@cisco.com', 'is_vendor' => true, 'is_manufacturer' => true],
+            [
+                'name' => 'Itegra',
+                'email' => 'salg@itegra.no',
+                'url' => 'https://www.itegra.no',
+                'is_vendor' => true,
+                'is_supplier' => true,
+                'is_manufacturer' => false,
+                'is_active' => true,
+            ],
         ];
 
         foreach ($vendors as $vendor) {

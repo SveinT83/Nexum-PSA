@@ -63,26 +63,34 @@ Each view follows standard PSA layout: **Top header / Main content / Right slim 
   * UI labels should distinguish the roles: `Vendor / Manufacturer` is who makes the item, while `Supplier` is where we buy it.
   * Storage item forms do not create vendors or suppliers inline. Use `New vendor` or `New supplier` to open the Documentation master-data form in a new tab, save the partner there, then select it on the Storage item.
   * Item supplier lines store supplier SKU, purchase URL, unit cost copied from the item purchase price, lead time, MOQ, pack size, and primary supplier state.
-* **Purchase Order (PO)** → request to vendor.
+* **Purchase Order (PO)** → an externally placed supplier order recorded in Nexum.
 
-  * Header: vendor_id, **deliver_to_location_id** (from Admin locations), status (draft/sent/partial/received/closed/cancelled), vendor_ref, tracking_no, documents (order confirmation).
-  * Lines: item_id, qty_ordered, unit_cost, tax, expected_date, qty_received.
+  * Header snapshots supplier, external reference, order/expected dates, currency, delivery location, actor, and lifecycle status.
+  * Lines snapshot item, SKU, supplier SKU, description, ordered/cancelled/received quantities, unit cost, tax, and expected date.
+  * A PO can own several shipments, append-only tracking identifiers, partial receipts, and compensating receipt reversals.
 
 ---
 
-## Future Purchase Ordering And Shipping Tracking
+## Purchase Ordering, Shipping Tracking, And Receiving
 
-This is planned, not active scope yet.
+Storage supports the practical workflow after goods have been ordered from a supplier website or
+another external channel:
 
-Storage should later support a practical ordering flow for buying parts from vendor web shops:
-
-* Items can store one or more vendor purchase URLs, so technicians can open the correct product page when ordering.
-* A purchase order can be registered after the item is bought online.
-* Purchase orders should store vendor, external order number/reference, order date, expected delivery date, and status.
-* Purchase order lines should store item, vendor item number/SKU, quantity, unit cost, and received quantity.
-* Shipping tracking should store carrier, tracking number, tracking URL, shipment status, and delivery updates where available.
-* The receiving flow should connect the purchase order lines back to Storage stock movements when goods arrive.
-* The picking list can later surface whether waiting stock has an open purchase order and visible tracking status.
+* Register the placed order with supplier, external reference, dates, currency, delivery location,
+  and item-line snapshots. Nexum does not send the supplier order.
+* Split the order across multiple shipments and allocate quantities per line.
+* Choose a fixed Documentation-owned carrier profile and append one or more tracking identifiers.
+  Verified HTTPS templates create safe links; login/recipient-only methods are labelled rather than
+  misrepresented as open tracking.
+* Print a control slip and post accepted and rejected quantities one physical delivery at a time.
+* Accepted quantities create immutable purchase-receipt movements atomically; rejected quantities
+  remain in receipt history without changing inventory.
+* Serial, batch, and expiry items create identified stock-unit records during receiving.
+* Dedicated over-receipt permission plus a reason is required to receive above the outstanding
+  ordered quantity.
+* Posted receipts are corrected only through a reasoned, linked reversal with compensating
+  movements. They are never edited or deleted.
+* Automatic carrier polling and generic identified-unit Ticket picking remain separate future work.
 
 ---
 
@@ -152,6 +160,7 @@ The item create/edit form is split into three working cards.
 * **Available math:** `available = total_on_hand − reserved` (never negative; over‑reservation is allowed but flagged).
 * **Shortage detection:** item rows flagged when `available ≤ 0` or `reserved > total_on_hand`.
 * **Reorder visibility:** the inventory list defaults to `Should order`, which includes manually flagged items, out-of-stock items, over-reserved items, and items at or below reorder point.
+* **Incoming visibility:** the inventory list sums positive outstanding line quantities from active ordered and partially received Purchase Orders. The row shows `On order` and the exact incoming quantity, but that quantity does not become on-hand or available until receipt posting.
 * **Serial/batch:** if `track_serial` → reserve by unit; if `track_batch` → reserve by batch with FEFO (first‑expiry‑first‑out) suggestion.
 * **Expiry:** FEFO recommendations for pick/issue; warning on receive if expiry in past or inside configurable window.
 * **Loan/Issue:** manual withdrawals and loans supported; loans require due_date and optional associated ticket.
@@ -181,8 +190,11 @@ Reusable widgets/components:
 * `storage.edit` — receive, relocate, adjust, manual issue/loan/return.
 * `storage.audit` — access full movement history and exports.
 * `storage.admin` — manage warehouses/rooms/containers/items/vendors.
-* `storage.purchase.view` — view POs.
-* `storage.purchase.edit` — create/edit/send POs, close/cancel.
+* `storage.purchase_view` — view orders, shipments, tracking, receipts, and control slips.
+* `storage.purchase_manage` — create/edit orders, manage shipment lifecycle and tracking, cancel remaining line quantities, and close/cancel orders.
+* `storage.purchase_receive` — post accepted and rejected delivery quantities.
+* `storage.purchase_receive_overage` — permit a reasoned receipt above the outstanding quantity.
+* `storage.purchase_reverse` — reverse an eligible posted receipt with a reason.
 
 > Tie into existing roles: technicians get `storage.view`; tech.admin gets all storage.*; sales may get `storage.view` limited to availability.
 

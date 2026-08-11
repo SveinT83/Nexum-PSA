@@ -12,12 +12,12 @@ use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Economy\Actions\GenerateOrders;
 use App\Modules\Economy\Controllers\Admin\EconomySettingsController;
 use App\Modules\Economy\Controllers\Tech\EconomyController;
-use App\Modules\Economy\Models\EconomyOrderLine;
 use App\Modules\Economy\Models\EconomyOrder;
+use App\Modules\Economy\Models\EconomyOrderLine;
 use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
-use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketCostEntry;
@@ -44,20 +44,25 @@ class EconomyModuleTest extends TestCase
         Role::create(['name' => 'Admin']);
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
+        $this->tech->givePermissionTo([
+            'economy.order_manage',
+            'economy.delete_orders',
+            'storage.pick',
+        ]);
     }
 
     #[Test]
     public function economy_routes_are_owned_by_economy_module(): void
     {
-        $this->assertSame(EconomyController::class . '@index', Route::getRoutes()->getByName('tech.economy.orders.index')->getActionName());
-        $this->assertSame(EconomyController::class . '@show', Route::getRoutes()->getByName('tech.economy.orders.show')->getActionName());
-        $this->assertSame(EconomyController::class . '@generate', Route::getRoutes()->getByName('tech.economy.orders.generate')->getActionName());
-        $this->assertSame(EconomyController::class . '@markReady', Route::getRoutes()->getByName('tech.economy.orders.ready')->getActionName());
-        $this->assertSame(EconomyController::class . '@markDraft', Route::getRoutes()->getByName('tech.economy.orders.draft')->getActionName());
-        $this->assertSame(EconomyController::class . '@markInvoiced', Route::getRoutes()->getByName('tech.economy.orders.invoiced')->getActionName());
-        $this->assertSame(EconomyController::class . '@destroyOrder', Route::getRoutes()->getByName('tech.economy.orders.destroy')->getActionName());
-        $this->assertSame(EconomySettingsController::class . '@index', Route::getRoutes()->getByName('tech.admin.settings.economy')->getActionName());
-        $this->assertSame(EconomySettingsController::class . '@update', Route::getRoutes()->getByName('tech.admin.settings.economy.update')->getActionName());
+        $this->assertSame(EconomyController::class.'@index', Route::getRoutes()->getByName('tech.economy.orders.index')->getActionName());
+        $this->assertSame(EconomyController::class.'@show', Route::getRoutes()->getByName('tech.economy.orders.show')->getActionName());
+        $this->assertSame(EconomyController::class.'@generate', Route::getRoutes()->getByName('tech.economy.orders.generate')->getActionName());
+        $this->assertSame(EconomyController::class.'@markReady', Route::getRoutes()->getByName('tech.economy.orders.ready')->getActionName());
+        $this->assertSame(EconomyController::class.'@markDraft', Route::getRoutes()->getByName('tech.economy.orders.draft')->getActionName());
+        $this->assertSame(EconomyController::class.'@markInvoiced', Route::getRoutes()->getByName('tech.economy.orders.invoiced')->getActionName());
+        $this->assertSame(EconomyController::class.'@destroyOrder', Route::getRoutes()->getByName('tech.economy.orders.destroy')->getActionName());
+        $this->assertSame(EconomySettingsController::class.'@index', Route::getRoutes()->getByName('tech.admin.settings.economy')->getActionName());
+        $this->assertSame(EconomySettingsController::class.'@update', Route::getRoutes()->getByName('tech.admin.settings.economy.update')->getActionName());
     }
 
     #[Test]

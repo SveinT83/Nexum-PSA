@@ -53,6 +53,37 @@ notice, monitoring alert, or security notification. Email remains responsible fo
 archiving, linking replies, and deciding whether a normal message becomes a ticket. Signal owns the
 cross-module follow-up after the explicit handoff has created a normalized Signal record.
 
+Email rules have an explicit routing phase. `normal` is the default and preserves the existing
+order: deterministic/machine/AI classification runs first, followed by Email rules and ordinary
+Ticket routing. `preclassification` is opt-in for narrow, deterministic handoffs that must run before
+the generic classifier. A matching preclassification rule can stop later classification and Ticket
+routing; nonmatching messages continue through the unchanged normal flow.
+
+## Trusted Sender Authentication
+
+A visible `From` address is untrusted input and is never sufficient evidence for automatic supplier
+processing. Admins must configure both exact trusted `Authentication-Results` authserv IDs and
+exact trusted receiving hops in Email Configuration. The first `Received` header must name one of
+those hosts after `by`; an authserv ID alone is never trusted. Configure only receiving
+infrastructure that removes untrusted inbound `Authentication-Results` headers before adding its
+own result.
+
+Both lists may be left empty to disable trusted sender authentication. A missing or empty list on
+either side fails closed: ordinary messages continue through the existing Email and Ticket flow,
+while supplier-order automation receives an empty, unauthenticated trust snapshot.
+
+Email parses only bounded `Authentication-Results` values after that paired trust boundary. It
+emits a compact `trusted_auth` snapshot with these canonical keys:
+
+- `authentication_passed`, `aligned`, and `authserv_id`.
+- `authenticated_supplier_identity` and `authenticated_supplier_domain`.
+- Canonical `spf`, `dkim`, and `dmarc` results.
+
+Raw headers are not copied into Signal. A trusted receiver may still report authentication that is
+failed or not aligned; those facts remain useful for review and shadow processing. Active automatic
+supplier-order gates must require both `authentication_passed=true` and `aligned=true` and repeat
+their hard checks in Storage.
+
 Technicians can mark an inbox message as spam. This:
 
 - Tags the message with `spam`.
@@ -69,6 +100,17 @@ tables, emphasis, and images, but removes active content such as scripts, iframe
 forms, embedded objects, and unsafe URL schemes.
 
 Inbox views and API responses must use the sanitized body, never raw email HTML.
+
+## Attachment Safety
+
+Inbound attachment persistence is controlled from Email Configuration. Admins set the maximum
+attachment count per message, maximum size per attachment, and an allowlist of MIME types. Filenames
+are sanitized before paths are built, and each accepted attachment gets an `EmailAttachment` row
+with actual size, detected MIME type, SHA-1 checksum, disk/path, inline state, and content ID.
+
+Unsupported, oversized, excess, unreadable, or unwritable attachments are skipped and logged without
+failing the stored email. Deterministic position/checksum paths make attachment persistence safe to
+retry without creating duplicate rows.
 
 ## API
 
@@ -110,6 +152,20 @@ messages too, because the database unique key still reserves those UIDs. `StoreI
 also recovers duplicate-key races between workers: active duplicates skip storage and can safely
 re-run inbound rules, while soft-deleted duplicates are ignored so locally hidden messages are not
 re-imported.
+
+The first automatic poll stores the current INBOX `UIDVALIDITY` and a forward-only `UIDNEXT - 1`
+baseline without importing messages that already existed. Later polls fetch the oldest bounded batch
+after the greater of that baseline and the highest stored UID, regardless of Seen state. This drains
+bursts larger than one batch without turning historical unread mail into Nexum tickets. Already-stored
+and soft-deleted UIDs are removed before selection, fetch jobs are serialized per account, and the
+database unique key remains the final race boundary. If `UIDVALIDITY` changes, automatic ingest stops
+and records an account error until an operator explicitly re-baselines the mailbox; it never guesses
+that reused UIDs are new mail.
+
+Nexum captures header evidence from the original Webklex raw header block. Folded values are
+unfolded, but repeated `Received` and `Authentication-Results` fields keep their top-to-bottom order
+so the configured first receiving hop can be verified. Missing, malformed, or untrusted header
+evidence never establishes sender trust and must lead to review rather than an automatic write.
 
 Sending email is intentionally not part of this API slice. Outbound email must wait for the shared
 send-email component so tickets, inbox, contacts, and future modules use the same sending flow.

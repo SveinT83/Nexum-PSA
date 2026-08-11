@@ -56,6 +56,26 @@
                 <label class="form-label">Webhook URL</label>
                 <input type="url" name="{{ $prefix }}[url]" class="form-control" value="{{ $action['url'] ?? '' }}">
             </div>
+            <div class="col-md-6" data-action-fields="storage_supplier_order_import">
+                <label class="form-label">Import profile ID <span class="text-muted">(optional)</span></label>
+                <input type="number" name="{{ $prefix }}[profile_id]" class="form-control" min="1" value="{{ $action['profile_id'] ?? '' }}">
+                <div class="form-text">Leave blank to let Storage select the matching active profile.</div>
+            </div>
+            <div class="col-md-6" data-action-fields="storage_supplier_order_import">
+                <div class="form-check form-switch mt-4">
+                    <input type="hidden" name="{{ $prefix }}[queue]" value="0">
+                    <input type="checkbox" role="switch" name="{{ $prefix }}[queue]" value="1" class="form-check-input"
+                           @checked(($action['queue'] ?? '') === '' ? true : (bool) $action['queue'])>
+                    <label class="form-check-label">Queue import processing</label>
+                </div>
+                <div class="form-text">Recommended for resilient retries and non-blocking email processing.</div>
+            </div>
+            <div class="col-12" data-action-fields="storage_supplier_order_import">
+                <div class="alert alert-info mb-0 py-2">
+                    Storage owns supplier matching, approval policy, AI fallback and import idempotency.
+                </div>
+            </div>
+
 
             <div class="col-md-6" data-action-fields="sales_follow_up ticket_follow_up task_follow_up portal_invitation">
                 <label class="form-label">Actor / creator</label>

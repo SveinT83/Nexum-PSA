@@ -1,5 +1,14 @@
 @extends('layouts.default_tech')
 
+@php
+    $canUseGenericAdjustment = $canUseGenericAdjustment ?? (
+        ! $item->has_serials
+        && ! $item->track_batch
+        && ! $item->expiry_enabled
+        && ! $item->stockUnits()->where('current_qty', '>', 0)->exists()
+    );
+@endphp
+
 @section('title', $item->sku . ' - Storage Item')
 
 @section('sidebar')
@@ -85,6 +94,7 @@
         <div class="card mb-4">
             <div class="card-header"><h5 class="mb-0">Adjust Stock</h5></div>
             <div class="card-body">
+                @if($canUseGenericAdjustment)
                 <form method="POST" action="{{ route('tech.storage.items.adjust', $item) }}" class="row g-3 align-items-end">
                     @csrf
                     <div class="col-md-3">
@@ -118,26 +128,58 @@
                         <button type="submit" class="btn btn-primary">Apply</button>
                     </div>
                 </form>
+                @else
+                    <div class="alert alert-light border mb-0" role="note">
+                        <div class="fw-semibold mb-1">Identified stock cannot use generic quantity adjustment.</div>
+                        <div class="small text-muted">
+                            This item is tracked by serial, batch, expiry, or positive StockUnit records. Correct a posted
+                            goods receipt with its reversal action. Other corrections require an identified-unit workflow
+                            so the item balance and unit ledger remain synchronized.
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="movement-history">
             <div class="card-header"><h5 class="mb-0">Movement History</h5></div>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                     <tr>
-                        <th>When</th>
-                        <th>Type</th>
-                        <th class="text-end">Before</th>
-                        <th class="text-end">Delta</th>
-                        <th class="text-end">After</th>
-                        <th>Reason</th>
-                        <th>Actor</th>
+                        <x-tables.sortable-header label="When" column="when"
+                                                  :current-sort="$movementSort" :current-direction="$movementDirection"
+                                                  :query="$movementSortQuery" sort-parameter="movement_sort"
+                                                  direction-parameter="movement_direction" fragment="movement-history"
+                                                  default-direction="desc" />
+                        <x-tables.sortable-header label="Type" column="type"
+                                                  :current-sort="$movementSort" :current-direction="$movementDirection"
+                                                  :query="$movementSortQuery" sort-parameter="movement_sort"
+                                                  direction-parameter="movement_direction" fragment="movement-history" />
+                        <x-tables.sortable-header label="Before" column="before" align="end"
+                                                  :current-sort="$movementSort" :current-direction="$movementDirection"
+                                                  :query="$movementSortQuery" sort-parameter="movement_sort"
+                                                  direction-parameter="movement_direction" fragment="movement-history" />
+                        <x-tables.sortable-header label="Delta" column="delta" align="end"
+                                                  :current-sort="$movementSort" :current-direction="$movementDirection"
+                                                  :query="$movementSortQuery" sort-parameter="movement_sort"
+                                                  direction-parameter="movement_direction" fragment="movement-history" />
+                        <x-tables.sortable-header label="After" column="after" align="end"
+                                                  :current-sort="$movementSort" :current-direction="$movementDirection"
+                                                  :query="$movementSortQuery" sort-parameter="movement_sort"
+                                                  direction-parameter="movement_direction" fragment="movement-history" />
+                        <x-tables.sortable-header label="Reason" column="reason"
+                                                  :current-sort="$movementSort" :current-direction="$movementDirection"
+                                                  :query="$movementSortQuery" sort-parameter="movement_sort"
+                                                  direction-parameter="movement_direction" fragment="movement-history" />
+                        <x-tables.sortable-header label="Actor" column="actor"
+                                                  :current-sort="$movementSort" :current-direction="$movementDirection"
+                                                  :query="$movementSortQuery" sort-parameter="movement_sort"
+                                                  direction-parameter="movement_direction" fragment="movement-history" />
                     </tr>
                     </thead>
                     <tbody>
-                    @forelse($item->movements->sortByDesc('created_at') as $movement)
+                    @forelse($movements as $movement)
                         <tr>
                             <td>{{ $movement->created_at->format('Y-m-d H:i') }}</td>
                             <td>{{ str_replace('_', ' ', ucfirst($movement->type)) }}</td>
@@ -192,6 +234,10 @@
                 <dd class="col-6 text-end">{{ $item->can_be_ordered ? 'Yes' : 'No' }}</dd>
                 <dt class="col-6">Serials</dt>
                 <dd class="col-6 text-end">{{ $item->has_serials ? 'Yes' : 'No' }}</dd>
+                <dt class="col-6">Batch tracking</dt>
+                <dd class="col-6 text-end">{{ $item->track_batch ? 'Yes' : 'No' }}</dd>
+                <dt class="col-6">Expiry tracking</dt>
+                <dd class="col-6 text-end">{{ $item->expiry_enabled ? 'Yes' : 'No' }}</dd>
             </dl>
         </div>
     </div>

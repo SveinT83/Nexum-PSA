@@ -22,7 +22,7 @@
 
     <div class="container-fluid">
         {{-- Warehouse administration lives outside the daily inventory work queue. --}}
-        <div class="card">
+        <div class="card" id="warehouses">
             <div class="card-header d-flex align-items-center justify-content-between gap-3">
                 <div>
                     <h2 class="h6 mb-0">Warehouses</h2>
@@ -37,13 +37,36 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                     <tr>
-                        <th style="width: 8rem;">Default</th>
-                        <th>Name</th>
-                        <th>Code</th>
-                        <th>Address</th>
-                        <th class="text-end">Items</th>
-                        <th class="text-end">Boxes</th>
-                        <th>Status</th>
+                        <x-tables.sortable-header label="Default" column="default"
+                                                  :current-sort="$warehouseSort" :current-direction="$warehouseDirection"
+                                                  :query="$warehouseSortQuery" sort-parameter="warehouse_sort"
+                                                  direction-parameter="warehouse_direction" fragment="warehouses"
+                                                  default-direction="desc" />
+                        <x-tables.sortable-header label="Name" column="name"
+                                                  :current-sort="$warehouseSort" :current-direction="$warehouseDirection"
+                                                  :query="$warehouseSortQuery" sort-parameter="warehouse_sort"
+                                                  direction-parameter="warehouse_direction" fragment="warehouses" />
+                        <x-tables.sortable-header label="Code" column="code"
+                                                  :current-sort="$warehouseSort" :current-direction="$warehouseDirection"
+                                                  :query="$warehouseSortQuery" sort-parameter="warehouse_sort"
+                                                  direction-parameter="warehouse_direction" fragment="warehouses" />
+                        <x-tables.sortable-header label="Address" column="address"
+                                                  :current-sort="$warehouseSort" :current-direction="$warehouseDirection"
+                                                  :query="$warehouseSortQuery" sort-parameter="warehouse_sort"
+                                                  direction-parameter="warehouse_direction" fragment="warehouses" />
+                        <x-tables.sortable-header label="Items" column="items" align="end"
+                                                  :current-sort="$warehouseSort" :current-direction="$warehouseDirection"
+                                                  :query="$warehouseSortQuery" sort-parameter="warehouse_sort"
+                                                  direction-parameter="warehouse_direction" fragment="warehouses" />
+                        <x-tables.sortable-header label="Boxes" column="boxes" align="end"
+                                                  :current-sort="$warehouseSort" :current-direction="$warehouseDirection"
+                                                  :query="$warehouseSortQuery" sort-parameter="warehouse_sort"
+                                                  direction-parameter="warehouse_direction" fragment="warehouses" />
+                        <x-tables.sortable-header label="Status" column="status"
+                                                  :current-sort="$warehouseSort" :current-direction="$warehouseDirection"
+                                                  :query="$warehouseSortQuery" sort-parameter="warehouse_sort"
+                                                  direction-parameter="warehouse_direction" fragment="warehouses"
+                                                  default-direction="desc" />
                     </tr>
                     </thead>
                     <tbody>

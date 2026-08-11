@@ -139,7 +139,13 @@
                     <div class="row g-3">
                         <div class="col-md-3">
                             <label for="initial_quantity" class="form-label">Initial Quantity</label>
-                            <input type="number" id="initial_quantity" name="initial_quantity" class="form-control" value="{{ old('initial_quantity', 0) }}" min="0">
+                            <input type="number" id="initial_quantity" name="initial_quantity"
+                                   class="form-control @error('initial_quantity') is-invalid @enderror"
+                                   value="{{ old('initial_quantity', 0) }}" min="0">
+                            @error('initial_quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div id="trackedInitialQuantityHelp" class="form-text">
+                                Tracked items must start at zero and receive identified units through Purchase Orders.
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label for="reorder_point" class="form-label">Reorder Point</label>
@@ -169,10 +175,31 @@
                             <label for="vat_rate" class="form-label">VAT Rate</label>
                             <input type="number" step="0.01" id="vat_rate" name="vat_rate" class="form-control" value="{{ old('vat_rate', $defaultVatRate) }}" min="0">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-check form-switch mt-4">
+                                <input type="hidden" name="has_serials" value="0">
                                 <input class="form-check-input" type="checkbox" id="has_serials" name="has_serials" value="1" @checked(old('has_serials'))>
-                                <label class="form-check-label" for="has_serials">Require serials on withdrawal/sale</label>
+                                <label class="form-check-label" for="has_serials">Track individual serial numbers</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mt-4">
+                                <input type="hidden" name="track_batch" value="0">
+                                <input class="form-check-input" type="checkbox" id="track_batch" name="track_batch" value="1" @checked(old('track_batch'))>
+                                <label class="form-check-label" for="track_batch">Track batch / lot numbers</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mt-4">
+                                <input type="hidden" name="expiry_enabled" value="0">
+                                <input class="form-check-input" type="checkbox" id="expiry_enabled" name="expiry_enabled" value="1" @checked(old('expiry_enabled'))>
+                                <label class="form-check-label" for="expiry_enabled">Require expiry dates</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-light border py-2 small mb-0" role="note">
+                                Serial, batch, and expiry tracking requires identified unit details during receiving.
+                                Generic quantity adjustment and one-click ticket picking are intentionally unavailable for these items.
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -202,4 +229,38 @@
 
 @section('rightbar')
     @include('storage::Tech.Storage.items.partials.documentation-card')
+@endsection
+
+@section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialQuantity = document.getElementById('initial_quantity');
+            const help = document.getElementById('trackedInitialQuantityHelp');
+            const trackingFlags = [
+                document.getElementById('has_serials'),
+                document.getElementById('track_batch'),
+                document.getElementById('expiry_enabled'),
+            ];
+
+            const refreshInitialQuantityRule = () => {
+                const tracked = trackingFlags.some((input) => input.checked);
+                const invalid = tracked && Number(initialQuantity.value || 0) > 0;
+
+                if (tracked) {
+                    initialQuantity.max = '0';
+                } else {
+                    initialQuantity.removeAttribute('max');
+                }
+
+                initialQuantity.setCustomValidity(invalid
+                    ? 'Tracked items must start at zero and be received with unit details.'
+                    : '');
+                help.classList.toggle('text-danger', invalid);
+            };
+
+            trackingFlags.forEach((input) => input.addEventListener('change', refreshInitialQuantityRule));
+            initialQuantity.addEventListener('input', refreshInitialQuantityRule);
+            refreshInitialQuantityRule();
+        });
+    </script>
 @endsection

@@ -9,11 +9,10 @@ use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailRuleLog;
-use App\Modules\Email\Services\BodyNormalizer;
-use App\Modules\Signal\Actions\RecordSignal;
-use App\Modules\Signal\Models\Signal;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
+use App\Modules\Signal\Actions\RecordSignal;
+use App\Modules\Signal\Models\Signal;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\CreateTicketFromInboundEmail;
 use App\Modules\Ticket\Actions\LinkInboundEmailToTicket;
@@ -30,7 +29,20 @@ class InboundEmailRuleEngine
         private readonly LinkInboundEmailToTicket $linkInboundEmailToTicket,
         private readonly CreateTicketFromInboundEmail $createTicketFromInboundEmail,
         private readonly RecordSignal $recordSignal,
+        private readonly TrustedSenderAuthenticationFacts $trustedSenderAuthenticationFacts,
     ) {}
+
+    public function processPreclassification(EmailMessage $message): bool
+    {
+        if ($message->ticket_id !== null || ! Schema::hasTable('email_rules')) {
+            return false;
+        }
+
+        return $this->runConfiguredRules(
+            $message,
+            EmailRule::ROUTING_PHASE_PRECLASSIFICATION,
+        );
+    }
 
     public function process(EmailMessage $message): void
     {
@@ -45,6 +57,7 @@ class InboundEmailRuleEngine
 
             $this->linkByHeaderReferences($message);
             $this->linkByTicketKey($message->fresh());
+
             return;
         }
 
@@ -52,10 +65,24 @@ class InboundEmailRuleEngine
             return;
         }
 
+        $stopped = $this->runConfiguredRules($message, EmailRule::ROUTING_PHASE_NORMAL);
+
+        if (! $stopped) {
+            $this->routeByDefaultTicketPolicy($message);
+        }
+    }
+
+    private function runConfiguredRules(EmailMessage $message, string $routingPhase): bool
+    {
+        if ($message->ticket_id !== null) {
+            return true;
+        }
+
         $stopped = false;
 
         EmailRule::query()
             ->where('trigger', EmailRule::TRIGGER_INBOUND)
+            ->where('routing_phase', $routingPhase)
             ->where('is_active', true)
             ->orderBy('weight')
             ->orderBy('id')
@@ -86,15 +113,14 @@ class InboundEmailRuleEngine
 
                 if ($rule->stop_processing) {
                     $stopped = true;
+
                     return false;
                 }
 
                 return null;
             });
 
-        if (! $stopped) {
-            $this->routeByDefaultTicketPolicy($message);
-        }
+        return $stopped || $message->fresh()->ticket_id !== null;
     }
 
     public function ticketKeyFromSubject(?string $subject): ?string
@@ -144,7 +170,7 @@ class InboundEmailRuleEngine
             'not_equals' => $actualLower !== $expectedLower,
             'starts_with' => str_starts_with($actualLower, $expectedLower),
             'ends_with' => str_ends_with($actualLower, $expectedLower),
-            'regex' => $expected !== '' && @preg_match('/' . str_replace('/', '\/', $expected) . '/i', $actual) === 1,
+            'regex' => $expected !== '' && @preg_match('/'.str_replace('/', '\/', $expected).'/i', $actual) === 1,
             'present' => $field === 'has_ticket_key'
                 ? $this->ticketKeyFromSubject($message->subject) !== null
                 : $actual !== '',
@@ -234,6 +260,7 @@ class InboundEmailRuleEngine
                 'ticket_id' => $message->fresh()->ticket_id,
                 'tags' => $message->tags->pluck('name')->values()->all(),
                 'note' => $action['payload_note'] ?? null,
+                'trusted_auth' => $this->trustedSenderAuthenticationFacts->forMessage($message),
             ],
             'occurred_at' => $message->received_at ?: now(),
         ]);
@@ -243,7 +270,7 @@ class InboundEmailRuleEngine
     {
         return collect($recipients)
             ->map(fn ($recipient) => is_array($recipient)
-                ? trim((string) (($recipient['name'] ?? '') . ' ' . ($recipient['email'] ?? $recipient['address'] ?? '')))
+                ? trim((string) (($recipient['name'] ?? '').' '.($recipient['email'] ?? $recipient['address'] ?? '')))
                 : (string) $recipient)
             ->filter()
             ->implode(' ');
@@ -345,6 +372,7 @@ class InboundEmailRuleEngine
             }
 
             $this->linkInboundEmailToTicket->handle($message->fresh(), $ticketMessage->ticket);
+
             return;
         }
     }
@@ -378,6 +406,7 @@ class InboundEmailRuleEngine
             }
 
             $this->createSalesInboundActivity($message->fresh(), $activity->opportunity);
+
             return true;
         }
 
@@ -423,7 +452,7 @@ class InboundEmailRuleEngine
 
     private function referencedMessageIds(EmailMessage $message): array
     {
-        $source = trim((string) $message->in_reply_to . ' ' . (string) $message->references);
+        $source = trim((string) $message->in_reply_to.' '.(string) $message->references);
         preg_match_all('/<([^>]+)>/', $source, $bracketedMatches);
         $sourceWithoutBracketedIds = preg_replace('/<[^>]+>/', ' ', $source) ?: '';
         preg_match_all('/[^\s<>;,]+@[^\s<>;,]+/', $sourceWithoutBracketedIds, $bareMatches);

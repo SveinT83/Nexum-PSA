@@ -30,6 +30,7 @@ use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\EmailTestResult;
 use App\Modules\Email\Services\EmailTestService;
 use App\Modules\Email\Services\HtmlSanitizer;
+use App\Modules\Email\Services\ImapClient;
 use App\Modules\Signal\Models\Signal;
 use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Taxonomy\Models\Category;
@@ -54,6 +55,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -69,8 +71,27 @@ class EmailModuleTest extends TestCase
     {
         parent::setUp();
 
-        Role::create(['name' => 'Tech']);
-        Role::create(['name' => 'Admin']);
+        $permissions = collect([
+            'email.inbox_view',
+            'email.inbox_manage',
+            'email.account_manage',
+            'email.rule_manage',
+            'email.template_manage',
+            'system.settings_manage',
+        ])->mapWithKeys(
+            fn (string $name): array => [$name => Permission::findOrCreate($name, 'web')],
+        );
+
+        Role::create(['name' => 'Tech'])->givePermissionTo([
+            $permissions['email.inbox_view'],
+            $permissions['email.inbox_manage'],
+        ]);
+        Role::create(['name' => 'Admin'])->givePermissionTo([
+            $permissions['email.account_manage'],
+            $permissions['email.rule_manage'],
+            $permissions['email.template_manage'],
+            $permissions['system.settings_manage'],
+        ]);
 
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $this->tech->assignRole('Tech');
@@ -379,6 +400,226 @@ class EmailModuleTest extends TestCase
         Queue::assertPushed(FetchImapAccount::class, 1);
         Queue::assertPushed(FetchImapAccount::class, fn (FetchImapAccount $job): bool => $job->batchSize === 20);
         $this->assertNotNull(Cache::get('email_last_poll_run'));
+    }
+
+    #[Test]
+    public function polling_drains_the_oldest_new_uid_batch_without_backfilling_unread_history(): void
+    {
+        Queue::fake();
+        $account = EmailAccount::create($this->emailAccountPayload([
+            'address' => 'poll-fairness@example.test',
+            'is_active' => true,
+            'imap_uid_validity' => 123,
+            'imap_live_start_uid' => 4,
+        ]));
+        $storedHighWater = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 4,
+            'message_id' => '<stored-4@example.test>',
+            'subject' => 'Already stored high-water message',
+            'from_email' => 'sender@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+        ]);
+        $storedHighWater->delete();
+
+        $payload = fn (int $uid): array => [
+            'imap_uid' => $uid,
+            'message_id' => '<'.$uid.'@example.test>',
+            'subject' => 'Message '.$uid,
+            'from_email' => 'sender@example.test',
+            'to' => [],
+            'cc' => [],
+            'headers' => [],
+            'received_at' => now()->toDateTimeString(),
+            'size_bytes' => 100,
+        ];
+
+        $client = new class($account, $payload) extends ImapClient
+        {
+            public ?int $requestedAfterUid = null;
+
+            public bool $disconnected = false;
+
+            public function __construct(EmailAccount $account, private $payload)
+            {
+                parent::__construct($account);
+            }
+
+            public function connect(): void {}
+
+            public function disconnect(): void
+            {
+                $this->disconnected = true;
+            }
+
+            public function mailboxState(): array
+            {
+                return [
+                    'uid_validity' => 123,
+                    'next_uid' => 1448,
+                ];
+            }
+
+            public function fetchAfterUid(int $uid, int $limit = 20): array
+            {
+                $this->requestedAfterUid = $uid;
+
+                return array_map($this->payload, [5, 6, 7, 8]);
+            }
+
+            public function fetchUnseen(int $limit = 20, int $page = 1): array
+            {
+                throw new \LogicException('Automatic polling must not scan unread history.');
+            }
+        };
+
+        $job = new class($account->id, 4, false, $client) extends FetchImapAccount
+        {
+            public function __construct(int $accountId, int $batchSize, bool $syncStore, private ImapClient $client)
+            {
+                parent::__construct($accountId, $batchSize, $syncStore);
+            }
+
+            protected function makeImapClient(EmailAccount $account): ImapClient
+            {
+                return $this->client;
+            }
+        };
+
+        $job->handle();
+
+        $queuedUids = collect();
+        Queue::assertPushed(StoreInboundMessage::class, function (StoreInboundMessage $queued) use ($queuedUids): bool {
+            $queuedUids->push((int) $queued->payload['imap_uid']);
+
+            return true;
+        });
+
+        $this->assertSame([5, 6, 7, 8], $queuedUids->all());
+        $this->assertSame(4, $client->requestedAfterUid);
+        $this->assertTrue($client->disconnected);
+    }
+
+    #[Test]
+    public function first_poll_establishes_a_forward_only_uid_baseline_without_importing_mail(): void
+    {
+        Queue::fake();
+        $account = EmailAccount::create($this->emailAccountPayload([
+            'address' => 'poll-baseline@example.test',
+            'is_active' => true,
+        ]));
+
+        $client = new class($account) extends ImapClient
+        {
+            public bool $disconnected = false;
+
+            public function connect(): void {}
+
+            public function disconnect(): void
+            {
+                $this->disconnected = true;
+            }
+
+            public function mailboxState(): array
+            {
+                return [
+                    'uid_validity' => 456,
+                    'next_uid' => 1448,
+                ];
+            }
+
+            public function fetchAfterUid(int $uid, int $limit = 20): array
+            {
+                throw new \LogicException('A baseline poll must not fetch historical messages.');
+            }
+        };
+
+        $job = new class($account->id, 20, false, $client) extends FetchImapAccount
+        {
+            public function __construct(int $accountId, int $batchSize, bool $syncStore, private ImapClient $client)
+            {
+                parent::__construct($accountId, $batchSize, $syncStore);
+            }
+
+            protected function makeImapClient(EmailAccount $account): ImapClient
+            {
+                return $this->client;
+            }
+        };
+
+        $job->handle();
+
+        Queue::assertNotPushed(StoreInboundMessage::class);
+        $account->refresh();
+        $this->assertSame(456, $account->imap_uid_validity);
+        $this->assertSame(1447, $account->imap_live_start_uid);
+        $this->assertNotNull($account->imap_live_cursor_initialized_at);
+        $this->assertNotNull($account->last_successful_fetch_at);
+        $this->assertTrue($client->disconnected);
+    }
+
+    #[Test]
+    public function changed_uidvalidity_fails_closed_without_fetching_or_queueing_mail(): void
+    {
+        Queue::fake();
+        $account = EmailAccount::create($this->emailAccountPayload([
+            'address' => 'poll-uidvalidity@example.test',
+            'is_active' => true,
+            'imap_uid_validity' => 123,
+            'imap_live_start_uid' => 4,
+            'last_successful_fetch_at' => now()->subMinute(),
+        ]));
+        $previousSuccessfulFetch = $account->last_successful_fetch_at;
+
+        $client = new class($account) extends ImapClient
+        {
+            public bool $disconnected = false;
+
+            public function connect(): void {}
+
+            public function disconnect(): void
+            {
+                $this->disconnected = true;
+            }
+
+            public function mailboxState(): array
+            {
+                return [
+                    'uid_validity' => 999,
+                    'next_uid' => 10,
+                ];
+            }
+
+            public function fetchAfterUid(int $uid, int $limit = 20): array
+            {
+                throw new \LogicException('Changed UIDVALIDITY must stop before fetching messages.');
+            }
+        };
+
+        $job = new class($account->id, 20, false, $client) extends FetchImapAccount
+        {
+            public function __construct(int $accountId, int $batchSize, bool $syncStore, private ImapClient $client)
+            {
+                parent::__construct($accountId, $batchSize, $syncStore);
+            }
+
+            protected function makeImapClient(EmailAccount $account): ImapClient
+            {
+                return $this->client;
+            }
+        };
+
+        $job->handle();
+
+        Queue::assertNotPushed(StoreInboundMessage::class);
+        $account->refresh();
+        $this->assertSame('IMAP_UIDVALIDITY_CHANGED', $account->last_error_code);
+        $this->assertSame(123, $account->imap_uid_validity);
+        $this->assertSame(4, $account->imap_live_start_uid);
+        $this->assertTrue($account->last_successful_fetch_at->equalTo($previousSuccessfulFetch));
+        $this->assertTrue($client->disconnected);
     }
 
     #[Test]
