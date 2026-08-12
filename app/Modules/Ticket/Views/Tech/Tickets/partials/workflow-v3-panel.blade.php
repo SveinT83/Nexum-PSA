@@ -4,40 +4,78 @@
     $plannedDecision = $actionDecision('add_planned_cost');
     $createQuoteDecision = $actionDecision('create_quote');
     $sendQuoteDecision = $actionDecision('send_quote');
+    $voidQuoteDecision = $actionDecision('void_accepted_quote');
     $reviewRequestDecision = $actionDecision('request_senior_review');
     $reviewDecision = $actionDecision('senior_review');
     $evidenceDecision = $actionDecision('classify_evidence');
     $closeDecision = $actionDecision('close');
     $inboundCustomerMessages = $ticket->messages->filter(fn ($message) => $message->author_type !== 'user')->sortByDesc('created_at');
+    $activeWorkflowEvidence = $ticket->workflowEvidence->whereNull('invalidated_at');
+    $showSalesApprovalPanel = (bool) $currentOpportunity || (bool) $currentQuote || $ticket->plannedLines->isNotEmpty();
+    $showReviewEvidencePanel = $ticket->workflowReviews->isNotEmpty()
+        || $activeWorkflowEvidence->isNotEmpty()
+        || in_array($reviewRequestDecision['mode'] ?? 'inherit', ['conditional', 'blocked'], true)
+        || in_array($evidenceDecision['mode'] ?? 'inherit', ['conditional', 'blocked'], true);
+    $quotePanelPlacement = $quotePanelPlacement ?? 'primary';
+    $deferAcceptedQuotePanel = (bool) ($deferAcceptedQuotePanel ?? false);
+    $renderQuotePanel = $showSalesApprovalPanel
+        && (
+            ($quotePanelPlacement === 'primary' && ! $deferAcceptedQuotePanel)
+            || ($quotePanelPlacement === 'deferred' && $deferAcceptedQuotePanel)
+        );
+    $renderReviewEvidencePanel = $quotePanelPlacement === 'primary' && $showReviewEvidencePanel;
+    $isAdditionalQuote = data_get($currentQuote?->snapshots, 'revision_mode') === 'additional_after_acceptance';
+    $quotePanelTitle = $currentQuote?->status === 'accepted'
+        ? 'Accepted quote and delivery'
+        : ($isAdditionalQuote ? 'Additional customer approval' : 'Quote and customer approval');
+    $quotePanelDescription = $currentQuote?->status === 'accepted'
+        ? 'Customer approval is recorded. Accepted lines are processed automatically; remaining buttons are retry actions.'
+        : ($isAdditionalQuote
+            ? 'Send only the new scope that was discovered after the earlier accepted quote.'
+            : 'Build the quote, send it for approval, and keep fulfilment blocked until acceptance.');
+    $quoteScopeNote = $currentQuote?->status === 'accepted'
+        ? 'Accepted quote lines become reservation, draft purchase need, or pending actual cost. Picking, vendor orders, and billing stay separate.'
+        : ($isAdditionalQuote
+            ? 'The earlier accepted quote is preserved as audit history. These new lines need their own customer acceptance before delivery.'
+            : 'Quote-scope lines do not reserve stock or create billing until the customer has accepted the current quote.');
+    $voidQuoteModalId = $currentQuote ? 'ticketVoidAcceptedQuoteModal'.$currentQuote->id : null;
 @endphp
 
-<!-- Commercial approval, review, and evidence remain task-focused tools outside workflow progress. -->
+<!-- Commercial approval appears only after a Ticket has actual quote scope or a linked Sales context. -->
+@if($renderQuotePanel)
 <div class="card mb-3">
     <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div>
-            <h2 class="h6 mb-1">Planned scope and customer approval</h2>
-            <div class="small text-muted">Plan costs, prepare the quote, and record the approvals needed for delivery.</div>
+            <h2 class="h6 mb-1">{{ $quotePanelTitle }}</h2>
+            <div class="small text-muted">{{ $quotePanelDescription }}</div>
         </div>
         @if($plannedDecision['visible'])
             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#ticketPlannedLineModal" @disabled(! $plannedDecision['allowed']) title="{{ $plannedDecision['reason'] }}">
-                Add planned cost
+                Add quote line
             </button>
         @endif
     </div>
     <div class="card-body">
-        <p class="small text-muted">Planned lines do not reserve stock or create billing until the customer has accepted the current quote.</p>
+        <p class="small text-muted">{{ $quoteScopeNote }}</p>
 
                 <div class="table-responsive border rounded mb-3">
                     <table class="table table-sm align-middle mb-0">
                         <thead><tr><th>Line</th><th>Status</th><th class="text-end">Ex VAT</th><th></th></tr></thead>
                         <tbody>
                         @forelse($ticket->plannedLines as $line)
+                            @php
+                                $lineProcessed = (bool) $line->converted_cost_entry_id || (bool) $line->purchaseOrderLine;
+                                $lineStatusLabel = $line->converted_cost_entry_id
+                                    ? 'Actual cost'
+                                    : ($line->purchaseOrderLine ? 'Purchase need' : ucfirst($line->status));
+                                $lineStatusClass = $lineProcessed ? 'text-bg-success' : 'text-bg-light border';
+                            @endphp
                             <tr>
                                 <td>
                                     <span class="fw-semibold">{{ $line->name }}</span>
                                     <div class="small text-muted">{{ $line->quantity }} {{ $line->unit }}{{ $line->sku ? ' - '.$line->sku : '' }}</div>
                                 </td>
-                                <td><span class="badge text-bg-light border">{{ ucfirst($line->status) }}</span></td>
+                                <td><span class="badge {{ $lineStatusClass }}">{{ $lineStatusLabel }}</span></td>
                                 <td class="text-end">{{ number_format((float) $line->quantity * (float) $line->unit_price_ex_vat, 2, ',', ' ') }}</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1">
@@ -47,23 +85,23 @@
                                                 <button class="btn btn-sm btn-outline-danger" @disabled(! $plannedDecision['allowed'])>Remove</button>
                                             </form>
                                         @endif
-                                        @if($line->status === 'approved' && ! $line->converted_cost_entry_id && $actionDecision($line->storage_item_id ? 'reserve_item' : 'add_actual_cost')['visible'])
+                                        @if($line->status === 'approved' && ! $lineProcessed && $actionDecision($line->storage_item_id ? 'reserve_item' : 'add_actual_cost')['visible'])
                                             <form method="POST" action="{{ route('tech.tickets.planned-lines.convert', [$ticket, $line]) }}">
                                                 @csrf
-                                                <button class="btn btn-sm btn-outline-success" @disabled(! $actionDecision($line->storage_item_id ? 'reserve_item' : 'add_actual_cost')['allowed'])>Convert</button>
+                                                <button class="btn btn-sm btn-outline-success" @disabled(! $actionDecision($line->storage_item_id ? 'reserve_item' : 'add_actual_cost')['allowed'])>Retry delivery</button>
                                             </form>
                                         @endif
-                                        @if($line->status === 'approved' && $line->storageItem?->can_be_ordered && ! $line->purchaseOrderLine && $actionDecision('request_purchase')['visible'])
+                                        @if($line->status === 'approved' && ! $lineProcessed && $line->storageItem?->can_be_ordered && $actionDecision('request_purchase')['visible'])
                                             <form method="POST" action="{{ route('tech.tickets.planned-lines.purchase', [$ticket, $line]) }}">
                                                 @csrf
-                                                <button class="btn btn-sm btn-outline-warning" @disabled(! $actionDecision('request_purchase')['allowed'])>Purchase need</button>
+                                                <button class="btn btn-sm btn-outline-warning" @disabled(! $actionDecision('request_purchase')['allowed'])>Retry purchase</button>
                                             </form>
                                         @endif
                                     </div>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="4" class="text-muted p-3">No planned costs yet.</td></tr>
+                            <tr><td colspan="4" class="text-muted p-3">No quote lines yet.</td></tr>
                         @endforelse
                         </tbody>
                     </table>
@@ -100,6 +138,17 @@
                                 @if($currentQuote->status === 'draft' && $sendQuoteDecision['visible'])
                                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#ticketSendQuoteForm" @disabled(! $sendQuoteDecision['allowed']) title="{{ $sendQuoteDecision['reason'] }}">Send for approval</button>
                                 @endif
+                                @if($currentQuote->status === 'accepted' && $voidQuoteDecision['visible'])
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#{{ $voidQuoteModalId }}"
+                                        @disabled(! $voidQuoteDecision['allowed'])
+                                        title="{{ $voidQuoteDecision['reason'] }}">
+                                        Void
+                                    </button>
+                                @endif
                             </div>
                         </div>
                         @if($currentQuote->status === 'draft')
@@ -115,8 +164,18 @@
                     @endif
                 </div>
 
-        <hr>
+    </div>
+</div>
+@endif
 
+@if($renderReviewEvidencePanel)
+<!-- Review and evidence remain task-focused tools outside the commercial approval surface. -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h2 class="h6 mb-1">Review and evidence</h2>
+        <div class="small text-muted">Record senior checks and customer evidence when the workflow requires it.</div>
+    </div>
+    <div class="card-body">
         <div class="row g-3">
             <div class="col-xl-6">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
@@ -200,7 +259,7 @@
                         <button class="btn btn-sm btn-primary">Save evidence classification</button>
                     </form>
                 </div>
-                @forelse($ticket->workflowEvidence->whereNull('invalidated_at')->sortByDesc('evidenced_at')->take(6) as $evidence)
+                @forelse($activeWorkflowEvidence->sortByDesc('evidenced_at')->take(6) as $evidence)
                     <div class="d-flex justify-content-between gap-2 border-bottom py-2 small">
                         <div><strong>{{ ucfirst(str_replace('_', ' ', $evidence->evidence_type)) }}</strong><div class="text-muted">{{ $evidence->subject_name ?: $evidence->scope_key ?: 'Ticket evidence' }}</div></div>
                         <div class="text-end text-muted">{{ $evidence->evidenced_at?->format('Y-m-d H:i') }}<br>{{ $evidence->creator?->name }}</div>
@@ -222,12 +281,13 @@
         </div>
     </div>
 </div>
+@endif
 
-@if($plannedDecision['visible'])
+@if($renderQuotePanel && $plannedDecision['visible'])
     <div class="modal fade" id="ticketPlannedLineModal" tabindex="-1" aria-labelledby="ticketPlannedLineModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h2 class="modal-title h5" id="ticketPlannedLineModalLabel">Add planned cost</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-header"><h2 class="modal-title h5" id="ticketPlannedLineModalLabel">Add quote line</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                 <form method="POST" action="{{ route('tech.tickets.planned-lines.store', $ticket) }}">
                     @csrf
                     <div class="modal-body">
@@ -242,7 +302,26 @@
                             <div class="col-12"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div>
                         </div>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add planned line</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add quote line</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
+
+@if($renderQuotePanel && $currentQuote?->status === 'accepted' && $voidQuoteDecision['visible'])
+    <div class="modal fade" id="{{ $voidQuoteModalId }}" tabindex="-1" aria-labelledby="{{ $voidQuoteModalId }}Label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h2 class="modal-title h5" id="{{ $voidQuoteModalId }}Label">Void accepted quote</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <form method="POST" action="{{ route('tech.tickets.sales-quote.void', [$ticket, $currentQuote]) }}">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="alert alert-warning small">This keeps the original customer acceptance for audit, but removes it as approved delivery scope when no irreversible work has happened.</div>
+                        <label class="form-label">Reason</label>
+                        <textarea name="reason" class="form-control" rows="3" required placeholder="What changed after the customer accepted this quote?"></textarea>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" @disabled(! $voidQuoteDecision['allowed'])>Void accepted quote</button></div>
                 </form>
             </div>
         </div>

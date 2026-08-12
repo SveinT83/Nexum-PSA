@@ -27,7 +27,7 @@ class SalesWorkflowFacts implements WorkflowFactProvider
 
     public function resolve(Ticket $ticket, string $fact, array $condition = []): array
     {
-        $ticket->loadMissing('salesContext.opportunity.currentQuoteVersion.lines');
+        $ticket->loadMissing('salesContext.opportunity.currentQuoteVersion.lines', 'salesContext.opportunity.currentQuoteVersion.acceptanceSnapshot');
         $context = $ticket->salesContext;
         $opportunity = $context?->opportunity;
         $version = $opportunity?->currentQuoteVersion;
@@ -37,10 +37,11 @@ class SalesWorkflowFacts implements WorkflowFactProvider
             'sales.quote_created' => $version !== null,
             'sales.quote_sent' => in_array($version?->status, ['sent', 'accepted'], true),
             'sales.quote_accepted' => $version?->status === 'accepted',
-            'sales.quote_accepted_amount' => $version?->status === 'accepted' ? (float) $version->total_ex_vat : null,
+            'sales.quote_accepted_amount' => $version?->status === 'accepted' ? $version->acceptedTotalExVat() : null,
             'sales.quote_declined' => in_array($version?->status, ['rejected', 'declined', 'expired'], true) || $opportunity?->status === 'lost',
             'sales.implementation_lines' => $version?->status === 'accepted'
-                && $version->lines->contains(fn ($line) => $line->downstream_type === 'implementation'),
+                && $version->lines->contains(fn ($line) => $line->downstream_type === 'implementation'
+                    && in_array((int) $line->id, $version->acceptanceSnapshot?->selected_line_ids ?: $version->lines->pluck('id')->map(fn ($id): int => (int) $id)->all(), true)),
             default => false,
         };
 

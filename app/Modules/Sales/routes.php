@@ -16,6 +16,7 @@ if (($salesPortalRoutes ?? false) === true) {
             Route::get('/', [PortalSalesQuoteController::class, 'index'])->name('index');
             Route::get('/{quote}', [PortalSalesQuoteController::class, 'show'])->name('show');
             Route::post('/{quote}/accept', [PortalSalesQuoteController::class, 'accept'])->name('accept');
+            Route::post('/{quote}/decline', [PortalSalesQuoteController::class, 'decline'])->name('decline');
             Route::post('/{quote}/question', [PortalSalesQuoteController::class, 'question'])->name('question');
         });
 
@@ -29,6 +30,8 @@ if (($salesPublicRoutes ?? false) === true) {
         ->name('sales.quotes.public.pdf');
     Route::post('/quote/accept/{token}', [PublicQuoteController::class, 'accept'])
         ->name('sales.quotes.public.accept');
+    Route::post('/quote/decline/{token}', [PublicQuoteController::class, 'decline'])
+        ->name('sales.quotes.public.decline');
     Route::post('/quote/question/{token}', [PublicQuoteController::class, 'question'])
         ->name('sales.quotes.public.question');
 
@@ -107,11 +110,62 @@ Route::post('/sales/{sale}/quote/send', [SalesController::class, 'sendQuote'])
 Route::post('/sales/{sale}/quote/revise', [SalesController::class, 'reviseQuote'])
     ->name('sales.quote.revise');
 
+Route::post('/sales/{sale}/quote/approval/request', [SalesController::class, 'requestQuoteApproval'])
+    ->name('sales.quote.approval.request');
+
+Route::post('/sales/{sale}/quote/approval/approve', [SalesController::class, 'approveQuote'])
+    ->name('sales.quote.approval.approve');
+
+Route::post('/sales/{sale}/quote/approval/reject', [SalesController::class, 'rejectQuote'])
+    ->name('sales.quote.approval.reject');
+
+Route::post('/sales/{sale}/quote/approval/changes', [SalesController::class, 'requestQuoteChanges'])
+    ->name('sales.quote.approval.changes');
+
+Route::post('/sales/{sale}/quote/template', [SalesController::class, 'applyQuoteTemplate'])
+    ->name('sales.quote.templates.apply');
+
+Route::post('/sales/{sale}/quote/conversion-plans/{plan}', [SalesController::class, 'updateConversionPlan'])
+    ->name('sales.quote.conversion-plans.update');
+
 Route::middleware('admin')->group(function () {
     Route::get('/admin/settings/sales/rules', [SalesSettingsController::class, 'rules'])
         ->name('admin.settings.sales.rules');
 
-    Route::get('/admin/settings/sales/workflows', [SalesSettingsController::class, 'workflows'])
+    Route::post('/admin/settings/sales/rules', [SalesSettingsController::class, 'updateRules'])
+        ->name('admin.settings.sales.rules.update');
+
+    Route::get('/admin/settings/sales/quote-templates', [SalesSettingsController::class, 'workflows'])
+        ->name('admin.settings.sales.quote-templates.index');
+
+    Route::get('/admin/settings/sales/workflows', fn () => redirect()->route('tech.admin.settings.sales.quote-templates.index'))
         ->name('admin.settings.sales.workflows');
+
+    Route::get('/admin/settings/sales/quote-templates/create', [SalesSettingsController::class, 'createTemplate'])
+        ->name('admin.settings.sales.quote-templates.create');
+
+    Route::post('/admin/settings/sales/quote-templates', [SalesSettingsController::class, 'storeTemplate'])
+        ->name('admin.settings.sales.quote-templates.store');
+
+    Route::get('/admin/settings/sales/quote-templates/{template}/edit', [SalesSettingsController::class, 'editTemplate'])
+        ->name('admin.settings.sales.quote-templates.edit');
+
+    Route::put('/admin/settings/sales/quote-templates/{template}', [SalesSettingsController::class, 'updateTemplate'])
+        ->name('admin.settings.sales.quote-templates.update');
+
+    Route::delete('/admin/settings/sales/quote-templates/{template}', [SalesSettingsController::class, 'destroyTemplate'])
+        ->name('admin.settings.sales.quote-templates.destroy');
+
+    Route::post('/admin/settings/sales/quote-templates/{template}/lines', [SalesSettingsController::class, 'storeTemplateLine'])
+        ->name('admin.settings.sales.quote-templates.lines.store');
+
+    Route::delete('/admin/settings/sales/quote-templates/{template}/lines/{line}', [SalesSettingsController::class, 'destroyTemplateLine'])
+        ->name('admin.settings.sales.quote-templates.lines.destroy');
+
+    Route::post('/admin/settings/sales/quote-templates/{template}/acknowledgements', [SalesSettingsController::class, 'storeTemplateAcknowledgement'])
+        ->name('admin.settings.sales.quote-templates.acknowledgements.store');
+
+    Route::delete('/admin/settings/sales/quote-templates/{template}/acknowledgements/{acknowledgement}', [SalesSettingsController::class, 'destroyTemplateAcknowledgement'])
+        ->name('admin.settings.sales.quote-templates.acknowledgements.destroy');
 
 });

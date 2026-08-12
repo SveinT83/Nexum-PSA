@@ -38,10 +38,51 @@ assumptions and alternatives, exclusions, next steps, and expiry. Introduction a
 the price groups; assumptions, exclusions, and next steps appear after them. Text is escaped and
 rendered as safe multiline content rather than trusted HTML.
 
-Sent and accepted versions remain immutable. Revising a sent quote creates a new draft that preserves
-all customer-facing text and line cadences. Existing administrator-customized quote email templates are
-not overwritten; the unchanged default template is upgraded to use the cadence-safe summary and customer
-copy variables.
+Sent and accepted versions remain immutable. Revising a sent quote supersedes the old sent version
+and creates a new draft that preserves all customer-facing text and line cadences; the superseded
+public link can still be viewed as history but can no longer be accepted. Accepted versions are not
+edited into a different customer promise. If later Ticket-origin scope needs approval, Nexum creates
+a separate additional quote draft for the new scope. Existing administrator-customized quote email
+templates are not overwritten; the unchanged default template is upgraded to use the cadence-safe
+summary and customer copy variables.
+
+## CPQ Options, Templates, And Approval
+
+Sales quote drafts support structured CPQ behavior without replacing the Commercial catalog. Sellers
+can add Commercial-backed or custom lines, mark lines as required, optional, recommended, selected by
+default, and customer quantity-selectable, and group options as add-ons, alternatives, required groups,
+or Good / Better / Best choices. Required lines are always included in customer acceptance.
+
+Administrators manage reusable quote templates under Admin Sales Quote Templates. The settings surface
+uses the same split-list and focused create/edit pattern as Ticket Workflows: the Quote Templates page
+lists templates, and each template opens into a separate editor with collapsed add sections for lines
+and acknowledgements. A user with Sales settings rights can delete a template from the edit page.
+A template can define default customer text, seller checklist items, approval hints, option groups,
+lines, downstream behavior, and acknowledgements. Applying a template copies and snapshots the
+template into the draft quote version. Later template edits or deletes do not change sent or accepted
+quote versions.
+
+Quote Templates use fixed choices for opportunity type, customer segment, catalog source, section,
+downstream owner, billing cadence, and option-group behavior. Template lines can be selected from the
+Commercial or Storage catalog or entered as a custom line; administrators should not need to type
+internal source IDs for catalog-backed lines. The default seeded template is named `Quote Templates`
+and should be edited with real customer text, prices, and lines before production quoting.
+
+Trusted automation can build and delete the same templates through the Sales quote-template API. The
+API uses `sales.quote_templates.read` for catalog/template reads and `sales.quote_templates.manage`
+for template, line, option-group, and acknowledgement writes. Accepted-quote follow-up workflows,
+such as automatically creating implementation tickets, are a separate automation concern and are not
+part of the quote-template editor.
+
+Sales rules settings control the CPQ approval policy. Approval can be required when a quote has high
+discount, low margin, high total value, or high-value manual/custom lines. Users with
+`sales.quote.approve` can approve, reject, or request changes before sending. Revising a draft after a
+material quote edit clears the approval decision so the edited version is evaluated again.
+
+Public and Customer Portal quote pages show customer-safe CPQ choices and live totals for selectable
+options. Required acknowledgements can exist at quote or line level, and customer acceptance validates
+required lines, option group min/max rules, quantity bounds, and required acknowledgements before the
+quote can be accepted.
 
 Sending a quote marks the quote version as `sent`, generates the customer-facing secure token link,
 queues the quote email when a primary contact email exists, and records Sales activity.
@@ -54,7 +95,19 @@ Public quote links remain available for token-based customer access:
 - Ask a question.
 
 Accepting a quote marks the quote version and quote as accepted, marks the opportunity as won, stores
-accepted name/IP/user agent, and records a `quote_accepted` Sales activity.
+accepted name/IP/user agent, stores an immutable acceptance snapshot, and records a `quote_accepted`
+Sales activity. The accepted snapshot contains selected and declined lines, quantities, prices,
+discounts, VAT, totals, customer identity, public text, and acknowledgement text as accepted.
+
+Declining a sent quote marks the quote as declined and records `quote_declined`. Opening a sent quote
+after its expiry date marks it expired and records `quote_expired`, so the customer can no longer
+accept or decline that version.
+
+Accepted quotes create Sales-owned conversion plan rows from the accepted snapshot. These rows describe
+the intended owner domain, target type, accepted line snapshot, idempotency key, status, and operator
+reference/note. Sales does not silently create Economy, Commercial, Ticket, Storage, Asset, Task,
+ServiceVisit, or future Project records; those domains must still perform their own explicit owner
+workflow and can link back to the accepted quote.
 
 ## Ticket-Owned Quote Work
 
@@ -62,11 +115,12 @@ A Ticket with planned commercial scope can create a quote through the same Sales
 
 Sending from a published Ticket creates an immutable PDF snapshot and a public Ticket reply with the PDF and secure acceptance link. After a sent version, further edits create a new draft version so the customer evidence never changes underneath an acceptance.
 
-Secure-link, Customer Portal, and staff-confirmed inbound-email acceptance all use the same acceptance action. Acceptance marks the Opportunity won and approves only the Ticket planned lines present in that accepted version. Workflow can require quote creation, sent state, accepted state, accepted amount, or implementation lines before the Ticket continues.
+Secure-link, Customer Portal, and staff-confirmed inbound-email acceptance all use the same acceptance action. Acceptance marks the Opportunity won and approves only the Ticket planned lines present in that accepted version. Accepted Ticket-origin quotes are processed automatically into safe reservations, draft purchase needs, or pending Ticket costs. If an accepted quote must be voided before delivery becomes irreversible, the Ticket action records the reason, marks the version `voided`, and reverses only safe pending downstream records. Workflow can require quote creation, sent state, accepted state, accepted amount, or implementation lines before the Ticket continues.
 
 ## Customer Portal
 
-The Customer Portal can show existing sent and accepted quote versions for the active Client scope.
+The Customer Portal can show existing sent, accepted, superseded, and voided quote versions for the
+active Client scope.
 Portal quote pages show customer-safe quote content:
 
 - Quote title and version.
@@ -75,8 +129,10 @@ Portal quote pages show customer-safe quote content:
 - Ex. VAT, VAT, and inc. VAT totals.
 - Expiry and current status.
 
-Portal users can accept sent, unexpired quotes. Acceptance stores the existing quote acceptance fields
-and also binds the quote version to the authenticated portal account, membership, and Contact through:
+Portal users can accept sent, unexpired quotes only. Superseded, accepted, declined, expired, and
+voided versions remain visible as history but cannot be accepted. Acceptance stores the existing
+quote acceptance fields and also binds the quote version to the authenticated portal account,
+membership, and Contact through:
 
 - `portal_accepted_account_id`
 - `portal_accepted_membership_id`

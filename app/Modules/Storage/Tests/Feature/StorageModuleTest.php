@@ -403,6 +403,7 @@ class StorageModuleTest extends TestCase
                 'reorder_point' => 2,
                 'target_level' => 10,
                 'moq' => 1,
+                'requires_customer_quote' => '1',
                 'status' => 'active',
             ])
             ->assertRedirect();
@@ -417,6 +418,7 @@ class StorageModuleTest extends TestCase
         $this->assertSame(0, $item->qty_reserved);
         $this->assertSame(5, $item->qty_available);
         $this->assertTrue($item->can_be_ordered);
+        $this->assertTrue($item->requires_customer_quote);
         $this->assertFalse($item->needs_reorder);
 
         $movement = Movement::firstOrFail();
@@ -479,6 +481,7 @@ class StorageModuleTest extends TestCase
             'reorder_point' => 2,
             'target_level' => 8,
             'can_be_ordered' => false,
+            'requires_customer_quote' => true,
             'status' => 'active',
         ]);
 
@@ -486,6 +489,7 @@ class StorageModuleTest extends TestCase
             ->assertJsonPath('data.sku', 'API-ROUTER')
             ->assertJsonPath('data.qty_on_hand', 4)
             ->assertJsonPath('data.can_be_ordered', false)
+            ->assertJsonPath('data.requires_customer_quote', true)
             ->assertJsonPath('data.box.id', $boxId);
 
         $itemId = $itemResponse->json('data.id');
@@ -498,11 +502,13 @@ class StorageModuleTest extends TestCase
             'name' => 'API Router Updated',
             'should_order' => true,
             'can_be_ordered' => true,
+            'requires_customer_quote' => false,
         ])
             ->assertOk()
             ->assertJsonPath('data.name', 'API Router Updated')
             ->assertJsonPath('data.should_order', true)
-            ->assertJsonPath('data.can_be_ordered', true);
+            ->assertJsonPath('data.can_be_ordered', true)
+            ->assertJsonPath('data.requires_customer_quote', false);
 
         $this->postJson(route('api.v1.storage.items.adjust', $itemId), [
             'delta' => -1,

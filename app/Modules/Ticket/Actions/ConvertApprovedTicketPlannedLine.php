@@ -29,12 +29,12 @@ class ConvertApprovedTicketPlannedLine
             throw ValidationException::withMessages(['planned_line' => $reason]);
         }
 
-        if ($line->status !== 'approved' || ! $line->approved_quote_version_id) {
-            throw ValidationException::withMessages(['planned_line' => 'Only a line from the accepted quote can be converted.']);
-        }
-
         if ($line->converted_cost_entry_id) {
             return $line->convertedCostEntry()->firstOrFail();
+        }
+
+        if ($line->status !== 'approved' || ! $line->approved_quote_version_id) {
+            throw ValidationException::withMessages(['planned_line' => 'Only a line from the accepted quote can be converted.']);
         }
 
         return DB::transaction(function () use ($ticket, $line, $actor): TicketCostEntry {

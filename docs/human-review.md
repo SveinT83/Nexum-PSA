@@ -27,6 +27,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-11-004 | Sales Quotes / CPQ completion | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-003 | One responsive Nexum PWA final browser acceptance | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-001 | Intake final routing and review completion | Pending | 2026-08-11 |  |  |
@@ -150,6 +151,151 @@ Reviewed date: 2026-07-28
 Result / notes: Approved by Svein Tore in the Codex task after reviewing the completed work.
 
 ## Open Reviews
+
+### HR-2026-08-11-004 - Sales Quotes / CPQ Completion
+
+Status: Pending
+Added: 2026-08-11
+Environment: Dev, then production beta after merge
+Related: GitHub Discussion #170, `docs/rfc/2026-08-11-sales-cpq-completion.md`,
+`docs/adr/2026-08-11-sales-cpq-accepted-snapshot-boundary.md`, and
+`docs/feature-slices/2026-08-11-sales-cpq-core.md`
+
+Scope: Sales-owned CPQ completion for structured quoting and customer acceptance. The update adds
+customer-selectable option groups, required/recommended/default line behavior, quantity bounds,
+quote-level and line-level acknowledgements, immutable accepted snapshots, configurable CPQ approval
+policy, `sales.quote.approve`, Admin Sales rules and Quote Templates settings, reusable quote
+templates/bundles, template snapshots copied into quote versions, public and Customer Portal
+accept/decline/expiry behavior, lifecycle activities, and Sales-owned conversion-plan
+status/reference tracking. Admin Sales Quote Templates uses the same split-list and focused
+create/edit pattern as Ticket Workflows, with controlled opportunity type, customer segment, catalog
+source, and option-group selectors so administrators do not need to type internal source IDs or fixed
+variable values. Scoped automation can create the same reusable quote templates through the Sales
+quote-template API. Ticket `Add cost/item` now hides the Sales quote panel until planned scope or a
+Sales context exists, and routes quote-required Storage items or threshold-triggered manual costs to
+planned scope instead of reserving stock or creating actual cost. After customer acceptance, the
+protected `ticket_quote_delivery_automation` system actor processes accepted Ticket quote lines into
+safe internal delivery records: reservations for available stock, draft purchase needs for orderable
+shortages, and pending Ticket costs for custom lines. Sent quote changes supersede the old public
+acceptance link and create a new draft revision. New quote-required Ticket scope after acceptance
+creates a separate additional quote draft instead of changing the accepted quote. Accepted Ticket
+quotes can be voided with a required reason only while downstream delivery records are still safely
+reversible.
+
+Deployment actions: deploy code, run `php artisan migrate --force`, run `php artisan optimize:clear`,
+restart queue workers if the target environment uses queued quote/customer portal mail delivery, and
+sync Sales, Ticket, and Integration Knowledge docs. Dev already ran `php artisan migrate`, applying
+`2026_08_11_140000_add_sales_cpq_core` in batch 67 and
+`2026_08_11_141000_add_sales_quote_templates` in batch 68, followed by `php artisan optimize:clear`.
+The Ticket/Storage quote-routing follow-up adds migration
+`2026_08_11_142000_add_customer_quote_policy_to_storage_items`, applied on Dev in batch 69. The first
+accepted Ticket quote after deploy creates or refreshes the hidden
+`ticket_quote_delivery_automation` system actor with least-privilege Ticket/Storage permissions.
+
+Risks: selectable options must not let customers drop required lines or submit quantities outside
+seller limits; acknowledgement text must be snapshotted exactly; approval must block risky sends until
+approved; template changes must not mutate sent or accepted quote versions; expired quotes must not be
+accepted; conversion plans for non-Ticket downstream domains must not silently create or alter
+Economy, Commercial, Asset, Task, ServiceVisit, or future Project records; Ticket planned scope must
+use only the accepted customer-selected snapshot; and true accepted-quote follow-up workflows, such
+as creating separate implementation Tickets automatically, remain a separate automation slice.
+Quote-required Storage items and threshold-triggered manual costs must not create reservations,
+Picking List rows, or billable actual costs before customer acceptance. Accepted Ticket quote
+automation must never pick stock, send supplier orders, post receipts, or mark billable Economy
+orders automatically. A superseded quote must not remain customer-acceptable. A voided accepted
+quote must preserve audit history and must not cancel picked stock, non-pending billing, placed
+purchase orders, shipments, or receipts silently.
+
+Automated verification: `HOME=/tmp php artisan test
+app/Modules/Sales/Tests/Feature/SalesModuleTest.php` passes with 25 tests and 418 assertions,
+including the Admin Sales Quote Templates split-editor regression, Sales quote-template API
+regression, and superseded sent-quote acceptance regression.
+`HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketModuleTest.php` passes with 122
+tests and 903 assertions, including the accepted Ticket quote card placement, sent-quote
+superseding, additional quote after acceptance, accepted-quote void, draft purchase-need reversal,
+and irreversible-delivery block regressions.
+`HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketWorkflowV3Test.php` passes with 25
+tests and 278 assertions, including the customer-acceptance auto-processing regression and the cost-entry
+API quote-scope routing regression. `HOME=/tmp php artisan test
+app/Modules/Storage/Tests/Feature/StorageModuleTest.php` passes with 23 tests and 363 assertions.
+`HOME=/tmp php artisan test` passes with 1281 tests and 10865 assertions.
+`HOME=/tmp php artisan view:cache` and `HOME=/tmp php artisan optimize:clear` passed. PHP syntax
+checks passed for the CPQ actions/controllers/models and all three CPQ/quote policy migrations.
+`HOME=/tmp php artisan knowledge:sync-docs --module=Ticket --module=Storage --module=Sales --push`
+reported 3 chapters, 19 articles, 0 skipped, and queued the BookStack push. A follow-up Ticket
+Knowledge sync after the accepted-quote card title change reported 1 chapter, 11 articles, 0 skipped,
+and queued the BookStack push. The accepted Ticket quote auto-processing update synced Ticket
+Knowledge again with 1 chapter, 11 articles, 0 skipped, and queued the BookStack push. The
+sent-revision/additional-quote/void update synced Sales, Storage, and Ticket Knowledge again with
+3 chapters, 19 articles, 0 skipped, and queued the BookStack push.
+
+Human checks:
+
+- [ ] Open Admin Sales Rules and confirm approval thresholds can be viewed and saved.
+- [ ] Open Admin Sales Quote Templates and confirm it shows a compact template list, not all template
+  editors at once.
+- [ ] Create or edit one active quote template and confirm the edit page is focused, customer text is
+  collapsed by default, and adding lines/acknowledgements happens in separate collapsed sections.
+- [ ] Confirm opportunity type, customer segment, catalog source, and option group are controlled
+  choices with no manual Source ID field.
+- [ ] Confirm the seeded `Quote Templates` default template exists and can be edited without creating
+  duplicates.
+- [ ] Confirm API management exposes `sales.quote_templates.read` and
+  `sales.quote_templates.manage` for scoped automation tokens.
+- [ ] Confirm a user with Sales settings rights can delete a test quote template from the edit page,
+  and that deleted templates disappear from the template list without changing existing quote
+  versions or accepted snapshots.
+- [ ] Add default customer text, at least one grouped line, and one acknowledgement to the template.
+- [ ] Create a Sales opportunity, prepare a quote, apply the active template, and confirm lines,
+  groups, customer text, and acknowledgements are copied into the draft.
+- [ ] Add a required line, an optional/recommended add-on, and a quantity-selectable line; send a
+  standard quote and confirm the public quote page shows only customer-safe prices and live totals.
+- [ ] Try accepting without required acknowledgements and confirm acceptance is blocked.
+- [ ] Accept with a selected add-on and changed allowed quantity; confirm Tech shows the accepted
+  snapshot and conversion-plan rows with the selected amount.
+- [ ] Confirm a risky quote is blocked before send, can be approved only by a user with
+  `sales.quote.approve`, and can then be sent.
+- [ ] Decline a sent quote and confirm Sales timeline, status, and Customer Portal/public state are
+  coherent.
+- [ ] Open an expired sent quote and confirm it is marked expired and cannot be accepted.
+- [ ] Add quote-required Ticket scope after a quote has been sent but before acceptance, and confirm
+  the old quote is shown as superseded, the old public acceptance link is blocked, and a new draft
+  revision contains the previous scope plus the new line.
+- [ ] From a Ticket planned-scope quote, accept only selected quote lines and confirm only those
+  planned lines become approved Ticket scope.
+- [ ] After accepting a Ticket quote, confirm available Storage items become reservations/pending
+  Ticket costs, orderable out-of-stock items become draft purchase needs without vendor order
+  sending, and custom lines become pending Ticket costs.
+- [ ] Add new quote-required Ticket scope after a Ticket quote has been accepted and confirm the
+  accepted quote remains unchanged, a separate `Additional customer approval` draft contains only
+  the new line, and the earlier accepted quote history sits below Activity once delivery is complete.
+- [ ] Void an accepted Ticket quote before picking/order sending and confirm the reason is audited,
+  safe pending costs/reservations/draft purchase needs are reversed, workflow quote evidence is
+  invalidated, and the quote is labelled voided rather than deleted.
+- [ ] Try voiding an accepted Ticket quote after picked stock, non-pending billing, a non-draft
+  purchase order, shipment, or receipt and confirm Nexum blocks the action with a clear reason.
+- [ ] Confirm processed accepted Ticket quote lines no longer show manual Convert/Purchase buttons,
+  while a blocked line still shows a retry action and audit reason.
+- [ ] Confirm a fully processed accepted Ticket quote card moves below Activity, while unfinished
+  accepted quote delivery stays above Activity and Nexum relationship remains the bottom card.
+- [ ] Open the linked Sales quote after Ticket quote acceptance and confirm Ticket-origin conversion
+  plan rows are marked completed with references to the created Ticket cost or purchase need.
+- [ ] Open an ordinary Ticket with no planned scope and confirm no Sales quote panel is visible.
+- [ ] Use Ticket `Add cost/item` on a Storage item marked `Requires accepted quote before use` and
+  confirm it creates planned scope, does not reserve stock, and then shows the customer approval
+  panel.
+- [ ] Use Ticket `Add cost/item` below the quote threshold and confirm the normal actual cost or
+  Storage reservation path still works.
+- [ ] Set the Ticket quote cost threshold and confirm a manual cost at or above the threshold becomes
+  planned scope through both browser and API.
+- [ ] Update a conversion-plan status/reference/note in Sales and confirm no downstream record is
+  created automatically by Sales.
+- [ ] Check desktop and mobile widths for Tech quote modal, public quote, and Customer Portal quote
+  and confirm controls and totals do not overlap.
+
+Reviewer:
+Reviewed date:
+Result / notes:
 
 ### HR-2026-08-11-003 - One Responsive Nexum PWA Final Browser Acceptance
 

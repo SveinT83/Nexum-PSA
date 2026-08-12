@@ -52,6 +52,8 @@ class TicketAction
 
     public const MARK_QUOTE_ACCEPTANCE = 'mark_quote_acceptance';
 
+    public const VOID_ACCEPTED_QUOTE = 'void_accepted_quote';
+
     public const RESERVE_ITEM = 'reserve_item';
 
     public const PICK_ITEM = 'pick_item';
@@ -89,12 +91,13 @@ class TicketAction
             self::REQUEST_KNOWLEDGE_UPDATE => ['label' => 'Request Knowledge update', 'type' => 'documentation', 'write' => true, 'permission' => 'ticket.update'],
             self::START_TIMER => ['label' => 'Start timer', 'type' => 'time', 'write' => true, 'permission' => 'ticket.register_time'],
             self::REGISTER_TIME => ['label' => 'Register time', 'type' => 'time', 'write' => true, 'permission' => 'ticket.register_time'],
-            self::ADD_PLANNED_COST => ['label' => 'Add planned cost', 'type' => 'commercial', 'write' => true, 'permission' => 'ticket.plan_cost'],
+            self::ADD_PLANNED_COST => ['label' => 'Add quote line', 'type' => 'commercial', 'write' => true, 'permission' => 'ticket.plan_cost'],
             self::ADD_ACTUAL_COST => ['label' => 'Add actual cost', 'type' => 'commercial', 'write' => true, 'permission' => 'ticket.update'],
             self::CREATE_QUOTE => ['label' => 'Create quote', 'type' => 'sales', 'write' => true, 'permission' => 'sales.quote_manage'],
             self::EDIT_QUOTE => ['label' => 'Edit quote', 'type' => 'sales', 'write' => true, 'permission' => 'sales.quote_manage'],
             self::SEND_QUOTE => ['label' => 'Send quote for approval', 'type' => 'sales', 'write' => true, 'permission' => 'sales.email_send'],
             self::MARK_QUOTE_ACCEPTANCE => ['label' => 'Mark customer quote acceptance', 'type' => 'sales', 'write' => true, 'permission' => 'ticket.approval_record'],
+            self::VOID_ACCEPTED_QUOTE => ['label' => 'Void accepted quote', 'type' => 'sales', 'write' => true, 'permission' => 'sales.quote_manage'],
             self::RESERVE_ITEM => ['label' => 'Reserve approved item', 'type' => 'storage', 'write' => true, 'permission' => 'storage.reserve'],
             self::PICK_ITEM => ['label' => 'Pick approved item', 'type' => 'storage', 'write' => true, 'permission' => 'storage.pick'],
             self::REQUEST_PURCHASE => ['label' => 'Create purchase need', 'type' => 'storage', 'write' => true, 'permission' => 'storage.purchase_manage'],
@@ -147,6 +150,7 @@ class TicketAction
             self::EDIT_QUOTE,
             self::SEND_QUOTE,
             self::MARK_QUOTE_ACCEPTANCE,
+            self::VOID_ACCEPTED_QUOTE,
             self::RESERVE_ITEM,
             self::PICK_ITEM,
             self::REQUEST_PURCHASE,

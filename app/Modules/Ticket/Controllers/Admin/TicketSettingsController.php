@@ -23,6 +23,7 @@ use App\Modules\Ticket\Services\TicketWorkflowMigrationService;
 use App\Modules\Ticket\Services\TicketWorkflowRequirementEvaluator;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Ticket\Support\TicketPortalPolicy;
+use App\Modules\Ticket\Support\TicketQuoteCostPolicy;
 use App\Modules\Ticket\Support\TicketSolutionPolicy;
 use App\Modules\Ticket\Support\TicketWorkflowCustomerNotificationPolicy;
 use Illuminate\Http\RedirectResponse;
@@ -34,7 +35,7 @@ use Illuminate\View\View;
 
 class TicketSettingsController extends Controller
 {
-    public function index(TicketSolutionPolicy $solutionPolicy, TicketPortalPolicy $portalPolicy): View
+    public function index(TicketSolutionPolicy $solutionPolicy, TicketPortalPolicy $portalPolicy, TicketQuoteCostPolicy $quoteCostPolicy): View
     {
         $emailAccounts = EmailAccount::query()
             ->where('is_active', true)
@@ -49,6 +50,7 @@ class TicketSettingsController extends Controller
             'mergeSettings' => $this->ticketMergeSettings(),
             'solutionPolicy' => $solutionPolicy->settings(),
             'portalPolicy' => $portalPolicy->settings(),
+            'quoteCostPolicy' => $quoteCostPolicy->settings(),
             'queues' => TicketQueue::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'types' => TicketType::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
             'statuses' => TicketStatus::withCount('tickets')->orderBy('sort_order')->orderBy('name')->get(),
@@ -222,6 +224,21 @@ class TicketSettingsController extends Controller
         $portalPolicy->update($data);
 
         return back()->with('success', 'Ticket customer portal policy updated.');
+    }
+
+    public function updateQuoteCostPolicy(Request $request, TicketQuoteCostPolicy $quoteCostPolicy): RedirectResponse
+    {
+        $data = $request->validate([
+            'quote_required_cost_threshold' => 'nullable|numeric|min:0|max:9999999999.99',
+        ]);
+
+        $quoteCostPolicy->update([
+            'quote_required_cost_threshold' => filled($data['quote_required_cost_threshold'] ?? null)
+                ? (float) $data['quote_required_cost_threshold']
+                : null,
+        ]);
+
+        return back()->with('success', 'Ticket quote cost policy updated.');
     }
 
     public function updateMergeSettings(Request $request): RedirectResponse

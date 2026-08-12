@@ -89,6 +89,8 @@ Route::post('/tickets/{ticket}/sales-quote', [TicketWorkflowController::class, '
     ->name('tickets.sales-quote.create');
 Route::post('/tickets/{ticket}/sales-quote/send', [TicketWorkflowController::class, 'sendQuote'])
     ->name('tickets.sales-quote.send');
+Route::post('/tickets/{ticket}/sales-quote/versions/{version}/void', [TicketWorkflowController::class, 'voidAcceptedQuote'])
+    ->name('tickets.sales-quote.void');
 Route::post('/tickets/{ticket}/messages/{message}/quote-versions/{version}/accept', [TicketWorkflowController::class, 'acceptQuoteFromMessage'])
     ->name('tickets.sales-quote.accept-message');
 Route::post('/tickets/{ticket}/workflow-reviews', [TicketWorkflowController::class, 'requestReview'])
@@ -158,6 +160,8 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.tickets.solution-policy.update');
     Route::post('/admin/settings/tickets/portal-policy', [TicketSettingsController::class, 'updatePortalPolicy'])
         ->name('admin.settings.tickets.portal-policy.update');
+    Route::post('/admin/settings/tickets/quote-cost-policy', [TicketSettingsController::class, 'updateQuoteCostPolicy'])
+        ->name('admin.settings.tickets.quote-cost-policy.update');
     Route::post('/admin/settings/tickets/merge-settings', [TicketSettingsController::class, 'updateMergeSettings'])
         ->name('admin.settings.tickets.merge-settings.update');
     Route::post('/admin/settings/tickets/queues', [TicketSettingsController::class, 'storeQueue'])

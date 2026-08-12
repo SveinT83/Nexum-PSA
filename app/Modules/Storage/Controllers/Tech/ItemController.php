@@ -162,6 +162,7 @@ class ItemController extends Controller
             'moq' => 'nullable|integer|min:1',
             'should_order' => 'boolean',
             'can_be_ordered' => 'boolean',
+            'requires_customer_quote' => 'boolean',
             'status' => 'required|string|in:active,inactive',
         ]);
 
@@ -175,6 +176,7 @@ class ItemController extends Controller
         }
         $itemData['should_order'] = $request->boolean('should_order');
         $itemData['can_be_ordered'] = $request->boolean('can_be_ordered');
+        $itemData['requires_customer_quote'] = $request->boolean('requires_customer_quote');
         $itemData['updated_by'] = $request->user()?->id;
 
         DB::transaction(function () use (
@@ -275,6 +277,7 @@ class ItemController extends Controller
             'initial_quantity' => 'nullable|integer|min:0',
             'should_order' => 'boolean',
             'can_be_ordered' => 'boolean',
+            'requires_customer_quote' => 'boolean',
             'status' => 'required|string|in:active,inactive',
         ]);
     }

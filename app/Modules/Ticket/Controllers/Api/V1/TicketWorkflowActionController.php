@@ -3,8 +3,8 @@
 namespace App\Modules\Ticket\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
 use App\Modules\Sales\Models\SalesQuoteVersion;
-use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Ticket\Actions\AcceptTicketQuoteFromMessage;
 use App\Modules\Ticket\Actions\ClassifyTicketWorkflowEvidence;
 use App\Modules\Ticket\Actions\CloseTicket;
@@ -13,15 +13,16 @@ use App\Modules\Ticket\Actions\DecideTicketWorkflowReview;
 use App\Modules\Ticket\Actions\DeleteTicketPlannedLine;
 use App\Modules\Ticket\Actions\EnsureTicketSalesQuote;
 use App\Modules\Ticket\Actions\EscalateTicketWorkflow;
+use App\Modules\Ticket\Actions\ProcessAcceptedTicketQuote;
 use App\Modules\Ticket\Actions\RecordTicketTimerStarted;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\RequestTicketPurchase;
 use App\Modules\Ticket\Actions\RequestTicketWorkflowReview;
-use App\Modules\Ticket\Actions\ReserveTicketStorageItem;
 use App\Modules\Ticket\Actions\SendTicketSalesQuote;
-use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
+use App\Modules\Ticket\Actions\StoreTicketCostOrQuoteScope;
 use App\Modules\Ticket\Actions\StoreTicketPlannedLine;
 use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
+use App\Modules\Ticket\Actions\VoidAcceptedTicketSalesQuote;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPlannedLine;
@@ -31,7 +32,6 @@ use App\Modules\Ticket\Resources\Api\V1\TicketResource;
 use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -79,8 +79,7 @@ class TicketWorkflowActionController extends Controller
     public function storeCostEntry(
         Request $request,
         Ticket $ticket,
-        ReserveTicketStorageItem $reserve,
-        StoreManualTicketCostEntry $manual,
+        StoreTicketCostOrQuoteScope $storeCostOrQuoteScope,
     ) {
         $data = $request->validate([
             'cost_mode' => ['required', Rule::in(['storage', 'manual'])],
@@ -93,22 +92,13 @@ class TicketWorkflowActionController extends Controller
             'note' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        if ($data['cost_mode'] === 'storage') {
-            $item = StorageItem::query()->where('status', 'active')->findOrFail((int) $data['storage_item_id']);
-            $entry = $reserve->handle($ticket, $item, $data, $request->user());
-        } else {
-            $entry = $manual->handle($ticket, [
-                'item_name' => $data['item_name'],
-                'quantity' => $data['quantity'],
-                'unit_price_ex_vat' => $data['unit_price_ex_vat'],
-                'currency' => Str::upper($data['currency'] ?? 'NOK'),
-                'invoice_text' => $data['invoice_text'] ?? null,
-                'note' => $data['note'] ?? null,
-            ], $request->user());
-        }
+        $result = $storeCostOrQuoteScope->handle($ticket, $data, $request->user());
 
         return response()->json([
-            'data' => $entry->toArray(),
+            'data_type' => $result['record_type'],
+            'routed_to' => $result['route'],
+            'reason' => $result['reason'],
+            'data' => $result['record']->toArray(),
             'ticket' => (new TicketResource($this->load($ticket)))->resolve(),
         ], 201);
     }
@@ -170,16 +160,18 @@ class TicketWorkflowActionController extends Controller
         return response()->noContent();
     }
 
-    public function convertPlannedLine(Request $request, Ticket $ticket, TicketPlannedLine $plannedLine, ConvertApprovedTicketPlannedLine $action)
+    public function convertPlannedLine(Request $request, Ticket $ticket, TicketPlannedLine $plannedLine, ConvertApprovedTicketPlannedLine $action, ProcessAcceptedTicketQuote $processor)
     {
         $entry = $action->handle($ticket, $plannedLine, $request->user());
+        $this->syncAcceptedQuoteDelivery($ticket, $plannedLine, $processor, $request->user());
 
         return response()->json(['data' => $entry->toArray()]);
     }
 
-    public function requestPurchase(Request $request, Ticket $ticket, TicketPlannedLine $plannedLine, RequestTicketPurchase $action)
+    public function requestPurchase(Request $request, Ticket $ticket, TicketPlannedLine $plannedLine, RequestTicketPurchase $action, ProcessAcceptedTicketQuote $processor)
     {
         $line = $action->handle($ticket, $plannedLine, $request->user());
+        $this->syncAcceptedQuoteDelivery($ticket, $plannedLine, $processor, $request->user());
 
         return response()->json(['data' => $line->load('purchaseOrder')->toArray()], 201);
     }
@@ -199,6 +191,15 @@ class TicketWorkflowActionController extends Controller
         ]);
 
         return response()->json(['data' => $this->quote($action->handle($ticket, $data, $request->user()))]);
+    }
+
+    public function voidAcceptedQuote(Request $request, Ticket $ticket, SalesQuoteVersion $version, VoidAcceptedTicketSalesQuote $action)
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:2000'],
+        ]);
+
+        return response()->json(['data' => $this->quote($action->handle($ticket, $version, $data, $request->user()))]);
     }
 
     public function acceptQuoteFromMessage(Request $request, Ticket $ticket, TicketMessage $message, SalesQuoteVersion $version, AcceptTicketQuoteFromMessage $action)
@@ -266,6 +267,14 @@ class TicketWorkflowActionController extends Controller
             'unit_price_ex_vat' => ['nullable', 'numeric', 'min:0'],
             'vat_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
+    }
+
+    private function syncAcceptedQuoteDelivery(Ticket $ticket, TicketPlannedLine $plannedLine, ProcessAcceptedTicketQuote $processor, ?User $actor): void
+    {
+        $version = $plannedLine->refresh()->approvedQuoteVersion()->first();
+        if ($version?->status === 'accepted') {
+            $processor->handle($ticket->refresh(), $version, $actor);
+        }
     }
 
     private function load(Ticket $ticket): Ticket

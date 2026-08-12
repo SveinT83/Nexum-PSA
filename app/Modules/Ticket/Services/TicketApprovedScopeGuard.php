@@ -9,14 +9,18 @@ class TicketApprovedScopeGuard
 {
     public function assertWithinApprovedScope(Ticket $ticket): void
     {
-        $ticket->loadMissing('salesContext.opportunity.currentQuoteVersion');
-        $version = $ticket->salesContext?->opportunity?->currentQuoteVersion;
+        $ticket->loadMissing('salesContext.opportunity.quotes.versions.acceptanceSnapshot');
+        $opportunity = $ticket->salesContext?->opportunity;
+        $acceptedVersions = collect($opportunity?->quotes ?? [])
+            ->flatMap(fn ($quote) => $quote->versions)
+            ->filter(fn ($version): bool => $version->status === 'accepted')
+            ->values();
 
-        if (! $version || $version->status !== 'accepted') {
+        if ($acceptedVersions->isEmpty()) {
             return;
         }
 
-        $approved = round((float) $version->total_ex_vat, 2);
+        $approved = round($acceptedVersions->sum(fn ($version): float => $version->acceptedTotalExVat()), 2);
         $actualCosts = (float) $ticket->costEntries()
             ->whereNotIn('status', ['cancelled', 'released'])
             ->selectRaw('COALESCE(SUM(quantity * unit_price_ex_vat), 0) AS total')

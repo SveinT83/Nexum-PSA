@@ -217,6 +217,8 @@ class IntegrationModuleTest extends TestCase
         }
 
         $this->assertTrue($catalog->isReadOnly('tickets.workflow.read'));
+        $this->assertTrue($catalog->isReadOnly('sales.quote_templates.read'));
+        $this->assertFalse($catalog->isReadOnly('sales.quote_templates.manage'));
         $this->assertTrue($catalog->isReadOnly('data_exchange.download'));
         $this->assertFalse($catalog->isReadOnly('tickets.create'));
     }

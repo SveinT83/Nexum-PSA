@@ -122,6 +122,8 @@ Implemented scopes:
 - `sales.read`: list and view sales opportunities and activities.
 - `sales.create`: create sales opportunities through the sales engine.
 - `sales.update`: update sales opportunities and add sales activities.
+- `sales.quote_templates.read`: read Sales quote-template catalogs and configured reusable templates.
+- `sales.quote_templates.manage`: create, update, and delete Sales quote templates, template lines, option groups, and acknowledgements.
 - `lead-intelligence.read`: read Lead Intelligence settings, segments, research runs, scan ledger, and policy results.
 - `lead-intelligence.manage`: update Lead Intelligence settings and manage lead segments.
 - `lead-intelligence.run`: create planned research runs, evaluate contact marketing eligibility, and promote approved candidates.

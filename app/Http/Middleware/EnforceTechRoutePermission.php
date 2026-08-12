@@ -255,6 +255,10 @@ class EnforceTechRoutePermission
         'tech.tickets.workflow.*' => 'ticket.update',
         'tech.tickets.portal-visibility.update' => 'ticket.update',
         'tech.tickets.cost-entries.*' => 'ticket.update',
+        'tech.tickets.sales-quote.send' => 'sales.email_send',
+        'tech.tickets.sales-quote.accept-message' => 'ticket.approval_record',
+        'tech.tickets.sales-quote.void' => 'sales.quote_manage',
+        'tech.tickets.sales-quote.*' => 'sales.quote_manage',
         'tech.tickets.*' => 'ticket.view',
 
         'tech.tasks.assign' => 'task.assign',
@@ -333,6 +337,9 @@ class EnforceTechRoutePermission
         'tech.risk.updates.destroy' => 'risk.delete',
         'tech.risk.*' => 'risk.view',
 
+        'tech.sales.quote.approval.approve' => 'sales.quote.approve',
+        'tech.sales.quote.approval.reject' => 'sales.quote.approve',
+        'tech.sales.quote.approval.changes' => 'sales.quote.approve',
         'tech.sales.quote.*' => 'sales.quote_manage',
         'tech.sales.leads.*' => 'sales.lead_manage',
         'tech.sales.create' => 'sales.opportunity_manage',

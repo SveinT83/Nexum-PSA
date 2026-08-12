@@ -84,8 +84,8 @@ separate correction workflow.
 
 ## If Pick Is Disabled
 
-Pick is disabled when there is not enough on-hand stock or the item requires identified-unit
-picking.
+Pick is disabled when there is not enough on-hand stock, the item requires identified-unit picking,
+or the item has not yet passed through accepted quote scope.
 
 Typical next steps:
 

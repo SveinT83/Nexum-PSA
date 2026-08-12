@@ -31,8 +31,7 @@ use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\PublishTicketToCustomerPortal;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\ReleaseTicketStorageReservation;
-use App\Modules\Ticket\Actions\ReserveTicketStorageItem;
-use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
+use App\Modules\Ticket\Actions\StoreTicketCostOrQuoteScope;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
@@ -350,7 +349,7 @@ class TicketController extends Controller
 
         abort_if($ticket->trashed(), 404);
 
-        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'workflowVersion', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'attachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'plannedLines.storageItem', 'plannedLines.approvedQuoteVersion', 'plannedLines.convertedCostEntry', 'plannedLines.purchaseOrderLine.purchaseOrder', 'salesContext.opportunity.currentQuoteVersion.quote', 'salesContext.opportunity.currentQuoteVersion.lines', 'workflowReviews.requester', 'workflowReviews.assignedReviewer', 'workflowReviews.reviewer', 'workflowEvidence.creator', 'workflowHistory.actor', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
+        $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'workflowVersion', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'attachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'plannedLines.storageItem', 'plannedLines.approvedQuoteVersion', 'plannedLines.convertedCostEntry', 'plannedLines.purchaseOrderLine.purchaseOrder', 'salesContext.opportunity.currentQuoteVersion.quote', 'salesContext.opportunity.currentQuoteVersion.lines', 'salesContext.opportunity.quotes.versions.quote', 'salesContext.opportunity.quotes.versions.acceptanceSnapshot', 'workflowReviews.requester', 'workflowReviews.assignedReviewer', 'workflowReviews.reviewer', 'workflowEvidence.creator', 'workflowHistory.actor', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
         $messageIds = $ticket->messages->pluck('id')->all();
         $emailMessageIds = $ticket->messages
             ->map(fn (TicketMessage $message): int => (int) data_get($message->metadata, 'email_message_id'))
@@ -546,7 +545,7 @@ class TicketController extends Controller
             ->with('success', 'Time entry added.');
     }
 
-    public function storeCostEntry(Request $request, Ticket $ticket, ReserveTicketStorageItem $reserveItem, StoreManualTicketCostEntry $storeManualCost): RedirectResponse
+    public function storeCostEntry(Request $request, Ticket $ticket, StoreTicketCostOrQuoteScope $storeCostOrQuoteScope): RedirectResponse
     {
         $data = $request->validate([
             'cost_mode' => 'nullable|string|in:storage,manual',
@@ -559,24 +558,8 @@ class TicketController extends Controller
             'note' => 'nullable|string|max:2000',
         ]);
 
-        if (($data['cost_mode'] ?? 'storage') === 'manual') {
-            $storeManualCost->handle($ticket, [
-                'item_name' => $data['item_name'],
-                'quantity' => $data['quantity'],
-                'unit_price_ex_vat' => $data['unit_price_ex_vat'],
-                'currency' => Str::upper($data['currency'] ?? 'NOK'),
-                'invoice_text' => $data['invoice_text'] ?? null,
-                'note' => $data['note'] ?? null,
-            ], $request->user());
-
-            return redirect()->route('tech.tickets.show', $ticket)
-                ->with('success', 'Manual cost added.');
-        }
-
-        $item = StorageItem::where('status', 'active')->findOrFail($data['storage_item_id']);
-
         try {
-            $reserveItem->handle($ticket, $item, $data, $request->user());
+            $result = $storeCostOrQuoteScope->handle($ticket, $data, $request->user());
         } catch (\InvalidArgumentException $exception) {
             return back()
                 ->withErrors(['storage_item_id' => $exception->getMessage()])
@@ -584,7 +567,7 @@ class TicketController extends Controller
         }
 
         return redirect()->route('tech.tickets.show', $ticket)
-            ->with('success', 'Storage item reserved.');
+            ->with('success', $result['message']);
     }
 
     public function updateTimeEntry(Request $request, Ticket $ticket, TicketTimeEntry $timeEntry, TicketTimeRateOptions $timeRateOptions, UpdateTicketTimeEntry $updateTimeEntry): RedirectResponse
@@ -1176,6 +1159,7 @@ class TicketController extends Controller
                 'label' => $item->name.($item->sku ? ' ('.$item->sku.')' : ''),
                 'available' => $item->qty_available,
                 'can_be_ordered' => $item->can_be_ordered,
+                'requires_customer_quote' => $item->requires_customer_quote,
                 'sale_price' => $item->sale_price,
                 'short_description' => $item->short_description,
                 'location' => trim(($item->warehouse?->name ?? 'No warehouse').($item->box ? ' / '.$item->box->code_human : '')),

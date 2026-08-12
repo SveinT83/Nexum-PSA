@@ -158,6 +158,7 @@ class PermissionSeeder extends Seeder
             'sales.lead_manage',
             'sales.opportunity_manage',
             'sales.quote_manage',
+            'sales.quote.approve',
             'sales.email_send',
             'sales.manage_settings',
 

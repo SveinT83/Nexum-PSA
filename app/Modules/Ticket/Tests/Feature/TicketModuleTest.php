@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Modules\Documentation\Models\Vendor;
 use App\Models\Knowledge\Article;
 use App\Models\Settings\CommonSetting;
 use App\Models\Tech\Work\Assets\Asset;
@@ -20,10 +21,23 @@ use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\SmtpAccountMailer;
+use App\Modules\Relationship\Models\NexumRelationship;
+use App\Modules\Relationship\Models\NexumSyncLink;
+use App\Modules\Relationship\Support\RelationshipCapability;
+use App\Modules\Relationship\Support\RelationshipDirection;
+use App\Modules\Relationship\Support\RelationshipHealthStatus;
+use App\Modules\Relationship\Support\RelationshipStatus;
+use App\Modules\Relationship\Support\RelationshipType;
+use App\Modules\Sales\Models\SalesOpportunity;
+use App\Modules\Sales\Models\SalesQuote;
+use App\Modules\Sales\Models\SalesQuoteLine;
+use App\Modules\Sales\Models\SalesQuoteVersion;
 use App\Modules\Signal\Actions\RecordSignal;
 use App\Modules\Signal\Models\Signal;
 use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Storage\Models\Item as StorageItem;
+use App\Modules\Storage\Models\PurchaseOrder;
+use App\Modules\Storage\Models\PurchaseOrderLine;
 use App\Modules\Storage\Models\Reservation as StorageReservation;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
 use App\Modules\Storage\Support\StorageWorkflowFacts;
@@ -50,6 +64,7 @@ use App\Modules\Ticket\Models\TicketPlannedLine;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketRule;
+use App\Modules\Ticket\Models\TicketSalesContext;
 use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
@@ -64,6 +79,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -94,8 +110,13 @@ class TicketModuleTest extends TestCase
             'ticket.note_internal',
             'ticket.register_time',
             'ticket.close',
+            'ticket.plan_cost',
+            'ticket.approval_record',
             'report.view',
+            'sales.email_send',
+            'sales.quote_manage',
             'storage.view',
+            'storage.purchase_manage',
             'storage.reserve',
             'storage.pick',
         ]);
@@ -1507,6 +1528,620 @@ class TicketModuleTest extends TestCase
             'ticket_id' => $ticket->id,
             'type' => 'storage_reservation_updated',
         ]);
+    }
+
+    #[Test]
+    public function quote_required_storage_item_adds_ticket_scope_without_reserving_stock(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999143',
+            'owner_id' => $this->tech->id,
+        ]);
+        $warehouse = StorageWarehouse::create([
+            'name' => 'Quote Warehouse',
+            'code' => 'QUOTE',
+        ]);
+        $item = StorageItem::create([
+            'warehouse_id' => $warehouse->id,
+            'sku' => 'APPROVAL-ROUTER',
+            'name' => 'Approval Router',
+            'short_description' => 'Router that requires customer approval.',
+            'purchase_price' => 1800,
+            'sale_price' => 2900,
+            'vat_rate' => 25,
+            'qty_on_hand' => 5,
+            'qty_reserved' => 0,
+            'requires_customer_quote' => true,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertDontSee('Quote and customer approval');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'storage_item_id' => $item->id,
+                'quantity' => 2,
+                'invoice_text' => 'Approved router for customer site.',
+                'note' => 'Customer must approve before picking.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket))
+            ->assertSessionHas('success', 'Storage item requires customer approval and was added to quote scope.');
+
+        $this->assertSame(0, $item->refresh()->qty_reserved);
+        $this->assertDatabaseMissing('storage_reservations', [
+            'item_id' => $item->id,
+            'source_type' => 'ticket',
+            'source_id' => (string) $ticket->id,
+        ]);
+        $this->assertDatabaseMissing('ticket_cost_entries', [
+            'ticket_id' => $ticket->id,
+            'storage_item_id' => $item->id,
+        ]);
+
+        $line = TicketPlannedLine::query()->where('ticket_id', $ticket->id)->firstOrFail();
+        $this->assertSame($item->id, $line->storage_item_id);
+        $this->assertSame('equipment', $line->line_type);
+        $this->assertSame('planned', $line->status);
+        $this->assertSame('Storage item requires customer quote approval.', $line->metadata['quote_required_reason']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket->refresh()))
+            ->assertOk()
+            ->assertSee('Quote and customer approval')
+            ->assertSee('Approval Router');
+    }
+
+    #[Test]
+    public function manual_cost_above_quote_threshold_adds_ticket_scope_instead_of_actual_cost(): void
+    {
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket', 'name' => 'quote_cost_policy'],
+            [
+                'description' => 'Ticket quote-required cost routing policy.',
+                'json' => json_encode(['quote_required_cost_threshold' => 500]),
+            ],
+        );
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999144',
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.cost-entries.store', $ticket), [
+                'cost_mode' => 'manual',
+                'item_name' => 'High value manual hardware',
+                'quantity' => 2,
+                'unit_price_ex_vat' => 300,
+                'currency' => 'nok',
+                'invoice_text' => 'Hardware requiring approval.',
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket))
+            ->assertSessionHas('success', 'Cost requires customer approval and was added to quote scope.');
+
+        $this->assertDatabaseMissing('ticket_cost_entries', [
+            'ticket_id' => $ticket->id,
+            'item_name' => 'High value manual hardware',
+        ]);
+        $this->assertDatabaseHas('ticket_planned_lines', [
+            'ticket_id' => $ticket->id,
+            'source_type' => 'manual_cost',
+            'name' => 'High value manual hardware',
+            'quantity' => '2.00',
+            'unit_price_ex_vat' => '300.00',
+            'status' => 'planned',
+        ]);
+    }
+
+    #[Test]
+    public function accepted_ticket_quote_uses_delivery_card_title(): void
+    {
+        $client = Client::factory()->create(['name' => 'Accepted Quote Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999145',
+            'owner_id' => $this->tech->id,
+            'subject' => 'Accepted quote title ticket',
+        ]);
+        $opportunity = SalesOpportunity::query()->create([
+            'opportunity_key' => 'SO-2026-TICKET145',
+            'client_id' => $client->id,
+            'primary_contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'title' => 'Accepted quote title ticket',
+            'type' => 'ticket_service_quote',
+            'status' => 'won',
+            'created_by' => $this->tech->id,
+        ]);
+        $quote = SalesQuote::query()->create([
+            'opportunity_id' => $opportunity->id,
+            'quote_key' => 'SQ-2026-TICKET145',
+            'status' => 'accepted',
+        ]);
+        $version = SalesQuoteVersion::query()->create([
+            'quote_id' => $quote->id,
+            'version_number' => 1,
+            'status' => 'accepted',
+            'secure_token' => Str::random(48),
+            'title' => 'Accepted customer quote',
+            'total_ex_vat' => 1200,
+            'total_inc_vat' => 1500,
+            'accepted_at' => now(),
+            'accepted_by_name' => 'Customer Contact',
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $quote->forceFill(['current_version_id' => $version->id])->save();
+        $opportunity->forceFill([
+            'current_quote_version_id' => $version->id,
+            'won_quote_version_id' => $version->id,
+        ])->save();
+        TicketSalesContext::query()->create([
+            'ticket_id' => $ticket->id,
+            'opportunity_id' => $opportunity->id,
+            'quote_id' => $quote->id,
+            'created_by' => $this->tech->id,
+        ]);
+        $relationship = NexumRelationship::query()->create([
+            'name' => 'Partner PSA',
+            'direction' => RelationshipDirection::WE_ARE_PROVIDER,
+            'relationship_type' => RelationshipType::CUSTOMER_PROVIDER,
+            'client_id' => $client->id,
+            'status' => RelationshipStatus::ACTIVE,
+            'health_status' => RelationshipHealthStatus::UNKNOWN,
+            'capabilities' => array_merge(RelationshipCapability::defaults(), [
+                RelationshipCapability::TICKET_SYNC => true,
+            ]),
+        ]);
+        NexumSyncLink::query()->create([
+            'relationship_id' => $relationship->id,
+            'domain' => 'ticket',
+            'local_type' => Ticket::class,
+            'local_id' => $ticket->id,
+            'remote_type' => 'ticket',
+            'remote_id' => 'remote-ticket-145',
+            'direction' => 'outbound',
+            'sync_status' => 'synced',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Accepted quote and delivery')
+            ->assertSee('Customer approval is recorded.')
+            ->assertSeeInOrder([
+                'Activity',
+                'Accepted quote and delivery',
+                'Nexum relationship',
+            ])
+            ->assertDontSee('Quote and customer approval');
+    }
+
+    #[Test]
+    public function accepted_ticket_quote_with_pending_delivery_stays_above_activity(): void
+    {
+        $client = Client::factory()->create(['name' => 'Pending Accepted Quote Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999146',
+            'owner_id' => $this->tech->id,
+            'subject' => 'Pending accepted quote delivery ticket',
+        ]);
+        $opportunity = SalesOpportunity::query()->create([
+            'opportunity_key' => 'SO-2026-TICKET146',
+            'client_id' => $client->id,
+            'primary_contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'title' => 'Pending accepted quote delivery ticket',
+            'type' => 'ticket_service_quote',
+            'status' => 'won',
+            'created_by' => $this->tech->id,
+        ]);
+        $quote = SalesQuote::query()->create([
+            'opportunity_id' => $opportunity->id,
+            'quote_key' => 'SQ-2026-TICKET146',
+            'status' => 'accepted',
+        ]);
+        $version = SalesQuoteVersion::query()->create([
+            'quote_id' => $quote->id,
+            'version_number' => 1,
+            'status' => 'accepted',
+            'secure_token' => Str::random(48),
+            'title' => 'Accepted customer quote with pending delivery',
+            'total_ex_vat' => 1200,
+            'total_inc_vat' => 1500,
+            'accepted_at' => now(),
+            'accepted_by_name' => 'Customer Contact',
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $quote->forceFill(['current_version_id' => $version->id])->save();
+        $opportunity->forceFill([
+            'current_quote_version_id' => $version->id,
+            'won_quote_version_id' => $version->id,
+        ])->save();
+        TicketSalesContext::query()->create([
+            'ticket_id' => $ticket->id,
+            'opportunity_id' => $opportunity->id,
+            'quote_id' => $quote->id,
+            'created_by' => $this->tech->id,
+        ]);
+        TicketPlannedLine::query()->create([
+            'ticket_id' => $ticket->id,
+            'line_type' => 'custom',
+            'source_type' => 'manual_cost',
+            'section' => 'one_time_costs',
+            'downstream_type' => 'one_time_order',
+            'name' => 'Accepted work that still needs delivery',
+            'quantity' => 1,
+            'unit' => 'pcs',
+            'unit_price_ex_vat' => 1200,
+            'vat_rate' => 25,
+            'status' => 'approved',
+            'approved_quote_version_id' => $version->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('Accepted quote and delivery')
+            ->assertSeeInOrder([
+                'Accepted quote and delivery',
+                'Activity',
+            ])
+            ->assertDontSee('Quote and customer approval');
+    }
+
+    #[Test]
+    public function sent_ticket_quote_is_superseded_when_new_scope_is_added(): void
+    {
+        $client = Client::factory()->create(['name' => 'Revision Quote Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999147',
+            'owner_id' => $this->tech->id,
+            'subject' => 'Sent quote revision ticket',
+        ]);
+        $existingLine = TicketPlannedLine::query()->create([
+            'ticket_id' => $ticket->id,
+            'line_type' => 'custom',
+            'source_type' => 'manual_cost',
+            'section' => 'one_time_costs',
+            'downstream_type' => 'one_time_order',
+            'name' => 'Already quoted router',
+            'quantity' => 1,
+            'unit' => 'pcs',
+            'unit_price_ex_vat' => 1200,
+            'vat_rate' => 25,
+            'status' => 'quoted',
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $context = $this->createTicketQuoteContext($ticket, $client, $contact, 'REV147', 'sent');
+        $this->createQuoteLineForPlannedLine($context['version'], $existingLine);
+        $oldToken = $context['version']->secure_token;
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.planned-lines.store', $ticket), [
+                'name' => 'Docking station added after sending',
+                'quantity' => 1,
+                'unit' => 'pcs',
+                'unit_price_ex_vat' => 1900,
+                'vat_rate' => 25,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket))
+            ->assertSessionHas('success', 'Planned cost added. No stock or billing record was created.');
+
+        $oldVersion = $context['version']->refresh();
+        $newVersion = $context['opportunity']->refresh()->currentQuoteVersion()->firstOrFail();
+        $newLine = TicketPlannedLine::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('name', 'Docking station added after sending')
+            ->firstOrFail();
+
+        $this->assertSame('superseded', $oldVersion->status);
+        $this->assertSame('draft', $newVersion->status);
+        $this->assertSame(2, (int) $newVersion->version_number);
+        $this->assertSame('revision', $newVersion->snapshots['revision_mode']);
+        $this->assertSame($oldVersion->id, $newVersion->snapshots['supersedes_quote_version_id']);
+        $this->assertSame(2, $newVersion->lines()->count());
+        $this->assertTrue($newVersion->lines()->get()->contains(
+            fn (SalesQuoteLine $line): bool => (int) data_get($line->snapshot, 'ticket_planned_line_id') === (int) $existingLine->id,
+        ));
+        $this->assertTrue($newVersion->lines()->get()->contains(
+            fn (SalesQuoteLine $line): bool => (int) data_get($line->snapshot, 'ticket_planned_line_id') === (int) $newLine->id,
+        ));
+        $this->assertSame('quoted', $newLine->refresh()->status);
+
+        $this->post(route('sales.quotes.public.accept', $oldToken), [
+            'name' => 'Kari Kunde',
+            'confirm' => '1',
+        ])->assertSessionHas('error', 'This quote cannot be accepted in its current status.');
+    }
+
+    #[Test]
+    public function accepted_ticket_quote_keeps_history_and_new_scope_becomes_additional_quote(): void
+    {
+        $client = Client::factory()->create(['name' => 'Additional Quote Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999149',
+            'owner_id' => $this->tech->id,
+            'subject' => 'Accepted quote additional scope ticket',
+        ]);
+        $acceptedLine = TicketPlannedLine::query()->create([
+            'ticket_id' => $ticket->id,
+            'line_type' => 'custom',
+            'source_type' => 'manual_cost',
+            'section' => 'one_time_costs',
+            'downstream_type' => 'one_time_order',
+            'name' => 'Previously accepted implementation',
+            'quantity' => 1,
+            'unit' => 'pcs',
+            'unit_price_ex_vat' => 2400,
+            'vat_rate' => 25,
+            'status' => 'converted',
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $context = $this->createTicketQuoteContext($ticket, $client, $contact, 'ADD149', 'accepted');
+        $acceptedLine->forceFill(['approved_quote_version_id' => $context['version']->id])->save();
+        $this->createQuoteLineForPlannedLine($context['version'], $acceptedLine);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tickets.planned-lines.store', $ticket), [
+                'name' => 'Forgotten docking station',
+                'quantity' => 1,
+                'unit' => 'pcs',
+                'unit_price_ex_vat' => 1800,
+                'vat_rate' => 25,
+            ])
+            ->assertRedirect(route('tech.tickets.show', $ticket));
+
+        $oldVersion = $context['version']->refresh();
+        $newVersion = $context['opportunity']->refresh()->currentQuoteVersion()->firstOrFail();
+        $newLine = TicketPlannedLine::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('name', 'Forgotten docking station')
+            ->firstOrFail();
+
+        $this->assertSame('accepted', $oldVersion->status);
+        $this->assertSame('draft', $newVersion->status);
+        $this->assertSame('additional_after_acceptance', $newVersion->snapshots['revision_mode']);
+        $this->assertSame($oldVersion->id, $newVersion->snapshots['additional_after_accepted_quote_version_id']);
+        $this->assertSame(1, $newVersion->lines()->count());
+        $this->assertTrue($newVersion->lines()->get()->contains(
+            fn (SalesQuoteLine $line): bool => (int) data_get($line->snapshot, 'ticket_planned_line_id') === (int) $newLine->id,
+        ));
+        $this->assertFalse($newVersion->lines()->get()->contains(
+            fn (SalesQuoteLine $line): bool => (int) data_get($line->snapshot, 'ticket_planned_line_id') === (int) $acceptedLine->id,
+        ));
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket->refresh()))
+            ->assertOk()
+            ->assertSee('Additional customer approval')
+            ->assertSee('Accepted quote and delivery')
+            ->assertSeeInOrder([
+                'Additional customer approval',
+                'Activity',
+                'Accepted quote and delivery',
+            ]);
+    }
+
+    #[Test]
+    public function api_can_void_accepted_ticket_quote_before_delivery_becomes_irreversible(): void
+    {
+        $client = Client::factory()->create(['name' => 'Void Quote Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999150',
+            'owner_id' => $this->tech->id,
+            'subject' => 'Accepted quote void ticket',
+        ]);
+        $context = $this->createTicketQuoteContext($ticket, $client, $contact, 'VOID150', 'accepted');
+        $records = $this->createReservedStorageCost($ticket, 'VOID-ROUTER', 2);
+        $plannedLine = TicketPlannedLine::query()->create([
+            'ticket_id' => $ticket->id,
+            'line_type' => 'equipment',
+            'source_type' => 'storage_item',
+            'source_id' => $records['item']->id,
+            'storage_item_id' => $records['item']->id,
+            'section' => 'equipment',
+            'downstream_type' => 'equipment',
+            'sku' => $records['item']->sku,
+            'name' => $records['item']->name,
+            'quantity' => 2,
+            'unit' => 'pcs',
+            'unit_price_ex_vat' => 500,
+            'vat_rate' => 25,
+            'status' => 'converted',
+            'approved_quote_version_id' => $context['version']->id,
+            'converted_cost_entry_id' => $records['entry']->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $this->createQuoteLineForPlannedLine($context['version'], $plannedLine);
+
+        Sanctum::actingAs($this->tech, ['tickets.actions']);
+        $this->postJson(route('api.v1.tickets.sales-quote.void', [$ticket, $context['version']]), [
+            'reason' => 'Customer changed the hardware scope before picking.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'voided');
+
+        $this->assertSame('voided', $context['version']->refresh()->status);
+        $this->assertNull($context['quote']->refresh()->current_version_id);
+        $this->assertNull($context['opportunity']->refresh()->current_quote_version_id);
+        $this->assertNull($context['opportunity']->won_quote_version_id);
+        $this->assertSame('qualified', $context['opportunity']->status);
+        $this->assertSame('cancelled', $plannedLine->refresh()->status);
+        $this->assertSame('released', $records['entry']->refresh()->status);
+        $this->assertSame('cancelled', $records['entry']->billing_status);
+        $this->assertSame('released', $records['reservation']->refresh()->status);
+        $this->assertSame(0, $records['item']->refresh()->qty_reserved);
+    }
+
+    #[Test]
+    public function voiding_accepted_ticket_quote_cancels_draft_purchase_need(): void
+    {
+        $client = Client::factory()->create(['name' => 'Void Purchase Quote Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999156',
+            'owner_id' => $this->tech->id,
+            'subject' => 'Accepted quote void purchase ticket',
+        ]);
+        $context = $this->createTicketQuoteContext($ticket, $client, $contact, 'VOID156', 'accepted');
+        $warehouse = StorageWarehouse::query()->create([
+            'name' => 'Void Purchase Warehouse',
+            'code' => 'VPUR',
+            'is_active' => true,
+        ]);
+        $vendor = Vendor::query()->create([
+            'name' => 'Void Supplier',
+            'vendor_code' => 'VOID-SUP',
+            'is_vendor' => true,
+            'is_supplier' => true,
+            'is_active' => true,
+        ]);
+        $item = StorageItem::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'primary_vendor_id' => $vendor->id,
+            'sku' => 'VOID-ORDER',
+            'name' => 'Order-only quote item',
+            'purchase_price' => 800,
+            'sale_price' => 1400,
+            'qty_on_hand' => 0,
+            'qty_reserved' => 0,
+            'can_be_ordered' => true,
+            'status' => 'active',
+        ]);
+        $plannedLine = TicketPlannedLine::query()->create([
+            'ticket_id' => $ticket->id,
+            'line_type' => 'equipment',
+            'source_type' => 'storage_item',
+            'source_id' => $item->id,
+            'storage_item_id' => $item->id,
+            'section' => 'equipment',
+            'downstream_type' => 'equipment',
+            'sku' => $item->sku,
+            'name' => $item->name,
+            'quantity' => 2,
+            'unit' => 'pcs',
+            'unit_price_ex_vat' => 1400,
+            'vat_rate' => 25,
+            'status' => 'approved',
+            'approved_quote_version_id' => $context['version']->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $this->createQuoteLineForPlannedLine($context['version'], $plannedLine);
+        $purchaseOrder = PurchaseOrder::query()->create([
+            'po_number' => 'PO-VOID-156',
+            'vendor_id' => $vendor->id,
+            'supplier_name_snapshot' => $vendor->name,
+            'deliver_to_warehouse_id' => $warehouse->id,
+            'status' => PurchaseOrder::STATUS_DRAFT,
+            'currency' => 'NOK',
+            'status_changed_at' => now(),
+            'status_changed_by' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $purchaseLine = PurchaseOrderLine::query()->create([
+            'purchase_order_id' => $purchaseOrder->id,
+            'item_id' => $item->id,
+            'item_name_snapshot' => $item->name,
+            'sku_snapshot' => $item->sku,
+            'ticket_id' => $ticket->id,
+            'ticket_planned_line_id' => $plannedLine->id,
+            'qty_ordered' => 2,
+            'qty_received' => 0,
+            'qty_cancelled' => 0,
+            'unit_cost' => 800,
+            'tax_rate' => 25,
+            'currency' => 'NOK',
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+
+        Sanctum::actingAs($this->tech, ['tickets.actions']);
+        $this->postJson(route('api.v1.tickets.sales-quote.void', [$ticket, $context['version']]), [
+            'reason' => 'Customer removed the order-only hardware before vendor order.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'voided');
+
+        $this->assertSame('voided', $context['version']->refresh()->status);
+        $this->assertSame('cancelled', $plannedLine->refresh()->status);
+        $this->assertSame(2, $purchaseLine->refresh()->qty_cancelled);
+        $this->assertSame(0, $purchaseLine->qty_outstanding);
+        $this->assertNotNull($purchaseLine->cancelled_at);
+        $this->assertSame($this->tech->id, $purchaseLine->cancelled_by);
+        $this->assertStringContainsString('Accepted Ticket quote voided', $purchaseLine->cancellation_reason);
+        $this->assertSame(PurchaseOrder::STATUS_CANCELLED, $purchaseOrder->refresh()->status);
+        $this->assertNotNull($purchaseOrder->cancelled_at);
+    }
+
+    #[Test]
+    public function voiding_accepted_ticket_quote_is_blocked_after_irreversible_delivery(): void
+    {
+        $client = Client::factory()->create(['name' => 'Blocked Void Quote Client']);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create(['client_site_id' => $site->id]);
+        $ticket = $this->createTicket($contact, [
+            'ticket_key' => 'TD-2026-999155',
+            'owner_id' => $this->tech->id,
+            'subject' => 'Accepted quote blocked void ticket',
+        ]);
+        $context = $this->createTicketQuoteContext($ticket, $client, $contact, 'BLK155', 'accepted');
+        $records = $this->createReservedStorageCost($ticket, 'VOID-BLOCK', 1);
+        $records['entry']->forceFill(['status' => 'picked'])->save();
+        $records['reservation']->forceFill(['status' => 'fulfilled'])->save();
+        $plannedLine = TicketPlannedLine::query()->create([
+            'ticket_id' => $ticket->id,
+            'line_type' => 'equipment',
+            'source_type' => 'storage_item',
+            'source_id' => $records['item']->id,
+            'storage_item_id' => $records['item']->id,
+            'section' => 'equipment',
+            'downstream_type' => 'equipment',
+            'sku' => $records['item']->sku,
+            'name' => $records['item']->name,
+            'quantity' => 1,
+            'unit' => 'pcs',
+            'unit_price_ex_vat' => 500,
+            'vat_rate' => 25,
+            'status' => 'converted',
+            'approved_quote_version_id' => $context['version']->id,
+            'converted_cost_entry_id' => $records['entry']->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $this->createQuoteLineForPlannedLine($context['version'], $plannedLine);
+
+        Sanctum::actingAs($this->tech, ['tickets.actions']);
+        $this->postJson(route('api.v1.tickets.sales-quote.void', [$ticket, $context['version']]), [
+            'reason' => 'Customer wants to cancel after picking.',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('quote');
+
+        $this->assertSame('accepted', $context['version']->refresh()->status);
+        $this->assertSame('converted', $plannedLine->refresh()->status);
+        $this->assertSame('picked', $records['entry']->refresh()->status);
+        $this->assertSame('fulfilled', $records['reservation']->refresh()->status);
     }
 
     #[Test]
@@ -3128,7 +3763,8 @@ class TicketModuleTest extends TestCase
             ->assertSeeHtml('aria-current="step"')
             ->assertSee('Next step')
             ->assertSee('Start work')
-            ->assertSee('Planned scope and customer approval')
+            ->assertSee('Add cost/item')
+            ->assertDontSee('Quote and customer approval')
             ->assertDontSeeHtml('class="card mb-3 border-primary-subtle"');
     }
 
@@ -4057,6 +4693,8 @@ class TicketModuleTest extends TestCase
             ->assertViewIs('ticket::Admin.Settings.index')
             ->assertSee('Solution Policy')
             ->assertSee('Allow internal notes to be marked as ticket solutions')
+            ->assertSee('Quote Cost Policy')
+            ->assertSee('Require quote at line total ex VAT')
             ->assertSee('Ticket Merging')
             ->assertSee('Documentation Follow-Ups')
             ->assertSee('TD-2026-999046')
@@ -4099,6 +4737,41 @@ class TicketModuleTest extends TestCase
             ->value('json'), true);
 
         $this->assertTrue($payload['allow_internal_solution_notes']);
+    }
+
+    #[Test]
+    public function admin_can_update_ticket_quote_cost_policy(): void
+    {
+        $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $admin->assignRole('Tech');
+        $admin->assignRole('Admin');
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.quote-cost-policy.update'), [
+                'quote_required_cost_threshold' => '1500.50',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Ticket quote cost policy updated.');
+
+        $payload = json_decode((string) CommonSetting::query()
+            ->where('type', 'ticket')
+            ->where('name', 'quote_cost_policy')
+            ->value('json'), true);
+
+        $this->assertSame(1500.50, $payload['quote_required_cost_threshold']);
+
+        $this->actingAs($admin)
+            ->post(route('tech.admin.settings.tickets.quote-cost-policy.update'), [
+                'quote_required_cost_threshold' => '',
+            ])
+            ->assertRedirect();
+
+        $payload = json_decode((string) CommonSetting::query()
+            ->where('type', 'ticket')
+            ->where('name', 'quote_cost_policy')
+            ->value('json'), true);
+
+        $this->assertNull($payload['quote_required_cost_threshold']);
     }
 
     #[Test]
@@ -4984,6 +5657,102 @@ class TicketModuleTest extends TestCase
             ->assertSessionHasErrors('type');
 
         $this->assertDatabaseHas('ticket_types', ['id' => $type->id]);
+    }
+
+    /**
+     * @return array{opportunity: SalesOpportunity, quote: SalesQuote, version: SalesQuoteVersion}
+     */
+    private function createTicketQuoteContext(
+        Ticket $ticket,
+        Client $client,
+        ClientUser $contact,
+        string $keySuffix,
+        string $versionStatus,
+    ): array {
+        $accepted = $versionStatus === 'accepted';
+        $opportunity = SalesOpportunity::query()->create([
+            'opportunity_key' => 'SO-2026-'.$keySuffix,
+            'client_id' => $client->id,
+            'primary_contact_id' => $contact->id,
+            'owner_id' => $this->tech->id,
+            'title' => $ticket->subject,
+            'type' => 'ticket_service_quote',
+            'status' => $accepted ? 'won' : 'proposal',
+            'estimated_value_ex_vat' => 2500,
+            'probability_percent' => $accepted ? 100 : 80,
+            'weighted_value_ex_vat' => $accepted ? 2500 : 2000,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $quote = SalesQuote::query()->create([
+            'opportunity_id' => $opportunity->id,
+            'quote_key' => 'SQ-2026-'.$keySuffix,
+            'status' => $versionStatus,
+        ]);
+        $version = SalesQuoteVersion::query()->create([
+            'quote_id' => $quote->id,
+            'version_number' => 1,
+            'status' => $versionStatus,
+            'secure_token' => Str::random(48),
+            'title' => $ticket->subject,
+            'intro_text' => 'Quote prepared from Ticket scope.',
+            'scope_text' => 'Ticket quote scope.',
+            'assumptions_text' => 'Prices are shown excluding VAT unless otherwise stated.',
+            'next_steps_text' => 'Please accept the quote or ask a question.',
+            'expires_at' => now()->addDays(14),
+            'total_ex_vat' => 2500,
+            'total_inc_vat' => 3125,
+            'sent_at' => now()->subHour(),
+            'accepted_at' => $accepted ? now()->subMinutes(30) : null,
+            'accepted_by_name' => $accepted ? 'Kari Kunde' : null,
+            'accepted_method' => $accepted ? 'public_link' : null,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+        ]);
+        $quote->forceFill(['current_version_id' => $version->id])->save();
+        $opportunity->forceFill([
+            'current_quote_version_id' => $version->id,
+            'won_quote_version_id' => $accepted ? $version->id : null,
+            'won_at' => $accepted ? now()->subMinutes(30) : null,
+        ])->save();
+        TicketSalesContext::query()->create([
+            'ticket_id' => $ticket->id,
+            'opportunity_id' => $opportunity->id,
+            'quote_id' => $quote->id,
+            'created_by' => $this->tech->id,
+        ]);
+
+        return compact('opportunity', 'quote', 'version');
+    }
+
+    private function createQuoteLineForPlannedLine(SalesQuoteVersion $version, TicketPlannedLine $plannedLine): SalesQuoteLine
+    {
+        $lineTotal = round((float) $plannedLine->quantity * (float) $plannedLine->unit_price_ex_vat, 2);
+        $vatAmount = round($lineTotal * ((float) $plannedLine->vat_rate / 100), 2);
+
+        return SalesQuoteLine::query()->create([
+            'quote_version_id' => $version->id,
+            'section' => $plannedLine->section,
+            'sort_order' => $version->lines()->count() * 10 + 10,
+            'source_type' => $plannedLine->source_type,
+            'source_id' => $plannedLine->source_id,
+            'downstream_type' => $plannedLine->downstream_type,
+            'is_optional' => false,
+            'sku' => $plannedLine->sku,
+            'name' => $plannedLine->name,
+            'description' => $plannedLine->description,
+            'quantity' => $plannedLine->quantity,
+            'unit' => $plannedLine->unit,
+            'unit_cost_ex_vat' => $plannedLine->unit_cost_ex_vat ?? 0,
+            'unit_price_ex_vat' => $plannedLine->unit_price_ex_vat ?? 0,
+            'discount_value' => 0,
+            'discount_type' => 'amount',
+            'vat_rate' => $plannedLine->vat_rate,
+            'line_total_ex_vat' => $lineTotal,
+            'vat_amount' => $vatAmount,
+            'line_total_inc_vat' => $lineTotal + $vatAmount,
+            'snapshot' => array_merge($plannedLine->snapshot ?: [], ['ticket_planned_line_id' => $plannedLine->id]),
+        ]);
     }
 
     private function createReservedStorageCost(Ticket $ticket, string $sku, int $quantity): array

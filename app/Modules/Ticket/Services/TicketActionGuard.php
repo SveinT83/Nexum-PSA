@@ -36,8 +36,8 @@ class TicketActionGuard
 
         $definition = $definitions[$action];
 
-        if (! $actor || $actor->status !== User::STATUS_ACTIVE) {
-            return $this->blocked($action, 'An active user is required for this ticket action.', false);
+        if (! $actor || (! $actor->isActive() && ! $actor->isSystemActor())) {
+            return $this->blocked($action, 'An active user or managed system actor is required for this ticket action.', false);
         }
 
         if ($permission = ($definition['permission'] ?? null)) {
@@ -145,6 +145,7 @@ class TicketActionGuard
             TicketAction::CREATE_QUOTE,
             TicketAction::EDIT_QUOTE,
             TicketAction::SEND_QUOTE,
+            TicketAction::VOID_ACCEPTED_QUOTE,
             TicketAction::ESCALATE,
         ], true)) {
             return 'This action is blocked because the Ticket is closed.';

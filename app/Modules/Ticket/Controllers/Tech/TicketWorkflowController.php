@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Controllers\Tech;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\User;
 use App\Modules\Sales\Models\SalesQuoteVersion;
 use App\Modules\Ticket\Actions\AcceptTicketQuoteFromMessage;
 use App\Modules\Ticket\Actions\ClassifyTicketWorkflowEvidence;
@@ -11,12 +12,14 @@ use App\Modules\Ticket\Actions\DecideTicketWorkflowReview;
 use App\Modules\Ticket\Actions\DeleteTicketPlannedLine;
 use App\Modules\Ticket\Actions\EnsureTicketSalesQuote;
 use App\Modules\Ticket\Actions\EscalateTicketWorkflow;
+use App\Modules\Ticket\Actions\ProcessAcceptedTicketQuote;
 use App\Modules\Ticket\Actions\RecordTicketTimerStarted;
 use App\Modules\Ticket\Actions\RequestTicketPurchase;
 use App\Modules\Ticket\Actions\RequestTicketWorkflowReview;
 use App\Modules\Ticket\Actions\SendTicketSalesQuote;
 use App\Modules\Ticket\Actions\StoreTicketPlannedLine;
 use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
+use App\Modules\Ticket\Actions\VoidAcceptedTicketSalesQuote;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPlannedLine;
@@ -94,6 +97,16 @@ class TicketWorkflowController extends Controller
         return $this->back($ticket, 'Quote sent as a Ticket reply with PDF and acceptance link.');
     }
 
+    public function voidAcceptedQuote(Request $request, Ticket $ticket, SalesQuoteVersion $version, VoidAcceptedTicketSalesQuote $action): RedirectResponse
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:2000'],
+        ]);
+        $action->handle($ticket, $version, $data, $request->user());
+
+        return $this->back($ticket, 'Accepted quote voided. Any safe reservations, pending costs, or draft purchase needs were reversed.');
+    }
+
     public function acceptQuoteFromMessage(
         Request $request,
         Ticket $ticket,
@@ -152,18 +165,28 @@ class TicketWorkflowController extends Controller
         return $this->back($ticket, 'Evidence classified for the workflow.');
     }
 
-    public function convertPlannedLine(Request $request, Ticket $ticket, TicketPlannedLine $plannedLine, ConvertApprovedTicketPlannedLine $action): RedirectResponse
+    public function convertPlannedLine(Request $request, Ticket $ticket, TicketPlannedLine $plannedLine, ConvertApprovedTicketPlannedLine $action, ProcessAcceptedTicketQuote $processor): RedirectResponse
     {
         $action->handle($ticket, $plannedLine, $request->user());
+        $this->syncAcceptedQuoteDelivery($ticket, $plannedLine, $processor, $request->user());
 
         return $this->back($ticket, 'Approved scope converted to an actual Ticket cost.');
     }
 
-    public function requestPurchase(Request $request, Ticket $ticket, TicketPlannedLine $plannedLine, RequestTicketPurchase $action): RedirectResponse
+    public function requestPurchase(Request $request, Ticket $ticket, TicketPlannedLine $plannedLine, RequestTicketPurchase $action, ProcessAcceptedTicketQuote $processor): RedirectResponse
     {
         $action->handle($ticket, $plannedLine, $request->user());
+        $this->syncAcceptedQuoteDelivery($ticket, $plannedLine, $processor, $request->user());
 
         return $this->back($ticket, 'Draft purchase need created. No vendor order was sent.');
+    }
+
+    private function syncAcceptedQuoteDelivery(Ticket $ticket, TicketPlannedLine $plannedLine, ProcessAcceptedTicketQuote $processor, ?User $actor): void
+    {
+        $version = $plannedLine->refresh()->approvedQuoteVersion()->first();
+        if ($version?->status === 'accepted') {
+            $processor->handle($ticket->refresh(), $version, $actor);
+        }
     }
 
     private function plannedLineData(Request $request): array

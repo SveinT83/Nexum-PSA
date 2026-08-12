@@ -104,6 +104,23 @@
         $showAddTimeModal = old('_time_entry_form');
         $actionDecision = fn (string $key) => $ticketActionDecisions[$key] ?? ['visible' => true, 'allowed' => true, 'reason' => null];
         $defaultTimeRateKey = old('rate_key', $timeRateOptions->first()['key'] ?? null);
+        $currentTicketQuote = $ticket->salesContext?->opportunity?->currentQuoteVersion;
+        $ticketQuoteVersions = collect($ticket->salesContext?->opportunity?->quotes ?? [])
+            ->flatMap(fn ($quote) => $quote->versions);
+        $acceptedQuoteHistoryVersions = $ticketQuoteVersions
+            ->filter(fn ($version): bool => $version->status === 'accepted'
+                && (! $currentTicketQuote || (int) $version->id !== (int) $currentTicketQuote->id))
+            ->sortByDesc(fn ($version): int => $version->accepted_at?->timestamp ?? $version->id)
+            ->values();
+        $acceptedQuoteHasPendingDelivery = $currentTicketQuote?->status === 'accepted'
+            && $ticket->plannedLines->contains(fn ($line): bool => $line->status === 'approved'
+                && ! $line->converted_cost_entry_id
+                && ! $line->purchaseOrderLine);
+        $acceptedQuoteHasNewScope = $currentTicketQuote?->status === 'accepted'
+            && $ticket->plannedLines->contains(fn ($line): bool => $line->status === 'planned');
+        $deferAcceptedQuotePanel = $currentTicketQuote?->status === 'accepted'
+            && ! $acceptedQuoteHasPendingDelivery
+            && ! $acceptedQuoteHasNewScope;
         // Activity combines conversation and time records into one technician-facing timeline.
         $activityItems = $ticket->messages
             ->map(fn ($message) => ['type' => 'message', 'date' => $message->created_at, 'record' => $message])
@@ -172,18 +189,15 @@
                             @disabled(! $canAddActualCost)
                             title="{{ $actionDecision('add_actual_cost')['reason'] ?: $actionDecision('reserve_item')['reason'] }}">
                             <i class="bi bi-box-seam" aria-hidden="true"></i>
-                            Add actual cost
+                            Add cost/item
                         </button>
                     @endif
                 </div>
             </div>
 
-            @include('ticket::Tech.Tickets.partials.workflow-v3-panel')
-
-            @include('relationship::Tech.Tickets.panel', [
-                'ticket' => $ticket,
-                'relationshipSyncLinks' => $relationshipSyncLinks ?? collect(),
-                'availableRelationships' => $availableRelationships ?? collect(),
+            @include('ticket::Tech.Tickets.partials.workflow-v3-panel', [
+                'quotePanelPlacement' => 'primary',
+                'deferAcceptedQuotePanel' => $deferAcceptedQuotePanel,
             ])
 
             <div class="card mb-3">
@@ -654,6 +668,26 @@
                     </div>
                 </div>
             </div>
+
+            @if($acceptedQuoteHistoryVersions->isNotEmpty())
+                @include('ticket::Tech.Tickets.partials.accepted-quote-history-panel', [
+                    'acceptedQuoteVersions' => $acceptedQuoteHistoryVersions,
+                    'voidQuoteDecision' => $actionDecision('void_accepted_quote'),
+                ])
+            @endif
+
+            @if($deferAcceptedQuotePanel)
+                @include('ticket::Tech.Tickets.partials.workflow-v3-panel', [
+                    'quotePanelPlacement' => 'deferred',
+                    'deferAcceptedQuotePanel' => true,
+                ])
+            @endif
+
+            @include('relationship::Tech.Tickets.panel', [
+                'ticket' => $ticket,
+                'relationshipSyncLinks' => $relationshipSyncLinks ?? collect(),
+                'availableRelationships' => $availableRelationships ?? collect(),
+            ])
         </div>
     </div>
 
@@ -788,10 +822,13 @@
                 @csrf
 
                 <div class="modal-header">
-                    <h2 class="modal-title h6" id="ticketAddCostModalLabel">Add cost</h2>
+                    <h2 class="modal-title h6" id="ticketAddCostModalLabel">Add cost/item</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-light border small py-2" role="note">
+                        Items or totals requiring customer approval are added to quote scope instead of actual cost.
+                    </div>
                     <div class="row g-2">
                         <div class="col-12">
                             <label class="form-label">Cost type</label>
@@ -827,6 +864,7 @@
                                         data-label="{{ $storageItem['label'] }}"
                                         data-price="{{ $storageItem['sale_price'] }}"
                                         data-invoice-text="{{ $storageItem['short_description'] }}"
+                                        data-quote-required="{{ $storageItem['requires_customer_quote'] ? '1' : '0' }}"
                                         data-search="{{ \Illuminate\Support\Str::lower($storageItem['label'] . ' ' . $storageItem['location']) }}"
                                         @disabled(! $canSelectStorageItem)>
                                         <span class="d-flex justify-content-between gap-2">
@@ -837,6 +875,9 @@
                                                     &middot; order needed
                                                 @elseif($storageItem['available'] < 1)
                                                     &middot; cannot order
+                                                @endif
+                                                @if($storageItem['requires_customer_quote'])
+                                                    &middot; quote required
                                                 @endif
                                             </span>
                                         </span>
@@ -892,7 +933,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save cost</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>
         </div>

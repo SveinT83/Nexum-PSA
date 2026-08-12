@@ -193,7 +193,7 @@
         ],
         'sales' => [
             ['name' => 'Rules', 'route' => 'tech.admin.settings.sales.rules', 'pattern' => 'tech.admin.settings.sales.rules*'],
-            ['name' => 'Workflows', 'route' => 'tech.admin.settings.sales.workflows', 'pattern' => 'tech.admin.settings.sales.workflows*'],
+            ['name' => 'Quote Templates', 'route' => 'tech.admin.settings.sales.quote-templates.index', 'pattern' => ['tech.admin.settings.sales.quote-templates*', 'tech.admin.settings.sales.workflows*']],
         ],
         'marketing' => [
             ['name' => 'Marketing settings', 'route' => 'tech.admin.settings.marketing', 'pattern' => 'tech.admin.settings.marketing*'],

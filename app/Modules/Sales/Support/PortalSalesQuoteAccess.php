@@ -11,7 +11,7 @@ class PortalSalesQuoteAccess
     public function visibleQuoteVersions(CustomerPortalContext $context): Builder
     {
         $query = SalesQuoteVersion::query()
-            ->whereIn('status', ['sent', 'accepted'])
+            ->whereIn('status', ['sent', 'accepted', 'declined', 'expired', 'superseded', 'voided'])
             ->whereHas('quote.opportunity', fn (Builder $query) => $query->where('client_id', $context->client->id));
 
         if ($context->site) {
@@ -27,7 +27,7 @@ class PortalSalesQuoteAccess
             return false;
         }
 
-        if (! in_array($version->status, ['sent', 'accepted'], true)) {
+        if (! in_array($version->status, ['sent', 'accepted', 'declined', 'expired', 'superseded', 'voided'], true)) {
             return false;
         }
 
@@ -54,6 +54,10 @@ class PortalSalesQuoteAccess
         return match ($version->status) {
             'sent' => 'Awaiting acceptance',
             'accepted' => 'Accepted',
+            'declined' => 'Declined',
+            'expired' => 'Expired',
+            'superseded' => 'Replaced by newer quote',
+            'voided' => 'Voided',
             default => ucfirst(str_replace('_', ' ', $version->status)),
         };
     }

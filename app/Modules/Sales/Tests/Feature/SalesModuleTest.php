@@ -16,7 +16,9 @@ use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Marketing\Models\MarketingCampaignEvent;
 use App\Modules\Marketing\Models\MarketingInterestAssignment;
 use App\Modules\Marketing\Models\MarketingInterestTag;
+use App\Modules\Sales\Actions\EnsureSalesDefaults;
 use App\Modules\Sales\Controllers\Admin\SalesSettingsController;
+use App\Modules\Sales\Controllers\Api\V1\SalesQuoteTemplateWorkflowController;
 use App\Modules\Sales\Controllers\PublicQuoteController;
 use App\Modules\Sales\Controllers\Tech\LeadsController;
 use App\Modules\Sales\Controllers\Tech\SalesController;
@@ -25,8 +27,14 @@ use App\Modules\Sales\Jobs\SendSalesInternalNotificationEmail;
 use App\Modules\Sales\Jobs\SendSalesQuoteEmail;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
+use App\Modules\Sales\Models\SalesQuoteAcceptanceSnapshot;
+use App\Modules\Sales\Models\SalesQuoteConversionPlan;
 use App\Modules\Sales\Models\SalesQuoteLine;
+use App\Modules\Sales\Models\SalesQuoteTemplate;
+use App\Modules\Sales\Models\SalesQuoteTemplateAcknowledgement;
+use App\Modules\Sales\Models\SalesQuoteTemplateLine;
 use App\Modules\Sales\Models\SalesQuoteVersion;
+use App\Modules\Sales\Models\SalesSetting;
 use App\Modules\Sales\Support\SalesQuotePresentation;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
@@ -36,6 +44,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -520,19 +529,330 @@ class SalesModuleTest extends TestCase
     {
         $rulesRoute = Route::getRoutes()->getByName('tech.admin.settings.sales.rules');
         $workflowsRoute = Route::getRoutes()->getByName('tech.admin.settings.sales.workflows');
+        $quoteTemplatesRoute = Route::getRoutes()->getByName('tech.admin.settings.sales.quote-templates.index');
 
         $this->assertSame(SalesSettingsController::class.'@rules', $rulesRoute->getActionName());
-        $this->assertSame(SalesSettingsController::class.'@workflows', $workflowsRoute->getActionName());
+        $this->assertSame('Closure', $workflowsRoute->getActionName());
+        $this->assertSame(SalesSettingsController::class.'@workflows', $quoteTemplatesRoute->getActionName());
+        $this->assertSame(SalesSettingsController::class.'@createTemplate', Route::getRoutes()->getByName('tech.admin.settings.sales.quote-templates.create')->getActionName());
+        $this->assertSame(SalesSettingsController::class.'@editTemplate', Route::getRoutes()->getByName('tech.admin.settings.sales.quote-templates.edit')->getActionName());
+        $this->assertSame(SalesSettingsController::class.'@destroyTemplate', Route::getRoutes()->getByName('tech.admin.settings.sales.quote-templates.destroy')->getActionName());
+        $this->assertSame(SalesSettingsController::class.'@updateRules', Route::getRoutes()->getByName('tech.admin.settings.sales.rules.update')->getActionName());
+        $this->assertSame(SalesQuoteTemplateWorkflowController::class.'@catalog', Route::getRoutes()->getByName('api.v1.sales.quote-templates.catalog')->getActionName());
+        $this->assertContains('Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.read', Route::getRoutes()->getByName('api.v1.sales.quote-templates.catalog')->gatherMiddleware());
+        $this->assertContains('Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage', Route::getRoutes()->getByName('api.v1.sales.quote-templates.store')->gatherMiddleware());
+        $this->assertContains('Laravel\\Sanctum\\Http\\Middleware\\CheckAbilities:sales.quote_templates.manage', Route::getRoutes()->getByName('api.v1.sales.quote-templates.destroy')->gatherMiddleware());
 
         $this->actingAs($this->admin)
             ->get(route('tech.admin.settings.sales.rules'))
             ->assertOk()
-            ->assertViewIs('sales::Admin.Settings.rules.index');
+            ->assertViewIs('sales::Admin.Settings.rules.index')
+            ->assertSee('CPQ approval policy');
+
+        SalesQuoteTemplate::query()->create([
+            'template_key' => 'MANAGED_WORKSPACE_STARTER',
+            'name' => 'Managed workspace starter',
+            'is_active' => true,
+            'customer_segment' => 'general',
+            'created_by' => $this->admin->id,
+            'updated_by' => $this->admin->id,
+        ]);
 
         $this->actingAs($this->admin)
             ->get(route('tech.admin.settings.sales.workflows'))
+            ->assertRedirect(route('tech.admin.settings.sales.quote-templates.index'));
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.sales.quote-templates.index'))
             ->assertOk()
-            ->assertViewIs('sales::Admin.Settings.workflows.index');
+            ->assertViewIs('sales::Admin.Settings.workflows.index')
+            ->assertSee('Quote Templates')
+            ->assertSee('New template')
+            ->assertSee('Quote Templates')
+            ->assertSee('Managed workspace starter')
+            ->assertDontSee('Catalog source')
+            ->assertDontSee('Source ID');
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.sales.quote-templates.create'))
+            ->assertOk()
+            ->assertViewIs('sales::Admin.Settings.workflows.form')
+            ->assertSee('Create Quote Template')
+            ->assertSee('Opportunity type')
+            ->assertDontSee('Catalog source')
+            ->assertDontSee('Source ID');
+
+        $template = SalesQuoteTemplate::query()->where('template_key', 'MANAGED_WORKSPACE_STARTER')->firstOrFail();
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.sales.quote-templates.edit', $template))
+            ->assertOk()
+            ->assertViewIs('sales::Admin.Settings.workflows.form')
+            ->assertSee('Edit Quote Template')
+            ->assertSee('Delete template')
+            ->assertSee('Add quote line')
+            ->assertSee('Catalog source')
+            ->assertDontSee('Source ID');
+    }
+
+    #[Test]
+    public function sales_defaults_seed_a_reusable_quote_templates_template(): void
+    {
+        app(EnsureSalesDefaults::class)->handle();
+
+        $template = SalesQuoteTemplate::query()
+            ->with(['lines', 'acknowledgements'])
+            ->where('template_key', 'QUOTE_TEMPLATES')
+            ->firstOrFail();
+
+        $this->assertSame('Quote Templates', $template->name);
+        $this->assertTrue($template->is_active);
+        $this->assertSame('general', $template->customer_segment);
+        $this->assertSame('Implementation', $template->lines->first()?->name);
+        $this->assertSame('implementation', $template->lines->first()?->downstream_type);
+        $this->assertSame('Scope and pricing confirmed', $template->acknowledgements->first()?->title);
+
+        $template->delete();
+
+        app(EnsureSalesDefaults::class)->handle();
+
+        $this->assertNull(SalesQuoteTemplate::query()->where('template_key', 'QUOTE_TEMPLATES')->first());
+        $this->assertNotNull(SalesQuoteTemplate::withTrashed()->where('template_key', 'QUOTE_TEMPLATES')->first()?->deleted_at);
+    }
+
+    #[Test]
+    public function admin_can_delete_quote_templates_from_the_edit_page(): void
+    {
+        $template = SalesQuoteTemplate::query()->create([
+            'template_key' => 'DELETE_ME',
+            'name' => 'Delete me',
+            'description' => 'Temporary quote template.',
+            'is_active' => true,
+            'customer_segment' => 'general',
+            'created_by' => $this->admin->id,
+            'updated_by' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->delete(route('tech.admin.settings.sales.quote-templates.destroy', $template))
+            ->assertRedirect(route('tech.admin.settings.sales.quote-templates.index'))
+            ->assertSessionHas('success', 'Quote template deleted.');
+
+        $this->assertSoftDeleted('sales_quote_templates', ['id' => $template->id]);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.sales.quote-templates.index'))
+            ->assertOk()
+            ->assertDontSee('Delete me');
+    }
+
+    #[Test]
+    public function sales_quote_template_api_can_manage_templates_for_automation(): void
+    {
+        Sanctum::actingAs($this->admin, ['sales.quote_templates.read']);
+
+        $this->getJson(route('api.v1.sales.quote-templates.catalog'))
+            ->assertOk()
+            ->assertJsonPath('data.customer_segments.smb', 'SMB')
+            ->assertJsonPath('data.source_types.custom', 'Custom');
+
+        $this->postJson(route('api.v1.sales.quote-templates.store'), [
+            'name' => 'API managed template',
+            'is_active' => true,
+            'target_type' => 'service_agreement',
+            'customer_segment' => 'smb',
+        ])->assertForbidden();
+
+        Sanctum::actingAs($this->admin, ['sales.quote_templates.read', 'sales.quote_templates.manage']);
+
+        $created = $this->postJson(route('api.v1.sales.quote-templates.store'), [
+            'name' => 'API managed template',
+            'description' => 'Built through the quote-template API.',
+            'is_active' => true,
+            'target_type' => 'service_agreement',
+            'customer_segment' => 'smb',
+            'intro_text' => 'Intro from API.',
+            'seller_checklist' => ['Confirm users', 'Confirm backup'],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'API managed template')
+            ->assertJsonPath('data.seller_checklist.1', 'Confirm backup');
+
+        $template = SalesQuoteTemplate::query()->findOrFail($created->json('data.id'));
+
+        $line = $this->postJson(route('api.v1.sales.quote-templates.lines.store', $template), [
+            'source_reference' => 'custom',
+            'section' => 'monthly_services',
+            'downstream_type' => 'recurring_contract',
+            'billing_cadence' => 'monthly',
+            'name' => 'API managed line',
+            'description' => 'Managed service line.',
+            'quantity' => 1,
+            'unit_price_ex_vat' => 1200,
+            'discount_value' => 0,
+            'discount_type' => 'amount',
+            'vat_rate' => 25,
+            'is_required' => true,
+            'customer_selected_by_default' => true,
+            'option_group_name' => 'Plan choice',
+            'option_group_type' => 'good_better_best',
+            'option_group_min_select' => 1,
+            'option_group_max_select' => 1,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.source_reference', 'custom')
+            ->assertJsonPath('data.option_group_name', 'Plan choice');
+
+        $this->postJson(route('api.v1.sales.quote-templates.acknowledgements.store', $template), [
+            'template_line_id' => $line->json('data.id'),
+            'title' => 'API confirmation',
+            'body' => 'Customer confirms the selected plan.',
+            'is_required' => true,
+        ])->assertCreated();
+
+        $this->getJson(route('api.v1.sales.quote-templates.show', $template))
+            ->assertOk()
+            ->assertJsonPath('data.lines.0.name', 'API managed line')
+            ->assertJsonPath('data.acknowledgements.0.title', 'API confirmation');
+
+        $this->putJson(route('api.v1.sales.quote-templates.update', $template), [
+            'name' => 'API managed template v2',
+            'is_active' => true,
+            'target_type' => 'service_agreement',
+            'customer_segment' => 'enterprise',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'API managed template v2')
+            ->assertJsonPath('data.customer_segment', 'enterprise');
+
+        $this->deleteJson(route('api.v1.sales.quote-templates.destroy', $template))
+            ->assertNoContent();
+
+        $this->assertSoftDeleted('sales_quote_templates', ['id' => $template->id]);
+    }
+
+    #[Test]
+    public function admin_templates_can_be_applied_to_quote_drafts_as_snapshots(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.sales.rules.update'), [
+                'enabled' => '1',
+                'discount_percent_threshold' => 15,
+                'minimum_margin_percent' => 12,
+                'quote_total_ex_vat_threshold' => 75000,
+                'manual_line_ex_vat_threshold' => 25000,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Sales CPQ approval policy updated.');
+
+        $this->assertEquals(15.0, SalesSetting::get('cpq_approval_policy')['discount_percent_threshold']);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.sales.quote-templates.store'), [
+                'name' => 'Managed workspace starter',
+                'is_active' => '1',
+                'target_type' => 'service_agreement',
+                'customer_segment' => 'smb',
+                'intro_text' => 'Template introduction.',
+                'scope_text' => 'Template scope.',
+                'assumptions_text' => 'Template assumptions.',
+                'seller_checklist_text' => "Confirm users\nConfirm backup",
+                'approval_policy_hints_text' => 'Managed service terms approved',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Quote template created.');
+
+        $template = SalesQuoteTemplate::query()->where('name', 'Managed workspace starter')->firstOrFail();
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.sales.quote-templates.lines.store', $template), [
+                'source_reference' => 'custom',
+                'section' => 'monthly_services',
+                'downstream_type' => 'recurring_contract',
+                'billing_cadence' => 'monthly',
+                'name' => 'Managed workspace base',
+                'description' => 'Template managed service.',
+                'quantity' => 2,
+                'unit_price_ex_vat' => 1000,
+                'unit_cost_ex_vat' => 350,
+                'discount_value' => 0,
+                'discount_type' => 'amount',
+                'vat_rate' => 25,
+                'is_required' => '1',
+                'is_recommended' => '1',
+                'customer_selected_by_default' => '1',
+                'option_group_name' => 'Good / Better / Best',
+                'option_group_type' => 'good_better_best',
+                'option_group_min_select' => 1,
+                'option_group_max_select' => 1,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Template line added.');
+
+        $line = SalesQuoteTemplateLine::query()->where('template_id', $template->id)->firstOrFail();
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.sales.quote-templates.acknowledgements.store', $template), [
+                'template_line_id' => $line->id,
+                'title' => 'Service assumptions',
+                'body' => 'Customer confirms supported user count.',
+                'is_required' => '1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Template acknowledgement added.');
+
+        $this->assertSame(1, SalesQuoteTemplateAcknowledgement::query()->where('template_id', $template->id)->count());
+
+        $client = Client::create(['name' => 'Template Client AS', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Template Buyer',
+            'email' => 'template-buyer@example.test',
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'primary_contact_id' => $contact->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'Template driven quote',
+                'type' => 'service_agreement',
+                'status' => 'quote_ready',
+                'estimated_value_ex_vat' => 0,
+                'probability_percent' => 40,
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()->where('title', 'Template driven quote')->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.ensure', $opportunity))
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.sales.show', $opportunity))
+            ->assertOk()
+            ->assertSee('Managed workspace starter');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.templates.apply', $opportunity), [
+                'template_id' => $template->id,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Quote template applied.');
+
+        $version = $opportunity->refresh()->currentQuoteVersion()->with(['lines.optionGroup', 'acknowledgements'])->firstOrFail();
+
+        $this->assertSame($template->id, $version->source_template_id);
+        $this->assertSame('Managed workspace starter', data_get($version->template_snapshot, 'name'));
+        $this->assertSame('Template introduction.', $version->intro_text);
+        $this->assertSame('2000.00', $version->total_ex_vat);
+        $this->assertSame('Managed workspace base', $version->lines->first()->name);
+        $this->assertSame('Good / Better / Best', $version->lines->first()->optionGroup?->name);
+        $this->assertSame('Service assumptions', $version->acknowledgements->first()->title);
+        $this->assertTrue(SalesActivity::query()->where('type', 'quote_template_applied')->exists());
     }
 
     #[Test]
@@ -1009,11 +1329,17 @@ class SalesModuleTest extends TestCase
             ->assertSessionHas('open_quote_modal', true);
 
         $version->refresh();
-        $this->assertSame('sent', $version->status);
+        $this->assertSame('superseded', $version->status);
         $draftVersion = $opportunity->refresh()->currentQuoteVersion()->with('quote')->firstOrFail();
         $this->assertNotSame($version->id, $draftVersion->id);
         $this->assertSame('draft', $draftVersion->status);
+        $this->assertSame($version->id, $draftVersion->snapshots['supersedes_quote_version_id']);
         $this->assertSame('draft', $draftVersion->quote->fresh()->status);
+
+        $this->post(route('sales.quotes.public.accept', $version->secure_token), [
+            'name' => 'Customer',
+            'confirm' => '1',
+        ])->assertSessionHas('error', 'This quote cannot be accepted in its current status.');
 
         $this->actingAs($this->tech)
             ->post(route('tech.sales.quote.send', $opportunity->refresh()))
@@ -1035,6 +1361,328 @@ class SalesModuleTest extends TestCase
         $this->assertSame('accepted', $version->status);
         $this->assertSame('Customer', $version->accepted_by_name);
         $this->assertTrue(SalesActivity::query()->where('type', 'quote_accepted')->exists());
+    }
+
+    #[Test]
+    public function sent_quotes_expire_before_customer_acceptance(): void
+    {
+        Queue::fake();
+
+        $client = Client::create(['name' => 'Expired Quote Client AS', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Expired Buyer',
+            'email' => 'expired-buyer@example.test',
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'primary_contact_id' => $contact->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'Expiring quote',
+                'type' => 'service_agreement',
+                'status' => 'quote_ready',
+                'estimated_value_ex_vat' => 0,
+                'probability_percent' => 40,
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()->where('title', 'Expiring quote')->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.ensure', $opportunity))
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.lines.store', $opportunity), [
+                'source_type' => 'custom',
+                'section' => 'implementation',
+                'downstream_type' => 'implementation',
+                'billing_cadence' => 'one_time',
+                'name' => 'Expired onboarding',
+                'quantity' => 1,
+                'unit_price_ex_vat' => 1000,
+                'unit_cost_ex_vat' => 500,
+                'discount_value' => 0,
+                'discount_type' => 'amount',
+                'vat_rate' => 25,
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.send', $opportunity))
+            ->assertRedirect();
+
+        $version = $opportunity->refresh()->currentQuoteVersion()->with('quote')->firstOrFail();
+        $version->forceFill(['expires_at' => now()->subDay()->toDateString()])->save();
+
+        $this->get(route('sales.quotes.public.view', $version->secure_token))
+            ->assertOk()
+            ->assertSee('This quote is expired.');
+
+        $version->refresh();
+        $this->assertSame('expired', $version->status);
+        $this->assertSame('expired', $version->quote->fresh()->status);
+        $this->assertTrue(SalesActivity::query()->where('type', 'quote_expired')->exists());
+
+        $this->post(route('sales.quotes.public.accept', $version->secure_token), [
+            'name' => 'Expired Buyer',
+            'confirm' => '1',
+        ])
+            ->assertSessionHas('error', 'This quote cannot be accepted in its current status.');
+    }
+
+    #[Test]
+    public function cpq_options_acknowledgements_and_acceptance_snapshot_are_enforced(): void
+    {
+        Queue::fake();
+
+        $client = Client::create(['name' => 'CPQ Client AS', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'CPQ Buyer',
+            'email' => 'cpq-buyer@example.test',
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'primary_contact_id' => $contact->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'CPQ managed workspace',
+                'type' => 'service_agreement',
+                'status' => 'quote_ready',
+                'estimated_value_ex_vat' => 0,
+                'probability_percent' => 40,
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()->where('title', 'CPQ managed workspace')->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.ensure', $opportunity))
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.sales.quote.details.update', $opportunity), [
+                'title' => 'CPQ proposal',
+                'acknowledgement_title' => 'Delivery terms',
+                'acknowledgement_body' => 'Customer confirms delivery access and third-party licence terms.',
+                'acknowledgement_required' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.lines.store', $opportunity), [
+                'source_type' => 'custom',
+                'section' => 'implementation',
+                'downstream_type' => 'implementation',
+                'billing_cadence' => 'one_time',
+                'name' => 'Required onboarding',
+                'quantity' => 1,
+                'unit_price_ex_vat' => 1000,
+                'unit_cost_ex_vat' => 500,
+                'discount_value' => 0,
+                'discount_type' => 'amount',
+                'vat_rate' => 25,
+                'is_required' => '1',
+                'customer_selected_by_default' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.lines.store', $opportunity), [
+                'source_type' => 'custom',
+                'section' => 'optional',
+                'downstream_type' => 'one_time_order',
+                'billing_cadence' => 'one_time',
+                'name' => 'Endpoint backup add-on',
+                'quantity' => 1,
+                'unit_price_ex_vat' => 200,
+                'unit_cost_ex_vat' => 50,
+                'discount_value' => 0,
+                'discount_type' => 'amount',
+                'vat_rate' => 25,
+                'is_required' => '0',
+                'is_recommended' => '1',
+                'customer_selected_by_default' => '0',
+                'customer_quantity_editable' => '1',
+                'min_customer_quantity' => 1,
+                'max_customer_quantity' => 3,
+                'option_group_name' => 'Selectable add-ons',
+                'option_group_type' => 'optional',
+                'option_group_min_select' => 0,
+                'option_group_max_select' => 2,
+                'line_acknowledgement_title' => 'Backup scope',
+                'line_acknowledgement_body' => 'Customer confirms selected endpoint count.',
+                'line_acknowledgement_required' => '1',
+            ])
+            ->assertRedirect();
+
+        $version = $opportunity->refresh()->currentQuoteVersion()->with(['lines', 'acknowledgements'])->firstOrFail();
+        $requiredLine = $version->lines->firstWhere('name', 'Required onboarding');
+        $optionalLine = $version->lines->firstWhere('name', 'Endpoint backup add-on');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.send', $opportunity->refresh()))
+            ->assertRedirect();
+
+        $version->refresh();
+        $this->assertSame('sent', $version->status);
+
+        $this->get(route('sales.quotes.public.view', $version->secure_token))
+            ->assertOk()
+            ->assertSee('Selectable add-ons')
+            ->assertSee('Endpoint backup add-on')
+            ->assertSee('data-cpq-select', false);
+
+        $this->post(route('sales.quotes.public.accept', $version->secure_token), [
+            'name' => 'CPQ Buyer',
+            'confirm' => '1',
+            'selected_line_ids' => [$optionalLine->id],
+            'quantities' => [$optionalLine->id => 2],
+        ])
+            ->assertSessionHasErrors('acknowledgement_ids');
+
+        $acknowledgementIds = $version->acknowledgements->pluck('id')->all();
+        $this->post(route('sales.quotes.public.accept', $version->secure_token), [
+            'name' => 'CPQ Buyer',
+            'email' => 'cpq-buyer@example.test',
+            'confirm' => '1',
+            'selected_line_ids' => [$optionalLine->id],
+            'quantities' => [$optionalLine->id => 2],
+            'acknowledgement_ids' => $acknowledgementIds,
+        ])->assertRedirect();
+
+        $version->refresh();
+        $snapshot = SalesQuoteAcceptanceSnapshot::query()->where('quote_version_id', $version->id)->firstOrFail();
+
+        $this->assertSame('accepted', $version->status);
+        $this->assertEqualsCanonicalizing([$requiredLine->id, $optionalLine->id], $snapshot->selected_line_ids);
+        $this->assertSame(1400.0, (float) data_get($snapshot->totals, 'total_ex_vat'));
+        $this->assertSame(1750.0, (float) data_get($snapshot->totals, 'total_inc_vat'));
+        $this->assertSame(2.0, (float) collect($snapshot->selected_lines)->firstWhere('id', $optionalLine->id)['quantity']);
+        $this->assertSame(2, SalesQuoteConversionPlan::query()->where('quote_version_id', $version->id)->count());
+        $this->assertDatabaseHas('sales_quote_conversion_plans', [
+            'quote_version_id' => $version->id,
+            'quote_line_id' => $optionalLine->id,
+            'target_domain' => 'Economy',
+            'target_type' => 'order_line',
+            'status' => 'pending',
+        ]);
+
+        $plan = SalesQuoteConversionPlan::query()
+            ->where('quote_version_id', $version->id)
+            ->where('quote_line_id', $optionalLine->id)
+            ->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.conversion-plans.update', [$opportunity, $plan]), [
+                'status' => 'completed',
+                'target_reference' => 'ECO-ORDER-42',
+                'operator_note' => 'Created through Economy owner workflow.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Conversion plan updated.');
+
+        $plan->refresh();
+        $this->assertSame('completed', $plan->status);
+        $this->assertSame('ECO-ORDER-42', $plan->target_reference);
+        $this->assertNotNull($plan->processed_at);
+        $this->assertTrue(SalesActivity::query()->where('type', 'quote_conversion_plan_updated')->exists());
+        $this->assertTrue(SalesActivity::query()->where('type', 'quote_viewed')->exists());
+    }
+
+    #[Test]
+    public function risky_quotes_require_internal_approval_before_sending(): void
+    {
+        Queue::fake();
+        Permission::findOrCreate('sales.quote.approve', 'web');
+        $this->admin->givePermissionTo('sales.quote.approve');
+
+        SalesSetting::query()->updateOrCreate(['key' => 'cpq_approval_policy'], ['value' => [
+            'enabled' => true,
+            'discount_percent_threshold' => 20,
+            'minimum_margin_percent' => 10,
+            'quote_total_ex_vat_threshold' => 100000,
+            'manual_line_ex_vat_threshold' => 50000,
+        ]]);
+
+        $client = Client::create(['name' => 'Approval Client AS', 'active' => true]);
+        $site = ClientSite::factory()->create(['client_id' => $client->id]);
+        $contact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Approval Buyer',
+            'email' => 'approval-buyer@example.test',
+            'active' => true,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'primary_contact_id' => $contact->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'Risky quote',
+                'type' => 'service_agreement',
+                'status' => 'quote_ready',
+                'estimated_value_ex_vat' => 0,
+                'probability_percent' => 40,
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()->where('title', 'Risky quote')->firstOrFail();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.ensure', $opportunity))
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.lines.store', $opportunity), [
+                'source_type' => 'custom',
+                'section' => 'implementation',
+                'downstream_type' => 'implementation',
+                'billing_cadence' => 'one_time',
+                'name' => 'Discounted project',
+                'quantity' => 1,
+                'unit_price_ex_vat' => 10000,
+                'unit_cost_ex_vat' => 9000,
+                'discount_value' => 25,
+                'discount_type' => 'percent',
+                'vat_rate' => 25,
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.send', $opportunity->refresh()))
+            ->assertRedirect()
+            ->assertSessionHas('warning', 'Quote requires internal approval before sending.');
+
+        $version = $opportunity->refresh()->currentQuoteVersion()->firstOrFail();
+        $this->assertSame('draft', $version->status);
+        $this->assertSame('pending', $version->approval_status);
+        Queue::assertNotPushed(SendSalesQuoteEmail::class);
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.sales.quote.approval.approve', $opportunity), [
+                'note' => 'Approved with known margin risk.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Quote approved.');
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.quote.send', $opportunity->refresh()))
+            ->assertRedirect();
+
+        $version->refresh();
+        $this->assertSame('sent', $version->status);
+        $this->assertSame('approved', $version->approval_status);
+        Queue::assertPushed(SendSalesQuoteEmail::class, fn (SendSalesQuoteEmail $job) => $job->salesQuoteVersionId === $version->id);
+        $this->assertTrue(SalesActivity::query()->where('type', 'quote_approval_approved')->exists());
     }
 
     #[Test]

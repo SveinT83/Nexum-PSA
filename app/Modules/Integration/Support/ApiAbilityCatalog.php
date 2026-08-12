@@ -73,6 +73,8 @@ class ApiAbilityCatalog
         'sales.read' => self::ACCESS_READ,
         'sales.create' => self::ACCESS_WRITE,
         'sales.update' => self::ACCESS_WRITE,
+        'sales.quote_templates.read' => self::ACCESS_READ,
+        'sales.quote_templates.manage' => self::ACCESS_WRITE,
         'lead-intelligence.read' => self::ACCESS_READ,
         'lead-intelligence.manage' => self::ACCESS_WRITE,
         'lead-intelligence.run' => self::ACCESS_WRITE,
@@ -395,6 +397,16 @@ class ApiAbilityCatalog
         'sales.update' => [
             'label' => 'Update sales',
             'description' => 'Update sales opportunities and add sales activities.',
+            'domain' => 'Sales',
+        ],
+        'sales.quote_templates.read' => [
+            'label' => 'Read sales quote templates',
+            'description' => 'Read Sales quote template catalogs and configured reusable quote templates.',
+            'domain' => 'Sales',
+        ],
+        'sales.quote_templates.manage' => [
+            'label' => 'Manage sales quote templates',
+            'description' => 'Create, update, and delete Sales quote templates, template lines, option groups, and acknowledgements.',
             'domain' => 'Sales',
         ],
         'lead-intelligence.read' => [

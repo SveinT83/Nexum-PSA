@@ -6,9 +6,11 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
+use App\Models\Settings\CommonSetting;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Documentation\Models\Vendor;
+use App\Modules\Sales\Models\SalesQuoteConversionPlan;
 use App\Modules\Storage\Models\Item as StorageItem;
 use App\Modules\Storage\Models\Warehouse as StorageWarehouse;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
@@ -16,6 +18,7 @@ use App\Modules\Ticket\Actions\RequestTicketPurchase;
 use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\StoreTicketPlannedLine;
+use App\Modules\Ticket\Actions\TicketQuoteDeliveryAutomationActor;
 use App\Modules\Ticket\Livewire\Admin\WorkflowEditor;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
@@ -310,6 +313,46 @@ class TicketWorkflowV3Test extends TestCase
             ->whereIn('ticket_id', [$timerTicket->id, $timeTicket->id, $costTicket->id, $webTimerTicket->id])
             ->where('transition_key', 'first-activity')
             ->count());
+    }
+
+    #[Test]
+    public function cost_entry_api_routes_quote_required_manual_cost_to_planned_scope(): void
+    {
+        CommonSetting::updateOrCreate(
+            ['type' => 'ticket', 'name' => 'quote_cost_policy'],
+            [
+                'description' => 'Ticket quote-required cost routing policy.',
+                'json' => json_encode(['quote_required_cost_threshold' => 500]),
+            ],
+        );
+        Sanctum::actingAs($this->tech, ['tickets.actions']);
+        [$ticket] = $this->ticketWithClient();
+
+        $this->postJson(route('api.v1.tickets.cost-entries.store', $ticket), [
+            'cost_mode' => 'manual',
+            'item_name' => 'API approval hardware',
+            'quantity' => 1,
+            'unit_price_ex_vat' => 750,
+            'currency' => 'NOK',
+            'invoice_text' => 'API approval hardware.',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data_type', 'planned_line')
+            ->assertJsonPath('routed_to', 'quote_scope')
+            ->assertJsonPath('reason', 'Line total requires customer quote approval.')
+            ->assertJsonPath('data.name', 'API approval hardware');
+
+        $this->assertDatabaseMissing('ticket_cost_entries', [
+            'ticket_id' => $ticket->id,
+            'item_name' => 'API approval hardware',
+        ]);
+        $this->assertDatabaseHas('ticket_planned_lines', [
+            'ticket_id' => $ticket->id,
+            'source_type' => 'manual_cost',
+            'name' => 'API approval hardware',
+            'unit_price_ex_vat' => '750.00',
+            'status' => 'planned',
+        ]);
     }
 
     #[Test]
@@ -1416,8 +1459,26 @@ class TicketWorkflowV3Test extends TestCase
             'can_be_ordered' => true,
             'status' => 'active',
         ]);
+        $switch = StorageItem::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'primary_vendor_id' => $vendor->id,
+            'sku' => 'SW-24',
+            'name' => 'Access switch',
+            'short_description' => 'Managed access switch.',
+            'purchase_price' => 900,
+            'sale_price' => 1500,
+            'vat_rate' => 25,
+            'qty_on_hand' => 3,
+            'qty_reserved' => 0,
+            'can_be_ordered' => true,
+            'status' => 'active',
+        ]);
 
         Sanctum::actingAs($this->tech, ['tickets.actions']);
+        $this->postJson(route('api.v1.tickets.planned-lines.store', $ticket), [
+            'storage_item_id' => $switch->id,
+            'quantity' => 2,
+        ])->assertCreated();
         $this->postJson(route('api.v1.tickets.planned-lines.store', $ticket), [
             'storage_item_id' => $router->id,
             'quantity' => 1,
@@ -1435,7 +1496,7 @@ class TicketWorkflowV3Test extends TestCase
 
         $this->postJson(route('api.v1.tickets.sales-quote.store', $ticket))
             ->assertCreated()
-            ->assertJsonCount(2, 'data.lines');
+            ->assertJsonCount(3, 'data.lines');
         $versionId = $ticket->refresh()->salesContext()->firstOrFail()->opportunity->current_quote_version_id;
 
         $this->postJson(route('api.v1.tickets.sales-quote.send', $ticket), [
@@ -1472,9 +1533,22 @@ class TicketWorkflowV3Test extends TestCase
             ->assertJsonPath('data.status', 'accepted');
 
         $this->assertSame('won', $ticket->refresh()->salesContext->opportunity->refresh()->status);
-        $this->assertSame(2, $ticket->plannedLines()->where('status', 'approved')->count());
+        $this->assertSame(3, $ticket->plannedLines()->whereIn('status', ['approved', 'converted'])->count());
+        $automationActor = app(TicketQuoteDeliveryAutomationActor::class)->resolve();
+        $this->assertTrue($automationActor->isSystemActor());
+        $this->assertSame(User::STATUS_DISABLED, $automationActor->status);
+
+        $switchLine = TicketPlannedLine::query()->where('ticket_id', $ticket->id)->where('storage_item_id', $switch->id)->firstOrFail();
+        $switchCost = $switchLine->convertedCostEntry()->firstOrFail();
+        $this->assertSame('converted', $switchLine->status);
+        $this->assertSame('reserved', $switchCost->status);
+        $this->assertSame(2, $switch->refresh()->qty_reserved);
+        $this->assertSame(0, $switchLine->purchaseOrderLine()->count());
 
         $routerLine = TicketPlannedLine::query()->where('ticket_id', $ticket->id)->where('storage_item_id', $router->id)->firstOrFail();
+        $purchaseLine = $routerLine->purchaseOrderLine()->with('purchaseOrder')->firstOrFail();
+        $this->assertSame('approved', $routerLine->status);
+        $this->assertSame(1, $routerLine->purchaseOrderLine()->count());
         $routerLine->load('storageItem.primaryVendor');
         $router->delete();
         try {
@@ -1488,34 +1562,47 @@ class TicketWorkflowV3Test extends TestCase
         $purchaseResponse = $this->postJson(route('api.v1.tickets.planned-lines.purchase', [$ticket, $routerLine]));
         $purchaseResponse
             ->assertCreated()
+            ->assertJsonPath('data.id', $purchaseLine->id)
             ->assertJsonPath('data.metadata.vendor_order_sent', false);
         $this->postJson(route('api.v1.tickets.planned-lines.purchase', [$ticket, $routerLine]))
             ->assertCreated()
             ->assertJsonPath('data.id', $purchaseResponse->json('data.id'));
-        $this->assertSame(1, $routerLine->purchaseOrderLine()->count());
         $this->assertDatabaseHas('storage_purchase_orders', [
             'status' => 'draft',
             'vendor_id' => $vendor->id,
             'supplier_name_snapshot' => 'Router Supplier',
             'currency' => 'NOK',
-            'status_changed_by' => $this->tech->id,
+            'status_changed_by' => $automationActor->id,
         ]);
         $this->assertDatabaseHas('storage_purchase_order_lines', [
             'ticket_planned_line_id' => $routerLine->id,
             'item_name_snapshot' => 'Mesh router',
             'sku_snapshot' => 'MESH-01',
             'currency' => 'NOK',
-            'created_by' => $this->tech->id,
+            'created_by' => $automationActor->id,
         ]);
 
         $implementationLine = TicketPlannedLine::query()->where('ticket_id', $ticket->id)->whereNull('storage_item_id')->firstOrFail();
+        $costEntry = $implementationLine->convertedCostEntry()->firstOrFail();
+        $this->assertSame('converted', $implementationLine->status);
         $this->postJson(route('api.v1.tickets.planned-lines.convert', [$ticket, $implementationLine]))
             ->assertOk()
+            ->assertJsonPath('data.id', $costEntry->id)
             ->assertJsonPath('data.item_name', 'Installation and configuration');
         $this->assertDatabaseHas('ticket_cost_entries', [
             'ticket_id' => $ticket->id,
             'item_name' => 'Installation and configuration',
             'billing_status' => 'pending',
+        ]);
+        $this->assertSame(1, $implementationLine->convertedCostEntry()->count());
+        $this->assertSame(3, SalesQuoteConversionPlan::query()
+            ->where('quote_version_id', $sentVersion->id)
+            ->where('status', 'completed')
+            ->count());
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $ticket->id,
+            'actor_id' => $automationActor->id,
+            'type' => 'accepted_quote_auto_processed',
         ]);
     }
 
