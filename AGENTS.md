@@ -65,6 +65,17 @@ agent-specific file conflicts with this file, this file wins.
   implementation must be added near the top of `docs/TODO.md`.
 - New domains and large new capabilities should wait unless they unblock beta
   completion or have an approved RFC.
+- For Mail module work, read
+  `docs/rfc/2026-07-04-mail-module-full-email-client.md` and its related
+  2026-08-11 ADRs before designing or implementing behavior. The current
+  direction is a real IMAP-backed mail client: provider folder/read state stays
+  authoritative, Nexum keeps its own `unread for me` and collaboration state,
+  and the default workspace is a Livewire conversation view across mailboxes
+  the user may access.
+- Do not replace the existing `TD-...` Ticket-number correlation when expanding
+  Mail. Converting or linking an email to a Ticket keeps the source email in
+  the mailbox, and one Ticket may link several independent email conversations
+  through guarded, auditable actions.
 
 ## Change Levels
 

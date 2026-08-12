@@ -27,6 +27,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-12-001 | Mail full-client RFC and Email architecture decisions | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
 | HR-2026-08-11-004 | Sales Quotes / CPQ completion | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-003 | One responsive Nexum PWA final browser acceptance | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Pending | 2026-08-11 |  |  |
@@ -62,6 +63,39 @@ has explicitly approved.
 | HR-2026-07-15-001 | Main and Dev pre-merge user-interface review | In Review | 2026-07-15 | Svein Tore |  |
 
 ## Reviewed History
+
+### HR-2026-08-12-001 - Mail Full-Client RFC And Email Architecture Decisions
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Documentation and architecture review; no runtime implementation or deployment
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md` and its four related 2026-08-11 Email
+ADRs
+
+Scope: The complete Level 3 target for a real provider-authoritative IMAP-backed Mail client,
+personal/shared mailbox access, per-user unread and collaboration state, Livewire conversation views,
+Taxonomy classification, deterministic rules, guarded AI, and multi-conversation Email/Ticket
+communication with the existing Ticket-number fallback preserved.
+
+Deployment actions: N/A. This review approves planning and architecture only. No code, migration,
+provider change, external publication, or production activation was performed. Implementation must
+use scoped Feature Slices on authoritative Dev; automatic external replies remain separately gated.
+
+Risks: the first Feature Slice must revalidate live Dev schema/code and dirty state; personal/shared
+mail access, Ticket ingress, provider synchronization, data migration, portal audience, send
+reconciliation, attachment safety, and AI egress require slice-specific tests and human review.
+
+- [x] Approve the complete RFC, including decisions 1-11 and the recorded security/lifecycle and
+  migration boundaries.
+- [x] Accept the four related ADRs for Email domain ownership, canonical message/mailbox placement,
+  mailbox access/rule authority, and Email conversations as Ticket communication channels.
+- [x] Accept that implementation remains sliced and that automatic external replies require a later
+  explicit approval and ADR.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein answered `Ja` to the explicit question asking whether he approved the complete
+RFC and all four ADRs.
 
 ### HR-2026-07-27-003 - Warroom Storage Should Order Warning
 
