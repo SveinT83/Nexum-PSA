@@ -17,6 +17,7 @@ use App\Modules\Marketing\Models\MarketingCampaignEvent;
 use App\Modules\Marketing\Models\MarketingInterestAssignment;
 use App\Modules\Marketing\Models\MarketingInterestTag;
 use App\Modules\Sales\Actions\EnsureSalesDefaults;
+use App\Modules\Sales\Actions\MarkSalesOpportunityLost;
 use App\Modules\Sales\Controllers\Admin\SalesSettingsController;
 use App\Modules\Sales\Controllers\Api\V1\SalesQuoteTemplateWorkflowController;
 use App\Modules\Sales\Controllers\PublicQuoteController;
@@ -42,6 +43,7 @@ use Database\Seeders\EmailTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
@@ -853,6 +855,217 @@ class SalesModuleTest extends TestCase
         $this->assertSame('Good / Better / Best', $version->lines->first()->optionGroup?->name);
         $this->assertSame('Service assumptions', $version->acknowledgements->first()->title);
         $this->assertTrue(SalesActivity::query()->where('type', 'quote_template_applied')->exists());
+    }
+
+    #[Test]
+    public function updating_an_opportunity_reuses_its_generated_sales_follow_up_event(): void
+    {
+        $client = Client::create(['name' => 'Calendar Sync Client AS', 'active' => true]);
+        $initialFollowUp = now('Europe/Oslo')->addDays(5)->startOfMinute();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'Idempotent calendar opportunity',
+                'type' => 'service_agreement',
+                'status' => 'contacted',
+                'estimated_value_ex_vat' => 12000,
+                'probability_percent' => 20,
+                'next_follow_up_at' => $initialFollowUp->format('Y-m-d H:i:s'),
+                'next_follow_up_type' => 'call',
+                'next_follow_up_note' => 'Initial follow-up note.',
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()
+            ->where('title', 'Idempotent calendar opportunity')
+            ->firstOrFail();
+        $eventId = $opportunity->follow_up_calendar_event_id;
+        $this->assertNotNull($eventId);
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.sales.update', $opportunity), [
+                'summary' => 'An unrelated opportunity update.',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame($eventId, $opportunity->refresh()->follow_up_calendar_event_id);
+
+        $updatedFollowUp = now('Europe/Oslo')->addDays(8)->setTime(14, 30)->startOfMinute();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.sales.update', $opportunity), [
+                'title' => 'Updated idempotent calendar opportunity',
+                'next_follow_up_at' => $updatedFollowUp->format('Y-m-d H:i:s'),
+                'next_follow_up_type' => 'meeting',
+                'next_follow_up_note' => 'Meet the customer on site.',
+            ])
+            ->assertRedirect();
+
+        $opportunity->refresh();
+        $event = CalendarEvent::query()->findOrFail($eventId);
+
+        $this->assertSame($eventId, $opportunity->follow_up_calendar_event_id);
+        $this->assertSame(1, CalendarEvent::query()
+            ->where('source', 'sales')
+            ->where('metadata->opportunity_id', $opportunity->id)
+            ->count());
+        $this->assertSame(1, $event->links()
+            ->where('linkable_type', $opportunity->getMorphClass())
+            ->where('linkable_id', $opportunity->id)
+            ->where('relation', 'sales_follow_up')
+            ->count());
+        $this->assertSame('Sales follow-up: Updated idempotent calendar opportunity', $event->title);
+        $this->assertSame(
+            "Meet the customer on site.\n\nOpportunity: ".$opportunity->opportunity_key,
+            $event->description,
+        );
+        $this->assertSame(
+            $updatedFollowUp->format('Y-m-d H:i:s'),
+            $event->starts_at->timezone($event->timezone)->format('Y-m-d H:i:s'),
+        );
+        $this->assertSame(
+            $updatedFollowUp->copy()->addMinutes(30)->format('Y-m-d H:i:s'),
+            $event->ends_at->timezone($event->timezone)->format('Y-m-d H:i:s'),
+        );
+        $this->assertSame('meeting', data_get($event->metadata, 'follow_up_type'));
+        $this->assertSame('Meeting', data_get($event->metadata, 'follow_up_label'));
+    }
+
+    #[Test]
+    public function clearing_an_opportunity_follow_up_soft_deletes_its_generated_event(): void
+    {
+        $client = Client::create(['name' => 'Clear Follow-up Client AS', 'active' => true]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'Clear generated follow-up',
+                'type' => 'service_agreement',
+                'status' => 'contacted',
+                'next_follow_up_at' => now('Europe/Oslo')->addDays(4)->format('Y-m-d H:i:s'),
+                'next_follow_up_type' => 'call',
+                'next_follow_up_note' => 'This follow-up will be cleared.',
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()
+            ->where('title', 'Clear generated follow-up')
+            ->firstOrFail();
+        $eventId = $opportunity->follow_up_calendar_event_id;
+        $this->assertNotNull($eventId);
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.sales.update', $opportunity), [
+                'next_follow_up_at' => null,
+                'next_follow_up_type' => null,
+                'next_follow_up_note' => null,
+            ])
+            ->assertRedirect();
+
+        $this->assertNull($opportunity->refresh()->follow_up_calendar_event_id);
+        $this->assertNull(CalendarEvent::query()->find($eventId));
+        $this->assertNotNull(CalendarEvent::withTrashed()->findOrFail($eventId)->deleted_at);
+    }
+
+    #[Test]
+    public function an_opportunity_with_no_event_pointer_does_not_reuse_a_historical_generated_event(): void
+    {
+        $client = Client::create(['name' => 'Historical Follow-up Client AS', 'active' => true]);
+        $initialFollowUp = now('Europe/Oslo')->addDays(3)->setTime(10, 0)->startOfMinute();
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.sales.store'), [
+                'client_id' => $client->id,
+                'owner_id' => $this->tech->id,
+                'title' => 'Historical generated follow-up',
+                'type' => 'service_agreement',
+                'status' => 'contacted',
+                'next_follow_up_at' => $initialFollowUp->format('Y-m-d H:i:s'),
+                'next_follow_up_type' => 'call',
+                'next_follow_up_note' => 'Keep this historical event unchanged.',
+            ])
+            ->assertRedirect();
+
+        $opportunity = SalesOpportunity::query()
+            ->where('title', 'Historical generated follow-up')
+            ->firstOrFail();
+        $historicalEventId = $opportunity->follow_up_calendar_event_id;
+        $this->assertNotNull($historicalEventId);
+
+        $opportunity->forceFill(['follow_up_calendar_event_id' => null])->save();
+        $updatedFollowUp = now('Europe/Oslo')->addDays(7)->setTime(15, 0)->startOfMinute();
+
+        $this->actingAs($this->tech)
+            ->patch(route('tech.sales.update', $opportunity), [
+                'title' => 'New generated follow-up',
+                'next_follow_up_at' => $updatedFollowUp->format('Y-m-d H:i:s'),
+                'next_follow_up_type' => 'meeting',
+                'next_follow_up_note' => 'Create a new event for this follow-up.',
+            ])
+            ->assertRedirect();
+
+        $opportunity->refresh();
+        $newEventId = $opportunity->follow_up_calendar_event_id;
+        $this->assertNotNull($newEventId);
+        $this->assertNotSame($historicalEventId, $newEventId);
+
+        $historicalEvent = CalendarEvent::query()->findOrFail($historicalEventId);
+        $newEvent = CalendarEvent::query()->findOrFail($newEventId);
+
+        $this->assertSame('Sales follow-up: Historical generated follow-up', $historicalEvent->title);
+        $this->assertSame(
+            $initialFollowUp->format('Y-m-d H:i:s'),
+            $historicalEvent->starts_at->timezone($historicalEvent->timezone)->format('Y-m-d H:i:s'),
+        );
+        $this->assertSame('Sales follow-up: New generated follow-up', $newEvent->title);
+        $this->assertSame('meeting', data_get($newEvent->metadata, 'follow_up_type'));
+        $this->assertSame(2, CalendarEvent::query()
+            ->where('source', 'sales')
+            ->where('metadata->opportunity_id', $opportunity->id)
+            ->count());
+    }
+
+    #[Test]
+    public function a_stale_opportunity_model_cannot_mark_the_same_opportunity_lost_twice(): void
+    {
+        $client = Client::create(['name' => 'Stale Lost Client AS', 'active' => true]);
+        $opportunity = SalesOpportunity::query()->create([
+            'opportunity_key' => 'SO-2026-STALE1',
+            'client_id' => $client->id,
+            'owner_id' => $this->tech->id,
+            'title' => 'Stale lost opportunity',
+            'type' => 'service_agreement',
+            'status' => 'contacted',
+            'estimated_value_ex_vat' => 12000,
+            'probability_percent' => 20,
+            'weighted_value_ex_vat' => 2400,
+        ]);
+        $staleOpportunity = SalesOpportunity::query()->findOrFail($opportunity->id);
+        $markLost = app(MarkSalesOpportunityLost::class);
+
+        $markLost->handle($opportunity, 'The first and authoritative reason.', null, $this->tech);
+        $this->assertSame('contacted', $staleOpportunity->status);
+
+        try {
+            $markLost->handle($staleOpportunity, 'A stale duplicate reason.', null, $this->tech);
+            $this->fail('The stale opportunity instance should have been rejected after the row lock.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                ['This opportunity is already marked as lost.'],
+                $exception->errors()['lost_reason'] ?? [],
+            );
+        }
+
+        $opportunity->refresh();
+        $this->assertSame('lost', $opportunity->status);
+        $this->assertSame('The first and authoritative reason.', $opportunity->lost_reason);
+        $this->assertSame(1, SalesActivity::query()
+            ->where('opportunity_id', $opportunity->id)
+            ->where('type', 'opportunity_lost')
+            ->count());
     }
 
     #[Test]
