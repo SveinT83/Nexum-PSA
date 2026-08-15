@@ -1,6 +1,6 @@
 # Feature Slice: Integration Hub Service Identity And Grants
 
-Status: Approved
+Status: Ready for Human Review
 Date: 2026-08-14
 Parent: GitHub #214
 Owner: Svein / Codex
@@ -39,7 +39,12 @@ Auth ADR, API/security docs, key-rotation/emergency runbook, and human review.
 
 ## Done Criteria
 
-- [ ] Service and delegated identities are distinct.
-- [ ] Grants are short-lived, signed, audience-bound, scoped, and one-time.
-- [ ] Failure is safe and machine-readable.
-- [ ] Focused security tests pass on authoritative Dev.
+- [x] Service and delegated identities are distinct.
+- [x] Grants are short-lived, signed, audience-bound, scoped, and one-time.
+- [x] Failure is safe and machine-readable.
+- [x] Focused security tests pass on authoritative Dev.
+
+The bootstrap and token commands fail closed when signing or network boundaries are missing. Tests
+cover early, expired, wrong audience/tenant/signature/key, revoked, replayed, re-signed broadened
+scope, token passthrough, workload policy, rate limiting, and key overlap. Human review remains
+`HR-2026-08-15-001`.

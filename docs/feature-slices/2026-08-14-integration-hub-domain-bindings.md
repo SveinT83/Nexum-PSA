@@ -1,6 +1,6 @@
 # Feature Slice: Integration Hub Domain Bindings
 
-Status: Approved
+Status: Ready for Human Review
 Date: 2026-08-14
 Parent: GitHub #218
 Owner: Svein / Codex
@@ -38,6 +38,10 @@ Provider ownership ADR, Clients/Integration/API/security/Knowledge docs, and hum
 
 ## Done Criteria
 
-- [ ] Canonical normalization is deterministic.
-- [ ] Every provider-resolvable domain has explicit ownership.
-- [ ] Unknown ownership fails closed without guessing.
+- [x] Canonical normalization is deterministic.
+- [x] Every provider-resolvable domain requires explicit ownership.
+- [x] Unknown ownership fails closed without guessing.
+
+Automated evidence covers normalized duplicate rejection, explicit transfer, inactive/orphaned/stale
+states, malformed hostnames, IDN where the runtime supports it, and cross-scope existence hiding.
+Human review remains `HR-2026-08-15-001`.

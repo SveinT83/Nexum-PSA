@@ -1,6 +1,6 @@
 # Feature Slice: Integration Hub Plesk Read-Only Adapter
 
-Status: Approved
+Status: Ready for Human Review
 Date: 2026-08-14
 Parent: GitHub #220
 Owner: Svein / Codex
@@ -46,7 +46,12 @@ non-production manual read remains required before rollout.
 
 ## Done Criteria
 
-- [ ] Mock/contract tests pass on authoritative Dev.
-- [ ] Provider credentials remain Nexum-only.
+- [x] Mock/contract tests pass on authoritative Dev.
+- [x] Provider credentials remain Nexum-only.
 - [ ] Manual non-production verification is recorded by a named human.
-- [ ] No mutation surface exists.
+- [x] No mutation surface exists.
+
+Automated tests cover success, empty/malformed/schema drift, redirects, authentication, timeout,
+rate limit, wrong subscription/site mapping, partial results, cancellation, direct emergency
+disablement, redaction, and absence of mutation methods. The remaining manual check is deliberately
+not automated because it requires a named reviewer and one approved non-production Plesk binding.

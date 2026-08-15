@@ -1,6 +1,6 @@
 # Feature Slice: Integration Hub Durable Executions
 
-Status: Approved
+Status: Ready for Human Review
 Date: 2026-08-14
 Parent: GitHub #215
 Owner: Svein / Codex
@@ -38,6 +38,10 @@ Execution ADR, API/state/retention/operations docs, and human review.
 
 ## Done Criteria
 
-- [ ] Durable state survives request boundaries.
-- [ ] Lifecycle and audit classifications are explicit.
-- [ ] Isolation, idempotency, retention, and redaction tests pass.
+- [x] Durable state survives request boundaries.
+- [x] Lifecycle and audit classifications are explicit.
+- [x] Isolation, idempotency, retention, and redaction tests pass.
+
+Approval creation now serializes on the Execution, binds the immutable plan digest, rejects a
+second pending request, and enforces expiry and separation of duties. Human review remains
+`HR-2026-08-15-001`.

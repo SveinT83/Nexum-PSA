@@ -1,6 +1,6 @@
 # Feature Slice: Integration Hub Capability Contracts
 
-Status: Approved
+Status: Ready for Human Review
 Date: 2026-08-14
 Parent: GitHub #213 and `docs/rfc/2026-08-14-nexum-integration-hub-mcp.md`
 Owner: Svein / Codex
@@ -39,7 +39,11 @@ Capability ADR, API contract, Integration/Agent/security notes, and human review
 
 ## Done Criteria
 
-- [ ] Registry and bindings migrate safely and roll back.
-- [ ] Effective catalogue is deny-by-default and versioned.
-- [ ] Shared envelope covers all seven result states.
-- [ ] Focused and regression tests pass on authoritative Dev.
+- [x] Registry and bindings migrate safely and roll back.
+- [x] Effective catalogue is deny-by-default and versioned.
+- [x] Shared envelope covers all seven result states.
+- [x] Focused and regression tests pass on authoritative Dev.
+
+Automated evidence: `IntegrationHubFoundationTest` passes 34 tests / 290 assertions and the affected
+Integration/AI regression group passes 70 tests / 667 assertions. Human review remains
+`HR-2026-08-15-001`.

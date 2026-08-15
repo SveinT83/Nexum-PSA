@@ -1,8 +1,10 @@
 # Nexum Integration Hub
 
-> Implementasjonsstatus: Fase 0 er i arbeid. Repoet inneholder foreløpig kun et
-> deny-by-default fundament og read-only kontrakter. Ingen produksjonsintegrasjon
-> eller mutasjon er aktivert.
+> Implementasjonsstatus: Nexum-backenden for første read-only leveranse er klar for
+> human review på feature-gren. Den private MCP-tjenesten kobles mot de versjonerte
+> kontraktene i et separat repo. Ingen produksjonsintegrasjon, provider-mutasjon
+> eller generell kommandokanal er aktivert. Én manuell read-only kontroll mot en
+> godkjent non-production Plesk-integrasjon gjenstår i `HR-2026-08-15-001`.
 
 ## Utvikling
 
@@ -14,9 +16,15 @@ pnpm verify
 pnpm dev:stdio
 ```
 
-`pnpm dev:http` binder kun til loopback i første Feature Slice. Ekstern HTTP,
-OAuth, Nexum execution grants og provider-tilgang er bevisst sperret til de
-tilhørende sikkerhetsleveransene er implementert og testet.
+`pnpm dev:http` binder kun til loopback i første Feature Slice. Nexum execution
+grants og den separate service-identiteten er implementert i Nexum-backenden;
+ekstern deling og produksjons/provider-tilgang forblir sperret frem til human
+review og eksplisitt rollout.
+
+Backendkontrakten er dokumentert i
+[`integration-hub-api.md`](integration-hub-api.md), med OpenAPI i
+[`integration-hub-v1.yaml`](../openapi/integration-hub-v1.yaml). Driftssteg finnes i
+`docs/deployment/integration-hub-*.md`.
 
 Se [leveranseplanen](docs/ROADMAP.md),
 [kapabilitetsmatrisen](docs/CAPABILITY_MATRIX.md) og

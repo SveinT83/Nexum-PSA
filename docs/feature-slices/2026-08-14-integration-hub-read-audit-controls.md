@@ -1,6 +1,6 @@
 # Feature Slice: Integration Hub Read Audit And Emergency Controls
 
-Status: Approved
+Status: Ready for Human Review
 Date: 2026-08-14
 Parent: GitHub #216
 Owner: Svein / Codex
@@ -38,6 +38,9 @@ Operations/security/API/Knowledge docs, emergency runbook, and human review.
 
 ## Done Criteria
 
-- [ ] Every Hub read records minimal sanitized evidence.
-- [ ] Every disablement scope fails closed centrally.
-- [ ] Operator changes are attributable and independently audited.
+- [x] Every Hub read records minimal sanitized evidence.
+- [x] Every disablement scope fails closed centrally and in the adapter.
+- [x] Operator changes are attributable and independently audited.
+
+The pruning command is scheduled daily at 04:00, and operator endpoints require an explicit narrow
+token in addition to the governance permission. Human review remains `HR-2026-08-15-001`.

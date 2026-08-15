@@ -1,6 +1,6 @@
 # Feature Slice: Integration Hub Integration Catalogue
 
-Status: Approved
+Status: Ready for Human Review
 Date: 2026-08-14
 Parent: GitHub #219
 Owner: Svein / Codex
@@ -38,6 +38,10 @@ Integration/API/OpenAPI/operations/security/Knowledge docs and human review.
 
 ## Done Criteria
 
-- [ ] Existing Integrations migrate without credential exposure.
-- [ ] Catalogue reflects effective capability and control state.
-- [ ] Health never claims success without a fresh observation.
+- [x] Existing Integrations migrate without credential exposure.
+- [x] Catalogue reflects effective capability and control state.
+- [x] Health never claims success without a fresh observation.
+
+Focused tests cover internal, installation, Client, and Site ownership; legacy BookStack health;
+credential redaction; effective capability bindings; and healthy/unknown/failure states. Human
+review remains `HR-2026-08-15-001`.

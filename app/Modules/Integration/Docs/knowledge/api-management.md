@@ -16,6 +16,27 @@ flagged for review but are never changed automatically.
 Coordinator tokens are created from AI Privacy & Coordinator Governance. They bind to an approved
 workload, contain read abilities only, expire, and are policy-checked on every request.
 
+## Integration Hub and MCP
+
+The private Nexum Integration Hub uses a stricter two-identity boundary than an ordinary API key.
+An interactive user or approved coordinator workload uses a narrow token only to request a
+short-lived, signed, one-time execution grant for one named capability and explicit scope. The MCP
+service then uses its separate bound service token plus that grant for exactly one protected read.
+The service token cannot issue grants or exercise a read capability by itself, and an inbound MCP
+token is never forwarded to Nexum.
+
+Current capabilities are read-only: effective identity, scoped Clients/Sites, explicit domain
+bindings, sanitized Integration health, durable Executions/audit, and one explicitly bound Plesk
+site inspection. Provider credentials, server URLs, raw errors/payloads, grants, and tokens are not
+returned. Missing scope or binding denies by default; a configured provider is never reported as
+healthy without fresh verified evidence.
+
+Administrators enable the Hub only after migrations, signing configuration, workload approval, and
+readiness review. Service-token creation requires an explicit IP/CIDR boundary unless the operator
+deliberately accepts any network. Emergency controls require a separate narrow operator token and
+can stop global, capability, Integration, Client, or Site scope. See the Integration Hub Knowledge
+article and deployment runbooks before issuing or rotating credentials.
+
 ## Internal Model Workloads
 
 An internal model workload is the governed execution boundary for a Nexum feature that needs strict

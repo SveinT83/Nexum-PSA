@@ -1,15 +1,15 @@
 <?php
+
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 // Use Domain Architecture rout file in the module folder, Read module-architecture.md for more info.
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 use App\Models\Core\User;
 use App\Modules\CustomerPortal\Support\CustomerPortalContextResolver;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 
 Route::get('/', function (Request $request) {
     if (Auth::check()) {
@@ -35,7 +35,7 @@ Route::get('/', function (Request $request) {
         $maxAgeSeconds = 300;
 
         if (is_numeric($ts) && (time() - (int) $ts) <= $maxAgeSeconds) {
-            $expectedSig = hash_hmac('sha256', $email . '|' . $ts, $sharedSecret);
+            $expectedSig = hash_hmac('sha256', $email.'|'.$ts, $sharedSecret);
 
             if (hash_equals($expectedSig, $sig)) {
                 $tokenValid = true;
@@ -152,6 +152,8 @@ unset(
     $clientsPortalRoutes,
     $economyPortalRoutes,
 );
+
+require app_path('Modules/Integration/api-public.php');
 
 // Dashboard (etter innlogging)
 /*

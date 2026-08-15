@@ -1,6 +1,6 @@
 # Feature Slice: Integration Hub Identity, Clients, And Sites
 
-Status: Approved
+Status: Ready for Human Review
 Date: 2026-08-14
 Parent: GitHub #217
 Owner: Svein / Codex
@@ -41,6 +41,10 @@ Clients, Integration, API/OpenAPI, User/Agent, security, Knowledge, and human re
 
 ## Done Criteria
 
-- [ ] Identity is minimal and explains effective scope.
-- [ ] Client/Site filtering occurs before pagination and model retrieval.
-- [ ] Existing Clients API behavior is unchanged.
+- [x] Identity is minimal and explains effective scope.
+- [x] Client/Site filtering occurs before pagination and model retrieval.
+- [x] Existing Clients API behavior is unchanged.
+
+Focused tests cover interactive and workload identity, empty and bounded lists, Client/Site scope,
+wrong scope, pagination, revoked/replayed grants, and response redaction. Human review remains
+`HR-2026-08-15-001`.
