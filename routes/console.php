@@ -190,6 +190,12 @@ Schedule::job(new CleanupAiAccessData)
     ->name('ai.access.cleanup')
     ->withoutOverlapping();
 
+// Integration Hub audit and durable execution retention.
+Schedule::command('integration-hub:prune')
+    ->dailyAt('04:00')
+    ->name('integration-hub.audit.prune')
+    ->withoutOverlapping();
+
 // Economy order generation catch-up. Manual Generate orders uses the same
 // action, while this keeps picked costs and closed-ticket time from piling up.
 Schedule::job(new GenerateEconomyOrdersJob)

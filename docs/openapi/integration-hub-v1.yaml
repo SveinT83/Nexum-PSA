@@ -1,0 +1,642 @@
+openapi: 3.1.0
+info:
+  title: Nexum Integration Hub API
+  version: 1.0.0
+  description: >-
+    Protocol-neutral, deny-by-default Integration Hub contracts. The initial release is read-only;
+    MCP is not the authorization or provider-credential boundary.
+servers:
+  - url: https://nexum.example.invalid
+    description: Replace with the exact Nexum installation origin.
+tags:
+  - name: Metadata
+  - name: Grants
+  - name: Capabilities
+  - name: Identity
+  - name: Clients
+  - name: Sites
+  - name: Domains
+  - name: Integrations
+  - name: Executions
+  - name: Audit
+  - name: Hosting
+  - name: Controls
+paths:
+  /.well-known/oauth-protected-resource/api/v1/integration-hub:
+    get:
+      tags: [Metadata]
+      operationId: integrationHubProtectedResource
+      security: []
+      responses:
+        '200':
+          description: Public audience and authorization-server metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProtectedResourceMetadata'
+  /api/v1/integration-hub/grants:
+    post:
+      tags: [Grants]
+      operationId: issueIntegrationHubGrant
+      security:
+        - issuerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantRequest'
+      responses:
+        '201':
+          description: A one-time short-lived execution grant. Never cache or log `data.grant`.
+          headers:
+            Cache-Control:
+              schema: {type: string, const: no-store}
+            Pragma:
+              schema: {type: string, const: no-cache}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/HubEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/IssuedGrant'
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Invalid'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/capabilities:
+    get:
+      tags: [Capabilities]
+      operationId: listEffectiveCapabilities
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200': {$ref: '#/components/responses/HubPage'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Invalid'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/capabilities/{key}/{version}:
+    get:
+      tags: [Capabilities]
+      operationId: getEffectiveCapability
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - name: key
+          in: path
+          required: true
+          schema: {type: string, maxLength: 160}
+        - name: version
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/CapabilityVersion'}
+      responses:
+        '200': {$ref: '#/components/responses/HubResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '404': {$ref: '#/components/responses/HiddenOrMissing'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/integration-hub/identity:
+    get:
+      tags: [Identity]
+      operationId: getEffectiveIdentity
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+      responses:
+        '200': {$ref: '#/components/responses/HubResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/clients:
+    get:
+      tags: [Clients]
+      operationId: listScopedClients
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: q
+          in: query
+          schema: {type: string, maxLength: 100}
+        - name: active
+          in: query
+          schema: {type: boolean}
+        - name: sort
+          in: query
+          schema: {type: string, enum: [name, -name, id, -id], default: name}
+      responses:
+        '200': {$ref: '#/components/responses/HubPage'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Invalid'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/clients/{client}:
+    get:
+      tags: [Clients]
+      operationId: getScopedClient
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - name: client
+          in: path
+          required: true
+          schema: {type: integer, minimum: 1}
+      responses:
+        '200': {$ref: '#/components/responses/HubResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '404': {$ref: '#/components/responses/HiddenOrMissing'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/integration-hub/sites:
+    get:
+      tags: [Sites]
+      operationId: listScopedSites
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: q
+          in: query
+          schema: {type: string, maxLength: 100}
+        - name: client_id
+          in: query
+          schema: {type: integer, minimum: 1}
+        - name: sort
+          in: query
+          schema: {type: string, enum: [name, -name, id, -id], default: name}
+      responses:
+        '200': {$ref: '#/components/responses/HubPage'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Invalid'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/sites/{site}:
+    get:
+      tags: [Sites]
+      operationId: getScopedSite
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/SiteId'
+      responses:
+        '200': {$ref: '#/components/responses/HubResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '404': {$ref: '#/components/responses/HiddenOrMissing'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/integration-hub/domains:
+    get:
+      tags: [Domains]
+      operationId: listScopedDomainBindings
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - {name: hostname, in: query, schema: {type: string, maxLength: 1024}}
+        - {name: client_id, in: query, schema: {type: integer, minimum: 1}}
+        - {name: site_id, in: query, schema: {type: integer, minimum: 1}}
+        - {name: integration_id, in: query, schema: {$ref: '#/components/schemas/Uuid'}}
+        - {name: environment, in: query, schema: {$ref: '#/components/schemas/Environment'}}
+        - name: lifecycle
+          in: query
+          schema: {type: string, enum: [active, inactive, transferring, orphaned, conflict]}
+        - name: sort
+          in: query
+          schema: {type: string, enum: [hostname, -hostname, id, -id], default: hostname}
+      responses:
+        '200': {$ref: '#/components/responses/HubPage'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Invalid'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/domains/{domain}:
+    get:
+      tags: [Domains]
+      operationId: getScopedDomainBinding
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - name: domain
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Uuid'}
+      responses:
+        '200': {$ref: '#/components/responses/HubResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '404': {$ref: '#/components/responses/HiddenOrMissing'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/integration-hub/integrations:
+    get:
+      tags: [Integrations]
+      operationId: listScopedIntegrations
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - {name: type, in: query, schema: {type: string, maxLength: 80}}
+        - {name: environment, in: query, schema: {$ref: '#/components/schemas/Environment'}}
+        - name: owner_scope
+          in: query
+          schema: {type: string, enum: [internal, installation, client, site]}
+        - name: status
+          in: query
+          schema: {type: string, enum: [active, disabled]}
+        - name: sort
+          in: query
+          schema: {type: string, enum: [name, -name, type, -type, id, -id], default: name}
+      responses:
+        '200': {$ref: '#/components/responses/HubPage'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Invalid'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/integrations/{integration}:
+    get:
+      tags: [Integrations]
+      operationId: getScopedIntegration
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/IntegrationId'
+      responses:
+        '200': {$ref: '#/components/responses/HubResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '404': {$ref: '#/components/responses/HiddenOrMissing'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/integration-hub/integrations/{integration}/health:
+    get:
+      tags: [Integrations]
+      operationId: getScopedIntegrationHealth
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/IntegrationId'
+      responses:
+        '200': {$ref: '#/components/responses/HubResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '404': {$ref: '#/components/responses/HiddenOrMissing'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/integration-hub/executions:
+    get:
+      tags: [Executions]
+      operationId: listScopedExecutions
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, running, input_required, partial, failed, unknown, completed, cancelled]
+        - {name: capability_key, in: query, schema: {type: string, maxLength: 160}}
+        - {name: correlation_id, in: query, schema: {$ref: '#/components/schemas/Uuid'}}
+      responses:
+        '200': {$ref: '#/components/responses/HubPage'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Invalid'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/executions/{execution}:
+    get:
+      tags: [Executions]
+      operationId: getScopedExecution
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - name: execution
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/Uuid'}
+      responses:
+        '200': {$ref: '#/components/responses/HubResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '404': {$ref: '#/components/responses/HiddenOrMissing'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/integration-hub/audit-events:
+    get:
+      tags: [Audit]
+      operationId: listScopedAuditEvents
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - {name: decision, in: query, schema: {type: string, enum: [allowed, denied]}}
+        - {name: result_status, in: query, schema: {$ref: '#/components/schemas/ResultStatus'}}
+        - {name: capability_key, in: query, schema: {type: string, maxLength: 160}}
+        - {name: correlation_id, in: query, schema: {$ref: '#/components/schemas/Uuid'}}
+      responses:
+        '200': {$ref: '#/components/responses/HubPage'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/Invalid'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/hosting/sites/{site}/inspect:
+    get:
+      tags: [Hosting]
+      operationId: inspectBoundPleskSite
+      parameters:
+        - $ref: '#/components/parameters/AcceptCapabilityVersion'
+        - $ref: '#/components/parameters/SiteId'
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema: {type: string, minLength: 1, maxLength: 191}
+      responses:
+        '200':
+          description: Verified, partial, unknown, failed, or unavailable read-only observation.
+          headers:
+            Content-Capability-Version:
+              schema: {$ref: '#/components/schemas/CapabilityVersion'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HubEnvelope'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '404': {$ref: '#/components/responses/HiddenOrMissing'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '429': {$ref: '#/components/responses/RateLimited'}
+  /api/v1/integration-hub/readiness:
+    get:
+      tags: [Controls]
+      operationId: getIntegrationHubReadiness
+      security:
+        - operatorBearer: []
+      responses:
+        '200': {$ref: '#/components/responses/OperatorResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '503': {$ref: '#/components/responses/OperatorResult'}
+  /api/v1/integration-hub/controls:
+    get:
+      tags: [Controls]
+      operationId: listIntegrationHubControls
+      security:
+        - operatorBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200': {$ref: '#/components/responses/OperatorResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+    post:
+      tags: [Controls]
+      operationId: setIntegrationHubControl
+      security:
+        - operatorBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ControlChange'
+      responses:
+        '200': {$ref: '#/components/responses/OperatorResult'}
+        '403': {$ref: '#/components/responses/Denied'}
+        '422': {$ref: '#/components/responses/Invalid'}
+components:
+  securitySchemes:
+    issuerBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Narrow Nexum Sanctum issuer token
+    serviceBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Bound Integration Hub service token
+    executionGrant:
+      type: apiKey
+      in: header
+      name: X-Nexum-Execution-Grant
+    operatorBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Narrow operator Sanctum token
+  parameters:
+    AcceptCapabilityVersion:
+      name: Accept-Capability-Version
+      in: header
+      required: false
+      description: Compatible capability contract version. Defaults to the route contract.
+      schema: {$ref: '#/components/schemas/CapabilityVersion'}
+    Page:
+      name: page
+      in: query
+      schema: {type: integer, minimum: 1, default: 1}
+    PerPage:
+      name: per_page
+      in: query
+      schema: {type: integer, minimum: 1, maximum: 50, default: 25}
+    SiteId:
+      name: site
+      in: path
+      required: true
+      schema: {type: integer, minimum: 1}
+    IntegrationId:
+      name: integration
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Uuid'}
+  responses:
+    HubResult:
+      description: Common Integration Hub result envelope.
+      headers:
+        Content-Capability-Version:
+          schema: {$ref: '#/components/schemas/CapabilityVersion'}
+        Vary:
+          schema: {type: string}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/HubEnvelope'}
+    HubPage:
+      description: Scoped result page. Scope filtering occurs before pagination.
+      headers:
+        Content-Capability-Version:
+          schema: {$ref: '#/components/schemas/CapabilityVersion'}
+        Vary:
+          schema: {type: string}
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/HubEnvelope'
+              - type: object
+                properties:
+                  data: {type: array, items: {type: object, additionalProperties: true}}
+                  meta: {$ref: '#/components/schemas/PaginationMeta'}
+    Denied:
+      description: Authentication, authorization, grant, binding, workload, or emergency denial.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/HubEnvelope'}
+    HiddenOrMissing:
+      description: Missing and out-of-scope records intentionally share this response.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/HubEnvelope'}
+    Conflict:
+      description: Unsupported contract, replay/conflict, or in-progress idempotent Execution.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/HubEnvelope'}
+    Invalid:
+      description: Bounded validation failure; raw submitted values are not reflected.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/HubEnvelope'}
+    RateLimited:
+      description: Route, workload, or provider rate boundary.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/HubEnvelope'}
+    OperatorResult:
+      description: Narrow operator control/readiness response.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties:
+              data: {}
+              meta: {type: object, additionalProperties: true}
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+    CapabilityVersion:
+      type: string
+      pattern: '^\d+(?:\.\d+)?$'
+      examples: ['1.0']
+    Environment:
+      type: string
+      enum: [production, staging, development, test, unknown]
+    ResultStatus:
+      type: string
+      enum: [ok, denied, unavailable, failed, unknown, stale, partial]
+    Scope:
+      type: object
+      required: [installation, client_ids, site_ids, integration_ids, environment]
+      properties:
+        installation: {type: string}
+        client_ids: {type: array, maxItems: 100, items: {type: integer, minimum: 1}}
+        site_ids: {type: array, maxItems: 100, items: {type: integer, minimum: 1}}
+        integration_ids: {type: array, maxItems: 50, items: {$ref: '#/components/schemas/Uuid'}}
+        environment: {$ref: '#/components/schemas/Environment'}
+      additionalProperties: false
+    GrantRequest:
+      type: object
+      required: [capability_key]
+      properties:
+        capability_key: {type: string, maxLength: 160}
+        capability_version: {$ref: '#/components/schemas/CapabilityVersion'}
+        correlation_id: {$ref: '#/components/schemas/Uuid'}
+        ttl_seconds: {type: integer, minimum: 30, maximum: 300, default: 300}
+        scope: {$ref: '#/components/schemas/Scope'}
+      additionalProperties: false
+    IssuedGrant:
+      type: object
+      required: [grant, token_type, expires_at, correlation_id, capability, scope]
+      properties:
+        grant: {type: string, writeOnly: true, maxLength: 8192}
+        token_type: {type: string, const: Nexum-Execution-Grant}
+        expires_at: {type: string, format: date-time}
+        correlation_id: {$ref: '#/components/schemas/Uuid'}
+        capability: {$ref: '#/components/schemas/CapabilityRef'}
+        scope: {$ref: '#/components/schemas/Scope'}
+      additionalProperties: false
+    CapabilityRef:
+      type: object
+      required: [key, version]
+      properties:
+        key: {type: string, maxLength: 160}
+        version: {$ref: '#/components/schemas/CapabilityVersion'}
+      additionalProperties: false
+    ContractRef:
+      type: object
+      required: [name, version]
+      properties:
+        name: {type: string, const: nexum.integration-hub.result}
+        version: {type: string, const: '1.0'}
+      additionalProperties: false
+    Reason:
+      oneOf:
+        - type: 'null'
+        - type: object
+          required: [code, message, retryable]
+          properties:
+            code: {type: string, maxLength: 120}
+            message: {type: [string, 'null'], maxLength: 500}
+            retryable: {type: boolean}
+          additionalProperties: false
+    Freshness:
+      type: object
+      required: [observed_at, stale_after_seconds, is_stale]
+      properties:
+        observed_at: {type: [string, 'null'], format: date-time}
+        stale_after_seconds: {type: [integer, 'null'], minimum: 0}
+        is_stale: {type: boolean}
+      additionalProperties: false
+    HubEnvelope:
+      type: object
+      required: [contract, status, correlation_id, capability, source, freshness, scope, data, reason, meta]
+      properties:
+        contract: {$ref: '#/components/schemas/ContractRef'}
+        status: {$ref: '#/components/schemas/ResultStatus'}
+        correlation_id: {$ref: '#/components/schemas/Uuid'}
+        capability:
+          type: object
+          properties:
+            key: {type: [string, 'null']}
+            version: {type: [string, 'null']}
+          additionalProperties: false
+        source:
+          type: object
+          required: [type, name]
+          properties:
+            type: {type: string}
+            name: {type: string}
+          additionalProperties: false
+        freshness: {$ref: '#/components/schemas/Freshness'}
+        scope: {type: object, additionalProperties: true}
+        data: {}
+        reason: {$ref: '#/components/schemas/Reason'}
+        meta: {type: [object, 'null'], additionalProperties: true}
+      additionalProperties: false
+    PaginationMeta:
+      type: object
+      required: [pagination]
+      properties:
+        pagination:
+          type: object
+          required: [current_page, per_page, total, last_page]
+          properties:
+            current_page: {type: integer, minimum: 1}
+            per_page: {type: integer, minimum: 1, maximum: 50}
+            total: {type: integer, minimum: 0}
+            last_page: {type: integer, minimum: 1}
+          additionalProperties: false
+      additionalProperties: false
+    ProtectedResourceMetadata:
+      type: object
+      required: [resource, authorization_servers]
+      properties:
+        resource: {type: string, format: uri}
+        authorization_servers: {type: array, minItems: 1, maxItems: 5, items: {type: string, format: uri}}
+        bearer_methods_supported: {type: array, items: {type: string}}
+        resource_documentation: {type: string, format: uri}
+      additionalProperties: true
+    ControlChange:
+      type: object
+      required: [scope_type, disabled, reason_code]
+      properties:
+        scope_type: {type: string, enum: [global, capability, integration, client, site]}
+        scope_id: {type: [string, 'null'], maxLength: 191}
+        capability_key: {type: [string, 'null'], maxLength: 160}
+        capability_version:
+          oneOf:
+            - $ref: '#/components/schemas/CapabilityVersion'
+            - type: 'null'
+        disabled: {type: boolean}
+        reason_code: {type: string, pattern: '^[a-z0-9_:-]+$', maxLength: 120}
+        reason_summary: {type: [string, 'null'], maxLength: 500}
+        correlation_id:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+      additionalProperties: false
+security:
+  - serviceBearer: []
+    executionGrant: []

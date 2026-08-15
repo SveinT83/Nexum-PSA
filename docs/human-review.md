@@ -27,6 +27,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-15-001 | Integration Hub read-only backend and Plesk adapter | Pending | 2026-08-15 |  |  |
 | HR-2026-08-11-004 | Sales Quotes / CPQ completion | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-003 | One responsive Nexum PWA final browser acceptance | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Pending | 2026-08-11 |  |  |
@@ -151,6 +152,92 @@ Reviewed date: 2026-07-28
 Result / notes: Approved by Svein Tore in the Codex task after reviewing the completed work.
 
 ## Open Reviews
+
+### HR-2026-08-15-001 - Integration Hub Read-Only Backend And Plesk Adapter
+
+Status: Pending
+Added: 2026-08-15
+Environment: Authoritative Dev, then one approved non-production Plesk Integration
+Related: GitHub #212-#220, `docs/rfc/2026-08-14-nexum-integration-hub-mcp.md`, the four
+Integration Hub ADRs, and the eight `2026-08-14-integration-hub-*` Feature Slices
+
+Scope: The candidate adds versioned capability/result contracts; a separate MCP service actor and
+one-time delegated execution grants; durable Executions, Steps, Approval and audit state; scoped
+identity, Client, Site, domain, Integration, health, Execution, and audit APIs; emergency controls;
+and one typed Plesk read-only adapter. The adapter resolves one explicit Nexum Client/Site/domain/
+Integration binding and has no generic request or provider-mutation method. The private MCP service
+is delivered separately and must remain loopback/private until this review is complete.
+
+Deployment actions: take the normal backup; deploy code; set the exact installation, issuer,
+audience, authorization-server, and grant-key secret settings; run `php artisan migrate --force`;
+run `php artisan integration-hub:bootstrap` without enablement; clear caches; classify/backfill only
+reviewed Integration/domain ownership; create an approved coordinator workload; then explicitly run
+`php artisan integration-hub:bootstrap --enable`. Issue the service token only into the approved
+secret store with an explicit IP/CIDR and expiry. Sync Integration Knowledge. No queue worker or
+frontend build is added. The scheduler must retain the daily 04:00 prune event.
+
+Risks: a service/issuer identity mix-up, scope broadening, wrong installation or owner mapping,
+secret-bearing response/audit data, false healthy status, replay, unsafe idempotency recovery,
+emergency-stop bypass, or a Plesk lookup against the wrong subscription/site. A configured provider
+is not healthy without fresh evidence. Cancellation does not compensate an external effect. Domain
+ownership must never be inferred from DNS, provider search, ticket text, or hostname similarity.
+
+Automated verification: `IntegrationHubFoundationTest` passes 34 tests / 290 assertions. The
+affected Integration, AI coordinator governance, internal workload admin, and structured workload
+regression group passes 70 tests / 667 assertions. The 21-route inventory shows grant middleware on
+all protected service reads and narrow operator middleware on readiness/controls. Tests cover
+version negotiation; common validation failures; minimal identity; service/workload/network/data
+policy; early/expired/wrong audience/signature/key/tenant, revoked, replayed and re-signed broadened
+grants; all Integration owner scopes; Client/Site isolation before pagination; duplicate,
+inactive/orphaned/stale and IDN domain behavior; Plesk success, empty, malformed, redirect, auth,
+timeout, rate, schema/mapping mismatch, partial, cancellation, redaction and emergency stop;
+idempotency; approval digest/expiry/separation; audit isolation; and pruning. No live provider or
+production request was made during automated verification.
+
+Human checks:
+
+- [ ] Review the migration/backfill/rollback plan and verify a restorable Dev backup exists before
+  migration or ownership classification.
+- [ ] With the Hub disabled, run bootstrap and confirm it creates descriptors/bindings/system actor
+  but no token or provider credential. Configure signing, explicitly enable, and confirm readiness
+  reports equal defined/enabled counts without exposing key material.
+- [ ] Create an approved, expiring coordinator workload with only the intended read abilities and
+  Client scope. Issue a service token to the MCP egress IP/CIDR, verify the printed record ID is
+  non-secret, and store the plaintext only in the encrypted service secret store.
+- [ ] Request and use one identity grant. Confirm minimal identity/scope, contract and correlation,
+  no user profile/token/grant leakage, one-use replay denial, and both audit events.
+- [ ] As an authorized and a restricted actor, verify Client/Site pagination, filters, empty state,
+  wrong Client/Site, and missing IDs. Confirm missing and out-of-scope records are indistinguishable.
+- [ ] Review one explicit domain binding and its case/trailing-dot/IDN representation. Confirm
+  inactive, orphaned, stale, conflicting, and transferred states are visible without guessed
+  ownership or leaked provider secrets.
+- [ ] Review internal, installation, Client, and Site Integration rows. Confirm owner visibility,
+  credential-configured boolean, capability/control reflection, and healthy/unknown/stale/disabled/
+  failed presentation without endpoint, credential, raw error, or stack-trace leakage.
+- [ ] Review one durable hosting Execution and its audit by correlation. Confirm sanitized scope,
+  outcome, verification and idempotent replay, and confirm a running duplicate does not make a
+  second provider call.
+- [ ] With a narrow operator token, disable one exact Integration and confirm central and direct
+  adapter denial without a provider call. Re-enable with a different reason and confirm distinct,
+  attributable audit events. Repeat readiness verification for a global stop without reusing an old
+  grant.
+- [ ] Select one approved non-production Plesk Integration. Verify the explicit Client/Site/domain/
+  subscription mapping, run exactly one read-only inspection, and confirm account/subscription/site,
+  bound aliases, hostname-verified certificate status/freshness, and no raw XML, endpoint, API key,
+  document root, private key, or unrelated object.
+- [ ] Confirm the Plesk request count is one for the first idempotency key, unchanged for its replay,
+  and unchanged while the Integration emergency control is active.
+- [ ] Rotate to a second service token, verify it, revoke the old token by record ID, and confirm the
+  old value is denied. Review the documented execution-grant key overlap procedure without recording
+  key values.
+- [ ] Confirm `integration-hub:prune` is scheduled at 04:00 and that a retention preview affects only
+  expired Hub metadata, never provider state.
+- [ ] Review the separate MCP service tools/resources against the API capability table and confirm it
+  has no credential-forwarding, generic command/request, or production/provider enablement path.
+
+Reviewer:
+Reviewed date:
+Result / notes:
 
 ### HR-2026-08-11-004 - Sales Quotes / CPQ Completion
 

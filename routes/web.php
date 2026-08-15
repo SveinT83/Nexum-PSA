@@ -153,6 +153,8 @@ unset(
     $economyPortalRoutes,
 );
 
+require app_path('Modules/Integration/api-public.php');
+
 // Dashboard (etter innlogging)
 /*
 Route::middleware('auth')->get('/dashboard', function () {
