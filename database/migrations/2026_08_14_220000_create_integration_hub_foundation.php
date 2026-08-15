@@ -95,9 +95,9 @@ return new class extends Migration
             $table->uuid('correlation_id')->index();
             $table->string('policy_digest', 64);
             $table->string('claims_digest', 64);
-            $table->timestamp('issued_at');
-            $table->timestamp('not_before');
-            $table->timestamp('expires_at')->index();
+            $table->dateTime('issued_at');
+            $table->dateTime('not_before');
+            $table->dateTime('expires_at')->index();
             $table->timestamp('used_at')->nullable();
             $table->timestamp('revoked_at')->nullable();
             $table->string('revocation_reason', 120)->nullable();
@@ -161,7 +161,7 @@ return new class extends Migration
             $table->json('scope');
             $table->string('risk_level', 20);
             $table->string('status', 30)->default('pending');
-            $table->timestamp('expires_at')->index();
+            $table->dateTime('expires_at')->index();
             $table->timestamp('decided_at')->nullable();
             $table->timestamps();
         });
