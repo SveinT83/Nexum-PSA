@@ -45,6 +45,11 @@
             <li>
                 <a class="dropdown-item {{ request()->routeIs('tech.clients.sites.*') ? 'active' : '' }}" href="{{ route('tech.clients.sites.index') }}">Sites</a>
             </li>
+            @if(Route::has('tech.assets.index'))
+                <li>
+                    <a class="dropdown-item {{ request()->routeIs('tech.assets*') ? 'active' : '' }}" href="{{ route('tech.assets.index') }}">Assets</a>
+                </li>
+            @endif
             @if(Route::has('tech.contacts.index'))
                 <li>
                     <a class="dropdown-item {{ request()->routeIs('tech.contacts*') ? 'active' : '' }}" href="{{ route('tech.contacts.index') }}">Contacts</a>
@@ -57,7 +62,7 @@
     <!-- Work dropdown menu -->
     <!-- -------------------------------------------------------------------------------------------------- -->
     @php
-        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.telephony*') || request()->routeIs('tech.assets*') || request()->routeIs('tech.calendar*');
+        $workGroupActive = request()->routeIs('tech.risk*') || request()->routeIs('tech.mail*') || request()->routeIs('tech.inbox*') || request()->routeIs('tech.tasks*') || request()->routeIs('tech.tickets*') || request()->routeIs('tech.telephony*') || request()->routeIs('tech.assets*') || request()->routeIs('tech.calendar*');
     @endphp
 
     <li class="nav-item dropdown">
@@ -72,10 +77,10 @@
             </li>
 
             <!-- ------------------------------------------------- -->
-            <!-- Inbox -->
+            <!-- Mail -->
             <!-- ------------------------------------------------- -->
             <li class="nav-item">
-                <a class="dropdown-item {{ request()->routeIs('tech.inbox.index') ? 'active' : '' }}" href="{{ route('tech.inbox.index') }}">Inbox</a>
+                <a class="dropdown-item {{ request()->routeIs('tech.mail*') ? 'active' : '' }}" href="{{ route('tech.mail.index') }}">Mail</a>
             </li>
 
             <!-- ------------------------------------------------- -->

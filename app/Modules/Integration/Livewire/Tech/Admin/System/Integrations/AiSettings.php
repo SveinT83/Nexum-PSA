@@ -5,6 +5,7 @@ namespace App\Modules\Integration\Livewire\Tech\Admin\System\Integrations;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiProvider;
 use App\Modules\Integration\Models\AiSystemSetting;
+use App\Modules\Integration\Services\ActivateStandardAiRuntime;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiProviderModelCatalog;
 use App\Modules\Integration\Services\AiToolCatalog;
@@ -12,6 +13,7 @@ use App\Modules\Integration\Support\ApiAbilityCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
@@ -39,6 +41,8 @@ class AiSettings extends Component
 
     public array $retentionForm = [];
 
+    public array $standardActivationForm = [];
+
     public array $modelOptions = [];
 
     public function mount(): void
@@ -46,6 +50,7 @@ class AiSettings extends Component
         $this->resetProviderForm();
         $this->resetAgentForm();
         $this->loadRetentionForm();
+        $this->resetStandardActivationForm();
     }
 
     public function updatedProviderFormProviderKey(): void
@@ -130,6 +135,11 @@ class AiSettings extends Component
         $provider->setSecret('api_key', $data['api_key'] ?? null);
         $provider->save();
 
+        if (blank($this->standardActivationForm['ai_provider_id'] ?? null)) {
+            $this->standardActivationForm['ai_provider_id'] = $provider->id;
+            $this->standardActivationForm['model'] = $provider->default_model ?? '';
+        }
+
         session()->flash('success', 'AI provider saved.');
         $this->resetProviderForm();
     }
@@ -137,6 +147,10 @@ class AiSettings extends Component
     public function deleteProvider(string $providerId): void
     {
         AiProvider::findOrFail($providerId)->delete();
+        if (($this->standardActivationForm['ai_provider_id'] ?? null) === $providerId) {
+            $this->resetStandardActivationForm();
+        }
+
         session()->flash('success', 'AI provider deleted.');
         $this->resetProviderForm();
         $this->resetDeleteConfirmation();
@@ -308,6 +322,55 @@ class AiSettings extends Component
         $this->pendingDeleteName = null;
     }
 
+    public function resetStandardActivationForm(): void
+    {
+        $provider = $this->defaultStandardActivationProvider();
+
+        $this->standardActivationForm = [
+            'ai_provider_id' => $provider?->id ?? '',
+            'model' => $provider?->default_model ?? '',
+            'confirm_standard_ai_terms' => false,
+        ];
+    }
+
+    public function updatedStandardActivationFormAiProviderId(?string $providerId): void
+    {
+        $provider = $providerId ? AiProvider::query()->where('status', 'active')->find($providerId) : null;
+
+        $this->standardActivationForm['model'] = $provider?->default_model ?? '';
+        $this->standardActivationForm['confirm_standard_ai_terms'] = false;
+    }
+
+    public function activateStandardAi(ActivateStandardAiRuntime $activator): void
+    {
+        $data = $this->validate($this->standardActivationRules())['standardActivationForm'];
+        $provider = AiProvider::query()
+            ->where('status', 'active')
+            ->findOrFail($data['ai_provider_id']);
+        $reviewer = auth()->user();
+
+        if (! $reviewer) {
+            $this->addError('standardActivationForm.ai_provider_id', 'Sign in before activating AI.');
+
+            return;
+        }
+
+        try {
+            $result = $activator->activate($provider, (string) $data['model'], $reviewer);
+        } catch (InvalidArgumentException $exception) {
+            $this->addError('standardActivationForm.model', $exception->getMessage());
+
+            return;
+        }
+
+        $this->standardActivationForm['confirm_standard_ai_terms'] = false;
+
+        session()->flash(
+            'success',
+            'AI activated for '.$provider->name.' / '.$result['model_policy']->model.'.',
+        );
+    }
+
     public function providerRequiresBaseUrl(): bool
     {
         return in_array($this->providerForm['provider_key'] ?? '', ['azure_openai', 'ollama', 'custom_openai_compatible'], true);
@@ -326,7 +389,26 @@ class AiSettings extends Component
             'apiScopeOptions' => $this->apiScopeOptions(),
             'domainOptions' => app(AiAgentResolver::class)->domainOptions(),
             'aiSystemSettings' => AiSystemSetting::current(),
+            'standardActivationProviders' => $this->standardActivationProviders(),
+            'standardActivationStatus' => app(ActivateStandardAiRuntime::class)->status(
+                $this->selectedStandardActivationProvider(),
+                $this->standardActivationForm['model'] ?? null,
+            ),
+            'standardActivationReasonLabels' => $this->standardActivationReasonLabels(),
         ]);
+    }
+
+    private function standardActivationRules(): array
+    {
+        return [
+            'standardActivationForm.ai_provider_id' => [
+                'required',
+                'uuid',
+                Rule::exists('ai_providers', 'id')->where('status', 'active'),
+            ],
+            'standardActivationForm.model' => ['required', 'string', 'max:255'],
+            'standardActivationForm.confirm_standard_ai_terms' => ['accepted'],
+        ];
     }
 
     private function retentionRules(): array
@@ -458,6 +540,48 @@ class AiSettings extends Component
         return collect(app(ApiAbilityCatalog::class)->all())
             ->mapWithKeys(fn (array $ability, string $key) => [$key => $ability['label']])
             ->all();
+    }
+
+    private function standardActivationProviders(): \Illuminate\Support\Collection
+    {
+        return AiProvider::query()
+            ->where('status', 'active')
+            ->orderByRaw("case when provider_key = 'openai' then 0 else 1 end")
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function defaultStandardActivationProvider(): ?AiProvider
+    {
+        return $this->standardActivationProviders()->first();
+    }
+
+    private function selectedStandardActivationProvider(): ?AiProvider
+    {
+        $providerId = $this->standardActivationForm['ai_provider_id'] ?? null;
+
+        if (! $providerId) {
+            return $this->defaultStandardActivationProvider();
+        }
+
+        return AiProvider::query()->where('status', 'active')->find($providerId);
+    }
+
+    private function standardActivationReasonLabels(): array
+    {
+        return [
+            'provider_missing' => 'Add an active AI provider first.',
+            'provider_inactive' => 'The selected provider is disabled.',
+            'model_missing' => 'Select the model this provider should use.',
+            'ai_disabled' => 'AI is not active yet.',
+            'processing_mode_not_allowed' => 'The installation policy does not allow this processing mode yet.',
+            'data_profile_exceeds_installation_maximum' => 'The installation policy does not allow full-context AI yet.',
+            'external_processing_not_active' => 'External direct processing is not active yet.',
+            'provider_governance_missing_or_incomplete' => 'Provider approval is missing or incomplete.',
+            'provider_policy_too_narrow' => 'The provider approval is narrower than standard Nexum AI needs.',
+            'model_governance_missing' => 'Model approval is missing or expired.',
+            'model_policy_too_narrow' => 'The model approval is narrower than standard Nexum AI needs.',
+        ];
     }
 
     private function normalizeApiScopes(array $scopes, bool $canExecuteActions): array

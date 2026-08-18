@@ -3,6 +3,7 @@
 namespace App\Modules\Email\Services;
 
 use App\Modules\Email\Models\EmailAccount;
+use Illuminate\Support\Facades\Schema;
 
 class DefaultEmailAccountResolver
 {
@@ -17,13 +18,19 @@ class DefaultEmailAccountResolver
     */
     public function forScope(string $scope): ?EmailAccount
     {
-        return EmailAccount::query()
-            ->where('is_active', true)
-            ->get()
+        $query = EmailAccount::query()
+            ->where('is_active', true);
+
+        if (Schema::hasColumn('email_accounts', 'account_kind')) {
+            $query->where('account_kind', '!=', EmailAccount::KIND_PERSONAL);
+        }
+
+        $runtime = app(EmailAccountProviderRuntimeResolver::class);
+        $accounts = (clone $query)->get()
+            ->filter(fn (EmailAccount $account): bool => $runtime->databaseReady($account));
+
+        return $accounts
             ->first(fn (EmailAccount $account) => in_array($scope, (array) $account->defaults_for, true))
-            ?: EmailAccount::query()
-                ->where('is_active', true)
-                ->where('is_global_default', true)
-                ->first();
+            ?: $accounts->first(fn (EmailAccount $account): bool => (bool) $account->is_global_default);
     }
 }

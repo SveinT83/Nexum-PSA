@@ -137,6 +137,15 @@
                 color: var(--bs-dark) !important;
             }
 
+            /* Keep shared light utility surfaces readable in the dark shell. */
+            [data-bs-theme="dark"] .sidebar .bg-light {
+                color: var(--bs-body-color);
+            }
+
+            [data-bs-theme="dark"] .sidebar .bg-light .text-muted {
+                color: var(--bs-secondary-color) !important;
+            }
+
             .tech-shell-mobile-toggle {
                 width: 2.5rem;
                 height: 2.5rem;
@@ -285,11 +294,19 @@
 
                     <!-- Right sidebar (right) -->
                     <div class="col-12 col-md-2 pt-3 sidebar tech-shell-side-panel order-3">
-                        @yield('rightbar')
+                        @hasSection('rightbar_after_context_ai')
+                            @auth
+                                <livewire:tech.ai.context-chat :page-title="trim($__env->yieldContent('title'))" />
+                            @endauth
 
-                        @auth
-                            <livewire:tech.ai.context-chat :page-title="trim($__env->yieldContent('title'))" />
-                        @endauth
+                            @yield('rightbar')
+                        @else
+                            @yield('rightbar')
+
+                            @auth
+                                <livewire:tech.ai.context-chat :page-title="trim($__env->yieldContent('title'))" />
+                            @endauth
+                        @endif
                     </div>
                 </div>
 

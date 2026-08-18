@@ -7,6 +7,8 @@ use App\Modules\Notification\Exceptions\TemporaryWebPushDeliveryException;
 use App\Modules\Notification\Jobs\SendWebPushDeviceTest;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Models\WebPushSubscription;
+use App\Modules\Notification\Notifications\InboundEmailRoutedNotification;
+use App\Modules\Notification\Services\InboundEmailWebPushDelivery;
 use App\Modules\Notification\Support\AuditedWebPushReportHandler;
 use App\Modules\Notification\Support\WebPushReadiness;
 use App\Modules\UserManagement\Actions\UpdateUserStatus;
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Minishlink\WebPush\MessageSentReport;
+use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
@@ -527,6 +530,112 @@ class WebPushChannelFoundationTest extends TestCase
             ],
         );
         $this->assertModelExists($subscription);
+    }
+
+    #[Test]
+    public function inbound_web_push_requires_an_explicit_aggregate_provider_outcome(): void
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $notification = new InboundEmailRoutedNotification(
+            ['type' => 'inbound_email_received'],
+            '00000000-0000-0000-0000-000000000001',
+            [
+                'scope' => null,
+                'account_id' => null,
+                'provider_binding_version' => null,
+                'failure_code' => null,
+            ],
+        );
+        $vendorChannel = $this->createMock(WebPushChannel::class);
+        $vendorChannel->expects($this->never())->method('send');
+        $delivery = new InboundEmailWebPushDelivery(
+            $vendorChannel,
+            app(AuditedWebPushReportHandler::class),
+        );
+
+        $this->assertSame('suppressed', $delivery->send($user, $notification)['status']);
+
+        $successful = $this->makeSubscription(
+            $user,
+            'https://push.example.test/subscriptions/successful',
+        );
+        $permanent = $this->makeSubscription(
+            $user,
+            'https://push.example.test/subscriptions/permanent',
+        );
+        $temporary = $this->makeSubscription(
+            $user,
+            'https://push.example.test/subscriptions/temporary',
+        );
+        $expired = $this->makeSubscription(
+            $user,
+            'https://push.example.test/subscriptions/expired',
+        );
+        Event::fake();
+        $handler = app(AuditedWebPushReportHandler::class);
+        $handler->beginInboundAggregate(2);
+        $handler->handleReport(
+            new MessageSentReport(
+                new Request('POST', $successful->endpoint),
+                new Response(201),
+                true,
+            ),
+            $successful,
+            new WebPushMessage,
+        );
+        $handler->handleReport(
+            new MessageSentReport(
+                new Request('POST', $permanent->endpoint),
+                new Response(400, [], 'provider-canary-body'),
+                false,
+                'provider-canary-reason',
+            ),
+            $permanent,
+            new WebPushMessage,
+        );
+        $this->assertSame('unresolved', $handler->finishInboundAggregate()['status']);
+
+        $handler->beginInboundAggregate(1);
+        $handler->handleReport(
+            new MessageSentReport(
+                new Request('POST', $permanent->endpoint),
+                new Response(400),
+                false,
+            ),
+            $permanent,
+            new WebPushMessage,
+        );
+        $this->assertSame('suppressed', $handler->finishInboundAggregate()['status']);
+
+        $handler->beginInboundAggregate(1);
+        try {
+            $handler->handleReport(
+                new MessageSentReport(
+                    new Request('POST', $temporary->endpoint),
+                    new Response(503, [], 'provider-canary-body'),
+                    false,
+                    'provider-canary-reason',
+                ),
+                $temporary,
+                new WebPushMessage,
+            );
+        } catch (TemporaryWebPushDeliveryException) {
+            // The aggregate must retain the unresolved result after the safe
+            // bounded-retry signal is severed by the inbound dispatcher.
+        }
+        $this->assertSame('unresolved', $handler->finishInboundAggregate()['status']);
+
+        $handler->beginInboundAggregate(1);
+        $handler->handleReport(
+            new MessageSentReport(
+                new Request('POST', $expired->endpoint),
+                new Response(410),
+                false,
+            ),
+            $expired,
+            new WebPushMessage,
+        );
+        $this->assertSame('suppressed', $handler->finishInboundAggregate()['status']);
     }
 
     /**

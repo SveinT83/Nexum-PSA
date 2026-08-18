@@ -131,6 +131,45 @@ Purchase Order actions. It has no roles and only `storage.purchase_manage`,
 `storage.purchase_import_profile_manage` and `documentation.create`. System actors must not be used
 as technician, customer-portal or API-token accounts.
 
+## Email Emergency-Access Permissions
+
+User Management owns assignment of Email's narrow emergency permissions; Email owns every current
+mailbox/account authorization decision and its audit records.
+
+- `email.break_glass_activate` permits an active human security operator to request bounded,
+  reason-bearing emergency access and to emergency-revoke another active record. It does not itself
+  grant ordinary mailbox content, send, organize, AI, Ticket, rule, or configuration access.
+- `email.break_glass_audit` is read-only access to metadata-only mailbox access history and marks an
+  active human as a security notification recipient. It never grants activation or revocation.
+- `email.raw_source_view` is an additional double guard for ordinary delegated or emergency raw
+  message source access; it grants nothing without a current mailbox access source.
+
+These permissions are not assigned to the default Administrator or Technician roles. Protected
+system actors can never use personal mailbox delegation or emergency access, even if a permission is
+assigned directly. Disabling a human user takes effect at the next Email authorization boundary.
+
+## Email Provider Administration Permissions
+
+Integration owns Email provider endpoint and credential authority while Email owns mailbox accounts
+and content access. User Management may assign the permissions, but neither role assignment nor
+account configuration bypasses the owning modules' execution-time checks.
+
+- `integration.email_provider_manage` is assigned to the default Admin and Superuser roles. It
+  manages public Email provider records and credential lifecycle metadata, not mailbox content.
+- `integration.email_private_endpoint_manage` is Superuser-only. It is required in addition to
+  provider management for listing, creating, staging, verifying, activating, binding, or testing an
+  approved private/internal provider.
+- `email.mailbox_sync_manage` is additionally required for provider preview, stage, Verify, legacy
+  cutover, and rollback operations.
+- `email.account_manage` is additionally required to bind an active, exactly verified provider to a
+  new Email account.
+- `system.telescope_view` is Superuser-only and gates the complete Telescope UI. Email provider
+  management alone does not expose other application telemetry.
+
+All lifecycle actions require a current active, non-system human and repeat authorization after
+locking current records. These permissions never grant mailbox View, Organize, Send, raw-source,
+attachment, search, conversation, Ticket, or emergency access.
+
 ## Development Rules
 
 - New general profile features belong in User Management.

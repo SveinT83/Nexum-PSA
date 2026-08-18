@@ -4,6 +4,83 @@
     @endif
 
     <div class="row g-3">
+        {{-- Standard AI activation --}}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div>
+                        <h2 class="h5 mb-0">AI Activation</h2>
+                        <div class="small text-muted">Turn on the normal governed AI path used by Mail AI and other user-triggered assistants.</div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        @php
+                            $policy = $standardActivationStatus['policy'];
+                            $activationReady = (bool) ($standardActivationStatus['ready'] ?? false);
+                            $activationReason = $standardActivationStatus['reason'] ?? null;
+                        @endphp
+                        <span class="badge {{ $policy->ai_enabled ? 'text-bg-success' : 'text-bg-secondary' }}">AI {{ $policy->ai_enabled ? 'On' : 'Off' }}</span>
+                        <span class="badge {{ $policy->external_processing_enabled ? 'text-bg-success' : 'text-bg-secondary' }}">External {{ $policy->external_processing_enabled ? 'On' : 'Off' }}</span>
+                        <span class="badge {{ $activationReady ? 'text-bg-success' : 'text-bg-warning' }}">{{ $activationReady ? 'Ready' : 'Needs activation' }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if($standardActivationProviders->isEmpty())
+                        <div class="alert alert-warning mb-0">
+                            Add an active AI provider before activating AI.
+                        </div>
+                    @else
+                        <form wire:submit.prevent="activateStandardAi">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-lg-3">
+                                    <label for="standard_activation_provider" class="form-label">Provider</label>
+                                    <select id="standard_activation_provider" wire:model.live="standardActivationForm.ai_provider_id" class="form-select @error('standardActivationForm.ai_provider_id') is-invalid @enderror">
+                                        @foreach($standardActivationProviders as $provider)
+                                            <option value="{{ $provider->id }}">{{ $provider->name }} · {{ $provider->provider_key }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('standardActivationForm.ai_provider_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-lg-3">
+                                    <label for="standard_activation_model" class="form-label">Model</label>
+                                    <input id="standard_activation_model" wire:model.live.debounce.300ms="standardActivationForm.model" class="form-control @error('standardActivationForm.model') is-invalid @enderror" placeholder="Provider default model">
+                                    @error('standardActivationForm.model')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-check">
+                                        <input id="confirm_standard_ai_terms" type="checkbox" wire:model="standardActivationForm.confirm_standard_ai_terms" class="form-check-input @error('standardActivationForm.confirm_standard_ai_terms') is-invalid @enderror">
+                                        <label for="confirm_standard_ai_terms" class="form-check-label">
+                                            I confirm this organization has reviewed and approves this provider/model for Nexum AI features.
+                                        </label>
+                                        @error('standardActivationForm.confirm_standard_ai_terms')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-lg-2 text-lg-end">
+                                    <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="activateStandardAi">
+                                        <i class="bi bi-check2-circle"></i>
+                                        Activate AI
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3 small">
+                                <div class="{{ $activationReady ? 'text-success' : 'text-muted' }}">
+                                    @if($activationReady)
+                                        Ready for {{ $standardActivationStatus['provider']?->name }} / {{ $standardActivationStatus['model'] }}.
+                                    @else
+                                        {{ $standardActivationReasonLabels[$activationReason] ?? 'Standard AI activation is not complete.' }}
+                                    @endif
+                                </div>
+                                <a href="{{ route('tech.admin.system.integrations.ai.privacy.index') }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-shield-check"></i>
+                                    Advanced governance
+                                </a>
+                            </div>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+
         {{-- Provider configuration --}}
         <div class="col-12">
             <div class="card">

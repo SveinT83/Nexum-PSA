@@ -187,6 +187,9 @@
         ],
         'email' => [
             ['name' => 'Accounts', 'route' => 'tech.admin.settings.email.accounts', 'pattern' => 'tech.admin.settings.email.accounts*'],
+            ['name' => 'Canonical correlation', 'route' => 'tech.admin.settings.email.correlation.index', 'pattern' => 'tech.admin.settings.email.correlation.*', 'permission' => 'email.mailbox_sync_manage'],
+            ['name' => 'Canonical cutover', 'route' => 'tech.admin.settings.email.canonical-cutover.index', 'pattern' => 'tech.admin.settings.email.canonical-cutover.*', 'permission' => 'email.canonical_cutover_manage'],
+            ['name' => 'Emergency access', 'route' => 'tech.admin.settings.email.emergency-access.index', 'pattern' => 'tech.admin.settings.email.emergency-access.*', 'permission' => 'email.break_glass_activate'],
             ['name' => 'Config', 'route' => 'tech.admin.settings.email.config', 'pattern' => 'tech.admin.settings.email.config*'],
             ['name' => 'Rules', 'route' => 'tech.admin.settings.email.rules', 'pattern' => 'tech.admin.settings.email.rules*'],
             ['name' => 'Templates', 'route' => 'tech.admin.system.templatesManagement.email.index', 'pattern' => 'tech.admin.system.templatesManagement.email.*'],
@@ -256,6 +259,7 @@
         ],
         'integrations' => [
             ['name' => 'All integrations', 'route' => 'tech.admin.system.integrations.index', 'pattern' => 'tech.admin.system.integrations.index'],
+            ['name' => 'Email providers', 'route' => 'tech.admin.system.integrations.email-providers.index', 'pattern' => 'tech.admin.system.integrations.email-providers.*', 'permission' => 'integration.email_provider_manage'],
             ['name' => 'Cloud Factory', 'route' => 'tech.admin.system.integrations.cloudfactory.index', 'pattern' => 'tech.admin.system.integrations.cloudfactory.*'],
             ['name' => 'Nexum relationships', 'route' => 'tech.admin.system.relationships.index', 'pattern' => 'tech.admin.system.relationships.*'],
             ['name' => 'N-able RMM', 'route' => 'tech.admin.system.integrations.nable_rmm.settings', 'pattern' => 'tech.admin.system.integrations.nable_rmm.*'],

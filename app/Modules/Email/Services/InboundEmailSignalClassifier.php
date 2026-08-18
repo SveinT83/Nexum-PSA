@@ -25,11 +25,12 @@ class InboundEmailSignalClassifier
         private readonly RecordSignal $signals,
         private readonly ClassifySignalContextWithAi $aiClassifier,
         private readonly SignalSettings $settings,
-    ) {
-    }
+    ) {}
 
-    public function classifyAndRecord(EmailMessage $message): ?Signal
-    {
+    public function classifyAndRecord(
+        EmailMessage $message,
+        ?int $aiTimeCapSeconds = null,
+    ): ?Signal {
         $existing = Signal::query()
             ->where('source_type', $message->getMorphClass())
             ->where('source_id', $message->id)
@@ -39,7 +40,7 @@ class InboundEmailSignalClassifier
             return $existing;
         }
 
-        $classification = $this->classify($message);
+        $classification = $this->classify($message, $aiTimeCapSeconds);
 
         if (! $classification) {
             return null;
@@ -78,10 +79,10 @@ class InboundEmailSignalClassifier
         return $signal && in_array($signal->signal_type, $stopTypes, true);
     }
 
-    private function classify(EmailMessage $message): ?array
+    private function classify(EmailMessage $message, ?int $aiTimeCapSeconds): ?array
     {
         return $this->classifyDeterministically($message)
-            ?: $this->classifyWithAi($message);
+            ?: $this->classifyWithAi($message, $aiTimeCapSeconds);
     }
 
     private function classifyDeterministically(EmailMessage $message): ?array
@@ -162,7 +163,7 @@ class InboundEmailSignalClassifier
         return null;
     }
 
-    private function classifyWithAi(EmailMessage $message): ?array
+    private function classifyWithAi(EmailMessage $message, ?int $aiTimeCapSeconds): ?array
     {
         return $this->aiClassifier->handle([
             'source_domain' => 'email',
@@ -175,7 +176,7 @@ class InboundEmailSignalClassifier
             'headers' => $message->headers_json,
             'body_text' => str((string) $message->body_text)->limit(12000, '')->toString(),
             'received_at' => $message->received_at?->toDateTimeString(),
-        ]);
+        ], timeCapSeconds: $aiTimeCapSeconds);
     }
 
     private function looksLikeBounce(string $content): bool

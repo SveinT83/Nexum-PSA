@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Jobs;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
@@ -26,7 +27,16 @@ class SendTicketWorkflowCustomerUpdate implements ShouldQueue
 
     public int $timeout = 120;
 
-    public function __construct(public int $ticketMessageId) {}
+    public ?int $emailAccountId = null;
+
+    public ?int $providerBindingVersion = null;
+
+    public function __construct(public int $ticketMessageId)
+    {
+        $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('tickets');
+        $this->emailAccountId = $snapshot['account_id'];
+        $this->providerBindingVersion = $snapshot['provider_binding_version'];
+    }
 
     public function handle(
         DefaultEmailAccountResolver $accountResolver,
@@ -156,6 +166,19 @@ class SendTicketWorkflowCustomerUpdate implements ShouldQueue
             return 'failed';
         }
 
+        try {
+            $account = app(EmailProviderBindingSnapshot::class)->resolveScope(
+                'tickets',
+                $this->emailAccountId,
+                $this->providerBindingVersion,
+            );
+        } catch (\App\Modules\Integration\Exceptions\EmailProviderSecurityException) {
+            $this->emailLog($account->id, $message, 'error', 'TICKET_STATUS_UPDATE_PROVIDER_BINDING_STALE', 'The outbound Email provider binding changed after this job was dispatched.');
+            $this->recordDelivery($message, 'email', 'failed', 'Outbound Email provider binding changed; create a new delivery request.');
+
+            return 'failed';
+        }
+
         $template = EmailTemplate::query()
             ->where('scope', 'tickets')
             ->where('key', $policy['email_template_key'])
@@ -185,6 +208,9 @@ class SendTicketWorkflowCustomerUpdate implements ShouldQueue
                 $rendered['subject'],
                 $rendered['html'],
                 $rendered['text'],
+                [],
+                [],
+                ['provider_binding_version' => $this->providerBindingVersion],
             );
             $this->emailLog($account->id, $message, 'info', 'TICKET_STATUS_UPDATE_SENT', 'Ticket status update email sent.', [
                 'ticket_id' => $ticket->id,

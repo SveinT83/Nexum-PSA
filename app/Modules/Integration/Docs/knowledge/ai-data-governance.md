@@ -11,6 +11,22 @@ finite.
 Every update creates a revision snapshot with actor, time, and change reason. Provider, model, agent,
 workload, and token settings can narrow the installation maximum but cannot widen it.
 
+## Standard AI activation
+
+AI Settings includes a compact **Activate AI** path for normal user-triggered assistants such as
+Mail AI. An administrator selects an active provider and model, confirms that the organization has
+reviewed and approves that provider/model for Nexum AI features, and Nexum records the required
+installation policy revision, provider governance profile, and model governance policy.
+
+For external providers this standard path enables direct external processing with `full_context`
+because Mail AI sends authorized message text. It also sets the provider and model approval to expire
+after one year so the organization can review it again. The record is an admin-confirmed
+governance input for Nexum enforcement; it is not legal certification by Nexum.
+
+The advanced **Privacy & Coordinator** page remains available for organizations that need narrower
+processing modes, privacy relay, shorter expiry, provider-specific legal references, agent overrides,
+coordinator workloads, or token bindings.
+
 ## Processing modes
 
 - `local_only` keeps model execution on the configured local Ollama provider.

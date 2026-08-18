@@ -16,6 +16,8 @@ class TicketMessage extends Model
 
     protected $fillable = [
         'ticket_id',
+        'source_inbound_email_message_id',
+        'inbound_email_message_id',
         'author_id',
         'author_type',
         'type',
@@ -30,6 +32,8 @@ class TicketMessage extends Model
     ];
 
     protected $casts = [
+        'source_inbound_email_message_id' => 'integer',
+        'inbound_email_message_id' => 'integer',
         'attachments' => 'array',
         'metadata' => 'array',
         'read_at' => 'datetime',

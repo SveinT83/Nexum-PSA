@@ -73,8 +73,15 @@ class AiChatResponder
         array $messages,
         ?int $timeoutSeconds = null,
         ?AiExecutionContext $executionContext = null,
+        ?int $absoluteBudgetSeconds = null,
     ): string {
-        return $this->send($agent, $messages, $timeoutSeconds, $executionContext);
+        return $this->send(
+            $agent,
+            $messages,
+            $timeoutSeconds,
+            $executionContext,
+            $absoluteBudgetSeconds,
+        );
     }
 
     /**
@@ -85,6 +92,7 @@ class AiChatResponder
         array $messages,
         ?int $timeoutSeconds = null,
         ?AiExecutionContext $executionContext = null,
+        ?int $absoluteBudgetSeconds = null,
     ): string {
         $provider = $agent->provider;
 
@@ -99,15 +107,18 @@ class AiChatResponder
         }
 
         $timeoutSeconds = $timeoutSeconds ?: self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS;
+        $absoluteDeadlineNanoseconds = $absoluteBudgetSeconds === null
+            ? null
+            : hrtime(true) + (max(1, $absoluteBudgetSeconds) * 1_000_000_000);
         $messages = $this->outboundPolicyGuard->prepare($agent, $model, $messages);
         $trace = new AiExecutionTrace($executionContext ?? AiExecutionContext::fallback());
 
         return match ($provider->provider_key) {
-            'openai' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds, $this->shouldPreferResponsesEndpoint($model)),
-            'custom_openai_compatible' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds),
-            'mistral' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://api.mistral.ai/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds),
-            'openrouter' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://openrouter.ai/api/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds),
-            'ollama' => $this->ollama($agent, $provider->base_url, $model, $messages, $trace, $timeoutSeconds),
+            'openai' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds, $this->shouldPreferResponsesEndpoint($model), $absoluteDeadlineNanoseconds),
+            'custom_openai_compatible' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds, absoluteDeadlineNanoseconds: $absoluteDeadlineNanoseconds),
+            'mistral' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://api.mistral.ai/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds, absoluteDeadlineNanoseconds: $absoluteDeadlineNanoseconds),
+            'openrouter' => $this->openAiCompatible($agent, $provider->base_url ?: 'https://openrouter.ai/api/v1', $provider->getSecret('api_key'), $model, $messages, $trace, $timeoutSeconds, absoluteDeadlineNanoseconds: $absoluteDeadlineNanoseconds),
+            'ollama' => $this->ollama($agent, $provider->base_url, $model, $messages, $trace, $timeoutSeconds, $absoluteDeadlineNanoseconds),
             default => throw new RuntimeException('Chat is not wired for '.$provider->provider_key.' yet.'),
         };
     }
@@ -121,17 +132,18 @@ class AiChatResponder
         AiExecutionTrace $trace,
         int $timeoutSeconds = self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS,
         bool $preferResponsesEndpoint = false,
+        ?int $absoluteDeadlineNanoseconds = null,
     ): string {
         if (! $apiKey) {
             throw new RuntimeException('API key is missing for this provider.');
         }
 
         if ($preferResponsesEndpoint) {
-            return $this->openAiCompatibleResponse($agent, $baseUrl, $apiKey, $model, $messages, $trace, min($timeoutSeconds, self::OPENAI_RESPONSES_TIMEOUT_SECONDS));
+            return $this->openAiCompatibleResponse($agent, $baseUrl, $apiKey, $model, $messages, $trace, min($timeoutSeconds, self::OPENAI_RESPONSES_TIMEOUT_SECONDS), $absoluteDeadlineNanoseconds);
         }
 
         if ($this->shouldUseCompletionEndpoint($model)) {
-            return $this->openAiCompatibleCompletion($agent, $baseUrl, $apiKey, $model, $messages, $trace, $timeoutSeconds);
+            return $this->openAiCompatibleCompletion($agent, $baseUrl, $apiKey, $model, $messages, $trace, $timeoutSeconds, $absoluteDeadlineNanoseconds);
         }
 
         $attempt = $this->modelExecutor->attempt(
@@ -141,7 +153,7 @@ class AiChatResponder
             requestedModel: $model,
             request: fn (): Response => Http::acceptJson()
                 ->withToken($apiKey)
-                ->timeout($timeoutSeconds)
+                ->timeout($this->remainingRequestTimeout($timeoutSeconds, $absoluteDeadlineNanoseconds))
                 ->post(rtrim((string) $baseUrl, '/').'/chat/completions', [
                     'model' => $model,
                     'messages' => $messages,
@@ -152,7 +164,7 @@ class AiChatResponder
 
         if (! $response->successful()) {
             if ($this->isNotChatModelError($response->body())) {
-                return $this->openAiCompatibleCompletion($agent, $baseUrl, $apiKey, $model, $messages, $trace, $timeoutSeconds);
+                return $this->openAiCompatibleCompletion($agent, $baseUrl, $apiKey, $model, $messages, $trace, $timeoutSeconds, $absoluteDeadlineNanoseconds);
             }
 
             throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
@@ -173,6 +185,7 @@ class AiChatResponder
         array $messages,
         AiExecutionTrace $trace,
         int $timeoutSeconds = self::OPENAI_COMPATIBLE_TIMEOUT_SECONDS,
+        ?int $absoluteDeadlineNanoseconds = null,
     ): string {
         $attempt = $this->modelExecutor->attempt(
             agent: $agent,
@@ -181,7 +194,7 @@ class AiChatResponder
             requestedModel: $model,
             request: fn (): Response => Http::acceptJson()
                 ->withToken($apiKey)
-                ->timeout($timeoutSeconds)
+                ->timeout($this->remainingRequestTimeout($timeoutSeconds, $absoluteDeadlineNanoseconds))
                 ->post(rtrim((string) $baseUrl, '/').'/completions', [
                     'model' => $model,
                     'prompt' => $this->completionPrompt($messages),
@@ -193,7 +206,7 @@ class AiChatResponder
 
         if (! $response->successful()) {
             if ($this->isCompletionUnsupportedError($response->body())) {
-                return $this->openAiCompatibleResponse($agent, $baseUrl, $apiKey, $model, $messages, $trace, min($timeoutSeconds, self::OPENAI_RESPONSES_TIMEOUT_SECONDS));
+                return $this->openAiCompatibleResponse($agent, $baseUrl, $apiKey, $model, $messages, $trace, min($timeoutSeconds, self::OPENAI_RESPONSES_TIMEOUT_SECONDS), $absoluteDeadlineNanoseconds);
             }
 
             throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
@@ -214,6 +227,7 @@ class AiChatResponder
         array $messages,
         AiExecutionTrace $trace,
         int $timeoutSeconds = self::OPENAI_RESPONSES_TIMEOUT_SECONDS,
+        ?int $absoluteDeadlineNanoseconds = null,
     ): string {
         $attempt = $this->modelExecutor->attempt(
             agent: $agent,
@@ -222,7 +236,7 @@ class AiChatResponder
             requestedModel: $model,
             request: fn (): Response => Http::acceptJson()
                 ->withToken($apiKey)
-                ->timeout($timeoutSeconds)
+                ->timeout($this->remainingRequestTimeout($timeoutSeconds, $absoluteDeadlineNanoseconds))
                 ->post(rtrim((string) $baseUrl, '/').'/responses', [
                     'model' => $model,
                     'input' => $this->completionPrompt($messages),
@@ -250,6 +264,7 @@ class AiChatResponder
         array $messages,
         AiExecutionTrace $trace,
         int $timeoutSeconds = 120,
+        ?int $absoluteDeadlineNanoseconds = null,
     ): string {
         if (! $baseUrl) {
             throw new RuntimeException('Ollama URL is missing for this provider.');
@@ -261,7 +276,7 @@ class AiChatResponder
             endpointKind: 'ollama_chat',
             requestedModel: $model,
             request: fn (): Response => Http::acceptJson()
-                ->timeout($timeoutSeconds)
+                ->timeout($this->remainingRequestTimeout($timeoutSeconds, $absoluteDeadlineNanoseconds))
                 ->post(rtrim($baseUrl, '/').'/api/chat', [
                     'model' => $model,
                     'messages' => $messages,
@@ -548,6 +563,28 @@ class AiChatResponder
             })
             ->filter()
             ->implode("\n");
+    }
+
+    /**
+     * Preserve ordinary per-request timeout behavior unless a caller supplies
+     * an absolute budget. Budgeted workflows share one monotonic deadline
+     * across endpoint fallbacks so each subsequent socket receives only the
+     * time that remains.
+     */
+    private function remainingRequestTimeout(
+        int $configuredTimeoutSeconds,
+        ?int $absoluteDeadlineNanoseconds,
+    ): int|float {
+        if ($absoluteDeadlineNanoseconds === null) {
+            return $configuredTimeoutSeconds;
+        }
+
+        $remainingSeconds = ($absoluteDeadlineNanoseconds - hrtime(true)) / 1_000_000_000;
+        if ($remainingSeconds <= 0.05) {
+            throw new RuntimeException('AI provider request time budget exhausted.');
+        }
+
+        return min($configuredTimeoutSeconds, $remainingSeconds);
     }
 
     private function emptyResponseMessage(array $payload): string

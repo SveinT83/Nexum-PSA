@@ -6,7 +6,6 @@ use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
-use App\Modules\Documentation\Models\Vendor;
 use App\Models\Knowledge\Article;
 use App\Models\Settings\CommonSetting;
 use App\Models\Tech\Work\Assets\Asset;
@@ -15,6 +14,7 @@ use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMessage;
@@ -73,9 +73,12 @@ use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use App\Modules\WorkContext\Support\WorkContextType;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -911,6 +914,47 @@ class TicketModuleTest extends TestCase
             'body_text' => 'This is not a support request.',
             'ticket_id' => $ticket->id,
         ]);
+        $forgedMetadataTarget = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 990027,
+            'message_id' => '<not-ticket-forged-target@example.test>',
+            'subject' => 'Unrelated inbox message',
+            'from_email' => 'other@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Must remain untouched.',
+            'ticket_id' => null,
+        ]);
+        $ticketMessage = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'source_inbound_email_message_id' => $email->id,
+            'inbound_email_message_id' => $email->id,
+            'author_type' => 'contact',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'subject' => $email->subject,
+            'body' => $email->body_text,
+            'metadata' => ['email_message_id' => $email->id],
+        ]);
+        $ticketMessageBefore = (array) DB::table('ticket_messages')
+            ->where('id', $ticketMessage->id)
+            ->first();
+        try {
+            DB::table('ticket_messages')->where('id', $ticketMessage->id)->update([
+                'metadata' => json_encode(
+                    ['email_message_id' => $forgedMetadataTarget->id],
+                    JSON_THROW_ON_ERROR,
+                ),
+                'updated_at' => now(),
+            ]);
+            $this->fail('Frozen inbound Ticket-message metadata cannot be reparented.');
+        } catch (QueryException) {
+            $this->assertSame(
+                $ticketMessageBefore,
+                (array) DB::table('ticket_messages')->where('id', $ticketMessage->id)->first(),
+            );
+        }
 
         $this->actingAs($this->tech)
             ->post(route('tech.tickets.not-ticket', $ticket))
@@ -923,6 +967,11 @@ class TicketModuleTest extends TestCase
         $this->assertNull($email->ticket_id);
         $this->assertSame('untriaged', $email->state);
         $this->assertTrue($email->tags()->where('tags.slug', 'not-ticket')->exists());
+        $this->assertNull($forgedMetadataTarget->fresh()->ticket_id);
+        $this->assertSame('untriaged', $forgedMetadataTarget->fresh()->state);
+        $this->assertFalse(
+            $forgedMetadataTarget->tags()->where('tags.slug', 'not-ticket')->exists(),
+        );
         $this->assertDatabaseHas('ticket_events', [
             'ticket_id' => $ticket->id,
             'type' => 'marked_not_ticket',
@@ -3584,6 +3633,7 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function tech_user_can_update_ticket_lifecycle_fields(): void
     {
+        Notification::fake();
         $ticket = $this->createTicket(null, ['ticket_key' => 'TD-2026-999110']);
         $resolved = TicketStatus::where('slug', 'resolved')->firstOrFail();
         $high = TicketPriority::where('slug', 'high')->firstOrFail();
@@ -4909,6 +4959,7 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function assignment_rule_can_assign_new_ticket_to_specific_technician(): void
     {
+        Notification::fake();
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $admin->assignRole('Tech');
         $admin->assignRole('Admin');
@@ -4947,6 +4998,7 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function assignment_engine_falls_back_to_profile_category_skill_and_capacity(): void
     {
+        Notification::fake();
         $category = Category::create([
             'name' => 'Firewall',
             'slug' => 'firewall',
@@ -4998,6 +5050,7 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function assignment_engine_scores_matching_ticket_tag_skills(): void
     {
+        Notification::fake();
         $tag = Tag::create([
             'name' => 'Fortigate',
             'slug' => 'fortigate',

@@ -262,7 +262,7 @@
                     ['label' => 'Ticket command', 'route' => 'tech.tickets.index', 'icon' => 'bi-ticket-detailed'],
                     ['label' => 'Client operations', 'route' => 'tech.clients.index', 'icon' => 'bi-buildings'],
                     ['label' => 'Assets', 'route' => 'tech.assets.index', 'icon' => 'bi-hdd-network'],
-                    ['label' => 'Inbox', 'route' => 'tech.inbox.index', 'icon' => 'bi-inbox'],
+                    ['label' => 'Mail', 'route' => 'tech.mail.index', 'icon' => 'bi-inbox'],
                     ['label' => 'Economy', 'route' => 'tech.economy.orders.index', 'icon' => 'bi-receipt'],
                     ['label' => 'Knowledge', 'route' => 'tech.knowledge.index', 'icon' => 'bi-journal-text'],
                 ];

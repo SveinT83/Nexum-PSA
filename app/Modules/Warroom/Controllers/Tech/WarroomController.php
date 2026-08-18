@@ -63,11 +63,11 @@ class WarroomController extends Controller
                     'meta' => $this->count('assets', fn (Builder $query) => $query->where('is_managed', true)).' managed assets',
                 ],
                 [
-                    'label' => 'Inbox triage',
+                    'label' => 'Mail triage',
                     'value' => $this->count('email_messages', fn (Builder $query) => $query->whereNull('ticket_id')),
                     'tone' => 'info',
                     'icon' => 'bi-inbox',
-                    'href' => $this->routeUrl('tech.inbox.index'),
+                    'href' => $this->routeUrl('tech.mail.index'),
                     'meta' => $this->count('email_messages', fn (Builder $query) => $query->where('received_at', '>=', now()->subHours($dashboardSettings['inbox_recent_hours']))).' last '.$dashboardSettings['inbox_recent_hours'].'h',
                 ],
             ],

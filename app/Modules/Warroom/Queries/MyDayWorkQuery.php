@@ -167,7 +167,7 @@ class MyDayWorkQuery
             ['label' => 'New ticket', 'route' => 'tech.tickets.create', 'icon' => 'bi-ticket-detailed'],
             ['label' => 'New task', 'route' => 'tech.tasks.create', 'icon' => 'bi-check2-square'],
             ['label' => 'Calendar', 'route' => 'tech.calendar.index', 'icon' => 'bi-calendar3'],
-            ['label' => 'Inbox', 'route' => 'tech.inbox.index', 'icon' => 'bi-inbox'],
+            ['label' => 'Mail', 'route' => 'tech.mail.index', 'icon' => 'bi-inbox'],
         ])
             ->filter(fn (array $action): bool => Route::has($action['route']))
             ->map(fn (array $action): array => array_merge($action, ['href' => route($action['route'])]))

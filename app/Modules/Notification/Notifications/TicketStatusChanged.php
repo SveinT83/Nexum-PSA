@@ -2,7 +2,9 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,16 +13,18 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when a ticket's status changes (e.g., open → in progress → resolved).
  */
-class TicketStatusChanged extends Notification
+class TicketStatusChanged extends Notification implements EmailAccountMailNotification
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     public function __construct(
         public Ticket $ticket,
         public string $oldStatus,
         public string $newStatus,
         public ?string $changedBy = null,
-    ) {}
+    ) {
+        $this->freezeEmailAccountMailSnapshot('tickets');
+    }
 
     public function via(object $notifiable): array
     {
@@ -31,7 +35,7 @@ class TicketStatusChanged extends Notification
             $channels[] = 'database';
         }
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel('tickets');
         }
 
         $talkChannel = \App\Modules\Notification\Models\NotificationChannel::getByDriver('nextcloud_talk');
@@ -52,7 +56,7 @@ class TicketStatusChanged extends Notification
             ->line("Ticket **{$this->ticket->ticket_key}** status has been changed.")
             ->line("**Subject:** {$this->ticket->subject}")
             ->line("**Status:** {$this->oldStatus} → {$this->newStatus}")
-            ->when($this->changedBy, fn($m) => $m->line("**Changed by:** {$this->changedBy}"))
+            ->when($this->changedBy, fn ($m) => $m->line("**Changed by:** {$this->changedBy}"))
             ->action('View Ticket', $ticketUrl);
     }
 
@@ -82,7 +86,7 @@ class TicketStatusChanged extends Notification
             ]),
             'url' => route('tech.tickets.show', $this->ticket->ticket_key),
             'urlLabel' => 'View Ticket',
-            'referenceId' => 'ticket-status-' . $this->ticket->ticket_key . '-' . $this->newStatus . '-' . time(),
+            'referenceId' => 'ticket-status-'.$this->ticket->ticket_key.'-'.$this->newStatus.'-'.time(),
         ];
     }
 }

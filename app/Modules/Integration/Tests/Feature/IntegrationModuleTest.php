@@ -28,6 +28,7 @@ use App\Modules\Integration\Models\AiModelGovernancePolicy;
 use App\Modules\Integration\Models\AiProvider;
 use App\Modules\Integration\Models\AiProviderGovernanceProfile;
 use App\Modules\Integration\Models\AiSystemSetting;
+use App\Modules\Integration\Services\ActivateStandardAiRuntime;
 use App\Modules\Integration\Services\AiChatCleanup;
 use App\Modules\Integration\Services\AiChatResponder;
 use App\Modules\Integration\Support\AiMessageFormatter;
@@ -760,6 +761,115 @@ class IntegrationModuleTest extends TestCase
         $this->assertSame(3, $settings->delete_empty_chats_after_days);
         $this->assertSame(6, $settings->delete_failed_pending_after_hours);
         $this->assertTrue($settings->cleanup_enabled);
+    }
+
+    #[Test]
+    public function admin_can_activate_standard_ai_runtime_from_ai_settings(): void
+    {
+        $policy = AiDataEgressPolicy::installation();
+        $policy->revisions()->delete();
+        $policy->forceFill([
+            'ai_enabled' => false,
+            'external_processing_enabled' => false,
+            'privacy_gateway_enabled' => true,
+            'direct_external_enabled' => false,
+            'allowed_processing_modes' => ['local_only'],
+            'maximum_data_profile' => 'aggregate',
+            'expires_at' => null,
+            'reviewed_by' => null,
+            'reviewed_at' => null,
+            'updated_by' => null,
+            'revision' => 1,
+        ])->save();
+
+        $provider = AiProvider::create([
+            'name' => 'OpenAI production',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-5.5-pro',
+            'status' => 'active',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tech.admin.system.integrations.ai-settings')
+            ->assertSee('AI Activation')
+            ->assertSee('Needs activation')
+            ->set('standardActivationForm.ai_provider_id', $provider->id)
+            ->set('standardActivationForm.model', 'gpt-5.5-pro')
+            ->set('standardActivationForm.confirm_standard_ai_terms', true)
+            ->call('activateStandardAi')
+            ->assertHasNoErrors()
+            ->assertSee('Ready');
+
+        $policy = AiDataEgressPolicy::installation()->fresh();
+        $this->assertTrue($policy->ai_enabled);
+        $this->assertTrue($policy->external_processing_enabled);
+        $this->assertTrue($policy->direct_external_enabled);
+        $this->assertSame(['local_only', 'direct_external'], $policy->allowed_processing_modes);
+        $this->assertSame('full_context', $policy->maximum_data_profile);
+        $this->assertSame($this->admin->id, $policy->reviewed_by);
+        $this->assertSame(2, $policy->revision);
+        $this->assertDatabaseHas('ai_data_egress_policy_revisions', [
+            'policy_id' => $policy->id,
+            'revision' => 2,
+            'changed_by' => $this->admin->id,
+            'change_reason' => 'Standard Nexum AI activation from AI Settings.',
+        ]);
+
+        $governance = AiProviderGovernanceProfile::query()->where('ai_provider_id', $provider->id)->firstOrFail();
+        $this->assertTrue($governance->is_active);
+        $this->assertTrue($governance->is_approved);
+        $this->assertTrue($governance->isComplete());
+        $this->assertSame(['direct_external'], $governance->allowed_processing_modes);
+        $this->assertSame('full_context', $governance->maximum_data_profile);
+
+        $modelPolicy = AiModelGovernancePolicy::query()
+            ->where('ai_provider_id', $provider->id)
+            ->where('model', 'gpt-5.5-pro')
+            ->firstOrFail();
+        $this->assertTrue($modelPolicy->is_approved);
+        $this->assertSame('direct_external', $modelPolicy->processing_mode);
+        $this->assertSame('full_context', $modelPolicy->maximum_data_profile);
+
+        $status = app(ActivateStandardAiRuntime::class)->status($provider, 'gpt-5.5-pro');
+        $this->assertTrue($status['ready']);
+        $this->assertNull($status['reason']);
+    }
+
+    #[Test]
+    public function standard_ai_activation_requires_admin_confirmation(): void
+    {
+        $policy = AiDataEgressPolicy::installation();
+        $policy->forceFill([
+            'ai_enabled' => false,
+            'external_processing_enabled' => false,
+            'privacy_gateway_enabled' => true,
+            'direct_external_enabled' => false,
+            'allowed_processing_modes' => ['local_only'],
+            'maximum_data_profile' => 'aggregate',
+            'revision' => 1,
+        ])->save();
+
+        $provider = AiProvider::create([
+            'name' => 'OpenAI production',
+            'provider_key' => 'openai',
+            'base_url' => 'https://api.openai.test/v1',
+            'default_model' => 'gpt-5.5-pro',
+            'status' => 'active',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test('tech.admin.system.integrations.ai-settings')
+            ->set('standardActivationForm.ai_provider_id', $provider->id)
+            ->set('standardActivationForm.model', 'gpt-5.5-pro')
+            ->call('activateStandardAi')
+            ->assertHasErrors(['standardActivationForm.confirm_standard_ai_terms' => 'accepted']);
+
+        $this->assertFalse(AiDataEgressPolicy::installation()->fresh()->ai_enabled);
+        $this->assertDatabaseMissing('ai_model_governance_policies', [
+            'ai_provider_id' => $provider->id,
+            'model' => 'gpt-5.5-pro',
+        ]);
     }
 
     #[Test]

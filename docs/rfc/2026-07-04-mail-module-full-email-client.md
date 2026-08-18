@@ -1392,3 +1392,19 @@ performed through separately scoped Feature Slices on authoritative Dev with the
 documentation, deployment checks, and human review. This approval does not itself execute migrations,
 change providers, enable external AI disclosure, activate production behavior, or publish anything
 externally. Automatic external replies remain excluded and require a later explicit approval and ADR.
+
+### Subsequent Completion Approval - 2026-08-16
+
+Svein subsequently instructed Codex to complete **all** remaining documented Mail slices, followed by
+the explicit clarification: `Ta alle slices. Også det som ikke er godkjent enda.` This is recorded as
+the separate product approval required for the remaining program, including the restricted automatic
+reply slice that the 2026-08-12 general approval intentionally excluded.
+
+The ordered remaining work is reconciled in
+`docs/plans/2026-08-16-email-mail-completion-slice-index.md`. This later approval authorizes scoped
+design and implementation; it does not itself enable automatic replies, execute a migration, call an
+Email/AI provider, change production, waive a required architecture or security review, or mark any
+human-review entry `Reviewed`. Restricted automatic replies remain off by default until their
+allowlists, sensitive-case exclusions, layered opt-ins, loop/duplicate/rate/cost limits, delivery
+reconciliation, emergency stop, no-send-on-uncertainty behavior, tests, operational review, and named
+human review are all complete.

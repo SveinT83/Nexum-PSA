@@ -14,6 +14,8 @@ use App\Modules\CustomerPortal\Models\CustomerPortalInvitation;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailFolder;
+use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiProvider;
@@ -795,6 +797,28 @@ class SignalModuleTest extends TestCase
             'received_at' => now(),
             'state' => 'untriaged',
             'body_text' => 'Datto RMM agent update is available for managed endpoints.',
+        ]);
+        $inbox = EmailFolder::query()->create([
+            'account_id' => $account->id,
+            'path' => 'INBOX',
+            'name' => 'INBOX',
+            'role' => EmailFolder::ROLE_INBOX,
+            'is_selectable' => true,
+            'sync_enabled' => true,
+            'uid_validity' => 1,
+        ]);
+        EmailMailboxPlacement::query()->create([
+            'email_message_id' => $email->id,
+            'account_id' => $account->id,
+            'email_folder_id' => $inbox->id,
+            'provider' => 'imap',
+            'folder_path' => 'INBOX',
+            'imap_uid_validity' => 1,
+            'imap_uid' => 8001,
+            'local_state' => EmailMailboxPlacement::LOCAL_ACTIVE,
+            'sync_status' => EmailMailboxPlacement::SYNC_SYNCED,
+            'sync_version' => 1,
+            'provider_missing_at' => null,
         ]);
 
         app()->call([new ProcessInboundRules($email->id), 'handle']);

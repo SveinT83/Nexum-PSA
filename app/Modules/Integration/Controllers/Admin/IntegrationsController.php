@@ -25,7 +25,9 @@ class IntegrationsController extends Controller
     public function toggle(Request $request)
     {
         $request->validate([
-            'type' => 'required|string',
+            // Email providers are multi-record and have a verified credential
+            // lifecycle; the generic first-record toggle is never valid.
+            'type' => 'required|string|not_in:email_provider',
             'name' => 'required|string',
         ]);
 

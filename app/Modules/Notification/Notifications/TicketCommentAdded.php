@@ -2,7 +2,9 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,15 +13,17 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when a comment/message is added to a ticket.
  */
-class TicketCommentAdded extends Notification
+class TicketCommentAdded extends Notification implements EmailAccountMailNotification
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     public function __construct(
         public Ticket $ticket,
         public string $commentAuthor,
         public string $commentPreview,
-    ) {}
+    ) {
+        $this->freezeEmailAccountMailSnapshot('tickets');
+    }
 
     public function via(object $notifiable): array
     {
@@ -30,7 +34,7 @@ class TicketCommentAdded extends Notification
             $channels[] = 'database';
         }
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel('tickets');
         }
 
         $talkChannel = \App\Modules\Notification\Models\NotificationChannel::getByDriver('nextcloud_talk');
@@ -50,7 +54,7 @@ class TicketCommentAdded extends Notification
             ->greeting("Hello {$notifiable->name},")
             ->line("**{$this->commentAuthor}** commented on ticket **{$this->ticket->ticket_key}**.")
             ->line("**Subject:** {$this->ticket->subject}")
-            ->line("> " . str($this->commentPreview)->limit(150))
+            ->line('> '.str($this->commentPreview)->limit(150))
             ->action('View Ticket', $ticketUrl);
     }
 
@@ -70,13 +74,13 @@ class TicketCommentAdded extends Notification
     {
         return [
             'title' => "Comment on {$this->ticket->ticket_key}",
-            'message' => "{$this->commentAuthor}: \"" . str($this->commentPreview)->limit(200) . '\"',
+            'message' => "{$this->commentAuthor}: \"".str($this->commentPreview)->limit(200).'\"',
             'details' => array_filter([
                 'Subject' => $this->ticket->subject,
             ]),
             'url' => route('tech.tickets.show', $this->ticket->ticket_key),
             'urlLabel' => 'View Ticket',
-            'referenceId' => 'ticket-comment-' . $this->ticket->ticket_key . '-' . time(),
+            'referenceId' => 'ticket-comment-'.$this->ticket->ticket_key.'-'.time(),
         ];
     }
 }

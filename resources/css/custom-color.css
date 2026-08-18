@@ -74,6 +74,25 @@
     color: var(--bs-secondary-color) !important;
 }
 
+/*
+ * Bootstrap's link-dark utility intentionally keeps a dark foreground.
+ * Workspace sidebars reuse that utility on theme-aware surfaces, so it
+ * becomes unreadable when the company default is dark. Keep the utility's
+ * spacing and border treatment while switching only its dark-mode colors.
+ */
+[data-bs-theme="dark"] .sidebar .nav-pills .nav-link.link-dark {
+    background-color: var(--nexum-content-bg) !important;
+    border-color: var(--nexum-brand-border-soft) !important;
+    color: var(--nexum-left-sidebar-color) !important;
+}
+
+[data-bs-theme="dark"] .nav-item,
+[data-bs-theme="dark"] .nav-item .black,
+[data-bs-theme="dark"] .nav-link .black,
+[data-bs-theme="dark"] .nav-link.disabled {
+    color: var(--bs-body-color) !important;
+}
+
 /* ------------------------------------------- */
 /* -------------- Main Elements -------------- */
 /* ------------------------------------------- */

@@ -8,6 +8,7 @@ use App\Modules\Notification\Models\NotificationChannel;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Sends notifications to Nextcloud Talk conversations.
@@ -39,37 +40,73 @@ class NextcloudTalkChannel
     /**
      * Send the given notification via Nextcloud Talk.
      */
-    public function send(object $notifiable, Notification $notification): void
-    {
+    public function send(
+        #[\SensitiveParameter] object $notifiable,
+        #[\SensitiveParameter] Notification $notification,
+    ): array {
+        return $this->sendUsingAuthority($notifiable, $notification, false, null);
+    }
+
+    /**
+     * Send from a recipient decision that already selected one exact
+     * notification type/setting. This path must never inspect another type's
+     * per-user Talk URL.
+     */
+    public function sendExact(
+        #[\SensitiveParameter] object $notifiable,
+        #[\SensitiveParameter] Notification $notification,
+        #[\SensitiveParameter] ?string $exactWebhookUrl,
+    ): array {
+        return $this->sendUsingAuthority($notifiable, $notification, true, $exactWebhookUrl);
+    }
+
+    private function sendUsingAuthority(
+        #[\SensitiveParameter] object $notifiable,
+        #[\SensitiveParameter] Notification $notification,
+        bool $exactAuthority,
+        #[\SensitiveParameter] ?string $exactWebhookUrl,
+    ): array {
         // Check if the channel is enabled system-wide
         $channelConfig = NotificationChannel::getByDriver('nextcloud_talk');
 
-        if (!$channelConfig || !$channelConfig->is_enabled) {
-            return;
+        if (! $channelConfig || ! $channelConfig->is_enabled) {
+            return $this->suppressed('nextcloud_talk_channel_disabled');
         }
 
-        if (! $this->hasConfiguredNextcloudConnection($channelConfig)) {
+        $connection = $this->configuredNextcloudConnection($channelConfig);
+        if (! $connection) {
             Log::debug('NextcloudTalk: Channel is enabled, but no active Nextcloud integration exists.');
-            return;
+
+            return $this->suppressed('nextcloud_talk_connection_missing');
         }
 
         // Get the message data from the notification
-        if (!method_exists($notification, 'toNextcloudTalk')) {
-            return;
+        if (! method_exists($notification, 'toNextcloudTalk')) {
+            return $this->suppressed('nextcloud_talk_notification_unsupported');
         }
 
         $data = $notification->toNextcloudTalk($notifiable);
 
-        $connection = $this->activeNextcloudConnection();
-
         // Prefer Bot API if configured
-        if ($connection && $connection->hasTalkBot()) {
-            $this->sendViaBotApi($connection, $notifiable, $data, $channelConfig);
-            return;
+        if ($connection->hasTalkBot()) {
+            return $this->sendViaBotApi(
+                $connection,
+                $notifiable,
+                $data,
+                $channelConfig,
+                $exactAuthority,
+                $exactWebhookUrl,
+            );
         }
 
         // Fall back to webhook
-        $this->sendViaWebhook($notifiable, $data, $channelConfig);
+        return $this->sendViaWebhook(
+            $notifiable,
+            $data,
+            $channelConfig,
+            $exactAuthority,
+            $exactWebhookUrl,
+        );
     }
 
     /**
@@ -80,18 +117,23 @@ class NextcloudTalkChannel
      */
     protected function sendViaBotApi(
         NextcloudConnection $connection,
-        object $notifiable,
-        array $data,
+        #[\SensitiveParameter] object $notifiable,
+        #[\SensitiveParameter] array $data,
         NotificationChannel $channelConfig,
-    ): void {
+        bool $exactAuthority = false,
+        #[\SensitiveParameter] ?string $exactWebhookUrl = null,
+    ): array {
         $talkClient = app(NextcloudTalkClient::class);
-        $conversationToken = $this->resolveConversationToken($notifiable, $channelConfig, $connection);
+        $conversationToken = $exactAuthority
+            ? $this->resolveExactConversationToken($exactWebhookUrl, $channelConfig, $connection)
+            : $this->resolveConversationToken($notifiable, $channelConfig, $connection);
 
         if (empty($conversationToken)) {
             Log::warning('NextcloudTalk: Bot API configured but no conversation token found.', [
                 'notifiable_id' => $notifiable->id ?? null,
             ]);
-            return;
+
+            return $this->suppressed('nextcloud_talk_conversation_missing');
         }
 
         // Build the message with optional title
@@ -101,7 +143,7 @@ class NextcloudTalkChannel
         if (isset($data['referenceId'])) {
             $options['referenceId'] = $data['referenceId'];
         }
-        if (!empty($data['silent'])) {
+        if (! empty($data['silent'])) {
             $options['silent'] = true;
         }
         if (isset($data['replyTo'])) {
@@ -111,36 +153,48 @@ class NextcloudTalkChannel
         try {
             $talkClient->sendBotMessage($connection, $conversationToken, $message, $options);
             Log::debug('NextcloudTalk: Bot API message sent.', [
-                'conversationToken' => $conversationToken,
+                'connection_id' => $connection->id,
                 'notifiable_id' => $notifiable->id ?? null,
             ]);
-        } catch (\Exception $e) {
+        } catch (Throwable $exception) {
             Log::error('NextcloudTalk: Bot API delivery failed.', [
-                'error' => $e->getMessage(),
-                'conversationToken' => $conversationToken,
+                'exception' => $exception::class,
+                'connection_id' => $connection->id,
                 'notifiable_id' => $notifiable->id ?? null,
             ]);
+
+            return $this->unresolved('nextcloud_talk_bot_delivery_unresolved');
         }
+
+        return $this->delivered();
     }
 
     /**
      * Send a notification via the legacy webhook approach.
      */
-    protected function sendViaWebhook(object $notifiable, array $data, NotificationChannel $channelConfig): void
-    {
-        $webhookUrl = $this->getWebhookUrl($notifiable, $channelConfig);
+    protected function sendViaWebhook(
+        #[\SensitiveParameter] object $notifiable,
+        #[\SensitiveParameter] array $data,
+        NotificationChannel $channelConfig,
+        bool $exactAuthority = false,
+        #[\SensitiveParameter] ?string $exactWebhookUrl = null,
+    ): array {
+        $webhookUrl = $exactAuthority
+            ? $this->getExactWebhookUrl($exactWebhookUrl, $channelConfig)
+            : $this->getWebhookUrl($notifiable, $channelConfig);
 
         if (empty($webhookUrl)) {
             Log::debug('NextcloudTalk: No webhook URL configured for notifiable.', [
                 'notifiable_id' => $notifiable->id ?? null,
             ]);
-            return;
+
+            return $this->suppressed('nextcloud_talk_webhook_missing');
         }
 
         // Build the payload — webhooks only support plain message
         $message = $data['message'] ?? '';
         if (isset($data['title'])) {
-            $message = "**{$data['title']}**\n\n" . $message;
+            $message = "**{$data['title']}**\n\n".$message;
         }
 
         $payload = ['message' => $message];
@@ -150,18 +204,22 @@ class NextcloudTalkChannel
                 ->withHeaders(['Content-Type' => 'application/json'])
                 ->post($webhookUrl, $payload);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('NextcloudTalk: Webhook delivery failed.', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
-                    'url' => substr($webhookUrl, 0, 50) . '...',
                 ]);
+
+                return $this->unresolved('nextcloud_talk_webhook_delivery_unresolved');
             }
-        } catch (\Exception $e) {
+        } catch (Throwable $exception) {
             Log::error('NextcloudTalk: Webhook delivery exception.', [
-                'error' => $e->getMessage(),
+                'exception' => $exception::class,
             ]);
+
+            return $this->unresolved('nextcloud_talk_webhook_delivery_unresolved');
         }
+
+        return $this->delivered();
     }
 
     /**
@@ -170,7 +228,7 @@ class NextcloudTalkChannel
      * When using the Bot API, this supports rich Markdown formatting.
      * When using webhooks, this returns a simple text message.
      */
-    protected function formatMessage(array $data): string
+    protected function formatMessage(#[\SensitiveParameter] array $data): string
     {
         $parts = [];
 
@@ -240,6 +298,28 @@ class NextcloudTalkChannel
         return $connection->talk_default_conversation_token;
     }
 
+    private function resolveExactConversationToken(
+        #[\SensitiveParameter] ?string $exactWebhookUrl,
+        NotificationChannel $channelConfig,
+        NextcloudConnection $connection,
+    ): ?string {
+        if ($exactWebhookUrl !== null) {
+            // An explicit per-type target is authoritative. Invalid input is
+            // suppression, never permission to fall through to another room.
+            $scheme = parse_url($exactWebhookUrl, PHP_URL_SCHEME);
+            if (filter_var($exactWebhookUrl, FILTER_VALIDATE_URL) === false
+                || ! is_string($scheme)
+                || ! in_array(strtolower($scheme), ['http', 'https'], true)) {
+                return null;
+            }
+
+            return $this->extractTokenFromWebhookUrl($exactWebhookUrl);
+        }
+
+        return $channelConfig->config['default_conversation_token']
+            ?? $connection->talk_default_conversation_token;
+    }
+
     /**
      * Try to extract a Talk conversation token from a webhook URL.
      *
@@ -285,18 +365,32 @@ class NextcloudTalkChannel
         return $channelConfig->config['default_webhook_url'] ?? null;
     }
 
+    private function getExactWebhookUrl(
+        #[\SensitiveParameter] ?string $exactWebhookUrl,
+        NotificationChannel $channelConfig,
+    ): ?string {
+        if ($exactWebhookUrl !== null) {
+            return filter_var($exactWebhookUrl, FILTER_VALIDATE_URL) !== false
+                ? $exactWebhookUrl
+                : null;
+        }
+
+        return $channelConfig->config['default_webhook_url'] ?? null;
+    }
+
     /**
      * Check if an active Nextcloud connection exists.
      */
-    private function hasConfiguredNextcloudConnection(NotificationChannel $channelConfig): bool
-    {
+    private function configuredNextcloudConnection(
+        NotificationChannel $channelConfig,
+    ): ?NextcloudConnection {
         $connectionId = $channelConfig->config['nextcloud_connection_id'] ?? null;
 
         if ($connectionId) {
             return NextcloudConnection::query()
                 ->where('is_active', true)
                 ->whereKey($connectionId)
-                ->exists();
+                ->first();
         }
 
         return NextcloudConnection::query()
@@ -304,18 +398,28 @@ class NextcloudTalkChannel
             ->orderByRaw("case when scope = 'global' and is_default = 1 then 1 else 0 end desc")
             ->orderByDesc('is_default')
             ->orderByRaw("case when scope = 'global' then 1 else 0 end desc")
-            ->exists();
-    }
-
-    /**
-     * Get the active Nextcloud connection for Talk delivery.
-     */
-    private function activeNextcloudConnection(): ?NextcloudConnection
-    {
-        return NextcloudConnection::query()
-            ->where('is_active', true)
-            ->orderByDesc('is_default')
             ->orderBy('name')
             ->first();
+    }
+
+    /** @return array{status:'delivered',reason_code:string} */
+    private function delivered(): array
+    {
+        return [
+            'status' => 'delivered',
+            'reason_code' => 'nextcloud_talk_delivery_confirmed',
+        ];
+    }
+
+    /** @return array{status:'suppressed',reason_code:string} */
+    private function suppressed(string $reasonCode): array
+    {
+        return ['status' => 'suppressed', 'reason_code' => $reasonCode];
+    }
+
+    /** @return array{status:'unresolved',reason_code:string} */
+    private function unresolved(string $reasonCode): array
+    {
+        return ['status' => 'unresolved', 'reason_code' => $reasonCode];
     }
 }

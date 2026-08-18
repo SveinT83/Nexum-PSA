@@ -68,6 +68,7 @@ class ApiAbilityCatalog
         'risk.update' => self::ACCESS_WRITE,
         'email.read' => self::ACCESS_READ,
         'email.update' => self::ACCESS_WRITE,
+        'email.rules.read' => self::ACCESS_READ,
         'notifications.read' => self::ACCESS_READ,
         'notifications.update' => self::ACCESS_WRITE,
         'sales.read' => self::ACCESS_READ,
@@ -366,12 +367,17 @@ class ApiAbilityCatalog
         ],
         'email.read' => [
             'label' => 'Read email inbox',
-            'description' => 'List and view unrouted inbox messages.',
+            'description' => 'List and view authorized unrouted inbox messages.',
             'domain' => 'Email',
         ],
         'email.update' => [
             'label' => 'Update email inbox',
-            'description' => 'Mark inbox messages as spam and queue inbox polling.',
+            'description' => 'Mark authorized inbox messages as spam and queue polling for mailboxes the actor can organize.',
+            'domain' => 'Email',
+        ],
+        'email.rules.read' => [
+            'label' => 'Read email rules',
+            'description' => 'List, view, and preview Email rule definitions with normal rule-management permission and mailbox access checks.',
             'domain' => 'Email',
         ],
         'notifications.read' => [

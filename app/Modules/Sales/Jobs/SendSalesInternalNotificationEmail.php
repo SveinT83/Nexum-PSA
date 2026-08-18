@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Sales\Models\SalesActivity;
@@ -19,7 +20,16 @@ class SendSalesInternalNotificationEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public int $salesActivityId) {}
+    public ?int $emailAccountId = null;
+
+    public ?int $providerBindingVersion = null;
+
+    public function __construct(public int $salesActivityId)
+    {
+        $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('sales');
+        $this->emailAccountId = $snapshot['account_id'];
+        $this->providerBindingVersion = $snapshot['provider_binding_version'];
+    }
 
     public function handle(
         DefaultEmailAccountResolver $accountResolver,
@@ -38,6 +48,18 @@ class SendSalesInternalNotificationEmail implements ShouldQueue
 
         if (! $account) {
             $this->log(null, $activity->id, 'error', 'SALES_INTERNAL_NOTIFY_NO_ACCOUNT', 'No active sales outbound email account is configured.');
+            return;
+        }
+
+        try {
+            $account = app(EmailProviderBindingSnapshot::class)->resolveScope(
+                'sales',
+                $this->emailAccountId,
+                $this->providerBindingVersion,
+            );
+        } catch (\App\Modules\Integration\Exceptions\EmailProviderSecurityException) {
+            $this->log($account->id, $activity->id, 'error', 'SALES_INTERNAL_NOTIFY_PROVIDER_BINDING_STALE', 'The outbound Email provider binding changed after this job was dispatched.');
+
             return;
         }
 
@@ -62,7 +84,17 @@ class SendSalesInternalNotificationEmail implements ShouldQueue
             'note_body' => $activity->body,
         ]);
 
-        $messageId = $mailer->send($account, $recipient->email, $recipient->name, $rendered['subject'], $rendered['html'], $rendered['text']);
+        $messageId = $mailer->send(
+            $account,
+            $recipient->email,
+            $recipient->name,
+            $rendered['subject'],
+            $rendered['html'],
+            $rendered['text'],
+            [],
+            [],
+            ['provider_binding_version' => $this->providerBindingVersion],
+        );
 
         $this->log($account->id, $activity->id, 'info', 'SALES_INTERNAL_NOTIFY_SENT', 'Sales internal note notification sent.', [
             'opportunity_id' => $opportunity->id,

@@ -31,8 +31,8 @@ use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\PublishTicketToCustomerPortal;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\ReleaseTicketStorageReservation;
-use App\Modules\Ticket\Actions\StoreTicketCostOrQuoteScope;
 use App\Modules\Ticket\Actions\StoreTicket;
+use App\Modules\Ticket\Actions\StoreTicketCostOrQuoteScope;
 use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Actions\UpdateTicketStorageReservation;
@@ -352,7 +352,7 @@ class TicketController extends Controller
         $ticket->load(['queue', 'status', 'priority', 'sla', 'workflow', 'workflowVersion', 'category', 'client', 'workContext', 'site', 'contact.site', 'contact.contact.emails', 'contact.contact.phones', 'owner', 'asset', 'tags', 'messages.author', 'messages.fileAttachments', 'attachments', 'events', 'timeEntries.user', 'costEntries.user', 'costEntries.storageItem', 'plannedLines.storageItem', 'plannedLines.approvedQuoteVersion', 'plannedLines.convertedCostEntry', 'plannedLines.purchaseOrderLine.purchaseOrder', 'salesContext.opportunity.currentQuoteVersion.quote', 'salesContext.opportunity.currentQuoteVersion.lines', 'salesContext.opportunity.quotes.versions.quote', 'salesContext.opportunity.quotes.versions.acceptanceSnapshot', 'workflowReviews.requester', 'workflowReviews.assignedReviewer', 'workflowReviews.reviewer', 'workflowEvidence.creator', 'workflowHistory.actor', 'tasks.status', 'tasks.workContext', 'tasks.assignee', 'tasks.checklistItems', 'tasks.timeEntries', 'syncLinks.relationship']);
         $messageIds = $ticket->messages->pluck('id')->all();
         $emailMessageIds = $ticket->messages
-            ->map(fn (TicketMessage $message): int => (int) data_get($message->metadata, 'email_message_id'))
+            ->map(fn (TicketMessage $message): int => (int) $message->source_inbound_email_message_id)
             ->filter()
             ->unique()
             ->values()

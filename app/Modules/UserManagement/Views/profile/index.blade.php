@@ -141,6 +141,11 @@
                     @endif
                 </div>
             </div>
+
+            <!-- Mail owns email signatures, while Profile exposes the personal technician entry point. -->
+            <div class="mt-3">
+                @include('email::Tech.partials.signature-settings')
+            </div>
         </div>
     </div>
 @endsection

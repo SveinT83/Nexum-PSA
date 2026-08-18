@@ -8,12 +8,24 @@
 
 @section('content')
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-        <form method="get" action="{{ route('tech.inbox.index') }}" class="d-flex" role="search">
-            <input type="text" name="q" value="{{ $search }}" class="form-control me-2" placeholder="Search subject, from, body...">
+        <form method="get" action="{{ route('tech.inbox.index') }}" class="d-flex flex-wrap gap-2" role="search">
+            <input type="text" name="q" value="{{ $search }}" class="form-control" style="max-width: 320px;" placeholder="Search subject, from, body...">
+            @if(($accounts ?? collect())->count() > 1)
+                <select name="account_id" class="form-select" style="max-width: 260px;" aria-label="Mailbox">
+                    <option value="">All accessible mailboxes</option>
+                    @foreach($accounts as $account)
+                        <option value="{{ $account->id }}" @selected((int) ($selectedAccountId ?? 0) === (int) $account->id)>
+                            {{ $account->address }}
+                        </option>
+                    @endforeach
+                </select>
+            @elseif(($accounts ?? collect())->count() === 1)
+                <span class="badge text-bg-light align-self-center">{{ $accounts->first()->address }}</span>
+            @endif
             <button class="btn btn-outline-secondary" type="submit">Search</button>
         </form>
 
-        <form method="post" action="{{ route('tech.inbox.poll') }}" onsubmit="return confirm('Fetch new mail now for all active accounts?');">
+        <form method="post" action="{{ route('tech.inbox.poll') }}" onsubmit="return confirm('Fetch new mail now for mailboxes you can organize?');">
             @csrf
             <button type="submit" class="btn btn-outline-success">Check now</button>
         </form>
@@ -42,10 +54,13 @@
                         <td>
                             <div class="fw-semibold">{{ $msg->from_name ?: $msg->from_email }}</div>
                             <div class="text-muted small">{{ $msg->from_email }}</div>
+                            @if($msg->account)
+                                <div class="text-muted small">{{ $msg->account->address }}</div>
+                            @endif
                         </td>
                         <td>
                             <a href="{{ route('tech.inbox.show', $msg) }}" class="text-decoration-none">
-                                {{ str($msg->subject)->limit(100) ?: '(no subject)' }}
+                                {{ str($msg->displaySubject())->limit(100) ?: '(no subject)' }}
                             </a>
                             <div class="text-muted small">{{ str($msg->body_text ?? '')->limit(120) }}</div>
                         </td>

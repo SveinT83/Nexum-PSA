@@ -2,7 +2,9 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -10,9 +12,9 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when a ticket is approaching or has breached its SLA deadline.
  */
-class TicketSlaWarning extends Notification
+class TicketSlaWarning extends Notification implements EmailAccountMailNotification
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     public function __construct(
         public string $ticketKey,
@@ -20,7 +22,9 @@ class TicketSlaWarning extends Notification
         public string $slaType, // 'response' or 'resolution'
         public string $severity, // 'warning' or 'breached'
         public ?string $dueAt = null,
-    ) {}
+    ) {
+        $this->freezeEmailAccountMailSnapshot('tickets');
+    }
 
     public function via(object $notifiable): array
     {
@@ -31,7 +35,7 @@ class TicketSlaWarning extends Notification
             $channels[] = 'database';
         }
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel('tickets');
         }
 
         $talkChannel = \App\Modules\Notification\Models\NotificationChannel::getByDriver('nextcloud_talk');
@@ -54,7 +58,7 @@ class TicketSlaWarning extends Notification
             ->greeting("Hello {$notifiable->name},")
             ->line("{$icon} The **{$slaLabel} SLA** for ticket **{$this->ticketKey}** has been **{$this->severity}**.")
             ->line("**Subject:** {$this->ticketSubject}")
-            ->when($this->dueAt, fn($m) => $m->line("**Due:** {$this->dueAt}"))
+            ->when($this->dueAt, fn ($m) => $m->line("**Due:** {$this->dueAt}"))
             ->action('View Ticket', $ticketUrl);
     }
 
@@ -85,7 +89,7 @@ class TicketSlaWarning extends Notification
             ]),
             'url' => route('tech.tickets.show', $this->ticketKey),
             'urlLabel' => 'View Ticket',
-            'referenceId' => 'sla-' . $this->ticketKey . '-' . $this->slaType . '-' . $this->severity,
+            'referenceId' => 'sla-'.$this->ticketKey.'-'.$this->slaType.'-'.$this->severity,
             'silent' => $this->severity === 'warning', // warning = silent, breached = loud
         ];
     }

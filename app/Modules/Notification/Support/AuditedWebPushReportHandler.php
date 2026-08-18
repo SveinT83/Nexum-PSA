@@ -23,10 +23,60 @@ use NotificationChannels\WebPush\WebPushMessageInterface;
  */
 class AuditedWebPushReportHandler implements ReportHandlerInterface
 {
+    /** @var null|array{expected:int,delivered:int,suppressed:int,unresolved:int} */
+    private ?array $inboundAggregate = null;
+
     public function __construct(
         private readonly Dispatcher $events,
         private readonly RemoveWebPushSubscription $removeSubscription,
     ) {}
+
+    public function beginInboundAggregate(int $expectedReports): void
+    {
+        if ($expectedReports < 1 || $this->inboundAggregate !== null) {
+            throw new \LogicException('web_push_aggregate_state_invalid');
+        }
+
+        $this->inboundAggregate = [
+            'expected' => $expectedReports,
+            'delivered' => 0,
+            'suppressed' => 0,
+            'unresolved' => 0,
+        ];
+    }
+
+    /** @return array{status:'delivered'|'suppressed'|'unresolved',reason_code:string} */
+    public function finishInboundAggregate(bool $forceUnresolved = false): array
+    {
+        $aggregate = $this->inboundAggregate;
+        $this->inboundAggregate = null;
+        if ($forceUnresolved || $aggregate === null) {
+            return $this->unresolvedAggregate();
+        }
+
+        $observed = $aggregate['delivered'] + $aggregate['suppressed'] + $aggregate['unresolved'];
+        if ($observed !== $aggregate['expected'] || $aggregate['unresolved'] > 0) {
+            return $this->unresolvedAggregate();
+        }
+
+        if ($aggregate['delivered'] === $aggregate['expected']) {
+            return [
+                'status' => 'delivered',
+                'reason_code' => 'web_push_delivery_confirmed',
+            ];
+        }
+
+        if ($aggregate['suppressed'] === $aggregate['expected']) {
+            return [
+                'status' => 'suppressed',
+                'reason_code' => 'web_push_delivery_suppressed',
+            ];
+        }
+
+        // Some devices accepted the notification while another device
+        // rejected it permanently. Replaying would duplicate accepted sends.
+        return $this->unresolvedAggregate();
+    }
 
     public function handleReport(
         MessageSentReport $report,
@@ -39,6 +89,7 @@ class AuditedWebPushReportHandler implements ReportHandlerInterface
             }
 
             $this->events->dispatch(new NotificationSent($report, $subscription, $message));
+            $this->recordInboundOutcome('delivered');
 
             return;
         }
@@ -46,6 +97,7 @@ class AuditedWebPushReportHandler implements ReportHandlerInterface
         if ($report->isSubscriptionExpired()) {
             $this->removeExpiredSubscription($subscription);
             $this->events->dispatch(new NotificationFailed($report, $subscription, $message));
+            $this->recordInboundOutcome('suppressed');
 
             return;
         }
@@ -54,8 +106,11 @@ class AuditedWebPushReportHandler implements ReportHandlerInterface
 
         $status = $report->getResponse()?->getStatusCode();
         if ($status === null || $status === 429 || $status >= 500) {
+            $this->recordInboundOutcome('unresolved');
             throw TemporaryWebPushDeliveryException::forStatus($status);
         }
+
+        $this->recordInboundOutcome('suppressed');
 
         Log::warning('Web Push delivery failed without retry.', [
             'subscription_public_id' => $subscription instanceof WebPushSubscription
@@ -63,6 +118,24 @@ class AuditedWebPushReportHandler implements ReportHandlerInterface
                 : null,
             'http_status' => $status,
         ]);
+    }
+
+    private function recordInboundOutcome(string $status): void
+    {
+        if ($this->inboundAggregate === null || ! array_key_exists($status, $this->inboundAggregate)) {
+            return;
+        }
+
+        $this->inboundAggregate[$status]++;
+    }
+
+    /** @return array{status:'unresolved',reason_code:string} */
+    private function unresolvedAggregate(): array
+    {
+        return [
+            'status' => 'unresolved',
+            'reason_code' => 'web_push_delivery_unresolved',
+        ];
     }
 
     private function removeExpiredSubscription(PushSubscription $subscription): void

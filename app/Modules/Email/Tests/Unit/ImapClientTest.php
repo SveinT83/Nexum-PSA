@@ -4,10 +4,17 @@ namespace App\Modules\Email\Tests\Unit;
 
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Services\ImapClient;
+use Carbon\CarbonImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use ReflectionProperty;
+use Webklex\PHPIMAP\Client;
+use Webklex\PHPIMAP\Folder;
+use Webklex\PHPIMAP\IMAP;
 use Webklex\PHPIMAP\Message;
+use Webklex\PHPIMAP\Query\WhereQuery;
+use Webklex\PHPIMAP\Support\MessageCollection;
 
 class ImapClientTest extends TestCase
 {
@@ -56,5 +63,144 @@ class ImapClientTest extends TestCase
         $method = new ReflectionMethod(ImapClient::class, 'normalizeHeaders');
 
         $this->assertSame([], $method->invoke($client, null));
+    }
+
+    #[Test]
+    public function fetch_by_uid_uses_one_exact_bounded_peek_query_without_a_folder_fallback(): void
+    {
+        $providerMessage = new \stdClass;
+        $messages = MessageCollection::make([$providerMessage]);
+        $query = $this->createMock(WhereQuery::class);
+        $query->expects($this->once())->method('whereUid')->with(4567)->willReturnSelf();
+        $query->expects($this->once())->method('setSequence')->with(IMAP::ST_UID)->willReturnSelf();
+        $query->expects($this->once())->method('leaveUnread')->willReturnSelf();
+        $query->expects($this->once())->method('limit')->with(1)->willReturnSelf();
+        $query->expects($this->once())->method('get')->willReturn($messages);
+
+        $folder = $this->createMock(Folder::class);
+        $folder->expects($this->once())->method('query')->willReturn($query);
+        $folder->expects($this->never())->method('messages');
+
+        $provider = new class($folder) extends Client
+        {
+            public array $folderRequests = [];
+
+            public function __construct(private readonly Folder $folder) {}
+
+            public function __destruct() {}
+
+            public function getFolderByPath($folder_path, bool $utf7 = false, bool $soft_fail = false): ?Folder
+            {
+                $this->folderRequests[] = $folder_path;
+
+                return $this->folder;
+            }
+        };
+
+        $client = new class(new EmailAccount) extends ImapClient
+        {
+            public array $existenceChecks = [];
+
+            public function messageExistsByUid(int $uid, string $folderPath = 'INBOX'): bool
+            {
+                $this->existenceChecks[] = [$uid, $folderPath];
+
+                return true;
+            }
+        };
+        (new ReflectionProperty(ImapClient::class, 'client'))->setValue($client, $provider);
+
+        $this->assertSame($providerMessage, $client->fetchByUid(4567, 'Archive/2026'));
+        $this->assertSame([[4567, 'Archive/2026']], $client->existenceChecks);
+        $this->assertSame(['Archive/2026'], $provider->folderRequests);
+
+        $peekContract = (new \ReflectionClass(WhereQuery::class))->newInstanceWithoutConstructor();
+        $peekContract->leaveUnread();
+        $this->assertSame(IMAP::FT_PEEK, $peekContract->getFetchOptions());
+    }
+
+    #[Test]
+    public function fetch_by_uid_returns_null_when_the_exact_uid_query_confirms_no_message(): void
+    {
+        $client = new class(new EmailAccount) extends ImapClient
+        {
+            public array $existenceChecks = [];
+
+            public function messageExistsByUid(int $uid, string $folderPath = 'INBOX'): bool
+            {
+                $this->existenceChecks[] = [$uid, $folderPath];
+
+                return false;
+            }
+        };
+
+        $this->assertNull($client->fetchByUid(7654));
+        $this->assertSame([[7654, 'INBOX']], $client->existenceChecks);
+    }
+
+    #[Test]
+    public function historical_uid_search_chunks_the_numeric_range_and_stops_at_the_cap_plus_one_sentinel(): void
+    {
+        $ranges = [];
+        $searches = 0;
+        $query = $this->createMock(WhereQuery::class);
+        $query->method('whereUid')->willReturnCallback(function (string $range) use (&$ranges, $query): WhereQuery {
+            $ranges[] = $range;
+
+            return $query;
+        });
+        $query->method('whereSince')->willReturnSelf();
+        $query->method('whereBefore')->willReturnSelf();
+        $query->method('setSequence')->with(IMAP::ST_UID)->willReturnSelf();
+        $query->method('search')->willReturnCallback(function () use (&$searches) {
+            $searches++;
+
+            return collect($searches === 1 ? [999] : [1500]);
+        });
+
+        $folder = $this->createMock(Folder::class);
+        $folder->expects($this->exactly(2))->method('query')->willReturn($query);
+        $provider = new class($folder) extends Client
+        {
+            public function __construct(private readonly Folder $folder) {}
+
+            public function __destruct() {}
+
+            public function getFolderByPath($folder_path, bool $utf7 = false, bool $soft_fail = false): ?Folder
+            {
+                return $this->folder;
+            }
+        };
+        $client = new ImapClient(new EmailAccount);
+        (new ReflectionProperty(ImapClient::class, 'client'))->setValue($client, $provider);
+
+        $uids = $client->searchHistoricalUidsInFolder(
+            'Archive',
+            CarbonImmutable::parse('2026-08-01', 'UTC'),
+            CarbonImmutable::parse('2026-08-02', 'UTC'),
+            1,
+            50000,
+            2,
+        );
+
+        $this->assertSame([999, 1500], $uids);
+        $this->assertSame(['1:1000', '1001:2000'], $ranges);
+        $this->assertSame(2, $searches);
+    }
+
+    #[Test]
+    public function historical_uid_search_rejects_an_unbounded_numeric_range_before_provider_search(): void
+    {
+        $client = new ImapClient(new EmailAccount);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $client->searchHistoricalUidsInFolder(
+            'Archive',
+            CarbonImmutable::parse('2026-08-01', 'UTC'),
+            CarbonImmutable::parse('2026-08-02', 'UTC'),
+            1,
+            ImapClient::HISTORICAL_UID_MAX_SCAN_SPAN + 1,
+            2,
+        );
     }
 }

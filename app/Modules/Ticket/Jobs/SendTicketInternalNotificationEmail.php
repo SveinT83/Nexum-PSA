@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Jobs;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Bus\Queueable;
@@ -17,8 +18,15 @@ class SendTicketInternalNotificationEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public ?int $emailAccountId = null;
+
+    public ?int $providerBindingVersion = null;
+
     public function __construct(public int $ticketMessageId)
     {
+        $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('tickets');
+        $this->emailAccountId = $snapshot['account_id'];
+        $this->providerBindingVersion = $snapshot['provider_binding_version'];
     }
 
     public function handle(DefaultEmailAccountResolver $accountResolver, SmtpAccountMailer $mailer): void
@@ -38,13 +46,35 @@ class SendTicketInternalNotificationEmail implements ShouldQueue
             return;
         }
 
+        try {
+            $account = app(EmailProviderBindingSnapshot::class)->resolveScope(
+                'tickets',
+                $this->emailAccountId,
+                $this->providerBindingVersion,
+            );
+        } catch (\App\Modules\Integration\Exceptions\EmailProviderSecurityException) {
+            $this->log($account->id, $message->id, 'error', 'TICKET_INTERNAL_NOTIFY_PROVIDER_BINDING_STALE', 'The outbound Email provider binding changed after this job was dispatched.');
+
+            return;
+        }
+
         $ticket = $message->ticket;
         $subject = '[' . $ticket->ticket_key . '] Internal note notification';
         $author = $message->author?->name ?? 'A technician';
         $text = $author . " added an internal note:\n\n" . $message->body;
         $html = '<p>' . e($author) . ' added an internal note:</p><div style="white-space:pre-wrap;">' . e($message->body) . '</div>';
 
-        $messageId = $mailer->send($account, $recipient->email, $recipient->name, $subject, $html, $text);
+        $messageId = $mailer->send(
+            $account,
+            $recipient->email,
+            $recipient->name,
+            $subject,
+            $html,
+            $text,
+            [],
+            [],
+            ['provider_binding_version' => $this->providerBindingVersion],
+        );
 
         $this->log($account->id, $message->id, 'info', 'TICKET_INTERNAL_NOTIFY_SENT', 'Ticket internal note notification sent.', [
             'ticket_id' => $ticket->id,

@@ -5,6 +5,7 @@ namespace App\Modules\Marketing\Actions;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Marketing\Models\MarketingCampaign;
 use App\Modules\Marketing\Models\MarketingCampaignEmail;
@@ -36,6 +37,12 @@ class SendMarketingCampaignEmailTest
         }
 
         $rendered = $this->renderEmail->handle($campaign, $email, $overrides);
+        $snapshot = app(EmailProviderBindingSnapshot::class)->captureAccount($account);
+        $account = app(EmailProviderBindingSnapshot::class)->resolveAccount(
+            $account,
+            $snapshot['account_id'],
+            $snapshot['provider_binding_version'],
+        );
         $messageId = $this->mailer->send(
             $account,
             $data['to_email'],
@@ -43,6 +50,9 @@ class SendMarketingCampaignEmailTest
             '[Test] '.$rendered['subject'],
             $rendered['html'],
             $rendered['text'],
+            [],
+            [],
+            ['provider_binding_version' => $snapshot['provider_binding_version']],
         );
 
         EmailLog::query()->create([

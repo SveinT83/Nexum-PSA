@@ -60,6 +60,9 @@ class TelephonyModuleTest extends TestCase
         $response->assertOk()
             ->assertViewIs('telephony::Tech.profile')
             ->assertSee('Personal Intake URL')
+            ->assertSee('Work workspace')
+            ->assertSee('Telephony')
+            ->assertSee(route('tech.telephony.profile'), false)
             ->assertSee('?caller=%no', false);
 
         $firstToken = TelephonyToken::query()->where('user_id', $this->tech->id)->first();

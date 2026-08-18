@@ -16,6 +16,8 @@ use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Documentation\Models\Documentation;
 use App\Modules\Documentation\Models\DocumentationTemplate;
 use App\Modules\Economy\Models\EconomyOrder;
+use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Knowledge\Actions\StoreArticle;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Notification\Models\NotificationSetting;
@@ -31,6 +33,7 @@ use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -318,6 +321,45 @@ class CustomerPortalNotificationsTest extends TestCase
             'unit' => 'month',
             'billing_interval' => 'monthly',
         ]);
+
+        EmailAccount::query()->create([
+            'address' => 'contract-system@example.test',
+            'from_name' => 'Contract System',
+            'account_kind' => EmailAccount::KIND_SYSTEM,
+            'is_active' => true,
+            'is_global_default' => false,
+            'defaults_for' => ['system'],
+            'provider_credential_source' => 'legacy',
+            'provider_binding_version' => 1,
+            'imap_host' => '8.8.8.8',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'contract-system@example.test',
+            'imap_secret' => Crypt::encryptString('contract-imap-secret-fixture'),
+            'imap_auth_type' => 'plain',
+            'smtp_host' => '1.1.1.1',
+            'smtp_port' => 465,
+            'smtp_encryption' => 'ssl',
+            'smtp_username' => 'contract-system@example.test',
+            'smtp_secret' => Crypt::encryptString('contract-smtp-secret-fixture'),
+            'smtp_auth_type' => 'login',
+        ]);
+        app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer
+        {
+            public function send(
+                EmailAccount $account,
+                string $toEmail,
+                ?string $toName,
+                string $subject,
+                string $html,
+                string $text,
+                array $attachments = [],
+                array $ccRecipients = [],
+                array $options = [],
+            ): string {
+                return '<contract-provider-fixture@example.test>';
+            }
+        });
 
         $this->actingAs($tech)
             ->post(route('tech.contracts.send-contract', $contract))

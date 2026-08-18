@@ -5,6 +5,7 @@ namespace App\Modules\Sales\Jobs;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Sales\Models\SalesActivity;
@@ -22,7 +23,16 @@ class SendSalesActivityEmail implements ShouldQueue
 
     public int $timeout = 120;
 
-    public function __construct(public int $salesActivityId) {}
+    public ?int $emailAccountId = null;
+
+    public ?int $providerBindingVersion = null;
+
+    public function __construct(public int $salesActivityId)
+    {
+        $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('sales');
+        $this->emailAccountId = $snapshot['account_id'];
+        $this->providerBindingVersion = $snapshot['provider_binding_version'];
+    }
 
     public function handle(
         DefaultEmailAccountResolver $accountResolver,
@@ -47,6 +57,18 @@ class SendSalesActivityEmail implements ShouldQueue
 
         if (! $account) {
             $this->log(null, $activity->id, 'error', 'SALES_EMAIL_NO_ACCOUNT', 'No active sales outbound email account is configured.');
+            return;
+        }
+
+        try {
+            $account = app(EmailProviderBindingSnapshot::class)->resolveScope(
+                'sales',
+                $this->emailAccountId,
+                $this->providerBindingVersion,
+            );
+        } catch (\App\Modules\Integration\Exceptions\EmailProviderSecurityException) {
+            $this->log($account->id, $activity->id, 'error', 'SALES_EMAIL_PROVIDER_BINDING_STALE', 'The outbound Email provider binding changed after this job was dispatched.');
+
             return;
         }
 
@@ -88,7 +110,8 @@ class SendSalesActivityEmail implements ShouldQueue
                 $this->appendReplyBoundaryToHtml($rendered['html']),
                 $this->appendReplyBoundaryToText($rendered['text']),
                 [],
-                $this->ccRecipients($metadata['cc'] ?? [])
+                $this->ccRecipients($metadata['cc'] ?? []),
+                ['provider_binding_version' => $this->providerBindingVersion],
             );
 
             $this->log($account->id, $activity->id, 'info', 'SALES_EMAIL_SENT', 'Sales email sent.', [

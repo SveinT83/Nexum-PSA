@@ -10,7 +10,9 @@ use App\Models\Core\User;
 use App\Modules\Calendar\Models\CalendarEvent;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLog;
+use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Marketing\Models\MarketingCampaignEvent;
@@ -1372,7 +1374,7 @@ class SalesModuleTest extends TestCase
 
         app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer
         {
-            public function send(\App\Modules\Email\Models\EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = []): string
+            public function send(\App\Modules\Email\Models\EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = [], array $options = []): string
             {
                 app()->instance('sales_quote_email_payload', compact('subject', 'html', 'text'));
 
@@ -2010,7 +2012,7 @@ class SalesModuleTest extends TestCase
 
         app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer
         {
-            public function send(\App\Modules\Email\Models\EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = []): string
+            public function send(\App\Modules\Email\Models\EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = [], array $options = []): string
             {
                 app()->instance('sales_activity_email_payload', compact('subject', 'html', 'text'));
 
@@ -2085,6 +2087,30 @@ class SalesModuleTest extends TestCase
             'body_text' => "Nei. Kan du sende linken igjen?\n\n"
                 ."tor. 21. mai 2026 kl. 21:13 skrev Svein Tore <post@tronderdata.no>:\n\n"
                 ."> Hello Svein Tore,\n>\n> Hei. Har du fått sett på tilbudet?\n>\n> Regards,\n> Admin User\n>\n> --- Please reply above this line ---",
+        ]);
+        $inbox = EmailFolder::query()->create([
+            'account_id' => $account->id,
+            'provider' => 'imap',
+            'path' => 'INBOX',
+            'name' => 'INBOX',
+            'role' => EmailFolder::ROLE_INBOX,
+            'is_selectable' => true,
+            'sync_enabled' => true,
+            'uid_validity' => 1,
+            'sync_status' => EmailFolder::SYNC_SYNCED,
+        ]);
+        EmailMailboxPlacement::query()->create([
+            'email_message_id' => $email->id,
+            'account_id' => $account->id,
+            'email_folder_id' => $inbox->id,
+            'provider' => 'imap',
+            'folder_path' => 'INBOX',
+            'imap_uid_validity' => 1,
+            'imap_uid' => $email->imap_uid,
+            'local_state' => EmailMailboxPlacement::LOCAL_ACTIVE,
+            'sync_status' => EmailMailboxPlacement::SYNC_SYNCED,
+            'sync_version' => 1,
+            'provider_missing_at' => null,
         ]);
 
         app()->call([new ProcessInboundRules($email->id), 'handle']);

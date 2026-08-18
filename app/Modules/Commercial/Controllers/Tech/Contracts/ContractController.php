@@ -11,15 +11,16 @@ use App\Modules\Commercial\Actions\CaptureContractTermVersions;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Requests\ContractsRequest;
-use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Services\BodyNormalizer;
+use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
+use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
@@ -626,82 +627,52 @@ class ContractController extends Controller
     }
 
     /**
-     * Helper to send contract emails using the system's EmailAccount configuration.
-     * Fallback to default Mailer if no active global account is found.
+     * Send through the Integration-backed system Email provider only. A
+     * missing or stale provider is visible to the operator; it never falls
+     * through to a separate system mail transport.
      */
     protected function sendEmailViaAccount(Contracts $contract, string $type)
     {
-        $emailAccount = EmailAccount::where('is_active', true)
-            ->where('is_global_default', true)
-            ->first();
+        $emailAccount = app(DefaultEmailAccountResolver::class)->forScope('system');
 
         $to = $contract->client->billing_email;
         $cc = $contract->cc_email;
 
         if (! $emailAccount) {
-            Log::info('No global default email account found. Using system default mailer.');
-            $mail = Mail::to($to);
-            if ($cc) {
-                $mail->cc($cc);
-            }
-            $mail->send(new ContractLinkSent($contract, $type));
-
-            return;
+            throw new \RuntimeException('No ready system Email provider is configured for contract delivery.');
         }
 
         try {
-            // Map encryption to Symfony Mailer scheme
-            $enc = strtolower($emailAccount->smtp_encryption);
-            $scheme = ($enc === 'ssl' ? 'smtps' : 'smtp');
-
-            $user = $emailAccount->smtp_username;
-            $pass = Crypt::decryptString($emailAccount->smtp_secret);
-            $host = $emailAccount->smtp_host;
-            $port = $emailAccount->smtp_port;
-
-            // Dynamic mailer configuration
-            config([
-                'mail.mailers.dynamic_smtp' => [
-                    'transport' => 'smtp',
-                    'scheme' => $scheme,
-                    'host' => $host,
-                    'port' => $port,
-                    'username' => $user,
-                    'password' => $pass,
-                    'timeout' => null,
-                ],
-            ]);
-
             $mailable = new ContractLinkSent($contract, $type);
-
-            // Set "From" based on account
-            if ($emailAccount->from_name) {
-                $mailable->from($emailAccount->address, $emailAccount->from_name);
-            } else {
-                $mailable->from($emailAccount->address);
-            }
-
-            $mail = Mail::mailer('dynamic_smtp')->to($to);
-            if ($cc) {
-                $mail->cc($cc);
-            }
-            $mail->send($mailable);
-
-            $emailAccount->update(['last_successful_send_at' => now()]);
-
-        } catch (\Exception $e) {
-            Log::error('Failed to send contract email via custom account', [
+            $html = $mailable->render();
+            $snapshot = app(EmailProviderBindingSnapshot::class)->captureAccount($emailAccount);
+            $emailAccount = app(EmailProviderBindingSnapshot::class)->resolveAccount(
+                $emailAccount,
+                $snapshot['account_id'],
+                $snapshot['provider_binding_version'],
+            );
+            app(SmtpAccountMailer::class)->send(
+                $emailAccount,
+                $to,
+                $contract->client?->name,
+                (string) $mailable->envelope()->subject,
+                $html,
+                BodyNormalizer::toText($html),
+                [],
+                $cc && filter_var($cc, FILTER_VALIDATE_EMAIL)
+                    ? [['email' => $cc, 'name' => '']]
+                    : [],
+                ['provider_binding_version' => $snapshot['provider_binding_version']],
+            );
+        } catch (\Throwable $exception) {
+            Log::error('Contract Email provider delivery failed safely.', [
                 'account_id' => $emailAccount->id,
                 'contract_id' => $contract->id,
-                'error' => $e->getMessage(),
+                'reason' => 'contract_email_provider_failed',
+                'exception' => $exception::class,
             ]);
 
-            // Final fallback to system mailer if custom one fails
-            $mail = Mail::to($to);
-            if ($cc) {
-                $mail->cc($cc);
-            }
-            $mail->send(new ContractLinkSent($contract, $type));
+            throw new \RuntimeException('The contract Email provider could not confirm delivery.');
         }
     }
 

@@ -15,6 +15,17 @@ class EnforceTechRoutePermission
     private const EXEMPT_ROUTE_PATTERNS = [
         'tech.invite.*',
         'tech.profile.*',
+        // Mailbox owners and audit operators use controller-level account scope instead of one
+        // broad route permission; neither account administration nor inbox access may substitute.
+        'tech.mail.index',
+        'tech.mail.attachments.download',
+        'tech.mail.raw-source.show',
+        'tech.mail.access.*',
+        'tech.mail.unread-handover.*',
+        'tech.mail.signature.*',
+        'tech.inbox.index',
+        'tech.inbox.show',
+        'tech.inbox.download',
         'tech.context.set',
     ];
 
@@ -85,6 +96,9 @@ class EnforceTechRoutePermission
         'tech.admin.settings.economy.*' => 'economy.manage_settings',
         'tech.admin.settings.email.accounts' => 'email.account_manage',
         'tech.admin.settings.email.accounts.*' => 'email.account_manage',
+        'tech.admin.settings.email.canonical-cutover.*' => 'email.canonical_cutover_manage',
+        'tech.admin.settings.email.correlation.*' => 'email.mailbox_sync_manage',
+        'tech.admin.settings.email.emergency-access.*' => 'email.break_glass_activate',
         'tech.admin.settings.email.config' => 'email.account_manage',
         'tech.admin.settings.email.config.*' => 'email.account_manage',
         'tech.admin.settings.email.rules' => 'email.rule_manage',
@@ -132,6 +146,7 @@ class EnforceTechRoutePermission
         'tech.admin.system.integrations.ai.privacy.*' => 'integration.ai_audit_view',
         'tech.admin.system.integrations.ai.*' => 'integration.ai_manage',
         'tech.admin.system.integrations.api.*' => 'integration.api_manage',
+        'tech.admin.system.integrations.email-providers.*' => 'integration.email_provider_manage',
         'tech.admin.system.integrations.book-stack.*' => 'integration.bookstack_manage',
         'tech.admin.system.integrations.nable-rmm.*' => 'integration.rmm_manage',
         'tech.admin.system.integrations.tactical-rmm.*' => 'integration.rmm_manage',
@@ -325,6 +340,7 @@ class EnforceTechRoutePermission
         'tech.inbox.spam' => 'email.inbox_manage',
         'tech.inbox.poll' => 'email.inbox_manage',
         'tech.inbox.*' => 'email.inbox_view',
+        'tech.mail.*' => 'email.inbox_view',
 
         'tech.risk.create' => 'risk.create',
         'tech.risk.store' => 'risk.create',

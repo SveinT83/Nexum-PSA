@@ -44,6 +44,39 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Provider material must never be copied to the session's validation
+        // old-input bag. Include common aliases so future forms fail closed.
+        $exceptions->dontFlash([
+            'imap_host',
+            'imap_port',
+            'imap_encryption',
+            'imap_transport',
+            'imap_auth_type',
+            'imap_username',
+            'imap_secret',
+            'imap_password',
+            'smtp_host',
+            'smtp_port',
+            'smtp_encryption',
+            'smtp_transport',
+            'smtp_auth_type',
+            'smtp_username',
+            'smtp_secret',
+            'smtp_password',
+            'provider_username',
+            'provider_secret',
+            'provider_password',
+            'credential',
+            'credentials',
+            'access_token',
+            'refresh_token',
+            'client_secret',
+            'api_key',
+            'private_endpoint_reason',
+            'trusted_cidr_name',
+            'trust_mode',
+        ]);
+
         $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
             if ($request->is('api/*')) {
                 return true;

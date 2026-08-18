@@ -317,7 +317,7 @@ class CustomerPortalFoundationTest extends TestCase
         ]);
 
         app()->instance(SmtpAccountMailer::class, new class extends SmtpAccountMailer {
-            public function send(EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = []): string
+            public function send(EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = [], array $options = []): string
             {
                 app()->instance('customer_portal_invite_email_payload', compact('toEmail', 'toName', 'subject', 'html', 'text'));
 

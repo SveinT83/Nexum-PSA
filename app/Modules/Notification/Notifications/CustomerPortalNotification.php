@@ -2,7 +2,9 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -10,9 +12,9 @@ use Illuminate\Notifications\Notification;
 /**
  * Customer-facing portal notification with safe portal URLs only.
  */
-class CustomerPortalNotification extends Notification
+class CustomerPortalNotification extends Notification implements EmailAccountMailNotification
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     /**
      * @param  array<string, mixed>  $payload
@@ -21,7 +23,9 @@ class CustomerPortalNotification extends Notification
     public function __construct(
         private readonly array $payload,
         private readonly ?array $channelOverride = null,
-    ) {}
+    ) {
+        $this->freezeEmailAccountMailSnapshot('system');
+    }
 
     public function via(object $notifiable): array
     {
@@ -33,11 +37,17 @@ class CustomerPortalNotification extends Notification
         }
 
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel('system');
         }
 
         if ($this->channelOverride !== null) {
-            $channels = array_values(array_intersect($channels, $this->channelOverride));
+            $override = array_map(
+                fn (string $channel): string => $channel === 'mail'
+                    ? $this->emailAccountMailChannel('system')
+                    : $channel,
+                $this->channelOverride,
+            );
+            $channels = array_values(array_intersect($channels, $override));
         }
 
         return $channels;

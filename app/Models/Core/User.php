@@ -2,6 +2,7 @@
 
 namespace App\Models\Core;
 
+use App\Modules\Notification\Notifications\EmailAccountResetPasswordNotification;
 use Database\Factories\UserFactory;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -113,6 +114,15 @@ class User extends Authenticatable
     public function isSystemActor(): bool
     {
         return (bool) $this->is_system_actor;
+    }
+
+    /**
+     * Keep password reset delivery inside the Integration-owned Email provider
+     * boundary instead of Laravel's ambient system mailer.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new EmailAccountResetPasswordNotification($token));
     }
 
     /*
