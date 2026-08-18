@@ -9,6 +9,8 @@ use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailProviderDeletionCleanupAttempt;
 use App\Modules\Email\Models\EmailProviderPlacementFinding;
 use App\Modules\Email\Models\EmailRemoteOperation;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
+use App\Modules\Email\Services\EmailLiveInvalidator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -28,6 +30,7 @@ class EmailProviderDeletionCleanupService
 
     public function __construct(
         private readonly EmailConversationProjector $conversations,
+        private readonly EmailLiveInvalidator $invalidator,
     ) {}
 
     /**
@@ -295,9 +298,18 @@ class EmailProviderDeletionCleanupService
                     $this->deleteLocalPayloads($message);
                     $message->tags()->detach();
 
+                    $accountId = $message->account_id;
+
                     if (! $message->forceDelete()) {
                         throw new RuntimeException('database_delete_failed');
                     }
+
+                    $this->invalidator->record([
+                        'account' => [
+                            $accountId => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
+                        ],
+                        'conversations' => $conversationIds,
+                    ]);
 
                     $attempt->forceFill([
                         'status' => EmailProviderDeletionCleanupAttempt::STATUS_PURGED,

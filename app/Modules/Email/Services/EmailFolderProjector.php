@@ -8,6 +8,8 @@ use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailFolderUidNamespace;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
+use App\Modules\Email\Services\EmailLiveInvalidator;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
 
@@ -15,6 +17,7 @@ class EmailFolderProjector
 {
     public function __construct(
         private readonly EmailConversationProjector $conversations,
+        private readonly EmailLiveInvalidator $invalidator,
     ) {}
 
     public function available(): bool
@@ -147,6 +150,14 @@ class EmailFolderProjector
 
         $this->conversations->assignPlacement($placement);
 
+        $this->invalidator->record([
+            'account' => [
+                $placement->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
+            ],
+            'conversations' => $placement->email_conversation_id ? [$placement->email_conversation_id] : [],
+            'placements' => [$placement->id],
+        ]);
+
         return $placement->refresh();
     }
 
@@ -202,6 +213,14 @@ class EmailFolderProjector
         }
 
         $this->conversations->assignPlacement($placement);
+
+        $this->invalidator->record([
+            'account' => [
+                $placement->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
+            ],
+            'conversations' => $placement->email_conversation_id ? [$placement->email_conversation_id] : [],
+            'placements' => [$placement->id],
+        ]);
 
         return $placement->refresh();
     }

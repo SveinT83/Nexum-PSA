@@ -83,6 +83,10 @@ return new class extends Migration
 
     private function resizeMailbox(int $length): void
     {
+        Schema::table('email_messages', function (Blueprint $table): void {
+            $table->index('account_id', 'tmp_acct_fk_idx');
+        });
+
         if (Schema::hasIndex('email_messages', 'em_msg_uid_ns_uq')) {
             Schema::table('email_messages', function (Blueprint $table): void {
                 $table->dropUnique('em_msg_uid_ns_uq');
@@ -91,13 +95,12 @@ return new class extends Migration
         Schema::table('email_messages', function (Blueprint $table) use ($length): void {
             $table->string('mailbox', $length)->default('INBOX')->change();
         });
-        if (! Schema::hasIndex('email_messages', 'em_msg_uid_ns_uq')) {
-            Schema::table('email_messages', function (Blueprint $table): void {
-                $table->unique(
-                    ['account_id', 'mailbox', 'imap_uid_validity', 'imap_uid'],
-                    'em_msg_uid_ns_uq',
-                );
-            });
-        }
+        Schema::table('email_messages', function (Blueprint $table): void {
+            $table->unique(
+                ['account_id', 'mailbox', 'imap_uid_validity', 'imap_uid'],
+                'em_msg_uid_ns_uq',
+            );
+            $table->dropIndex('tmp_acct_fk_idx');
+        });
     }
 };

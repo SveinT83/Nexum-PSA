@@ -68,12 +68,76 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
+use App\Modules\Email\Models\EmailLiveProjectionStream;
+use App\Modules\Email\Services\EmailLiveInvalidator;
+use App\Modules\Email\Services\EmailLivePublisherService;
 use RuntimeException;
 
 class MailWorkspace extends Component
 {
     use WithFileUploads;
     use WithPagination;
+
+    public string $invalidationVersion = '0';
+
+    public bool $liveEnabled = false;
+
+    public function mount(): void
+    {
+        $this->invalidationVersion = (string) (EmailLiveProjectionStream::query()
+            ->where('stream_type', EmailLiveProjectionStream::TYPE_USER)
+            ->where('user_id', auth()->id())
+            ->value('current_version') ?? '0');
+        $this->liveEnabled = config('email_live.enabled', true);
+    }
+
+    public function getListeners()
+    {
+        return [
+            "echo-private:email.user." . auth()->id() . ",.email.projection.invalidated.v1" => 'handleEmailProjectionInvalidated',
+            'mail-filters-changed' => 'applyFilters',
+        ];
+    }
+
+    public function handleEmailProjectionInvalidated(array $payload): void
+    {
+        $toVersion = (int) ($payload['to_version'] ?? 0);
+        $currentVersion = (int) $this->invalidationVersion;
+
+        if ($toVersion <= $currentVersion) {
+            return;
+        }
+
+        if ($toVersion === $currentVersion + 1) {
+            $this->invalidationVersion = (string) $toVersion;
+            $this->refreshMailState();
+            return;
+        }
+
+        $this->catchUpInvalidation();
+    }
+
+    public function catchUpInvalidation(): void
+    {
+        $latestVersion = (int) (EmailLiveProjectionStream::query()
+            ->where('stream_type', EmailLiveProjectionStream::TYPE_USER)
+            ->where('user_id', auth()->id())
+            ->value('current_version') ?? '0');
+
+        if ($latestVersion > (int) $this->invalidationVersion) {
+            $this->invalidationVersion = (string) $latestVersion;
+            $this->refreshMailState();
+        }
+    }
+
+    private function refreshMailState(): void
+    {
+        // For Livewire, simply calling a method that does nothing but exists
+        // will trigger a re-render and re-run the queries in the blade view.
+        // We can also clear some specific caches if needed.
+        $this->unreadForMeByMessage = [];
+    }
 
     private const LEGACY_CONVERSATION_LIST_LIMIT = 100;
 
@@ -283,7 +347,6 @@ class MailWorkspace extends Component
         $this->dispatchFilterChange();
     }
 
-    #[On('mail-filters-changed')]
     public function applyFilters(string $viewMode = 'unread', mixed $accountId = '', mixed $folderId = ''): void
     {
         if (! in_array($viewMode, ['unread', 'inbox', 'drafts', 'all', 'folder'], true)) {
