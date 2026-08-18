@@ -5,6 +5,7 @@ namespace App\Modules\Sales\Jobs;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Sales\Models\SalesQuoteVersion;
@@ -30,7 +31,16 @@ class SendSalesQuoteEmail implements ShouldQueue
     */
     public int $timeout = 120;
 
-    public function __construct(public int $salesQuoteVersionId) {}
+    public ?int $emailAccountId = null;
+
+    public ?int $providerBindingVersion = null;
+
+    public function __construct(public int $salesQuoteVersionId)
+    {
+        $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('sales');
+        $this->emailAccountId = $snapshot['account_id'];
+        $this->providerBindingVersion = $snapshot['provider_binding_version'];
+    }
 
     public function handle(
         DefaultEmailAccountResolver $accountResolver,
@@ -59,6 +69,18 @@ class SendSalesQuoteEmail implements ShouldQueue
 
         if (! $account) {
             $this->log(null, $version->id, 'error', 'SALES_QUOTE_NO_ACCOUNT', 'No active sales outbound email account is configured.');
+
+            return;
+        }
+
+        try {
+            $account = app(EmailProviderBindingSnapshot::class)->resolveScope(
+                'sales',
+                $this->emailAccountId,
+                $this->providerBindingVersion,
+            );
+        } catch (\App\Modules\Integration\Exceptions\EmailProviderSecurityException) {
+            $this->log($account->id, $version->id, 'error', 'SALES_QUOTE_PROVIDER_BINDING_STALE', 'The outbound Email provider binding changed after this job was dispatched.');
 
             return;
         }
@@ -100,7 +122,10 @@ class SendSalesQuoteEmail implements ShouldQueue
                 $recipient->name,
                 $rendered['subject'],
                 $rendered['html'],
-                $rendered['text']
+                $rendered['text'],
+                [],
+                [],
+                ['provider_binding_version' => $this->providerBindingVersion],
             );
 
             $this->log($account->id, $version->id, 'info', 'SALES_QUOTE_SENT', 'Sales quote email sent.', [

@@ -13,23 +13,23 @@ class MarkSalesOpportunityLost
 {
     public function handle(SalesOpportunity $opportunity, string $reason, ?string $note, User $actor): SalesOpportunity
     {
-        if ($opportunity->status === 'lost') {
-            throw ValidationException::withMessages([
-                'lost_reason' => 'This opportunity is already marked as lost.',
-            ]);
-        }
+        $this->assertNotLost($opportunity);
 
-        return DB::transaction(function () use ($opportunity, $reason, $note, $actor): SalesOpportunity {
-            $opportunity->refresh();
-            $calendarEvent = $opportunity->follow_up_calendar_event_id
-                ? CalendarEvent::query()->lockForUpdate()->find($opportunity->follow_up_calendar_event_id)
+        DB::transaction(function () use ($opportunity, $reason, $note, $actor): void {
+            $lockedOpportunity = SalesOpportunity::query()
+                ->lockForUpdate()
+                ->findOrFail($opportunity->getKey());
+            $this->assertNotLost($lockedOpportunity);
+
+            $calendarEvent = $lockedOpportunity->follow_up_calendar_event_id
+                ? CalendarEvent::query()->lockForUpdate()->find($lockedOpportunity->follow_up_calendar_event_id)
                 : null;
 
-            if ($this->isGeneratedFutureFollowUp($calendarEvent, $opportunity)) {
+            if ($this->isGeneratedFutureFollowUp($calendarEvent, $lockedOpportunity)) {
                 $calendarEvent->delete();
             }
 
-            $opportunity->forceFill([
+            $lockedOpportunity->forceFill([
                 'status' => 'lost',
                 'probability_percent' => 0,
                 'weighted_value_ex_vat' => 0,
@@ -44,7 +44,7 @@ class MarkSalesOpportunityLost
             ])->save();
 
             SalesActivity::query()->create([
-                'opportunity_id' => $opportunity->id,
+                'opportunity_id' => $lockedOpportunity->id,
                 'actor_id' => $actor->id,
                 'type' => 'opportunity_lost',
                 'subject' => 'Opportunity marked as lost',
@@ -57,9 +57,18 @@ class MarkSalesOpportunityLost
                     'calendar_event_removed' => $calendarEvent?->trashed() ?? false,
                 ],
             ]);
-
-            return $opportunity->refresh();
         });
+
+        return $opportunity->refresh();
+    }
+
+    private function assertNotLost(SalesOpportunity $opportunity): void
+    {
+        if ($opportunity->status === 'lost') {
+            throw ValidationException::withMessages([
+                'lost_reason' => 'This opportunity is already marked as lost.',
+            ]);
+        }
     }
 
     private function isGeneratedFutureFollowUp(?CalendarEvent $event, SalesOpportunity $opportunity): bool

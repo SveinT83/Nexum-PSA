@@ -15,11 +15,13 @@ class ClassifySignalContextWithAi
     public function __construct(
         private readonly AiChatResponder $responder,
         private readonly SignalSettings $settings,
-    ) {
-    }
+    ) {}
 
-    public function handle(array $context, ?array $settings = null): ?array
-    {
+    public function handle(
+        #[\SensitiveParameter] array $context,
+        ?array $settings = null,
+        ?int $timeCapSeconds = null,
+    ): ?array {
         $settings = $settings ? $this->settings->normalize($settings) : $this->settings->get();
 
         if (! (bool) $settings['ai_classification_enabled']) {
@@ -41,7 +43,10 @@ class ClassifySignalContextWithAi
             $reply = $this->responder->complete($agent, [
                 ['role' => 'system', 'content' => $this->systemPrompt($settings)],
                 ['role' => 'user', 'content' => json_encode($this->context($context, $settings), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)],
-            ], self::TIMEOUT_SECONDS);
+            ],
+                timeoutSeconds: max(1, min(self::TIMEOUT_SECONDS, $timeCapSeconds ?? self::TIMEOUT_SECONDS)),
+                absoluteBudgetSeconds: max(1, min(self::TIMEOUT_SECONDS, $timeCapSeconds ?? self::TIMEOUT_SECONDS)),
+            );
 
             return $this->sanitize($this->decodeJson($reply), $settings, $reply);
         } catch (\Throwable) {
@@ -63,7 +68,7 @@ class ClassifySignalContextWithAi
 
     private function systemPrompt(array $settings): string
     {
-        return trim((string) $settings['ai_classification_prompt'])."\n\nAllowed signal types: ".implode(', ', $settings['ai_allowed_signal_types']).".";
+        return trim((string) $settings['ai_classification_prompt'])."\n\nAllowed signal types: ".implode(', ', $settings['ai_allowed_signal_types']).'.';
     }
 
     private function context(array $context, array $settings): array

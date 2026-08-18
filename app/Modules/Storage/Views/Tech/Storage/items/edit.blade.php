@@ -250,17 +250,25 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-check form-switch mt-4">
+                                <input type="hidden" name="should_order" value="0">
                                 <input class="form-check-input" type="checkbox" id="should_order" name="should_order" value="1" @checked(old('should_order', $item->should_order))>
                                 <label class="form-check-label" for="should_order">Manual should-order flag</label>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-check form-switch mt-4">
                                 <input type="hidden" name="can_be_ordered" value="0">
                                 <input class="form-check-input" type="checkbox" id="can_be_ordered" name="can_be_ordered" value="1" @checked(old('can_be_ordered', $item->can_be_ordered))>
                                 <label class="form-check-label" for="can_be_ordered">Can be ordered when stock is short</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mt-4">
+                                <input type="hidden" name="requires_customer_quote" value="0">
+                                <input class="form-check-input" type="checkbox" id="requires_customer_quote" name="requires_customer_quote" value="1" @checked(old('requires_customer_quote', $item->requires_customer_quote))>
+                                <label class="form-check-label" for="requires_customer_quote">Requires accepted quote before use</label>
                             </div>
                         </div>
                     </div>

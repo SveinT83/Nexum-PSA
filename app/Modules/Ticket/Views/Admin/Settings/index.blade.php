@@ -85,6 +85,35 @@
         </form>
     </x-card.default>
 
+    <!-- Quote cost policy: decides when the shared Add cost/item action starts customer approval instead of actual cost. -->
+    <x-card.default title="Quote Cost Policy">
+        <form method="POST" action="{{ route('tech.admin.settings.tickets.quote-cost-policy.update') }}">
+            @csrf
+
+            <div class="mb-3">
+                <label for="quote_required_cost_threshold" class="form-label">Require quote at line total ex VAT</label>
+                <div class="input-group">
+                    <input
+                        id="quote_required_cost_threshold"
+                        name="quote_required_cost_threshold"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        class="form-control @error('quote_required_cost_threshold') is-invalid @enderror"
+                        value="{{ old('quote_required_cost_threshold', $quoteCostPolicy['quote_required_cost_threshold'] ?? '') }}"
+                        placeholder="No automatic threshold">
+                    <span class="input-group-text">NOK</span>
+                    @error('quote_required_cost_threshold')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="form-text">
+                    Applies to the Ticket Add cost/item action. Storage items can also require quote approval individually.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save quote cost policy</button>
+        </form>
+    </x-card.default>
+
     <!-- Ticket merge settings: manual merge is always available; automation and suggestions are explicitly controlled. -->
     <x-card.default title="Ticket Merging">
         <form method="POST" action="{{ route('tech.admin.settings.tickets.merge-settings.update') }}">

@@ -12,11 +12,64 @@ clearly owned service namespace.
 - BookStack connection settings and health check.
 - BookStack pull sync into Knowledge and guarded two-way push for shelves, books, chapters, and pages.
 - API key management for tdPSA external access.
+- Multi-record Email provider connections with normalized endpoints, staged password credentials,
+  explicit verification/activation/revocation, and controlled legacy-account migration.
 - Provider-neutral AI providers, agents, chat execution, and sanitized attempt-level model usage
   telemetry.
 
 Routes live in `app/Modules/Integration/routes.php`. Controllers live in
 `app/Modules/Integration/Controllers`. Views live in `app/Modules/Integration/Views`.
+
+## Email Provider Connections
+
+Integration is the only writer of Email provider endpoints and credentials. Administrators manage
+independent connections under **Admin > System > Integrations > Email providers**. Each connection
+has one safe display label, normalized IMAP/SMTP configuration, a monotonically versioned password
+credential history, an exact active/verified pointer, and append-only metadata-only lifecycle events.
+The generic Integration enable/disable form cannot mutate an Email provider connection.
+
+Standard endpoints are fixed to IMAP 993 implicit TLS, IMAP 143 required STARTTLS, SMTP 465 implicit
+TLS, and SMTP 587 required STARTTLS. A custom port must match one uniquely named installation entry
+in `email_provider_security.additional_endpoints`. Public resolution rejects every mixed or unsafe
+answer set and all private, loopback, link-local, metadata, documentation, benchmark, reserved, and
+special-purpose destinations. One approved address is pinned for the connection while certificate
+and hostname verification continue to use the original normalized hostname, TLS 1.2 or newer, and no
+self-signed bypass.
+
+Private/internal endpoints require all of the following: Superuser-only
+`integration.email_private_endpoint_manage`, `trust_mode=trusted_private`, a non-empty operator
+reason, and an exact named entry in `email_provider_security.trusted_private_cidrs`. Always-denied
+destinations are never made available by private trust. The Admin permission
+`integration.email_provider_manage` manages public connections; preview, stage, Verify, cutover, and
+rollback also require `email.mailbox_sync_manage`. Binding a provider to an Email account additionally
+requires `email.account_manage`.
+
+Creating a connection or rotating a secret creates a staged credential. Only explicit **Verify** may
+perform DNS and provider authentication. **Activate** accepts only that exact verified configuration
+and credential version under provider/account locks, retires the previous version, and destroys its
+ciphertext. **Revoke** destroys local ciphertext and blocks new runtime use; it does not claim that a
+provider-side password was revoked. Only secret rotation is allowed in place. A username or endpoint
+change requires a new connection, explicit account rebind, and mailbox re-baseline.
+
+The legacy migration surface is deliberately staged: read-only preview, local locked re-encryption,
+separate provider Verify, pause/drain, exact cutover readiness, source/reference-only cutover, and a
+guarded rollback while legacy ciphertext remains intact. Staging performs no DNS lookup, provider
+call, send, provider mutation, or source switch. Legacy secret purge is readiness-only and requires a
+later named human review plus backup/recovery proof.
+
+Runtime credentials are short-lived, redacted, non-serializable value objects resolved only while the
+owning Email provider lock is held. Queue payloads freeze opaque account and positive binding-version
+facts, then re-resolve at execution; stale binding, revocation, endpoint/configuration change, or
+missing exact verification fails before network I/O. There is no legacy or Laravel system-mailer
+fallback. This applies to Mail, Ticket, Sales, Marketing, Commercial, Customer Portal, Storage,
+Booking, Notification, and password-reset sends.
+
+Telescope query and model watchers are disabled for this boundary, request values are recursively
+redacted, and `/telescope` requires an active Superuser with `system.telescope_view`. Historical local
+entries created before these guards must be handled with the bounded
+`email-provider:telescope-remediate` preview/hash/purge command. Never substitute a broad
+`telescope:clear`: unrelated observability history must be preserved unless a human separately
+authorizes its deletion.
 
 ## Product Direction
 
@@ -89,6 +142,8 @@ or stale BookStack source metadata.
 ## Guardrails
 
 - API keys and provider secrets must be encrypted using existing integration secret patterns.
+- Email endpoints and credentials must use the dedicated versioned provider lifecycle; do not add
+  them to generic Integration settings or back to Email account forms.
 - Agents must never bypass tdPSA authorization, tenant boundaries, or module ownership rules.
 - Context providers should return structured, auditable context instead of passing entire pages
   blindly to a model.

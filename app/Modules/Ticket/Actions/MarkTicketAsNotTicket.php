@@ -5,6 +5,7 @@ namespace App\Modules\Ticket\Actions;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
+use App\Modules\Notification\Services\InboundEmailNotificationFanoutReadiness;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
@@ -15,8 +16,21 @@ use InvalidArgumentException;
 
 class MarkTicketAsNotTicket
 {
+    public function __construct(
+        private readonly InboundEmailNotificationFanoutReadiness $fanoutReadiness,
+    ) {}
+
     public function handle(Ticket $ticket, ?User $actor = null): int
     {
+        if (! $this->fanoutReadiness->ready()
+            || DB::table(AdvanceInboundEmailTicketMessageRepair::TABLE)
+                ->where('id', 1)
+                ->value('status') !== AdvanceInboundEmailTicketMessageRepair::STATUS_COMPLETED) {
+            throw new InvalidArgumentException(
+                'Inbound Ticket-message pointer repair must complete before returning mail to Inbox.',
+            );
+        }
+
         return DB::transaction(function () use ($ticket, $actor) {
             $emails = $this->linkedEmails($ticket);
 
@@ -71,17 +85,14 @@ class MarkTicketAsNotTicket
     private function linkedEmails(Ticket $ticket): Collection
     {
         $messageEmailIds = $ticket->messages()
-            ->get(['metadata'])
-            ->pluck('metadata')
-            ->map(fn ($metadata) => (int) ($metadata['email_message_id'] ?? 0))
+            ->pluck('source_inbound_email_message_id')
+            ->map(fn ($emailMessageId): int => (int) $emailMessageId)
             ->filter()
             ->values();
 
         return EmailMessage::query()
             ->where('ticket_id', $ticket->id)
-            ->when($messageEmailIds->isNotEmpty(), function ($query) use ($messageEmailIds) {
-                $query->orWhereIn('id', $messageEmailIds);
-            })
+            ->whereIn('id', $messageEmailIds)
             ->get()
             ->unique('id')
             ->values();
@@ -128,6 +139,7 @@ class MarkTicketAsNotTicket
 
         if ($rule) {
             $rule->forceFill($payload)->save();
+
             return;
         }
 

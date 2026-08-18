@@ -481,6 +481,7 @@ class StorageController extends Controller
             'initial_quantity' => [$creating ? 'sometimes' : 'prohibited', 'nullable', 'integer', 'min:0'],
             'should_order' => ['sometimes', 'boolean'],
             'can_be_ordered' => ['sometimes', 'boolean'],
+            'requires_customer_quote' => ['sometimes', 'boolean'],
             'status' => [$creating ? 'sometimes' : 'sometimes', 'string', Rule::in(['active', 'inactive'])],
         ]);
     }

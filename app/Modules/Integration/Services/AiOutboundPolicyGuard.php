@@ -91,6 +91,16 @@ class AiOutboundPolicyGuard
         return $this->authorize($agent, $model, $workload);
     }
 
+    /**
+     * Validate an ordinary agent/model call without sending or sanitizing a payload.
+     *
+     * @throws AiPolicyDeniedException
+     */
+    public function authorizeAgent(AiAgent $agent, string $model): string
+    {
+        return $this->authorize($agent, $model, null);
+    }
+
     private function authorize(
         AiAgent $agent,
         string $model,

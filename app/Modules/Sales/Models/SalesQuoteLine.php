@@ -9,6 +9,7 @@ class SalesQuoteLine extends Model
 {
     protected $fillable = [
         'quote_version_id',
+        'option_group_id',
         'section',
         'sort_order',
         'source_type',
@@ -31,11 +32,22 @@ class SalesQuoteLine extends Model
         'line_total_inc_vat',
         'margin_amount',
         'margin_percent',
+        'is_required',
+        'is_recommended',
+        'customer_selected_by_default',
+        'customer_quantity_editable',
+        'min_customer_quantity',
+        'max_customer_quantity',
+        'customer_label',
         'snapshot',
     ];
 
     protected $casts = [
         'is_optional' => 'boolean',
+        'is_required' => 'boolean',
+        'is_recommended' => 'boolean',
+        'customer_selected_by_default' => 'boolean',
+        'customer_quantity_editable' => 'boolean',
         'quantity' => 'decimal:2',
         'unit_cost_ex_vat' => 'decimal:2',
         'unit_price_ex_vat' => 'decimal:2',
@@ -46,6 +58,8 @@ class SalesQuoteLine extends Model
         'line_total_inc_vat' => 'decimal:2',
         'margin_amount' => 'decimal:2',
         'margin_percent' => 'decimal:2',
+        'min_customer_quantity' => 'decimal:2',
+        'max_customer_quantity' => 'decimal:2',
         'snapshot' => 'array',
     ];
 
@@ -58,11 +72,32 @@ class SalesQuoteLine extends Model
                     ? 'monthly'
                     : 'one_time';
             }
+
+            if ($line->is_required === null) {
+                $line->is_required = ! (bool) $line->is_optional;
+            }
+
+            if ($line->customer_selected_by_default === null) {
+                $line->customer_selected_by_default = true;
+            }
+
+            if ($line->min_customer_quantity === null) {
+                $line->min_customer_quantity = $line->quantity;
+            }
+
+            if ($line->max_customer_quantity === null) {
+                $line->max_customer_quantity = $line->quantity;
+            }
         });
     }
 
     public function quoteVersion(): BelongsTo
     {
         return $this->belongsTo(SalesQuoteVersion::class, 'quote_version_id');
+    }
+
+    public function optionGroup(): BelongsTo
+    {
+        return $this->belongsTo(SalesQuoteOptionGroup::class, 'option_group_id');
     }
 }

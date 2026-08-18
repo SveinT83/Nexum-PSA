@@ -4,6 +4,7 @@ namespace App\Modules\UserManagement\Jobs;
 
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\UserManagement\Models\InviteToken;
@@ -12,12 +13,17 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SendUserInviteEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 120;
+
+    public ?int $emailAccountId = null;
+
+    public ?int $providerBindingVersion = null;
 
     /*
     |--------------------------------------------------------------------------
@@ -31,6 +37,9 @@ class SendUserInviteEmail implements ShouldQueue
     */
     public function __construct(public int $inviteTokenId)
     {
+        $snapshot = app(EmailProviderBindingSnapshot::class)->captureScope('system');
+        $this->emailAccountId = $snapshot['account_id'];
+        $this->providerBindingVersion = $snapshot['provider_binding_version'];
     }
 
     public function handle(
@@ -48,6 +57,21 @@ class SendUserInviteEmail implements ShouldQueue
 
         if (! $account) {
             throw new \RuntimeException('No active system outbound email account is configured for user invites.');
+        }
+
+        try {
+            $account = app(EmailProviderBindingSnapshot::class)->resolveScope(
+                'system',
+                $this->emailAccountId,
+                $this->providerBindingVersion,
+            );
+        } catch (\App\Modules\Integration\Exceptions\EmailProviderSecurityException) {
+            Log::warning('User invite Email was superseded by a provider binding change.', [
+                'invite_token_id' => $inviteToken->id,
+                'reason' => 'provider_binding_stale',
+            ]);
+
+            return;
         }
 
         $template = EmailTemplate::query()
@@ -79,7 +103,10 @@ class SendUserInviteEmail implements ShouldQueue
             $user->name,
             $rendered['subject'],
             $rendered['html'],
-            $rendered['text']
+            $rendered['text'],
+            [],
+            [],
+            ['provider_binding_version' => $this->providerBindingVersion],
         );
     }
 }

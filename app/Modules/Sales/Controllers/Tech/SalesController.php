@@ -16,6 +16,8 @@ use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\Sales\Actions\EnsureSalesDefaults;
 use App\Modules\Sales\Actions\EnsureSalesQuoteDraft;
+use App\Modules\Sales\Actions\EvaluateSalesQuoteApproval;
+use App\Modules\Sales\Actions\ApplySalesQuoteTemplate;
 use App\Modules\Sales\Actions\MarkSalesOpportunityLost;
 use App\Modules\Sales\Actions\RecalculateSalesQuoteVersion;
 use App\Modules\Sales\Actions\ReopenSalesOpportunity;
@@ -27,8 +29,12 @@ use App\Modules\Sales\Jobs\SendSalesQuoteEmail;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Sales\Models\SalesOpportunityStakeholder;
+use App\Modules\Sales\Models\SalesQuoteAcknowledgement;
 use App\Modules\Sales\Models\SalesQuote;
+use App\Modules\Sales\Models\SalesQuoteConversionPlan;
 use App\Modules\Sales\Models\SalesQuoteLine;
+use App\Modules\Sales\Models\SalesQuoteOptionGroup;
+use App\Modules\Sales\Models\SalesQuoteTemplate;
 use App\Modules\Sales\Models\SalesQuoteVersion;
 use App\Modules\Sales\Models\SalesSetting;
 use App\Modules\Sales\Support\SalesQuotePresentation;
@@ -211,8 +217,12 @@ class SalesController extends Controller
             'owner',
             'activities.actor',
             'stakeholders.clientUser',
-            'quotes.currentVersion.lines',
-            'currentQuoteVersion.lines',
+            'quotes.currentVersion.lines.optionGroup',
+            'currentQuoteVersion.lines.optionGroup',
+            'currentQuoteVersion.optionGroups.lines',
+            'currentQuoteVersion.acknowledgements',
+            'currentQuoteVersion.acceptanceSnapshot',
+            'currentQuoteVersion.conversionPlans',
         ]);
 
         return view('sales::Tech.Sales.show', [
@@ -229,6 +239,11 @@ class SalesController extends Controller
             'services' => Services::query()
                 ->with(['costRelations.cost'])
                 ->where(fn ($query) => $query->where('status', 'active')->orWhereNull('status'))
+                ->orderBy('name')
+                ->get(),
+            'quoteTemplates' => SalesQuoteTemplate::query()
+                ->where('is_active', true)
+                ->withCount('lines')
                 ->orderBy('name')
                 ->get(),
             'packages' => Package::query()
@@ -435,11 +450,16 @@ class SalesController extends Controller
             'assumptions_text' => ['nullable', 'string', 'max:20000'],
             'exclusions_text' => ['nullable', 'string', 'max:20000'],
             'next_steps_text' => ['nullable', 'string', 'max:20000'],
+            'acknowledgement_title' => ['nullable', 'string', 'max:255'],
+            'acknowledgement_body' => ['nullable', 'string', 'max:20000'],
+            'acknowledgement_required' => ['nullable', 'boolean'],
         ]);
 
-        $version->fill(array_merge($data, [
+        $version->fill(array_merge(collect($data)->except(['acknowledgement_title', 'acknowledgement_body', 'acknowledgement_required'])->all(), [
             'updated_by' => $request->user()->id,
         ]))->save();
+        $this->saveQuoteAcknowledgement($version, $data);
+        $this->resetDraftApproval($version, $request->user(), 'Quote presentation changed.');
 
         return back()
             ->with('success', 'Quote presentation updated.')
@@ -472,12 +492,30 @@ class SalesController extends Controller
             'discount_type' => 'required|string|in:amount,percent',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
             'is_optional' => 'nullable|boolean',
+            'is_required' => 'nullable|boolean',
+            'is_recommended' => 'nullable|boolean',
+            'customer_selected_by_default' => 'nullable|boolean',
+            'customer_quantity_editable' => 'nullable|boolean',
+            'min_customer_quantity' => 'nullable|numeric|min:0.01|max:100000',
+            'max_customer_quantity' => 'nullable|numeric|min:0.01|max:100000',
+            'customer_label' => 'nullable|string|max:255',
+            'option_group_name' => 'nullable|string|max:255',
+            'option_group_type' => ['nullable', Rule::in(array_keys(SalesQuoteOptionGroup::TYPES))],
+            'option_group_description' => 'nullable|string|max:2000',
+            'option_group_min_select' => 'nullable|integer|min:0|max:100',
+            'option_group_max_select' => 'nullable|integer|min:1|max:100',
+            'line_acknowledgement_title' => 'nullable|string|max:255',
+            'line_acknowledgement_body' => 'nullable|string|max:20000',
+            'line_acknowledgement_required' => 'nullable|boolean',
         ]);
 
         $lineData = $this->lineDataFromSource($data);
+        $optionGroup = $this->resolveOptionGroup($version, $data);
+        $cpqData = $this->lineCpqData($request, $data);
 
-        SalesQuoteLine::query()->create(array_merge($lineData, [
+        $line = SalesQuoteLine::query()->create(array_merge($lineData, $cpqData, [
             'quote_version_id' => $version->id,
+            'option_group_id' => $optionGroup?->id,
             'section' => $data['section'],
             'downstream_type' => $data['downstream_type'],
             'billing_cadence' => $quotePresentation->normalizeCadence(
@@ -491,9 +529,11 @@ class SalesController extends Controller
             'discount_value' => $data['discount_value'] ?? 0,
             'discount_type' => $data['discount_type'],
             'vat_rate' => $data['vat_rate'] ?? $lineData['vat_rate'],
-            'is_optional' => $request->boolean('is_optional'),
+            'is_optional' => ! $cpqData['is_required'],
             'description' => $data['description'] ?? $lineData['description'],
         ]));
+        $this->saveLineAcknowledgement($version, $line, $data);
+        $this->resetDraftApproval($version, $request->user(), 'Quote line added.');
 
         $recalculate->handle($version);
 
@@ -502,13 +542,14 @@ class SalesController extends Controller
             ->with('open_quote_modal', true);
     }
 
-    public function deleteQuoteLine(SalesOpportunity $sale, SalesQuoteLine $line, RecalculateSalesQuoteVersion $recalculate): RedirectResponse
+    public function deleteQuoteLine(Request $request, SalesOpportunity $sale, SalesQuoteLine $line, RecalculateSalesQuoteVersion $recalculate): RedirectResponse
     {
         abort_unless((int) $line->quoteVersion->quote->opportunity_id === (int) $sale->id, 404);
         abort_unless($line->quoteVersion->isEditable(), 422);
 
         $version = $line->quoteVersion;
         $line->delete();
+        $this->resetDraftApproval($version, $request->user(), 'Quote line removed.');
         $recalculate->handle($version);
 
         return back()
@@ -539,9 +580,36 @@ class SalesController extends Controller
             'discount_type' => 'required|string|in:amount,percent',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
             'is_optional' => 'nullable|boolean',
+            'is_required' => 'nullable|boolean',
+            'is_recommended' => 'nullable|boolean',
+            'customer_selected_by_default' => 'nullable|boolean',
+            'customer_quantity_editable' => 'nullable|boolean',
+            'min_customer_quantity' => 'nullable|numeric|min:0.01|max:100000',
+            'max_customer_quantity' => 'nullable|numeric|min:0.01|max:100000',
+            'customer_label' => 'nullable|string|max:255',
+            'option_group_name' => 'nullable|string|max:255',
+            'option_group_type' => ['nullable', Rule::in(array_keys(SalesQuoteOptionGroup::TYPES))],
+            'option_group_description' => 'nullable|string|max:2000',
+            'option_group_min_select' => 'nullable|integer|min:0|max:100',
+            'option_group_max_select' => 'nullable|integer|min:1|max:100',
+            'line_acknowledgement_title' => 'nullable|string|max:255',
+            'line_acknowledgement_body' => 'nullable|string|max:20000',
+            'line_acknowledgement_required' => 'nullable|boolean',
         ]);
+        $optionGroup = $this->resolveOptionGroup($line->quoteVersion, $data);
+        $cpqData = $this->lineCpqData($request, $data, $line);
 
-        $line->fill(array_merge($data, [
+        $line->fill(array_merge(collect($data)->except([
+            'option_group_name',
+            'option_group_type',
+            'option_group_description',
+            'option_group_min_select',
+            'option_group_max_select',
+            'line_acknowledgement_title',
+            'line_acknowledgement_body',
+            'line_acknowledgement_required',
+        ])->all(), $cpqData, [
+            'option_group_id' => $optionGroup?->id,
             'billing_cadence' => $quotePresentation->normalizeCadence(
                 $data['billing_cadence'] ?? null,
                 $data['section'],
@@ -550,8 +618,10 @@ class SalesController extends Controller
             'unit_cost_ex_vat' => $data['unit_cost_ex_vat'] ?? 0,
             'discount_value' => $data['discount_value'] ?? 0,
             'vat_rate' => $data['vat_rate'] ?? 25,
-            'is_optional' => $request->boolean('is_optional'),
+            'is_optional' => ! $cpqData['is_required'],
         ]))->save();
+        $this->saveLineAcknowledgement($line->quoteVersion, $line, $data);
+        $this->resetDraftApproval($line->quoteVersion, $request->user(), 'Quote line changed.');
 
         $recalculate->handle($line->quoteVersion);
 
@@ -587,7 +657,115 @@ class SalesController extends Controller
             ->with('open_quote_modal', true);
     }
 
-    public function sendQuote(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate, SendCustomerPortalNotification $portalNotifications): RedirectResponse
+    public function requestQuoteApproval(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate, EvaluateSalesQuoteApproval $approval): RedirectResponse
+    {
+        $version = $sale->currentQuoteVersion()->with('quote')->firstOrFail();
+        abort_unless($version->isEditable(), 422, 'Only draft quotes can be submitted for approval.');
+
+        $recalculate->handle($version);
+        $result = $approval->handle($version);
+
+        $version->forceFill([
+            'approval_status' => $result['required'] ? 'pending' : 'not_required',
+            'approval_required_reasons' => $result['reasons'],
+            'approval_policy_snapshot' => $result['policy'],
+            'approval_requested_at' => $result['required'] ? now() : null,
+            'approval_requested_by' => $result['required'] ? $request->user()->id : null,
+            'approval_decided_at' => null,
+            'approval_decided_by' => null,
+            'approval_decision_note' => null,
+        ])->save();
+
+        SalesActivity::query()->create([
+            'opportunity_id' => $sale->id,
+            'actor_id' => $request->user()->id,
+            'type' => $result['required'] ? 'quote_approval_requested' : 'quote_approval_not_required',
+            'subject' => $result['required'] ? 'Quote approval requested' : 'Quote approval not required',
+            'body' => $result['required'] ? implode("\n", $result['reasons']) : 'Approval policy did not require internal approval for this quote.',
+            'metadata' => ['quote_version_id' => $version->id, 'reasons' => $result['reasons']],
+        ]);
+
+        return back()
+            ->with($result['required'] ? 'warning' : 'success', $result['required'] ? 'Quote sent for internal approval.' : 'Approval is not required for this quote.')
+            ->with('open_quote_modal', true);
+    }
+
+    public function approveQuote(Request $request, SalesOpportunity $sale): RedirectResponse
+    {
+        $this->assertQuoteApprover($request);
+
+        return $this->decideQuoteApproval($request, $sale, 'approved', 'Quote approved.');
+    }
+
+    public function rejectQuote(Request $request, SalesOpportunity $sale): RedirectResponse
+    {
+        $this->assertQuoteApprover($request);
+
+        return $this->decideQuoteApproval($request, $sale, 'rejected', 'Quote approval rejected.');
+    }
+
+    public function requestQuoteChanges(Request $request, SalesOpportunity $sale): RedirectResponse
+    {
+        $this->assertQuoteApprover($request);
+
+        return $this->decideQuoteApproval($request, $sale, 'changes_requested', 'Quote changes requested.');
+    }
+
+    public function applyQuoteTemplate(Request $request, SalesOpportunity $sale, ApplySalesQuoteTemplate $applyTemplate): RedirectResponse
+    {
+        $data = $request->validate([
+            'template_id' => 'required|exists:sales_quote_templates,id',
+            'replace_existing' => 'nullable|boolean',
+        ]);
+
+        $template = SalesQuoteTemplate::query()->where('is_active', true)->findOrFail($data['template_id']);
+        $version = $sale->currentQuoteVersion()->with('quote')->firstOrFail();
+
+        $applyTemplate->handle($version, $template, $request->user(), (bool) ($data['replace_existing'] ?? false));
+
+        return redirect()->route('tech.sales.show', $sale)
+            ->with('success', 'Quote template applied.')
+            ->with('open_quote_modal', true);
+    }
+
+    public function updateConversionPlan(Request $request, SalesOpportunity $sale, SalesQuoteConversionPlan $plan): RedirectResponse
+    {
+        $plan->loadMissing('quoteVersion.quote');
+        abort_unless((int) $plan->quoteVersion->quote->opportunity_id === (int) $sale->id, 404);
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['pending', 'in_progress', 'completed', 'deferred', 'blocked', 'not_applicable'])],
+            'target_reference' => ['nullable', 'string', 'max:255'],
+            'operator_note' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $terminalStatuses = ['completed', 'deferred', 'blocked', 'not_applicable'];
+        $plan->forceFill([
+            'status' => $data['status'],
+            'target_reference' => $data['target_reference'] ?? null,
+            'operator_note' => $data['operator_note'] ?? null,
+            'processed_at' => in_array($data['status'], $terminalStatuses, true) ? now() : null,
+            'processed_by' => in_array($data['status'], $terminalStatuses, true) ? $request->user()->id : null,
+        ])->save();
+
+        SalesActivity::query()->create([
+            'opportunity_id' => $sale->id,
+            'actor_id' => $request->user()->id,
+            'type' => 'quote_conversion_plan_updated',
+            'subject' => 'Quote conversion plan updated',
+            'body' => trim(str_replace('_', ' ', $data['status'])."\n".($data['target_reference'] ?? '')."\n".($data['operator_note'] ?? '')),
+            'metadata' => [
+                'quote_version_id' => $plan->quote_version_id,
+                'conversion_plan_id' => $plan->id,
+                'status' => $data['status'],
+                'target_reference' => $data['target_reference'] ?? null,
+            ],
+        ]);
+
+        return back()->with('success', 'Conversion plan updated.');
+    }
+
+    public function sendQuote(Request $request, SalesOpportunity $sale, RecalculateSalesQuoteVersion $recalculate, SendCustomerPortalNotification $portalNotifications, EvaluateSalesQuoteApproval $approval): RedirectResponse
     {
         $version = $sale->currentQuoteVersion()->with('quote')->firstOrFail();
 
@@ -599,6 +777,46 @@ class SalesController extends Controller
 
         if ($version->lines()->count() < 1) {
             return back()->with('warning', 'Add at least one quote line before sending.');
+        }
+
+        $approvalResult = $approval->handle($version);
+        if ($approvalResult['required'] && $version->approval_status !== 'approved') {
+            $version->forceFill([
+                'approval_status' => 'pending',
+                'approval_required_reasons' => $approvalResult['reasons'],
+                'approval_policy_snapshot' => $approvalResult['policy'],
+                'approval_requested_at' => $version->approval_requested_at ?: now(),
+                'approval_requested_by' => $version->approval_requested_by ?: $request->user()->id,
+                'approval_decided_at' => null,
+                'approval_decided_by' => null,
+                'approval_decision_note' => null,
+            ])->save();
+
+            SalesActivity::query()->create([
+                'opportunity_id' => $sale->id,
+                'actor_id' => $request->user()->id,
+                'type' => 'quote_approval_requested',
+                'subject' => 'Quote approval required',
+                'body' => implode("\n", $approvalResult['reasons']),
+                'metadata' => ['quote_version_id' => $version->id, 'reasons' => $approvalResult['reasons']],
+            ]);
+
+            return back()
+                ->with('warning', 'Quote requires internal approval before sending.')
+                ->with('open_quote_modal', true);
+        }
+
+        if (! $approvalResult['required'] && $version->approval_status !== 'not_required') {
+            $version->forceFill([
+                'approval_status' => 'not_required',
+                'approval_required_reasons' => [],
+                'approval_policy_snapshot' => $approvalResult['policy'],
+                'approval_requested_at' => null,
+                'approval_requested_by' => null,
+                'approval_decided_at' => null,
+                'approval_decided_by' => null,
+                'approval_decision_note' => null,
+            ])->save();
         }
 
         $wasDraft = $version->status === 'draft';
@@ -665,6 +883,188 @@ class SalesController extends Controller
         }
 
         return back()->with('warning', 'Quote marked as sent, but no primary contact email is available. Public link: '.route('sales.quotes.public.view', $version->secure_token));
+    }
+
+    private function decideQuoteApproval(Request $request, SalesOpportunity $sale, string $status, string $message): RedirectResponse
+    {
+        $data = $request->validate([
+            'note' => ['nullable', 'string', 'max:4000'],
+        ]);
+
+        $version = $sale->currentQuoteVersion()->firstOrFail();
+        abort_unless($version->isEditable(), 422, 'Only draft quotes can receive an internal approval decision.');
+
+        $version->forceFill([
+            'approval_status' => $status,
+            'approval_decided_at' => now(),
+            'approval_decided_by' => $request->user()->id,
+            'approval_decision_note' => $data['note'] ?? null,
+        ])->save();
+
+        SalesActivity::query()->create([
+            'opportunity_id' => $sale->id,
+            'actor_id' => $request->user()->id,
+            'type' => 'quote_approval_'.$status,
+            'subject' => $message,
+            'body' => $data['note'] ?? $message,
+            'metadata' => ['quote_version_id' => $version->id, 'approval_status' => $status],
+        ]);
+
+        return back()
+            ->with($status === 'approved' ? 'success' : 'warning', $message)
+            ->with('open_quote_modal', true);
+    }
+
+    private function assertQuoteApprover(Request $request): void
+    {
+        abort_unless($request->user()?->can('sales.quote.approve'), 403);
+    }
+
+    private function resolveOptionGroup(SalesQuoteVersion $version, array $data): ?SalesQuoteOptionGroup
+    {
+        if (! filled($data['option_group_name'] ?? null)) {
+            return null;
+        }
+
+        $maxSelect = $data['option_group_max_select'] ?? null;
+        $type = $data['option_group_type'] ?? 'optional';
+        if ($maxSelect === null && in_array($type, ['alternative', 'good_better_best'], true)) {
+            $maxSelect = 1;
+        }
+
+        if ($maxSelect !== null && (int) $maxSelect < (int) ($data['option_group_min_select'] ?? 0)) {
+            throw ValidationException::withMessages(['option_group_max_select' => 'Maximum selections must be greater than or equal to minimum selections.']);
+        }
+
+        return SalesQuoteOptionGroup::query()->updateOrCreate(
+            [
+                'quote_version_id' => $version->id,
+                'name' => trim((string) $data['option_group_name']),
+            ],
+            [
+                'type' => $type,
+                'description' => $data['option_group_description'] ?? null,
+                'min_select' => (int) ($data['option_group_min_select'] ?? 0),
+                'max_select' => $maxSelect !== null ? (int) $maxSelect : null,
+                'sort_order' => $version->optionGroups()->count() * 10 + 10,
+            ]
+        );
+    }
+
+    private function lineCpqData(Request $request, array $data, ?SalesQuoteLine $line = null): array
+    {
+        $quantity = (float) ($data['quantity'] ?? $line?->quantity ?? 1);
+        $customerQuantityEditable = $request->boolean('customer_quantity_editable');
+        $minQuantity = (float) ($data['min_customer_quantity'] ?? ($customerQuantityEditable ? 1 : $quantity));
+        $maxQuantity = array_key_exists('max_customer_quantity', $data) && $data['max_customer_quantity'] !== null
+            ? (float) $data['max_customer_quantity']
+            : ($customerQuantityEditable ? null : $quantity);
+
+        if ($maxQuantity !== null && $maxQuantity < $minQuantity) {
+            throw ValidationException::withMessages(['max_customer_quantity' => 'Maximum customer quantity must be greater than or equal to minimum quantity.']);
+        }
+
+        $isOptional = $request->boolean('is_optional');
+        $isRequired = $request->has('is_required') ? $request->boolean('is_required') : ! $isOptional;
+        $selectedByDefault = $request->has('customer_selected_by_default')
+            ? $request->boolean('customer_selected_by_default')
+            : true;
+
+        return [
+            'is_required' => $isRequired,
+            'is_recommended' => $request->boolean('is_recommended'),
+            'customer_selected_by_default' => $isRequired || $selectedByDefault,
+            'customer_quantity_editable' => $customerQuantityEditable,
+            'min_customer_quantity' => $minQuantity,
+            'max_customer_quantity' => $maxQuantity,
+            'customer_label' => $data['customer_label'] ?? null,
+        ];
+    }
+
+    private function saveQuoteAcknowledgement(SalesQuoteVersion $version, array $data): void
+    {
+        $body = trim((string) ($data['acknowledgement_body'] ?? ''));
+        $existing = SalesQuoteAcknowledgement::query()
+            ->where('quote_version_id', $version->id)
+            ->whereNull('quote_line_id')
+            ->where('source_type', 'manual_quote_details')
+            ->first();
+
+        if ($body === '') {
+            $existing?->delete();
+
+            return;
+        }
+
+        SalesQuoteAcknowledgement::query()->updateOrCreate(
+            [
+                'quote_version_id' => $version->id,
+                'quote_line_id' => null,
+                'source_type' => 'manual_quote_details',
+            ],
+            [
+                'title' => $data['acknowledgement_title'] ?: 'Important information',
+                'body' => $body,
+                'is_required' => array_key_exists('acknowledgement_required', $data) ? (bool) $data['acknowledgement_required'] : true,
+                'sort_order' => $existing?->sort_order ?? $version->acknowledgements()->count() * 10 + 10,
+            ]
+        );
+    }
+
+    private function saveLineAcknowledgement(SalesQuoteVersion $version, SalesQuoteLine $line, array $data): void
+    {
+        $body = trim((string) ($data['line_acknowledgement_body'] ?? ''));
+        $existing = SalesQuoteAcknowledgement::query()
+            ->where('quote_version_id', $version->id)
+            ->where('quote_line_id', $line->id)
+            ->where('source_type', 'manual_line')
+            ->first();
+
+        if ($body === '') {
+            $existing?->delete();
+
+            return;
+        }
+
+        SalesQuoteAcknowledgement::query()->updateOrCreate(
+            [
+                'quote_version_id' => $version->id,
+                'quote_line_id' => $line->id,
+                'source_type' => 'manual_line',
+            ],
+            [
+                'title' => $data['line_acknowledgement_title'] ?: 'Important information for '.$line->name,
+                'body' => $body,
+                'is_required' => array_key_exists('line_acknowledgement_required', $data) ? (bool) $data['line_acknowledgement_required'] : true,
+                'sort_order' => $existing?->sort_order ?? $version->acknowledgements()->count() * 10 + 10,
+            ]
+        );
+    }
+
+    private function resetDraftApproval(SalesQuoteVersion $version, User $actor, string $reason): void
+    {
+        if (! $version->isEditable() || ! in_array($version->approval_status, ['pending', 'approved', 'rejected', 'changes_requested'], true)) {
+            return;
+        }
+
+        $version->forceFill([
+            'approval_status' => 'not_required',
+            'approval_required_reasons' => [],
+            'approval_requested_at' => null,
+            'approval_requested_by' => null,
+            'approval_decided_at' => null,
+            'approval_decided_by' => null,
+            'approval_decision_note' => null,
+        ])->save();
+
+        SalesActivity::query()->create([
+            'opportunity_id' => $version->quote->opportunity_id,
+            'actor_id' => $actor->id,
+            'type' => 'quote_approval_invalidated',
+            'subject' => 'Quote approval reset',
+            'body' => $reason,
+            'metadata' => ['quote_version_id' => $version->id],
+        ]);
     }
 
     private function opportunityData(Request $request, bool $create = true): array

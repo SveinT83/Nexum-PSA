@@ -8,9 +8,9 @@
             'icon' => 'bi-shield-exclamation',
         ],
         [
-            'label' => 'Inbox',
-            'route' => 'tech.inbox.index',
-            'pattern' => 'tech.inbox*',
+            'label' => 'Mail',
+            'route' => 'tech.mail.index',
+            'pattern' => 'tech.mail*',
             'icon' => 'bi-inbox',
         ],
         [
@@ -24,6 +24,12 @@
             'route' => 'tech.tickets.index',
             'pattern' => 'tech.tickets*',
             'icon' => 'bi-ticket-detailed',
+        ],
+        [
+            'label' => 'Telephony',
+            'route' => 'tech.telephony.profile',
+            'pattern' => 'tech.telephony*',
+            'icon' => 'bi-telephone',
         ],
         [
             'label' => 'Assets',

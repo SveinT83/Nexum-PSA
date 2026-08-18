@@ -4,14 +4,17 @@ namespace App\Modules\Email\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class EmailLog extends Model
 {
     protected $table = 'email_logs';
+
     public $timestamps = true;
 
     protected $fillable = [
-        'direction', 'account_id', 'email_message_id', 'rfc_message_id', 'scope', 'level', 'code', 'message', 'context_json',
+        'direction', 'account_id', 'email_message_id', 'rfc_message_id', 'idempotency_key',
+        'scope', 'level', 'code', 'message', 'context_json',
     ];
 
     protected $casts = [
@@ -26,5 +29,10 @@ class EmailLog extends Model
     public function emailMessage(): BelongsTo
     {
         return $this->belongsTo(EmailMessage::class, 'email_message_id');
+    }
+
+    public function sentReconciliation(): HasOne
+    {
+        return $this->hasOne(EmailSentReconciliation::class, 'email_log_id');
     }
 }

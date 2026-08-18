@@ -151,11 +151,18 @@ Inbound Ticket messages can be classified as customer-response evidence. Uploade
 
 Evidence keeps its source, fingerprint, scope, actor, timestamp, and invalidation history. This gives the workflow a traceable fact instead of an unchecked manual box.
 
-## Planned Cost And Ticket Quotes
+## Quote Lines And Ticket Quotes
 
 Planned scope is separate from actual cost. A technician can add equipment, services, time, or custom lines without reserving stock, ordering anything, or billing the Client.
 
-When planned lines exist, `Create Quote` reuses the Sales quote engine and editor. Nexum creates or reuses a Sales Opportunity linked to the Ticket, while the quote remains operable from both Ticket and Sales. A sent quote version becomes immutable; editing after send creates a new draft version.
+The Ticket page does not show the Sales quote panel on ordinary tickets with no sales scope. The
+shared `Add cost/item` action starts with the normal actual-cost or Storage-reservation action guard.
+When the selected item requires accepted quote approval, or the line total reaches the configured
+Ticket quote cost threshold, Nexum routes the line to planned scope instead of creating an actual
+cost or reservation. The Ticket shows `Quote and customer approval` while the quote is being prepared
+or sent. After the customer accepts, the same surface becomes `Accepted quote and delivery`.
+
+When planned lines exist, `Create Quote` reuses the Sales quote engine and editor. Nexum creates or reuses a Sales Opportunity linked to the Ticket, while the quote remains operable from both Ticket and Sales. A sent quote version becomes immutable. If planned scope changes before customer acceptance, Nexum supersedes the sent version and creates a new draft revision so the old public link can no longer be accepted.
 
 Sending from the Ticket:
 
@@ -167,19 +174,31 @@ Sending from the Ticket:
 
 The Ticket must be published to the Customer Portal before a customer-facing quote reply can be sent.
 
-The customer can accept through the secure link or Customer Portal. If the customer accepts in an email reply, an authorized technician can mark that inbound Ticket message as acceptance evidence. All acceptance methods use the same Sales acceptance action. The quote becomes accepted, the Opportunity becomes won, and only the lines from that accepted immutable quote version become approved Ticket scope.
+The customer can accept through the secure link or Customer Portal. If the customer accepts in an email reply, an authorized technician can mark that inbound Ticket message as acceptance evidence. All acceptance methods use the same Sales acceptance action. The quote becomes accepted, the Opportunity becomes won, and only the customer-selected lines from that accepted immutable quote snapshot become approved Ticket scope. Accepted Ticket quote lines are then processed automatically into the next safe internal record when possible.
+
+An accepted Ticket quote is preserved as commercial history. If new quote-required scope is added after acceptance, Nexum creates a separate additional quote draft for only the new lines instead of changing the accepted quote. The current additional quote stays near the working area, while earlier accepted quote delivery history is shown below Activity unless it still has unfinished delivery work.
+
+An authorized user can void an accepted Ticket quote when the downstream delivery is still reversible. Voiding records a reason, marks the accepted version as `voided`, invalidates matching quote-acceptance workflow evidence, cancels the approved planned lines, releases active Storage reservations, cancels pending manual costs, and cancels draft purchase needs. Nexum blocks voiding when a line has moved beyond safe handling, such as picked stock, non-pending billing, non-draft purchase orders, shipments, or receipts. Voiding never silently edits an accepted quote into a different commercial promise.
 
 ## From Approval To Storage, Purchase, And Economy
 
-An approved equipment line may be converted to a real Storage reservation and pending Ticket cost.
-An approved orderable line may instead create a draft purchase need linked to the Ticket and
-planned line. Creating the need never sends an order to the vendor. After the order has actually
-been placed, a technician completes its supplier reference, commercial snapshots, line quantities,
+After customer acceptance, Nexum automatically processes approved Ticket quote lines with a protected
+system actor. Equipment with enough available stock becomes a real Storage reservation and pending
+Ticket cost. Orderable equipment with a shortage becomes a draft purchase need linked to the Ticket
+and planned line. Custom approved lines become pending actual Ticket costs. These automatic actions
+are idempotent and update the accepted quote conversion-plan rows with the created record reference.
+
+Creating a purchase need never sends an order to the vendor. Picking, supplier-order sending,
+receipt posting, and billing remain explicit downstream workflows. After the order has actually been
+placed, a technician completes its supplier reference, commercial snapshots, line quantities,
 shipments, and tracking in Storage Purchase Orders. Each physical delivery is then posted as a
 partial receipt; accepted quantity updates inventory through audited movements and can satisfy the
 waiting reservation, while rejected quantity remains receipt history without entering stock.
 
-Custom approved lines can be converted to pending actual Ticket costs. These operations are idempotent: repeating the same conversion or purchase request does not create duplicate downstream records.
+If automatic processing is blocked because an item is inactive, short on stock and not orderable, or
+missing required purchase master data, the approved line remains on the `Accepted quote and delivery`
+surface with a retry action and an audit event explaining the blocker. Repeating a conversion or
+purchase request returns the existing downstream record rather than creating a duplicate.
 
 Completed closure checks that actual time and costs stay within the accepted quote and the configured state tolerance. Declined, cancelled, and no-sale outcomes require a reason and do not generate a billing order. A successful completed Ticket continues through the normal Economy order process.
 
@@ -244,7 +263,7 @@ chosen strategy and the evaluated target-step requirements.
 The version 1 API provides the same workflow operations as the Ticket page:
 
 - Read workflow decisions, visible actions, missing requirements, transitions, and escalations.
-- Perform transitions, escalation, close outcomes, planned-line operations, quote creation/send/acceptance, reviews, and evidence classification.
+- Perform transitions, escalation, close outcomes, planned-line operations, quote creation/send/acceptance/voiding, reviews, and evidence classification.
 - Start the Ticket timer and register time or actual cost through the same guarded actions that the
   Ticket page uses; successful actions evaluate the same automatic workflow triggers.
 - Create, edit, inspect, publish, preview, and migrate workflow definitions.
@@ -262,4 +281,4 @@ normal Ticket domain permissions and action guard in addition to the token abili
 
 Use stable state, transition, and escalation keys. Test a new draft with representative Tickets, publish it, and use migration preview before moving active work. Do not delete or rename facts in a way that makes a published version unreadable.
 
-Workflow publishing, migration, escalation, approval recording, evidence classification, planned cost, and senior review have separate permissions. Every transition, escalation, review, evidence classification, accepted quote, conversion, purchase need, migration, and close outcome is written to the Ticket audit history.
+Workflow publishing, migration, escalation, approval recording, evidence classification, quote-line handling, accepted-quote voiding, and senior review have separate permissions. Every transition, escalation, review, evidence classification, accepted quote, voided accepted quote, conversion, purchase need, migration, and close outcome is written to the Ticket audit history.

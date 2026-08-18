@@ -3,11 +3,16 @@
 use App\Jobs\Integrations\NAbleRmmSyncJob;
 use App\Modules\Contact\Actions\MigrateClientUsersToContacts;
 use App\Modules\Economy\Jobs\GenerateEconomyOrdersJob;
+use App\Modules\Email\Actions\DispatchEmailAccountPolling;
+use App\Modules\Email\Jobs\CleanupEmailProviderDeletionCache;
+use App\Modules\Email\Jobs\DispatchEmailProviderDeletionReconciliation;
+use App\Modules\Email\Jobs\DispatchEmailProviderIdleListeners;
+use App\Modules\Email\Jobs\DispatchEmailProviderReconciliation;
 use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\EmailRetentionPurgeJob;
-use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\PollActiveEmailAccounts;
 use App\Modules\Email\Jobs\ProcessInboundRules;
+use App\Modules\Email\Jobs\RetryDueEmailRemoteOperations;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Integration\Jobs\CleanupAiAccessData;
@@ -16,6 +21,8 @@ use App\Modules\Integration\Jobs\CloudFactorySyncJob;
 use App\Modules\Integration\Jobs\PullBookStackToKnowledge;
 use App\Modules\Integration\Services\AiChatCleanup;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
+use App\Modules\Notification\Jobs\DispatchPendingInboundEmailExternalNotifications;
+use App\Modules\Notification\Jobs\DispatchPendingInboundEmailNotificationFanouts;
 use App\Modules\Storage\Actions\DispatchDueSupplierOrderImports;
 use App\Modules\Storage\Actions\PurgeSupplierOrderImportTroubleshootingData;
 use App\Modules\Storage\Actions\RunSupplierOrderImportOperationsMaintenance;
@@ -36,6 +43,45 @@ Schedule::job(new PollActiveEmailAccounts)
     ->name('email.poll')
     ->withoutOverlapping();
 
+// Provider mutations are retried only after row-locked evidence validation.
+// The queued job also recovers stale running work as ambiguous and reconciles
+// provider state before any possible replay.
+Schedule::job(new RetryDueEmailRemoteOperations)
+    ->everyMinute()
+    ->name('email.remote_operations.retry_due')
+    ->withoutOverlapping(5);
+
+// Full all-folder provider reconciliation is the correctness fallback for
+// missed/out-of-order IDLE hints and provider-originated changes.
+Schedule::job(new DispatchEmailProviderReconciliation)
+    ->everyMinute()
+    ->name('email.provider_reconciliation.dispatch')
+    ->withoutOverlapping(5);
+
+// IDLE only lowers latency and needs its separately supervised queue worker.
+// Default-off scheduling avoids accumulating listener jobs on installations
+// that intentionally rely on the complete scheduled cycle alone.
+Schedule::job(new DispatchEmailProviderIdleListeners)
+    ->everyMinute()
+    ->name('email.provider_reconciliation.idle_dispatch')
+    ->withoutOverlapping(5)
+    ->when(fn (): bool => (bool) config('email_provider_reconciliation.idle_enabled', false));
+
+// Canonical inbound notifications and their external-delivery outbox are
+// committed atomically. This bounded dispatcher recovers a worker loss after
+// commit but before the immediate delivery job was queued.
+Schedule::job(new DispatchPendingInboundEmailExternalNotifications)
+    ->everyMinute()
+    ->name('notification.inbound_email.external_dispatch')
+    ->withoutOverlapping(5);
+
+// Recipient discovery is its own durable cursor. This bounded wakeup closes
+// the commit-before-dispatch crash window without rescanning all subscribers.
+Schedule::job(new DispatchPendingInboundEmailNotificationFanouts)
+    ->everyMinute()
+    ->name('notification.inbound_email.fanout_dispatch')
+    ->withoutOverlapping(5);
+
 // Email account health check every five minutes
 Schedule::call(function () {
     EmailAccount::query()
@@ -52,6 +98,19 @@ Schedule::call(function () {
 Schedule::job(new EmailRetentionPurgeJob(24))
     ->monthlyOn(1, '03:00')
     ->name('email.retention.purge');
+
+// These lifecycle jobs are internally gated by the explicit, default-off
+// provider deletion reconciliation setting. A complete inventory only marks
+// provider-confirmed loss; cleanup remains subject to grace and retention.
+Schedule::job(new DispatchEmailProviderDeletionReconciliation)
+    ->dailyAt('04:00')
+    ->name('email.provider_deletion.reconcile')
+    ->withoutOverlapping(120);
+
+Schedule::job(new CleanupEmailProviderDeletionCache)
+    ->dailyAt('05:00')
+    ->name('email.provider_deletion.cleanup')
+    ->withoutOverlapping(120);
 
 // Supplier-order import dispatch owns a durable scheduler heartbeat and claims
 // due rows before queueing, so overlapping scheduler invocations remain safe.
@@ -213,7 +272,12 @@ Schedule::command('data-exchange:run-due')
 
 // Marketing campaign automation. Campaign settings and recipient due_at control
 // whether this run performs work.
-Schedule::job(new SendDueMarketingCampaignEmails)
+Schedule::call(static function (): void {
+    // Construct the queued job only when the scheduled event runs. Its
+    // constructor freezes the provider binding before queue serialization,
+    // while application/bootstrap discovery remains independent of schema.
+    SendDueMarketingCampaignEmails::dispatch();
+})
     ->everyMinute()
     ->name('marketing.campaigns.send_due')
     ->withoutOverlapping();
@@ -234,34 +298,52 @@ Artisan::command('ai:cleanup-chats {--queue : Dispatch cleanup to the queue inst
 
 // Manual polling via CLI: php artisan email:poll [--account=ID] [--async]
 Artisan::command('email:poll {--account=} {--async}', function () {
-    $accountId = $this->option('account');
-    $async = (bool) $this->option('async');
+    $accountOption = $this->option('account');
+    $accountId = null;
 
-    $query = EmailAccount::query()->where('is_active', true);
-    if (! empty($accountId)) {
-        $query->whereKey($accountId);
+    if ($accountOption !== null) {
+        $validatedAccountId = filter_var(
+            $accountOption,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]],
+        );
+
+        if ($validatedAccountId === false) {
+            $this->error('The --account option must be a positive integer.');
+
+            return ConsoleCommand::INVALID;
+        }
+
+        $accountId = (int) $validatedAccountId;
     }
 
-    $accounts = $query->get();
-    if ($accounts->isEmpty()) {
+    $async = (bool) $this->option('async');
+    $batchSize = max(1, (int) (\App\Models\Settings\CommonSetting::query()
+        ->where('type', 'emailhub')
+        ->where('name', 'batch_size')
+        ->value('value') ?? 20));
+    $result = app(DispatchEmailAccountPolling::class)->handle(
+        accountId: $accountId,
+        batchSize: $batchSize,
+        asynchronously: $async,
+    );
+
+    if ($result['matched'] === 0) {
         $this->info('No active accounts to poll.');
 
-        return 0;
+        return ConsoleCommand::SUCCESS;
     }
 
-    $count = 0;
-    foreach ($accounts as $account) {
-        if ($async) {
-            FetchImapAccount::dispatch($account->id)->onQueue('email');
-        } else {
-            FetchImapAccount::dispatchSync($account->id);
-        }
-        $count++;
+    $count = $result['started'];
+    $this->info(($async ? 'Queued poll for ' : 'Checked now for ').$count.' account'.($count !== 1 ? 's' : '').'.');
+
+    if ($result['failed'] > 0) {
+        $this->error($result['failed'].' account'.($result['failed'] !== 1 ? 's' : '').' could not be started. Check Email account health.');
+
+        return ConsoleCommand::FAILURE;
     }
 
-    $this->info(($async ? 'Queued poll for ' : 'Checked now for ').$count.' account'.($count > 1 ? 's' : ''));
-
-    return 0;
+    return ConsoleCommand::SUCCESS;
 })->purpose('Fetch new mail for active accounts (optionally one account)');
 
 // Manual inbound rule processing: php artisan email:process-inbound-rules [--message=ID] [--limit=100] [--async]

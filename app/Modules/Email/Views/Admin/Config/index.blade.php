@@ -2,9 +2,9 @@
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center">
-        <h1>Email Configuration</h1>
+        <h1>Email Sync & Cache Settings</h1>
         <div class="d-flex gap-2">
-            <button type="submit" form="config-form" class="btn btn-primary">Save Changes</button>
+            <button type="submit" form="config-form" class="btn btn-primary">Save Settings</button>
         </div>
     </div>
 @endsection
@@ -17,17 +17,28 @@
 <div class="container-fluid">
     <form id="config-form" action="{{ route('tech.admin.settings.email.config.update') }}" method="POST">
         @csrf
+        @php
+            $legacyCleanupEnabled = (string) ($config['delete_on_success'] ?? '0') === '1';
+            $providerDeletionReconciliationEnabled = (string) ($config['provider_deletion_reconciliation_enabled'] ?? '0') === '1';
+            $trustedAuthservConfigured = trim((string) ($config['trusted_authserv_ids'] ?? '')) !== '';
+            $trustedHopsConfigured = trim((string) ($config['trusted_receiving_hops'] ?? '')) !== '';
+            $trustedTrustConfigured = $trustedAuthservConfigured && $trustedHopsConfigured;
+            $trustedTrustExpanded = $trustedAuthservConfigured
+                || $trustedHopsConfigured
+                || $errors->has('trusted_authserv_ids')
+                || $errors->has('trusted_receiving_hops');
+        @endphp
         <div class="row">
             <div class="col-lg-8">
-                <!-- 1. Ingest & Polling -->
+                <!-- 1. Provider Sync -->
                 <div class="card mb-4 shadow-sm border-0">
                     <div class="card-header bg-light">
-                        <h5 class="mb-0">Ingest & Polling</h5>
+                        <h5 class="mb-0">Provider Sync</h5>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="poll_interval" class="form-label">Global poll interval (minutes)</label>
+                                <label for="poll_interval" class="form-label">Poll interval</label>
                                 <select name="poll_interval" id="poll_interval" class="form-select">
                                     @foreach([1, 5, 15, 30] as $min)
                                         <option value="{{ $min }}" {{ (isset($config['poll_interval']) && $config['poll_interval'] == $min) ? 'selected' : '' }}>{{ $min }} min</option>
@@ -35,7 +46,7 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="concurrency" class="form-label">Max concurrent fetch</label>
+                                <label for="concurrency" class="form-label">Concurrent account fetches</label>
                                 <select name="concurrency" id="concurrency" class="form-select">
                                     @foreach([1, 2, 4, 8] as $val)
                                         <option value="{{ $val }}" {{ (isset($config['concurrency']) && $config['concurrency'] == $val) ? 'selected' : '' }}>{{ $val }}</option>
@@ -43,53 +54,156 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="batch_size" class="form-label">Messages per poll (Batch size)</label>
+                                <label for="batch_size" class="form-label">New messages per folder poll</label>
                                 <input type="number" name="batch_size" id="batch_size" class="form-control" value="{{ $config['batch_size'] ?? 20 }}" min="1">
                             </div>
                             <div class="col-md-6">
                                 <div class="form-check form-switch mt-4">
                                     <input class="form-check-input" type="checkbox" name="pause_ingest" id="pause_ingest" value="1" {{ (isset($config['pause_ingest']) && $config['pause_ingest'] == '1') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="pause_ingest">Pause all ingest (Maintenance mode)</label>
+                                    <label class="form-check-label" for="pause_ingest">Pause provider sync</label>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. Retention & Deletion -->
+                <!-- 2. Local Cache And Legacy Cleanup -->
                 <div class="card mb-4 shadow-sm border-0">
                     <div class="card-header bg-light">
-                        <h5 class="mb-0">Retention & Deletion</h5>
+                        <h5 class="mb-0">Local Cache & Legacy Cleanup</h5>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-12">
                                 <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" name="delete_on_success" id="delete_on_success" value="1" {{ (isset($config['delete_on_success']) && $config['delete_on_success'] == '1') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="delete_on_success">Delete from server after successful import (Default)</label>
-                                    <div class="form-text">Note: Per-account settings can override this.</div>
+                                    <label class="form-check-label" for="delete_on_success">Legacy server cleanup after successful Ticket-ingest import</label>
+                                    <div class="form-text">
+                                        Normal IMAP client sync keeps provider mail on the server. This switch only affects
+                                        accounts set to <strong>Use legacy global cleanup switch</strong>.
+                                    </div>
+                                </div>
+                                @if($legacyCleanupEnabled)
+                                    <div class="alert alert-warning py-2 small mb-0" role="alert">
+                                        Legacy cleanup is enabled. Ticket-ingress imports for accounts using the legacy
+                                        global cleanup policy may remove newly imported INBOX mail from the provider after
+                                        local storage.
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="col-md-4">
+                                <label for="retention_months" class="form-label">Local mail cache retention</label>
+                                <div class="input-group">
+                                    <input type="number" name="retention_months" id="retention_months" class="form-control" value="{{ $config['retention_months'] ?? 24 }}" min="1">
+                                    <span class="input-group-text">months</span>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <label for="retention_months" class="form-label">Email retention (months)</label>
-                                <input type="number" name="retention_months" id="retention_months" class="form-control" value="{{ $config['retention_months'] ?? 24 }}" min="0">
+                                <label for="size_limit_mb" class="form-label">Max stored message size</label>
+                                <div class="input-group">
+                                    <input type="number" name="size_limit_mb" id="size_limit_mb" class="form-control" value="{{ $config['size_limit_mb'] ?? 25 }}" min="1">
+                                    <span class="input-group-text">MB</span>
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <label for="size_limit_mb" class="form-label">Max message size (MB)</label>
-                                <input type="number" name="size_limit_mb" id="size_limit_mb" class="form-control" value="{{ $config['size_limit_mb'] ?? 25 }}" min="1">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="max_failures" class="form-label">Alarm after X failures</label>
+                                <label for="max_failures" class="form-label">Alert after failed polls</label>
                                 <input type="number" name="max_failures" id="max_failures" class="form-control" value="{{ $config['max_failures'] ?? 3 }}" min="1">
                             </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch mt-2">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="provider_deletion_reconciliation_enabled"
+                                        id="provider_deletion_reconciliation_enabled"
+                                        value="1"
+                                        {{ $providerDeletionReconciliationEnabled ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="provider_deletion_reconciliation_enabled">
+                                        Reconcile provider-side moves and deletions
+                                    </label>
+                                    <div class="form-text">
+                                        Runs bounded, stable mailbox inventories and fails closed on incomplete evidence,
+                                        UIDVALIDITY changes, provider errors, or ambiguous moves. Confirmed missing cache
+                                        remains recoverable during the grace period before retention-protected cleanup.
+                                    </div>
+                                </div>
+                                @if(!$providerDeletionReconciliationEnabled)
+                                    <div class="alert alert-info py-2 small mt-2 mb-0" role="status">
+                                        Provider deletion reconciliation is off. Enable it only after the pending Mail
+                                        provider-deletion human review is complete.
+                                    </div>
+                                @endif
+                            </div>
                         </div>
+
+                        <!-- Retention eligibility preview -->
+                        <hr class="my-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                            <div>
+                                <h6 class="mb-1">Retention preview</h6>
+                                <p class="text-muted small mb-0">
+                                    Read-only preview for messages received before
+                                    <strong>{{ $retentionPreview['cutoff_at']->format('Y-m-d H:i') }}</strong>.
+                                    Provider-backed mail and protected evidence are never eligible here.
+                                </p>
+                            </div>
+                            <span class="badge bg-light text-dark border">Monthly scheduled cleanup</span>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 col-xl-3">
+                                <div class="border rounded px-2 py-2 h-100">
+                                    <div class="text-muted small">Expired</div>
+                                    <div class="fw-semibold">{{ $retentionPreview['expired_count'] }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-xl-3">
+                                <div class="border border-success rounded px-2 py-2 h-100">
+                                    <div class="text-muted small">Eligible orphans</div>
+                                    <div class="fw-semibold text-success">{{ $retentionPreview['eligible_count'] }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-xl-3">
+                                <div class="border border-warning rounded px-2 py-2 h-100">
+                                    <div class="text-muted small">Protected</div>
+                                    <div class="fw-semibold text-warning-emphasis">{{ $retentionPreview['protected_count'] }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-xl-3">
+                                <div class="border rounded px-2 py-2 h-100">
+                                    <div class="text-muted small">Retention</div>
+                                    <div class="fw-semibold">{{ $retentionPreview['retention_months'] }} months</div>
+                                </div>
+                            </div>
+                        </div>
+                        @if($retentionPreview['reason_breakdown'] !== [])
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Protection reason</th>
+                                            <th scope="col" class="text-end">Messages</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($retentionPreview['reason_breakdown'] as $reason)
+                                            <tr>
+                                                <td>{{ $reason['label'] }}</td>
+                                                <td class="text-end">{{ $reason['count'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <p class="text-muted small mb-0">No expired messages are currently protected by a retention blocker.</p>
+                        @endif
                     </div>
                 </div>
 
-                <!-- 3. Attachment Policy -->
+                <!-- 3. Attachment Import Policy -->
                 <div class="card mb-4 shadow-sm border-0">
                     <div class="card-header bg-light">
-                        <h5 class="mb-0">Attachment Policy</h5>
+                        <h5 class="mb-0">Attachment Import Policy</h5>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
@@ -116,22 +230,22 @@
                     </div>
                 </div>
 
-                <!-- 4. Trusted Sender Authentication -->
-                <div class="card mb-4 shadow-sm border-0">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">Trusted Sender Authentication</h5>
-                    </div>
+                <!-- 4. Advanced Automation Trust -->
+                <details class="card mb-4 shadow-sm border-0" @if($trustedTrustExpanded) open @endif>
+                    <summary class="card-header bg-light d-flex justify-content-between align-items-center gap-3">
+                        <span class="h5 mb-0">Advanced Automation Trust</span>
+                        <span class="badge {{ $trustedTrustConfigured ? 'bg-success' : 'bg-secondary' }}">
+                            {{ $trustedTrustConfigured ? 'Configured' : 'Off' }}
+                        </span>
+                    </summary>
                     <div class="card-body">
                         <p class="text-muted small">
-                            Both lists are required together. Nexum trusts SPF, DKIM and DMARC facts
-                            only when the <code>Authentication-Results</code> authserv ID is listed
-                            and the first <code>Received</code> header names a configured receiving
-                            hop after <code>by</code>. An authserv ID or visible From address alone
-                            is never sufficient trust evidence. Leave both lists empty to disable
-                            trusted sender authentication.
+                            Proxmox Mail Gateway, DNS, SPF, DKIM and DMARC remain the normal mail security
+                            boundary. Configure these fields only when Nexum automation must trust gateway
+                            authentication evidence before running sensitive rules.
                         </p>
                         <div class="alert alert-warning py-2 small" role="alert">
-                            Only list receiving infrastructure that removes untrusted inbound
+                            Only list infrastructure that strips untrusted inbound
                             <code>Authentication-Results</code> headers and adds its own result.
                         </div>
                         <div class="row g-3">
@@ -160,7 +274,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </details>
 
                 <!-- 5. Identification & Threading (Read-only) -->
                 <div class="card mb-4 bg-light text-muted border-0">
@@ -213,6 +327,51 @@
                                 </li>
                             @endforeach
                         </ul>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Mail AI</h5>
+                    </div>
+                    <div class="card-body">
+                        <label for="mail_ai_default_agent_id" class="form-label">Default Email agent</label>
+                        <select id="mail_ai_default_agent_id" name="mail_ai_default_agent_id" class="form-select @error('mail_ai_default_agent_id') is-invalid @enderror">
+                            <option value="">Use global fallback agent</option>
+                            @foreach($mailAiAgents as $agent)
+                                <option value="{{ $agent->id }}" @selected((int) ($mailAiDomainAgent?->id ?? 0) === (int) $agent->id)>
+                                    {{ $agent->name }} · {{ $agent->provider?->name ?? 'No provider' }} · {{ $agent->model ?: $agent->provider?->default_model }}
+                                    @if($agent->is_default)
+                                        · global fallback
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('mail_ai_default_agent_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        @if($mailAiGlobalFallbackAgent)
+                            <div class="mt-2 small text-muted">
+                                Global fallback agent: <strong>{{ $mailAiGlobalFallbackAgent->name }}</strong>
+                            </div>
+                        @else
+                            <div class="mt-2 small">
+                                <span class="text-muted">No global fallback agent is configured.</span>
+                            </div>
+                        @endif
+                        @if($mailAiDefaultAgent && ! ($mailAiRuntimeAvailability['available'] ?? false))
+                            <div class="alert alert-warning py-2 px-3 mt-3 mb-0 small d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <span>
+                                    Mail AI needs activation:
+                                    <code>{{ $mailAiRuntimeAvailability['reason'] ?? 'not_ready' }}</code>
+                                </span>
+                                <a href="{{ route('tech.admin.system.integrations.ai.index') }}" class="btn btn-sm btn-outline-primary">
+                                    AI Settings
+                                </a>
+                            </div>
+                        @elseif($mailAiRuntimeAvailability['available'] ?? false)
+                            <div class="mt-2 small text-success">
+                                Mail AI ready for {{ $mailAiRuntimeAvailability['agent']?->name }} / {{ $mailAiRuntimeAvailability['model'] }}.
+                            </div>
+                        @endif
                     </div>
                 </div>
 

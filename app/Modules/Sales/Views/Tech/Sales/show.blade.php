@@ -298,8 +298,11 @@
                             $quoteLineCount = $quoteSummaryVersion->lines->count();
                         @endphp
                         <div class="small text-muted">
-                            {{ ucfirst($quoteSummaryVersion->status) }} / {{ $quoteSummaryVersion->lines->count() }} lines
+                            {{ ucfirst($quoteSummaryVersion->status) }} / {{ $quoteSummaryVersion->lines->count() }} lines / Approval {{ str_replace('_', ' ', $quoteSummaryVersion->approval_status ?? 'not_required') }}
                         </div>
+                        @if(! empty($quoteSummaryVersion->approval_required_reasons))
+                            <div class="small text-warning">{{ implode(' / ', $quoteSummaryVersion->approval_required_reasons) }}</div>
+                        @endif
                         @foreach($quotePresentation['groups'] as $group)
                             <div class="small">{{ $group['summary_label'] }}: {{ number_format((float) $group['total_ex_vat'], 2, ',', ' ') }} {{ $group['unit'] }} ex VAT</div>
                         @endforeach
@@ -316,6 +319,22 @@
                         <a href="{{ route('sales.quotes.public.pdf', $sale->currentQuoteVersion->secure_token) }}" class="btn btn-sm btn-outline-secondary" target="_blank">PDF</a>
                         @if($sale->currentQuoteVersion->status === 'draft')
                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quoteLineModal">Edit Quote</button>
+                            <form method="POST" action="{{ route('tech.sales.quote.approval.request', $sale) }}">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Check Approval</button>
+                            </form>
+                            @can('sales.quote.approve')
+                                @if($sale->currentQuoteVersion->approval_status === 'pending')
+                                    <form method="POST" action="{{ route('tech.sales.quote.approval.approve', $sale) }}">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Approve</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('tech.sales.quote.approval.changes', $sale) }}">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">Request Changes</button>
+                                    </form>
+                                @endif
+                            @endcan
                             @if($quoteLineCount > 0)
                                 <form method="POST" action="{{ route('tech.sales.quote.send', $sale) }}">
                                     @csrf
@@ -355,6 +374,21 @@
                         $version = $sale->currentQuoteVersion->loadMissing('lines');
                     @endphp
                     <h3 class="h6">Customer presentation</h3>
+                    @if($version->approval_status && $version->approval_status !== 'not_required')
+                        <div class="alert alert-warning py-2">
+                            <div class="fw-semibold">Approval: {{ ucfirst(str_replace('_', ' ', $version->approval_status)) }}</div>
+                            @if(! empty($version->approval_required_reasons))
+                                <ul class="mb-0 small">
+                                    @foreach($version->approval_required_reasons as $reason)
+                                        <li>{{ $reason }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            @if($version->approval_decision_note)
+                                <div class="small mt-1">{{ $version->approval_decision_note }}</div>
+                            @endif
+                        </div>
+                    @endif
                     @foreach($quotePresentation['before_copy'] as $section)
                         <div class="mb-3">
                             <h4 class="h6">{{ $section['label'] }}</h4>
@@ -394,6 +428,21 @@
                                     <td>
                                         <span class="fw-semibold">{{ $line->name }}</span>
                                         <div class="text-muted small">{{ $line->description }}</div>
+                                        <div class="small">
+                                            @if($line->is_required)
+                                                <span class="badge text-bg-light border">Required</span>
+                                            @elseif($line->is_recommended)
+                                                <span class="badge text-bg-primary">Recommended</span>
+                                            @else
+                                                <span class="badge text-bg-light border">Optional</span>
+                                            @endif
+                                            @if($line->optionGroup)
+                                                <span class="badge text-bg-light border">{{ $line->optionGroup->name }}</span>
+                                            @endif
+                                            @if($line->customer_quantity_editable)
+                                                <span class="badge text-bg-light border">Customer quantity</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="text-end">{{ $line->quantity }}</td>
                                     <td class="text-end">{{ number_format((float) $line->unit_cost_ex_vat, 2, ',', ' ') }}</td>
@@ -415,6 +464,63 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($version->status === 'accepted' && $version->acceptanceSnapshot)
+                        <h3 class="h6 mt-4">Accepted snapshot</h3>
+                        <dl class="row small mb-3">
+                            <dt class="col-md-3">Accepted total ex VAT</dt>
+                            <dd class="col-md-3">{{ number_format((float) data_get($version->acceptanceSnapshot->totals, 'total_ex_vat'), 2, ',', ' ') }}</dd>
+                            <dt class="col-md-3">Selected lines</dt>
+                            <dd class="col-md-3">{{ count($version->acceptanceSnapshot->selected_line_ids ?: []) }}</dd>
+                        </dl>
+                    @endif
+                    @if($version->conversionPlans->isNotEmpty())
+                        <h3 class="h6 mt-4">Conversion plan</h3>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Target</th>
+                                    <th>Line</th>
+                                    <th>Status</th>
+                                    <th>Update</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($version->conversionPlans as $plan)
+                                    <tr>
+                                        <td>{{ $plan->target_domain }} / {{ str_replace('_', ' ', $plan->target_type) }}</td>
+                                        <td>{{ data_get($plan->accepted_line_snapshot, 'name') }}</td>
+                                        <td><span class="badge text-bg-light border">{{ str_replace('_', ' ', $plan->status) }}</span></td>
+                                        <td>
+                                            <form method="POST" action="{{ route('tech.sales.quote.conversion-plans.update', [$sale, $plan]) }}" class="row g-2 align-items-end">
+                                                @csrf
+                                                <div class="col-md-3">
+                                                    <label class="form-label small">Status</label>
+                                                    <select name="status" class="form-select form-select-sm">
+                                                        @foreach(['pending', 'in_progress', 'completed', 'deferred', 'blocked', 'not_applicable'] as $status)
+                                                            <option value="{{ $status }}" @selected($plan->status === $status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small">Reference</label>
+                                                    <input name="target_reference" class="form-control form-control-sm" value="{{ $plan->target_reference }}">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label small">Note</label>
+                                                    <input name="operator_note" class="form-control form-control-sm" value="{{ $plan->operator_note }}">
+                                                </div>
+                                                <div class="col-md-2 d-grid">
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                                </div>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 @else
                     <p class="text-muted mb-0">Prepare a quote to start adding lines.</p>
                 @endif
@@ -435,8 +541,41 @@
                         </div>
                         <div class="modal-body">
                             @php
-                                $editableVersion = $sale->currentQuoteVersion->loadMissing('lines');
+                                $editableVersion = $sale->currentQuoteVersion->loadMissing(['lines.optionGroup', 'optionGroups', 'acknowledgements']);
+                                $quoteLevelAcknowledgement = $editableVersion->acknowledgements
+                                    ->whereNull('quote_line_id')
+                                    ->firstWhere('source_type', 'manual_quote_details');
                             @endphp
+                            @if($quoteTemplates->isNotEmpty())
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h3 class="h6 mb-0">Quote template</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="POST" action="{{ route('tech.sales.quote.templates.apply', $sale) }}" class="row g-3 align-items-end">
+                                            @csrf
+                                            <div class="col-md-8">
+                                                <label for="quote_template_id" class="form-label">Template</label>
+                                                <select id="quote_template_id" name="template_id" class="form-select" required>
+                                                    @foreach($quoteTemplates as $template)
+                                                        <option value="{{ $template->id }}">{{ $template->name }} ({{ $template->lines_count }} lines)</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-check">
+                                                    <input type="hidden" name="replace_existing" value="0">
+                                                    <input type="checkbox" id="replace_existing_template_lines" name="replace_existing" value="1" class="form-check-input">
+                                                    <label for="replace_existing_template_lines" class="form-check-label">Replace existing</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 d-grid">
+                                                <button type="submit" class="btn btn-outline-primary">Apply template</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endif
                             <div class="card mb-3">
                                 <div class="card-header">
                                     <h3 class="h6 mb-0">Customer-facing quote text</h3>
@@ -475,6 +614,21 @@
                                             <label for="quote_next_steps_text" class="form-label">Next steps</label>
                                             <textarea id="quote_next_steps_text" name="next_steps_text" class="form-control" rows="4" maxlength="20000">{{ old('next_steps_text', $editableVersion->next_steps_text) }}</textarea>
                                         </div>
+                                        <div class="col-md-4">
+                                            <label for="quote_acknowledgement_title" class="form-label">Acknowledgement title</label>
+                                            <input id="quote_acknowledgement_title" type="text" name="acknowledgement_title" class="form-control" maxlength="255" value="{{ old('acknowledgement_title', $quoteLevelAcknowledgement?->title) }}">
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label for="quote_acknowledgement_body" class="form-label">Required acknowledgement</label>
+                                            <textarea id="quote_acknowledgement_body" name="acknowledgement_body" class="form-control" rows="3" maxlength="20000">{{ old('acknowledgement_body', $quoteLevelAcknowledgement?->body) }}</textarea>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check mt-2">
+                                                <input type="hidden" name="acknowledgement_required" value="0">
+                                                <input type="checkbox" name="acknowledgement_required" value="1" id="quote_acknowledgement_required" class="form-check-input" @checked(old('acknowledgement_required', $quoteLevelAcknowledgement?->is_required ?? true))>
+                                                <label for="quote_acknowledgement_required" class="form-check-label">Customer must confirm</label>
+                                            </div>
+                                        </div>
                                         <div class="col-12 d-flex align-items-center justify-content-between gap-3">
                                             <div class="form-text">Assumptions, exclusions, and next steps appear after the price groups.</div>
                                             <button type="submit" class="btn btn-primary">Save quote text</button>
@@ -502,11 +656,28 @@
                                             </thead>
                                             <tbody>
                                             @forelse($editableVersion->lines as $line)
+                                                @php
+                                                    $lineAcknowledgement = $editableVersion->acknowledgements
+                                                        ->where('quote_line_id', $line->id)
+                                                        ->firstWhere('source_type', 'manual_line');
+                                                @endphp
                                                 <tr>
                                                     <td>
                                                         <span class="fw-semibold">{{ $line->name }}</span>
                                                         <div class="text-muted small">{{ $line->description }}</div>
-                                                        <div class="small">{{ $quoteCadences[$line->billing_cadence]['label'] ?? $line->billing_cadence }}</div>
+                                                        <div class="small">
+                                                            {{ $quoteCadences[$line->billing_cadence]['label'] ?? $line->billing_cadence }}
+                                                            @if($line->is_required)
+                                                                / Required
+                                                            @elseif($line->is_recommended)
+                                                                / Recommended
+                                                            @else
+                                                                / Optional
+                                                            @endif
+                                                            @if($line->optionGroup)
+                                                                / {{ $line->optionGroup->name }}
+                                                            @endif
+                                                        </div>
                                                     </td>
                                                     <td class="text-end">{{ $line->quantity }}</td>
                                                     <td class="text-end">{{ number_format((float) $line->unit_price_ex_vat, 2, ',', ' ') }}</td>
@@ -531,6 +702,21 @@
                                                                 data-discount-type="{{ $line->discount_type }}"
                                                                 data-vat-rate="{{ $line->vat_rate }}"
                                                                 data-is-optional="{{ $line->is_optional ? '1' : '0' }}"
+                                                                data-is-required="{{ $line->is_required ? '1' : '0' }}"
+                                                                data-is-recommended="{{ $line->is_recommended ? '1' : '0' }}"
+                                                                data-customer-selected-by-default="{{ $line->customer_selected_by_default ? '1' : '0' }}"
+                                                                data-customer-quantity-editable="{{ $line->customer_quantity_editable ? '1' : '0' }}"
+                                                                data-min-customer-quantity="{{ $line->min_customer_quantity }}"
+                                                                data-max-customer-quantity="{{ $line->max_customer_quantity }}"
+                                                                data-customer-label="{{ $line->customer_label }}"
+                                                                data-option-group-name="{{ $line->optionGroup?->name }}"
+                                                                data-option-group-type="{{ $line->optionGroup?->type }}"
+                                                                data-option-group-description="{{ $line->optionGroup?->description }}"
+                                                                data-option-group-min-select="{{ $line->optionGroup?->min_select }}"
+                                                                data-option-group-max-select="{{ $line->optionGroup?->max_select }}"
+                                                                data-line-acknowledgement-title="{{ $lineAcknowledgement?->title }}"
+                                                                data-line-acknowledgement-body="{{ $lineAcknowledgement?->body }}"
+                                                                data-line-acknowledgement-required="{{ $lineAcknowledgement?->is_required ? '1' : '0' }}"
                                                             >Edit</button>
                                                             <form method="POST" action="{{ route('tech.sales.quote.lines.destroy', [$sale, $line]) }}">
                                                                 @csrf
@@ -634,9 +820,84 @@
                                             <label class="form-label">VAT %</label>
                                             <input type="number" name="vat_rate" id="quoteLineVat" step="0.01" value="25" class="form-control">
                                         </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Option group</label>
+                                            <input type="text" name="option_group_name" id="quoteLineOptionGroupName" class="form-control" placeholder="Add-ons, Good / Better / Best, alternatives">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Group type</label>
+                                            <select name="option_group_type" id="quoteLineOptionGroupType" class="form-select">
+                                                @foreach(\App\Modules\Sales\Models\SalesQuoteOptionGroup::TYPES as $groupType => $label)
+                                                    <option value="{{ $groupType }}">{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Min choices</label>
+                                            <input type="number" name="option_group_min_select" id="quoteLineOptionGroupMin" min="0" step="1" value="0" class="form-control">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Max choices</label>
+                                            <input type="number" name="option_group_max_select" id="quoteLineOptionGroupMax" min="1" step="1" class="form-control">
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label">Group description</label>
+                                            <input type="text" name="option_group_description" id="quoteLineOptionGroupDescription" class="form-control">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Customer label</label>
+                                            <input type="text" name="customer_label" id="quoteLineCustomerLabel" class="form-control">
+                                        </div>
                                         <div class="col-md-8">
                                             <label class="form-label">Explanation</label>
                                             <input type="text" name="description" id="quoteLineDescription" class="form-control">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="border rounded p-2">
+                                                <div class="form-check">
+                                                    <input type="hidden" name="is_required" value="0">
+                                                    <input type="checkbox" name="is_required" value="1" id="quoteLineRequired" class="form-check-input" checked>
+                                                    <label for="quoteLineRequired" class="form-check-label">Required/included line</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input type="hidden" name="is_recommended" value="0">
+                                                    <input type="checkbox" name="is_recommended" value="1" id="quoteLineRecommended" class="form-check-input">
+                                                    <label for="quoteLineRecommended" class="form-check-label">Recommended option</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input type="hidden" name="customer_selected_by_default" value="0">
+                                                    <input type="checkbox" name="customer_selected_by_default" value="1" id="quoteLineDefaultSelected" class="form-check-input" checked>
+                                                    <label for="quoteLineDefaultSelected" class="form-check-label">Selected by default</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input type="hidden" name="customer_quantity_editable" value="0">
+                                                    <input type="checkbox" name="customer_quantity_editable" value="1" id="quoteLineCustomerQuantityEditable" class="form-check-input">
+                                                    <label for="quoteLineCustomerQuantityEditable" class="form-check-label">Customer can change quantity</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Min customer qty</label>
+                                            <input type="number" name="min_customer_quantity" id="quoteLineMinCustomerQuantity" step="0.01" min="0.01" class="form-control">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Max customer qty</label>
+                                            <input type="number" name="max_customer_quantity" id="quoteLineMaxCustomerQuantity" step="0.01" min="0.01" class="form-control">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Line acknowledgement title</label>
+                                            <input type="text" name="line_acknowledgement_title" id="quoteLineAcknowledgementTitle" class="form-control">
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label">Line acknowledgement</label>
+                                            <input type="text" name="line_acknowledgement_body" id="quoteLineAcknowledgementBody" class="form-control">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-check mt-4">
+                                                <input type="hidden" name="line_acknowledgement_required" value="0">
+                                                <input type="checkbox" name="line_acknowledgement_required" value="1" id="quoteLineAcknowledgementRequired" class="form-check-input" checked>
+                                                <label for="quoteLineAcknowledgementRequired" class="form-check-label">Required</label>
+                                            </div>
                                         </div>
                                         <div class="col-md-2 d-grid gap-2">
                                             <button type="submit" class="btn btn-primary" id="quoteLineSubmit">Add line</button>
@@ -682,6 +943,15 @@
                                     'quote_email_queued' => 'Quote email',
                                     'quote_sent' => 'Quote sent',
                                     'quote_accepted' => 'Quote accepted',
+                                    'quote_declined' => 'Quote declined',
+                                    'quote_expired' => 'Quote expired',
+                                    'quote_viewed' => 'Quote viewed',
+                                    'quote_template_applied' => 'Quote template',
+                                    'quote_approval_requested' => 'Approval requested',
+                                    'quote_approval_approved' => 'Quote approved',
+                                    'quote_approval_rejected' => 'Quote rejected',
+                                    'quote_approval_changes_requested' => 'Quote changes requested',
+                                    'quote_conversion_plan_updated' => 'Conversion plan',
                                     default => ucfirst(str_replace('_', ' ', $activity->type)),
                                 };
                                 $participantLine = $activity->direction === 'inbound'
@@ -887,6 +1157,21 @@
             const quantityInput = document.getElementById('quoteLineQuantity');
             const discountValueInput = document.getElementById('quoteLineDiscountValue');
             const discountTypeInput = document.getElementById('quoteLineDiscountType');
+            const requiredInput = document.getElementById('quoteLineRequired');
+            const recommendedInput = document.getElementById('quoteLineRecommended');
+            const defaultSelectedInput = document.getElementById('quoteLineDefaultSelected');
+            const customerQuantityEditableInput = document.getElementById('quoteLineCustomerQuantityEditable');
+            const minCustomerQuantityInput = document.getElementById('quoteLineMinCustomerQuantity');
+            const maxCustomerQuantityInput = document.getElementById('quoteLineMaxCustomerQuantity');
+            const customerLabelInput = document.getElementById('quoteLineCustomerLabel');
+            const optionGroupNameInput = document.getElementById('quoteLineOptionGroupName');
+            const optionGroupTypeInput = document.getElementById('quoteLineOptionGroupType');
+            const optionGroupDescriptionInput = document.getElementById('quoteLineOptionGroupDescription');
+            const optionGroupMinInput = document.getElementById('quoteLineOptionGroupMin');
+            const optionGroupMaxInput = document.getElementById('quoteLineOptionGroupMax');
+            const lineAcknowledgementTitleInput = document.getElementById('quoteLineAcknowledgementTitle');
+            const lineAcknowledgementBodyInput = document.getElementById('quoteLineAcknowledgementBody');
+            const lineAcknowledgementRequiredInput = document.getElementById('quoteLineAcknowledgementRequired');
             const activityType = document.getElementById('salesActivityType');
             const emailRecipientFields = document.getElementById('salesEmailRecipientFields');
             const emailCcFields = document.getElementById('salesEmailCcFields');
@@ -1076,6 +1361,14 @@
                 editCancel.classList.add('d-none');
                 quoteLineForm.reset();
                 sourceType.value = 'custom';
+                requiredInput.checked = true;
+                recommendedInput.checked = false;
+                defaultSelectedInput.checked = true;
+                customerQuantityEditableInput.checked = false;
+                optionGroupTypeInput.value = 'optional';
+                optionGroupMinInput.value = '0';
+                optionGroupMaxInput.value = '';
+                lineAcknowledgementRequiredInput.checked = true;
                 syncPickerVisibility();
             };
 
@@ -1111,6 +1404,21 @@
                     discountValueInput.value = button.dataset.discountValue || '0';
                     discountTypeInput.value = button.dataset.discountType || 'amount';
                     vatInput.value = button.dataset.vatRate || '25';
+                    requiredInput.checked = button.dataset.isRequired === '1';
+                    recommendedInput.checked = button.dataset.isRecommended === '1';
+                    defaultSelectedInput.checked = button.dataset.customerSelectedByDefault !== '0';
+                    customerQuantityEditableInput.checked = button.dataset.customerQuantityEditable === '1';
+                    minCustomerQuantityInput.value = button.dataset.minCustomerQuantity || '';
+                    maxCustomerQuantityInput.value = button.dataset.maxCustomerQuantity || '';
+                    customerLabelInput.value = button.dataset.customerLabel || '';
+                    optionGroupNameInput.value = button.dataset.optionGroupName || '';
+                    optionGroupTypeInput.value = button.dataset.optionGroupType || 'optional';
+                    optionGroupDescriptionInput.value = button.dataset.optionGroupDescription || '';
+                    optionGroupMinInput.value = button.dataset.optionGroupMinSelect || '0';
+                    optionGroupMaxInput.value = button.dataset.optionGroupMaxSelect || '';
+                    lineAcknowledgementTitleInput.value = button.dataset.lineAcknowledgementTitle || '';
+                    lineAcknowledgementBodyInput.value = button.dataset.lineAcknowledgementBody || '';
+                    lineAcknowledgementRequiredInput.checked = button.dataset.lineAcknowledgementRequired !== '0';
                     quoteLineForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 });
             });

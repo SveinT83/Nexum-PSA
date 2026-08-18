@@ -232,6 +232,8 @@
                 <dd class="col-6 text-end">{{ $item->suggested_order_qty }}</dd>
                 <dt class="col-6">Orderable</dt>
                 <dd class="col-6 text-end">{{ $item->can_be_ordered ? 'Yes' : 'No' }}</dd>
+                <dt class="col-6">Quote required</dt>
+                <dd class="col-6 text-end">{{ $item->requires_customer_quote ? 'Yes' : 'No' }}</dd>
                 <dt class="col-6">Serials</dt>
                 <dd class="col-6 text-end">{{ $item->has_serials ? 'Yes' : 'No' }}</dd>
                 <dt class="col-6">Batch tracking</dt>

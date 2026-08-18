@@ -179,7 +179,11 @@ return [
         Watchers\MailWatcher::class => env('TELESCOPE_MAIL_WATCHER', true),
 
         Watchers\ModelWatcher::class => [
-            'enabled' => env('TELESCOPE_MODEL_WATCHER', true),
+            // Model changes bypass Eloquent $hidden and may contain provider
+            // credential ciphertext/endpoints. Keep disabled; the provider
+            // also drops sensitive model entries if an installation overrides
+            // watcher registration in custom bootstrap code.
+            'enabled' => false,
             'events' => ['eloquent.*'],
             'hydrations' => true,
         ],
@@ -187,7 +191,10 @@ return [
         Watchers\NotificationWatcher::class => env('TELESCOPE_NOTIFICATION_WATCHER', true),
 
         Watchers\QueryWatcher::class => [
-            'enabled' => env('TELESCOPE_QUERY_WATCHER', true),
+            // Telescope interpolates SQL bindings before filtering. Disable
+            // query capture so provider ciphertext and endpoints never enter
+            // its in-memory queue or persistent store.
+            'enabled' => false,
             'ignore_packages' => true,
             'ignore_paths' => [],
             'slow' => 100,

@@ -15,6 +15,8 @@ class Category extends Model
 
     public const TYPE_TICKET = 'ticket';
 
+    public const TYPE_EMAIL = 'email';
+
     protected $fillable = [
         'parent_id',
         'name',

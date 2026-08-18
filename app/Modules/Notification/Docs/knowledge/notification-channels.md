@@ -85,6 +85,9 @@ Recipient behavior:
   becomes a customer Ticket reply and the owner has Ticket access.
 - Explicit New inbound Email subscribers can receive inbox/triage alerts when they are active and
   authorized for the target Email inbox or linked Ticket.
+- Emergency break-glass content access does not by itself authorize background inbox subscriptions,
+  canonical alerts, or external previews. A user must have ordinary current mailbox View authority;
+  break-glass disclosure remains an interactive, separately audited action.
 - If the same user is eligible through both paths, Nexum keeps one notification for that Email.
 - Stored account and queue scopes can restrict the inbox subscriber path. No stored scope means all
   authorized inbound Email for that subscriber.
@@ -110,6 +113,72 @@ Read behavior:
 
 Web Push remains best effort. Failed browser delivery does not roll back Email, Ticket, or canonical
 database notification persistence.
+
+#### Durable external delivery and current recipient checks
+
+For a newly accepted inbound Email event, Notification commits the canonical database notification
+and a payload-free `notification_inbound_external_deliveries` outbox row in the same transaction
+when Email, Web Push, or Nextcloud Talk was requested. Retries reuse that identity. Existing legacy
+canonical notifications are not retrofitted into the outbox because their original recipient,
+preference, mailbox, Ticket, and provider-binding evidence is no longer current enough to authorize
+an external send.
+
+The outbox stores only requested channels and safe notification, user, Email source, account, mail
+scope, and provider-binding references. The canonical notification remains the source of the
+content. Immediately before external delivery, the worker rechecks all of the following:
+
+- the user is active, non-system, and still an exact current recipient for the Email or Ticket;
+- the canonical source, notification type, and Email account remain coherent;
+- the user's current preference still enables each originally requested channel;
+- mailbox or Ticket authority still allows the source; and
+- Email delivery still resolves the exact frozen Notification mail scope, account, and provider
+  binding generation.
+
+Delivery uses only the intersection of channels requested when the event was committed and channels
+still enabled now. A revoked, disabled, rebound, or no longer eligible target becomes terminal
+`suppressed`; it does not fall back to another recipient, account, binding, or system mailer. Each
+row has one claimed external attempt. A provider-uncertain exception or abandoned worker claim is
+terminal `unresolved` because one channel may already have accepted the message; Nexum never blindly
+replays it. Canonical in-app notification availability and read state remain independent of that
+external outcome.
+
+The scheduler dispatches at most 100 pending or safely recoverable pre-attempt rows each minute.
+`DispatchPendingInboundEmailExternalNotifications` and
+`DeliverInboundEmailExternalNotification` run on the `notifications` queue, so installations must
+supervise that worker after the `118200` migration. Operators should investigate `suppressed` and
+`unresolved` safe reason codes, current user preferences/authority, the exact Notification Email
+binding, the `notifications` queue backlog, and failed jobs. Do not manually replay an unresolved
+row or copy canonical content into the outbox.
+
+This durable delivery boundary is implemented and automatically verified as part of Mail Order 7,
+but `HR-2026-08-16-007` remains Pending. No automated result completes its mailbox, provider,
+scheduler, worker, queue/backlog, privacy, or delivery review checks.
+
+### Account-backed email delivery
+
+Notification email and password resets use the Notification-owned Email account channel. They do
+not use Laravel's ambient system mailer. The channel selects an active shared/system Email account
+through the configured default scope:
+
+- Ticket notifications and Ticket-linked inbound alerts use `tickets`.
+- Asset and supplier-order operational alerts use `alerts`.
+- Booking, customer portal, password reset, and non-Ticket inbound alerts use `system`.
+
+The selected account ID and provider-binding version are frozen before Laravel clones a synchronous
+notification or serializes a queued notification. Delivery rechecks the same default scope, account,
+readiness, and binding, renders the supported Markdown message inside Notification, and submits it
+through the Integration-backed Email SMTP boundary. Queue payloads contain the safe account ID,
+scope, and binding generation, never provider hosts, usernames, or credentials.
+
+A missing, paused, revoked, rebound, or newly selected provider blocks delivery without falling back
+to another account, legacy credentials, or the system mailer. Synchronous callers receive a safe
+failure code. Queued delivery records a safe blocked result. If SMTP may already have accepted a
+message but the response is uncertain, the result is `smtp_send_outcome_unresolved` and is never
+automatically replayed. Unsupported custom mailers, views, sender overrides, Bcc, attachments, or
+callbacks fail closed until the account-backed channel explicitly supports and tests them.
+
+After deploying a channel or provider-binding change, restart long-lived queue workers so queued
+notifications load the current snapshot and delivery contract.
 
 ## Transactional SMS
 

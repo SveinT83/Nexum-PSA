@@ -65,6 +65,17 @@ agent-specific file conflicts with this file, this file wins.
   implementation must be added near the top of `docs/TODO.md`.
 - New domains and large new capabilities should wait unless they unblock beta
   completion or have an approved RFC.
+- For Mail module work, read
+  `docs/rfc/2026-07-04-mail-module-full-email-client.md` and its related
+  2026-08-11 ADRs before designing or implementing behavior. The current
+  direction is a real IMAP-backed mail client: provider folder/read state stays
+  authoritative, Nexum keeps its own `unread for me` and collaboration state,
+  and the default workspace is a Livewire conversation view across mailboxes
+  the user may access.
+- Do not replace the existing `TD-...` Ticket-number correlation when expanding
+  Mail. Converting or linking an email to a Ticket keeps the source email in
+  the mailbox, and one Ticket may link several independent email conversations
+  through guarded, auditable actions.
 
 ## Change Levels
 
@@ -263,6 +274,23 @@ affected code and tests.
 - Use the development server as the default runtime for Laravel verification:
   PHP, Composer, Artisan, migrations, scheduler, queue, and Laravel tests should
   normally run on the Dev server, not through local Windows PHP.
+- For GitHub Issue and TODO maintenance, the default deliverable is an
+  implemented and verified change in the authoritative Dev working copy, not
+  only triage or an Issue comment. When a safe, approved task can be completed,
+  inspect the affected Dev code, implement the fix there, add or update tests,
+  and run the relevant Dev verification before reporting the result.
+- An Issue comment alone is an acceptable outcome only when implementation is
+  genuinely blocked by a current, concrete condition such as missing approval,
+  an unavailable required dependency, conflicting in-progress work, or failed
+  Dev access after trying the approved access path. State the exact blocker and
+  required next action; do not repeatedly post the same unchanged blocker as a
+  substitute for implementation.
+- Svein owns commit, merge, promotion, and deployment to `Main`. AI agents and
+  maintenance automations must not commit, push, merge, or deploy `Main` unless
+  Svein explicitly requests that action. A narrowly scoped change may be
+  committed or pushed to `Dev` only when the task authorizes it and the required
+  Dev tests have passed; otherwise leave the verified Dev working-copy changes
+  ready for Svein's review.
 - Compiled Blade views under `storage/framework/views` must remain
   group-writable by the PHP-FPM group (normally files `0664`). Keep the
   directory's default group-write ACL, and set `umask 0002` before Artisan

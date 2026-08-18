@@ -3,17 +3,19 @@
 namespace App\Modules\Storage\Notifications;
 
 use App\Modules\Notification\Channels\NextcloudTalkChannel;
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class SupplierOrderImportDailyDigestNotification extends Notification
+class SupplierOrderImportDailyDigestNotification extends Notification implements EmailAccountMailNotification
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     /**
      * @param  array<string, int>  $statusCounts
@@ -25,7 +27,9 @@ class SupplierOrderImportDailyDigestNotification extends Notification
         public readonly int $total,
         public readonly array $statusCounts,
         public readonly array $reasonCounts,
-    ) {}
+    ) {
+        $this->freezeEmailAccountMailSnapshot('alerts');
+    }
 
     /** @return list<class-string|string> */
     public function via(object $notifiable): array
@@ -36,7 +40,7 @@ class SupplierOrderImportDailyDigestNotification extends Notification
             $channels[] = 'database';
         }
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel('alerts');
         }
         if ($setting->web_push_enabled) {
             $channels[] = WebPushChannel::class;

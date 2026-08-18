@@ -19,12 +19,25 @@ use App\Modules\DataExchange\Livewire\Admin\ProfileBuilder as DataExchangeProfil
 use App\Modules\DataExchange\Support\DataExchangeSourceRegistry;
 use App\Modules\Documentation\Livewire\Admin\TemplateForm as DocumentationTemplateForm;
 use App\Modules\Economy\Support\EconomyOrdersDataExchangeSource;
+use App\Modules\Email\Contracts\EmailProviderIdleHintReader;
+use App\Modules\Email\Contracts\EmailProviderReconciliationMessageStore;
+use App\Modules\Email\Contracts\EmailProviderReconciliationReader;
+use App\Modules\Email\Livewire\Tech\MailSidebar as EmailMailSidebar;
+use App\Modules\Email\Livewire\Tech\MailWorkspace as EmailMailWorkspace;
+use App\Modules\Email\Livewire\Tech\SmartInboxReviewQueue as EmailSmartInboxReviewQueue;
+use App\Modules\Email\Services\EmailProviderImapIdleHintReader;
+use App\Modules\Email\Services\EmailProviderReconciliationImapReader;
+use App\Modules\Email\Services\EmailProviderReconciliationStore;
+use App\Modules\Email\Services\EmailUnreadSchemaState;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\AiSettings as IntegrationAiSettings;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\NAbleRmmSync as IntegrationNAbleRmmSync;
 use App\Modules\Integration\Livewire\Tech\Admin\System\Integrations\TacticalRmmSync as IntegrationTacticalRmmSync;
 use App\Modules\Integration\Livewire\Tech\Ai\ContextChat as IntegrationContextChat;
 use App\Modules\Knowledge\Livewire\ArticleForm as KnowledgeArticleForm;
+use App\Modules\Notification\Contracts\InboundEmailExternalNotificationDispatcher;
 use App\Modules\Notification\Livewire\NotificationBell;
+use App\Modules\Notification\Services\InboundEmailExternalChannelDispatcher;
+use App\Modules\Notification\Services\InboundEmailNotificationFanoutReadiness;
 use App\Modules\Notification\Support\AuditedWebPushReportHandler;
 use App\Modules\System\Support\CompanyProfileSettings;
 use App\Modules\Task\Livewire\Tech\TaskChecklistEditor;
@@ -49,10 +62,29 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(DataExchangeSourceRegistry::class);
+        $this->app->bind(
+            EmailProviderReconciliationReader::class,
+            EmailProviderReconciliationImapReader::class,
+        );
+        $this->app->bind(
+            EmailProviderIdleHintReader::class,
+            EmailProviderImapIdleHintReader::class,
+        );
+        $this->app->bind(
+            EmailProviderReconciliationMessageStore::class,
+            EmailProviderReconciliationStore::class,
+        );
+        $this->app->bind(
+            InboundEmailExternalNotificationDispatcher::class,
+            InboundEmailExternalChannelDispatcher::class,
+        );
+        $this->app->scoped(EmailUnreadSchemaState::class);
+        $this->app->scoped(InboundEmailNotificationFanoutReadiness::class);
+        $this->app->scoped(AuditedWebPushReportHandler::class);
 
         $this->app->when(WebPushChannel::class)
             ->needs(ReportHandlerInterface::class)
-            ->give(AuditedWebPushReportHandler::class);
+            ->give(fn ($app) => $app->make(AuditedWebPushReportHandler::class));
 
         if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
@@ -143,6 +175,9 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('tech.tasks.checklist-editor', TaskChecklistEditor::class);
         Livewire::component('tech.tasks.form-context', TaskFormContext::class);
         Livewire::component('tech.admin.tickets.workflow-editor', TicketWorkflowEditor::class);
+        Livewire::component('tech.mail.sidebar', EmailMailSidebar::class);
+        Livewire::component('tech.mail.workspace', EmailMailWorkspace::class);
+        Livewire::component('tech.mail.smart-inbox-review-queue', EmailSmartInboxReviewQueue::class);
         Livewire::component('tech.admin.system.templates-management.doc.template-form', DocumentationTemplateForm::class);
         Livewire::component('tech.admin.user_management.roles.role-permissions', UserManagementRolePermissions::class);
         Livewire::component('tech.admin.system.integrations.n-able-rmm-sync', IntegrationNAbleRmmSync::class);

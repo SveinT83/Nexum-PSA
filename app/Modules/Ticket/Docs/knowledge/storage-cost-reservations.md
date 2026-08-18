@@ -2,11 +2,17 @@ Ticket cost entries let technicians capture material and expense costs before bi
 
 Workflow-controlled planned lines come before actual costs when customer approval is required. A planned line does not reserve stock, create a purchase order, or become billable. It can be copied into a Ticket-linked Sales quote and becomes approved scope only when that immutable quote version is accepted.
 
-Technicians use the `Add cost` action beside `Add time` on the ticket show page. The form supports two modes:
+Technicians use the `Add cost/item` action beside `Add time` on the ticket show page. The form supports two modes:
 
 - `Storage item` reserves an active Storage item for the ticket.
 - `Manual cost` records an ad-hoc cost such as parking, shipping, subcontractor work, or other
   expenses that should not be mapped to warehouse stock.
+
+The same action can start quote scope instead of actual cost. If the selected Storage item is marked
+`Requires accepted quote before use`, or if the manual/storage line total reaches the Ticket quote
+cost threshold in Ticket Settings, Nexum creates a `ticket_planned_lines` row and does not create a
+`ticket_cost_entries` row or `storage_reservations` row. The Ticket then shows the quote and
+customer approval panel so the line can be copied into a Sales quote.
 
 Storage-backed costs create a pending `ticket_cost_entries` record and a linked `storage_reservations` record. The reservation increments the Storage item's `qty_reserved` value. It does not reduce `qty_on_hand`, does not create an invoice line, and does not decide whether the item is contract-covered or directly billable. Billing will settle that later.
 
@@ -33,4 +39,16 @@ Important status fields:
 
 Later billing should read pending ticket cost entries together with pending time entries. At that point it can decide whether to invoice the item, include it in a contract, convert the reservation to a stock movement, or release it if the work is cancelled.
 
-After quote acceptance, an authorized technician or API client can convert an approved equipment line to a reservation/pending cost, convert an approved custom line to a pending manual cost, or create a draft purchase need for an orderable Storage item. Repeating a conversion or purchase request returns the existing downstream record rather than creating a duplicate. A purchase need never sends a vendor order automatically.
+After quote acceptance, Nexum automatically processes approved Ticket quote lines when it is safe:
+equipment with enough available stock becomes a reservation/pending cost, orderable equipment with a
+shortage becomes a draft purchase need, and custom approved lines become pending manual costs.
+Technician and API conversion actions remain as retry paths when an item is inactive, not orderable,
+missing purchase master data, or otherwise blocked. Repeating a conversion or purchase request
+returns the existing downstream record rather than creating a duplicate. A purchase need never sends
+a vendor order automatically.
+
+If an accepted Ticket quote is voided before delivery becomes irreversible, Nexum reverses the safe
+records it created: active Storage reservations are released, pending manual costs are cancelled, and
+draft purchase needs are cancelled. Voiding is blocked after picking, non-pending billing, placed
+purchase orders, shipments, or receipts, because those steps require the owning downstream workflow
+to handle correction explicitly.

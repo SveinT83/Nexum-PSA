@@ -10,6 +10,9 @@ Required scopes:
 - `sales.read`: list and view opportunities.
 - `sales.create`: create opportunities through the Sales opportunity engine.
 - `sales.update`: update opportunities, add activities, and mark inbound activity as read.
+- `sales.quote_templates.read`: read quote-template catalogs and configured reusable templates.
+- `sales.quote_templates.manage`: create, update, and delete quote templates, template lines, option
+  groups, and acknowledgements.
 
 ## Opportunities
 
@@ -93,10 +96,47 @@ designed and documented.
 `POST /api/v1/sales/opportunities/{opportunity}/read` marks unread activities on the opportunity as
 read.
 
+## Quote Templates
+
+Quote template routes let trusted automation build reusable Sales quote templates through the same
+controlled catalog and validation as the Admin Sales Quote Templates UI.
+
+Read routes:
+
+- `GET /api/v1/sales/quote-template-catalog`
+  - Requires `sales.quote_templates.read`.
+  - Returns fixed choices for opportunity type, customer segment, source type, catalog line sources,
+    sections, downstream owners, billing cadences, and option-group types.
+- `GET /api/v1/sales/quote-templates`
+  - Requires `sales.quote_templates.read`.
+  - Lists templates with line, group, and acknowledgement counts.
+- `GET /api/v1/sales/quote-templates/{template}`
+  - Requires `sales.quote_templates.read`.
+  - Returns the template, option groups, lines, acknowledgements, and customer text.
+
+Write routes:
+
+- `POST /api/v1/sales/quote-templates`
+- `PUT /api/v1/sales/quote-templates/{template}`
+- `DELETE /api/v1/sales/quote-templates/{template}`
+- `POST /api/v1/sales/quote-templates/{template}/lines`
+- `DELETE /api/v1/sales/quote-templates/{template}/lines/{line}`
+- `POST /api/v1/sales/quote-templates/{template}/acknowledgements`
+- `DELETE /api/v1/sales/quote-templates/{template}/acknowledgements/{acknowledgement}`
+
+All write routes require `sales.quote_templates.manage`.
+
+Template create and update accept fixed `target_type` and `customer_segment` values from the catalog.
+Template line create accepts `source_reference` values such as `custom`, `service:{id}`,
+`package:{id}`, `time_rate:{id}`, and `storage_item:{id}`. Catalog-backed lines snapshot their source
+data when they are added to the template. A new option group can be created with `option_group_name`,
+or an existing group can be selected with `option_group_id`.
+
 ## Operational Notes
 
-Use the Sales API when an external workflow needs to create or update opportunities, register inbound
-sales communication, or let an AI agent operate inside the Sales workflow with scoped access.
+Use the Sales API when an external automation needs to create or update opportunities, register
+inbound sales communication, create reusable quote templates, or let an AI agent manage quote
+templates with scoped access.
 
 Use the Tech UI for quote versioning, quote approval, outbound quote sending, and sales-specific email
 composition until those workflows receive their own API slices.

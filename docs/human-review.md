@@ -27,6 +27,69 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-16-008 | Email private live invalidation and polling fallback | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-005 | Email canonical message and placement cutover | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-004 | Email canonical message shadow correlation | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-003 | Email per-user unread baselines and explicit backlog handover | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-002 | Email personal mailbox delegation, break-glass, and access history | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-001 | Email Mail historical import and UID re-baseline | Pending | 2026-08-16 |  |  |
+| HR-2026-08-15-007 | Email Mail desktop workspace density and height polish | Pending | 2026-08-15 |  |  |
+| HR-2026-08-15-006 | Email Mail inbound attachment recovery and download | Pending | 2026-08-15 |  |  |
+| HR-2026-08-15-005 | Email Mail Smart Inbox reader-first polish | Pending | 2026-08-15 |  |  |
+| HR-2026-08-15-004 | Email Mail decoded subject search compatibility | Pending | 2026-08-15 |  |  |
+| HR-2026-08-15-003 | Email Mail runtime reliability, truthful send follow-up, and right-bar controls | Pending | 2026-08-15 |  |  |
+| HR-2026-08-15-002 | Email Mail folder hierarchy and subject readability | Pending | 2026-08-15 |  |  |
+| HR-2026-08-15-001 | Email Mail selected conversation list expansion | Pending | 2026-08-15 |  |  |
+| HR-2026-08-14-015 | Email Mail provider deletion reconciliation | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-014 | Email Mail supervised Smart Inbox cleanup | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-013 | Email Mail reviewed Smart Inbox actions | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-012 | Email Mail durable Smart Inbox foundation and review queue | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-011 | Email Mail verified remote operation Undo | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-010 | Email Mail remote operation recovery | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-009 | Email Mail fail-safe retention purge and preview | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-008 | Email Mail conversation Taxonomy classification | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-007 | Email Mail conversation identity hardening | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-006 | Email Mail durable account-scoped conversations | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-005 | Email Mail composer local status polish | Reviewed | 2026-08-14 | Svein Tore | 2026-08-14 |
+| HR-2026-08-14-004 | Email Mail composer AI consistency | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-003 | Email Mail conversation reader polish | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-002 | Email Mail conversation list grouping | Pending | 2026-08-14 |  |  |
+| HR-2026-08-14-001 | Email Mail manual send/receive and folder refresh | Pending | 2026-08-14 |  |  |
+| HR-2026-08-13-032 | Email Mail provider folder create, rename, move, and delete | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-031 | Email Mail write-gated AI assistants | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-030 | Email Mail remote operation retry dashboard | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-029 | Email Mail multi-conversation Ticket links | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-028 | Email Mail grouped rules and reprocessing | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-027 | Email Mail provider Sent append support | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-026 | Email Mail provider Drafts direct editing | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-025 | Email Mail provider folder create | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-024 | Email Mail durable draft attachments | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-023 | Email Mail provider Drafts write sync | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-022 | Email Mail provider Drafts visibility | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-021 | Email Mail Sent reconciliation foundation | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-020 | Email Mail local drafts and autosave | Pending | 2026-08-13 |  |  |
+| HR-2026-08-13-019 | Email Mail personal signatures | Pending | 2026-08-13 |  |  |
+| HR-2026-08-12-018 | Integration standard AI activation for Mail AI | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-017 | Email Mail AI reply drafting and settings storage | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-016 | Email Mail AI summary | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-015 | Email Mail personal simple rules | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-014 | Email Mail Reply All, new compose, and Move-to-folder | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-013 | Email Mail list filter pagination and sidebar polish | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
+| HR-2026-08-12-012 | Email automatic polling Carbon 3 interval regression | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-011 | Email Mail taxonomy classification | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-010 | Email Mail command bar triage actions | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-009 | Email Mail forward and rich HTML composer | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-008 | Email Mail reply composer with attachments | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-007 | Email provider mailbox actions and API | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
+| HR-2026-08-12-006 | Email Livewire Mail workspace and personal state | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
+| HR-2026-08-12-005 | Email deterministic rule versions and API foundation | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
+| HR-2026-08-12-004 | Email admin sync and cache settings clarity | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
+| HR-2026-08-12-003 | Email server-authoritative folders and placements | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
+| HR-2026-08-12-002 | Email mailbox access foundation | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
+| HR-2026-08-12-001 | Mail full-client RFC and Email architecture decisions | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
+| HR-2026-08-11-004 | Sales Quotes / CPQ completion | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-003 | One responsive Nexum PWA final browser acceptance | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Pending | 2026-08-11 |  |  |
 | HR-2026-08-11-001 | Intake final routing and review completion | Pending | 2026-08-11 |  |  |
@@ -61,6 +124,39 @@ has explicitly approved.
 | HR-2026-07-15-001 | Main and Dev pre-merge user-interface review | In Review | 2026-07-15 | Svein Tore |  |
 
 ## Reviewed History
+
+### HR-2026-08-12-001 - Mail Full-Client RFC And Email Architecture Decisions
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Documentation and architecture review; no runtime implementation or deployment
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md` and its four related 2026-08-11 Email
+ADRs
+
+Scope: The complete Level 3 target for a real provider-authoritative IMAP-backed Mail client,
+personal/shared mailbox access, per-user unread and collaboration state, Livewire conversation views,
+Taxonomy classification, deterministic rules, guarded AI, and multi-conversation Email/Ticket
+communication with the existing Ticket-number fallback preserved.
+
+Deployment actions: N/A. This review approves planning and architecture only. No code, migration,
+provider change, external publication, or production activation was performed. Implementation must
+use scoped Feature Slices on authoritative Dev; automatic external replies remain separately gated.
+
+Risks: the first Feature Slice must revalidate live Dev schema/code and dirty state; personal/shared
+mail access, Ticket ingress, provider synchronization, data migration, portal audience, send
+reconciliation, attachment safety, and AI egress require slice-specific tests and human review.
+
+- [x] Approve the complete RFC, including decisions 1-11 and the recorded security/lifecycle and
+  migration boundaries.
+- [x] Accept the four related ADRs for Email domain ownership, canonical message/mailbox placement,
+  mailbox access/rule authority, and Email conversations as Ticket communication channels.
+- [x] Accept that implementation remains sliced and that automatic external replies require a later
+  explicit approval and ADR.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein answered `Ja` to the explicit question asking whether he approved the complete
+RFC and all four ADRs.
 
 ### HR-2026-07-27-003 - Warroom Storage Should Order Warning
 
@@ -150,6 +246,4865 @@ Reviewed date: 2026-07-28
 Result / notes: Approved by Svein Tore in the Codex task after reviewing the completed work.
 
 ## Open Reviews
+
+### HR-2026-08-16-008 - Email Private Live Invalidation And Polling Fallback
+
+Status: Pending
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; inert durable-foundation schema/model implementation
+is in progress, while runtime writer integration, packages, browser/transport, services, deployment,
+automated verification, and named human review remain pending
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-16-email-live-invalidation-user-stream-fanout.md`,
+`docs/feature-slices/2026-08-16-email-mail-private-live-invalidation-polling-fallback.md`, and
+`HR-2026-08-16-007`
+
+Scope: Add one permanent private user channel for opaque Mail invalidation hints, durable account and
+global source streams, bounded crash-resumable source-to-user fanout, per-user projection versions,
+and a 15-second automatic polling fallback. Database versions and current authorization remain the
+authority. Events and browser manifests contain no subject, sender, body, filename, Ticket detail,
+provider metadata, credential reference, unread count, or canonical identity. Late grants never
+replay old source events; revocation and access-boundary changes force a bounded current refresh.
+
+The browser subscribes once regardless of mailbox count. It catches up on connect, reconnect,
+online, `pageshow`, and visibility resume; hidden/offline tabs stop periodic work. A healthy socket
+still performs a 120-second bounded safety refresh. Scrolled lists pin at most the current 25
+authorized rows, remove revoked/deleted rows immediately, and expose an authorized **New mail (N)**
+control instead of moving the viewport. Livewire remains the sole Alpine owner.
+
+Affected pages / workflows: `/tech/mail` list, counts, selected conversation, navigation, personal
+unread/opened state, classification, Ticket links, mailbox access, and new-mail presentation;
+module-local private broadcast authorization; Email Admin live-mode/health information; scheduler,
+the dedicated `email-live` worker, Reverb, Apache/Plesk WebSocket proxying, CSP/origin policy, and
+deployment monitoring. Taxonomy/global changes and account/access mutations participate through
+explicit transactional invalidation writers rather than broad model observers.
+
+Deploy / migration notes: The unexecuted additive `130000` durable-foundation migration, hard-cap
+configuration, and inert EmailLive models are being implemented in the working copy. No migration,
+package, secret, Reverb process, Apache change, queue worker, scheduler change, asset build, provider
+call, runtime activation, deployment, commit, or push has been performed for this slice. Deployment
+will
+require an exact frozen code/schema candidate, backup and restore rehearsal, additive migration,
+locked Composer/npm versions, production Vite assets, cache/view rebuild with `umask 0002`, a
+loopback-only Reverb service, one dedicated `email-live` database worker, the shared scheduler,
+exact `/app` and `/apps` TLS proxying, exact allowed origins/CSP socket origin, and private-channel
+plus polling-fallback smoke. Operational rollback sets `EMAIL_LIVE_MODE=poll`; durable projection
+evidence remains unless a separately reviewed clean-schema rollback is safe.
+
+Risks: a source mutation could commit without durable fanout, a late/revoked authority path could
+retain identifiers, a candidate query could scan an unbounded rejected prefix, a role-wide change
+could omit users, pruning could strand unfinished publication, or a stale browser callback could
+reinsert revoked content. Socket/auth/proxy/CSP drift could silently force fallback; duplicate
+Alpine, listeners, subscriptions, or timers could disconnect Livewire controls or create a request
+herd. Every writer, cursor, authority generation, decimal-string version, retention boundary, and
+browser lifecycle therefore requires automated and controlled Dev evidence before activation.
+
+Automated verification: not yet run. This entry records the accepted review boundary only; passing
+future tests will not change its Pending status.
+
+Human checks:
+
+- [ ] On backed-up Dev, confirm the additive live schema, source/user/global streams, account/global
+  audience generations, exact-user access state, fanout cursors, unique deliveries, retention
+  guards, and required indexes exist without generating a source change or provider operation.
+- [ ] Verify one visible Mail tab creates exactly one authenticated
+  `private-email.user.{currentUserId}` subscription and one listener/timer lifecycle. Confirm a
+  guest, inactive user, system actor, or different user ID is denied without unread-baseline,
+  break-glass-use, access-event, or other side effects.
+- [ ] Create account, personal-state, Ticket-link, classification, and global Taxonomy changes.
+  Confirm authorized rows/counts/selection refresh promptly, account/global sources fan out in
+  pages of at most 100, duplicate authority paths converge once, and no event/log/failed job exposes
+  Mail, Ticket, provider, credential, or canonical content/identity.
+- [ ] With more than 100 mixed owner/grant/delegation/break-glass or global candidates, confirm raw
+  cursors advance through revoked/future/inactive/duplicate rows, crashes before/after page commit
+  resume without omission or duplicate user versions, and deterministic failure visibly blocks the
+  source instead of sealing it.
+- [ ] Grant, re-enable, future-start, revoke, expire, or replace an authority path after a source
+  event. Confirm old events are not replayed through the later path, current revocation removes rows
+  on catch-up, and scheduler/socket delay cannot retain content past the 15/120-second refresh
+  boundaries.
+- [ ] Scroll away from the top while mail arrives. Confirm existing authorized rows remain stable,
+  **New mail (N)** appears, clicking it refreshes the bounded page, and revoked/deleted rows disappear
+  immediately. Confirm the selected conversation stays only while independently authorized.
+- [ ] Stop Reverb or break private auth for more than five seconds. Confirm the degraded notice and
+  visible 15-second polling fallback; verify 15/30/60-second HTTP backoff, no hidden/offline timer,
+  immediate online/visible/`pageshow` catch-up, and recovery to one socket subscription.
+- [ ] Exercise duplicate, delayed, out-of-order, gap, pruned, truncated, and greater-than-250 version
+  hints. Confirm decimal strings remain exact, no JavaScript `Number` comparison occurs, and each
+  unsafe case performs only the bounded current 25-row authorized refresh.
+- [ ] Verify `POST /tech/mail/broadcasting/auth` has web/auth/tech/2FA/CSRF/throttle middleware and
+  only its exact route-permission exemption. Confirm Reverb binds loopback, public proxy/origin/CSP
+  values are exact, only the public key enters assets, and environment secrets remain `0640` or
+  tighter.
+- [ ] Verify the scheduler, `email-live` worker, Reverb process, pending/blocked age, backlog, retries,
+  failed jobs, socket handshake, and fallback status in health/Admin views. Restart each service and
+  confirm no duplicate process, listener, subscription, timer, or immediate failed-job growth.
+- [ ] Check `/tech/mail` on desktop and mobile through normal load, future Livewire navigation,
+  BFCache back/forward, background/foreground, offline/online, and logout/login. Confirm controls
+  remain connected, scroll/degraded/new-mail UI is readable, and only one Alpine runtime exists.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-16-007 - Email Provider-Originated Read-Only Reconciliation
+
+Status: Pending
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; final focused SQLite, rolling-schema, disposable
+MariaDB, and independent static evidence are complete; shared-schema migration, controlled
+provider/browser/scheduler/worker/queue checks, deployment, and named human review pending
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-owned-mail-client-domain.md`,
+`docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/feature-slices/2026-08-16-email-mail-provider-originated-reconciliation.md`,
+`HR-2026-08-16-001`, `HR-2026-08-16-005`, and `HR-2026-08-16-006`
+
+Scope: Add an account-scoped, resumable, bounded reconciliation cycle that reads provider folder,
+UID namespace, UID, FLAGS, size, header, and exact PEEK evidence without creating any provider
+write. The scheduled all-account dispatcher is the correctness path; optional IMAP IDLE listeners
+only enqueue opaque latency hints. Runs freeze the provider binding, folder scope, UIDVALIDITY,
+UIDNEXT/EXISTS/MODSEQ facts, bounded inventory hashes, placement snapshots, import evidence, and
+stable end state before projecting provider flags, confirmed moves, copies, Trash, expunge,
+reappearance, or folder lifecycle locally. Mailboxes without persistent MODSEQ require two matching
+post-import UID+FLAGS inventories before any flag projection.
+
+Unknown messages are read with bounded EXAMINE/SEARCH/FETCH. Normal-size messages use one complete
+byte-exact `BODY.PEEK`; oversize messages use bounded header-only PEEK and never request their body.
+Reconciliation Store work is content-safe, retryable, artifact- and canonical-map-attested, and
+must remain hidden from every list/show/raw/attachment/rule/API surface until its exact local
+occurrence is accepted. Historical messages in a folder discovered after the personal unread
+baseline remain hidden while a bounded durable viewer-baseline cursor completes. Draft/Sent local
+projection, conversation visibility, automation eligibility, and notification delivery occur only
+after their respective durable acceptance gates. Reconciliation rule execution has no provider
+mutation authority; ambiguous evidence is visible and never blindly replayed.
+
+Affected pages / workflows: **Admin > Settings > Email accounts > Mailbox maintenance** status,
+folder progress, start, cancel, blocked UIDVALIDITY and re-baseline link; scheduled all-account
+reconciliation; optional IDLE listeners; Email/default/live notification queues; folder, placement,
+conversation, personal unread/opened, Draft, Sent, remote-operation, provider-deletion, historical
+import, canonical mapping, raw source and attachment surfaces. The maintenance UI exposes only
+bounded operational facts and stable codes, never subject, participants, snippets, body, raw
+source, attachment filename, endpoint, username, or credential material.
+
+Authorization boundary: maintenance view/start/cancel requires an active non-system human with both
+`email.account_manage` and `email.mailbox_sync_manage`, current access to the exact active account,
+and non-enumerating nested account/run checks. Reconciliation grants no mailbox View, Organize,
+Send, raw-source, attachment, Ticket, Signal, AI, notification, or personal-state authority.
+Queued work re-resolves the exact active Integration provider binding and secure endpoint under the
+shared provider lock; disable, rotate, revoke, rebind, UID namespace change, cancellation, or
+insufficient deadline fails closed before unsafe projection or provider I/O.
+
+Deploy / migration notes: No shared Dev migration, live provider read/write, IDLE connection,
+scheduler enablement, worker restart, account reconciliation, deployment, commit, or push was
+performed while preparing this entry. Before deployment, back up the database and record active
+Email provider bindings, account/folder/namespace/placement counts, unresolved provider operations,
+historical import/re-baseline/deletion/reconciliation states, queue/failed-job counts, and worker
+configuration. Apply the additive migrations in order:
+`2026_08_16_118000_add_email_provider_reconciliation.php`,
+`2026_08_16_118100_expand_email_message_mailbox_for_reconciliation.php`,
+`2026_08_16_118200_add_inbound_notification_external_outbox.php`,
+`2026_08_16_118300_add_authoritative_target_identity_to_email_remote_operations.php`, and
+`2026_08_16_118400_make_email_provider_paths_byte_exact.php`, followed by
+`2026_08_16_118500_add_durable_inbound_notification_fanout.php`.
+Seed permissions/roles if required; clear caches; rebuild group-writable views with `umask 0002`;
+build assets; and restart every long-lived Email/default/notification worker. Configure the external
+Laravel scheduler runner and required Email queue before enabling the optional IDLE setting. No
+deploy step may automatically start provider cleanup or any destructive reconciliation.
+
+Rollback notes: stop new reconciliation/IDLE dispatch, let or conservatively cancel bounded active
+claims, drain the affected queues, and retain every run/folder/item/outbox/operation audit row.
+Migration down is only for a disposable clean schema and must refuse durable reconciliation,
+long-path, notification-outbox, authoritative MOVE, or other retained evidence before changing a
+column, index, collation, constraint, or table. Provider facts are never rewritten during rollback;
+use explicit UID re-baseline for a changed namespace.
+
+Automated verification: the final focused Order-7 SQLite bundle passes **255 tests / 2,225
+assertions** across reconciliation core/workflow, finalization, cancellation, retention, automation,
+durable fan-out, external delivery, Ticket source identity, and exact Talk targeting. The standalone
+durability gate passes **34 / 468**, and the rolling unread-schema compatibility regression passes
+**4 / 26**. The existing disposable private-socket MariaDB guard/path/Integration matrix passes
+**3 / 434**. The final `118500` contract separately passes **3 / 163** using Laravel's `mysql`
+driver against a real private MariaDB server, including partial rerun, strict ledger transitions,
+first-seal provenance, repair singleton, index plans, and legal `SET NULL` detach evidence. Targeted
+PHP syntax, Pint, diff checks, and an independent current-copy re-audit pass. These are focused
+results, not a claim that the complete repository suite is clean. Passing automation does not
+complete any manual checkbox.
+
+Connectivity to the authoritative Dev/Plesk MySQL endpoint is restored. Sanitized, read-only
+`php artisan migrate:status` checks completed successfully. The last check reported the exact 20
+Order-1-through-7 migrations `100000` through `118500` as Pending; no migration was applied. Shared
+Dev migration and rollback smoke, authenticated browser/provider checks,
+scheduler/worker/queue/backlog validation,
+deployment, commit, push, and named human review remain operator-gated. SQLite and disposable
+MariaDB evidence do not replace those checks.
+
+Human checks:
+
+- [ ] On one backed-up non-production IMAP mailbox, record initial provider/local folder, message,
+  placement, personal unread/opened, Draft/Sent, Ticket/Signal, queue, and failed-job facts. Confirm
+  maintenance is hidden/denied for inactive users, system actors, users missing either permission,
+  inaccessible accounts, and mismatched nested run IDs.
+- [ ] Start one manual cycle and confirm folder/UID progress, bounded counts, stable codes, age,
+  cancel behavior, latest completed result, pagination, and the UIDVALIDITY blocked/re-baseline link
+  are accurate without exposing message content, filenames, endpoints, usernames, or credentials.
+- [ ] Change Seen, Answered, Flagged, Deleted, Draft, and one custom keyword at the provider; repeat
+  on a mailbox reporting NOMODSEQ. Confirm stable changes project only after complete evidence while
+  personal unread/opened state remains unchanged and partial/drifting evidence projects nothing.
+- [ ] Exercise provider-originated move, copy, Trash, expunge, reappearance, folder create, rename,
+  delete, case-distinct folders such as `Foo` and `foo`, and, where the controlled provider supports
+  it, a byte-distinct trailing-space pair such as `Foo` and `Foo `. Confirm exact UIDVALIDITY/UID identity,
+  two-cycle absence, personal state preservation for a confirmed move, visible ambiguity for weak
+  evidence, and no cross-account match.
+- [ ] Import one genuinely new live Inbox message, one post-baseline folder backlog, and matching
+  Draft/Sent items. Confirm raw/attachments/canonical mapping are complete before visibility;
+  historical items are read-for-me for current viewers; later live mail is unread; Draft/Sent local
+  state reconciles once; existing provider moves/copies do not duplicate Ticket, Signal, AI, rule,
+  or external-notification effects.
+- [ ] Force one provider read timeout, worker loss, queue-dispatch loss, Store/artifact failure,
+  stale claim, binding rotation/revoke, UIDVALIDITY change, and cancellation during active work.
+  Confirm bounded resume or visible partial/blocked outcome, no hidden item becomes visible early,
+  no stale flag/absence/move projection occurs, and logs/failed jobs contain only safe codes.
+- [ ] Enable optional IDLE only for the controlled account. Confirm duplicate/lost/reordered hints
+  coalesce, oversized/broken hints disconnect safely, DONE/cleanup occurs, and the scheduled
+  all-account catch-up still reaches accounts beyond the first dispatch page after one account/job
+  failure. Then disable IDLE and confirm scheduled correctness remains.
+- [ ] Inspect IMAP/provider audit logs and local remote-operation rows for the complete review.
+  Confirm reconciliation issued no send, APPEND, STORE, MOVE, COPY, EXPUNGE, delete, folder write,
+  provider archive, or other provider mutation, including through admin and personal rules.
+- [ ] Confirm scheduler, Email/default/notification worker and backlog health after repeated cycles;
+  verify group-writable compiled views, synchronized Email/Integration/Notification Knowledge, and
+  no new content, filename, address, provider response, endpoint, username, token, or credential in
+  application logs, Telescope, queue payloads, durable error JSON, or failed jobs.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-16-006 - Integration-Owned Email Provider Credentials And Endpoint Security
+
+Status: Pending
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; implementation, automated verification, disposable
+MariaDB migration contract, and independent read-only code-security audit complete; shared-schema
+migration, controlled browser/provider/worker rollout, historical telemetry remediation, and named
+human review pending
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-16-integration-owned-email-provider-credentials-and-endpoint-security.md`,
+`docs/feature-slices/2026-08-16-email-mail-integration-provider-credentials-endpoint-security.md`,
+`HR-2026-08-16-001`, `HR-2026-08-16-005`, and `HR-2026-08-16-007`
+
+Scope: Integration becomes the sole writer and lifecycle owner for Email provider endpoints,
+usernames, and encrypted password credentials. One `type=email_provider` Integration root owns a
+normalized connection, exact configuration and credential versions, staged/verified/active/retired/
+revoked/destroyed lifecycle, active-version pointer, and append-only metadata-only events. Email
+continues to own mailbox identity, defaults, access, health, provider operations, and one explicit
+`legacy|integration` provider binding with a positive immutable binding version.
+
+Endpoint security accepts only normalized hostname/IP syntax and the fixed IMAP 993 implicit TLS,
+IMAP 143 STARTTLS, SMTP 465 implicit TLS, or SMTP 587 STARTTLS matrix unless a uniquely named
+installation policy allows another port. DNS/CNAME work is bounded; every answer must pass one
+versioned special-purpose address policy; mixed or unsafe sets fail; one allowed address is pinned
+while TLS SNI/peer-name stays on the original host. Certificate and hostname verification,
+self-signed rejection, authentication-after-TLS, and TLS 1.2 minimum cannot be bypassed. Private
+endpoints require a Superuser, reason, and exact named installation CIDR, and cannot override the
+always-denied ranges.
+
+Runtime credentials are redacted, non-serializable, and resolved only under the mailbox provider
+lock. Durable provider jobs and ledgers freeze an opaque account and positive binding version, then
+re-resolve immediately before provider I/O. Cutover/rebind/rollback makes old work stale before the
+network; revoke blocks new authentication; secret-only rotation may resolve the new active version.
+Endpoint/username changes require a new connection and mailbox re-baseline. No Integration-bound
+operation falls back to legacy fields or Laravel's system mailer. The same strict SMTP boundary now
+covers Mail, Ticket, Sales, Marketing, User Management, Customer Portal, Commercial, Notification,
+Storage, Booking, inbound routing notifications, and Fortify password reset.
+
+Affected pages / workflows: **Admin > System > Integrations > Email providers** multi-record index,
+create, lifecycle and migration pages; **Admin > Settings > Email accounts** safe provider selection,
+readiness, activation, and health test; permissions/roles/admin navigation; all IMAP polling,
+maintenance, Drafts/Sent, attachment recovery and reconciliation paths; all account-backed SMTP and
+notification senders; local Telescope request/exception/job recording and Telescope UI access; and
+the bounded `email-provider:telescope-remediate` operator command.
+
+Authorization boundary: `integration.email_provider_manage` belongs to Admin and Superuser for
+public providers. `integration.email_private_endpoint_manage` and `system.telescope_view` are
+Superuser-only. Provider preview, stage, Verify, cutover, and rollback additionally require
+`email.mailbox_sync_manage`; Email binding additionally requires `email.account_manage`. Actions
+require an active non-system human and repeat authorization after current rows are locked. None of
+these permissions grants mailbox content, raw source, attachment, search, conversation, Ticket,
+Organize, or Send access.
+
+Deploy / migration notes: No shared Dev migration, live DNS lookup, provider verification, poll,
+send, provider mutation, account cutover, legacy-secret purge, broad Telescope clear, deployment,
+commit, or push was performed. Back up the database/configuration and record existing Email account
+sources, binding versions, legacy ciphertext non-null counts, provider-work states, queue/failed-job
+state, and Telescope sequence range. Deploy additive migrations
+`2026_08_16_112000`-`117000`; seed `PermissionSeeder` and `RoleSeeder`; clear caches; rebuild
+group-writable views with `umask 0002`; build assets; restart all long-lived Email/default workers;
+and synchronize Integration, Email, Notification, and User Management Knowledge locally. Deployment
+must leave every existing account on `source=legacy` and perform zero provider I/O.
+
+After the new redaction/watchers and Superuser-only Telescope gate are active, run the read-only
+`php artisan email-provider:telescope-remediate --limit=20000`. Review only its counts, sequence
+bounds, and cohort hash; it never prints entry content. For each non-empty bounded cohort, record the
+approved observability loss and run the exact unchanged `--after-sequence`, `--through-sequence`,
+`--cohort-hash`, `--purge`, and `--acknowledge-observability-loss` command under this review. Repeat
+until a final read-only preview returns zero. A changed cohort must fail without deletion. Do not run
+`telescope:clear`: unrelated historical telemetry is outside this authorization.
+
+First provider rollout must use exactly one backed-up non-production mailbox. Preview and local
+stage must show zero DNS/provider/send/source effects. Named human approval is required before the
+one explicit Verify. Activate the exact version, pause and drain every account provider path,
+resolve active Draft/Sent/remote-operation/import/re-baseline/inventory/deletion/reconciliation/IDLE
+work, preview exact cutover readiness, then apply the source/reference-only cutover. Resume only for
+the checks below. No second account may be staged or cut over until this entry records the first
+result.
+
+Rollback notes: prefer the guarded account-source rollback while the exact legacy ciphertext is
+intact. Pause/drain again, prove no later rotation, revoke, purge, rebind, unresolved provider work,
+active reconciliation, or IDLE presence, then roll back inside the declared window. Schema down is
+only for a disposable clean database and refuses provider bindings, credential/event history, and
+migration runs/items. Legacy ciphertext destruction is readiness-only and requires a later named
+review plus backup/recovery proof; it is not authorized here.
+
+Risks: endpoint-policy or DNS mistakes could create SSRF; a stale credential or binding could open a
+socket against the wrong mailbox identity; a verification/revoke race could use destroyed material;
+a short lock/deadline could overlap provider work; plaintext could enter request/session/trace/log/
+Telescope/queue data; a system-mail fallback could bypass the account ledger; an ambiguous SMTP
+outcome could be replayed; private trust could be granted too broadly; a partial cutover could strand
+Draft/Sent/reconciliation work; or early legacy purge could remove the only rollback path. The
+implementation therefore fails closed at every exact-version, lock, trust, readiness, and diagnostic
+boundary.
+
+Automated verification: the order-6 focused matrix passes **42 tests / 470 assertions** across
+endpoint/transport policy, security diagnostics, credential lifecycle, legacy migration, Admin/private
+authorization, Telescope remediation, and bounded health checks. The stable order-6 complete Email
+Feature/Unit boundary passes **491 / 5,069**; historical/deletion coverage also passed **28 / 273**.
+The complete Ticket/workflow matrix passes **132 / 955**; Sales, Marketing, User Management,
+Customer Portal, and Commercial add **116 passing tests**. The strict Notification/password-reset
+channel passes **10 / 111** plus **62 / 403** adjacent. A generated isolated MariaDB 10.11 database
+passes the `112000`-`117000` up/down/refusal contract with **1 / 60** and was removed afterward.
+Targeted Pint passes 72 PHP files and syntax passes 67 production/test/migration files. Eighteen
+Email-provider routes and 15 Email-account/maintenance routes load; configuration cache round-trip,
+complete Blade compilation with zero non-group-writable files, Vite production build, and Git diff
+checks pass.
+Independent read-only code-security audit reports GO with no remaining order-6 P0/P1. Automated
+evidence never changes this entry from Pending.
+
+Human checks:
+
+- [ ] Back up Dev and capture the listed Email account/source/binding/legacy-ciphertext,
+  provider-work, queue/failed-job, and Telescope sequence inventories without printing any secret,
+  endpoint, username, raw provider response, or ciphertext.
+- [ ] Deploy migrations `112000`-`117000` in order. Confirm the new Integration connection,
+  credential, append-only event, migration run/item, and Email binding schema exists; every existing
+  account remains `legacy`; and no provider Integration root, credential version, migration run,
+  provider call, source switch, or mailbox mutation is created automatically.
+- [ ] Seed permissions/roles. Confirm Admin and Superuser can manage public providers; only
+  Superuser can use private trust or open Telescope; missing mailbox-sync/account-manage permission,
+  inactive/system actors, and direct/inaccessible opaque IDs fail without existence disclosure or
+  mutation.
+- [ ] Run the Telescope remediation preview. Review and record each exact cohort count/bounds/hash,
+  purge only unchanged approved provider-sensitive cohorts, preserve unrelated entries, and finish
+  with zero matches. Confirm no provider host, username, password, pinned IP, private reason,
+  ciphertext, or raw response appears in new request/session/query/model/log/job/exception entries.
+- [ ] In Email providers, create one public standard-port test connection. Confirm its credentials
+  are Staged, existing values never render or flash back, the generic Integration toggle cannot
+  mutate it, Email accounts cannot bind it yet, and page source/browser history contains no secret.
+- [ ] Attempt malformed URL/control/wildcard/zone hosts, unsupported auth/ports/transports, mixed or
+  special-purpose DNS answers, and a certificate/hostname/TLS failure in the controlled test setup.
+  Confirm every attempt blocks with a stable safe reason and no raw provider/endpoint diagnostic.
+- [ ] As Admin, confirm a trusted-private provider cannot be listed, opened, staged, bound, or tested.
+  As Superuser, use one exact named private CIDR and reason; confirm an outside or always-denied
+  address still fails and the UI/event shows no host, IP, username, or reason text outside its
+  intended protected form boundary.
+- [ ] With named approval, select Verify on the one staged test provider. Confirm one bounded
+  authenticated IMAP/SMTP probe, pinned-IP/original-host certificate behavior, required STARTTLS or
+  implicit TLS, clean disconnect/stop, sanitized result, and no duplicate provider read under a
+  concurrent click or deadline/worker timeout.
+- [ ] Activate the exact verified credential and create one Email account from its safe label.
+  Confirm the account page shows source/readiness/capabilities but no endpoint/username/secret,
+  rejects direct legacy fields and a staged/unverified/private-without-authority binding, and its
+  bounded Full Test persists only safe health evidence.
+- [ ] Stage and Verify a password-only rotation. Confirm usernames cannot change, the old active
+  runtime stays ready until activation, activation destroys the retired ciphertext, an in-flight
+  locked operation finishes before the flip, and current-binding work uses the new active secret.
+  Revoke the test version and confirm new IMAP/SMTP work blocks before network without claiming
+  provider-side revocation.
+- [ ] On one backed-up legacy test mailbox, preview and stage locally. Confirm exact scope/fingerprint,
+  no DNS/provider/send/folder/read/Ticket/source effect, and explicit public or authorized named
+  private trust. Verify and activate only after the named approval.
+- [ ] Pause/drain that mailbox and confirm unresolved Drafts, Sent, remote operations, historical
+  import, cursor re-baseline, inventory, deletion cleanup, provider reconciliation, or IDLE presence
+  blocks readiness. After resolving them, apply exact cutover and confirm only provider reference,
+  source, binding version, and audit evidence change; mailbox content/state and legacy ciphertext
+  remain intact.
+- [ ] While a pre-cutover queued provider job/send exists, perform the controlled cutover or rollback
+  and resume it. Confirm it fails stale before network. Confirm secret-only rotation does not silently
+  adopt another username and revoke blocks dispatch-to-handle authentication.
+- [ ] Exercise one controlled Ticket/Notification/password-reset send through the selected system
+  Email account. Confirm the frozen account/binding is present without runtime material, no Laravel
+  default-mailer fallback occurs, and an ambiguous acceptance is recorded without automatic replay.
+- [ ] Roll the one account back while eligible. Confirm source/reference restoration only, preserved
+  legacy ciphertext, positive binding bump, and stale pre-rollback work. Then introduce one guarded
+  blocker on a disposable copy and confirm rollback/down refuses rather than discarding history.
+- [ ] Check Email provider and Email account pages at desktop and mobile widths. Confirm lifecycle,
+  status, safe blocker text, private-trust controls, migration steps, and destructive confirmations
+  remain understandable without exposing endpoint or credential values.
+- [ ] Confirm long-lived workers were restarted, no credential-bearing legacy serialized job is
+  accepted, queues/failed jobs have no new provider-secret evidence, Knowledge is synchronized, and
+  only the reviewed single account was touched. Leave legacy purge disabled and every other account
+  on its previous source.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-16-005 - Email Canonical Message And Placement Cutover
+
+Status: Pending
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; implementation, automated verification, and final
+independent read-only audit complete; additive migration and controlled operator/browser/worker
+cutover review pending
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/adr/2026-08-11-email-owned-mail-client-domain.md`,
+`docs/feature-slices/2026-08-16-email-mail-canonical-message-shadow-correlation.md`,
+`docs/feature-slices/2026-08-16-email-mail-canonical-message-placement-cutover.md`,
+`HR-2026-08-16-004`, and `HR-2026-08-12-003`
+
+Scope: Add a reversible canonical common-content expansion while preserving every existing
+`email_messages` row as the immutable source occurrence. Account, active placement, provider UID,
+personal unread/opened state, Ticket and rule behavior, provider operations, search result, route,
+and external API identity remain source-scoped. A nullable placement pointer and unique
+source-to-canonical mapping may supply equivalent common content only after the existing source
+placement was independently authorized.
+
+The local `canonical-cutover-v1` evidence contract compares every projected field and hashes the
+actual private raw and attachment files. Stored attachment size/SHA-1 must match the actual file and
+actual SHA-256 must agree. Individual materialized fields/files, JSON depth (24), visited nodes
+(10,000), entries (5,000), message/component/item counts, and the complete 256 MiB cutover-run
+evidence are bounded. A multi-source projection requires one complete locked clique from a completed
+shadow run:
+every edge is strong, immutably confirmed, and inspected at the exact reviewed hashes, with no weak,
+ambiguous, oversized, incomplete, missing, stale, or retained keep-separate evidence.
+
+Accounts above the 500-placement direct verification cap use a durable whole-account parity
+attestation rather than an unbounded request or permanent mode block. It freezes the complete active
+placement scope and processes at most 100 placements per operator request while loading one full
+source/projection at a time. A currently authorized replacement may continue the cursor after the
+requester is offboarded. Completion records the exact item count, rolling evidence, total bytes,
+scope hash, requester/completer, and fingerprint. A mode preview binds that fingerprint; apply
+rechecks every durable row/database relation and rejects changed scope or an attestation older than
+15 minutes. `canonical` requires strict actual-file evidence on every page.
+
+Affected pages / workflows: new Email Admin **Canonical cutover** index/report and eight routes;
+permission/role/admin-menu seeding; inbound source self-map after complete local persistence; Mail
+workspace, Inbox list/show API, raw-source, and attachment reads; retention eligibility; and
+additive canonical projection/mapping/mode/cutover/parity-attestation audit tables. `legacy` remains
+default, `verify` always returns source content, and `canonical` overlays common content while
+retaining source IDs and falling back to the authorized source on any drift. Pointer drift is repaired; content drift
+dissolves the complete shared component into independent projections. Attachment delivery always
+serves the exact route-bound source part after full parity verification.
+
+Authorization boundary: preview/apply/rollback/audit/mode actions require an active non-system human
+with both `email.canonical_cutover_manage` and `email.mailbox_sync_manage`, plus ordinary current
+View for every account in the complete expanded scope. Break-glass never qualifies. Durable run
+access follows current complete account authority, not requester identity, so an authorized
+replacement may recover work after requester offboarding; requested/applied/rolled-back actors remain
+separate audit. Inaccessible and nonexistent run IDs use the same hidden response. Canonical IDs and
+private paths/content are not serialized by the operator UI, Mail UI, API, raw, or attachment surface.
+
+Deploy / migration notes: No live migration, cutover preview/apply/rollback, provider/network/AI
+call, private-file write/delete, BookStack push, deployment, commit, or push was performed. Back up
+Dev and capture authoritative source/account/folder/placement/conversation/Ticket-link/attachment/
+raw-file/personal-state/rule/Smart Inbox/remote-operation/retention counts before applying additive
+migration `2026_08_16_111000_add_email_canonical_message_placement_cutover.php` after `110000`.
+Seed permissions/roles, clear caches, rebuild group-writable views with `umask 0002`, and restart
+long-lived Email workers. Deployment creates no mapping/run or mode switch. First use must be one
+small non-production account: preview/apply self maps, preview/apply `verify`, compare all read
+surfaces, complete all whole-account parity pages when the account exceeds the direct cap, and only
+then separately preview `canonical`. Physical removal of legacy content columns is not in this
+migration and requires a later forward migration after parity, rollback-window expiry, and named
+human approval.
+
+Rollback notes: stop new applies, preview/apply `legacy` mode for affected accounts, and roll applied
+runs back newest-first. Mapping, pointer, component, evidence, access, or later-run drift blocks an
+unsafe rollback. Migration down is permitted only on a disposable clean schema with no canonical
+projection/attachment/mapping, placement pointer, read-mode row, preview/run item, parity
+attestation, or parity item. All durable evidence must be preserved or carried forward. Retired
+projections remain until the later reviewed lifecycle policy. Retention reports the stable
+`canonical_projection_or_cutover_audit` protection reason before touching any retained source file.
+
+Risks: a false equivalence could show another delivery variant; a missing full-field/file check or
+partial clique could widen content; a pointer could bypass source authorization; stale access or
+requester ownership could strand emergency rollback; schema-first/application-first deployment could
+cause missing-table failures; duplicate attachment metadata could return the wrong source part;
+unbounded headers/files or a whole-mailbox scan could exhaust a request under locks; component drift
+or rollback ordering could create a partial merge; retention could delete a source still referenced
+by durable audit; or canonical reads could accidentally change Ticket, unread, rule, provider, search, or external API
+identity. The implementation is intentionally local, bounded, source-preserving, fallback-first, and
+contains no provider write.
+
+Automated verification: focused `EmailCanonicalPlacementCutoverTest` passes **18 tests / 702
+assertions**. The adjacent retention, shadow correlation, historical maintenance, workspace/access,
+attachment, and per-user unread set passes **91 / 843**; the shadow plus historical subset remains
+**34 / 275**. Coverage includes strict actual-file
+evidence, structural/aggregate budgets, complete cliques, apply-time access/evidence drift, mode
+fallback, component dissolution, unsafe/newest-first rollback, schema-absent Mail/API/Admin reads,
+duplicate source-part identity, retention protection, metadata-only UI, permission separation,
+offboarded-requester recovery, paginated 501/502-placement parity, attestation fingerprint binding,
+scope/age rejection, durable migration-down refusal, and no canonical-ID serialization. Eight
+routes, PHP syntax, targeted formatting/diff checks, and group-writable Blade cache pass. These
+isolated tests migrated disposable test databases only; migration `111000` was not run against the
+shared Dev data and the tests do not replace the checks below. The final independent audit is GO on
+the arbitrary-account cap removal, current-authority continuation, fingerprint/drift/age binding,
+and fail-closed preservation of all durable schema evidence.
+
+Manual checks:
+
+- [ ] On a backed-up Dev copy, capture the listed authoritative counts/files, apply migration
+  `111000` after `110000`, and confirm only eight new canonical/cutover/mode/parity tables plus the
+  nullable placement pointer/index/FK appear. Confirm zero source rewrite, mapping, run, mode row,
+  provider call, Ticket/rule/unread action, file write/delete, or automatic backfill occurs.
+- [ ] Exercise an application-first staged deploy before `111000`. Confirm Mail workspace, Inbox API,
+  and Email Admin remain available in honest legacy/pending state without querying a missing
+  canonical table or exposing a cutover control that can execute.
+- [ ] Seed roles and permissions. Confirm Admin/Superuser receive the new cutover permission while a
+  normal Tech does not. Test missing either cutover or mailbox-sync permission, inactive/system
+  actors, break-glass-only access, revoked/missing ordinary View, and partial multi-account access.
+  All must fail before content or mutation and must not enumerate inaccessible runs/accounts.
+- [ ] Disable one run requester, transfer/regrant ordinary View, and confirm a second currently fully
+  authorized operator can list, inspect, apply, and roll back the durable run with distinct actor
+  audit. Revoke one scoped account before apply/rollback and confirm the operation fails closed.
+- [ ] Inspect Admin list/report at desktop/mobile widths. Confirm preview/apply/rollback are visually
+  separate, typed confirmation is exact, validation/focus/status/error states are clear, and reports
+  never show canonical IDs, subject, participants, body, header, filename, raw/attachment content,
+  private path, credential, provider payload, search term, Ticket content, or AI data.
+- [ ] Preview/apply one bounded self map. Confirm source/account/placement/provider UID, conversation,
+  Ticket/link, classification, personal unread/opened, rule, Smart Inbox, search, remote-operation,
+  and API IDs are unchanged. Repeat preview/apply and inbound duplicate storage and confirm
+  idempotency, pointer repair, and no blind provider retry or shared-component rewrite.
+- [ ] In disposable fixtures, reject missing/malformed fields, missing/unreadable/unsafe/symlink raw
+  and attachment paths, stored size/SHA-1 mismatches, different actual SHA-256, body/JSON byte limits,
+  depth/node/entry limits, per-message file limits, component/item limits, and the 256 MiB run limit.
+  Confirm budget rejection occurs before long component locks and leaves no partial apply.
+- [ ] From completed shadow evidence, merge one exact fully inspected/confirmed strong clique. Reject
+  incomplete connected edges, weak/possible/ambiguous/oversized candidates, stale review/inspection,
+  keep-separate evidence, missing component members, divergent full fields/files, moved accounts, or
+  changed evidence. Confirm source occurrences and authorization identities remain independent.
+- [ ] Preview/apply `verify` and confirm all Mail/API/raw/attachment reads stay source content. Then
+  preview/apply `canonical` for the controlled account and compare workspace, list/show API, raw
+  source, and every attachment byte/name. Confirm source/account IDs remain stable, canonical IDs and
+  private paths are absent, and duplicate metadata/identical parts each download the exact clicked
+  source part.
+- [ ] On an isolated account above 500 active placements, start a strict whole-account parity
+  attestation. Confirm each request advances no more than 100 rows, progress survives restart, and a
+  second currently authorized operator can continue after the requester is disabled. Confirm only a
+  complete current fingerprint can be previewed/applied; add/remove one active placement and age a
+  completed attestation past 15 minutes to verify both fail closed without changing read mode.
+- [ ] Change a source, canonical projection, file, mapping, or placement pointer. Confirm ordinary
+  canonical reads immediately fall back to the authorized source. Preview/apply audit: pointer-only
+  drift repairs exactly; shared content drift expands and dissolves the complete component in one
+  transaction, with no partial split or provider/workflow mutation.
+- [ ] Apply overlapping disposable backfill/merge/audit/mode runs and test newest-first rollback.
+  Confirm a later mapping/pointer/mode run blocks older rollback, divergent evidence blocks unsafe
+  shared-component restoration, and restored exact evidence permits complete prior-state recovery.
+- [ ] Age a mapped/root/audited/non-legacy source beyond retention. Confirm preview and purge show
+  `canonical_projection_or_cutover_audit`, retain database/source/raw/attachment evidence, record a
+  protected—not failed—attempt, and do not encounter a raw FK exception or partial file deletion.
+- [ ] Run the real Email worker on a controlled inbound message and duplicate redelivery. Confirm the
+  self-map is created/repaired only after complete source/placement/attachment persistence, failure
+  logs are sanitized, authoritative inbound success is not retried blindly, and no provider write or
+  Inbox automation is duplicated by canonical projection work.
+- [ ] Compare authoritative counts/fingerprints and provider audit before/after preview, apply,
+  canonical reads, audit, and rollback. Confirm no provider Seen/folder/message state, Ticket,
+  conversation/classification, personal unread/opened, rule/attempt, Signal/notification, Smart
+  Inbox/AI, search identity, remote operation, or private file is created/changed/deleted outside the
+  documented local canonical tables and placement pointer.
+- [ ] With all accounts returned to `legacy` and applied runs rolled back, confirm guarded migration
+  down still refuses every preview/run item, parity attestation/item, projection/attachment/mapping,
+  placement pointer, and even a legacy read-mode row. It may succeed only on a disposable clean state.
+  Restart workers, clear caches, rebuild group-writable views, and recheck Mail/API/raw/attachment
+  legacy behavior. Do not remove legacy columns as part of this review.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-16-004 - Email Canonical Message Shadow Correlation
+
+Status: Pending
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; implementation, focused verification, and independent
+audit complete, additive migration and authenticated operator/worker review pending
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/adr/2026-08-11-email-owned-mail-client-domain.md`,
+`docs/feature-slices/2026-08-16-email-mail-canonical-message-shadow-correlation.md`, and
+`HR-2026-08-12-003`
+
+Scope: Add a conservative, rebuildable, metadata-only shadow process that discovers possible
+same-delivery pairs from bounded normalized Message-ID, exact checksum, or current explicit
+Ticket/conversation relationships. It freezes exact account and message-ID scope, compares complete
+available delivery evidence, and retains versioned hashes, reason codes, counters, run state,
+inspection audit, and immutable human review decisions. It never makes a canonical merge or changes
+an externally visible canonical ID.
+
+The initial and final frozen snapshots each fail closed above 64 MiB of conservatively estimated
+local evidence input. The entire run has a durable 256 MiB aggregate evidence-read cap, and raw files
+are not hashed until the lightweight scope preflight passes. Precise group/pair boundaries are
+bounded and exact; a candidate found through both precise and oversized discovery remains
+deterministically oversized. An oversized representative cannot be confirmed.
+
+Affected pages / workflows: `/tech/admin/settings/email/correlation`, seven Email Admin correlation
+routes, the `email` queue, local message/raw/attachment evidence reads, metadata-only run reports,
+exact two-message audited inspection, and immutable `confirmed_candidate`, `keep_separate`, or
+`needs_more_evidence` review. Ordinary `/tech/mail`, legacy Inbox, Inbox API, Ticket communication,
+provider synchronization/actions, search, Smart Inbox, AI, rules, retention, personal unread/opened
+state, attachments, and raw-source delivery remain unchanged.
+
+Authorization boundary: an active human requires `email.mailbox_sync_manage` and ordinary current
+mailbox View independently for every exact account. Metadata pages hide inaccessible/nonexistent
+runs and candidates consistently. Content inspection and final review reauthorize both recorded
+accounts, require each exact message still to belong to its recorded account, and bind the actor to
+the current left/right evidence hashes. Configuration authority, stale access, a moved-account
+message, or an old inspection never becomes content/review authority.
+
+Deploy / migration notes: No live migration, provider/network/AI call, shadow run, authoritative
+mail/Ticket/user-state mutation, BookStack push, deployment, commit, or push was performed. Back up
+Dev and capture authoritative message, placement, conversation, Ticket-link, attachment, raw-file,
+personal-state, rule, Smart Inbox, and remote-operation counts before applying additive migration
+`2026_08_16_110000_create_email_canonical_correlation_shadow.php`. Then clear caches, rebuild views
+with `umask 0002`, and restart long-lived Email workers. Deployment must not launch a run. The first
+run must use a small explicitly selected non-production account/message-ID scope. Ordinary rollback
+is blocked when any inspection audit or non-`unreviewed` decision exists; that evidence must be
+explicitly exported or carried forward before the three shadow tables may be removed.
+
+Risks: a weak fingerprint or reused/malformed Message-ID could create a misleading future-cutover
+candidate; recipient/Bcc, raw, body, date, direction, or attachment divergence could be missed;
+unbounded grouping or repeated raw reads could exhaust workers; concurrent scope changes could make
+results stale; an authorization or exact-account-binding defect could expose personal content; and
+rollback could silently discard a retained inspection or decision. This slice deliberately leaves
+all candidates as shadow evidence and performs no cutover, merge, relink, deletion, or authorization
+widening.
+
+Automated verification: focused `EmailCanonicalCorrelationShadowTest` coverage passes **19 tests /
+131 assertions**. It covers strong/possible/ambiguous/different evidence, malformed and normalized
+Message-ID, Bcc/raw conflicts, order-independent attachment evidence, exact and overflow caps,
+frozen-scope changes, idempotency/no-mutation, cancellation, access revocation, moved-account
+inspection, inspection audit, immutable review, deterministic oversized dominance, the 64 MiB
+snapshot and 256 MiB aggregate budgets, non-enumeration, and rollback guard.
+Seven routes are registered; targeted Pint, PHP syntax, route inspection, and scoped whitespace
+checks pass. The final independent audit result is **GO**. These checks did not run the pending
+migration or replace the manual checks below.
+
+Manual checks:
+
+- [ ] On a backed-up Dev copy, capture the listed authoritative table/file counts, apply migration
+  `110000`, and confirm only the three additive correlation tables appear. Confirm deployment creates
+  no run/candidate/inspection, performs no provider/network/AI action, and changes no authoritative
+  Mail, Ticket, personal-state, rule, Smart Inbox, attachment, raw, or remote-operation record.
+- [ ] As an active human with `email.mailbox_sync_manage` and ordinary View for the selected exact
+  accounts, open **Canonical correlation** and queue a small message-ID window. Confirm a
+  configuration-only administrator, inactive/system actor, revoked viewer, and user missing either
+  account View cannot enumerate an inaccessible personal account, run, candidate, or content; forged
+  and nonexistent IDs must use the same hidden response.
+- [ ] Inspect the run list and detail before opening content. Confirm it exposes only exact scoped
+  account/message IDs, status, caps, counters, candidate classes, reason codes, opaque hashes, and
+  review audit—never subject, participant/address, filename, snippet, body, header/raw source,
+  attachment content, credential, provider payload, search term, Ticket content, or AI data.
+- [ ] Exercise a frozen account/message-ID scope at an exact cap and just beyond it. In a controlled
+  disposable fixture, verify initial and final snapshots stop above 64 MiB, the aggregate run stops
+  above 256 MiB, no raw hashing begins before size preflight succeeds, and each failure asks for a
+  narrower scope without retaining a false completed result.
+- [ ] Process one queued run with the real Dev Email worker. Confirm bounded progress, durable
+  counters, overlap protection, safe cancellation between batches, idempotent requeue, and resume of
+  a failed but unchanged run. Change/delete one frozen source row during a disposable run and confirm
+  the fingerprint fails closed before completion without an authoritative-row mutation.
+- [ ] Use controlled same-delivery and divergent fixtures to confirm normalized Message-ID, checksum,
+  current Ticket link, and current conversation link can discover candidates while subject-only,
+  missing, reused, malformed, or synthetic IDs never establish identity. Verify sender, To/Cc/Bcc,
+  direction, delivery time, body, raw source, and attachment differences produce the documented
+  conservative class.
+- [ ] Create one exact-boundary group and one over-limit group, including a pair discovered through
+  both precise and oversized paths. Confirm discovery order cannot downgrade oversized status, its
+  representative cannot be confirmed, and a narrower message-ID scope is required for further
+  review.
+- [ ] Open **Inspect exact evidence** for same-account and cross-account candidates. Confirm ordinary
+  View is required independently for both exact recorded accounts, the inspection is audited before
+  content appears, and no opened receipt, `Unread for me`, provider Seen, or other state changes.
+  Revoke access, move one message to another owning account, or change evidence and confirm the old
+  candidate/inspection becomes unavailable or stale without leaking content.
+- [ ] After the same actor inspects the exact current hashes, record `Confirmed candidate` and `Keep
+  separate` on separate disposable candidates and confirm each decision is immutable/idempotent only
+  for the same actor/state/reason. Confirm another actor or an old inspection cannot reuse it, while
+  `Needs more evidence` remains metadata-only and still performs no merge.
+- [ ] Compare authoritative counts/fingerprints and provider audit before and after a completed run,
+  inspection, and review. Confirm no message, placement, conversation, Ticket/link, attachment/raw,
+  search, personal state, rule, Smart Inbox, retention, notification, AI, provider, or remote
+  operation is created, changed, hidden, relinked, merged, or deleted, including across accounts.
+- [ ] Check the Admin list/detail/inspection at desktop and mobile widths. Confirm keyboard focus,
+  labels, validation, pending/running/failed/cancelled/completed states, safe errors, and resume/cancel
+  controls remain understandable and content inspection is visually distinct from metadata review.
+- [ ] On a disposable database copy, confirm rollback succeeds with only unreviewed rebuildable
+  shadow rows. Then create an inspection audit and, separately, a reviewed decision; confirm either
+  blocks rollback until the evidence is explicitly exported or carried forward, without touching
+  authoritative Email rows.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-16-003 - Email Per-User Unread Baselines And Explicit Backlog Handover
+
+Status: Pending
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; implementation and automated verification complete,
+additive migrations and authenticated browser review pending
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
+`docs/feature-slices/2026-08-16-email-mail-per-user-unread-baselines-backlog-handover.md`,
+`HR-2026-08-16-001`, `HR-2026-08-16-002`, and `HR-2026-08-12-006`
+
+Scope: Replace sparse missing-row-is-unread behavior with one Email-owned account/user access epoch
+and local message-ID baseline. Existing ordinary access migrates to epoch 1/baseline 0. A new shared
+View grant, personal owner, or personal delegation starts a deterministic epoch without flooding old
+mail; uninterrupted edits, overlaps, and account/user disable/re-enable do not reset it; a real
+ordinary-access gap and re-grant do. Scheduled delegation boundaries preserve mail received after the
+actual start as unread even before first open. Personal legacy direct grants fail closed, and
+break-glass never receives or mutates personal unread/open/epoch state. Historical imports project
+insert-only current-epoch read-for-me rows independently of provider Seen.
+
+The slice also adds a metadata-only **Unread handover** surface for an authorized shared-mailbox
+manager or personal owner. A 15-minute preview freezes one account, exact active human target,
+selectable synchronized folders, received-date window, reason, maximum 1–500, message/placement IDs,
+authorization fingerprint, and current epoch. Apply reloads and reauthorizes the previewing actor
+and target under locks, verifies the exact snapshot, and writes only the target's current-epoch
+`is_unread=true` state. Provider Seen, other users, later arrivals, folders, rules, Tickets,
+notifications, AI, and remote operations remain unchanged.
+
+Affected pages / workflows: `/tech/mail` conversation/list/filter/count/selected-message personal
+unread state; Email Admin account create/edit/grant/owner transitions; personal mailbox delegation;
+historical import and inbound message storage; Email Admin account list; `/tech/mail/access`; and
+`/tech/mail/accounts/{account}/unread-handover` preview/apply/history. The Inbox API currently exposes
+no personal unread field/filter, so no new API surface was added.
+
+Deploy / migration notes: No live migration, provider call, notification, Ticket/rule execution,
+external AI request, BookStack push, deployment, commit, or push was performed. Before migration,
+record account kind/owner, current View source, message, and message-user-state counts. Back up Dev,
+then apply additive migrations `2026_08_16_104000_add_email_unread_access_baselines.php` and
+`2026_08_16_105000_create_email_unread_handover_runs_and_items.php` after the historical/delegation
+foundation migrations. Run `php artisan optimize:clear`, rebuild views with
+`umask 0002 && HOME=/tmp php artisan view:cache`, and restart long-lived Email workers. Verify every
+existing ordinary owner/shared grant/current delegation has exactly one epoch-1 baseline at zero,
+every prior state is epoch 1, and any legacy personal direct-only row is retained only as blocked
+evidence. Rollback intentionally fails closed after any non-legacy baseline/epoch or durable handover
+audit exists; preserve/export or explicitly convert that evidence before considering a legacy
+rollback.
+
+Risks: a missed access transition could expose old history as unread or suppress new work; an
+unobserved scheduled-delegation gap could reuse an old epoch; provider Seen could accidentally leak
+back into personal state; break-glass or a personal direct grant could gain personal-state authority;
+or a stale/cross-account handover could mutate the wrong user. Handover history must remain
+metadata-only, exact-snapshot apply must fail before partial mutation, and account/user deletion must
+not erase retained run audit. The two additive migrations have not been exercised against live Dev
+data, and authenticated desktop/mobile behavior still requires a named human.
+
+Automated verification: focused unread/baseline/handover coverage passes **13 tests / 118
+assertions**. The isolated rolling-schema compatibility regression passes **4 / 26**, covering the
+sealed epoch schema, exact legacy schema, mixed-shape fail-closed behavior, and locked current-actor
+reauthorization. On the authoritative Dev/Plesk MySQL schema, a sanitized read-only probe resolved
+the current pre-`104000` state as `legacy`, completed the scoped unread count with **428** rows, and
+rendered the 25-row Mail workspace server-side for user 1 inside a transaction that was rolled back.
+No migration or data change was performed; authenticated browser review remains pending. Full
+historical-import plus delegation/break-glass rerun passes **30 / 340**. Full
+conversation-query plus historical-import regression passes **23 / 257**, and focused Email account,
+personal-owner, and workspace-open regression passes **3 / 44**. The adjacent broad run passes
+**171 / 1,548** across Email, delegation, and attachment recovery, plus **157 / 1,063** across
+Notification, User Management, system-actor, and Ticket coverage. PHP lint, targeted Pint, diff
+checks, migration type/rollback guards, rendered metadata-only HTTP tests, and all three named route
+registrations pass. Automated checks do not complete the manual checks below.
+
+Manual checks:
+
+- [ ] Before migration, capture ordinary owner/shared grant/current delegation pairs, message counts,
+  and personal-state counts. Run the additive migrations on backed-up Dev and confirm existing pairs
+  receive epoch 1/baseline 0, existing state rows receive epoch 1, and legacy personal direct-only
+  evidence is blocked rather than authorized.
+- [ ] Give an active technician a new shared View grant. Confirm old stored mail starts read for that
+  technician, a later inbound message starts unread even when provider Seen is true, and another
+  user's personal badges/state do not change.
+- [ ] Verify personal-owner onboarding and a bounded personal delegation. Confirm an uninterrupted
+  edit and overlapping delegation do not reset the baseline; revoke/re-grant or a natural uncovered
+  interval does; mail received after a scheduled delegation starts but before first open is unread.
+  Disable/re-enable the account and user and confirm that alone does not create a new epoch.
+- [ ] Confirm a legacy personal direct grant and emergency-only access show no personal Unread badge,
+  filter, count, mark action, or opened receipt and cannot create/increment/rewrite a baseline or
+  state row. Confirm ordinary owner/delegation/shared access remains usable.
+- [ ] In `/tech/mail`, compare list parent/child badges, conversation aggregate, Unread-for-me filter
+  and counts, and the selected message. Explicit Mark read/Mark unread must affect only the signed-in
+  user's current epoch; opening must record the open without acknowledging provider Seen or changing
+  the explicit personal choice.
+- [ ] Run a bounded historical import for a mailbox with multiple ordinary viewers, including a
+  temporarily disabled viewer. Confirm new history is read-for-me in each current epoch without
+  overwriting an existing personal choice and without provider, rule, Ticket, Signal, Notification,
+  Smart Inbox, AI, or cursor side effects.
+- [ ] As a shared-mailbox manager without mailbox View, open **Unread handover** from Email Admin.
+  As a personal owner, open it from Mailbox access. Confirm the page lists only current active human
+  targets and exact selectable/synchronized folders and reveals no subject, participant, snippet,
+  body, raw source, attachment filename, credential, or provider content.
+- [ ] Preview exact folders/date range/reason with the default 100 and hard maximum 500, then apply.
+  Confirm only the frozen target/message IDs become current-epoch unread; provider Seen, another
+  user, a later arrival, folders, Tickets, rules, notifications, AI, and remote operations remain
+  unchanged. Repeat Apply and confirm it is idempotent with durable per-item counters.
+- [ ] Before Apply, separately move or hide a placement, disable folder sync, mark provider missing,
+  expire the 15-minute preview, change/revoke target authority, create a new access epoch, and try a
+  system actor or cross-account run. Each case must fail closed/stale before any personal-state
+  mutation and show only a safe metadata error code.
+- [ ] Check keyboard labels/focus, validation feedback, collapsed safety help, desktop layout, and the
+  mobile handover table/form. Confirm unauthorized personal mailbox IDs return the same hidden 404
+  behavior as nonexistent/inaccessible mailboxes.
+- [ ] On a disposable database copy, confirm ordinary rollback is allowed only for epoch-1,
+  baseline-0, currently entitled legacy-compatible state and is blocked for epoch >1, non-zero/new
+  baselines, revoked entitlement, duplicate epochs, or any retained handover run/item.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-16-002 - Email Personal Mailbox Delegation, Break-Glass, And Access History
+
+Status: Pending
+Added: 2026-08-16
+Environment: Authoritative Dev; implementation and focused automated verification complete,
+migration and authenticated browser review pending
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
+`docs/feature-slices/2026-08-16-email-mailbox-delegation-break-glass-access-history.md`, and
+`HR-2026-08-12-002`
+
+Scope: Add owner-created, exact-operation personal mailbox delegations that expire within 31 days;
+a distinct maximum-120-minute emergency read/search/attachment/raw-source path for active human
+security operators; metadata-only append-only access history; after-commit owner/security notices;
+and one current authorization decision across Mail, legacy Inbox, Inbox API, attachment, raw-source,
+and Livewire content boundaries. Personal legacy direct grants fail closed. Emergency access never
+grants personal unread state, AI, Smart Inbox, Ticket, send, organize, rule, configuration, export,
+or deletion authority.
+
+Affected pages / workflows: `/tech/mail`, legacy `/tech/inbox`, Inbox API reads/search,
+`/tech/mail/access`, `/tech/mail/access-history`, Email Admin **Emergency mailbox access**, attachment
+download, raw-source view, permission/role seeding, internal Notification delivery, unread access
+epoch transitions for ordinary delegation only, and Email operator documentation.
+
+Deploy / migration notes: No live migration, provider call, notification delivery, external AI
+request, BookStack push, deployment, commit, or push was performed. Before review, back up and run the
+additive `2026_08_16_103000_create_email_mailbox_delegation_break_glass_access.php` migration on Dev,
+seed permissions, clear caches, rebuild Blade views with `umask 0002`, and restart long-lived Email
+and Notification workers where serialized authorization code may be resident. Existing accounts gain
+no delegation or emergency record automatically. Ordinary rollback is intentionally blocked while
+delegation, break-glass, or access-event rows exist; revocation plus an explicit retention/export
+decision is required before dropping durable history.
+
+Risks: an authorization regression could expose a personal mailbox through account administration,
+a rogue direct grant, a stale Livewire request, or a queued action. Emergency access must disappear
+immediately after expiry/revocation/disable, and an audit failure must block content before it is
+read. Access history or notifications must never copy message content or search terms. Emergency
+access must not mutate personal unread/open state or invoke AI/Ticket/Smart/provider actions. A
+partial notification failure must retry remaining active recipients without duplicating successful
+deliveries.
+
+Automated verification: focused delegation/break-glass suite **15 tests / 196 assertions**; final
+combined Email module plus attachment-access recovery run **171 / 1,548**, including the complete
+Email module **141 / 1,227** and attachment recovery **15 / 125**; an earlier adjacent Mail
+workspace/Inbox selection regression passed **5 / 58**. Affected Notification, User Management,
+system-actor, and Ticket suites pass **157 / 1,063**. PHP lint, route registration, targeted Pint, and
+diff checks pass. These runs used the isolated test database and Notification fakes. Live
+migration, authenticated browser, real queue worker, provider storage, and responsive/accessibility
+checks remain manual. Passing tests do not complete the checks below.
+
+Manual checks:
+
+- [ ] As an active personal mailbox owner, create one bounded delegation for an active human user.
+  Verify exact View/Organize/Send/raw choices, reason, start/expiry, recent history, and explicit
+  revocation. Reject self-delegation, overlap, inactive/system users, excessive duration, and any
+  operation the owner no longer holds.
+- [ ] Confirm an account administrator and a user holding a legacy personal direct grant cannot see
+  personal content or create an owner delegation. Confirm shared/system direct grants retain their
+  normal exact View/Organize/Send behavior.
+- [ ] As an authorized active security operator, activate emergency access only after typed account
+  confirmation, reason, exact operation selection, and a duration no greater than 120 minutes.
+  Confirm the prominent Mail warning and expiry, then verify send, organize, provider actions,
+  Ticket, AI, Smart Inbox, rules, export, deletion, and account configuration remain unavailable.
+- [ ] Verify emergency content view, search, allowed attachment download, and separately permitted
+  raw source on desktop and mobile. Confirm search/results, folder/count/list boundaries, forged IDs,
+  another account, inactive account/user, expiry, and revocation all fail closed without mailbox
+  existence leakage.
+- [ ] During emergency-only access, confirm no **Unread for me** badges/counts/filter/actions, open
+  receipt, or unread access-epoch row is created or changed. Confirm an ordinary delegation starts
+  and ends its unread epoch according to the unread handover review contract.
+- [ ] Confirm the activating actor, current active owner, and another active human holding
+  `email.break_glass_activate` can revoke an active record. Confirm a user holding only
+  `email.break_glass_audit` cannot revoke it.
+- [ ] Confirm activation queues one content-free notice after commit for the active owner and active
+  audit/security recipients. Verify the relative link opens only scoped metadata history, inactive
+  recipients are skipped, and a partial recipient failure retries without duplicating prior success.
+- [ ] Inspect access history for created/revoked/expired-at-use events and explicit emergency mailbox
+  view, message view, search, attachment, and raw-source use. Confirm it contains no subject,
+  participants, filename, snippet, body, raw header/source, search term, credential, provider data,
+  attachment bytes, AI data, or Ticket content.
+- [ ] Simulate an access-event write failure and confirm content/search/attachment/raw source is not
+  returned. Confirm source deletion cannot erase retained events, account deletion is blocked while
+  audit history exists, and an ordinary rollback refuses to drop non-empty durable history.
+- [ ] Check keyboard focus, clear labels/help, validation feedback, responsive layout, and immediate
+  control disappearance after authority is revoked. Confirm ordinary owner/delegate and shared-mail
+  workflows remain usable.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-16-001 - Email Mail Historical Import And UID Re-Baseline
+
+Status: Pending
+Added: 2026-08-16
+Environment: Authoritative Dev; implementation complete, migration and controlled provider verification pending
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/plans/2026-08-16-email-mail-completion-slice-index.md`,
+`docs/feature-slices/2026-08-16-email-mail-historical-import-and-uid-rebaseline.md`,
+`docs/feature-slices/2026-08-12-email-server-authoritative-folders-placements.md`, and
+`HR-2026-08-12-003`
+
+Scope: Add one advanced mailbox-maintenance surface guarded by `email.account_manage` plus the new
+`email.mailbox_sync_manage` permission. It previews and runs a historical import for exact account,
+enabled/selectable folders, UIDVALIDITY namespace, and a maximum 31-day UTC window. Runs default to
+100 messages, enforce a hard maximum of 500 and batches no larger than 50, retain immutable sanitized
+progress/item evidence, and support safe cancellation between batches. A separate reason-bearing
+preview/apply action re-baselines one failed folder at current provider `UIDNEXT` without importing
+history or relabelling old placements. Changed UIDVALIDITY creates and supersedes an explicit
+namespace; documented same-validity cursor recovery reuses the immutable namespace and changes only
+the forward high-water.
+
+Affected pages / workflows: Email Admin account list/detail, the new per-account Mailbox maintenance
+page, historical preview/progress/cancel, UIDVALIDITY failure recovery, forward-only account/folder
+polling, provider-read services, queue/lock behavior, placement/conversation projection, permission
+seeding, and Email operator documentation. Normal `/tech/mail`, `/tech/inbox`, provider mailbox
+actions, drafts, Sent, Ticket routing, rules, Signals, notifications, AI, and personal unread state
+must remain unchanged except that safely imported historical messages become available through their
+authorized real folders.
+
+Deploy / migration notes: The implementation is complete in the authoritative Dev working copy, but
+no live migration, provider call, import, re-baseline, external AI request, BookStack push,
+deployment, or production activation was performed. Before review, the
+three additive `2026_08_16_100000`-`102000` migrations must pass clean-schema and populated-Dev
+checks, then run on Dev with a backup and inspected before/after counts. Deploy must seed the narrow
+permission, run `umask 0002; HOME=/tmp php artisan optimize:clear`, rebuild Blade views with the same
+umask, restart the isolated Email worker when required, and verify the external scheduler runner.
+The first provider exercise is one non-production account/folder with a small cap. No production
+import or re-baseline is approved by this entry.
+
+Risks: a widened or unread-derived import could replay old mail as current work, flood Tickets and
+notifications, or expose personal mailbox history. Reusing a numeric UID after UIDVALIDITY changes
+could mutate the wrong provider message. Concurrent poll/import/re-baseline work could skip or
+duplicate placements. Account administration must not become content access; preview/progress/errors
+must not disclose subject, participants, filenames, body, raw headers, credentials, or inaccessible
+mailbox existence. A partial provider or worker failure must retain honest resumable evidence rather
+than silently broadening scope, moving the live cursor, or fabricating completion.
+
+Automated verification: focused historical-import/UID/rebaseline **21 tests / 167 assertions**;
+adjacent polling, Draft, remote-operation, Undo, Sent and attachment **68 / 465**; inbound automation
+plus durable conversation query **22 / 194**; complete `EmailModuleTest` **141 / 1,227**. Pint on 41
+owned/shared files, PHP lint, Blade cache, compiled-view group-write and diff checks pass. These runs
+used the isolated test database and deterministic provider fakes. Live migration, authenticated
+browser, real queue/scheduler/storage runtimes and a controlled provider account remain manual.
+Passing tests do not complete the checks below.
+
+Manual checks:
+
+- [ ] Confirm a normal Tech, an account administrator without `email.mailbox_sync_manage`, and a user
+  with only that new permission cannot open, preview, start, cancel, or re-baseline. Confirm an
+  explicitly authorized operator can, and disabling the user or revoking either permission blocks
+  queued execution.
+- [ ] On a personal mailbox, confirm maintenance metadata exposes no subject, participant, filename,
+  body, raw header, credential, or message snippet. Confirm the operator gains no Mail content access
+  unless they independently have normal mailbox View authority.
+- [ ] Preview one or more enabled/selectable folders. Confirm the exact account/folders,
+  UIDVALIDITY, UTC dates, already-present/new estimates, effective cap, and blockers are clear;
+  reject more than 31 days, more than 500 messages, an installation/account lower cap violation,
+  disabled/non-selectable/cross-account folders, and an expired or changed preview.
+- [ ] Run a small historical import. Confirm deterministic folder-path/ascending-UID progress (not a
+  claimed global chronology), batches no larger than 50,
+  imported/already-present/skipped/failed counters, and sanitized errors. Repeat the request and queue
+  delivery and confirm there are no duplicate messages, placements, attachments, conversations,
+  Sent/Draft reconciliation rows, or audit items.
+- [ ] During an import, request cancellation and restart the Email worker. Confirm cancellation stops
+  before the next batch, committed items remain intact, and durable progress resumes without
+  replaying completed items. Disable the original requester and confirm a second currently authorized
+  mailbox-maintenance operator can still request cancellation with an audited actor identity.
+- [ ] Compare before/after live cursors, provider flags/folders/messages, personal unread/opened state,
+  rules, rule attempts, Tickets, Ticket evidence, Signals, notifications, Smart Inbox suggestions,
+  AI usage, and remote operations. Confirm the historical run changes none of them and never uses
+  provider unread as its cursor.
+- [ ] Start or simulate overlapping poll, folder refresh, provider inventory, Draft refresh, remote
+  operation, import, and re-baseline work for the same folder. Confirm the shared account/folder lock
+  allows only the safe owner and reports a visible blocker instead of racing.
+- [ ] With a controlled UIDVALIDITY failure, preview re-baseline and confirm old/new validity,
+  UIDNEXT, live start, local placement count, reason, and blockers. Change provider state after
+  preview and confirm apply becomes stale without local mutation.
+- [ ] Apply a stable changed-UIDVALIDITY re-baseline and confirm it creates/selects a new explicit
+  namespace, supersedes but does not relabel/delete the old namespace or placements, starts
+  forward-only at current `UIDNEXT`, clears only the matching sync blocker, imports no message, and
+  performs no provider write. Repeat with a documented same-UIDVALIDITY cursor failure and confirm it
+  reuses the immutable namespace while moving only the live high-water. Confirm old-namespace
+  placements cannot drive a provider mutation without separate exact reconciliation.
+- [ ] Create an unresolved Draft/Sent/remote/reconciliation operation for the folder and confirm
+  re-baseline blocks. Repeat a completed confirmation and confirm it is idempotent.
+- [ ] After re-baseline, deliver one genuinely new message and confirm ordinary polling imports it
+  once. Then run a separate small historical import and confirm older selected mail is projected
+  without becoming `unread for me` or entering Inbox automation.
+- [ ] Verify the Email worker and external scheduler runner from their real runtime users, inspect
+  failed jobs without blind retry/deletion, and confirm private Email files created by the controlled
+  import retain the required group-write ownership/modes.
+- [ ] Check the Mailbox maintenance page at desktop/mobile widths, keyboard navigation, error/focus
+  handling, double-submit protection, progress refresh, and light/dark themes. Confirm controls are
+  absent when the backend capability or authorization is unavailable.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-15-007 - Email Mail Desktop Workspace Density And Height Polish
+
+Status: Pending
+Added: 2026-08-15
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-15-email-mail-desktop-workspace-density-height-polish.md`,
+`HR-2026-08-15-001`, and `HR-2026-08-15-005`
+
+Scope: The two-column desktop Mail workspace uses equal bounded list/reader panes that consume the
+available viewport height before scrolling independently. Conversation parent and expanded-child
+rows are denser on desktop and show only the signed-in technician's personal **Unread** badge;
+provider unread remains available through its filter, folder counts, detailed reader, and explicit
+mailbox actions. One Smart Inbox button is restored above the reader while the same scoped Livewire
+component keeps its controlled results after the complete conversation, closed by default per
+selection. The stacked layout below 1200 px remains unchanged.
+
+Affected pages / workflows: `/tech/mail` desktop conversation list and reader, expanded conversation
+children, personal/provider unread presentation, Smart Inbox trigger/results/focus, pagination,
+composer, and the existing stacked tablet/mobile layout.
+
+Deploy / migration notes: No migration, permission seed, provider call, queue/scheduler change,
+frontend build, API change, or data backfill is required. Deploy the module-owned Blade/Livewire
+changes, run `umask 0002; HOME=/tmp php artisan optimize:clear`, rebuild views with
+`umask 0002; HOME=/tmp php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: fixed desktop height must not clip composer, More dropdowns, modals, pagination, or short
+viewports; list compaction must preserve readable labels and touch/focus targets; removing provider
+badges from the list must not change provider Seen/filter/count/action authority; and the split Smart
+locations must retain one synchronized accessible control and one authorization owner without focus
+loss or exposing unavailable suggestions.
+
+Automated verification: focused Smart Inbox, conversation-query, hierarchy, and readability coverage
+passes **20 tests / 337 assertions**. `EmailModuleTest` plus supervised Smart Inbox cleanup passes
+**153 / 1,408**. The complete Email test directory passes **349 / 3,066**. Focused Pint and PHP
+syntax checks, Blade compilation, compiled-view group-write, and tracked/untracked whitespace checks
+pass. Email Knowledge sync processed one chapter and one article with nothing skipped; no external
+BookStack push was queued in this implementation turn. Automated checks do not replace the manual
+layout and browser checks below.
+
+Manual checks:
+
+- [ ] At roughly 1280x720, 1440x900, and 1920x1080, confirm the conversation list and reader have the
+  same top/bottom edges, use the available height even when the Mail folder sidebar is taller, and
+  scroll independently only after filling their panes. Confirm toolbar, command bar, and pagination
+  remain visible.
+- [ ] Compare several dense parent rows and one expanded conversation. Confirm only the current
+  technician's **Unread** badge appears in parent/child list rows; a provider-unread but personally
+  read message has no list unread badge, while a provider-read but personally unread message does.
+- [ ] Confirm the mailbox-unread filter, provider folder counts, detailed `Mailbox read/unread`
+  reader badge, and explicit provider read/unread actions remain available and unchanged.
+- [ ] With usable Smart content, confirm the Smart Inbox button is above the reader and starts
+  collapsed. Open it by mouse and keyboard; confirm focus/scroll reaches the one result region after
+  the complete conversation. Close it and confirm focus returns to the button. Switch away and back
+  and confirm it starts closed again.
+- [ ] Remove Smart availability and confirm neither the button nor unavailable result content is
+  shown. Confirm applied useful history remains visible when its existing eligibility contract says
+  it should.
+- [ ] Open Reply/Reply all/Forward/Compose, More actions, classification/move/rule controls, and modal
+  surfaces at desktop width. Confirm no content is clipped by the bounded pane and scrolling remains
+  understandable at 200% zoom and in light/dark themes.
+- [ ] Check 1199 px, tablet, and roughly 390 px mobile widths. Confirm the existing stacked flow,
+  touch targets, content order, and natural page scrolling remain unchanged.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-15-006 - Email Mail Inbound Attachment Recovery And Download
+
+Status: Pending
+Added: 2026-08-15
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
+`docs/feature-slices/2026-08-15-email-mail-inbound-attachment-recovery-download.md`, and
+`HR-2026-08-15-003`
+
+Scope: The selected Mail reader gains placement-bound attachment downloads with current Mailbox View
+authorization and fail-closed storage/path checks. A bounded idempotent recovery command can restore
+attachment metadata/files that earlier private-storage permission failures prevented from being
+persisted, without replaying inbound rules, Tickets, notifications, or provider mutations. Future raw
+snapshots retain complete reparsable RFC822 evidence when safely available. The code boundary and
+exact non-mutating provider-read fallback are implemented, and the bounded Dev recovery is complete.
+
+Affected pages / workflows: attachment rows in the selected `/tech/mail` conversation reader, the new
+Mail download endpoint, inbound raw/attachment persistence, the bounded operator recovery path, and the
+Email private-storage directories. Legacy `/tech/inbox` download behavior remains unchanged.
+
+Deploy / operations notes: Migration `121200` ran on Dev in batch 98. The two legacy private trees are
+now `www-data:www-data`, directories `2770`, with group-rwx access/default ACLs; readiness reports
+`safe=true` and `received_at_schema_safe`. The bounded 19-message recovery ran under the Email worker
+lock. Local evidence restored 24 parts across 13 messages. Exact provider reads were limited to
+messages `4`, `5`, `10`, `456`, `478`, and `479`; they restored four more parts from the latter three,
+while `4`, `5`, and `10` returned `provider_message_missing` and initially retained zero rows/counter
+2 each. This first phase produced 28 rows across 16 messages without broad provider search.
+
+The exact historical persister directory `email/attachments/{account_id}/{imap_uid}` subsequently
+resolved all three counter-only messages locally. Each exact account-and-UID directory contained two
+direct files matching the preserved counter. The recovery rejects count mismatch, symlink,
+outside-root/nested paths, empty/oversized files, and MIME types denied by current attachment policy;
+accepted legacy evidence short-circuits provider access. First controlled apply recovered 6 / 6
+rows/files while all three counters stayed at two. A second live apply returned
+`existing_rows_complete` for every message, and all six resulting referenced files pass stored-size
+and SHA-1 integrity checks.
+
+Final bounded state is **34 attachment rows and counter sum 34 across all 19 target messages**. The
+original legacy source files and duplicate account-2 legacy copies remain preserved for the separate
+unreferenced-file provenance/retention review; recovery did not delete or repurpose them. Idempotency
+reruns remain unchanged for the 13 raw-snapshot targets, provider-backed `456`, `478`, and `479`, and
+legacy-directory targets `4`, `5`, and `10`.
+
+The broader storage inventory remains an explicit dependency under `HR-2026-08-15-003`: all 61
+directories are `www-data`/`2770` with the required access/default ACLs and no symlinks, while the
+current read-only 939-file snapshot reports 79 `www-data`-owned `0644` files. The SSH project user
+cannot change the companion runtime's owner-only modes. Root/operator must normalize exactly those 79
+files to `0660` without content, ownership, move, or deletion, then rerun inventory and dual-runtime
+smoke.
+
+The recorded state before the original operation was zero attachment rows, target counter sum 6, 36
+existing attachment files, 23 remote operations, and two rule attempts. The final recovery reconciles
+all target counters to their 34 rows while preserving the old source/duplicate file inventory and the
+previously unchanged operation/rule evidence.
+
+After code/operations verification, run `umask 0002; HOME=/tmp php artisan optimize:clear` and
+`umask 0002; HOME=/tmp php artisan view:cache`, restart the ordinary/default and `email` workers so
+long-lived runtimes use the final read contract, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: an attachment ID without exact placement/message binding could leak another mailbox; unsafe
+paths or response headers could expose local files or enable content sniffing; unbounded provider reads
+could overload IMAP; and a non-idempotent repair could duplicate files or metadata. A legacy directory
+must never be accepted on account/UID/count mismatch, symlink, outside-root/nested path, size, or MIME
+policy failure. Missing or unverifiable evidence must remain an honest per-message failure rather than
+a fabricated attachment, and successful recovery must not silently delete legacy evidence.
+
+Automated verification: focused `EmailAttachmentAccessRecoveryTest` passes **15 tests / 110
+assertions**. It covers exact placement/message ownership, active account/grant scope, private path
+allowlisting, safe response headers, bounded/idempotent snapshot/provider/legacy-directory recovery,
+readiness failure, rejection guards, no provider call for exact legacy evidence, and negative identity
+cases. Before this narrow follow-up, the adjacent exact provider-read package passed 47 / 321, the
+broad Email module/inbound package 155 / 1,308, and the complete Email directory 347 / 3,030. Pint,
+PHP syntax, and diff checks pass for the follow-up. The controlled side-effect window created zero
+remote operations/attempts, rule attempts, outbound logs, Ticket-domain
+tickets/messages/events/attachments, notifications, or queued jobs. Passing automated and operator
+checks will not replace the manual checks below.
+
+Manual checks:
+
+- [ ] Complete the exact root/operator mode-only repair tracked in `HR-2026-08-15-003`: change the 79
+  identified `www-data`-owned `0644` files to `0660` without content/move/delete/ownership changes,
+  then reconcile the expected 61-directory/939-file inventory and confirm both project/queue and
+  PHP-FPM runtimes pass read/write smoke.
+- [ ] Review the exact recovery report: 24 raw-snapshot parts plus four exact-provider parts and six
+  exact legacy-directory parts produced 34 rows/counter 34 across all 19 target messages. Confirm
+  every referenced size/checksum/path and each duplicate-free rerun.
+- [ ] Confirm messages `4`, `5`, and `10` each used only their exact
+  `email/attachments/{account_id}/{imap_uid}` directory with exactly two policy-accepted direct files,
+  preserved counter two, and no provider search. Confirm mismatch, symlink, nested/outside-root,
+  empty/oversized, and denied-MIME cases fail without partial persistence.
+- [ ] Confirm the original legacy source files, duplicate account-2 legacy copies, and previously
+  recorded unreferenced inventory remain preserved for a separate evidence review; approve no
+  deletion as part of this check.
+- [ ] Open representative received messages with ordinary and inline attachments. Confirm stored files
+  appear under the exact selected message with friendly filename/size and download intact; inline
+  content is downloadable but is not previewed inline by this slice.
+- [ ] Confirm active authorized Inbox, Sent/Archive, and Ticket-linked placements can download their own
+  files without changing provider state, personal unread, Ticket data, or message selection.
+- [ ] Remove the global Email permission and confirm the route returns 403. Then restore that ceiling,
+  revoke mailbox access, and test inactive account, hidden placement, cross-account IDs,
+  attachment/message mismatch, missing file, and unsafe stored path; each context-specific denial must
+  be a hidden 404 without path or mailbox metadata.
+- [ ] Inspect download headers for forced attachment disposition, safe filename, `nosniff`, and
+  private/no-store caching. No inline preview is part of this review.
+- [ ] Confirm the side-effect window created zero remote operations/attempts, rule attempts, outbound
+  logs, Ticket-domain tickets/messages/events/attachments, notifications, and queued jobs, and that provider access
+  was read-only.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-15-005 - Email Mail Smart Inbox Reader-First Polish
+
+Status: Pending
+Added: 2026-08-15
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-15-email-mail-smart-inbox-reader-first-polish.md`,
+`HR-2026-08-14-012`, `HR-2026-08-14-013`, `HR-2026-08-14-014`, and
+`HR-2026-08-15-004`
+
+Scope: Smart Inbox results remain after the selected-message reader and default closed; follow-up
+`HR-2026-08-15-007` restores one synchronized trigger above the reader without duplicating the scoped
+Livewire query/eligibility owner. The surface presents only current useful controls and hides pending
+actions that the recorded agent/current actor/account/target cannot execute. Terminal rows remain
+durable audit evidence outside the ordinary reader, while applied results remain visible as useful
+history. Current schema-v2 fingerprints remain sensitive to real conversation content/membership
+changes but ignore unrelated Eloquent bookkeeping timestamps; legacy suggestions are evaluated with
+their recorded schema. Existing action-time authorization remains authoritative.
+
+Affected pages / workflows: the Smart Inbox review queue embedded in `/tech/mail`, analysis and the
+controlled trigger/result region,
+single and batch apply/correct/dismiss/rule-prefill controls, current-agent capability projection, and
+conversation source fingerprint evaluation. The `received_at` corruption/recovery remains separately
+gated by `HR-2026-08-15-004`.
+
+Deploy / migration notes: Forward migration `121200` ran on Dev in batch 98. It records each
+suggestion's fingerprint schema and removed the unsafe receipt-timestamp clause before the exact
+repair recovered five false-stale suggestions. Deploy the matching code and migration together. Run
+`umask 0002; HOME=/tmp php artisan optimize:clear`, rebuild compiled views with
+`umask 0002; HOME=/tmp php artisan view:cache`, restart long-lived ordinary/default and `email`
+workers so every runtime uses the same fingerprint contract, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: presentation checks must not replace server authorization; hiding audit rows must not delete
+them or weaken API access controls; capability drift could show a control guaranteed to fail; and an
+overly broad fingerprint could miss a real content change while an unstable one could falsely stale a
+review. The split trigger/result behavior must remain synchronized and keyboard/screen-reader
+operable; its layout review is tracked by `HR-2026-08-15-007` while this capability/fingerprint review
+remains Pending.
+
+Automated verification: the Smart Inbox reader/capability package passes 21 tests / 306 assertions.
+The receipt-timestamp repair plus adjacent Smart Inbox regressions pass 36 / 408; an earlier combined
+repair/reader package passed 47 / 578, and the complete Email test directory passes 347 / 3,030.
+The split trigger/result follow-up plus desktop/navigation regressions pass 20 / 337, and the current
+complete Email directory passes 349 / 3,066 under `HR-2026-08-15-007`.
+Coverage includes default-closed controlled result behavior, reader-first result order, hidden
+unavailable/terminal rows, retained applied history, recorded-agent and
+exact-scope eligibility, forged/direct action denial, and schema-aware fingerprint staleness. Passing
+automated checks will not replace the manual checks below.
+
+Manual checks:
+
+- [ ] Open and return to a message with usable suggestions. Confirm Smart results remain after the
+  complete email conversation and start closed each time. Use the trigger above the reader by mouse
+  and keyboard; confirm synchronized expanded state, screen-reader naming, result focus, and focus
+  return remain truthful. The detailed desktop placement check is also recorded under
+  `HR-2026-08-15-007`.
+- [ ] With a read-capable but write-disabled agent, confirm Analyze may remain available while Apply,
+  batch, correction/rule actions that cannot execute are absent and no generic unavailable alert is
+  shown.
+- [ ] Disable/deactivate or replace the recorded agent, revoke mailbox access, deactivate the account,
+  remove exact scopes, and disable/delete targets. Confirm unavailable pending reader content
+  disappears without revealing hidden context or showing a generic unavailable error, while
+  forged/direct calls still fail server-side.
+- [ ] Confirm stale/dismissed/revoked suggestions no longer clutter the selected-message reader but their
+  durable rows/events remain available to authorized audit/API workflows. Confirm an applied result
+  remains visible as history.
+- [ ] Change only local state, `updated_at`, or the derived search projection and confirm a pending
+  suggestion remains valid. Then change real subject/body/participants, attachment metadata/count, or
+  conversation membership and confirm the old suggestion becomes stale.
+- [ ] Test desktop, narrow mobile, keyboard focus, screen-reader labels, dark/light theme, and selection
+  changes without focus loss or automatically expanding the panel.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-15-004 - Email Mail Decoded Subject Search Compatibility
+
+Status: Pending
+Added: 2026-08-15
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`, and
+`docs/feature-slices/2026-08-15-email-mail-decoded-subject-search-compatibility.md`
+
+Defect reported during review, 2026-08-15: the existing MariaDB definition of
+`email_messages.received_at` included implicit `ON UPDATE CURRENT_TIMESTAMP`. The `121000` and
+`121100` projection-only backfills consequently advanced receipt timestamps, changed Smart Inbox
+source fingerprints, and produced false stale warnings. The prior claim that all message timestamps
+and fingerprints were unchanged is withdrawn.
+
+Rework completed on Dev, 2026-08-15: forward migration `121200` removed the implicit clause and froze
+all 490 messages in an audit ledger. Preview identified 471 deterministically repairable timestamps
+(439 sane header dates and 32 conflict-free conversation boundaries); apply restored those 471 and
+left 19 unresolved candidates untouched. Exact source-ID and recorded-schema fingerprint comparison
+recovered five suggestions falsely staled inside the corruption window without reactivating later or
+mismatched stale evidence. This review is now Pending for the manual checks below; it is not Reviewed.
+
+Scope: `/tech/mail`, legacy `/tech/inbox`, and `GET /api/v1/email/inbox/messages` now share one
+parenthesized local SQL search contract. It searches the stored raw subject, a hidden nullable
+`subject_search` projection produced by the bounded RFC 2047 presenter, sender name/address, and
+plain-text body. This makes readable Q/Base64 and conservatively recovered truncated subject terms
+searchable without rewriting the provider subject. User-entered `%`, `_`, and the `!` escape
+character remain literal text rather than broadening the query. Eloquent subject writes maintain the
+derived projection, and historical projections are rebuildable in bounded chunks.
+
+Affected pages / workflows: conversation search and SQL pagination in `/tech/mail`; search and
+filters in `/tech/inbox`; `q`, account filters, pagination, and response serialization in
+`GET /api/v1/email/inbox/messages`; inbound and other Eloquent `EmailMessage` subject writes; and the
+two `subject_search` migrations. Rework additionally affects the `received_at` schema/repair ledger,
+schema-aware Smart Inbox fingerprints, and exact false-stale recovery events.
+
+Out of scope / not reviewed here: rewriting `email_messages.subject`, `email_conversations.subject`,
+headers, Ticket evidence, or provider data; changing rule matching, TD/SO Ticket correlation,
+conversation identity, provider fingerprints, API response fields, mailbox grants, folder semantics,
+the existing FULLTEXT definition, or choosing an external search/index service. Smart Inbox changes
+are limited to recording/evaluating the fingerprint schema and recovering exactly matched
+timestamp-corruption fallout. The API still returns the stored raw `subject`; `subject_search` is not
+fillable and is hidden from serialization.
+
+Deploy / migration notes: Dev migration
+`2026_08_15_121000_add_email_message_subject_search.php` has run in batch 96. It added the nullable
+512-character projection and performed the initial bounded backfill without changing `updated_at`.
+`2026_08_15_121100_harden_email_message_subject_search_backfill.php` ran in batch 97. It is a
+forward-only, idempotent rebuild of missing or stale values. Each update compares the originally
+read raw subject and projection before writing, so a concurrent fresher subject writer wins while an
+unrelated state update does not prevent repair; its `down()` is intentionally a no-op.
+
+`2026_08_15_121200_harden_email_message_received_at.php` ran in batch 98. MariaDB now reports an empty
+`EXTRA` value for `received_at`, and its ledger holds the frozen 490-message repair scope. The
+forward-only operator command previews by default and applies only evidence-supported timestamps;
+unresolved candidates remain unchanged. It performs no provider read/write, rule replay, Ticket
+mutation, or outbound action.
+
+For another environment, pause the ordinary/default and `email` queue workers through the normal
+worker manager, deploy the compatible code, and run migrations in timestamp order (`121000`,
+`121100`, `121200`). Confirm `received_at` has no `ON UPDATE` clause and inspect the frozen ledger.
+Run `php artisan email:repair-received-at` first as preview, accept only the evidence-supported count,
+then use `--apply`; never guess unresolved timestamps. Run
+`umask 0002; HOME=/tmp php artisan optimize:clear`, rebuild compiled views with
+`umask 0002; HOME=/tmp php artisan view:cache`, restart/resume every paused worker, and sync Email
+Knowledge with `php artisan knowledge:sync-docs --module=Email --push`. Confirm migration, repair,
+projection, and Smart recovery counts before reopening normal processing. No permission seed,
+scheduler change, frontend build, provider setting/call, or external index is required.
+
+Risks: rewriting the raw subject would change identity-bearing provider evidence and could affect
+rules, Ticket correlation, conversation grouping, and fingerprints. A derived value returned by the
+API would silently change its contract. An unparenthesized subject/sender/body OR branch could escape
+mailbox View, account, folder, Ticket, or state filters. Unescaped `%` or `_` input could match every
+row instead of the literal character. An old worker writing during or after the rebuild could leave a
+missing/stale projection; the worker pause/restart and CAS repair are therefore deploy gates. The
+receipt-timestamp repair has 19 candidates without safe deterministic evidence; they must remain
+explicitly unresolved rather than guessed. The additional local substring OR does not add a new
+index, so large-dataset query cost and database-side 25-row conversation pagination must remain under
+observation.
+
+Automated verification: the search-surface regression passes with 4 tests / 58 assertions.
+Together with adjacent conversation-query and Mail navigation/readability regressions, it passes
+with 13 tests / 231 assertions, including 30 matching durable conversations represented by 60
+placements and paginated as 25 plus 5 latest-message leaders. Projection coverage passes 9 tests /
+56 assertions; projection plus the three surfaces pass 13 / 114, and the full focused package with
+adjacent regressions passes 22 / 287. The complete Email test directory passes 347 tests / 3,030
+assertions. Dev migration status confirms batches 96 and 97. A sanitized post-repair audit found 490
+projection rows, zero projection mismatches, and 32 intentionally different decoded values. The
+receipt-timestamp repair plus adjacent Smart Inbox regressions pass 36 / 408; an earlier combined
+repair/reader package passed 47 / 578. Dev migration status confirms batches 96, 97, and 98. The
+timestamp audit contains 490 rows: 471 evidence-supported repairs, 19 untouched unresolved
+candidates, and five exact false-stale recoveries. MariaDB reports an empty `EXTRA` value for
+`received_at`. Prior unchanged receipt-timestamp/fingerprint digest claims are not completion
+evidence. Pint, PHP syntax, migration status, and scoped diff checks pass.
+Automated checks do not replace the manual checks below.
+
+Manual checks:
+
+- [ ] Confirm Dev reports `121000` as batch 96, `121100` as batch 97, and `121200` as batch 98;
+  confirm MariaDB shows no `ON UPDATE` clause and the timestamp ledger contains the frozen 490 rows.
+- [ ] Review the timestamp repair evidence: 439 header-date rows plus 32 conversation-boundary rows
+  were applied, 19 unresolved candidates remain untouched, and rerunning preview/apply is idempotent.
+  Confirm no provider call, rule replay, Ticket mutation, or outbound action occurred.
+- [ ] Confirm the five recovered Smart Inbox suggestions have exact source/fingerprint recovery
+  evidence, while a later legitimately stale or mismatched suggestion remains stale.
+- [ ] In `/tech/mail`, search separately for readable terms found only inside a UTF-8 Q-encoded,
+  Base64-encoded, and truncated `=?utf-8?Q?...=C3=` stored subject. Confirm each authorized
+  conversation appears with friendly text and the correct newest matching message.
+- [ ] Repeat the decoded searches in legacy `/tech/inbox` and through
+  `GET /api/v1/email/inbox/messages?q=...`; confirm all three surfaces agree on accessible results.
+- [ ] Inspect the API response for an encoded match and confirm `subject` is the exact stored raw
+  encoded value and no `subject_search` field is present.
+- [ ] Search each surface by a raw encoded-subject fragment, plain subject, sender name, sender
+  address, and body-only term; confirm these existing matches still work.
+- [ ] Create safe messages containing literal `%`, `_`, and `!` characters, with near-miss rows that
+  omit each character. Search for each character on all three surfaces and confirm only literal
+  matches appear rather than wildcard-expanded results.
+- [ ] With accessible and inaccessible mailboxes plus two accounts, folder-scoped, Ticket-linked,
+  and non-Ticket messages, confirm search never escapes mailbox View, selected account/folder,
+  Ticket, state, or API account filters.
+- [ ] Use at least 30 matching durable conversations with two placements/messages each. Confirm Mail
+  reports 30 conversations, page one has 25, page two has 5, each row reports two messages, and the
+  leader is the newest matching message rather than either of 60 placement rows.
+- [ ] Compare representative rows before and after the migrations. Confirm raw subjects, conversation
+  keys/subjects, Message-IDs, Ticket references, rule outcomes, provider evidence, mailbox placements,
+  and raw API payloads remain unchanged while `subject_search` is the readable rebuildable value.
+  For repaired timestamps, confirm each new value matches its ledger evidence; for the 19 unresolved
+  candidates, confirm the repair made no value up.
+- [ ] After workers restart, import one encoded provider message and update another subject through
+  the supported Eloquent path. Confirm both projections are immediately searchable and no provider
+  write, Ticket reroute, or conversation regrouping is triggered by projection maintenance.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-15-003 - Email Mail Runtime Reliability, Truthful Send Follow-Up, And Right-Bar Controls
+
+Status: Pending
+Added: 2026-08-15
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/feature-slices/2026-08-15-email-mail-runtime-reliability-hardening.md`,
+`docs/feature-slices/2026-08-16-email-mail-private-storage-inventory.md`,
+`HR-2026-08-14-010`, `HR-2026-08-13-030`, `HR-2026-08-13-027`, `HR-2026-08-13-023`,
+`HR-2026-08-13-024`, `HR-2026-08-13-021`, `HR-2026-08-13-020`, and
+`HR-2026-08-13-019`
+
+Scope: Mail runtime hardening for defects found during real Dev use. Provider operations now
+resolve special folders from provider SPECIAL-USE or the exact folder leaf, check exact UID presence
+without fetching headers, stop a confirmed missing source as stale, and keep genuine provider-read
+failures out of blind automatic retry. Connection/read preflights remain audit evidence without
+consuming the provider-mutation attempt budget, and raw provider exceptions such as
+`no headers found` never enter user-facing operation fields. Manual provider Draft sync re-infers an
+exact selectable, sync-enabled Drafts folder and uses a tokenized durable APPEND reservation: fresh
+reservations block concurrent calls, only a five-minute-stale pre-write reservation can be taken
+over, and a started/unresolved provider response cannot be replayed. New private Email writes share a
+verified group-access contract across PHP-FPM and queue-worker users, and stored attachment IDs are
+rebound to the exact active authorized draft before SMTP. One unique Email log and stable Message-ID
+are reserved atomically before SMTP, and initial same-identity Sent reconciliation is attempted
+separately;
+concurrent/repeated submission cannot elect a second sender, and an uncertain transport outcome
+remains blocked for Sent review. SMTP acceptance remains sent even when local log finalization,
+account telemetry, the local Sent snapshot, or the reconciliation record fails afterward; the local
+draft is marked sent and the warning says not to resend. A failed reconciliation insert removes its
+newly created raw snapshot, and later exact provider Sent evidence can resolve an unconfirmed
+reservation without resending. A successful manual provider Draft APPEND queues one bounded
+exact-folder refresh to import the authoritative Drafts placement. Technical provider Sent APPEND is
+reserved under a row lock and stays blocked after an ambiguous provider-write start. Mailbox
+operations and Mail signature are now default-collapsed right-bar cards, with operation counts still
+visible and the signature modal's X/Cancel/footer layering preserved.
+
+Affected pages / workflows: `/tech/mail` Mailbox operations and Mail signature right-bar cards,
+Archive/Trash/Seen/Flag/Move provider actions and retry/reconciliation, Compose/Reply/Reply All/Forward
+send completion, local/provider draft Save/Send/Discard, provider Drafts view, inbound raw/attachment
+storage, durable draft attachments, provider Sent follow-up storage, and the read-only
+`email:inventory-private-storage` operator workflow.
+
+Out of scope / not reviewed here: permanent provider deletion, bulk retry, automatic external
+replies, full historical Drafts import, a new provider adapter, database migration, storage-disk
+migration, rewriting immutable historical operation targets, and automatically proving or replaying
+an SMTP transport outcome that the provider did not confirm. Do not use the repaired historical
+ambiguous delete/Trash operation as a retry test; its controlled repair is retained below as audit
+evidence and deliberately did not replay the original provider mutation.
+
+Controlled Dev repair: fresh read-only provider evidence showed operation `23`'s source UID absent,
+one exact Message-ID match at Trash UID `30177` in canonical folder `141`, no copy in the wrongly
+classified child, and draft `1`'s exact Message-ID at its recorded Drafts UID. Operation `23` was
+cancelled, stale source placement `474` was hidden, the verified Trash copy was projected as
+placement `485`, the child folder role was repaired to `custom`, and draft `1` was marked sent with
+its exact provider copy deleted after matching the outbound send-log identity. The provider
+post-check confirmed source absent, correct Trash copy present, wrong child empty, and draft UID
+absent. The repair issued zero SMTP writes and zero IMAP MOVE writes. No provider Sent copy was
+fabricated or appended because the exact Sent Message-ID was not present and the raw outbound
+snapshot was unavailable.
+
+Deploy / migration notes: No migration, permission seed, scheduler registration, provider setting,
+or frontend build is required. The send reservation reuses the unique key from existing migration
+`2026_08_12_125000_add_email_log_idempotency_key.php`; confirm normal migration status rather than
+adding a new schema change. Deploy the code, run
+`umask 0002; HOME=/tmp php artisan optimize:clear`, run
+`umask 0002; HOME=/tmp php artisan view:cache`, restart the ordinary/default and `email` queue
+workers so they load `RefreshEmailProviderDraftFolder` and the hardened operation/send classes, and
+sync Email Knowledge with `php artisan knowledge:sync-docs --module=Email --push`.
+
+Run `HOME=/tmp php artisan email:inventory-private-storage` without `--show-paths` before and after
+the root/operator mode repair. A nonzero exit remains expected while the 28 missing raw references
+exist even after the 79 mode blockers are corrected; do not widen scope, print paths into ordinary
+logs, delete files, or change database references merely to force a successful exit.
+
+The read-only `email:inventory-private-storage` slice is implemented. Its first redacted Dev run
+inspected 939 files without mutation: `sent_pending` 322 (0 referenced / 322 unreferenced), `raw` 547
+(465 / 82), and `attachments` 70 (34 / 36), totalling 499 referenced and 440 unreferenced files. It
+also reports 28 missing `message_raw` references, 79 non-private `0644` files, and 12 duplicate
+unreferenced checksum+size groups. Duplicate or unreferenced status is evidence only and authorizes no
+deletion.
+
+The preceding structural audit found all 61 directories `www-data`, mode `2770`, with group-rwx
+access/default ACLs, plus zero symlinks, unsafe paths, or unreadable files. File-mode normalization is
+not complete: the 79 `0644` files are `www-data`-owned, and the SSH project user cannot safely chmod
+them. A root/operator must change only those 79 modes to `0660` without changing content, ownership,
+location, or existence, then rerun the read-only inventory and PHP-FPM/queue dual-runtime read/write
+smoke. The 28 missing raw references and 440 unreferenced files require separate provenance,
+reconciliation, retention, Ticket/legal-hold/backup, and deletion review. Attachment recovery
+readiness remains `safe=true` and `received_at_schema_safe`, but none of these facts closes the
+owner/root blocker or the remaining browser, provider/send, failed-job, and right-bar checks. This
+entry remains Pending.
+
+Risks: a false missing-UID result could suppress a legitimate provider action, while treating a read
+failure as absence could corrupt the local projection. A wrong special-folder target could move mail
+into a custom child. A post-SMTP exception must never invite a duplicate send, but provider Sent
+placement may remain pending when its local snapshot is unavailable. The persisted Email-log
+reservation must be created before SMTP and retain one immutable identity when the outcome is
+uncertain; automatic replay could duplicate a message. Preliminary reconciliation failure must stay
+`reservation_failed`, and an ambiguous SMTP handler must not overwrite a concurrent exact Sent-sync
+confirmation. The targeted Drafts refresh must not import
+history, cross accounts, run Inbox automation, or trust stale UIDVALIDITY. Saved attachment IDs must
+not escape the exact active draft/account authorization. A provider Sent append whose write started
+must not run again merely because acknowledgement failed. Likewise, a provider Draft APPEND must
+have one current reservation owner; a fresh/concurrent reservation must not be stolen, a stale
+pre-write takeover must not inherit an unsafe provider-write claim, and an unresolved started write
+must remain reconciliation-only. New shared file modes must not broaden private Email data beyond the
+intended runtime group. The normalized paths still require the named human's cross-runtime/browser
+verification below.
+
+Automated verification: the integrated runtime-focused package passes 74 tests / 613 assertions;
+the full `EmailModuleTest.php` passes 141 / 1,227; and `InboundAutomationTest.php` passes 14 / 81
+against isolated fake Email storage. The focused package covers private storage, pre-/post-SMTP
+safety, provider Sent APPEND, tokenized provider Draft APPEND/targeted refresh, composer lifecycle,
+remote-operation recovery/preflight accounting, verified Undo, and supervised Smart Inbox cleanup.
+The focused read-only private-storage inventory test passes **3 tests / 21 assertions**, covering all
+reference sources, redacted/explicit path output, duplicate groups, missing references, scan caps, and
+no file/row mutation. The live 939-file command run changed no file, permission, database, provider,
+queue, or retention state and correctly remained failed while missing references/non-private modes
+exist. Pint, targeted PHP syntax, Blade cache, and diff checks pass. The automated tests used no real
+provider mutation; the separately recorded controlled repair used exact provider evidence and the
+zero-SMTP/zero-MOVE boundary above. Automated checks do not replace these manual checks.
+
+Manual checks:
+
+- [ ] Open `/tech/mail` with active/recent provider work. Confirm **Mailbox operations** appears in
+  the right bar, starts collapsed, shows correct pending/running/failed/recent counts in its header,
+  expands without leaving the right bar, and retains keyboard focus plus working Retry, Cancel, and
+  eligible Undo controls. With no active/recent work, confirm the card is absent.
+- [ ] Confirm **Mail signature** starts collapsed below the page AI chat. Expand it, open settings,
+  and confirm the modal remains above the footer and closes through X, Cancel, Escape, and backdrop
+  while returning focus to the trigger. Save a toggle and confirm the signature body is unchanged.
+- [ ] In a disposable mailbox with a canonical Trash plus a custom child below Trash (and similarly
+  Archive where available), move one safe test message through the normal action and confirm the
+  provider and Nexum target is the real special folder, never the custom descendant.
+- [ ] For a disposable test placement whose exact source UID was removed externally, run the safe
+  operation/retry path and confirm it stops as stale with no provider mutation, no automatic retry,
+  and no raw `no headers found` text in the UI or persisted user-facing reason. Confirm connection,
+  UID-read, and authorization preflights remain audit rows without incrementing the mutation count.
+  Separately simulate a provider read failure and confirm it is not misclassified as confirmed
+  absence or automatically replayed.
+- [ ] Inspect an ambiguous historical Archive/Trash/Move row without immutable target path or target
+  UID evidence. Confirm it remains visible for review/cancellation but offers no manual Retry.
+- [ ] Inspect the controlled operation `23` repair without running it again. Confirm it is cancelled,
+  placement `474` is hidden, placement `485` represents Trash UID `30177` in folder `141`, the wrong
+  child role is `custom`, draft `1` is sent/provider-deleted, and there is no fabricated provider Sent
+  placement for the outbound log whose exact Message-ID was absent.
+- [ ] Save a new draft in a mailbox with an initialized provider Drafts folder, process the ordinary
+  queue worker, and confirm the exact draft appears in Nexum Drafts and the external provider once
+  with the same Message-ID/content. Confirm no Ticket, Signal, Inbox rule execution, or Inbox unread
+  work is created. Confirm Drafts selection ignores a stale descendant role and requires the
+  re-inferred selectable, sync-enabled canonical folder. Change UIDVALIDITY in a controlled test and
+  confirm refresh fails closed.
+- [ ] In an isolated Drafts APPEND fault/concurrency check, confirm one fresh token reservation elects
+  one writer, a second call performs no APPEND, and only a pre-write reservation older than five
+  minutes can be taken over. Simulate loss of the provider response after APPEND starts and confirm
+  later Save/queue runs perform reconciliation only, with no second APPEND.
+- [ ] Send one safe test message and confirm SMTP is invoked once, the composer closes, the local
+  draft becomes sent, provider-draft cleanup runs, and normal Sent reconciliation remains pending or
+  reconciles honestly. Confirm receipt in the destination mailbox separately.
+- [ ] In isolated controlled Dev fault cases, make accepted-log finalization, account telemetry,
+  Sent snapshot, and reconciliation recording fail after simulated SMTP acceptance. Confirm Mail
+  still says the message was accepted, includes **Do not resend it**, never says it could not be
+  sent, marks the draft sent, stores only sanitized warning metadata, and a repeat with the reserved
+  idempotency key does not call SMTP twice.
+- [ ] In a controlled transport-ambiguity case, confirm the pre-SMTP row keeps the reserved
+  Message-ID, changes to unresolved evidence, tells the technician not to resend, and blocks both a
+  repeated and concurrent submission until provider Sent mail is reviewed. Import the exact
+  same-account Sent copy and confirm normal sync resolves the row as accepted without SMTP replay.
+- [ ] Force only the preliminary Sent-reconciliation write to fail and confirm the reservation says
+  `reservation_failed`, not accepted. In a controlled race, confirm an exact Sent-sync confirmation
+  wins over later ambiguous SMTP exception handling.
+- [ ] In a controlled backend Sent-append case, call an accepted append twice and confirm one IMAP
+  write. Then simulate an exception after provider-write start and confirm repeated processing stays
+  blocked with sanitized evidence until normal Sent sync reconciles the outcome.
+- [ ] Force reconciliation persistence to fail after a new raw Sent snapshot is written and confirm
+  the new file is removed rather than left orphaned.
+- [ ] Attempt a controlled Livewire request containing an attachment ID from another same-user draft
+  or mailbox. Confirm the file is not handed to SMTP, while attachments from the exact active and
+  currently authorized draft still send once.
+- [ ] As root/operator, apply a mode-only normalization to the exact 79 `www-data`-owned legacy files
+  currently at `0644`, changing them to `0660` without reading/modifying content, moving, deleting,
+  changing ownership, or broadening other access. Rerun `email:inventory-private-storage` and confirm
+  all 61 directories remain `www-data`/`2770` with group-rwx access/default ACLs, the non-private-mode
+  count becomes zero, the expected 939-file inventory reconciles, and there are no symlinks, unsafe
+  paths, or unreadable files.
+- [ ] Review the read-only inventory totals: 322 unreferenced Sent-pending files, 82 unreferenced raw
+  files, 36 unreferenced attachment files, 28 missing `message_raw` references, and 12 duplicate
+  unreferenced checksum+size groups. Trace provider/send, database, backup, retention, Ticket/legal
+  hold, and recovery provenance; do not delete, move, chmod, chown, or repair database references as
+  part of inventory review.
+- [ ] After that owner/root repair, write one safe private Email test payload from the web/FPM path
+  and one from the queue-worker path. Confirm both runtimes can traverse/read/write the intended
+  subtree, directories remain setgid/group-writable, files remain group read/write, other users gain
+  no access, and an intentionally failed write never persists `raw_path`.
+- [ ] Check the two right-bar cards and their expanded content at desktop and 320-375px mobile widths
+  in light/dark/system themes. Confirm long operation reasons/status badges wrap without overlapping
+  the Mail reader, footer, modal controls, or adjacent AI cards.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-15-002 - Email Mail Folder Hierarchy And Subject Readability
+
+Status: Pending
+Added: 2026-08-15
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`, and
+`docs/feature-slices/2026-08-15-email-mail-folder-hierarchy-subject-readability.md`
+
+Scope: The normal `/tech/mail` Folders navigation now renders each authorized provider mailbox as
+an expandable parent/child hierarchy. Branches start collapsed; each explicit open/close choice is
+stored per technician and provider folder across sessions/devices, while selecting a nested folder
+opens and remembers its ancestor path. A passive deep-link/reload respects an explicit stored close
+and marks the collapsed ancestor as containing the current folder. Non-selectable parents are
+structural only, and a folder click retains exact physical folder filtering. Common and
+conservatively salvageable truncated RFC 2047 subjects are presented as safe readable Unicode in
+Mail lists/readers and Reply/Forward subject presentation.
+
+Affected pages / workflows: `/tech/mail` sidebar folder navigation, account/folder filters,
+conversation rows and expanded child rows, threaded reader, recent mailbox-operation labels,
+Reply/Forward composer defaults, and legacy `/tech/inbox` list/detail subject headings.
+
+Out of scope / not reviewed here: provider folder changes, descendant/subtree filtering, mailbox
+permission changes, generic User preference/API fields, stored-subject backfill, decoded historical
+SQL search, Email rule matching, Ticket-number extraction, provider evidence, API subject payloads,
+conversation identity, queue/scheduler behavior, or external provider writes. The separate
+decoded-subject search/data follow-up is recorded in `docs/TODO.md`.
+
+Deploy / migration notes: Dev ran
+`2026_08_15_120000_create_email_folder_navigation_preferences.php` in batch 94. Run that migration
+before serving the updated Mail sidebar in another environment with
+`php artisan migrate --force --path=database/migrations/2026_08_15_120000_create_email_folder_navigation_preferences.php`.
+No permission seed, queue restart, scheduler change, frontend build, provider configuration, or data
+backfill is required. Deploy the code, run `php artisan optimize:clear`, run
+`php artisan view:cache`, and sync Email Knowledge with `php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: identical folder paths in different mailboxes must never share state or leak access.
+Non-selectable provider containers must not become filter targets, and stale deleted leaves must not
+reappear. Stored expansion rows must remain per user/folder, must not grant access after a mailbox
+grant is revoked, and concurrent device changes to different branches must not overwrite each other.
+Counts must remain folder-local provider mailbox unread state. Subject decoding must not
+corrupt ordinary Norwegian/Unicode text, expose invalid/header-control bytes, interpret HTML, or
+alter stored identity-sensitive values. Historical search continues to use the raw stored subject.
+
+Automated verification: focused hierarchy, persisted preference, and subject presentation coverage
+passes with 10 tests and 133 assertions. Six adjacent folder, folder-manager, Reply, and Forward
+regressions pass with 100 assertions. The complete Email test directory passes with 267 tests and
+2,377 assertions, including `EmailModuleTest` with 141 tests and 1,206 assertions. Targeted Pint,
+PHP syntax, Blade cache, and diff checks pass. The complete Laravel project suite passes with 1,494
+tests and 12,940 assertions. Migration and final documentation/Knowledge verification are recorded
+in the related Feature Slice.
+
+Manual checks:
+
+- [ ] In one mailbox with parent, child, and grandchild folders, expand and collapse each branch;
+  confirm indentation, connector lines, chevrons, names, icons, and keyboard focus are clear.
+- [ ] Reload Mail, sign out/in, and open Mail in another browser/device; confirm explicitly opened
+  branches remain open and explicitly closed branches remain closed for the same technician. Confirm
+  another technician starts with independent collapsed state.
+- [ ] Select a deeply nested folder from the sidebar and confirm all ancestors reveal, the current
+  row is distinct, the opened ancestor path remains remembered, and the message list contains only
+  that exact physical folder rather than descendants.
+- [ ] Close an ancestor of the current folder, reload/deep-link to the same folder, and confirm the
+  branch stays closed but its parent visibly and accessibly says it contains the current folder;
+  selecting the nested folder again must reopen and remember the path.
+- [ ] With two accessible mailboxes containing the same folder paths, expand one branch and confirm
+  the other remains independent. Confirm an inaccessible mailbox never appears.
+- [ ] Confirm a non-selectable provider parent is a label/disclosure only, its selectable child can
+  be opened, and a stale deleted non-selectable leaf stays hidden.
+- [ ] Compare parent and child provider unread counts and confirm each badge is labelled mailbox
+  unread, is not summed from children, and is not confused with Nexum Unread for me.
+- [ ] Open messages with UTF-8 Q, Base64, ISO-8859-1, ordinary Norwegian/emoji, adjacent folded
+  encoded words, and the truncated `=?utf-8?Q?Fwd=3A_...=C3=` pattern. Confirm readable, stable text
+  in the conversation row, expanded child, reader, and legacy Inbox surfaces.
+- [ ] Start Reply and Forward from an encoded subject and confirm their subject fields and forwarded
+  header are readable while normal threading and send behavior remain unchanged.
+- [ ] Use an HTML-like subject and confirm it is shown as text rather than markup. Confirm malformed
+  or unsupported input remains safe and no header-control/newline content changes the surrounding UI.
+- [ ] Check mouse, Tab/Shift+Tab, Enter/Space, visible focus, screen-reader labels, light/dark theme,
+  a 320-375px mobile sidebar, long Unicode folder names, and at least five hierarchy levels.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-15-001 - Email Mail Selected Conversation List Expansion
+
+Status: Pending
+Added: 2026-08-15
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-15-email-mail-selected-conversation-list-expansion.md`,
+`HR-2026-08-14-002`, and `HR-2026-08-14-003`
+
+Scope: Selecting a multi-email conversation in `/tech/mail` now expands that one center-list row
+with an indented, newest-first list of the authorized mailbox placements in the conversation. Each
+child is a keyboard-accessible control for one exact placement and stays synchronized with the
+selected row in the threaded reader. The parent remains qualified and paginated by the current
+view; authorized Sent, Archive, or other folder context may appear below it with explicit
+`in this view` and `in conversation` counts when those scopes differ. One-email conversations are
+not duplicated.
+
+Affected pages / workflows: `/tech/mail` center conversation list, selected threaded reader,
+folder/search/filter navigation, exact-placement command-bar actions, and the bounded legacy
+header-thread fallback.
+
+Out of scope / not reviewed here: new persistent data models or migrations, manual expansion of
+several conversations, bulk conversation actions, provider writes, automatic read acknowledgement,
+cross-account merging, API behavior, Ticket behavior, or IMAP synchronization. The existing
+placement-opened receipt still records an authorized selection.
+
+Deploy / migration notes: No migration, permission seed, scheduler change, queue restart,
+frontend build, provider configuration, or data backfill is required. Deploy the code, run
+`php artisan optimize:clear`, run `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: a child must never broaden mailbox access, enter from another account, or change the parent
+paginator/filter result. Folder context and counts must make it clear why an email outside the
+current view is visible. Selecting a child must target that exact provider placement without
+silently changing personal unread or provider Seen state. Long and legacy threads must remain
+usable without nested scrolling, inaccessible markup, or ambiguous selection.
+
+Automated verification: focused conversation query and access regressions pass with 6 tests and
+81 assertions. The existing conversation grouping flow passes with 1 test and 16 assertions.
+The full `EmailModuleTest.php` passes with 141 tests and 1,193 assertions. Blade cache, formatting,
+PHP syntax, diff, and compiled-view permission checks pass. Email Knowledge sync processed one
+chapter and one article with nothing skipped and queued the BookStack push. The final queue check
+reports one pre-existing `FetchImapAccount` failure from 2026-08-15 10:46; this UI slice dispatched
+no sync job, and the separate private-storage
+cross-user permission blocker is recorded in `docs/TODO.md` without retrying or deleting the row.
+
+Manual checks:
+
+- [ ] Open a multi-email conversation and confirm exactly that conversation expands below its
+  parent; select another conversation and confirm the first closes.
+- [ ] Open a one-email conversation and confirm it does not render a duplicate child row.
+- [ ] Click an older child in the center list and confirm the exact same email becomes selected and
+  expanded in the right reader; then click a different reader row and confirm the center child
+  highlight follows it.
+- [ ] Use an Inbox conversation with authorized Sent or Archive context and confirm the parent stays
+  in the filtered list, the context child is clearly folder-labelled, and actions target only the
+  selected placement.
+- [ ] Confirm the row labels separate `N mails in this view` from `M mails in conversation` when
+  search, folder, or list filters reduce the parent scope.
+- [ ] Confirm opening or switching children does not itself mark `Unread for me` as read or change
+  provider Seen state. Verify personal **Unread** in the child list and authoritative `Mailbox
+  read/unread` in the detailed reader; the list intentionally no longer duplicates the provider
+  badge after `HR-2026-08-15-007`.
+- [ ] Remove mailbox View access or deactivate the account, refresh the component, and confirm no
+  child subject, sender, folder, or placement from that account remains visible. Confirm matching
+  thread headers in another account never enter the expanded list.
+- [ ] Navigate parent and child controls with Tab, Shift+Tab, Enter, and Space; confirm visible focus,
+  a clear selected-email announcement, no nested buttons, and no unexpected focus jump.
+- [ ] Check light, dark, and system themes plus roughly 340 px, 575 px, and 1199 px widths with long
+  sender, subject, account, and folder labels; confirm selection remains readable and controls do
+  not overlap.
+- [ ] Check a 25-plus-message durable thread and a bounded legacy thread; confirm ordering matches
+  the reader, conversation pagination is unchanged, and legacy Load more remains usable.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-015 - Email Mail Provider Deletion Reconciliation
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-provider-deletion-reconciliation.md`,
+`HR-2026-08-14-009`, `HR-2026-08-14-010`, and `HR-2026-08-14-012`
+
+Scope: Email can run a bounded, account-scoped provider inventory that recognizes placement loss
+only when a complete folder scan has stable start/end `UIDVALIDITY`, `UIDNEXT`, and message counts.
+Confirmed loss creates an immutable finding and hides the placement as a seven-day tombstone.
+Exact reappearance restores it and cancels cleanup; a move is recognized only from conservative
+provider evidence for an already projected target. After grace, cleanup repeats placement,
+retention, unresolved-operation, and Ticket-evidence checks before removing eligible Mail cache,
+local files, tags, and source-derived Smart Inbox artifacts. Scheduler dispatch exists, but every
+job is disabled unless the Admin opt-in value is exactly `1`; the default is off.
+
+Affected pages / workflows: Email Sync & Cache Settings, the scheduled provider-deletion inventory
+and cleanup jobs on the `email` queue, provider folder/placement projection, local cache retention,
+Smart Inbox artifact lifecycle, and Ticket-owned evidence isolation.
+
+Out of scope / not reviewed here: a Nexum action that permanently deletes provider mail,
+cross-account correlation, hidden backup/archive behavior, a complete legal-hold/DSAR/offboarding
+product, a new search/index provider, or deletion of Ticket-owned snapshots.
+
+Deploy / migration notes: Migration
+`2026_08_14_115000_add_email_provider_deletion_reconciliation.php` ran in batch 93 and created empty
+inventory, finding, and cleanup-ledger structures. The deliberately staged Dev chain was `105000`
+(batch 86), `110000` (87), `111000` (88), `112000` (89), `112500` (90), the dated-later `113000`
+Undo migration (91), then `114000` (92) and `115000` (93). To reproduce the reviewed rollout, run
+those exact migration paths in that sequence. A fresh combined `php artisan migrate` sorts the
+2026-08-14 `114000`/`115000` filenames before the 2026-08-15 `113000` filename; the schemas have no
+foreign-key dependency and are currently safe in that framework order, but it is not the same staged
+behavioral rollout. Then run `php artisan optimize:clear`, compile views with the required
+group-write umask, restart the `email` queue worker, verify the external scheduler runner, and sync
+Email Knowledge. Keep
+`provider_deletion_reconciliation_enabled=0` until this review passes; do not infer approval from
+the jobs appearing in `schedule:list`.
+
+Risks: An incomplete or unstable inventory must never be mistaken for deletion. Local file cleanup
+is not application-reversible, a remote move can resemble disappearance, a reappearing UID can race
+with grace cleanup, and removing source-derived artifacts must not remove independent Ticket evidence
+or another surviving placement. Findings contain operational identifiers and must remain
+account-scoped and content-free.
+
+Automated verification: The current focused provider-deletion suite passes **13 tests / 129
+assertions**. Provider deletion plus the earlier retention, conversation identity, recovery, and
+Smart Inbox regression set passes **41 / 323**. PHP syntax, focused Pint, migration pretend, and
+whitespace checks passed for the isolated implementation. Final broad regression, runtime, and
+Knowledge-push evidence belongs to the parent workstream and is not claimed here.
+
+Manual checks:
+
+- [ ] Before enabling the setting, run the scheduler/dispatcher and confirm no account scan or
+  cleanup starts; confirm a missing, malformed, or non-exact setting value also fails closed.
+- [ ] Open Email Sync & Cache Settings and confirm the provider-deletion option is visibly off by
+  default, explains the destructive local-cache risk, and saves both checked and unchecked states.
+- [ ] On one safe Dev mailbox, enable the option and run a complete bounded inventory. Confirm the
+  recorded start/end folder facts are stable and contain no subject, address, body, header,
+  attachment name, raw provider payload, or credential.
+- [ ] Force an incomplete scan, UIDVALIDITY change, scan limit, provider error, or concurrent folder
+  drift and confirm no active placement is hidden, moved, or cleaned.
+- [ ] Remove one safe provider message outside Nexum and confirm the exact placement becomes a
+  hidden seven-day tombstone with an immutable finding; confirm Mail payload/files still exist
+  during grace.
+- [ ] Reintroduce that exact provider occurrence during grace and confirm the placement is restored
+  and its old cleanup path is cancelled without a duplicate conversation or finding effect.
+- [ ] Move a safe message in another provider client and confirm Nexum recognizes a move only when
+  the target identity is already and conservatively proven; ambiguous disappearance must remain
+  protected.
+- [ ] With two active placements for one message, remove only one and confirm the surviving placement
+  protects the conversation and all shared Mail payload.
+- [ ] For an eligible test tombstone beyond grace, run cleanup and confirm only Mail-owned cache,
+  tags, and source-derived Smart Inbox artifacts are removed. Confirm separately captured Ticket
+  evidence and its attachments remain readable under Ticket authorization.
+- [ ] Simulate a partial local-file deletion failure and confirm the attempt stays failed/retryable,
+  missing files are idempotent on retry, and the database never records false completion.
+- [ ] Revoke account scope or disable the opt-in while work is queued and confirm execution stops
+  before provider access or cleanup. Finally return the setting to off after the controlled review.
+
+Expected result: Only a complete, stable, explicitly enabled provider inventory can create a
+placement-loss finding. Grace, reappearance, surviving placements, unresolved work, retention, and
+Ticket ownership all fail closed; local cleanup is bounded, idempotent, auditable, and disabled by
+default.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-014 - Email Mail Supervised Smart Inbox Cleanup
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-supervised-smart-inbox-cleanup.md`,
+`HR-2026-08-14-011`, `HR-2026-08-14-012`, and `HR-2026-08-14-013`
+
+Scope: A human can accept typed Smart Inbox `archive_mail` or `move_to_folder` suggestions for an
+existing selectable same-account target. Application records one deterministic provider-operation
+reference, commits suggestion state before provider I/O, and uses the normal recovery and verified
+Undo paths. A batch is one exact unique snapshot of at most 50 suggestion IDs with per-item
+reauthorization and results. `Always do this` opens only a prefilled existing personal modal or
+Admin rule builder; it creates no rule by itself. Admin prefills are inactive and use distinct
+`provider_archive` / `provider_move` actions, while legacy `archive` remains local-only.
+
+Affected pages / workflows: the Smart Inbox review queue in `/tech/mail`, its selection and batch
+controls, recent mailbox-operation/Undo evidence, the personal rule modal, the Admin Email rule
+builder, and published Email-rule execution against provider Archive/Move.
+
+Out of scope / not reviewed here: permanent delete, provider read-state changes, send/reply,
+automatic or unattended cleanup, silent rule creation/publication, arbitrary Ticket/Task/Signal
+writes, or automatic external replies.
+
+Deploy / migration notes: No additional migration follows the Smart Inbox `114000` migration in
+batch 92 for this slice. It requires the `113000` verified Undo foundation in batch 91. Deploy code,
+run `php artisan optimize:clear`, compile views with the required group-write umask, restart the
+`email` queue worker, verify the remote-operation retry scheduler, and sync Email Knowledge. No new
+permission seed or frontend build is required.
+
+Risks: A stale target folder or revoked organizer/publisher must fail before IMAP. Provider failure
+must not be reported as successful application; provider Seen and personal unread state must remain
+unchanged. The reviewed source placement/UID/version must not be followed after another move, and a
+batch must not run two cleanup effects against the same source. Batch membership must not grow after
+confirmation. A prefill must never become hidden learned behavior or place sender/subject data in a
+URL, and the new provider actions must not change the compatibility meaning of legacy local
+`archive`.
+
+Automated verification: Focused supervised-cleanup coverage passes **11 tests / 170 assertions**,
+including exact source-placement CAS, chained-move rejection, cleanup-only batches, revoked
+Organize, disabled targets, ambiguous sources, deterministic provider operations, verified Undo
+linkage, personal/provider unread preservation, safe Livewire rendering, status-correct provider
+feedback, folder correction, one-use opaque Admin prefill, and no-write personal/Admin rule prefill.
+The combined Smart Inbox foundation, reviewed-apply, review-queue, and cleanup set passes
+**32 / 422**, and the broader focused Mail workstream set passes **112 / 993**. Focused PHP syntax,
+Pint, and diff checks pass. The final application-wide Dev suite passes
+**1,482 tests / 12,749 assertions**.
+
+Manual checks:
+
+- [ ] Analyze a safe conversation, accept an Archive suggestion, and confirm one remote operation is
+  shown, reaches acknowledged success only after provider confirmation, and exposes normal verified
+  Undo when eligible.
+- [ ] Undo the safe Archive/Move and confirm the exact acknowledged placement returns to its original
+  selectable folder without changing provider Seen or any user's Nexum `Unread for me` state.
+- [ ] Accept the same suggestion again and confirm it returns the same applied reference without a
+  second provider mutation.
+- [ ] Select several cleanup suggestions, confirm the exact snapshot before apply, and verify each
+  item has its own success/failure reason. Confirm a later suggestion cannot join the batch and more
+  than 50 IDs is rejected.
+- [ ] Make one selected suggestion stale, revoke Organize on another, and disable a third target
+  folder; confirm each fails independently while unrelated authorized snapshot items continue.
+- [ ] Move the exact reviewed source to another folder without changing its message content, then
+  apply the old suggestion; confirm it becomes stale and records no second provider operation. Put
+  two cleanup suggestions for one source in a batch and confirm only the fixed first reservation can
+  run.
+- [ ] Force a provider operation into Pending, Failed, Superseded, and Cancelled states and confirm
+  both the immediate alert and the rerendered queue show the real non-green state.
+- [ ] Click `Always do this` for a personal mailbox and confirm the modal is merely prefilled and no
+  rule/version/execution exists until the normal explicit form submission.
+- [ ] Click `Always do this` for a shared/system mailbox and confirm the Admin builder opens with the
+  exact mailbox/condition/target, `is_active=0`, `stop_processing=1`, and the distinct provider
+  action. Confirm the URL contains no sender, subject, rule name, or condition value, cannot be
+  replayed after one use, and leaving the form creates nothing.
+- [ ] Explicitly save/publish one controlled provider cleanup rule, confirm current `published_by`
+  and mailbox Organize are rechecked at execution, and confirm successful `stop_processing=1`
+  prevents default Ticket routing for that matched message.
+- [ ] Force that provider action to fail and confirm later actions in the same rule are
+  skipped/`not_run`, while other eligible rules continue according to normal precedence.
+- [ ] Confirm an existing legacy `archive` rule still changes only its historical local state and
+  does not unexpectedly issue an IMAP Archive operation.
+
+Expected result: Cleanup is always human-triggered, bounded, reversible where provider evidence
+supports Undo, and honest about partial failure. `Always do this` is only a normal inactive prefill
+until explicit save/publication; no permanent delete, read-state change, send, or hidden learning
+occurs.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-013 - Email Mail Reviewed Smart Inbox Actions
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-ai-reviewed-conversation-actions.md`, and
+`HR-2026-08-14-012`
+
+Scope: A human may apply exactly three non-cleanup Smart Inbox effects: compare-and-set one existing
+active Email category, add one existing active Taxonomy tag, or create an editable internal Task
+through Task's guarded action and work-context rules. The suggestion row is locked, every click
+rechecks source and provenance, and the applied classification or Task reference plus append-only
+event provides end-to-end evidence. The existing AI-summary-assisted Mail-to-Ticket action remains a
+separate reviewed workflow and is unchanged.
+
+Affected pages / workflows: the selected-conversation Smart Inbox queue in `/tech/mail`, Smart Inbox
+apply API behavior, Email conversation classification, Taxonomy tag assignment, and Task creation.
+
+Out of scope / not reviewed here: creating Taxonomy definitions, replacing a different human
+category, inventing Task assignee/due date, provider mutation, arbitrary Ticket change, automatic
+apply, rule publication, send/reply, or direct AI tool/model writes.
+
+Deploy / migration notes: This action uses the Smart Inbox structures from migration `114000` in
+batch 92 and adds no later schema. Deploy code, run `php artisan optimize:clear`, compile views with
+the required group-write umask, and sync Email Knowledge. No new queue, scheduler, permission seed,
+or frontend build is required.
+
+Risks: A suggestion tied to a formerly selected/default agent must not inherit a different agent's
+authority. Wildcard scopes, stale/revoked state, changed classification, inactive targets, and
+missing target-domain access must fail closed. Cross-domain Task creation must remain inside Task's
+normal policy and must not duplicate on retry.
+
+Automated verification: Focused reviewed-application coverage passes **7 tests / 79 assertions**.
+Foundation, reviewed-apply, and review-queue coverage passes **21 / 252**; the full Smart Inbox set
+with supervised cleanup passes **32 / 422**. The final application-wide Dev suite passes
+**1,482 / 12,749**.
+
+Manual checks:
+
+- [ ] Apply an existing active Email category to an unclassified conversation and confirm every
+  visible placement in that account conversation shows it, the suggestion stores one classification
+  reference, and a second click writes nothing new.
+- [ ] Assign a different category manually before applying a category suggestion and confirm Smart
+  Inbox refuses to replace it.
+- [ ] Apply an existing active tag and confirm it is added without removing current category/tags and
+  without creating a new Taxonomy definition.
+- [ ] Apply a Task suggestion and confirm one editable internal Task is created through the expected
+  work context with no speculative assignee or due date; repeat apply and confirm no duplicate Task.
+- [ ] Disable the proposed category/tag, change the conversation fingerprint, dismiss the
+  suggestion, or revoke mailbox access and confirm application fails without a target-domain write.
+- [ ] Disable action execution, remove the exact `email.update` or `tasks.create` scope from the
+  recorded AI agent, or switch the current default Email agent and confirm the original suggestion
+  does not inherit wildcard/fallback authority.
+- [ ] Through the API, confirm token scope is an additional ceiling (`tasks.create` for Task and
+  `email.update` for apply) and an inaccessible account returns Not Found.
+- [ ] Inspect the suggestion events/reference and confirm they contain normalized metadata and IDs,
+  not model prompts/responses, bodies, headers, attachment data, credentials, or secrets.
+
+Expected result: Only category, tag, and Task effects can write, and only after a current explicit
+human click through both the recorded AI-agent ceiling and normal domain authorization. Retries are
+idempotent and no provider/outbound effect occurs.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-012 - Email Mail Durable Smart Inbox Foundation And Review Queue
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md` and
+`docs/feature-slices/2026-08-14-email-mail-smart-inbox-suggestion-foundation.md`
+
+Scope: A technician with current mailbox View access can explicitly analyze one selected durable
+conversation. The governed Mail AI summary path produces normalized, typed, user/account/conversation
+and source-fingerprint-bound suggestions plus append-only events. `/tech/mail` embeds a review queue
+that shows status, effect impact, reason, confidence, provenance, and current actions. Account-scoped
+REST endpoints provide queue/count/show/analyze/dismiss/correct with hidden-404 isolation. Analysis
+alone changes no provider, Email classification, Ticket, Task, Taxonomy, rule, or outbound state.
+
+Affected pages / workflows: `/tech/mail` selected-conversation review queue, manual Mail AI analysis,
+Smart Inbox REST endpoints/counts, and durable suggestion/event storage.
+
+Out of scope / not reviewed here: scheduled, arrival-triggered, unattended, or bulk AI generation;
+applying category/tag/Task/cleanup effects; permanent delete; rule publication; raw model-payload
+storage; and automatic external replies.
+
+Deploy / migration notes: Migration
+`2026_08_14_114000_create_email_smart_inbox_suggestions.php` ran in batch 92 after verified Undo
+`113000` in batch 91 and before provider-deletion `115000` in batch 93. Reproducing that reviewed Dev
+rollout requires exact-path staging because the Undo file is dated 2026-08-15; a fresh combined
+migrate sorts the independent `114000` schema first and is schema-safe but follows a different
+behavioral order. Run `php artisan optimize:clear`, compile views with the required group-write
+umask, and sync Email Knowledge. No new scheduler, queue worker class, permission seed, or frontend
+build is required for manual analysis/review.
+
+Risks: Mail content may leave Nexum only through the already governed Integration path. Suggestions
+must not leak inaccessible account existence, persist raw prompts/provider responses or attachment
+names, outlive a changed source fingerprint as actionable, or become writable merely because a
+token has a broad ability. Counts and events must remain user/account scoped. Revoking access while
+an AI request is in flight must prevent its final persistence, and provider exception text must not
+be returned to the browser or API.
+
+Automated verification: Foundation coverage passes **10 tests / 106 assertions**, including
+terminal-state access revocation, inactive-account isolation, post-AI authorization recheck, safe
+provider-error messaging, and preservation of suggestion/event audit references during conversation
+identity reconciliation. The combined Smart Inbox foundation, reviewed-apply, review-queue, and
+cleanup set passes **32 / 422**, and the broader focused Mail workstream set passes **112 / 993**.
+
+Manual checks:
+
+- [ ] With a governed Email agent and one authorized mailbox, select a conversation, click Analyze,
+  and confirm the queue shows normalized reason, confidence, provenance, status, and clear impact
+  labels only after the explicit request.
+- [ ] Before applying anything, confirm analysis created suggestion/event rows only and did not
+  change category, tags, Tasks, Tickets, rules, provider folder/flags/Seen, personal unread, or send
+  external mail.
+- [ ] Confirm a review-summary item is advisory and has no Apply control, while category/tag/Task or
+  cleanup controls appear only for supported current proposal types.
+- [ ] Dismiss one suggestion twice and correct one editable proposal twice; confirm the operations
+  are idempotent and append understandable immutable evidence without changing another user's row.
+- [ ] Add/change mail in the conversation and refresh the queue; confirm old source-bound suggestions
+  become stale and cannot be applied.
+- [ ] Revoke mailbox View, disable the user/account, or remove the selected placement and confirm the
+  queue hides/revokes the suggestion without disclosing content or an account-specific denial.
+- [ ] Repeat that access-revocation check for an already Applied and an already Dismissed suggestion;
+  confirm direct API show also returns Not Found. Revoke the grant while an Analyze provider request
+  is in flight and confirm no suggestion/event row is persisted when it returns.
+- [ ] Make the governed provider throw an error containing a distinctive secret-like value and
+  confirm the UI/API returns only the fixed safe failure text and never the raw value.
+- [ ] Sign in as another authorized mailbox user and confirm they cannot list, count, show, dismiss,
+  correct, or apply the first user's suggestions.
+- [ ] Exercise queue/count/show/analyze/dismiss/correct through API tokens and confirm `email.read` /
+  `email.update` are ceilings intersected with current mailbox scope; inaccessible IDs return Not
+  Found.
+- [ ] Inspect stored proposals, trace, and events and confirm there is no raw prompt/response, HTML,
+  body, raw source, attachment name/content, address list, credential, or secret.
+
+Expected result: Manual analysis produces only durable, typed, inspectable review evidence for the
+current user/account/source. Stale or revoked rows fail closed, normal users cannot enumerate one
+another's queue, and no business/provider write occurs until a separately reviewed explicit action.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-011 - Email Mail Verified Remote Operation Undo
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-verified-remote-operation-undo.md`, and
+`HR-2026-08-14-010`
+
+Scope: Recent provider-acknowledged Seen/Unseen, Flag/Unflag, Archive, Trash, and Move operations
+capture immutable metadata-only result snapshots and may expose Undo for 15 minutes. Undo creates one
+uniquely linked inverse ledger row. It rechecks the current actor/account authority, exact local
+source/target placement and folder evidence, later operations, UID/UIDVALIDITY, sync version, flags,
+and live provider state before every inverse write. Seen/flag inverses stay on the same placement;
+acknowledged moves return the exact target placement to the still-selectable original folder. Every
+inverse uses the existing remote-operation attempt, retry, and ambiguity-reconciliation contract.
+The Mail workspace shows recent reason/Undo state, and account-scoped API clients have separate
+eligibility and apply endpoints.
+
+Out of scope / not reviewed here: permanent provider deletion, folder create/rename/move/delete
+Undo, moves without an acknowledged target UID, ambiguous/reconciled source operations, bulk or
+automatic Undo, and restoration of retention-purged data.
+
+Deploy / migration notes: Migration
+`2026_08_15_113000_add_verified_email_remote_operation_undo.php` ran on Dev in batch 91, explicitly
+before the 114000 Smart Inbox migration in batch 92 and 115000 provider-deletion migration in batch
+93. It adds a nullable self-link, an immutable result snapshot plus verification audit fields, a
+unique inverse constraint, and a bounded recent-operation index. Existing successful rows are deliberately not
+backfilled and therefore cannot be undone. Deploy must run migrations, `php artisan optimize:clear`,
+`php artisan view:cache`, and
+`php artisan knowledge:sync-docs --module=Email --push`. No new permission seed, frontend build,
+scheduler entry, or queue class is required; existing `email.read`, `email.update`, mailbox View,
+mailbox Organize, and the recovery `email` queue worker are reused.
+
+Risks: Provider verification and the inverse mutation cannot be one atomic IMAP transaction, so a
+provider-side change in that narrow interval can still yield an ambiguous result. The normal
+reconciliation contract must prove the inverse result before any retry and must never replay it
+blindly. A conservative false-stale result may suppress a legitimate Undo, but missing/mismatched
+folder, UID, UIDVALIDITY, version, target UID, provider flag, account, access, or later-operation
+evidence must fail closed. Result and attempt evidence must remain account-scoped and content-free.
+
+Automated verification: Focused Undo coverage passes with 12 tests and 75 assertions. Combined
+recovery/Undo coverage passes with 22 tests and 126 assertions, and the existing provider
+operation/UI/API regression set passes with 6 tests and 52 assertions. The exact migration SQL was
+previewed on MariaDB, then ran in batch 91 with the expected short unique/recent index names. Dev
+verification confirmed 22 historical successes remain conservatively without a result snapshot and
+no inverse rows were introduced. PHP syntax, Pint, six route registrations, Blade compilation,
+and final diff checks pass. Email Knowledge synchronized one chapter/article with no skips, and the
+BookStack push was queued. Compiled views remain group-writable.
+
+Manual checks:
+
+- [ ] On a safe test message, Flag or mark it Seen, open Mailbox operations, and confirm the recent
+  row shows an understandable verified reason and Undo expiry.
+- [ ] Click Undo once and confirm the provider flag, Nexum placement, conversation provider-unread
+  count where applicable, linked inverse status, and immutable attempt evidence update exactly once.
+- [ ] Click Undo again and confirm it returns/shows the same inverse operation without another
+  provider mutation.
+- [ ] Move a safe test message to a discovered folder, Undo it, and confirm only the exact
+  acknowledged target placement moves back to the original selectable folder.
+- [ ] Change a test placement, provider flag, folder, UID/UIDVALIDITY, or create a later operation
+  before Undo; confirm the reason changes and no inverse provider write occurs.
+- [ ] Revoke the actor's Organize grant or disable the mailbox before applying/retrying Undo and
+  confirm it is blocked without provider mutation.
+- [ ] Confirm permanent delete, custom folder mutations, reconciled/ambiguous work, and moves without
+  an exact target UID never expose Undo.
+- [ ] Verify API account isolation: an inaccessible operation returns Not Found, a View-only caller
+  can read an ineligible authorization reason but cannot POST, and an authorized `email.update`
+  caller gets the same linked inverse as the UI.
+- [ ] Wait beyond 15 minutes on a fresh success and confirm no new Undo can be started; confirm an
+  inverse already created inside the window can still complete through safe recovery.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-010 - Email Mail Remote Operation Recovery
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-remote-operation-recovery.md`,
+`HR-2026-08-13-030`, `HR-2026-08-12-007`, and `HR-2026-08-15-003`
+
+Scope: Provider mailbox writes now snapshot placement/folder identity and reauthorize the original
+requester at execution time. Stale or revoked work is superseded before IMAP is touched. Each
+provider mutation or ambiguity-reconciliation attempt records sanitized append-only evidence.
+Transient failures use bounded exponential backoff with a five-attempt ceiling; stale running work
+becomes ambiguous and is reconciled before any replay. The Mailbox operations dashboard shows
+attempts, reason, classification, and next retry, while Livewire and the Email API share row-locked
+retry/cancel actions. Provider Seen/Unseen acknowledgement now refreshes the durable conversation's
+provider-unread aggregate.
+
+The 2026-08-15 hardening first checks exact UID presence without fetching headers, makes confirmed
+source absence terminal stale work instead of exposing `no headers found`, keeps true provider read
+failures out of automatic retry loops, and resolves Archive/Trash only from SPECIAL-USE or an exact
+canonical leaf. The operations surface now starts collapsed in the Mail right bar.
+
+Out of scope / not reviewed here: verified inverse/undo, permanent provider deletion, bulk
+retry/cancel, automatic external sending, a new provider adapter, or a provider push transport.
+
+Deploy / migration notes: Migration
+`2026_08_14_112000_harden_email_remote_operation_recovery.php` ran on Dev in batch 89 and the
+forward-only legacy ambiguity quarantine
+`2026_08_14_112500_complete_email_remote_operation_recovery.php` ran in batch 90. Deploy must run
+migrations, `php artisan optimize:clear`, `php artisan view:cache`, restart the ordinary queue
+workers including the `email` queue, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. The new
+`email.remote_operations.retry_due` schedule runs every minute; verify the external scheduler runner
+and queue worker instead of relying on `schedule:list` alone. No permission seed or frontend build is
+required because existing `email.read`, `email.update`, mailbox View, and mailbox Organize boundaries
+are reused.
+
+Risks: A false stale match could suppress legitimate work, while an over-broad reconciliation could
+repeat a provider mutation. The slice therefore fails closed on missing identity evidence and leaves
+unprovable moves/renames blocked. Automatic recovery depends on both scheduler and queue health.
+Attempt evidence contains folder/UID operational metadata and must remain account scoped. A running
+provider call cannot be cancelled mid-flight; it is recovered as ambiguous if its worker disappears.
+
+Automated verification: Focused recovery coverage passes with 16 tests and 102 assertions, including
+immutable/sanitized evidence, bounded retries, maximum attempts, stale evidence, revoked authority,
+due execution, cancellation races/idempotency, ambiguity reconciliation/no duplicate mutation,
+account isolation, positive API parity, durable conversation unread refresh, authoritative move
+target evidence, provider-folder inventory failure, exact missing-source handling, deterministic
+special-folder targeting, and mutation-only attempt accounting. Adjacent verified Undo passes 12 /
+75 and supervised Smart Inbox cleanup passes 11 / 170. PHP syntax, Pint, route, scheduler, Blade, and
+broader Email verification are recorded in the final workstream handoff.
+
+Manual checks:
+
+- [ ] Create a safe failed Seen/Unseen operation and confirm `/tech/mail` shows its reason,
+  classification, provider-attempt count, evidence count, and next retry time.
+- [ ] Retry that operation and confirm provider state and Nexum placement/conversation unread count
+  reconcile once without a duplicate provider mutation.
+- [ ] Remove a disposable source UID externally, then exercise the safe operation/retry path and
+  confirm it stops as stale with no provider write, no automatic retry, and no raw `no headers
+  found` text. Confirm a true provider read failure is not treated as confirmed absence.
+- [ ] Cancel a pending/failed test operation and confirm repeated Cancel is harmless; confirm a
+  running operation cannot be cancelled mid-call.
+- [ ] Change a test placement UID, UIDVALIDITY, sync version, or folder before retry and confirm the
+  operation becomes Superseded without changing provider state.
+- [ ] Revoke the original requester's Organize grant (or disable the account), then retry and confirm
+  the operation becomes Superseded without provider access even if another operator has Organize.
+- [ ] Simulate an ambiguous applied Seen/Flag change and confirm reconciliation marks it succeeded
+  without issuing the provider mutation again.
+- [ ] Simulate an ambiguous move without target UID evidence and confirm it stays blocked with no
+  blind replay and exposes no manual Retry. Repeat with missing target-folder path.
+- [ ] Simulate an ambiguous move with the source UID still present and a copied target UID also
+  present; confirm it stays ambiguous without replay. Make target-folder inventory fail and confirm
+  the provider error is not interpreted as an absent folder/message.
+- [ ] Call list/show/retry/cancel with API tokens and confirm `email.read`/`email.update` plus mailbox
+  View/Organize are intersected; inaccessible mailbox operations must return Not Found.
+- [ ] Verify the external scheduler and `email` queue worker process
+  `email.remote_operations.retry_due`, and confirm retries stop after five provider mutation attempts.
+- [ ] Inspect completed `email_remote_operation_attempts` and confirm evidence contains no subject,
+  addresses, body, MIME, attachment data, raw content, credential, token, or secret.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-009 - Email Mail Fail-Safe Retention Purge And Preview
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md` and
+`docs/feature-slices/2026-08-14-email-mail-fail-safe-retention-purge.md`
+
+Scope: The monthly local-cache cleanup now uses one fail-closed eligibility service shared with a
+read-only Email Admin preview. Age alone can never delete provider-backed mail. Provider placements,
+unresolved provider operations/reconciliation, Ticket links or captured evidence, recognized legal
+holds, ambiguity review, and unsupported attachment storage protect the message. Only an expired,
+definitively unplaced, unprotected orphan can lose its local raw/attachment files and Email row. Each
+run and per-message outcome is retained in a sanitized audit ledger, and a storage failure preserves
+database evidence for a later retry.
+
+Out of scope / not reviewed here: provider-side Trash/expunge, a manual purge button, provider-folder
+inventory confirmation and placement cleanup, legal-hold authoring/release, DSAR/export/erasure,
+account offboarding, backup expiry enforcement, search/AI artifact stores that do not yet exist, or
+deletion of Ticket-owned evidence.
+
+Deploy / migration notes: Run
+`2026_08_14_111000_add_email_retention_purge_audit.php`, then run
+`php artisan optimize:clear`, `php artisan view:cache`, restart the ordinary queue workers, and sync
+Email Knowledge with `php artisan knowledge:sync-docs --module=Email --push`. The existing monthly
+`email.retention.purge` scheduler entry remains the execution trigger; verify the external scheduler
+runner and the queue worker rather than relying on `schedule:list` alone.
+
+Risks: A protection query must fail closed; the first live scheduled run should be checked for
+unexpected eligible counts before treating deletion as operationally accepted. Deleting local files
+cannot be rolled back from the application, while a mid-delete storage/database failure can leave a
+database record whose earlier file was already removed; the next run handles missing files
+idempotently and retains the failed attempt. Full hold/DSAR and provider-deletion confirmation are
+still required before broader lifecycle claims.
+
+Automated verification: PHP syntax checks pass for the eligibility service, purge job, audit models,
+controller, migration, and focused test file. Focused retention verification passes with 6 tests and
+31 assertions, covering active provider mail, Ticket evidence, pending/failed provider operations,
+eligible orphan cleanup, storage-failure retry/idempotency, and the Admin preview.
+
+Manual checks:
+
+- [ ] Run the migration and open `/tech/admin/settings/email/config` as an Email account
+  administrator.
+- [ ] Confirm **Retention preview** shows the configured cutoff, expired count, eligible orphan
+  count, protected count, and readable reason breakdown, with no manual purge button.
+- [ ] Create or identify an expired test message with an active provider placement and confirm the
+  preview protects it and the scheduled job leaves its local message/files unchanged.
+- [ ] Confirm an expired source captured in Ticket stays protected and the Ticket message/attachment
+  remains unchanged.
+- [ ] Confirm pending and failed provider operations appear as protection reasons and are not
+  deleted.
+- [ ] In a non-production test account, create one expired orphan with no placement/protection, run
+  the scheduled job, and confirm only its local raw/attachment files and Email row are removed.
+- [ ] Simulate an unreadable or undeletable local payload and confirm the purge attempt is `failed`,
+  the Email row remains, no content/path appears in the audit, and a later run can finish safely.
+- [ ] Inspect the latest `email_retention_purge_runs` counts and per-message reason/failure codes and
+  confirm no subject, address, body, attachment filename, raw path, or provider secret is stored.
+- [ ] Confirm Ticket-owned evidence, provider state, unread state, rules, and external mail are not
+  changed by the retention run.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-008 - Email Mail Conversation Taxonomy Classification
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-conversation-taxonomy-classification.md`,
+`HR-2026-08-14-007`, and `HR-2026-08-14-006`
+
+Scope: Nexum Email category and tag assignment now belongs to the durable account-scoped
+conversation. Every authorized placement in that mailbox conversation shows the same one active
+Email category and set of Taxonomy tags, while a correlated conversation in another mailbox remains
+independent. The forward migration promotes only one unambiguous, identical temporary
+message-classification snapshot and preserves source history; conflicts receive durable issue
+evidence. Livewire, API, and explicit rule actions use the same conversation boundary. Legacy
+`tag`/`tag_message` remain message-scoped.
+
+Affected pages / workflows: `/tech/mail` conversation list/reader category and tag editor,
+conversation classification API read/replace/clear, Email-rule actions, and the legacy
+message-classification forward migration.
+
+Out of scope / not reviewed here: provider flags/folders/labels/keywords, Ticket classification,
+bulk or cross-account classification, automatic Ticket routing, removing the legacy message tables,
+and automatic external replies.
+
+Deploy / migration notes: Migration
+`2026_08_14_110000_create_email_conversation_classifications.php` ran in batch 87 immediately after
+identity hardening `105000` in batch 86. It uses explicit MariaDB-safe short index names and
+`datetime` issue fields. Dev had zero temporary message classifications, so it produced zero
+migrated assignments and zero issues while all 462 placements remained conversation-linked. Deploy
+must preserve `105000` then `110000`, run `php artisan optimize:clear`, compile views with the
+required group-write umask, and sync Email Knowledge. No new queue, scheduler, permission seed, or
+frontend build is required.
+
+Risks: Classification must never cross a mailbox privacy boundary or be confused with provider/Ticket
+state. The migration must not guess between conflicting message snapshots, explicit rule naming must
+not change legacy routing semantics, and users with View but not Organize must remain read-only.
+
+Automated verification: Focused classification/API/rule and migration coverage passes **11 tests /
+90 assertions**. Inbound Automation passes **14 / 81**. The broad Email, cache/view, Knowledge-push,
+and queue verification remains in the final parent handoff and is not claimed here.
+
+Manual checks:
+
+- [ ] In `/tech/mail`, assign one active Email category and several existing tags from one message,
+  then open another placement in the same account conversation and confirm the same classification
+  appears in the list and reader.
+- [ ] Open a correlated conversation in another mailbox account and confirm its category/tags remain
+  independent and no count, chip, or suggestion leaks across accounts.
+- [ ] Replace and clear the classification and confirm one immutable before/after event per action,
+  without changing provider flags, folder, Seen, personal unread, Ticket category/tags, or `TD-...`
+  correlation.
+- [ ] As a View-only mailbox user, confirm classification is readable but no mutation control or
+  direct write succeeds. With View plus Organize, confirm assignment succeeds.
+- [ ] Enter an unknown tag without `taxonomy.manage_tags` and confirm no definition is created; grant
+  that permission and confirm the normal Taxonomy creation boundary is used.
+- [ ] Exercise API read/replace/clear with correct and missing `email.read`/`email.update` token
+  abilities, and confirm inaccessible mailbox conversations return Not Found.
+- [ ] Run controlled legacy `tag`, explicit `tag_message`, `tag_conversation`, and
+  `set_conversation_category` rules and confirm their message-versus-conversation meanings remain
+  distinct.
+- [ ] Inspect the migration issue tables and source compatibility records; confirm legacy rows/events
+  were preserved, no message-level routing tag became a conversation/Ticket tag, and no ambiguous
+  source was guessed.
+
+Expected result: Classification is consistent within one durable account conversation, isolated
+across accounts, guarded by current View/Organize and Taxonomy permissions, and additive to legacy
+provider, Ticket, routing, and audit state.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-007 - Email Mail Conversation Identity Hardening
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-conversation-identity-hardening.md`, and
+`HR-2026-08-14-006`
+
+Scope: Durable account-local conversation correlation now resolves nested replies through uniquely
+matched `References` / `In-Reply-To` evidence, keeps a stable root, and refuses to merge conflicting
+same-account messages merely because they reuse a `Message-ID`. The forward reconciler moved only
+unambiguous split placements, refreshes aggregates, and retains durable issue evidence instead of
+guessing when referenced conversations or Ticket primaries conflict.
+
+Affected pages / workflows: conversation grouping and reader selection in `/tech/mail`, inbound
+conversation projection, placement-to-conversation pointers, aggregate counts, and compatible
+Mail-owned Ticket conversation pointers.
+
+Out of scope / not reviewed here: cross-account merging, subject-only grouping, canonical-message or
+Ticket-evidence rewrites, provider/read/folder mutations, classification, and automatic routing of
+later mail to Tickets.
+
+Deploy / migration notes: Migration
+`2026_08_14_105000_harden_email_conversation_identity.php` ran in batch 86 before classification
+`110000` in batch 87. It reduced 141 Dev conversation projections to 139 by moving two known
+unambiguous split placements and deleting only their empty unreferenced shells. All 462 placements
+remain linked; there are no empty conversations and current Dev required no ambiguity issue. Deploy
+must run `105000` before every later Mail workstream migration, then run
+`php artisan optimize:clear`, compile views with the required group-write umask, and sync Email
+Knowledge. No provider command, queue change, permission seed, scheduler change, or frontend build
+is required by this migration.
+
+Risks: A false merge can disclose unrelated mail or redirect a Ticket relationship, while a false
+split can fragment reader state and later classification. Reused/malformed identifiers, several
+referenced conversations, and competing primary Ticket relationships must remain separate and
+reviewable.
+
+Automated verification: The focused identity suite passes **7 tests / 50 assertions**. Combined
+conversation-classification coverage passes **11 / 90**, and Inbound Automation passes **14 / 81**.
+The broader focused Mail workstream set passes **112 / 993**.
+
+Manual checks:
+
+- [ ] Open or ingest a safe root message, direct reply, and nested reply whose `References` contains
+  the root-to-parent chain; confirm `/tech/mail` shows one account conversation and selecting each
+  thread row keeps actions bound to that exact placement.
+- [ ] Create two incompatible same-account messages that reuse one `Message-ID` and confirm they
+  remain separate conversations with no shared counts, Ticket pointer, or classification.
+- [ ] Place the same identifier chain in two mailbox accounts and confirm the conversations, counts,
+  snippets, and actions remain account-isolated.
+- [ ] Inspect a reconciled formerly split thread and confirm the message/active-placement/provider
+  unread/attachment aggregates match its real placements and no empty shell remains.
+- [ ] Create or inspect conflicting references and competing primary Ticket-link evidence and
+  confirm no placement or primary relationship moves; a sanitized durable issue is recorded instead.
+- [ ] Confirm provider folder, UID/UIDVALIDITY, Seen/flag, personal unread, message body/attachments,
+  existing `TD-...` correlation, and Ticket evidence were not changed by reconciliation.
+- [ ] With a durable Smart Inbox suggestion/event referencing a source conversation, reconcile its
+  last placement into an unambiguous target and confirm the old projection shell plus suggestion and
+  append-only events remain as audit evidence; the suggestion itself may become stale normally.
+- [ ] As users with different mailbox grants, confirm grouping never reveals an inaccessible
+  account, message, participant, snippet, count, or Ticket relationship.
+
+Expected result: Only unambiguous account-local RFC evidence joins or reconciles conversations.
+Ambiguous/reused identifiers fail closed, all provider and Ticket evidence stays intact, and the
+reader remains scoped to the exact selected placement.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-006 - Email Mail Durable Account-Scoped Conversations
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-durable-account-conversations.md`,
+`HR-2026-08-14-002`, `HR-2026-08-14-003`, and `HR-2026-08-13-029`
+
+Scope: Email now has a durable `email_conversations` projection for account-scoped mail threads.
+Mailbox placements and Ticket conversation links can point to that conversation, inbound storage
+projects new placements into it, provider move projection keeps the moved placement attached, and
+`/tech/mail` uses the durable conversation ID for grouping/reader context when available while
+retaining the previous conservative header-key fallback.
+
+Out of scope / not reviewed here: conversation-scoped category/tag migration, provider read/flag
+authority changes, cross-account conversation merging, automatic conversation-wide read actions,
+Ticket auto-routing for later arrivals, automatic replies, or removal of existing `TD-...`
+correlation and scalar `email_messages.ticket_id` compatibility.
+
+Deploy / migration notes: Run migration
+`2026_08_14_100000_create_email_conversations_table.php`, then run `php artisan optimize:clear`,
+`php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. Existing queue workers should be restarted
+after deploy so inbound polling and remote operations use the new projector code.
+
+Risks: migration must backfill existing placements without merging mailboxes that share the same
+`Message-ID`. The Mail UI must keep selected-placement actions scoped to the opened provider
+placement. Ticket links must gain a durable pointer without weakening legacy Ticket-key correlation
+or broadening Mail access from Ticket access.
+
+Automated verification: PHP syntax checks pass for the new model, projector, migration, updated
+models, Mail workspace, folder projector, remote operation runner, Ticket link action, and Email
+feature test file. Focused durable conversation regressions pass with 4 tests and 36 assertions.
+Full `EmailModuleTest.php` passes with 139 tests and 1176 assertions. `InboundAutomationTest.php`
+passes with 14 tests and 81 assertions. The first Dev migration attempt exposed a wrong attachment
+backfill column assumption; the migration was corrected to use the existing
+`email_attachments.message_id`, rerun successfully, and migration status now shows
+`2026_08_14_100000_create_email_conversations_table` as batch 85 `Ran`. Sanitized Dev backfill
+verification found 141 conversations, 462 of 462 mailbox placements linked to a conversation, and
+zero existing Ticket conversation links to backfill. `php artisan optimize:clear`, `php artisan
+view:cache`, Email Knowledge sync with BookStack push queueing, and failed-job checks pass. A
+`FetchImapAccount` failed-job with `MaxAttemptsExceeded` was retried and processed; the final
+`queue:failed` check reports no failed jobs. `git diff --check` reports only pre-existing CRLF
+working-copy warnings in unrelated files.
+
+Manual checks:
+
+- [ ] After migration, open `/tech/mail` and confirm existing mail still lists as conversations.
+- [ ] Open a root/reply thread and confirm both messages are in one Conversation reader thread.
+- [ ] Confirm the same `Message-ID` in two different mailbox accounts remains two separate
+  conversation rows when both accounts are visible.
+- [ ] Move one message to another folder and confirm it remains in the same reader thread from the
+  new folder placement.
+- [ ] Link two messages from one thread to a Ticket and confirm the Ticket link count still appears
+  without changing the old `TD-...` behavior.
+- [ ] Confirm Category/tags still behave as before and were not silently migrated in this slice.
+- [ ] Confirm unread/read, flag, trash, move, spam, Ticket, AI, and rule actions still apply only to
+  the selected placement.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-005 - Email Mail Composer Local Status Polish
+
+Status: Reviewed
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-composer-local-status-polish.md`,
+`HR-2026-08-14-004`, `HR-2026-08-13-024`, and `HR-2026-08-13-026`
+
+Scope: `/tech/mail` now renders composer-specific AI and draft feedback inside the shared composer
+instead of the page-level Mail alert while the composer remains open. This includes AI apply
+success, AI no-reply advice, composer AI availability/governance warnings, manual draft
+save/restore/provider Drafts sync status, and draft attachment removal. Send/discard completion and
+non-composer actions still use the page-level Mail alert because those actions either close the
+composer or are not tied to the editor.
+
+Out of scope / not reviewed here: AI prompt behavior, provider/model governance, agent selection,
+SMTP send behavior, IMAP polling, provider Drafts semantics, provider Sent reconciliation, automatic
+sending, AI write tools, shared draft locking, or a reusable cross-module editor.
+
+Deploy / migration notes: No migration, permission seed, scheduler change, frontend build,
+OAuth/provider configuration change, queue restart, or IMAP account reconfiguration is required.
+Deploy the code, run `php artisan optimize:clear`, run `php artisan view:cache`, and sync Email
+Knowledge with `php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: composer-local errors must remain visible and not disappear behind the global alert boundary.
+Global send/discard feedback must still appear after the composer closes. Long AI or provider Drafts
+messages must wrap without covering the editor toolbar, fields, attachment controls, or Send/Close
+buttons.
+
+Automated verification: PHP syntax checks pass for the Mail workspace Livewire component, Mail
+workspace Blade view, shared composer Blade partial, and Email feature test file. Focused composer
+draft/AI status regressions pass with 8 tests and 113 assertions. The AI-governance unavailable
+composer-status regression passes with 1 test and 6 assertions. Full `EmailModuleTest.php` passes
+with 138 tests and 1163 assertions. `php artisan optimize:clear`, `php artisan view:cache`, Email
+Knowledge sync with BookStack push queueing, one default queue worker pass, and failed-job checks
+pass. `git diff --check` reports only pre-existing CRLF working-copy warnings in unrelated files.
+
+Manual checks:
+
+- [x] Open Compose, type body text, use an AI rewrite, and confirm the success message appears inside
+  the composer while the page-level Mail alert stays absent.
+- [x] Open Reply on an automated/no-reply style message, use Draft reply, and confirm the no-reply
+  advisory appears inside the composer without replacing the body.
+- [x] Temporarily use an unavailable/governance-denied Mail AI setup from an open composer and
+  confirm the warning appears inside the composer, not as a top Mail alert.
+- [x] Save a draft manually and confirm Draft saved/provider Drafts status appears inside the
+  composer.
+- [x] Restore an existing draft and confirm the restored status appears inside the composer.
+- [x] Send and discard messages and confirm those completion messages still appear at page level
+  after the composer closes.
+- [x] Check desktop and mobile widths and confirm long composer status text wraps without overlapping
+  toolbar buttons, editor content, attachments, or Send/Close controls.
+
+Reviewer: Svein Tore
+Reviewed date: 2026-08-14
+Result / notes: Approved by Svein Tore in the Codex task after reviewing the completed work.
+
+### HR-2026-08-14-004 - Email Mail Composer AI Consistency
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-composer-ai-consistency.md`,
+`HR-2026-08-12-017`, and `HR-2026-08-14-003`
+
+Scope: `/tech/mail` now exposes the same Mail AI rewrite controls in the shared composer for
+Compose, Reply, Reply All, and Forward when the selected/default Email agent is ready under
+Integration policy. Draft reply remains visible and callable only for Reply and Reply All. Compose
+uses the selected send-authorized account without requiring a selected source message. Forward
+rewrites only the technician-authored introduction and preserves the original forwarded-message block
+when applying AI output.
+
+Out of scope / not reviewed here: automatic external sending, AI recipient changes, AI subject
+changes, attachment changes, provider mutations, Ticket/Task/rule/Taxonomy writes, imported provider
+draft AI assistance, a new shared content-editor platform, or replacing the current HTML editor.
+
+Deploy / migration notes: No migration, permission seed, scheduler change, frontend build,
+OAuth/provider configuration change, queue restart, or IMAP account reconfiguration is required.
+Deploy the code, run `php artisan optimize:clear`, run `php artisan view:cache`, and sync Email
+Knowledge with `php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: Compose AI must not require mailbox View or leak a mailbox message because no selected source
+exists. Forward AI must not remove or rewrite the original forwarded block. Draft reply must not
+appear in Compose or Forward, because that would imply a selected inbound message or reply context.
+All modes must leave recipients, subject, attachments, provider state, Tickets, Tasks, rules, and
+Taxonomy unchanged until the technician sends or uses a separate explicit action.
+
+Automated verification: PHP syntax checks pass for the Mail AI action, Mail workspace Livewire
+component, shared composer Blade partial, and Email feature test file. Focused Compose/Forward AI
+regressions pass with 2 tests and 22 assertions. Existing Reply AI regressions pass with 4 tests and
+37 assertions. Full `EmailModuleTest.php` passes with 138 tests and 1142 assertions. `php artisan
+optimize:clear`, `php artisan view:cache`, Email Knowledge sync with BookStack push queueing, one
+default queue worker pass, and failed-job check pass. `git diff --check` reports only pre-existing
+CRLF working-copy warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Open Compose in `/tech/mail` with a send-authorized account and a ready Email agent; confirm AI
+  guidance plus improve/shorten/warmer/NO controls are visible, and Draft reply is not visible.
+- [ ] Use one Compose AI rewrite and confirm it updates only the body while To, Cc, Subject,
+  attachments, and sender stay unchanged.
+- [ ] Open Reply or Reply All and confirm Draft reply plus the rewrite controls are visible.
+- [ ] Use Draft reply on an automated/no-reply style message and confirm advisory no-reply output
+  does not replace the composer body.
+- [ ] Open Forward and confirm rewrite controls are visible, Draft reply is not visible, and the
+  forwarded original message block remains after using an AI rewrite.
+- [ ] Confirm AI rewrite does not create Tickets, Tasks, rules, categories/tags, provider operations,
+  or outbound Email logs before Send is clicked.
+- [ ] Check desktop and mobile widths and confirm the AI instruction input and icon buttons wrap
+  without overlapping the editor toolbar.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-003 - Email Mail Conversation Reader Polish
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-conversation-reader-polish.md`,
+`HR-2026-08-14-002`, and `HR-2026-08-13-029`
+
+Scope: `/tech/mail` now renders the selected account-scoped conversation as one compact threaded
+reader. The selected provider placement is expanded with body, attachments, AI summary, and
+selected-message metadata. Other visible messages in the same thread are collapsed rows. Clicking a
+collapsed row selects that provider placement and the command bar continues to act on only the
+selected placement.
+
+Out of scope / not reviewed here: durable account-scoped conversation tables or migration,
+cross-account conversation merging, bulk conversation actions, automatic conversation-wide read
+state changes, Ticket capture changes, `TD-...` Ticket-key correlation changes, provider folder
+source-of-truth changes, or IMAP synchronization changes.
+
+Deploy / migration notes: No migration, permission seed, scheduler change, frontend build,
+OAuth/provider configuration change, queue restart, or IMAP account reconfiguration is required.
+Deploy the code, run `php artisan optimize:clear`, run `php artisan view:cache`, and sync Email
+Knowledge with `php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: the reader must make the active message clear so technicians do not reply to or move the wrong
+placement. Collapsed rows must not render body or attachment content until selected. Actions must
+remain selected-placement actions, not silent conversation-wide actions.
+
+Automated verification: PHP syntax checks pass for the Mail workspace Blade file and Email feature
+test file. Focused conversation reader/list regressions pass with 3 tests and 23 assertions. Full
+`EmailModuleTest.php` passes with 136 tests and 1120 assertions. `php artisan optimize:clear`,
+`php artisan view:cache`, Email Knowledge sync with BookStack push queueing, one default queue worker
+pass, and failed-job check pass. `git diff --check` reports only pre-existing CRLF working-copy
+warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Open `/tech/mail` with a mailbox containing a root message and a reply in the same RFC thread;
+  confirm the reader shows a compact Conversation thread.
+- [ ] Confirm only the selected message is expanded with body and attachment metadata; the other
+  thread rows remain collapsed.
+- [ ] Click an older collapsed row and confirm it becomes the expanded message.
+- [ ] Confirm Reply, Reply all, Forward, Mark read, Trash, Move, Ticket, Category/tags, Add rule, and
+  AI actions apply to the currently expanded placement only.
+- [ ] Confirm read/unread, flagged, provider draft, Ticket link, and Sent reconciled badges remain
+  readable without crowding the row.
+- [ ] Check desktop and mobile widths and confirm long subjects, senders, folders, and Message-ID
+  text truncate/wrap without overlapping actions or body content.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-002 - Email Mail Conversation List Grouping
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-conversation-list-grouping.md`,
+`HR-2026-08-12-006`, and `HR-2026-08-13-029`
+
+Scope: `/tech/mail` now renders the message list as account-scoped conversation rows. The current
+mailbox/folder/search/filter query is applied first, then matching placements are grouped by the
+existing conservative Email conversation key prefixed with `account_id`. The newest matching
+placement becomes the visible row, grouped rows show message count plus aggregate personal and
+provider-unread badges, and selecting the row still opens one real provider placement. The threaded
+reader behavior is tracked separately in `HR-2026-08-14-003`.
+
+Out of scope / not reviewed here: new durable conversation tables, backfill/migration, cross-account
+conversation merging, subject-only merge expansion, changing `TD-...` Ticket-key correlation,
+changing Ticket link behavior, or changing provider folder/source-of-truth rules.
+
+Deploy / migration notes: No migration, permission seed, scheduler change, frontend build,
+OAuth/provider configuration change, queue restart, or IMAP account reconfiguration is required.
+Deploy the code, run `php artisan optimize:clear`, run `php artisan view:cache`, and sync Email
+Knowledge with `php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: grouping must not broaden mailbox visibility or merge copies from different accounts. The
+row is a view projection only; selected actions still operate on the opened provider placement, not
+on every message in the conversation. The current implementation groups the filtered result set in
+PHP while the durable account-scoped conversation model remains a later migration slice.
+
+Automated verification: PHP syntax checks pass for the Mail workspace and Email feature test file.
+Focused conversation list regressions pass with 2 tests and 11 assertions. Full
+`EmailModuleTest.php` passes with 136 tests and 1115 assertions. `php artisan optimize:clear`,
+`php artisan view:cache`, Email Knowledge sync with BookStack push queueing, one default queue worker
+pass, and failed-job check pass. `git diff --check` reports only pre-existing CRLF working-copy
+warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Open `/tech/mail` with a mailbox containing a root message and a reply in the same RFC thread;
+  confirm the message list shows one conversation row with a multi-message badge.
+- [ ] Open that conversation row and confirm the reading pane opens one real provider placement from
+  the grouped row; detailed threaded reader behavior is reviewed in `HR-2026-08-14-003`.
+- [ ] Confirm the row unread badges match the thread's personal unread and mailbox unread state in
+  the current filtered scope.
+- [ ] Switch between `Unread`, `Inbox`, a selected folder, and search/filter states; confirm grouping
+  remains inside the current authorized scope.
+- [ ] Confirm messages with the same Message-ID or copied content in another authorized mailbox stay
+  separate rows.
+- [ ] Confirm Reply, Forward, Mark read, Trash, Move, Ticket, Category/tags, and AI actions still
+  operate on the selected/opened placement, not silently on every message in the grouped row.
+- [ ] Check desktop and mobile widths and confirm conversation badges do not overlap sender, subject,
+  or date text.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-14-001 - Email Mail Manual Send/Receive And Folder Refresh
+
+Status: Pending
+Added: 2026-08-14
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-14-email-mail-manual-send-receive-refresh.md`,
+`HR-2026-08-12-003`, `HR-2026-08-12-006`, and `HR-2026-08-13-032`
+
+Scope: `/tech/mail` now shows a compact `Send/receive` button in the Mail message-list header for
+users who can organize at least one active mailbox. The action queues the existing
+`FetchImapAccount` job for each active organize-authorized mailbox and never runs IMAP inside the
+Livewire request. When a folder is selected and the user can organize that folder's mailbox, the
+Folders header shows a refresh icon. The folder refresh action queues the same fetch job for the
+selected folder's account so the normal provider folder discovery path can notice external folder
+renames, creates, deletes, and new mail.
+Reply, Reply All, Forward, Compose, and provider-draft editing continue to share the same composer
+partial and Mail AI toolbar where AI drafting is allowed.
+
+Out of scope / not reviewed here: synchronous browser IMAP polling, historical import, UID
+re-baseline, a separate send outbox, folder-only polling that skips account discovery, and grouped
+message-list conversation rows.
+
+Deploy / migration notes: No migration, permission seed, scheduler change, frontend build,
+OAuth/provider configuration change, or IMAP account reconfiguration is required. Deploy the code,
+run `php artisan optimize:clear`, run `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. Queue workers must be running for queued
+fetches to complete.
+
+Risks: The buttons must stay hidden for view-only mailboxes and direct Livewire calls must still
+reject them. Manual refresh intentionally uses account-wide provider discovery; it must not import
+historical unread mail or bypass folder UIDVALIDITY safety. Clicking repeatedly may queue duplicate
+fetch jobs, but message import remains idempotent by provider UID identity and the fetch job uses
+account-level overlap protection.
+
+Automated verification: PHP syntax checks pass for the Mail workspace, Mail sidebar component, and
+Email feature test file. Focused manual sync regressions pass with 3 tests and 14 assertions. Full
+`EmailModuleTest.php` passes with 136 tests and 1116 assertions after moving `Send/receive` from the
+sidebar to the message-list header. `php artisan optimize:clear`,
+`php artisan view:cache`, Email Knowledge sync with BookStack push queueing, one default queue worker
+pass, and failed-job check pass. `git diff --check` reports only pre-existing CRLF working-copy
+warnings in unrelated files. The cache, Knowledge, queue, failed-job, and diff checks were rerun
+successfully after the header move.
+
+Manual checks:
+
+- [ ] Open `/tech/mail` as a user with mailbox View and Organize access and confirm the message-list
+  header shows `Send/receive`.
+- [ ] Click `Send/receive`, confirm a status message appears, and confirm the queue receives or
+  processes `FetchImapAccount` for the user's organize-authorized active mailboxes.
+- [ ] Select a folder in a mailbox the user can organize and confirm the Folders header shows the
+  refresh icon.
+- [ ] Rename or create a safe test folder in another IMAP client, click the folder refresh icon, let
+  the queue process, and confirm the provider folder change appears in Nexum.
+- [ ] Send one safe test email to the mailbox, click `Send/receive` or folder refresh, let the queue
+  process, and confirm the new message appears without importing older historical mail.
+- [ ] Use a View-only mailbox grant and confirm `Send/receive` and selected-folder refresh are hidden
+  or rejected.
+- [ ] Confirm Reply, Reply All, Forward, Compose, provider-draft editing, and Mail AI composer
+  controls still use the same composer behavior after the sidebar refresh buttons were added.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-13-032 - Email Mail Provider Folder Create, Rename, Move, And Delete
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-provider-folder-rename-delete.md`,
+`HR-2026-08-12-003`, `HR-2026-08-12-014`, and `HR-2026-08-13-025`
+
+Scope: `/tech/mail` now shows a gear button on the right side of the Folders header when the
+technician can organize at least one mailbox. The gear opens a mailbox-scoped folder manager modal
+for the selected mailbox/folder context when available, otherwise the first organize-authorized
+mailbox; if multiple mailboxes can be organized, the modal header includes a mailbox selector. The
+folder manager can create, inspect as an expandable tree, rename, and delete custom provider folders
+through IMAP-backed remote operations. Parent folders are collapsed by default, but can be expanded
+to show subfolders. Custom folders can be created at mailbox root or inside an existing parent
+folder, and safe custom leaf folders can be moved to root or another parent folder.
+System/special-use folders,
+folders with child folders, folders with pending operations, and rule-referenced folders are blocked
+from unsafe mutation and show the blocker reason when no actions are available. Custom folders
+containing mail must be emptied first with the modal's same-account move action before delete becomes
+available. Folder creation keeps the folder manager open and expands the new folder's parent path
+instead of switching the message list to the created folder.
+
+Out of scope / not reviewed here: system folder rename/move/delete, recursive folder operations,
+deleting provider mail with a folder, bulk operations across mailboxes, permanent provider message
+delete, automatic folder cleanup, and richer undo UX.
+
+Deploy / migration notes: No migration, permission seed, queue restart, scheduler change, frontend
+build, OAuth/provider configuration change, or IMAP account reconfiguration is required. Deploy the
+code, run `php artisan optimize:clear`, run `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: Folder create/rename/move/delete must stay provider-authoritative and must not change local
+folder state until the IMAP server acknowledges the operation. Folder create must not run provider
+expunge after IMAP CREATE, because some servers reject expunge when no mailbox is selected even after
+the folder was created successfully. Deleting a folder with active mail must stay blocked; users must
+move messages to another selectable folder first. Rule-referenced folders must not be deleted because
+active rules could route future mail to a missing provider folder.
+
+Automated verification: Focused folder-manager regressions pass with 13 tests and 85 assertions. The
+full `EmailModuleTest.php` passes with 131 tests and 1090 assertions. PHP syntax checks pass for the
+folder manager action, remote-operation runner, IMAP client, Mail workspace Livewire component, and
+Email feature test file. `php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge
+sync, one default queue worker pass, and `php artisan queue:failed` pass; no failed jobs are present.
+
+Manual checks:
+
+- [ ] Open `/tech/mail`, select one mailbox or one folder where the technician has Organize access,
+  and confirm the gear appears at the far right of the Folders header.
+- [ ] Open the gear modal and confirm it lists folders only for the selected mailbox.
+- [ ] Confirm parent folders are collapsed by default, can be expanded/collapsed, and subfolders are
+  visible only when their parent is expanded.
+- [ ] Confirm rows without actions show the blocker reason, such as system folder or has subfolders.
+- [ ] Create a safe custom test folder at root and another safe custom test folder under a selected
+  parent; confirm both appear in Nexum and an external IMAP client.
+- [ ] Rename the safe custom folder and confirm the new name appears in Nexum, in the external IMAP
+  client, and as the target for any personal rule that referenced that folder.
+- [ ] Move a safe custom leaf folder to another parent or back to root and confirm the new path
+  appears in Nexum and the external IMAP client.
+- [ ] Place or move one test message into the custom folder, start delete, and confirm Nexum warns
+  that the folder contains mail instead of allowing direct delete.
+- [ ] Move the folder's mail to another selectable folder from the modal, confirm the message appears
+  in the target folder, then delete the now-empty custom folder.
+- [ ] Confirm INBOX, Sent, Drafts, Trash, Archive, Junk/Spam, and other special-use folders do not
+  expose rename/move/delete actions.
+- [ ] Confirm a View-only mailbox hides the gear and direct folder actions are rejected.
+- [ ] Check desktop and mobile widths and confirm the folder modal stays inside the viewport, the
+  folder list scrolls inside the modal, and the modal does not overlap the message panes.
+
+Result / notes:
+
+### HR-2026-08-13-031 - Email Mail Write-Gated AI Assistants
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-ai-write-gated-assistants.md`,
+`HR-2026-08-12-016`, and `HR-2026-08-12-017`
+
+Scope: Mail AI summary can expose a human-clicked `Create Ticket` assistant only when governed Mail
+AI is available, the selected/default Email agent has action execution enabled, the agent has
+`tickets.create` and `tickets.update` API scopes, and the user has the normal Ticket and mailbox
+permissions. The action reuses the deterministic Mail-to-Ticket flow.
+
+Out of scope / not reviewed here: automatic replies, AI sending, AI moving mail, AI creating rules,
+AI arbitrary Ticket updates, background AI agents, and broader write-gated assistant actions.
+
+Deploy / migration notes: No migration, permission seed, queue restart, scheduler change, frontend
+build, provider configuration change, or OpenAI/legal action is required beyond the existing AI
+governance records already used by Mail AI.
+
+Risks: The AI write button must remain hidden unless every governance, agent, user, and mailbox gate
+passes. AI output must not mutate data directly, and manual Ticket creation must remain available
+without depending on AI policy.
+
+Automated verification: Focused Mail regressions for the six 2026-08-13 completion slices pass with
+6 tests and 50 assertions. Full `EmailModuleTest.php` passed on Dev with 120 tests and 1016 assertions. Migration `2026_08_13_140000_create_email_ticket_conversation_links_table` ran in batch 84. Cache clearing, Blade cache, Email Knowledge sync, one queue-worker pass, route registration, no failed jobs, and git diff checks passed; git diff reported only pre-existing CRLF warnings in unrelated files.
+
+Manual checks:
+
+- [ ] With an action-disabled Email agent, generate an AI summary and confirm `Create Ticket` is not
+  shown in the AI summary panel.
+- [ ] Enable action execution and Ticket write scopes on the Email/default agent, keep user
+  `ticket.create` and mailbox Organize access, and confirm `Create Ticket` appears.
+- [ ] Click the AI-gated `Create Ticket` button and confirm a Ticket is created through the normal
+  Mail-to-Ticket flow and linked to the source email.
+- [ ] Remove either the agent Ticket scope or the user's `ticket.create` permission and confirm the
+  AI write button disappears.
+- [ ] Confirm the read-only Summary and Draft reply AI buttons still work as before and do not send
+  email or mutate Ticket fields directly.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-13-030 - Email Mail Remote Operation Retry Dashboard
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-remote-operation-retry-dashboard.md`,
+`HR-2026-08-12-007`, `HR-2026-08-12-014`, and `HR-2026-08-15-003`
+
+Scope: `/tech/mail` shows a compact Mailbox operations card in the right bar when
+organize-authorized mailboxes have pending, running, failed, or recent verified provider operations.
+The card starts collapsed with status counts in its header. Expanding it shows the existing detailed
+operation, Retry, Cancel, evidence, and eligible verified Undo controls; no-operation state adds no
+empty card. Pending/failed rows use the existing provider operation runner or cancellation action.
+An ambiguous Archive/Trash/Move row without immutable target path/UID evidence remains visible but
+does not expose Retry.
+
+Out of scope / not reviewed here: automatic retry scheduler, bulk retry/cancel, provider folder
+rename/delete, provider folder create retry ledger, and richer undo UX.
+
+Deploy / migration notes: No migration, permission seed, queue restart, scheduler change, frontend
+build, or provider configuration change is required.
+
+Risks: Users must see only operations for mailboxes they can organize. Retry must use the same
+provider mutation logic as the original action, and cancellation must not alter already succeeded
+provider state.
+
+Automated verification: Focused Mail regressions for the six 2026-08-13 completion slices pass with
+6 tests and 50 assertions. Full `EmailModuleTest.php` passed on Dev with 120 tests and 1016 assertions. Migration `2026_08_13_140000_create_email_ticket_conversation_links_table` ran in batch 84. Cache clearing, Blade cache, Email Knowledge sync, one queue-worker pass, route registration, no failed jobs, and git diff checks passed; git diff reported only pre-existing CRLF warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Create or identify a failed Mail remote operation for a safe test message and confirm the
+  Mailbox operations card appears in the `/tech/mail` right bar, starts collapsed, and shows the
+  correct failed/status count without expanding.
+- [ ] Expand the right-bar card and confirm the account, operation type, subject, status, error,
+  focus order, and ARIA disclosure state are understandable. Confirm it is absent when no active or
+  recent operation qualifies.
+- [ ] Confirm an ambiguous Archive/Trash/Move row with missing immutable target path or target UID
+  remains reviewable but has no Retry control.
+- [ ] Retry a safe failed operation, such as a move to a test folder, and confirm the provider
+  mailbox and Nexum placement projection both update.
+- [ ] Cancel a pending/failed operation and confirm it no longer appears as active retry work.
+- [ ] Sign in as a user without Organize access to that mailbox and confirm the operation is hidden.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-13-029 - Email Mail Multi-Conversation Ticket Links
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-ticket-conversation-links.md`, and
+`HR-2026-08-12-010`
+
+Scope: Mail can link a selected non-draft email to an existing Ticket through a guarded More action.
+New Mail-created Tickets also record a Mail-owned conversation-link row. The existing
+`LinkInboundEmailToTicket` action still owns Ticket message creation and attachment capture.
+
+Out of scope / not reviewed here: unlink UI, one email linked to several active Tickets, Ticket
+timeline redesign, customer portal projection, and AI arbitrary Ticket updates.
+
+Deploy / migration notes: Run migration
+`2026_08_13_140000_create_email_ticket_conversation_links_table.php`. No queue restart, scheduler
+change, frontend build, or provider configuration change is required.
+
+Risks: `email_messages.ticket_id` remains a single compatibility link; the new table must not imply
+the same email can be actively linked to several Tickets. Source mail must stay in the mailbox.
+
+Automated verification: Focused Mail regressions for the six 2026-08-13 completion slices pass with
+6 tests and 50 assertions. Full `EmailModuleTest.php` passed on Dev with 120 tests and 1016 assertions. Migration `2026_08_13_140000_create_email_ticket_conversation_links_table` ran in batch 84. Cache clearing, Blade cache, Email Knowledge sync, one queue-worker pass, route registration, no failed jobs, and git diff checks passed; git diff reported only pre-existing CRLF warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Open an unlinked test email in `/tech/mail` with mailbox Organize access and `ticket.update`,
+  then use More -> Link existing Ticket with a known Ticket key.
+- [ ] Confirm the Ticket gets an inbound Ticket message and the source email remains in its mailbox.
+- [ ] Link another message in the same RFC thread to the same Ticket and confirm Mail shows multiple
+  Ticket conversation links for that conversation.
+- [ ] Try the same flow without `ticket.update` and confirm the Link existing Ticket action is not
+  available.
+- [ ] Confirm the ordinary Ticket icon still creates a new Ticket only when `ticket.create` is
+  present and the email is not already linked.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-13-028 - Email Mail Grouped Rules And Reprocessing
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-grouped-rules-reprocessing.md`,
+`HR-2026-08-12-005`, and `HR-2026-08-12-015`
+
+Scope: Admin Email rules can use grouped all/any conditions, add/remove condition rows in the form,
+show grouped snapshots in the rules list, and reprocess a stored Email message through the published
+rule engine.
+
+Out of scope / not reviewed here: nested groups deeper than one level, personal grouped rule builder
+UI, drag ordering, and IMAP folder reprocessing.
+
+Deploy / migration notes: No migration, permission seed, queue restart, scheduler change, frontend
+build, or provider configuration change is required.
+
+Risks: Rule preview and runtime must use the same all/any semantics. Reprocessing must stay gated by
+`email.rule_manage` and must use the idempotent published rule attempt ledger.
+
+Automated verification: Focused Mail regressions for the six 2026-08-13 completion slices pass with
+6 tests and 50 assertions. Full `EmailModuleTest.php` passed on Dev with 120 tests and 1016 assertions. Migration `2026_08_13_140000_create_email_ticket_conversation_links_table` ran in batch 84. Cache clearing, Blade cache, Email Knowledge sync, one queue-worker pass, route registration, no failed jobs, and git diff checks passed; git diff reported only pre-existing CRLF warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Create an Admin Email rule with two condition groups and `Any group can match`.
+- [ ] Confirm add/remove condition controls work without editing JSON.
+- [ ] Preview or reprocess a message that matches only one group and confirm the action runs.
+- [ ] Confirm the rule list displays grouped conditions readably.
+- [ ] Sign in without `email.rule_manage` and confirm the reprocess route is denied.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-13-027 - Email Mail Provider Sent Append Support
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-provider-sent-append-support.md`,
+`HR-2026-08-13-021`, and `HR-2026-08-15-003`
+
+Scope: Mail keeps technical provider Sent append support for pending outbound reconciliation rows,
+with same-account Message-ID deduplication before append. The regular `/tech/mail` workspace no
+longer shows a Provider Sent dashboard or `Append to Sent` controls. The 2026-08-15 reliability
+refinement reserves `append_started` under a row lock, makes repeated started/appended calls no-ops,
+and blocks replay after a provider write may have started.
+
+Out of scope / not reviewed here: ambiguous-match chooser UI, automatic append retry scheduler,
+Ticket timeline projection, and replacing normal Sent-folder sync as final reconciliation.
+
+Deploy / migration notes: No migration beyond the existing Sent reconciliation table, permission
+seed, queue restart, scheduler change, frontend build, or provider configuration change is required.
+
+Risks: Append must require mailbox Send access, must not duplicate an already imported provider Sent
+copy, and must honestly remain `appended` until normal provider sync confirms final reconciliation.
+Only a proven pre-write failure may be reserved again; an exception after the provider write begins
+must remain blocked and await provider evidence.
+
+Automated verification: Focused Mail regressions for the six 2026-08-13 completion slices pass with
+6 tests and 50 assertions. Full `EmailModuleTest.php` passed on Dev with 120 tests and 1016 assertions. Migration `2026_08_13_140000_create_email_ticket_conversation_links_table` ran in batch 84. Cache clearing, Blade cache, Email Knowledge sync, one queue-worker pass, route registration, no failed jobs, and git diff checks passed; git diff reported only pre-existing CRLF warnings in unrelated files.
+The 2026-08-15 provider Sent append/reservation safety regressions pass 4 tests / 16 assertions.
+
+Manual checks:
+
+- [ ] Send a test Compose message from a mailbox with a real selectable Sent folder and confirm
+  `/tech/mail` does not show a Provider Sent dashboard or `Append to Sent` control.
+- [ ] Confirm the pending provider Sent reconciliation row still stores a raw outbound snapshot for
+  technical append/reconciliation.
+- [ ] If technical append is triggered through a backend/admin path, confirm the message appears in
+  the provider Sent folder in an external IMAP client.
+- [ ] Trigger the same accepted append twice and confirm only one provider write. Simulate a provider
+  exception after write start and confirm a repeat performs no new append; simulate a proven
+  pre-write failure and confirm it alone can be reserved safely again.
+- [ ] Run normal mail sync and confirm the Sent copy reconciles to `Sent reconciled`.
+- [ ] Confirm a user without mailbox Send access sees no Provider Sent controls for that account.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-13-026 - Email Mail Provider Drafts Direct Editing
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-provider-drafts-direct-editing.md`,
+`HR-2026-08-13-022`, and `HR-2026-08-13-023`
+
+Scope: Imported provider Drafts placements can be opened with `Edit draft`, copied into the Mail
+composer, sent through normal SMTP, and cleaned up from provider Drafts by folder/UIDVALIDITY/UID.
+
+Out of scope / not reviewed here: provider folder rename/delete, concurrent draft locks, editing a
+provider draft without safe UID evidence, automatic sending, and AI write/send actions.
+
+Deploy / migration notes: No new migration beyond the existing draft tables, permission seed, queue
+restart, scheduler change, frontend build, or provider configuration change is required.
+
+Risks: Draft editing must require mailbox View and Send access. Provider Drafts rows must not expose
+Reply/Forward/Ticket/rule/spam actions. SMTP success must not be rolled back if provider cleanup
+later fails; instead the cleanup issue must be visible.
+
+Automated verification: Focused Mail regressions for the six 2026-08-13 completion slices pass with
+6 tests and 50 assertions. Full `EmailModuleTest.php` passed on Dev with 120 tests and 1016 assertions. Migration `2026_08_13_140000_create_email_ticket_conversation_links_table` ran in batch 84. Cache clearing, Blade cache, Email Knowledge sync, one queue-worker pass, route registration, no failed jobs, and git diff checks passed; git diff reported only pre-existing CRLF warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Import or create a safe provider Drafts message and open it from `/tech/mail`.
+- [ ] Confirm provider Drafts rows show `Edit draft` and do not show Reply, Forward, Spam, Ticket,
+  or Add rule actions.
+- [ ] Edit recipients/body/subject and send the draft through SMTP.
+- [ ] Confirm the outbound message is sent, the original provider Drafts copy is removed or an
+  honest cleanup warning is shown, and the Drafts placement no longer appears as active.
+- [ ] Confirm a View-only or non-send-authorized user cannot edit or send the provider draft.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-13-025 - Email Mail Provider Folder Create
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-provider-folder-create.md`,
+`HR-2026-08-12-003`, and `HR-2026-08-12-014`
+
+Scope: `/tech/mail` now lets a technician create one custom provider folder from the Mail sidebar
+after selecting a mailbox they can organize. Nexum calls IMAP CREATE first, projects the returned
+folder into `email_folders`, selects the new folder, and keeps it available for later move/rule
+targets through existing folder projection.
+
+Out of scope / not reviewed here: provider folder rename, provider folder delete, system/special-use
+folder creation, automatic message moves into the new folder, remote-operation ledger retry for
+folder creation, provider Drafts direct editing, provider Sent append/deduplication, automatic
+replies, and AI write/send actions.
+
+Deploy / migration notes: No migration, permission seed, queue restart, scheduler change, frontend
+build, provider folder rename/delete, or OAuth/provider configuration change is required. Deploy the
+code, run `php artisan optimize:clear`, run `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: Folder creation must require mailbox Organize access and one selected mailbox. Nexum must not
+project a local folder if the provider CREATE call fails. Reserved system folders must stay owned by
+IMAP discovery. Rename/delete remain separate because they can strand messages or remove provider
+state.
+
+Automated verification: Folder-create focused regressions pass with 2 tests and 11 assertions. Full
+`EmailModuleTest.php` passes with 114 tests and 966 assertions. PHP syntax checks pass for the new
+provider folder action, IMAP client, Mail workspace component, and Email feature test file.
+`php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge sync, one default queue
+worker pass, and `php artisan queue:failed` pass; no failed jobs are present. `git diff --check`
+passes with only pre-existing CRLF working-copy warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Select one safe mailbox in `/tech/mail` where the signed-in technician has Organize access and
+  confirm the folder-create icon appears in the sidebar.
+- [ ] Create a safe custom folder such as `Nexum Test/Manual Review` and confirm the success message
+  appears and the new folder is selected.
+- [ ] Confirm the folder appears in the same mailbox in an external IMAP client.
+- [ ] Confirm the folder appears as a selectable Move-to-folder target for messages in the same
+  mailbox.
+- [ ] Switch to a View-only mailbox and confirm the create icon is hidden and direct submission is
+  rejected.
+- [ ] Try a reserved name such as `INBOX` or `Drafts` and confirm Nexum rejects it instead of trying
+  to create a system folder.
+- [ ] Check desktop and mobile sidebar widths and confirm the create form and validation messages do
+  not overlap the folder list.
+
+Result / notes:
+
+### HR-2026-08-13-024 - Email Mail Durable Draft Attachments
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-durable-draft-attachments.md`,
+`HR-2026-08-13-020`, `HR-2026-08-13-023`, and `HR-2026-08-15-003`
+
+Scope: `/tech/mail` now stores composer draft attachments durably in
+`email_composer_draft_attachments` and local storage. Saved draft attachments restore in the
+composer, can be removed from the draft, are included in SMTP sends, are included in provider Drafts
+append, and are cleaned up when the draft is sent or discarded.
+New attachment writes use the verified Email private-storage boundary; the two legacy Dev trees and
+dual-runtime filesystem review remain tracked under `HR-2026-08-15-003`. The 2026-08-15 runtime
+hardening also reauthorizes client-supplied attachment IDs against the exact active draft and current
+mailbox composer context before SMTP.
+
+Out of scope / not reviewed here: inline image editing or CID rewriting; attachment preview/download
+from the draft editor; direct editing of imported provider Drafts placements; shared draft locks or
+conflict UI; provider folder create/rename/delete mirrored to IMAP; automatic replies; and AI
+write/send actions.
+
+Deploy / migration notes: Run `umask 0002; HOME=/tmp php artisan migrate` so
+`2026_08_13_130000_create_email_composer_draft_attachments_table` is applied. Then run
+`php artisan optimize:clear`, `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. No permission seed, queue restart,
+scheduler change, frontend build, provider folder creation, or external storage migration is
+required. Before cross-runtime attachment verification, complete the owner/root ACL normalization
+listed in `HR-2026-08-15-003`.
+
+Risks: Draft attachments must stay scoped to the owning technician and authorized mailbox draft
+context. Stored files must be included when sending and provider-syncing, but must be deleted after
+send/discard. Removing an attachment must mark the provider draft copy stale until the user saves
+again. Total composer attachments must stay capped at 5 and 10 MB per file.
+
+Automated verification: Dev migration applied successfully. Durable draft attachment focused
+regressions pass with 5 tests and 72 assertions. Full `EmailModuleTest.php` passes with 112 tests and
+955 assertions. PHP syntax checks pass for the migration, draft attachment model, draft model, local
+draft service, provider draft sync service, send action, Mail workspace component, and Email feature
+test file. `php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge sync, one default
+queue worker pass, and `php artisan queue:failed` pass; no failed jobs are present. `php artisan
+migrate:status` confirms the new migration ran in batch 83. `git diff --check` passes with only
+pre-existing CRLF working-copy warnings in unrelated files.
+The later private-storage contract contributes to the affected storage/send run of 16 tests / 125
+assertions. The exact-active-draft isolation regression passes 1 test / 6 assertions within the
+expanded composer lifecycle file at 4 / 26.
+
+Manual checks:
+
+- [ ] Open `/tech/mail`, start Compose, add one small attachment, click Save draft, and confirm the
+  saved attachment appears in the composer as a stored draft attachment.
+- [ ] Close and reopen the same draft and confirm the attachment is still listed without needing a
+  new upload.
+- [ ] Save the draft to provider Drafts and confirm the provider draft includes the attachment in an
+  external mail client.
+- [ ] Remove the saved attachment and confirm it disappears from the composer, then Save draft again
+  and confirm the provider draft no longer contains it.
+- [ ] Send a restored draft with a saved attachment and confirm the outbound email includes the
+  attachment once.
+- [ ] In a controlled request, substitute an attachment ID from another same-user draft/account and
+  confirm the file is not sent; revoke mailbox access and confirm a stale composer cannot send its
+  stored attachments.
+- [ ] Confirm the sent or discarded draft no longer restores and that saved draft attachment metadata
+  is cleaned up.
+- [ ] Try adding more than 5 files or a file over 10 MB and confirm the UI rejects it cleanly.
+- [ ] Check desktop and mobile composer widths and confirm attachment badges wrap without overlapping
+  address fields or Send/Save buttons.
+
+Result / notes:
+
+### HR-2026-08-13-023 - Email Mail Provider Drafts Write Sync
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/feature-slices/2026-08-13-email-mail-provider-drafts-write-sync.md`,
+`HR-2026-08-13-020`, `HR-2026-08-13-021`, `HR-2026-08-13-022`, and
+`HR-2026-08-15-003`
+
+Scope: `/tech/mail` manual `Save draft` now saves the local Nexum composer draft and, when the
+composer has no temporary attachments and the mailbox has a discovered selectable provider Drafts
+folder, appends a real IMAP provider draft with `X-Unsent: 1` and the `\Draft` flag. Local drafts
+record provider Drafts status, folder path, UIDVALIDITY, UID, Message-ID, timestamps, and errors.
+Autosave remains local-only. Send and Discard best-effort delete the recorded provider draft copy.
+Normal Drafts import reconciles actual provider UID/status back to the local draft by normalized
+Message-ID.
+
+The 2026-08-15 reliability refinement queues one exact bounded Drafts-folder refresh after a
+successful APPEND. It shares the account-fetch overlap lock, requires an established baseline,
+fails closed on UIDVALIDITY change, imports only the matching Message-ID with Inbox automation off,
+and leaves the draft pending when the provider copy is not visible yet. Pre-APPEND UIDNEXT is not
+treated as final provider identity.
+
+Out of scope / not reviewed here: durable draft attachments; uploading temporary composer
+attachments into provider Drafts; direct editing of imported provider Drafts placements; shared draft
+locks, responder reservations, typing presence, or conflict UI; creating, renaming, or deleting
+provider folders from Nexum; direct provider Sent append/deduplication; automatic replies; and AI
+write/send actions.
+
+Deploy / migration notes: Run `umask 0002; HOME=/tmp php artisan migrate` so
+`2026_08_13_120000_add_provider_sync_fields_to_email_composer_drafts` is applied. Then run
+`php artisan optimize:clear`, `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. Restart the ordinary/default queue worker so
+it loads `RefreshEmailProviderDraftFolder`. No permission seed, frontend build, scheduler change,
+provider folder creation, or external OAuth change is required.
+
+Risks: Provider write sync must use only discovered real Drafts folders and mailbox Send
+authorization. Autosave must not spam the provider with drafts. Draft cleanup must never delete by
+stale UIDVALIDITY evidence. Temporary attachments must not be silently omitted from provider Drafts
+while the UI implies they were saved. Provider cleanup failures after Send/Discard must be visible
+without rolling back the successful local lifecycle.
+The targeted refresh must not scan all folders, import history, cross accounts, run Inbox automation,
+or accept a stale UID namespace.
+
+Automated verification: Dev migration applied successfully. Drafts write-sync focused regressions
+pass with 4 tests and 38 assertions. Full `EmailModuleTest.php` passes with 111 tests and 936
+assertions. PHP syntax checks pass for the migration, provider draft sync service, local draft
+service, IMAP client, Mail workspace Livewire component, inbound store job, and Email feature test
+file. `php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge sync, one default
+queue worker pass, and `php artisan queue:failed` pass; no failed jobs are present. `php artisan
+migrate:status` confirms the new migration ran in batch 82. `git diff --check` passes with only
+pre-existing CRLF working-copy warnings in unrelated files.
+The 2026-08-15 targeted-refresh file passes 4 tests / 35 assertions, and four existing provider
+Draft regressions pass with 40 assertions; Pint, PHP syntax, and diff checks pass without a live
+provider call.
+
+Manual checks:
+
+- [ ] Open `/tech/mail`, start Compose from a safe mailbox with a discovered provider Drafts folder,
+  enter To/Cc/Subject/body without attachments, click Save draft, and confirm the composer shows a
+  provider synced or pending status.
+- [ ] Confirm the saved draft appears in the real provider Drafts folder in an external mail client
+  with the same recipients, subject, and body. Process the ordinary queue worker and confirm the same
+  exact Message-ID appears once in Nexum's Drafts view without waiting for an unrelated full poll.
+- [ ] Change the same draft, click Save draft again, and confirm the provider shows one updated
+  usable draft rather than a growing list of stale copies.
+- [ ] Add a temporary attachment, click Save draft, and confirm the UI says the draft is local-only
+  for attachments instead of implying the attachment was saved to provider Drafts.
+- [ ] Send the saved draft and confirm SMTP sends once, the local draft is marked sent, and the
+  provider Drafts copy is removed or a cleanup warning is shown.
+- [ ] Discard a synced draft and confirm the local draft does not restore and the provider Drafts
+  copy is removed or a cleanup warning is shown.
+- [ ] Wait for or run IMAP Drafts sync and confirm the local draft provider UID/status reconciles by
+  Message-ID without creating Tickets, Signals, inbound rule executions, or Inbox unread work.
+- [ ] Check desktop and mobile composer widths and confirm provider draft status badges do not
+  overlap the Save draft button or address fields.
+
+Result / notes:
+
+### HR-2026-08-13-022 - Email Mail Provider Drafts Visibility
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/feature-slices/2026-08-13-email-mail-provider-drafts-visibility.md`,
+`HR-2026-08-12-003`, `HR-2026-08-13-020`, `HR-2026-08-13-021`, and
+`HR-2026-08-15-003`
+
+Scope: `/tech/mail` now shows imported provider Drafts-folder placements as explicit provider
+drafts. Technicians get a Drafts sidebar view, a provider draft list filter, and `Provider draft`
+badges in the list and reader. Drafts-folder placements are treated as read-only provider cache
+projections in this slice.
+The later post-APPEND targeted refresh imports a matching manually saved provider copy into this same
+projection without running Inbox automation.
+
+Out of scope / not reviewed here: IMAP APPEND, replace, or delete for provider Drafts; linking local
+Nexum autosave drafts to provider Drafts rows; durable draft attachment persistence; shared draft
+locks or presence; creating, renaming, or deleting provider folders from Nexum; Sent append and
+deduplication dashboard; automatic replies; and AI write/send actions.
+
+Deploy / migration notes: No migration, permission seed, queue restart, scheduler change, frontend
+build, or provider folder write operation is required by this slice. Deploy the code, run
+`php artisan optimize:clear`, run `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`.
+
+Risks: Provider drafts must stay scoped to authorized mailbox View access. Drafts-folder imports must
+not run Inbox Ticket/rule automation. Provider draft placements must not expose ordinary
+Reply/Reply All/Forward, Spam, Ticket, or rule actions until a later provider Drafts write slice
+exists. Local Nexum autosave drafts must not be presented as provider drafts.
+
+Automated verification: Drafts-focused regressions pass with 2 tests and 15 assertions. Full
+`EmailModuleTest.php` passes with 107 tests and 898 assertions. PHP syntax checks pass for the Mail
+workspace Livewire component, Email folder projector, and Email feature test file.
+`php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge sync, one default queue
+worker pass, and `php artisan queue:failed` pass; no failed jobs are present. `git diff --check`
+passes with only pre-existing CRLF working-copy warnings in unrelated files.
+
+Manual checks:
+
+- [ ] Import or create a safe real provider Drafts-folder message after the folder baseline and
+  confirm it appears in the `/tech/mail` Drafts view.
+- [ ] Confirm the list row and reader show `Provider draft` for that placement.
+- [ ] Confirm ordinary Reply, Reply All, Forward, Spam, Ticket, and Add rule actions are hidden for
+  the provider draft placement.
+- [ ] Select the provider Drafts folder directly in the sidebar and confirm the folder view remains
+  scoped to that folder.
+- [ ] Confirm the Drafts import does not create Tickets, Signals, inbound rule executions, or Inbox
+  unread work.
+- [ ] Check desktop and mobile widths and confirm the Drafts sidebar count, filter, and badges wrap
+  without overlap.
+
+Result / notes:
+
+### HR-2026-08-13-021 - Email Mail Sent Reconciliation Foundation
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
+`docs/feature-slices/2026-08-13-email-mail-sent-reconciliation-foundation.md`,
+`HR-2026-08-12-003`, `HR-2026-08-12-008`, `HR-2026-08-13-020`, and
+`HR-2026-08-15-003`
+
+Scope: `/tech/mail` now records a pending provider Sent reconciliation row after successful SMTP
+send from Compose, Reply, Reply All, or Forward. When normal IMAP sync later imports a same-account
+Sent-folder placement with the same normalized `Message-ID`, Mail marks the outbound log reconciled
+and shows `Sent reconciled` on the provider Sent copy.
+
+The 2026-08-15 reliability refinement makes SMTP acceptance the truthful UI boundary. If the local
+Sent snapshot or reconciliation record fails afterward, Mail marks the matching draft sent and
+shows a sanitized accepted-but-follow-up-failed warning with `Do not resend it`; it never reports the
+accepted message as an SMTP send failure. Before SMTP, one atomic Email-log reservation stores the
+unique idempotency key and stable Message-ID; Mail then attempts initial same-identity reconciliation
+evidence. Concurrent or repeated submission cannot elect another sender, and an uncertain transport
+result stays unresolved and blocks replay until provider Sent mail is reviewed.
+Normal same-account Sent sync resolves that reservation as accepted when the exact reserved
+Message-ID appears, without another SMTP call. A newly written raw snapshot is removed if its
+reconciliation row cannot be persisted.
+
+Out of scope / not reviewed here: direct IMAP APPEND to provider Sent, provider Drafts sync,
+Sent deduplication dashboard, ambiguous-match resolution UI, Ticket timeline projection, automatic
+replies, AI write/send actions, and API multipart send support.
+
+Deploy / migration notes: Run `umask 0002; HOME=/tmp php artisan migrate` so
+`2026_08_13_110000_create_email_sent_reconciliations_table` is applied. On Dev, the first migration
+attempt failed on MySQL's FK-name length limit, left an empty partial table, and the empty table was
+dropped before the corrected migration ran in batch 81. No queue restart or frontend build is
+required by this slice.
+
+Risks: Reconciliation must stay scoped to the same Email account and exact normalized `Message-ID`.
+Sent-folder imports must not run Inbox ticket/rule automation. SMTP success must not be represented
+as provider Sent confirmation until the provider copy is actually imported. Ambiguous matches must
+not be silently resolved.
+A post-SMTP storage/database failure must not reopen the composer or invite a duplicate send. The
+durable reservation must exist before the provider call, accepted-log/telemetry failure must not
+reverse delivery truth, and an unresolved transport outcome must not be retried automatically.
+
+Automated verification completed 2026-08-13: focused Sent-reconciliation regressions pass with 2
+tests and 17 assertions. Full `EmailModuleTest.php` passes with 105 tests and 883 assertions. PHP
+syntax checks pass for the reconciliation model, service, migration, send action, inbound storage
+job, Mail workspace component, and Email feature test file. `php artisan optimize:clear`,
+`php artisan view:cache`, Email Knowledge sync, one default queue worker pass,
+`php artisan queue:failed`, `php artisan migrate:status`, and `git diff --check` pass. `git diff
+--check` reports only pre-existing CRLF working-copy warnings in unrelated files.
+The expanded 2026-08-15 pre-/post-SMTP boundary passes 11 focused tests / 94 assertions, provider Sent
+append/reservation safety passes 4 / 16, and targeted Mail send regressions pass 7 / 131.
+
+Manual checks:
+
+- [ ] Send a new Compose message from `/tech/mail`; confirm the message sends normally and an
+  outbound `email_logs` row records `provider_sent.status=pending`.
+- [ ] Run or wait for provider folder sync; confirm the provider Sent copy is imported and the
+  matching reconciliation row changes to `reconciled`.
+- [ ] Open the Sent folder or All view in `/tech/mail`; confirm the provider Sent copy shows
+  `Sent reconciled` in the list and reader.
+- [ ] Confirm Sent-folder imports do not create Tickets, Signals, Inbox unread work, or inbound rule
+  executions.
+- [ ] Send or import a Sent copy with a different account or different `Message-ID`; confirm it does
+  not reconcile the wrong outbound log.
+- [ ] In isolated controlled send-failure cases, confirm the reservation and exact Message-ID exist
+  before SMTP; concurrent/repeated submission makes only one SMTP call; an uncertain transport
+  result remains unresolved and blocked; and accepted-log, telemetry, snapshot, or reconciliation
+  failure after acceptance keeps the draft sent with `Do not resend it` and no internal exception
+  text.
+- [ ] Import a matching same-account Sent copy for an unresolved reservation and confirm it becomes
+  accepted/reconciled without resending. Force a snapshot-followed-by-row-insert failure and confirm
+  the new raw file is removed.
+- [ ] Check desktop and mobile widths and confirm the new badge wraps without overlapping the list
+  row or reader status badges.
+
+Result / notes:
+
+### HR-2026-08-13-020 - Email Mail Local Drafts And Autosave
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-drafts-autosave.md`, `HR-2026-08-12-008`,
+`HR-2026-08-12-009`, `HR-2026-08-12-014`, `HR-2026-08-12-017`,
+`HR-2026-08-13-019`, `HR-2026-08-13-024`, and `HR-2026-08-15-003`
+
+Scope: `/tech/mail` now keeps local Nexum drafts for Compose, Reply, Reply All, and Forward. Drafts
+are scoped to the signed-in technician and the relevant sender account or selected mailbox
+placement. The composer autosaves after field/editor changes, exposes explicit Save draft and
+Discard draft actions, restores active matching drafts when the same composer context opens, marks a
+matching draft sent after confirmed SMTP acceptance, and avoids creating a draft when an untouched
+Forward/Reply composer is simply closed. Durable attachments and provider Drafts synchronization were
+outside this original slice and are now reviewed separately under `HR-2026-08-13-024` and
+`HR-2026-08-13-023`.
+
+The 2026-08-15 lifecycle correction removes an unsupported Livewire 2 entangle modifier that made
+the Alpine body value undefined. Visual and HTML modes now update Livewire explicitly before
+autosave or Send, and Livewire no longer morphs the active Visual `contenteditable` contents away.
+The runtime hardening also marks the matching draft sent after confirmed SMTP acceptance even when
+later Sent snapshot/reconciliation follow-up warns, while an uncertain SMTP transport outcome keeps
+the composer open and blocks another call for the same reserved send key.
+
+Deployment actions: deploy the code, run `php artisan migrate --force`, run
+`php artisan optimize:clear`, run `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. No permission seed, queue restart,
+scheduler change, frontend build, provider Drafts append, provider Sent append, Ticket write, or
+automatic AI send is required.
+
+Risks: Drafts must stay user-scoped and mailbox-authorized, must not broaden mailbox read or send
+access, must not send or mutate provider state during autosave, and must not store temporary upload
+paths as durable draft attachments. Autosave should not turn untouched default Reply/Forward content
+into noisy saved drafts. Sending must mark only the matching active local draft sent after confirmed
+SMTP acceptance; an unresolved provider outcome must neither mark it sent nor permit blind resend.
+
+Automated verification: Dev migration status confirms
+`2026_08_13_100000_create_email_composer_drafts_table` is `Ran` in batch 80. Draft-filtered Email
+regressions pass with 6 tests and 60 assertions, including the four local draft/autosave
+regressions. Full `EmailModuleTest.php` passes with 103 tests and 865 assertions. PHP syntax checks
+pass for the Mail workspace Livewire component, draft service, draft model, and draft migration.
+`php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge sync, and one default queue
+worker pass completed. At that 2026-08-13 verification, `php artisan queue:failed` reported no
+failed jobs. `git diff --check` passed with only pre-existing CRLF working-copy warnings in unrelated
+files.
+
+The 2026-08-15 composer lifecycle regression passes 3 tests and 20 assertions. Together with the
+full `EmailModuleTest.php`, the current focused run passes 144 tests and 1,226 assertions. Pint, PHP
+syntax, Blade cache compilation, and `git diff --check` pass. One unrelated, pre-existing
+`FetchImapAccount` failed job is now recorded under the separate Email private-storage Operations
+blocker; it was not caused or retried by this composer correction.
+The expanded lifecycle file including exact-draft attachment isolation now passes 4 tests / 26
+assertions.
+
+Human checks:
+
+- [ ] Start Compose in Visual mode, type a body, wait through several autosave intervals, and confirm
+  the text remains visible and the local draft body is saved.
+- [ ] Switch to HTML mode, edit the body source, wait for autosave, switch back to Visual, and confirm
+  the same content remains. Send from a safe test mailbox and confirm the valid body is accepted
+  rather than showing `Write a message before sending.`
+- [ ] Enter a valid body with an invalid recipient, attempt Send, and confirm recipient validation
+  leaves the body and open composer intact.
+- [ ] Open `/tech/mail`, start a new Compose draft, fill To/Cc/Subject/body, click Save draft, close
+  the composer, reopen Compose from the same sender account, and confirm the fields restore.
+- [ ] Start Reply, Reply All when visible, and Forward drafts on a safe test message, save each, close
+  and reopen the same action, and confirm only the matching action/message restores.
+- [ ] Open Forward on a message, make no edits, close it, reopen Forward, and confirm no local draft
+  status appears from the untouched default content.
+- [ ] Add a draft attachment, close/reopen, and confirm the later durable-attachment behavior under
+  `HR-2026-08-13-024` restores only the exact active authorized draft's file.
+- [ ] Click Discard draft and confirm reopening the same composer context does not restore the
+  discarded content.
+- [ ] Send a saved draft from a safe test mailbox and confirm SMTP sends once, the composer closes,
+  and reopening the same context does not restore the sent draft.
+- [ ] Simulate a Sent follow-up failure after accepted SMTP and confirm the matching draft remains
+  sent/closed with `Do not resend it`; simulate an unresolved transport outcome and confirm the
+  composer stays open but repeating the same reserved send does not call SMTP again.
+- [ ] Confirm users without Send access cannot save Compose drafts and users without View plus Send
+  cannot save Reply/Reply All/Forward drafts for a selected placement.
+- [ ] Check desktop and mobile widths and confirm the draft status, Save draft, Close, Discard draft,
+  attachments, AI controls, and Send button wrap without overlap.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-13-019 - Email Mail Personal Signatures
+
+Status: Pending
+Added: 2026-08-13
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-13-email-mail-signatures.md`, `HR-2026-08-12-008`,
+`HR-2026-08-12-009`, `HR-2026-08-12-014`, `HR-2026-08-12-017`, and
+`HR-2026-08-15-003`
+
+Scope: Mail now owns one personal signature per technician. The signature can be edited from
+`/tech/profile`, while `/tech/mail` right bar keeps the page AI chat first, then the conditional
+Mailbox operations card, then a compact Mail signature card that starts collapsed. Expanding it
+reveals the settings trigger. Its responsive Bootstrap dialog has an explicit X, Cancel, and Save
+for Compose, Reply, Reply All, and Forward and stays above the page footer. The Mail AI runtime status
+remains a separate collapsed card below the Mail-specific signature controls. If no
+saved row exists, Mail renders a default tokenized signature from technician and company profile
+values. Signatures are appended by `SendEmailComposerMessage` after composer-body validation and
+immediately before SMTP, with a plain-text fallback and outbound `email_logs` metadata. Mail AI
+draft/rewrite controls continue to replace only the composer body and do not receive or rewrite the
+signature block.
+
+Deployment actions: deploy the code, run `php artisan migrate --force`, run
+`php artisan optimize:clear`, run `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. No permission seed, queue restart,
+scheduler change, frontend build, provider mailbox folder write, Ticket write, or automatic AI send
+is required.
+
+Risks: The profile page must not let Mail-owned settings collide with profile form fields. Right-bar
+toggles must not wipe a saved signature body. The send pipeline must not allow an otherwise empty
+message to pass only because a signature exists, must not duplicate signatures on retry or pre-marked
+HTML, and must place Forward signatures above quoted forwarded content. AI drafting must not mutate
+or leak the signature. Users still need normal mailbox Send access to send mail.
+
+Automated verification: Dev migration status confirms
+`2026_08_13_090000_create_email_signatures_table` is `Ran` in batch 79. Signature-focused Email
+regressions pass with 2 tests and 33 assertions. Affected Reply, Reply All, new Compose, Forward,
+and idempotency send regressions pass with 6 tests and 115 assertions. Full `EmailModuleTest.php`
+passes with 103 tests and 865 assertions after the right-bar/order regression was added, and
+`UserPreferencesTest.php` passes with 6 tests and 42 assertions. PHP syntax checks pass for the
+signature model, renderer, controller, migration, Mail send action, Email feature test file, and
+route-permission middleware. `php artisan optimize:clear`, `php artisan view:cache`, Email
+Knowledge sync, one default queue worker pass, and `php artisan queue:failed` all pass; no failed
+jobs are present. `git diff --check` passes with only pre-existing CRLF working-copy warnings in
+unrelated files. The later Mail rightbar ordering correction passes the targeted Mail signature
+rightbar regression with 1 test and 31 assertions, the targeted Integration rightbar AI chat
+regression with 1 test and 9 assertions, `php artisan view:cache`, Email Knowledge sync, one default
+queue worker pass, and `php artisan queue:failed`. The 2026-08-15 responsive dialog regression passes
+with 1 test and 44 assertions plus Pint, PHP syntax, Blade cache, diff, and compiled-view permission
+checks.
+The final targeted Compose/Reply/Reply All/Forward/idempotency regression run passes 7 tests / 131
+assertions.
+
+Human checks:
+
+- [ ] Open `/tech/profile`, confirm **Email signature** appears, and confirm the default preview
+  renders technician/company values.
+- [ ] Save a custom HTML signature with tokens and mode toggles, then reload `/tech/profile` and
+  confirm the body, preview, and toggles persist.
+- [ ] Open `/tech/mail` and confirm the right bar shows the page AI chat first, then the collapsed
+  Mailbox operations card when qualifying work exists, a collapsed Mail signature card with its
+  current name badge, and the collapsed Mail AI runtime status card.
+- [ ] Expand Mail signature, open its dialog, and confirm it stays above the footer, shows the current
+  signature name plus Compose, Reply, Reply all, and Forward toggles, and closes through X, Cancel,
+  Escape, and backdrop while returning focus to the trigger. Collapse the card again and confirm the
+  state/chevron/focus remain understandable.
+- [ ] Change only the right-bar toggles, save, and confirm the saved signature body was not wiped.
+- [ ] Send one Compose and one Reply from a safe test mailbox and confirm the delivered/plain text
+  and HTML bodies include the rendered signature exactly once.
+- [ ] Forward one message and confirm the signature appears above the forwarded-message block and
+  original inbound attachments are not automatically attached.
+- [ ] Turn off one mode, send that mode again, and confirm no signature is appended while other
+  enabled modes still append it.
+- [ ] Use Mail AI Draft/Improve on a Reply and confirm AI changes only the message body; the
+  signature appears only after Send.
+- [ ] Check desktop and mobile widths for `/tech/profile` and `/tech/mail` and confirm the signature
+  form/right bar controls do not overlap or push text outside their containers.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-018 - Integration Standard AI Activation For Mail AI
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-14-organization-controlled-ai-data-access.md`,
+`docs/feature-slices/2026-08-12-integration-standard-ai-activation.md`,
+`HR-2026-08-12-016`, `HR-2026-08-12-017`, and `HR-2026-07-29-012`
+
+Scope: AI Settings now includes a compact **AI Activation** card that lets an administrator select
+an active provider and model, confirm that the organization has reviewed and approves that
+provider/model for Nexum AI features, and activate the ordinary governed AI path without manually
+filling every advanced governance form. The action records a new installation policy revision,
+enables AI and the required processing mode/profile, creates or updates an approved provider
+governance profile for external providers, and creates or updates the selected model governance
+policy. Email settings shows a compact readiness reason and AI Settings link when Mail AI has a
+selected/default agent but Integration policy is not ready.
+
+Deployment actions: deploy the code, run `php artisan optimize:clear`, run `php artisan
+view:cache`, and sync Integration and Email Knowledge with
+`php artisan knowledge:sync-docs --module=Integration --push` and
+`php artisan knowledge:sync-docs --module=Email --push`. No migration, permission seed, queue
+restart, scheduler change, frontend build, provider mailbox write, Ticket write, or automatic AI
+send is required by this slice.
+
+Risks: The activation path must not claim Nexum has legally certified the provider/model; it records
+the organization's admin-confirmed governance decision for enforcement. Missing confirmation must
+not activate AI. The action must not create coordinator workloads, token bindings, agent write
+approval, Mail content, Tickets, Tasks, provider mailbox operations, or Taxonomy changes. Advanced
+Privacy & Coordinator governance must remain available and able to narrow or deny later requests.
+
+Automated verification: focused Integration activation regressions pass with 2 tests and 27
+assertions. The focused Email runtime activation regression passes with 1 test and 5 assertions.
+Full `IntegrationModuleTest.php` passes with 49 tests and 486 assertions. Integration governance
+coverage also passes with `AiCoordinatorGovernanceTest.php` at 9 tests and 77 assertions,
+`InternalAiWorkloadAdminTest.php` at 4 tests and 31 assertions, `AiModelUsageTelemetryTest.php` at
+5 tests and 72 assertions, and `StructuredAiWorkloadExecutorTest.php` at 10 tests and 90
+assertions. Full `EmailModuleTest.php` passes with 97 tests and 775 assertions, and
+`InboundAutomationTest.php` passes with 14 tests and 81 assertions. `php artisan optimize:clear`,
+`php artisan view:cache`, Email Knowledge sync, Integration Knowledge sync, default-queue worker
+passes, and `php artisan queue:failed` pass. Knowledge sync and failed-jobs checks required
+unsandboxed execution because sandboxed Artisan could not connect to Dev MySQL. `git diff --check`
+reports only pre-existing CRLF working-copy warnings in unrelated files. One old `economy` queue job
+from 2026-07-17 remains and was intentionally not processed as part of this Mail AI slice.
+
+Human checks:
+
+- [ ] Open AI Settings and confirm the **AI Activation** card appears above Providers with AI,
+  External, and readiness badges.
+- [ ] Select the intended active provider and model, leave the confirmation unchecked, click
+  Activate AI, and confirm activation is rejected.
+- [ ] Check the confirmation, activate, and confirm the page reports the selected provider/model as
+  ready.
+- [ ] Confirm the Privacy & Coordinator page now has the corresponding installation policy revision,
+  provider governance profile, and model governance policy for the selected model.
+- [ ] Confirm the activation text does not say Nexum legally certifies compliance.
+- [ ] Open Email Sync & Cache Settings with the selected/default Email agent and confirm the Mail AI
+  readiness warning disappears after activation.
+- [ ] Confirm `/tech/mail` shows Summary and Reply AI controls only for authorized users/mailboxes
+  after activation.
+- [ ] Confirm existing advanced governance screens can still narrow/disable policy and that Mail AI
+  then hides or denies controls again.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-017 - Email Mail AI Reply Drafting And Settings Storage
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mail-ai-reply-drafting.md`,
+`HR-2026-08-12-016`, `HR-2026-08-12-018`, and `HR-2026-07-29-012`
+
+Scope: `/tech/mail` Reply and Reply All composers now expose governed Mail AI controls when the
+selected message is authorized, the actor has mailbox View and Send access, and the signed-in user
+has a selected Email agent or global fallback agent. AI can draft, improve, shorten, warm tone, or
+rewrite the composer body in Norwegian with optional technician guidance. Sendable responses replace
+only the composer body after escaping to safe HTML. If AI determines that no reply is recommended,
+such as for an automated alert or status notification, the composer body is left unchanged and the
+reason is shown as an advisory status. To, Cc, Subject, attachments, idempotency key, provider state,
+folders, Tickets, Tasks, rules, categories, tags, and outbound Email logs are not changed. Migration
+`2026_08_12_132000_expand_common_settings_value_column` expands
+`common_settings.value` to `TEXT` so full Email settings submissions can persist the default
+attachment MIME allowlist, trusted-authentication lists, and Mail AI agent settings. Email settings
+lets admins choose the Default Email agent directly; clearing that field uses the global default
+fallback agent. The old structured workload override is no longer visible or used for Mail AI
+runtime selection, and legacy `mail_ai_workload_profile_id` is cleared on the next settings save.
+Mail AI controls are shown only when Integration policy readiness allows the selected/default
+agent/model runtime; missing model governance hides the controls and direct action attempts return
+the stable denial reason without sending a provider request.
+
+Deployment actions: deploy the code, run `php artisan migrate --force`, run
+`php artisan optimize:clear`, run `php artisan view:cache`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. No permission seed, SMTP/IMAP write,
+queue restart, scheduler change, or frontend build is required. Admins still must configure
+Integration AI policy/provider/model governance, normally through AI Settings **Activate AI**, before
+Mail AI can call an external model.
+
+Risks: AI composer assist must not send mail, alter recipients, alter subjects, attach files,
+forward original attachments, mutate provider state, create Tickets/Tasks/rules, apply Taxonomy, or
+turn technician-facing no-reply advice into a sendable composer body. The AI request must not include
+raw source, HTML markup, attachment contents, attachment filenames, or unauthorized mailbox content.
+Email settings must save the full MIME allowlist without truncation and legacy structured workload
+settings must not affect Mail AI runtime selection. A broad
+action-capable default agent may draft/summarize only through the manual non-writing Mail AI buttons;
+those buttons must not execute any of the agent's write permissions.
+
+Automated verification: Dev migration status confirms
+`2026_08_12_132000_expand_common_settings_value_column` is `Ran` in batch 78. The no-reply advisory
+composer regression passes with 1 test and 9 assertions, the existing Mail AI composer regressions
+pass with 3 tests and 28 assertions, and the focused standard-activation runtime regression passes
+with 1 test and 5 assertions. The complete Email feature suite passes with 97 tests and 775
+assertions. The Inbound automation suite passes with 14 tests and 81 assertions. Full
+`IntegrationModuleTest.php` passes with 49 tests and 486 assertions. Integration AI telemetry passes
+with 5 tests and 72 assertions, and the structured AI executor suite passes with 10 tests and 90
+assertions. PHP syntax checks pass for the composer AI action, Mail workspace Livewire component,
+Email feature test file, standard activation service, AI settings component, and Email config
+controller. `php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge sync,
+Integration Knowledge sync, default-queue worker passes, and `php artisan queue:failed` all pass; no
+failed jobs are present. `git diff --check` reports only pre-existing CRLF working-copy warnings in
+unrelated files. One old `economy` queue job from 2026-07-17 remains and was intentionally not
+processed as part of this Mail AI slice.
+
+Human checks:
+
+- [ ] Run the new migration in the target environment and confirm Email settings can save with the
+  full default attachment MIME allowlist and Mail AI agent settings.
+- [ ] Confirm Email settings has no Structured workload override field, no `Not ready`
+  `mail_ai_workload_owned_by_other_domain` status, and no `Email agent in use` text.
+- [ ] Confirm the Mail AI card shows only the Default Email agent dropdown plus
+  `Global fallback agent: Datanora` when Datanora is the global default.
+- [ ] Select `Mail Agent` in Default Email agent, save, and confirm the dropdown keeps that
+  selection while the fallback line still shows Datanora. Clear the field, save, and confirm Mail AI
+  uses Datanora as the global fallback agent.
+- [ ] If a legacy `mail_ai_workload_profile_id` value exists, save Email settings once and confirm it
+  is cleared and does not affect Summary or Reply assist.
+- [ ] With an Email/default agent whose model governance is missing, confirm Summary and composer AI
+  controls are hidden and a direct action attempt reports `model_governance_missing` without a
+  provider request.
+- [ ] Use AI Settings **Activate AI** for the selected provider/model and confirm the AI controls
+  reappear for authorized mailbox users.
+- [ ] Open `/tech/mail`, select a message in a mailbox where the user has View and Send, click
+  Reply, and confirm AI composer controls are visible.
+- [ ] Click Draft reply and confirm only the message body is filled; To, Cc, Subject, attachments,
+  provider read/flag/folder state, Tickets, Tasks, rules, categories, tags, and outbound Email logs
+  remain unchanged until the user manually sends.
+- [ ] On an automated RMM/status notification where AI recommends no reply, click Draft reply and
+  confirm the composer body stays unchanged while the no-reply reason appears as advisory status.
+- [ ] Write rough text, add optional guidance, click Improve/Shorten/Warmer/Norwegian, and confirm
+  only the composer body changes.
+- [ ] Confirm AI composer controls are hidden or denied for users without Send access, for disabled
+  Mail AI runtime with no available Email/default agent, and for Forward/new Compose modes.
+- [ ] Check a message with attachments and confirm AI output does not reveal attachment content or
+  attachment filenames.
+- [ ] Check desktop and mobile widths and confirm the AI instruction field/buttons wrap inside the
+  composer toolbar without overlapping editor, attachment controls, or Send/Cancel buttons.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-016 - Email Mail AI Summary
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mail-ai-summary.md`,
+`HR-2026-08-12-015`, `HR-2026-08-12-018`, and `HR-2026-07-29-012`
+
+Scope: `/tech/mail` now exposes a read-only AI summary action for an authorized selected message
+when the signed-in user has a selected Email agent or global fallback agent and Integration policy
+readiness allows that agent/model runtime. The AI request includes bounded authorized message text
+and mailbox metadata, excludes raw source, HTML, attachment contents, and attachment filenames, and
+returns advisory summary, key points, questions, action items, suggested labels, urgency,
+reply-needed signal, and provenance. The feature does not send mail, draft replies, move messages,
+change Taxonomy, create Tickets or Tasks, create rules, or run external tools.
+
+Deployment actions: deploy the code, run `php artisan optimize:clear`, run `php artisan view:cache`,
+and sync Email Knowledge with `php artisan knowledge:sync-docs --module=Email --push`. No migration,
+permission seed, queue restart, scheduler change, SMTP/IMAP write, or frontend build is required.
+Admins must separately activate Integration AI policy/provider/model governance, normally through AI
+Settings **Activate AI**.
+
+Risks: Mail AI must not leak unauthorized mailbox content, raw source, HTML, attachment content,
+attachment names, secrets, or mailbox data outside the selected user's View grants. The output must
+remain advisory and non-mutating. If no Email/default agent is available, the action must stay
+hidden or warn. Direct Livewire calls must recheck readiness and mailbox access server-side.
+
+Automated verification: focused Mail AI runtime regressions pass with 2 tests and 9 assertions, and
+the focused standard-activation runtime regression passes with 1 test and 5 assertions. Full
+`EmailModuleTest.php` passes with 97 tests and 775 assertions, and `InboundAutomationTest.php`
+passes with 14 tests and 81 assertions. Full `IntegrationModuleTest.php` passes with 49 tests and
+486 assertions. Integration AI telemetry passes with 5 tests and 72 assertions, and the structured
+AI executor suite passes with 10 tests and 90 assertions. PHP syntax checks pass for
+`SummarizeEmailWithAi`, `AssistEmailComposerWithAi`, `MailAiAgentRuntime`,
+`AiOutboundPolicyGuard`, `ActivateStandardAiRuntime`, `MailWorkspace`, `ConfigController`, and the
+affected feature test files.
+`php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge sync, Integration Knowledge
+sync, default-queue worker passes, and `php artisan queue:failed` pass. Knowledge sync and the
+failed-jobs check required unsandboxed execution because sandboxed Artisan could not connect to Dev
+MySQL. `git diff --check` reports only pre-existing CRLF working-copy warnings in unrelated files.
+One old `economy` queue job from 2026-07-17 remains and was intentionally not processed as part of
+this Mail AI slice.
+
+Human checks:
+
+- [ ] In Integration/Admin, confirm a default Email agent or global fallback agent is active and
+  available to the user before using Mail AI.
+- [ ] Open Email Sync & Cache Settings, choose a Default Email agent or leave the field blank, save,
+  and confirm the card shows the global fallback agent without a structured workload override.
+- [ ] Confirm Mail AI controls stay hidden while the selected/default agent is denied by Integration
+  policy, for example `model_governance_missing`, and appear only after AI Settings **Activate AI**
+  completes the model/provider policy.
+- [ ] Open `/tech/mail`, select an authorized message, and confirm the AI summary icon appears when
+  the runtime is ready.
+- [ ] Generate a summary and confirm the panel shows summary, key points/questions/action items,
+  suggestions, urgency, reply-needed state, and provenance without changing read state, provider
+  flags, folders, category/tags, Tickets, Tasks, rules, or outbound Email logs.
+- [ ] Confirm the same user cannot see or summarize a mailbox without View access.
+- [ ] Remove/disable available Email/default agents, then confirm the AI icon disappears and direct
+  action attempts show a warning.
+- [ ] Check a message with attachments and confirm the summary does not reveal attachment content or
+  attachment filenames.
+- [ ] Check desktop and mobile widths and confirm the AI summary panel does not overlap the command
+  bar, message header, conversation list, or reading pane.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-015 - Email Mail Personal Simple Rules
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mail-personal-simple-rules.md`, and
+`docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`
+
+Scope: `/tech/mail` More -> Add rule now supports personal owner simple rules with matched rule
+history, safe condition/action subsets, `personal_simple` rule kind, owner-scoped published versions,
+and personal rule execution for personal mailboxes that do not run legacy Ticket ingress. Shared and
+system mailbox rule managers are redirected to the Admin rule builder with selected mailbox and
+sender context, while Admin and API rule lists remain admin-managed only.
+
+Deployment actions: deploy the code, run `php artisan migrate --force`, run
+`php artisan optimize:clear`, run `php artisan view:cache`, sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`, and restart queue workers if Email polling
+or notifications run through workers. Migration
+`2026_08_12_131000_add_personal_simple_email_rules` is additive and does not call IMAP/SMTP, send
+mail, re-run rules, move provider messages, create Tickets, or create Signals.
+
+Risks: personal rules must not affect shared/system mailboxes, must not create Tickets or Signals,
+must not send mail, call webhooks, permanently delete provider mail, or bypass mailbox owner
+authorization. Provider moves must still run through the remote-operation ledger, Admin/API rule
+surfaces must not expose personal rules, and repeated processing must stay idempotent.
+
+Automated verification: Dev migration status confirms
+`2026_08_12_131000_add_personal_simple_email_rules` ran in batch 77. Focused personal-rule
+regression passed with 3 tests and 28 assertions. Broader
+`HOME=/tmp php artisan test app/Modules/Email/Tests/Feature/EmailModuleTest.php
+app/Modules/Email/Tests/Feature/InboundAutomationTest.php --compact` passed with 100 tests and 759
+assertions. `HOME=/tmp php artisan test
+app/Modules/Notification/Tests/Feature/InboundEmailWebPushNotificationTest.php --compact` passed
+with 7 tests and 34 assertions. PHP syntax checks passed for the new action, service, migration,
+model, publisher, job, Livewire component, Admin controller, and Email feature test file.
+`php artisan optimize:clear`, `php artisan view:cache`, Email Knowledge sync with BookStack push
+queueing, one default queue worker pass, and `php artisan queue:failed` passed. After the Admin rule
+builder layout polish, `php artisan view:cache` passed again and the focused Admin rule create tests
+passed with 3 tests and 26 assertions.
+
+Human checks:
+
+- [ ] Open `/tech/mail` as the owner of a personal mailbox, select a personal Inbox message, and
+  confirm More -> Add rule opens the personal rule modal with rule history.
+- [ ] Create a move rule to a same-account selectable folder, then receive or simulate matching
+  future personal mail and confirm it leaves Inbox and appears in the target folder.
+- [ ] Confirm a non-owner, or a user without mailbox Organize access, cannot see or create the
+  personal rule action.
+- [ ] On a shared or system mailbox, confirm a user with `email.rule_manage` is sent to the Admin
+  builder with mailbox and sender prefilled.
+- [ ] Open `/tech/admin/settings/email/rules/create` directly and confirm the Email Admin side menu
+  is visible, the examples panel is in a card, and the rule form fills the content width.
+- [ ] On a shared or system mailbox, confirm a user without `email.rule_manage` does not see the
+  Add rule action.
+- [ ] Confirm personal rules are not listed in `/tech/admin/settings/email/rules` or
+  `/api/v1/email/rules`.
+- [ ] Check desktop and mobile widths for the personal rule modal and More menu.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-014 - Email Mail Reply All, New Compose, And Move-To-Folder
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mail-reply-all-new-compose.md`, and
+`docs/feature-slices/2026-08-12-email-mail-move-to-folder.md`
+
+Scope: `/tech/mail` now supports Reply All from a selected message, new outbound compose from the
+message-list header, one shared rich HTML composer partial with From/To/Cc/Subject/body/attachments,
+mode-specific outbound Email logs, and More-menu Move to folder for any same-account selectable
+provider folder. The mailbox placement operations API also accepts `operation=move` with
+`target_folder_id`. Add-rule behavior moved to HR-2026-08-12-015.
+
+Deployment actions: deploy the code, run `php artisan optimize:clear`, run `php artisan view:cache`,
+and sync Email Knowledge with `php artisan knowledge:sync-docs --module=Email --push`. No migration,
+permission seed, scheduler change, queue restart, or frontend build is required.
+
+Risks: Reply All must not send to the selected mailbox's own address or duplicate recipients; new
+compose must not grant read access to send-only mailboxes; Move to folder must not allow moving into
+another account's folder or a nonselectable provider folder; and provider moves must keep folder
+state authoritative by hiding the source placement and projecting the returned target UID only when
+the provider acknowledges it.
+
+Automated verification: focused new regression run passes with 4 tests and 52 assertions. Focused
+Reply All visibility regression passes with 2 tests and 20 assertions. Full `EmailModuleTest.php`
+passes with 83 tests and 650 assertions, and `InboundAutomationTest.php` passes with 14 tests and 81
+assertions. PHP syntax checks, `php artisan optimize:clear`, `php artisan view:cache`, Email
+Knowledge sync, a bounded queue worker pass, and `php artisan queue:failed` pass. The failed-jobs
+check required unsandboxed execution because sandboxed Artisan could not connect to Dev MySQL.
+
+Human checks:
+
+- [ ] Open `/tech/mail` as a user with Send access, click Compose from the message-list header, and
+  confirm the rich composer opens even when no message is selected.
+- [ ] Send a new internal test email with From, To, Cc, Subject, rich formatting, and an attachment;
+  confirm SMTP acceptance in the UI and that inbox receipt still needs real mailbox confirmation.
+- [ ] Select a message with To/Cc participants, click Reply all, and confirm the selected mailbox
+  itself is excluded while other To/Cc recipients are deduplicated.
+- [ ] Select a one-to-one message where only the sender and the selected mailbox are involved and
+  confirm Reply all is not visible.
+- [ ] Move a selected message from More -> Move to folder into a custom provider folder and confirm
+  it disappears from the Inbox view and appears when that folder is selected.
+- [ ] Confirm Add-rule behavior under HR-2026-08-12-015; this slice no longer owns that control.
+- [ ] Check desktop and mobile widths and confirm Compose, Reply all, More, Trash, move panel, and
+  composer controls do not overlap or push text outside their containers.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-013 - Email Mail List Filter Pagination And Sidebar Polish
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-livewire-mail-workspace-personal-state.md`, and
+`HR-2026-08-12-006`
+
+Scope: `/tech/mail` now keeps the normal Work sidemenu above the Mail-specific sidebar navigation,
+moves Search into the message-list column, adds a compact message-list filter selector for all,
+personal unread, mailbox unread, flagged, attachment, and Ticket-linked mail, and constrains the
+message-list pagination so the result summary and page buttons wrap inside the list column.
+
+Deployment actions: deploy the code, run `php artisan optimize:clear`, run `php artisan view:cache`,
+and sync Email Knowledge with `php artisan knowledge:sync-docs --module=Email --push`. No migration,
+permission seed, scheduler change, queue restart, or frontend build is required.
+
+Risks: list filters must stay inside the current authorized mailbox/folder/view scope; Search must
+continue to apply only to authorized content; pagination must not cross into the reading pane; and
+the restored Work sidemenu must not hide the Mail Views, Mailboxes, or Folders navigation.
+
+Automated verification completed 2026-08-12: focused Mail workspace/sidebar/filter tests pass with
+5 tests / 88 assertions, and the full Email module feature test passes with 78 tests / 593
+assertions. Email Knowledge sync, one default queue worker pass, failed-job check,
+`php artisan optimize:clear`, and Blade cache compilation completed successfully. These automated
+checks do not replace the human checks below.
+
+Human checks:
+
+- [x] Open `/tech/mail` and confirm the left sidebar shows the normal Work sidemenu plus Mail Views,
+  Mailboxes, and Folders.
+- [x] Confirm Search and Filter are inside the message-list column, not above both Mail columns.
+- [x] Use the list filter for Mailbox unread, Flagged, and Has attachments and confirm the message
+  list changes without exposing mail outside the current account/folder/view scope.
+- [x] Open a mailbox with enough messages for pagination and confirm the result summary plus page
+  buttons wrap inside the list column without crossing into the reading pane.
+- [x] Check desktop and mobile widths and confirm the list toolbar, filter select, pagination,
+  message list, and reading pane do not overlap.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein approved the Mail list filter, pagination, and sidebar polish in the Codex task.
+
+### HR-2026-08-12-012 - Email Automatic Polling Carbon 3 Interval Regression
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev; production verification required after deploy
+Related: `app/Modules/Email/Jobs/PollActiveEmailAccounts.php`
+
+Scope: `PollActiveEmailAccounts` now compares the cached `email_last_poll_run` heartbeat with
+absolute elapsed time. Carbon 3 returns signed differences by default, so an old heartbeat previously
+made the interval check evaluate as still inside the interval and skipped automatic fetch dispatch
+forever. Manual `Check now` continued to work because it does not use this scheduler interval gate.
+
+Deployment actions: deploy the code, run `php artisan optimize:clear`, restart the queue worker so it
+loads the new job code, and keep the once-per-minute Laravel scheduler active. No migration,
+permission seed, frontend build, or provider configuration change is required.
+
+Risks: production may still need an explicit queue-worker restart or cache clear before the new job
+code is active; a stale heartbeat alone should recover on the next queued `email.poll` job after the
+fix, but account credentials, IMAP errors, and queue failures remain separate operational causes.
+
+Automated verification completed 2026-08-12: focused automatic poll tests pass with 3 tests / 8
+assertions, including a Carbon 3 regression where a heartbeat 10 minutes in the past still queues
+fetch jobs. The full Email module feature test passes with 77 tests / 557 assertions. These
+automated checks do not replace the production checks below.
+
+Human checks:
+
+- [ ] Deploy the fix to production and restart the production queue worker.
+- [ ] Confirm `schedule:run` continues to execute once per minute.
+- [ ] Confirm a queued `email.poll` job updates `email_last_poll_run` after deploy.
+- [ ] Confirm automatic polling queues `FetchImapAccount` without pressing `Check now`.
+- [ ] Confirm at least one active mailbox records a fresh successful fetch, or records a real
+  account/provider error instead of silently skipping.
+- [ ] Confirm `/tech/admin/settings/email/config` no longer reports a stale scheduler heartbeat after
+  the next normal polling window.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-011 - Email Mail Taxonomy Classification
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mail-taxonomy-classification.md`, and `HR-2026-08-12-010`
+
+Scope: `/tech/mail` now separates provider mailbox flags from Nexum classification. Flagged mail has
+a visible yellow flag treatment in the message list and reading pane while the provider flag action
+stays in More actions. The selected mail has a More-actions classification surface that reuses
+Taxonomy categories and tags: one category, multiple tags, visible chips while editing, existing tag
+suggestions, a clear action, and guarded creation of unknown tag definitions only for users with
+`taxonomy.manage_tags`. Assignments are Email-owned and scoped to the selected account and message
+as a compatibility step until the later account-scoped conversation model is delivered.
+
+Deployment actions: deploy the code, run `php artisan migrate`, run `php artisan optimize:clear`,
+and sync Email Knowledge with `php artisan knowledge:sync-docs --module=Email --push`. No new
+permission seed, scheduler change, queue restart, or frontend build is required.
+
+Risks: classification must not be confused with provider folders, provider flags, or Ticket
+category/tag routing; users without mailbox Organize access must not mutate shared classification;
+unknown tag creation must stay behind Taxonomy tag-management permission; and the account/message
+compatibility scope must be migrated deliberately when full conversation classification arrives.
+
+Automated verification completed 2026-08-12: migration
+`2026_08_12_130000_create_email_message_classifications_table` ran in batch 76; after the More-menu
+classification refinement, focused Mail classification/provider tests pass with 4 tests / 59
+assertions and the full Email module feature test passes with 77 tests / 578 assertions. The
+Taxonomy feature test previously passed with 6 tests / 43 assertions. `php artisan optimize:clear`,
+Blade cache compilation, Email Knowledge sync, one default queue worker pass, and failed-job check all
+completed without errors. These automated checks do not replace the human checks below.
+
+Human checks:
+
+- [ ] Open a flagged mail item in `/tech/mail` and confirm the list row and reading pane make the
+  provider flag visually obvious.
+- [ ] Confirm category/tag controls are hidden during normal reading, then open More actions and use
+  **Category and tags** to show the editor.
+- [ ] Assign one existing Taxonomy category and at least two existing tags to a selected message and
+  confirm the category/tag chips appear while editing and in the message list.
+- [ ] Clear the classification and confirm category/tag chips are removed without changing provider
+  read state, provider flag state, folder placement, Ticket link, or personal `Unread for me`.
+- [ ] As a user with View but not Organize for the mailbox, confirm the classification editor is not
+  visible in More actions and classification cannot be changed.
+- [ ] If using a user with `taxonomy.manage_tags`, enter a new tag name and confirm it is created in
+  system Taxonomy and assigned to the mail. With an ordinary user, confirm unknown tag names are
+  rejected.
+- [ ] Confirm existing provider `Flag in mailbox` / `Unflag in mailbox` still updates only the
+  mailbox flag and does not add or remove categories/tags.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-010 - Email Mail Command Bar Triage Actions
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mail-command-bar-triage-actions.md`, `HR-2026-08-12-009`,
+and `HR-2026-08-12-008`
+
+Scope: The `/tech/mail` reading-pane command bar now has one visible personal `Mark read` action,
+compact icon actions for Spam, Ticket, and Trash, and a More menu for provider read/unread,
+flag/unflag, archive, and personal mark-unread when applicable. Spam reuses Email's spam rule/tag
+action and archives the provider placement when a selectable Archive folder exists. Ticket reuses
+Ticket's inbound-email creation/link action when the user has `ticket.create`; already linked email
+shows an Open Ticket icon for users with `ticket.view`. Unimplemented Move-to-folder and generic
+Add-rule controls remain hidden.
+
+Deployment actions: deploy the code, run `php artisan optimize:clear`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. No new migration, permission seed, scheduler
+change, queue restart, or frontend build is required for this slice.
+
+Risks: the compact icon bar must remain understandable with tooltips/screen-reader labels; personal
+read state must not accidentally change provider `Seen`; provider read/flag/archive must remain
+available in More; Spam partially depends on the account having a selectable Archive folder; Ticket
+action must not appear without `ticket.create` and mailbox Organize access.
+
+Automated verification: focused Mail command-bar, Spam, Ticket, and provider action regressions pass
+with 6 tests and 51 assertions on Dev. The full Email feature suite passes with 73 tests and 532
+assertions. The broader targeted Email, inbound automation, Notification inbound email, Integration,
+and Warroom package passes with 147 tests and 1,138 assertions. PHP syntax checks and Blade cache
+compilation pass. Email Knowledge sync queued a BookStack push; the default queue was empty when
+checked afterward, `optimize:clear` passed, and failed-job checks report no failed jobs.
+
+Human checks:
+
+- [ ] As a user with mailbox View/Organize/Send access, open `/tech/mail`, select an unread message,
+  and confirm only one visible read action appears: `Mark read`.
+- [ ] Click `Mark read` and confirm it changes only `Unread for me`; provider `Seen` remains
+  unchanged until More action is used.
+- [ ] Open More and confirm provider read/unread, flag/unflag, and archive actions are still
+  available there when authorized.
+- [ ] Confirm Trash is visible as an icon-only action and still asks for confirmation before moving
+  the provider placement to Trash.
+- [ ] Use the Spam icon on a harmless test message and confirm the spam rule/tag updates and the
+  message archives when an Archive folder is available.
+- [ ] Use the Ticket icon on an unlinked test email as a user with `ticket.create`; confirm a Ticket
+  is created/linked and the linked email then shows Open Ticket for users with `ticket.view`.
+- [ ] As a user without `ticket.create`, confirm the Ticket create icon is absent and direct action
+  invocation is rejected.
+- [ ] Confirm generic Move-to-folder and Add-rule controls are not visible yet.
+- [ ] Check desktop and mobile widths and confirm icons, More menu, and composer do not overlap.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-009 - Email Mail Forward And Rich HTML Composer
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mail-forward-rich-html-composer.md`, and
+`HR-2026-08-12-008`
+
+Scope: The `/tech/mail` reading pane now exposes Forward alongside Reply for users with global Email
+view/manage permission, effective mailbox View/Send access, and an active SMTP configuration. Reply
+and Forward share one Mail-owned rich HTML composer with To, Cc, Subject, formatting controls, HTML
+source mode, and up to five new attachments. Reply preserves In-Reply-To/References headers; Forward
+starts a new outbound message with a forwarded-message body block and does not automatically reattach
+original inbound attachments. Successful sends create idempotent outbound Email logs using distinct
+`MAIL_REPLY_SENT` and `MAIL_FORWARD_SENT` codes.
+
+Deployment actions: deploy the code, run `php artisan optimize:clear`, and sync Email Knowledge with
+`php artisan knowledge:sync-docs --module=Email --push`. No new migration, permission seed, queue
+restart, scheduler change, or frontend build is required for this slice.
+
+Risks: rich editor browser behavior must stay usable in the Livewire workspace; pasted or source-mode
+HTML must be sanitized before SMTP; Forward must not leak or automatically resend unsafe original
+attachments; users without mailbox Send access must not see or invoke sending controls; SMTP success
+is logged but still does not prove provider Sent placement reconciliation.
+
+Automated verification: focused Reply/Forward composer regressions pass with 5 tests and 67
+assertions on Dev. The broader targeted Email, inbound automation, Notification inbound email,
+Integration, and Warroom package passes with 144 tests and 1,119 assertions. PHP syntax checks,
+Blade cache compilation, `optimize:clear`, Email Knowledge sync, BookStack default queue processing,
+and failed-job checks pass.
+
+Human checks:
+
+- [ ] As a user with mailbox View and Send access, open `/tech/mail`, select a message, and confirm
+  both Reply and Forward are visible.
+- [ ] Open Reply, format text with bold/italic/list/link controls, switch to HTML mode and back, add
+  one harmless attachment, send to an internal test recipient, and confirm the recipient sees the
+  formatted message.
+- [ ] Open Forward, confirm To starts blank, Subject starts with `Fwd:`, and the original sender,
+  date, subject, recipients, and body appear in the forwarded-message block.
+- [ ] Forward a message that has an original inbound attachment and confirm the original attachment
+  is not automatically resent unless a new attachment is explicitly added.
+- [ ] Confirm outbound `email_logs` rows use `MAIL_REPLY_SENT` / `MAIL_FORWARD_SENT`, include
+  account, source message, recipients, attachment count, RFC Message-ID, and idempotency key.
+- [ ] Confirm Reply and Forward do not change provider `Seen`, personal `Unread for me`, folders,
+  Ticket links, Signals, or customer-portal visibility.
+- [ ] As a user with mailbox View but without Send, confirm Reply and Forward are absent and direct
+  Livewire invocation shows the Send-access warning.
+- [ ] Check desktop and mobile widths and confirm the composer, toolbar, attachment badges, and
+  message reader do not overlap.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-008 - Email Mail Reply Composer With Attachments
+
+Status: Pending
+Added: 2026-08-12
+Environment: Dev, then production after merge
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mail-reply-compose-attachments.md`, and the accepted
+2026-08-11 Email ADR set
+
+Scope: first Mail reply composer inside `/tech/mail`. The update adds a Reply button for selected
+mailbox placements when the actor has global Email view/manage permissions plus effective mailbox
+View and Send access. The composer exposes To, Cc, Subject, Message, and up to five attachments.
+Replies send synchronously through the selected mailbox account's SMTP settings, preserve
+In-Reply-To/References where source headers exist, and write an idempotent outbound Email log. This
+slice does not add drafts, Reply All, forward, new-message compose, provider Sent reconciliation,
+Ticket evidence capture, API multipart sending, or automatic replies.
+
+Deployment actions: deploy code, run `php artisan migrate --force` to apply
+`2026_08_12_125000_add_email_log_idempotency_key`, run `php artisan optimize:clear`, restart queue
+workers if Email polling/notifications run through workers, and sync Email Knowledge. Dev migration
+already ran after the Mail workspace migration.
+
+Risks: Reply must not appear for users without mailbox Send access; duplicate browser submits must
+not send duplicate SMTP messages after success; attachment limits must remain bounded; reply headers
+must not strip the source conversation chain; and this slice must not imply provider Sent placement,
+Ticket capture, or portal publication before those later guarded slices exist.
+
+Automated verification: focused reply regression passed with `HOME=/tmp php artisan test
+app/Modules/Email/Tests/Feature/EmailModuleTest.php --filter=reply` at 8 tests and 44 assertions.
+
+Human checks:
+
+- [ ] Open `/tech/mail` as a user with View and Send grant for a real SMTP-enabled mailbox, select a
+  message, and confirm the Reply button appears in the reading pane.
+- [ ] Open Reply and confirm To defaults to the source sender, Subject defaults to `Re: ...`, Cc is
+  editable, and the message body can be entered without layout overlap on desktop and mobile widths.
+- [ ] Attach one small harmless file and send to an internal test recipient; confirm the recipient
+  receives the body and attachment.
+- [ ] Confirm the outbound `email_logs` row has `code=MAIL_REPLY_SENT`, the selected account,
+  source message, recipient metadata, attachment count, RFC Message-ID, and an idempotency key.
+- [ ] Confirm the source message remains in the same provider folder and that personal
+  `Unread for me`, provider `Seen`, Ticket links, and Signal records do not change merely because a
+  reply was sent.
+- [ ] Test a user with View but without Send grant and confirm the Reply button is absent.
+
+Reviewer:
+Reviewed date:
+Result / notes:
+
+### HR-2026-08-12-007 - Email Provider Mailbox Actions And API
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Dev, then production after merge
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-provider-mailbox-actions-api.md`, and the accepted 2026-08-11
+Email ADR set
+
+Scope: provider-authoritative mailbox actions for `/tech/mail` and API parity. The update adds
+explicit provider `Seen`/`Unseen`, `Flag`/`Unflag`, `Archive`, and normal provider `Trash` actions
+for selected mailbox placements when the signed-in user has `email.inbox_manage` and an effective
+mailbox Organize grant. The same operations are exposed through
+`POST /api/v1/email/mailbox/placements/{placement}/operations`. Each operation is recorded through
+the idempotent remote-operation ledger and updates local placement projection only after IMAP
+acknowledgement. Permanent provider delete, arbitrary custom-folder move, bulk actions, and
+retry/cancel UI remain out of scope.
+
+Deployment actions: deploy code, run `php artisan optimize:clear`, and sync Email Knowledge. No
+migration, permission seed, queue restart, scheduler change, or frontend build is required for this
+slice.
+
+Risks: provider state is shared across users and must stay clearly separate from personal `Unread for
+me`; view-only mailbox grants must not get provider mutation controls or API success; archive/trash
+must not pretend success before IMAP acknowledgement; and permanent delete/custom move controls must
+not be visible until their separate guarded slices exist.
+
+Automated verification: `HOME=/tmp php artisan test app/Modules/Email/Tests/Feature/EmailModuleTest.php`
+passes with 65 tests and 446 assertions. Blade cache compilation and API route listing pass.
+
+Human checks:
+
+- [x] Open `/tech/mail` as an Organize-authorized technician, select a real provider-backed INBOX
+  message, and confirm `Mailbox read` / `Mailbox unread`, `Mark read in mailbox` /
+  `Mark unread in mailbox`, `Flag` / `Unflag`, and available `Archive` / `Move to Trash` controls are
+  visible.
+- [x] Use mailbox read/unread and confirm provider `Seen` changes while `Unread for me` remains a
+  separate personal state.
+- [x] Use flag/unflag and confirm the mailbox flag badge/control updates without changing personal
+  unread state.
+- [x] Archive or move a test message to Trash and confirm the message leaves the current Inbox view
+  only after a success message, with no permanent delete control shown.
+- [x] Test a view-only mailbox grant and confirm provider mutation controls are absent in UI and API
+  calls return forbidden.
+- [x] Call the API endpoint with a token that has `email.update` and confirm a succeeded
+  `email_remote_operations` row is returned/recorded for an authorized placement.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein confirmed after reconnecting that the pending Mail review checks had been
+approved before the power loss. Approval recorded from the Codex task message on 2026-08-12.
+
+### HR-2026-08-12-006 - Email Livewire Mail Workspace And Personal State
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Dev, then production after merge
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-livewire-mail-workspace-personal-state.md`, and the accepted
+2026-08-11 Email ADR set
+
+Scope: first visible technician Mail workspace under `/tech/mail`. The update adds module-owned
+Livewire Mail content and sidebar components over provider mailbox placements, sidebar account/folder
+navigation, search, sanitized reading pane, attachment metadata, safe Ticket links, operational
+navigation to Mail, and Nexum-owned per-user opened/read state. Opening a message records an opened
+receipt but does not clear `Unread for me` and does not set provider `Seen`; only explicit personal
+read/unread controls change the signed-in user's state. The legacy `/tech/inbox` and Email Inbox API
+remain available and scoped to unrouted INBOX work.
+
+Deployment actions: deploy code, run `php artisan migrate --force` to apply
+`2026_08_12_124000_add_email_message_user_states`, run `php artisan optimize:clear`, restart queue
+workers if Email polling/notifications run through workers, and sync Email Knowledge. Dev migration
+already ran in batch 74.
+
+Risks: Mail must not leak private/shared mailbox content outside explicit mailbox grants; personal
+`Unread for me` must not be confused with provider `Seen`; opening a message must not hide work for
+the user or other users; legacy `/tech/inbox`, Ticket email routing, and inbound notification behavior
+must remain unchanged.
+
+Automated verification: `HOME=/tmp php artisan test app/Modules/Email/Tests/Feature/EmailModuleTest.php
+--compact` passed at 61 tests and 407 assertions, including new
+workspace authorization, folder filtering, opened receipt, and personal read/unread regressions.
+`HOME=/tmp php artisan test app/Modules/Email/Tests/Feature/InboundAutomationTest.php --compact`
+passed at 14 tests and 81 assertions. `HOME=/tmp php artisan test
+app/Modules/Warroom/Tests/Feature/WarroomDashboardTest.php --compact` passed at 6 tests and 32
+assertions, and `HOME=/tmp php artisan test app/Modules/Warroom/Tests/Feature/WarroomMyDayTest.php
+--compact` passed at 1 test and 10 assertions. `php artisan view:cache` and
+`php artisan optimize:clear` completed successfully. Email Knowledge sync processed 1 chapter and 1
+article with BookStack push queued; one default queue worker pass completed without error output.
+After the sidebar refinement, the focused Mail workspace tests passed again at 3 tests and 35
+assertions, the full Email feature file passed at 61 tests and 418 assertions, and Blade cache plus
+optimize-clear completed successfully.
+
+Human checks:
+
+- [x] Open `/tech/mail` as a Tech user with access to at least one shared mailbox and confirm Mail is
+  visible from Work navigation, top Work dropdown, Warroom lanes, and My Day actions.
+- [x] Confirm Views, Mailboxes, and Folders are in the left sidebar, the content area only shows
+  search, message list, and reading pane, and the sidebar `Unread` view has a count badge.
+- [x] Confirm provider-unread badges remain labelled separately from personal unread state.
+- [x] Open one unread message and confirm it remains `Unread for me` until the explicit `Mark read
+  for me` action is used.
+- [x] Mark the message read for the current user, refresh `/tech/mail`, and confirm it leaves the
+  default unread view but still appears under `Inbox`.
+- [x] Mark it unread again and confirm it returns to the default unread view without changing provider
+  read state in the source mailbox.
+- [x] Switch account and folder filters, including Sent/Archive/custom folders if discovered, and
+  confirm only mailboxes granted to the user are visible.
+- [x] Open a message linked to a Ticket and confirm the Mail pane shows a valid Ticket link when the
+  Ticket exists.
+- [x] Check desktop and mobile widths for the three-pane workspace and confirm search, lists, badges,
+  and message body text do not overlap.
+- [x] Re-open legacy `/tech/inbox` and confirm unrouted Inbox triage still behaves as before.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein approved the updated Mail workspace after the sidebar refinement and removal of
+the redundant top badges.
+
+### HR-2026-08-12-005 - Email Deterministic Rule Versions And API Foundation
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Dev, then production after merge
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-deterministic-rule-versions-api-foundation.md`, and
+`docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`
+
+Scope: first implementation slice for deterministic Email rules and API. The update adds immutable
+published rule versions, idempotent rule execution attempts, version backfill for existing Email
+rules, automatic publishing on Admin create/update/toggle, runtime execution from the published
+snapshot where available, compatibility for programmatic legacy rules without a version, a
+read/preview API under `/api/v1/email/rules`, and `email.rules.read` API ability metadata.
+
+Deployment actions: deploy code, run `php artisan migrate --force`, run `php artisan optimize:clear`,
+restart queue workers if Email polling/notifications run through workers, and sync Email plus
+Integration Knowledge. On Dev, `2026_08_12_123000_add_email_rule_versions_and_execution_attempts`
+was applied after the admin sync/cache settings migration. The migration does not call providers,
+send mail, re-run rules, import messages, create Tickets, or create Signals.
+
+Risks: runtime must not read mutable rule form state when a published snapshot exists; repeated
+processing must not replay successful side effects for the same message/rule-version; preview must
+not mutate mail, tags, Tickets, Signals, or execution history; API token abilities must remain a
+ceiling and must not bypass Email rule-management permission or mailbox View access; and current
+preclassification, Signal handoff, Ticket-key linking, default Ticket routing, and account-scoped
+rules must continue.
+
+Automated verification: Dev migration status confirms
+`2026_08_12_123000_add_email_rule_versions_and_execution_attempts` ran in batch 73. Focused
+verification passes with `HOME=/tmp php artisan test
+app/Modules/Email/Tests/Feature/EmailModuleTest.php --compact` at 58 tests and 383 assertions plus
+`HOME=/tmp php artisan test app/Modules/Email/Tests/Feature/InboundAutomationTest.php --compact` at
+14 tests and 81 assertions. Broader `HOME=/tmp php artisan test app/Modules/Email/Tests
+app/Modules/Notification/Tests --compact` passes with 120 tests and 709 assertions. Coverage includes
+version publishing, idempotent execution attempts, read-only API preview, mailbox access, provider
+folder placements, inbound automation, preclassification, trusted-auth validation, Signal handoff,
+Ticket routing, and inbound Email notifications. `php artisan view:cache`, `php artisan
+optimize:clear`, Email and Integration Knowledge sync with BookStack push queueing, two default queue
+worker passes, `php artisan queue:failed`, and `git diff --check` pass. `git diff --check` reports
+only pre-existing CRLF working-copy warnings in unrelated Client/Commercial/CustomerPortal/Integration
+files and an older legal-document migration.
+
+Human checks:
+
+- [x] Open `/tech/admin/settings/email/rules` and confirm each Admin-saved rule shows a published
+  version badge.
+- [x] Create or update a harmless tag/archive test rule, save it, and confirm the rule remains
+  understandable and scoped to selected shared/system Ticket-ingress mailboxes.
+- [x] Use a test API token with `email.rules.read` and confirm `GET /api/v1/email/rules` returns
+  version metadata without exposing account secrets or raw message content.
+- [x] Preview a rule against an authorized message and confirm it reports would-run actions without
+  changing message state, tags, Ticket links, Signals, or hit count.
+- [x] Confirm a token without `email.rules.read`, a user without Email rule-management permission, or
+  a user without mailbox View access is denied without mailbox enumeration.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein confirmed after reconnecting that the pending Mail review checks had been
+approved before the power loss. Approval recorded from the Codex task message on 2026-08-12.
+
+### HR-2026-08-12-004 - Email Admin Sync And Cache Settings Clarity
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Dev, then production after merge
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md` and
+`docs/feature-slices/2026-08-12-email-admin-sync-cache-settings-clarity.md`
+
+Scope: Email admin config clarity under the Mail full-client RFC. The update renames
+`/tech/admin/settings/email/config` to Email Sync & Cache Settings, groups the page around provider
+sync, local mail cache, legacy cleanup, attachment import policy, and health, moves authserv and
+receiving-hop controls into Advanced Automation Trust, changes fresh installs so global legacy
+server cleanup is off by default, and introduces a `legacy_default` account cleanup policy so old
+global Ticket-ingest cleanup can be preserved without making ordinary `local_only` IMAP accounts
+delete provider mail.
+
+Deployment actions: deploy code, run `php artisan migrate --force`, run `php artisan optimize:clear`,
+restart queue workers if Email polling/notifications run through workers, and sync Email Knowledge.
+On Dev, `2026_08_12_122000_preserve_legacy_email_cleanup_policy` was applied after the folder and
+placement migration. The migration changes no schema and updates account cleanup policy only when
+the legacy global cleanup setting was already enabled.
+
+Risks: the page must not imply that Nexum replaces Proxmox Mail Gateway or DNS mail security; fresh
+Mail-client configuration must not delete provider mail after import; existing installations that
+intentionally used the old global cleanup switch must keep an explicit preserved policy; trusted
+authserv/receiving-hop validation must still fail closed; and ordinary admins should not have to
+understand header-authentication internals before configuring normal IMAP sync.
+
+Automated verification: Dev migration status confirms
+`2026_08_12_122000_preserve_legacy_email_cleanup_policy` ran in batch 72. Focused verification passes
+with `HOME=/tmp php artisan test app/Modules/Email/Tests/Feature/InboundAutomationTest.php
+app/Modules/Email/Tests/Feature/EmailModuleTest.php --compact` at 70 tests and 433 assertions,
+including the config page copy, unchecked legacy cleanup default, `legacy_default` account policy
+storage, paired trusted-auth validation, mailbox access, provider folder placements, and inbound
+automation regressions. Broader `HOME=/tmp php artisan test app/Modules/Email/Tests
+app/Modules/Notification/Tests --compact` passes with 118 tests and 678 assertions. `php artisan
+view:cache`, `php artisan optimize:clear`, Email Knowledge sync with BookStack push queueing, one
+default queue worker pass, `php artisan queue:failed`, and `git diff --check` pass. `git diff
+--check` reports only pre-existing CRLF working-copy warnings in unrelated
+Client/Commercial/CustomerPortal/Integration files and an older legal-document migration.
+
+Human checks:
+
+- [x] Open `/tech/admin/settings/email/config` and confirm the page reads as Sync/Cache settings,
+  not a technical inbound-ingest dump.
+- [x] Confirm Provider Sync, Local Cache & Legacy Cleanup, Attachment Import Policy, System Health,
+  and Shortcuts are understandable without editing authserv/receiving-hop values.
+- [x] Confirm Legacy server cleanup is off by default unless the environment intentionally had the
+  old setting enabled.
+- [x] Open Advanced Automation Trust and confirm the copy says Proxmox Mail Gateway, DNS, SPF, DKIM,
+  and DMARC remain the normal mail-security boundary.
+- [x] Open an Email account form and confirm Provider cleanup policy has clear choices, including
+  Keep provider mail on server and Use legacy global cleanup switch.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein confirmed after reconnecting that the pending Mail review checks had been
+approved before the power loss. Approval recorded from the Codex task message on 2026-08-12.
+
+### HR-2026-08-12-003 - Email Server-Authoritative Folders And Placements
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Dev, then production after merge
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-server-authoritative-folders-placements.md`,
+`docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`, and the accepted Email ADR set
+
+Scope: second implementation slice for the Mail full-client RFC. The update adds provider folder
+records, mailbox placement records, a remote-operation ledger, folder discovery during IMAP polling,
+forward-only per-folder baselines, safe multi-folder polling, Inbox-only legacy automation, and
+explicit `/tech/inbox` plus Email Inbox API scoping so non-Inbox folders do not appear in the old
+Inbox surface. Existing `email_messages` remain the compatibility message/content records during the
+shadow period.
+
+Deployment actions: deploy code, run `php artisan migrate --force`, run `php artisan optimize:clear`,
+restart queue workers if Email polling/notifications run through workers, and sync Email Knowledge
+docs. The migration is additive and does not call IMAP/SMTP, send mail, delete mail, mark mail read,
+create Tickets, move provider messages, or re-run rules. On Dev,
+`2026_08_12_121000_add_email_folders_placements_and_remote_operations` was applied in batch 71.
+
+Risks: folder discovery must not overwrite stored UIDVALIDITY baselines before comparison; Sent,
+Archive, Trash, Drafts, Junk, and custom folders must not run Ticket/Sales/Signal ingress; existing
+Inbox/Ticket routing must remain compatible; the old `/tech/inbox` and Email Inbox API must not
+start showing non-Inbox provider cache; raw/attachment paths must not collide when the same UID exists
+in different folders; and remote operation rows must be idempotent because later provider mutation
+workers will rely on those keys.
+
+Automated verification: Dev migration status confirms the new folder/placement/remote-operation
+migration ran in batch 71. `HOME=/tmp php artisan test app/Modules/Email/Tests
+app/Modules/Notification/Tests --compact` passes with 117 tests and 667 assertions after migration,
+including non-Inbox placement storage without inbound automation, Inbox UI/API exclusion of non-Inbox
+messages, first folder discovery baseline without historical import, multi-folder bounded poll
+payloads, changed folder UIDVALIDITY fail-closed behavior, remote-operation idempotency, and inbound
+Email notification regressions. `php artisan view:cache`, `php artisan optimize:clear`, Email
+Knowledge sync with BookStack push queueing, one default queue worker pass, `php artisan
+queue:failed`, and `git diff --check` pass. `git diff --check` reports only pre-existing CRLF
+working-copy warnings in unrelated Client/Commercial/CustomerPortal/Integration files and an older
+legal-document migration.
+
+Human checks:
+
+- [x] Run the migration on Dev and confirm existing accounts have discovered `INBOX` folder rows and
+  placement rows for existing messages.
+- [x] Open `/tech/admin/settings/email/accounts` and confirm each account row shows folder count,
+  INBOX UIDVALIDITY when known, and sync issue count without exposing secrets.
+- [x] Trigger or wait for a poll and confirm first discovery baselines folders without importing old
+  Sent/Archive/Trash history as new Inbox work.
+- [x] Send or identify one genuinely new INBOX mail and confirm it still appears in `/tech/inbox` and
+  existing Ticket routing/rules still behave as expected.
+- [x] Confirm Sent/Archive/Trash/Drafts/custom folder messages do not appear in `/tech/inbox` or the
+  Email Inbox API and do not create Tickets or Signals.
+- [x] Simulate or identify a folder UIDVALIDITY change only in a non-INBOX folder and confirm the
+  account remains usable while that folder shows a sync issue.
+- [x] Confirm no remote provider move/read/delete UI controls are visible from this slice.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein confirmed after reconnecting that the pending Mail review checks had been
+approved before the power loss. Approval recorded from the Codex task message on 2026-08-12.
+
+### HR-2026-08-12-002 - Email Mailbox Access Foundation
+
+Status: Reviewed
+Added: 2026-08-12
+Environment: Dev, then production beta after merge
+Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
+`docs/feature-slices/2026-08-12-email-mailbox-access-foundation.md`, and the four accepted
+2026-08-11 Email ADRs
+
+Scope: first implementation slice for the Mail full-client RFC. The update adds Email account kinds
+for shared, personal, and system mailboxes; one owner for personal mailboxes; explicit user-level
+View, Organize, and Send mailbox grants; a `ticket_ingress_enabled` account policy; rule-to-account
+scope records; scoped Tech Inbox and Email Inbox API reads/actions; manual polling limited to
+mailboxes the actor can organize; inbound notification recipient filtering by the same mailbox access
+decision; and safe personal-mail runtime behavior that stores mail without running legacy
+classification, Email rules, Sales routing, or Ticket routing. Existing shared/system accounts and
+rules are backfilled to preserve current ticket-first behavior for already configured accounts.
+
+Deployment actions: deploy code, run `php artisan migrate --force`, run `php artisan optimize:clear`,
+restart queue workers if Email polling/notifications run through workers, and sync Email and
+Integration Knowledge docs. On Dev, `php artisan migrate` applied
+`2026_08_12_120000_add_email_mailbox_access_foundation`. The migration is additive and does not call
+IMAP/SMTP, send mail, delete mail, mark mail read, create Tickets, or re-run rules.
+
+Risks: incorrect grant backfill could hide existing shared inbox work or expose mailbox content to
+users without an explicit grant; personal accounts must not inherit legacy Ticket ingress or global
+rules; Admin account configuration must remain possible without becoming content access; API tokens
+must remain ceilings rather than full mailbox access; inbound notifications must not leak personal
+mail existence; and existing supplier-order preclassification plus Ticket-key/header/default Ticket
+routing must continue for explicit shared/system intake accounts.
+
+Automated verification: `HOME=/tmp php artisan test app/Modules/Email/Tests
+app/Modules/Notification/Tests` passes with 111 tests and 633 assertions, including scoped Inbox
+UI/API, personal no-Ticket-ingress, Admin grant persistence, account-scoped rules, spam rule scoping,
+existing Ticket routing regressions, and no notification for an inbox subscriber without mailbox
+grant. `php artisan view:cache`, `php artisan optimize:clear`, and `git diff --check` pass; the diff
+check only reports unrelated pre-existing CRLF warnings outside this Email slice. Email Knowledge
+sync processed 1 chapter and 1 article, Integration Knowledge sync processed 1 chapter and 6
+articles, and the Integration module feature test passes with 47 tests and 458 assertions after the
+API ability text update. Both Knowledge sync commands queued BookStack push jobs, queue workers were
+run for the queued pushes, and `queue:failed` reports no failed jobs.
+
+Human checks:
+
+- [x] Run the migration on Dev and confirm existing Email accounts show as Shared with Ticket ingress
+  enabled and visible grant counts.
+- [x] Open `/tech/admin/settings/email/accounts`, edit an existing shared account, save without
+  retyping IMAP/SMTP passwords, and confirm the account still saves.
+- [x] Add or edit a shared mailbox, grant View only to one user and View + Organize to another, then
+  confirm the first can open messages but cannot spam/delete/poll while the second can.
+- [x] Create a personal mailbox with an owner and confirm Ticket ingress/global defaults are off after
+  save.
+- [x] Confirm a different user with `email.inbox_view` but no mailbox grant cannot see or open the
+  personal mailbox message in UI or API.
+- [x] Open Email Rules, create a rule, and confirm the mailbox scope is selected from shared/system
+  Ticket-ingress accounts rather than typed manually.
+- [x] Confirm a rule scoped to one shared mailbox does not run for another mailbox.
+- [x] Confirm inbound notification settings do not send an Inbox notification for a mailbox the
+  subscriber cannot view.
+- [x] Confirm existing Ticket-key/header/default Ticket routing still works for the current support
+  mailbox.
+- [x] Check desktop and mobile widths for the Email account form, Email rule form, and Inbox list.
+
+Reviewer: Svein
+Reviewed date: 2026-08-12
+Result / notes: Svein confirmed after reconnecting that the pending Mail review checks had been
+approved before the power loss. Approval recorded from the Codex task message on 2026-08-12.
+
+### HR-2026-08-11-004 - Sales Quotes / CPQ Completion
+
+Status: Pending
+Added: 2026-08-11
+Environment: Dev, then production beta after merge
+Related: GitHub Discussion #170, `docs/rfc/2026-08-11-sales-cpq-completion.md`,
+`docs/adr/2026-08-11-sales-cpq-accepted-snapshot-boundary.md`, and
+`docs/feature-slices/2026-08-11-sales-cpq-core.md`
+
+Scope: Sales-owned CPQ completion for structured quoting and customer acceptance. The update adds
+customer-selectable option groups, required/recommended/default line behavior, quantity bounds,
+quote-level and line-level acknowledgements, immutable accepted snapshots, configurable CPQ approval
+policy, `sales.quote.approve`, Admin Sales rules and Quote Templates settings, reusable quote
+templates/bundles, template snapshots copied into quote versions, public and Customer Portal
+accept/decline/expiry behavior, lifecycle activities, and Sales-owned conversion-plan
+status/reference tracking. Admin Sales Quote Templates uses the same split-list and focused
+create/edit pattern as Ticket Workflows, with controlled opportunity type, customer segment, catalog
+source, and option-group selectors so administrators do not need to type internal source IDs or fixed
+variable values. Scoped automation can create the same reusable quote templates through the Sales
+quote-template API. Ticket `Add cost/item` now hides the Sales quote panel until planned scope or a
+Sales context exists, and routes quote-required Storage items or threshold-triggered manual costs to
+planned scope instead of reserving stock or creating actual cost. After customer acceptance, the
+protected `ticket_quote_delivery_automation` system actor processes accepted Ticket quote lines into
+safe internal delivery records: reservations for available stock, draft purchase needs for orderable
+shortages, and pending Ticket costs for custom lines. Sent quote changes supersede the old public
+acceptance link and create a new draft revision. New quote-required Ticket scope after acceptance
+creates a separate additional quote draft instead of changing the accepted quote. Accepted Ticket
+quotes can be voided with a required reason only while downstream delivery records are still safely
+reversible.
+
+Deployment actions: deploy code, run `php artisan migrate --force`, run `php artisan optimize:clear`,
+restart queue workers if the target environment uses queued quote/customer portal mail delivery, and
+sync Sales, Ticket, and Integration Knowledge docs. Dev already ran `php artisan migrate`, applying
+`2026_08_11_140000_add_sales_cpq_core` in batch 67 and
+`2026_08_11_141000_add_sales_quote_templates` in batch 68, followed by `php artisan optimize:clear`.
+The Ticket/Storage quote-routing follow-up adds migration
+`2026_08_11_142000_add_customer_quote_policy_to_storage_items`, applied on Dev in batch 69. The first
+accepted Ticket quote after deploy creates or refreshes the hidden
+`ticket_quote_delivery_automation` system actor with least-privilege Ticket/Storage permissions.
+
+Risks: selectable options must not let customers drop required lines or submit quantities outside
+seller limits; acknowledgement text must be snapshotted exactly; approval must block risky sends until
+approved; template changes must not mutate sent or accepted quote versions; expired quotes must not be
+accepted; conversion plans for non-Ticket downstream domains must not silently create or alter
+Economy, Commercial, Asset, Task, ServiceVisit, or future Project records; Ticket planned scope must
+use only the accepted customer-selected snapshot; and true accepted-quote follow-up workflows, such
+as creating separate implementation Tickets automatically, remain a separate automation slice.
+Quote-required Storage items and threshold-triggered manual costs must not create reservations,
+Picking List rows, or billable actual costs before customer acceptance. Accepted Ticket quote
+automation must never pick stock, send supplier orders, post receipts, or mark billable Economy
+orders automatically. A superseded quote must not remain customer-acceptable. A voided accepted
+quote must preserve audit history and must not cancel picked stock, non-pending billing, placed
+purchase orders, shipments, or receipts silently.
+
+Automated verification: `HOME=/tmp php artisan test
+app/Modules/Sales/Tests/Feature/SalesModuleTest.php` passes with 25 tests and 418 assertions,
+including the Admin Sales Quote Templates split-editor regression, Sales quote-template API
+regression, and superseded sent-quote acceptance regression.
+`HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketModuleTest.php` passes with 122
+tests and 903 assertions, including the accepted Ticket quote card placement, sent-quote
+superseding, additional quote after acceptance, accepted-quote void, draft purchase-need reversal,
+and irreversible-delivery block regressions.
+`HOME=/tmp php artisan test app/Modules/Ticket/Tests/Feature/TicketWorkflowV3Test.php` passes with 25
+tests and 278 assertions, including the customer-acceptance auto-processing regression and the cost-entry
+API quote-scope routing regression. `HOME=/tmp php artisan test
+app/Modules/Storage/Tests/Feature/StorageModuleTest.php` passes with 23 tests and 363 assertions.
+`HOME=/tmp php artisan test` passes with 1281 tests and 10865 assertions.
+`HOME=/tmp php artisan view:cache` and `HOME=/tmp php artisan optimize:clear` passed. PHP syntax
+checks passed for the CPQ actions/controllers/models and all three CPQ/quote policy migrations.
+`HOME=/tmp php artisan knowledge:sync-docs --module=Ticket --module=Storage --module=Sales --push`
+reported 3 chapters, 19 articles, 0 skipped, and queued the BookStack push. A follow-up Ticket
+Knowledge sync after the accepted-quote card title change reported 1 chapter, 11 articles, 0 skipped,
+and queued the BookStack push. The accepted Ticket quote auto-processing update synced Ticket
+Knowledge again with 1 chapter, 11 articles, 0 skipped, and queued the BookStack push. The
+sent-revision/additional-quote/void update synced Sales, Storage, and Ticket Knowledge again with
+3 chapters, 19 articles, 0 skipped, and queued the BookStack push.
+
+Human checks:
+
+- [ ] Open Admin Sales Rules and confirm approval thresholds can be viewed and saved.
+- [ ] Open Admin Sales Quote Templates and confirm it shows a compact template list, not all template
+  editors at once.
+- [ ] Create or edit one active quote template and confirm the edit page is focused, customer text is
+  collapsed by default, and adding lines/acknowledgements happens in separate collapsed sections.
+- [ ] Confirm opportunity type, customer segment, catalog source, and option group are controlled
+  choices with no manual Source ID field.
+- [ ] Confirm the seeded `Quote Templates` default template exists and can be edited without creating
+  duplicates.
+- [ ] Confirm API management exposes `sales.quote_templates.read` and
+  `sales.quote_templates.manage` for scoped automation tokens.
+- [ ] Confirm a user with Sales settings rights can delete a test quote template from the edit page,
+  and that deleted templates disappear from the template list without changing existing quote
+  versions or accepted snapshots.
+- [ ] Add default customer text, at least one grouped line, and one acknowledgement to the template.
+- [ ] Create a Sales opportunity, prepare a quote, apply the active template, and confirm lines,
+  groups, customer text, and acknowledgements are copied into the draft.
+- [ ] Add a required line, an optional/recommended add-on, and a quantity-selectable line; send a
+  standard quote and confirm the public quote page shows only customer-safe prices and live totals.
+- [ ] Try accepting without required acknowledgements and confirm acceptance is blocked.
+- [ ] Accept with a selected add-on and changed allowed quantity; confirm Tech shows the accepted
+  snapshot and conversion-plan rows with the selected amount.
+- [ ] Confirm a risky quote is blocked before send, can be approved only by a user with
+  `sales.quote.approve`, and can then be sent.
+- [ ] Decline a sent quote and confirm Sales timeline, status, and Customer Portal/public state are
+  coherent.
+- [ ] Open an expired sent quote and confirm it is marked expired and cannot be accepted.
+- [ ] Add quote-required Ticket scope after a quote has been sent but before acceptance, and confirm
+  the old quote is shown as superseded, the old public acceptance link is blocked, and a new draft
+  revision contains the previous scope plus the new line.
+- [ ] From a Ticket planned-scope quote, accept only selected quote lines and confirm only those
+  planned lines become approved Ticket scope.
+- [ ] After accepting a Ticket quote, confirm available Storage items become reservations/pending
+  Ticket costs, orderable out-of-stock items become draft purchase needs without vendor order
+  sending, and custom lines become pending Ticket costs.
+- [ ] Add new quote-required Ticket scope after a Ticket quote has been accepted and confirm the
+  accepted quote remains unchanged, a separate `Additional customer approval` draft contains only
+  the new line, and the earlier accepted quote history sits below Activity once delivery is complete.
+- [ ] Void an accepted Ticket quote before picking/order sending and confirm the reason is audited,
+  safe pending costs/reservations/draft purchase needs are reversed, workflow quote evidence is
+  invalidated, and the quote is labelled voided rather than deleted.
+- [ ] Try voiding an accepted Ticket quote after picked stock, non-pending billing, a non-draft
+  purchase order, shipment, or receipt and confirm Nexum blocks the action with a clear reason.
+- [ ] Confirm processed accepted Ticket quote lines no longer show manual Convert/Purchase buttons,
+  while a blocked line still shows a retry action and audit reason.
+- [ ] Confirm a fully processed accepted Ticket quote card moves below Activity, while unfinished
+  accepted quote delivery stays above Activity and Nexum relationship remains the bottom card.
+- [ ] Open the linked Sales quote after Ticket quote acceptance and confirm Ticket-origin conversion
+  plan rows are marked completed with references to the created Ticket cost or purchase need.
+- [ ] Open an ordinary Ticket with no planned scope and confirm no Sales quote panel is visible.
+- [ ] Use Ticket `Add cost/item` on a Storage item marked `Requires accepted quote before use` and
+  confirm it creates planned scope, does not reserve stock, and then shows the customer approval
+  panel.
+- [ ] Use Ticket `Add cost/item` below the quote threshold and confirm the normal actual cost or
+  Storage reservation path still works.
+- [ ] Set the Ticket quote cost threshold and confirm a manual cost at or above the threshold becomes
+  planned scope through both browser and API.
+- [ ] Update a conversion-plan status/reference/note in Sales and confirm no downstream record is
+  created automatically by Sales.
+- [ ] Check desktop and mobile widths for Tech quote modal, public quote, and Customer Portal quote
+  and confirm controls and totals do not overlap.
+
+Reviewer:
+Reviewed date:
+Result / notes:
 
 ### HR-2026-08-11-003 - One Responsive Nexum PWA Final Browser Acceptance
 

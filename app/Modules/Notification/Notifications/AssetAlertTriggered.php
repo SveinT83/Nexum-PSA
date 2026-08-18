@@ -2,8 +2,10 @@
 
 namespace App\Modules\Notification\Notifications;
 
-use App\Modules\Notification\Models\NotificationSetting;
 use App\Models\Tech\Work\Assets\Asset;
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
+use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -11,16 +13,18 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when an asset alert is triggered (from RMM integration).
  */
-class AssetAlertTriggered extends Notification
+class AssetAlertTriggered extends Notification implements EmailAccountMailNotification
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     public function __construct(
         public Asset $asset,
         public string $alertTitle,
         public string $alertMessage,
         public string $integrationType = 'tactical_rmm',
-    ) {}
+    ) {
+        $this->freezeEmailAccountMailSnapshot('alerts');
+    }
 
     public function via(object $notifiable): array
     {
@@ -31,7 +35,7 @@ class AssetAlertTriggered extends Notification
             $channels[] = 'database';
         }
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel('alerts');
         }
 
         $talkChannel = \App\Modules\Notification\Models\NotificationChannel::getByDriver('nextcloud_talk');
@@ -52,7 +56,7 @@ class AssetAlertTriggered extends Notification
             ->line("An alert has been triggered on asset **{$this->asset->hostname}** ({$this->asset->type}).")
             ->line("**Alert:** {$this->alertTitle}")
             ->line("**Details:** {$this->alertMessage}")
-            ->line("**Source:** " . ucfirst(str_replace('_', ' ', $this->integrationType)))
+            ->line('**Source:** '.ucfirst(str_replace('_', ' ', $this->integrationType)))
             ->action('View Asset', $assetUrl);
     }
 
@@ -80,7 +84,7 @@ class AssetAlertTriggered extends Notification
             ]),
             'url' => route('tech.assets.show', $this->asset->id),
             'urlLabel' => 'View Asset',
-            'referenceId' => 'asset-alert-' . $this->asset->id . '-' . time(),
+            'referenceId' => 'asset-alert-'.$this->asset->id.'-'.time(),
         ];
     }
 }

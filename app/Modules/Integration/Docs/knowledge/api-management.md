@@ -115,13 +115,17 @@ Implemented scopes:
 - `risk.read`: list and view risk assessments and risk items.
 - `risk.create`: create risk assessments and risk items.
 - `risk.update`: update risk assessments, risk items, and risk item history.
-- `email.read`: list and view unrouted inbox messages.
-- `email.update`: mark inbox messages as spam and queue inbox polling.
+- `email.read`: list and view authorized unrouted inbox messages by mailbox View access.
+- `email.update`: mark authorized inbox messages as spam and queue polling for mailboxes the actor can organize.
+- `email.rules.read`: list, view, and preview Email rules with rule-management permission and
+  mailbox View checks.
 - `notifications.read`: list and view the authenticated user notifications.
 - `notifications.update`: mark the authenticated user notifications as read.
 - `sales.read`: list and view sales opportunities and activities.
 - `sales.create`: create sales opportunities through the sales engine.
 - `sales.update`: update sales opportunities and add sales activities.
+- `sales.quote_templates.read`: read Sales quote-template catalogs and configured reusable templates.
+- `sales.quote_templates.manage`: create, update, and delete Sales quote templates, template lines, option groups, and acknowledgements.
 - `lead-intelligence.read`: read Lead Intelligence settings, segments, research runs, scan ledger, and policy results.
 - `lead-intelligence.manage`: update Lead Intelligence settings and manage lead segments.
 - `lead-intelligence.run`: create planned research runs, evaluate contact marketing eligibility, and promote approved candidates.
@@ -1021,24 +1025,35 @@ snapshot for likelihood, impact, status, and next review date.
 
 ## Email Inbox API
 
-Email Inbox API routes expose unrouted email messages for trusted automation and future AI-assisted
-triage.
+Email Inbox API routes expose authorized unrouted email messages for trusted automation and future
+AI-assisted triage.
 
-`GET /api/v1/email/inbox/messages` returns messages where `ticket_id` is null. Supported filters:
+`GET /api/v1/email/inbox/messages` returns messages where `ticket_id` is null and the token user has
+effective mailbox View access. Supported filters:
 
 - `q`: search subject, from name, from email, and plain text body.
 - `state`: filter message state.
 - `account_id`: filter by email account.
 - `from_email`: exact sender filter.
 
-`GET /api/v1/email/inbox/messages/{message}` returns one unrouted message with attachments and tags.
-The API does not expose raw storage paths or email account secrets.
+`GET /api/v1/email/inbox/messages/{message}` returns one authorized unrouted message with
+attachments and tags. The API does not expose raw storage paths or email account secrets.
 
 `POST /api/v1/email/inbox/messages/{message}/spam` uses the Email `MarkEmailAsSpam` action. It tags
-the message, archives it, and creates or updates an inbound spam rule.
+the message, archives it, and creates or updates an account-scoped inbound spam rule. The token user
+must have effective mailbox Organize access.
 
-`POST /api/v1/email/inbox/poll` queues `FetchImapAccount` jobs for active accounts. It does not run
-IMAP polling inside the HTTP request.
+`POST /api/v1/email/inbox/poll` queues `FetchImapAccount` jobs for active accounts the token user can
+organize. It does not run IMAP polling inside the HTTP request.
+
+API token abilities are request ceilings. `email.read` and `email.update` never replace Email
+mailbox grants.
+
+`GET /api/v1/email/rules`, `GET /api/v1/email/rules/{rule}`, and
+`POST /api/v1/email/rules/{rule}/preview` use `email.rules.read`. The authenticated user must also
+have Email rule-management permission. Preview reports the published rule version, account scope,
+condition matches, and actions that would run for one authorized message without changing the
+message, tags, Tickets, Signals, or rule execution history.
 
 ## Notification API
 

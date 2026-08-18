@@ -41,6 +41,10 @@ Stock & Pricing fields:
 - **Track batch** means accepted receipt quantity must be assigned to one or more named batches.
 - **Track expiry** means applicable accepted units must carry an expiry date during receiving.
 - **Manual should-order flag** forces the item into reorder attention even when quantity rules have not triggered.
+- **Can be ordered when stock is short** lets Ticket reservations create reorder demand when the
+  item is active but available quantity is too low.
+- **Requires accepted quote before use** means Ticket `Add cost/item` creates planned quote scope
+  instead of reserving or picking the item directly.
 
 Tracking controls protect the stock-unit ledger. Nexum blocks changing serial, batch, or expiry
 flags while the item has on-hand quantity, reserved quantity, an active reservation, or a positive

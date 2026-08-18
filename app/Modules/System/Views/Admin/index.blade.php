@@ -36,10 +36,10 @@
         [
             'title' => 'Sales',
             'icon' => 'bi-graph-up-arrow',
-            'description' => 'Tune sales rules, workflows, and opportunity behavior.',
+            'description' => 'Tune sales rules, quote templates, and opportunity behavior.',
             'links' => [
                 ['label' => 'Rules', 'route' => route('tech.admin.settings.sales.rules')],
-                ['label' => 'Workflows', 'route' => route('tech.admin.settings.sales.workflows')],
+                ['label' => 'Quote Templates', 'route' => route('tech.admin.settings.sales.quote-templates.index')],
             ],
         ],
         [

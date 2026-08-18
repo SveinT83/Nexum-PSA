@@ -2,7 +2,9 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,14 +13,16 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent when a ticket is assigned to a technician.
  */
-class TicketAssigned extends Notification
+class TicketAssigned extends Notification implements EmailAccountMailNotification
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     public function __construct(
         public Ticket $ticket,
         public string $assignedBy,
-    ) {}
+    ) {
+        $this->freezeEmailAccountMailSnapshot('tickets');
+    }
 
     /**
      * Determine which channels to use based on user preferences.
@@ -32,7 +36,7 @@ class TicketAssigned extends Notification
             $channels[] = 'database';
         }
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel('tickets');
         }
 
         // Check if Nextcloud Talk is enabled system-wide and for this user
@@ -53,8 +57,8 @@ class TicketAssigned extends Notification
             ->greeting("Hello {$notifiable->name},")
             ->line("A ticket has been assigned to you by **{$this->assignedBy}**.")
             ->line("**Subject:** {$this->ticket->subject}")
-            ->line("**Priority:** " . ($this->ticket->priority?->name ?? 'Unset'))
-            ->line("**Client:** " . ($this->ticket->client?->name ?? 'N/A'))
+            ->line('**Priority:** '.($this->ticket->priority?->name ?? 'Unset'))
+            ->line('**Client:** '.($this->ticket->client?->name ?? 'N/A'))
             ->action('View Ticket', $ticketUrl)
             ->line('Please review and respond accordingly.');
     }
@@ -84,7 +88,7 @@ class TicketAssigned extends Notification
             ]),
             'url' => route('tech.tickets.show', $this->ticket->ticket_key),
             'urlLabel' => 'View Ticket',
-            'referenceId' => 'ticket-assigned-' . $this->ticket->ticket_key . '-' . time(),
+            'referenceId' => 'ticket-assigned-'.$this->ticket->ticket_key.'-'.time(),
         ];
     }
 }

@@ -20,6 +20,7 @@ Approved:
 - `2026-07-17-ticket-workflow-v3-conditional-actions-and-escalation.md`
 - `2026-07-16-version-and-github-update-status.md`
 - `2026-07-14-organization-controlled-ai-data-access.md`
+- `2026-07-04-mail-module-full-email-client.md`
 - `2026-07-04-customer-portal-foundation.md`
 - `2026-07-04-notification-sms-channel-automation.md`
 - `2026-07-04-online-booking-calendar-availability.md`
@@ -38,7 +39,6 @@ Drafts:
 - `2026-07-04-economy-invoicing-accounting-payments.md`
 - `2026-07-04-email-health-monitoring-remediation.md`
 - `2026-07-04-intelligence-events-metrics-insights-feedback.md`
-- `2026-07-04-mail-module-full-email-client.md`
 - `2026-07-04-one-responsive-nexum-pwa.md`
 - `2026-07-04-public-inquiry-forms.md`
 - `2026-07-04-resource-vehicles-tools-equipment-scheduling.md`

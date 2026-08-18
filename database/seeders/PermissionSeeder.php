@@ -146,6 +146,11 @@ class PermissionSeeder extends Seeder
             'email.inbox_view',
             'email.inbox_manage',
             'email.account_manage',
+            'email.mailbox_sync_manage',
+            'email.canonical_cutover_manage',
+            'email.break_glass_activate',
+            'email.break_glass_audit',
+            'email.raw_source_view',
             'email.rule_manage',
             'email.template_manage',
 
@@ -158,6 +163,7 @@ class PermissionSeeder extends Seeder
             'sales.lead_manage',
             'sales.opportunity_manage',
             'sales.quote_manage',
+            'sales.quote.approve',
             'sales.email_send',
             'sales.manage_settings',
 
@@ -188,6 +194,8 @@ class PermissionSeeder extends Seeder
             'integration.ai_governance_manage',
             'integration.ai_workload_manage',
             'integration.ai_audit_view',
+            'integration.email_provider_manage',
+            'integration.email_private_endpoint_manage',
             'integration.bookstack_manage',
             'integration.rmm_manage',
             'integration.cloudfactory_view',
@@ -241,6 +249,7 @@ class PermissionSeeder extends Seeder
             'user.manage_2fa',
 
             'system.view',
+            'system.telescope_view',
             'system.queue_manage',
             'system.security_manage',
             'system.backup_manage',

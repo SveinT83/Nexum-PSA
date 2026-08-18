@@ -14,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class StoreTicketPlannedLine
 {
-    public function __construct(private readonly TicketActionGuard $guard) {}
+    public function __construct(
+        private readonly TicketActionGuard $guard,
+        private readonly EnsureTicketSalesQuote $ensureQuote,
+    ) {}
 
     public function handle(Ticket $ticket, array $data, User $actor): TicketPlannedLine
     {
@@ -60,8 +63,26 @@ class StoreTicketPlannedLine
             return $line;
         });
 
+        $this->syncExistingQuoteLifecycle($ticket->refresh(), $actor);
+
         app(ApplyTicketWorkflowActionTrigger::class)->handle($ticket->refresh(), TicketAction::ADD_PLANNED_COST, $actor);
 
         return $line;
+    }
+
+    private function syncExistingQuoteLifecycle(Ticket $ticket, User $actor): void
+    {
+        $ticket->loadMissing('salesContext.opportunity.currentQuoteVersion');
+        $currentQuote = $ticket->salesContext?->opportunity?->currentQuoteVersion;
+
+        if (! $currentQuote || ! in_array($currentQuote->status, ['sent', 'accepted'], true)) {
+            return;
+        }
+
+        if (! $this->guard->allowed($ticket, TicketAction::CREATE_QUOTE, $actor)) {
+            return;
+        }
+
+        $this->ensureQuote->handle($ticket, $actor);
     }
 }

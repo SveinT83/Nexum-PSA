@@ -142,7 +142,7 @@ allowed because it would bypass the movement history. Generic adjustment is also
 serial-, batch-, or expiry-controlled items and for items with positive stock-unit ledger quantity;
 those units require an operation that identifies exactly which units move.
 
-Ticket Workflow operations use the Ticket API rather than the generic Storage API. An approved planned line can be converted with `/api/v1/tickets/{ticket}/planned-lines/{plannedLine}/convert` or turned into a draft purchase need with `/api/v1/tickets/{ticket}/planned-lines/{plannedLine}/purchase`. Both operations enforce the Ticket's current workflow and user permissions.
+Ticket Workflow operations use the Ticket API rather than the generic Storage API. An approved planned line can be converted with `/api/v1/tickets/{ticket}/planned-lines/{plannedLine}/convert` or turned into a draft purchase need with `/api/v1/tickets/{ticket}/planned-lines/{plannedLine}/purchase`. `POST /api/v1/tickets/{ticket}/cost-entries` uses the same quote-required policy as the browser `Add cost/item` action and can return `routed_to = quote_scope` with a planned line instead of an actual cost entry. Both operations enforce the Ticket's current workflow and user permissions.
 
 Manual web adjustments:
 

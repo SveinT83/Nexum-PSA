@@ -80,6 +80,9 @@ Route::post('tickets/{ticket}/sales-quote', [TicketWorkflowActionController::cla
 Route::post('tickets/{ticket}/sales-quote/send', [TicketWorkflowActionController::class, 'sendQuote'])
     ->name('tickets.sales-quote.send')
     ->middleware(CheckAbilities::class.':tickets.actions');
+Route::post('tickets/{ticket}/sales-quote/versions/{version}/void', [TicketWorkflowActionController::class, 'voidAcceptedQuote'])
+    ->name('tickets.sales-quote.void')
+    ->middleware(CheckAbilities::class.':tickets.actions');
 Route::post('tickets/{ticket}/messages/{message}/quote-versions/{version}/accept', [TicketWorkflowActionController::class, 'acceptQuoteFromMessage'])
     ->name('tickets.sales-quote.accept-message')
     ->middleware(CheckAbilities::class.':tickets.actions');

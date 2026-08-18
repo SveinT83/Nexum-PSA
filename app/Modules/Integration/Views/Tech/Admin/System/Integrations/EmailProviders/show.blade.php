@@ -1,0 +1,69 @@
+@extends('layouts.default_tech')
+
+@section('title', 'Manage Email provider')
+
+@section('pageHeader')
+    <div class="d-flex justify-content-between align-items-center gap-3">
+        <div><h1 class="h4 mb-1">{{ $connection->integration?->name ?? 'Email provider' }}</h1><p class="text-body-secondary mb-0">Credential lifecycle without endpoint or username disclosure.</p></div>
+        <a class="btn btn-outline-secondary" href="{{ route('tech.admin.system.integrations.email-providers.index') }}">Close</a>
+    </div>
+@endsection
+
+@section('content')
+    @if(session('status'))<div class="alert alert-success" role="status">{{ session('status') }}</div>@endif
+    <div class="row g-4">
+        <!-- Safe connection state -->
+        <div class="col-lg-4"><div class="card shadow-sm h-100"><div class="card-header"><h2 class="h6 mb-0">Connection state</h2></div><div class="card-body">
+            <dl class="row small mb-0">
+                <dt class="col-6">Lifecycle</dt><dd class="col-6">{{ ucfirst($connection->status) }}</dd>
+                <dt class="col-6">Configuration</dt><dd class="col-6">v{{ $connection->configuration_version }}</dd>
+                <dt class="col-6">Runtime</dt><dd class="col-6"><span class="badge text-bg-{{ $isRuntimeReady ? 'success' : 'secondary' }}">{{ $isRuntimeReady ? 'Ready' : 'Not ready' }}</span></dd>
+                <dt class="col-6">IMAP</dt><dd class="col-6">{{ data_get($connection->capabilities, 'imap') ? 'Verified' : 'Pending' }}</dd>
+                <dt class="col-6">SMTP</dt><dd class="col-6">{{ data_get($connection->capabilities, 'smtp') ? 'Verified' : 'Pending' }}</dd>
+                <dt class="col-6">Last verification</dt><dd class="col-6">{{ $connection->last_verified_at?->format('Y-m-d H:i') ?? 'Never' }}</dd>
+            </dl>
+        </div></div></div>
+
+        <!-- Secret rotation never renders usernames or existing ciphertext -->
+        <div class="col-lg-8"><div class="card shadow-sm h-100"><div class="card-header"><h2 class="h6 mb-0">Rotate secrets</h2></div><div class="card-body">
+            @if($connection->activeCredentialVersion)
+                <p class="small text-body-secondary">Username identity is preserved. A username or endpoint change requires a new connection and explicit rebind/rebaseline.</p>
+                <form method="POST" action="{{ route('tech.admin.system.integrations.email-providers.credentials.stage', $connection->getKey()) }}" class="row g-3" autocomplete="off">
+                    @csrf
+                    <div class="col-md-6"><label for="imap_secret" class="form-label">New IMAP password</label><input type="password" id="imap_secret" name="imap_secret" class="form-control" required autocomplete="new-password"></div>
+                    <div class="col-md-6"><label for="smtp_secret" class="form-label">New SMTP password</label><input type="password" id="smtp_secret" name="smtp_secret" class="form-control" required autocomplete="new-password"></div>
+                    <div class="col-12"><button class="btn btn-outline-primary" type="submit">Stage rotation</button></div>
+                </form>
+            @else
+                <p class="text-body-secondary mb-0">Activate the initial verified version before staging an in-place secret rotation.</p>
+            @endif
+        </div></div></div>
+    </div>
+
+    <!-- Append-only version lifecycle -->
+    <div class="card shadow-sm mt-4"><div class="card-header"><h2 class="h6 mb-0">Credential versions</h2></div><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+        <thead class="table-light"><tr><th>Version</th><th>State</th><th>Verification</th><th>Staged</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+            @foreach($connection->credentialVersions as $credential)
+                <tr>
+                    <td>v{{ $credential->version }}</td><td><span class="badge text-bg-light border">{{ ucfirst($credential->state) }}</span></td>
+                    <td>{{ $credential->verified_at ? 'Verified '.$credential->verified_at->format('Y-m-d H:i') : 'Not verified' }}</td><td>{{ $credential->staged_at?->format('Y-m-d H:i') }}</td>
+                    <td class="text-end">
+                        @if($credential->state === 'staged')
+                            <form class="d-inline" method="POST" action="{{ route('tech.admin.system.integrations.email-providers.credentials.verify', [$connection->getKey(), $credential->version]) }}">@csrf<button class="btn btn-sm btn-outline-primary" type="submit">Verify</button></form>
+                            @if($credential->verified_at)<form class="d-inline" method="POST" action="{{ route('tech.admin.system.integrations.email-providers.credentials.activate', [$connection->getKey(), $credential->version]) }}">@csrf<button class="btn btn-sm btn-primary" type="submit">Activate</button></form>@endif
+                        @endif
+                        @if(in_array($credential->state, ['staged', 'active'], true))
+                            <form class="d-inline" method="POST" action="{{ route('tech.admin.system.integrations.email-providers.credentials.revoke', [$connection->getKey(), $credential->version]) }}">@csrf<input type="hidden" name="reason_code" value="operator_revoked"><button class="btn btn-sm btn-outline-danger" type="submit">Revoke</button></form>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table></div></div>
+@endsection
+
+@section('sidebar')
+    <x-nav.admin-menu group="integrations" />
+@endsection
+

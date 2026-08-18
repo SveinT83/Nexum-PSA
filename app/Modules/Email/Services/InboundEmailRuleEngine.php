@@ -3,12 +3,22 @@
 namespace App\Modules\Email\Services;
 
 use App\Models\Clients\ClientUser;
+use App\Models\Core\User;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
+use App\Modules\Email\Actions\ApplyEmailConversationRuleClassification;
+use App\Modules\Email\Actions\BuildEmailSmartInboxRulePrefill;
+use App\Modules\Email\Actions\PerformEmailRemoteOperation;
+use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLog;
+use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Models\EmailRemoteOperation;
 use App\Modules\Email\Models\EmailRule;
+use App\Modules\Email\Models\EmailRuleExecutionAttempt;
 use App\Modules\Email\Models\EmailRuleLog;
+use App\Modules\Email\Models\EmailRuleVersion;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Signal\Actions\RecordSignal;
@@ -30,23 +40,31 @@ class InboundEmailRuleEngine
         private readonly CreateTicketFromInboundEmail $createTicketFromInboundEmail,
         private readonly RecordSignal $recordSignal,
         private readonly TrustedSenderAuthenticationFacts $trustedSenderAuthenticationFacts,
+        private readonly ApplyEmailConversationRuleClassification $applyConversationClassification,
+        private readonly MailboxAccess $mailboxAccess,
+        private readonly PerformEmailRemoteOperation $performRemoteOperation,
     ) {}
 
-    public function processPreclassification(EmailMessage $message): bool
-    {
-        if ($message->ticket_id !== null || ! Schema::hasTable('email_rules')) {
+    public function processPreclassification(
+        EmailMessage $message,
+        bool $allowProviderMutation = false,
+    ): bool {
+        if ($message->ticket_id !== null || ! $this->allowsInboundAutomation($message) || ! Schema::hasTable('email_rules')) {
             return false;
         }
 
         return $this->runConfiguredRules(
             $message,
             EmailRule::ROUTING_PHASE_PRECLASSIFICATION,
+            $allowProviderMutation,
         );
     }
 
-    public function process(EmailMessage $message): void
-    {
-        if ($message->ticket_id !== null) {
+    public function process(
+        EmailMessage $message,
+        bool $allowProviderMutation = false,
+    ): void {
+        if ($message->ticket_id !== null || ! $this->allowsInboundAutomation($message)) {
             return;
         }
 
@@ -65,15 +83,22 @@ class InboundEmailRuleEngine
             return;
         }
 
-        $stopped = $this->runConfiguredRules($message, EmailRule::ROUTING_PHASE_NORMAL);
+        $stopped = $this->runConfiguredRules(
+            $message,
+            EmailRule::ROUTING_PHASE_NORMAL,
+            $allowProviderMutation,
+        );
 
         if (! $stopped) {
             $this->routeByDefaultTicketPolicy($message);
         }
     }
 
-    private function runConfiguredRules(EmailMessage $message, string $routingPhase): bool
-    {
+    private function runConfiguredRules(
+        EmailMessage $message,
+        string $routingPhase,
+        bool $allowProviderMutation,
+    ): bool {
         if ($message->ticket_id !== null) {
             return true;
         }
@@ -81,37 +106,94 @@ class InboundEmailRuleEngine
         $stopped = false;
 
         EmailRule::query()
+            ->adminManaged()
             ->where('trigger', EmailRule::TRIGGER_INBOUND)
             ->where('routing_phase', $routingPhase)
             ->where('is_active', true)
+            ->with(['accounts', 'publishedVersion'])
             ->orderBy('weight')
             ->orderBy('id')
             ->get()
-            ->each(function (EmailRule $rule) use ($message, &$stopped) {
+            ->each(function (EmailRule $rule) use ($message, $allowProviderMutation, &$stopped) {
                 if ($stopped || $message->fresh()->ticket_id !== null) {
                     return false;
                 }
 
-                if (! $this->matches($message, $rule->conditions_json ?? [])) {
+                $snapshot = $this->runtimeSnapshot($rule);
+
+                if (! $this->ruleAppliesToMessageAccount($rule, $message, $snapshot)) {
                     return null;
                 }
 
-                $this->executeActions($message, $rule, $rule->actions_json ?? []);
+                if (! $this->matches($message, $snapshot['conditions'])) {
+                    return null;
+                }
+
+                $attempt = $this->startExecutionAttempt($rule, $snapshot, $message);
+
+                if ($attempt && ! $attempt->wasRecentlyCreated) {
+                    if ($attempt->status === EmailRuleExecutionAttempt::STATUS_SUCCEEDED && $attempt->stop_processing) {
+                        $stopped = true;
+
+                        return false;
+                    }
+
+                    return null;
+                }
+
+                try {
+                    $actionResults = $this->executeActions(
+                        $message,
+                        $rule,
+                        $snapshot,
+                        $allowProviderMutation,
+                    );
+                } catch (\Throwable $exception) {
+                    $this->finishExecutionAttempt($attempt, EmailRuleExecutionAttempt::STATUS_FAILED, [
+                        [
+                            'status' => EmailRuleExecutionAttempt::STATUS_FAILED,
+                            'reason' => 'email_rule_action_failed',
+                        ],
+                    ]);
+
+                    throw $exception;
+                }
+
+                $actionFailed = collect($actionResults)
+                    ->contains(fn (array $result): bool => ($result['status'] ?? '') === EmailRuleExecutionAttempt::STATUS_FAILED);
+
+                if ($actionFailed) {
+                    $this->finishExecutionAttempt($attempt, EmailRuleExecutionAttempt::STATUS_FAILED, $actionResults);
+
+                    EmailRuleLog::create([
+                        'email_rule_id' => $rule->id,
+                        'email_message_id' => $message->id,
+                        'status' => 'failed',
+                        'actions_json' => $snapshot['actions'],
+                        'message' => 'Inbound email rule matched, but at least one guarded action failed.',
+                    ]);
+
+                    return null;
+                }
 
                 $rule->forceFill([
                     'last_hit_at' => now(),
                     'hit_count' => $rule->hit_count + 1,
                 ])->save();
 
+                $this->finishExecutionAttempt($attempt, EmailRuleExecutionAttempt::STATUS_SUCCEEDED, $actionResults);
+
                 EmailRuleLog::create([
                     'email_rule_id' => $rule->id,
                     'email_message_id' => $message->id,
                     'status' => 'matched',
-                    'actions_json' => $rule->actions_json ?? [],
-                    'message' => 'Inbound email rule matched.',
+                    'actions_json' => $snapshot['actions'],
+                    'message' => $snapshot['version_number']
+                        ? 'Inbound email rule matched published version v'.$snapshot['version_number'].'.'
+                        : 'Inbound email rule matched compatibility live rule.',
                 ]);
 
-                if ($rule->stop_processing) {
+                if ($snapshot['stop_processing']) {
                     $stopped = true;
 
                     return false;
@@ -121,6 +203,83 @@ class InboundEmailRuleEngine
             });
 
         return $stopped || $message->fresh()->ticket_id !== null;
+    }
+
+    public function previewRule(EmailRule $rule, EmailMessage $message): array
+    {
+        $rule->loadMissing(['accounts', 'publishedVersion']);
+
+        $snapshot = $this->runtimeSnapshot($rule);
+        $accountMatched = $this->ruleAppliesToMessageAccount($rule, $message, $snapshot);
+        $conditions = $this->conditionDetails($message, $snapshot['conditions']);
+        $conditionsMatched = $this->matches($message, $snapshot['conditions']);
+        $matched = $accountMatched && $conditionsMatched;
+
+        return [
+            'rule_id' => $rule->id,
+            'rule_name' => $snapshot['name'],
+            'version_id' => $snapshot['version_id'],
+            'version_number' => $snapshot['version_number'],
+            'version_status' => $snapshot['version_status'],
+            'message_id' => $message->id,
+            'routing_phase' => $snapshot['routing_phase'],
+            'account_scope_matched' => $accountMatched,
+            'matched' => $matched,
+            'stop_processing' => $snapshot['stop_processing'],
+            'conditions' => $conditions,
+            'actions' => collect($snapshot['actions'])
+                ->values()
+                ->map(fn (array $action, int $index): array => [
+                    'position' => $index,
+                    'type' => $action['type'] ?? '',
+                    'value' => $action['value'] ?? $action['signal_type'] ?? null,
+                    'status' => $matched ? 'would_run' : 'not_run',
+                ])
+                ->all(),
+        ];
+    }
+
+    public function allowsInboundAutomation(EmailMessage $message): bool
+    {
+        $message->loadMissing('account');
+        $account = $message->account;
+
+        if (! $account) {
+            return false;
+        }
+
+        if (EmailFolder::inferRole((string) $message->mailbox) !== EmailFolder::ROLE_INBOX) {
+            return false;
+        }
+
+        if (! Schema::hasColumn('email_accounts', 'ticket_ingress_enabled')) {
+            return true;
+        }
+
+        return $account->allowsTicketIngress();
+    }
+
+    private function ruleAppliesToMessageAccount(EmailRule $rule, EmailMessage $message, ?array $snapshot = null): bool
+    {
+        if (! Schema::hasTable('email_rule_accounts')) {
+            return true;
+        }
+
+        if (! $message->account_id) {
+            return false;
+        }
+
+        if ($snapshot && $snapshot['uses_published_version']) {
+            return in_array((int) $message->account_id, $snapshot['account_ids'], true);
+        }
+
+        if ($rule->accounts->isNotEmpty()) {
+            return $rule->accounts->contains(fn (EmailAccount $account): bool => (int) $account->id === (int) $message->account_id);
+        }
+
+        // Compatibility for programmatic legacy rules created without the new
+        // pivot. The account policy still blocks personal or non-ingress mail.
+        return $this->allowsInboundAutomation($message);
     }
 
     public function ticketKeyFromSubject(?string $subject): ?string
@@ -147,17 +306,99 @@ class InboundEmailRuleEngine
 
     private function matches(EmailMessage $message, array $conditions): bool
     {
-        foreach ($conditions as $condition) {
-            $field = $condition['field'] ?? '';
-            $operator = $condition['operator'] ?? 'contains';
-            $expected = (string) ($condition['value'] ?? '');
+        $groups = $this->conditionGroups($conditions);
 
-            if (! $this->matchCondition($this->fieldValue($message, $field), $operator, $expected, $message, $field)) {
-                return false;
-            }
+        if ($groups === []) {
+            return false;
         }
 
-        return true;
+        $topMatch = $this->conditionTopMatch($conditions);
+        $groupResults = collect($groups)
+            ->map(function (array $group) use ($message): bool {
+                $details = $this->conditionDetails($message, $group['conditions']);
+
+                return ($group['match'] ?? 'all') === 'any'
+                    ? collect($details)->contains(fn (array $condition): bool => (bool) $condition['matched'])
+                    : collect($details)->every(fn (array $condition): bool => (bool) $condition['matched']);
+            });
+
+        return $topMatch === 'any'
+            ? $groupResults->contains(true)
+            : $groupResults->every(fn (bool $matched): bool => $matched);
+    }
+
+    private function conditionDetails(EmailMessage $message, array $conditions): array
+    {
+        if (! array_is_list($conditions) && isset($conditions['groups'])) {
+            return collect($this->conditionGroups($conditions))
+                ->flatMap(function (array $group, int $groupIndex) use ($message): array {
+                    return collect($this->conditionDetails($message, $group['conditions']))
+                        ->map(function (array $condition) use ($group, $groupIndex): array {
+                            $condition['group'] = $group['name'] ?? 'Group '.($groupIndex + 1);
+                            $condition['group_match'] = $group['match'] ?? 'all';
+
+                            return $condition;
+                        })
+                        ->all();
+                })
+                ->values()
+                ->all();
+        }
+
+        return collect($conditions)
+            ->map(function (array $condition) use ($message): array {
+                $field = $condition['field'] ?? '';
+                $operator = $condition['operator'] ?? 'contains';
+                $expected = (string) ($condition['value'] ?? '');
+                $actual = $this->fieldValue($message, $field);
+
+                return [
+                    'field' => $field,
+                    'operator' => $operator,
+                    'expected' => $expected,
+                    'actual_preview' => Str::limit($actual, 500),
+                    'matched' => $this->matchCondition($actual, $operator, $expected, $message, $field),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{name: string|null, match: string, conditions: array<int, array<string, mixed>>}>
+     */
+    private function conditionGroups(array $conditions): array
+    {
+        if (array_is_list($conditions)) {
+            return [[
+                'name' => null,
+                'match' => 'all',
+                'conditions' => $conditions,
+            ]];
+        }
+
+        return collect($conditions['groups'] ?? [])
+            ->filter(fn (mixed $group): bool => is_array($group))
+            ->map(fn (array $group): array => [
+                'name' => isset($group['name']) ? (string) $group['name'] : null,
+                'match' => ($group['match'] ?? 'all') === 'any' ? 'any' : 'all',
+                'conditions' => collect($group['conditions'] ?? [])
+                    ->filter(fn (mixed $condition): bool => is_array($condition))
+                    ->values()
+                    ->all(),
+            ])
+            ->filter(fn (array $group): bool => $group['conditions'] !== [])
+            ->values()
+            ->all();
+    }
+
+    private function conditionTopMatch(array $conditions): string
+    {
+        if (array_is_list($conditions)) {
+            return 'all';
+        }
+
+        return ($conditions['match'] ?? 'all') === 'any' ? 'any' : 'all';
     }
 
     private function matchCondition(string $actual, string $operator, string $expected, EmailMessage $message, string $field): bool
@@ -195,22 +436,270 @@ class InboundEmailRuleEngine
         };
     }
 
-    private function executeActions(EmailMessage $message, EmailRule $rule, array $actions): void
-    {
-        foreach ($actions as $index => $action) {
+    private function executeActions(
+        EmailMessage $message,
+        EmailRule $rule,
+        array $snapshot,
+        bool $allowProviderMutation,
+    ): array {
+        $results = [];
+
+        foreach ($snapshot['actions'] as $index => $action) {
             $type = $action['type'] ?? '';
             $value = $action['value'] ?? null;
+
+            if (in_array($type, [
+                BuildEmailSmartInboxRulePrefill::ADMIN_ACTION_PROVIDER_ARCHIVE,
+                BuildEmailSmartInboxRulePrefill::ADMIN_ACTION_PROVIDER_MOVE,
+            ], true)) {
+                $providerResult = $this->executeProviderCleanupAction(
+                    $message,
+                    $snapshot,
+                    $action,
+                    (int) $index,
+                    $allowProviderMutation,
+                );
+                $results[] = $providerResult;
+
+                if (($providerResult['status'] ?? '') === EmailRuleExecutionAttempt::STATUS_FAILED) {
+                    foreach (array_slice($snapshot['actions'], ((int) $index) + 1, null, true) as $laterIndex => $laterAction) {
+                        $results[] = [
+                            'position' => (int) $laterIndex,
+                            'type' => (string) ($laterAction['type'] ?? ''),
+                            'status' => EmailRuleExecutionAttempt::STATUS_SKIPPED,
+                            'reason' => 'not_run_after_provider_cleanup_failure',
+                        ];
+                    }
+
+                    break;
+                }
+
+                continue;
+            }
 
             match ($type) {
                 'link_ticket_by_subject_token' => $this->linkByTicketKey($message),
                 'link_sales_by_subject_token' => $this->linkBySalesKey($message),
                 'create_ticket' => $this->createTicket($message, (string) $value),
                 'archive' => $message->forceFill(['state' => 'archived'])->save(),
-                'tag' => $this->tag($message, (string) $value),
+                'tag', 'tag_message' => $this->tag($message, (string) $value),
+                ApplyEmailConversationRuleClassification::ACTION_TAG_CONVERSATION,
+                ApplyEmailConversationRuleClassification::ACTION_SET_CONVERSATION_CATEGORY => $this->applyConversationClassification->handle(
+                    $message,
+                    $rule,
+                    $type,
+                    (string) $value,
+                    (int) $index,
+                ),
                 'emit_signal' => $this->emitSignal($message, $rule, $action, (int) $index),
                 default => null,
             };
+
+            $results[] = [
+                'position' => (int) $index,
+                'type' => $type,
+                'status' => $type === '' ? 'skipped' : EmailRuleExecutionAttempt::STATUS_SUCCEEDED,
+            ];
         }
+
+        return $results;
+    }
+
+    /**
+     * @param  array<string, mixed>  $snapshot
+     * @param  array<string, mixed>  $action
+     * @return array<string, mixed>
+     */
+    private function executeProviderCleanupAction(
+        EmailMessage $message,
+        array $snapshot,
+        array $action,
+        int $position,
+        bool $allowProviderMutation,
+    ): array {
+        $type = (string) ($action['type'] ?? '');
+        $failure = fn (string $reason): array => [
+            'position' => $position,
+            'type' => $type,
+            'status' => EmailRuleExecutionAttempt::STATUS_FAILED,
+            'reason' => $reason,
+        ];
+        if (! $allowProviderMutation) {
+            return $failure('provider_mutation_not_authorized');
+        }
+
+        $publisherId = (int) ($snapshot['published_by'] ?? 0);
+        $publisher = $publisherId > 0
+            ? User::query()->whereKey($publisherId)->where('status', User::STATUS_ACTIVE)->first()
+            : null;
+        $message->loadMissing('account');
+        $account = $message->account;
+
+        if (! $publisher
+            || ! $publisher->can('email.rule_manage')
+            || ! $account
+            || ! $account->is_active
+            || ! in_array((int) $account->id, $snapshot['account_ids'] ?? [], true)
+            || ! $this->mailboxAccess->canAccessAccount($publisher, $account, MailboxAccess::ORGANIZE)) {
+            return $failure('provider_cleanup_authorization_revoked');
+        }
+
+        $placements = EmailMailboxPlacement::query()
+            ->with(['account', 'folder', 'message'])
+            ->where('email_message_id', $message->id)
+            ->where('account_id', $account->id)
+            ->where('local_state', EmailMailboxPlacement::LOCAL_ACTIVE)
+            ->where(function ($placements): void {
+                $placements
+                    ->whereHas('folder', fn ($folders) => $folders->where('role', EmailFolder::ROLE_INBOX))
+                    ->orWhere(function ($legacy): void {
+                        $legacy
+                            ->whereNull('email_folder_id')
+                            ->whereIn('folder_path', ['INBOX', 'Inbox', 'inbox']);
+                    });
+            })
+            ->orderBy('id')
+            ->get();
+
+        if ($placements->count() !== 1) {
+            return $failure('provider_cleanup_source_stale_or_ambiguous');
+        }
+
+        $placement = $placements->first();
+        $targetFolder = EmailFolder::query()
+            ->whereKey((int) ($action['target_folder_id'] ?? 0))
+            ->where('account_id', $account->id)
+            ->where('is_selectable', true)
+            ->where('sync_enabled', true)
+            ->when(
+                $type === BuildEmailSmartInboxRulePrefill::ADMIN_ACTION_PROVIDER_ARCHIVE,
+                fn ($folders) => $folders->where('role', EmailFolder::ROLE_ARCHIVE),
+            )
+            ->first();
+
+        if (! $targetFolder || (int) $targetFolder->id === (int) $placement->email_folder_id) {
+            return $failure('provider_cleanup_target_stale');
+        }
+
+        try {
+            $operation = $this->performRemoteOperation->handle(
+                $placement,
+                $type === BuildEmailSmartInboxRulePrefill::ADMIN_ACTION_PROVIDER_ARCHIVE
+                    ? PerformEmailRemoteOperation::ARCHIVE
+                    : PerformEmailRemoteOperation::MOVE,
+                $publisher,
+                $targetFolder,
+            );
+        } catch (\Throwable) {
+            return $failure('provider_cleanup_operation_rejected');
+        }
+
+        return [
+            'position' => $position,
+            'type' => $type,
+            'status' => $operation->status === EmailRemoteOperation::STATUS_SUCCEEDED
+                ? EmailRuleExecutionAttempt::STATUS_SUCCEEDED
+                : EmailRuleExecutionAttempt::STATUS_FAILED,
+            'remote_operation_id' => (int) $operation->id,
+            'remote_operation_status' => $operation->status,
+            'reason' => $operation->status === EmailRemoteOperation::STATUS_SUCCEEDED
+                ? null
+                : ($operation->error_code ?: 'provider_cleanup_not_acknowledged'),
+        ];
+    }
+
+    private function runtimeSnapshot(EmailRule $rule): array
+    {
+        $version = $rule->publishedVersion;
+
+        if ($version instanceof EmailRuleVersion && $version->status === EmailRuleVersion::STATUS_PUBLISHED) {
+            return [
+                'uses_published_version' => true,
+                'version_id' => $version->id,
+                'version_number' => $version->version_number,
+                'version_status' => $version->status,
+                'name' => $version->name,
+                'routing_phase' => $version->routing_phase,
+                'rule_kind' => $version->rule_kind ?? $rule->rule_kind ?? EmailRule::KIND_ADMIN,
+                'owner_id' => $version->owner_id ? (int) $version->owner_id : ($rule->owner_id ? (int) $rule->owner_id : null),
+                'published_by' => $version->published_by ? (int) $version->published_by : null,
+                'stop_processing' => (bool) $version->stop_processing,
+                'conditions' => $version->conditions_json ?? [],
+                'actions' => $version->actions_json ?? [],
+                'account_ids' => collect($version->account_ids_json ?? [])
+                    ->map(fn ($id): int => (int) $id)
+                    ->values()
+                    ->all(),
+            ];
+        }
+
+        return [
+            'uses_published_version' => false,
+            'version_id' => null,
+            'version_number' => null,
+            'version_status' => 'live_compatibility',
+            'name' => $rule->name,
+            'routing_phase' => $rule->routing_phase,
+            'rule_kind' => $rule->rule_kind ?? EmailRule::KIND_ADMIN,
+            'owner_id' => $rule->owner_id ? (int) $rule->owner_id : null,
+            'published_by' => $rule->published_by ? (int) $rule->published_by : null,
+            'stop_processing' => (bool) $rule->stop_processing,
+            'conditions' => $rule->conditions_json ?? [],
+            'actions' => $rule->actions_json ?? [],
+            'account_ids' => $rule->accounts
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->values()
+                ->all(),
+        ];
+    }
+
+    private function startExecutionAttempt(EmailRule $rule, array $snapshot, EmailMessage $message): ?EmailRuleExecutionAttempt
+    {
+        if (! Schema::hasTable('email_rule_execution_attempts')) {
+            return null;
+        }
+
+        $message->loadMissing('latestPlacement');
+        $placementId = $message->latestPlacement?->id;
+        $versionKey = $snapshot['version_id'] ?: 'live';
+        $idempotencyKey = hash('sha256', implode('|', [
+            'email-rule',
+            $rule->id,
+            $versionKey,
+            $message->id,
+            $placementId ?: 0,
+        ]));
+
+        return EmailRuleExecutionAttempt::query()->firstOrCreate(
+            ['idempotency_key' => $idempotencyKey],
+            [
+                'email_rule_id' => $rule->id,
+                'email_rule_version_id' => $snapshot['version_id'],
+                'email_message_id' => $message->id,
+                'email_mailbox_placement_id' => $placementId,
+                'routing_phase' => $snapshot['routing_phase'],
+                'status' => EmailRuleExecutionAttempt::STATUS_RUNNING,
+                'matched' => true,
+                'stop_processing' => $snapshot['stop_processing'],
+                'conditions_json' => $snapshot['conditions'],
+                'actions_json' => $snapshot['actions'],
+                'started_at' => now(),
+            ],
+        );
+    }
+
+    private function finishExecutionAttempt(?EmailRuleExecutionAttempt $attempt, string $status, array $actionResults): void
+    {
+        if (! $attempt || ! $attempt->wasRecentlyCreated) {
+            return;
+        }
+
+        $attempt->forceFill([
+            'status' => $status,
+            'action_results_json' => $actionResults,
+            'finished_at' => now(),
+        ])->save();
     }
 
     private function emitSignal(EmailMessage $message, EmailRule $rule, array $action, int $actionIndex): ?Signal

@@ -19,7 +19,7 @@
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="fw-semibold text-truncate">{{ $message->subject ?: '(no subject)' }}</div>
+            <div class="fw-semibold text-truncate">{{ $message->displaySubject() ?: '(no subject)' }}</div>
             <div class="text-muted small">#{{ $message->id }}</div>
         </div>
         <div class="card-body">

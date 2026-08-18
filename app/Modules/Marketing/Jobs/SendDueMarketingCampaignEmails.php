@@ -4,6 +4,7 @@ namespace App\Modules\Marketing\Jobs;
 
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
+use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Marketing\Actions\AdvanceMarketingCampaignLifecycle;
@@ -27,8 +28,23 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
 
     public int $timeout = 300;
 
+    /** @var array<int, array{account_id: int|null, provider_binding_version: int|null}> */
+    public array $providerBindingSnapshots = [];
+
     public function __construct(public ?int $campaignId = null)
     {
+        $bindings = app(EmailProviderBindingSnapshot::class);
+        $default = $bindings->captureScope('marketing');
+
+        MarketingCampaign::query()
+            ->when($campaignId, fn ($query) => $query->whereKey($campaignId))
+            ->when(! $campaignId, fn ($query) => $query->whereIn('status', ['approved', 'active']))
+            ->get(['id', 'email_account_id'])
+            ->each(function (MarketingCampaign $campaign) use ($bindings, $default): void {
+                $this->providerBindingSnapshots[(int) $campaign->id] = $campaign->email_account_id
+                    ? $bindings->captureAccount($campaign->emailAccount()->first())
+                    : $default;
+            });
     }
 
     public function handle(
@@ -68,6 +84,20 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
             return;
         }
 
+        $snapshot = $this->providerBindingSnapshots[(int) $campaign->id] ?? null;
+        try {
+            $account = app(EmailProviderBindingSnapshot::class)->resolveAccount(
+                $account,
+                $snapshot['account_id'] ?? null,
+                $snapshot['provider_binding_version'] ?? null,
+            );
+        } catch (\App\Modules\Integration\Exceptions\EmailProviderSecurityException) {
+            $this->log($account->id, $campaign->id, null, null, 'error', 'MARKETING_EMAIL_PROVIDER_BINDING_STALE', 'The outbound Email provider binding changed after this campaign job was dispatched.');
+
+            return;
+        }
+        $providerBindingVersion = (int) $snapshot['provider_binding_version'];
+
         $settingsPayload = $settings->get();
 
         if ($this->isInsideQuietHours($settingsPayload)) {
@@ -86,7 +116,7 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
             ->orderBy('id')
             ->limit($limit)
             ->get()
-            ->each(function (MarketingCampaignRecipient $recipient) use ($campaign, $account, $renderer, $mailer, $settingsPayload, $suppressionGuard): void {
+            ->each(function (MarketingCampaignRecipient $recipient) use ($campaign, $account, $renderer, $mailer, $providerBindingVersion, $settingsPayload, $suppressionGuard): void {
                 $suppressionReason = $suppressionGuard->reasonForRecipient($recipient, $settingsPayload);
 
                 if ($suppressionReason !== null) {
@@ -113,7 +143,17 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
                     $html = $this->appendTrackingPixel($campaign, $recipient, $this->appendUnsubscribeHtml($this->rewriteLinks($campaign, $recipient, $rendered['html']), $recipient, $settingsPayload));
                     $text = $this->appendUnsubscribeText($rendered['text'], $recipient, $settingsPayload);
 
-                    $messageId = $mailer->send($account, $recipient->email, $recipient->name, $subject, $html, $text);
+                    $messageId = $mailer->send(
+                        $account,
+                        $recipient->email,
+                        $recipient->name,
+                        $subject,
+                        $html,
+                        $text,
+                        [],
+                        [],
+                        ['provider_binding_version' => $providerBindingVersion],
+                    );
 
                     DB::transaction(function () use ($recipient, $messageId): void {
                         $recipient->forceFill([

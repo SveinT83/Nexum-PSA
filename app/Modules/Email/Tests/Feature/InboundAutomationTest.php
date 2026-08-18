@@ -7,10 +7,16 @@ use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAttachment;
+use App\Modules\Email\Models\EmailFolder;
+use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Services\InboundAttachmentPersister;
+use App\Modules\Email\Services\InboundEmailRuleEngine;
+use App\Modules\Email\Services\InboundEmailSignalClassifier;
+use App\Modules\Email\Services\PersonalEmailRuleEngine;
 use App\Modules\Email\Services\TrustedSenderAuthenticationFacts;
+use App\Modules\Notification\Actions\DispatchInboundEmailNotification;
 use App\Modules\Signal\Models\Signal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -30,6 +36,10 @@ class InboundAutomationTest extends TestCase
     {
         parent::setUp();
 
+        // Inbound persistence must never write test MIME or attachments into
+        // the shared Dev private-email tree while the database is rolled back.
+        Storage::fake('local');
+
         Permission::findOrCreate('email.account_manage', 'web');
         Permission::findOrCreate('email.rule_manage', 'web');
         Role::findOrCreate('Admin', 'web');
@@ -42,6 +52,10 @@ class InboundAutomationTest extends TestCase
     #[Test]
     public function admin_can_store_an_opt_in_preclassification_rule(): void
     {
+        $account = $this->emailAccount([
+            'address' => 'preclassification@example.test',
+        ]);
+
         $this->actingAs($this->admin)
             ->get(route('tech.admin.settings.email.rules.create'))
             ->assertOk()
@@ -53,6 +67,7 @@ class InboundAutomationTest extends TestCase
                 'name' => 'Supplier order intake',
                 'description' => 'Recognize deterministic supplier mail before generic classification.',
                 'weight' => 5,
+                'account_ids' => [$account->id],
                 'routing_phase' => EmailRule::ROUTING_PHASE_PRECLASSIFICATION,
                 'is_active' => '1',
                 'stop_processing' => '1',
@@ -140,14 +155,100 @@ class InboundAutomationTest extends TestCase
     }
 
     #[Test]
+    public function inbound_rules_require_an_exact_active_nonmissing_same_account_provider_occurrence(): void
+    {
+        EmailRule::query()->create([
+            'name' => 'Provider occurrence boundary',
+            'trigger' => EmailRule::TRIGGER_INBOUND,
+            'routing_phase' => EmailRule::ROUTING_PHASE_PRECLASSIFICATION,
+            'weight' => 1,
+            'is_active' => true,
+            'stop_processing' => true,
+            'conditions_json' => [
+                ['field' => 'from_domain', 'operator' => 'equals', 'value' => 'boundary.example'],
+            ],
+            'actions_json' => [
+                ['type' => 'emit_signal', 'signal_type' => 'provider_occurrence_boundary'],
+            ],
+        ]);
+
+        $active = $this->emailMessage(7103);
+        $active->forceFill(['from_email' => 'sender@boundary.example'])->save();
+        $this->activeInboxPlacement($active);
+
+        $providerMissing = $this->emailMessage(7104);
+        $providerMissing->forceFill(['from_email' => 'sender@boundary.example'])->save();
+        $this->activeInboxPlacement($providerMissing, overrides: [
+            'provider_missing_at' => now(),
+        ]);
+
+        $crossAccount = $this->emailMessage(7105);
+        $crossAccount->forceFill(['from_email' => 'sender@boundary.example'])->save();
+        $foreignAccount = $this->emailAccount([
+            'address' => 'foreign-boundary@example.test',
+            'imap_username' => 'foreign-boundary@example.test',
+            'smtp_username' => 'foreign-boundary@example.test',
+        ]);
+        $this->activeInboxPlacement($crossAccount, $foreignAccount);
+
+        app()->call([new ProcessInboundRules($active->id, true), 'handle']);
+
+        $ruleEngine = $this->createMock(InboundEmailRuleEngine::class);
+        $ruleEngine->expects($this->never())->method('allowsInboundAutomation');
+        $classifier = $this->createMock(InboundEmailSignalClassifier::class);
+        $classifier->expects($this->never())->method('classifyAndRecord');
+        $personalRuleEngine = $this->createMock(PersonalEmailRuleEngine::class);
+        $personalRuleEngine->expects($this->never())->method('process');
+        $notifications = $this->createMock(DispatchInboundEmailNotification::class);
+        $notifications->expects($this->never())->method('handle');
+
+        foreach ([$providerMissing, $crossAccount] as $message) {
+            (new ProcessInboundRules($message->id, true))->handle(
+                $ruleEngine,
+                $classifier,
+                $personalRuleEngine,
+                $notifications,
+            );
+        }
+
+        $this->assertDatabaseHas('signals', [
+            'source_domain' => 'email',
+            'source_id' => $active->id,
+            'signal_type' => 'provider_occurrence_boundary',
+        ]);
+
+        foreach ([$providerMissing, $crossAccount] as $rejected) {
+            $this->assertDatabaseMissing('signals', [
+                'source_domain' => 'email',
+                'source_id' => $rejected->id,
+            ]);
+            $this->assertDatabaseMissing('email_rule_execution_attempts', [
+                'email_message_id' => $rejected->id,
+            ]);
+            $this->assertDatabaseMissing('email_rule_logs', [
+                'email_message_id' => $rejected->id,
+            ]);
+            $this->assertNull($rejected->fresh()->ticket_id);
+            $this->assertSame('untriaged', $rejected->fresh()->state);
+        }
+
+        $this->assertDatabaseCount('email_remote_operations', 0);
+        $this->assertDatabaseCount('notifications', 0);
+    }
+
+    #[Test]
     public function admin_can_configure_trusted_authentication_infrastructure(): void
     {
         $this->actingAs($this->admin)
             ->get(route('tech.admin.settings.email.config'))
             ->assertOk()
-            ->assertSee('Trusted Sender Authentication')
+            ->assertSee('Email Sync & Cache Settings', false)
+            ->assertSee('Provider Sync')
+            ->assertSee('Local Cache & Legacy Cleanup', false)
+            ->assertSee('Legacy server cleanup after successful Ticket-ingest import')
+            ->assertSee('Advanced Automation Trust')
+            ->assertSee('Proxmox Mail Gateway')
             ->assertSee('Trusted authserv IDs')
-            ->assertSee('Both lists are required together')
             ->assertSee('Trusted receiving hops');
 
         $payload = [
@@ -183,6 +284,20 @@ class InboundAutomationTest extends TestCase
             ]))
             ->assertRedirect(route('tech.admin.settings.email.config'))
             ->assertSessionHasErrors('trusted_authserv_ids');
+    }
+
+    #[Test]
+    public function email_config_keeps_legacy_server_cleanup_off_by_default(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.email.config'))
+            ->assertOk()
+            ->assertSee('Normal IMAP client sync keeps provider mail on the server.');
+
+        $this->assertMatchesRegularExpression(
+            '/id="delete_on_success"[^>]*value="1"(?![^>]*checked)/',
+            $response->getContent(),
+        );
     }
 
     #[Test]
@@ -289,6 +404,7 @@ class InboundAutomationTest extends TestCase
                 'Received' => 'from attacker.test by mail-gateway.forged.test with ESMTPS',
             ],
         ])->save();
+        $this->activeInboxPlacement($message);
 
         EmailRule::query()->create([
             'name' => 'Synthetic supplier confirmation',
@@ -357,6 +473,7 @@ class InboundAutomationTest extends TestCase
                 'X-Private-Trace' => 'must-not-leave-email',
             ],
         ])->save();
+        $this->activeInboxPlacement($message);
 
         EmailRule::query()->create([
             'name' => 'Trusted supplier confirmation',
@@ -452,7 +569,7 @@ class InboundAutomationTest extends TestCase
 
     private function vendorEmail(int $uid): EmailMessage
     {
-        return EmailMessage::query()->create([
+        $message = EmailMessage::query()->create([
             'account_id' => $this->emailAccount()->id,
             'mailbox' => 'INBOX',
             'imap_uid' => $uid,
@@ -464,6 +581,10 @@ class InboundAutomationTest extends TestCase
             'state' => 'untriaged',
             'body_text' => 'QNAP firmware update available for NAS devices. You can unsubscribe from notifications.',
         ]);
+
+        $this->activeInboxPlacement($message);
+
+        return $message;
     }
 
     private function emailMessage(int $uid): EmailMessage
@@ -481,12 +602,55 @@ class InboundAutomationTest extends TestCase
         ]);
     }
 
-    private function emailAccount(): EmailAccount
+    /**
+     * Project the exact provider occurrence required before inbound content may
+     * enter any rule, Signal, notification, Ticket, or provider-write path.
+     *
+     * @param  array<string, mixed>  $overrides
+     */
+    private function activeInboxPlacement(
+        EmailMessage $message,
+        ?EmailAccount $occurrenceAccount = null,
+        array $overrides = [],
+    ): EmailMailboxPlacement {
+        $account = $occurrenceAccount ?? $message->account()->firstOrFail();
+        $folder = EmailFolder::query()->firstOrCreate(
+            [
+                'account_id' => $account->id,
+                'path' => 'INBOX',
+            ],
+            [
+                'name' => 'INBOX',
+                'role' => EmailFolder::ROLE_INBOX,
+                'is_selectable' => true,
+                'sync_enabled' => true,
+                'uid_validity' => 1,
+            ],
+        );
+
+        return EmailMailboxPlacement::query()->create(array_merge([
+            'email_message_id' => $message->id,
+            'account_id' => $account->id,
+            'email_folder_id' => $folder->id,
+            'provider' => 'imap',
+            'folder_path' => 'INBOX',
+            'imap_uid_validity' => 1,
+            'imap_uid' => $message->imap_uid,
+            'local_state' => EmailMailboxPlacement::LOCAL_ACTIVE,
+            'sync_status' => EmailMailboxPlacement::SYNC_SYNCED,
+            'sync_version' => 1,
+            'provider_missing_at' => null,
+        ], $overrides));
+    }
+
+    private function emailAccount(array $overrides = []): EmailAccount
     {
-        return EmailAccount::query()->create([
+        return EmailAccount::query()->create(array_merge([
             'address' => 'inbound-'.uniqid().'@example.test',
             'from_name' => 'Inbound',
+            'account_kind' => EmailAccount::KIND_SHARED,
             'is_active' => true,
+            'ticket_ingress_enabled' => true,
             'imap_host' => 'imap.example.test',
             'imap_port' => 993,
             'imap_encryption' => 'ssl',
@@ -499,7 +663,7 @@ class InboundAutomationTest extends TestCase
             'smtp_username' => 'inbound@example.test',
             'smtp_secret' => 'secret',
             'smtp_auth_type' => 'password',
-        ]);
+        ], $overrides));
     }
 
     private function trustedAuthenticationSettings(): void

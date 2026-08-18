@@ -50,6 +50,35 @@
       </div>
     </div>
 
+    <div class="card mb-4">
+      <div class="card-header py-2">
+        <div class="fw-semibold">Reprocess message</div>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ route('tech.admin.settings.email.rules.reprocess') }}" class="row g-2 align-items-end">
+          @csrf
+          <div class="col-md-4">
+            <label for="email_message_id" class="form-label">Email message ID</label>
+            <input id="email_message_id" name="email_message_id" type="number" min="1" class="form-control @error('email_message_id') is-invalid @enderror" value="{{ old('email_message_id') }}" required>
+            @error('email_message_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+          </div>
+          <div class="col-md-4">
+            <label for="run_mode" class="form-label">Run mode</label>
+            <select id="run_mode" name="run_mode" class="form-select @error('run_mode') is-invalid @enderror">
+              <option value="queue" @selected(old('run_mode', 'queue') === 'queue')>Queue reprocessing</option>
+              <option value="now" @selected(old('run_mode') === 'now')>Run now</option>
+            </select>
+            @error('run_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
+          </div>
+          <div class="col-md-4">
+            <button type="submit" class="btn btn-outline-primary w-100">
+              <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>Reprocess
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div>
       <h2 class="h5">Custom inbound rules</h2>
 
@@ -65,6 +94,7 @@
               <tr>
                 <th style="width: 90px;">Weight</th>
                 <th>Rule</th>
+                <th>Mailboxes</th>
                 <th>Conditions</th>
                 <th>Actions</th>
                 <th class="text-center" style="width: 110px;">Flow</th>
@@ -80,6 +110,11 @@
                     <div class="fw-semibold">{{ $rule->name }}</div>
                     <div class="small mt-1">
                       <span class="badge text-bg-light">{{ $rule->routing_phase === 'preclassification' ? 'Preclassification' : 'Normal phase' }}</span>
+                      @if($rule->publishedVersion)
+                        <span class="badge text-bg-info">v{{ $rule->publishedVersion->version_number }}</span>
+                      @else
+                        <span class="badge text-bg-warning">Unpublished legacy</span>
+                      @endif
                     </div>
                     @if($rule->description)
                       <div class="small text-muted">{{ $rule->description }}</div>
@@ -89,15 +124,41 @@
                     @endif
                   </td>
                   <td>
-                    @foreach((array) $rule->conditions_json as $condition)
+                    @forelse($rule->accounts as $account)
                       <div class="small">
-                        <code>{{ $condition['field'] ?? '' }}</code>
-                        {{ str_replace('_', ' ', $condition['operator'] ?? '') }}
-                        @if(($condition['value'] ?? '') !== '')
-                          <code>{{ $condition['value'] }}</code>
-                        @endif
+                        <span class="badge text-bg-light">{{ $account->address }}</span>
                       </div>
-                    @endforeach
+                    @empty
+                      <span class="badge text-bg-warning">Legacy scope</span>
+                    @endforelse
+                  </td>
+                  <td>
+                    @php($conditionGroups = data_get($rule->conditions_json, 'groups'))
+                    @if($conditionGroups)
+                      <div class="small text-muted mb-1">{{ (data_get($rule->conditions_json, 'match') === 'any') ? 'Any group' : 'All groups' }}</div>
+                      @foreach($conditionGroups as $group)
+                        <div class="small fw-semibold">{{ $group['name'] ?? 'Default' }} <span class="text-muted">({{ ($group['match'] ?? 'all') === 'any' ? 'any' : 'all' }})</span></div>
+                        @foreach((array) ($group['conditions'] ?? []) as $condition)
+                          <div class="small ms-2">
+                            <code>{{ $condition['field'] ?? '' }}</code>
+                            {{ str_replace('_', ' ', $condition['operator'] ?? '') }}
+                            @if(($condition['value'] ?? '') !== '')
+                              <code>{{ $condition['value'] }}</code>
+                            @endif
+                          </div>
+                        @endforeach
+                      @endforeach
+                    @else
+                      @foreach((array) $rule->conditions_json as $condition)
+                        <div class="small">
+                          <code>{{ $condition['field'] ?? '' }}</code>
+                          {{ str_replace('_', ' ', $condition['operator'] ?? '') }}
+                          @if(($condition['value'] ?? '') !== '')
+                            <code>{{ $condition['value'] }}</code>
+                          @endif
+                        </div>
+                      @endforeach
+                    @endif
                   </td>
                   <td>
                     @foreach((array) $rule->actions_json as $action)

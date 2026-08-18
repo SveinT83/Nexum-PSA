@@ -45,8 +45,10 @@ class MarkEmailAsSpam
 
         $rule = EmailRule::query()
             ->where('trigger', EmailRule::TRIGGER_INBOUND)
+            ->with('accounts')
             ->get()
-            ->first(fn (EmailRule $rule) => ($rule->conditions_json ?? []) === $conditions);
+            ->first(fn (EmailRule $rule) => ($rule->conditions_json ?? []) === $conditions
+                && $rule->accounts->contains(fn ($account): bool => (int) $account->id === (int) $message->account_id));
 
         $payload = [
             'name' => 'Spam: '.Str::limit((string) ($message->from_email ?: $message->subject ?: 'Inbound email'), 80, ''),
@@ -62,13 +64,18 @@ class MarkEmailAsSpam
 
         if ($rule) {
             $rule->forceFill($payload)->save();
+            $rule->accounts()->syncWithoutDetaching([$message->account_id]);
 
             return $rule->fresh();
         }
 
-        return EmailRule::create($payload + [
+        $rule = EmailRule::create($payload + [
             'created_by' => $actor?->id,
             'hit_count' => 0,
         ]);
+
+        $rule->accounts()->sync([$message->account_id]);
+
+        return $rule;
     }
 }

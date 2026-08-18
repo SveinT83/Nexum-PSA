@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Sales\Actions\EvaluateSalesQuoteApproval;
 use App\Modules\Sales\Actions\RecalculateSalesQuoteVersion;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Support\SalesQuotePresentation;
@@ -20,6 +21,7 @@ class SendTicketSalesQuote
     public function __construct(
         private readonly TicketActionGuard $guard,
         private readonly RecalculateSalesQuoteVersion $recalculate,
+        private readonly EvaluateSalesQuoteApproval $approval,
         private readonly AddTicketMessage $addMessage,
         private readonly StoreTicketAttachment $attachments,
         private readonly SalesQuotePresentation $quotePresentation,
@@ -46,8 +48,24 @@ class SendTicketSalesQuote
             throw ValidationException::withMessages(['quote' => 'Add at least one quote line before sending.']);
         }
 
+        $this->recalculate->handle($version);
+        $approvalResult = $this->approval->handle($version);
+        if ($approvalResult['required'] && $version->approval_status !== 'approved') {
+            $version->forceFill([
+                'approval_status' => 'pending',
+                'approval_required_reasons' => $approvalResult['reasons'],
+                'approval_policy_snapshot' => $approvalResult['policy'],
+                'approval_requested_at' => $version->approval_requested_at ?: now(),
+                'approval_requested_by' => $version->approval_requested_by ?: $actor->id,
+                'approval_decided_at' => null,
+                'approval_decided_by' => null,
+                'approval_decision_note' => null,
+            ])->save();
+
+            throw ValidationException::withMessages(['quote' => 'Quote requires internal approval before sending.']);
+        }
+
         $sent = DB::transaction(function () use ($ticket, $data, $actor, $version) {
-            $this->recalculate->handle($version);
             $version->loadMissing(['quote.opportunity.client', 'quote.opportunity.primaryContact', 'lines']);
             $pdf = $this->renderPdf($version);
             $path = 'sales/quote-snapshots/'.$version->quote->quote_key.'/v'.$version->version_number.'-'.hash('sha256', $pdf).'.pdf';

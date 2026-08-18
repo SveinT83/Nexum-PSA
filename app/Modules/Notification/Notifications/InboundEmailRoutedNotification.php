@@ -2,9 +2,12 @@
 
 namespace App\Modules\Notification\Notifications;
 
+use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Notification\Channels\NextcloudTalkChannel;
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use App\Modules\Notification\Support\WebPushReadiness;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,17 +16,26 @@ use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class InboundEmailRoutedNotification extends Notification implements ShouldQueue
+class InboundEmailRoutedNotification extends Notification implements EmailAccountMailNotification, ShouldQueue
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     /**
      * @param  array<string, mixed>  $payload
      */
     public function __construct(
-        public readonly array $payload,
-        public readonly string $databaseNotificationId,
+        #[\SensitiveParameter] public readonly array $payload,
+        #[\SensitiveParameter] public readonly string $databaseNotificationId,
+        #[\SensitiveParameter] ?array $frozenMailSnapshot = null,
+        private readonly bool $frozenWebPushPreview = false,
     ) {
+        if ($frozenMailSnapshot === null) {
+            $this->freezeEmailAccountMailSnapshot(
+                filled($this->payload['ticket_id'] ?? null) ? 'tickets' : 'system',
+            );
+        } else {
+            $this->hydrateFrozenMailSnapshot($frozenMailSnapshot);
+        }
         $this->afterCommit();
     }
 
@@ -36,7 +48,9 @@ class InboundEmailRoutedNotification extends Notification implements ShouldQueue
         $channels = [];
 
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel(
+                filled($this->payload['ticket_id'] ?? null) ? 'tickets' : 'system',
+            );
         }
 
         if ($setting->web_push_enabled && app(WebPushReadiness::class)->isReady()) {
@@ -62,11 +76,9 @@ class InboundEmailRoutedNotification extends Notification implements ShouldQueue
 
     public function toWebPush(mixed $notifiable, Notification $notification): WebPushMessage
     {
-        $setting = NotificationSetting::getForUser($notifiable, (string) $this->payload['type']);
-
         return (new WebPushMessage)
             ->title((string) ($this->payload['push_title'] ?? 'Nexum notification'))
-            ->body($this->pushBody($setting))
+            ->body($this->pushBody())
             ->icon('/logo.png')
             ->badge('/logo.png')
             ->tag((string) $this->payload['web_push_tag'])
@@ -114,9 +126,9 @@ class InboundEmailRoutedNotification extends Notification implements ShouldQueue
         return route('tech.profile.notifications.open', ['notification' => $this->databaseNotificationId], false);
     }
 
-    private function pushBody(NotificationSetting $setting): string
+    private function pushBody(): string
     {
-        if (! $setting->web_push_preview_enabled) {
+        if (! $this->frozenWebPushPreview) {
             return (string) ($this->payload['push_body'] ?? 'Open Nexum to view the notification.');
         }
 
@@ -130,5 +142,43 @@ class InboundEmailRoutedNotification extends Notification implements ShouldQueue
         return $subject !== ''
             ? str($subject)->limit(140)->toString()
             : (string) ($this->payload['push_body'] ?? 'Open Nexum to view the notification.');
+    }
+
+    /** @param array<string, mixed> $snapshot */
+    private function hydrateFrozenMailSnapshot(#[\SensitiveParameter] array $snapshot): void
+    {
+        $scope = is_string($snapshot['scope'] ?? null) ? $snapshot['scope'] : null;
+        $accountId = filter_var(
+            $snapshot['account_id'] ?? null,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]],
+        );
+        $bindingVersion = filter_var(
+            $snapshot['provider_binding_version'] ?? null,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]],
+        );
+        $failureCode = is_string($snapshot['failure_code'] ?? null)
+            ? $snapshot['failure_code']
+            : null;
+
+        $this->emailAccountMailSnapshotCaptured = true;
+        if (! array_key_exists((string) $scope, EmailAccount::DEFAULT_SCOPES)
+            || (($accountId === false || $bindingVersion === false) && $failureCode === null)) {
+            $this->emailAccountMailSnapshotFailureCode = 'provider_binding_snapshot_missing';
+
+            return;
+        }
+
+        $this->emailAccountMailScope = $scope;
+        $this->emailAccountMailAccountId = $accountId === false ? null : (int) $accountId;
+        $this->emailAccountMailProviderBindingVersion = $bindingVersion === false
+            ? null
+            : (int) $bindingVersion;
+        $this->emailAccountMailSnapshotFailureCode = in_array($failureCode, [
+            null,
+            'provider_binding_snapshot_missing',
+            'provider_binding_snapshot_unavailable',
+        ], true) ? $failureCode : 'provider_binding_snapshot_missing';
     }
 }

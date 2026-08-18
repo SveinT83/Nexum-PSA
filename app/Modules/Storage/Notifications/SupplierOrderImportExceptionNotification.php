@@ -3,17 +3,19 @@
 namespace App\Modules\Storage\Notifications;
 
 use App\Modules\Notification\Channels\NextcloudTalkChannel;
+use App\Modules\Notification\Contracts\EmailAccountMailNotification;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
+use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class SupplierOrderImportExceptionNotification extends Notification
+class SupplierOrderImportExceptionNotification extends Notification implements EmailAccountMailNotification
 {
-    use Queueable;
+    use Queueable, RoutesEmailThroughAccount;
 
     /** @param array<string, mixed> $context */
     public function __construct(
@@ -23,7 +25,9 @@ class SupplierOrderImportExceptionNotification extends Notification
         public readonly string $title,
         public readonly string $summary,
         public readonly array $context = [],
-    ) {}
+    ) {
+        $this->freezeEmailAccountMailSnapshot('alerts');
+    }
 
     /** @return list<class-string|string> */
     public function via(object $notifiable): array
@@ -34,7 +38,7 @@ class SupplierOrderImportExceptionNotification extends Notification
             $channels[] = 'database';
         }
         if ($setting->mail_enabled) {
-            $channels[] = 'mail';
+            $channels[] = $this->emailAccountMailChannel('alerts');
         }
         if ($setting->web_push_enabled) {
             $channels[] = WebPushChannel::class;

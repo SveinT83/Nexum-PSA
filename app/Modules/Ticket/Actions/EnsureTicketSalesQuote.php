@@ -69,7 +69,13 @@ class EnsureTicketSalesQuote
                 $opportunity = $context->opportunity;
             }
 
-            $version = $this->ensureDraft->handle($opportunity, $actor);
+            $currentQuoteVersion = $opportunity->currentQuoteVersion;
+            $version = $this->ensureDraft->handle($opportunity, $actor, [
+                'mode' => $currentQuoteVersion?->status === 'accepted'
+                    ? 'additional_after_acceptance'
+                    : 'revision',
+                'reason' => 'Ticket planned scope changed.',
+            ]);
             $existingPlannedIds = $version->lines()->get()
                 ->map(fn ($line) => (int) data_get($line->snapshot, 'ticket_planned_line_id'))
                 ->filter()->all();
