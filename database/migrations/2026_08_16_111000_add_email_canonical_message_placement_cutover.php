@@ -230,7 +230,7 @@ return new class extends Migration
             $table->unsignedBigInteger('total_evidence_bytes')->default(0);
             $table->char('scope_state_hash', 64);
             $table->char('rolling_evidence_hash', 64);
-            $table->char('attestation_fingerprint', 64)->nullable()->index();
+            $table->char('attestation_fingerprint', 64)->nullable()->index('em_parity_attest_fingerprint_ix');
             $table->string('error_code', 80)->nullable();
             $table->dateTime('started_at');
             $table->dateTime('completed_at')->nullable();

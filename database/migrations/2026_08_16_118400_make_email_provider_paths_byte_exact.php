@@ -125,6 +125,14 @@ return new class extends Migration
             return;
         }
 
+        Schema::table('email_messages', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->index('account_id', 'tmp_acct_fk_idx');
+        });
+
+        Schema::table('email_provider_inventory_folders', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->index('email_provider_inventory_run_id', 'tmp_inv_run_fk_idx');
+        });
+
         foreach (self::COLUMNS as $table => $columns) {
             if (! Schema::hasTable($table)) {
                 continue;
@@ -134,6 +142,14 @@ return new class extends Migration
             $this->alterColumns($table, $columns, true);
             $this->createIndexes($table);
         }
+
+        Schema::table('email_provider_inventory_folders', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->dropIndex('tmp_inv_run_fk_idx');
+        });
+
+        Schema::table('email_messages', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->dropIndex('tmp_acct_fk_idx');
+        });
     }
 
     public function down(): void
@@ -147,6 +163,14 @@ return new class extends Migration
             return;
         }
 
+        Schema::table('email_messages', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->index('account_id', 'tmp_acct_fk_idx');
+        });
+
+        Schema::table('email_provider_inventory_folders', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->index('email_provider_inventory_run_id', 'tmp_inv_run_fk_idx');
+        });
+
         foreach (self::COLUMNS as $table => $columns) {
             if (! Schema::hasTable($table)) {
                 continue;
@@ -156,6 +180,14 @@ return new class extends Migration
             $this->alterColumns($table, $columns, false);
             $this->createIndexes($table);
         }
+
+        Schema::table('email_provider_inventory_folders', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->dropIndex('tmp_inv_run_fk_idx');
+        });
+
+        Schema::table('email_messages', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            $table->dropIndex('tmp_acct_fk_idx');
+        });
     }
 
     private function assertSupportedDriver(string $driver): void

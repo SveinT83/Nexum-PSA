@@ -10,6 +10,8 @@ use App\Modules\Email\Models\EmailMessageUserState;
 use App\Modules\Email\Services\EmailOrdinaryMailboxEntitlementResolver;
 use App\Modules\Email\Services\EmailUnreadAccessEpochService;
 use App\Modules\Email\Services\EmailUnreadSchemaState;
+use App\Modules\Email\Services\EmailLiveInvalidator;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -19,6 +21,7 @@ class RecordEmailMessageOpened
         private readonly EmailOrdinaryMailboxEntitlementResolver $entitlements,
         private readonly EmailUnreadAccessEpochService $epochs,
         private readonly EmailUnreadSchemaState $schemaState,
+        private readonly EmailLiveInvalidator $invalidator,
     ) {}
 
     public function handle(
@@ -91,6 +94,13 @@ class RecordEmailMessageOpened
             $state->last_opened_placement_id = $placement?->id;
             $state->opened_count = ((int) $state->opened_count) + 1;
             $state->save();
+
+            $this->invalidator->record([
+                'user' => [
+                    $lockedActor->id => [EmailLiveProjectionChange::TYPE_PERSONAL_STATE],
+                ],
+                'conversations' => [$lockedMessage->conversation_id],
+            ]);
 
             return $state->fresh();
         });

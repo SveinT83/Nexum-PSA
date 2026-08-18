@@ -57,11 +57,11 @@ return new class extends Migration
         $this->backfillMessageUidValidities();
 
         Schema::table('email_messages', function (Blueprint $table): void {
-            $table->dropUnique('uniq_account_mailbox_uid');
             $table->unique(
                 ['account_id', 'mailbox', 'imap_uid_validity', 'imap_uid'],
                 'em_msg_uid_ns_uq',
             );
+            $table->dropUnique('uniq_account_mailbox_uid');
         });
     }
 

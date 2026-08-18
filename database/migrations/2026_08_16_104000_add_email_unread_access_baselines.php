@@ -15,11 +15,11 @@ return new class extends Migration
         });
 
         Schema::table('email_message_user_states', function (Blueprint $table): void {
-            $table->dropUnique('email_message_user_states_unique');
             $table->unique(
                 ['email_message_id', 'user_id', 'access_epoch'],
                 'em_msg_state_message_user_epoch_uq',
             );
+            $table->dropUnique('email_message_user_states_unique');
             $table->index(
                 ['user_id', 'access_epoch', 'is_unread', 'email_message_id'],
                 'em_msg_state_user_epoch_unread_ix',

@@ -509,6 +509,7 @@ return new class extends Migration
                 'updated_at',
             ],
             DB::table('model_has_permissions as assignment')
+                ->join('user_management as u', 'u.id', '=', 'assignment.model_id')
                 ->join('permissions as permission', 'permission.id', '=', 'assignment.permission_id')
                 ->select([
                     'assignment.model_id',
@@ -547,6 +548,7 @@ return new class extends Migration
                 'updated_at',
             ],
             DB::table('model_has_roles as assignment')
+                ->join('user_management as u', 'u.id', '=', 'assignment.model_id')
                 ->join('role_has_permissions as role_permission', 'role_permission.role_id', '=', 'assignment.role_id')
                 ->join('permissions as permission', 'permission.id', '=', 'role_permission.permission_id')
                 ->select([
@@ -620,18 +622,18 @@ return new class extends Migration
     private function attestCurrentRows(): void
     {
         $contracts = [
-            [self::STREAMS, $this->streamContract('')],
-            [self::CHANGES, $this->changeContract('').' and ('.$this->changeLinkContract('').')'],
-            [self::PUBLICATIONS, $this->publicationContract('').' and ('.$this->publicationLinkContract('').')'],
-            [self::DELIVERIES, $this->deliveryContract('').' and ('.$this->deliveryLinkContract('').')'],
-            [self::GLOBAL_AUTHORITY, $this->globalAuthorityContract('')],
-            [self::ACCOUNT_AUTHORITY, $this->accountAuthorityContract('')],
-            [self::USER_ACCESS, $this->userAccessContract('')],
-            [self::USER_CONTENT_PATHS, $this->contentAuthorityPathContract('')],
+            [self::STREAMS, $this->streamContract('outer_table.')],
+            [self::CHANGES, $this->changeContract('outer_table.').' and ('.$this->changeLinkContract('outer_table.').')'],
+            [self::PUBLICATIONS, $this->publicationContract('outer_table.').' and ('.$this->publicationLinkContract('outer_table.').')'],
+            [self::DELIVERIES, $this->deliveryContract('outer_table.').' and ('.$this->deliveryLinkContract('outer_table.').')'],
+            [self::GLOBAL_AUTHORITY, $this->globalAuthorityContract('outer_table.')],
+            [self::ACCOUNT_AUTHORITY, $this->accountAuthorityContract('outer_table.')],
+            [self::USER_ACCESS, $this->userAccessContract('outer_table.')],
+            [self::USER_CONTENT_PATHS, $this->contentAuthorityPathContract('outer_table.')],
         ];
         foreach ($contracts as [$table, $valid]) {
             $this->assertPreflightDeadline();
-            if (DB::table($table)->whereRaw("coalesce(({$valid}), 0) = 0")->limit(1)->exists()) {
+            if (DB::table($table.' as outer_table')->whereRaw("coalesce(({$valid}), 0) = 0")->limit(1)->exists()) {
                 throw new RuntimeException("Malformed Email live-invalidation state in {$table}.");
             }
         }
@@ -782,6 +784,7 @@ return new class extends Migration
     private function missingPristineDirectContentPath(string $userModel): bool
     {
         return DB::table('model_has_permissions as assignment')
+            ->join('user_management as u', 'u.id', '=', 'assignment.model_id')
             ->join('permissions as permission', 'permission.id', '=', 'assignment.permission_id')
             ->where('permission.name', 'email.inbox_view')
             ->where('assignment.model_type', $userModel)
@@ -798,6 +801,7 @@ return new class extends Migration
     private function missingPristineRoleContentPath(string $userModel): bool
     {
         return DB::table('model_has_roles as assignment')
+            ->join('user_management as u', 'u.id', '=', 'assignment.model_id')
             ->join('role_has_permissions as role_permission', 'role_permission.role_id', '=', 'assignment.role_id')
             ->join('permissions as permission', 'permission.id', '=', 'role_permission.permission_id')
             ->where('permission.name', 'email.inbox_view')
@@ -1405,7 +1409,7 @@ return new class extends Migration
             ." and (({$prefix}source_stream_type = 'account'"
             .' and exists(select 1 from '.self::ACCOUNT_AUTHORITY.' as account_authority'
             ." where account_authority.email_account_id = {$prefix}email_account_id"
-            ." and account_authority.owner_user_id is {$prefix}frozen_owner_user_id"
+            ." and account_authority.owner_user_id <=> {$prefix}frozen_owner_user_id"
             ." and account_authority.audience_generation = {$prefix}account_audience_generation)"
             ." and {$prefix}grant_through_id = coalesce((select max(candidate.id)"
             .' from email_account_user_grants as candidate'

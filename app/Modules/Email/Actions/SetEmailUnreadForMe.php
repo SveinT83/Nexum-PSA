@@ -9,6 +9,8 @@ use App\Modules\Email\Models\EmailMessageUserState;
 use App\Modules\Email\Services\EmailOrdinaryMailboxEntitlementResolver;
 use App\Modules\Email\Services\EmailUnreadAccessEpochService;
 use App\Modules\Email\Services\EmailUnreadSchemaState;
+use App\Modules\Email\Services\EmailLiveInvalidator;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +20,7 @@ class SetEmailUnreadForMe
         private readonly EmailOrdinaryMailboxEntitlementResolver $entitlements,
         private readonly EmailUnreadAccessEpochService $epochs,
         private readonly EmailUnreadSchemaState $schemaState,
+        private readonly EmailLiveInvalidator $invalidator,
     ) {}
 
     public function handle(User $actor, EmailMessage $message, bool $isUnread): EmailMessageUserState
@@ -74,6 +77,13 @@ class SetEmailUnreadForMe
             $state->marked_read_at = $isUnread ? $state->marked_read_at : $now;
             $state->marked_unread_at = $isUnread ? $now : $state->marked_unread_at;
             $state->save();
+
+            $this->invalidator->record([
+                'user' => [
+                    $lockedActor->id => [EmailLiveProjectionChange::TYPE_PERSONAL_STATE],
+                ],
+                'conversations' => [$lockedMessage->conversation_id],
+            ]);
 
             return $state->fresh();
         });

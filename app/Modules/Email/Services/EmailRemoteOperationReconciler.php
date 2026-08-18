@@ -8,12 +8,16 @@ use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailFolderUidNamespace;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailRemoteOperation;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
 use App\Modules\Email\Support\EmailProviderPath;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 class EmailRemoteOperationReconciler
 {
+    public function __construct(
+        private readonly EmailLiveInvalidator $invalidator,
+    ) {}
     public const APPLIED = 'applied';
 
     public const NOT_APPLIED = 'not_applied';
@@ -87,6 +91,14 @@ class EmailRemoteOperationReconciler
             'sync_error_code' => null,
             'sync_error_message' => null,
         ])->save();
+
+        $this->invalidator->record([
+            'account' => [
+                $placement->account_id => [EmailLiveProjectionChange::TYPE_PERSONAL_STATE],
+            ],
+            'conversations' => $placement->email_conversation_id ? [$placement->email_conversation_id] : [],
+            'placements' => [$placement->id],
+        ]);
 
         app(EmailConversationProjector::class)->refreshForPlacement($placement->refresh());
 
@@ -209,7 +221,15 @@ class EmailRemoteOperationReconciler
             'sync_error_message' => null,
         ])->save();
 
-        app(EmailConversationProjector::class)->assignPlacement($target);
+        $this->invalidator->record([
+            'account' => [
+                $source->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
+            ],
+            'conversations' => $source->email_conversation_id ? [$source->email_conversation_id] : [],
+            'placements' => [$source->id, $target->id],
+        ]);
+
+        app(EmailConversationProjector::class)->refreshForPlacement($source->refresh());
         app(EmailConversationProjector::class)->refreshForPlacement($target->refresh());
 
         return $this->applied('REMOTE_RECONCILIATION_APPLIED', 'Provider evidence confirms the move and the local placement was reconciled.', [

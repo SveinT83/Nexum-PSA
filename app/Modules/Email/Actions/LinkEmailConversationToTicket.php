@@ -7,6 +7,8 @@ use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailTicketConversationLink;
 use App\Modules\Email\Services\EmailConversationProjector;
+use App\Modules\Email\Services\EmailLiveInvalidator;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
 use App\Modules\Ticket\Actions\LinkInboundEmailToTicket;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +19,7 @@ class LinkEmailConversationToTicket
     public function __construct(
         private readonly LinkInboundEmailToTicket $linkInboundEmailToTicket,
         private readonly EmailConversationProjector $conversations,
+        private readonly EmailLiveInvalidator $invalidator,
     ) {}
 
     public function handle(
@@ -78,7 +81,7 @@ class LinkEmailConversationToTicket
 
             $this->linkInboundEmailToTicket->handle($message->fresh(), $ticket);
 
-            return EmailTicketConversationLink::query()->updateOrCreate(
+            $link = EmailTicketConversationLink::query()->updateOrCreate(
                 [
                     'ticket_id' => $ticket->id,
                     'email_message_id' => $message->id,
@@ -103,6 +106,15 @@ class LinkEmailConversationToTicket
                     'unlinked_at' => null,
                 ],
             );
+
+            $this->invalidator->record([
+                'account' => [
+                    $placement->account_id => [EmailLiveProjectionChange::TYPE_TICKET_LINK],
+                ],
+                'conversations' => $conversation ? [$conversation->id] : [],
+            ]);
+
+            return $link;
         });
     }
 
