@@ -41,9 +41,9 @@ class EmailLiveInvalidator
         // 1. Global stream
         if (! empty($batch['global'])) {
             $locks[] = [
-                'key' => 'global:0',
+                'key' => 'global:1',
                 'type' => EmailLiveProjectionStream::TYPE_GLOBAL,
-                'id' => 0,
+                'id' => 1,
                 'types' => $batch['global'],
             ];
         }
@@ -82,7 +82,7 @@ class EmailLiveInvalidator
                 ->where('stream_type', $lock['type'])
                 ->when($lock['type'] === EmailLiveProjectionStream::TYPE_ACCOUNT, fn($q) => $q->where('email_account_id', $lock['id']))
                 ->when($lock['type'] === EmailLiveProjectionStream::TYPE_USER, fn($q) => $q->where('user_id', $lock['id']))
-                ->when($lock['type'] === EmailLiveProjectionStream::TYPE_GLOBAL, fn($q) => $q->where('global_slot', 0))
+                ->when($lock['type'] === EmailLiveProjectionStream::TYPE_GLOBAL, fn($q) => $q->where('global_slot', 1))
                 ->lockForUpdate()
                 ->first();
 
@@ -92,7 +92,7 @@ class EmailLiveInvalidator
                     'stream_type' => $lock['type'],
                     'email_account_id' => $lock['type'] === EmailLiveProjectionStream::TYPE_ACCOUNT ? $lock['id'] : null,
                     'user_id' => $lock['type'] === EmailLiveProjectionStream::TYPE_USER ? $lock['id'] : null,
-                    'global_slot' => $lock['type'] === EmailLiveProjectionStream::TYPE_GLOBAL ? 0 : null,
+                    'global_slot' => $lock['type'] === EmailLiveProjectionStream::TYPE_GLOBAL ? 1 : null,
                     'current_version' => 0,
                     'oldest_retained_version' => 1,
                 ]);

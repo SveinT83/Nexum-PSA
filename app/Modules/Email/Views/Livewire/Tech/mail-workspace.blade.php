@@ -1,4 +1,5 @@
-<div class="mail-workspace-root">
+<div class="mail-workspace-root"
+     @if($liveEnabled) wire:poll.300s="catchUpInvalidation" @else wire:poll.60s @endif>
     <style>
         .mail-workspace-grid {
             display: grid;
