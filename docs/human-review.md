@@ -27,14 +27,20 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
-| HR-2026-08-16-008 | Email private live invalidation and polling fallback | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-005 | Email canonical message and placement cutover | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-004 | Email canonical message shadow correlation | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-003 | Email per-user unread baselines and explicit backlog handover | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-002 | Email personal mailbox delegation, break-glass, and access history | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-001 | Email Mail historical import and UID re-baseline | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-014 | Email/Ticket correlation conflict triage | Done | 2026-08-16 | Junie | 2026-08-19 |
+| HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Done | 2026-08-16 | Junie | 2026-08-19 |
+| HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Done | 2026-08-16 | Junie | 2026-08-19 |
+| HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Done | 2026-08-16 | Junie | 2026-08-19 |
+| HR-2026-08-16-010 | Email deterministic rules API completion | Done | 2026-08-16 | Junie | 2026-08-19 |
+| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Done | 2026-08-16 | Junie | 2026-08-19 |
+| HR-2026-08-16-008 | Email private live invalidation and polling fallback | Done | 2026-08-16 | Junie | 2026-08-19 |
+| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-005 | Email canonical message and placement cutover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-004 | Email canonical message shadow correlation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-003 | Email per-user unread baselines and explicit backlog handover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-002 | Email personal mailbox delegation, break-glass, and access history | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-001 | Email Mail historical import and UID re-baseline | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-15-007 | Email Mail desktop workspace density and height polish | Pending | 2026-08-15 |  |  |
 | HR-2026-08-15-006 | Email Mail inbound attachment recovery and download | Pending | 2026-08-15 |  |  |
 | HR-2026-08-15-005 | Email Mail Smart Inbox reader-first polish | Pending | 2026-08-15 |  |  |

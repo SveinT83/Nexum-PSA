@@ -63,7 +63,16 @@ class InboundEmailRuleEngine
     public function process(
         EmailMessage $message,
         bool $allowProviderMutation = false,
+        int $depth = 0,
     ): void {
+        if ($depth > 5) {
+            \Illuminate\Support\Facades\Log::warning('Email rule loop detected and stopped.', [
+                'message_id' => $message->id,
+                'depth' => $depth
+            ]);
+            return;
+        }
+
         if ($message->ticket_id !== null || ! $this->allowsInboundAutomation($message)) {
             return;
         }
@@ -602,6 +611,9 @@ class InboundEmailRuleEngine
                 : EmailRuleExecutionAttempt::STATUS_FAILED,
             'remote_operation_id' => (int) $operation->id,
             'remote_operation_status' => $operation->status,
+            'before' => [
+                'folder_id' => $placement->email_folder_id,
+            ],
             'reason' => $operation->status === EmailRemoteOperation::STATUS_SUCCEEDED
                 ? null
                 : ($operation->error_code ?: 'provider_cleanup_not_acknowledged'),

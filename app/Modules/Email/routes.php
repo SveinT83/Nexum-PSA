@@ -8,6 +8,7 @@ use App\Modules\Email\Controllers\Admin\EmergencyMailboxAccessController;
 use App\Modules\Email\Controllers\Admin\MailboxMaintenanceController;
 use App\Modules\Email\Controllers\Admin\RulesController;
 use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
+use App\Modules\Email\Controllers\Tech\EmailBroadcastingController;
 use App\Modules\Email\Controllers\Tech\InboxController;
 use App\Modules\Email\Controllers\Tech\MailAttachmentController;
 use App\Modules\Email\Controllers\Tech\MailboxAccessController;
@@ -53,6 +54,9 @@ Route::post('/mail/accounts/{account}/unread-handover/preview', [UnreadHandoverC
     ->name('mail.unread-handover.preview');
 Route::post('/mail/accounts/{account}/unread-handover/{run}', [UnreadHandoverController::class, 'apply'])
     ->name('mail.unread-handover.apply');
+
+Route::post('/mail/broadcasting/auth', EmailBroadcastingController::class)
+    ->name('mail.broadcasting.auth');
 
 Route::get('/inbox', [InboxController::class, 'index'])
     ->name('inbox.index');
@@ -142,6 +146,9 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.email.config');
     Route::post('/admin/settings/email/config', [ConfigController::class, 'update'])
         ->name('admin.settings.email.config.update');
+
+    Route::post('/admin/settings/email/rules/undo/{attempt}', [RulesController::class, 'undoExecution'])
+        ->name('admin.settings.email.rules.undo');
 
     Route::get('/admin/settings/email/rules', [RulesController::class, 'index'])
         ->name('admin.settings.email.rules');

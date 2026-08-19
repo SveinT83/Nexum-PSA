@@ -4,6 +4,7 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Models\EmailTicketConversationLink;
 use App\Modules\Task\Models\Task;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
@@ -54,6 +55,7 @@ class MergeTickets
             TicketTimeEntry::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);
             TicketCostEntry::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);
             EmailMessage::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);
+            EmailTicketConversationLink::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);
             Task::where('owner_type', $source->getMorphClass())
                 ->where('owner_id', $source->id)
                 ->update(['owner_id' => $target->id]);

@@ -10,3 +10,5 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
  */
 
 import './echo';
+
+document.dispatchEvent(new CustomEvent('echo-ready'));
