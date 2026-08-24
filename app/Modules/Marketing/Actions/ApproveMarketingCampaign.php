@@ -11,14 +11,14 @@ class ApproveMarketingCampaign
     public function __construct(
         private readonly SyncMarketingCampaignRecipients $syncRecipients,
         private readonly ResolveMarketingListMembers $resolveListMembers,
-    ) {
-    }
+    ) {}
 
     public function handle(MarketingCampaign $campaign, User $approver): int
     {
         return DB::transaction(function () use ($campaign, $approver): int {
             $campaign->forceFill([
                 'status' => 'approved',
+                'completion_behavior' => 'continue',
                 'approved_by' => $approver->id,
                 'approved_at' => now(),
             ])->save();

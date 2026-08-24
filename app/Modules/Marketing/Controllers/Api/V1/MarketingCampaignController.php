@@ -12,6 +12,7 @@ use App\Modules\Marketing\Actions\DraftMarketingCampaignPlanWithAi;
 use App\Modules\Marketing\Actions\EnsureMarketingDefaults;
 use App\Modules\Marketing\Actions\ResolveMarketingListMembers;
 use App\Modules\Marketing\Actions\SendMarketingCampaignEmailTest;
+use App\Modules\Marketing\Actions\SummarizeMarketingCampaignRecipientProgress;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Marketing\Models\MarketingCampaign;
@@ -21,6 +22,7 @@ use App\Modules\Marketing\Resources\Api\V1\MarketingCampaignResource;
 use App\Modules\Marketing\Support\MarketingSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use RuntimeException;
 use Throwable;
@@ -41,15 +43,12 @@ class MarketingCampaignController extends Controller
         'sequence_interval_value',
         'sequence_interval_unit',
         'new_recipient_policy',
-        'completion_behavior',
-        'repeat_interval_value',
-        'repeat_interval_unit',
     ];
 
     public function __construct(
         private readonly CountMarketingCampaignAudienceRecipients $audienceCounter,
-    ) {
-    }
+        private readonly SummarizeMarketingCampaignRecipientProgress $recipientProgress,
+    ) {}
 
     public function index(Request $request, EnsureMarketingDefaults $defaults)
     {
@@ -114,9 +113,7 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => $schedule['sequence_interval_value'],
             'sequence_interval_unit' => $schedule['sequence_interval_unit'],
             'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
-            'completion_behavior' => $data['completion_behavior'] ?? 'stop',
-            'repeat_interval_value' => $data['repeat_interval_value'] ?? 1,
-            'repeat_interval_unit' => $data['repeat_interval_unit'] ?? 'months',
+            'completion_behavior' => 'continue',
             'current_cycle' => 1,
             'track_opens' => $request->boolean('track_opens', $settingsPayload['open_tracking_enabled']),
             'track_clicks' => $request->boolean('track_clicks', $settingsPayload['click_tracking_enabled']),
@@ -147,7 +144,7 @@ class MarketingCampaignController extends Controller
         ResolveMarketingListMembers $resolve,
         SyncMarketingCampaignRecipients $syncRecipients,
     ) {
-        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign can only be changed before completion.');
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active', 'completed'], true), 422, 'Campaign cannot be changed in its current state.');
 
         $data = $this->validatedCampaignData($request, creating: false);
         $marketingListIds = $this->campaignListIds($data);
@@ -183,9 +180,7 @@ class MarketingCampaignController extends Controller
                 'sequence_interval_value' => $schedule['sequence_interval_value'],
                 'sequence_interval_unit' => $schedule['sequence_interval_unit'],
                 'new_recipient_policy' => $scheduleData['new_recipient_policy'] ?? 'start_at_first_email',
-                'completion_behavior' => $scheduleData['completion_behavior'] ?? 'stop',
-                'repeat_interval_value' => $scheduleData['repeat_interval_value'] ?? 1,
-                'repeat_interval_unit' => $scheduleData['repeat_interval_unit'] ?? 'months',
+                'completion_behavior' => 'continue',
             ]);
         }
 
@@ -225,7 +220,7 @@ class MarketingCampaignController extends Controller
         Request $request,
         SyncMarketingCampaignRecipients $syncRecipients,
     ) {
-        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign schedule can only be changed before completion.');
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active', 'completed'], true), 422, 'Campaign schedule cannot be changed in its current state.');
 
         $data = array_merge($this->schedulePayloadFromCampaign($campaign), $this->validatedScheduleData($request));
         $schedule = $this->normalizeSchedulePayload($data);
@@ -237,9 +232,7 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => $schedule['sequence_interval_value'],
             'sequence_interval_unit' => $schedule['sequence_interval_unit'],
             'new_recipient_policy' => $data['new_recipient_policy'] ?? 'start_at_first_email',
-            'completion_behavior' => $data['completion_behavior'] ?? 'stop',
-            'repeat_interval_value' => $data['repeat_interval_value'] ?? 1,
-            'repeat_interval_unit' => $data['repeat_interval_unit'] ?? 'months',
+            'completion_behavior' => 'continue',
             'updated_by' => $request->user()?->id,
         ])->save();
 
@@ -255,9 +248,11 @@ class MarketingCampaignController extends Controller
         SyncMarketingCampaignRecipients $syncRecipients,
         BuildMarketingCampaignEmailSnapshot $snapshot,
     ) {
-        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign emails can only be changed before completion.');
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active', 'completed'], true), 422, 'Campaign emails cannot be changed in its current state.');
 
         $data = $this->validatedCampaignEmailData($request, $campaign, creating: true);
+        $continuesLegacyCampaign = $campaign->status === 'completed'
+            && ($data['status'] ?? 'active') === 'active';
         $template = EmailTemplate::query()
             ->whereKey($data['email_template_id'])
             ->where('scope', 'marketing')
@@ -277,12 +272,22 @@ class MarketingCampaignController extends Controller
             'delay_minutes' => $data['delay_minutes'],
         ]);
 
+        if ($continuesLegacyCampaign) {
+            $campaign->forceFill([
+                'status' => 'active',
+                'completion_behavior' => 'continue',
+            ])->save();
+        }
+
         $created = in_array($campaign->status, ['approved', 'active'], true)
             ? $syncRecipients->handle($campaign->fresh(['emails', 'lists.members', 'list.members']))
             : 0;
 
         return (new MarketingCampaignEmailResource($this->loadCampaignEmail($email)))
-            ->additional(['meta' => ['queued_recipients' => $created]])
+            ->additional(['meta' => [
+                'queued_recipients' => $created,
+                'continued_legacy_campaign' => $continuesLegacyCampaign,
+            ]])
             ->response()
             ->setStatusCode(201);
     }
@@ -424,25 +429,39 @@ class MarketingCampaignController extends Controller
         abort_if($email->marketing_campaign_id !== $campaign->id, 404);
         abort_if(! in_array($campaign->status, ['draft', 'paused', 'approved', 'active'], true), 422, 'Campaign emails can only be changed before completion.');
 
-        $sentExists = $email->recipients()->where('status', 'sent')->exists();
+        $historyRetained = DB::transaction(function () use ($email): bool {
+            $lockedEmail = MarketingCampaignEmail::query()
+                ->lockForUpdate()
+                ->findOrFail($email->id);
+            $historyExists = $lockedEmail->deliveries()->exists()
+                || $lockedEmail->recipients()->where('status', 'sent')->exists();
 
-        if ($sentExists) {
-            $email->forceFill(['status' => 'inactive'])->save();
-            $email->recipients()->where('status', 'pending')->update(['status' => 'cancelled', 'updated_at' => now()]);
+            if ($historyExists) {
+                $lockedEmail->forceFill(['status' => 'inactive'])->save();
+                $lockedEmail->recipients()
+                    ->where('status', 'pending')
+                    ->whereNull('marketing_campaign_delivery_id')
+                    ->whereNull('claimed_at')
+                    ->update(['status' => 'cancelled', 'updated_at' => now()]);
+            } else {
+                $lockedEmail->recipients()->delete();
+                $lockedEmail->delete();
+            }
 
+            return $historyExists;
+        }, 3);
+
+        if ($historyRetained) {
             return (new MarketingCampaignEmailResource($this->loadCampaignEmail($email)))
                 ->additional(['meta' => ['deactivated' => true]]);
         }
-
-        $email->recipients()->delete();
-        $email->delete();
 
         return response()->noContent();
     }
 
     public function approve(MarketingCampaign $campaign, Request $request, ApproveMarketingCampaign $approve)
     {
-        abort_if(! in_array($campaign->status, ['draft', 'paused'], true), 422, 'Only draft or paused campaigns can be approved.');
+        abort_if(! in_array($campaign->status, ['draft', 'paused', 'completed'], true), 422, 'Only draft, paused, or legacy completed campaigns can be approved.');
         abort_if($campaign->emails()->where('status', 'active')->doesntExist(), 422, 'Campaign must have at least one active email.');
 
         $count = $approve->handle($campaign, $request->user());
@@ -487,9 +506,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
             'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'new_recipient_policy' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
-            'completion_behavior' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::COMPLETION_BEHAVIORS))],
-            'repeat_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
-            'repeat_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'completion_behavior' => ['nullable', 'string', Rule::in(['continue'])],
+            'repeat_interval_value' => ['prohibited'],
+            'repeat_interval_unit' => ['prohibited'],
             'track_opens' => ['nullable', 'boolean'],
             'track_clicks' => ['nullable', 'boolean'],
         ]);
@@ -527,9 +546,9 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
             'sequence_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
             'new_recipient_policy' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::NEW_RECIPIENT_POLICIES))],
-            'completion_behavior' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::COMPLETION_BEHAVIORS))],
-            'repeat_interval_value' => ['nullable', 'integer', 'min:1', 'max:999'],
-            'repeat_interval_unit' => ['nullable', 'string', Rule::in(array_keys(MarketingCampaign::SEQUENCE_INTERVAL_UNITS))],
+            'completion_behavior' => ['nullable', 'string', Rule::in(['continue'])],
+            'repeat_interval_value' => ['prohibited'],
+            'repeat_interval_unit' => ['prohibited'],
         ]);
     }
 
@@ -567,9 +586,6 @@ class MarketingCampaignController extends Controller
             'sequence_interval_value' => $campaign->sequence_interval_value ?: 1,
             'sequence_interval_unit' => $campaign->sequence_interval_unit ?: 'days',
             'new_recipient_policy' => $campaign->new_recipient_policy ?: 'start_at_first_email',
-            'completion_behavior' => $campaign->completion_behavior ?: 'stop',
-            'repeat_interval_value' => $campaign->repeat_interval_value ?: 1,
-            'repeat_interval_unit' => $campaign->repeat_interval_unit ?: 'months',
         ];
     }
 
@@ -713,12 +729,13 @@ class MarketingCampaignController extends Controller
         if ($includeRecipients) {
             $campaign->load([
                 'recipients' => fn ($query) => $query
-                    ->with(['campaignEmail', 'client'])
+                    ->with(['campaignEmail', 'client', 'delivery'])
                     ->latest('updated_at'),
             ]);
         }
 
         $campaign->setAttribute('audience_recipients_count', $this->audienceCounter->handle($campaign));
+        $campaign->setAttribute('recipient_progress', $this->recipientProgress->handle($campaign));
 
         return $campaign;
     }

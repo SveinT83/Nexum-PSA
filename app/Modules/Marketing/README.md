@@ -42,8 +42,10 @@ The implemented foundation now covers:
   recipient batch throttling, and safe removal/deactivation.
 - AI-assisted campaign email drafting through active Integration AI agents. AI suggestions update
   the editable form only and must still be saved by the technician.
-- Campaign completion policy for stopping after a completed sequence or repeating the sequence on a
-  configured interval with cycle-aware recipient rows.
+- Evergreen contact progression: each eligible contact advances through the ordered emails once,
+  while a caught-up campaign remains active and waits for new contacts or newly appended emails.
+- A durable delivery ledger, stable recipient identity keys, and an atomic transmission claim protect
+  each campaign-email/contact pair from automatic replay across list refreshes and historical cycles.
 - WordPress content pull on campaign detail pages. Cached post titles, excerpts, links, and content
   snippets are included as AI context for campaign planning and email drafting.
 - Suppression hardening for list resolution, unsubscribe, and final pre-SMTP checks.
@@ -104,10 +106,10 @@ address before list members are stored.
 Campaigns are created as drafts from one or more mailing lists, send rhythm, sender account, and send
 preferences. Campaign emails are added from the campaign detail page after the campaign exists. A
 campaign must be approved by a technician with `marketing.campaign.approve` before any recipients
-are sent. Approval materializes recipient queue rows for all selected audience lists and active
-campaign emails. Recipients are deduplicated by Contact, legacy `client_users` identity, and
-normalized email address so one person/email is queued once per campaign email even when they appear
-in multiple lists.
+are sent. Approval materializes only the next missing campaign-email step for each eligible member
+of the selected audience lists. Recipients are matched by Contact, legacy `client_users` identity,
+and normalized email address so one person/mailbox can receive a campaign-email record at most once,
+even after a list refresh, across multiple lists, or across historical repeat cycles.
 Draft and paused campaigns still expose a deduplicated audience recipient count from the selected
 lists, but queue rows are not created until approval.
 
@@ -118,7 +120,9 @@ silently change draft, approved, active, or historical campaign emails.
 
 Sending uses the selected Email account, or the active Email account marked as default for the
 `marketing` scope. The scheduled job runs every minute and sends due recipients up to the campaign
-batch size. Operators can also run:
+batch size. Before SMTP it obtains a durable claim and reserves a stable Message-ID. A provider
+exception after transmission begins is recorded as an unknown outcome and is never retried
+automatically; it blocks that contact until reviewed. Operators can also run:
 
 ```bash
 php artisan marketing:send-due
@@ -158,15 +162,18 @@ Recipient throttling is separate from sequence timing. `batch_size` controls how
 one campaign email are due at the same time, and `send_interval_minutes` spaces the next recipient
 batch to reduce delivery bursts. New contacts can either start at the first campaign email, which is
 useful for nurture sequences, or join the current campaign schedule, which is useful for newsletter
-lists where new subscribers should not receive old news. Sent recipient history is kept; removing a
-campaign email with sent recipients deactivates it and cancels pending recipients instead of
-deleting history. Adding a new active email to an approved or active campaign queues recipients for
-the existing list members according to the campaign schedule.
+lists where new subscribers should not receive old news. Enrollment, progression, and an appended
+email for a caught-up contact use the next configured calendar occurrence rather than an elapsed
+historical due time. A later step is not created until the previous applicable step is confirmed sent.
 
-When the active sequence has no pending recipients, the campaign completion policy runs. Stop marks
-the campaign `completed`. Repeat increments `current_cycle`, calculates `next_cycle_at`, and queues
-the same ordered campaign emails for the next cycle. Recipient uniqueness includes `cycle_number` so
-repeat campaigns preserve historical sends and still queue the same audience again later.
+Sent and claimed recipient history is kept; removing a campaign email with sent recipients
+deactivates it and cancels pending recipients instead of deleting history. When all current contacts
+have received every active email, the campaign stays active but idle. Adding a new active email makes
+that record the next missing step for caught-up contacts without replaying earlier emails. Legacy
+`completed` campaigns remain inert until a technician explicitly continues them or adds an email;
+continuation changes them to ongoing processing while the lifetime delivery guard preserves all old
+send history. Repeat controls are no longer accepted. Existing cycle and repeat fields remain only
+as deprecated historical compatibility data.
 
 Campaign email preview is rendered in the browser from the editable HTML body. Test-send uses the
 current editor fields and sends through the campaign sender account or the default `marketing`
@@ -180,6 +187,30 @@ not send, approve, or save the campaign by itself. AI-generated marketing emails
 include `unsubscribe_url` in the editable body so operators can see the unsubscribe footer in
 preview. External website URLs in prompts are treated as destination links or brand hints unless the
 content has been pulled and stored as a campaign content source.
+
+## Deployment And Operations
+
+Use this order when deploying the evergreen delivery guard to another environment:
+
+1. Run `php artisan marketing:delivery-preflight`. It is read-only; review and retain only its
+   sanitized counts.
+2. Create and integrity-check an approved application/database backup before changing schema.
+3. Run `php artisan migrate --force`.
+4. Run `php artisan optimize:clear`.
+5. Run `php artisan queue:restart`, then verify the target environment's default-queue workers have
+   restarted from the deployed project.
+6. Repeat the read-only preflight/readback checks and verify the external Laravel scheduler invokes
+   `schedule:run` every minute, or uses a supervised `schedule:work` process.
+
+Do not roll back or drop the delivery ledger or identity-key structures after any runtime delivery
+claim exists. Those rows are the lifetime no-resend authority; use a reviewed forward repair and
+preserve their evidence instead.
+
+On authoritative Dev, three active `email,default` workers run from `/var/Projects/tdPSA`, and
+Marketing uses the default queue. A read-only failed-job count found zero Marketing failures and two
+unrelated failures without exposing payloads. No tdPSA `schedule:run` or `schedule:work` runner was
+found in accessible cron, systemd, or process sources, and the root crontab was unavailable.
+Therefore queue execution capacity is verified, but automatic schedule dispatch is not.
 
 ## API
 
@@ -202,7 +233,8 @@ Campaign API routes create draft campaigns, update campaign metadata and schedul
 campaign emails, request AI plans or email drafts, test-send one campaign email, approve campaigns,
 and queue due-send processing. The API uses the same Marketing actions as the technician UI, so list
 resolution, approval, recipient queue creation, snapshots, AI behavior, and send jobs follow the
-same rules.
+same rules. Repeat lifecycle writes are rejected. Campaign resources expose the ongoing sequence
+mode and keep old completion/repeat fields only as deprecated compatibility fields.
 
 ## Approved RFC
 
@@ -210,6 +242,8 @@ See:
 
 - `docs/rfc/2026-06-09-marketing-domain-email-campaigns.md`
 - `docs/rfc/2026-06-17-marketing-api-surface.md`
+- `docs/rfc/2026-08-24-evergreen-marketing-contact-sequences.md`
+- `docs/adr/2026-08-24-marketing-at-most-once-delivery-identity-claims.md`
 
 ## Ownership Rules
 

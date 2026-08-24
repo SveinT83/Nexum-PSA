@@ -29,8 +29,10 @@ The first slices create the Marketing and Email foundation:
   campaign-level send rhythm, optional extra delay, editable email subject/body snapshots, preview,
   test-send, new-contact policy, recipient batch throttling, and active-campaign recipient queue
   sync.
-- Campaign completion policy for stopping when the current sequence is done or repeating the
-  sequence on a configured interval with cycle-aware recipient rows.
+- Evergreen contact progression that keeps campaigns active and idle when current contacts are
+  caught up, then enrolls new contacts or advances caught-up contacts when another email is added.
+- Lifetime delivery identity guards and an atomic SMTP claim that prevent automatic replay of the
+  same campaign-email record to the same contact or mailbox.
 - WordPress content pull on campaign detail pages. Pulled posts are cached as campaign content
   sources and included as grounded AI context for campaign planning and email drafting.
 - Suppression hardening for list resolution, unsubscribe, and final pre-SMTP send checks. Suppressed
@@ -116,10 +118,12 @@ campaign can choose a sender account. If it does not, Marketing uses the active 
 as default for the `marketing` scope.
 
 A campaign must be approved by a technician with `marketing.campaign.approve` before sending. On
-approval, Marketing creates `marketing_campaign_recipients` rows from the current resolved members
-in every selected audience list. Recipients are deduplicated by Contact, legacy `client_users`
-identity, and normalized email address before queue rows are created. The queue stores due time,
-status, attempts, message id, and tracking token.
+approval, Marketing creates the next missing `marketing_campaign_recipients` step for each current
+eligible member of every selected audience list. It does not queue every later email in advance.
+Recipients are matched by Contact, legacy `client_users` identity, and normalized email address.
+Durable delivery keys guard both person identity and mailbox identity across list refreshes,
+overlapping lists, email casing, and historical cycles. The queue stores due time, status, attempts,
+message id, tracking token, and its delivery-ledger link.
 Draft and paused campaigns expose a deduplicated audience recipient count from their selected
 lists, while actual recipient queue rows remain approval-only.
 
@@ -141,24 +145,26 @@ ordered campaign emails remain the primary work surface.
 Recipient throttling is separate from sequence timing. Batch size controls how many recipients are
 due at the same time for a campaign email, and batch interval minutes space later recipient batches.
 New contacts can either start at the first sequence email, or join the current schedule so newsletter
-subscribers do not receive old campaign emails. Sent recipient history is kept. If a sent sequence
-email is removed, the email is deactivated and pending recipients are cancelled; unsent sequence
-emails are deleted with their pending queue rows.
+subscribers do not receive old campaign emails. Under the default start-first policy, a contact added
+later receives email 1 at the next configured campaign occurrence. Each later step is created only
+after the prior applicable step is confirmed sent, and uses the next calendar-aligned occurrence.
 
-Campaign completion policy controls what happens after the current active sequence has no pending
-recipients. `Stop when sequence is complete` marks the campaign `completed` and preserves history.
-`Repeat sequence` increments `current_cycle`, calculates `next_cycle_at` from the repeat interval,
-and queues a new set of pending recipient rows for the next cycle. Recipient uniqueness includes
-`cycle_number`, so the same Contact can receive the same ordered email again in a later cycle without
-overwriting historical send state.
+Sent and claimed history is kept. If a sent sequence email is removed, the email is deactivated and
+pending recipients are cancelled; unsent sequence emails are deleted with their pending queue rows.
+After every current contact is caught up, the campaign remains active but idle. There is no automatic
+repeat cycle. A newly appended active email becomes the next missing step for caught-up and newer
+contacts without replaying an earlier campaign-email record. A legacy `completed` campaign stays
+inert until explicitly continued or extended, at which point the same lifetime no-resend rule applies.
 
 Campaign emails send from their stored snapshot, not from the live Email template. This means an
 administrator can later change a reusable Marketing template without silently changing draft,
 approved, active, or historical campaign emails that were already created from it.
 
-Adding a sequence email to an approved or active campaign immediately creates pending recipient rows
-for current eligible list members, so existing contacts can receive new follow-up emails without
-recreating the campaign.
+Adding a sequence email to an approved or active campaign creates the next eligible pending step for
+current list members at their next configured occurrence. Contacts that are still progressing reach
+the appended email in order; caught-up contacts receive it as their next step. The technician surface
+shows ongoing sequence behavior and derived in-progress, caught-up, blocked/review, and next-due
+information instead of completion and repeat controls.
 
 Preview uses the editable HTML body in the campaign email form. Known recipient/company
 placeholders such as `contact_name`, `client_name`, `company_name`, and `unsubscribe_url` are
@@ -183,8 +189,12 @@ as grounded `wordpress_content`. Other external website URLs in prompts are stil
 destination links or brand hints unless they have been pulled and stored as content sources.
 
 The scheduled Marketing job runs every minute and sends due recipients in batches. Before SMTP, the
-job re-checks Contact opt-out, explicit consent mode, and suppression entries. Suppressed recipients
-are marked `suppressed`, logged as `MARKETING_EMAIL_SUPPRESSED`, and skipped. The manual command is:
+job re-checks Contact opt-out, explicit consent mode, suppression entries, sender account, and
+provider binding. It then acquires one durable delivery claim and reserves a stable RFC Message-ID.
+Only the worker holding that claim may transmit. Suppressed recipients are marked `suppressed`,
+logged as `MARKETING_EMAIL_SUPPRESSED`, and skipped. An exception after provider writing begins is
+marked as an unknown outcome, blocks progression, and is never retried automatically. The manual
+command is:
 
 ```bash
 php artisan marketing:send-due
@@ -207,6 +217,33 @@ Contacts as `do_not_email` with `marketing_consent=false`.
 Marketing campaign events also write normalized records to the Signal domain. Signal rules can tag
 Contacts or Clients, suppress marketing email, emit derived signals, or call webhooks. Marketing
 lists remain the owner of audience selection and can later use those tags during refresh.
+
+## Deployment And Operations
+
+Deploy the evergreen delivery guard in this order:
+
+1. Run the read-only preflight and review only its sanitized counts:
+
+   ```bash
+   php artisan marketing:delivery-preflight
+   ```
+
+2. Create and integrity-check an approved application/database backup.
+3. Run `php artisan migrate --force`.
+4. Run `php artisan optimize:clear`.
+5. Run `php artisan queue:restart` and verify the default-queue workers restarted from the deployed
+   project.
+6. Repeat the read-only preflight/readback checks and verify an external once-per-minute
+   `schedule:run` trigger or supervised `schedule:work` process.
+
+Never roll back or remove the delivery ledger or identity-key tables after a runtime claim exists.
+They are the durable lifetime no-resend evidence; preserve them and use a reviewed forward repair.
+
+Authoritative Dev currently has three active `email,default` workers and Marketing uses the default
+queue. The read-only failed-job count found zero Marketing failures and two unrelated failures; no
+payload or failure detail was exposed. No tdPSA scheduler runner was found in accessible cron,
+systemd, or process sources, and the root crontab was unavailable. Queue processing is therefore
+verified, while automatic scheduled dispatch remains unverified.
 
 ## Settings
 
@@ -243,7 +280,9 @@ The API exposes list create/read/update/delete, member lookup, list refresh, Con
 campaign create/read/update, schedule update, campaign email create/update/delete/test-send, AI plan,
 AI email draft, approval, due-send queueing, and settings read/update. These endpoints reuse the same
 Marketing actions as the technician UI, so recipient resolution, campaign email snapshots, approval,
-queue creation, and due-send behavior stay consistent.
+queue creation, and due-send behavior stay consistent. Repeat lifecycle values are rejected on write.
+Campaign resources identify the ongoing contact-sequence mode and expose old completion, repeat, and
+cycle fields only as deprecated compatibility data.
 
 ## Domain Ownership
 

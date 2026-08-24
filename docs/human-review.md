@@ -27,6 +27,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Pending | 2026-08-24 |  |  |
 | HR-2026-08-21-001 | Dev database recovery and Mail permission-repair verification | In Review | 2026-08-21 | Svein |  |
 | HR-2026-08-16-014 | Email/Ticket correlation conflict triage | Pending | 2026-08-16 |  |  |
 | HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Rework Needed | 2026-08-16 |  |  |
@@ -258,6 +259,112 @@ The 2026-08-19 summary had used the invalid status `Done` and listed Orders 8-14
 the required detailed checks or explicit human-review evidence. The 2026-08-21 code/runtime audit
 reclassified those rows below. This accounting correction does not erase a valid `Reviewed` result;
 none was recorded under the register's rules.
+
+### HR-2026-08-24-002 - Evergreen Marketing Contact Sequences And Lifetime No-Resend Delivery Guard
+
+Status: Pending
+Added: 2026-08-24
+Environment: Authoritative Dev working copy and Dev database
+Related: `docs/rfc/2026-08-24-evergreen-marketing-contact-sequences.md`,
+`docs/adr/2026-08-24-marketing-at-most-once-delivery-identity-claims.md`, and the three
+`docs/feature-slices/2026-08-24-evergreen-marketing-*.md` slices
+
+Scope and affected workflow: Marketing campaigns now remain active but idle when current Contacts
+are caught up. Under the default policy, a new Contact starts with email 1 at the next configured
+calendar occurrence, advances by one confirmed step per later occurrence, and never receives the
+same campaign-email record twice. Adding a new active campaign email makes it the next missing step
+for existing caught-up Contacts and newer Contacts alike. Technician and API repeat controls are
+retired. A durable Contact/client-user/normalized-email identity claim, stable RFC Message-ID, and
+review-required outcome state protect against overlapping jobs and ambiguous SMTP acceptance.
+Legacy cycle and completion evidence is preserved, and deployment does not automatically reactivate
+completed campaigns.
+
+Automated verification on authoritative Dev: the complete isolated Marketing run passed 65 tests
+and 802 assertions with explicit SQLite `:memory:`, empty connection URL, disabled config cache,
+array cache/session, and sync queue guards. The read-only live preflight found zero ambiguous
+identity splits, zero consumed rows without stable identity, and zero uncertain outcomes. It found
+one safe pending replay candidate matching the single historical sent row. The verified Dev database
+backup is
+`storage/app/private/NexumPSA/before-marketing-evergreen-20260824-120159.zip` (288,050,911 bytes,
+SHA-256 `0c3c305ce9982dc6cb28cb75347fd81f34027231b3210c787808683ab6f98860`;
+ZIP integrity passed).
+
+The first migration attempt stopped on MySQL's 64-character identifier limit after additive tables
+and columns but before any ledger backfill. No delivery, queue, recipient-send, or provider state was
+created. Explicit short index names and regression assertions were added; the idempotent rerun then
+completed. Read-back confirms the original 14-campaign status/cycle/timestamp fingerprint is
+unchanged, the historical sent count/latest timestamp remains 1 / `2026-06-11 13:43:06`, one sent
+historical ledger has three stable identity keys, one matching pending row became
+`duplicate_skipped` and links to that ledger, and the remaining 16 pending rows have no delivery
+claim. All three recipient indexes and the migration record are present. `optimize:clear` passed and
+the queue restart signal was broadcast. Browser verification and Knowledge synchronization are
+recorded separately below when completed.
+
+Read-only browser QA on authoritative Dev covered the campaign overview, campaign detail, and create
+surfaces. No `Repeat`, `When Sequence Completes`, or `Repeat Unit` control was present. At 768-pixel
+and 390-pixel viewport widths the checked pages had no horizontal overflow, and the browser console
+remained free of warnings and errors. Legacy completed-campaign continuation was not exercised in
+the read-only browser session because it changes campaign state; that path is verified only by the
+automated regression suite and remains part of the pending controlled human review.
+
+Deployment and operations notes: do not roll back after runtime delivery claims exist; the lifetime
+guard must be preserved. The final read-only runtime audit found three active `email,default` workers
+and three active `supplier-orders` workers, all with `/var/Projects/tdPSA` as their working directory.
+Marketing uses the default queue, so its queue-worker capacity is verified. The failed-jobs table
+contains two unrelated failures and zero Marketing failures; no payload or failure details were
+exposed. No tdPSA `schedule:run` or `schedule:work` runner was found in accessible cron, systemd, or
+process sources. The root crontab was unavailable, so external scheduler execution remains
+unverified. Code and schedule registration alone do not prove automatic due dispatch; verify the
+external scheduler before relying on automatic campaign delivery.
+
+Local Marketing Knowledge synchronization completed with one chapter, one article, zero skipped,
+and module `Marketing`. No BookStack push was requested or claimed.
+
+Risks: an incorrect historical classification could replay an earlier email or block a legitimate
+future step; a split recipient identity could evade or over-apply the guard; a crash after claim may
+leave a deliberate review-required missed delivery; an incorrect calendar anchor could send at the
+wrong occurrence; and old API clients that still write repeat fields now receive validation errors.
+
+Human checks:
+
+- [ ] Create or use a controlled Dev campaign with at least two active emails and
+  `start_at_first_email`. Add a new eligible Contact after activation and confirm only email 1 is
+  queued for the next configured occurrence.
+- [ ] Record email 1 as confirmed sent through the controlled Dev flow and confirm only email 2 is
+  scheduled for the following occurrence; repeat due processing and confirm email 1 is not sent or
+  queued again.
+- [ ] Let every current Contact become caught up and confirm the campaign remains Active with an
+  idle/caught-up progress summary rather than becoming Completed or creating another cycle.
+- [ ] Append a new active campaign email and confirm it is queued once for both an existing caught-up
+  Contact and a newer Contact, while every earlier campaign email remains consumed.
+- [ ] Refresh or replace a list-member row, vary email casing, and use overlapping audience lists;
+  confirm the same Contact/mailbox still has one lifetime delivery for each campaign-email record.
+- [ ] Pause a campaign while due processing is possible and confirm no worker reactivates it and no
+  provider write begins. Restore a temporary suppression or correct a pre-transmission content
+  failure and confirm the same step resumes at a safe later occurrence.
+- [ ] Simulate or inspect a controlled `claimed`, `provider_write_started`, or `outcome_unknown`
+  result and confirm Needs Review remains visible even if the Contact is later suppressed or removed;
+  confirm no blind resend or later-step bypass is offered.
+- [x] Read-only browser QA confirms campaign create/show/schedule surfaces contain no Repeat controls,
+  explain the ongoing once-per-Contact rule, have no horizontal overflow at 768 and 390 pixels, and
+  produce no browser-console warning or error.
+- [ ] A named human confirms the same pages remain usable at desktop, tablet, and mobile widths.
+- [x] Read-only runtime audit confirms three active `email,default` workers can process Marketing's
+  default queue, with zero Marketing failed jobs; two unrelated failed jobs remain preserved.
+- [ ] Verify the external tdPSA scheduler from an authoritative source. Accessible cron, systemd,
+  and process sources contained no runner, and the root crontab was unavailable.
+- [ ] Send repeat fields through the Marketing API and confirm HTTP 422. Inspect a campaign detail
+  response and confirm `lifecycle_mode`, `repeat_fields_deprecated`, `sequence_state`, and
+  `recipient_progress` are truthful.
+- [ ] Continue a legacy completed campaign by adding one active email. Confirm historical
+  `current_cycle`, `next_cycle_at`, `last_cycle_completed_at`, and `completed_at` remain unchanged,
+  and only the newly missing email is queued.
+
+Reviewer:
+Reviewed date:
+Result / notes: Read-only browser QA and default queue-worker verification are complete. The
+remaining controlled workflow, API, legacy-continuation, external-scheduler, and named human checks
+remain pending; no reviewer approval is recorded.
 
 ### HR-2026-08-21-001 - Dev Database Recovery And Mail Permission-Repair Verification
 

@@ -19,10 +19,12 @@ use App\Modules\Integration\Models\AiChatMessage;
 use App\Modules\Integration\Models\AiProvider;
 use App\Modules\LeadIntelligence\Models\ContactMarketingEligibility;
 use App\Modules\LeadIntelligence\Models\MarketingSuppressionEntry;
+use App\Modules\Marketing\Actions\AdvanceMarketingCampaignLifecycle;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
 use App\Modules\Marketing\Controllers\Tech\MarketingController;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Marketing\Models\MarketingCampaign;
+use App\Modules\Marketing\Models\MarketingCampaignDelivery;
 use App\Modules\Marketing\Models\MarketingCampaignEvent;
 use App\Modules\Marketing\Models\MarketingCampaignRecipient;
 use App\Modules\Marketing\Models\MarketingConsentCategory;
@@ -294,6 +296,25 @@ class MarketingModuleTest extends TestCase
             ->assertJsonPath('data.members_count', 1);
         $secondListId = $secondListResponse->json('data.id');
 
+        $this->postJson(route('api.v1.marketing.campaigns.store'), [
+            'name' => 'Rejected repeating API campaign',
+            'marketing_list_ids' => [$listId, $secondListId],
+            'schedule_frequency' => 'weekly',
+            'first_send_date' => '2026-06-19',
+            'send_time' => '12:00',
+            'send_weekday' => 5,
+            'new_recipient_policy' => 'start_at_first_email',
+            'completion_behavior' => 'repeat',
+            'repeat_interval_value' => 1,
+            'repeat_interval_unit' => 'weeks',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'completion_behavior',
+                'repeat_interval_value',
+                'repeat_interval_unit',
+            ]);
+
         $campaignResponse = $this->postJson(route('api.v1.marketing.campaigns.store'), [
             'name' => 'API campaign',
             'description' => 'Campaign from API test.',
@@ -306,6 +327,9 @@ class MarketingModuleTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.lifecycle_mode', 'ongoing_contact_sequence')
+            ->assertJsonPath('data.repeat_fields_deprecated', true)
+            ->assertJsonPath('data.completion_behavior', 'continue')
             ->assertJsonPath('data.batch_size', 25)
             ->assertJsonPath('data.marketing_list_ids.0', $listId)
             ->assertJsonPath('data.marketing_list_ids.1', $secondListId)
@@ -367,6 +391,22 @@ class MarketingModuleTest extends TestCase
             ->assertJsonPath('data.email_template_id', $replacementTemplate->id)
             ->assertJsonPath('data.template_snapshot_name', 'API Replacement Template')
             ->assertJsonPath('data.status', 'active');
+
+        $this->patchJson(route('api.v1.marketing.campaigns.schedule.update', $campaignId), [
+            'schedule_frequency' => 'daily',
+            'first_send_date' => '2026-06-20',
+            'send_time' => '09:30',
+            'new_recipient_policy' => 'join_current_step',
+            'completion_behavior' => 'repeat',
+            'repeat_interval_value' => 1,
+            'repeat_interval_unit' => 'months',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'completion_behavior',
+                'repeat_interval_value',
+                'repeat_interval_unit',
+            ]);
 
         $this->patchJson(route('api.v1.marketing.campaigns.schedule.update', $campaignId), [
             'schedule_frequency' => 'daily',
@@ -1465,10 +1505,23 @@ class MarketingModuleTest extends TestCase
         $this->assertSame('pending', $recipient->status);
         $this->assertSame('campaign@example.test', $recipient->email);
 
-        $this->mock(SmtpAccountMailer::class, function ($mock): void {
+        $this->travelTo($recipient->due_at->copy());
+
+        $reservedMessageId = null;
+        $this->mock(SmtpAccountMailer::class, function ($mock) use (&$reservedMessageId): void {
             $mock->shouldReceive('send')
                 ->once()
-                ->withArgs(function (EmailAccount $account, string $toEmail, ?string $toName, string $subject, string $html, string $text): bool {
+                ->withArgs(function (
+                    EmailAccount $account,
+                    string $toEmail,
+                    ?string $toName,
+                    string $subject,
+                    string $html,
+                    string $text,
+                    array $attachments,
+                    array $ccRecipients,
+                    array $options,
+                ) use (&$reservedMessageId): bool {
                     $this->assertSame('marketing@example.test', $account->address);
                     $this->assertSame('campaign@example.test', $toEmail);
                     $this->assertSame('Campaign Contact', $toName);
@@ -1481,21 +1534,34 @@ class MarketingModuleTest extends TestCase
                     $this->assertSame(1, substr_count($html, '/marketing/unsubscribe/'));
                     $this->assertStringContainsString('/marketing/unsubscribe/', $text);
                     $this->assertSame(1, substr_count($text, '/marketing/unsubscribe/'));
+                    $this->assertSame([], $attachments);
+                    $this->assertSame([], $ccRecipients);
+                    $this->assertArrayHasKey('message_id', $options);
+                    $this->assertNotSame('', trim((string) $options['message_id']));
+                    $reservedMessageId = (string) $options['message_id'];
 
                     return true;
                 })
-                ->andReturn('<marketing-message@example.test>');
+                ->andReturnUsing(static fn (...$arguments): string => (string) $arguments[8]['message_id']);
         });
 
         SendDueMarketingCampaignEmails::dispatchSync($campaign->id);
 
         $recipient = $recipient->fresh();
         $this->assertSame('sent', $recipient->status);
-        $this->assertSame('<marketing-message@example.test>', $recipient->rfc_message_id);
+        $this->assertNotNull($reservedMessageId);
+        $this->assertSame($reservedMessageId, $recipient->rfc_message_id);
+        $this->assertDatabaseHas('marketing_campaign_deliveries', [
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_campaign_email_id' => $recipient->marketing_campaign_email_id,
+            'marketing_campaign_recipient_id' => $recipient->id,
+            'status' => 'sent',
+            'rfc_message_id' => $reservedMessageId,
+        ]);
         $this->assertDatabaseHas('email_logs', [
             'scope' => 'marketing',
             'code' => 'MARKETING_EMAIL_SENT',
-            'rfc_message_id' => '<marketing-message@example.test>',
+            'rfc_message_id' => $reservedMessageId,
         ]);
 
         $this->get(route('marketing.track.open', $recipient->tracking_token))->assertOk();
@@ -1537,7 +1603,7 @@ class MarketingModuleTest extends TestCase
     }
 
     #[Test]
-    public function suppressed_recipients_are_not_sent_and_campaign_can_complete(): void
+    public function suppressed_recipients_are_not_sent_and_campaign_remains_active_and_idle(): void
     {
         $this->travelTo(Carbon::parse('2026-06-20 10:00:00'));
 
@@ -1606,7 +1672,16 @@ class MarketingModuleTest extends TestCase
         SendDueMarketingCampaignEmails::dispatchSync($campaign->id);
 
         $this->assertSame('suppressed', $recipient->fresh()->status);
-        $this->assertSame('completed', $campaign->fresh()->status);
+        $campaign->refresh();
+        $this->assertSame('active', $campaign->status);
+        $this->assertSame(1, $campaign->current_cycle);
+        $this->assertNull($campaign->next_cycle_at);
+        $this->assertSame(1, $campaign->recipients()->count());
+        $this->assertSame(
+            'idle',
+            app(AdvanceMarketingCampaignLifecycle::class)->handle($campaign),
+        );
+        $this->assertDatabaseCount('marketing_campaign_deliveries', 0);
         $this->assertDatabaseHas('email_logs', [
             'scope' => 'marketing',
             'code' => 'MARKETING_EMAIL_SUPPRESSED',
@@ -1614,7 +1689,7 @@ class MarketingModuleTest extends TestCase
     }
 
     #[Test]
-    public function repeat_campaigns_queue_the_next_cycle_after_current_sequence_finishes(): void
+    public function legacy_repeat_configuration_does_not_create_a_new_cycle_or_replay(): void
     {
         $this->travelTo(Carbon::parse('2026-06-20 10:00:00'));
 
@@ -1672,27 +1747,386 @@ class MarketingModuleTest extends TestCase
         ]);
 
         $this->mock(SmtpAccountMailer::class, function ($mock): void {
-            $mock->shouldReceive('send')->once()->andReturn('<repeat@example.test>');
+            $mock->shouldReceive('send')
+                ->once()
+                ->andReturnUsing(static fn (...$arguments): string => (string) $arguments[8]['message_id']);
         });
 
+        SendDueMarketingCampaignEmails::dispatchSync($campaign->id);
         SendDueMarketingCampaignEmails::dispatchSync($campaign->id);
 
         $campaign->refresh();
 
         $this->assertSame('active', $campaign->status);
-        $this->assertSame(2, $campaign->current_cycle);
-        $this->assertSame('2026-06-21 10:00', $campaign->next_cycle_at->format('Y-m-d H:i'));
+        $this->assertSame(1, $campaign->current_cycle);
+        $this->assertNull($campaign->next_cycle_at);
+        $this->assertSame(1, $campaign->recipients()->count());
         $this->assertDatabaseHas('marketing_campaign_recipients', [
             'marketing_campaign_id' => $campaign->id,
             'marketing_campaign_email_id' => $email->id,
             'cycle_number' => 1,
             'status' => 'sent',
         ]);
-        $this->assertDatabaseHas('marketing_campaign_recipients', [
+        $this->assertDatabaseMissing('marketing_campaign_recipients', [
             'marketing_campaign_id' => $campaign->id,
             'marketing_campaign_email_id' => $email->id,
             'cycle_number' => 2,
+        ]);
+    }
+
+    #[Test]
+    public function legacy_completed_campaign_can_append_new_email_and_continue_without_replay(): void
+    {
+        foreach (['marketing.view', 'marketing.campaign.edit'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $this->travelTo(Carbon::parse('2026-06-20 10:00:00'));
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.campaign.edit']);
+        $client = Client::factory()->create(['name' => 'Legacy Campaign Client AS']);
+        $contact = $this->contactForClient($client, 'Legacy Contact', 'legacy-sequence@example.test');
+        $oldTemplate = $this->marketingTemplate('legacy_sequence_old', 'Legacy Sequence Old');
+        $newTemplate = $this->marketingTemplate('legacy_sequence_new', 'Legacy Sequence New');
+        $list = MarketingList::query()->create([
+            'name' => 'Legacy sequence list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+        ]);
+        $member = $list->members()->create([
+            'source_type' => 'manual_contact',
+            'source_id' => $contact->id,
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'email' => 'legacy-sequence@example.test',
+            'name' => 'Legacy Contact',
+            'status' => 'eligible',
+        ]);
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'name' => 'Legacy completed sequence',
+            'status' => 'completed',
+            'starts_at' => Carbon::parse('2026-06-19 12:00:00'),
+            'sequence_interval_value' => 1,
+            'sequence_interval_unit' => 'weeks',
+            'new_recipient_policy' => 'start_at_first_email',
+            'completion_behavior' => 'repeat',
+            'repeat_interval_value' => 1,
+            'repeat_interval_unit' => 'months',
+            'current_cycle' => 4,
+            'next_cycle_at' => Carbon::parse('2026-07-19 12:00:00'),
+            'completed_at' => Carbon::parse('2026-06-19 12:05:00'),
+            'batch_size' => 10,
+            'send_interval_minutes' => 15,
+        ]);
+        $oldEmail = $campaign->emails()->create([
+            'email_template_id' => $oldTemplate->id,
+            'template_snapshot_name' => $oldTemplate->name,
+            'subject_snapshot' => 'Legacy first email',
+            'body_html_snapshot' => '<p>Legacy first email</p>',
+            'body_text_snapshot' => 'Legacy first email',
+            'sequence_order' => 1,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+        $oldEmail->recipients()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_list_member_id' => $member->id,
+            'cycle_number' => 1,
+            'contact_id' => $contact->id,
+            'client_id' => $client->id,
+            'email' => 'legacy-sequence@example.test',
+            'name' => 'Legacy Contact',
+            'status' => 'sent',
+            'due_at' => Carbon::parse('2026-06-19 12:00:00'),
+            'sent_at' => Carbon::parse('2026-06-19 12:05:00'),
+            'rfc_message_id' => '<legacy-first@example.test>',
+            'tracking_token' => 'legacy-first-token',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('tech.marketing.campaigns.emails.store', $campaign), [
+                'email_template_id' => $newTemplate->id,
+                'email_subject' => 'Legacy second email',
+                'sequence_order' => 2,
+                'delay_minutes' => 0,
+            ])
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign))
+            ->assertSessionHas(
+                'status',
+                'Campaign email added, sequence continued, and 1 recipients queued without replaying earlier emails.',
+            );
+
+        $campaign->refresh();
+        $newEmail = $campaign->emails()->where('sequence_order', 2)->firstOrFail();
+
+        $this->assertSame('active', $campaign->status);
+        $this->assertSame('continue', $campaign->completion_behavior);
+        $this->assertSame(4, $campaign->current_cycle);
+        $this->assertSame(
+            '2026-07-19 12:00',
+            $campaign->next_cycle_at?->format('Y-m-d H:i'),
+        );
+        $this->assertSame(
+            '2026-06-19 12:05',
+            $campaign->completed_at?->format('Y-m-d H:i'),
+        );
+        $this->assertSame(1, $oldEmail->recipients()->count());
+        $this->assertSame(1, $newEmail->recipients()->count());
+        $this->assertSame(2, $campaign->recipients()->count());
+        $this->assertDatabaseHas('marketing_campaign_recipients', [
+            'marketing_campaign_email_id' => $newEmail->id,
+            'cycle_number' => 4,
+            'email' => 'legacy-sequence@example.test',
             'status' => 'pending',
+            'due_at' => Carbon::parse('2026-06-26 12:00:00')->toDateTimeString(),
+        ]);
+        $this->assertSame(
+            0,
+            app(SyncMarketingCampaignRecipients::class)->handle(
+                $campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients']),
+            ),
+        );
+        $this->assertSame(1, $oldEmail->recipients()->count());
+        $this->assertSame(1, $newEmail->recipients()->count());
+    }
+
+    #[Test]
+    public function api_inactive_email_does_not_continue_a_legacy_completed_campaign(): void
+    {
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        Sanctum::actingAs($user, ['marketing.campaigns.update']);
+
+        $template = $this->marketingTemplate(
+            'inactive_legacy_continuation',
+            'Inactive Legacy Continuation',
+        );
+        $list = MarketingList::query()->create([
+            'name' => 'Inactive legacy continuation list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+        ]);
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'name' => 'Inactive legacy continuation campaign',
+            'status' => 'completed',
+            'completion_behavior' => 'repeat',
+            'repeat_interval_value' => 1,
+            'repeat_interval_unit' => 'months',
+            'current_cycle' => 3,
+            'next_cycle_at' => Carbon::parse('2026-07-19 12:00:00'),
+            'completed_at' => Carbon::parse('2026-06-19 12:05:00'),
+        ]);
+
+        $this->postJson(route('api.v1.marketing.campaigns.emails.store', $campaign), [
+            'email_template_id' => $template->id,
+            'email_subject' => 'Inactive future step',
+            'sequence_order' => 1,
+            'delay_minutes' => 0,
+            'status' => 'inactive',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'inactive')
+            ->assertJsonPath('meta.queued_recipients', 0)
+            ->assertJsonPath('meta.continued_legacy_campaign', false);
+
+        $campaign->refresh();
+
+        $this->assertSame('completed', $campaign->status);
+        $this->assertSame('repeat', $campaign->completion_behavior);
+        $this->assertSame(3, $campaign->current_cycle);
+        $this->assertSame('2026-07-19 12:00', $campaign->next_cycle_at?->format('Y-m-d H:i'));
+        $this->assertSame('2026-06-19 12:05', $campaign->completed_at?->format('Y-m-d H:i'));
+        $this->assertSame(0, $campaign->recipients()->count());
+    }
+
+    #[Test]
+    public function delivery_history_is_observable_and_retained_when_campaign_emails_are_removed(): void
+    {
+        foreach (['marketing.view', 'marketing.campaign.edit'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        $user = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $user->givePermissionTo(['marketing.view', 'marketing.campaign.edit']);
+        $template = $this->marketingTemplate(
+            'delivery_history_retention',
+            'Delivery History Retention',
+        );
+        $list = MarketingList::query()->create([
+            'name' => 'Delivery history list',
+            'status' => 'active',
+            'audience_type' => 'manual_contacts',
+        ]);
+        $campaign = MarketingCampaign::query()->create([
+            'marketing_list_id' => $list->id,
+            'name' => 'Delivery history campaign',
+            'status' => 'active',
+            'starts_at' => now(),
+            'completion_behavior' => 'continue',
+            'sequence_interval_value' => 1,
+            'sequence_interval_unit' => 'days',
+        ]);
+        $providerStartedEmail = $campaign->emails()->create([
+            'email_template_id' => $template->id,
+            'template_snapshot_name' => $template->name,
+            'subject_snapshot' => 'Provider write started',
+            'body_html_snapshot' => '<p>Provider write started</p>',
+            'body_text_snapshot' => 'Provider write started',
+            'sequence_order' => 1,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+        $providerStartedRecipient = $providerStartedEmail->recipients()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'cycle_number' => 1,
+            'email' => 'provider-started@example.test',
+            'name' => 'Provider Started',
+            'status' => 'claimed',
+            'due_at' => now(),
+            'claimed_at' => now(),
+            'attempts' => 1,
+            'rfc_message_id' => '<provider-started@example.test>',
+            'last_error' => 'sensitive provider diagnostic must not be rendered',
+            'tracking_token' => str_repeat('a', 64),
+        ]);
+        $providerStartedDelivery = MarketingCampaignDelivery::query()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_campaign_email_id' => $providerStartedEmail->id,
+            'marketing_campaign_recipient_id' => $providerStartedRecipient->id,
+            'status' => MarketingCampaignDelivery::STATUS_PROVIDER_WRITE_STARTED,
+            'source' => 'runtime',
+            'claim_token' => str_repeat('b', 64),
+            'rfc_message_id' => '<provider-started@example.test>',
+            'claimed_at' => now(),
+            'provider_write_started_at' => now(),
+            'last_error_code' => 'smtp_transport_timeout',
+        ]);
+        $providerStartedRecipient->forceFill([
+            'marketing_campaign_delivery_id' => $providerStartedDelivery->id,
+        ])->save();
+
+        $outcomeUnknownEmail = $campaign->emails()->create([
+            'email_template_id' => $template->id,
+            'template_snapshot_name' => $template->name,
+            'subject_snapshot' => 'Outcome unknown',
+            'body_html_snapshot' => '<p>Outcome unknown</p>',
+            'body_text_snapshot' => 'Outcome unknown',
+            'sequence_order' => 2,
+            'status' => 'active',
+            'delay_minutes' => 0,
+        ]);
+        $outcomeUnknownRecipient = $outcomeUnknownEmail->recipients()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'cycle_number' => 1,
+            'email' => 'outcome-unknown@example.test',
+            'name' => 'Outcome Unknown',
+            'status' => 'outcome_unknown',
+            'due_at' => now(),
+            'claimed_at' => now()->subMinute(),
+            'outcome_unknown_at' => now(),
+            'attempts' => 1,
+            'rfc_message_id' => '<outcome-unknown@example.test>',
+            'last_error' => 'another sensitive provider diagnostic',
+            'tracking_token' => str_repeat('c', 64),
+        ]);
+        $outcomeUnknownDelivery = MarketingCampaignDelivery::query()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'marketing_campaign_email_id' => $outcomeUnknownEmail->id,
+            'marketing_campaign_recipient_id' => $outcomeUnknownRecipient->id,
+            'status' => MarketingCampaignDelivery::STATUS_OUTCOME_UNKNOWN,
+            'source' => 'runtime',
+            'claim_token' => str_repeat('d', 64),
+            'rfc_message_id' => '<outcome-unknown@example.test>',
+            'claimed_at' => now()->subMinute(),
+            'provider_write_started_at' => now()->subSeconds(30),
+            'outcome_unknown_at' => now(),
+            'last_error_code' => 'smtp_outcome_unknown',
+        ]);
+        $outcomeUnknownRecipient->forceFill([
+            'marketing_campaign_delivery_id' => $outcomeUnknownDelivery->id,
+        ])->save();
+        $unclaimedPendingRecipient = $outcomeUnknownEmail->recipients()->create([
+            'marketing_campaign_id' => $campaign->id,
+            'cycle_number' => 1,
+            'email' => 'unclaimed-pending@example.test',
+            'name' => 'Unclaimed Pending',
+            'status' => 'pending',
+            'due_at' => now()->addDay(),
+            'tracking_token' => str_repeat('e', 64),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('tech.marketing.campaigns.show', $campaign))
+            ->assertOk()
+            ->assertSee('Provider Write Started')
+            ->assertSee('smtp_transport_timeout')
+            ->assertSee('Outcome Unknown')
+            ->assertSee('smtp_outcome_unknown')
+            ->assertDontSee('sensitive provider diagnostic must not be rendered')
+            ->assertDontSee('another sensitive provider diagnostic');
+
+        Sanctum::actingAs($user, ['marketing.read', 'marketing.campaigns.update']);
+
+        $apiResponse = $this->getJson(
+            route('api.v1.marketing.campaigns.show', $campaign).'?include_recipients=1',
+        )->assertOk();
+        $apiRecipients = collect($apiResponse->json('data.recipients'))->keyBy('id');
+        $providerStartedData = $apiRecipients->get($providerStartedRecipient->id);
+        $outcomeUnknownData = $apiRecipients->get($outcomeUnknownRecipient->id);
+
+        $this->assertSame(
+            $providerStartedDelivery->id,
+            $providerStartedData['marketing_campaign_delivery_id'] ?? null,
+        );
+        $this->assertNotNull($providerStartedData['claimed_at'] ?? null);
+        $this->assertNull($providerStartedData['outcome_unknown_at'] ?? null);
+        $this->assertSame(
+            MarketingCampaignDelivery::STATUS_PROVIDER_WRITE_STARTED,
+            $providerStartedData['delivery']['status'] ?? null,
+        );
+        $this->assertSame('smtp_transport_timeout', $providerStartedData['delivery']['last_error_code'] ?? null);
+        $this->assertSame(
+            $outcomeUnknownDelivery->id,
+            $outcomeUnknownData['marketing_campaign_delivery_id'] ?? null,
+        );
+        $this->assertNotNull($outcomeUnknownData['claimed_at'] ?? null);
+        $this->assertNotNull($outcomeUnknownData['outcome_unknown_at'] ?? null);
+        $this->assertSame(
+            MarketingCampaignDelivery::STATUS_OUTCOME_UNKNOWN,
+            $outcomeUnknownData['delivery']['status'] ?? null,
+        );
+
+        $this->deleteJson(route('api.v1.marketing.campaigns.emails.destroy', [
+            'campaign' => $campaign,
+            'email' => $outcomeUnknownEmail,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'inactive')
+            ->assertJsonPath('meta.deactivated', true);
+
+        $this->assertSame('inactive', $outcomeUnknownEmail->fresh()->status);
+        $this->assertSame('outcome_unknown', $outcomeUnknownRecipient->fresh()->status);
+        $this->assertSame('cancelled', $unclaimedPendingRecipient->fresh()->status);
+        $this->assertDatabaseHas('marketing_campaign_deliveries', [
+            'id' => $outcomeUnknownDelivery->id,
+            'status' => MarketingCampaignDelivery::STATUS_OUTCOME_UNKNOWN,
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('tech.marketing.campaigns.emails.destroy', [
+                $campaign,
+                $providerStartedEmail,
+            ]))
+            ->assertRedirect(route('tech.marketing.campaigns.show', $campaign))
+            ->assertSessionHas('status', 'Campaign email deactivated. Delivery history was kept.');
+
+        $this->assertSame('inactive', $providerStartedEmail->fresh()->status);
+        $this->assertSame('claimed', $providerStartedRecipient->fresh()->status);
+        $this->assertDatabaseHas('marketing_campaign_deliveries', [
+            'id' => $providerStartedDelivery->id,
+            'status' => MarketingCampaignDelivery::STATUS_PROVIDER_WRITE_STARTED,
         ]);
     }
 
@@ -1839,6 +2273,13 @@ class MarketingModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Send Rhythm')
             ->assertSee('Sending Preferences')
+            ->assertSee('Ongoing contact sequence')
+            ->assertDontSee('When Sequence Completes')
+            ->assertDontSee('Repeat sequence')
+            ->assertDontSee('Repeat Unit')
+            ->assertDontSee('name="completion_behavior"', false)
+            ->assertDontSee('name="repeat_interval_value"', false)
+            ->assertDontSee('name="repeat_interval_unit"', false)
             ->assertDontSee('First Campaign Email')
             ->assertDontSee('Start Template');
 
@@ -1873,6 +2314,14 @@ class MarketingModuleTest extends TestCase
             ->assertSee('First Send Date')
             ->assertSee('Send Time')
             ->assertSee('Weekday')
+            ->assertSee('Ongoing contact sequence')
+            ->assertSee('each campaign email at most once')
+            ->assertDontSee('When Sequence Completes')
+            ->assertDontSee('Repeat sequence')
+            ->assertDontSee('Repeat Unit')
+            ->assertDontSee('name="completion_behavior"', false)
+            ->assertDontSee('name="repeat_interval_value"', false)
+            ->assertDontSee('name="repeat_interval_unit"', false)
             ->assertDontSee('Email Cadence')
             ->assertDontSee('Cadence Unit')
             ->assertSee('Campaign Emails')
@@ -1924,12 +2373,19 @@ class MarketingModuleTest extends TestCase
             ->post(route('tech.marketing.campaigns.approve', $campaign))
             ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
 
-        $this->assertSame(2, MarketingCampaignRecipient::query()->count());
-        $secondEmail = $campaign->fresh()->emails()->where('sequence_order', 2)->firstOrFail();
+        $emails = $campaign->fresh()->emails()->orderBy('sequence_order')->get();
+        $firstEmail = $emails->firstWhere('sequence_order', 1);
+        $secondEmail = $emails->firstWhere('sequence_order', 2);
+
+        $this->assertSame(1, MarketingCampaignRecipient::query()->count());
         $this->assertDatabaseHas('marketing_campaign_recipients', [
-            'marketing_campaign_email_id' => $secondEmail->id,
+            'marketing_campaign_email_id' => $firstEmail->id,
             'email' => 'sequence@example.test',
             'status' => 'pending',
+        ]);
+        $this->assertDatabaseMissing('marketing_campaign_recipients', [
+            'marketing_campaign_email_id' => $secondEmail->id,
+            'email' => 'sequence@example.test',
         ]);
 
         $this->actingAs($user)
@@ -1951,10 +2407,8 @@ class MarketingModuleTest extends TestCase
             'body_html_snapshot' => '<p>Second body</p>',
         ]);
 
-        $this->assertSame(
-            $start->copy()->addDay()->addMinutes(120)->format('Y-m-d H:i'),
-            $secondEmail->fresh()->recipients()->first()->due_at->format('Y-m-d H:i'),
-        );
+        $this->assertSame(0, $secondEmail->fresh()->recipients()->count());
+        $this->assertSame(1, $firstEmail->fresh()->recipients()->where('status', 'pending')->count());
 
         $this->actingAs($user)
             ->post(route('tech.marketing.campaigns.emails.store', $campaign->fresh()), [
@@ -1966,15 +2420,15 @@ class MarketingModuleTest extends TestCase
             ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
 
         $thirdEmail = $campaign->fresh()->emails()->where('sequence_order', 3)->firstOrFail();
-        $this->assertSame(3, MarketingCampaignRecipient::query()->count());
-        $this->assertSame(1, $thirdEmail->recipients()->where('status', 'pending')->count());
+        $this->assertSame(1, MarketingCampaignRecipient::query()->count());
+        $this->assertSame(0, $thirdEmail->recipients()->count());
 
         $this->actingAs($user)
             ->delete(route('tech.marketing.campaigns.emails.destroy', [$campaign, $thirdEmail]))
             ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
 
         $this->assertDatabaseMissing('marketing_campaign_emails', ['id' => $thirdEmail->id]);
-        $this->assertSame(2, MarketingCampaignRecipient::query()->count());
+        $this->assertSame(1, MarketingCampaignRecipient::query()->count());
     }
 
     #[Test]
@@ -2069,18 +2523,17 @@ class MarketingModuleTest extends TestCase
             ->get();
         $secondRecipients = MarketingCampaignRecipient::query()
             ->where('marketing_campaign_email_id', $emails[1]->id)
-            ->orderBy('email')
             ->get();
         $thirdRecipients = MarketingCampaignRecipient::query()
             ->where('marketing_campaign_email_id', $emails[2]->id)
-            ->orderBy('email')
             ->get();
 
+        $this->assertCount(3, $firstRecipients);
+        $this->assertCount(0, $secondRecipients);
+        $this->assertCount(0, $thirdRecipients);
         $this->assertSame($start->format('Y-m-d H:i'), $firstRecipients[0]->due_at->format('Y-m-d H:i'));
         $this->assertSame($start->format('Y-m-d H:i'), $firstRecipients[1]->due_at->format('Y-m-d H:i'));
         $this->assertSame($start->copy()->addMinutes(10)->format('Y-m-d H:i'), $firstRecipients[2]->due_at->format('Y-m-d H:i'));
-        $this->assertSame($start->copy()->addWeek()->format('Y-m-d H:i'), $secondRecipients[0]->due_at->format('Y-m-d H:i'));
-        $this->assertSame($start->copy()->addWeeks(2)->format('Y-m-d H:i'), $thirdRecipients[0]->due_at->format('Y-m-d H:i'));
 
         $newStart = Carbon::parse('2026-06-26 12:00:00');
         $this->actingAs($user)
@@ -2094,21 +2547,18 @@ class MarketingModuleTest extends TestCase
                 'send_interval_minutes' => 5,
             ])
             ->assertRedirect(route('tech.marketing.campaigns.show', $campaign))
-            ->assertSessionHas('status', 'Campaign schedule updated. 9 pending recipients were rescheduled.');
+            ->assertSessionHas('status', 'Campaign schedule updated. 3 pending recipients were rescheduled.');
 
         $firstRecipients = MarketingCampaignRecipient::query()
             ->where('marketing_campaign_email_id', $emails[0]->id)
             ->orderBy('email')
             ->get();
-        $secondRecipients = MarketingCampaignRecipient::query()
-            ->where('marketing_campaign_email_id', $emails[1]->id)
-            ->orderBy('email')
-            ->get();
-
         $this->assertSame($newStart->format('Y-m-d H:i'), $firstRecipients[0]->fresh()->due_at->format('Y-m-d H:i'));
         $this->assertSame($newStart->copy()->addMinutes(5)->format('Y-m-d H:i'), $firstRecipients[1]->fresh()->due_at->format('Y-m-d H:i'));
         $this->assertSame($newStart->copy()->addMinutes(10)->format('Y-m-d H:i'), $firstRecipients[2]->fresh()->due_at->format('Y-m-d H:i'));
-        $this->assertSame($newStart->copy()->addWeek()->format('Y-m-d H:i'), $secondRecipients[0]->fresh()->due_at->format('Y-m-d H:i'));
+        $this->assertSame(0, MarketingCampaignRecipient::query()
+            ->whereIn('marketing_campaign_email_id', [$emails[1]->id, $emails[2]->id])
+            ->count());
     }
 
     #[Test]

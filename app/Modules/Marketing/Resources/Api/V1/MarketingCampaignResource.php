@@ -29,6 +29,24 @@ class MarketingCampaignResource extends JsonResource
             'sequence_interval_value' => $this->sequence_interval_value,
             'sequence_interval_unit' => $this->sequence_interval_unit,
             'new_recipient_policy' => $this->new_recipient_policy,
+            'lifecycle_mode' => 'ongoing_contact_sequence',
+            'repeat_fields_deprecated' => true,
+            'sequence_state' => $this->when(isset($this->recipient_progress), function (): string {
+                if ((int) ($this->recipient_progress['blocked'] ?? 0) > 0) {
+                    return 'review_required';
+                }
+
+                return (int) ($this->recipient_progress['in_progress'] ?? 0) > 0
+                    ? 'in_progress'
+                    : 'caught_up';
+            }),
+            'recipient_progress' => $this->when(isset($this->recipient_progress), fn (): array => [
+                'eligible_recipients' => (int) ($this->recipient_progress['eligible_recipients'] ?? 0),
+                'in_progress' => (int) ($this->recipient_progress['in_progress'] ?? 0),
+                'caught_up' => (int) ($this->recipient_progress['caught_up'] ?? 0),
+                'blocked' => (int) ($this->recipient_progress['blocked'] ?? 0),
+                'next_due' => $this->recipient_progress['next_due'] ?? null,
+            ]),
             'completion_behavior' => $this->completion_behavior,
             'repeat_interval_value' => $this->repeat_interval_value,
             'repeat_interval_unit' => $this->repeat_interval_unit,

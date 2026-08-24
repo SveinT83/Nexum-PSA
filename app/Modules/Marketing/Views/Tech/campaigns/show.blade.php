@@ -14,12 +14,12 @@
                 Campaigns
             </a>
             @can('marketing.campaign.approve')
-                @if(in_array($campaign->status, ['draft', 'paused'], true))
+                @if(in_array($campaign->status, ['draft', 'paused', 'completed'], true))
                     <form method="POST" action="{{ route('tech.marketing.campaigns.approve', $campaign) }}" class="mb-0">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-success">
                             <i class="bi bi-check2-circle" aria-hidden="true"></i>
-                            Approve
+                            {{ $campaign->status === 'completed' ? 'Continue Sequence' : 'Approve' }}
                         </button>
                     </form>
                 @endif
@@ -51,6 +51,11 @@
             @foreach($errors->all() as $error)
                 <div>{{ $error }}</div>
             @endforeach
+        </div>
+    @endif
+    @if($campaign->status === 'completed')
+        <div class="alert alert-info py-2">
+            This is a legacy completed campaign. Add a new campaign email or continue the sequence; emails already recorded for a contact will not be sent again.
         </div>
     @endif
     @php
@@ -91,6 +96,38 @@
                     <div class="fw-semibold">{{ $campaign->approved_at?->format('Y-m-d H:i') ?? '—' }}</div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center justify-content-between gap-2">
+            <span class="fw-semibold">Contact Progress</span>
+            <span class="badge text-bg-light border">Each email once per contact</span>
+        </div>
+        <div class="card-body py-3">
+            <div class="row g-3 text-center">
+                <div class="col-6 col-lg-3">
+                    <div class="small text-muted text-uppercase fw-semibold">Eligible</div>
+                    <div class="fs-5 fw-semibold">{{ number_format($recipientProgress['eligible_recipients']) }}</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="small text-muted text-uppercase fw-semibold">In Progress</div>
+                    <div class="fs-5 fw-semibold">{{ number_format($recipientProgress['in_progress']) }}</div>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <div class="small text-muted text-uppercase fw-semibold">Caught Up</div>
+                    <div class="fs-5 fw-semibold text-success">{{ number_format($recipientProgress['caught_up']) }}</div>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <div class="small text-muted text-uppercase fw-semibold">Needs Review</div>
+                    <div class="fs-5 fw-semibold {{ $recipientProgress['blocked'] > 0 ? 'text-danger' : '' }}">{{ number_format($recipientProgress['blocked']) }}</div>
+                </div>
+                <div class="col-12 col-lg-2">
+                    <div class="small text-muted text-uppercase fw-semibold">Next Due</div>
+                    <div class="fw-semibold">{{ $recipientProgress['next_due']?->format('Y-m-d H:i') ?? '—' }}</div>
+                </div>
+            </div>
+            <div class="small text-muted text-center mt-2">Suppressed and opted-out contacts are not counted as eligible.</div>
         </div>
     </div>
 
@@ -168,9 +205,6 @@
         $monthDay = old('month_day', $campaign->scheduleMonthDay());
         $customIntervalValue = old('custom_interval_value', $campaign->sequence_interval_value ?: 1);
         $customIntervalUnit = old('custom_interval_unit', $campaign->sequence_interval_unit ?: 'days');
-        $completionBehavior = old('completion_behavior', $campaign->completion_behavior ?: 'stop');
-        $repeatIntervalValue = old('repeat_interval_value', $campaign->repeat_interval_value ?: 1);
-        $repeatIntervalUnit = old('repeat_interval_unit', $campaign->repeat_interval_unit ?: 'months');
         $scheduleErrorFields = [
             'starts_at',
             'schedule_frequency',
@@ -185,9 +219,6 @@
             'sequence_interval_value',
             'sequence_interval_unit',
             'new_recipient_policy',
-            'completion_behavior',
-            'repeat_interval_value',
-            'repeat_interval_unit',
         ];
         $schedulePanelOpen = collect($scheduleErrorFields)->contains(fn (string $field): bool => $errors->has($field));
     @endphp
@@ -267,28 +298,11 @@
                                 </select>
                                 @error('new_recipient_policy')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
-                            <div class="col-lg-3">
-                                <label for="completion_behavior" class="form-label">When Sequence Completes</label>
-                                <select id="completion_behavior" name="completion_behavior" class="form-select form-select-sm @error('completion_behavior') is-invalid @enderror" data-completion-behavior>
-                                    @foreach($completionBehaviors as $value => $label)
-                                        <option value="{{ $value }}" @selected($completionBehavior === $value)>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                                @error('completion_behavior')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-lg-1" data-repeat-field>
-                                <label for="repeat_interval_value" class="form-label">Repeat</label>
-                                <input type="number" min="1" max="999" id="repeat_interval_value" name="repeat_interval_value" class="form-control form-control-sm @error('repeat_interval_value') is-invalid @enderror" value="{{ $repeatIntervalValue }}">
-                                @error('repeat_interval_value')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-lg-2" data-repeat-field>
-                                <label for="repeat_interval_unit" class="form-label">Repeat Unit</label>
-                                <select id="repeat_interval_unit" name="repeat_interval_unit" class="form-select form-select-sm @error('repeat_interval_unit') is-invalid @enderror">
-                                    @foreach($sequenceIntervalUnits as $value => $label)
-                                        <option value="{{ $value }}" @selected($repeatIntervalUnit === $value)>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                                @error('repeat_interval_unit')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="col-lg-6">
+                                <div class="alert alert-info mb-0 py-2">
+                                    <div class="fw-semibold">Ongoing contact sequence</div>
+                                    <div class="small">Every contact receives each campaign email at most once. A caught-up contact waits until another email is added.</div>
+                                </div>
                             </div>
                             <div class="col-lg-1">
                                 <label for="batch_size" class="form-label">Batch</label>
@@ -319,13 +333,8 @@
                         <dd class="col-md-9">{{ $campaign->sendRhythmLabel() }}</dd>
                         <dt class="col-md-3">New contacts</dt>
                         <dd class="col-md-9">{{ $campaign->newRecipientPolicyLabel() }}</dd>
-                        <dt class="col-md-3">Completion</dt>
-                        <dd class="col-md-9">
-                            {{ $campaign->completionBehaviorLabel() }}
-                            @if(($campaign->completion_behavior ?: 'stop') === 'repeat')
-                                <span class="text-muted">({{ $campaign->repeatIntervalLabel() }})</span>
-                            @endif
-                        </dd>
+                        <dt class="col-md-3">Sequence</dt>
+                        <dd class="col-md-9">Ongoing; each email is sent at most once per contact</dd>
                         <dt class="col-md-3">Recipient throttle</dt>
                         <dd class="col-md-9">{{ $campaign->batch_size ?: $settings['default_batch_size'] }} per batch, {{ $campaign->send_interval_minutes ?: $settings['default_send_interval_minutes'] }} minutes between batches</dd>
                     </dl>
@@ -681,7 +690,22 @@
                                 <td>{{ $recipient->name ?: '—' }}</td>
                                 <td>{{ $recipient->email }}</td>
                                 <td>{{ $recipient->client?->name ?? '—' }}</td>
-                                <td><span class="badge text-bg-{{ $recipient->status === 'sent' ? 'success' : ($recipient->status === 'failed' ? 'danger' : 'light') }} border">{{ ucfirst($recipient->status) }}</span></td>
+                                @php
+                                    $effectiveDeliveryStatus = $recipient->delivery?->status ?: $recipient->status;
+                                    $deliveryErrorCode = $recipient->delivery?->last_error_code;
+                                    $recipientStatusColor = match ($effectiveDeliveryStatus) {
+                                        'sent' => 'success',
+                                        'failed', 'outcome_unknown' => 'danger',
+                                        'claimed', 'provider_write_started' => 'warning',
+                                        default => 'light',
+                                    };
+                                @endphp
+                                <td>
+                                    <span class="badge text-bg-{{ $recipientStatusColor }} border">{{ str($effectiveDeliveryStatus)->replace('_', ' ')->title() }}</span>
+                                    @if($deliveryErrorCode)
+                                        <div class="small text-danger mt-1" title="{{ $deliveryErrorCode }}">{{ str($deliveryErrorCode)->limit(80) }}</div>
+                                    @endif
+                                </td>
                                 <td>{{ $recipient->due_at?->format('Y-m-d H:i') ?? '—' }}</td>
                                 <td>{{ $recipient->sent_at?->format('Y-m-d H:i') ?? '—' }}</td>
                             </tr>
@@ -713,8 +737,6 @@
                 const weeklyFields = form.querySelectorAll('[data-schedule-weekly]');
                 const monthlyFields = form.querySelectorAll('[data-schedule-monthly]');
                 const customFields = form.querySelectorAll('[data-schedule-custom]');
-                const completionBehavior = form.querySelector('[data-completion-behavior]');
-                const repeatFields = form.querySelectorAll('[data-repeat-field]');
 
                 const syncScheduleFields = function () {
                     const value = frequency ? frequency.value : 'daily';
@@ -728,13 +750,9 @@
                     customFields.forEach(function (field) {
                         field.classList.toggle('d-none', value !== 'custom');
                     });
-                    repeatFields.forEach(function (field) {
-                        field.classList.toggle('d-none', (completionBehavior?.value || 'stop') !== 'repeat');
-                    });
                 };
 
                 frequency?.addEventListener('change', syncScheduleFields);
-                completionBehavior?.addEventListener('change', syncScheduleFields);
                 syncScheduleFields();
             });
 
@@ -1158,14 +1176,10 @@
             <dd class="col-6 text-end">{{ $campaign->emailAccount?->address ?? 'Marketing default' }}</dd>
             <dt class="col-6">Batch</dt>
             <dd class="col-6 text-end">{{ $campaign->batch_size ?: $settings['default_batch_size'] }}</dd>
-            <dt class="col-6">Cycle</dt>
-            <dd class="col-6 text-end">{{ $campaign->current_cycle ?: 1 }}</dd>
-            <dt class="col-6">Completion</dt>
-            <dd class="col-6 text-end">{{ ($campaign->completion_behavior ?: 'stop') === 'repeat' ? $campaign->repeatIntervalLabel() : 'Stop' }}</dd>
-            @if($campaign->next_cycle_at)
-                <dt class="col-6">Next Cycle</dt>
-                <dd class="col-6 text-end">{{ $campaign->next_cycle_at->format('Y-m-d H:i') }}</dd>
-            @endif
+            <dt class="col-6">Sequence</dt>
+            <dd class="col-6 text-end">Ongoing</dd>
+            <dt class="col-6">Delivery rule</dt>
+            <dd class="col-6 text-end">Once per contact</dd>
             <dt class="col-6">Tracking</dt>
             <dd class="col-6 text-end">{{ $campaign->track_opens ? 'Open' : 'No open' }} / {{ $campaign->track_clicks ? 'Click' : 'No click' }}</dd>
         </dl>

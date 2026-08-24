@@ -47,6 +47,11 @@ class MarketingCampaignEmail extends Model
         return $this->hasMany(MarketingCampaignRecipient::class);
     }
 
+    public function deliveries(): HasMany
+    {
+        return $this->hasMany(MarketingCampaignDelivery::class, 'marketing_campaign_email_id');
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(MarketingCampaignEvent::class);
