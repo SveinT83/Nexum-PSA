@@ -19,6 +19,10 @@ class EmailLivePublisherService
      */
     public function publishPending(): void
     {
+        if (! config('email_live.enabled', false)) {
+            return;
+        }
+
         $changes = EmailLiveProjectionChange::query()
             ->where('publication_status', EmailLiveProjectionChange::STATUS_PENDING)
             ->where(function ($q) {
@@ -32,7 +36,7 @@ class EmailLivePublisherService
             try {
                 $this->publish($change);
             } catch (Exception $e) {
-                Log::error("Failed to publish email live change {$change->id}: " . $e->getMessage());
+                Log::error("Failed to publish email live change {$change->id}: ".$e->getMessage());
                 $this->markAsFailed($change, $e);
             }
         }
@@ -44,10 +48,15 @@ class EmailLivePublisherService
 
     public function publish(EmailLiveProjectionChange $change): void
     {
+        if (! config('email_live.enabled', false)) {
+            return;
+        }
+
         $stream = $change->stream;
 
         if ($stream->stream_type === EmailLiveProjectionStream::TYPE_USER) {
             $this->publishDirect($change, $stream);
+
             return;
         }
 
@@ -108,7 +117,7 @@ class EmailLivePublisherService
 
     private function captureGenerations(EmailLiveProjectionPublication $publication): void
     {
-        $global = DB::table('email_live_global_authority')->where('id', 1)->first();
+        $global = DB::table('email_live_global_authority_states')->where('id', 1)->first();
 
         $data = [
             'global_active_user_generation' => $global->active_user_generation,
@@ -117,7 +126,7 @@ class EmailLivePublisherService
         ];
 
         if ($publication->source_stream_type === EmailLiveProjectionStream::TYPE_ACCOUNT) {
-            $account = DB::table('email_live_account_authority')
+            $account = DB::table('email_live_account_authority_states')
                 ->where('email_account_id', $publication->email_account_id)
                 ->first();
 
@@ -167,7 +176,9 @@ class EmailLivePublisherService
                 'last_attempt_at' => now(),
             ]);
 
-        if (! $updated) return;
+        if (! $updated) {
+            return;
+        }
 
         $publication->refresh();
 
@@ -192,7 +203,7 @@ class EmailLivePublisherService
                 $publication->update(['status' => EmailLiveProjectionPublication::STATUS_PENDING]);
             }
         } catch (Exception $e) {
-            Log::error("Publication phase failed: " . $e->getMessage());
+            Log::error('Publication phase failed: '.$e->getMessage());
             $publication->update([
                 'status' => EmailLiveProjectionPublication::STATUS_BLOCKED,
                 'error_code' => 'phase_failed',
@@ -344,12 +355,12 @@ class EmailLivePublisherService
     {
         broadcast(new EmailProjectionInvalidated($userId, [
             'schema' => 1,
-            'scope' => 'mail',
+            'scope' => 'user',
             'from_version' => (string) ($change->version - 1),
             'to_version' => (string) $change->version,
             'change_types' => $change->change_types_json,
-            'conversation_ids' => $change->conversation_ids_json,
-            'placement_ids' => $change->placement_ids_json,
+            'conversation_ids' => $change->conversation_ids_json ?? [],
+            'placement_ids' => $change->placement_ids_json ?? [],
             'truncated' => $change->truncated,
         ]));
     }

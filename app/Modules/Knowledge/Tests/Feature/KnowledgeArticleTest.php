@@ -776,6 +776,24 @@ class KnowledgeArticleTest extends TestCase
     }
 
     #[Test]
+    public function repository_documentation_sync_includes_marketing_docs(): void
+    {
+        $this->artisan('knowledge:sync-docs', ['--module' => ['Marketing']])
+            ->expectsOutput('chapters: 1')
+            ->expectsOutput('articles: 1')
+            ->expectsOutput('modules: Marketing')
+            ->assertSuccessful();
+
+        $article = Article::where('source_system', 'nexum')
+            ->where('source_type', 'repository-docs')
+            ->where('source_id', 'marketing/marketing-domain-overview')
+            ->firstOrFail();
+
+        $this->assertSame('Marketing Domain Overview', $article->title);
+        $this->assertSame('Marketing', $article->source_payload['module']);
+    }
+
+    #[Test]
     public function repository_documentation_sync_includes_booking_docs(): void
     {
         $this->artisan('knowledge:sync-docs', ['--module' => ['Booking']])

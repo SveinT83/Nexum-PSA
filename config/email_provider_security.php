@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Integration\Support\EmailProviderTrustedPrivateCidrConfiguration;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -14,7 +16,10 @@ return [
     */
     'additional_endpoints' => [],
 
-    'trusted_private_cidrs' => [],
+    'trusted_private_cidrs' => EmailProviderTrustedPrivateCidrConfiguration::exactRfc1918Ipv4Host(
+        'tronderdata_mail_dev',
+        env('EMAIL_PROVIDER_TRONDERDATA_MAIL_DEV_CIDR'),
+    ),
 
     // Compatibility-only mapping: email_account_id => named CIDR. New
     // private connections must use the reviewed Integration lifecycle.

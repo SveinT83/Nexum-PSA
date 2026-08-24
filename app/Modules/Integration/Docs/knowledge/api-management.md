@@ -491,6 +491,28 @@ HTML body, plaintext body, and sequence settings as a campaign snapshot. The API
 campaign until `POST /api/v1/marketing/campaigns/{campaign}/approve` has created recipient queue
 rows and due-send processing has been queued or run.
 
+Approved campaigns use an ongoing, contact-specific sequence. With the default
+`start_at_first_email` policy, a newly eligible Contact receives only email 1 at the next configured
+campaign occurrence. After a confirmed send, only the next missing active email is queued for the
+following occurrence. A caught-up Contact remains enrolled, and a newly appended active campaign
+email becomes that Contact's next step without replaying earlier emails.
+
+Automatic repeat is no longer a supported write contract. Requests containing
+`repeat_interval_value`, `repeat_interval_unit`, or a `completion_behavior` other than `continue`
+fail validation. Historical `completion_behavior`, repeat interval, cycle, and completion timestamp
+fields remain in responses for compatibility, but clients must treat them as deprecated evidence,
+not as instructions to resend. Adding an active email to a legacy `completed` campaign is an
+explicit continuation and returns the campaign to active processing without re-queuing previously
+transmitted campaign-email records.
+
+Campaign detail responses expose `lifecycle_mode=ongoing_contact_sequence`,
+`repeat_fields_deprecated=true`, a derived `sequence_state`, and `recipient_progress` counts for
+eligible, in-progress, caught-up, and blocked Contacts plus the next due time. Delivery identity is
+guarded for the lifetime of each campaign-email record across Contact ID, compatible client-user ID,
+and normalized destination email. A claimed or sent identity is never transmitted automatically a
+second time. If SMTP acceptance cannot be confirmed, the Contact is reported as blocked/review
+required and no blind retry is performed.
+
 ## Contact Ownership Repair API
 
 Contact ownership repair endpoints are intended for trusted cleanup tools and production support.

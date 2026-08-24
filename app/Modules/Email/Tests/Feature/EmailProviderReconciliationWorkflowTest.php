@@ -760,6 +760,17 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
         $this->assertSame(EmailRemoteOperation::STATUS_FAILED, $forged->fresh()->status);
         $this->assertNull($absence->fresh()->target_placement_id);
 
+        // Terminalize the deliberately forged operation before creating a
+        // second operation for the same source. Production serializes behind
+        // the oldest unresolved operation and must not skip it.
+        $forged->forceFill([
+            'status' => EmailRemoteOperation::STATUS_CANCELLED,
+            'cancelled_at' => now(),
+            'next_attempt_at' => null,
+            'status_reason_code' => 'REMOTE_OPERATION_CANCELLED',
+            'status_reason_message' => 'Test fixture cancellation after forged evidence was rejected.',
+        ])->save();
+
         $authoritative = EmailRemoteOperation::query()->create($operationValues + [
             'idempotency_key' => 'reconcile-authoritative-target-'.$account->id,
             'acknowledged_target_uid_validity' => 923,
@@ -1273,12 +1284,20 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
             919,
             90,
         );
-        [, $placement] = $this->messageAndPlacement($account, $folder, $namespace, 89);
+        [$message, $placement] = $this->messageAndPlacement($account, $folder, $namespace, 89);
         $run = $this->reconciliationRun($account);
         $run->forceFill([
             'status' => EmailProviderReconciliationRun::STATUS_RUNNING,
             'phase' => EmailProviderReconciliationRun::PHASE_DISCOVER_END,
             'started_at' => now(),
+        ])->save();
+        $identity = app(EmailProviderMessageIdentity::class)->forMessage($message);
+        $observedSyncVersion = (int) $placement->sync_version;
+        $placement->forceFill([
+            'last_provider_reconciliation_run_id' => $run->id,
+            'last_provider_observed_sync_version' => $observedSyncVersion,
+            'last_provider_observed_identity_hash' => $identity,
+            'last_provider_observed_at' => now(),
         ])->save();
         $folderRun = EmailProviderReconciliationFolder::query()->create([
             'email_provider_reconciliation_run_id' => $run->id,
@@ -1291,6 +1310,7 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
             'discovery_state' => EmailProviderReconciliationFolder::DISCOVERY_EXISTING,
             'status' => EmailProviderReconciliationFolder::STATUS_WAITING_FOR_IMPORTS,
             'import_policy' => EmailProviderReconciliationFolder::IMPORT_LIVE,
+            'expected_uid_validity' => $namespace->uid_validity,
         ]);
         $item = EmailProviderReconciliationItem::query()->create([
             'email_provider_reconciliation_run_id' => $run->id,
@@ -1300,11 +1320,32 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
             'kind' => EmailProviderReconciliationItem::KIND_IMPORT,
             'status' => EmailProviderReconciliationItem::STATUS_PROJECTED,
             'result_placement_id' => $placement->id,
+            'identity_hash' => $identity,
+            'placement_sync_version_before' => $observedSyncVersion,
+            'placement_sync_version_after' => $observedSyncVersion,
             'automation_required' => true,
             'automation_status' => EmailProviderReconciliationItem::AUTOMATION_PENDING,
             'automation_attempt_count' => 0,
             'completed_at' => now(),
         ]);
+        $summaryAt = now();
+        $folderRun->forceFill([
+            'item_summary_status' => EmailProviderReconciliationFolder::ITEM_SUMMARY_SEALED,
+            'item_summary_through_id' => $item->id,
+            'item_summary_cursor_id' => $item->id,
+            'item_summary_missing_count' => 0,
+            'item_summary_move_count' => 0,
+            'item_summary_conflict_count' => 0,
+            'item_summary_nonterminal' => false,
+            'item_summary_batch_count' => 1,
+            'item_summary_started_at' => $summaryAt,
+            'item_summary_completed_at' => $summaryAt,
+            'status' => EmailProviderReconciliationFolder::STATUS_COMPLETE,
+            'missing_count' => 0,
+            'conflict_count' => 0,
+            'reason_code' => null,
+            'finished_at' => $summaryAt,
+        ])->save();
 
         $canary = 'SUBJECT_BODY_SQLSTATE_PROVIDER_CANARY';
         $engine = Mockery::mock(InboundEmailRuleEngine::class);

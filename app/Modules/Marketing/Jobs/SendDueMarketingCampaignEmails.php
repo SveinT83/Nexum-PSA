@@ -8,6 +8,8 @@ use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Marketing\Actions\AdvanceMarketingCampaignLifecycle;
+use App\Modules\Marketing\Actions\AuthorizeMarketingCampaignRecipientProgression;
+use App\Modules\Marketing\Actions\ClaimMarketingCampaignDelivery;
 use App\Modules\Marketing\Actions\MarketingSuppressionGuard;
 use App\Modules\Marketing\Actions\SyncMarketingCampaignRecipients;
 use App\Modules\Marketing\Models\MarketingCampaign;
@@ -20,7 +22,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class SendDueMarketingCampaignEmails implements ShouldQueue
 {
@@ -54,18 +55,41 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         MarketingSettings $settings,
         SyncMarketingCampaignRecipients $syncRecipients,
         MarketingSuppressionGuard $suppressionGuard,
+        AuthorizeMarketingCampaignRecipientProgression $progression,
+        ClaimMarketingCampaignDelivery $deliveryClaims,
         AdvanceMarketingCampaignLifecycle $lifecycle,
     ): void {
         $campaigns = MarketingCampaign::query()
-            ->with(['emailAccount', 'emails.template', 'lists.members', 'list.members'])
+            ->with('emailAccount')
             ->whereIn('status', ['approved', 'active'])
             ->when($this->campaignId, fn ($query) => $query->whereKey($this->campaignId))
             ->get();
 
         foreach ($campaigns as $campaign) {
             $syncRecipients->handle($campaign);
-            $this->sendCampaignDueRecipients($campaign->fresh(['emailAccount']), $accountResolver, $renderer, $mailer, $settings, $suppressionGuard);
-            $lifecycle->handle($campaign);
+            $campaignContext = $campaign->fresh([
+                'emailAccount',
+                'emails.template',
+                'recipients.delivery',
+                'lists.members',
+                'list.members',
+            ]);
+
+            if (! $campaignContext) {
+                continue;
+            }
+
+            $this->sendCampaignDueRecipients(
+                $campaignContext,
+                $accountResolver,
+                $renderer,
+                $mailer,
+                $settings,
+                $suppressionGuard,
+                $progression,
+                $deliveryClaims,
+            );
+            $lifecycle->handle($campaignContext);
         }
     }
 
@@ -76,11 +100,14 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
         SmtpAccountMailer $mailer,
         MarketingSettings $settings,
         MarketingSuppressionGuard $suppressionGuard,
+        AuthorizeMarketingCampaignRecipientProgression $progression,
+        ClaimMarketingCampaignDelivery $deliveryClaims,
     ): void {
         $account = $campaign->emailAccount ?: $accountResolver->forScope('marketing');
 
         if (! $account) {
             $this->log(null, $campaign->id, null, null, 'error', 'MARKETING_EMAIL_NO_ACCOUNT', 'No active marketing outbound account is configured.');
+
             return;
         }
 
@@ -102,6 +129,7 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
 
         if ($this->isInsideQuietHours($settingsPayload)) {
             $this->log($account->id, $campaign->id, null, null, 'info', 'MARKETING_EMAIL_QUIET_HOURS', 'Marketing send skipped during quiet hours.');
+
             return;
         }
 
@@ -116,11 +144,12 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
             ->orderBy('id')
             ->limit($limit)
             ->get()
-            ->each(function (MarketingCampaignRecipient $recipient) use ($campaign, $account, $renderer, $mailer, $providerBindingVersion, $settingsPayload, $suppressionGuard): void {
+            ->each(function (MarketingCampaignRecipient $recipient) use ($campaign, $account, $renderer, $mailer, $providerBindingVersion, $settingsPayload, $suppressionGuard, $progression, $deliveryClaims): void {
                 $suppressionReason = $suppressionGuard->reasonForRecipient($recipient, $settingsPayload);
 
                 if ($suppressionReason !== null) {
                     $this->markSuppressed($recipient, $suppressionReason);
+
                     return;
                 }
 
@@ -129,20 +158,96 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
 
                 if (! $campaignEmail || ! $template || $template->scope !== 'marketing') {
                     $this->markFailed($recipient, 'MARKETING_EMAIL_NO_CONTENT', 'No campaign email content exists for this recipient.');
+
                     return;
                 }
 
                 if (! $campaignEmail->hasSnapshotContent() && (! $template->is_active || $template->scope !== 'marketing')) {
                     $this->markFailed($recipient, 'MARKETING_EMAIL_NO_TEMPLATE', 'No active marketing template exists for this legacy campaign email.');
+
                     return;
                 }
 
+                // Rendering is deliberately completed before the durable
+                // transmission claim. A deterministic content failure is safe
+                // to correct without consuming the lifetime delivery guard.
                 try {
                     $rendered = $renderer->render($template, $this->variables($campaign, $recipient, $campaignEmail));
                     $subject = $rendered['subject'];
                     $html = $this->appendTrackingPixel($campaign, $recipient, $this->appendUnsubscribeHtml($this->rewriteLinks($campaign, $recipient, $rendered['html']), $recipient, $settingsPayload));
                     $text = $this->appendUnsubscribeText($rendered['text'], $recipient, $settingsPayload);
+                } catch (\Throwable) {
+                    $this->markFailed(
+                        $recipient,
+                        'MARKETING_EMAIL_RENDER_FAILED',
+                        'Campaign content could not be rendered before transmission.',
+                    );
 
+                    return;
+                }
+
+                if (! $progression->handle($recipient, $campaign)) {
+                    $this->log(
+                        $account->id,
+                        $campaign->id,
+                        $recipient->marketing_campaign_email_id,
+                        $recipient->id,
+                        'info',
+                        'MARKETING_EMAIL_PROGRESSION_NOT_AUTHORIZED',
+                        'The recipient is not authorized for this sequence step.',
+                    );
+
+                    return;
+                }
+
+                $delivery = $deliveryClaims->handle($recipient, $account);
+
+                if (! $delivery) {
+                    $recipient->refresh();
+
+                    if ($recipient->status === 'duplicate_skipped') {
+                        $this->log(
+                            $account->id,
+                            $campaign->id,
+                            $recipient->marketing_campaign_email_id,
+                            $recipient->id,
+                            'info',
+                            'MARKETING_EMAIL_DUPLICATE_SKIPPED',
+                            'A lifetime delivery guard blocked a duplicate Marketing transmission.',
+                        );
+                    }
+
+                    return;
+                }
+
+                try {
+                    $started = $deliveryClaims->markProviderWriteStarted(
+                        (int) $delivery->id,
+                        (string) $delivery->claim_token,
+                    );
+                } catch (\Throwable) {
+                    // The durable claimed row still blocks replay. Never enter
+                    // SMTP when the provider-write transition cannot be saved.
+                    $this->log(
+                        $account->id,
+                        $campaign->id,
+                        $recipient->marketing_campaign_email_id,
+                        $recipient->id,
+                        'warning',
+                        'MARKETING_EMAIL_PROVIDER_WRITE_NOT_STARTED',
+                        'The durable claim could not be advanced to provider write; automatic replay remains blocked.',
+                        [],
+                        $delivery->rfc_message_id,
+                    );
+
+                    return;
+                }
+
+                if (! $started) {
+                    return;
+                }
+
+                try {
                     $messageId = $mailer->send(
                         $account,
                         $recipient->email,
@@ -152,46 +257,95 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
                         $text,
                         [],
                         [],
-                        ['provider_binding_version' => $providerBindingVersion],
+                        [
+                            'provider_binding_version' => $providerBindingVersion,
+                            'message_id' => $delivery->rfc_message_id,
+                        ],
+                    );
+                } catch (\Throwable) {
+                    try {
+                        $deliveryClaims->markOutcomeUnknown(
+                            (int) $delivery->id,
+                            (string) $delivery->claim_token,
+                        );
+                    } catch (\Throwable) {
+                        // provider_write_started itself is already a durable,
+                        // non-replayable state when local finalization fails.
+                    }
+
+                    try {
+                        $account->forceFill([
+                            'last_error_code' => 'SMTP_SEND_OUTCOME_UNRESOLVED',
+                            'last_error_message' => 'The SMTP provider outcome could not be confirmed.',
+                        ])->save();
+                    } catch (\Throwable) {
+                    }
+
+                    $this->log(
+                        $account->id,
+                        $campaign->id,
+                        $recipient->marketing_campaign_email_id,
+                        $recipient->id,
+                        'warning',
+                        'MARKETING_EMAIL_SEND_OUTCOME_UNKNOWN',
+                        'The SMTP provider outcome could not be confirmed. Automatic resend is blocked pending review.',
+                        ['to' => $recipient->email],
+                        $delivery->rfc_message_id,
                     );
 
-                    DB::transaction(function () use ($recipient, $messageId): void {
-                        $recipient->forceFill([
-                            'status' => 'sent',
-                            'sent_at' => now(),
-                            'attempts' => $recipient->attempts + 1,
-                            'rfc_message_id' => $messageId,
-                            'last_error' => null,
-                        ])->save();
-                    });
-
-                    $this->log($account->id, $campaign->id, $recipient->marketing_campaign_email_id, $recipient->id, 'info', 'MARKETING_EMAIL_SENT', 'Marketing email sent.', [
-                        'to' => $recipient->email,
-                        'rfc_message_id' => $messageId,
-                    ], $messageId);
-                } catch (\Throwable $e) {
-                    $recipient->forceFill([
-                        'status' => 'failed',
-                        'attempts' => $recipient->attempts + 1,
-                        'last_error' => $e->getMessage(),
-                    ])->save();
-
-                    $account->forceFill([
-                        'last_error_code' => 'SMTP_SEND',
-                        'last_error_message' => $e->getMessage(),
-                    ])->save();
-
-                    $this->log($account->id, $campaign->id, $recipient->marketing_campaign_email_id, $recipient->id, 'error', 'MARKETING_EMAIL_SEND_FAILED', $e->getMessage(), [
-                        'to' => $recipient->email,
-                    ]);
-
-                    throw $e;
+                    return;
                 }
+
+                try {
+                    $finalized = $deliveryClaims->markSent(
+                        (int) $delivery->id,
+                        (string) $delivery->claim_token,
+                        $messageId,
+                    );
+                } catch (\Throwable) {
+                    // SMTP already accepted the stable Message-ID. The
+                    // provider_write_started guard must remain non-replayable.
+                    $finalized = false;
+                }
+
+                if (! $finalized) {
+                    try {
+                        $deliveryClaims->markOutcomeUnknown(
+                            (int) $delivery->id,
+                            (string) $delivery->claim_token,
+                            'SMTP_ACCEPTED_FINALIZE_FAILED',
+                        );
+                    } catch (\Throwable) {
+                        // provider_write_started remains a durable no-replay
+                        // guard if even the review-state update is unavailable.
+                    }
+
+                    $this->log(
+                        $account->id,
+                        $campaign->id,
+                        $recipient->marketing_campaign_email_id,
+                        $recipient->id,
+                        'warning',
+                        'MARKETING_EMAIL_ACCEPTED_FINALIZE_FAILED',
+                        'SMTP accepted the Marketing email, but local finalization requires review. Automatic resend is blocked.',
+                        [],
+                        $delivery->rfc_message_id,
+                    );
+
+                    return;
+                }
+
+                $messageId = trim((string) $messageId) ?: (string) $delivery->rfc_message_id;
+                $this->log($account->id, $campaign->id, $recipient->marketing_campaign_email_id, $recipient->id, 'info', 'MARKETING_EMAIL_SENT', 'Marketing email sent.', [
+                    'to' => $recipient->email,
+                    'rfc_message_id' => $messageId,
+                ], $messageId);
             });
 
-        if ($campaign->status === 'approved') {
-            $campaign->forceFill(['status' => 'active'])->save();
-        }
+        MarketingCampaign::query()
+            ->whereKey($campaign->id)
+            ->where('status', 'approved')
+            ->update(['status' => 'active']);
     }
 
     private function variables(MarketingCampaign $campaign, MarketingCampaignRecipient $recipient, MarketingCampaignEmail $campaignEmail): array
@@ -297,7 +451,6 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
     {
         $recipient->forceFill([
             'status' => 'failed',
-            'attempts' => $recipient->attempts + 1,
             'last_error' => $message,
         ])->save();
 
@@ -308,7 +461,6 @@ class SendDueMarketingCampaignEmails implements ShouldQueue
     {
         $recipient->forceFill([
             'status' => 'suppressed',
-            'attempts' => $recipient->attempts + 1,
             'last_error' => $message,
         ])->save();
 

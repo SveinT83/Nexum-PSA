@@ -27,16 +27,24 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
-| HR-2026-08-16-008 | Email private live invalidation and polling fallback | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-005 | Email canonical message and placement cutover | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-004 | Email canonical message shadow correlation | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-003 | Email per-user unread baselines and explicit backlog handover | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-002 | Email personal mailbox delegation, break-glass, and access history | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-001 | Email Mail historical import and UID re-baseline | Pending | 2026-08-16 |  |  |
+| HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Pending | 2026-08-24 |  |  |
+| HR-2026-08-21-001 | Dev database recovery and Mail permission-repair verification | In Review | 2026-08-21 | Svein |  |
+| HR-2026-08-16-014 | Email/Ticket correlation conflict triage | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Rework Needed | 2026-08-16 |  |  |
+| HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Rework Needed | 2026-08-16 |  |  |
+| HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Rework Needed | 2026-08-16 |  |  |
+| HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed | 2026-08-16 |  |  |
+| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Rework Needed | 2026-08-16 |  |  |
+| HR-2026-08-16-008 | Email private live invalidation and polling fallback | Rework Needed | 2026-08-16 |  |  |
+| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Rework Needed | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-21 |
+| HR-2026-08-16-005 | Email canonical message and placement cutover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-004 | Email canonical message shadow correlation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-003 | Email per-user unread baselines and explicit backlog handover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-002 | Email personal mailbox delegation, break-glass, and access history | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-001 | Email Mail historical import and UID re-baseline | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-15-007 | Email Mail desktop workspace density and height polish | Pending | 2026-08-15 |  |  |
-| HR-2026-08-15-006 | Email Mail inbound attachment recovery and download | Pending | 2026-08-15 |  |  |
+| HR-2026-08-15-006 | Email Mail inbound attachment recovery and download | Rework Needed | 2026-08-15 |  |  |
 | HR-2026-08-15-005 | Email Mail Smart Inbox reader-first polish | Pending | 2026-08-15 |  |  |
 | HR-2026-08-15-004 | Email Mail decoded subject search compatibility | Pending | 2026-08-15 |  |  |
 | HR-2026-08-15-003 | Email Mail runtime reliability, truthful send follow-up, and right-bar controls | Pending | 2026-08-15 |  |  |
@@ -247,13 +255,477 @@ Result / notes: Approved by Svein Tore in the Codex task after reviewing the com
 
 ## Open Reviews
 
-### HR-2026-08-16-008 - Email Private Live Invalidation And Polling Fallback
+The 2026-08-19 summary had used the invalid status `Done` and listed Orders 8-14 as reviewed without
+the required detailed checks or explicit human-review evidence. The 2026-08-21 code/runtime audit
+reclassified those rows below. This accounting correction does not erase a valid `Reviewed` result;
+none was recorded under the register's rules.
+
+### HR-2026-08-24-002 - Evergreen Marketing Contact Sequences And Lifetime No-Resend Delivery Guard
+
+Status: Pending
+Added: 2026-08-24
+Environment: Authoritative Dev working copy and Dev database
+Related: `docs/rfc/2026-08-24-evergreen-marketing-contact-sequences.md`,
+`docs/adr/2026-08-24-marketing-at-most-once-delivery-identity-claims.md`, and the three
+`docs/feature-slices/2026-08-24-evergreen-marketing-*.md` slices
+
+Scope and affected workflow: Marketing campaigns now remain active but idle when current Contacts
+are caught up. Under the default policy, a new Contact starts with email 1 at the next configured
+calendar occurrence, advances by one confirmed step per later occurrence, and never receives the
+same campaign-email record twice. Adding a new active campaign email makes it the next missing step
+for existing caught-up Contacts and newer Contacts alike. Technician and API repeat controls are
+retired. A durable Contact/client-user/normalized-email identity claim, stable RFC Message-ID, and
+review-required outcome state protect against overlapping jobs and ambiguous SMTP acceptance.
+Legacy cycle and completion evidence is preserved, and deployment does not automatically reactivate
+completed campaigns.
+
+Automated verification on authoritative Dev: the complete isolated Marketing run passed 65 tests
+and 802 assertions with explicit SQLite `:memory:`, empty connection URL, disabled config cache,
+array cache/session, and sync queue guards. The read-only live preflight found zero ambiguous
+identity splits, zero consumed rows without stable identity, and zero uncertain outcomes. It found
+one safe pending replay candidate matching the single historical sent row. The verified Dev database
+backup is
+`storage/app/private/NexumPSA/before-marketing-evergreen-20260824-120159.zip` (288,050,911 bytes,
+SHA-256 `0c3c305ce9982dc6cb28cb75347fd81f34027231b3210c787808683ab6f98860`;
+ZIP integrity passed).
+
+The first migration attempt stopped on MySQL's 64-character identifier limit after additive tables
+and columns but before any ledger backfill. No delivery, queue, recipient-send, or provider state was
+created. Explicit short index names and regression assertions were added; the idempotent rerun then
+completed. Read-back confirms the original 14-campaign status/cycle/timestamp fingerprint is
+unchanged, the historical sent count/latest timestamp remains 1 / `2026-06-11 13:43:06`, one sent
+historical ledger has three stable identity keys, one matching pending row became
+`duplicate_skipped` and links to that ledger, and the remaining 16 pending rows have no delivery
+claim. All three recipient indexes and the migration record are present. `optimize:clear` passed and
+the queue restart signal was broadcast. Browser verification and Knowledge synchronization are
+recorded separately below when completed.
+
+Read-only browser QA on authoritative Dev covered the campaign overview, campaign detail, and create
+surfaces. No `Repeat`, `When Sequence Completes`, or `Repeat Unit` control was present. At 768-pixel
+and 390-pixel viewport widths the checked pages had no horizontal overflow, and the browser console
+remained free of warnings and errors. Legacy completed-campaign continuation was not exercised in
+the read-only browser session because it changes campaign state; that path is verified only by the
+automated regression suite and remains part of the pending controlled human review.
+
+Deployment and operations notes: do not roll back after runtime delivery claims exist; the lifetime
+guard must be preserved. The final read-only runtime audit found three active `email,default` workers
+and three active `supplier-orders` workers, all with `/var/Projects/tdPSA` as their working directory.
+Marketing uses the default queue, so its queue-worker capacity is verified. The failed-jobs table
+contains two unrelated failures and zero Marketing failures; no payload or failure details were
+exposed. No tdPSA `schedule:run` or `schedule:work` runner was found in accessible cron, systemd, or
+process sources. The root crontab was unavailable, so external scheduler execution remains
+unverified. Code and schedule registration alone do not prove automatic due dispatch; verify the
+external scheduler before relying on automatic campaign delivery.
+
+Local Marketing Knowledge synchronization completed with one chapter, one article, zero skipped,
+and module `Marketing`. No BookStack push was requested or claimed.
+
+Risks: an incorrect historical classification could replay an earlier email or block a legitimate
+future step; a split recipient identity could evade or over-apply the guard; a crash after claim may
+leave a deliberate review-required missed delivery; an incorrect calendar anchor could send at the
+wrong occurrence; and old API clients that still write repeat fields now receive validation errors.
+
+Human checks:
+
+- [ ] Create or use a controlled Dev campaign with at least two active emails and
+  `start_at_first_email`. Add a new eligible Contact after activation and confirm only email 1 is
+  queued for the next configured occurrence.
+- [ ] Record email 1 as confirmed sent through the controlled Dev flow and confirm only email 2 is
+  scheduled for the following occurrence; repeat due processing and confirm email 1 is not sent or
+  queued again.
+- [ ] Let every current Contact become caught up and confirm the campaign remains Active with an
+  idle/caught-up progress summary rather than becoming Completed or creating another cycle.
+- [ ] Append a new active campaign email and confirm it is queued once for both an existing caught-up
+  Contact and a newer Contact, while every earlier campaign email remains consumed.
+- [ ] Refresh or replace a list-member row, vary email casing, and use overlapping audience lists;
+  confirm the same Contact/mailbox still has one lifetime delivery for each campaign-email record.
+- [ ] Pause a campaign while due processing is possible and confirm no worker reactivates it and no
+  provider write begins. Restore a temporary suppression or correct a pre-transmission content
+  failure and confirm the same step resumes at a safe later occurrence.
+- [ ] Simulate or inspect a controlled `claimed`, `provider_write_started`, or `outcome_unknown`
+  result and confirm Needs Review remains visible even if the Contact is later suppressed or removed;
+  confirm no blind resend or later-step bypass is offered.
+- [x] Read-only browser QA confirms campaign create/show/schedule surfaces contain no Repeat controls,
+  explain the ongoing once-per-Contact rule, have no horizontal overflow at 768 and 390 pixels, and
+  produce no browser-console warning or error.
+- [ ] A named human confirms the same pages remain usable at desktop, tablet, and mobile widths.
+- [x] Read-only runtime audit confirms three active `email,default` workers can process Marketing's
+  default queue, with zero Marketing failed jobs; two unrelated failed jobs remain preserved.
+- [ ] Verify the external tdPSA scheduler from an authoritative source. Accessible cron, systemd,
+  and process sources contained no runner, and the root crontab was unavailable.
+- [ ] Send repeat fields through the Marketing API and confirm HTTP 422. Inspect a campaign detail
+  response and confirm `lifecycle_mode`, `repeat_fields_deprecated`, `sequence_state`, and
+  `recipient_progress` are truthful.
+- [ ] Continue a legacy completed campaign by adding one active email. Confirm historical
+  `current_cycle`, `next_cycle_at`, `last_cycle_completed_at`, and `completed_at` remain unchanged,
+  and only the newly missing email is queued.
+
+Reviewer:
+Reviewed date:
+Result / notes: Read-only browser QA and default queue-worker verification are complete. The
+remaining controlled workflow, API, legacy-continuation, external-scheduler, and named human checks
+remain pending; no reviewer approval is recorded.
+
+### HR-2026-08-21-001 - Dev Database Recovery And Mail Permission-Repair Verification
+
+Status: In Review
+Added: 2026-08-21
+Environment: Authoritative Dev working copy and Dev MariaDB database `tdPSA_`
+Related: `HR-2026-08-15-006`, `HR-2026-08-16-006`, `HR-2026-08-16-008`,
+`docs/feature-slices/2026-08-16-email-mail-integration-provider-credentials-endpoint-security.md`,
+and `app/Modules/Integration/Docs/knowledge/email-provider-connections.md`
+
+Scope and affected workflow: on 2026-08-21, a Laravel test process retained the normal Dev database
+target through cached configuration. Its `RefreshDatabase` lifecycle invoked `migrate:fresh`
+against the authoritative Dev database and replaced its contents. The portal and scheduled work
+were contained while recovery was prepared. The database was then restored from the verified
+2026-08-15 same-database backup. This entry covers recovery integrity, safe application of current
+forward migrations, and the Mail permission deployment repair needed for the reported authorized
+Admin 403. It does not authorize a production deployment, live provider verification, account
+cutover, legacy-secret purge, or destructive storage cleanup.
+
+Recovery evidence: the preserved source is
+`/var/Projects/tdPSA-worktrees/codex-integration-hub/storage/app/backups/integration-hub/nexum-dev-before-integration-hub-20260815T130738Z.sql.gz`,
+with SHA-256 `d1e9146c83d41332b61a14e60ae5c956ecdd56344f4908516895c6a481922544`.
+Its gzip integrity check passed; the dump identifies database `tdPSA_`, contains 310 tables and 205
+migration records, and ends at migration `2026_08_15_120000_create_email_folder_navigation_preferences`.
+The backup import is complete. There is no available binary-log recovery for writes after the
+snapshot, so the 2026-08-15 through 2026-08-21 data-loss window must still be reviewed explicitly.
+
+Post-restore database verification reports 234 migration records and 351 tables, with MariaDB
+`CHECK TABLE` returning `OK` for all 351. The recovered migration ledger records `121000`, `121100`,
+and `121200` in batches 95, 96, and 97; the 20 Order-1-through-7 migrations `100000` through
+`118500` one per step in batches 98 through 117; live foundation `130000` in batch 118; inert
+Order 9/12 markers `140000` and `150000` in batches 119 and 120; the permission repair in batch 121;
+and live repairs `2026_08_21_110000` and `120000` in batches 122 and 123.
+
+Sanitized data readback confirms all eight approved Mail permissions, 167 total Admin grants, 216
+total Superuser grants, and unchanged totals for every other role. Both Email accounts remain
+`source=legacy` and have no Integration provider binding. The receipt-timestamp repair records 471
+evidence-supported repairs and 19 unresolved rows left untouched. The inbound Ticket-message repair
+cursor completed through ID 363 in four pages. The restored stale Economy queue job was removed only
+after the safety backup, one restored session was invalidated, and the failed IMAP job was preserved
+without retry or deletion.
+
+The pre-attachment-recovery post-migration checkpoint is
+`/var/Projects/tdPSA/storage/app/backups/recovery-incident-20260821/post-migration-clean-state-20260821T114021Z.sql.gz`,
+with SHA-256 `ea65f5f85289cf3d3569ff778a721426f2e803fe9a75d9e9e7b448cbea2dab4a`.
+The latest post-Mail-recovery backup is
+`/var/Projects/tdPSA/storage/app/backups/recovery-incident-20260821/post-migration-mail-recovery-20260821T115109Z.sql.gz`,
+with SHA-256 `467d4cf18ab54726fb0f32b82eb70ed793499e9c54c7c6ccaffbd0e05eb1b009`
+and mode `0600`.
+
+The restored attachment baseline had zero attachment rows and only counter sum 6. An exact 19-ID
+preflight preceded local apply, which restored 30 rows/files across 16 messages; the idempotent rerun
+was unchanged. The four remaining expected parts for messages `456`, `478`, and `479` remain
+unrecovered because the fail-closed provider resolver returned `dns_answer_set_denied`. Those failed
+calls made no database, file, or provider mutation. The latest read-only inventory reports 969 files,
+492 referenced and 477 unreferenced: `raw` 547 (462 / 85), `attachments` 100 (30 / 70), and
+`sent_pending` 322 (0 / 322). It also reports 28 missing raw references, 79 non-private files, 15
+duplicate unreferenced groups, and zero unsafe or unreadable files. No deletion ran.
+
+Recovery and deployment notes: seeding was deliberately rejected. Do not run `db:seed`,
+`DatabaseSeeder`, `RoleSeeder`, or `AdminUserSeeder`: these are not recovery tools, can create demo or
+default-admin data, and the current full role synchronization can remove valid module-owned grants.
+No seeding ran during recovery. Preserve the existing application key and restored ciphertext; do
+not generate a new key. The current additive forward path and fail-closed Mail live repairs have been
+applied and read back as listed above. Keep normal provider work gated until the open queue, browser,
+and human checks are completed; do not substitute a seeder for a forward migration.
+
+Tests must use an isolated test database whose target is proven before PHPUnit boots. Never run
+`migrate:fresh`, `RefreshDatabase`, destructive migration tests, or a cached-config test process
+against the shared Dev database. Pre-incident migration batch numbers in other review entries are
+historical evidence only; current migration status and batch numbers must be read back from the
+recovered database.
+
+Risks: all database writes between the backup and incident may be missing; filesystem content newer
+than the snapshot can be orphaned or referenced differently; restored jobs, sessions, tokens, and
+integration work may be stale; application-key drift can make provider and account secrets
+undecryptable; broad seeding can silently alter users, permissions, clients, and Knowledge data; and
+restarting Email workers before migration and queue review can cause provider or notification side
+effects. No file should be deleted merely because the recovered database does not reference it.
+
+Automated and operator verification: source/final backup checksums, dump metadata, the complete
+migration ledger, all-table checks, permission/role totals, account source/binding state, timestamp
+repair outcomes, repair-cursor completion, attachment recovery/inventory outcomes, and queue/session
+containment were read back after recovery. Earlier Mail tests validate the code candidate, not
+browser behavior or human acceptance
+of the restored database. No post-restore browser smoke or named human approval is claimed.
+
+Human checks:
+
+- [ ] Review and confirm all three recorded backup paths and SHA-256 values, including that the
+  pre-attachment checkpoint remains preserved and the latest post-Mail-recovery backup is mode
+  `0600`.
+- [ ] Review the sanitized evidence for database identity, all 351 successful table checks, all 234
+  migration records, and representative counts from Users, Clients, Tickets, Email
+  accounts/messages/folders, permissions, queue tables, and other business-critical domains.
+- [ ] Review the known 2026-08-15 through 2026-08-21 loss window with a named owner. Record which
+  missing records can be reconstructed from filesystem, provider, notification, or other external
+  evidence; do not import or delete anything under this review.
+- [ ] Confirm the application key is unchanged and sample restored encrypted settings and Email
+  provider/account credentials through a redacted, no-network decrypt/readiness check. Do not print
+  plaintext, ciphertext, endpoints, usernames, or raw provider errors.
+- [ ] Confirm the exact recovered batch sequence 95 through 123 recorded above, and confirm no
+  unexpected schema/table was created by the incident or recovery. Preserve the sanitized
+  `migrate:status` and all-table-check evidence for the review.
+- [ ] Confirm migration `2026_08_21_100000` is recorded, all eight approved Mail permissions exist,
+  Admin has 167 total grants, Superuser has 216, every other role total is unchanged, both Email
+  accounts remain legacy/unbound, and no `RoleSeeder`, `AdminUserSeeder`, demo seeder, or broad
+  permission synchronization ran.
+- [ ] As an active authorized Admin, open **Admin > Settings > Email accounts > Create** and the
+  Integration-owned Email-provider pages and confirm the reported 403 is repaired without provider
+  I/O. Repeat the negative cases for missing permissions, inactive/system users, private-provider
+  authority, and inaccessible opaque IDs.
+- [ ] Confirm Mail live invalidation, collaboration, and acknowledgement feature gates remain
+  fail-closed; no live provider verification, send, poll, source switch, cutover, secret purge,
+  broad Telescope deletion, or mailbox mutation occurred during recovery.
+- [ ] Confirm the inbound Ticket-message repair completed through ID 363 in four pages; review the
+  removal of the restored stale Economy job and invalidation of one restored session; and confirm the
+  failed IMAP job remains preserved without blind retry/deletion. Review all remaining queue,
+  schedule, token, provider-operation, and idempotency state before normal work resumes.
+- [ ] Review the exact 19-ID attachment preflight, 30-row/file local apply, unchanged rerun, and four
+  blocked parts on `456`/`478`/`479`. Confirm each `dns_answer_set_denied` call changed no database,
+  file, or provider state. Reconcile the 969-file inventory and preserve all 477 unreferenced files,
+  28 missing raw references, 79 non-private files, and 15 duplicate groups; perform no cleanup.
+- [ ] Run the focused Mail permission and fail-closed runtime tests only against a proven isolated
+  test database, then perform authenticated Dev browser and HTTP smoke checks across login, core
+  records, Mail, Tickets, attachments, and downloads.
+- [x] A named human reviewer confirms the recovery evidence, accepts or remediates the data-loss
+  window, and explicitly authorizes normal Dev traffic, schedules, and workers to resume.
+
+Reviewer: Svein
+Reviewed date:
+Result / notes: The 2026-08-15 backup was imported, current forward migrations and bounded repairs
+were applied, both post-migration checkpoints were recorded, and no seeding ran. The bounded local
+attachment recovery restored 30 parts while four provider-dependent parts remain fail-closed.
+Svein explicitly approved the recovery and Mail permission-repair handoff on 2026-08-21, then
+separately authorized normal tdPSA schedules and workers to resume. The preserved crontab with
+SHA-256 `a41a4c79a315af436ccf475a6191d9b0868f85d606eb5686814bcb1512e680ff` was installed unchanged at
+14:35 CEST. The 14:36 cycle started the expected Email and Supplier Orders database workers; the
+queue readback remained at zero pending jobs and one preserved historical failed job. The first
+restored `email:poll --account=1` attempt failed closed before IMAP with sanitized `IMAP_CONNECT`
+because the endpoint security boundary rejected the DNS answer set. It created no queued job or
+Email message, and neither runtime log contained a command-level error. Authenticated browser
+verification and the separately reviewed private/provider-binding remediation remain open. A
+sanitized follow-up classified the account's single answer as non-public and confirmed that, at the
+time of the failed restart, no legacy private mapping or named trusted CIDR was configured. To
+prevent minute-by-minute health/log churn, Email polling alone was re-paused; the Supplier Orders
+schedules and the Email/default and
+Supplier Orders workers remain enabled. The installed bounded crontab is preserved at
+`storage/app/backups/recovery-incident-20260821/tdpsa-crontab-email-poll-paused-20260821`, SHA-256
+`087a575a8292b45b6da2845757243a10f6954e408c4b95eff5468c287bae6679`, mode `0600`. The 14:42 cycle
+started both expected workers, produced no new polling warning, and left zero pending jobs, one
+historical failed job, and 490 Email messages. This entry remains `In Review`.
+
+Follow-up: Svein explicitly approved the current Dev endpoint as exact RFC1918 IPv4 `/32` group
+`tronderdata_mail_dev`. The value was written only to ignored Dev environment configuration without
+being displayed. After cache clear, sanitized readback confirmed one exact rule shared by IMAP and
+SMTP, successful policy authorization, no legacy compatibility mapping, both accounts still
+legacy/unbound, and zero provider connections, credential versions, or events. No provider call,
+stage, activation, cutover, source switch, or polling resume occurred.
+
+### HR-2026-08-16-014 - Email/Ticket Correlation Conflict Triage
 
 Status: Pending
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; inert durable-foundation schema/model implementation
-is in progress, while runtime writer integration, packages, browser/transport, services, deployment,
-automated verification, and named human review remain pending
+Environment: Authoritative Dev working copy; implementation and human review are missing
+Related: `docs/feature-slices/2026-08-19-email-ticket-correlation-conflict-triage.md`
+
+Scope and affected workflow: preserve durable links and RFC headers as authoritative, keep
+`TD-...` as an additive fallback, and introduce durable, audited conflict detection and human triage
+for inbound Email-to-Ticket correlation.
+
+Deploy / migration notes: no conflict table, migration, triage action, UI or deploy action is ready.
+Do not claim or activate this workflow until a complete reviewed implementation exists.
+
+Risks: guessing between contradictory evidence can link mailbox content to the wrong Ticket or widen
+its audience. Existing correlation behavior must remain unchanged while the slice is incomplete.
+
+Automated verification: no focused Order 14 test exists.
+
+Human checks:
+
+- [ ] Review and approve the complete conflict evidence/data model and deterministic precedence.
+- [ ] Verify conflicting durable link, RFC header and `TD-...` cases remain unresolved until an
+  authorized human records an auditable choice without moving or publishing source mail.
+
+Reviewer:
+Reviewed date:
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without a detailed review entry. Reclassified
+on 2026-08-21 because the implementation is missing.
+
+### HR-2026-08-16-013 - Email/Ticket Conversation Relationship Migration
+
+Status: Rework Needed
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; unsafe backfill scaffold must not run
+Related: `docs/feature-slices/2026-08-19-email-ticket-conversation-relationship-migration.md`
+
+Scope and affected workflow: migrate legacy Email/Ticket evidence into first-class conversation
+links while preserving the source mailbox, audience and `TD-...` correlation.
+
+Deploy / migration notes: do not dispatch the current backfill. It calls an absent relationship,
+selects an arbitrary first user as actor, catches failures without a completion gate, and lacks a
+frozen preview or focused tests. No data migration was run during the 2026-08-21 audit.
+
+Risks: false attribution, duplicate/wrong Ticket links, partial backfill and silent audience drift.
+
+Automated verification: no focused Order 13 test exists.
+
+Human checks:
+
+- [ ] Approve a deterministic, resumable preview/apply backfill with a real authorized actor or
+  explicit system-actor contract and per-item evidence.
+- [ ] Verify Inbox preservation, link roles, duplicates, failures, audit and audience isolation on a
+  disposable data copy before any shared-schema run.
+
+Reviewer:
+Reviewed date:
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence.
+
+### HR-2026-08-16-012 - Email Conversation Acknowledgement And Explicit Multi-Account Actions
+
+Status: Rework Needed
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; historical migration `2026_08_19_150000` is an inert
+marker in recovered Dev batch 120 and the acknowledgement table is absent
+Related: `docs/feature-slices/2026-08-19-email-mail-conversation-acknowledgement-multi-account-actions.md`
+
+Scope and affected workflow: acknowledge only the exact authorized conversation-placement snapshot
+selected by one user, while keeping provider Seen and unselected/future account occurrences separate.
+
+Deploy / migration notes: `150000` was converted to an inert marker before it ran in recovered Dev
+batch 120;
+it created no table or acknowledgement data. `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` defaults false and
+the current action returns an honest unavailable status. The action still calls an absent
+relationship and lacks action-level mailbox authorization, a frozen placement snapshot and
+provider/personal result evidence. A corrected contract requires a new forward migration.
+
+Risks: acknowledging future mail, another account or another user's state; provider/personal read
+conflation; partial multi-account actions.
+
+Automated verification: `EmailQuarantinedMailSliceMigrationTest` proves the flag defaults off and
+the table remains absent through the inert marker's up/down path. No Order 12 completion test exists.
+
+Human checks:
+
+- [ ] Review the final schema/action contract and disposable migration rollback before migration.
+- [ ] Verify future arrivals and unselected accounts remain unchanged, each placement is reauthorized,
+  and partial provider/personal results are explicit and retry-safe.
+
+Reviewer:
+Reviewed date:
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence.
+
+### HR-2026-08-16-011 - Email Compose, Draft, Send, And Sent API Parity
+
+Status: Rework Needed
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; one P0 regression repaired, full slice incomplete
+Related: `docs/feature-slices/2026-08-19-email-mail-compose-draft-send-sent-api-parity.md`
+
+Scope and affected workflow: preserve one idempotent outbound action and private draft ownership
+while adding explicit shared-draft scope, fencing and complete Livewire/API/Sent parity.
+
+Deploy / migration notes: Reply, Reply All and Forward now resolve the reauthorized placement before
+sending; focused regression coverage passes even with the lock table absent. Historical Order 9
+migration `140000` is an inert marker in recovered Dev batch 119 and created no table.
+`EMAIL_MAIL_COLLABORATION_ENABLED` defaults false. Do not activate shared drafts: current draft
+lookup can cross private user scope and durable fencing remains incomplete.
+
+Risks: cross-user draft/attachment disclosure or deletion, stale/concurrent send, duplicate outbound
+mail and incomplete Sent reconciliation.
+
+Automated verification: `EmailMailComposerPlacementRegressionTest` drops the lock table and passes
+1 test / 14 assertions across Reply, Reply All and Forward.
+
+Human checks:
+
+- [ ] Verify Reply, Reply All and Forward against the selected authorized placement in the browser
+  with outbound delivery intercepted, and confirm one correct Email log per action.
+- [ ] Review and test private versus explicitly shared draft scope, two-user fencing, access loss,
+  ambiguous send and Sent convergence before shared-draft activation.
+
+Reviewer:
+Reviewed date:
+Result / notes: The P0 undefined-placement error was repaired 2026-08-21. The 2026-08-19 summary's
+`Done`/Junie row had no detailed review evidence and does not close the remaining slice.
+
+### HR-2026-08-16-010 - Email Deterministic Rules API Completion
+
+Status: Rework Needed
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; incomplete Undo/API scaffold remains inactive
+Related: `docs/feature-slices/2026-08-19-email-mail-deterministic-rules-api-completion.md`
+
+Scope and affected workflow: complete draft/publish/preview/version/reprocess/retry/Undo parity with
+immutable attempts, account scope, precedence and Email/Signal loop protection.
+
+Deploy / migration notes: no Order 10 deploy action is authorized. The current reversal service
+changes only local folder state instead of using the provider-operation ledger and does not meet the
+approved deterministic reversal contract.
+
+Risks: local/provider divergence, misleading Undo success, repeated rules and raw exception exposure.
+
+Automated verification: no focused Order 10 completion test exists.
+
+Human checks:
+
+- [ ] Review and test the full rule draft/publish/version/preview/reprocess/retry contract.
+- [ ] Verify every reversible provider action uses the normal idempotent remote-operation ledger,
+  and non-reversible/ambiguous effects fail honestly without local-only success.
+
+Reviewer:
+Reviewed date:
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence.
+
+### HR-2026-08-16-009 - Email Presence, Shared Draft Locks, And Stale-Composer Protection
+
+Status: Rework Needed
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; historical migration `2026_08_19_140000` is an inert
+marker in recovered Dev batch 119 and the draft-lock table is absent
+Related: `docs/feature-slices/2026-08-19-email-mail-presence-shared-draft-locks-stale-composer.md`
+
+Scope and affected workflow: expose only authorized ephemeral reading/typing coordination and use
+durable shared-draft fencing so two users/tabs cannot overwrite or send stale content.
+
+Deploy / migration notes: `140000` was converted to an inert marker before it ran in recovered Dev
+batch 119;
+it created no table. `EMAIL_MAIL_COLLABORATION_ENABLED` defaults false, and ordinary private composer
+flows remain available without a lock. The rejected schema lacked the approved conversation FK,
+explicit shared scope, draft binding, monotonic fencing/content version and audit evidence. Current
+whispers use separate per-user channels, so coworkers cannot receive them. A corrected design
+requires a new forward migration.
+
+Risks: cross-user draft access, concurrent/stale send, false presence, orphaned locks and content
+leakage through the wrong channel scope.
+
+Automated verification: `EmailQuarantinedMailSliceMigrationTest` proves the flag defaults off and
+the table remains absent; `EmailMailComposerPlacementRegressionTest` proves ordinary composer sends
+remain available without it. No Order 9 collaboration/fencing completion test exists.
+
+Human checks:
+
+- [ ] Review a corrected additive schema and two-user/two-tab fencing contract before a new forward
+  migration.
+- [ ] Verify acquire/renew/takeover/release, stale tokens, access loss, one send reservation and
+  authorized ephemeral presence without permanent heartbeat content.
+
+Reviewer:
+Reviewed date:
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence.
+
+### HR-2026-08-16-008 - Email Private Live Invalidation And Polling Fallback
+
+Status: Rework Needed
+Added: 2026-08-16
+Environment: Authoritative Dev working copy; migration `130000` is Ran in recovered Dev batch 118,
+forward repairs `2026_08_21_110000` and `120000` are Ran in batches 122 and 123, server config/cache and Vite assets
+keep runtime disabled, and the unsafe unsupervised debug Reverb listener was stopped. Historical
+Order 9/12 filenames are inert markers in batches 119 and 120 with both tables absent. Full implementation and
+named review remain pending.
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-16-email-live-invalidation-user-stream-fanout.md`,
 `docs/feature-slices/2026-08-16-email-mail-private-live-invalidation-polling-fallback.md`, and
@@ -279,17 +751,33 @@ the dedicated `email-live` worker, Reverb, Apache/Plesk WebSocket proxying, CSP/
 deployment monitoring. Taxonomy/global changes and account/access mutations participate through
 explicit transactional invalidation writers rather than broad model observers.
 
-Deploy / migration notes: The unexecuted additive `130000` durable-foundation migration, hard-cap
-configuration, and inert EmailLive models are being implemented in the working copy. No migration,
-package, secret, Reverb process, Apache change, queue worker, scheduler change, asset build, provider
-call, runtime activation, deployment, commit, or push has been performed for this slice. Deployment
-will
-require an exact frozen code/schema candidate, backup and restore rehearsal, additive migration,
+Rework record: the 2026-08-19 summary marked this slice `Done` even though this detailed entry and its
+human checks remained Pending. The 2026-08-21 audit found an unusable stream trigger, missing append
+idempotency/NULL evidence, wrong authority table names, an unused broad global auth route, duplicate
+subscriptions, a client that connected while disabled, incomplete fanout phases and writers outside
+the required transaction boundary. Runtime is now fail-closed: `EMAIL_LIVE_ENABLED` and the Vite
+gate default false, invalidation becomes a safe no-op, auth returns 503, no global auth route exists,
+and the disabled build contains no Echo/Pusher client. Even a build with its client gate enabled
+exposes only a lazy initializer; the server-rendered Mail workspace must independently enable live
+mode before it can open a socket. Module auth now enforces active/non-system/exact canonical user
+identity with auth/tech/2FA/CSRF/dedicated throttle. These repairs do not complete the publisher,
+fanout, fallback, authorization-generation, retention or operational contracts.
+
+Deploy / migration notes: Migration `130000` ran in recovered Dev batch 118 before this audit;
+forward-only `2026_08_21_110000` ran in batch 122 after a SQLite contract test and a MariaDB pretend
+review. Fail-closed runtime quarantine `2026_08_21_120000` then ran in batch 123; it removes only incomplete base writer
+guards while disabled and repairs valid same-second stream/acknowledgement transitions. No Mail
+content, provider, Ticket, outbound message or projection-change data was created. Keep
+`EMAIL_LIVE_ENABLED=false`, `VITE_EMAIL_LIVE_ENABLED=false`,
+`EMAIL_MAIL_COLLABORATION_ENABLED=false`, and `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false`; do not start
+Reverb or an `email-live` worker. A future activation still requires an exact frozen code/schema
+candidate, backup rehearsal,
 locked Composer/npm versions, production Vite assets, cache/view rebuild with `umask 0002`, a
 loopback-only Reverb service, one dedicated `email-live` database worker, the shared scheduler,
 exact `/app` and `/apps` TLS proxying, exact allowed origins/CSP socket origin, and private-channel
-plus polling-fallback smoke. Operational rollback sets `EMAIL_LIVE_MODE=poll`; durable projection
-evidence remains unless a separately reviewed clean-schema rollback is safe.
+plus polling-fallback smoke. The current rollback is to keep both live flags false, rebuild config
+and assets, and stop Reverb; the planned 15-second degraded polling mode is not implemented. Durable
+projection evidence remains unless a separately reviewed clean-schema rollback is safe.
 
 Risks: a source mutation could commit without durable fanout, a late/revoked authority path could
 retain identifiers, a candidate query could scan an unbounded rejected prefix, a role-wide change
@@ -299,8 +787,12 @@ Alpine, listeners, subscriptions, or timers could disconnect Livewire controls o
 herd. Every writer, cursor, authority generation, decimal-string version, retention boundary, and
 browser lifecycle therefore requires automated and controlled Dev evidence before activation.
 
-Automated verification: not yet run. This entry records the accepted review boundary only; passing
-future tests will not change its Pending status.
+Automated verification: the final focused permission/quarantine, trigger portability, invalidator
+gate/append/transaction, private event, module-auth and composer-placement matrix passes 20 tests /
+116 assertions on SQLite. `npm run build` passes, produces one application JavaScript entry, and the
+disabled asset contains no Echo/Pusher/auth-endpoint code. The final complete Email Feature directory
+passes **621 tests / 6,345 assertions**. This evidence does not exercise or approve the incomplete
+enabled publisher/fanout/fallback runtime and cannot change this entry to Reviewed.
 
 Human checks:
 
@@ -352,8 +844,10 @@ Result / notes:
 Status: Pending
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; final focused SQLite, rolling-schema, disposable
-MariaDB, and independent static evidence are complete; shared-schema migration, controlled
-provider/browser/scheduler/worker/queue checks, deployment, and named human review pending
+MariaDB, and independent static evidence are complete. The exact 20 Order-1-through-7 migrations
+report Ran one per step in recovered Dev batches 98 through 117; controlled
+provider/browser/scheduler/worker/queue checks and
+reconciliation with the existing summary review record remain open.
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-owned-mail-client-domain.md`,
 `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
@@ -396,9 +890,10 @@ Queued work re-resolves the exact active Integration provider binding and secure
 shared provider lock; disable, rotate, revoke, rebind, UID namespace change, cancellation, or
 insufficient deadline fails closed before unsafe projection or provider I/O.
 
-Deploy / migration notes: No shared Dev migration, live provider read/write, IDLE connection,
-scheduler enablement, worker restart, account reconciliation, deployment, commit, or push was
-performed while preparing this entry. Before deployment, back up the database and record active
+Deploy / migration notes: The exact 20 additive Order-1-through-7 migrations `100000` through
+`118500` now report Ran one per step in recovered Dev batches 98 through 117. No live provider read/write, IDLE connection,
+scheduler enablement, worker restart, account reconciliation, production deployment, commit, or push
+was performed during the 2026-08-21 repair. Before production deployment, back up the database and record active
 Email provider bindings, account/folder/namespace/placement counts, unresolved provider operations,
 historical import/re-baseline/deletion/reconciliation states, queue/failed-job counts, and worker
 configuration. Apply the additive migrations in order:
@@ -408,7 +903,8 @@ configuration. Apply the additive migrations in order:
 `2026_08_16_118300_add_authoritative_target_identity_to_email_remote_operations.php`, and
 `2026_08_16_118400_make_email_provider_paths_byte_exact.php`, followed by
 `2026_08_16_118500_add_durable_inbound_notification_fanout.php`.
-Seed permissions/roles if required; clear caches; rebuild group-writable views with `umask 0002`;
+Verify the additive Mail permission repair in batch 121; do not run the full role seeder. Clear
+caches; rebuild group-writable views with `umask 0002`;
 build assets; and restart every long-lived Email/default/notification worker. Configure the external
 Laravel scheduler runner and required Email queue before enabling the optional IDLE setting. No
 deploy step may automatically start provider cleanup or any destructive reconciliation.
@@ -429,16 +925,19 @@ durability gate passes **34 / 468**, and the rolling unread-schema compatibility
 driver against a real private MariaDB server, including partial rerun, strict ledger transitions,
 first-seal provenance, repair singleton, index plans, and legal `SET NULL` detach evidence. Targeted
 PHP syntax, Pint, diff checks, and an independent current-copy re-audit pass. These are focused
-results, not a claim that the complete repository suite is clean. Passing automation does not
-complete any manual checkbox.
+results. The final complete Email Feature directory additionally passes **621 tests / 6,345
+assertions** after stale Ticket-pointer and provider-reconciliation fixtures were brought up to the
+already-enforced production contracts; no production guard was loosened. This is not a claim that
+the complete repository suite is clean. Passing automation does not complete any manual checkbox.
 
 Connectivity to the authoritative Dev/Plesk MySQL endpoint is restored. Sanitized, read-only
-`php artisan migrate:status` checks completed successfully. The last check reported the exact 20
-Order-1-through-7 migrations `100000` through `118500` as Pending; no migration was applied. Shared
-Dev migration and rollback smoke, authenticated browser/provider checks,
-scheduler/worker/queue/backlog validation,
-deployment, commit, push, and named human review remain operator-gated. SQLite and disposable
-MariaDB evidence do not replace those checks.
+`php artisan migrate:status` checks completed successfully and report the exact 20
+Order-1-through-7 migrations `100000` through `118500` as Ran one per step in recovered Dev batches
+98 through 117. Rollback smoke,
+authenticated browser/provider checks, scheduler/worker/queue/backlog validation, production
+deployment, commit, and push remain operator-gated. The review summary records Svein's 2026-08-19
+approval, while this older detailed checklist still needs human record reconciliation. SQLite and
+disposable MariaDB evidence do not replace current runtime checks.
 
 Human checks:
 
@@ -484,12 +983,12 @@ Result / notes:
 
 ### HR-2026-08-16-006 - Integration-Owned Email Provider Credentials And Endpoint Security
 
-Status: Pending
+Status: Rework Needed
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; implementation, automated verification, disposable
-MariaDB migration contract, and independent read-only code-security audit complete; shared-schema
-migration, controlled browser/provider/worker rollout, historical telemetry remediation, and named
-human review pending
+MariaDB migration contract, independent read-only code-security audit, and the 2026-08-21 additive
+permission repair complete; controlled browser/provider/worker rollout, historical telemetry
+remediation, and named re-review pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-16-integration-owned-email-provider-credentials-and-endpoint-security.md`,
 `docs/feature-slices/2026-08-16-email-mail-integration-provider-credentials-endpoint-security.md`,
@@ -535,15 +1034,37 @@ require an active non-system human and repeat authorization after current rows a
 these permissions grants mailbox content, raw source, attachment, search, conversation, Ticket,
 Organize, or Send access.
 
-Deploy / migration notes: No shared Dev migration, live DNS lookup, provider verification, poll,
-send, provider mutation, account cutover, legacy-secret purge, broad Telescope clear, deployment,
-commit, or push was performed. Back up the database/configuration and record existing Email account
+Rework record: the summary previously recorded a 2026-08-19 review while this detailed entry and all
+human checkboxes remained Pending. On 2026-08-21 the portal returned 403 from Email account creation.
+Dev reproduced the exact denial because the provider schema was present while eight approved Mail
+security permissions were absent. The forward-only migration `2026_08_21_100000` was added, tested,
+and applied to the recovered shared runtime in batch 121. It inserted only missing catalog/default
+role rows and reset caches. Sanitized readback confirms all eight approved permissions, 167 total
+Admin grants, 216 total Superuser grants, unchanged totals for every other role, and both Email
+accounts still legacy/unbound. No seeding, provider call, mailbox mutation, source switch, send,
+cutover, or secret operation ran.
+The entry is therefore reopened as Rework Needed until an authenticated human verifies the repaired
+Admin/Superuser paths and completes or explicitly re-scopes the remaining checks.
+
+On 2026-08-21, Svein separately approved the current Dev Mail endpoint as the exact RFC1918 IPv4
+`/32` group `tronderdata_mail_dev`. A fail-closed environment parser and blank example setting were
+added; focused configuration/endpoint tests pass 36 / 161. Sanitized preflight proved that IMAP and
+SMTP share one IPv4 answer and that only the exact rule authorizes it. Sanitized runtime readback
+after cache clear confirmed the group, no legacy mapping, both accounts still legacy/unbound, and
+zero provider connections, credentials, or events. Email polling remains paused. This approval does
+not claim or authorize a completed provider Verify, activation, cutover, legacy-secret purge, or
+production private-endpoint rule.
+
+Deploy / migration notes: Back up the database/configuration and record existing Email account
 sources, binding versions, legacy ciphertext non-null counts, provider-work states, queue/failed-job
 state, and Telescope sequence range. Deploy additive migrations
-`2026_08_16_112000`-`117000`; seed `PermissionSeeder` and `RoleSeeder`; clear caches; rebuild
-group-writable views with `umask 0002`; build assets; restart all long-lived Email/default workers;
-and synchronize Integration, Email, Notification, and User Management Knowledge locally. Deployment
-must leave every existing account on `source=legacy` and perform zero provider I/O.
+`2026_08_16_112000`-`117000` plus `2026_08_21_100000`; in the recovered Dev ledger these ran one per
+step in batches 106 through 111 and batch 121. Clear caches; rebuild group-writable views
+with `umask 0002`; build assets; restart all long-lived Email/default workers; and synchronize
+Integration, Email, Notification, and User Management Knowledge locally. The permission repair is
+additive; do not substitute the full `RoleSeeder`, whose complete-role synchronization can remove
+module-owned grants. Deployment must leave every existing account on `source=legacy` and perform zero
+provider I/O.
 
 After the new redaction/watchers and Superuser-only Telescope gate are active, run the read-only
 `php artisan email-provider:telescope-remediate --limit=20000`. Review only its counts, sequence
@@ -588,9 +1109,11 @@ passes the `112000`-`117000` up/down/refusal contract with **1 / 60** and was re
 Targeted Pint passes 72 PHP files and syntax passes 67 production/test/migration files. Eighteen
 Email-provider routes and 15 Email-account/maintenance routes load; configuration cache round-trip,
 complete Blade compilation with zero non-group-writable files, Vite production build, and Git diff
-checks pass.
+checks pass. The focused 2026-08-21 administration and deployment-repair matrix passes **7 tests /
+127 assertions**. Post-restore operator readback confirms the exact permission/role/account state
+recorded above; it does not replace the open browser checks.
 Independent read-only code-security audit reports GO with no remaining order-6 P0/P1. Automated
-evidence never changes this entry from Pending.
+evidence does not change this reopened entry to `Reviewed`.
 
 Human checks:
 
@@ -601,10 +1124,12 @@ Human checks:
   credential, append-only event, migration run/item, and Email binding schema exists; every existing
   account remains `legacy`; and no provider Integration root, credential version, migration run,
   provider call, source switch, or mailbox mutation is created automatically.
-- [ ] Seed permissions/roles. Confirm Admin and Superuser can manage public providers; only
-  Superuser can use private trust or open Telescope; missing mailbox-sync/account-manage permission,
-  inactive/system actors, and direct/inaccessible opaque IDs fail without existence disclosure or
-  mutation.
+- [ ] Confirm migration `2026_08_21_100000` is recorded and all eight approved permissions exist.
+  Confirm Admin and Superuser can manage public providers; only Superuser can use private trust or
+  open Telescope; missing mailbox-sync/account-manage permission, inactive/system actors, and direct/
+  inaccessible opaque IDs fail without existence disclosure or mutation. Confirm unrelated Calendar/
+  Sales grants remain present, totals are Admin 167 and Superuser 216 with every other role
+  unchanged, both accounts remain legacy/unbound, and no seeding or full-role synchronization ran.
 - [ ] Run the Telescope remediation preview. Review and record each exact cohort count/bounds/hash,
   purge only unchanged approved provider-sensitive cohorts, preserve unrelated entries, and finish
   with zero matches. Confirm no provider host, username, password, pinned IP, private reason,
@@ -665,9 +1190,9 @@ Result / notes:
 
 Status: Pending
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; implementation, automated verification, and final
-independent read-only audit complete; additive migration and controlled operator/browser/worker
-cutover review pending
+Environment: Authoritative Dev working copy; implementation, automated verification, final
+independent read-only audit, and additive migration `111000` in recovered Dev batch 105 complete;
+controlled operator/browser/worker cutover review pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
 `docs/adr/2026-08-11-email-owned-mail-client-domain.md`,
@@ -701,7 +1226,7 @@ rechecks every durable row/database relation and rejects changed scope or an att
 15 minutes. `canonical` requires strict actual-file evidence on every page.
 
 Affected pages / workflows: new Email Admin **Canonical cutover** index/report and eight routes;
-permission/role/admin-menu seeding; inbound source self-map after complete local persistence; Mail
+permission/admin-menu deployment; inbound source self-map after complete local persistence; Mail
 workspace, Inbox list/show API, raw-source, and attachment reads; retention eligibility; and
 additive canonical projection/mapping/mode/cutover/parity-attestation audit tables. `legacy` remains
 default, `verify` always returns source content, and `canonical` overlays common content while
@@ -717,13 +1242,12 @@ replacement may recover work after requester offboarding; requested/applied/roll
 separate audit. Inaccessible and nonexistent run IDs use the same hidden response. Canonical IDs and
 private paths/content are not serialized by the operator UI, Mail UI, API, raw, or attachment surface.
 
-Deploy / migration notes: No live migration, cutover preview/apply/rollback, provider/network/AI
-call, private-file write/delete, BookStack push, deployment, commit, or push was performed. Back up
-Dev and capture authoritative source/account/folder/placement/conversation/Ticket-link/attachment/
-raw-file/personal-state/rule/Smart Inbox/remote-operation/retention counts before applying additive
-migration `2026_08_16_111000_add_email_canonical_message_placement_cutover.php` after `110000`.
-Seed permissions/roles, clear caches, rebuild group-writable views with `umask 0002`, and restart
-long-lived Email workers. Deployment creates no mapping/run or mode switch. First use must be one
+Deploy / migration notes: post-restore rollout applied additive migration
+`2026_08_16_111000_add_email_canonical_message_placement_cutover.php` in batch 105 after shadow
+migration `110000` in batch 104. No cutover preview/apply/rollback, provider/network/AI call,
+private-file write/delete, mapping/run, or mode switch was performed. The additive permission repair
+in batch 121 replaces broad role seeding. Clear caches, rebuild group-writable views with `umask
+0002`, and restart long-lived Email workers before controlled use. First use must be one
 small non-production account: preview/apply self maps, preview/apply `verify`, compare all read
 surfaces, complete all whole-account parity pages when the account exceeds the direct cap, and only
 then separately preview `canonical`. Physical removal of legacy content columns is not in this
@@ -758,15 +1282,15 @@ duplicate source-part identity, retention protection, metadata-only UI, permissi
 offboarded-requester recovery, paginated 501/502-placement parity, attestation fingerprint binding,
 scope/age rejection, durable migration-down refusal, and no canonical-ID serialization. Eight
 routes, PHP syntax, targeted formatting/diff checks, and group-writable Blade cache pass. These
-isolated tests migrated disposable test databases only; migration `111000` was not run against the
-shared Dev data and the tests do not replace the checks below. The final independent audit is GO on
+isolated tests migrated disposable databases; the later post-restore Dev migration is separate
+operational evidence and does not replace the checks below. The final independent audit is GO on
 the arbitrary-account cap removal, current-authority continuation, fingerprint/drift/age binding,
 and fail-closed preservation of all durable schema evidence.
 
 Manual checks:
 
-- [ ] On a backed-up Dev copy, capture the listed authoritative counts/files, apply migration
-  `111000` after `110000`, and confirm only eight new canonical/cutover/mode/parity tables plus the
+- [ ] Review the backed-up post-restore application of `111000` in batch 105 after `110000` in batch
+  104, and confirm only eight new canonical/cutover/mode/parity tables plus the
   nullable placement pointer/index/FK appear. Confirm zero source rewrite, mapping, run, mode row,
   provider call, Ticket/rule/unread action, file write/delete, or automatic backfill occurs.
 - [ ] Exercise an application-first staged deploy before `111000`. Confirm Mail workspace, Inbox API,
@@ -838,8 +1362,9 @@ Result / notes:
 
 Status: Pending
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; implementation, focused verification, and independent
-audit complete, additive migration and authenticated operator/worker review pending
+Environment: Authoritative Dev working copy; implementation, focused verification, independent
+audit, and additive migration `110000` in recovered Dev batch 104 complete; authenticated
+operator/worker review pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
 `docs/adr/2026-08-11-email-owned-mail-client-domain.md`,
@@ -873,12 +1398,11 @@ accounts, require each exact message still to belong to its recorded account, an
 the current left/right evidence hashes. Configuration authority, stale access, a moved-account
 message, or an old inspection never becomes content/review authority.
 
-Deploy / migration notes: No live migration, provider/network/AI call, shadow run, authoritative
-mail/Ticket/user-state mutation, BookStack push, deployment, commit, or push was performed. Back up
-Dev and capture authoritative message, placement, conversation, Ticket-link, attachment, raw-file,
-personal-state, rule, Smart Inbox, and remote-operation counts before applying additive migration
-`2026_08_16_110000_create_email_canonical_correlation_shadow.php`. Then clear caches, rebuild views
-with `umask 0002`, and restart long-lived Email workers. Deployment must not launch a run. The first
+Deploy / migration notes: post-restore rollout applied additive migration
+`2026_08_16_110000_create_email_canonical_correlation_shadow.php` in batch 104. It launched no shadow
+run and made no provider/network/AI call or authoritative Mail/Ticket/user-state mutation. Clear
+caches, rebuild views with `umask 0002`, and restart long-lived Email workers before controlled use.
+The first
 run must use a small explicitly selected non-production account/message-ID scope. Ordinary rollback
 is blocked when any inspection audit or non-`unreviewed` decision exists; that evidence must be
 explicitly exported or carried forward before the three shadow tables may be removed.
@@ -898,13 +1422,13 @@ frozen-scope changes, idempotency/no-mutation, cancellation, access revocation, 
 inspection, inspection audit, immutable review, deterministic oversized dominance, the 64 MiB
 snapshot and 256 MiB aggregate budgets, non-enumeration, and rollback guard.
 Seven routes are registered; targeted Pint, PHP syntax, route inspection, and scoped whitespace
-checks pass. The final independent audit result is **GO**. These checks did not run the pending
-migration or replace the manual checks below.
+checks pass. The final independent audit result is **GO**. The later post-restore Dev migration is
+separate operational evidence and does not replace the manual checks below.
 
 Manual checks:
 
-- [ ] On a backed-up Dev copy, capture the listed authoritative table/file counts, apply migration
-  `110000`, and confirm only the three additive correlation tables appear. Confirm deployment creates
+- [ ] Review the backed-up post-restore application of migration `110000` in batch 104 and confirm
+  only the three additive correlation tables appear. Confirm deployment creates
   no run/candidate/inspection, performs no provider/network/AI action, and changes no authoritative
   Mail, Ticket, personal-state, rule, Smart Inbox, attachment, raw, or remote-operation record.
 - [ ] As an active human with `email.mailbox_sync_manage` and ordinary View for the selected exact
@@ -962,8 +1486,9 @@ Result / notes:
 
 Status: Pending
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; implementation and automated verification complete,
-additive migrations and authenticated browser review pending
+Environment: Authoritative Dev working copy; implementation, automated verification, and additive
+migrations `104000`/`105000` in recovered Dev batches 102/103 complete; authenticated browser review
+pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
 `docs/feature-slices/2026-08-16-email-mail-per-user-unread-baselines-backlog-handover.md`,
@@ -992,12 +1517,11 @@ historical import and inbound message storage; Email Admin account list; `/tech/
 `/tech/mail/accounts/{account}/unread-handover` preview/apply/history. The Inbox API currently exposes
 no personal unread field/filter, so no new API surface was added.
 
-Deploy / migration notes: No live migration, provider call, notification, Ticket/rule execution,
-external AI request, BookStack push, deployment, commit, or push was performed. Before migration,
-record account kind/owner, current View source, message, and message-user-state counts. Back up Dev,
-then apply additive migrations `2026_08_16_104000_add_email_unread_access_baselines.php` and
-`2026_08_16_105000_create_email_unread_handover_runs_and_items.php` after the historical/delegation
-foundation migrations. Run `php artisan optimize:clear`, rebuild views with
+Deploy / migration notes: post-restore rollout applied additive migrations
+`2026_08_16_104000_add_email_unread_access_baselines.php` and
+`2026_08_16_105000_create_email_unread_handover_runs_and_items.php` in batches 102 and 103 after the
+historical/delegation foundation migrations. No provider call, notification, Ticket/rule execution,
+or external AI request was part of recovery. Run `php artisan optimize:clear`, rebuild views with
 `umask 0002 && HOME=/tmp php artisan view:cache`, and restart long-lived Email workers. Verify every
 existing ordinary owner/shared grant/current delegation has exactly one epoch-1 baseline at zero,
 every prior state is epoch 1, and any legacy personal direct-only row is retained only as blocked
@@ -1010,16 +1534,16 @@ unobserved scheduled-delegation gap could reuse an old epoch; provider Seen coul
 back into personal state; break-glass or a personal direct grant could gain personal-state authority;
 or a stale/cross-account handover could mutate the wrong user. Handover history must remain
 metadata-only, exact-snapshot apply must fail before partial mutation, and account/user deletion must
-not erase retained run audit. The two additive migrations have not been exercised against live Dev
-data, and authenticated desktop/mobile behavior still requires a named human.
+not erase retained run audit. The two additive migrations are present on recovered Dev, while their
+data behavior and authenticated desktop/mobile workflow still require a named human.
 
 Automated verification: focused unread/baseline/handover coverage passes **13 tests / 118
 assertions**. The isolated rolling-schema compatibility regression passes **4 / 26**, covering the
 sealed epoch schema, exact legacy schema, mixed-shape fail-closed behavior, and locked current-actor
-reauthorization. On the authoritative Dev/Plesk MySQL schema, a sanitized read-only probe resolved
-the current pre-`104000` state as `legacy`, completed the scoped unread count with **428** rows, and
-rendered the 25-row Mail workspace server-side for user 1 inside a transaction that was rolled back.
-No migration or data change was performed; authenticated browser review remains pending. Full
+reauthorization. Before rollout, a sanitized read-only Dev probe resolved the pre-`104000` state as
+`legacy`, completed the scoped unread count with **428** rows, and rendered the 25-row Mail workspace
+server-side for user 1 inside a transaction that was rolled back. The later migrations ran during
+the backed-up recovery; authenticated browser review remains pending. Full
 historical-import plus delegation/break-glass rerun passes **30 / 340**. Full
 conversation-query plus historical-import regression passes **23 / 257**, and focused Email account,
 personal-owner, and workspace-open regression passes **3 / 44**. The adjacent broad run passes
@@ -1030,9 +1554,9 @@ registrations pass. Automated checks do not complete the manual checks below.
 
 Manual checks:
 
-- [ ] Before migration, capture ordinary owner/shared grant/current delegation pairs, message counts,
-  and personal-state counts. Run the additive migrations on backed-up Dev and confirm existing pairs
-  receive epoch 1/baseline 0, existing state rows receive epoch 1, and legacy personal direct-only
+- [ ] Review the backed-up application of `104000`/`105000` in batches 102/103 and confirm existing
+  ordinary owner/shared grant/current delegation pairs receive epoch 1/baseline 0, existing state
+  rows receive epoch 1, and legacy personal direct-only
   evidence is blocked rather than authorized.
 - [ ] Give an active technician a new shared View grant. Confirm old stored mail starts read for that
   technician, a later inbound message starts unread even when provider Seen is true, and another
@@ -1079,8 +1603,8 @@ Result / notes:
 
 Status: Pending
 Added: 2026-08-16
-Environment: Authoritative Dev; implementation and focused automated verification complete,
-migration and authenticated browser review pending
+Environment: Authoritative Dev; implementation, focused automated verification, and additive
+migration `103000` in recovered Dev batch 101 complete; authenticated browser review pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
 `docs/feature-slices/2026-08-16-email-mailbox-delegation-break-glass-access-history.md`, and
@@ -1096,14 +1620,15 @@ or deletion authority.
 
 Affected pages / workflows: `/tech/mail`, legacy `/tech/inbox`, Inbox API reads/search,
 `/tech/mail/access`, `/tech/mail/access-history`, Email Admin **Emergency mailbox access**, attachment
-download, raw-source view, permission/role seeding, internal Notification delivery, unread access
+download, raw-source view, permission deployment, internal Notification delivery, unread access
 epoch transitions for ordinary delegation only, and Email operator documentation.
 
-Deploy / migration notes: No live migration, provider call, notification delivery, external AI
-request, BookStack push, deployment, commit, or push was performed. Before review, back up and run the
-additive `2026_08_16_103000_create_email_mailbox_delegation_break_glass_access.php` migration on Dev,
-seed permissions, clear caches, rebuild Blade views with `umask 0002`, and restart long-lived Email
-and Notification workers where serialized authorization code may be resident. Existing accounts gain
+Deploy / migration notes: post-restore rollout applied additive
+`2026_08_16_103000_create_email_mailbox_delegation_break_glass_access.php` in batch 101. No provider
+call, notification delivery, or external AI request was part of recovery. The additive permission
+repair in batch 121 replaces broad permission/role seeding. Clear caches, rebuild Blade views with
+`umask 0002`, and restart long-lived Email and Notification workers where serialized authorization
+code may be resident. Existing accounts gain
 no delegation or emergency record automatically. Ordinary rollback is intentionally blocked while
 delegation, break-glass, or access-event rows exist; revocation plus an explicit retention/export
 decision is required before dropping durable history.
@@ -1121,9 +1646,9 @@ combined Email module plus attachment-access recovery run **171 / 1,548**, inclu
 Email module **141 / 1,227** and attachment recovery **15 / 125**; an earlier adjacent Mail
 workspace/Inbox selection regression passed **5 / 58**. Affected Notification, User Management,
 system-actor, and Ticket suites pass **157 / 1,063**. PHP lint, route registration, targeted Pint, and
-diff checks pass. These runs used the isolated test database and Notification fakes. Live
-migration, authenticated browser, real queue worker, provider storage, and responsive/accessibility
-checks remain manual. Passing tests do not complete the checks below.
+diff checks pass. These runs used the isolated test database and Notification fakes. The later Dev
+migration is operational evidence; authenticated browser, real queue worker, provider storage, and
+responsive/accessibility checks remain manual. Passing tests do not complete the checks below.
 
 Manual checks:
 
@@ -1170,7 +1695,8 @@ Result / notes:
 
 Status: Pending
 Added: 2026-08-16
-Environment: Authoritative Dev; implementation complete, migration and controlled provider verification pending
+Environment: Authoritative Dev; implementation and additive migrations `100000`-`102000` in
+recovered Dev batches 98-100 complete; controlled provider verification pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/plans/2026-08-16-email-mail-completion-slice-index.md`,
 `docs/feature-slices/2026-08-16-email-mail-historical-import-and-uid-rebaseline.md`,
@@ -1190,18 +1716,17 @@ the forward high-water.
 Affected pages / workflows: Email Admin account list/detail, the new per-account Mailbox maintenance
 page, historical preview/progress/cancel, UIDVALIDITY failure recovery, forward-only account/folder
 polling, provider-read services, queue/lock behavior, placement/conversation projection, permission
-seeding, and Email operator documentation. Normal `/tech/mail`, `/tech/inbox`, provider mailbox
+deployment, and Email operator documentation. Normal `/tech/mail`, `/tech/inbox`, provider mailbox
 actions, drafts, Sent, Ticket routing, rules, Signals, notifications, AI, and personal unread state
 must remain unchanged except that safely imported historical messages become available through their
 authorized real folders.
 
-Deploy / migration notes: The implementation is complete in the authoritative Dev working copy, but
-no live migration, provider call, import, re-baseline, external AI request, BookStack push,
-deployment, or production activation was performed. Before review, the
-three additive `2026_08_16_100000`-`102000` migrations must pass clean-schema and populated-Dev
-checks, then run on Dev with a backup and inspected before/after counts. Deploy must seed the narrow
-permission, run `umask 0002; HOME=/tmp php artisan optimize:clear`, rebuild Blade views with the same
-umask, restart the isolated Email worker when required, and verify the external scheduler runner.
+Deploy / migration notes: post-restore rollout applied the three additive
+`2026_08_16_100000`-`102000` migrations one per step in batches 98-100. No provider call, import,
+re-baseline, external AI request, or production activation was performed. The additive permission
+repair in batch 121 replaces broad permission/role seeding. Run `umask 0002; HOME=/tmp php artisan
+optimize:clear`, rebuild Blade views with the same umask, restart the isolated Email worker when
+required, and verify the external scheduler runner.
 The first provider exercise is one non-production account/folder with a small cap. No production
 import or re-baseline is approved by this entry.
 
@@ -1217,8 +1742,9 @@ Automated verification: focused historical-import/UID/rebaseline **21 tests / 16
 adjacent polling, Draft, remote-operation, Undo, Sent and attachment **68 / 465**; inbound automation
 plus durable conversation query **22 / 194**; complete `EmailModuleTest` **141 / 1,227**. Pint on 41
 owned/shared files, PHP lint, Blade cache, compiled-view group-write and diff checks pass. These runs
-used the isolated test database and deterministic provider fakes. Live migration, authenticated
-browser, real queue/scheduler/storage runtimes and a controlled provider account remain manual.
+used the isolated test database and deterministic provider fakes. The later Dev migrations are
+operational evidence; authenticated browser, real queue/scheduler/storage runtimes and a controlled
+provider account remain manual.
 Passing tests do not complete the checks below.
 
 Manual checks:
@@ -1346,9 +1872,10 @@ Result / notes:
 
 ### HR-2026-08-15-006 - Email Mail Inbound Attachment Recovery And Download
 
-Status: Pending
+Status: Rework Needed
 Added: 2026-08-15
-Environment: Dev
+Environment: Recovered Dev; local attachment recovery complete for 30 parts, provider recovery
+blocked fail closed for four parts, browser and named review pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
 `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
@@ -1360,46 +1887,33 @@ authorization and fail-closed storage/path checks. A bounded idempotent recovery
 attachment metadata/files that earlier private-storage permission failures prevented from being
 persisted, without replaying inbound rules, Tickets, notifications, or provider mutations. Future raw
 snapshots retain complete reparsable RFC822 evidence when safely available. The code boundary and
-exact non-mutating provider-read fallback are implemented, and the bounded Dev recovery is complete.
+exact non-mutating provider-read fallback are implemented, but post-restore recovery remains partial
+because four provider-dependent parts are blocked fail closed.
 
 Affected pages / workflows: attachment rows in the selected `/tech/mail` conversation reader, the new
 Mail download endpoint, inbound raw/attachment persistence, the bounded operator recovery path, and the
 Email private-storage directories. Legacy `/tech/inbox` download behavior remains unchanged.
 
-Deploy / operations notes: Migration `121200` ran on Dev in batch 98. The two legacy private trees are
-now `www-data:www-data`, directories `2770`, with group-rwx access/default ACLs; readiness reports
-`safe=true` and `received_at_schema_safe`. The bounded 19-message recovery ran under the Email worker
-lock. Local evidence restored 24 parts across 13 messages. Exact provider reads were limited to
-messages `4`, `5`, `10`, `456`, `478`, and `479`; they restored four more parts from the latter three,
-while `4`, `5`, and `10` returned `provider_message_missing` and initially retained zero rows/counter
-2 each. This first phase produced 28 rows across 16 messages without broad provider search.
+Deploy / operations notes: migration `121200` ran after recovery in Dev batch 97. The restored
+attachment baseline contained zero rows and only counter sum 6. Recovery froze one exact 19-ID scope
+and completed a no-write preflight before apply. Local raw/legacy evidence then restored 30 rows/files
+across 16 messages, and an idempotent rerun returned unchanged without a duplicate row or file.
 
-The exact historical persister directory `email/attachments/{account_id}/{imap_uid}` subsequently
-resolved all three counter-only messages locally. Each exact account-and-UID directory contained two
-direct files matching the preserved counter. The recovery rejects count mismatch, symlink,
-outside-root/nested paths, empty/oversized files, and MIME types denied by current attachment policy;
-accepted legacy evidence short-circuits provider access. First controlled apply recovered 6 / 6
-rows/files while all three counters stayed at two. A second live apply returned
-`existing_rows_complete` for every message, and all six resulting referenced files pass stored-size
-and SHA-1 integrity checks.
+The four remaining expected parts belong to messages `456`, `478`, and `479`. Each exact provider
+recovery stopped at the fail-closed resolver with `dns_answer_set_denied`. The blocked calls made no
+database, filesystem, or provider mutation, and no broad search or alternate endpoint was attempted.
+Those four parts remain unresolved rather than guessed.
 
-Final bounded state is **34 attachment rows and counter sum 34 across all 19 target messages**. The
-original legacy source files and duplicate account-2 legacy copies remain preserved for the separate
-unreferenced-file provenance/retention review; recovery did not delete or repurpose them. Idempotency
-reruns remain unchanged for the 13 raw-snapshot targets, provider-backed `456`, `478`, and `479`, and
-legacy-directory targets `4`, `5`, and `10`.
+The current redacted inventory reports 969 files: `sent_pending` 322 (0 referenced / 322
+unreferenced), `raw` 547 (462 / 85), and `attachments` 100 (30 / 70), for 492 referenced and 477
+unreferenced. It reports 28 missing raw references, 79 non-private files, 15 duplicate unreferenced
+checksum+size groups, and zero unsafe or unreadable files. Original, duplicate, and unreferenced
+evidence remains preserved; no deletion occurred.
 
-The broader storage inventory remains an explicit dependency under `HR-2026-08-15-003`: all 61
-directories are `www-data`/`2770` with the required access/default ACLs and no symlinks, while the
-current read-only 939-file snapshot reports 79 `www-data`-owned `0644` files. The SSH project user
-cannot change the companion runtime's owner-only modes. Root/operator must normalize exactly those 79
-files to `0660` without content, ownership, move, or deletion, then rerun inventory and dual-runtime
-smoke.
-
-The recorded state before the original operation was zero attachment rows, target counter sum 6, 36
-existing attachment files, 23 remote operations, and two rule attempts. The final recovery reconciles
-all target counters to their 34 rows while preserving the old source/duplicate file inventory and the
-previously unchanged operation/rule evidence.
+The pre-attachment checkpoint remains preserved, and the latest post-recovery backup is
+`/var/Projects/tdPSA/storage/app/backups/recovery-incident-20260821/post-migration-mail-recovery-20260821T115109Z.sql.gz`
+with SHA-256 `467d4cf18ab54726fb0f32b82eb70ed793499e9c54c7c6ccaffbd0e05eb1b009`
+and mode `0600`.
 
 After code/operations verification, run `umask 0002; HOME=/tmp php artisan optimize:clear` and
 `umask 0002; HOME=/tmp php artisan view:cache`, restart the ordinary/default and `email` workers so
@@ -1410,8 +1924,9 @@ Risks: an attachment ID without exact placement/message binding could leak anoth
 paths or response headers could expose local files or enable content sniffing; unbounded provider reads
 could overload IMAP; and a non-idempotent repair could duplicate files or metadata. A legacy directory
 must never be accepted on account/UID/count mismatch, symlink, outside-root/nested path, size, or MIME
-policy failure. Missing or unverifiable evidence must remain an honest per-message failure rather than
-a fabricated attachment, and successful recovery must not silently delete legacy evidence.
+policy failure. `dns_answer_set_denied` must not be bypassed with a broader or unreviewed endpoint.
+Missing or unverifiable evidence must remain an honest per-message failure rather than a fabricated
+attachment, and successful recovery must not silently delete legacy evidence.
 
 Automated verification: focused `EmailAttachmentAccessRecoveryTest` passes **15 tests / 110
 assertions**. It covers exact placement/message ownership, active account/grant scope, private path
@@ -1422,23 +1937,29 @@ broad Email module/inbound package 155 / 1,308, and the complete Email directory
 PHP syntax, and diff checks pass for the follow-up. The controlled side-effect window created zero
 remote operations/attempts, rule attempts, outbound logs, Ticket-domain
 tickets/messages/events/attachments, notifications, or queued jobs. Passing automated and operator
-checks will not replace the manual checks below.
+checks will not replace the manual checks below. Post-restore operational evidence confirms the
+exact preflight, 30-row/file local recovery, unchanged rerun, fail-closed resolver outcomes, current
+inventory, and no mutation from the three blocked provider calls.
 
 Manual checks:
 
 - [ ] Complete the exact root/operator mode-only repair tracked in `HR-2026-08-15-003`: change the 79
   identified `www-data`-owned `0644` files to `0660` without content/move/delete/ownership changes,
-  then reconcile the expected 61-directory/939-file inventory and confirm both project/queue and
+  then reconcile the current 969-file inventory and confirm both project/queue and
   PHP-FPM runtimes pass read/write smoke.
-- [ ] Review the exact recovery report: 24 raw-snapshot parts plus four exact-provider parts and six
-  exact legacy-directory parts produced 34 rows/counter 34 across all 19 target messages. Confirm
-  every referenced size/checksum/path and each duplicate-free rerun.
+- [ ] Review the exact 19-ID preflight and local recovery report: 30 rows/files were restored across
+  16 messages and the second run was unchanged. Confirm every referenced size/checksum/path and the
+  duplicate-free rerun.
 - [ ] Confirm messages `4`, `5`, and `10` each used only their exact
   `email/attachments/{account_id}/{imap_uid}` directory with exactly two policy-accepted direct files,
   preserved counter two, and no provider search. Confirm mismatch, symlink, nested/outside-root,
   empty/oversized, and denied-MIME cases fail without partial persistence.
+- [ ] Review messages `456`, `478`, and `479`. Confirm four expected parts remain unresolved, every
+  provider attempt stopped with `dns_answer_set_denied`, and the failed calls changed no database,
+  file, provider operation, or remote mailbox state. Approve no endpoint-policy bypass under this
+  review.
 - [ ] Confirm the original legacy source files, duplicate account-2 legacy copies, and previously
-  recorded unreferenced inventory remain preserved for a separate evidence review; approve no
+  recorded 477 unreferenced files remain preserved for a separate evidence review; approve no
   deletion as part of this check.
 - [ ] Open representative received messages with ordinary and inline attachments. Confirm stored files
   appear under the exact selected message with friendly filename/size and download intact; inline
@@ -1452,12 +1973,14 @@ Manual checks:
 - [ ] Inspect download headers for forced attachment disposition, safe filename, `nosniff`, and
   private/no-store caching. No inline preview is part of this review.
 - [ ] Confirm the side-effect window created zero remote operations/attempts, rule attempts, outbound
-  logs, Ticket-domain tickets/messages/events/attachments, notifications, and queued jobs, and that provider access
-  was read-only.
+  logs, Ticket-domain tickets/messages/events/attachments, notifications, and queued jobs, and that
+  provider access was read-only or stopped before connection.
 
 Reviewer:
 Reviewed date:
-Result / notes:
+Result / notes: Reopened as Rework Needed after post-restore recovery recovered 30 of 34 expected
+parts. Four parts remain blocked by `dns_answer_set_denied`; no browser or named human review is
+complete.
 
 ### HR-2026-08-15-005 - Email Mail Smart Inbox Reader-First Polish
 
@@ -1484,7 +2007,7 @@ single and batch apply/correct/dismiss/rule-prefill controls, current-agent capa
 conversation source fingerprint evaluation. The `received_at` corruption/recovery remains separately
 gated by `HR-2026-08-15-004`.
 
-Deploy / migration notes: Forward migration `121200` ran on Dev in batch 98. It records each
+Deploy / migration notes: Forward migration `121200` ran after recovery in Dev batch 97. It records each
 suggestion's fingerprint schema and removed the unsafe receipt-timestamp clause before the exact
 repair recovered five false-stale suggestions. Deploy the matching code and migration together. Run
 `umask 0002; HOME=/tmp php artisan optimize:clear`, rebuild compiled views with
@@ -1582,14 +2105,14 @@ timestamp-corruption fallout. The API still returns the stored raw `subject`; `s
 fillable and is hidden from serialization.
 
 Deploy / migration notes: Dev migration
-`2026_08_15_121000_add_email_message_subject_search.php` has run in batch 96. It added the nullable
+`2026_08_15_121000_add_email_message_subject_search.php` has run after recovery in batch 95. It added the nullable
 512-character projection and performed the initial bounded backfill without changing `updated_at`.
-`2026_08_15_121100_harden_email_message_subject_search_backfill.php` ran in batch 97. It is a
+`2026_08_15_121100_harden_email_message_subject_search_backfill.php` ran in batch 96. It is a
 forward-only, idempotent rebuild of missing or stale values. Each update compares the originally
 read raw subject and projection before writing, so a concurrent fresher subject writer wins while an
 unrelated state update does not prevent repair; its `down()` is intentionally a no-op.
 
-`2026_08_15_121200_harden_email_message_received_at.php` ran in batch 98. MariaDB now reports an empty
+`2026_08_15_121200_harden_email_message_received_at.php` ran in batch 97. MariaDB now reports an empty
 `EXTRA` value for `received_at`, and its ledger holds the frozen 490-message repair scope. The
 forward-only operator command previews by default and applies only evidence-supported timestamps;
 unresolved candidates remain unchanged. It performs no provider read/write, rule replay, Ticket
@@ -1623,10 +2146,10 @@ with 13 tests / 231 assertions, including 30 matching durable conversations repr
 placements and paginated as 25 plus 5 latest-message leaders. Projection coverage passes 9 tests /
 56 assertions; projection plus the three surfaces pass 13 / 114, and the full focused package with
 adjacent regressions passes 22 / 287. The complete Email test directory passes 347 tests / 3,030
-assertions. Dev migration status confirms batches 96 and 97. A sanitized post-repair audit found 490
+assertions. Dev migration status confirms batches 95 and 96. A sanitized post-repair audit found 490
 projection rows, zero projection mismatches, and 32 intentionally different decoded values. The
 receipt-timestamp repair plus adjacent Smart Inbox regressions pass 36 / 408; an earlier combined
-repair/reader package passed 47 / 578. Dev migration status confirms batches 96, 97, and 98. The
+repair/reader package passed 47 / 578. Dev migration status confirms batches 95, 96, and 97. The
 timestamp audit contains 490 rows: 471 evidence-supported repairs, 19 untouched unresolved
 candidates, and five exact false-stale recoveries. MariaDB reports an empty `EXTRA` value for
 `received_at`. Prior unchanged receipt-timestamp/fingerprint digest claims are not completion
@@ -1635,7 +2158,7 @@ Automated checks do not replace the manual checks below.
 
 Manual checks:
 
-- [ ] Confirm Dev reports `121000` as batch 96, `121100` as batch 97, and `121200` as batch 98;
+- [ ] Confirm Dev reports `121000` as batch 95, `121100` as batch 96, and `121200` as batch 97;
   confirm MariaDB shows no `ON UPDATE` clause and the timestamp ledger contains the frozen 490 rows.
 - [ ] Review the timestamp repair evidence: 439 header-date rows plus 32 conversation-boundary rows
   were applied, 19 unresolved candidates remain untouched, and rerunning preview/apply is idempotent.

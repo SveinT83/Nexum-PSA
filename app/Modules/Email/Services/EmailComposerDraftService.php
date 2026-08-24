@@ -34,8 +34,8 @@ class EmailComposerDraftService
     ): ?EmailComposerDraft {
         $this->authorizeDraftContext($user, $mode, $account, $placement);
 
+        // We check for any draft for this conversation/context to support shared drafting.
         return EmailComposerDraft::query()
-            ->where('user_id', $user->id)
             ->where('draft_key', $this->draftKey($mode, $account, $placement))
             ->where('status', EmailComposerDraft::STATUS_ACTIVE)
             ->latest('last_saved_at')

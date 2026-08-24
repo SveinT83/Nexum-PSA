@@ -40,4 +40,10 @@ class EmailProjectionInvalidated implements ShouldBroadcastNow
     {
         return 'email.projection.invalidated.v1';
     }
+
+    /** Expose only the approved opaque invalidation manifest to the browser. */
+    public function broadcastWith(): array
+    {
+        return $this->payload;
+    }
 }

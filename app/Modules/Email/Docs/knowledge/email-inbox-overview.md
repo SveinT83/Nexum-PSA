@@ -218,12 +218,11 @@ lease used by in-flight reads, changes the run to `cancelling`, and lets bounded
 pending work without publishing hidden content. The maintenance page may therefore briefly show an
 active run with cancellation requested; repeated Cancel requests are safe.
 
-Order 7 has released focused automated evidence, but active durable-notification-fanout and remote-
-operation access-path rework, Dev deployment, and named review remain Pending under
-`HR-2026-08-16-007`. Connectivity to Dev/Plesk MySQL is restored; read-only status currently reports
-20 Pending migrations, the 19 released candidates plus unreleased `118500`, and none was applied.
-Browser, controlled-provider, scheduler, worker, queue/backlog, and rollback smoke also
-remain operator-gated. Automated SQLite and disposable MariaDB contracts do not replace those
+Order 7 has released focused automated evidence. Its exact 20 migrations `100000` through `118500`
+now report Ran one per step in recovered Dev batches 98-117. Browser, controlled-provider, scheduler, worker,
+queue/backlog, and rollback smoke remain operator-gated. The `HR-2026-08-16-007` review summary
+records Svein's 2026-08-19 approval, while its older detailed checklist still needs human record
+reconciliation. Automated SQLite and disposable MariaDB contracts do not replace current runtime
 checks.
 
 ## Mail Workspace And Personal State
@@ -291,7 +290,7 @@ On Dev, the initial nullable `subject_search` column/backfill migration `121000`
 The forward-only `121100` rebuild ran in batch 97. Dev review then exposed a historical MariaDB
 `received_at` definition with implicit `ON UPDATE CURRENT_TIMESTAMP`; that database clause, not the
 projection code, advanced receipt evidence during the rebuild and falsely staled five Smart Inbox
-suggestions. Migration `121200` ran in batch 98, removed the clause, and froze a 490-message audit
+suggestions. Migration `121200` ran after recovery in batch 97, removed the clause, and froze a 490-message audit
 scope. Preview/apply restored 471 values supported by deterministic evidence (439 header dates and 32
 conversation boundaries), left 19 unresolved candidates untouched, and recovered exactly the five
 matching false-stale suggestions. MariaDB now reports no `ON UPDATE` clause.
@@ -830,7 +829,7 @@ application does not pretend it can chmod an existing path owned by the companio
 legacy `email/raw/2` and `email/attachments` roots have now been normalized to
 `www-data:www-data`; all 61 directories are `2770`, have group-rwx access/default ACLs, and contain no
 symlinks. Readiness reports `safe=true` and `received_at_schema_safe`. File-mode normalization still
-requires a root/operator: the read-only inventory sees 939 files, of which 79 remain
+requires a root/operator: the read-only inventory sees 969 files, of which 79 remain
 `www-data`-owned `0644` that the SSH project user cannot chmod. Change only those 79 modes to `0660`
 without content, ownership, move, or deletion, then repeat the exact inventory and PHP-FPM/queue
 dual-runtime smoke under `HR-2026-08-15-003`.
@@ -842,29 +841,25 @@ is an explicit operator diagnostic and still prints no content. Missing referenc
 unreadable files, incomplete scans, and non-private modes fail the command; unreferenced files and
 checksum+size duplicate groups remain evidence only and never authorize deletion.
 
-The verified redacted Dev run changed no file, permission, database, provider, queue, or retention
-state. It inspected 939 files: `sent_pending` 322 (0 referenced / 322 unreferenced), `raw` 547 (465 /
-82), and `attachments` 70 (34 / 36), for 499 referenced and 440 unreferenced. It reports 28 missing
-`message_raw` references, 79 non-private `0644` files, and 12 duplicate unreferenced checksum+size
-groups. The preceding structural audit found zero symlinks, unsafe paths, or unreadable files.
+The verified redacted post-recovery run changed no file, permission, database, provider, queue, or
+retention state. It inspected 969 files: `sent_pending` 322 (0 referenced / 322 unreferenced), `raw`
+547 (462 / 85), and `attachments` 100 (30 / 70), for 492 referenced and 477 unreferenced. It reports
+28 missing `message_raw` references, 79 non-private files, 15 duplicate unreferenced checksum+size
+groups, and zero unsafe or unreadable files. No result authorizes deletion.
 Focused command coverage passes 3 tests / 21 assertions.
 
-The first bounded phase restored 28 attachments across 16 messages: 24 from local snapshots and four
-from exact read-only provider evidence. Exact provider identities for messages `4`, `5`, and `10`
-were absent, but each message's exact legacy account-and-UID directory contained two policy-accepted
-files matching its preserved counter. The first legacy apply recovered 6 / 6 rows/files without a
-provider search or counter change; the second live apply returned `existing_rows_complete` for all
-three. All six resulting referenced files match stored size and SHA-1.
+The restored database began with zero attachment rows and only counter sum 6. Recovery first froze
+and previewed the exact 19 message IDs without writes. Local raw/legacy evidence then restored 30
+rows/files across 16 messages; the idempotent rerun was unchanged. Four expected parts remain for
+messages `456`, `478`, and `479`. Their exact provider-recovery calls stopped at the fail-closed
+resolver with `dns_answer_set_denied` and made no database, file, provider-operation, or remote
+mailbox mutation. Do not bypass that endpoint decision or substitute a broad provider search.
 
-The complete bounded result is 34 rows/counter 34 across all 19 target messages. Original legacy
-source files, duplicate account-2 legacy copies, and the broader unreferenced-file inventory remain
-preserved and are not proven safe to purge; they require a separate provenance/retention review
-before deletion. The recovery side-effect window created no remote operation/attempt, rule attempt,
-outbound log, Ticket-domain ticket/message/event/attachment, notification, or queued job. Focused
-coverage passes 15 / 110, and Pint, PHP syntax, and diff checks pass. Earlier adjacent provider-read
+Original legacy sources, duplicate account-2 copies, and all 477 unreferenced files remain preserved
+and are not proven safe to purge. Focused coverage passes 15 / 110; earlier adjacent provider-read
 coverage passed 47 / 321, broad Email module/inbound coverage 155 / 1,308, and the complete Email
-directory 347 / 3,030 before this narrow follow-up. Manual browser and access review remains Pending
-under `HR-2026-08-15-006`.
+directory 347 / 3,030. Browser/access review and safe disposition or recovery of the four blocked
+parts remain Rework Needed under `HR-2026-08-15-006`.
 
 ## Controlled Dev Incident Recovery
 
@@ -1087,10 +1082,11 @@ a moved-account message makes the candidate unavailable. The same inspecting ope
 one immutable `Confirmed candidate` or `Keep separate` decision; `Needs more evidence` remains a
 metadata-only outcome. None of these choices performs a merge.
 
-The additive migration `2026_08_16_110000_create_email_canonical_correlation_shadow.php` has not run
-on shared Dev. Focused verification passes 19 tests / 131 assertions and the final independent audit
-is GO. Backed-up Dev migration, authenticated operator/worker behavior, responsive review, exact
-no-mutation checks, and the guarded rollback exercise remain Pending under `HR-2026-08-16-004`.
+The additive migration `2026_08_16_110000_create_email_canonical_correlation_shadow.php` ran on
+recovered Dev in batch 104. Focused verification passes 19
+tests / 131 assertions and the final independent audit is GO. Authenticated operator/worker behavior,
+responsive review, exact no-mutation checks, and the guarded rollback exercise remain to be
+reconciled with the human-review summary for `HR-2026-08-16-004`.
 
 ### Canonical Message And Placement Cutover
 
@@ -1145,6 +1141,28 @@ Sent-folder imports never run Inbox ticket/rule automation. They may reconcile p
 when the account and normalized `Message-ID` match exactly. If several pending outbound rows match
 the same provider Sent copy, Mail marks them ambiguous for later review instead of choosing one
 silently.
+
+### Live update rollout status
+
+Private Reverb/Echo Mail updates are currently disabled while the bounded fanout, revocation,
+fallback and supervised-service contracts are completed. Disabled mode performs no projection-
+invalidation writes, rejects the module channel-auth endpoint, creates no Echo connection, and keeps
+ordinary Mail actions available. The disabled production bundle contains no Echo/Pusher client; an
+enabled build would expose only a lazy initializer that the independently enabled server-rendered
+Mail workspace may call. Forward repairs `2026_08_21_110000` and `120000` are installed in recovered
+Dev batches 122 and 123; the latter quarantines incomplete base-authority guards only while live mode is
+off. Do not set `EMAIL_LIVE_ENABLED` or `VITE_EMAIL_LIVE_ENABLED` true, start Reverb, or start an
+`email-live` worker until Feature Slice Order 8 and
+`HR-2026-08-16-008` pass. The historical shared-draft-lock and conversation-acknowledgement
+migration filenames from 2026-08-19 are registered as inert deploy markers in Dev batches 119 and 120; they
+created no tables. `EMAIL_MAIL_COLLABORATION_ENABLED` and
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` also default false; corrected designs require new forward
+migrations.
+
+Reply, Reply All and Forward now resolve the selected placement again at send time. This closes the
+undefined-placement error, but does not activate unfinished shared drafts or presence. Private drafts
+remain the required boundary until explicit shared scope and durable fencing are implemented and
+reviewed.
 
 Nexum captures header evidence from the original Webklex raw header block. Folded values are
 unfolded, but repeated `Received` and `Authentication-Results` fields keep their top-to-bottom order

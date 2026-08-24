@@ -295,7 +295,10 @@ standalone durable-fanout contract (**34 / 468**) and the rolling unread-schema 
 contract (**4 / 26**). The existing disposable MariaDB guard/path/Integration matrix passes
 **3 / 434**, and the final `118500` contract passes **3 / 163** using Laravel's `mysql` driver
 against a real private MariaDB server. These are focused results, not a claim that the complete
-repository suite is clean. Exact scopes are recorded in `HR-2026-08-16-007`; passing automation
+repository suite is clean. The final complete Email Feature directory passes **621 tests / 6,345
+assertions** after three stale fixtures were aligned with existing Ticket-pointer, unresolved-
+operation serialization and frozen provider-observation contracts; no production guard was relaxed.
+Exact scopes are recorded in `HR-2026-08-16-007`; passing automation
 does not complete any manual checkbox or authorize a provider run, migration, scheduler change,
 worker restart, or deployment.
 
@@ -308,14 +311,14 @@ operator tasks; no deployment automatically starts provider reconciliation or en
 cleanup.
 
 Connectivity to the authoritative Dev/Plesk MySQL endpoint is restored. A sanitized, read-only
-`php artisan migrate:status` check completed successfully. The last check reported the exact 20
-Order-1-through-7 migrations `100000` through `118500` as Pending. No migration was applied. Shared
-Dev migration and rollback smoke, authenticated browser/provider checks,
-scheduler/worker/queue/backlog validation,
-deployment, and named review remain operator-gated under `HR-2026-08-16-007`. SQLite and disposable
-private-socket MariaDB automation do not replace those checks.
+`php artisan migrate:status` check on 2026-08-21 reports the exact 20 Order-1-through-7 migrations
+`100000` through `118500` as Ran in Dev batches 99-103. Authenticated browser/provider checks,
+scheduler/worker/queue/backlog validation, and rollback smoke remain operator-gated. The
+`HR-2026-08-16-007` review summary records Svein's 2026-08-19 approval, while its older detailed
+checklist still needs human record reconciliation. SQLite and disposable private-socket MariaDB
+automation do not replace current runtime checks.
 
-`HR-2026-08-16-007` remains Pending until a named reviewer verifies on one controlled mailbox:
+The still-open detailed `HR-2026-08-16-007` checks require controlled verification of:
 external flags, move/copy/Trash, folder lifecycle, Draft/Sent, unchanged personal unread, visible
 ambiguous-operation behavior, UIDVALIDITY block/re-baseline, IDLE disconnect plus scheduled catch-up,
 all-account coverage, worker/backlog health, sanitized logs, and zero reconciliation-created provider
@@ -336,10 +339,10 @@ mutations.
 - [x] IDLE is an optional hint; the bounded scheduled all-account dispatcher remains the correctness
   path.
 - [x] Focused SQLite and actual MariaDB contract evidence is documented under `HR-2026-08-16-007`.
-- [ ] Apply the pending additive migrations only after a backed-up authoritative
-  Dev migration preflight, and explicit operator approval; verify rollback refusal against retained
-  evidence.
+- [x] The additive migrations report Ran on authoritative Dev in batches 99-103. No provider run or
+  provider mutation is implied by schema status; rollback refusal against retained evidence still
+  requires controlled verification.
 - [ ] Verify the scheduler plus Email/default/notification workers, optional IDLE supervision,
   backlog/failed-job health, group-writable compiled views, and controlled provider behavior on Dev.
-- [ ] A named human reviewer completes every unchecked manual check under `HR-2026-08-16-007` and
-  explicitly changes that entry from `Pending` only after the results are recorded.
+- [ ] Reconcile the review summary's existing Svein/2026-08-19 `Reviewed` record with the older
+  detailed entry and record the outcome of every still-open controlled runtime check.

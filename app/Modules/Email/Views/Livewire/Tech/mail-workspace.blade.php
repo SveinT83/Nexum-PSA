@@ -1,4 +1,12 @@
-<div class="mail-workspace-root">
+<div class="mail-workspace-root"
+     x-data
+     @if($liveEnabled)
+         x-init="window.EmailMailLive?.init({{ auth()->id() }}); @if($collaborationEnabled) window.EmailMailLive?.onPresence((type, e) => $wire.dispatch('email-presence-event', { ...e, type })); @endif"
+         @email-mail-invalidated.window="$wire.handleEmailProjectionInvalidated($event.detail.payload)"
+         wire:poll.120s="catchUpInvalidation"
+     @else
+         wire:poll.60s
+     @endif>
     <style>
         .mail-workspace-grid {
             display: grid;
@@ -1187,6 +1195,19 @@
                 @php($threadPlacements = $conversationPlacements->isNotEmpty() ? $conversationPlacements : collect([$selectedPlacement]))
 
                 <div class="mail-reader-body" data-mail-reader-body>
+                    @if($collaborationEnabled && $presenceIndicators)
+                        <div class="mail-presence-bar px-3 py-1 border-bottom bg-info-subtle d-flex flex-wrap gap-2 small">
+                            @foreach($presenceIndicators as $indicator)
+                                @if($indicator['conversation_id'] === (int) $selectedPlacement?->conversation_id)
+                                    <span class="presence-item">
+                                        <strong>{{ $indicator['user_name'] }}</strong>
+                                        @if($indicator['type'] === 'typing') is typing... @else is reading @endif
+                                    </span>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
+
                     @if($conversationPlacementsTotal > 1)
                         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 py-2 border-bottom bg-light">
                             <div class="fw-semibold">Conversation</div>

@@ -43,8 +43,7 @@ class MarketingCampaign extends Model
     ];
 
     public const COMPLETION_BEHAVIORS = [
-        'stop' => 'Stop when sequence is complete',
-        'repeat' => 'Repeat sequence',
+        'continue' => 'Keep sequence open',
     ];
 
     protected $fillable = [
@@ -72,6 +71,10 @@ class MarketingCampaign extends Model
         'approved_at',
         'created_by',
         'updated_by',
+    ];
+
+    protected $attributes = [
+        'completion_behavior' => 'continue',
     ];
 
     protected $casts = [
@@ -205,8 +208,7 @@ class MarketingCampaign extends Model
 
     public function completionBehaviorLabel(): string
     {
-        return self::COMPLETION_BEHAVIORS[$this->completion_behavior ?: 'stop']
-            ?? self::COMPLETION_BEHAVIORS['stop'];
+        return self::COMPLETION_BEHAVIORS['continue'];
     }
 
     public function repeatIntervalLabel(): string

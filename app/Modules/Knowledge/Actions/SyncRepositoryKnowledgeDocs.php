@@ -121,6 +121,7 @@ class SyncRepositoryKnowledgeDocs
             'Integration' => $this->definition('integrations', 'Integrations', 850),
             'Knowledge' => $this->definition('knowledge', 'Knowledge', 860),
             'LeadIntelligence' => $this->definition('lead-intelligence', 'Lead Intelligence', 820),
+            'Marketing' => $this->definition('marketing', 'Marketing', 823),
             'Nextcloud' => $this->definition('nextcloud', 'Nextcloud', 870),
             'Notification' => $this->definition('notifications', 'Notifications', 880),
             'Report' => $this->definition('reports', 'Reports', 890),

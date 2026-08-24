@@ -64,6 +64,14 @@ benchmark, reserved, and other always-denied destinations stay blocked even when
 selected. Admins without private-endpoint permission cannot list, bind, test, stage, verify, or
 activate such a connection.
 
+The controlled Dev rollout exposes `tronderdata_mail_dev` only when
+`EMAIL_PROVIDER_TRONDERDATA_MAIL_DEV_CIDR` contains one canonical RFC1918 IPv4 `/32`. Missing,
+broader, public, IPv6, multiple, whitespace, and control-character values omit the group entirely.
+The value is installation-local and must not be copied to production or written into documentation,
+logs, tickets, or source control. Clear Laravel configuration cache after changing it. Making the
+name available does not bind a legacy account, contact the provider, or authorize Verify, activate,
+cutover, polling, or legacy-secret removal.
+
 ## Rotate Or Revoke
 
 **Stage rotation** accepts only new IMAP and SMTP passwords and preserves both usernames. Verify and
@@ -103,10 +111,17 @@ review and backup/recovery evidence.
 
 ## Deployment And Historical Telescope Data
 
-Apply migrations `2026_08_16_112000` through `117000`, seed permissions and roles, clear caches,
-rebuild group-writable views, restart long-lived queue workers, and synchronize Integration, Email,
-Notification, and User Management Knowledge. Additive deployment leaves existing accounts on their
-legacy source and makes no provider call.
+Apply migrations `2026_08_16_112000` through `117000` and the forward permission repair
+`2026_08_21_100000`, clear caches, rebuild group-writable views, restart long-lived queue workers,
+and synchronize Integration, Email, Notification, and User Management Knowledge. In the recovered
+Dev ledger, `112000` through `117000` ran one per step in batches 106 through 111 and the permission
+repair ran in batch 121. Sanitized readback confirms all eight approved permission entries, 167
+total Admin grants, 216 total Superuser grants, unchanged totals for every other role, and both Email
+accounts still on `source=legacy` without an Integration provider binding. The permission repair
+creates only approved missing catalog/default grants and preserves unrelated role grants; do not
+substitute a full `RoleSeeder` hotfix. No seeding or provider I/O is part of this deployment.
+The Dev-only exact-private-host setting is optional and fail-closed; production must leave it blank
+unless its own separately reviewed installation rule is approved.
 
 Before `/telescope` is opened after this rollout, inventory historical provider-sensitive entries:
 
@@ -131,5 +146,6 @@ Continue from the reported `through-sequence` until a read-only preview reports 
 changed cohort fails without deletion. Do not run broad `telescope:clear`; unrelated diagnostic
 history is outside this review.
 
-Human review `HR-2026-08-16-006` remains Pending. No live provider verification, account cutover, or
-legacy-secret purge is authorized merely because automated tests pass.
+Human review `HR-2026-08-16-006` remains Rework Needed until the repaired Admin/Superuser browser
+paths are checked. No live provider verification, account cutover, or legacy-secret purge is
+authorized merely because automated tests pass.

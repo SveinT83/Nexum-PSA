@@ -20,6 +20,7 @@ class EnforceTechRoutePermission
         'tech.mail.index',
         'tech.mail.attachments.download',
         'tech.mail.raw-source.show',
+        'tech.mail.broadcast.auth',
         'tech.mail.access.*',
         'tech.mail.unread-handover.*',
         'tech.mail.signature.*',

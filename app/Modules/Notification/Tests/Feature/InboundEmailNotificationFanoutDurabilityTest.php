@@ -39,10 +39,12 @@ use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Notifications\InboundEmailRoutedNotification;
 use App\Modules\Notification\Services\InboundEmailNotificationFanoutReadiness;
 use App\Modules\Notification\Support\CanonicalNotificationPayloadAttestation;
+use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\AdvanceInboundEmailTicketMessageRepair;
 use App\Modules\Ticket\Actions\LinkInboundEmailToTicket;
 use App\Modules\Ticket\Actions\MarkTicketAsNotTicket;
 use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,6 +57,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Spatie\Permission\Models\Permission;
@@ -1931,6 +1934,136 @@ class InboundEmailNotificationFanoutDurabilityTest extends TestCase
     }
 
     #[Test]
+    public function legacy_not_ticket_detachment_repairs_capture_without_relinking_email(): void
+    {
+        [$ticket, $emails, $messages] = $this->legacyNotTicketDetachment(2, true, true);
+        $softDeletedMessage = $messages->first();
+        $this->assertTrue($softDeletedMessage->trashed());
+        $softDeletedAt = $softDeletedMessage->deleted_at?->toISOString();
+        $evidenceSnapshot = $this->legacyNotTicketEvidenceSnapshot($ticket, $emails);
+        $this->rebuildRepairState();
+
+        $result = app(AdvanceInboundEmailTicketMessageRepair::class)->handle();
+
+        $this->assertSame(AdvanceInboundEmailTicketMessageRepair::STATUS_COMPLETED, $result['status']);
+        $this->assertSame(2, $result['processed']);
+        foreach ($messages as $position => $message) {
+            $message->refresh();
+            $email = $emails->get($position);
+            $this->assertSame((int) $email->id, $message->source_inbound_email_message_id);
+            $this->assertSame((int) $email->id, $message->inbound_email_message_id);
+            $this->assertNull($email->fresh()->ticket_id);
+            $this->assertSame('untriaged', $email->fresh()->state);
+        }
+        $this->assertTrue($softDeletedMessage->fresh()->trashed());
+        $this->assertSame($softDeletedAt, $softDeletedMessage->fresh()->deleted_at?->toISOString());
+        $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+
+        foreach ($emails as $email) {
+            $this->assertNull(app(DispatchInboundEmailNotification::class)->handle($email->fresh()));
+        }
+        $this->assertDatabaseCount('notification_inbound_email_fanouts', 0);
+        $this->assertSame(
+            $evidenceSnapshot,
+            $this->legacyNotTicketEvidenceSnapshot($ticket, $emails),
+        );
+    }
+
+    #[Test]
+    #[DataProvider('legacyNotTicketEvidenceBreaks')]
+    public function legacy_not_ticket_detachment_with_broken_evidence_fails_closed(
+        string $proofBreak,
+    ): void {
+        [$ticket, $emails, $messages] = $this->legacyNotTicketDetachment(1);
+        $email = $emails->sole();
+        $event = TicketEvent::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('type', 'marked_not_ticket')
+            ->sole();
+
+        match ($proofBreak) {
+            'email_wrong_state' => $email->forceFill(['state' => 'archived'])->save(),
+            'email_other_ticket' => $email->forceFill([
+                'ticket_id' => Ticket::factory()->create()->id,
+            ])->save(),
+            'ticket_restored' => $ticket->restore(),
+            'ticket_merged' => $ticket->forceFill([
+                'merged_into_ticket_id' => Ticket::factory()->create()->id,
+            ])->save(),
+            'ticket_metadata_candidate_missing' => $this->replaceNotTicketMetadataEmailIds(
+                $ticket,
+                [(int) $email->id + 100000],
+            ),
+            'ticket_metadata_duplicate' => $this->replaceNotTicketMetadataEmailIds(
+                $ticket,
+                [(int) $email->id, (int) $email->id],
+            ),
+            'ticket_metadata_string_id' => $this->replaceNotTicketMetadataEmailIds(
+                $ticket,
+                [(string) $email->id],
+            ),
+            'event_missing' => $event->delete(),
+            'event_duplicate' => $event->replicate()->save(),
+            'event_wrong_tag' => $this->replaceMarkedNotTicketEventAfter(
+                $event,
+                ['email_message_ids' => [(int) $email->id], 'tag' => 'noise'],
+            ),
+            'event_mismatched_ids' => $this->replaceMarkedNotTicketEventAfter(
+                $event,
+                ['email_message_ids' => [(int) $email->id + 100000], 'tag' => 'not-ticket'],
+            ),
+            'tag_missing' => $email->tags()->detach(),
+            'tag_wrong_module' => $email->tags()->updateExistingPivot(
+                (int) $email->tags()->where('tags.slug', 'not-ticket')->value('tags.id'),
+                ['module' => 'ticket'],
+            ),
+            default => throw new RuntimeException('Unknown legacy not-ticket proof break.'),
+        };
+
+        $evidenceSnapshot = $this->legacyNotTicketEvidenceSnapshot($ticket, $emails);
+        $messageSnapshot = (array) DB::table('ticket_messages')
+            ->where('id', $messages->sole()->id)
+            ->first();
+        $this->rebuildRepairState();
+
+        $result = app(AdvanceInboundEmailTicketMessageRepair::class)->handle();
+
+        $this->assertSame(AdvanceInboundEmailTicketMessageRepair::STATUS_FAILED, $result['status']);
+        $this->assertSame('repair_email_ticket_conflict', $result['error_code']);
+        $this->assertSame(0, $result['cursor_id']);
+        $this->assertNull($messages->sole()->fresh()->source_inbound_email_message_id);
+        $this->assertNull($messages->sole()->fresh()->inbound_email_message_id);
+        $this->assertSame(
+            $messageSnapshot,
+            (array) DB::table('ticket_messages')->where('id', $messages->sole()->id)->first(),
+        );
+        $this->assertSame(
+            $evidenceSnapshot,
+            $this->legacyNotTicketEvidenceSnapshot($ticket, $emails),
+        );
+    }
+
+    /** @return array<string, array{string}> */
+    public static function legacyNotTicketEvidenceBreaks(): array
+    {
+        return [
+            'Email state is not the detached workflow state' => ['email_wrong_state'],
+            'Email points at another Ticket' => ['email_other_ticket'],
+            'source Ticket is restored' => ['ticket_restored'],
+            'source Ticket is a merge source' => ['ticket_merged'],
+            'Ticket metadata omits the candidate' => ['ticket_metadata_candidate_missing'],
+            'Ticket metadata repeats an ID' => ['ticket_metadata_duplicate'],
+            'Ticket metadata stores a string ID' => ['ticket_metadata_string_id'],
+            'marked-not-ticket event is missing' => ['event_missing'],
+            'marked-not-ticket event is duplicated' => ['event_duplicate'],
+            'event has the wrong tag' => ['event_wrong_tag'],
+            'event and Ticket metadata disagree' => ['event_mismatched_ids'],
+            'Email tag evidence is missing' => ['tag_missing'],
+            'Email tag pivot has the wrong module' => ['tag_wrong_module'],
+        ];
+    }
+
+    #[Test]
     public function semantic_repair_conflict_rolls_back_the_whole_page_and_fails_safely(): void
     {
         $account = $this->emailAccount();
@@ -2350,6 +2483,139 @@ class InboundEmailNotificationFanoutDurabilityTest extends TestCase
             'body' => 'Inbound reply body.',
             'metadata' => [],
         ], $overrides));
+    }
+
+    /**
+     * @return array{0:Ticket,1:Collection<int, EmailMessage>,2:Collection<int, TicketMessage>}
+     */
+    private function legacyNotTicketDetachment(
+        int $emailCount,
+        bool $attachTagEvidence = true,
+        bool $softDeleteFirstMessage = false,
+    ): array {
+        $account = $this->emailAccount();
+        $ticket = Ticket::factory()->create();
+        $emails = collect();
+        for ($position = 0; $position < $emailCount; $position++) {
+            $emails->push($this->bareEmail($account));
+        }
+
+        if ($attachTagEvidence) {
+            $tag = Tag::query()->firstOrCreate(
+                ['slug' => 'not-ticket'],
+                ['name' => 'not-ticket', 'color' => '#6c757d', 'active' => true],
+            );
+            foreach ($emails as $email) {
+                $email->tags()->attach($tag->id, ['module' => 'email']);
+            }
+        }
+
+        $emailIds = $emails
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+        $messages = $this->seedLegacyTicketMessages(function () use (
+            $ticket,
+            $emails,
+            $emailIds,
+            $softDeleteFirstMessage,
+        ): Collection {
+            $messages = $emails->map(fn (EmailMessage $email): TicketMessage => $this->ticketMessage(
+                $ticket,
+                ['metadata' => ['email_message_id' => (int) $email->id]],
+            ));
+            if ($softDeleteFirstMessage) {
+                $messages->first()?->delete();
+            }
+            TicketEvent::query()->create([
+                'ticket_id' => $ticket->id,
+                'type' => 'marked_not_ticket',
+                'message' => 'Ticket returned to Inbox as not ticket.',
+                'after' => [
+                    'email_message_ids' => $emailIds,
+                    'tag' => 'not-ticket',
+                ],
+            ]);
+            $ticket->forceFill([
+                'metadata' => [
+                    'not_ticket' => [
+                        'by_user_id' => null,
+                        'at' => '2026-05-29T10:00:00+02:00',
+                        'email_message_ids' => $emailIds,
+                    ],
+                ],
+            ])->save();
+            $ticket->delete();
+
+            return $messages;
+        });
+
+        return [$ticket, $emails, $messages];
+    }
+
+    /**
+     * Snapshot every legacy not-ticket fact which the repair may inspect but
+     * must never mutate while it adds TicketMessage capture pointers.
+     *
+     * @param  Collection<int, EmailMessage>  $emails
+     * @return array{
+     *     emails:array<int, array<string, mixed>>,
+     *     ticket:array<string, mixed>,
+     *     events:array<int, array<string, mixed>>,
+     *     taggables:array<int, array<string, mixed>>
+     * }
+     */
+    private function legacyNotTicketEvidenceSnapshot(Ticket $ticket, Collection $emails): array
+    {
+        $emailIds = $emails->pluck('id')->map(fn ($id): int => (int) $id)->all();
+        $morphType = $emails->first()?->getMorphClass() ?? EmailMessage::class;
+
+        return [
+            'emails' => EmailMessage::query()
+                ->withTrashed()
+                ->whereIn('id', $emailIds)
+                ->orderBy('id')
+                ->get()
+                ->map(fn (EmailMessage $email): array => $email->getAttributes())
+                ->all(),
+            'ticket' => Ticket::query()
+                ->withTrashed()
+                ->findOrFail($ticket->id)
+                ->getAttributes(),
+            'events' => TicketEvent::query()
+                ->where('ticket_id', $ticket->id)
+                ->orderBy('id')
+                ->get()
+                ->map(fn (TicketEvent $event): array => $event->getAttributes())
+                ->all(),
+            'taggables' => DB::table('taggables')
+                ->where('taggable_type', $morphType)
+                ->whereIn('taggable_id', $emailIds)
+                ->orderBy('id')
+                ->get()
+                ->map(fn (object $taggable): array => (array) $taggable)
+                ->all(),
+        ];
+    }
+
+    /** @param array<int, mixed> $emailIds */
+    private function replaceNotTicketMetadataEmailIds(Ticket $ticket, array $emailIds): bool
+    {
+        $metadata = is_array($ticket->metadata) ? $ticket->metadata : [];
+        $notTicket = is_array($metadata['not_ticket'] ?? null)
+            ? $metadata['not_ticket']
+            : [];
+        $notTicket['email_message_ids'] = $emailIds;
+        $metadata['not_ticket'] = $notTicket;
+
+        return $ticket->forceFill(['metadata' => $metadata])->save();
+    }
+
+    /** @param array<string, mixed> $after */
+    private function replaceMarkedNotTicketEventAfter(TicketEvent $event, array $after): bool
+    {
+        return $event->forceFill(['after' => $after])->save();
     }
 
     /**

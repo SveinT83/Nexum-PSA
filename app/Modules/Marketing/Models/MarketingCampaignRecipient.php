@@ -14,6 +14,7 @@ class MarketingCampaignRecipient extends Model
         'marketing_campaign_id',
         'marketing_campaign_email_id',
         'marketing_list_member_id',
+        'marketing_campaign_delivery_id',
         'cycle_number',
         'contact_id',
         'client_user_id',
@@ -23,6 +24,8 @@ class MarketingCampaignRecipient extends Model
         'status',
         'due_at',
         'sent_at',
+        'claimed_at',
+        'outcome_unknown_at',
         'attempts',
         'rfc_message_id',
         'last_error',
@@ -33,6 +36,8 @@ class MarketingCampaignRecipient extends Model
     protected $casts = [
         'due_at' => 'datetime',
         'sent_at' => 'datetime',
+        'claimed_at' => 'datetime',
+        'outcome_unknown_at' => 'datetime',
         'cycle_number' => 'integer',
         'metadata' => 'array',
     ];
@@ -50,6 +55,11 @@ class MarketingCampaignRecipient extends Model
     public function listMember(): BelongsTo
     {
         return $this->belongsTo(MarketingListMember::class, 'marketing_list_member_id');
+    }
+
+    public function delivery(): BelongsTo
+    {
+        return $this->belongsTo(MarketingCampaignDelivery::class, 'marketing_campaign_delivery_id');
     }
 
     public function contact(): BelongsTo

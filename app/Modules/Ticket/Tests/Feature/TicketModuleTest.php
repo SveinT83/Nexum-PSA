@@ -1329,6 +1329,25 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function ticket_stopwatch_keeps_elapsed_draft_until_time_form_is_submitted(): void
+    {
+        $ticket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999139',
+            'owner_id' => $this->tech->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('id="ticketAddTimeForm"', false)
+            ->assertSee('stopwatch.elapsedMs = elapsed;', false)
+            ->assertSee('saveStopwatch();', false)
+            ->assertSee('openTimeModalFromStopwatch(elapsed);', false)
+            ->assertSee("addTimeForm?.addEventListener('submit'", false)
+            ->assertSee('localStorage.removeItem(stopwatchStorageKey);', false);
+    }
+
+    #[Test]
     public function tech_user_can_register_ticket_time_with_without_contract_rate(): void
     {
         $ticket = $this->createTicket(null, [

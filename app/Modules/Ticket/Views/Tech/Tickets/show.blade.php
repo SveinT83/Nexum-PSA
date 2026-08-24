@@ -697,7 +697,7 @@
 <div class="modal fade" id="ticketAddTimeModal" tabindex="-1" aria-labelledby="ticketAddTimeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
-            <form method="POST" action="{{ route('tech.tickets.time-entries.store', $ticket) }}">
+            <form id="ticketAddTimeForm" method="POST" action="{{ route('tech.tickets.time-entries.store', $ticket) }}">
                 @csrf
                 <input type="hidden" name="_time_entry_form" value="1">
 
@@ -1032,6 +1032,7 @@
         const ccInput = document.getElementById('cc');
         const ccSuggestions = document.getElementById('cc_contact_suggestions');
         const addTimeModal = document.getElementById('ticketAddTimeModal');
+        const addTimeForm = document.getElementById('ticketAddTimeForm');
         const shouldShowAddTimeModal = @json((bool) $showAddTimeModal);
         const timeAiDraft = document.getElementById('ticketTimeAiDraft');
         const timeInvoiceText = document.getElementById('time_invoice_text');
@@ -1344,10 +1345,17 @@
                 return;
             }
 
-            stopwatch = { ...defaultStopwatchState };
-            localStorage.removeItem(stopwatchStorageKey);
+            stopwatch.elapsedMs = elapsed;
+            stopwatch.startedAt = null;
+            stopwatch.running = false;
+            saveStopwatch();
             syncStopwatchUi();
             openTimeModalFromStopwatch(elapsed);
+        });
+
+        addTimeForm?.addEventListener('submit', function () {
+            stopwatch = { ...defaultStopwatchState };
+            localStorage.removeItem(stopwatchStorageKey);
         });
 
         timeAiDraft?.addEventListener('click', async function () {

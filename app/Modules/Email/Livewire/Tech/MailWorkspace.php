@@ -4,6 +4,7 @@ namespace App\Modules\Email\Livewire\Tech;
 
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
+use App\Modules\Email\Actions\AcknowledgeEmailConversation;
 use App\Modules\Email\Actions\AssistEmailComposerWithAi;
 use App\Modules\Email\Actions\CancelEmailRemoteOperation;
 use App\Modules\Email\Actions\CreatePersonalEmailRule;
@@ -26,8 +27,10 @@ use App\Modules\Email\Models\EmailComposerDraft;
 use App\Modules\Email\Models\EmailComposerDraftAttachment;
 use App\Modules\Email\Models\EmailConversationClassification;
 use App\Modules\Email\Models\EmailFolder;
+use App\Modules\Email\Models\EmailLiveProjectionStream;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMailboxPlacement;
+use App\Modules\Email\Models\EmailMailDraftLock;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailMessageClassification;
 use App\Modules\Email\Models\EmailRemoteOperation;
@@ -38,6 +41,7 @@ use App\Modules\Email\Services\BodyNormalizer;
 use App\Modules\Email\Services\EmailCanonicalContentResolver;
 use App\Modules\Email\Services\EmailComposerDraftService;
 use App\Modules\Email\Services\EmailConversationProjector;
+use App\Modules\Email\Services\EmailPresenceService;
 use App\Modules\Email\Services\EmailRemoteOperationEvidenceSanitizer;
 use App\Modules\Email\Services\EmailRemoteOperationUndoEligibility;
 use App\Modules\Email\Services\EmailSendOutcomeUnresolvedException;
@@ -68,10 +72,6 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use App\Modules\Email\Models\EmailLiveProjectionChange;
-use App\Modules\Email\Models\EmailLiveProjectionStream;
-use App\Modules\Email\Services\EmailLiveInvalidator;
-use App\Modules\Email\Services\EmailLivePublisherService;
 use RuntimeException;
 
 class MailWorkspace extends Component
@@ -83,25 +83,44 @@ class MailWorkspace extends Component
 
     public bool $liveEnabled = false;
 
+    public bool $collaborationEnabled = false;
+
+    public ?EmailMailDraftLock $activeComposerLock = null;
+
+    /** @var array<int, array{user_id: int, user_name: string, type: string, timestamp: int}> */
+    public array $presenceIndicators = [];
+
     public function mount(): void
     {
-        $this->invalidationVersion = (string) (EmailLiveProjectionStream::query()
-            ->where('stream_type', EmailLiveProjectionStream::TYPE_USER)
-            ->where('user_id', auth()->id())
-            ->value('current_version') ?? '0');
-        $this->liveEnabled = config('email_live.enabled', true);
+        $this->liveEnabled = config('email_live.enabled', false)
+            && Schema::hasTable('email_live_projection_streams');
+        $this->collaborationEnabled = $this->liveEnabled
+            && config('email_live.collaboration_enabled', false)
+            && Schema::hasTable('email_mail_draft_locks');
+
+        if ($this->liveEnabled) {
+            $this->invalidationVersion = (string) (EmailLiveProjectionStream::query()
+                ->where('stream_type', EmailLiveProjectionStream::TYPE_USER)
+                ->where('user_id', auth()->id())
+                ->value('current_version') ?? '0');
+        }
     }
 
     public function getListeners()
     {
         return [
-            "echo-private:email.user." . auth()->id() . ",.email.projection.invalidated.v1" => 'handleEmailProjectionInvalidated',
             'mail-filters-changed' => 'applyFilters',
+            'email-mail-invalidated' => 'handleEmailProjectionInvalidated',
+            'email-presence-event' => 'handlePresenceEvent',
         ];
     }
 
     public function handleEmailProjectionInvalidated(array $payload): void
     {
+        if (! $this->liveEnabled) {
+            return;
+        }
+
         $toVersion = (int) ($payload['to_version'] ?? 0);
         $currentVersion = (int) $this->invalidationVersion;
 
@@ -112,6 +131,7 @@ class MailWorkspace extends Component
         if ($toVersion === $currentVersion + 1) {
             $this->invalidationVersion = (string) $toVersion;
             $this->refreshMailState();
+
             return;
         }
 
@@ -120,6 +140,10 @@ class MailWorkspace extends Component
 
     public function catchUpInvalidation(): void
     {
+        if (! $this->liveEnabled) {
+            return;
+        }
+
         $latestVersion = (int) (EmailLiveProjectionStream::query()
             ->where('stream_type', EmailLiveProjectionStream::TYPE_USER)
             ->where('user_id', auth()->id())
@@ -129,6 +153,83 @@ class MailWorkspace extends Component
             $this->invalidationVersion = (string) $latestVersion;
             $this->refreshMailState();
         }
+
+        if ($this->collaborationEnabled && $this->composerOpen && $this->activeComposerLock) {
+            $renewed = app(EmailPresenceService::class)->renewLock(
+                $this->activeComposerLock->conversation_id,
+                auth()->id(),
+                session()->getId()
+            );
+
+            if (! $renewed) {
+                $this->activeComposerLock = null;
+                $this->composerActionStatus = [
+                    'type' => 'warning',
+                    'message' => 'Your editing lock has expired or been revoked.',
+                ];
+            }
+        }
+    }
+
+    public function handlePresenceEvent(array $payload): void
+    {
+        if (! $this->collaborationEnabled) {
+            return;
+        }
+
+        $userId = (int) ($payload['user_id'] ?? 0);
+        $type = (string) ($payload['type'] ?? '');
+        $conversationId = (int) ($payload['conversation_id'] ?? 0);
+
+        if ($userId === auth()->id()) {
+            return;
+        }
+
+        // Simple presence indicator cleanup: remove entries older than 30 seconds
+        $now = time();
+        $this->presenceIndicators = collect($this->presenceIndicators)
+            ->filter(fn ($p) => ($now - $p['timestamp']) < 30)
+            ->toArray();
+
+        if ($type === 'reading' || ($type === 'typing' && ($payload['is_typing'] ?? false))) {
+            $user = User::find($userId);
+            $this->presenceIndicators[$userId] = [
+                'user_id' => $userId,
+                'user_name' => $user ? $user->name : 'Unknown User',
+                'type' => $type,
+                'conversation_id' => $conversationId,
+                'timestamp' => $now,
+            ];
+        } elseif ($type === 'typing' && ! ($payload['is_typing'] ?? false)) {
+            unset($this->presenceIndicators[$userId]);
+        }
+    }
+
+    public function acknowledgeConversation(): void
+    {
+        if (! config('email_live.conversation_acknowledgement_enabled', false)
+            || ! Schema::hasTable('email_mail_user_conversation_acknowledgements')) {
+            $this->mailActionStatus = [
+                'type' => 'warning',
+                'message' => 'Conversation acknowledgement is not available yet.',
+            ];
+
+            return;
+        }
+
+        $selected = $this->selectedPlacement;
+        if (! $selected || ! $selected->conversation) {
+            return;
+        }
+
+        app(AcknowledgeEmailConversation::class)->handle($selected->conversation, $this->user());
+
+        $this->mailActionStatus = [
+            'type' => 'success',
+            'message' => 'Conversation acknowledged.',
+        ];
+
+        $this->refreshMailState();
     }
 
     private function refreshMailState(): void
@@ -1792,7 +1893,24 @@ class MailWorkspace extends Component
 
     public function sendComposer(): void
     {
-        $placement = $this->selectedPlacementForAction();
+        $context = $this->composerDraftContext();
+        $placement = $context['placement'] ?? null;
+
+        if ($this->collaborationEnabled && $context && $context['placement']?->conversation_id) {
+            $presence = app(EmailPresenceService::class);
+            $conversation = $context['placement']->conversation;
+            $versionHash = $conversation ? md5($conversation->updated_at.$conversation->message_count) : null;
+
+            if (! $presence->verifyLock($context['placement']->conversation_id, auth()->id(), $versionHash)) {
+                $this->composerActionStatus = [
+                    'type' => 'danger',
+                    'message' => 'Cannot send: This conversation has changed or is locked by another user.',
+                ];
+
+                return;
+            }
+        }
+
         $user = $this->user();
 
         if (! $placement || ! $user) {
@@ -4862,11 +4980,43 @@ class MailWorkspace extends Component
         $this->resetPersonalRuleForm();
         $this->mailActionStatus = null;
         $this->resetErrorBag();
-        $this->restoreComposerDraftIfAvailable($placement->account, $placement);
+
+        if ($this->collaborationEnabled && $placement?->conversation_id) {
+            $presence = app(EmailPresenceService::class);
+            $conversation = $placement->conversation;
+            $versionHash = $conversation ? md5($conversation->updated_at.$conversation->message_count) : null;
+
+            $this->activeComposerLock = $presence->acquireLock(
+                $placement->conversation_id,
+                auth()->id(),
+                session()->getId(),
+                $versionHash
+            );
+
+            if (! $this->activeComposerLock) {
+                $this->composerActionStatus = [
+                    'type' => 'warning',
+                    'message' => 'This conversation is currently being edited by another user.',
+                ];
+            } else {
+                $this->restoreComposerDraftIfAvailable($placement->account, $placement);
+            }
+        } else {
+            $this->restoreComposerDraftIfAvailable($placement->account, $placement);
+        }
     }
 
     private function resetComposer(): void
     {
+        if ($this->activeComposerLock) {
+            app(EmailPresenceService::class)->releaseLock(
+                $this->activeComposerLock->conversation_id,
+                auth()->id(),
+                session()->getId()
+            );
+            $this->activeComposerLock = null;
+        }
+
         $this->composerOpen = false;
         $this->composerMode = SendEmailComposerMessage::MODE_REPLY;
         $this->composerAccountId = '';

@@ -8,7 +8,9 @@ use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
+use App\Modules\Email\Models\EmailRuleExecutionAttempt;
 use App\Modules\Email\Services\EmailRulePublisher;
+use App\Modules\Email\Services\EmailRuleReversalService;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketQueue;
@@ -166,6 +168,17 @@ class RulesController extends Controller
         }
 
         return back()->with('success', 'Email message #'.$message->id.' was submitted for rule reprocessing.');
+    }
+
+    public function undoExecution(EmailRuleExecutionAttempt $attempt, EmailRuleReversalService $reversalService): RedirectResponse
+    {
+        try {
+            $reversalService->revert($attempt);
+
+            return redirect()->back()->with('success', 'Rule execution successfully reverted.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Reversal failed: ' . $e->getMessage());
+        }
     }
 
     private function validatedRule(Request $request): array

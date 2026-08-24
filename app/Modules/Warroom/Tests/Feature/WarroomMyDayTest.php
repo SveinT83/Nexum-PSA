@@ -43,6 +43,35 @@ class WarroomMyDayTest extends TestCase
     }
 
     #[Test]
+    public function my_day_navigation_keeps_dashboard_group_active_and_marks_only_my_day_current(): void
+    {
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.my-day.index'))
+            ->assertOk();
+
+        $html = $response->getContent();
+        $dashboardUrl = preg_quote(route('tech.dashboard'), '/');
+        $myDayUrl = preg_quote(route('tech.my-day.index'), '/');
+
+        $this->assertSame(2, preg_match_all(
+            '/<a class="nav-link dropdown-toggle active"[^>]*>Dashboard<\\/a>/',
+            $html
+        ));
+        $this->assertSame(2, preg_match_all(
+            '/<a class="dropdown-item active"\\s+aria-current="page"\\s+href="'.$myDayUrl.'">My Day<\\/a>/',
+            $html
+        ));
+        $this->assertSame(2, preg_match_all(
+            '/<a class="dropdown-item"\\s+\\s*href="'.$dashboardUrl.'">Dashboard<\\/a>/',
+            $html
+        ));
+        $this->assertDoesNotMatchRegularExpression(
+            '/<a[^>]*aria-current="page"[^>]*href="'.$dashboardUrl.'"/',
+            $html
+        );
+    }
+
+    #[Test]
     public function my_day_shows_the_signed_in_technicians_personal_work(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-05 09:15', 'Europe/Oslo'));

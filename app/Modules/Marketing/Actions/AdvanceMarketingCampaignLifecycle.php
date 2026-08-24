@@ -3,14 +3,13 @@
 namespace App\Modules\Marketing\Actions;
 
 use App\Modules\Marketing\Models\MarketingCampaign;
-use Illuminate\Support\Carbon;
 
 class AdvanceMarketingCampaignLifecycle
 {
     public function __construct(
         private readonly SyncMarketingCampaignRecipients $syncRecipients,
-    ) {
-    }
+        private readonly SummarizeMarketingCampaignRecipientProgress $recipientProgress,
+    ) {}
 
     public function handle(MarketingCampaign $campaign): ?string
     {
@@ -20,69 +19,40 @@ class AdvanceMarketingCampaignLifecycle
             return null;
         }
 
-        $activeEmailIds = $campaign->emails()
-            ->where('status', 'active')
-            ->pluck('id');
-
-        if ($activeEmailIds->isEmpty()) {
+        if (! $campaign->emails()->where('status', 'active')->exists()) {
             return null;
         }
 
-        $cycle = max(1, (int) ($campaign->current_cycle ?: 1));
-        $cycleRecipients = $campaign->recipients()
-            ->where('cycle_number', $cycle)
-            ->whereIn('marketing_campaign_email_id', $activeEmailIds);
+        MarketingCampaign::query()
+            ->whereKey($campaign->id)
+            ->where('status', 'approved')
+            ->update(['status' => 'active']);
 
-        if (! (clone $cycleRecipients)->exists()) {
+        $campaign = $campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients.delivery']);
+
+        if (! $campaign || $campaign->status !== 'active') {
             return null;
         }
 
-        if ((clone $cycleRecipients)->where('status', 'pending')->exists()) {
-            return null;
+        $created = $this->syncRecipients->handle(
+            $campaign,
+        );
+        $summary = $this->recipientProgress->handle(
+            $campaign->fresh(['emails', 'lists.members', 'list.members', 'recipients.delivery']) ?: $campaign,
+        );
+
+        if ($created > 0) {
+            return 'progressed';
         }
 
-        if (($campaign->completion_behavior ?: 'stop') === 'repeat') {
-            $nextCycleAt = $this->nextCycleAt($campaign);
-
-            $campaign->forceFill([
-                'status' => 'active',
-                'current_cycle' => $cycle + 1,
-                'next_cycle_at' => $nextCycleAt,
-                'last_cycle_completed_at' => now(),
-                'completed_at' => null,
-            ])->save();
-
-            $this->syncRecipients->handle($campaign->fresh(['emails.recipients', 'lists.members', 'list.members', 'recipients']));
-
-            return 'repeated';
+        if ($summary['blocked'] > 0) {
+            return 'blocked';
         }
 
-        $campaign->forceFill([
-            'status' => 'completed',
-            'completed_at' => now(),
-            'last_cycle_completed_at' => now(),
-            'next_cycle_at' => null,
-        ])->save();
+        if ($summary['in_progress'] > 0) {
+            return 'in_progress';
+        }
 
-        return 'completed';
-    }
-
-    private function nextCycleAt(MarketingCampaign $campaign): Carbon
-    {
-        $next = now()->copy();
-        $value = max(1, (int) ($campaign->repeat_interval_value ?: 1));
-        $unit = array_key_exists($campaign->repeat_interval_unit ?: 'months', MarketingCampaign::SEQUENCE_INTERVAL_UNITS)
-            ? ($campaign->repeat_interval_unit ?: 'months')
-            : 'months';
-
-        match ($unit) {
-            'minutes' => $next->addMinutes($value),
-            'hours' => $next->addHours($value),
-            'days' => $next->addDays($value),
-            'weeks' => $next->addWeeks($value),
-            default => $next->addMonthsNoOverflow($value),
-        };
-
-        return $next->seconds(0);
+        return 'idle';
     }
 }
