@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Inbound Attachment Recovery And Download
 
-Status: Done
+Status: Rework Needed / Partial Recovery
 Date: 2026-08-15
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
 Owner: Svein / Codex
@@ -51,50 +51,41 @@ failures prevented from being persisted.
 ## Data, Storage, And Operations
 
 The recovery may add missing `email_attachments` rows/files and correct their owning message's derived
-attachment count. Dev's bounded scope was 19 messages: logged persistence failures identified 16
-messages / 28 MIME parts, while three additional rows had only a nonzero attachment counter.
+attachment count. The restored Dev database baseline had zero attachment rows and only counter sum
+6. Recovery froze and previewed one exact 19-message-ID scope before any apply.
 
 The `email/attachments` and `email/raw/2` directory/ACL contract was normalized non-destructively to
 `www-data:www-data`, directories `2770`, and group-rwx access/default ACLs. Readiness then reported
-`safe=true` and `received_at_schema_safe`. Before recovery, Dev had zero attachment rows, target
-counter sum 6, 36 existing attachment files, 23 remote-operation rows, and two rule-attempt rows.
+`safe=true` and `received_at_schema_safe`.
 
-Under the Email worker lock, local snapshot apply recovered 13 messages / 24 parts. Exact provider
-fallback was then limited to messages `4`, `5`, `10`, `456`, `478`, and `479`; it recovered one, one,
-and two parts for `456`, `478`, and `479`. Messages `4`, `5`, and `10` returned
-`provider_message_missing`, so their zero rows and counter 2 each were initially preserved instead
-of being guessed. This first phase produced 28 rows across 16 messages and did not authorize a broad
-provider search.
-
-The follow-up recovered the three remaining counter-only messages from the historical persister path
+Under the Email worker lock, local snapshot evidence recovered 13 messages / 24 parts. The same
+bounded local apply recovered the three counter-only messages from the historical persister path
 `email/attachments/{account_id}/{imap_uid}`. The exact account-and-UID directory for each of messages
 `4`, `5`, and `10` contained exactly two direct files, matching its preserved counter of two. The
 recovery rejects a count mismatch, nested/outside-root file, symlink, empty/oversized content, or MIME
 type denied by the current attachment policy before persisting anything, and exact legacy evidence
 short-circuits the provider path rather than performing a mailbox search.
 
-The first controlled legacy apply recovered all 6 rows/files while each message counter remained two.
-A second live apply returned `existing_rows_complete` for all three messages without changing rows,
-files, or counters. All six resulting referenced files pass stored-size and SHA-1 integrity checks.
-The bounded 19-message target is now fully resolved at **34 attachment rows and counter sum 34**.
+Together, local raw and exact legacy evidence restored **30 rows/files across 16 messages**. The
+idempotent rerun returned unchanged and created no duplicate row or file. The four remaining expected
+parts belong to messages `456`, `478`, and `479`. Their exact provider-recovery calls stopped at the
+fail-closed provider resolver with `dns_answer_set_denied`; no failed call changed the database,
+filesystem, or provider. No broad search or alternate endpoint was attempted, and the four parts
+remain honestly unresolved rather than fabricated.
 
 The original legacy source files and the duplicate account-2 legacy copies were not deleted or
 repurposed. They remain in the preserved pre-existing unreferenced-file inventory for separate
 provenance, checksum, retention, and safe-deletion review. Recovery does not treat successful metadata
 reconstruction as authorization to purge source or duplicate files.
 
-The broader private-storage inventory is not yet owner/root-complete. All 61 directories are
-`www-data` mode `2770`, have group-rwx access/default ACLs, and contain no symlinks. Of 938 legacy
-files, 859 are `0660`, while 79 remain `www-data`-owned `0644`; the SSH project user cannot chmod
-files owned by the companion runtime. Root/operator must change only those 79 modes to `0660`
-without content, ownership, move, or deletion and then repeat inventory plus PHP-FPM/queue
-dual-runtime smoke under `HR-2026-08-15-003`.
+The current read-only private-storage inventory contains 969 files: `sent_pending` 322 (0 referenced /
+322 unreferenced), `raw` 547 (462 / 85), and `attachments` 100 (30 / 70), for 492 referenced and 477
+unreferenced. It reports 28 missing raw references, 79 non-private files, 15 duplicate unreferenced
+checksum+size groups, and zero unsafe or unreadable files. These results authorize no deletion.
 
-The original controlled side-effect window created zero remote operations/attempts, rule attempts,
-outbound logs, Ticket-domain tickets/messages/events/attachments, notifications, or queued jobs.
-Repeating all 13 local recoveries and provider recovery for `456`, `478`, and `479` returned unchanged
-results with no duplicate row/file. The follow-up for `4`, `5`, and `10` used only exact local legacy
-directories and performed no provider search.
+The controlled side-effect window created no provider mutation. Local rerun was unchanged, and the
+three blocked provider-recovery calls created no database row, file, provider operation, or remote
+mailbox change. Original/duplicate/unreferenced evidence remains preserved.
 
 ## Permissions And Security
 
@@ -124,21 +115,24 @@ Current automated evidence: the focused `EmailAttachmentAccessRecoveryTest` pass
 assertions**, including exact legacy-directory recovery and proof that the provider is not contacted.
 The earlier adjacent exact provider-read package passed 47 / 321, the broad Email module/inbound
 package 155 / 1,308, and the complete Email test directory 347 / 3,030 before this narrow follow-up.
-Pint, PHP syntax, and diff checks pass for the follow-up. Controlled Dev recovery, integrity, and
-idempotency checks produced the exact filesystem/database results above. Browser, authorization, and
-dual-runtime verification remain Pending under the human-review entry.
+Pint, PHP syntax, and diff checks pass for the earlier follow-up. Controlled post-restore preflight,
+local apply, idempotency, fail-closed provider-resolution, and inventory checks produced the exact
+filesystem/database results above. Browser, authorization, safe provider recovery, and dual-runtime
+verification remain open under the human-review entry.
 
 ## Documentation
 
 Update the Email Knowledge article, Email module README, `docs/TODO.md`, and `docs/human-review.md`.
-Human review is tracked as `HR-2026-08-15-006` and remains Pending until a named reviewer completes it.
+Human review `HR-2026-08-15-006` is Rework Needed until safe recovery of the four blocked parts is
+resolved or explicitly deferred and a named reviewer completes the remaining checks.
 
 ## Done Criteria
 
 - [x] Placement-bound download and hidden mailbox-context denial are implemented and tested.
-- [x] The known 16-message / 28-part persistence-failure set is recovered from exact evidence.
-- [x] The three additional counter-only messages are recovered from exact count-matched legacy
-  account/UID directories without provider search; all 19 targets now have 34 rows/counter 34.
-- [x] Storage ACLs, final paths/files/modes, unchanged side-effect ledgers, and idempotent reruns are
-  recorded.
-- [x] Documentation is updated and `HR-2026-08-15-006` remains Pending for named human review.
+- [x] The exact 19-ID preflight and local apply recovered 30 rows/files across 16 messages; rerun is
+  idempotent and unchanged.
+- [ ] Recover or explicitly defer the four remaining parts for `456`, `478`, and `479` through a
+  separately reviewed endpoint-resolution path; `dns_answer_set_denied` must remain fail closed.
+- [x] Current inventory, unchanged failure side effects, and the no-deletion boundary are recorded.
+- [ ] Complete browser/access/provider recovery checks and named human review under
+  `HR-2026-08-15-006`, which is Rework Needed.

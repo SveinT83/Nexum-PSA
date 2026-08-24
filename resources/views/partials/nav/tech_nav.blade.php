@@ -4,18 +4,23 @@
     $dropdownMenuClass = $isMobileNav ? 'dropdown-menu position-static show border-0 shadow-none ps-3' : 'dropdown-menu';
     $profileDropdownMenuClass = $isMobileNav ? $dropdownMenuClass : 'dropdown-menu dropdown-menu-end';
     $logoutFormId = $isMobileNav ? 'logout-form-mobile' : 'logout-form';
+    $dashboardGroupActive = request()->routeIs('tech.dashboard') || request()->routeIs('tech.my-day.*');
+    $dashboardRouteActive = request()->routeIs('tech.dashboard');
+    $myDayRouteActive = request()->routeIs('tech.my-day.*');
 @endphp
 
 <ul class="{{ $navClass }}">
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('tech.dashboard') ? 'active' : '' }}" aria-current="page" href="{{ route('tech.dashboard') }}">Dashboard</a>
+    <li class="nav-item dropdown">
+        <a @class(['nav-link', 'dropdown-toggle', 'active' => $dashboardGroupActive]) data-bs-toggle="dropdown" href="#" role="button" aria-expanded="{{ $isMobileNav ? 'true' : 'false' }}">Dashboard</a>
+        <ul class="{{ $dropdownMenuClass }}">
+            <li>
+                <a @class(['dropdown-item', 'active' => $dashboardRouteActive]) @if($dashboardRouteActive) aria-current="page" @endif href="{{ route('tech.dashboard') }}">Dashboard</a>
+            </li>
+            <li>
+                <a @class(['dropdown-item', 'active' => $myDayRouteActive]) @if($myDayRouteActive) aria-current="page" @endif href="{{ route('tech.my-day.index') }}">My Day</a>
+            </li>
+        </ul>
     </li>
-
-    @if(Route::has('tech.my-day.index'))
-        <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('tech.my-day.*') ? 'active' : '' }}" aria-current="page" href="{{ route('tech.my-day.index') }}">My Day</a>
-        </li>
-    @endif
 
     @php
         $adminGroupActive = request()->routeIs('tech.admin*');

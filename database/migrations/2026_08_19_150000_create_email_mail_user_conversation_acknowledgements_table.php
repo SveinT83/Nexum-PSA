@@ -1,40 +1,18 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * This unreleased scaffold did not satisfy the approved frozen-placement
+     * and per-user authorization contract. Keep the historical filename as
+     * an inert deploy marker; corrected storage needs a new forward migration.
      */
-    public function up(): void
-    {
-        Schema::create('email_mail_user_conversation_acknowledgements', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('email_conversation_id')->index();
-            $table->unsignedBigInteger('user_id')->index();
-            $table->unsignedBigInteger('last_acknowledged_message_id')->nullable();
-            $table->timestamp('acknowledged_at');
-            $table->timestamps();
-
-            $table->unique(['email_conversation_id', 'user_id'], 'uk_email_conv_ack_user');
-
-            $table->foreign('email_conversation_id', 'fk_email_conv_ack_conv')
-                ->references('id')->on('email_conversations')
-                ->onDelete('cascade');
-            $table->foreign('user_id', 'fk_email_conv_ack_user')
-                ->references('id')->on('user_management')
-                ->onDelete('cascade');
-        });
-    }
+    public function up(): void {}
 
     /**
-     * Reverse the migrations.
+     * No schema was created by this quarantined marker.
      */
-    public function down(): void
-    {
-        Schema::dropIfExists('email_mail_user_conversation_acknowledgements');
-    }
+    public function down(): void {}
 };

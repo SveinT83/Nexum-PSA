@@ -1,9 +1,13 @@
 # Feature Slice: Email/Ticket Correlation Conflict Triage
 
-Status: In Progress
+Status: In Progress / Implementation Missing
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 14)
 Review ID: `HR-2026-08-16-014`
+
+2026-08-21 audit: the planned conflict records, triage actions, UI and focused tests do not exist.
+No completed conflict-triage behavior is claimed; existing durable links, RFC headers and additive
+`TD-...` fallback remain unchanged.
 
 ## Purpose
 

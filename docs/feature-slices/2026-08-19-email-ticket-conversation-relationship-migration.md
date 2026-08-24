@@ -1,9 +1,13 @@
 # Feature Slice: Email/Ticket Conversation Relationship Migration
 
-Status: In Progress
+Status: Rework Needed
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 13)
 Review ID: `HR-2026-08-16-013`
+
+2026-08-21 audit: the backfill scaffold calls an absent relationship, chooses an arbitrary first user
+as actor, catches failures without a completion gate, and is not dispatched or covered by focused
+tests. Existing durable links remain authoritative; the backfill must not run.
 
 ## Purpose
 

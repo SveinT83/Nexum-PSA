@@ -11,6 +11,7 @@ class EmailMailLive {
         this.userId = null;
         this.channel = null;
         this.reconnectTimeout = null;
+        this.presenceCallbacks = [];
     }
 
     init(userId) {
@@ -21,8 +22,13 @@ class EmailMailLive {
 
         if (window.Echo) {
             this.subscribe();
-        } else {
-            document.addEventListener('echo-ready', () => this.subscribe());
+        } else if (window.initializeEmailEcho) {
+            window.initializeEmailEcho()
+                .then(() => this.subscribe())
+                .catch(() => {
+                    // Livewire polling remains the safe fallback when the
+                    // optional client or websocket transport cannot start.
+                });
         }
     }
 
@@ -40,12 +46,10 @@ class EmailMailLive {
                 this.handleInvalidation(e);
             });
 
-        console.log(`[EmailLive] Subscribed to private channel for user ${this.userId}`);
+        this.presenceCallbacks.forEach((callback) => this.listenForPresence(callback));
     }
 
     handleInvalidation(event) {
-        console.log('[EmailLive] Invalidation event received:', event);
-
         // Dispatch to Livewire components
         // We use a browser event that Livewire can listen for
         window.dispatchEvent(new CustomEvent('email-mail-invalidated', {
@@ -81,8 +85,14 @@ class EmailMailLive {
     }
 
     onPresence(callback) {
-        if (!this.channel) return;
+        this.presenceCallbacks.push(callback);
 
+        if (this.channel) {
+            this.listenForPresence(callback);
+        }
+    }
+
+    listenForPresence(callback) {
         this.channel.listenForWhisper('typing', (e) => callback('typing', e));
         this.channel.listenForWhisper('reading', (e) => callback('reading', e));
     }

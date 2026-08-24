@@ -265,6 +265,7 @@
                     ['label' => 'Mail', 'route' => 'tech.mail.index', 'icon' => 'bi-inbox'],
                     ['label' => 'Economy', 'route' => 'tech.economy.orders.index', 'icon' => 'bi-receipt'],
                     ['label' => 'Knowledge', 'route' => 'tech.knowledge.index', 'icon' => 'bi-journal-text'],
+                    ['label' => 'My Day', 'route' => 'tech.my-day.index', 'icon' => 'bi-calendar2-check'],
                 ];
             @endphp
             @foreach($lanes as $lane)

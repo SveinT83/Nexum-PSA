@@ -7,6 +7,7 @@ use App\Models\System\Integrations\Integration;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Integration\Models\EmailProviderConnection;
 use App\Modules\Integration\Models\EmailProviderCredentialVersion;
+use App\Modules\Integration\Models\EmailProviderEvent;
 use App\Modules\Integration\Services\EmailProviderCredentialCipher;
 use App\Providers\TelescopeServiceProvider;
 use Database\Seeders\PermissionSeeder;
@@ -14,6 +15,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -113,6 +115,34 @@ class EmailProviderAdministrationSecurityTest extends TestCase
             ->assertDontSee('secret-ui-canary');
 
         $this->assertNotNull($public);
+    }
+
+    #[Test]
+    #[DataProvider('missingEmailAccountBindingPermissionProvider')]
+    public function email_account_create_fails_closed_without_each_provider_binding_permission(
+        string $missingPermission,
+    ): void {
+        $this->activeProvider('Denied account binding provider', 'public');
+        Role::findByName('Admin')->revokePermissionTo($missingPermission);
+        $admin = $this->admin->fresh();
+
+        $this->assertFalse($admin->can($missingPermission));
+        $this->assertTrue($admin->can('email.account_manage'));
+        $before = $this->emailProviderPersistenceFingerprint();
+
+        $this->actingAs($admin)
+            ->get(route('tech.admin.settings.email.accounts.create'))
+            ->assertForbidden();
+
+        // A denied read must not create, update, or remove account/provider lifecycle data.
+        $this->assertSame($before, $this->emailProviderPersistenceFingerprint());
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function missingEmailAccountBindingPermissionProvider(): iterable
+    {
+        yield 'provider management permission' => ['integration.email_provider_manage'];
+        yield 'mailbox sync permission' => ['email.mailbox_sync_manage'];
     }
 
     #[Test]
@@ -310,6 +340,44 @@ class EmailProviderAdministrationSecurityTest extends TestCase
             'ticket_ingress_enabled' => 0,
             'delete_policy' => 'local_only',
             'provider_integration_id' => $connection->getKey(),
+        ];
+    }
+
+    /** @return array<string, list<string>> */
+    private function emailProviderPersistenceFingerprint(): array
+    {
+        $fingerprint = static fn (array $attributes): string => hash(
+            'sha256',
+            json_encode($attributes, JSON_THROW_ON_ERROR),
+        );
+
+        return [
+            'accounts' => EmailAccount::query()
+                ->orderBy('id')
+                ->get()
+                ->map(fn (EmailAccount $account): string => $fingerprint($account->getAttributes()))
+                ->all(),
+            'integrations' => Integration::query()
+                ->where('type', 'email_provider')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (Integration $integration): string => $fingerprint($integration->getAttributes()))
+                ->all(),
+            'provider_connections' => EmailProviderConnection::query()
+                ->orderBy('integration_id')
+                ->get()
+                ->map(fn (EmailProviderConnection $connection): string => $fingerprint($connection->getAttributes()))
+                ->all(),
+            'provider_events' => EmailProviderEvent::query()
+                ->orderBy('id')
+                ->get()
+                ->map(fn (EmailProviderEvent $event): string => $fingerprint($event->getAttributes()))
+                ->all(),
+            'credential_versions' => EmailProviderCredentialVersion::query()
+                ->orderBy('id')
+                ->get()
+                ->map(fn (EmailProviderCredentialVersion $version): string => $fingerprint($version->getAttributes()))
+                ->all(),
         ];
     }
 }

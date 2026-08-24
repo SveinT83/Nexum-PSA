@@ -1,9 +1,16 @@
 # Feature Slice: Email Conversation Acknowledgement and Explicit Multi-Account Actions
 
-Status: In Progress
+Status: Rework Needed / Migration Gated
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 12)
 Review ID: `HR-2026-08-16-012`
+
+2026-08-21 audit: the original `150000` schema and action do not freeze/re-authorize the exact
+placement snapshot or separate provider and personal results, and the action calls an absent model
+relationship. The migration is now an inert deploy marker, ran in Dev batch 108, and created no
+`email_mail_user_conversation_acknowledgements` table. Acknowledgement defaults off independently
+through `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` and returns an honest unavailable status. Do not
+activate this slice until the approved multi-account contract has tests and a new forward migration.
 
 ## Purpose
 

@@ -1,9 +1,13 @@
 # Feature Slice: Email Deterministic Rules API Completion
 
-Status: In Progress
+Status: Rework Needed
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 10)
 Review ID: `HR-2026-08-16-010`
+
+2026-08-21 audit: the current Undo scaffold changes local folder state without a provider operation
+or the complete immutable execution/reversal contract. The slice has no focused completion tests and
+must not be represented as API/Undo parity.
 
 ## Purpose
 

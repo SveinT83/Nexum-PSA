@@ -1,6 +1,6 @@
 # Feature Slice: Integration-Owned Email Provider Credentials And Endpoint Security
 
-Status: Done / Human Review Pending
+Status: Done / Human Review Rework Needed
 Date: 2026-08-16
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
 ADR: `docs/adr/2026-08-16-integration-owned-email-provider-credentials-and-endpoint-security.md`
@@ -79,6 +79,9 @@ fallback send path.
   and nullable legacy connection/credential fields.
 - Migration `2026_08_16_116000`: `integration_email_provider_migration_runs`.
 - Migration `2026_08_16_117000`: `integration_email_provider_migration_items`.
+- Migration `2026_08_21_100000`: additively repairs the approved Mail security permission catalog
+  and default Admin/Superuser grants on upgraded installations without synchronizing or removing
+  unrelated role permissions.
 - `integrations` receives one root per Email provider connection; no generic toggle owns the
   provider lifecycle.
 - Legacy Email account ciphertext remains intact until a later separately reviewed purge.
@@ -110,6 +113,8 @@ fallback send path.
 - Permissions and UI non-disclosure, no public API, Integration generic-toggle isolation, and
   cross-module SMTP caller regressions for Ticket, Sales, Marketing, UserManagement, CustomerPortal,
   Notification, and Commercial.
+- Forward permission-deployment coverage proves fresh-install catalog creation, upgraded-role repair,
+  idempotency, forward-only rollback, and preservation of existing Calendar/Sales grants.
 - MariaDB migration round-trip with down refusal while bindings, migration runs, or retained history
   make destructive rollback unsafe.
 
@@ -137,20 +142,44 @@ fallback send path.
   mailer and do not replay an ambiguous SMTP outcome.
 - A disposable MariaDB 10.11 database passed the migrations `112000`-`117000` round-trip and guarded
   down-refusal contract with 1 test / 60 assertions. The generated database was validated, dropped,
-  and its temporary server data removed; the shared Dev schema was not migrated.
+  and its temporary server data removed. That isolated test did not touch shared Dev; the later
+  post-restore Dev rollout is recorded below.
 - Targeted Pint passes 72 PHP files and syntax passes 67 production/test/migration files. Eighteen
   Email-provider routes and 15 Email-account/maintenance routes load; configuration cache round-trip,
   complete Blade compilation with zero non-group-writable files, Vite production build, and Git diff
   checks pass.
 - Independent read-only security audit found no remaining order-6 P0/P1 code issue. Automated
   evidence does not authorize a provider call, account cutover, legacy-secret purge, or human review.
+- On 2026-08-21, a portal 403 exposed that the shared runtime had the provider schema but not the new
+  permission rows. Migration `2026_08_21_100000` now repairs that deployment gap additively and ran
+  after database recovery in Dev batch 121. Its focused administration/migration matrix passes 7
+  tests / 127 assertions. Sanitized final readback confirms all eight catalog entries, 167 total
+  Admin grants, 216 total Superuser grants, unchanged totals for every other role, and successful
+  binding authorization without provider I/O. Both Email accounts remain `source=legacy` with no
+  Integration provider binding. No seeder, provider call, source switch, or credential operation ran.
+- Svein separately approved the current Dev Mail endpoint as the exact RFC1918 IPv4 `/32` group
+  `tronderdata_mail_dev`. The optional `EMAIL_PROVIDER_TRONDERDATA_MAIL_DEV_CIDR` setting accepts
+  only one canonical RFC1918 `/32`; a missing, broader, public, IPv6, multiple, whitespace, or
+  control-character value omits the group entirely. Focused configuration and endpoint-policy
+  coverage passes 36 tests / 161 assertions. Sanitized Dev readback proves one rule matching the
+  single shared IMAP/SMTP answer, no legacy compatibility mapping, both accounts still legacy and
+  unbound, and zero provider connections, credentials, or events. This configuration authorizes
+  only the later reviewed named-private workflow; it performs no provider call or account cutover.
 
 ## Deploy And Rollback
 
-- Deploy additive schema and code with every existing account still `source=legacy`. Do not run a
-  broad migration while other Mail schema files are changing.
+- Deploy additive schema and code with every existing account still `source=legacy`. In the recovered
+  Dev ledger, migrations `112000` through `117000` ran one per step in batches 106 through 111. Do
+  not run a broad migration while other Mail schema files are changing.
+- Apply `2026_08_21_100000_ensure_mail_security_permissions_are_deployed` on upgraded installations.
+  It is the forward-only permission repair and deliberately does not revoke grants on rollback.
+  Do not replace this repair with a full `RoleSeeder` hotfix: that seeder synchronizes complete roles
+  and can remove grants owned by other modules. Clear the permission/application cache afterward.
 - After migrations and caches, stage exactly one account through read-only preview and staging. Only
   named human review may authorize its provider verification and cutover.
+- The `tronderdata_mail_dev` environment value is Dev-only and must be an exact approved RFC1918
+  IPv4 `/32`. Do not copy it to another environment, widen it, or use the legacy account mapping.
+  Clear configuration cache after changing it; blank or invalid input must leave the group absent.
 - Pause/drain that account's poll/send/provider work before cutover or rollback. Cutover changes only
   the account reference/source after exact verified-version and unresolved-operation checks.
 - Roll back inside the declared window only while legacy ciphertext is intact and no later rotation,
@@ -169,5 +198,5 @@ fallback send path.
   redaction, queue payloads, and affected-module behavior have focused automated coverage.
 - [x] Narrow and affected cross-module tests, syntax, formatting, routes, compiled views, migration
   status/round-trip where safe, and diff checks pass on authoritative Dev.
-- [x] README, Knowledge, TODO, index, permissions docs, and `HR-2026-08-16-006` are updated; human
-  review remains Pending.
+- [x] README, Knowledge, TODO, index, permissions docs, and `HR-2026-08-16-006` are updated; the
+  reported deployment defect is repaired automatically and human review remains Rework Needed.

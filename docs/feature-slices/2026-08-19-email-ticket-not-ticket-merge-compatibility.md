@@ -1,9 +1,13 @@
 # Feature Slice: Email/Ticket Not-Ticket and Merge Compatibility
 
-Status: In Progress
+Status: In Progress / Dependency Gated
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 15)
 Review ID: `HR-2026-08-16-015`
+
+2026-08-21 audit: current Ticket merge code only bulk-updates Email link rows. Conversation-scoped
+suppression, locks/deduplication, strongest-role resolution, frozen preview, target reauthorization,
+retired aliases and atomic conflict handling remain to implement after Orders 8–14 are safe.
 
 ## Purpose
 

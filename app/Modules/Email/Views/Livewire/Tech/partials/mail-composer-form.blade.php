@@ -16,9 +16,10 @@
     x-data="{
         mode: 'visual',
         value: @entangle('composerBodyHtml'),
+        collaborationEnabled: @js($collaborationEnabled),
         typingTimeout: null,
         typing(isTyping) {
-            if (window.EmailMailLive && {{ (int) ($selectedPlacement?->conversation_id ?? 0) }}) {
+            if (this.collaborationEnabled && window.EmailMailLive && {{ (int) ($selectedPlacement?->conversation_id ?? 0) }}) {
                 if (isTyping) {
                     window.EmailMailLive.startTyping({{ (int) ($selectedPlacement?->conversation_id ?? 0) }});
                 } else {

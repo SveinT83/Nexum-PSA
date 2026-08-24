@@ -1,9 +1,17 @@
 # Feature Slice: Email Presence, Shared Draft Locks, and Stale-Composer Protection
 
-Status: In Progress
+Status: Rework Needed / Migration Gated
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 9)
 Review ID: `HR-2026-08-16-009`
+
+2026-08-21 audit: the original `140000` schema and its service did not implement the approved shared
+scope, durable fencing/audit or fail-closed send boundary. The migration is now an inert deploy
+marker, ran in Dev batch 108, and created no `email_mail_draft_locks` table. Collaboration defaults
+off independently through `EMAIL_MAIL_COLLABORATION_ENABLED=false`; ordinary Reply, Reply All and
+Forward remain available without the table. Per-user whispers do not reach coworkers. Do not
+activate this slice until it is redesigned, tested against the original 2026-08-16 approved slice,
+and delivered through a new forward migration.
 
 ## Purpose
 

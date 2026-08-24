@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Private Live Invalidation And Polling Fallback
 
-Status: In Progress / Runtime Activation Gated
+Status: Rework Needed / Runtime Disabled
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -21,6 +21,24 @@ Implementation starts only after completion orders 2, 3, 5, 6, and 7 are stable.
 hint to the provider reconciliation pipeline and never broadcasts directly to browsers. The final
 canonical resolver, credential readiness, provider reconciliation, access, unread, Ticket-link, and
 Taxonomy actions must be re-read before their transaction boundaries are instrumented.
+
+## 2026-08-21 Rework Audit
+
+The foundation was incorrectly reported as complete after migration `130000` had already run on Dev.
+The implementation still lacked a trigger-safe append, used wrong authority-table names, exposed an
+unused global broadcast-auth surface, subscribed twice, and left disabled mode connected to Echo.
+It also has incomplete fanout/delivery phases and unwrapped writer call sites. Runtime activation is
+therefore prohibited. After database recovery, the final Dev ledger records foundation migration
+`2026_08_16_130000` in batch 118, inert Order 9/12 markers `2026_08_19_140000` and `150000` in
+batches 119 and 120, and the unrelated Mail permission repair in batch 121. Forward migration
+`2026_08_21_110000` ran in batch 122 and repairs the first stream-version NULL transition. Forward
+migration `2026_08_21_120000` ran in batch 123; it refuses to change guards while live mode is
+enabled, quarantines incomplete base-authority writer guards that otherwise block ordinary mailbox
+grants, and permits valid version/acknowledgement transitions within one database timestamp second.
+The default-off writer/client gate, strict module auth and focused regression tests make continued
+ordinary Mail use safe while the remaining contract is completed. The enabled publisher state
+machine, stable call-site idempotency, exact conversation identifiers and several required outer
+transactions remain incomplete.
 
 ## User-Visible Behavior
 
@@ -177,9 +195,13 @@ independently reauthorizes, even if a stale socket delivered an opaque event.
 ## Browser And Livewire Contract
 
 Create `resources/js/email-mail-live.js` and import it from `resources/js/app.js`. It may initialize
-Echo/Pusher but never Alpine. Subscribe once from a server-rendered user ID/user-version manifest and
-use the module CSRF/session auth endpoint. Authorized account IDs are resolved only by bounded,
-current server catch-up and never become an unbounded browser subscription manifest.
+Echo/Pusher but never Alpine. The quarantined implementation now tree-shakes Echo/Pusher from a
+disabled production build. An enabled client build exposes only a lazy initializer, and the
+server-rendered Mail workspace calls it only when its independent runtime/table gate passes; neither
+flag can open a socket alone. Collaboration/presence additionally requires its separate server gate.
+Subscribe once from a server-rendered user ID/user-version manifest and use the module CSRF/session
+auth endpoint. Authorized account IDs are resolved only by bounded, current server catch-up and never
+become an unbounded browser subscription manifest.
 
 Catch up on connect, reconnect, `online`, `pageshow`, and visibility resume. Run a visible connected
 safety check every 120 seconds. Enter fallback after five seconds of connection/auth failure and poll
@@ -275,9 +297,11 @@ Deploy packages and built assets, then additive schema with `umask 0002`. Config
 test and reload Apache, install scheduler and live worker, start Reverb, rebuild caches, restart Reverb
 and long-lived workers, and perform health/private-channel smoke before browser review.
 
-Operational rollback sets `EMAIL_LIVE_MODE=poll`, rebuilds config, gracefully stops Reverb, and
-proves 15-second fallback. Keep projection tables; they contain rebuildable invalidation history, not
-mailbox state. Database rollback follows application rollback only if explicitly required.
+Operational rollback keeps `EMAIL_LIVE_ENABLED=false` and `VITE_EMAIL_LIVE_ENABLED=false`, rebuilds
+config and production assets, gracefully stops Reverb, and returns to ordinary Mail polling. The
+planned 15-second degraded fallback is not yet implemented and must not be claimed as a current
+rollback mode. Keep projection tables; they contain rebuildable invalidation history, not mailbox
+state. Database rollback follows application rollback only if explicitly required.
 
 ## Done Criteria
 
@@ -287,4 +311,5 @@ mailbox state. Database rollback follows application rollback only if explicitly
 - [ ] Reverb, Apache, scheduler, worker, CSP/origin, secret-permission, health, outage, and revocation
   behavior pass automated and controlled Dev checks.
 - [ ] Email/affected-module tests and asset build pass; docs/TODO/index/Knowledge and
-  `HR-2026-08-16-008` are updated; human review remains Pending.
+  `HR-2026-08-16-008` are updated; the review remains `Rework Needed` until the enabled runtime is
+  completed and then explicitly reviewed by a named human.

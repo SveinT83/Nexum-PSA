@@ -1409,7 +1409,9 @@ return new class extends Migration
             ." and (({$prefix}source_stream_type = 'account'"
             .' and exists(select 1 from '.self::ACCOUNT_AUTHORITY.' as account_authority'
             ." where account_authority.email_account_id = {$prefix}email_account_id"
-            ." and account_authority.owner_user_id <=> {$prefix}frozen_owner_user_id"
+            ." and ((account_authority.owner_user_id = {$prefix}frozen_owner_user_id)"
+            .' or (account_authority.owner_user_id is null'
+            ." and {$prefix}frozen_owner_user_id is null))"
             ." and account_authority.audience_generation = {$prefix}account_audience_generation)"
             ." and {$prefix}grant_through_id = coalesce((select max(candidate.id)"
             .' from email_account_user_grants as candidate'

@@ -1,8 +1,12 @@
 <div class="mail-workspace-root"
      x-data
-     x-init="window.EmailMailLive && window.EmailMailLive.init({{ auth()->id() }}); window.EmailMailLive.onPresence((type, e) => $wire.dispatch('email-presence-event', { ...e, type }))"
-     @email-mail-invalidated.window="$wire.handleEmailProjectionInvalidated($event.detail.payload)"
-     @if($liveEnabled) wire:poll.300s="catchUpInvalidation" @else wire:poll.60s @endif>
+     @if($liveEnabled)
+         x-init="window.EmailMailLive?.init({{ auth()->id() }}); @if($collaborationEnabled) window.EmailMailLive?.onPresence((type, e) => $wire.dispatch('email-presence-event', { ...e, type })); @endif"
+         @email-mail-invalidated.window="$wire.handleEmailProjectionInvalidated($event.detail.payload)"
+         wire:poll.120s="catchUpInvalidation"
+     @else
+         wire:poll.60s
+     @endif>
     <style>
         .mail-workspace-grid {
             display: grid;
@@ -1191,7 +1195,7 @@
                 @php($threadPlacements = $conversationPlacements->isNotEmpty() ? $conversationPlacements : collect([$selectedPlacement]))
 
                 <div class="mail-reader-body" data-mail-reader-body>
-                    @if($presenceIndicators)
+                    @if($collaborationEnabled && $presenceIndicators)
                         <div class="mail-presence-bar px-3 py-1 border-bottom bg-info-subtle d-flex flex-wrap gap-2 small">
                             @foreach($presenceIndicators as $indicator)
                                 @if($indicator['conversation_id'] === (int) $selectedPlacement?->conversation_id)

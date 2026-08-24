@@ -1,9 +1,15 @@
 # Feature Slice: Email Compose, Draft, Send, and Sent API Parity
 
-Status: In Progress
+Status: Rework Needed
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 11)
 Review ID: `HR-2026-08-16-011`
+
+2026-08-21 audit: the Reply/Reply All/Forward undefined-placement regression is repaired with a
+focused test that removes the quarantined lock table and proves all three ordinary private composer
+flows still send through their selected mailbox placement. Collaboration remains independently
+disabled. Shared lookup currently erases the private-draft ownership boundary; durable fencing,
+explicit shared scope and complete API/Sent parity remain unverified.
 
 ## Purpose
 

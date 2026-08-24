@@ -35,6 +35,40 @@ class WarroomDashboardTest extends TestCase
     }
 
     #[Test]
+    public function dashboard_navigation_groups_dashboard_and_my_day_and_links_the_warroom_lane(): void
+    {
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.dashboard'))
+            ->assertOk();
+
+        $html = $response->getContent();
+        $dashboardUrl = preg_quote(route('tech.dashboard'), '/');
+        $myDayUrl = preg_quote(route('tech.my-day.index'), '/');
+
+        $this->assertSame(2, preg_match_all(
+            '/<a class="nav-link dropdown-toggle active"[^>]*>Dashboard<\\/a>/',
+            $html
+        ));
+        $this->assertSame(2, preg_match_all(
+            '/<a class="dropdown-item active"\\s+aria-current="page"\\s+href="'.$dashboardUrl.'">Dashboard<\\/a>/',
+            $html
+        ));
+        $this->assertSame(2, preg_match_all(
+            '/<a class="dropdown-item"\\s+\\s*href="'.$myDayUrl.'">My Day<\\/a>/',
+            $html
+        ));
+        $this->assertDoesNotMatchRegularExpression(
+            '/<a[^>]*aria-current="page"[^>]*href="'.$myDayUrl.'"/',
+            $html
+        );
+        $this->assertMatchesRegularExpression(
+            '/<i class="bi bi-journal-text me-2" aria-hidden="true"><\\/i>Knowledge\\s*<\\/a>.*'
+                .'<i class="bi bi-calendar2-check me-2" aria-hidden="true"><\\/i>My Day\\s*<\\/a>/s',
+            $html
+        );
+    }
+
+    #[Test]
     public function dashboard_shows_next_calendar_event_when_today_has_no_events(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-05-28 09:00', 'Europe/Oslo'));

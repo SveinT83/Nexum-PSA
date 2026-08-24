@@ -4,6 +4,8 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Notification\Services\InboundEmailNotificationFanoutReadiness;
+use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -184,7 +186,7 @@ final class AdvanceInboundEmailTicketMessageRepair
                     }
 
                     $email = $emails->get($emailId);
-                    if (! $email || (int) $email->ticket_id !== (int) $ticketMessage->ticket_id) {
+                    if (! $email || ! $this->hasExactTicketOwnershipEvidence($email, $ticketMessage)) {
                         throw new RuntimeException('repair_email_ticket_conflict');
                     }
 
@@ -314,6 +316,89 @@ final class AdvanceInboundEmailTicketMessageRepair
         $raw = $metadata['email_message_id'] ?? null;
 
         return is_int($raw) && $raw >= 1 ? $raw : null;
+    }
+
+    /**
+     * Accept either the active scalar Ticket owner or the exact durable facts
+     * written by the legacy "Mark as not Ticket" workflow. That workflow
+     * deliberately detached the Email row and soft-deleted the Ticket while
+     * retaining its captured TicketMessage as evidence. The repair may add
+     * the immutable capture pointers, but must never relink that Email.
+     */
+    private function hasExactTicketOwnershipEvidence(
+        EmailMessage $email,
+        TicketMessage $ticketMessage,
+    ): bool {
+        $ticketId = (int) $ticketMessage->ticket_id;
+        if ((int) ($email->ticket_id ?? 0) === $ticketId) {
+            return true;
+        }
+
+        return $this->isProvenLegacyNotTicketDetachment($email, $ticketId);
+    }
+
+    /** Require the complete legacy detachment chain before preserving its capture. */
+    private function isProvenLegacyNotTicketDetachment(EmailMessage $email, int $ticketId): bool
+    {
+        if ($email->ticket_id !== null || $email->state !== 'untriaged') {
+            return false;
+        }
+
+        $ticket = Ticket::query()
+            ->withTrashed()
+            ->whereKey($ticketId)
+            ->lockForUpdate()
+            ->first(['id', 'metadata', 'deleted_at', 'merged_into_ticket_id']);
+        $notTicket = is_array($ticket?->metadata)
+            ? ($ticket->metadata['not_ticket'] ?? null)
+            : null;
+        $metadataEmailIds = is_array($notTicket)
+            ? $this->normalizedExactEmailIds($notTicket['email_message_ids'] ?? null)
+            : null;
+        if (! $ticket?->trashed()
+            || $ticket->merged_into_ticket_id !== null
+            || $metadataEmailIds === null
+            || ! in_array((int) $email->id, $metadataEmailIds, true)) {
+            return false;
+        }
+
+        $events = TicketEvent::query()
+            ->where('ticket_id', $ticketId)
+            ->where('type', 'marked_not_ticket')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get(['after']);
+        if ($events->count() !== 1) {
+            return false;
+        }
+        $after = is_array($events->sole()->after) ? $events->sole()->after : [];
+        $eventEmailIds = $this->normalizedExactEmailIds($after['email_message_ids'] ?? null);
+
+        return ($after['tag'] ?? null) === 'not-ticket'
+            && $eventEmailIds === $metadataEmailIds
+            && $email->tags()
+                ->wherePivot('module', 'email')
+                ->where('tags.slug', 'not-ticket')
+                ->exists();
+    }
+
+    /** @return list<int>|null */
+    private function normalizedExactEmailIds(mixed $values): ?array
+    {
+        if (! is_array($values) || $values === []) {
+            return null;
+        }
+
+        $normalized = [];
+        foreach ($values as $value) {
+            if (! is_int($value) || $value < 1 || in_array($value, $normalized, true)) {
+                return null;
+            }
+            $normalized[] = $value;
+        }
+        sort($normalized, SORT_NUMERIC);
+
+        return $normalized;
     }
 
     /** @return array{status:string,cursor_id:int,through_id:int,processed:int,error_code:?string} */

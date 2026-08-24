@@ -56,7 +56,8 @@ Route::post('/mail/accounts/{account}/unread-handover/{run}', [UnreadHandoverCon
     ->name('mail.unread-handover.apply');
 
 Route::post('/mail/broadcasting/auth', EmailBroadcastingController::class)
-    ->name('mail.broadcasting.auth');
+    ->middleware('throttle:email-mail-broadcast-auth')
+    ->name('mail.broadcast.auth');
 
 Route::get('/inbox', [InboxController::class, 'index'])
     ->name('inbox.index');

@@ -287,6 +287,8 @@ class EmailProviderDeletionReconciliationTest extends TestCase
         $ticket = Ticket::factory()->create();
         $ticketMessage = TicketMessage::query()->create([
             'ticket_id' => $ticket->id,
+            'source_inbound_email_message_id' => $message->id,
+            'inbound_email_message_id' => $message->id,
             'author_type' => 'contact',
             'type' => 'customer_reply',
             'visibility' => 'public',
