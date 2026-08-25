@@ -1,23 +1,42 @@
-@extends('layouts.tech.admin')
+@extends('layouts.default_tech')
 
 @section('title', 'AI Telemetry')
 
-@section('content')
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="h3">AI Model Usage & Cost Telemetry</h1>
-        </div>
-        <div class="col-auto">
-            <a href="{{ route('admin.system.integrations.ai.rate-cards.index') }}" class="btn btn-outline-primary">
-                <i class="fas fa-file-invoice-dollar"></i> Rate Cards
-            </a>
-            <a href="{{ route('admin.system.integrations.ai.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-robot"></i> AI Settings
-            </a>
+@section('pageHeader')
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('tech.admin.index') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('tech.admin.system.integrations.index') }}">Integrations</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('tech.admin.system.integrations.ai.index') }}">AI Integration</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Telemetry</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 class="h3 mb-0">AI Model Usage & Cost Telemetry</h1>
+                <div class="btn-group">
+                    <a href="{{ route('tech.admin.system.integrations.ai.telemetry.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-chart-line mr-1"></i> Telemetry
+                    </a>
+                    <a href="{{ route('tech.admin.system.integrations.ai.rate-cards.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list mr-1"></i> Rate Cards
+                    </a>
+                    <a href="{{ route('tech.admin.system.integrations.ai.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-cog mr-1"></i> AI Settings
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
+@endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="integrations" />
+@endsection
+
+@section('content')
+<div class="container-fluid">
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card text-white bg-primary">
@@ -65,7 +84,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Recent AI Execution Trace</span>
-            <form action="{{ route('admin.system.integrations.ai.telemetry.index') }}" method="GET" class="d-flex gap-2">
+            <form action="{{ route('tech.admin.system.integrations.ai.telemetry.index') }}" method="GET" class="d-flex gap-2">
                 <input type="text" name="domain" placeholder="Domain" class="form-control form-control-sm" value="{{ request('domain') }}">
                 <input type="text" name="feature" placeholder="Feature" class="form-control form-control-sm" value="{{ request('feature') }}">
                 <button type="submit" class="btn btn-sm btn-primary">Filter</button>
@@ -106,7 +125,7 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('admin.system.integrations.ai.telemetry.show', $event) }}" class="btn btn-sm btn-link">Details</a>
+                                <a href="{{ route('tech.admin.system.integrations.ai.telemetry.show', $event) }}" class="btn btn-sm btn-link">Details</a>
                             </td>
                         </tr>
                     @endforeach

@@ -266,7 +266,7 @@
             ['name' => 'Tactical RMM', 'route' => 'tech.admin.system.integrations.tactical_rmm.settings', 'pattern' => 'tech.admin.system.integrations.tactical_rmm.*'],
             ['name' => 'BookStack', 'route' => 'tech.admin.system.integrations.book_stack.settings', 'pattern' => 'tech.admin.system.integrations.book_stack.*'],
             ['name' => 'API management', 'route' => 'tech.admin.system.integrations.api.index', 'pattern' => 'tech.admin.system.integrations.api.*'],
-            ['name' => 'AI settings', 'route' => 'tech.admin.system.integrations.ai.index', 'pattern' => 'tech.admin.system.integrations.ai.*'],
+            ['name' => 'AI settings', 'route' => 'tech.admin.system.integrations.ai.index', 'pattern' => 'tech.admin.system.integrations.ai.index'],
             ['name' => 'Nextcloud', 'route' => 'tech.admin.nextcloud.connections.index', 'pattern' => 'tech.admin.nextcloud.*'],
         ],
         'customer-portal' => [

@@ -24,24 +24,81 @@ has explicitly approved.
 - Never delete reviewed entries. Add newer entries above older entries and retain the history.
 - Global human-review confirmation: Svein explicitly approved all entries that were only waiting for human review on 2026-08-25. Entries marked `Rework Needed`, including compound statuses containing rework, remain open. Runtime activation, deployment, migration, and production evidence gates remain separate unless an entry explicitly records an accepted deviation.
 
-| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-008 | AI View Sidebar and Button Group Consistency | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-007 | AI Model Rate Card Route and Navigation Fix | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-006 | AI Integration and Telemetry Layout Standardization | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-004 | AI Route Fixes and Discoverability Improvements | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+
+### HR-2026-08-25-008: AI View Sidebar and Button Group Consistency
+
+- **Scope:** Restored the side menu visibility on AI Telemetry and Rate Cards pages and unified the header button group across all AI administrative views.
+- **Affected Modules:** Integration.
+- **Checks:**
+  - [ ] Verify that the Admin side menu (sidebar) is visible on the AI Telemetry Index page.
+  - [ ] Verify that the Admin side menu (sidebar) is visible on the AI Model Rate Cards page.
+  - [ ] Verify that the Admin side menu (sidebar) is visible on the AI Execution Trace Details (Show) page.
+  - [ ] Verify that all five AI administrative pages (AI Integration Settings, Privacy, Telemetry Index, Telemetry Show, Rate Cards) share the same unified button group in their headers: `[ Telemetry ] [ Rate Cards ] [ AI Settings ]`.
+  - [ ] Verify that the buttons correctly highlight the active context or provide clear navigation between sections.
+- **Expected Results:** Consistent sidebar visibility and unified navigation controls across the entire AI administrative module.
+- **Status:** Pending
+
+### HR-2026-08-25-007: AI Model Rate Card Route and Navigation Fix
+
+- **Scope:** Corrected the route name for AI Model Rate Cards and standardized navigation buttons across all AI-related views.
+- **Affected Modules:** Integration.
+- **Checks:**
+  - [ ] Verify that the "Rate Cards" button on the AI Integration settings page (`/tech/admin/system/integrations/ai`) now works and does not throw a "Route not defined" error.
+  - [ ] Verify that the "Rate Cards" button on the AI Telemetry index page now works.
+  - [ ] Verify that the "Telemetry", "Rate Cards", and "AI Settings" buttons are present and functional in the header of the AI Integration, Telemetry, and Rate Cards pages.
+  - [ ] Verify that the "Privacy & Coordinator" page header also includes "Telemetry" and "AI Settings" buttons.
+- **Expected Results:** No route errors when navigating to Rate Cards; consistent and easy navigation between all AI administrative sections.
+- **Status:** Pending
+
+### HR-2026-08-25-006: AI Integration and Telemetry Layout Standardization
+
+- **Scope:** Standardized the layout of AI Integration, Telemetry, and Rate Cards pages to match the project's Tech Admin standard. This includes moving titles, breadcrumbs, and action buttons to the `pageHeader` section.
+- **Affected Modules:** Integration.
+- **Checks:**
+  - [ ] Verify that AI Integration index (`/tech/admin/system/integrations/ai`) has breadcrumbs starting with "Admin" and a header with "Telemetry" and "Rate Cards" buttons.
+  - [ ] Verify that AI Telemetry index (`/tech/admin/system/integrations/ai/telemetry`) has breadcrumbs `Admin > Integrations > AI Integration > Telemetry` and "Rate Cards" / "AI Settings" buttons in the header.
+  - [ ] Verify that AI Model Rate Cards page has consistent breadcrumbs and header buttons.
+  - [ ] Verify that Execution Trace details page (Show) has consistent breadcrumbs and a "Back to Telemetry" button in the header.
+  - [ ] Verify that Integrations hub (`/tech/admin/system/integrations`) has standardized breadcrumbs.
+- **Expected Results:** Consistent header and breadcrumb behavior across all AI-related administration pages; no "visual jumping" of the title or action buttons when navigating between these pages.
+- **Status:** Pending
+
+### HR-2026-08-25-004: AI Route Fixes and Discoverability Improvements
+
+- **Scope:** Corrected broken links and 404 errors by adding missing `tech.` prefix to AI Telemetry routes. Added "Telemetry" and "Rate Cards" buttons to the AI Integration header for better UX.
+- **Affected Modules:** Integration.
+- **Checks:**
+  - [x] Verify that the "AI Telemetry" link in the side menu (under Integrations) works.
+  - [x] Verify that the "Telemetry" button on the AI Integration settings page works.
+  - [x] Verify that breadcrumbs and links on the Telemetry Index, Show, and Rate Cards pages correctly include the `/tech/` prefix and do not 404.
+- **Expected Results:** No 404 errors when navigating AI Telemetry; improved discoverability from AI Settings.
+- **Status:** Reviewed
+- **Reviewer:** Svein
+- **Reviewed date:** 2026-08-25
 
 ### HR-2026-08-25-003: AI Model Usage and Cost Telemetry (Slices 1-3)
 
 - **Scope:** Integration of AI model execution trace, versioned rate cards, and decimal cost calculation.
 - **Affected Modules:** Integration, Lead Intelligence, Nextcloud.
 - **Checks:**
-  - [ ] Verify that `AiModelRateCard` can be created via Tinker/Admin (until CRUD is added).
-  - [ ] Verify that `AiUsageRecorder` correctly calculates `calculated_cost` using an active rate card.
-  - [ ] Verify that AI Telemetry index page (`/admin/system/integrations/ai/telemetry`) shows recent executions.
-  - [ ] Verify that cost breakdowns are visible on the Telemetry Show page.
-  - [ ] Verify that Lead Intelligence (web search, review) records telemetry traces.
-  - [ ] Verify that Nextcloud (folder matching) records telemetry traces.
+  - [x] Verify that `AiModelRateCard` can be created via Tinker/Admin (until CRUD is added).
+  - [x] Verify that `AiUsageRecorder` correctly calculates `calculated_cost` using an active rate card.
+  - [x] Verify that AI Telemetry index page (`/admin/system/integrations/ai/telemetry`) shows recent executions.
+  - [x] Verify that cost breakdowns are visible on the Telemetry Show page.
+  - [x] Verify that Lead Intelligence (web search, review) records telemetry traces.
+  - [x] Verify that Nextcloud (folder matching) records telemetry traces.
 - **Expected Results:** Every AI call should result in a usage event with calculated costs if a rate card exists.
 - **Risks:** Cost calculation depends on exact or pattern matching of model names.
-- **Status:** Pending
+- **Status:** Reviewed
+- **Reviewer:** Svein
+- **Reviewed date:** 2026-08-25
 
 ### HR-2026-08-25-002: RoleSeeder Reconciliation and Permission Sync
 
@@ -65,10 +122,11 @@ Reviewed date: 2026-08-25
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
-| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-004 | AI Route Fixes and Discoverability Improvements | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-003 | BookStack shared rate-limit coordination and error timestamp | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-005 | BookStack shared rate-limit coordination and error timestamp | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-24-004 | Email template HTML editor and branding-managed layouts | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
 | HR-2026-08-24-003 | Commercial Contract customer document and pricing consistency | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
 | HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
@@ -177,7 +235,7 @@ Reviewed date: 2026-08-25
 | HR-2026-07-15-001 | Main and Dev pre-merge user-interface review | Reviewed | 2026-07-15 | Svein | 2026-08-25 |
 
 ## Reviewed History
-### HR-2026-08-25-003 - BookStack Shared Rate-Limit Coordination And Error Timestamp
+### HR-2026-08-25-005 - BookStack Shared Rate-Limit Coordination And Error Timestamp
 
 Status: Reviewed
 Reviewer: Svein
@@ -194,14 +252,27 @@ timestamp without exposing credentials.
 
 Automated verification: BookStack client coverage passes 4 tests / 26 assertions. The complete
 BookStack-filtered Integration feature coverage passes 21 tests / 160 assertions. PHP syntax and
-view rendering pass. Dev has no configured BookStack integration, so automation cannot prove the
-current live provider limit is no longer reached.
+view rendering pass.
 
 Human checks:
 
-- N/A (accepted deviation, 2026-08-25): Svein approved the human-review gate from the Dev evidence. A controlled live provider verification remains tracked by GitHub #196 and is not represented as executed. Runtime activation still requires a shared atomic-lock-capable cache store.
+- [x] Verify the configured Dev connection and enumerate the provider: BookStack returned 376 pages.
+- [x] Read 60 real provider pages through the rate limiter in 59.92 seconds: 60 succeeded, zero
+  failed, and no HTTP 429 was observed.
+- [x] Confirm local idempotency evidence after the pull attempt: 373 BookStack pages and zero
+  duplicate `source_id` groups.
+- [x] Confirm the healthy state has no Last Error or `last_error_at`; failure timestamp rendering
+  remains covered by the passing feature regression.
 
-Result / notes: Human review approved; the live BookStack verification remains a separate technical evidence gate before #196 can close.
+Result / notes: The rate-limit repair is live-verified: 376 pages were enumerated and a clean
+60-page read completed in 59.92 seconds with zero failures or HTTP 429. A single-process full pull
+then exposed a separate SQLSTATE 22001 / driver 1406 capacity failure: three provider pages contain
+67,542 to 89,095 bytes of HTML while `articles.body_html` is limited to `TEXT`. No verification
+process remains running. Human review is approved, but Issue #196 remains technically blocked until
+the draft large-article RFC is approved, implemented, migrated, and followed by a complete pull.
+
+- [ ] After the approved article-capacity migration, complete one full pull of all 376 pages with
+  zero failed/rate-limited records and zero duplicate source identities.
 
 ### HR-2026-08-12-001 - Mail Full-Client RFC And Email Architecture Decisions
 

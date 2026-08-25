@@ -1,21 +1,43 @@
-@extends('layouts.tech.admin')
+@extends('layouts.default_tech')
 
 @section('title', 'Execution Trace Details')
 
-@section('content')
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
+@section('pageHeader')
+    <div class="row">
+        <div class="col-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.system.integrations.ai.telemetry.index') }}">AI Telemetry</a></li>
-                    <li class="breadcrumb-item active">Execution Trace</li>
+                    <li class="breadcrumb-item"><a href="{{ route('tech.admin.index') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('tech.admin.system.integrations.index') }}">Integrations</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('tech.admin.system.integrations.ai.index') }}">AI Integration</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('tech.admin.system.integrations.ai.telemetry.index') }}">Telemetry</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Execution Trace</li>
                 </ol>
             </nav>
-            <h1 class="h3">Execution Trace: {{ $event->execution_id }}</h1>
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 class="h3 mb-0">Execution Trace: {{ $event->execution_id }}</h1>
+                <div class="btn-group">
+                    <a href="{{ route('tech.admin.system.integrations.ai.telemetry.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-chart-line mr-1"></i> Telemetry
+                    </a>
+                    <a href="{{ route('tech.admin.system.integrations.ai.rate-cards.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list mr-1"></i> Rate Cards
+                    </a>
+                    <a href="{{ route('tech.admin.system.integrations.ai.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-cog mr-1"></i> AI Settings
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
+@endsection
 
+@section('sidebar')
+    <x-nav.admin-menu group="integrations" />
+@endsection
+
+@section('content')
+<div class="container-fluid">
     <div class="row">
         <div class="col-md-8">
             <div class="card mb-4">
