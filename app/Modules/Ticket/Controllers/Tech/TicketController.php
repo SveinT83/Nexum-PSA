@@ -109,8 +109,12 @@ class TicketController extends Controller
             'mergeSuggestions' => $mergeSuggestionService->suggestionsForIndex(),
             'stats' => [
                 'open' => Ticket::whereHas('status', fn ($query) => $query->where('is_closed', false))->count(),
-                'mine' => Ticket::where('owner_id', $request->user()?->id)->count(),
-                'unread' => Ticket::where('is_unread', true)->count(),
+                'mine' => Ticket::where('owner_id', $request->user()?->id)
+                    ->whereHas('status', fn ($query) => $query->where('is_closed', false))
+                    ->count(),
+                'unread' => Ticket::where('is_unread', true)
+                    ->whereHas('status', fn ($query) => $query->where('is_closed', false))
+                    ->count(),
                 'unassigned' => Ticket::whereNull('owner_id')
                     ->whereHas('status', fn ($query) => $query->where('is_closed', false))
                     ->count(),
@@ -807,10 +811,6 @@ class TicketController extends Controller
         $assetId = empty($data['asset_id'])
             ? null
             : $this->validateAssetScope($data['asset_id'], $clientId, $contactId, $siteId)->id;
-
-        if (app()->environment('testing')) {
-             throw new \Exception('is_scheduled: ' . json_encode($data['is_scheduled'] ?? 'MISSING'));
-        }
 
         $updateTicketFields->handle($ticket, [
             'subject' => $data['subject'],
