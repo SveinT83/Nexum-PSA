@@ -27,5 +27,9 @@ work surface remains available from both navigation contexts.
 
 My Day is available at `/tech/my-day` and is also protected by `warroom.view`. It shows the signed-in
 technician's open assigned tickets, open assigned tasks, and today's calendar events in a compact
-mobile-friendly surface. It reads existing Ticket, Task, and Calendar data; those source domains keep
+mobile-friendly surface. All summary cards and queue rows are actionable drill-down links:
+- **Tickets/Tasks/Events**: Link to their respective modules filtered to the technician's open work or the current date.
+- **Unread/Overdue**: Link to specific filtered views for triage.
+- **Overdue Focus**: Provides a combined, unified view of all overdue tickets and tasks in a single list for immediate priority focus.
+It reads existing Ticket, Task, and Calendar data; those source domains keep
 ownership of their own workflows and write actions.

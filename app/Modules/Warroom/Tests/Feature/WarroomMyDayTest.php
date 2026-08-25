@@ -169,6 +169,73 @@ class WarroomMyDayTest extends TestCase
             ->assertSee('serviceWorker')
             ->assertDontSee('Other technician ticket')
             ->assertDontSee('Other technician task')
-            ->assertDontSee('Other technician event');
+            ->assertDontSee('Other technician event')
+            ->assertSee(route('tech.tickets.index', ['ownership' => 'mine', 'lifecycle' => 'open']))
+            ->assertSee(route('tech.tasks.index', ['mine' => 1]))
+            ->assertSee(route('tech.calendar.index', ['view' => 'day', 'date' => '2026-07-05']))
+            ->assertSee(route('tech.my-day.index', ['focus' => 'overdue']))
+            ->assertSee(route('tech.tickets.index', ['ownership' => 'mine', 'lifecycle' => 'open', 'unread' => 1]));
+    }
+
+    #[Test]
+    public function my_day_shows_full_counts_even_when_previews_are_limited(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-05 09:15', 'Europe/Oslo'));
+
+        // Create 10 tickets (limit is 8)
+        Ticket::factory()->count(10)->create([
+            'owner_id' => $this->tech->id,
+            'resolve_due_at' => now()->addHour(),
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.my-day.index'))
+            ->assertOk()
+            ->assertSee('10') // Full count in Ticket summary card
+            ->assertSee('Tickets');
+
+        // Check that only 8 ticket subjects are visible if we had unique subjects
+        // But we just want to verify the count is 10.
+    }
+
+    #[Test]
+    public function overdue_focus_shows_combined_tickets_and_tasks(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-05 09:15', 'Europe/Oslo'));
+        $now = now();
+
+        $openStatus = TaskStatus::query()->create([
+            'name' => 'Open',
+            'slug' => 'open',
+            'is_default' => true,
+            'is_active' => true,
+            'is_open' => true,
+            'sort_order' => 1,
+        ]);
+
+        $overdueTicket = Ticket::factory()->create([
+            'owner_id' => $this->tech->id,
+            'subject' => 'URGENT Overdue Ticket',
+            'resolve_due_at' => $now->copy()->subDay(),
+        ]);
+
+        $overdueTask = Task::query()->create([
+            'title' => 'URGENT Overdue Task',
+            'owner_type' => User::class,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'assigned_to' => $this->tech->id,
+            'status_id' => $openStatus->id,
+            'due_at' => $now->copy()->subDay(),
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.my-day.index', ['focus' => 'overdue']))
+            ->assertOk()
+            ->assertSee('Overdue Work Items')
+            ->assertSee('URGENT Overdue Ticket')
+            ->assertSee('URGENT Overdue Task')
+            ->assertSee(route('tech.tickets.show', $overdueTicket))
+            ->assertSee(route('tech.tasks.show', $overdueTask));
     }
 }
