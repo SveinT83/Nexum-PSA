@@ -20,6 +20,8 @@ use Illuminate\Http\Request;
  */
 class AssetController extends Controller
 {
+    private const ASSET_FILTER_TTL_MINUTES = 120;
+
     /**
      * Display the global or client-scoped asset list.
      *
@@ -38,10 +40,72 @@ class AssetController extends Controller
             $client = Client::find($client);
         }
 
+        $sessionKey = $client
+            ? 'asset_filters_client_' . $client->id
+            : 'asset_filters_global';
+
+        if ($request->boolean('clear_filters')) {
+            session()->forget($sessionKey);
+
+            return redirect()->to($request->url());
+        }
+
+        $filterKeys = [
+            'search',
+            'client_id',
+            'context_type',
+            'work_context_id',
+            'type',
+            'status',
+            'sensitivity_level',
+            'criticality_level',
+            'has_alerts',
+            'sort',
+            'direction',
+            'page',
+        ];
+
+        $hasIncomingFilters = collect($filterKeys)->contains(fn (string $key): bool => $request->has($key));
+        $storedData = session($sessionKey);
+
+        if (! $hasIncomingFilters && is_array($storedData ?? null)) {
+            $storedAt = $storedData['stored_at'] ?? null;
+            $isExpired = ! $storedAt || now()->diffInMinutes($storedAt) > self::ASSET_FILTER_TTL_MINUTES;
+
+            if ($isExpired) {
+                session()->forget($sessionKey);
+                $filters = array_fill_keys($filterKeys, null);
+            } else {
+                $filters = array_merge(array_fill_keys($filterKeys, null), $storedData['filters'] ?? []);
+                // If we are restoring from session, we might want to redirect to the URL with these parameters
+                // OR we can just merge them into the request so the Query object sees them.
+                foreach ($filters as $key => $value) {
+                    if (filled($value) && ! $request->has($key)) {
+                        $request->merge([$key => $value]);
+                    }
+                }
+            }
+        } else {
+            $filters = array_merge(array_fill_keys($filterKeys, null), $request->only($filterKeys));
+            $filters = array_map(fn ($value) => is_string($value) ? trim($value) : $value, $filters);
+
+            session([
+                $sessionKey => [
+                    'filters' => $filters,
+                    'stored_at' => now(),
+                ],
+            ]);
+        }
+
         $assets = app(AssetQuery::class)->paginateForTechIndex($request, $client);
         $clients = Client::orderBy('name')->get();
 
-        return view('asset::Tech.index', compact('assets', 'clients', 'client'));
+        $activeFilterCount = collect($filters)
+            ->except(['sort', 'direction', 'page'])
+            ->filter(fn ($value): bool => filled($value))
+            ->count();
+
+        return view('asset::Tech.index', compact('assets', 'clients', 'client', 'filters', 'activeFilterCount'));
     }
 
     /**

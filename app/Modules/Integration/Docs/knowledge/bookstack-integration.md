@@ -119,6 +119,16 @@ New BookStack failures record `last_error_at`. Admin shows the exact recorded ti
 last error, and the sanitized status API returns it without credentials or raw provider payloads.
 Historical errors without recorded timing are labelled accordingly.
 
+## Large Page Storage
+
+Knowledge stores `articles.body_markdown` and nullable `articles.body_html` as `MEDIUMTEXT`. This
+preserves BookStack pages above the 65,535-byte `TEXT` ceiling without truncation. The schema change
+is owned by `2026_08_25_210000_expand_knowledge_article_body_capacity`; its rollback refuses to
+shrink while either body contains more than 65,535 bytes.
+
+A production rollout requires a database backup, paused BookStack/default workers during migration,
+column-type read-back, `php artisan optimize:clear`, worker restart, and one controlled full pull.
+
 ## Safety Rules
 
 Do not overwrite BookStack source metadata when updating repository-owned documentation.

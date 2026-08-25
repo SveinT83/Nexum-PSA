@@ -10,7 +10,11 @@ The module is singular by architecture rule: the domain is `Asset`, even though 
 
 ### List Assets
 
-Technicians can open **Work > Assets** to view all registered assets. The list supports filtering by client, type, status, and active alerts.
+Technicians can open **Work > Assets** to view all registered assets. The list supports a compact search toolbar for asset names and hostnames, and an expandable filter panel for client context, type, status, sensitivity, criticality, and active alerts.
+
+The Client filter in the expanded panel uses a searchable text field with datalist suggestions (autocomplete) for fast lookup across all clients.
+
+Asset list state (search, filters, sorting, and page) is automatically remembered for the technician's session, isolated by global vs client scope. This allows opening an asset and returning to the exact same list state without repeated filtering. An explicit URL query string overrides the remembered state.
 
 Client pages and site pages also display asset cards. Those cards link back to the canonical client-scoped asset list:
 

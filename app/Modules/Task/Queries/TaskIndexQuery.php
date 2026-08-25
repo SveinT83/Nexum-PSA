@@ -15,7 +15,7 @@ class TaskIndexQuery
      */
     public function paginate(Request $request): LengthAwarePaginator
     {
-        $sort = $request->input('sort', 'updated_at');
+        $sort = $request->input('sort');
         $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
 
         $query = Task::query()
@@ -33,11 +33,8 @@ class TaskIndexQuery
 
         if ($statusId = $request->integer('status_id')) {
             $query->where('status_id', $statusId);
-        } elseif (! $request->boolean('include_done')) {
-            $query->where(function (Builder $nested) {
-                $nested->whereNull('completed_at')
-                    ->whereHas('status', fn (Builder $status) => $status->where('is_done', false));
-            });
+        } elseif (! $request->has('include_done') || ! $request->boolean('include_done')) {
+            $query->open();
         }
 
         if ($queueId = $request->integer('queue_id')) {
@@ -50,10 +47,10 @@ class TaskIndexQuery
 
         if ($assignedTo = $request->integer('assigned_to')) {
             $query->where('assigned_to', $assignedTo);
-        }
-
-        if ($request->boolean('mine') && $request->user() instanceof User) {
-            $query->where('assigned_to', $request->user()->id);
+        } elseif (($request->has('mine') && $request->boolean('mine')) || (! $request->has('mine') && ! $request->has('assigned_to'))) {
+            if ($request->user() instanceof User) {
+                $query->where('assigned_to', $request->user()->id);
+            }
         }
 
         $this->applySort($query, $sort, $direction);
@@ -61,8 +58,20 @@ class TaskIndexQuery
         return $query->paginate(25)->withQueryString();
     }
 
-    private function applySort(Builder $query, string $sort, string $direction): void
+    private function applySort(Builder $query, ?string $sort, string $direction): void
     {
+        if (! $sort) {
+            $query->leftJoin('ticket_priorities as default_sort_priorities', 'tasks.priority_id', '=', 'default_sort_priorities.id')
+                ->orderByRaw('default_sort_priorities.level is null')
+                ->orderBy('default_sort_priorities.level', 'asc')
+                ->orderByRaw('tasks.due_at is null')
+                ->orderBy('tasks.due_at', 'asc')
+                ->orderBy('tasks.id', 'desc')
+                ->select('tasks.*');
+
+            return;
+        }
+
         match ($sort) {
             'title' => $query->orderBy('title', $direction),
             'status' => $query->leftJoin('task_statuses as sort_statuses', 'tasks.status_id', '=', 'sort_statuses.id')

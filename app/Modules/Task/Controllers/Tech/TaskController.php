@@ -45,8 +45,11 @@ class TaskController extends Controller
             'queues' => TicketQueue::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::query()->where('is_active', true)->orderBy('sort_order')->orderBy('level')->get(),
             'users' => User::query()->where('status', User::STATUS_ACTIVE)->orderBy('name')->get(),
-            'filters' => $request->only(['q', 'status_id', 'queue_id', 'priority_id', 'assigned_to', 'mine', 'include_done', 'sort', 'direction']),
-            'sort' => $request->input('sort', 'updated_at'),
+            'filters' => array_merge(
+                ['mine' => ! $request->has('assigned_to') && ! $request->has('mine')],
+                $request->only(['q', 'status_id', 'queue_id', 'priority_id', 'assigned_to', 'mine', 'include_done', 'sort', 'direction'])
+            ),
+            'sort' => $request->input('sort'),
             'direction' => $request->input('direction') === 'asc' ? 'asc' : 'desc',
         ]);
     }

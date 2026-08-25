@@ -24,6 +24,7 @@ has explicitly approved.
 - Never delete reviewed entries. Add newer entries above older entries and retain the history.
 - Global human-review confirmation: Svein explicitly approved all entries that were only waiting for human review on 2026-08-25. Entries marked `Rework Needed`, including compound statuses containing rework, remain open. Runtime activation, deployment, migration, and production evidence gates remain separate unless an entry explicitly records an accepted deviation.
 
+| HR-2026-08-25-009 | Technician Task List Default Filter and Ordering | Pending | 2026-08-25 |  |  |
 | HR-2026-08-25-008 | AI View Sidebar and Button Group Consistency | Pending | 2026-08-25 |  |  |
 | HR-2026-08-25-007 | AI Model Rate Card Route and Navigation Fix | Pending | 2026-08-25 |  |  |
 | HR-2026-08-25-006 | AI Integration and Telemetry Layout Standardization | Pending | 2026-08-25 |  |  |
@@ -31,6 +32,22 @@ has explicitly approved.
 | HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+
+### HR-2026-08-25-009: Technician Task List Default Filter and Ordering
+
+- **Scope:** Changed the default Technician Task list to show only genuinely open work assigned to the authenticated user, ordered by priority (P1 first) and due date.
+- **Affected Modules:** Task.
+- **Checks:**
+  - [ ] Verify that navigating to `/tech/tasks` without parameters defaults to tasks assigned to the current user.
+  - [ ] Verify that the "Assigned to me" checkbox is checked by default.
+  - [ ] Verify that only Open, In Progress, and Blocked tasks are shown by default (Done/Cancelled excluded).
+  - [ ] Verify that tasks are ordered by Priority level (P1 first), then Due Date (earlier first), then Task ID (desc).
+  - [ ] Verify that tasks without a priority appear after prioritized tasks.
+  - [ ] Verify that unchecking "Assigned to me" or selecting a different user shows the expected tasks.
+  - [ ] Verify that clicking "Clear" resets to the new personal default view.
+  - [ ] Verify that manual sorting (e.g., by Title) overrides the default priority-based sorting.
+- **Expected Results:** Technicians immediately see their most important open work; filters and UI state remain consistent during pagination and explicit overrides.
+- **Status:** Pending
 
 ### HR-2026-08-25-008: AI View Sidebar and Button Group Consistency
 
@@ -251,27 +268,28 @@ honored, fallback retries use 15/30/60 seconds, and new Admin/API error records 
 timestamp without exposing credentials.
 
 Automated verification: BookStack client coverage passes 4 tests / 26 assertions. The complete
-BookStack-filtered Integration feature coverage passes 21 tests / 160 assertions. PHP syntax and
-view rendering pass.
+BookStack-filtered Integration feature coverage passes 21 tests / 164 assertions, including
+complete persistence of HTML and Markdown payloads above 70 KB. Together with the client suite, the
+focused result is 25 tests / 190 assertions. PHP syntax, Pint, and diff checks pass.
 
 Human checks:
 
 - [x] Verify the configured Dev connection and enumerate the provider: BookStack returned 376 pages.
 - [x] Read 60 real provider pages through the rate limiter in 59.92 seconds: 60 succeeded, zero
   failed, and no HTTP 429 was observed.
-- [x] Confirm local idempotency evidence after the pull attempt: 373 BookStack pages and zero
-  duplicate `source_id` groups.
+- [x] Confirm final local idempotency evidence: 376 BookStack pages and zero duplicate
+  `source_id` groups.
 - [x] Confirm the healthy state has no Last Error or `last_error_at`; failure timestamp rendering
   remains covered by the passing feature regression.
 
-Result / notes: The rate-limit repair is live-verified: 376 pages were enumerated and a clean
-60-page read completed in 59.92 seconds with zero failures or HTTP 429. A single-process full pull
-then exposed a separate SQLSTATE 22001 / driver 1406 capacity failure: three provider pages contain
-67,542 to 89,095 bytes of HTML while `articles.body_html` is limited to `TEXT`. No verification
-process remains running. Human review is approved, but Issue #196 remains technically blocked until
-the draft large-article RFC is approved, implemented, migrated, and followed by a complete pull.
+Result / notes: Svein approved the large-article RFC and migration on 2026-08-25. Dev migration
+`2026_08_25_210000_expand_knowledge_article_body_capacity` ran in batch 2 and read-back confirms
+`body_markdown` and nullable `body_html` are `MEDIUMTEXT`. The final single-process pull completed in
+390.96 seconds: 3 created, 373 skipped, 0 failed, 0 rate-limited, 376 total, 0 duplicate source
+identities, healthy integration, and no Last Error or `last_error_at`. No verification process
+remains running.
 
-- [ ] After the approved article-capacity migration, complete one full pull of all 376 pages with
+- [x] After the approved article-capacity migration, complete one full pull of all 376 pages with
   zero failed/rate-limited records and zero duplicate source identities.
 
 ### HR-2026-08-12-001 - Mail Full-Client RFC And Email Architecture Decisions

@@ -46,6 +46,14 @@ class AssetQuery
 
     private function applyRequestFilters(Builder $query, Request $request): void
     {
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('assets.name', 'like', "%$search%")
+                    ->orWhere('assets.hostname', 'like', "%$search%");
+            });
+        }
+
         if ($request->filled('client_id')) {
             $query->where('client_id', $request->client_id);
         }
