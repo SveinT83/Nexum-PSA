@@ -20,7 +20,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->as('tech.')
                 ->group(function () {
                     require base_path('routes/tech.php');
-                    require base_path('routes/techAdmin.php');
                 });
 
             // Client portal

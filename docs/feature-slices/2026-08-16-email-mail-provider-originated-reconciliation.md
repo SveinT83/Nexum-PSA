@@ -304,6 +304,29 @@ Exact scopes are recorded in `HR-2026-08-16-007`; passing automation
 does not complete any manual checkbox or authorize a provider run, migration, scheduler change,
 worker restart, or deployment.
 
+## Forward Repair For Recorded-Migration Schema Drift
+
+Production verification on 2026-08-25 found that polling and the `default,economy,email` worker were
+active, but every message stored after 2026-08-18 lacked a mailbox placement. The migration ledger
+reported `2026_08_16_118000_add_email_provider_reconciliation` as Ran even though
+`email_mailbox_placements` lacked `last_provider_reconciliation_run_id`,
+`last_provider_observed_sync_version`, `last_provider_observed_identity_hash`, and
+`last_provider_observed_at`. Runtime placement inserts and reconciliation then failed on unknown
+columns, while the legacy message row remained fail-closed and invisible from Inbox queries.
+
+Forward migration `2026_08_25_100000_repair_email_provider_reconciliation_placement_schema.php`
+repairs only that missing placement-observation contract. Each nullable column, foreign key, bounded
+index, and value guard is independently discovered so a MariaDB/MySQL DDL-autocommit retry is safe.
+An existing same-named malformed foreign key or index fails closed instead of being replaced
+silently. The rollback is intentionally a no-op because removing the contract would strand provider
+evidence. The migration does not create placements or invoke a provider; normal bounded provider
+reconciliation remains the only approved repair path for the 241 already-stored production rows.
+
+The regression test removes the contract from a fully migrated SQLite schema while retaining the
+historical `118000` migration-ledger row, runs the repair twice, and verifies the exact columns,
+foreign authority, indexes, guards, and forward-only rollback. Dev applied the no-data-change path
+in batch 132.
+
 ## Deploy And Human Review
 
 Deploy uses additive migrations `2026_08_16_118000` through `118500`, permission-preserving code,
