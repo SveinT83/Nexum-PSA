@@ -280,6 +280,11 @@
                                 @if ($ticket->is_unread)
                                     <span class="badge text-bg-primary ms-1">Unread</span>
                                 @endif
+                                @if ($ticket->schedule)
+                                    <span class="badge text-bg-info ms-1" title="Scheduled: {{ $ticket->schedule->planned_start_at->format('Y-m-d H:i') }}">
+                                        <i class="bi bi-calendar-event"></i>
+                                    </span>
+                                @endif
                             </td>
                             <td>{{ $ticket->subject }}</td>
                             <td>
@@ -690,13 +695,13 @@
                 </a>
             </div>
             <div class="col">
-                <a href="{{ $statLink(['lifecycle' => 'all', 'ownership' => 'mine']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
+                <a href="{{ $statLink(['lifecycle' => 'open', 'ownership' => 'mine']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
                     <div class="small text-muted text-uppercase">Mine</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['mine'] }}</div>
                 </a>
             </div>
             <div class="col">
-                <a href="{{ $statLink(['lifecycle' => 'all', 'ownership' => 'all', 'unread' => '1']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
+                <a href="{{ $statLink(['lifecycle' => 'open', 'ownership' => 'all', 'unread' => '1']) }}" class="d-block border rounded bg-light py-2 px-1 text-decoration-none text-body">
                     <div class="small text-muted text-uppercase">Unread</div>
                     <div class="fw-bold fs-5 lh-1">{{ $stats['unread'] }}</div>
                 </a>

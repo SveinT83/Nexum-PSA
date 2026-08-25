@@ -109,8 +109,12 @@ class TicketController extends Controller
             'mergeSuggestions' => $mergeSuggestionService->suggestionsForIndex(),
             'stats' => [
                 'open' => Ticket::whereHas('status', fn ($query) => $query->where('is_closed', false))->count(),
-                'mine' => Ticket::where('owner_id', $request->user()?->id)->count(),
-                'unread' => Ticket::where('is_unread', true)->count(),
+                'mine' => Ticket::where('owner_id', $request->user()?->id)
+                    ->whereHas('status', fn ($query) => $query->where('is_closed', false))
+                    ->count(),
+                'unread' => Ticket::where('is_unread', true)
+                    ->whereHas('status', fn ($query) => $query->where('is_closed', false))
+                    ->count(),
                 'unassigned' => Ticket::whereNull('owner_id')
                     ->whereHas('status', fn ($query) => $query->where('is_closed', false))
                     ->count(),
@@ -740,35 +744,47 @@ class TicketController extends Controller
 
     public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, TransitionTicketWorkflow $transitionWorkflow, TicketActionGuard $actionGuard): RedirectResponse
     {
+        \Illuminate\Support\Facades\Log::emergency("TICKET ID: " . $ticket->id);
         if ($reason = $actionGuard->reason($ticket, TicketAction::UPDATE_FIELDS, $request->user())) {
+            \Illuminate\Support\Facades\Log::emergency("BLOCKED BY ACTION GUARD: " . $reason);
             return back()->withErrors(['ticket' => $reason])->withInput();
         }
 
-        $data = $request->validate([
-            'subject' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'queue_id' => 'required|exists:ticket_queues,id',
-            'status_id' => 'required|exists:ticket_statuses,id',
-            'priority_id' => 'required|exists:ticket_priorities,id',
-            'category_id' => ['nullable', $this->ticketCategoryRule()],
-            'client_id' => 'nullable|exists:clients,id',
-            'contact_id' => 'nullable|exists:client_users,id',
-            'site_id' => 'nullable|exists:client_sites,id',
-            'asset_id' => 'nullable|exists:assets,id',
-            'owner_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')],
-            'tag_names' => 'nullable|array',
-            'tag_names.*' => 'nullable|string|max:80',
-            'is_scheduled' => 'nullable|boolean',
-            'planned_start_at' => 'nullable|date',
-            'planned_end_at' => 'nullable|date',
-            'timezone' => 'nullable|string',
-            'schedule_type' => 'nullable|string|in:one_time,recurring',
-            'sla_mode' => 'nullable|string|in:defer_until_planned_start,non_sla_until_start,normal',
-        ]);
+        \Illuminate\Support\Facades\Log::emergency("VALIDATING DATA...");
+        try {
+            $data = $request->validate([
+                'subject' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'queue_id' => 'required|exists:ticket_queues,id',
+                'status_id' => 'required|exists:ticket_statuses,id',
+                'priority_id' => 'required|exists:ticket_priorities,id',
+                'category_id' => ['nullable', $this->ticketCategoryRule()],
+                'client_id' => 'nullable|exists:clients,id',
+                'contact_id' => 'nullable|exists:client_users,id',
+                'site_id' => 'nullable|exists:client_sites,id',
+                'asset_id' => 'nullable|exists:assets,id',
+                'owner_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')],
+                'tag_names' => 'nullable|array',
+                'tag_names.*' => 'nullable|string|max:80',
+                'is_scheduled' => 'nullable|boolean',
+                'planned_start_at' => 'nullable|date',
+                'planned_end_at' => 'nullable|date',
+                'timezone' => 'nullable|string',
+                'schedule_type' => 'nullable|string|in:one_time,recurring',
+                'sla_mode' => 'nullable|string|in:defer_until_planned_start,non_sla_until_start,normal',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Illuminate\Support\Facades\Log::emergency("VALIDATION FAILED: " . json_encode($e->errors()));
+            throw $e;
+        }
+        \Illuminate\Support\Facades\Log::emergency("DATA VALIDATED.");
 
         $queue = TicketQueue::where('is_active', true)->findOrFail($data['queue_id']);
+        \Illuminate\Support\Facades\Log::emergency("QUEUE FOUND.");
         $status = TicketStatus::where('is_active', true)->findOrFail($data['status_id']);
+        \Illuminate\Support\Facades\Log::emergency("STATUS FOUND.");
         $priority = TicketPriority::where('is_active', true)->findOrFail($data['priority_id']);
+        \Illuminate\Support\Facades\Log::emergency("PRIORITY FOUND.");
         $categoryId = empty($data['category_id'])
             ? null
             : $this->ticketCategoryId((int) $data['category_id']);
@@ -778,20 +794,24 @@ class TicketController extends Controller
 
         if ((int) ($data['owner_id'] ?? 0) !== (int) ($ticket->owner_id ?? 0)
             && ($reason = $actionGuard->reason($ticket, TicketAction::ASSIGN_OTHER, $request->user()))) {
+            \Illuminate\Support\Facades\Log::emergency("ASSIGN OTHER BLOCKED. Owner in data: " . ($data['owner_id'] ?? 'null') . ", Owner in ticket: " . ($ticket->owner_id ?? 'null') . ", User: " . $request->user()->id . ", Reason: " . $reason);
             return back()->withErrors(['owner_id' => $reason])->withInput();
         }
 
         if ($contactId && ! $clientId) {
+            \Illuminate\Support\Facades\Log::emergency("CONTACT WITHOUT CLIENT.");
             return back()
                 ->withErrors(['client_id' => 'Select a client before selecting a contact.'])
                 ->withInput();
         }
 
         if ($contactId && $clientId && ! $this->contactBelongsToClient((int) $contactId, (int) $clientId)) {
+            \Illuminate\Support\Facades\Log::emergency("CONTACT DOES NOT BELONG TO CLIENT.");
             return back()
                 ->withErrors(['contact_id' => 'The selected contact does not belong to the selected client.'])
                 ->withInput();
         }
+        \Illuminate\Support\Facades\Log::emergency("CLIENT/CONTACT CHECKS PASSED.");
 
         if ($clientChanged) {
             if (! empty($data['site_id']) && (! $clientId || ! ClientSite::where('client_id', $clientId)->whereKey($data['site_id'])->exists())) {
@@ -808,11 +828,7 @@ class TicketController extends Controller
             ? null
             : $this->validateAssetScope($data['asset_id'], $clientId, $contactId, $siteId)->id;
 
-        if (app()->environment('testing')) {
-             throw new \Exception('is_scheduled: ' . json_encode($data['is_scheduled'] ?? 'MISSING'));
-        }
-
-        $updateTicketFields->handle($ticket, [
+        $updateData = [
             'subject' => $data['subject'],
             'description' => $data['description'] ?? null,
             'queue_id' => $queue->id,
@@ -823,13 +839,15 @@ class TicketController extends Controller
             'owner_id' => $data['owner_id'] ?? null,
             'site_id' => $siteId,
             'asset_id' => $assetId,
-            'is_scheduled' => $data['is_scheduled'] ?? null,
+            'is_scheduled' => $request->boolean('is_scheduled'),
             'planned_start_at' => $data['planned_start_at'] ?? null,
             'planned_end_at' => $data['planned_end_at'] ?? null,
             'timezone' => $data['timezone'] ?? null,
             'schedule_type' => $data['schedule_type'] ?? null,
             'sla_mode' => $data['sla_mode'] ?? null,
-        ], $request->user());
+        ];
+
+        $updateTicketFields->handle($ticket, $updateData, $request->user());
 
         $transitionWorkflow->handleToStatus($ticket->refresh(), $status, $request->user());
         $ticket->tags()->syncWithPivotValues($this->resolveTagIds($data['tag_names'] ?? []), ['module' => 'ticket']);

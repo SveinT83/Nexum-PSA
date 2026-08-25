@@ -23,10 +23,29 @@ has explicitly approved.
   `Reviewed`.
 - Never delete reviewed entries. Add newer entries above older entries and retain the history.
 
+| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Pending | 2026-08-25 |  |  |
+
+### HR-2026-08-25-001: One-time scheduled tickets with SLA deferral (Slice 1)
+
+- **Scope:** Backend and UI for one-time scheduled tickets, allowing deferral of SLA due dates until the planned start time.
+- **Affected Pages:** Ticket Create, Ticket Edit, Ticket Show, Ticket Index.
+- **Checks:**
+  - [x] Verify that "Schedule for later" toggle exists on Ticket Create and Edit pages.
+  - [x] Verify that checking "Schedule for later" reveals start time and SLA mode fields.
+  - [ ] Verify that a scheduled ticket shows the "Scheduled" badge with start time on the Show page.
+  - [ ] Verify that a scheduled ticket shows a calendar icon on the Index page.
+  - [x] Verify that SLA due dates are deferred until `planned_start_at` when `defer_until_planned_start` mode is selected.
+  - [x] Verify that existing SLA is preserved when adding a schedule to an existing ticket (per RFC).
+  - [x] Verify that removing a schedule from a ticket deletes the schedule record.
+- **Expected Results:** One-time scheduling should be fully functional in the UI and correctly influence SLA calculations.
+- **Risks:** SLA calculations might be affected if timezone handling is inconsistent.
+- **Status:** Pending manual verification.
+
 ## Review Summary
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Pending | 2026-08-25 |  |  |
 | HR-2026-08-24-004 | Email template HTML editor and branding-managed layouts | Pending | 2026-08-24 |  |  |
 | HR-2026-08-24-003 | Commercial Contract customer document and pricing consistency | Pending | 2026-08-24 |  |  |
 | HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Pending | 2026-08-24 |  |  |
@@ -39,7 +58,7 @@ has explicitly approved.
 | HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed / Safety Repair Implemented | 2026-08-16 |  |  |
 | HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend/API Safety; Runtime/UI Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-008 | Email private live invalidation and polling fallback | Rework Needed | 2026-08-16 |  |  |
-| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | In Review | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-24 |
+| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | In Review | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-24 and 2026-08-25 |
 | HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Rework Needed | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-21 |
 | HR-2026-08-16-005 | Email canonical message and placement cutover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-004 | Email canonical message shadow correlation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
@@ -1525,6 +1544,20 @@ Email provider bindings, account/folder/namespace/placement counts, unresolved p
 historical import/re-baseline/deletion/reconciliation states, queue/failed-job counts, and worker
 configuration. Apply the additive migrations in order:
 `2026_08_16_118000_add_email_provider_reconciliation.php`,
+
+Production incident update 2026-08-25: polling and the `default,economy,email` worker were live, and
+241 messages had been stored since 2026-08-18, but none had an Inbox placement. The production
+migration ledger reported `118000` as Ran while the four placement-observation columns and their
+authority/index/guard contract were absent. This caused unknown-column errors during ordinary
+placement creation and provider reconciliation. Dev now contains forward-only repair migration
+`2026_08_25_100000_repair_email_provider_reconciliation_placement_schema.php`, applied in Dev batch
+132. Its focused drift regression passes 1 test / 8 assertions and proves idempotent repair while the
+historical migration ledger row remains present. Production is unchanged. Before production work,
+back up the database, stop affected workers, capture schema/queue/message/placement baselines, apply
+only the new repair migration, read back the complete contract, restart workers, and let bounded
+provider reconciliation repair the 241 rows. Do not rerun `118000` or use an ad-hoc placement
+backfill.
+
 `2026_08_16_118100_expand_email_message_mailbox_for_reconciliation.php`,
 `2026_08_16_118200_add_inbound_notification_external_outbox.php`,
 `2026_08_16_118300_add_authoritative_target_identity_to_email_remote_operations.php`, and
@@ -1609,6 +1642,13 @@ Human checks:
 - [ ] Inspect IMAP/provider audit logs and local remote-operation rows for the complete review.
   Confirm reconciliation issued no send, APPEND, STORE, MOVE, COPY, EXPUNGE, delete, folder write,
   provider archive, or other provider mutation, including through admin and personal rules.
+- [ ] For the 2026-08-25 production repair, capture a database backup and the pre-migration column,
+  index, foreign-key, guard, message, placement, queue, failed-job, scheduler, worker, and latest
+  visible-Inbox facts. Stop affected workers, apply only migration `2026_08_25_100000`, and read back
+  the exact placement-observation contract before restart. After bounded provider reconciliation,
+  confirm all 241 already-stored post-18-August messages have the correct active provider placement,
+  the visible Inbox advances beyond 18 August, no duplicate message/Ticket/rule/notification effect
+  occurred, and no provider write was issued. Keep the review open if any row remains unplaced.
 - [ ] Resolve the current runtime gap: Dev has targeted `email,default` processing but no full
   Laravel scheduler or `notifications` worker, and 136 unattempted fanout jobs while relevant Web
   Push settings are already enabled. Review the cohort before activation, then confirm scheduler,

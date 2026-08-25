@@ -29,6 +29,7 @@ class ScheduledTicketSlaTest extends TestCase
             'ticket.view',
             'ticket.create',
             'ticket.update',
+            'ticket.assign',
         ]);
         $this->actingAs($this->admin);
     }
@@ -113,6 +114,7 @@ class ScheduledTicketSlaTest extends TestCase
             'status_id' => $defaults['status']->id,
             'queue_id' => $defaults['queue']->id,
             'channel' => 'web',
+            'owner_id' => $this->admin->id, // Set owner to current user
         ]);
 
         $ticket = Ticket::latest('id')->first();
@@ -120,22 +122,45 @@ class ScheduledTicketSlaTest extends TestCase
         $this->assertNotNull($originalDueAt);
 
         // Now update it to be scheduled
-        $plannedStart = Carbon::now()->addDays(10);
+        $plannedStart = Carbon::now()->addDays(10)->startOfMinute();
         $response = $this->patch(route('tech.tickets.update', $ticket), [
             'subject' => 'Normal Ticket',
             'priority_id' => $defaults['priority']->id,
             'status_id' => $defaults['status']->id,
             'queue_id' => $defaults['queue']->id,
+            'owner_id' => $this->admin->id,
             'is_scheduled' => true,
             'planned_start_at' => $plannedStart->toDateTimeString(),
             'sla_mode' => 'defer_until_planned_start',
         ]);
 
         $response->assertStatus(302);
-        $ticket->refresh();
 
+        $this->assertDatabaseHas('ticket_schedules', [
+            'ticket_id' => $ticket->id,
+            'sla_mode' => 'defer_until_planned_start',
+        ]);
+
+        $ticket = $ticket->fresh(['schedule']);
         $this->assertNotNull($ticket->schedule);
         // SLA should NOT have changed
         $this->assertEquals($originalDueAt->toDateTimeString(), $ticket->first_response_due_at->toDateTimeString());
+
+        // Now test removing the schedule
+        $response = $this->patch(route('tech.tickets.update', $ticket), [
+            'subject' => 'Normal Ticket',
+            'priority_id' => $defaults['priority']->id,
+            'status_id' => $defaults['status']->id,
+            'queue_id' => $defaults['queue']->id,
+            'owner_id' => $this->admin->id,
+            'is_scheduled' => false,
+        ]);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseMissing('ticket_schedules', [
+            'ticket_id' => $ticket->id,
+        ]);
+        $ticket = $ticket->fresh(['schedule']);
+        $this->assertNull($ticket->schedule);
     }
 }

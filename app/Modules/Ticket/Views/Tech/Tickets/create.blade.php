@@ -288,6 +288,40 @@
                         </div>
                     </div>
                 </x-card.default>
+
+                <!-- ------------------------------------------------- -->
+                <!-- Schedule card (Slice 1) -->
+                <!-- Allows deferring SLA and marking the ticket for future work. -->
+                <!-- ------------------------------------------------- -->
+                <x-card.default title="Schedule">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_scheduled" name="is_scheduled" value="1" @checked(old('is_scheduled'))>
+                        <label class="form-check-label" for="is_scheduled">Schedule for later</label>
+                    </div>
+
+                    <div id="schedule_details" class="{{ old('is_scheduled') ? '' : 'd-none' }}">
+                        <div class="mb-3">
+                            <label for="planned_start_at" class="form-label">Planned start</label>
+                            <input type="datetime-local" id="planned_start_at" name="planned_start_at" class="form-control @error('planned_start_at') is-invalid @enderror" value="{{ old('planned_start_at') }}">
+                            @error('planned_start_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sla_mode" class="form-label">SLA Deferral</label>
+                            <select id="sla_mode" name="sla_mode" class="form-select">
+                                <option value="defer_until_planned_start" @selected(old('sla_mode') == 'defer_until_planned_start')>Defer until planned start</option>
+                                <option value="non_sla_until_start" @selected(old('sla_mode') == 'non_sla_until_start')>No SLA until start</option>
+                                <option value="normal" @selected(old('sla_mode') == 'normal')>Normal (calculate from creation)</option>
+                            </select>
+                            <div class="form-text">
+                                Controls how due dates are calculated for scheduled tickets.
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="schedule_type" value="one_time">
+                        <input type="hidden" name="timezone" value="{{ config('app.timezone') }}">
+                    </div>
+                </x-card.default>
             </div>
         </div>
 
@@ -312,6 +346,20 @@
 <!-- -------------------------------------------------------------------------------------------------- -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Toggle schedule details
+        const isScheduledCheckbox = document.getElementById('is_scheduled');
+        const scheduleDetails = document.getElementById('schedule_details');
+
+        if (isScheduledCheckbox && scheduleDetails) {
+            isScheduledCheckbox.addEventListener('change', function () {
+                if (this.checked) {
+                    scheduleDetails.classList.remove('d-none');
+                } else {
+                    scheduleDetails.classList.add('d-none');
+                }
+            });
+        }
+
         const clientLookup = document.getElementById('client_lookup');
         const clientId = document.getElementById('client_id');
         const clientSuggestions = document.getElementById('client_suggestions');

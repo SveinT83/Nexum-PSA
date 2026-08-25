@@ -239,8 +239,8 @@ class TicketModuleTest extends TestCase
             ->assertSee('ticket_index_status_id')
             ->assertSee('New ticket')
             ->assertSee('lifecycle=open&amp;ownership=all', false)
-            ->assertSee('lifecycle=all&amp;ownership=mine', false)
-            ->assertSee('lifecycle=all&amp;ownership=all&amp;unread=1', false)
+            ->assertSee('lifecycle=open&amp;ownership=mine', false)
+            ->assertSee('lifecycle=open&amp;ownership=all&amp;unread=1', false)
             ->assertSee('lifecycle=open&amp;ownership=all&amp;unassigned=1', false);
 
         $this->assertDatabaseHas('ticket_queues', ['slug' => 'support', 'is_default' => true]);
@@ -843,6 +843,70 @@ class TicketModuleTest extends TestCase
             ->assertSee($unassigned->ticket_key)
             ->assertDontSee('Open other owner hidden')
             ->assertDontSee('Closed mine hidden');
+    }
+
+    #[Test]
+    public function ticket_index_mine_and_unread_stats_count_open_tickets_only(): void
+    {
+        app(EnsureTicketDefaults::class)->handle();
+        $otherTech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $otherTech->assignRole('Tech');
+        $closed = TicketStatus::where('slug', 'closed')->firstOrFail();
+
+        $openMine = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999320',
+            'subject' => 'Open mine stat visible',
+            'owner_id' => $this->tech->id,
+        ]);
+        $closedMine = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999321',
+            'subject' => 'Closed mine stat hidden',
+            'status_id' => $closed->id,
+            'owner_id' => $this->tech->id,
+        ]);
+        $openUnread = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999322',
+            'subject' => 'Open unread stat visible',
+            'owner_id' => $otherTech->id,
+            'is_unread' => true,
+        ]);
+        $closedUnread = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999323',
+            'subject' => 'Closed unread stat hidden',
+            'status_id' => $closed->id,
+            'owner_id' => $otherTech->id,
+            'is_unread' => true,
+        ]);
+
+        $response = $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index'))
+            ->assertOk()
+            ->assertSee('lifecycle=open&amp;ownership=mine', false)
+            ->assertSee('lifecycle=open&amp;ownership=all&amp;unread=1', false);
+
+        $this->assertSame(1, $response->viewData('stats')['mine']);
+        $this->assertSame(1, $response->viewData('stats')['unread']);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index', [
+                'lifecycle' => 'open',
+                'ownership' => 'mine',
+            ]))
+            ->assertOk()
+            ->assertSee($openMine->ticket_key)
+            ->assertDontSee($closedMine->ticket_key)
+            ->assertDontSee($openUnread->ticket_key);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.index', [
+                'lifecycle' => 'open',
+                'ownership' => 'all',
+                'unread' => '1',
+            ]))
+            ->assertOk()
+            ->assertSee($openUnread->ticket_key)
+            ->assertDontSee($closedUnread->ticket_key)
+            ->assertDontSee($openMine->ticket_key);
     }
 
     #[Test]

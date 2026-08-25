@@ -187,4 +187,18 @@ Route::middleware('admin')->group(function () {
         ->name('admin.settings.economy.rates.store');
     Route::put('/admin/settings/economy/rates/{rate}', [TimeRateController::class, 'update'])
         ->name('admin.settings.economy.rates.update');
+
+    // -----------------------------------------
+    // Contracts & Services Settings
+    // -----------------------------------------
+    Route::redirect('/admin/settings/cs/contacts', '/tech/admin/settings/cs/contracts')
+        ->name('admin.settings.cs.contracts.legacy');
+
+    Route::get('/admin/settings/cs/contracts', function () {
+        return view('commercial::Admin.settings.contracts');
+    })->name('admin.settings.cs.contracts');
+
+    Route::get('/admin/settings/cs/services', function () {
+        return view('commercial::Admin.settings.services');
+    })->name('admin.settings.cs.services');
 });

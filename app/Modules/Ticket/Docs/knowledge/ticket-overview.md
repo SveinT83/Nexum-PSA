@@ -106,6 +106,8 @@ Ticket list:
 
 The list supports search, filters, sorting, unread and unassigned views, lifecycle filtering, SLA risk badges, owner display, bulk selection, merge controls, and merge suggestions.
 
+The right-side **Mine**, **Unread**, and **Unassigned** counters and shortcuts include only Tickets whose current status is open. Closed Tickets remain available through explicit lifecycle filters.
+
 Ticket show:
 
 The show page is the primary work surface. It contains ticket details, conversation/activity, a workflow cockpit, missing requirements, next steps, escalation, reviews and evidence, planned commercial scope, linked Sales quote, Storage/purchase conversion, replies, notes, time and actual cost registration, assignment, SLA details, customer contact cards, and Knowledge suggestions. Buttons are shown, disabled, or hidden from the current workflow decision.

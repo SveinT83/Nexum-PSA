@@ -1437,6 +1437,17 @@ named indexes/foreign keys, defaults, empty down, evidence-preserving refusal an
 current-data copy before coordinated deployment; keep the feature gate false afterward.
 
 
+### Recorded reconciliation migration repair
+
+If `2026_08_16_118000_add_email_provider_reconciliation` is recorded as Ran but the four
+`email_mailbox_placements.last_provider_*` observation columns are absent, do not rerun or edit the
+historical migration and do not backfill active placements directly. Deploy and run forward migration
+`2026_08_25_100000_repair_email_provider_reconciliation_placement_schema.php` after a database backup
+and with affected workers stopped. Read back its columns, foreign key, indexes, and guards before
+restarting workers. Existing stored messages without placements must be recovered through bounded
+provider reconciliation so artifact, canonical, visibility, automation, and notification gates remain
+authoritative. Track the production baseline and read-back under `HR-2026-08-16-007`.
+
 ## Scheduler and cron (server setup)
 
 - Email polling runs via Laravel Scheduler (see `routes/console.php`).
