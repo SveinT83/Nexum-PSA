@@ -1016,6 +1016,11 @@ class EmailProviderReconciliationAutomationCorrelationTest extends TestCase
                 === $scope['item']->id,
         );
 
+        $scope['run']->forceFill([
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $beforeFanout = $scope['run']->fresh()->last_progress_at;
+        $this->travel(2)->seconds();
         app(DispatchInboundEmailNotification::class)->advance((int) $fanout->id);
 
         $this->assertSame(
@@ -1025,6 +1030,17 @@ class EmailProviderReconciliationAutomationCorrelationTest extends TestCase
         $this->assertSame(
             EmailProviderReconciliationItem::AUTOMATION_COMPLETED,
             $scope['item']->fresh()->automation_status,
+        );
+        $afterFanout = $scope['run']->fresh()->last_progress_at;
+        $this->assertTrue($afterFanout->greaterThan($beforeFanout));
+        $this->assertTrue(
+            $afterFanout->equalTo($scope['item']->fresh()->automation_completed_at),
+        );
+
+        $this->travel(2)->seconds();
+        app(DispatchInboundEmailNotification::class)->advance((int) $fanout->id);
+        $this->assertTrue(
+            $scope['run']->fresh()->last_progress_at->equalTo($afterFanout),
         );
     }
 
@@ -1075,10 +1091,13 @@ class EmailProviderReconciliationAutomationCorrelationTest extends TestCase
     {
         $scope = $this->attachAwaitingFanout();
         $fanout = NotificationInboundEmailFanout::query()->sole();
-        $scope['run']->forceFill([
+        $cancellingRun = $scope['run']->fresh();
+        $cancellingRun->forceFill([
             'status' => EmailProviderReconciliationRun::STATUS_CANCELLING,
             'cancellation_requested_at' => now(),
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
         ])->save();
+        $beforeDrain = $scope['run']->fresh()->last_progress_at;
 
         $this->assertFalse(app(EmailProviderReconciliationFinalizer::class)->finalizeOneStep(
             $scope['run']->fresh(),
@@ -1088,8 +1107,11 @@ class EmailProviderReconciliationAutomationCorrelationTest extends TestCase
             EmailProviderReconciliationRun::STATUS_CANCELLING,
             $scope['run']->fresh()->status,
         );
+        $this->assertTrue($scope['run']->fresh()->last_progress_at->equalTo($beforeDrain));
 
+        $this->travel(2)->seconds();
         app(DispatchInboundEmailNotification::class)->advance((int) $fanout->id);
+        $this->assertTrue($scope['run']->fresh()->last_progress_at->greaterThan($beforeDrain));
         $this->assertSame(
             EmailProviderReconciliationItem::AUTOMATION_FAILED,
             $scope['item']->fresh()->automation_status,
@@ -1559,6 +1581,10 @@ class EmailProviderReconciliationAutomationCorrelationTest extends TestCase
         $personalRules = $this->mock(PersonalEmailRuleEngine::class);
         $personalRules->shouldReceive('process')->once();
 
+        $scope['run']->forceFill([
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $beforeAutomation = $scope['run']->fresh()->last_progress_at;
         (new ProcessEmailProviderReconciliationAutomation($scope['item']->id))->handle();
 
         $this->assertSame(
@@ -1566,6 +1592,9 @@ class EmailProviderReconciliationAutomationCorrelationTest extends TestCase
             $scope['item']->fresh()->automation_status,
         );
         $this->assertSame(1, NotificationInboundEmailFanout::query()->count());
+        $this->assertTrue(
+            $scope['run']->fresh()->last_progress_at->greaterThan($beforeAutomation),
+        );
 
         return $scope;
     }

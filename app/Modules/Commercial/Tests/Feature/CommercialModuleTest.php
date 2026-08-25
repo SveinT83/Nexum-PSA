@@ -6,6 +6,7 @@ use App\Models\Clients\Client;
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Commercial\Actions\CaptureContractCustomerDocument;
 use App\Modules\Commercial\Controllers\Admin\UnitsController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\ContractController;
 use App\Modules\Commercial\Controllers\Tech\Contracts\PublicContractController;
@@ -26,6 +27,7 @@ use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\Terms\terms as CommercialTerm;
 use App\Modules\Commercial\Models\TimeRate;
+use App\Modules\Commercial\Support\ContractTermSnapshotReadiness;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -373,7 +375,7 @@ class CommercialModuleTest extends TestCase
             'end_date' => now()->addYear()->toDateString(),
         ]);
 
-        Contracts::query()->create([
+        $acmeContract = Contracts::query()->create([
             'client_id' => $acme->id,
             'created_by' => $this->tech->id,
             'description' => 'Acme support agreement',
@@ -381,6 +383,28 @@ class CommercialModuleTest extends TestCase
             'sla_id' => $sla->id,
             'start_date' => now()->addDays(10)->toDateString(),
             'end_date' => now()->addYear()->toDateString(),
+        ]);
+        ContractItem::query()->create([
+            'contract_id' => $acmeContract->id,
+            'name' => 'Managed EDR',
+            'sku' => 'EDR-109',
+            'unit_price' => '109.00',
+            'quantity' => 3,
+            'unit' => 'device',
+            'billing_interval' => 'monthly',
+            'setup_fee' => '0.00',
+            'uses_contract_default_sla' => true,
+        ]);
+        ContractItem::query()->create([
+            'contract_id' => $acmeContract->id,
+            'name' => 'Managed operations',
+            'sku' => 'OPS-3552',
+            'unit_price' => '3552.68',
+            'quantity' => 1,
+            'unit' => 'month',
+            'billing_interval' => 'monthly',
+            'setup_fee' => '0.00',
+            'uses_contract_default_sla' => true,
         ]);
 
         $this->actingAs($this->tech)
@@ -402,7 +426,8 @@ class CommercialModuleTest extends TestCase
             ->get(route('tech.contracts.index', ['status' => 'sent_contract']))
             ->assertOk()
             ->assertSee('Acme Managed Services')
-            ->assertSee('Managed Contract SLA');
+            ->assertSee('Managed Contract SLA')
+            ->assertSee('3 879,68 kr');
 
         $this->assertSame(
             ['Acme Managed Services'],
@@ -1229,8 +1254,8 @@ class CommercialModuleTest extends TestCase
         $this->assertSame("Managed terms\nGeneral managed service terms.", $contract->terms_snapshot);
         $this->assertSame("Managed DPA\nData processing agreement content.", $contract->dpa_snapshot);
         $this->assertSame("Managed legal\nLegal and GDPR content.", $contract->legal_snapshot);
-        $this->assertStringContainsString('Contract default SLA: Contract default SLA', $contract->sla_snapshot);
-        $this->assertStringContainsString('Service SLA: Third-party email SLA', $contract->sla_snapshot);
+        $this->assertStringContainsString('Avtalens felles responspolicy: Contract default SLA', $contract->sla_snapshot);
+        $this->assertStringContainsString('Tjenestens responspolicy: Third-party email SLA', $contract->sla_snapshot);
 
         $this->assertDatabaseHas('contract_item_time_rates', [
             'contract_item_id' => $item->id,
@@ -1268,7 +1293,8 @@ class CommercialModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.contracts.show', $contract))
             ->assertOk()
-            ->assertSee('Contract Won')
+            ->assertSee('Historisk kundedokument – dokumenttype må velges')
+            ->assertDontSee('Godkjent')
             ->assertDontSee('Contract not ready for approval')
             ->assertDontSee('Start date must be in the future.');
     }
@@ -1406,7 +1432,14 @@ class CommercialModuleTest extends TestCase
     #[Test]
     public function tech_user_can_download_contract_pdf_from_contract_show(): void
     {
-        $client = Client::factory()->create(['name' => 'PDF Client']);
+        app(CompanyProfileSettings::class)->update([
+            'legal_name' => 'PDF Supplier AS',
+            'organization_number' => '999888777',
+        ]);
+        $client = Client::factory()->create([
+            'name' => 'PDF Client',
+            'org_no' => '987654321',
+        ]);
         $contract = Contracts::query()->create([
             'client_id' => $client->id,
             'description' => 'PDF ready contract.',
@@ -1429,6 +1462,10 @@ class CommercialModuleTest extends TestCase
             'billing_interval' => 'monthly',
             'uses_contract_default_sla' => true,
         ]);
+        app(ContractTermSnapshotReadiness::class)->markReviewed($contract, $this->tech->id);
+
+        $this->assertTrue($contract->fresh()->isReady());
+        $this->assertTrue(app(ContractTermSnapshotReadiness::class)->isCurrent($contract->fresh()));
 
         $this->actingAs($this->tech)
             ->get(route('tech.contracts.show', $contract))
@@ -1452,17 +1489,38 @@ class CommercialModuleTest extends TestCase
     {
         app(CompanyProfileSettings::class)->update([
             'company_name' => 'Tronder Data',
+            'legal_name' => 'Tronder Data AS',
+            'organization_number' => '999888777',
         ]);
 
-        $client = Client::factory()->create(['name' => 'Brand Client']);
+        $client = Client::factory()->create([
+            'name' => 'Brand Client',
+            'org_no' => '987654321',
+        ]);
         $contract = Contracts::query()->create([
             'client_id' => $client->id,
             'description' => 'Brand-aware public contract.',
-            'start_date' => now()->toDateString(),
-            'approval_status' => 'sent_quote',
+            'start_date' => now()->addMonth()->toDateString(),
+            'approval_status' => 'draft',
             'secure_token' => 'public-brand-token',
+            'terms_snapshot' => 'Brand contract terms.',
             'created_by' => $this->tech->id,
         ]);
+        ContractItem::query()->create([
+            'contract_id' => $contract->id,
+            'name' => 'Brand service',
+            'sku' => 'BRAND',
+            'unit_price' => 100,
+            'quantity' => 1,
+            'unit' => 'month',
+            'billing_interval' => 'monthly',
+        ]);
+        app(ContractTermSnapshotReadiness::class)->markReviewed($contract, $this->tech->id);
+        app(CaptureContractCustomerDocument::class)->handle($contract, 'sent_quote');
+        $contract->forceFill([
+            'approval_status' => 'sent_quote',
+            'sent_at' => now(),
+        ])->saveQuietly();
 
         $this->get(route('contracts.public.view', $contract->secure_token))
             ->assertOk()
@@ -1621,7 +1679,6 @@ class CommercialModuleTest extends TestCase
             ->get(route('tech.contracts.show', $contract))
             ->assertOk()
             ->assertSee('Contract support')
-            ->assertSee('SLA Summary')
-            ->assertSee('First response 24 hours');
+            ->assertSee('Intern SLA-kobling');
     }
 }

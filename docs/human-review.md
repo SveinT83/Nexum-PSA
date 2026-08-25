@@ -27,16 +27,19 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-24-004 | Email template HTML editor and branding-managed layouts | Pending | 2026-08-24 |  |  |
+| HR-2026-08-24-003 | Commercial Contract customer document and pricing consistency | Pending | 2026-08-24 |  |  |
 | HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Pending | 2026-08-24 |  |  |
+| HR-2026-08-24-001 | Ticket owner, customer, and contact at a glance | Reviewed | 2026-08-24 | Svein Tore | 2026-08-24 |
 | HR-2026-08-21-001 | Dev database recovery and Mail permission-repair verification | In Review | 2026-08-21 | Svein |  |
 | HR-2026-08-16-014 | Email/Ticket correlation conflict triage | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Rework Needed | 2026-08-16 |  |  |
-| HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Rework Needed | 2026-08-16 |  |  |
-| HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Rework Needed | 2026-08-16 |  |  |
-| HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed | 2026-08-16 |  |  |
-| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Rework Needed | 2026-08-16 |  |  |
+| HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Pending | 2026-08-16 |  |  |
+| HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Pending (Safety Rework; Activation Gated) | 2026-08-16 |  |  |
+| HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Pending (Private/API; Shared Gated) | 2026-08-16 |  |  |
+| HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed / Safety Repair Implemented | 2026-08-16 |  |  |
+| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend/API Safety; Runtime/UI Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-008 | Email private live invalidation and polling fallback | Rework Needed | 2026-08-16 |  |  |
-| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
+| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | In Review | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-24 |
 | HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Rework Needed | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-21 |
 | HR-2026-08-16-005 | Email canonical message and placement cutover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-004 | Email canonical message shadow correlation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
@@ -260,6 +263,294 @@ the required detailed checks or explicit human-review evidence. The 2026-08-21 c
 reclassified those rows below. This accounting correction does not erase a valid `Reviewed` result;
 none was recorded under the register's rules.
 
+### HR-2026-08-24-004 - Email Template HTML Editor And Branding-Managed Layouts
+
+Status: Pending
+Added: 2026-08-24
+Environment: Authoritative Dev working copy and Dev database
+Related: `docs/rfc/2026-06-09-marketing-domain-email-campaigns.md`,
+`docs/adr/2026-08-24-email-template-managed-branding-layout.md`, and
+`docs/feature-slices/2026-08-24-email-template-html-editor-branding-layout.md`
+
+Scope and affected workflow: Admin Email templates now separate visual/source-edited Body HTML,
+plaintext, and complete Layout HTML. Branding-managed layouts use current Company Profile
+light-theme branding until an admin explicitly chooses `Customize layout`; ordinary copy changes do
+not freeze branding. Custom layouts require one `{{ email_body }}` slot and remain unchanged until
+explicit reset. Email and Marketing previews use the authoritative renderer in empty sandboxed
+iframes. Marketing body fields reuse the editor and every campaign email stores its own materialized
+layout snapshot.
+
+Deployment actions: install the locked frontend dependencies, build Vite assets, run the additive
+migration `database/migrations/2026_08_24_170000_add_email_template_layouts.php`, then run
+`php artisan optimize:clear` and `php artisan knowledge:sync-docs --module=Email --module=Marketing
+--no-interaction` using the supported syntax for multiple modules. No permission seed, queue change,
+scheduler change, sender-setting change, or production deployment is authorized by this entry. Dev
+migration and backfill are complete; production remains untouched.
+
+Risks: invalid or active HTML could execute in an admin preview or break outbound mail; custom
+layouts could lose the body slot; editor normalization could alter template variables; branding
+could change a manually designed layout; a live template change could silently restyle an existing
+campaign; and email-client rendering can differ from browser preview. Server policy, an empty iframe
+sandbox, explicit layout state, canonical textarea values, and Marketing snapshots mitigate these
+risks but do not replace human review.
+
+Automated verification on authoritative Dev: database-only backup completed before migration.
+Readback found 10 branding-managed Email templates, 6/6 existing Marketing emails with layout
+snapshots, and zero templates or snapshots failing policy. Focused checks passed 23 tests / 203
+assertions. Vite production build, Blade cache, route discovery, PHP syntax, and diff checks passed.
+Automatic UI review stopped at Dev login because no authenticated browser session was available;
+no credential was requested or entered.
+
+Marketing Knowledge sync completed. Email Knowledge source documentation is updated, but its Dev
+sync remains blocked by the existing `body_markdown` `TEXT` limit: the combined
+`email-inbox-overview.md` is 98,860 bytes and fails with SQLSTATE `22001`. Expanding that unrelated
+Knowledge storage contract or splitting the existing Mail article requires separately approved scope.
+
+Human checks:
+
+- [ ] Open a Marketing-scoped template under Admin -> Templates -> Email. Confirm Body HTML has a
+  usable visual toolbar and Source mode, template variables survive switching modes, plaintext is
+  separate, and the preview renders the message instead of escaped HTML source.
+- [ ] With `Branding managed`, confirm the preview uses the configured Company Profile logo,
+  header/footer, page/content, text, action/link, and accent colors. Change only subject/body/text,
+  save, and confirm the template remains branding-managed.
+- [ ] Choose `Customize layout`. Confirm the current branding document appears in Advanced Layout
+  HTML with exactly one `{{ email_body }}` slot. Make a visible controlled layout change, confirm the
+  unsaved server preview updates, save, and confirm a later Company Profile color change does not
+  rewrite that custom template.
+- [ ] Choose `Reset to branding`, accept the warning, save, and confirm the custom HTML is cleared
+  and the newest Company Profile colors/logo are used again.
+- [ ] Try a missing/duplicate body slot, a full HTML document in Body HTML, a script/event handler,
+  an unsafe URL, a form control, and unsafe CSS. Confirm each is rejected with a useful field error
+  and that no active content executes in preview.
+- [ ] Open a Marketing campaign. Confirm new and existing campaign Body HTML fields use the same
+  editor, template selection fills the editor, AI draft insertion stays synchronized, and the
+  preview matches an actual controlled test send. Confirm the stored campaign layout remains stable
+  after changing its reusable source template or Company Profile branding.
+- [ ] Check template and Marketing editors at desktop, tablet, and phone widths. Confirm the toolbar,
+  advanced layout source, full-width preview, variables list, focus order, Source toggle, tabs, and
+  save actions remain usable by keyboard and do not create horizontal page overflow.
+- [ ] Inspect representative output in Outlook desktop/web, Apple Mail, and a Gmail client. Confirm
+  logo sizing, background/header/footer colors, links, tables, long text, unsubscribe content, and
+  plaintext fallback remain readable. Record any accepted email-client deviation here.
+- [ ] Before production promotion, verify the database backup/rollback plan, run the migration and
+  asset build in the target environment, read back layout state/snapshot counts, clear caches, sync
+  Email and Marketing Knowledge, and confirm no unrelated pending migration is applied implicitly.
+  Resolve and verify the documented Email Knowledge article-size blocker before treating the
+  Knowledge sync as complete.
+
+Reviewer:
+Reviewed date:
+Result / notes: Pending named human visual, responsive, keyboard, and representative email-client
+review. Dev implementation and migration are complete; commit, push, Main, and production remain
+outside this entry.
+
+### HR-2026-08-24-003 - Commercial Contract Customer Document And Pricing Consistency
+
+Status: Pending
+Added: 2026-08-24
+Environment: Authoritative Dev working copy and Dev database
+Related: `docs/rfc/2026-08-24-commercial-contract-customer-document-consistency.md`,
+`docs/adr/2026-08-24-commercial-contract-calculation-and-snapshot-boundary.md`,
+`docs/feature-slices/2026-08-24-commercial-contract-pricing-snapshot-consistency.md`, and
+`docs/feature-slices/2026-08-24-commercial-contract-customer-document-pdf.md`
+
+Scope and affected workflow: Commercial Contracts use one Brick Math decimal/minor-unit calculator
+and one customer-document projector across the Tech preview, secure public view, Customer Portal,
+Commercial API, captured document evidence, and PDF. Customer tables contain only Service, Short
+description, Scope, Unit price, Billing, and Total. Cadence totals remain separate, zero-value lines
+read as included, customer-visible rates are explicit and deduplicated, and operational SLA/rate
+relationships remain internal. Sending or approving captures immutable customer evidence. Every
+non-null customer snapshot is evidence; unsupported shapes fail closed instead of rebuilding. The v1
+reader validates the complete document/dates/parties/approval/columns/lines/totals/optional-sections/
+appendices envelope, not only `schema_version`, including canonical Norwegian dates, money triplets,
+rate identities, strict JSON primitive types, exact allowed keys/list shapes, and sequential appendix
+metadata. Invalid Livewire price/cadence input remains a
+field-validation response with a safe preview placeholder and no preview-rendering 500. CloudFactory
+Contract-bound sale projection uses exact decimals, and won-line reconciliation locks the accepted
+parent Contract before resolving and locking its child line.
+
+Reviewed legal wording uses `approval_metadata.customer_document_terms` metadata version 2:
+`source_fingerprint` binds the exact selected source versions, `snapshot_fingerprint` binds the exact
+Contract text, and `source_snapshot_checksums` records generated per-field text with reviewer
+identity/time. Manual wording is captured verbatim as an `origin=contract` term snapshot labelled
+`Versjon 1 (kontraktsspesifikk)`. Terms `GET` only previews; explicit POST refresh/save owns every
+persisted review, and removed pre-metadata sources fail closed. Binding end cannot be later than the
+operational Contract end.
+
+Deployment actions: deploy the Commercial code and documentation, run the additive migration
+`database/migrations/2026_08_24_160000_add_contract_customer_document_snapshot_fields.php` before
+`database/migrations/2026_08_24_180000_add_contract_item_sale_currency_snapshot.php`. The latter must
+complete its authoritative Service/offer NOK preflight before DDL. Then run `php artisan optimize:clear`
+and
+`php artisan knowledge:sync-docs --module=Commercial --no-interaction`. No permission seed, queue
+restart, scheduler change, or frontend build is required. The migration `down()` refuses to drop
+protected customer snapshot/wording/unit/rate evidence, and the currency migration refuses unsupported
+stored currencies. Export and verify protected data before any separately approved rollback.
+
+Production readiness is currently blocked and requires explicit human resolution before promotion:
+
+- Dev Company Profile is missing both `legal_name` and supplier organization number.
+- One legacy `won` Contract is missing both the customer's organization number and customer JSON
+  snapshot. A human must supply authoritative identity/evidence disposition; never guess or backfill it
+  from a display name, current catalogue, or unrelated customer record.
+- Until that evidence is resolved, all customer delivery, PDF, public, portal, capture, and detail API
+  paths fail closed. Tech exposes only a marked reconstruction aid. A named technician may freeze it
+  once after checking every field against original evidence; the action binds a stable preview hash,
+  original document type, actor, note, source status, and snapshot hash. A changed preview is rejected.
+  `won` and `approved` do not infer offer versus agreement, and no reconstruction is shown before the
+  type is selected from the original. Production preflight must still inspect the CloudFactory link,
+  `LicenceAmendment`, and other operative line history; today's live values alone are never evidence.
+- Historical rows without their captured `secure_token` remain unavailable to public and resend paths;
+  this workflow does not silently generate replacement access.
+- Dev read-only readiness found zero non-editable hidden/default rate links. This is not production
+  evidence: run a read-only production rate-visibility preflight and classify any unknown rows found
+  there explicitly. Names, codes, and operational use are not visibility evidence, and accepted
+  history is not automatically backfilled.
+- Dev has no catalogue Service that can be identified safely as EDR. Identify the exact production
+  Service and authoritative cadence before any change; otherwise leave it unchanged.
+
+Risks: a duplicated or mixed-cadence calculation could misstate the commitment; a mutable catalogue
+fallback could change accepted evidence; an overly broad rate rule could expose internal pricing;
+schema-marker-only trust could accept partial evidence; a validation-time preview exception could
+turn correct rejection into a 500; incomplete term metadata could mislabel manual text; missing party
+identity could create an unenforceable document; a stale/manual attestation or inferred document type
+could freeze false history; an integration race or foreign sale currency could change accepted
+economics; an unsafe rollback could drop evidence; and long descriptions, legal text, or multiple
+attachments could clip, overlap, or lose page identity.
+
+Automated verification on authoritative Dev: the final scoped bundle passes 99 tests / 1,455
+assertions: `ContractFinalReviewRegressionTest` 44 / 868, `ContractCustomerDocumentTest` 6 / 104,
+`CommercialModuleTest` 33 / 313, `CustomerPortalQuoteContractAcceptanceTest` 2 / 60, two
+Contract-focused `CustomerPortalCommercialEconomyTest` methods 2 / 26, `ContractPricingTest` 8 / 31,
+and four CloudFactory Contract-boundary tests 4 / 53. Scoped Pint, PHP syntax, Blade compilation, and
+`git diff --check` pass. Sanitized read-only Dev readiness found supplier
+`legal_name=false` and supplier organization number false; one won Contract without
+`customer_document`, one won Contract without customer organization number, zero non-editable
+hidden/default rate links, zero non-NOK/null stored Contract sale currencies, zero EDR/endpoint name or
+SKU matches, and zero test-fixture residue. Additive migration `2026_08_24_160000` ran in Dev batch 130,
+followed by `2026_08_24_180000` in batch 131.
+
+The complete `CustomerPortalCommercialEconomyTest` file still has one separate pre-existing Email
+provider-binding failure (`provider_binding_snapshot_missing` during technician publish). Its two
+Contract/portal methods pass in isolation as recorded above; this Contract slice did not weaken or
+claim the unrelated Email path.
+
+The final Dev-rendered `nexum-kontrakt-eksempel-2026-08-24.pdf` artifact is 27 354 bytes with SHA-256
+`977d273fedcae01ddcac946b933e04063c620a7acc6e8dfe30d03132c5f5a03f` and has two A4 pages.
+Visual review found no clipping or overlap, and page 2 starts `Vedlegg 1`. Rendered evidence confirms
+monthly `3 879,68 kr`, EDR `327,00 kr`, and one-time `750,00 kr`. Identity and `Side X av Y`
+appear in the footer on both pages, and forbidden labels are absent. Passing automation and visual QA
+support this review but do not mark any human check complete.
+
+Human checks:
+
+- [ ] Before production, run a read-only readiness report. Confirm a human has entered the
+  authoritative supplier legal name and organization number in Company Profile and the authoritative
+  customer organization number/evidence disposition for the one legacy won Contract. Confirm no
+  guessed identity or automatic accepted-history backfill occurred. For the null-JSON record, inspect
+  the CloudFactory link, `LicenceAmendment`, and all other operative line history. Confirm any frozen
+  quantity and unit price come from authoritative accepted evidence, never today's live
+  `ContractItem` values alone.
+- [ ] Run a read-only production Contract-rate visibility preflight. If any historical snapshots have
+  unknown visibility, record an explicit customer-visible/hidden classification before promotion.
+  Confirm rate names, codes, or operational use did not make this decision automatically, and do not
+  infer a production result from Dev's zero matching links.
+- [ ] Identify the exact EDR Service and authoritative billing cadence before any production correction.
+  Confirm no name/SKU exception or guessed Dev row was introduced; leave EDR unchanged if identity is
+  not proven.
+- [ ] Save generated terms and inspect metadata version 2. Confirm source fingerprint, exact snapshot
+  fingerprint, per-field source checksums, reviewer user, and review time are all present and change
+  when their corresponding source or exact text changes.
+- [ ] Manually change one legal snapshot, save review, send it, and confirm the exact wording appears
+  in every customer surface as a Contract-owned `Versjon 1 (kontraktsspesifikk)` appendix rather than being
+  assigned a mismatching catalogue version.
+- [ ] Exercise a legacy null-snapshot `sent_quote`, `sent_contract`, and ambiguous `approved`/`won` row.
+  Confirm PDF, public, portal, capture, and detail API remain blocked, while the paginated API/portal
+  list keeps unrelated rows and marks only the historical row unavailable without amounts. For
+  approved/won, confirm no reconstruction, customer, approval amount, or attestation form appears
+  before the original-backed `Tilbud`/`Avtale` choice.
+- [ ] Compare every reconstructed field with original evidence, submit the named attestation, and
+  verify actor, note, source status, original document type, and SHA-256 audit metadata. Change a source
+  line after preview and confirm the stale fingerprint is rejected with no snapshot; reload, review,
+  and confirm only the new fingerprint succeeds. Reload identical lines/rates in the opposite relation
+  order and confirm the fingerprint remains stable. Confirm a non-null snapshot can never be replaced.
+- [ ] Remove a source term from a pre-metadata Contract and confirm it fails closed. Open the terms GET
+  and confirm it writes neither preview text nor review metadata; only explicit POST refresh/save may
+  persist reviewed wording.
+- [ ] Store an empty, scalar, unsupported-version, and `schema_version: 1`-only partial
+  customer snapshot. Confirm Tech, API, capture, public, portal, and PDF paths validate the complete
+  v1 envelope, fail closed, and preserve the exact stored value instead of rebuilding from live rows.
+- [ ] Corrupt the v1 column labels/order, Norwegian date formats, redundant money displays, rate
+  identity uniqueness, appendix numbering, appendix version (`Unversioned`), and list shapes. Add an
+  unknown top-level and line-level internal key, plus numeric strings in integer/boolean fields. Confirm
+  every surface fails closed and the extra field is never returned. Confirm newly built unversioned
+  content is shown as `ikke versjonert`.
+- [ ] Enter an unknown billing cadence and a negative price in the Contract Livewire editor. Confirm
+  each remains a field-validation error, the line preview shows `—`, invalid aggregate totals are
+  omitted, the persisted line is unchanged, and no preview request returns 500.
+- [ ] On isolated copies, run `160000` against more than one backfill chunk and confirm bounded,
+  idempotent, draft-only description filling. Run both migration rollbacks with protected evidence and
+  unsupported sale currency and confirm each refuses data loss. Review exports and explicit rollback
+  plans separately; do not test destructive rollback on shared Dev or production.
+- [ ] Create a controlled mixed-cadence draft and confirm the monthly total is exactly NOK 3,879.68,
+  including an endpoint-security line of 3 x NOK 109.00 = NOK 327.00. Confirm the same exact amounts
+  in the editor, Tech customer preview, Commercial API, secure public view, Customer Portal, and PDF.
+- [ ] Include monthly, annual, one-time, setup-fee, legacy quarterly, discounted, and zero-value
+  components. Confirm each cadence is separate, setup fees are one-time, and zero-value lines read
+  `Inkludert` instead of disappearing or being mixed into another total.
+- [ ] Confirm each customer-facing service table has exactly `Tjeneste`,
+  `Kort beskrivelse`, `Omfang`, `Enhetspris`, `Fakturering`, and `Sum`.
+  Confirm no SKU, per-line SLA, internal rate label, or other implementation field appears.
+- [ ] Verify a plain-text customer description plus singular/plural scope labels on a draft. Send the
+  document, then change the source Service description, units, billing, rate, and SLA defaults.
+  Confirm every sent/accepted customer surface remains byte-for-value consistent with its captured
+  snapshot and never adopts the catalogue edits.
+- [ ] Mark one Contract rate customer-visible on two service lines and confirm it appears once under
+  `Satser for arbeid utenfor avtalt omfang`. Confirm a different amount/unit remains separate,
+  hidden rates are omitted, and an empty rate section is not rendered.
+- [ ] Confirm `Support og responstid` appears once, while internal per-line SLA and rate controls
+  remain available to technicians and continue to support Ticket/timebank resolution.
+- [ ] Confirm Norwegian document type, status, date, party, organization-number, and approval labels.
+  Accept through both supported public and portal paths and verify the captured signer/account
+  evidence is shown without exposing internal workflow metadata.
+- [ ] Use multiple versioned legal terms/attachments and long Norwegian text. Confirm each numbered
+  appendix starts on a new page and shows its stored title, version, and date without clipping,
+  overlap, broken Unicode, or an unexplained blank page.
+- [ ] Inspect every rendered PDF page and confirm the footer identifies the Contract and customer and
+  shows `Side X av Y`, including attachment pages.
+- [ ] Try a binding end after the Contract end in both Tech and API flows. Confirm both reject it with
+  clear Norwegian validation, while an equal or earlier binding end succeeds.
+- [ ] Confirm sent/approved ordinary metadata, line, rate, and term changes are rejected and do not
+  replace `customer_document_snapshot`.
+- [ ] Use the draft-only billing correction on a known mismatched Service line. Confirm it changes
+  only the draft line cadence, leaves price and other negotiated fields unchanged, and refuses a
+  sent/approved Contract.
+- [ ] Reconcile a CloudFactory subscription against an accepted Contract. Confirm NOK price/quantity
+  updates and amendment/conflict behavior remain intact, non-NOK sale updates block without line
+  mutation, and the transaction locks the authoritative parent Contract before resolving/locking its
+  Contract-owned line.
+- [ ] Use a historical sent row with no `secure_token`. Confirm Tech hides both public link and resend,
+  direct resend returns the Norwegian blocker, no token or CC change is persisted, and a draft token
+  cannot open the public route.
+- [ ] Send an editable Contract that has an old token, including after changing Client. Confirm the old
+  bearer URL returns 404 and only the newly generated token opens the new captured snapshot. Confirm
+  resend retains that new token, while manual approval of an editable unsent Contract clears a dormant
+  token. Approval of an already sent Contract must preserve its active link.
+- [ ] Remove or invalidate the customer's billing email on an otherwise resendable captured document.
+  Confirm resend returns the Norwegian recipient blocker with no CC mutation, provider call, or success
+  message.
+- [ ] Check Tech, secure public, and portal surfaces at desktop and mobile widths with keyboard
+  navigation; confirm tables remain understandable and no customer data or actions cross Client
+  boundaries.
+
+Reviewer:
+Reviewed date:
+Result / notes: Production readiness is blocked on authoritative party identity, one legacy won
+evidence disposition, historical rate-visibility classification, and exact EDR identification.
+Automated/PDF preflight does not resolve these facts. Named human review remains Pending, and no
+checkbox is marked complete without explicit reviewer confirmation.
+
 ### HR-2026-08-24-002 - Evergreen Marketing Contact Sequences And Lifetime No-Resend Delivery Guard
 
 Status: Pending
@@ -366,6 +657,66 @@ Result / notes: Read-only browser QA and default queue-worker verification are c
 remaining controlled workflow, API, legacy-continuation, external-scheduler, and named human checks
 remain pending; no reviewer approval is recorded.
 
+### HR-2026-08-24-001 - Ticket Owner, Customer, And Contact At A Glance
+
+Status: Reviewed
+Added: 2026-08-24
+Environment: Authoritative Dev working copy and Dev web application
+Related: GitHub issue #209 and `app/Modules/Ticket/Docs/knowledge/ticket-overview.md`
+
+Scope and affected workflow: the technician Ticket show page now presents an always-visible,
+responsive context strip for the assigned owner, customer, and contact. The strip reads only
+existing Ticket relations, uses explicit fallback labels, and provides Customer and Contact links
+only to technicians with `client.view`. The existing Customer and Details accordions remain in
+place. This review does not cover workflow, data, permission, database, or integration changes.
+
+Automated verification: the focused identity scenarios passed with 3 tests and 36 assertions; all
+eight Ticket show tests passed with 80 assertions; PHP syntax, `git diff --check`, and scoped Pint
+verification passed on authoritative Dev.
+
+Browser verification on 2026-08-24 used the authenticated authoritative Dev origin. An internal
+Ticket confirmed the exact `Unassigned`, `Internal work`, and `No contact` states, while a customer
+Ticket confirmed three populated values plus permission-authorized Customer and Contact route
+patterns. Both links had accessible names, titles, wrapping behavior, and a visible keyboard
+focus ring. The Customer and Details accordions toggled and returned to their original states.
+
+At 1440 x 900 and 768 x 1024 the three context cards remained aligned in one row. At 390 x 844
+they stacked in order inside the viewport, with no context-card or link overflow; the console had
+no warnings or errors. A separate 19-pixel page-level overflow on the internal Ticket at mobile
+width was traced only to the existing workflow step/connector outside this change. The customer
+Ticket had no page-level overflow. The `http://nexum-psa.local` origin remained on its login page,
+so this browser evidence used `https://dev.nexumpsa.eu`. Svein Tore explicitly accepted this
+authoritative Dev review on 2026-08-24; the HTTP origin was not part of the approval evidence.
+
+Deployment actions: deploy the changed files, run `php artisan optimize:clear`, and run
+`php artisan knowledge:sync-docs --module=Ticket --no-interaction`. No migration, seed, queue,
+scheduler, or frontend build action is required.
+
+Risks: stale or inferred identity would send technicians to the wrong customer context;
+permission-insensitive links could expose dead or unauthorized navigation; long names or narrow
+screens could cause overflow; and the new strip could visually obscure existing Ticket controls.
+
+Human checks:
+
+- [x] Open a normal customer Ticket and confirm the owner, customer, and contact are correct before
+  opening an accordion; confirm the Customer and Contact links open the matching records.
+- [x] Check an unassigned Ticket, a client Ticket without a contact, an internal Ticket, and an
+  unscoped Ticket; confirm `Unassigned`, `No contact`, `Internal work`, and `No customer` appear in
+  the appropriate scenarios without guessing identity from the subject.
+- [x] As a technician without `client.view`, confirm Customer, Contact, and Site names remain useful
+  text and that no unauthorized detail links or open buttons are rendered.
+- [x] Confirm the Customer and Details accordions, workflow actions, reply controls, and other
+  Ticket show content still operate normally.
+- [x] Check desktop, tablet, and mobile widths plus unusually long names; confirm the three columns
+  stack cleanly without horizontal overflow or obscured controls.
+- [x] Navigate the context links by keyboard and confirm visible focus, meaningful link names, and
+  acceptable contrast in the active theme.
+
+Reviewer: Svein Tore
+Reviewed date: 2026-08-24
+Result / notes: Approved by Svein Tore in the Codex task after reviewing the Dev implementation and
+browser verification for GitHub issue #209.
+
 ### HR-2026-08-21-001 - Dev Database Recovery And Mail Permission-Repair Verification
 
 Status: In Review
@@ -407,6 +758,32 @@ cursor completed through ID 363 in four pages. The restored stale Economy queue 
 after the safety backup, one restored session was invalidated, and the failed IMAP job was preserved
 without retry or deletion.
 
+2026-08-24 completion follow-up: both Dev Email accounts now use Integration-owned credentials,
+provider binding version 2, the approved exact private `/32`, and active overlap-safe polling.
+Mail completion migrations `2026_08_24_110000`, `120000`, `125000`, `130000`, and `140000` ran one
+per step in batches 124 through 128. All live/Vite/operations/collaboration/UI/acknowledgement gates
+remain false; the new Order 9/11/12/13 ledgers are empty and no Ticket backfill or acknowledgement
+apply ran. The pre-final-schema backup is
+`/var/Projects/tdPSA/storage/app/private/NexumPSA/nexum-dev-pre-mail-final-schema-20260824T090709Z.zip`,
+SHA-256 `f0d1d3cccbcac003ab9a1a6d5d098ea39f54c4d59803aed4d3a41f49f8bf3cbb`, mode `0600`; ZIP
+integrity and its MySQL dump member passed. No seeding ran and production is untouched.
+
+The verified post-completion database backup is
+`/var/Projects/tdPSA/storage/app/private/NexumPSA/nexum-dev-post-mail-completion-20260824T105700Z.zip`,
+SHA-256 `888693191eedbb64417d13ac6f1977becec5cf618212687e9ab382dbd73e4c69`,
+289,061,692 bytes, mode `0600`. ZIP integrity passed and its sole member is
+`db-dumps/mysql-tdPSA_.sql`. It was created with backup notifications disabled after the clean Mail
+test/runtime readback; no seeding or production action occurred.
+
+The latest 2026-08-24 12:47 CEST direct storage readback has 1,445 files, 968 referenced, 477 unreferenced, 28 missing raw
+references, 79 non-private modes, 15 duplicate groups, and zero unsafe/unreadable entries. It finds
+32 of 34 expected attachment parts on exact source rows. Provider reconciliation confirmed message
+479 absent from its source placement, hid placement 478 and soft-deleted that local cache; it remains
+without raw or attachments. Same-identity message 650 remains active in Trash with independent raw
+plus two-attachment evidence.
+Messages 456 and 478 each retain one attachment file but no raw snapshot. These current facts
+supersede earlier 30/34 and 34/34 completion claims without authorizing substitution or deletion.
+
 The pre-attachment-recovery post-migration checkpoint is
 `/var/Projects/tdPSA/storage/app/backups/recovery-incident-20260821/post-migration-clean-state-20260821T114021Z.sql.gz`,
 with SHA-256 `ea65f5f85289cf3d3569ff778a721426f2e803fe9a75d9e9e7b448cbea2dab4a`.
@@ -415,14 +792,15 @@ The latest post-Mail-recovery backup is
 with SHA-256 `467d4cf18ab54726fb0f32b82eb70ed793499e9c54c7c6ccaffbd0e05eb1b009`
 and mode `0600`.
 
-The restored attachment baseline had zero attachment rows and only counter sum 6. An exact 19-ID
-preflight preceded local apply, which restored 30 rows/files across 16 messages; the idempotent rerun
-was unchanged. The four remaining expected parts for messages `456`, `478`, and `479` remain
-unrecovered because the fail-closed provider resolver returned `dns_answer_set_denied`. Those failed
-calls made no database, file, or provider mutation. The latest read-only inventory reports 969 files,
-492 referenced and 477 unreferenced: `raw` 547 (462 / 85), `attachments` 100 (30 / 70), and
-`sent_pending` 322 (0 / 322). It also reports 28 missing raw references, 79 non-private files, 15
-duplicate unreferenced groups, and zero unsafe or unreadable files. No deletion ran.
+Historical 2026-08-21 recovery record: the restored attachment baseline had zero attachment rows and
+only counter sum 6. An exact 19-ID preflight preceded local apply, which restored 30 rows/files across
+16 messages; the idempotent rerun was unchanged. At that checkpoint four expected parts for messages
+`456`, `478`, and `479` were unrecovered because the fail-closed provider resolver returned
+`dns_answer_set_denied`; those calls made no database, file, or provider mutation. Its read-only
+inventory recorded 969 files, 492 referenced and 477 unreferenced: `raw` 547 (462 / 85),
+`attachments` 100 (30 / 70), and `sent_pending` 322 (0 / 322), plus 28 missing raw references, 79
+non-private files, 15 duplicate unreferenced groups, and zero unsafe or unreadable files. The current
+2026-08-24 evidence above supersedes those counts. No deletion ran.
 
 Recovery and deployment notes: seeding was deliberately rejected. Do not run `db:seed`,
 `DatabaseSeeder`, `RoleSeeder`, or `AdminUserSeeder`: these are not recovery tools, can create demo or
@@ -450,13 +828,21 @@ migration ledger, all-table checks, permission/role totals, account source/bindi
 repair outcomes, repair-cursor completion, attachment recovery/inventory outcomes, and queue/session
 containment were read back after recovery. Earlier Mail tests validate the code candidate, not
 browser behavior or human acceptance
-of the restored database. No post-restore browser smoke or named human approval is claimed.
+of the restored database. No authenticated post-restore browser review or named human approval is
+claimed.
+
+The 2026-08-24 completion candidate additionally passes the clean complete Email Feature directory
+at 686 tests / 7,046 assertions, Notification Feature at 110 / 1,030, and the focused
+provider-permission/deployment package at 9 / 135.
+Local web smoke returns 200 for `/login` and an expected unauthenticated 302 for `/tech/mail` and
+`/tech/admin/settings/email/accounts/create`, with no 500. This does not replace the still-open
+authenticated Admin/browser checks or named review.
 
 Human checks:
 
-- [ ] Review and confirm all three recorded backup paths and SHA-256 values, including that the
-  pre-attachment checkpoint remains preserved and the latest post-Mail-recovery backup is mode
-  `0600`.
+- [ ] Review and confirm all recorded backup paths and SHA-256 values, including that the
+  pre-attachment checkpoint remains preserved and both the recovery and 2026-08-24 post-completion
+  backups are mode `0600` with successful archive integrity.
 - [ ] Review the sanitized evidence for database identity, all 351 successful table checks, all 234
   migration records, and representative counts from Users, Clients, Tickets, Email
   accounts/messages/folders, permissions, queue tables, and other business-critical domains.
@@ -469,10 +855,12 @@ Human checks:
 - [ ] Confirm the exact recovered batch sequence 95 through 123 recorded above, and confirm no
   unexpected schema/table was created by the incident or recovery. Preserve the sanitized
   `migrate:status` and all-table-check evidence for the review.
-- [ ] Confirm migration `2026_08_21_100000` is recorded, all eight approved Mail permissions exist,
-  Admin has 167 total grants, Superuser has 216, every other role total is unchanged, both Email
-  accounts remain legacy/unbound, and no `RoleSeeder`, `AdminUserSeeder`, demo seeder, or broad
-  permission synchronization ran.
+- [ ] Review the historical permission checkpoint after migration `2026_08_21_100000`: all eight
+  approved Mail permissions existed, Admin had 167 total grants, Superuser had 216, every other role
+  total was unchanged, both Email accounts were then legacy/unbound, and no `RoleSeeder`,
+  `AdminUserSeeder`, demo seeder, or broad permission synchronization ran. Separately confirm the
+  current Integration-owned version-2 bindings for both accounts without treating them as part of
+  that historical schema-only proof.
 - [ ] As an active authorized Admin, open **Admin > Settings > Email accounts > Create** and the
   Integration-owned Email-provider pages and confirm the reported 403 is repaired without provider
   I/O. Repeat the negative cases for missing permissions, inactive/system users, private-provider
@@ -484,21 +872,28 @@ Human checks:
   removal of the restored stale Economy job and invalidation of one restored session; and confirm the
   failed IMAP job remains preserved without blind retry/deletion. Review all remaining queue,
   schedule, token, provider-operation, and idempotency state before normal work resumes.
-- [ ] Review the exact 19-ID attachment preflight, 30-row/file local apply, unchanged rerun, and four
-  blocked parts on `456`/`478`/`479`. Confirm each `dns_answer_set_denied` call changed no database,
-  file, or provider state. Reconcile the 969-file inventory and preserve all 477 unreferenced files,
-  28 missing raw references, 79 non-private files, and 15 duplicate groups; perform no cleanup.
+- [ ] Review the historical exact 19-ID attachment preflight, 30-row/file local apply, unchanged
+  rerun, and fail-closed `dns_answer_set_denied` calls, confirming they changed no database, file, or
+  provider state. Reconcile that checkpoint with the current 32/34 exact-source readback: message 479
+  is a soft-deleted cache with hidden/provider-missing placement 478 and still lacks raw/attachments;
+  message 650 remains active independent same-identity Trash evidence; and messages 456 and 478 lack
+  raw snapshots. Reconcile the current 1,445 / 968 / 477 / 28 / 79 / 15 storage
+  inventory and perform no cleanup.
 - [ ] Run the focused Mail permission and fail-closed runtime tests only against a proven isolated
   test database, then perform authenticated Dev browser and HTTP smoke checks across login, core
   records, Mail, Tickets, attachments, and downloads.
-- [x] A named human reviewer confirms the recovery evidence, accepts or remediates the data-loss
-  window, and explicitly authorizes normal Dev traffic, schedules, and workers to resume.
+- [ ] Review the 136 unattempted inbound notification-fanout jobs and already-enabled Web Push
+  settings. Explicitly decide the bounded cohort's disposition before starting a `notifications`
+  worker or the full Laravel scheduler.
+- [x] Svein explicitly authorized normal Dev traffic and the targeted schedules/workers to resume.
+  This runtime authorization does not accept, remediate, or close the August 15–21 loss window.
 
 Reviewer: Svein
 Reviewed date:
 Result / notes: The 2026-08-15 backup was imported, current forward migrations and bounded repairs
-were applied, both post-migration checkpoints were recorded, and no seeding ran. The bounded local
-attachment recovery restored 30 parts while four provider-dependent parts remain fail-closed.
+were applied, both post-migration checkpoints were recorded, and no seeding ran. The historical
+bounded local attachment recovery restored 30 parts; current direct readback finds 32/34 exact-source
+parts, while exact-source disposition and raw-snapshot evidence review remain open.
 Svein explicitly approved the recovery and Mail permission-repair handoff on 2026-08-21, then
 separately authorized normal tdPSA schedules and workers to resume. The preserved crontab with
 SHA-256 `a41a4c79a315af436ccf475a6191d9b0868f85d606eb5686814bcb1512e680ff` was installed unchanged at
@@ -557,165 +952,379 @@ on 2026-08-21 because the implementation is missing.
 
 ### HR-2026-08-16-013 - Email/Ticket Conversation Relationship Migration
 
-Status: Rework Needed
+Status: Pending
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; unsafe backfill scaffold must not run
+Environment: Authoritative Dev working copy; isolated SQLite verification plus an actual disposable,
+socket-only MariaDB 10.11.14 migration contract; migration `2026_08_24_130000` ran in Dev batch 127,
+both ledgers remain empty, and no preview/backfill/runtime apply ran
 Related: `docs/feature-slices/2026-08-19-email-ticket-conversation-relationship-migration.md`
 
 Scope and affected workflow: migrate legacy Email/Ticket evidence into first-class conversation
 links while preserving the source mailbox, audience and `TD-...` correlation.
 
-Deploy / migration notes: do not dispatch the current backfill. It calls an absent relationship,
-selects an arbitrary first user as actor, catches failures without a completion gate, and lacks a
-frozen preview or focused tests. No data migration was run during the 2026-08-21 audit.
+Deploy / migration notes: deploy additive ledger migration
+`2026_08_24_130000_create_email_ticket_conversation_link_migration_ledger.php` before using the
+command. It creates empty schema only and refuses rollback after evidence exists. The migration ran
+in Dev batch 127 after backup/schema review; no preview/apply run, provider operation, queue/worker/
+cron change or production action was performed by Order 13. Preview the exact cohort with
+`email:backfill-ticket-conversation-links --actor=<active-human-id> --limit=100`; do not use
+`--apply=<reviewed-public-id>` on shared data until the disposable-copy checks below pass.
 
-Risks: false attribution, duplicate/wrong Ticket links, partial backfill and silent audience drift.
+Risks: legacy account/conversation/Ticket/audience evidence may conflict or drift after preview. Such
+items block or fail stale without a link; Order 14 must resolve conflicts. Apply inserts a durable
+primary relationship and therefore requires exact cohort review, worker observation and a tested
+backup/rollback plan. A next-page queue dispatch can fail after one bounded page commits; the run now
+records terminal `continuation_dispatch_failed`, preserves its ready rows and requires a new reviewed
+preview to resume. The broader first-class relationship/capture/event model remains incomplete.
 
-Automated verification: no focused Order 13 test exists.
+Automated verification: explicit SQLite `:memory:` with isolated `APP_CONFIG_CACHE`, array cache,
+maintenance and session stores, and `HOME=/tmp`: focused Order 13 coverage passes 17 tests / 150
+assertions. It covers schema, read-only/sanitized preview, exact human attribution, command dispatch
+separation, side-effect-free apply, customer/internal audience, idempotency, competing claims,
+missing provenance, stale evidence, cross-operator denial, committed-page continuation-dispatch
+failure, fresh-preview remainder recovery and the final-attempt failure hook. Adjacent Email conversation identity,
+current Ticket-link intake, provider-deletion retention, Ticket not-Ticket and merge coverage passes
+15 / 116 (32 / 266 combined). The combined Order 12/13 opt-in migration contract passes 1 / 52 on
+MariaDB 10.11.14. For `130000` it proves up, every named index and foreign key, exact valid JSON
+metadata keys (`message`, `ticket`, `placements`, `conversation`) and fingerprints, invalid-JSON
+rejection, empty down and non-empty evidence refusal. Cleanup reported zero matching random schemas,
+then stopped the socket-only daemon and removed its `/tmp` datadir. Pint passes for the changed PHP
+files.
 
 Human checks:
 
-- [ ] Approve a deterministic, resumable preview/apply backfill with a real authorized actor or
-  explicit system-actor contract and per-item evidence.
-- [ ] Verify Inbox preservation, link roles, duplicates, failures, audit and audience isolation on a
-  disposable data copy before any shared-schema run.
+- [ ] On a disposable current-schema data copy, run preview with one named active human holding
+  `email.account_manage`, `email.mailbox_sync_manage`, and `ticket.update`. Confirm the public ID,
+  fingerprint, cap and candidate/ready/already-mapped/conflict/failed counts before apply.
+- [ ] Inspect blocked missing/merged Ticket, ambiguous placement/account, competing-primary,
+  secondary-reference, missing-provenance and unknown-audience fixtures. Confirm no link is created
+  and only safe IDs, statuses, reason codes and hashes enter the ledger.
+- [ ] Apply the exact reviewed public ID with the same human. Confirm the Email worker creates one
+  active primary link with that operator in `linked_by`, preserves customer/internal audience and
+  completes every ledger item; repeat the job/preview and confirm no duplicate.
+- [ ] Change source evidence or revoke/disable the actor after preview. Confirm apply fails stale or
+  unauthorized with a terminal ledger state and no partial link for that item.
+- [ ] With at least 26 ready items on a disposable copy, fail dispatch of the second page after 25
+  commit. Confirm the first run is terminal `continuation_dispatch_failed` with 25 applied and one
+  ready, then review/apply a fresh preview and confirm it classifies 25 mapped and applies only the
+  remaining item. Confirm the queue final-attempt hook cannot overwrite the more precise result.
+- [ ] Compare source Email/placement/provider flags, personal unread/opened, Ticket/message/event/tag/
+  classification, rules, Signals, notifications, portal and outbound/provider operations before and
+  after preview/apply. Confirm only the relationship and migration ledger change and the source stays
+  visible under ordinary Mail placement/access predicates.
+- [ ] Exercise the empty-ledger rollback in a disposable database, then create preview evidence and
+  confirm rollback refuses to erase it. Verify the real Email worker remains healthy and reports any
+  failed migration job instead of silently continuing.
 
 Reviewer:
 Reviewed date:
-Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence.
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence. The
+2026-08-24 safety rework closes the documented absent-relationship, arbitrary-actor and missing
+dispatch/verification defects. Named disposable-copy and runtime review is still required; AI has
+not marked this entry Reviewed.
 
 ### HR-2026-08-16-012 - Email Conversation Acknowledgement And Explicit Multi-Account Actions
 
-Status: Rework Needed
+Status: Pending (Safety Rework Implemented; Activation Gated)
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; historical migration `2026_08_19_150000` is an inert
-marker in recovered Dev batch 120 and the acknowledgement table is absent
+marker in recovered Dev batch 120; additive `2026_08_24_140000` ran in Dev batch 128 with empty
+ledgers and its gate false; isolated SQLite plus disposable MariaDB verification; no provider call,
+personal-state runtime action or acknowledgement apply
 Related: `docs/feature-slices/2026-08-19-email-mail-conversation-acknowledgement-multi-account-actions.md`
 
 Scope and affected workflow: acknowledge only the exact authorized conversation-placement snapshot
 selected by one user, while keeping provider Seen and unselected/future account occurrences separate.
 
-Deploy / migration notes: `150000` was converted to an inert marker before it ran in recovered Dev
-batch 120;
-it created no table or acknowledgement data. `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` defaults false and
-the current action returns an honest unavailable status. The action still calls an absent
-relationship and lacks action-level mailbox authorization, a frozen placement snapshot and
-provider/personal result evidence. A corrected contract requires a new forward migration.
+Implemented boundary: new run/item evidence freezes exact account, conversation, message, folder,
+placement, UID namespace/UID, current access epoch, provider-binding and sync versions, before/target
+values and immutable fingerprints. Preview is read-only and bounded to the active account
+conversation or exact selected placement IDs. Apply requires the same actor, claims at most 25
+items, reauthorizes every placement and changes only that actor's current-epoch state through
+`SetEmailUnreadForMe`. Optional provider Seen separately requires Organize and creates one pending
+idempotent `RecordEmailRemoteOperation` row without IMAP. Personal success remains truthful if the
+provider half is denied, stale, conflicted or failed. Safe item statuses/reason codes retain that
+partial result. Future arrivals, unselected accounts and other users are outside the frozen run.
+One message with several active placements freezes one selected personal effect per account/message/
+access-epoch/target; later placement items are immutable `coalesced` evidence while provider work
+remains selected per placement. Run outcomes ignore coalesced rows as success, so a selected failure
+cannot be masked.
 
-Risks: acknowledging future mail, another account or another user's state; provider/personal read
-conflation; partial multi-account actions.
+Deploy / migration notes: leave inert `150000` unchanged. Review additive forward migration
+`2026_08_24_140000_create_email_conversation_acknowledgement_action_ledger.php` on a disposable
+current-schema copy before coordinated deployment. It later ran in Dev batch 128; both ledgers are
+empty and the gate remains false. The empty down path is reversible; once either ledger contains
+evidence, rollback refuses to erase it. The migration
+itself creates no preview, personal state, provider operation or external call. Keep
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` after migration: the implicit legacy action now rejects,
+and the Livewire method cannot bypass the still-missing public preview/confirmation interface.
 
-Automated verification: `EmailQuarantinedMailSliceMigrationTest` proves the flag defaults off and
-the table remains absent through the inert marker's up/down path. No Order 12 completion test exists.
+Risks: accidental feature activation before accessible confirmation/continuation exists; migration
+and index behavior on the deployment engine; stale/revoked placement, epoch, UID or provider binding;
+truthful partial provider reconciliation; hidden-account leakage; and broad Archive/Move/Trash
+actions retargeting an open shared composer. Those broader UI/API/action paths and private
+invalidation remain Order 8/9/full-slice gated.
+
+Automated verification: explicit SQLite `:memory:` with isolated `APP_CONFIG_CACHE`, array
+cache/maintenance/session stores and `HOME=/tmp`: focused
+`EmailConversationAcknowledgementSafetyTest` passes 10 tests / 110 assertions. It covers the
+default-off gate, forward schema and rollback refusal, preview no-mutation, active/future/explicit
+multi-account membership, inaccessible selection, exact actor/snapshot reauthorization, sanitized
+personal/provider partial failure, Organize revocation, provider pending/succeeded redelivery without
+IMAP or duplication, canonical multi-placement personal coalescing, unmasked selected failure,
+break-glass denial and the closed implicit action. The combined focused plus
+historical-quarantine, unread-epoch and remote-operation recovery package passes 60 / 522. An
+isolated authorized Mail workspace render smoke adds 1 / 11, for 61 / 533 recorded handoff coverage.
+The combined Order 12/13 opt-in migration contract passes 1 / 52 on MariaDB 10.11.14. For `140000`
+it proves up, every named index and foreign key, default-off configuration and boolean schema
+defaults, empty down, non-empty evidence refusal, and exact `pending` / `coalesced` status plus
+selected/non-selected round-trip for canonical multi-placement evidence. Cleanup reported zero
+matching random schemas, then stopped the socket-only daemon and removed its `/tmp` datadir.
 
 Human checks:
 
-- [ ] Review the final schema/action contract and disposable migration rollback before migration.
-- [ ] Verify future arrivals and unselected accounts remain unchanged, each placement is reauthorized,
-  and partial provider/personal results are explicit and retry-safe.
+- [ ] On a disposable current-schema copy, inspect `140000`, run the empty up/down path, create one
+  preview, and confirm rollback refuses to delete its run/item evidence. Confirm inert `150000` and
+  the absent old table remain unchanged.
+- [ ] With the feature flag enabled only in the disposable environment, preview one named user's
+  active account conversation. Confirm exact placement/UID/epoch/binding evidence, 100/500/20/15
+  bounds, no personal/provider mutation during preview, and no subject/body/participant/filename/
+  private-path/credential/raw-provider-error evidence.
+- [ ] Add mail after preview and include a correlated copy in an unselected account. Apply with the
+  same user and confirm only frozen personal states change; future/unselected mail, other users,
+  baselines, opened receipts, Ticket/rule/Signal/Notification/draft state and provider flags do not.
+- [ ] Select exact placements across two authorized accounts, then test an inaccessible account,
+  another actor, revoked View/Organize, changed epoch, moved/missing placement, UIDVALIDITY/UID/sync
+  drift and provider-binding drift. Confirm non-enumerating denied/stale results and no substitution.
+- [ ] Request optional provider Seen and confirm personal and provider results stay separate. Observe
+  one pending remote operation per exact placement, existing worker acknowledgement/reconciliation,
+  provider failure/conflict and redelivery without duplicate personal or provider work.
+- [ ] Put one EmailMessage in two active folders. Confirm preview selects one fingerprint-bound
+  personal effect, marks the later item coalesced, changes personal state once, still reserves two
+  placement-bound provider operations, and never reports false stale/partial or masks selected
+  personal failure.
+- [ ] Verify the eventual Livewire/API preview and explicit confirmation controls on desktop,
+  keyboard and mobile before enabling. Confirm the legacy callable method never mutates directly,
+  Order 8 remains disabled-safe and an open shared draft cannot be silently retargeted.
 
 Reviewer:
 Reviewed date:
-Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence.
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence. The
+2026-08-24 safety rework closes the absent relationship, implicit scope, missing action-time
+authorization and personal/provider conflation. AI has not marked this entry Reviewed. Named
+disposable migration, runtime/provider and eventual UI/API review remain required.
 
 ### HR-2026-08-16-011 - Email Compose, Draft, Send, And Sent API Parity
 
-Status: Rework Needed
+Status: Pending (Private/API Rework Implemented; Shared Collaboration Gated)
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; one P0 regression repaired, full slice incomplete
+Environment: Authoritative Dev working copy; isolated SQLite/fake-storage/fake-SMTP verification;
+additive `2026_08_24_110000` ran in Dev batch 124, preserved the one private draft, and left the
+outbound ledger empty; no provider call or SMTP runtime test
 Related: `docs/feature-slices/2026-08-19-email-mail-compose-draft-send-sent-api-parity.md`
 
-Scope and affected workflow: preserve one idempotent outbound action and private draft ownership
-while adding explicit shared-draft scope, fencing and complete Livewire/API/Sent parity.
+Scope and affected workflow: Compose, Reply, Reply All, Forward, provider-Draft editing, local
+autosave/manual save/discard, durable attachments, exact signed preview, SMTP submission, Email log,
+and provider Sent status in `/tech/mail` and `/api/v1/email/mailbox`.
 
-Deploy / migration notes: Reply, Reply All and Forward now resolve the reauthorized placement before
-sending; focused regression coverage passes even with the lock table absent. Historical Order 9
-migration `140000` is an inert marker in recovered Dev batch 119 and created no table.
-`EMAIL_MAIL_COLLABORATION_ENABLED` defaults false. Do not activate shared drafts: current draft
-lookup can cross private user scope and durable fencing remains incomplete.
+Implemented private boundary: the cross-user active-draft query is closed. Drafts have explicit
+`private` scope, opaque public identity, immutable generation evidence, and a non-reversible HMAC
+version token. Mutations recheck the exact owner, generation, active placement, mailbox access, and
+provider binding. Attachment resources expose no storage path/checksum/generation. Livewire and API
+call the same `SubmitEmailComposerDraft` boundary, which freezes the prepared signed body/threading
+and attachment manifest, elects one version-specific `email_outbound_submissions` row, moves the
+draft to `send_reserved`, calls the existing SMTP action once, and links safe Email-log and
+Sent-reconciliation status. Accepted requests are idempotently recoverable; unresolved provider
+outcomes remain reserved and reject the same or a new key without SMTP. Exact normal Sent observation
+marks the submission `sent_reconciled`.
 
-Risks: cross-user draft/attachment disclosure or deletion, stale/concurrent send, duplicate outbound
-mail and incomplete Sent reconciliation.
+Deploy / migration notes: review additive migration
+`2026_08_24_110000_add_private_draft_fencing_and_outbound_submissions.php` on a disposable database
+copy, then coordinate normal deployment/migration. It later ran in Dev batch 124; its backfill kept
+the existing draft private and the submission ledger is empty. Rollback refuses to drop non-empty
+submission evidence. No provider settings or provider mailbox was changed. Historical Order 9
+migration `140000` remains an inert marker; `EMAIL_MAIL_COLLABORATION_ENABLED` remains false and
+shared drafts/leases/`423` behavior must
+not be activated by this review.
 
-Automated verification: `EmailMailComposerPlacementRegressionTest` drops the lock table and passes
-1 test / 14 assertions across Reply, Reply All and Forward.
+The new draft/attachment public and generation columns are intentionally nullable for rolling-deploy
+compatibility. Migration `110000` backfills rows present during the run; current model `creating`
+hooks guarantee opaque IDs/generation for all new application rows. Old application writers must be
+drained during cutover, followed by an explicit zero-null check. Schema-level `NOT NULL` is a later
+reviewed hardening step after the rolling window, not an invariant claimed by this migration.
+
+Risks: migration/backfill/index behavior on the deployment engine; cross-user/account leakage;
+stale client overwrite; concurrent duplicate SMTP; missing/tampered attachments; access or provider
+binding loss between load and send; post-acceptance cleanup failure; ambiguous outcome accidentally
+presented as retryable; and incorrect same-Message-ID Sent convergence.
+
+Automated verification: explicit isolated `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`, unused
+`APP_CONFIG_CACHE`, array maintenance/cache stores, `HOME=/tmp`, fake private storage, and fake SMTP.
+`EmailComposeDraftSendApiParityTest`, composer lifecycle, post-SMTP safety, and selected-placement
+regressions pass 22 tests / 228 assertions. Coverage includes two-user private isolation, shared-scope
+rejection, opaque stale fencing, attachment response secrecy, signature/body preview/send parity,
+accepted repeat with one SMTP call, unresolved no-retry, binding drift, revoked access, exact Sent
+reconciliation, Reply/Reply All/Forward placement, and accepted-follow-up failure behavior. PHP
+syntax passes for the changed Order 11 PHP/migration files, and targeted Pint passes for all 23
+Order 11 PHP files.
 
 Human checks:
 
-- [ ] Verify Reply, Reply All and Forward against the selected authorized placement in the browser
-  with outbound delivery intercepted, and confirm one correct Email log per action.
-- [ ] Review and test private versus explicitly shared draft scope, two-user fencing, access loss,
-  ambiguous send and Sent convergence before shared-draft activation.
+- [ ] Review migration `110000` up/down on a disposable copy containing existing drafts and
+  attachments. Confirm opaque IDs/generations are complete, indexes are valid, no content changes,
+  empty rollback succeeds, and rollback with submission evidence refuses safely.
+- [ ] With two active humans granted the same controlled mailbox, save Compose and Reply drafts in
+  both browser/API sessions. Confirm each sees only their own private draft and attachments; a
+  `shared` API request is rejected and no Order 9 table/lock is required.
+- [ ] Load one draft in two clients, update the first, then use the second client's old token for
+  update, attachment removal, provider sync, discard, and send. Confirm every stale mutation returns
+  conflict/current safe metadata and never overwrites or contacts a provider.
+- [ ] Intercept SMTP and exercise Compose, Reply, Reply All, Forward, and provider-Draft editing from
+  web plus one API send. Compare To/Cc, sanitized HTML/plain text, signature, attachment order/hash,
+  threading, sender account, and Email log; confirm exactly one SMTP call per submission.
+- [ ] Repeat an accepted request with the same key and an unresolved request with the same and a new
+  key. Confirm the accepted submission is returned, unresolved remains blocked with `Do not resend`,
+  and no second SMTP call occurs. Simulate post-acceptance log/Sent/draft-cleanup failure and confirm
+  the result still says accepted with a warning.
+- [ ] Revoke mailbox access and rotate the provider binding after draft load. Confirm non-enumerating
+  denial/conflict happens before provider access and no submission/provider write is created.
+- [ ] Import one controlled same-account Sent placement with the exact reserved Message-ID. Confirm
+  submission and reconciliation become `sent_reconciled`; a different account/Message-ID does not
+  match and never triggers SMTP or fuzzy correlation.
+- [ ] Inspect API responses and logs for private disk paths, checksums, generation IDs, Bcc, raw MIME,
+  canonical IDs, credentials, and raw exception/provider text. None may be exposed.
 
 Reviewer:
 Reviewed date:
-Result / notes: The P0 undefined-placement error was repaired 2026-08-21. The 2026-08-19 summary's
-`Done`/Junie row had no detailed review evidence and does not close the remaining slice.
+Result / notes: Automated work does not mark this review complete. The private/API beta boundary is
+ready for named review; shared collaboration remains separately dependency-gated by Order 9.
 
 ### HR-2026-08-16-010 - Email Deterministic Rules API Completion
 
-Status: Rework Needed
+Status: Rework Needed / Safety Repair Implemented
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; incomplete Undo/API scaffold remains inactive
+Environment: Authoritative Dev working copy; code and isolated SQLite verification only
 Related: `docs/feature-slices/2026-08-19-email-mail-deterministic-rules-api-completion.md`
 
 Scope and affected workflow: complete draft/publish/preview/version/reprocess/retry/Undo parity with
 immutable attempts, account scope, precedence and Email/Signal loop protection.
 
-Deploy / migration notes: no Order 10 deploy action is authorized. The current reversal service
-changes only local folder state instead of using the provider-operation ledger and does not meet the
-approved deterministic reversal contract.
+Deploy / migration notes: no Order 10 migration, database-data change, provider call, queue/scheduler
+change, cron change, or runtime activation was performed. The 2026-08-24 safety repair removes the
+local-only reversal and routes an eligible action through the existing verified provider-operation
+Undo ledger. A specifically scoped API token must include `email.rules.execute`; current user,
+`email.rule_manage`, mailbox View/Organize, and provider evidence are still checked at request time.
 
-Risks: local/provider divergence, misleading Undo success, repeated rules and raw exception exposure.
+Risks: applying an eligible Undo is a real provider Move and must be tested only with an approved
+non-production fixture. Full rule drafts, durable bounded reprocess/retry/full-rerun coordination,
+and complete API/OpenAPI parity remain unimplemented and dependency-gated. Mixed/local-only effects
+cannot be presented as undone.
 
-Automated verification: no focused Order 10 completion test exists.
+Automated verification: isolated SQLite with explicit `:memory:`, array cache, isolated
+`APP_CONFIG_CACHE`, array maintenance store, and `HOME=/tmp`: focused Order 10 coverage passes 5 /
+65; adjacent Email Undo, supervised cleanup, inbound automation, and Integration passes 91 / 875;
+targeted existing rule publication/API/runtime passes 3 / 36. Pint passes for the changed PHP files.
 
 Human checks:
 
 - [ ] Review and test the full rule draft/publish/version/preview/reprocess/retry contract.
-- [ ] Verify every reversible provider action uses the normal idempotent remote-operation ledger,
-  and non-reversible/ambiguous effects fail honestly without local-only success.
+- [ ] With one approved non-production provider Move execution inside the 15-minute window, verify
+  eligibility, apply Undo once, confirm the exact source folder/UID, and repeat the request to confirm
+  that no second inverse/provider mutation is created.
+- [ ] Verify a mixed-effect, local Archive/tag, stale-target, and target-mismatch attempt is unavailable
+  and creates neither an inverse operation nor local compensation.
+- [ ] Verify inaccessible account/attempt IDs return Not Found, View without Organize reports current
+  authorization failure, and execution output contains no subject, address, folder path, before/target
+  snapshot, raw exception, or raw provider message.
 
 Reviewer:
 Reviewed date:
-Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence.
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence. The
+2026-08-24 safety repair closes the known local-only Undo/raw-failure defect but does not close the
+full Order 10 slice or this review.
 
 ### HR-2026-08-16-009 - Email Presence, Shared Draft Locks, And Stale-Composer Protection
 
-Status: Rework Needed
+Status: Pending (Backend/API Safety Rework Implemented; Runtime/UI Gated)
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; historical migration `2026_08_19_140000` is an inert
-marker in recovered Dev batch 119 and the draft-lock table is absent
+Environment: Authoritative Dev working copy. Historical migration `2026_08_19_140000` remains an
+inert marker in recovered Dev batch 119. Forward migration
+`2026_08_24_125000_add_email_shared_draft_coordination.php` ran in Dev batch 126 after Order 11;
+the existing draft remains private, shared ledgers are empty, and collaboration/UI/live gates remain
+false.
 Related: `docs/feature-slices/2026-08-19-email-mail-presence-shared-draft-locks-stale-composer.md`
 
-Scope and affected workflow: expose only authorized ephemeral reading/typing coordination and use
-durable shared-draft fencing so two users/tabs cannot overwrite or send stale content.
+Scope and affected workflow: default-off API/backend boundary for authorized ephemeral
+reading/typing coordination, explicit private-to-shared reply drafts, one current editor,
+lease/fence/content/source versioning, stale rebase/discard and once-only shared submission. The
+legacy `MailWorkspace` SQL-lock/presence and Echo whisper fallback is removed; workspace
+collaboration now requires private-live readiness, the separate UI flag and `EmailCollaborationGate`.
 
-Deploy / migration notes: `140000` was converted to an inert marker before it ran in recovered Dev
-batch 119;
-it created no table. `EMAIL_MAIL_COLLABORATION_ENABLED` defaults false, and ordinary private composer
-flows remain available without a lock. The rejected schema lacked the approved conversation FK,
-explicit shared scope, draft binding, monotonic fencing/content version and audit evidence. Current
-whispers use separate per-user channels, so coworkers cannot receive them. A corrected design
-requires a new forward migration.
+Deploy / migration notes: preserve inert `140000`. Order 11 migration `110000` and additive `125000`
+ran in Dev batches 124 and 126 with `umask 0002`; exact FKs/indexes/backfill and empty/non-empty
+guarded-down behavior were read back, and no shared draft/lock/event evidence was created.
+Do not enable `EMAIL_LIVE_ENABLED`, `EMAIL_MAIL_COLLABORATION_ENABLED` or
+`EMAIL_MAIL_COLLABORATION_UI_ENABLED`, rebuild an enabled asset, start Reverb/`email-live`, or make a
+provider call during migration review. The config-first gate must return unavailable without asking
+the optional schema when either server flag is false; a fully enabled gate additionally requires
+Order 8 private runtime readiness.
 
 Risks: cross-user draft access, concurrent/stale send, false presence, orphaned locks and content
-leakage through the wrong channel scope.
+leakage through cache/events/API, irreversible attachment deletion before SQL commit, and enabling
+collaboration ahead of its private transport/UI review.
 
-Automated verification: `EmailQuarantinedMailSliceMigrationTest` proves the flag defaults off and
-the table remains absent; `EmailMailComposerPlacementRegressionTest` proves ordinary composer sends
-remain available without it. No Order 9 collaboration/fencing completion test exists.
+Automated verification: isolated SQLite `:memory:`, array cache, unique `APP_CONFIG_CACHE`, cache
+maintenance and `HOME=/tmp`: `EmailSharedDraftCoordinationSafetyTest` passes 9 tests / 122 assertions;
+the relevant workspace/quarantine set passes 20 / 193. They cover config-first/live
+readiness, presence permissions/multi-tab filtering/no SQL, cross-user isolation, idempotent share,
+one lease, expiry takeover/monotonic fence, stale-token `423`, stale rebase/body/attachment
+preservation, stale discard, one submission/provider call and rollback-safe attachment files. The
+adjacent Order 11 composer/submission/Sent set passes 22 / 228. A fresh default-off `npm run build`
+selects `assets/app-DjAfqa_z.js`, SHA-256
+`1fc6ecddbe9242c244e0cf2658f7a2af7e265d9d2b3b6830feda999b707ed2a5`; the selected and retained
+bundles contain zero legacy presence/whisper markers and retain the current private-live markers.
+No shared database, Redis, Reverb, browser, worker, provider or production check was run. The opt-in actual MariaDB contract
+passes 1 / 44 against a random disposable schema on an isolated `/tmp` server: up/backfill/named
+indexes/FKs/default-off, empty down, and refusal for independent shared-draft/lock/event evidence all
+pass. `finally` dropped the schema, and an independent `information_schema` prefix readback returned
+zero before the temporary server and datadir were stopped and removed. This does not mark the human
+migration inspection complete.
 
 Human checks:
 
-- [ ] Review a corrected additive schema and two-user/two-tab fencing contract before a new forward
-  migration.
-- [ ] Verify acquire/renew/takeover/release, stale tokens, access loss, one send reservation and
-  authorized ephemeral presence without permanent heartbeat content.
+- [ ] On a disposable current-schema MariaDB copy, inspect and run `125000` up. Verify existing rows
+  remain private, exact conversation/source backfill is correct, shared scope is unique, one lock
+  row per draft is enforced, event evidence is content-free, and an empty down succeeds while a
+  non-empty lock/event/shared draft refuses rollback without erasing evidence.
+- [ ] With all runtime flags still false, verify private Compose/Reply/Reply All/Forward, attachments,
+  send and Sent status remain available, while every presence/share/shared-draft endpoint returns
+  unavailable without a schema query/provider access.
+- [ ] After Order 8 is separately reviewed and in an approved non-production runtime, enable the
+  server collaboration gate only. With two authorized ordinary shared-mailbox users and two tabs,
+  verify reading 45-second and typing 25-second expiry, multi-tab aggregation, 10-second floor,
+  leave/disconnect, revoked View/Send filtering and absent indicators during Redis/Reverb loss. Verify
+  no SQL heartbeat, content-bearing cache/event/log payload or personal/delegated/break-glass scope.
+- [ ] Explicitly share one Reply draft, repeat the exact request, and verify the same result. Confirm
+  View-only may read but not edit, an unrelated user/account/source gets Not Found, and responses do
+  not expose lease tokens/hashes, generations, fingerprints, paths, checksums or provider evidence.
+- [ ] Verify acquire/renew/release, active-holder `423`, explicit expiry takeover with a larger fence,
+  and denial of every old-token save/upload/remove/rebase/discard/send. Revoke Send while open and
+  confirm the immediate pre-provider check produces no provider call.
+- [ ] Introduce a new inbound/current source, confirm save/preview/send is stale with no submission or
+  provider call, then confirm rebase recalculates source/recipient/subject/thread while preserving
+  authored body/eligible attachments. Confirm stale discard remains possible under the exact lease.
+- [ ] Send once and repeat the same idempotency key. Confirm one SMTP attempt, one Order 11 outbound
+  submission, safe Accepted/Sent reconciliation, released lease, post-commit attachment cleanup and
+  no retry after unresolved provider outcome.
+- [ ] Only after the backend review passes, review the accessible desktop/mobile Livewire controls,
+  status text (not color alone), focus/keyboard behavior and truthful unavailable state before the
+  separate UI gate is enabled.
 
 Reviewer:
 Reviewed date:
-Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence.
+Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence. The
+2026-08-24 rework closes the beta-critical backend/API safety boundary but does not activate or
+human-review Order 8 transport, MariaDB deployment, Redis/Reverb, browser UI or provider behavior.
 
 ### HR-2026-08-16-008 - Email Private Live Invalidation And Polling Fallback
 
@@ -725,7 +1334,9 @@ Environment: Authoritative Dev working copy; migration `130000` is Ran in recove
 forward repairs `2026_08_21_110000` and `120000` are Ran in batches 122 and 123, server config/cache and Vite assets
 keep runtime disabled, and the unsafe unsupervised debug Reverb listener was stopped. Historical
 Order 9/12 filenames are inert markers in batches 119 and 120 with both tables absent. Full implementation and
-named review remain pending.
+named review remain pending. Forward repair `2026_08_24_120000` ran in Dev batch 125 with four
+replacement UPDATE guards present and live ledgers empty; `EMAIL_LIVE_ENABLED`,
+`EMAIL_LIVE_RUNTIME_APPROVED`, collaboration/UI/acknowledgement and the Vite gate remain false.
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-16-email-live-invalidation-user-stream-fanout.md`,
 `docs/feature-slices/2026-08-16-email-mail-private-live-invalidation-polling-fallback.md`, and
@@ -763,20 +1374,33 @@ mode before it can open a socket. Module auth now enforces active/non-system/exa
 identity with auth/tech/2FA/CSRF/dedicated throttle. These repairs do not complete the publisher,
 fanout, fallback, authorization-generation, retention or operational contracts.
 
+The 2026-08-24 static rework freezes publication evidence in the source transaction, requires stable
+call-site identities, adds exact conversation IDs and missing outer transactions, and replaces the
+publisher with bounded raw candidate/delivery/summary claims, finite recovery/blocking and no false
+source seal. Catch-up is capped and generic on unsafe state; a signed user/version/epoch/global-
+generation receipt is required before acknowledgement or retention. The client now implements one
+channel, five-second degradation, visible 15-second polling, 15/30/60 HTTP backoff, 120-second safety
+checks and hidden/offline pause. Reverb origins and CSP are exact, and a separate operations approval
+gate prevents an accidental environment toggle. Guarded retention protects unfinished fanout and
+unacknowledged user versions.
+
 Deploy / migration notes: Migration `130000` ran in recovered Dev batch 118 before this audit;
 forward-only `2026_08_21_110000` ran in batch 122 after a SQLite contract test and a MariaDB pretend
 review. Fail-closed runtime quarantine `2026_08_21_120000` then ran in batch 123; it removes only incomplete base writer
 guards while disabled and repairs valid same-second stream/acknowledgement transitions. No Mail
 content, provider, Ticket, outbound message or projection-change data was created. Keep
 `EMAIL_LIVE_ENABLED=false`, `VITE_EMAIL_LIVE_ENABLED=false`,
-`EMAIL_MAIL_COLLABORATION_ENABLED=false`, and `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false`; do not start
-Reverb or an `email-live` worker. A future activation still requires an exact frozen code/schema
+`EMAIL_LIVE_RUNTIME_APPROVED=false`,
+`EMAIL_MAIL_COLLABORATION_ENABLED=false`, `EMAIL_MAIL_COLLABORATION_UI_ENABLED=false`, and
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false`; do not start Reverb or an `email-live` worker. A future
+activation still requires an exact frozen code/schema
 candidate, backup rehearsal,
 locked Composer/npm versions, production Vite assets, cache/view rebuild with `umask 0002`, a
 loopback-only Reverb service, one dedicated `email-live` database worker, the shared scheduler,
 exact `/app` and `/apps` TLS proxying, exact allowed origins/CSP socket origin, and private-channel
 plus polling-fallback smoke. The current rollback is to keep both live flags false, rebuild config
-and assets, and stop Reverb; the planned 15-second degraded polling mode is not implemented. Durable
+and assets, and stop Reverb. Forward migration `2026_08_24_120000` ran in Dev batch 125 with live
+mode disabled; it is forward-only because the old guards strand retry evidence. Durable
 projection evidence remains unless a separately reviewed clean-schema rollback is safe.
 
 Risks: a source mutation could commit without durable fanout, a late/revoked authority path could
@@ -788,11 +1412,14 @@ herd. Every writer, cursor, authority generation, decimal-string version, retent
 browser lifecycle therefore requires automated and controlled Dev evidence before activation.
 
 Automated verification: the final focused permission/quarantine, trigger portability, invalidator
-gate/append/transaction, private event, module-auth and composer-placement matrix passes 20 tests /
-116 assertions on SQLite. `npm run build` passes, produces one application JavaScript entry, and the
-disabled asset contains no Echo/Pusher/auth-endpoint code. The final complete Email Feature directory
-passes **621 tests / 6,345 assertions**. This evidence does not exercise or approve the incomplete
-enabled publisher/fanout/fallback runtime and cannot change this entry to Reviewed.
+gate/append/transaction, private event, module-auth, CSP and publisher/catch-up/retention matrix
+passes 32 tests / 161 assertions, with adjacent provider projection,
+deletion and remote-reconciliation coverage passing 52 tests / 457 assertions. The actual isolated
+MariaDB `120000` replacement/transition contract passes 1 test / 14 assertions; its `finally` and an
+independent `information_schema` readback both found zero temporary schemas. `npm run build` passes.
+This evidence does not activate or approve Reverb, Apache/Plesk, the worker/scheduler, authority
+writer/recompute coordination, the dedicated bounded current-page projection, or browser behavior
+and cannot change this entry to Reviewed.
 
 Human checks:
 
@@ -841,13 +1468,13 @@ Result / notes:
 
 ### HR-2026-08-16-007 - Email Provider-Originated Read-Only Reconciliation
 
-Status: Pending
+Status: In Review
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; final focused SQLite, rolling-schema, disposable
 MariaDB, and independent static evidence are complete. The exact 20 Order-1-through-7 migrations
-report Ran one per step in recovered Dev batches 98 through 117; controlled
-provider/browser/scheduler/worker/queue checks and
-reconciliation with the existing summary review record remain open.
+report Ran one per step in recovered Dev batches 98 through 117. Svein's 2026-08-19 review history is
+preserved; the entry was reopened on 2026-08-24 for ordinary-folder-cap/progress/runtime changes and
+the current controlled provider/browser/scheduler/worker/queue checks.
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-owned-mail-client-domain.md`,
 `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
@@ -925,19 +1552,29 @@ durability gate passes **34 / 468**, and the rolling unread-schema compatibility
 driver against a real private MariaDB server, including partial rerun, strict ledger transitions,
 first-seal provenance, repair singleton, index plans, and legal `SET NULL` detach evidence. Targeted
 PHP syntax, Pint, diff checks, and an independent current-copy re-audit pass. These are focused
-results. The final complete Email Feature directory additionally passes **621 tests / 6,345
-assertions** after stale Ticket-pointer and provider-reconciliation fixtures were brought up to the
-already-enforced production contracts; no production guard was loosened. This is not a claim that
-the complete repository suite is clean. Passing automation does not complete any manual checkbox.
+results. The clean final 2026-08-24 complete Email Feature directory additionally passes **686 tests /
+7,046 assertions**, including the ordinary-folder-cap and truthful child-progress regressions,
+without weakening any production guard. This is not a claim that the complete repository suite is clean. Passing automation does not
+complete any manual checkbox.
+
+Controlled account-2 run 1 failed closed at the former ordinary 100-folder cap with zero
+observations. Replacement run 2 finished terminal `stale` in `summary` at 2026-08-24 10:25:23 UTC:
+137 folders, 131 complete and 6 stale with `provider_tuple_drift`; 8,427 observations; 7 confirmed
+missing; 0 moves, conflicts or errors; and a sealed final summary. Provider-wins local projection
+hid seven placements and soft-deleted caches where no active placement survived. Three pending
+observations belong only to the six stale folders. The run made no provider write and delivered no
+notification. There are zero active or queued reconciliation runs/jobs. The failed-job ledger now
+preserves both the historical 2026-08-15 `FetchImapAccount` job and run 1's understood fail-closed
+2026-08-24 `ReconcileEmailProviderAccount` job; neither was retried or deleted.
 
 Connectivity to the authoritative Dev/Plesk MySQL endpoint is restored. Sanitized, read-only
 `php artisan migrate:status` checks completed successfully and report the exact 20
 Order-1-through-7 migrations `100000` through `118500` as Ran one per step in recovered Dev batches
 98 through 117. Rollback smoke,
 authenticated browser/provider checks, scheduler/worker/queue/backlog validation, production
-deployment, commit, and push remain operator-gated. The review summary records Svein's 2026-08-19
-approval, while this older detailed checklist still needs human record reconciliation. SQLite and
-disposable MariaDB evidence do not replace current runtime checks.
+deployment, commit, and push remain operator-gated. Svein's 2026-08-19 review is preserved, and the
+2026-08-24 folder-cap/progress/runtime changes plus current checks are the explicit reason this entry
+is reopened. SQLite and disposable MariaDB evidence do not replace current runtime checks.
 
 Human checks:
 
@@ -972,14 +1609,18 @@ Human checks:
 - [ ] Inspect IMAP/provider audit logs and local remote-operation rows for the complete review.
   Confirm reconciliation issued no send, APPEND, STORE, MOVE, COPY, EXPUNGE, delete, folder write,
   provider archive, or other provider mutation, including through admin and personal rules.
-- [ ] Confirm scheduler, Email/default/notification worker and backlog health after repeated cycles;
-  verify group-writable compiled views, synchronized Email/Integration/Notification Knowledge, and
+- [ ] Resolve the current runtime gap: Dev has targeted `email,default` processing but no full
+  Laravel scheduler or `notifications` worker, and 136 unattempted fanout jobs while relevant Web
+  Push settings are already enabled. Review the cohort before activation, then confirm scheduler,
+  Email/default/notification worker and backlog health after repeated cycles; verify group-writable
+  compiled views, synchronized Email/Integration/Notification Knowledge, and
   no new content, filename, address, provider response, endpoint, username, token, or credential in
   application logs, Telescope, queue payloads, durable error JSON, or failed jobs.
 
-Reviewer:
-Reviewed date:
-Result / notes:
+Reviewer: Svein
+Reviewed date: 2026-08-19; reopened 2026-08-24
+Result / notes: Historical review is preserved. Re-review remains open for the 2026-08-24
+folder-cap/progress/runtime changes and every unchecked controlled-runtime item above.
 
 ### HR-2026-08-16-006 - Integration-Owned Email Provider Credentials And Endpoint Security
 
@@ -1120,16 +1761,19 @@ Human checks:
 - [ ] Back up Dev and capture the listed Email account/source/binding/legacy-ciphertext,
   provider-work, queue/failed-job, and Telescope sequence inventories without printing any secret,
   endpoint, username, raw provider response, or ciphertext.
-- [ ] Deploy migrations `112000`-`117000` in order. Confirm the new Integration connection,
-  credential, append-only event, migration run/item, and Email binding schema exists; every existing
-  account remains `legacy`; and no provider Integration root, credential version, migration run,
-  provider call, source switch, or mailbox mutation is created automatically.
+- [ ] Review the backed-up historical deployment of migrations `112000`-`117000` in order. Confirm
+  the new Integration connection, credential, append-only event, migration run/item, and Email
+  binding schema existed; every existing account remained `legacy` at that schema-only checkpoint;
+  and no provider Integration root, credential version, migration run, provider call, source switch,
+  or mailbox mutation was created automatically.
 - [ ] Confirm migration `2026_08_21_100000` is recorded and all eight approved permissions exist.
   Confirm Admin and Superuser can manage public providers; only Superuser can use private trust or
   open Telescope; missing mailbox-sync/account-manage permission, inactive/system actors, and direct/
   inaccessible opaque IDs fail without existence disclosure or mutation. Confirm unrelated Calendar/
   Sales grants remain present, totals are Admin 167 and Superuser 216 with every other role
-  unchanged, both accounts remain legacy/unbound, and no seeding or full-role synchronization ran.
+  unchanged, and no seeding or full-role synchronization ran. Preserve that both accounts were
+  legacy/unbound at the historical permission checkpoint; separately verify their current
+  Integration-owned version-2 bindings and active overlap-safe polling.
 - [ ] Run the Telescope remediation preview. Review and record each exact cohort count/bounds/hash,
   purge only unchanged approved provider-sensitive cohorts, preserve unrelated entries, and finish
   with zero matches. Confirm no provider host, username, password, pinned IP, private reason,
@@ -1874,8 +2518,8 @@ Result / notes:
 
 Status: Rework Needed
 Added: 2026-08-15
-Environment: Recovered Dev; local attachment recovery complete for 30 parts, provider recovery
-blocked fail closed for four parts, browser and named review pending
+Environment: Recovered Dev; current direct readback finds 32 of 34 expected attachment parts on
+their exact source rows; canonical evidence, browser and named review remain pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
 `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
@@ -1887,28 +2531,39 @@ authorization and fail-closed storage/path checks. A bounded idempotent recovery
 attachment metadata/files that earlier private-storage permission failures prevented from being
 persisted, without replaying inbound rules, Tickets, notifications, or provider mutations. Future raw
 snapshots retain complete reparsable RFC822 evidence when safely available. The code boundary and
-exact non-mutating provider-read fallback are implemented, but post-restore recovery remains partial
-because four provider-dependent parts are blocked fail closed.
+exact non-mutating provider-read fallback are implemented. Current direct readback remains partial at
+32/34 exact-source parts; provider reconciliation has now hidden 479's confirmed-missing placement,
+while the separate 479/650 canonical evidence and raw-snapshot evidence for messages 456 and 478
+remain open.
 
 Affected pages / workflows: attachment rows in the selected `/tech/mail` conversation reader, the new
 Mail download endpoint, inbound raw/attachment persistence, the bounded operator recovery path, and the
 Email private-storage directories. Legacy `/tech/inbox` download behavior remains unchanged.
 
-Deploy / operations notes: migration `121200` ran after recovery in Dev batch 97. The restored
-attachment baseline contained zero rows and only counter sum 6. Recovery froze one exact 19-ID scope
-and completed a no-write preflight before apply. Local raw/legacy evidence then restored 30 rows/files
-across 16 messages, and an idempotent rerun returned unchanged without a duplicate row or file.
+Deploy / operations notes: migration `121200` ran after recovery in Dev batch 97. Historical
+2026-08-21 checkpoint: the restored attachment baseline contained zero rows and only counter sum 6.
+Recovery froze one exact 19-ID scope and completed a no-write preflight before apply. Local raw/legacy
+evidence then restored 30 rows/files across 16 messages, and an idempotent rerun returned unchanged
+without a duplicate row or file.
 
-The four remaining expected parts belong to messages `456`, `478`, and `479`. Each exact provider
-recovery stopped at the fail-closed resolver with `dns_answer_set_denied`. The blocked calls made no
-database, filesystem, or provider mutation, and no broad search or alternate endpoint was attempted.
-Those four parts remain unresolved rather than guessed.
+At that historical checkpoint, four expected parts belonged to messages `456`, `478`, and `479`.
+Each exact provider recovery stopped at the fail-closed resolver with `dns_answer_set_denied`. The
+blocked calls made no database, filesystem, or provider mutation, and no broad search or alternate
+endpoint was attempted. The current correction below supersedes that count without guessing or
+substituting evidence.
 
-The current redacted inventory reports 969 files: `sent_pending` 322 (0 referenced / 322
-unreferenced), `raw` 547 (462 / 85), and `attachments` 100 (30 / 70), for 492 referenced and 477
-unreferenced. It reports 28 missing raw references, 79 non-private files, 15 duplicate unreferenced
-checksum+size groups, and zero unsafe or unreadable files. Original, duplicate, and unreferenced
-evidence remains preserved; no deletion occurred.
+2026-08-24 current-state correction: direct database/filesystem readback finds 32 of 34 expected
+attachment parts on exact source rows. Provider reconciliation confirmed message 479 absent from its
+source placement, hid placement 478 and soft-deleted that local cache; it still has neither raw nor
+attachment evidence. Same-identity message 650 remains active in Trash with independent raw plus two
+attachments and must not be substituted automatically. Messages 456 and 478 each retain one attachment row/file but lack raw
+snapshots. This current evidence supersedes both the earlier 30/34 snapshot and later 34/34
+completion claims. No completion-pass operation copied, deleted, moved, or rewrote a file.
+
+The current 2026-08-24 12:47 CEST redacted inventory reports 1,445 files: 968 referenced and 477 unreferenced. It reports
+28 missing raw references, 79 non-private files, 15 duplicate unreferenced checksum+size groups, and
+zero unsafe or unreadable files. Original, duplicate, and unreferenced evidence remains preserved;
+no deletion occurred.
 
 The pre-attachment checkpoint remains preserved, and the latest post-recovery backup is
 `/var/Projects/tdPSA/storage/app/backups/recovery-incident-20260821/post-migration-mail-recovery-20260821T115109Z.sql.gz`
@@ -1945,7 +2600,7 @@ Manual checks:
 
 - [ ] Complete the exact root/operator mode-only repair tracked in `HR-2026-08-15-003`: change the 79
   identified `www-data`-owned `0644` files to `0660` without content/move/delete/ownership changes,
-  then reconcile the current 969-file inventory and confirm both project/queue and
+  then reconcile the recorded current 1,445-file inventory and confirm both project/queue and
   PHP-FPM runtimes pass read/write smoke.
 - [ ] Review the exact 19-ID preflight and local recovery report: 30 rows/files were restored across
   16 messages and the second run was unchanged. Confirm every referenced size/checksum/path and the
@@ -1954,10 +2609,9 @@ Manual checks:
   `email/attachments/{account_id}/{imap_uid}` directory with exactly two policy-accepted direct files,
   preserved counter two, and no provider search. Confirm mismatch, symlink, nested/outside-root,
   empty/oversized, and denied-MIME cases fail without partial persistence.
-- [ ] Review messages `456`, `478`, and `479`. Confirm four expected parts remain unresolved, every
-  provider attempt stopped with `dns_answer_set_denied`, and the failed calls changed no database,
-  file, provider operation, or remote mailbox state. Approve no endpoint-policy bypass under this
-  review.
+- [ ] Review messages `456`, `478`, `479`, and same-identity `650`. Confirm exact source-row evidence,
+  the missing raw snapshots, and why message 650's Trash raw/two attachments remain independent
+  evidence rather than an automatic substitute for 479. Approve no guessed copy or deletion.
 - [ ] Confirm the original legacy source files, duplicate account-2 legacy copies, and previously
   recorded 477 unreferenced files remain preserved for a separate evidence review; approve no
   deletion as part of this check.
@@ -1978,9 +2632,9 @@ Manual checks:
 
 Reviewer:
 Reviewed date:
-Result / notes: Reopened as Rework Needed after post-restore recovery recovered 30 of 34 expected
-parts. Four parts remain blocked by `dns_answer_set_denied`; no browser or named human review is
-complete.
+Result / notes: Reopened as Rework Needed. Current direct readback finds 32 of 34 expected parts on
+exact source rows and preserves same-identity evidence separately; no browser or named human review
+is complete.
 
 ### HR-2026-08-15-005 - Email Mail Smart Inbox Reader-First Polish
 
@@ -2271,19 +2925,17 @@ the root/operator mode repair. A nonzero exit remains expected while the 28 miss
 exist even after the 79 mode blockers are corrected; do not widen scope, print paths into ordinary
 logs, delete files, or change database references merely to force a successful exit.
 
-The read-only `email:inventory-private-storage` slice is implemented. Its first redacted Dev run
-inspected 939 files without mutation: `sent_pending` 322 (0 referenced / 322 unreferenced), `raw` 547
-(465 / 82), and `attachments` 70 (34 / 36), totalling 499 referenced and 440 unreferenced files. It
-also reports 28 missing `message_raw` references, 79 non-private `0644` files, and 12 duplicate
-unreferenced checksum+size groups. Duplicate or unreferenced status is evidence only and authorizes no
-deletion.
+The read-only `email:inventory-private-storage` slice is implemented. The latest redacted Dev run
+inspected 1,445 files without mutation: 968 referenced and 477 unreferenced. It reports 28 missing
+`message_raw` references, 79 non-private `0644` files, and 15 duplicate unreferenced checksum+size
+groups. Duplicate or unreferenced status is evidence only and authorizes no deletion.
 
 The preceding structural audit found all 61 directories `www-data`, mode `2770`, with group-rwx
 access/default ACLs, plus zero symlinks, unsafe paths, or unreadable files. File-mode normalization is
 not complete: the 79 `0644` files are `www-data`-owned, and the SSH project user cannot safely chmod
 them. A root/operator must change only those 79 modes to `0660` without changing content, ownership,
 location, or existence, then rerun the read-only inventory and PHP-FPM/queue dual-runtime read/write
-smoke. The 28 missing raw references and 440 unreferenced files require separate provenance,
+smoke. The 28 missing raw references and 477 unreferenced files require separate provenance,
 reconciliation, retention, Ticket/legal-hold/backup, and deletion review. Attachment recovery
 readiness remains `safe=true` and `received_at_schema_safe`, but none of these facts closes the
 owner/root blocker or the remaining browser, provider/send, failed-job, and right-bar checks. This
@@ -2313,9 +2965,10 @@ safety, provider Sent APPEND, tokenized provider Draft APPEND/targeted refresh, 
 remote-operation recovery/preflight accounting, verified Undo, and supervised Smart Inbox cleanup.
 The focused read-only private-storage inventory test passes **3 tests / 21 assertions**, covering all
 reference sources, redacted/explicit path output, duplicate groups, missing references, scan caps, and
-no file/row mutation. The live 939-file command run changed no file, permission, database, provider,
+no file/row mutation. The earlier 939-file command run changed no file, permission, database, provider,
 queue, or retention state and correctly remained failed while missing references/non-private modes
-exist. Pint, targeted PHP syntax, Blade cache, and diff checks pass. The automated tests used no real
+exist; the latest 1,445-file direct readback is recorded above and leaves those blockers open. Pint,
+targeted PHP syntax, Blade cache, and diff checks pass. The automated tests used no real
 provider mutation; the separately recorded controlled repair used exact provider evidence and the
 zero-SMTP/zero-MOVE boundary above. Automated checks do not replace these manual checks.
 
@@ -2380,13 +3033,13 @@ Manual checks:
   currently at `0644`, changing them to `0660` without reading/modifying content, moving, deleting,
   changing ownership, or broadening other access. Rerun `email:inventory-private-storage` and confirm
   all 61 directories remain `www-data`/`2770` with group-rwx access/default ACLs, the non-private-mode
-  count becomes zero, the expected 939-file inventory reconciles, and there are no symlinks, unsafe
+  count becomes zero, the recorded 1,445-file inventory reconciles, and there are no symlinks, unsafe
   paths, or unreadable files.
-- [ ] Review the read-only inventory totals: 322 unreferenced Sent-pending files, 82 unreferenced raw
-  files, 36 unreferenced attachment files, 28 missing `message_raw` references, and 12 duplicate
-  unreferenced checksum+size groups. Trace provider/send, database, backup, retention, Ticket/legal
-  hold, and recovery provenance; do not delete, move, chmod, chown, or repair database references as
-  part of inventory review.
+- [ ] Review the current aggregate read-only inventory totals: 1,445 files, 968 referenced, 477
+  unreferenced, 28 missing `message_raw` references, 79 non-private modes, 15 duplicate unreferenced
+  checksum+size groups, and zero unsafe/unreadable files. Trace provider/send, database, backup,
+  retention, Ticket/legal hold, and recovery provenance; do not delete, move, chmod, chown, or repair
+  database references as part of inventory review.
 - [ ] After that owner/root repair, write one safe private Email test payload from the web/FPM path
   and one from the queue-worker path. Confirm both runtimes can traverse/read/write the intended
   subtree, directories remain setgid/group-writable, files remain group read/write, other users gain

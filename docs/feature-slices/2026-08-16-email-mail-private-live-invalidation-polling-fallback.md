@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Private Live Invalidation And Polling Fallback
 
-Status: Rework Needed / Runtime Disabled
+Status: Static Publisher Rework Implemented / Runtime Disabled
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -39,6 +39,37 @@ The default-off writer/client gate, strict module auth and focused regression te
 ordinary Mail use safe while the remaining contract is completed. The enabled publisher state
 machine, stable call-site idempotency, exact conversation identifiers and several required outer
 transactions remain incomplete.
+
+## 2026-08-24 Static Publisher Rework
+
+The authoritative Dev working copy now has a default-off replacement publisher contract. Source
+changes freeze authority generations and candidate high-water marks in the same outer transaction;
+all instrumented writers supply stable operation identities and exact positive conversation IDs.
+Candidate and delivery work advances in raw pages of at most 100, retries without cursor advance,
+blocks after three failed claims, and seals the source only after a terminal compact delivery
+summary. Missing recipient authority state fails closed instead of being counted as suppression.
+
+Catch-up reads at most 250 versions and 50 identifiers, treats invalid/gapped/pruned/overflow or
+changed-authority state as generic and truncated, and accepts acknowledgement only with a signed
+user/version/epoch/global-generation receipt echoed after a rendered response. A no-change response
+may skip rendering only after a fresh bounded-refresh receipt and before the 120-second boundary.
+The browser owns one private channel, enters visible polling after five seconds, uses visible
+15/30/60-second backoff, performs 120-second safety catch-up, and pauses while hidden/offline. Exact
+origins and one exact CSP socket origin replace wildcards and broad `ws:` / `wss:` sources.
+
+Forward migration `2026_08_24_120000_repair_email_live_publisher_state_transitions.php` ran in Dev
+batch 125 with live mode disabled and replaced the previously run projection guards. Its isolated SQLite bootstrap and actual
+disposable MariaDB trigger replacement/valid-invalid transition contract pass; cleanup readback
+found zero temporary schemas. Migration deployment does not authorize runtime activation.
+The final isolated Order 8 SQLite matrix passes 32 tests / 161 assertions; adjacent provider
+projection/deletion/reconciliation coverage passes 52 / 457; the actual MariaDB contract passes
+1 / 14; Pint and `npm run build` pass.
+
+Runtime remains prohibited. The quarantined base-authority writers still need one coordinated
+generation/recompute implementation, and periodic refresh still needs extraction of the current
+25-row page/selection/counts from the monolithic workspace render. After those static dependencies,
+the remaining external gate is supervised Reverb, Apache/Plesk proxy/CSP, worker/scheduler health,
+and named browser/revocation/outage review under `HR-2026-08-16-008`.
 
 ## User-Visible Behavior
 

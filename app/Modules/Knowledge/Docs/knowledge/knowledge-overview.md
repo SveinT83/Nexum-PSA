@@ -140,6 +140,14 @@ If a Knowledge record already comes from BookStack, repository sync must preserv
 
 This prevents duplicate pages and ensures the existing BookStack page is updated instead of creating a separate local copy.
 
+## Ticket Suggestions
+
+Ticket-side Knowledge suggestions score every published article that the technician
+may access before applying the result limit. Matching uses exact normalized terms,
+with title matches weighted above body matches. Weak matches below the minimum score
+are omitted so the UI can show its empty state instead of unrelated guidance.
+Equal scores are ordered by article ID to keep results deterministic.
+
 ## Operational Notes
 
 The queue worker must run for queued BookStack pushes.

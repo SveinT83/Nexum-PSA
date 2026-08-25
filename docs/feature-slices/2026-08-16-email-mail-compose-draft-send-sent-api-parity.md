@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Compose, Draft, Send, And Sent API Parity
 
-Status: Queued / Dependency Gated
+Status: Private/API Rework Implemented / Human Review Pending; Shared Collaboration Gated
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -9,6 +9,12 @@ ADRs:
 - `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`
 Owner: Svein / Codex
 Human Review: `HR-2026-08-16-011`
+
+Implementation note (2026-08-24): Order 9 remains quarantined, so this slice implements the safe
+beta subset as explicitly private human-owned drafts and rejects shared scope. Livewire and REST now
+share one opaque-fenced, version-specific outbound submission and exact Sent reconciliation. See the
+2026-08-19 execution slice for migration, verification, and remaining human/shared-collaboration
+gates.
 
 ## Goal
 
@@ -225,11 +231,11 @@ health, sanitized evidence, and browser/API responses.
 ## Done Criteria
 
 - [ ] Orders 6 and 9 are stable and their provider-binding/draft-fencing contracts are used directly.
-- [ ] Web and API share one outbound submission, validation, signature, SMTP, and reconciliation
+- [x] Web and API share one outbound submission, validation, signature, SMTP, and reconciliation
   action with one pre-provider reservation and no blind retry.
-- [ ] Drafts, attachments, submissions and statuses have explicit abilities, account/participant
+- [x] Private drafts, attachments, submissions and statuses have explicit abilities, account/owner
   scope, execution-time reauthorization, version conflicts, and non-enumerating resources.
-- [ ] Failure/race tests prove one delivery, truthful unresolved outcomes, safe Sent reconciliation,
+- [x] Failure/race tests prove one delivery, truthful unresolved outcomes, safe Sent reconciliation,
   immutable evidence, and no secret/private-path/canonical-ID exposure.
-- [ ] Focused and affected-module tests, migration guards, OpenAPI, docs, Knowledge, deploy steps, and
+- [x] Focused and affected-module tests, migration guards, OpenAPI, docs, Knowledge, deploy steps, and
   `HR-2026-08-16-011` are complete while human review remains Pending.

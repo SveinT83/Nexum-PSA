@@ -71,6 +71,8 @@ Route::post('/contracts/{contract}/send-contract', [ContractController::class, '
     ->name('contracts.send-contract');
 Route::post('/contracts/{contract}/resend', [ContractController::class, 'resend'])
     ->name('contracts.resend');
+Route::post('/contracts/{contract}/customer-document/attest-legacy', [ContractController::class, 'attestLegacyCustomerDocument'])
+    ->name('contracts.customer-document.attest-legacy');
 Route::post('/contracts/{contract}/approve-manual', [ContractController::class, 'approveManual'])
     ->name('contracts.approve-manual');
 Route::get('/contracts/{contract}/services', [ContractController::class, 'servicesEdit'])
@@ -79,6 +81,8 @@ Route::post('/contracts/{contract}/services', [ContractController::class, 'servi
     ->name('contracts.services.update');
 Route::get('/contracts/{contract}/terms', [ContractController::class, 'terms'])
     ->name('contracts.terms');
+Route::post('/contracts/{contract}/terms/refresh', [ContractController::class, 'termsRefresh'])
+    ->name('contracts.terms.refresh');
 Route::post('/contracts/{contract}/terms', [ContractController::class, 'termsUpdate'])
     ->name('contracts.terms.update');
 Route::post('/clients/{client}/contracts/timebank-consumptions', [ClientTimebankConsumptionController::class, 'store'])

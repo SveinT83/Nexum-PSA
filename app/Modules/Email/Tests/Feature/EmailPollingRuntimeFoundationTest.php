@@ -2,6 +2,8 @@
 
 namespace App\Modules\Email\Tests\Feature;
 
+use App\Models\Settings\CommonSetting;
+use App\Modules\Email\Actions\DispatchEmailAccountPolling;
 use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\PollActiveEmailAccounts;
 use App\Modules\Email\Jobs\StoreInboundMessage;
@@ -14,6 +16,7 @@ use App\Modules\Email\Support\EmailAccountProviderLock;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
@@ -82,6 +85,64 @@ class EmailPollingRuntimeFoundationTest extends TestCase
             fn (FetchImapAccount $job): bool => $job->accountId === $second->id
                 && $job->accountId !== $first->id
                 && $job->queue === 'email',
+        );
+    }
+
+    #[Test]
+    public function operations_scheduled_tick_is_all_account_and_honors_the_ingest_pause(): void
+    {
+        $first = $this->account('runtime-scheduled-first@example.test');
+        $second = $this->account('runtime-scheduled-second@example.test');
+        Queue::fake();
+        Cache::forget('email_last_poll_run');
+
+        $exitCode = Artisan::call('email:poll', ['--scheduled' => true]);
+
+        $this->assertSame(ConsoleCommand::SUCCESS, $exitCode);
+        $this->assertStringContainsString('Scheduled all-account poll tick evaluated.', Artisan::output());
+        Queue::assertPushed(FetchImapAccount::class, 2);
+        Queue::assertPushed(
+            FetchImapAccount::class,
+            fn (FetchImapAccount $job): bool => in_array($job->accountId, [$first->id, $second->id], true)
+                && $job->queue === 'email',
+        );
+
+        Queue::fake();
+        Cache::forget('email_last_poll_run');
+        CommonSetting::query()->updateOrCreate(
+            ['type' => 'emailhub', 'name' => 'pause_ingest'],
+            ['value' => '1'],
+        );
+
+        $this->assertSame(
+            ConsoleCommand::SUCCESS,
+            Artisan::call('email:poll', ['--scheduled' => true]),
+        );
+        Queue::assertNothingPushed();
+
+        $this->assertSame(
+            ConsoleCommand::INVALID,
+            Artisan::call('email:poll', ['--scheduled' => true, '--account' => $first->id]),
+        );
+    }
+
+    #[Test]
+    public function synchronous_polling_persists_child_store_work_inside_the_parent_provider_lock(): void
+    {
+        $account = $this->account('runtime-synchronous-store@example.test');
+        Bus::fake();
+
+        $result = app(DispatchEmailAccountPolling::class)->handle(
+            accountId: $account->id,
+            batchSize: 20,
+            asynchronously: false,
+        );
+
+        $this->assertSame(['matched' => 1, 'started' => 1, 'failed' => 0], $result);
+        Bus::assertDispatchedSync(
+            FetchImapAccount::class,
+            fn (FetchImapAccount $job): bool => $job->accountId === $account->id
+                && $job->syncStore,
         );
     }
 
@@ -157,6 +218,47 @@ class EmailPollingRuntimeFoundationTest extends TestCase
         $otherAccountLock = (new FetchImapAccount($this->account('runtime-overlap-other@example.test')->id))->middleware()[0];
         $this->assertSame($middleware->getLockKey($job), $sameAccountLock->getLockKey($job));
         $this->assertNotSame($middleware->getLockKey($job), $otherAccountLock->getLockKey($job));
+    }
+
+    #[Test]
+    public function queued_inbound_store_releases_normal_parent_fetch_lock_contention(): void
+    {
+        $account = $this->account('runtime-store-overlap@example.test');
+        $job = (new StoreInboundMessage([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'uid_validity' => 101,
+            'imap_uid' => 11,
+        ]))->withFakeQueueInteractions();
+        $lock = EmailAccountProviderLock::acquire($account->id, 60);
+        $this->assertNotNull($lock);
+
+        try {
+            app()->call([$job, 'handle']);
+        } finally {
+            $lock?->release();
+        }
+
+        $job->assertReleased(EmailAccountProviderLock::RELEASE_AFTER_SECONDS);
+        $this->assertSame('email', $job->queue);
+
+        $payloadMethod = new ReflectionMethod(Queue::connection('sync'), 'createPayload');
+        $payload = json_decode(
+            $payloadMethod->invoke(Queue::connection('sync'), new StoreInboundMessage([
+                'account_id' => $account->id,
+                'mailbox' => 'INBOX',
+                'uid_validity' => 101,
+                'imap_uid' => 12,
+            ]), 'email'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+
+        $this->assertSame(40, $payload['maxTries']);
+        $this->assertSame(10, $payload['maxExceptions']);
+        $this->assertSame('15,30,60', $payload['backoff']);
+        $this->assertSame(60, $payload['timeout']);
+        $this->assertGreaterThan(now()->addMinutes(9)->timestamp, $payload['retryUntil']);
     }
 
     #[Test]

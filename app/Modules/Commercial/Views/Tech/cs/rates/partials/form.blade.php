@@ -47,22 +47,28 @@
 
 <!-- Rate behavior -->
 <div class="row g-3 mt-0">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="form-check">
             <input class="form-check-input" type="checkbox" name="applies_with_contract" value="1" id="rate_with_contract_{{ $rateId }}" @checked(old('applies_with_contract', $rate->applies_with_contract ?? true))>
             <label class="form-check-label small" for="rate_with_contract_{{ $rateId }}">Available with contract</label>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="form-check">
             <input class="form-check-input" type="checkbox" name="applies_without_contract" value="1" id="rate_without_contract_{{ $rateId }}" @checked(old('applies_without_contract', $rate->applies_without_contract ?? false))>
             <label class="form-check-label small" for="rate_without_contract_{{ $rateId }}">Available without contract</label>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="form-check">
             <input class="form-check-input" type="checkbox" name="is_active" value="1" id="rate_active_{{ $rateId }}" @checked(old('is_active', $rate->is_active ?? true))>
             <label class="form-check-label small" for="rate_active_{{ $rateId }}">Active</label>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_customer_visible" value="1" id="rate_customer_visible_{{ $rateId }}" @checked(old('is_customer_visible', $rate->is_customer_visible ?? false))>
+            <label class="form-check-label small" for="rate_customer_visible_{{ $rateId }}">Visible to customer</label>
         </div>
     </div>
 </div>

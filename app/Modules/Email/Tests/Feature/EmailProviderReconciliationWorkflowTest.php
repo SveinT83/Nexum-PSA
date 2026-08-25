@@ -301,7 +301,19 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
                 1,
             );
         };
+        $run->forceFill([
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $beforeImport = $run->fresh()->last_progress_at;
         app(EmailProviderReconciliationImporter::class)->importOne($item, $reader, $store);
+        $afterImport = $run->fresh()->last_progress_at;
+        $this->assertTrue($afterImport->greaterThan($beforeImport));
+        $this->assertTrue($afterImport->equalTo($item->fresh()->completed_at));
+
+        // A stale redelivery observes the terminal item but commits nothing.
+        $this->travel(2)->seconds();
+        app(EmailProviderReconciliationImporter::class)->importOne($item, $reader, $store);
+        $this->assertTrue($run->fresh()->last_progress_at->equalTo($afterImport));
 
         $this->assertFalse($scanner->scanOnePage($folderRun->fresh(), $reader)['folder_finished']);
         $this->assertSame('nomodseq_baseline_pending', $folderRun->fresh()->reason_code);
@@ -1348,10 +1360,21 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
         ])->save();
 
         $canary = 'SUBJECT_BODY_SQLSTATE_PROVIDER_CANARY';
+        $run->forceFill([
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $beforeAutomation = $run->fresh()->last_progress_at;
         $engine = Mockery::mock(InboundEmailRuleEngine::class);
         $engine->shouldReceive('allowsInboundAutomation')
             ->once()
-            ->andThrow(new RuntimeException($canary));
+            ->andReturnUsing(function () use ($beforeAutomation, $canary, $run): never {
+                // Claiming work is not completion and cannot keep a stuck
+                // worker alive without a later durable child-state commit.
+                $this->assertTrue($run->fresh()->last_progress_at->equalTo($beforeAutomation));
+                $this->travel(2)->seconds();
+
+                throw new RuntimeException($canary);
+            });
         $this->app->instance(InboundEmailRuleEngine::class, $engine);
         Queue::fake();
 
@@ -1370,11 +1393,16 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
         $this->assertSame(1, $item->automation_attempt_count);
         $this->assertNull($item->automation_claim_token);
         $this->assertNotNull($item->automation_completed_at);
+        $afterAutomation = $run->fresh()->last_progress_at;
+        $this->assertTrue($afterAutomation->greaterThan($beforeAutomation));
+        $this->assertTrue($afterAutomation->equalTo($item->automation_completed_at));
 
         // Terminal evidence makes redelivery a no-op; the throwing action is
         // called exactly once and the attempt counter cannot advance.
+        $this->travel(2)->seconds();
         (new ProcessEmailProviderReconciliationAutomation($item->id))->handle();
         $this->assertSame(1, $item->fresh()->automation_attempt_count);
+        $this->assertTrue($run->fresh()->last_progress_at->equalTo($afterAutomation));
     }
 
     #[Test]
@@ -1423,10 +1451,18 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
         ]);
 
         $finalizer = app(EmailProviderReconciliationFinalizer::class);
+        $progressRun = $run->fresh();
+        $progressRun->forceFill([
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $beforeAutomationDrain = $run->fresh()->last_progress_at;
         $this->assertFalse($finalizer->finalizeOneStep(
             $run->fresh(),
             new FakeEmailProviderReconciliationReader,
         ));
+        $this->assertTrue(
+            $run->fresh()->last_progress_at->equalTo($beforeAutomationDrain),
+        );
         $this->assertSame(EmailProviderReconciliationRun::STATUS_CANCELLING, $run->fresh()->status);
         $this->assertSame(EmailProviderReconciliationItem::AUTOMATION_RUNNING, $item->fresh()->automation_status);
         $this->assertSame($token, $item->fresh()->automation_claim_token);
@@ -1532,7 +1568,15 @@ class EmailProviderReconciliationWorkflowTest extends TestCase
         ])->save();
 
         $finalizer = app(EmailProviderReconciliationFinalizer::class);
+        $progressRun = $run->fresh();
+        $progressRun->forceFill([
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $beforeBaselineDrain = $run->fresh()->last_progress_at;
         $this->assertFalse($finalizer->finalizeOneStep($run->fresh(), $reader));
+        $this->assertTrue(
+            $run->fresh()->last_progress_at->equalTo($beforeBaselineDrain),
+        );
         $this->assertSame(EmailProviderReconciliationRun::STATUS_CANCELLING, $run->fresh()->status);
         $this->assertSame($token, $item->fresh()->historical_baseline_claim_token);
 

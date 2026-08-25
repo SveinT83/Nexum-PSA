@@ -16,22 +16,8 @@
     x-data="{
         mode: 'visual',
         value: @entangle('composerBodyHtml'),
-        collaborationEnabled: @js($collaborationEnabled),
-        typingTimeout: null,
-        typing(isTyping) {
-            if (this.collaborationEnabled && window.EmailMailLive && {{ (int) ($selectedPlacement?->conversation_id ?? 0) }}) {
-                if (isTyping) {
-                    window.EmailMailLive.startTyping({{ (int) ($selectedPlacement?->conversation_id ?? 0) }});
-                } else {
-                    window.EmailMailLive.stopTyping({{ (int) ($selectedPlacement?->conversation_id ?? 0) }});
-                }
-            }
-        },
         handleInput() {
             this.sync();
-            if (this.typingTimeout) clearTimeout(this.typingTimeout);
-            this.typing(true);
-            this.typingTimeout = setTimeout(() => this.typing(false), 3000);
         },
         clean(html) {
             const doc = new DOMParser().parseFromString(html || '', 'text/html');

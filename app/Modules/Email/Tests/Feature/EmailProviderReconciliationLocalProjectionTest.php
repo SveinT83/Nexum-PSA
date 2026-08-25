@@ -259,11 +259,21 @@ class EmailProviderReconciliationLocalProjectionTest extends TestCase
         ]);
 
         $projection = app(ProjectHistoricalEmailReadBaseline::class);
+        $run->forceFill([
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $beforeFirstPage = $run->fresh()->last_progress_at;
         $firstToken = $projection->claimReconciliationBatch($item->id);
         $this->assertNotNull($firstToken);
+        $this->assertTrue($run->fresh()->last_progress_at->equalTo($beforeFirstPage));
         $this->assertSame(
             ProjectHistoricalEmailReadBaseline::RECONCILIATION_PENDING,
             $projection->projectReconciliationBatch($item->id, $firstToken, 2),
+        );
+        $afterFirstPage = $run->fresh()->last_progress_at;
+        $this->assertTrue($afterFirstPage->greaterThan($beforeFirstPage));
+        $this->assertTrue(
+            $afterFirstPage->equalTo($item->fresh()->historical_baseline_last_attempt_at),
         );
         $this->assertSame($baselines[1]->id, $item->fresh()->historical_baseline_cursor_id);
         $this->assertSame(
@@ -286,9 +296,17 @@ class EmailProviderReconciliationLocalProjectionTest extends TestCase
         $secondToken = $projection->claimReconciliationBatch($item->id);
         $this->assertNotNull($secondToken);
         $this->assertNotSame($firstToken, $secondToken);
+        $this->assertTrue($run->fresh()->last_progress_at->equalTo($afterFirstPage));
+        $this->travel(2)->seconds();
         $this->assertSame(
             ProjectHistoricalEmailReadBaseline::RECONCILIATION_COMPLETED,
             $projection->projectReconciliationBatch($item->id, $secondToken, 2),
+        );
+        $afterActivation = $run->fresh()->last_progress_at;
+        $this->assertTrue($afterActivation->greaterThan($afterFirstPage));
+        $this->assertTrue($afterActivation->equalTo($item->fresh()->completed_at));
+        $this->assertTrue(
+            $afterActivation->equalTo($item->fresh()->historical_baseline_completed_at),
         );
 
         $systemBaseline = $baselines->last()->fresh();
@@ -338,6 +356,7 @@ class EmailProviderReconciliationLocalProjectionTest extends TestCase
             ProjectHistoricalEmailReadBaseline::RECONCILIATION_INACTIVE,
             $projection->projectReconciliationBatch($item->id, $secondToken, 2),
         );
+        $this->assertTrue($run->fresh()->last_progress_at->equalTo($afterActivation));
     }
 
     #[Test]

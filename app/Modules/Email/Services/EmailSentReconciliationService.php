@@ -5,6 +5,7 @@ namespace App\Modules\Email\Services;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMailboxPlacement;
+use App\Modules\Email\Models\EmailOutboundSubmission;
 use App\Modules\Email\Models\EmailSentReconciliation;
 use App\Modules\Email\Support\EmailAccountProviderLock;
 use Illuminate\Support\Collection;
@@ -248,6 +249,33 @@ class EmailSentReconciliationService
 
         if ($reconciliation->emailLog) {
             $this->syncLogContext($reconciliation->emailLog, $reconciliation);
+
+            if (Schema::hasTable('email_outbound_submissions')) {
+                EmailOutboundSubmission::query()
+                    ->where('email_log_id', $reconciliation->email_log_id)
+                    ->whereIn('status', [
+                        EmailOutboundSubmission::STATUS_ACCEPTED,
+                        EmailOutboundSubmission::STATUS_OUTCOME_UNRESOLVED,
+                        EmailOutboundSubmission::STATUS_PROVIDER_WRITE_STARTED,
+                    ])
+                    ->update([
+                        'email_sent_reconciliation_id' => $reconciliation->id,
+                        'status' => EmailOutboundSubmission::STATUS_SENT_RECONCILED,
+                        'reconciled_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                EmailOutboundSubmission::query()
+                    ->where('email_log_id', $reconciliation->email_log_id)
+                    ->whereIn('reason_code', [
+                        'SMTP_SEND_OUTCOME_UNRESOLVED',
+                        'OUTBOUND_SEND_OUTCOME_UNRESOLVED',
+                    ])
+                    ->update([
+                        'reason_code' => null,
+                        'updated_at' => now(),
+                    ]);
+            }
         }
 
         return $reconciliation;

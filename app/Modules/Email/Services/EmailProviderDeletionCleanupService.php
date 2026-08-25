@@ -2,15 +2,14 @@
 
 namespace App\Modules\Email\Services;
 
-use App\Modules\Email\Models\EmailConversation;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailConversation;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailProviderDeletionCleanupAttempt;
 use App\Modules\Email\Models\EmailProviderPlacementFinding;
 use App\Modules\Email\Models\EmailRemoteOperation;
-use App\Modules\Email\Models\EmailLiveProjectionChange;
-use App\Modules\Email\Services\EmailLiveInvalidator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -309,6 +308,7 @@ class EmailProviderDeletionCleanupService
                             $accountId => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
                         ],
                         'conversations' => $conversationIds,
+                        'idempotency_key' => 'provider-deletion-cleanup:'.$attempt->id,
                     ]);
 
                     $attempt->forceFill([

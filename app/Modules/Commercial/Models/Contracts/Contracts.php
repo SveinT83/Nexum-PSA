@@ -5,6 +5,7 @@ namespace App\Modules\Commercial\Models\Contracts;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Models\Terms\ContractTermSnapshot;
 use App\Modules\Commercial\Models\Terms\LegalAcceptanceEvent;
+use App\Modules\Commercial\Support\ContractPricing;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
@@ -79,6 +80,8 @@ class Contracts extends Model
 
             'total_monthly_amount' => 'decimal:2',
 
+            'customer_document_snapshot' => 'array',
+            'approval_metadata' => 'array',
             'last_indexed_at' => 'datetime',
 
             'sent_at' => 'datetime',
@@ -137,16 +140,18 @@ class Contracts extends Model
         return $this->belongsTo(Contact::class, 'portal_accepted_contact_id');
     }
 
-    public function getTotalMonthlyAmountAttribute(): float
+    /**
+     * Resolve customer pricing through the same exact calculator used by every
+     * customer document. The stored column remains a sortable cache.
+     */
+    public function getTotalMonthlyAmountAttribute(): string
     {
-        $total = 0;
-        foreach ($this->items as $item) {
-            if ($item->billing_interval === 'monthly') {
-                $total += $item->line_total;
-            }
-        }
+        return $this->pricingTotals()['monthly']['decimal'];
+    }
 
-        return (float) $total;
+    public function pricingTotals(): array
+    {
+        return app(ContractPricing::class)->calculateTotals($this->items);
     }
 
     public function getYearlyProfitAttribute(): float
@@ -201,6 +206,28 @@ class Contracts extends Model
         return $this->items()->count() > 0
             && ! empty($this->terms_snapshot)
             && $this->start_date
-            && $this->start_date->isFuture();
+            && $this->start_date->isFuture()
+            && $this->hasValidContractPeriod();
+    }
+
+    /**
+     * Enforce the same date invariant for request, domain and capture paths.
+     */
+    public function hasValidContractPeriod(): bool
+    {
+        if (! $this->start_date) {
+            return false;
+        }
+
+        if ($this->end_date && $this->end_date->lessThan($this->start_date)) {
+            return false;
+        }
+
+        if ($this->binding_end_date && $this->binding_end_date->lessThan($this->start_date)) {
+            return false;
+        }
+
+        return ! ($this->end_date && $this->binding_end_date
+            && $this->binding_end_date->greaterThan($this->end_date));
     }
 }

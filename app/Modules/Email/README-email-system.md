@@ -24,6 +24,37 @@ Current non-goals for this foundation slice:
   Smart Inbox suggestions, and expose only the documented human-reviewed actions after normal user,
   mailbox, target-domain, agent-action, and exact agent-scope checks pass.
 
+## Current Dev rollout record (2026-08-24)
+
+- Mail completion migrations `2026_08_24_110000`, `120000`, `125000`, `130000`, and `140000`
+  ran in Dev batches 124 through 128, one per step. The existing draft remains private and all new
+  shared-draft, outbound-submission, Ticket-migration, acknowledgement, and live-publication ledgers
+  are empty. Provider reconciliation uses separate run/folder/item ledgers and does not own these
+  completion ledgers.
+- Keep `EMAIL_LIVE_ENABLED`, `EMAIL_LIVE_RUNTIME_APPROVED`, `VITE_EMAIL_LIVE_ENABLED`,
+  `EMAIL_MAIL_COLLABORATION_ENABLED`, `EMAIL_MAIL_COLLABORATION_UI_ENABLED`, and
+  `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` false. Schema deployment does not activate those features.
+- Both Dev accounts use Integration-owned provider bindings at version 2 and the approved exact
+  private `/32`. The targeted cron dispatches polling and runs one database `email,default` worker.
+  The complete Laravel scheduler and the `notifications` worker are not active.
+- There are 136 unattempted inbound notification-fanout jobs. Web Push is already enabled for the
+  relevant types, so an operator must review that cohort before starting notification delivery or
+  the complete scheduler. No notification preference was changed during completion.
+- Production is untouched. Upgraded installations still need additive permission migration
+  `2026_08_21_100000` when promoted; never substitute the full `RoleSeeder`.
+- The verified post-completion DB-only backup is
+  `storage/app/private/NexumPSA/nexum-dev-post-mail-completion-20260824T105700Z.zip`, SHA-256
+  `888693191eedbb64417d13ac6f1977becec5cf618212687e9ab382dbd73e4c69`, mode `0600`; its sole MySQL
+  dump member passes ZIP integrity.
+- The latest 2026-08-24 12:47 CEST read-only private-storage inventory has 1,445 files: 968
+  referenced, 477 unreferenced,
+  28 missing raw references, 79 non-private legacy modes, 15 duplicate groups, and zero unsafe or
+  unreadable entries. Inventory authorizes no deletion.
+- Controlled account-2 provider reconciliation run 2 finished terminal `stale/summary` after reading
+  all 137 folders: 131 complete, 6 stale with `provider_tuple_drift`, 8,427 observations, 7 confirmed
+  missing and 0 moves/conflicts/errors. Seven placements were hidden under provider-wins local
+  projection; no provider write or notification delivery occurred.
+
 
 ## Key components at a glance
 
@@ -207,6 +238,17 @@ same identifiers in another mailbox remain a separate Nexum conversation boundar
 reconciler moves only unambiguous split placements and writes unresolved correlation evidence to an
 issue ledger without changing provider or Ticket state.
 
+### EmailConversationActionRun / Item
+Back `email_conversation_action_runs` and `email_conversation_action_items`. These rows are the
+default-off safety ledger for conversation acknowledgement and explicit selected-account scope.
+
+The run freezes the requester, scope kind, active account/conversation where applicable, personal
+target, optional provider-Seen effect, caps, expiry, idempotency key and complete scope fingerprint.
+Each item freezes the exact account/conversation/message/folder/placement, UID namespace and UID,
+access epoch, provider-binding and placement-sync versions, before/target values and separate
+personal/provider statuses. Snapshot fields are immutable. Rollback refuses to remove non-empty
+evidence.
+
 ### EmailConversationClassification — `app/Modules/Email/Models/EmailConversationClassification.php`
 Backs `email_conversation_classifications`. Each row stores Nexum work classification for one
 durable account-scoped Email conversation.
@@ -280,6 +322,36 @@ Important columns:
 
 Ticket message capture still belongs to Ticket through `LinkInboundEmailToTicket`; this table gives
 Mail a durable way to show that one Ticket may contain several independent email conversations.
+
+The legacy relationship repair is an explicit operational workflow, never a schema-migration side
+effect. `php artisan email:backfill-ticket-conversation-links --actor=<id> --limit=100` creates a
+bounded 15-minute frozen preview in the migration run/item ledger. The exact active non-system human
+must hold `email.account_manage`, `email.mailbox_sync_manage`, and `ticket.update`. A reviewed run is
+queued separately with the same actor through `--apply=<public-id>`; the Email job processes at most
+25 items per claim and reauthorizes the frozen source before each write.
+
+Continuation dispatch is also durable. If enqueueing the next bounded page fails after a committed
+batch, the old run is terminal with `continuation_dispatch_failed` and its unapplied items remain
+ready evidence. A new reviewed preview sees committed links as already mapped and can resume only the
+remainder. The queue final-attempt hook marks an otherwise unstarted queued/running run
+`worker_failed` and never overwrites a more precise terminal result.
+
+Only an unambiguous active same-account placement/conversation, one agreeing primary Ticket and exact
+Ticket-message source/live pointers may create a missing primary link. Existing links are
+idempotent; missing or merged Tickets, competing primary evidence, secondary collisions, account or
+audience conflicts, stale evidence, expiry, and actor/permission changes fail closed in the ledger.
+Apply inserts only the relationship and migration evidence. It does not call the ordinary capture
+actions or change the source message/placement, Ticket message/event/tags, provider/personal state,
+rules, Signals, notifications, portal visibility, or outbound delivery. Ledger evidence is bounded
+to IDs, statuses, reason codes and hashes; it excludes Mail/Ticket content, addresses, attachment
+names, provider UIDs/UIDVALIDITY, folder paths and private conversation keys.
+
+Migration `2026_08_24_130000_create_email_ticket_conversation_link_migration_ledger.php` creates the
+empty operational ledger and refuses rollback after evidence exists. It was not run during Order 13
+implementation and later ran in Dev batch 127; both tables remain empty and no preview/backfill ran.
+The opt-in Order 12/13 contract proves its named MariaDB indexes/foreign keys, JSON
+metadata shape, empty down and evidence-preserving refusal on a disposable socket-only MariaDB
+10.11 schema. Preview/apply against shared data remains gated by `HR-2026-08-16-013`.
 
 ### EmailRemoteOperation — `app/Modules/Email/Models/EmailRemoteOperation.php`
 Backs `email_remote_operations`. It is the idempotent ledger for provider writes such as mark
@@ -416,22 +488,16 @@ file is a non-symlink regular file contained below the attachment root with allo
 MIME type. A count, containment, symlink, size, or MIME-policy failure rejects the whole legacy source
 without partial persistence. Exact legacy evidence never triggers a provider search.
 
-After the ACL repair, readiness reported `safe=true` and `received_at_schema_safe`. The first
-controlled Dev phase produced 28 rows across 16 messages: 24 parts from 13 local snapshots and four
-from exact provider reads for messages `456`, `478`, and `479`. Exact provider reads for `4`, `5`, and
-`10` returned `provider_message_missing`, but their exact account-and-UID legacy directories later
-provided two count-matched files each. First legacy apply recovered 6 / 6 rows/files while each
-counter remained two; the second live apply returned `existing_rows_complete` for all three.
-
-The bounded result is now 34 rows/counter 34 across all 19 target messages. Every newly referenced
-legacy result passes stored-size and SHA-1 integrity checks, and idempotency reruns remain unchanged.
-The original legacy sources, duplicate account-2 legacy copies, and the broader unreferenced-file
-inventory are preserved for separate provenance/retention/deletion review. The side-effect window
-created no remote operation/attempt, rule attempt, outbound log, Ticket-domain
-ticket/message/event/attachment, notification, or queued job. Focused attachment coverage passes 15
-tests / 110 assertions; Pint, PHP syntax, and diff checks pass. Earlier adjacent provider-read
-coverage passed 47 / 321, broad Email module/inbound coverage 155 / 1,308, and the complete Email
-directory 347 / 3,030 before this narrow follow-up.
+An earlier pre-recovery report claimed a completed 34-part result. The current recovered Dev
+database/filesystem readback does not substantiate that claim: 32 of 34 expected attachment parts
+exist on their exact source rows. Provider reconciliation confirmed `EmailMessage 479` absent from
+its source placement, hid placement `478`, and soft-deleted that local cache; it still has neither
+raw nor attachment evidence. Same-identity `EmailMessage 650` remains active in Trash with
+independent raw plus two attachments and must not be silently substituted. Messages `456` and `478`
+each retain one attachment row/file but lack raw
+snapshots. All original, duplicate, and unreferenced evidence remains preserved; no completion-pass
+operation copied, deleted, moved, or rewrote a file. Keep `HR-2026-08-15-006` open until a named
+human reviews the canonical evidence and browser/download behavior.
 
 ### EmailSignature — `app/Modules/Email/Models/EmailSignature.php`
 Backs `email_signatures`. Each technician has one Mail-owned personal signature, edited from the
@@ -452,12 +518,14 @@ Backs `email_composer_drafts`. It stores local Nexum composer drafts for one sig
 one composer context.
 
 Important columns:
+- Identity/fencing: opaque `public_id`, explicit `scope`, immutable `generation_id`, and monotonic
+  `version`.
 - Scope: `user_id`, `email_account_id`, optional `email_message_id`, optional
-  `email_mailbox_placement_id`, `mode`, and a stable `draft_key`.
+  `email_mailbox_placement_id`, `mode`, and a stable private `draft_key`.
 - Content: `to_recipients`, `cc_recipients`, `subject`, sanitized `body_html`, generated
   `body_text`, and the outbound `idempotency_key`.
-- Lifecycle: `status` (`active`, `sent`, `discarded`), `last_saved_at`, `sent_at`, and
-  `discarded_at`.
+- Lifecycle: `status` (`active`, `send_reserved`, `discard_reserved`, `sent`, `discarded`),
+  `last_saved_at`, `sent_at`, and `discarded_at`.
 - Provider Drafts sync: `provider_draft_status`, provider folder path, UIDVALIDITY, UID,
   Message-ID, sync/delete timestamps, and error code/message.
 - Attachments: `email_composer_draft_attachments` stores durable local draft attachment metadata and
@@ -465,6 +533,17 @@ Important columns:
 
 New Compose drafts are scoped per technician and sender account. Reply, Reply All, and Forward drafts
 are scoped per technician, selected mailbox placement, and account. Autosave remains local-only.
+Ordinary drafts are explicitly private while Order 9 collaboration is disabled. Active lookup,
+mutation, attachment access, discard, and send must include the exact owner, private scope,
+generation, opaque HMAC fence, and current mailbox/source authority; a reserved generation is not
+editable. The default-off Order 9 API can explicitly convert only the creator's active Reply, Reply
+All or Forward draft for an ordinary shared/system mailbox. It records an immutable shared scope,
+exact conversation/source context, monotonic content version and one 60-second lease row. Shared
+read requires current ordinary View; every mutation/send requires View plus Send, exact opaque lease
+token hash, increasing fence, content version and source version. Lost/expired fences return `423`,
+and stale source evidence requires explicit rebase or exact-lease discard. This backend boundary is
+not a fallback and remains unavailable until Order 8 runtime readiness, the collaboration flag,
+`125000` schema and named review all pass; the separate UI gate remains false.
 Manual Save draft writes a provider Drafts copy when the mailbox has a discovered selectable Drafts
 folder. Candidate folders must also be sync-enabled and are re-inferred from their current
 SPECIAL-USE/exact-leaf evidence; a stale stored Drafts role on a descendant is ignored. Explicit
@@ -494,6 +573,22 @@ path, size, MIME type, checksum, position, and owner. Saved draft attachments ar
 composer, included in SMTP sends, included in provider Drafts append, and deleted when the owning
 draft is sent or discarded. Client-supplied attachment IDs are rechecked against the exact active
 draft and its currently authorized mailbox composer context before SMTP.
+
+API-facing attachments also have an opaque public ID and immutable draft-generation evidence.
+Resources return only that opaque ID, filename, MIME, size, and position; disk, path, checksum,
+owner, and generation remain server-side evidence.
+
+### EmailOutboundSubmission — `app/Modules/Email/Models/EmailOutboundSubmission.php`
+Backs `email_outbound_submissions`. One row is the authoritative pre-SMTP request/outcome record for
+one private draft generation/version.
+
+It freezes actor, account, caller channel, client idempotency key, source placement/message, request
+fingerprint, attachment-manifest hash, provider-binding version, signature evidence, and reserved
+RFC Message-ID. It links the compatibility `EmailLog` and provider `EmailSentReconciliation` and
+progresses through `reserved`, `provider_write_started`, `accepted`, `outcome_unresolved`,
+`provider_not_attempted`, or `sent_reconciled`. Unique client-key and draft-version constraints elect
+one submission before provider access. Accepted/unresolved evidence is never deleted by ordinary
+draft cleanup, and rollback refuses to drop a non-empty ledger.
 
 ### EmailHealthCheck — `app/Modules/Email/Models/EmailHealthCheck.php`
 Backs `email_health_checks` (`database/migrations/2025_11_11_000004_create_email_health_checks_table.php`).
@@ -577,7 +672,9 @@ Compose requires effective Send access to the sender account, while Reply, Reply
 drafts require effective View and Send access to the selected placement's account. The service
 sanitizes draft HTML, stores a plain-text fallback, stores durable draft attachments, restores only
 active drafts, attempts provider Drafts sync for explicit Save draft, and marks drafts as sent or
-discarded after explicit user actions.
+discarded after explicit user actions. All ordinary lookup is private-owner scoped. Mutations lock
+the exact active generation and require its HMAC fence version; send/discard reserve the generation
+before cleanup so another stale editor cannot race the terminal transition.
 
 ### EmailProviderDraftSyncService — `app/Modules/Email/Services/EmailProviderDraftSyncService.php`
 Builds a safe RFC 822 `DraftEmail` with `X-Unsent: 1`, appends it to the discovered provider Drafts
@@ -607,16 +704,18 @@ mode/group, size, modification time, SHA-1, and checksum+size duplicate groups. 
 unsafe/symlink path, unreadable file, missing reference, or non-private mode fails the command, while
 unreferenced status alone never authorizes deletion.
 
-The verified redacted Dev snapshot inspected 939 files without mutation: `sent_pending` 322 (0
-referenced / 322 unreferenced), `raw` 547 (465 / 82), and `attachments` 70 (34 / 36), totalling 499
-referenced and 440 unreferenced. It reports 28 missing `message_raw` references, 79 non-private
-`0644` files, and 12 duplicate unreferenced checksum+size groups. Focused coverage passes 3 tests / 21
-assertions. The preceding structural audit found zero symlinks, unsafe paths, or unreadable files.
+The latest 2026-08-24 12:47 CEST redacted Dev snapshot inspected 1,445 files without mutation: 968
+referenced and 477 unreferenced. It reports 28 missing `message_raw` references, 79 non-private
+`0644` files, and 15
+duplicate unreferenced checksum+size groups. Focused coverage passes 3 tests / 21 assertions. The
+structural audit found zero symlinks, unsafe paths, or unreadable files.
 Neither the command nor duplicate evidence changes files, permissions, database rows, provider,
 queue, retention, or deletion state.
 
 ### SendEmailComposerMessage — `app/Modules/Email/Actions/SendEmailComposerMessage.php`
-Shared server action for `/tech/mail` Reply, Reply All, Forward, and new-message sends.
+Shared validation/preparation and lower Email-log/SMTP action for Reply, Reply All, Forward,
+provider-Draft editing, and new-message sends. It is called through `SubmitEmailComposerDraft` by
+both `/tech/mail` and the Mail draft API.
 
 Selected-message sends require the actor to have global Email view/manage permissions plus effective
 mailbox View and Send access for the selected placement's account. New compose requires effective
@@ -676,16 +775,57 @@ repeat using the reserved idempotency key returns the accepted row or stays bloc
 without a second SMTP call. A newly written raw snapshot is deleted if its reconciliation row cannot
 be persisted, so that failure does not leave an untracked private payload.
 If marking/cleaning the local draft itself fails after acceptance, the composer still closes with a
-sent warning and the durable reservation blocks resend, although that draft can remain locally
-active until reviewed.
+sent warning and the durable reservation blocks resend; the draft remains `send_reserved`, not
+active/editable, until reviewed.
+
+### SubmitEmailComposerDraft — `app/Modules/Email/Actions/SubmitEmailComposerDraft.php`
+The single web/API outbound boundary. It builds the exact signed/sanitized preview through
+`SendEmailComposerMessage`, verifies private owner/source/access/provider binding and every stored
+attachment's size/checksum, fingerprints the frozen snapshot, reserves `EmailOutboundSubmission`,
+claims the draft generation, and only then enters the lower SMTP action. Exact accepted repeats
+return the same submission. Pre-provider failure is recorded as not attempted; ambiguous provider
+outcome remains unresolved and neither the same nor a new key can send the snapshot again. Normal
+same-account Sent import of the reserved Message-ID updates the submission to `sent_reconciled`.
+
+Versioned routes under `/api/v1/email/mailbox` expose private draft CRUD, attachment mutation,
+explicit provider sync, preview/send, submission status, and Sent-reconciliation status. They use
+`email.drafts.read`, `email.drafts.write`, and `email.send` request-ceiling abilities while still
+requiring the current active human's normal mailbox authority. Resources omit private storage and
+raw/provider evidence.
 
 ### SendEmailReply — `app/Modules/Email/Actions/SendEmailReply.php`
 Compatibility wrapper around `SendEmailComposerMessage` for reply-only call paths and tests.
 
-The action does not mark provider `Seen`, change personal `Unread for me`, move folders, create
+The outbound boundary does not mark provider `Seen`, change personal `Unread for me`, move folders, create
 Tickets, emit Signals, append to provider Drafts or Sent, or capture Ticket evidence. Provider Drafts
-write sync, provider Sent append/deduplication support, Ticket projection, and API multipart sending
-are separate later slices.
+write sync and provider Sent append/deduplication remain their existing explicit Mail services;
+Ticket projection remains a separate later slice.
+
+### Conversation acknowledgement safety actions
+
+`PreviewEmailConversationAcknowledgement` is a read-only, bounded ledger preview for either the exact
+active-account conversation or explicit selected placement IDs. It rechecks ordinary View for every
+account, requires Organize separately for optional provider Seen, excludes break-glass/system actors
+and never selects a related account through correlation. `ApplyEmailConversationAcknowledgement`
+requires the same actor and frozen evidence, processes at most 25 claims per invocation, reauthorizes
+every item and changes personal state only through `SetEmailUnreadForMe`.
+
+Personal state is message-scoped even when one message has several active provider placements.
+Preview therefore selects the personal effect once per account/message/access epoch/target, stores
+later placement items as immutable `coalesced` evidence, and includes that selection in the item
+fingerprint. Provider Seen stays placement-scoped and still reserves one operation for every selected
+placement. Run status is derived only from selected effects, so a failed selected personal effect
+cannot be hidden by a coalesced row.
+
+Provider Seen remains an independent outcome. Apply records one idempotent pending `mark_seen`
+operation through `RecordEmailRemoteOperation`; it does not resolve an IMAP client. A failed or
+denied provider reservation cannot roll back a successful personal acknowledgement, and retry/readback
+cannot duplicate either effect. Historical implicit `AcknowledgeEmailConversation` calls now fail
+closed. The Livewire acknowledgement method also refuses to bypass preview/confirmation.
+
+This backend is not an activated UI/API feature. `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` defaults false;
+broad multi-account Archive/Move/Trash, confirmation UI, API, queue continuation and private
+invalidation remain dependency-gated under Order 12 and `HR-2026-08-16-012`.
 
 ### Mail workspace triage actions
 The `/tech/mail` command bar keeps common actions compact:
@@ -1029,8 +1169,15 @@ Views:
   list.
 - Admin rules distinguish the compatibility `archive` action, which remains local-only, from
   `provider_archive` and `provider_move`, which use the normal provider ledger. Provider actions
-  reauthorize the active published-by actor and mailbox Organize at execution. Failure records later
-  actions in that rule as skipped/not-run while other eligible rules may continue.
+  reauthorize the active published-by actor and mailbox Organize at execution. A failure is recorded
+  as `failed`; every later position is `not_run` with a stable reason code while other eligible rules
+  may continue.
+- Finished execution attempts are immutable. The Rules execution API exposes only sanitized action
+  identity/status and opaque operation IDs. Undo can delegate exactly one successful provider
+  Archive/Move effect to `UndoEmailRemoteOperation` only when its snapshotted action target and exact
+  account/placement/provider ledger agree. Mixed, local-only, stale, ambiguous, or mismatched effects
+  fail closed without changing the attempt or performing local compensation. Repeated application
+  returns the existing uniquely linked inverse.
 
 ### Personal simple rules
 - `CreatePersonalEmailRule` creates owner-only `personal_simple` rules from `/tech/mail`.
@@ -1054,8 +1201,11 @@ Declared in `app/Modules/Email/routes.php` with the `tech.` name prefix. Key rou
 - `tech.admin.settings.email.accounts.toggle` — toggle active
 - `tech.admin.settings.email.accounts.test` — POST run connection test
 - Additional: `tech.admin.settings.email.config`, `tech.admin.settings.email.rules`
-- API: `/api/v1/email/rules` exposes read/preview endpoints through `email.rules.read`, intersected
-  with `email.rule_manage` and mailbox View checks for previews.
+- API: `/api/v1/email/rules` exposes rule read/preview plus account-scoped execution detail and Undo
+  eligibility through `email.rules.read`, intersected with `email.rule_manage` and current mailbox
+  View. `POST /api/v1/email/rules/executions/{attempt}/undo` additionally requires
+  `email.rules.execute` and current Mailbox Organize, then uses the verified provider-operation
+  inverse rather than local reversal.
 - API: `/api/v1/email/mailbox/remote-operations` exposes account-scoped list/show through
   `email.read`, and guarded retry/cancel endpoints through `email.update` plus mailbox Organize.
 - API: `/api/v1/email/mailbox/conversations/{conversation}/classification` exposes scoped
@@ -1151,12 +1301,13 @@ SMTP:
   folders cannot collide.
 - Dev's legacy `storage/app/private/email/raw/2` and `storage/app/private/email/attachments` roots are
   `www-data:www-data`; all 61 directories are `2770`, have group-rwx access/default ACLs, and contain
-  no symlinks. The read-only command sees 939 total files and 79 `www-data`-owned non-private `0644`
+  no symlinks. The latest read-only snapshot sees 1,445 total files and 79 `www-data`-owned
+  non-private `0644`
   files that cannot be chmodded by the SSH project user. Root/operator must change only those 79 modes
   to `0660` without content, ownership, move, or deletion, then rerun the inventory and PHP-FPM/queue
-  dual-runtime smoke. Recovery has 34 integrity-checked referenced rows/files across all 19 bounded
-  targets. The 440 unreferenced files, including 322 Sent-pending, 82 raw, and 36 attachment files,
-  remain preserved pending separate reconciliation, evidence, retention, and deletion review.
+  dual-runtime smoke. Current direct attachment readback is 32 of 34 expected parts on exact source
+  rows; same-identity evidence remains separate. The 477 unreferenced files remain preserved pending
+  separate reconciliation, evidence, retention, and deletion review.
 - `HtmlSanitizer` removes risky tags/handlers; replace with HTMLPurifier later for full safety.
 - `BodyNormalizer::toText()` produces a readable plaintext version for search and previews.
 
@@ -1212,6 +1363,9 @@ workflow is scheduled but disabled by default through the exact Admin opt-in des
   by default and applies only to accounts explicitly set to `legacy_default`; per-account
   `auto_delete` remains the explicit server-cleanup policy.
 - Settings are persisted as Email-owned `common_settings` values.
+- Conversation acknowledgement has an independent default-off rollout gate plus a default 100-item
+  preview cap, hard 500-item cap, 20-account maximum and 15-minute expiry in `config/email_live.php`.
+  Do not enable it until the public confirmation surface, operations and named review are complete.
 
 ## Ordered Mail workstream migrations
 
@@ -1227,12 +1381,12 @@ order:
 7. `2026_08_14_114000_create_email_smart_inbox_suggestions.php` — batch 92.
 8. `2026_08_14_115000_add_email_provider_deletion_reconciliation.php` — batch 93.
 9. `2026_08_15_120000_create_email_folder_navigation_preferences.php` — batch 94.
-10. `2026_08_15_121000_add_email_message_subject_search.php` — batch 96.
-11. `2026_08_15_121100_harden_email_message_subject_search_backfill.php` — batch 97.
-12. `2026_08_15_121200_harden_email_message_received_at.php` — batch 98.
-13. `2026_08_16_100000_add_email_uidvalidity_namespaces.php` — pending review/deploy.
-14. `2026_08_16_101000_create_email_historical_import_runs_and_items.php` — pending review/deploy.
-15. `2026_08_16_102000_create_email_cursor_rebaseline_runs.php` — pending review/deploy.
+10. `2026_08_15_121000_add_email_message_subject_search.php` — recovered Dev batch 95.
+11. `2026_08_15_121100_harden_email_message_subject_search_backfill.php` — recovered Dev batch 96.
+12. `2026_08_15_121200_harden_email_message_received_at.php` — recovered Dev batch 97.
+13. `2026_08_16_100000_add_email_uidvalidity_namespaces.php` — recovered Dev batch 98.
+14. `2026_08_16_101000_create_email_historical_import_runs_and_items.php` — recovered Dev batch 99.
+15. `2026_08_16_102000_create_email_cursor_rebaseline_runs.php` — recovered Dev batch 100.
 
 The Undo filename is dated one day later than the Smart Inbox/provider-deletion filenames. A fresh
 combined `php artisan migrate` therefore sorts `114000` and `115000` before `113000`. Those schemas
@@ -1244,18 +1398,43 @@ before the persisted folder tree is served. The subject-search migrations must p
 last migration removes the historical MariaDB receipt-timestamp update clause, freezes its repair
 ledger, and adds the Smart Inbox fingerprint-schema marker.
 
-After every Order 1–6 prerequisite, Order 7 adds these pending migrations in exact order:
+After every Order 1–6 prerequisite, Order 7 added these migrations in exact order:
 
 1. `2026_08_16_118000_add_email_provider_reconciliation.php`.
 2. `2026_08_16_118100_expand_email_message_mailbox_for_reconciliation.php`.
 3. `2026_08_16_118200_add_inbound_notification_external_outbox.php`.
 4. `2026_08_16_118300_add_authoritative_target_identity_to_email_remote_operations.php`.
 5. `2026_08_16_118400_make_email_provider_paths_byte_exact.php`.
+6. `2026_08_16_118500_add_durable_inbound_notification_fanout.php`.
 
 They add only schema, constraints, indexes, and rollback refusal; they do not read a provider, start
-reconciliation, run rules, or deliver a notification. Apply them only after a database backup and
-the pending `HR-2026-08-16-007` deployment checks. Their down paths intentionally refuse retained
-reconciliation, outbox, target-identity, long-path, or observed-placement evidence.
+reconciliation, run rules, or deliver a notification. They ran on recovered Dev as the final six
+steps of the exact batch-98-through-117 sequence. Apply them in another environment only after a
+database backup and the pending `HR-2026-08-16-007` deployment checks. Their down paths intentionally
+refuse retained reconciliation, outbox, target-identity, long-path, durable fanout, or
+observed-placement evidence.
+
+Order 9 adds forward migration
+`2026_08_24_125000_add_email_shared_draft_coordination.php`. It leaves the inert historical
+`2026_08_19_140000` marker untouched and adds explicit shared-draft context, one durable
+lease/fencing row and metadata-only transition evidence. Presence remains in expiring cache, not
+SQL. The migration was not run during implementation; it later ran in Dev batch 126 after Order
+11's `110000` batch 124. The opt-in actual MariaDB contract verifies `125000` up/down, legacy
+backfill, named FKs and
+indexes, and guarded refusal for shared-draft/lock/event evidence against a random disposable schema;
+its `finally` cleanup leaves zero matching temp schemas. The additive migration is present in shared
+Dev batch 126; human inspection and runtime activation remain pending. Keep
+live/collaboration/UI flags false until `HR-2026-08-16-009` passes. Its down path
+refuses to erase any shared draft, lock or event evidence.
+
+Order 12 adds forward migration
+`2026_08_24_140000_create_email_conversation_acknowledgement_action_ledger.php`. It leaves the inert
+historical `2026_08_19_150000` marker untouched, creates no preview or remote operation by itself and
+was not run during implementation; it later ran in Dev batch 128 with both ledgers empty and its
+feature gate false. Its actual disposable MariaDB 10.11 contract proves
+named indexes/foreign keys, defaults, empty down, evidence-preserving refusal and exact
+`pending` / `coalesced` personal-state evidence. A human must still review it on a disposable
+current-data copy before coordinated deployment; keep the feature gate false afterward.
 
 
 ## Scheduler and cron (server setup)
@@ -1268,7 +1447,8 @@ reconciliation, outbox, target-identity, long-path, or observed-placement eviden
 ```
 
 - Queue processing:
-	- Development: set `QUEUE_CONNECTION=sync` (no worker required).
+	- Current Dev uses `QUEUE_CONNECTION=database`, one targeted `email,default` worker, and no
+      `notifications` worker. Do not start notification delivery while the 136-job cohort is unreviewed.
 	- Production: start a worker, for example:
 
 ```bash
@@ -1402,13 +1582,16 @@ in-flight work before setting `cancelling` and waking bounded finalization. This
 after cancellation without interrupting a committed hidden file-reference/write sequence. Repeated
 Cancel requests and a lost first transition dispatch are recovered idempotently.
 
-Order 7 has released focused evidence of 122 SQLite tests / 1,383 assertions and 3 disposable
-MariaDB 10.11 migration/guard tests / 434 assertions. Active durable-notification-fanout and remote-
-operation access-path rework means this is not a claim that the current Order-7 candidate, broader
-affected-module matrix, shared Dev database, scheduler, workers, provider, browser, or rollback
-smoke is clean. Connectivity to Dev/Plesk MySQL is restored; read-only status currently reports 20
-Pending migrations, the 19 released candidates plus unreleased `118500`, and none was applied.
-Those checks and every manual review item remain Pending under `HR-2026-08-16-007`.
+Order 7 has released focused evidence of 255 SQLite tests / 2,225 assertions, a standalone durable
+fanout gate of 34 / 468, rolling unread-schema coverage of 4 / 26, and disposable MariaDB contracts
+of 3 / 434 plus 3 / 163. The clean 2026-08-24 complete Email Feature directory passes 686 / 7,046.
+Connectivity to Dev/Plesk MySQL is restored; the exact 20 Order-1-through-7 migrations `100000`
+through `118500` ran one per step in recovered Dev batches 98 through 117. Controlled account-2 run
+2 finished terminal `stale/summary`: all 137 folders were read, 131 completed, 6 became stale with
+`provider_tuple_drift`, 8,427 observations and 7 confirmed missing were recorded, and no provider
+write or notification delivery occurred. Browser, full-scheduler/notification-worker, rollback and
+named human checks remain open under `HR-2026-08-16-007`; these results are not a complete repository
+suite claim.
 
 ### Canonical message shadow correlation
 
@@ -1450,9 +1633,10 @@ representative confirmation fails closed. A completed review decision is immutab
 never merges messages, changes placements/read paths, widens authorization, or mutates Ticket,
 conversation, provider, user-state, rule, Smart Inbox, search, attachment, or raw-source records.
 
-Migration `110000` is still pending and was not run on shared Dev. Deployment must back up and record
-authoritative counts, apply the additive migration, clear caches, rebuild group-writable views, and
-restart long-lived Email workers; it must not start a run automatically. Ordinary rollback is
+Canonical shadow migration `2026_08_16_110000` ran in recovered Dev batch 104. Other installations
+must still back up and record authoritative counts, apply the additive migration, clear caches,
+rebuild group-writable views, and restart long-lived Email workers; it must not start a run
+automatically. Ordinary rollback is
 allowed only while there is no reviewed candidate or inspection audit. Reviewed/inspected shadow
 evidence must first be explicitly exported or carried forward. Focused verification passes 19 tests
 / 131 assertions, and named migration/browser/worker/rollback review remains Pending under
@@ -1550,7 +1734,9 @@ How other controllers/services can reuse this module:
 - For Mail Reply, Reply All, Forward, and new compose, use `SendEmailComposerMessage` so mailbox
   authorization, To/Cc parsing, rich HTML sanitization, attachment handling, reply threading
   headers, personal signatures, idempotency, and `EmailLog` records stay consistent.
-  `SendEmailReply` remains available as a reply-only compatibility wrapper.
+  User/API draft sends must enter through `SubmitEmailComposerDraft` so this preparation cannot
+  bypass the version-specific outbound submission. `SendEmailReply` remains a reply-only
+  compatibility wrapper for established lower-level tests/callers.
 - For subsystem outbound mail such as Ticket, Sales, Marketing, and alerts, keep using
   `SmtpAccountMailer` through the owning domain's guarded action/job until the broader outbound
   lifecycle slice replaces those call paths.
@@ -1564,6 +1750,14 @@ Coding guidelines:
 
 ## Testing and troubleshooting
 
+Order 12 conversation-acknowledgement safety verification passes 10 focused tests / 110 assertions.
+Combined with the historical quarantine, unread-epoch and remote-operation recovery files it passes
+60 / 522; an isolated authorized Mail workspace render smoke adds 1 / 11. Those runs use SQLite
+`:memory:` with isolated config/maintenance/cache/session state. The combined Order 12/13 opt-in
+migration contract additionally passes 1 / 52 on a random schema in actual socket-only MariaDB
+10.11.14, with zero matching schemas after guarded cleanup and the daemon/datadir removed. No run
+performs provider I/O or a shared Dev migration.
+
 Decoded-subject search verification currently records:
 
 - Search surfaces: **4 tests / 58 assertions**. With adjacent durable-conversation query and Mail
@@ -1573,7 +1767,8 @@ Decoded-subject search verification currently records:
 - Projection coverage passes **9 tests / 56 assertions**. Projection plus all three search surfaces
   pass **13 / 114**, and the full focused package with adjacent regressions passes **22 / 287**.
   The complete Email test directory passes **349 / 3,066** after the desktop workspace polish.
-- Dev migrations `121000`, `121100`, and `121200` have run in batches 96, 97, and 98. MariaDB reports
+- Dev migrations `121000`, `121100`, and `121200` have run in recovered batches 95, 96, and 97.
+  MariaDB reports
   no `ON UPDATE` clause on `received_at`; the ledger froze 490 messages. Preview/apply repaired 471
   evidence-supported values (439 header dates and 32 conversation boundaries), left 19 unresolved
   candidates untouched, and recovered exactly five false-stale Smart Inbox suggestions. Receipt repair
@@ -1600,18 +1795,18 @@ Current Smart Inbox reader-first and attachment evidence:
   count-matched legacy-directory recovery without provider access. The earlier adjacent exact provider
   `ST_UID`/`leaveUnread`/limit-1 package passed **47 / 321**.
 - Focused read-only private-storage inventory coverage passes **3 / 21**. The live redacted command
-  inspected 939 files, reported 499 referenced / 440 unreferenced, 28 missing raw references, 79
-  non-private modes, and 12 duplicate unreferenced groups without mutation.
+  inspected 1,445 files, reported 968 referenced / 477 unreferenced, 28 missing raw references, 79
+  non-private modes, and 15 duplicate unreferenced groups without mutation.
 - The combined `EmailModuleTest.php` and `InboundAutomationTest.php` package passes **155 / 1,308**.
 - Desktop workspace/Smart/navigation coverage passes **20 / 337**; `EmailModuleTest` plus supervised
   cleanup passes **153 / 1,408**.
 - The complete Email test directory passes **349 / 3,066**.
-- Attachment readiness is safe and the bounded 19-message operation is complete at **34 rows/counter
-  34**. The final six rows/files came from the exact legacy
-  `email/attachments/{account_id}/{imap_uid}` directories for messages `4`, `5`, and `10`, with no
-  provider search; all six size/SHA-1 checks and the `existing_rows_complete` rerun pass. Legacy
-  sources and duplicate account-2 copies remain preserved for separate unreferenced-file review.
-  Manual browser/access review remains Pending under `HR-2026-08-15-006`.
+- Current direct attachment readback finds **32 of 34** expected parts on their exact source rows.
+  Provider reconciliation hid placement 478 and soft-deleted message 479's cache after confirmed
+  source absence; it remains without raw/attachment files. Same-identity message 650 remains active
+  with independent raw plus two-attachment evidence in Trash. Messages 456 and 478 each retain one attachment file but
+  no raw snapshot. Manual canonical/browser/access review remains Pending under
+  `HR-2026-08-15-006`.
 
 Controlled Dev recovery for the reported incident used fresh exact provider evidence before changing
 local state. Operation `23` was cancelled, stale source placement `474` was hidden, verified Trash UID
@@ -1625,7 +1820,7 @@ and no raw snapshot remained.
 The code hardening and directory/ACL contract are verified, while broader private-storage human review
 remains In Progress. A root/operator must first normalize the exact 79 remaining `www-data`-owned
 `0644` legacy files to `0660` without changing content, ownership, location, or existence. Then rerun
-`email:inventory-private-storage`, reconcile the expected 61-directory/939-file snapshot, complete
+`email:inventory-private-storage`, reconcile the recorded 61-directory/1,445-file snapshot, complete
 PHP-FPM and queue-worker write/read smoke, and perform the remaining runtime checks in
 `HR-2026-08-15-003`. No deletion is authorized by the inventory.
 

@@ -7,6 +7,7 @@ use App\Modules\Email\Models\Concerns\HasImmutableProviderBindingVersion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class EmailComposerDraft extends Model
 {
@@ -14,9 +15,24 @@ class EmailComposerDraft extends Model
 
     public const STATUS_ACTIVE = 'active';
 
+    /**
+     * The immutable draft generation has been claimed by one outbound
+     * submission. Keeping this separate from active prevents edits and a
+     * second send while the first provider outcome is being established.
+     */
+    public const STATUS_SEND_RESERVED = 'send_reserved';
+
+    public const STATUS_DISCARD_RESERVED = 'discard_reserved';
+
     public const STATUS_SENT = 'sent';
 
     public const STATUS_DISCARDED = 'discarded';
+
+    public const SCOPE_PRIVATE = 'private';
+
+    public const SCOPE_SHARED = 'shared';
+
+    public const SOURCE_CONTEXT_SCHEMA = 1;
 
     public const PROVIDER_DRAFT_LOCAL_ONLY = 'local_only';
 
@@ -41,11 +57,28 @@ class EmailComposerDraft extends Model
     protected $table = 'email_composer_drafts';
 
     protected $fillable = [
+        'public_id',
         'user_id',
+        'scope',
+        'generation_id',
+        'version',
+        'content_version',
+        'shared_scope_id',
+        'shared_by_id',
+        'shared_at',
+        'sharing_revoked_at',
+        'source_context_schema',
+        'source_context_fingerprint',
+        'source_context_captured_at',
+        'source_placement_sync_version',
+        'stale_reason_code',
+        'stale_at',
+        'last_rebased_at',
         'email_account_id',
         'provider_binding_version',
         'email_message_id',
         'email_mailbox_placement_id',
+        'email_conversation_id',
         'mode',
         'draft_key',
         'status',
@@ -71,7 +104,16 @@ class EmailComposerDraft extends Model
     ];
 
     protected $casts = [
+        'version' => 'integer',
+        'content_version' => 'integer',
+        'source_context_schema' => 'integer',
+        'source_placement_sync_version' => 'integer',
         'provider_binding_version' => 'integer',
+        'shared_at' => 'datetime',
+        'sharing_revoked_at' => 'datetime',
+        'source_context_captured_at' => 'datetime',
+        'stale_at' => 'datetime',
+        'last_rebased_at' => 'datetime',
         'last_saved_at' => 'datetime',
         'sent_at' => 'datetime',
         'discarded_at' => 'datetime',
@@ -80,6 +122,16 @@ class EmailComposerDraft extends Model
         'provider_draft_synced_at' => 'datetime',
         'provider_draft_deleted_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $draft): void {
+            $draft->public_id = $draft->public_id ?: (string) Str::uuid();
+            $draft->scope = $draft->scope ?: self::SCOPE_PRIVATE;
+            $draft->generation_id = $draft->generation_id ?: (string) Str::uuid();
+            $draft->version = max(1, (int) ($draft->version ?: 1));
+        });
+    }
 
     public function user(): BelongsTo
     {
@@ -99,6 +151,26 @@ class EmailComposerDraft extends Model
     public function placement(): BelongsTo
     {
         return $this->belongsTo(EmailMailboxPlacement::class, 'email_mailbox_placement_id');
+    }
+
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(EmailConversation::class, 'email_conversation_id');
+    }
+
+    public function sharedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shared_by_id');
+    }
+
+    public function sharedLock(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(EmailSharedDraftLock::class, 'email_composer_draft_id');
+    }
+
+    public function sharedEvents(): HasMany
+    {
+        return $this->hasMany(EmailSharedDraftEvent::class, 'email_composer_draft_id');
     }
 
     public function attachments(): HasMany

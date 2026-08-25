@@ -68,8 +68,9 @@ class InboundEmailRuleEngine
         if ($depth > 5) {
             \Illuminate\Support\Facades\Log::warning('Email rule loop detected and stopped.', [
                 'message_id' => $message->id,
-                'depth' => $depth
+                'depth' => $depth,
             ]);
+
             return;
         }
 
@@ -475,7 +476,7 @@ class InboundEmailRuleEngine
                         $results[] = [
                             'position' => (int) $laterIndex,
                             'type' => (string) ($laterAction['type'] ?? ''),
-                            'status' => EmailRuleExecutionAttempt::STATUS_SKIPPED,
+                            'status' => EmailRuleExecutionAttempt::STATUS_NOT_RUN,
                             'reason' => 'not_run_after_provider_cleanup_failure',
                         ];
                     }
@@ -486,32 +487,90 @@ class InboundEmailRuleEngine
                 continue;
             }
 
-            match ($type) {
-                'link_ticket_by_subject_token' => $this->linkByTicketKey($message),
-                'link_sales_by_subject_token' => $this->linkBySalesKey($message),
-                'create_ticket' => $this->createTicket($message, (string) $value),
-                'archive' => $message->forceFill(['state' => 'archived'])->save(),
-                'tag', 'tag_message' => $this->tag($message, (string) $value),
-                ApplyEmailConversationRuleClassification::ACTION_TAG_CONVERSATION,
-                ApplyEmailConversationRuleClassification::ACTION_SET_CONVERSATION_CATEGORY => $this->applyConversationClassification->handle(
-                    $message,
-                    $rule,
-                    $type,
-                    (string) $value,
-                    (int) $index,
-                ),
-                'emit_signal' => $this->emitSignal($message, $rule, $action, (int) $index),
-                default => null,
-            };
+            try {
+                if (! $this->executeLocalAction($message, $rule, $action, (int) $index)) {
+                    throw new \UnexpectedValueException('Unsupported Email rule action.');
+                }
 
-            $results[] = [
-                'position' => (int) $index,
-                'type' => $type,
-                'status' => $type === '' ? 'skipped' : EmailRuleExecutionAttempt::STATUS_SUCCEEDED,
-            ];
+                $results[] = [
+                    'position' => (int) $index,
+                    'type' => $type,
+                    'status' => EmailRuleExecutionAttempt::STATUS_SUCCEEDED,
+                ];
+            } catch (\Throwable) {
+                $results[] = [
+                    'position' => (int) $index,
+                    'type' => (string) $type,
+                    'status' => EmailRuleExecutionAttempt::STATUS_FAILED,
+                    'reason' => 'email_rule_action_failed',
+                ];
+
+                foreach (array_slice($snapshot['actions'], ((int) $index) + 1, null, true) as $laterIndex => $laterAction) {
+                    $results[] = [
+                        'position' => (int) $laterIndex,
+                        'type' => (string) ($laterAction['type'] ?? ''),
+                        'status' => EmailRuleExecutionAttempt::STATUS_NOT_RUN,
+                        'reason' => 'not_run_after_action_failure',
+                    ];
+                }
+
+                break;
+            }
         }
 
         return $results;
+    }
+
+    /** @param  array<string, mixed>  $action */
+    private function executeLocalAction(
+        EmailMessage $message,
+        EmailRule $rule,
+        array $action,
+        int $position,
+    ): bool {
+        $type = (string) ($action['type'] ?? '');
+        $value = (string) ($action['value'] ?? '');
+
+        switch ($type) {
+            case 'link_ticket_by_subject_token':
+                $this->linkByTicketKey($message);
+
+                return true;
+            case 'link_sales_by_subject_token':
+                $this->linkBySalesKey($message);
+
+                return true;
+            case 'create_ticket':
+                $this->createTicket($message, $value);
+
+                return true;
+            case 'archive':
+                $message->forceFill(['state' => 'archived'])->save();
+
+                return true;
+            case 'tag':
+            case 'tag_message':
+                $this->tag($message, $value);
+
+                return true;
+            case ApplyEmailConversationRuleClassification::ACTION_TAG_CONVERSATION:
+            case ApplyEmailConversationRuleClassification::ACTION_SET_CONVERSATION_CATEGORY:
+                $this->applyConversationClassification->handle(
+                    $message,
+                    $rule,
+                    $type,
+                    $value,
+                    $position,
+                );
+
+                return true;
+            case 'emit_signal':
+                $this->emitSignal($message, $rule, $action, $position);
+
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**

@@ -25,6 +25,9 @@ class ImapClient
 
     protected Client $client;
 
+    /** @var array<string, object> */
+    private array $discoveredFoldersByPath = [];
+
     public function __construct(
         #[\SensitiveParameter] protected EmailAccount $account,
         protected ?int $expectedProviderBindingVersion = null,
@@ -82,7 +85,20 @@ class ImapClient
     public function folderState(string $folderPath): array
     {
         $folderPath = EmailProviderPath::normalize($folderPath);
-        $status = $this->folderByPath($folderPath)->status();
+        $folder = $this->folderByPath($folderPath);
+        if (! is_object($folder) || ! method_exists($folder, 'status')) {
+            throw new EmailProviderReadException('The provider folder could not be resolved.');
+        }
+
+        return $this->normalizeFolderStatus($folder->status());
+    }
+
+    /** @return array{uid_validity:int,next_uid:int,exists_count:?int,unseen_count:?int,highest_modseq:?int} */
+    private function normalizeFolderStatus(mixed $status): array
+    {
+        if (! is_array($status) && ! $status instanceof \ArrayAccess) {
+            throw new EmailProviderReadException('The provider folder state is invalid.');
+        }
 
         return [
             'uid_validity' => (int) ($status['uidvalidity'] ?? 0),
@@ -124,9 +140,7 @@ class ImapClient
         }
 
         try {
-            $providerFolders = method_exists($this->client, 'getFolders')
-                ? $this->client->getFolders(false)
-                : [];
+            $providerFolders = $this->providerFolderInventory();
         } catch (\Throwable) {
             $providerFolders = [];
         }
@@ -137,9 +151,14 @@ class ImapClient
                 continue;
             }
 
+            // Discovery already returned an exact provider handle. Reuse it
+            // for STATUS and message queries because some IMAP servers cannot
+            // resolve a discovered child again through a flat path lookup.
+            $this->discoveredFoldersByPath[$path] = $folder;
+
             $attributes = $this->folderAttributes($folder);
             $specialUse = $this->specialUseFromAttributes($attributes);
-            $state = $this->safeMailboxState($path);
+            $state = $this->safeDiscoveredFolderState($folder, $path);
             $delimiter = $this->folderDelimiter($folder);
 
             $folders[$path] = [
@@ -858,6 +877,10 @@ class ImapClient
     {
         $path = EmailProviderPath::normalize($path);
 
+        if (isset($this->discoveredFoldersByPath[$path])) {
+            return $this->discoveredFoldersByPath[$path];
+        }
+
         return method_exists($this->client, 'getFolderByPath')
             ? $this->client->getFolderByPath($path)
             : $this->client->getFolder($path);
@@ -915,6 +938,30 @@ class ImapClient
                 'highest_modseq' => null,
             ];
         }
+    }
+
+    /**
+     * Child folder objects returned by discovery are authoritative handles.
+     * Some providers cannot resolve those same children again through a flat
+     * path lookup, so read STATUS from the exact discovered object first.
+     *
+     * @return array{uid_validity:int,next_uid:int,exists_count:?int,unseen_count:?int,highest_modseq:?int}
+     */
+    private function safeDiscoveredFolderState(object $folder, string $path): array
+    {
+        try {
+            if (method_exists($folder, 'status')) {
+                $state = $this->normalizeFolderStatus($folder->status());
+                if ($state['uid_validity'] > 0 && $state['next_uid'] > 0) {
+                    return $state;
+                }
+            }
+        } catch (\Throwable) {
+            // The bounded flat-path fallback below may still resolve servers
+            // whose discovery object does not support STATUS directly.
+        }
+
+        return $this->safeMailboxState($path);
     }
 
     /**

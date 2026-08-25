@@ -37,6 +37,37 @@ UI until a later lifecycle feature needs them. Preview, test-send, and AI-assist
 of the email-first frontend slice. AI drafting is a form-assist workflow: it may use campaign/list
 context and current email content, but it does not send, approve, or save without technician action.
 
+## Scope Amendment 2026-08-24
+
+Email template editing is promoted from the post-beta backlog into one focused implementation
+slice under this approved RFC. Email still owns reusable templates and rendering. Marketing still
+owns campaign-specific content snapshots.
+
+Reusable Email templates separate editable content from the outer email layout:
+
+- `Body HTML` is the reusable content fragment and uses a visual editor with HTML source mode.
+- `Layout HTML` is the complete outer email document and contains exactly one reserved
+  `{{ email_body }}` slot.
+- Plaintext remains a separate, explicitly editable fallback.
+- A template layout is either `branding` or `custom`. Branding-managed layouts are generated from
+  the current organization branding on every normal render. Editing subject, body, plaintext, or
+  variables does not disconnect the layout from branding.
+- Choosing `Customize layout` materializes the current branding layout and switches only that
+  template to `custom`. Later branding changes do not rewrite it. An explicit reset returns the
+  template to branding-managed mode.
+- Existing complete HTML documents stored in `body_html` are migrated into custom layouts without
+  silently replacing their HTML.
+
+Marketing campaign emails preserve the approved snapshot contract. Creating a campaign email
+materializes and stores the selected template layout together with the existing subject/body/text
+snapshot. Later template or organization-branding edits therefore do not change draft, approved,
+active, or historical campaign emails that already exist. Body editing inside Marketing never
+changes the reusable Email template layout.
+
+The template preview remains read-only, sandboxed, and responsive. It renders unsaved values through
+the authoritative server renderer, rather than duplicating layout rules in browser JavaScript. The
+visual editor and advanced layout source field live in the main form, not inside the preview frame.
+
 This is a Level 3 change because it introduces a new domain, database tables, permissions,
 automation, outbound email behavior, tracking endpoints, integrations, and cross-module workflows
 with Contact, Email, Sales, Integration, and future Signal/AI features.
@@ -503,3 +534,7 @@ Rollback:
 ## Approval
 
 Approved by Svein Tore Ramstad on 2026-06-09.
+
+The 2026-08-24 Email template editor and managed-branding scope amendment was explicitly requested
+and prioritized by Svein Tore Ramstad on 2026-08-24. Implementation is limited by the linked Feature
+Slice and ADR; it does not authorize a general Documentation or Knowledge editor replacement.

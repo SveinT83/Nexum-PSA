@@ -980,7 +980,7 @@ class EmailSmartInboxSupervisedCleanupTest extends TestCase
         $attempt = $revokedRule->executionAttempts()->sole();
         $this->assertSame(EmailRuleExecutionAttempt::STATUS_FAILED, $attempt->status);
         $this->assertSame('provider_cleanup_authorization_revoked', $attempt->action_results_json[0]['reason']);
-        $this->assertSame(EmailRuleExecutionAttempt::STATUS_SKIPPED, $attempt->action_results_json[1]['status']);
+        $this->assertSame(EmailRuleExecutionAttempt::STATUS_NOT_RUN, $attempt->action_results_json[1]['status']);
         $this->assertSame('not_run_after_provider_cleanup_failure', $attempt->action_results_json[1]['reason']);
         $this->assertSame($operationsBefore, EmailRemoteOperation::query()->count());
         $this->assertFalse(Signal::query()->where('signal_type', 'cleanup_should_not_run')->exists());
@@ -1148,7 +1148,7 @@ class EmailSmartInboxSupervisedCleanupTest extends TestCase
         $this->assertSame(EmailRuleExecutionAttempt::STATUS_FAILED, $adminAttempt->status);
         $this->assertSame('provider_mutation_not_authorized', $adminAttempt->action_results_json[0]['reason']);
         $this->assertSame(EmailRuleExecutionAttempt::STATUS_FAILED, $personalAttempt->status);
-        $this->assertSame(EmailRuleExecutionAttempt::STATUS_SKIPPED, $personalAttempt->action_results_json[0]['status']);
+        $this->assertSame(EmailRuleExecutionAttempt::STATUS_FAILED, $personalAttempt->action_results_json[0]['status']);
         $this->assertSame('provider_mutation_not_authorized', $personalAttempt->action_results_json[0]['reason']);
         $this->assertSame(0, $providerClientResolutions);
         $this->assertSame(0, EmailRemoteOperation::query()->count());

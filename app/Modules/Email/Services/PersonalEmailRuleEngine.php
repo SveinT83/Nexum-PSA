@@ -397,11 +397,13 @@ class PersonalEmailRuleEngine
                 $results[] = [
                     'position' => (int) $index,
                     'type' => $type,
-                    'status' => EmailRuleExecutionAttempt::STATUS_SKIPPED,
+                    'status' => EmailRuleExecutionAttempt::STATUS_FAILED,
                     'reason' => 'provider_mutation_not_authorized',
                 ];
 
-                continue;
+                $this->appendNotRunActions($results, $actions, (int) $index);
+
+                break;
             }
 
             if (in_array($operation, [
@@ -420,21 +422,56 @@ class PersonalEmailRuleEngine
                     ->first();
             }
 
-            $remoteOperation = $this->performRemoteOperation->handle($placement, $operation, $owner, $targetFolder);
-            $results[] = [
-                'position' => (int) $index,
-                'type' => $type,
-                'status' => $remoteOperation->status === EmailRemoteOperation::STATUS_SUCCEEDED
-                    ? EmailRuleExecutionAttempt::STATUS_SUCCEEDED
-                    : EmailRuleExecutionAttempt::STATUS_FAILED,
-                'remote_operation_id' => $remoteOperation->id,
-                'remote_operation_status' => $remoteOperation->status,
-                'target_folder_path' => $remoteOperation->target_folder_path,
-                'reason' => $remoteOperation->error_message,
-            ];
+            try {
+                $remoteOperation = $this->performRemoteOperation->handle($placement, $operation, $owner, $targetFolder);
+                $succeeded = $remoteOperation->status === EmailRemoteOperation::STATUS_SUCCEEDED;
+                $results[] = [
+                    'position' => (int) $index,
+                    'type' => $type,
+                    'status' => $succeeded
+                        ? EmailRuleExecutionAttempt::STATUS_SUCCEEDED
+                        : EmailRuleExecutionAttempt::STATUS_FAILED,
+                    'remote_operation_id' => $remoteOperation->id,
+                    'remote_operation_status' => $remoteOperation->status,
+                    'target_folder_path' => $remoteOperation->target_folder_path,
+                    'reason' => $succeeded
+                        ? null
+                        : ($remoteOperation->error_code ?: 'provider_rule_action_not_acknowledged'),
+                ];
+            } catch (Throwable) {
+                $succeeded = false;
+                $results[] = [
+                    'position' => (int) $index,
+                    'type' => $type,
+                    'status' => EmailRuleExecutionAttempt::STATUS_FAILED,
+                    'reason' => 'provider_rule_action_rejected',
+                ];
+            }
+
+            if (! $succeeded) {
+                $this->appendNotRunActions($results, $actions, (int) $index);
+
+                break;
+            }
         }
 
         return $results;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $results
+     * @param  array<int, array<string, mixed>>  $actions
+     */
+    private function appendNotRunActions(array &$results, array $actions, int $failedPosition): void
+    {
+        foreach (array_slice($actions, $failedPosition + 1, null, true) as $position => $action) {
+            $results[] = [
+                'position' => (int) $position,
+                'type' => (string) ($action['type'] ?? ''),
+                'status' => EmailRuleExecutionAttempt::STATUS_NOT_RUN,
+                'reason' => 'not_run_after_action_failure',
+            ];
+        }
     }
 
     /**

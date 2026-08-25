@@ -29,6 +29,7 @@ class MarketingCampaignEmailResource extends JsonResource
             'effective_subject' => $this->effectiveSubject(),
             'body_html_snapshot' => $this->body_html_snapshot,
             'body_text_snapshot' => $this->body_text_snapshot,
+            'layout_html_snapshot' => $this->layout_html_snapshot,
             'variables_snapshot' => $this->variables_snapshot,
             'metadata' => $this->metadata,
             'recipients_count' => $this->whenCounted('recipients'),

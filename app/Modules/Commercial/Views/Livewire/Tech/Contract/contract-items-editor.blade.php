@@ -1,4 +1,15 @@
 <div>
+    @if($errors->any())
+        <div class="alert alert-danger" role="alert">
+            <div class="fw-semibold">Rett feltene som er markert før kontraktlinjen lagres.</div>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @foreach($items as $index => $item)
 
         <!-- ------------------------------------------------- -->
@@ -35,13 +46,33 @@
                             </select>
                         </div>
 
+                        <!-- Customer-facing description -->
+                        <div class="col-12 mt-3">
+                            <label class="form-label fw-bold">Kort kundebeskrivelse</label>
+                            <textarea rows="2" maxlength="2000" wire:model.blur="items.{{ $index }}.customer_description" class="form-control" @if(!$isEditable) disabled @endif></textarea>
+                            <div class="form-text">Ren tekst som lagres på kontraktlinjen og i kundedokumentet.</div>
+                        </div>
+
+                        <!-- Customer-facing quantity labels -->
+                        <div class="col-md-6 mt-3">
+                            <label class="form-label">Kundenær enhet (entall)</label>
+                            <input type="text" maxlength="255" wire:model.blur="items.{{ $index }}.customer_unit_singular" class="form-control" @if(!$isEditable) disabled @endif>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label class="form-label">Kundenær enhet (flertall)</label>
+                            <input type="text" maxlength="255" wire:model.blur="items.{{ $index }}.customer_unit_plural" class="form-control" @if(!$isEditable) disabled @endif>
+                        </div>
+
 
                         <!-- ------------------------------------------------- -->
                         <!-- Item unit price -->
                         <!-- ------------------------------------------------- -->
                         <div class="col-md-3">
-                            <label class="form-label fw-bold">Price:</label>
+                            <label class="form-label fw-bold">Price (NOK):</label>
                             <input type="number" step="0.01" wire:model.blur="items.{{ $index }}.unit_price" class="form-control" @if(!$isEditable) disabled @endif>
+                            @error('items.'.$index.'.price_currency')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <!-- ------------------------------------------------- -->
@@ -61,13 +92,17 @@
                         <!-- ------------------------------------------------- -->
                         <!-- Billing interval -->
                         <!-- ------------------------------------------------- -->
-                        <div class="col-md-2">
-                            <select wire:model.live="items.{{ $index }}.billing_interval" class="w-full p-1 border rounded text-sm min-w-[100px]" @if(!$isEditable) disabled @endif>
+                        <div class="col-md-3">
+                            <label class="form-label fw-light">Fakturering</label>
+                            <select wire:model.live="items.{{ $index }}.billing_interval" class="form-select form-select-sm" @if(!$isEditable) disabled @endif>
                                 <option value="monthly">Monthly</option>
                                 <option value="quarterly">Quarterly</option>
                                 <option value="yearly">Yearly</option>
                                 <option value="one_time">One-time</option>
                             </select>
+                            @if($isEditable)
+                                <button type="button" wire:click="syncBillingIntervalFromService({{ $index }})" class="btn btn-link btn-sm px-0">Bruk fakturering fra tjenesten</button>
+                            @endif
                         </div>
 
                         <!-- ------------------------------------------------- -->
@@ -140,6 +175,10 @@
                                                         {{ $rate['name'] ?? 'Rate' }}
                                                     </label>
                                                     <span class="badge text-bg-light border">{{ $rate['unit'] ?? 'hour' }}</span>
+                                                    <label class="form-check-label small">
+                                                        <input type="checkbox" class="form-check-input me-1" wire:model.live="items.{{ $index }}.time_rates.{{ $rateIndex }}.is_customer_visible" @if(!$isEditable) disabled @endif>
+                                                        Synlig for kunde
+                                                    </label>
                                                 </div>
                                                 <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.id">
                                                 <input type="hidden" wire:model="items.{{ $index }}.time_rates.{{ $rateIndex }}.time_rate_id">
@@ -187,6 +226,10 @@
     <!-- ------------------------------------------------- -->
     <div class="row mt-5 align-items-end">
 
+        @php
+            $billingTotals = $this->calculateBillingTotals();
+        @endphp
+
         <!-- Add button -->
         <div class="col-md-4">
             @if($isEditable)
@@ -209,18 +252,30 @@
             <p>{{ $this->calculateTotalDiscount() }}</p>
         </div>
 
-        <!-- Tott amount -->
-        <div class="col-md-2">
-            <b>Total Amount:</b>
-            <p>{{ $this->calculateTotalAmount() }}</p>
-        </div>
-
         <!-- Profit year -->
         <div class="col-md-2 text-success">
             <b>Yearly profit:</b>
             <p>{{ $this->calculateAnnualProfit() }}</p>
         </div>
+    </div>
 
+    <!-- Canonical customer totals by billing cadence -->
+    <div class="row g-3 mt-3">
+        @foreach([
+            'monthly' => 'Månedlig beløp eks. mva.',
+            'quarterly' => 'Kvartalsbeløp eks. mva.',
+            'yearly' => 'Årlig beløp eks. mva.',
+            'one_time' => 'Engangsbeløp eks. mva.',
+        ] as $cadence => $label)
+            @if(($billingTotals[$cadence]['minor'] ?? 0) > 0)
+                <div class="col-md-3">
+                    <div class="border rounded bg-light p-3 h-100">
+                        <div class="small text-muted">{{ $label }}</div>
+                        <div class="fw-bold">{{ $billingTotals[$cadence]['display'] }}</div>
+                    </div>
+                </div>
+            @endif
+        @endforeach
     </div>
 
 </div>

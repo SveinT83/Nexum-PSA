@@ -4,9 +4,11 @@ namespace App\Modules\Email\Services;
 
 final class EmailProviderReconciliationPolicy
 {
-    public const DEFAULT_MAX_FOLDERS = 100;
-
     public const HARD_MAX_FOLDERS = 500;
+
+    // Ordinary runs must be able to reconcile every folder that the bounded
+    // provider inventory reader is allowed to return.
+    public const DEFAULT_MAX_FOLDERS = self::HARD_MAX_FOLDERS;
 
     public const DEFAULT_UID_BATCH_SIZE = 250;
 

@@ -105,19 +105,14 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                 ->orderBy('id')
                 ->first(['id', 'status']);
             if ($unresolvedAttempt) {
-                EmailProviderReconciliationItem::query()
-                    ->whereKey($this->itemId)
-                    ->where('automation_status', EmailProviderReconciliationItem::AUTOMATION_RUNNING)
-                    ->where('automation_claim_token', $claim['token'])
-                    ->update([
-                        'automation_status' => EmailProviderReconciliationItem::AUTOMATION_FAILED,
-                        'automation_claim_token' => null,
-                        'automation_completed_at' => now(),
-                        'automation_error_code' => $unresolvedAttempt->status === EmailRuleExecutionAttempt::STATUS_RUNNING
-                            ? 'provider_reconciliation_rule_attempt_unresolved'
-                            : 'provider_reconciliation_rule_attempt_failed',
-                        'updated_at' => now(),
-                    ]);
+                $this->completeClaim(
+                    $runId,
+                    $claim['token'],
+                    EmailProviderReconciliationItem::AUTOMATION_FAILED,
+                    $unresolvedAttempt->status === EmailRuleExecutionAttempt::STATUS_RUNNING
+                        ? 'provider_reconciliation_rule_attempt_unresolved'
+                        : 'provider_reconciliation_rule_attempt_failed',
+                );
 
                 return;
             }
@@ -130,46 +125,31 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                     $notificationIntent,
                 );
                 if ($fanout === null) {
-                    EmailProviderReconciliationItem::query()
-                        ->whereKey($this->itemId)
-                        ->where('automation_status', EmailProviderReconciliationItem::AUTOMATION_RUNNING)
-                        ->where('automation_claim_token', $claim['token'])
-                        ->update([
-                            'automation_status' => EmailProviderReconciliationItem::AUTOMATION_FAILED,
-                            'automation_claim_token' => null,
-                            'automation_completed_at' => now(),
-                            'automation_error_code' => NotificationInboundEmailFanout::ERROR_ITEM_SCOPE_STALE,
-                            'updated_at' => now(),
-                        ]);
+                    $this->completeClaim(
+                        $runId,
+                        $claim['token'],
+                        EmailProviderReconciliationItem::AUTOMATION_FAILED,
+                        NotificationInboundEmailFanout::ERROR_ITEM_SCOPE_STALE,
+                    );
                 }
 
                 return;
             }
 
-            EmailProviderReconciliationItem::query()
-                ->whereKey($this->itemId)
-                ->where('automation_status', EmailProviderReconciliationItem::AUTOMATION_RUNNING)
-                ->where('automation_claim_token', $claim['token'])
-                ->update([
-                    'automation_status' => EmailProviderReconciliationItem::AUTOMATION_COMPLETED,
-                    'automation_claim_token' => null,
-                    'automation_completed_at' => now(),
-                    'automation_error_code' => null,
-                    'updated_at' => now(),
-                ]);
+            $this->completeClaim(
+                $runId,
+                $claim['token'],
+                EmailProviderReconciliationItem::AUTOMATION_COMPLETED,
+                null,
+            );
         } catch (Throwable) {
             if ($claim !== null) {
-                EmailProviderReconciliationItem::query()
-                    ->whereKey($this->itemId)
-                    ->where('automation_status', EmailProviderReconciliationItem::AUTOMATION_RUNNING)
-                    ->where('automation_claim_token', $claim['token'])
-                    ->update([
-                        'automation_status' => EmailProviderReconciliationItem::AUTOMATION_FAILED,
-                        'automation_claim_token' => null,
-                        'automation_completed_at' => now(),
-                        'automation_error_code' => 'provider_reconciliation_automation_failed',
-                        'updated_at' => now(),
-                    ]);
+                $this->completeClaim(
+                    $runId,
+                    $claim['token'],
+                    EmailProviderReconciliationItem::AUTOMATION_FAILED,
+                    'provider_reconciliation_automation_failed',
+                );
             }
 
             // Sever any rule/notification persistence exception. Provider
@@ -209,11 +189,12 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
 
             if ($run->cancellation_requested_at !== null
                 || $run->status === EmailProviderReconciliationRun::STATUS_CANCELLING) {
+                $progressAt = now();
                 if ($item->automation_status === EmailProviderReconciliationItem::AUTOMATION_PENDING) {
                     $item->forceFill([
                         'automation_status' => EmailProviderReconciliationItem::AUTOMATION_CANCELLED,
                         'automation_claim_token' => null,
-                        'automation_completed_at' => now(),
+                        'automation_completed_at' => $progressAt,
                         'automation_error_code' => 'provider_reconciliation_automation_cancelled',
                     ])->save();
                 } else {
@@ -224,10 +205,11 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                     $item->forceFill([
                         'automation_status' => EmailProviderReconciliationItem::AUTOMATION_FAILED,
                         'automation_claim_token' => null,
-                        'automation_completed_at' => now(),
+                        'automation_completed_at' => $progressAt,
                         'automation_error_code' => 'provider_reconciliation_automation_failed',
                     ])->save();
                 }
+                $this->recordDurableProgress($run, $progressAt);
 
                 return 'transition';
             }
@@ -240,12 +222,14 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                 return null;
             }
 
+            $progressAt = now();
             $item->forceFill([
                 'automation_status' => EmailProviderReconciliationItem::AUTOMATION_FAILED,
                 'automation_claim_token' => null,
-                'automation_completed_at' => now(),
+                'automation_completed_at' => $progressAt,
                 'automation_error_code' => 'provider_reconciliation_automation_failed',
             ])->save();
+            $this->recordDurableProgress($run, $progressAt);
 
             return 'finalize';
         }, 3);
@@ -293,12 +277,16 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                 || $run->terminal()
                 || $run->status === EmailProviderReconciliationRun::STATUS_CANCELLING
                 || $run->cancellation_requested_at !== null) {
+                $progressAt = now();
                 $item->forceFill([
                     'automation_status' => EmailProviderReconciliationItem::AUTOMATION_CANCELLED,
                     'automation_claim_token' => null,
-                    'automation_completed_at' => now(),
+                    'automation_completed_at' => $progressAt,
                     'automation_error_code' => 'provider_reconciliation_automation_cancelled',
                 ])->save();
+                if ($run) {
+                    $this->recordDurableProgress($run, $progressAt);
+                }
 
                 return null;
             }
@@ -313,6 +301,7 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                     'automation_completed_at' => now(),
                     'automation_error_code' => 'provider_reconciliation_automation_scope_invalid',
                 ])->save();
+                $this->recordDurableProgress($run, now());
 
                 return null;
             }
@@ -334,6 +323,7 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                     'automation_completed_at' => now(),
                     'automation_error_code' => 'provider_reconciliation_automation_worker_lost',
                 ])->save();
+                $this->recordDurableProgress($run, now());
 
                 return null;
             }
@@ -345,6 +335,7 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                     'automation_completed_at' => now(),
                     'automation_error_code' => 'provider_reconciliation_automation_attempt_limit',
                 ])->save();
+                $this->recordDurableProgress($run, now());
 
                 return null;
             }
@@ -360,6 +351,7 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                     'automation_completed_at' => now(),
                     'automation_error_code' => 'provider_reconciliation_automation_scope_missing',
                 ])->save();
+                $this->recordDurableProgress($run, now());
 
                 return null;
             }
@@ -374,6 +366,7 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                     'automation_completed_at' => now(),
                     'automation_error_code' => self::RESULT_SCOPE_DRIFT_CODE,
                 ])->save();
+                $this->recordDurableProgress($run, now());
 
                 return null;
             }
@@ -400,6 +393,70 @@ class ProcessEmailProviderReconciliationAutomation implements ShouldBeUniqueUnti
                 'token' => $token,
             ];
         }, 3);
+    }
+
+    /**
+     * Commit a claimed automation outcome and its run progress under the
+     * global run -> item lock order. A lost/stale claim remains a true no-op.
+     */
+    private function completeClaim(
+        int $runId,
+        string $claimToken,
+        string $status,
+        ?string $errorCode,
+    ): bool {
+        return DB::transaction(function () use ($claimToken, $errorCode, $runId, $status): bool {
+            $run = EmailProviderReconciliationRun::query()
+                ->whereKey($runId)
+                ->lockForUpdate()
+                ->first();
+            $item = EmailProviderReconciliationItem::query()
+                ->whereKey($this->itemId)
+                ->lockForUpdate()
+                ->first();
+            if (! $run || ! $item
+                || (int) $item->email_provider_reconciliation_run_id !== (int) $run->id
+                || $item->automation_status !== EmailProviderReconciliationItem::AUTOMATION_RUNNING
+                || ! is_string($item->automation_claim_token)
+                || ! hash_equals($item->automation_claim_token, $claimToken)) {
+                return false;
+            }
+
+            $progressAt = now();
+            $item->forceFill([
+                'automation_status' => $status,
+                'automation_claim_token' => null,
+                'automation_completed_at' => $progressAt,
+                'automation_error_code' => $errorCode,
+            ])->save();
+            $this->recordDurableProgress($run, $progressAt);
+
+            return true;
+        }, 3);
+    }
+
+    /** Record an automation commit, never a no-op, retry, or cancellation poll. */
+    private function recordDurableProgress(
+        EmailProviderReconciliationRun $run,
+        \DateTimeInterface $progressAt,
+    ): void {
+        $activePhase = in_array($run->phase, [
+            EmailProviderReconciliationRun::PHASE_DISCOVER_END,
+            EmailProviderReconciliationRun::PHASE_IMPORTS,
+        ], true);
+        $activeStatus = in_array($run->status, [
+            EmailProviderReconciliationRun::STATUS_RUNNING,
+            EmailProviderReconciliationRun::STATUS_WAITING_FOR_IMPORTS,
+            EmailProviderReconciliationRun::STATUS_CANCELLING,
+        ], true);
+        if ($run->terminal()
+            || (int) $run->active_slot !== 1
+            || ! $activePhase
+            || ! $activeStatus) {
+            return;
+        }
+
+        $run->forceFill(['last_progress_at' => $progressAt])->save();
     }
 
     private function resultPlacementIsStillAuthoritative(

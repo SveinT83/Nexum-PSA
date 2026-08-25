@@ -4,7 +4,6 @@ namespace App\Modules\Email\Livewire\Tech;
 
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
-use App\Modules\Email\Actions\AcknowledgeEmailConversation;
 use App\Modules\Email\Actions\AssistEmailComposerWithAi;
 use App\Modules\Email\Actions\CancelEmailRemoteOperation;
 use App\Modules\Email\Actions\CreatePersonalEmailRule;
@@ -17,6 +16,7 @@ use App\Modules\Email\Actions\RecordEmailMessageOpened;
 use App\Modules\Email\Actions\RetryEmailRemoteOperation;
 use App\Modules\Email\Actions\SendEmailComposerMessage;
 use App\Modules\Email\Actions\SetEmailUnreadForMe;
+use App\Modules\Email\Actions\SubmitEmailComposerDraft;
 use App\Modules\Email\Actions\SummarizeEmailWithAi;
 use App\Modules\Email\Actions\UndoEmailRemoteOperation;
 use App\Modules\Email\Actions\UpdateEmailConversationClassification;
@@ -30,22 +30,26 @@ use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLiveProjectionStream;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMailboxPlacement;
-use App\Modules\Email\Models\EmailMailDraftLock;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailMessageClassification;
+use App\Modules\Email\Models\EmailOutboundSubmission;
 use App\Modules\Email\Models\EmailRemoteOperation;
 use App\Modules\Email\Models\EmailRuleExecutionAttempt;
 use App\Modules\Email\Models\EmailSentReconciliation;
 use App\Modules\Email\Models\EmailTicketConversationLink;
 use App\Modules\Email\Services\BodyNormalizer;
 use App\Modules\Email\Services\EmailCanonicalContentResolver;
+use App\Modules\Email\Services\EmailCollaborationGate;
 use App\Modules\Email\Services\EmailComposerDraftService;
 use App\Modules\Email\Services\EmailConversationProjector;
-use App\Modules\Email\Services\EmailPresenceService;
+use App\Modules\Email\Services\EmailDraftConflictException;
+use App\Modules\Email\Services\EmailDraftFence;
+use App\Modules\Email\Services\EmailLiveCatchUpService;
+use App\Modules\Email\Services\EmailLiveRuntimeReadiness;
 use App\Modules\Email\Services\EmailRemoteOperationEvidenceSanitizer;
 use App\Modules\Email\Services\EmailRemoteOperationUndoEligibility;
-use App\Modules\Email\Services\EmailSendOutcomeUnresolvedException;
 use App\Modules\Email\Services\EmailSignatureRenderer;
+use App\Modules\Email\Services\EmailSubmissionConflictException;
 use App\Modules\Email\Services\EmailUnreadForMeResolver;
 use App\Modules\Email\Services\HtmlSanitizer;
 use App\Modules\Email\Services\MailAiAgentRuntime;
@@ -81,28 +85,44 @@ class MailWorkspace extends Component
 
     public string $invalidationVersion = '0';
 
+    public string $liveAuthorizationEpoch = '0';
+
+    public string $liveGlobalAuthorizationGeneration = '0';
+
+    public string $liveAppliedReceipt = '';
+
     public bool $liveEnabled = false;
 
     public bool $collaborationEnabled = false;
 
-    public ?EmailMailDraftLock $activeComposerLock = null;
-
-    /** @var array<int, array{user_id: int, user_name: string, type: string, timestamp: int}> */
-    public array $presenceIndicators = [];
-
     public function mount(): void
     {
-        $this->liveEnabled = config('email_live.enabled', false)
+        $this->liveEnabled = app(EmailLiveRuntimeReadiness::class)->ready()
             && Schema::hasTable('email_live_projection_streams');
+        // The separately approved UI gate is checked before the Order 9
+        // backend gate. The quarantined SQL-lock/whisper scaffold is never a
+        // fallback, even if its historical table exists on an old install.
         $this->collaborationEnabled = $this->liveEnabled
-            && config('email_live.collaboration_enabled', false)
-            && Schema::hasTable('email_mail_draft_locks');
+            && config('email_live.collaboration_ui_enabled', false)
+            && app(EmailCollaborationGate::class)->available();
 
         if ($this->liveEnabled) {
             $this->invalidationVersion = (string) (EmailLiveProjectionStream::query()
                 ->where('stream_type', EmailLiveProjectionStream::TYPE_USER)
                 ->where('user_id', auth()->id())
                 ->value('current_version') ?? '0');
+            $this->liveAuthorizationEpoch = (string) (DB::table('email_live_user_access_states')
+                ->where('user_id', auth()->id())
+                ->value('authorization_epoch') ?? '0');
+            $this->liveGlobalAuthorizationGeneration = (string) (DB::table('email_live_global_authority_states')
+                ->where('id', 1)
+                ->value('authorization_generation') ?? '0');
+            $this->liveAppliedReceipt = app(EmailLiveCatchUpService::class)->receipt(
+                $this->user(),
+                $this->invalidationVersion,
+                $this->liveAuthorizationEpoch,
+                $this->liveGlobalAuthorizationGeneration,
+            );
         }
     }
 
@@ -111,7 +131,6 @@ class MailWorkspace extends Component
         return [
             'mail-filters-changed' => 'applyFilters',
             'email-mail-invalidated' => 'handleEmailProjectionInvalidated',
-            'email-presence-event' => 'handlePresenceEvent',
         ];
     }
 
@@ -121,94 +140,57 @@ class MailWorkspace extends Component
             return;
         }
 
-        $toVersion = (int) ($payload['to_version'] ?? 0);
-        $currentVersion = (int) $this->invalidationVersion;
-
-        if ($toVersion <= $currentVersion) {
-            return;
-        }
-
-        if ($toVersion === $currentVersion + 1) {
-            $this->invalidationVersion = (string) $toVersion;
-            $this->refreshMailState();
-
-            return;
-        }
-
+        // Socket payloads are opaque hints. Durable state is re-read before
+        // any identifier or projection refresh is trusted.
         $this->catchUpInvalidation();
     }
 
-    public function catchUpInvalidation(): void
+    public function catchUpInvalidation(bool $forceBoundedRefresh = false): void
     {
         if (! $this->liveEnabled) {
             return;
         }
 
-        $latestVersion = (int) (EmailLiveProjectionStream::query()
-            ->where('stream_type', EmailLiveProjectionStream::TYPE_USER)
-            ->where('user_id', auth()->id())
-            ->value('current_version') ?? '0');
-
-        if ($latestVersion > (int) $this->invalidationVersion) {
-            $this->invalidationVersion = (string) $latestVersion;
-            $this->refreshMailState();
-        }
-
-        if ($this->collaborationEnabled && $this->composerOpen && $this->activeComposerLock) {
-            $renewed = app(EmailPresenceService::class)->renewLock(
-                $this->activeComposerLock->conversation_id,
-                auth()->id(),
-                session()->getId()
-            );
-
-            if (! $renewed) {
-                $this->activeComposerLock = null;
-                $this->composerActionStatus = [
-                    'type' => 'warning',
-                    'message' => 'Your editing lock has expired or been revoked.',
-                ];
-            }
-        }
-    }
-
-    public function handlePresenceEvent(array $payload): void
-    {
-        if (! $this->collaborationEnabled) {
+        $user = $this->user();
+        if (! $user) {
             return;
         }
 
-        $userId = (int) ($payload['user_id'] ?? 0);
-        $type = (string) ($payload['type'] ?? '');
-        $conversationId = (int) ($payload['conversation_id'] ?? 0);
+        $catchUp = app(EmailLiveCatchUpService::class);
+        $catchUp->acknowledgeAppliedVersion(
+            $user,
+            $this->invalidationVersion,
+            $this->liveAuthorizationEpoch,
+            $this->liveGlobalAuthorizationGeneration,
+            $this->liveAppliedReceipt,
+        );
+        $result = $catchUp->catchUp(
+            $user,
+            $this->invalidationVersion,
+            $this->liveAuthorizationEpoch,
+            $this->liveGlobalAuthorizationGeneration,
+            $forceBoundedRefresh,
+        );
+        $this->invalidationVersion = $result['to_version'];
+        $this->liveAuthorizationEpoch = $result['authorization_epoch'];
+        $this->liveGlobalAuthorizationGeneration = $result['global_authorization_generation'];
+        $this->liveAppliedReceipt = $result['applied_receipt'];
 
-        if ($userId === auth()->id()) {
+        if ($result['skip_render']) {
+            $this->skipRender();
+
             return;
         }
 
-        // Simple presence indicator cleanup: remove entries older than 30 seconds
-        $now = time();
-        $this->presenceIndicators = collect($this->presenceIndicators)
-            ->filter(fn ($p) => ($now - $p['timestamp']) < 30)
-            ->toArray();
+        $this->refreshMailState();
 
-        if ($type === 'reading' || ($type === 'typing' && ($payload['is_typing'] ?? false))) {
-            $user = User::find($userId);
-            $this->presenceIndicators[$userId] = [
-                'user_id' => $userId,
-                'user_name' => $user ? $user->name : 'Unknown User',
-                'type' => $type,
-                'conversation_id' => $conversationId,
-                'timestamp' => $now,
-            ];
-        } elseif ($type === 'typing' && ! ($payload['is_typing'] ?? false)) {
-            unset($this->presenceIndicators[$userId]);
-        }
     }
 
     public function acknowledgeConversation(): void
     {
         if (! config('email_live.conversation_acknowledgement_enabled', false)
-            || ! Schema::hasTable('email_mail_user_conversation_acknowledgements')) {
+            || ! Schema::hasTable('email_conversation_action_runs')
+            || ! Schema::hasTable('email_conversation_action_items')) {
             $this->mailActionStatus = [
                 'type' => 'warning',
                 'message' => 'Conversation acknowledgement is not available yet.',
@@ -217,19 +199,13 @@ class MailWorkspace extends Component
             return;
         }
 
-        $selected = $this->selectedPlacement;
-        if (! $selected || ! $selected->conversation) {
-            return;
-        }
-
-        app(AcknowledgeEmailConversation::class)->handle($selected->conversation, $this->user());
-
+        // The safe action requires a separate bounded preview and explicit
+        // confirmation surface. Do not turn a callable Livewire method into
+        // an implicit whole-conversation mutation while that UI remains gated.
         $this->mailActionStatus = [
-            'type' => 'success',
-            'message' => 'Conversation acknowledged.',
+            'type' => 'warning',
+            'message' => 'Conversation acknowledgement requires preview and confirmation.',
         ];
-
-        $this->refreshMailState();
     }
 
     private function refreshMailState(): void
@@ -298,6 +274,8 @@ class MailWorkspace extends Component
     public string $composerIdempotencyKey = '';
 
     public mixed $composerDraftId = '';
+
+    public string $composerDraftFence = '';
 
     public string $composerDraftStatus = '';
 
@@ -1610,7 +1588,19 @@ class MailWorkspace extends Component
         }
 
         try {
-            $draft = app(EmailComposerDraftService::class)->removeAttachment($user, $attachment);
+            $expectedVersion = app(EmailDraftFence::class)->version(
+                $attachment->draft,
+                $this->composerDraftFence,
+            );
+            $draft = app(EmailComposerDraftService::class)->removeAttachment(
+                $user,
+                $attachment,
+                $expectedVersion,
+            );
+        } catch (EmailDraftConflictException $exception) {
+            $this->setComposerOrMailActionStatus('warning', $exception->getMessage());
+
+            return;
         } catch (AuthorizationException $exception) {
             $this->setComposerOrMailActionStatus('warning', $exception->getMessage());
 
@@ -1625,6 +1615,7 @@ class MailWorkspace extends Component
         }
 
         $this->composerDraftAttachments = $this->composerDraftAttachmentList($draft);
+        $this->syncComposerDraftMetadata($draft, 'saved');
         $this->composerDraftProviderStatus = EmailComposerDraft::PROVIDER_DRAFT_LOCAL_ONLY;
         $this->composerDraftProviderMessage = 'Local draft only';
         $this->composerDraftBaselineHash = $this->composerDraftPayloadHash();
@@ -1868,12 +1859,29 @@ class MailWorkspace extends Component
 
         if ($context && $user) {
             try {
-                $draft = app(EmailComposerDraftService::class)->discard(
-                    $user,
-                    $this->composerMode,
-                    $context['account'],
-                    $context['placement'],
-                );
+                $draftId = $this->positiveId($this->composerDraftId);
+                $activeDraft = $draftId
+                    ? EmailComposerDraft::query()
+                        ->whereKey($draftId)
+                        ->where('user_id', $user->id)
+                        ->where('scope', EmailComposerDraft::SCOPE_PRIVATE)
+                        ->where('status', EmailComposerDraft::STATUS_ACTIVE)
+                        ->first()
+                    : null;
+                $draft = $activeDraft
+                    ? app(EmailComposerDraftService::class)->discardDraft(
+                        $user,
+                        $activeDraft,
+                        app(EmailDraftFence::class)->version($activeDraft, $this->composerDraftFence),
+                    )
+                    : null;
+            } catch (EmailDraftConflictException $exception) {
+                $this->mailActionStatus = [
+                    'type' => 'warning',
+                    'message' => $exception->getMessage(),
+                ];
+
+                return;
             } catch (AuthorizationException $exception) {
                 $this->mailActionStatus = [
                     'type' => 'warning',
@@ -1895,21 +1903,6 @@ class MailWorkspace extends Component
     {
         $context = $this->composerDraftContext();
         $placement = $context['placement'] ?? null;
-
-        if ($this->collaborationEnabled && $context && $context['placement']?->conversation_id) {
-            $presence = app(EmailPresenceService::class);
-            $conversation = $context['placement']->conversation;
-            $versionHash = $conversation ? md5($conversation->updated_at.$conversation->message_count) : null;
-
-            if (! $presence->verifyLock($context['placement']->conversation_id, auth()->id(), $versionHash)) {
-                $this->composerActionStatus = [
-                    'type' => 'danger',
-                    'message' => 'Cannot send: This conversation has changed or is locked by another user.',
-                ];
-
-                return;
-            }
-        }
 
         $user = $this->user();
 
@@ -1943,65 +1936,64 @@ class MailWorkspace extends Component
             ]);
         }
 
-        $attachments = array_merge($this->composerDraftAttachmentPayloads(), $this->composerAttachments);
-        $sentLog = null;
-
         try {
-            if (in_array($this->composerMode, [
-                SendEmailComposerMessage::MODE_COMPOSE,
-                SendEmailComposerMessage::MODE_PROVIDER_DRAFT,
-            ], true)) {
-                $account = $this->composerMode === SendEmailComposerMessage::MODE_PROVIDER_DRAFT
-                    ? $placement?->account
-                    : $this->selectedComposeAccount();
+            // Web and API callers persist, fence, preview, reserve, and submit
+            // through the same Email-owned boundary. No direct SMTP path may
+            // bypass the version-specific outbound submission ledger.
+            $draft = $this->persistComposerDraft(false);
 
-                if (! $account) {
-                    throw ValidationException::withMessages([
-                        'composerAccountId' => 'Choose a mailbox you can send from.',
-                    ]);
-                }
-
-                if ($this->composerMode === SendEmailComposerMessage::MODE_PROVIDER_DRAFT
-                    && (! $placement || ! $this->canEditProviderDraftPlacement($placement))) {
-                    throw ValidationException::withMessages([
-                        'composer' => 'The provider draft is no longer available for sending.',
-                    ]);
-                }
-
-                $sentLog = app(SendEmailComposerMessage::class)->handleNew($account, $user, [
-                    'to' => $this->composerTo,
-                    'cc' => $this->composerCc,
-                    'subject' => $this->composerSubject,
-                    'body_html' => $this->composerBodyHtml,
-                    'attachments' => $attachments,
-                    'idempotency_key' => $this->composerIdempotencyKey ?: (string) Str::uuid(),
-                ]);
-
-                $senderAddress = $account->address;
-            } else {
-                if (! $placement) {
-                    throw ValidationException::withMessages([
-                        'composer' => 'Select a message before sending mail.',
-                    ]);
-                }
-
-                $sentLog = app(SendEmailComposerMessage::class)->handle($placement, $user, [
-                    'mode' => $this->composerMode,
-                    'to' => $this->composerTo,
-                    'cc' => $this->composerCc,
-                    'subject' => $this->composerSubject,
-                    'body_html' => $this->composerBodyHtml,
-                    'attachments' => $attachments,
-                    'idempotency_key' => $this->composerIdempotencyKey ?: (string) Str::uuid(),
-                ]);
-
-                $senderAddress = $placement->account?->address;
+            if (! $draft && $context) {
+                $draft = app(EmailComposerDraftService::class)->activeDraft(
+                    $user,
+                    $this->composerMode,
+                    $context['account'],
+                    $context['placement'],
+                );
             }
+
+            if (! $draft && $this->composerDraftId) {
+                $draft = EmailComposerDraft::query()
+                    ->with(['account', 'placement.message', 'attachments'])
+                    ->whereKey($this->composerDraftId)
+                    ->where('user_id', $user->id)
+                    ->where('scope', EmailComposerDraft::SCOPE_PRIVATE)
+                    ->whereIn('status', [
+                        EmailComposerDraft::STATUS_SEND_RESERVED,
+                        EmailComposerDraft::STATUS_SENT,
+                    ])
+                    ->first();
+            }
+
+            if (! $draft) {
+                throw ValidationException::withMessages([
+                    'composer' => 'Save a current private draft before sending.',
+                ]);
+            }
+
+            $submission = app(SubmitEmailComposerDraft::class)->submit(
+                $draft,
+                $user,
+                $this->composerIdempotencyKey ?: (string) Str::uuid(),
+                SubmitEmailComposerDraft::CHANNEL_MAIL_WEB,
+                app(EmailDraftFence::class)->version($draft, $this->composerDraftFence),
+            );
+            $sentLog = $submission->emailLog;
+            $sentDraft = $submission->draft;
+            $senderAddress = $draft->account?->address;
         } catch (ValidationException $exception) {
             throw $exception;
-        } catch (EmailSendOutcomeUnresolvedException $exception) {
+        } catch (EmailDraftConflictException $exception) {
             $this->mailActionStatus = [
                 'type' => 'warning',
+                'message' => $exception->getMessage(),
+            ];
+
+            return;
+        } catch (EmailSubmissionConflictException $exception) {
+            $this->mailActionStatus = [
+                'type' => $exception->submission->status === EmailOutboundSubmission::STATUS_PROVIDER_NOT_ATTEMPTED
+                    ? 'danger'
+                    : 'warning',
                 'message' => $exception->getMessage(),
             ];
 
@@ -2025,26 +2017,16 @@ class MailWorkspace extends Component
             return;
         }
 
-        $draftCleanupWarning = null;
-
-        try {
-            $sentDraft = $this->markComposerDraftSent();
-        } catch (\Throwable $exception) {
-            $sentDraft = null;
-            $draftCleanupWarning = ' The message was accepted, but local draft cleanup could not be completed. Do not resend it.';
-
-            try {
-                Log::warning('SMTP accepted an Email message, but composer draft cleanup failed.', [
-                    'email_log_id' => $sentLog?->id,
-                    'user_id' => $user->id,
-                    'exception' => $exception::class,
-                ]);
-            } catch (\Throwable) {
-                // Logging is secondary after provider acceptance.
-            }
-        }
-
-        $postSendWarning = $this->composerPostSendWarning($sentLog);
+        $draftCleanupWarning = $submission->reason_code === 'SMTP_ACCEPTED_DRAFT_CLEANUP_FAILED'
+            ? ' The message was accepted, but local draft cleanup could not be completed. Do not resend it.'
+            : null;
+        $postSendWarning = $this->composerPostSendWarning($sentLog)
+            ?? match ($submission->reason_code) {
+                'SMTP_ACCEPTED_LOG_FINALIZATION_FAILED' => ' The message was accepted, but its local send log could not be finalized. Do not resend it.',
+                'SMTP_ACCEPTED_SENT_RECONCILIATION_RECORD_FAILED' => ' The message was accepted, but Sent-folder tracking could not be recorded. Do not resend it.',
+                'SMTP_ACCEPTED_SENT_SNAPSHOT_FAILED' => ' The message was accepted, but its local Sent snapshot could not be stored. Do not resend it.',
+                default => null,
+            };
         $this->mailActionStatus = [
             'type' => $sentDraft?->provider_draft_status === EmailComposerDraft::PROVIDER_DRAFT_ERROR
                 || $draftCleanupWarning !== null
@@ -4981,42 +4963,14 @@ class MailWorkspace extends Component
         $this->mailActionStatus = null;
         $this->resetErrorBag();
 
-        if ($this->collaborationEnabled && $placement?->conversation_id) {
-            $presence = app(EmailPresenceService::class);
-            $conversation = $placement->conversation;
-            $versionHash = $conversation ? md5($conversation->updated_at.$conversation->message_count) : null;
-
-            $this->activeComposerLock = $presence->acquireLock(
-                $placement->conversation_id,
-                auth()->id(),
-                session()->getId(),
-                $versionHash
-            );
-
-            if (! $this->activeComposerLock) {
-                $this->composerActionStatus = [
-                    'type' => 'warning',
-                    'message' => 'This conversation is currently being edited by another user.',
-                ];
-            } else {
-                $this->restoreComposerDraftIfAvailable($placement->account, $placement);
-            }
-        } else {
-            $this->restoreComposerDraftIfAvailable($placement->account, $placement);
-        }
+        // Shared editing is entered only through the explicit Order 9 API
+        // share/lease/fence contract. The ordinary private composer must not
+        // acquire the quarantined conversation-wide SQL lock implicitly.
+        $this->restoreComposerDraftIfAvailable($placement->account, $placement);
     }
 
     private function resetComposer(): void
     {
-        if ($this->activeComposerLock) {
-            app(EmailPresenceService::class)->releaseLock(
-                $this->activeComposerLock->conversation_id,
-                auth()->id(),
-                session()->getId()
-            );
-            $this->activeComposerLock = null;
-        }
-
         $this->composerOpen = false;
         $this->composerMode = SendEmailComposerMessage::MODE_REPLY;
         $this->composerAccountId = '';
@@ -5065,7 +5019,17 @@ class MailWorkspace extends Component
             return null;
         }
 
-        $draft = app(EmailComposerDraftService::class)->save(
+        $draftService = app(EmailComposerDraftService::class);
+        $activeDraft = $draftService->activeDraft(
+            $user,
+            $this->composerMode,
+            $context['account'],
+            $context['placement'],
+        );
+        $expectedVersion = $activeDraft
+            ? app(EmailDraftFence::class)->version($activeDraft, $this->composerDraftFence)
+            : null;
+        $draft = $draftService->save(
             $user,
             $this->composerMode,
             $context['account'],
@@ -5078,15 +5042,21 @@ class MailWorkspace extends Component
                 'idempotency_key' => $this->composerIdempotencyKey ?: (string) Str::uuid(),
             ],
             false,
+            $expectedVersion,
         );
 
         if ($this->composerAttachments !== []) {
-            $draft = app(EmailComposerDraftService::class)->storeAttachments($user, $draft, $this->composerAttachments);
+            $draft = $draftService->storeAttachments(
+                $user,
+                $draft,
+                $this->composerAttachments,
+                (int) $draft->version,
+            );
             $this->composerAttachments = [];
         }
 
         if ($manual) {
-            $draft = app(EmailComposerDraftService::class)->syncProviderDraft($user, $draft);
+            $draft = $draftService->syncProviderDraft($user, $draft, (int) $draft->version);
         }
 
         $this->syncComposerDraftMetadata($draft, 'saved');
@@ -5138,26 +5108,10 @@ class MailWorkspace extends Component
         $this->setComposerActionStatus('info', 'Draft restored.');
     }
 
-    private function markComposerDraftSent(): ?EmailComposerDraft
-    {
-        $user = $this->user();
-        $context = $this->composerDraftContext();
-
-        if (! $user || ! $context) {
-            return null;
-        }
-
-        return app(EmailComposerDraftService::class)->markSent(
-            $user,
-            $this->composerMode,
-            $context['account'],
-            $context['placement'],
-        );
-    }
-
     private function syncComposerDraftMetadata(EmailComposerDraft $draft, string $status): void
     {
         $this->composerDraftId = $draft->id;
+        $this->composerDraftFence = app(EmailDraftFence::class)->issue($draft);
         $this->composerDraftStatus = $status;
         $this->composerDraftSavedAt = $draft->last_saved_at?->format('Y-m-d H:i') ?? now()->format('Y-m-d H:i');
         $this->composerDraftProviderStatus = (string) $draft->provider_draft_status;
@@ -5176,64 +5130,6 @@ class MailWorkspace extends Component
                 'id' => (int) $attachment->id,
                 'filename' => (string) $attachment->filename,
                 'size_bytes' => (int) $attachment->size_bytes,
-                'content_type' => $attachment->content_type,
-            ])
-            ->values()
-            ->all();
-    }
-
-    /**
-     * @return array<int, array{disk: string, path: string, filename: string, content_type: string|null}>
-     */
-    private function composerDraftAttachmentPayloads(): array
-    {
-        $user = $this->user();
-        $context = $this->composerDraftContext();
-        $draftId = $this->positiveId($this->composerDraftId);
-
-        if (! $user || ! $context || ! $draftId) {
-            return [];
-        }
-
-        try {
-            $activeDraft = app(EmailComposerDraftService::class)->activeDraft(
-                $user,
-                $this->composerMode,
-                $context['account'],
-                $context['placement'],
-            );
-        } catch (AuthorizationException) {
-            return [];
-        }
-
-        // Livewire state is client-controlled. Only files owned by the exact
-        // active draft in the currently re-authorized composer context may be
-        // handed to SMTP; a same-user draft from another mailbox is not enough.
-        if (! $activeDraft || (int) $activeDraft->id !== $draftId) {
-            return [];
-        }
-
-        $ids = collect($this->composerDraftAttachments)
-            ->pluck('id')
-            ->map(fn (mixed $id): int => (int) $id)
-            ->filter()
-            ->values();
-
-        if ($ids->isEmpty()) {
-            return [];
-        }
-
-        return EmailComposerDraftAttachment::query()
-            ->whereIn('id', $ids->all())
-            ->where('user_id', $user->id)
-            ->where('email_composer_draft_id', $activeDraft->id)
-            ->orderBy('position')
-            ->orderBy('id')
-            ->get()
-            ->map(fn (EmailComposerDraftAttachment $attachment): array => [
-                'disk' => $attachment->disk ?: 'local',
-                'path' => $attachment->path,
-                'filename' => $attachment->filename,
                 'content_type' => $attachment->content_type,
             ])
             ->values()
@@ -5375,6 +5271,7 @@ class MailWorkspace extends Component
     private function resetComposerDraftState(): void
     {
         $this->composerDraftId = '';
+        $this->composerDraftFence = '';
         $this->composerDraftStatus = '';
         $this->composerDraftSavedAt = '';
         $this->composerDraftProviderStatus = '';

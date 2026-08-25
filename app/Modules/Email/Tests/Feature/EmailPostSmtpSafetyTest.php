@@ -12,6 +12,7 @@ use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Models\EmailOutboundSubmission;
 use App\Modules\Email\Models\EmailSentReconciliation;
 use App\Modules\Email\Services\EmailAccountProviderRuntimeResolver;
 use App\Modules\Email\Services\EmailComposerDraftService;
@@ -118,11 +119,12 @@ class EmailPostSmtpSafetyTest extends TestCase
         $this->assertArrayNotHasKey('sent_raw_path', $reconciliation->context_json ?? []);
         $this->assertSame(EmailComposerDraft::STATUS_SENT, $draft->status);
 
+        $submission = EmailOutboundSubmission::query()->sole();
         app(SendEmailComposerMessage::class)->handleNew($account, $this->actor, [
             'to' => 'customer@example.test',
             'subject' => 'Post SMTP safety',
             'body_html' => '<p>The provider accepts this message once.</p>',
-            'idempotency_key' => (string) $draft->idempotency_key,
+            'idempotency_key' => 'submission-'.$submission->public_id,
         ]);
 
         $this->assertSame(1, $mailer->calls, 'An idempotent retry must not call SMTP again.');
@@ -607,6 +609,11 @@ class EmailPostSmtpSafetyTest extends TestCase
                 {
                     throw new RuntimeException('draft cleanup database unavailable');
                 }
+
+                public function markDraftSent(User $user, EmailComposerDraft $draft, int $expectedVersion): EmailComposerDraft
+                {
+                    throw new RuntimeException('draft cleanup database unavailable');
+                }
             },
         );
 
@@ -627,7 +634,7 @@ class EmailPostSmtpSafetyTest extends TestCase
             ->assertDontSee('database unavailable');
 
         $this->assertSame(1, $mailer->calls);
-        $this->assertSame(EmailComposerDraft::STATUS_ACTIVE, EmailComposerDraft::query()->sole()->status);
+        $this->assertSame(EmailComposerDraft::STATUS_SEND_RESERVED, EmailComposerDraft::query()->sole()->status);
         $this->assertSame('MAIL_COMPOSE_SENT', EmailLog::query()->sole()->code);
     }
 

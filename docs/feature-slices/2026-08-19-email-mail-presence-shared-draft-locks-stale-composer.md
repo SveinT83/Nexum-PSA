@@ -1,57 +1,122 @@
 # Feature Slice: Email Presence, Shared Draft Locks, and Stale-Composer Protection
 
-Status: Rework Needed / Migration Gated
+Status: Safety Rework Implemented / Runtime And UI Gated / Human Review Pending
 Date: 2026-08-19
+Reworked: 2026-08-24
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 9)
+Approved contract: `2026-08-16-email-mail-presence-shared-draft-locks-stale-composer.md`
 Review ID: `HR-2026-08-16-009`
 
-2026-08-21 audit: the original `140000` schema and its service did not implement the approved shared
-scope, durable fencing/audit or fail-closed send boundary. The migration is now an inert deploy
-marker, ran in Dev batch 108, and created no `email_mail_draft_locks` table. Collaboration defaults
-off independently through `EMAIL_MAIL_COLLABORATION_ENABLED=false`; ordinary Reply, Reply All and
-Forward remain available without the table. Per-user whispers do not reach coworkers. Do not
-activate this slice until it is redesigned, tested against the original 2026-08-16 approved slice,
-and delivered through a new forward migration.
+## Outcome
 
-## Purpose
+The beta-critical backend/API safety boundary is implemented without activating collaboration.
+Historical migration `2026_08_19_140000_create_email_mail_draft_locks_table.php` remains an inert
+marker and is unchanged. New additive forward migration
+`2026_08_24_125000_add_email_shared_draft_coordination.php` adds explicit shared-draft scope,
+source-context evidence, one durable lock row per draft, monotonic fencing/content versions and
+metadata-only transition events. It was not run during implementation and later ran in Dev batch
+126 after Order 11; the existing draft remains private and the shared lock/event ledgers are empty.
 
-This slice implements real-time coordination for multiple users working in the same Email Mail workspace. It prevents concurrent editing of the same draft, warns when someone else is reading/typing, and protects against submitting stale content.
+`EMAIL_LIVE_ENABLED`, `EMAIL_MAIL_COLLABORATION_ENABLED` and
+`EMAIL_MAIL_COLLABORATION_UI_ENABLED` all default false. The collaboration gate checks the two
+server flags before runtime/schema readiness, so a disabled or pre-migration deployment never asks
+the optional `125000` schema. Even with both flags enabled, the API remains unavailable until Order
+8's private live runtime reports ready. No Reverb listener, Echo subscription, presence whisper,
+Livewire collaboration control, queue, scheduler, provider call or shared configuration was
+activated by this rework.
 
-## Scope
+## Implemented Safety Boundary
 
-- **Presence:** Real-time "Who is reading this conversation" and "Who is typing a reply" indicators.
-- **Shared Draft Locks:** Durable (but expiring) locks when a user starts composing a reply to a conversation.
-- **Stale-Composer Protection:** Preventing submission if the underlying conversation or draft has changed since the composer was opened.
-- **Privacy:** Presence is limited to the private user coordination channel; no permanent heartbeat content in the database.
+### Ephemeral presence
 
-## Technical Design
+- Reading and typing heartbeats use the configured cache store, normally Redis; no SQL presence row
+  or durable heartbeat event is created.
+- Reading expires after 45 seconds, typing after 25 seconds, and a tab is accepted no faster than
+  every 10 seconds. Exact account, conversation and source placement plus a keyed hash of the opaque
+  tab token form the cache scope.
+- Multi-tab state is aggregated per actor/activity. Names are resolved only from a fresh,
+  permission-filtered server snapshot.
+- Ordinary grant-sourced View is required for reading; ordinary View plus Send is required for
+  typing. Personal owner/delegation, break-glass, inactive/system users, revoked grants, mismatched
+  sources and inaccessible accounts fail closed.
+- Cache failure makes presence absent. Best-effort leave never replaces TTL expiry.
 
-### Presence (Expiring coordination)
-- Use Reverb/Echo `whisper` or specialized presence events.
-- Since we want to avoid unnecessary backend load, simple "typing" indicators can be client-to-client via Echo whispers.
-- "Reading" indicators will be handled via a similar mechanism or a lightweight periodic ping.
+### Explicit shared drafts and leases
 
-### Shared Draft Locks (Backend)
-- A new table `email_mail_draft_locks` or using Cache with a specific tag.
-- Given the requirement for "durable fencing" and "execution-time reauthorization", a database table is preferred for auditability and strict enforcement during the `send` action.
-- Lock duration: 5 minutes, auto-renewed by the active composer.
+- Only the private creator may explicitly share an active Reply, Reply All or Forward draft for an
+  ordinary shared/system mailbox source. Exact repeated share delivery is idempotent; a different
+  key/version cannot recover or widen the share.
+- Shared read requires current ordinary View. Share, lease, mutation, attachment, rebase, discard
+  and send require current ordinary View plus Send for the exact account/conversation/source.
+- The one-row lock uses an opaque token hash, 60-second lease, 20-second renewal floor, monotonic
+  fencing token, exact draft generation, exact source placement and content version. Expired
+  takeover is explicit and increments the fence. A prior tab receives HTTP `423 Locked` for every
+  mutation/send boundary.
+- Attachments remain in private Email storage and stay bound to the exact draft generation. File
+  deletion occurs only after the lifecycle/evidence transaction commits; a rollback keeps both DB
+  metadata and files.
+- Explicit transition events contain only opaque IDs, actor, safe type/reason, fence/content
+  versions and time. They contain no recipients, subject, body, attachment metadata/path/checksum,
+  provider response or exception text.
 
-### Stale-Composer Protection
-- The composer will track the `updated_at` or a version hash of the conversation/draft when opened.
-- On submit, the backend verifies the version hasn't changed.
+### Stale source, rebase and send
 
-## Implementation Plan
+- `EmailComposerSourceContext` binds account/provider version, conversation/source generation,
+  active placement identity, threading identity and normalized audience/subject hashes without
+  placing message content in coordination evidence.
+- A source/provider/audience mismatch blocks save, attachment mutation, preview and send with a
+  safe `409` stale response and no provider call. Rebase preview/confirmation recalculates the
+  current source, recipients, subject and thread while preserving only the authored body and
+  eligible draft attachments.
+- Stale drafts may still be explicitly discarded under the exact current lease/fence because
+  discard is non-provider cleanup.
+- Shared send uses Order 11's same immutable `email_outbound_submissions` ledger. The service
+  reauthorizes ordinary Send, lease expiry/token hash, fence, content version and source fingerprint
+  under row locks immediately before the durable provider-write marker. Accepted or unresolved
+  outcomes cannot be blindly resent.
 
-1. **Database Migration:** Create `email_mail_draft_locks` table.
-2. **Backend Service:** `EmailPresenceService` to manage locks and presence state.
-3. **Broadcasting:** Define presence channels and events (if not using whispers).
-4. **Livewire Integration:** 
-   - Update `MailComposer` to acquire/release locks.
-   - Update `MailWorkspace` to display presence indicators.
-5. **Frontend (JS):** Update `EmailMailLive` to handle typing whispers and presence sync.
+## API Contract
 
-## Boundary & Risks
+The versioned Email module owns default-off endpoints for presence snapshot/heartbeat/leave,
+private-to-shared conversion, shared read, lease acquire/renew/release, fenced update/attachments,
+rebase preview/confirm, send preview/send and discard. Existing token abilities
+`email.drafts.read`, `email.drafts.write` and `email.send` are only request ceilings; current
+ordinary mailbox authority is always rechecked. Out-of-scope IDs return Not Found, stale/source or
+submission conflicts return `409`, and invalid/held/expired leases return `423` with safe current
+state but never a lease token/hash or internal generation.
 
-- **Risk:** Abandoned locks if the browser crashes.
-- **Mitigation:** Short TTL (5 mins) and periodic pings.
-- **Boundary:** Expiring coordination only; no permanent heartbeat content.
+## Verification
+
+Isolated tests use SQLite `:memory:`, array cache, a unique `APP_CONFIG_CACHE`, cache maintenance
+mode and `HOME=/tmp`. The focused collaboration suite plus inert-marker test pass 8 tests / 109
+assertions. Adjacent Order 11 composer/submission/Sent regression passes 22 / 228. Coverage includes
+config-first disabled behavior, private-live readiness, presence permissions/multi-tab filtering,
+no SQL presence, exact cross-user isolation, idempotent share, one editor, renewal/takeover fencing,
+stale-token `423`, stale/rebase preservation, one outbound submission/provider call, stale discard,
+and attachment rollback safety.
+
+The opt-in actual MariaDB contract passes 1 test / 44 assertions against a random disposable schema
+on an isolated `/tmp` server. It proves `125000` up, legacy private-draft conversation/sync/content
+backfill, named indexes and foreign keys, default-off collaboration, empty down, and refusal for each
+non-empty shared-draft, lock and event evidence case. The `finally` cleanup drops the random schema;
+an independent `information_schema.schemata` prefix readback returned zero before the temporary
+server/datadir was stopped and removed.
+
+## Remaining Activation Work
+
+- The automated disposable MariaDB up/down/index/FK/backfill contract is green. Dev migration
+  `125000` is batch 126, but migration deployment does not authorize runtime activation or complete
+  `HR-2026-08-16-009`.
+- Order 8 remains rework-needed/runtime-disabled. Complete and review its bounded private transport,
+  authorization generations, fallback, retention and supervised operations before enabling Order 9.
+- Build the accessible Livewire/Alpine presence, lock, stale/rebase and mobile controls only after
+  the private transport is stable. Per-user whispers are not a valid coworker transport.
+- Perform two-user/two-tab browser, Redis-loss, Reverb-loss, access-revocation, lease-expiry,
+  stale-source and one-send human review. Keep every collaboration flag false until named approval.
+
+## Rollback
+
+Operational rollback turns the collaboration/UI flags off first and retains lock/event/source and
+outbound evidence. The migration down path refuses when any shared draft, lock or event exists.
+Application rollback must therefore precede only an explicitly reviewed empty-schema rollback; it
+must never erase evidence to make rollback pass.

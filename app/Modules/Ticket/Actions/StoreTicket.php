@@ -86,6 +86,21 @@ class StoreTicket
                 'resolve_due_at' => $sla['resolve_due_at'],
             ]);
 
+            if (! empty($data['is_scheduled'])) {
+                $ticket->schedule()->create([
+                    'schedule_type' => $data['schedule_type'] ?? 'one_time',
+                    'planned_start_at' => $data['planned_start_at'] ?? null,
+                    'planned_end_at' => $data['planned_end_at'] ?? null,
+                    'timezone' => $data['timezone'] ?? 'UTC',
+                    'recurrence_rule' => $data['recurrence_rule'] ?? null,
+                    'recurrence_ends_at' => $data['recurrence_ends_at'] ?? null,
+                    'sla_mode' => $data['sla_mode'] ?? 'defer_until_planned_start',
+                    'status' => 'scheduled',
+                    'created_by' => $actor?->id,
+                    'updated_by' => $actor?->id,
+                ]);
+            }
+
             if (! empty($data['description']) && ($data['channel'] ?? 'manual') !== 'email') {
                 TicketMessage::create([
                     'ticket_id' => $ticket->id,

@@ -138,12 +138,14 @@ class ImportEmailProviderReconciliationItem implements ShouldBeUniqueUntilProces
                 return false;
             }
 
+            $progressAt = now();
             $item->forceFill([
                 'status' => EmailProviderReconciliationItem::STATUS_FAILED,
                 'error_code' => 'provider_import_failed',
-                'completed_at' => now(),
+                'completed_at' => $progressAt,
             ])->save();
             $run->markAutomationScopeUnsafe();
+            $run->forceFill(['last_progress_at' => $progressAt])->save();
 
             return true;
         }, 3);

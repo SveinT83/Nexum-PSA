@@ -4,12 +4,15 @@ namespace App\Modules\Email\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LogicException;
 
 class EmailRuleExecutionAttempt extends Model
 {
     public const STATUS_RUNNING = 'running';
 
     public const STATUS_SKIPPED = 'skipped';
+
+    public const STATUS_NOT_RUN = 'not_run';
 
     public const STATUS_SUCCEEDED = 'succeeded';
 
@@ -42,6 +45,15 @@ class EmailRuleExecutionAttempt extends Model
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function (self $attempt): void {
+            if ($attempt->getRawOriginal('finished_at') !== null && $attempt->isDirty()) {
+                throw new LogicException('Completed Email rule execution attempts are immutable.');
+            }
+        });
+    }
 
     public function rule(): BelongsTo
     {

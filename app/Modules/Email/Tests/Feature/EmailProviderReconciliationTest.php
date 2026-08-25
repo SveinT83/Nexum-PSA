@@ -194,6 +194,153 @@ class EmailProviderReconciliationTest extends TestCase
     }
 
     #[Test]
+    public function each_successful_bounded_finalization_step_advances_run_progress(): void
+    {
+        [$account, $folder] = $this->mailbox(
+            'reconcile-finalization-progress@example.test',
+            811,
+            1,
+        );
+        $run = $this->reconciliationRun($account);
+        $reader = $this->readerFor($folder, [
+            new EmailProviderReconciliationFolderState(811, 1, 0, true, 25),
+            new EmailProviderReconciliationFolderState(811, 1, 0, true, 25),
+        ]);
+        $reader->metadataPages[$folder->path] = [
+            new EmailProviderReconciliationMetadataPage(
+                [],
+                terminal: true,
+                completeThroughUid: 0,
+            ),
+        ];
+
+        $folderRun = $this->discover($run, $reader);
+        $scanner = app(EmailProviderReconciliationScanner::class);
+        $this->assertFalse($scanner->scanOnePage($folderRun, $reader)['folder_finished']);
+        $this->assertTrue($scanner->scanOnePage($folderRun->fresh(), $reader)['folder_finished']);
+
+        $finalizer = app(EmailProviderReconciliationFinalizer::class);
+        $this->assertFalse($finalizer->finalizeOneStep($run->fresh(), $reader));
+        $this->assertFalse($finalizer->finalizeOneStep($run->fresh(), $reader));
+        $run->forceFill(['last_progress_at' => now()->subMinutes(5)->startOfSecond()])->save();
+
+        $beforeCapture = $run->fresh()->last_progress_at;
+        $this->travel(2)->seconds();
+        $this->assertFalse($finalizer->finalizeOneStep($run->fresh(), $reader));
+        $afterCapture = $run->fresh()->last_progress_at;
+        $this->assertTrue(
+            $afterCapture->greaterThan($beforeCapture),
+            'A committed provider end-state capture must advance visible run progress.',
+        );
+        $this->assertNotNull($folderRun->fresh()->end_uid_validity);
+
+        $this->travel(2)->seconds();
+        $this->assertFalse($finalizer->finalizeOneStep($run->fresh(), $reader));
+        $afterValidation = $run->fresh()->last_progress_at;
+        $this->assertTrue(
+            $afterValidation->greaterThan($afterCapture),
+            'A committed end-state validation must advance visible run progress.',
+        );
+        $this->assertSame('stable_end_validated', $folderRun->fresh()->reason_code);
+
+        $this->travel(2)->seconds();
+        $this->assertFalse($finalizer->finalizeOneStep($run->fresh(), $reader));
+        $this->assertTrue(
+            $run->fresh()->last_progress_at->greaterThan($afterValidation),
+            'A committed folder-finalization step must advance visible run progress.',
+        );
+        $this->assertSame('stable_absence_freeze', $folderRun->fresh()->reason_code);
+    }
+
+    #[Test]
+    public function active_finalization_no_op_does_not_refresh_run_progress(): void
+    {
+        $run = $this->reconciliationRun(
+            $this->account('reconcile-finalization-no-op@example.test'),
+        );
+        $run->forceFill([
+            'status' => EmailProviderReconciliationRun::STATUS_RUNNING,
+            'phase' => EmailProviderReconciliationRun::PHASE_DISCOVER_END,
+            'started_at' => now()->subMinute(),
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $before = $run->fresh()->last_progress_at;
+        $callbackCalled = false;
+        $method = new \ReflectionMethod(
+            EmailProviderReconciliationFinalizer::class,
+            'withActiveFinalizationRun',
+        );
+
+        $this->travel(2)->seconds();
+        $progressed = $method->invoke(
+            app(EmailProviderReconciliationFinalizer::class),
+            $run,
+            static function (EmailProviderReconciliationRun $locked) use (&$callbackCalled): bool {
+                $callbackCalled = true;
+
+                return false;
+            },
+        );
+
+        $this->assertTrue($callbackCalled);
+        $this->assertFalse($progressed);
+        $this->assertTrue(
+            $run->fresh()->last_progress_at->equalTo($before),
+            'A callback without a durable write must not mask a stalled finalizer loop.',
+        );
+    }
+
+    #[Test]
+    public function unchanged_child_wait_advances_progress_only_when_entering_the_waiting_barrier(): void
+    {
+        [$account, $folder, $namespace] = $this->mailbox(
+            'reconcile-unchanged-child-wait@example.test',
+            812,
+            2,
+        );
+        $run = $this->reconciliationRun($account);
+        $reader = $this->readerFor($folder, []);
+        $folderRun = $this->discover($run, $reader);
+        $folderRun->forceFill([
+            'status' => EmailProviderReconciliationFolder::STATUS_WAITING_FOR_IMPORTS,
+        ])->save();
+        $item = EmailProviderReconciliationItem::query()->create([
+            'email_provider_reconciliation_run_id' => $run->id,
+            'email_provider_reconciliation_folder_id' => $folderRun->id,
+            'uid_namespace_id' => $namespace->id,
+            'imap_uid' => 1,
+            'kind' => EmailProviderReconciliationItem::KIND_IMPORT,
+            'status' => EmailProviderReconciliationItem::STATUS_PENDING,
+        ]);
+        $run->forceFill(['last_progress_at' => now()->subMinutes(5)->startOfSecond()])->save();
+        $beforeTransition = $run->fresh()->last_progress_at;
+        $providerCallsBeforeWait = $reader->calls;
+        $finalizer = app(EmailProviderReconciliationFinalizer::class);
+
+        $this->travel(2)->seconds();
+        $this->assertFalse($finalizer->finalizeOneStep($run->fresh(), $reader));
+        $afterTransition = $run->fresh()->last_progress_at;
+        $this->assertSame(
+            EmailProviderReconciliationRun::STATUS_WAITING_FOR_IMPORTS,
+            $run->fresh()->status,
+        );
+        $this->assertSame(EmailProviderReconciliationRun::PHASE_IMPORTS, $run->fresh()->phase);
+        $this->assertTrue(
+            $afterTransition->greaterThan($beforeTransition),
+            'Entering the durable child-work barrier must advance run progress.',
+        );
+
+        $this->travel(2)->seconds();
+        $this->assertFalse($finalizer->finalizeOneStep($run->fresh(), $reader));
+        $this->assertTrue(
+            $run->fresh()->last_progress_at->equalTo($afterTransition),
+            'An unchanged child-work barrier must not emit a synthetic heartbeat.',
+        );
+        $this->assertSame(EmailProviderReconciliationItem::STATUS_PENDING, $item->fresh()->status);
+        $this->assertSame($providerCallsBeforeWait, $reader->calls);
+    }
+
+    #[Test]
     public function sparse_uid_windows_resume_above_one_million_and_timeout_never_advances_the_cursor(): void
     {
         [$account, $folder, $namespace] = $this->mailbox(
@@ -1926,6 +2073,82 @@ class EmailProviderReconciliationTest extends TestCase
             ReconcileEmailProviderAccount::class,
             fn (ReconcileEmailProviderAccount $job): bool => $job->runId === $catchup->id,
         );
+    }
+
+    #[Test]
+    public function ordinary_runs_accept_the_exact_hard_folder_cap_and_reject_overflow(): void
+    {
+        Queue::fake();
+        $start = app(StartEmailProviderReconciliation::class);
+        $descriptors = static fn (int $count): array => array_map(
+            static fn (int $number): EmailProviderReconciliationFolderDescriptor => new EmailProviderReconciliationFolderDescriptor(
+                path: sprintf('Folder/%03d', $number),
+                name: sprintf('Folder %03d', $number),
+                delimiter: '/',
+            ),
+            range(1, $count),
+        );
+
+        $scheduled = $start->handle(
+            $this->account('reconcile-default-folder-cap-scheduled@example.test'),
+            EmailProviderReconciliationRun::TRIGGER_SCHEDULED,
+            dispatch: false,
+        );
+        $this->assertSame(
+            EmailProviderReconciliationPolicy::HARD_MAX_FOLDERS,
+            (int) $scheduled->max_folders,
+        );
+
+        $reader = new FakeEmailProviderReconciliationReader;
+        $reader->folders = $descriptors(EmailProviderReconciliationPolicy::HARD_MAX_FOLDERS);
+        $folderIds = app(EmailProviderReconciliationCoordinator::class)->discoverStart(
+            $scheduled,
+            $reader,
+        );
+
+        $this->assertCount(EmailProviderReconciliationPolicy::HARD_MAX_FOLDERS, $folderIds);
+        $this->assertSame(
+            EmailProviderReconciliationPolicy::HARD_MAX_FOLDERS,
+            (int) $scheduled->fresh()->folder_count,
+        );
+
+        $manual = $start->handle(
+            $this->account('reconcile-default-folder-cap-manual@example.test'),
+            EmailProviderReconciliationRun::TRIGGER_MANUAL,
+            dispatch: false,
+        );
+        $this->assertSame(
+            EmailProviderReconciliationPolicy::HARD_MAX_FOLDERS,
+            (int) $manual->max_folders,
+        );
+
+        $catchup = $start->handle(
+            $this->account('reconcile-default-folder-cap-catchup@example.test'),
+            EmailProviderReconciliationRun::TRIGGER_CATCHUP,
+            dispatch: false,
+        );
+        $this->assertSame(
+            EmailProviderReconciliationPolicy::HARD_MAX_FOLDERS,
+            (int) $catchup->max_folders,
+        );
+        $overflowReader = new FakeEmailProviderReconciliationReader;
+        $overflowReader->folders = $descriptors(EmailProviderReconciliationPolicy::HARD_MAX_FOLDERS + 1);
+
+        try {
+            app(EmailProviderReconciliationCoordinator::class)->discoverStart(
+                $catchup,
+                $overflowReader,
+            );
+            $this->fail('A provider scope above the hard folder cap must fail closed.');
+        } catch (EmailProviderReconciliationReadException $exception) {
+            $this->assertSame('provider_folder_cap_exceeded', $exception->safeCode);
+        }
+
+        $this->assertNull($catchup->fresh()->start_folder_scope_hash);
+        $this->assertSame(EmailProviderReconciliationRun::STATUS_QUEUED, $catchup->fresh()->status);
+        $this->assertDatabaseMissing('email_provider_reconciliation_folders', [
+            'email_provider_reconciliation_run_id' => $catchup->id,
+        ]);
     }
 
     #[Test]

@@ -47,3 +47,17 @@ Examples:
 - Email service through a third-party provider can use a third-party email SLA.
 - Backup service can use a backup SLA.
 - General support can use the contract default SLA.
+
+## Customer Document Presentation
+
+Per-line SLA selection and inheritance are operational data. They remain available in the internal
+Contract editor and are used by Ticket resolution, but they are not a column in the customer service
+table.
+
+The customer document collects agreed support expectations once under `Support og responstid`.
+Sent and approved documents use the Contract-owned customer-document and SLA snapshots, not a later
+mutable SLA policy. This keeps the customer presentation concise without weakening the internal
+operational relationship.
+
+A line edit never overwrites existing manually reviewed SLA wording. It makes the source/text review
+stale until a technician explicitly saves or refreshes the terms through a CSRF-protected POST.

@@ -139,6 +139,143 @@ class ImapClientTest extends TestCase
     }
 
     #[Test]
+    public function folder_discovery_uses_the_exact_child_object_when_flat_path_lookup_cannot_resolve_it(): void
+    {
+        $folder = static function (string $path, int $uidValidity, int $uidNext): object {
+            return new class($path, $uidValidity, $uidNext)
+            {
+                public array $uidRanges = [];
+
+                public array $limits = [];
+
+                public int $gets = 0;
+
+                public function __construct(
+                    private readonly string $path,
+                    private readonly int $uidValidity,
+                    private readonly int $uidNext,
+                ) {}
+
+                public function getPath(): string
+                {
+                    return $this->path;
+                }
+
+                public function getName(): string
+                {
+                    return basename($this->path);
+                }
+
+                public function getDelimiter(): string
+                {
+                    return '/';
+                }
+
+                public function getAttributes(): array
+                {
+                    return [];
+                }
+
+                public function children(): array
+                {
+                    return [];
+                }
+
+                public function status(): array
+                {
+                    return [
+                        'uidvalidity' => $this->uidValidity,
+                        'uidnext' => $this->uidNext,
+                        'messages' => 3,
+                        'unseen' => 1,
+                    ];
+                }
+
+                public function messages(): object
+                {
+                    return new class($this)
+                    {
+                        public function __construct(private readonly object $folder) {}
+
+                        public function whereUid(string $range): self
+                        {
+                            $this->folder->uidRanges[] = $range;
+
+                            return $this;
+                        }
+
+                        public function setFetchOrderAsc(): self
+                        {
+                            return $this;
+                        }
+
+                        public function limit(int $limit): self
+                        {
+                            $this->folder->limits[] = $limit;
+
+                            return $this;
+                        }
+
+                        public function get(): array
+                        {
+                            $this->folder->gets++;
+
+                            return [];
+                        }
+                    };
+                }
+            };
+        };
+        $inventory = [
+            $folder('INBOX', 101, 12),
+            $folder('Parent/Child', 202, 8),
+        ];
+        $provider = new class extends Client
+        {
+            public int $flatLookups = 0;
+
+            public function __construct() {}
+
+            public function __destruct() {}
+
+            public function getFolderByPath($folder_path, bool $utf7 = false, bool $soft_fail = false): ?Folder
+            {
+                $this->flatLookups++;
+
+                return null;
+            }
+        };
+        $client = new class(new EmailAccount, $inventory) extends ImapClient
+        {
+            public function __construct(EmailAccount $account, private readonly array $inventory)
+            {
+                parent::__construct($account);
+            }
+
+            protected function providerFolderInventory(): iterable
+            {
+                return $this->inventory;
+            }
+        };
+        (new ReflectionProperty(ImapClient::class, 'client'))->setValue($client, $provider);
+
+        $folders = collect($client->folders())->keyBy('path');
+
+        $this->assertSame(0, $provider->flatLookups);
+        $this->assertSame(101, $folders->get('INBOX')['uid_validity']);
+        $this->assertSame(12, $folders->get('INBOX')['uid_next']);
+        $this->assertSame(202, $folders->get('Parent/Child')['uid_validity']);
+        $this->assertSame(8, $folders->get('Parent/Child')['uid_next']);
+        $this->assertNull($folders->get('Parent/Child')['sync_error_code']);
+
+        $this->assertSame([], $client->fetchAfterUidInFolder('Parent/Child', 8, 5));
+        $this->assertSame(0, $provider->flatLookups);
+        $this->assertSame(['9:*'], $inventory[1]->uidRanges);
+        $this->assertSame([5], $inventory[1]->limits);
+        $this->assertSame(1, $inventory[1]->gets);
+    }
+
+    #[Test]
     public function historical_uid_search_chunks_the_numeric_range_and_stops_at_the_cap_plus_one_sentinel(): void
     {
         $ranges = [];

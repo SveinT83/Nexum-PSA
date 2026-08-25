@@ -174,6 +174,8 @@ Route::middleware('admin')->group(function () {
         ->name('admin.system.templatesManagement.email.create');
     Route::post('/admin/system/templatesManagement/email', [EmailTemplateController::class, 'store'])
         ->name('admin.system.templatesManagement.email.store');
+    Route::post('/admin/system/templatesManagement/email/preview', [EmailTemplateController::class, 'preview'])
+        ->name('admin.system.templatesManagement.email.preview');
     Route::get('/admin/system/templatesManagement/email/{template}/edit', [EmailTemplateController::class, 'edit'])
         ->name('admin.system.templatesManagement.email.edit');
     Route::put('/admin/system/templatesManagement/email/{template}', [EmailTemplateController::class, 'update'])

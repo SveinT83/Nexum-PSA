@@ -3,14 +3,12 @@
 namespace App\Modules\Email\Jobs;
 
 use App\Modules\Email\Models\EmailLiveProjectionChange;
-use App\Modules\Email\Models\EmailLiveProjectionStream;
 use App\Modules\Email\Services\EmailLivePublisherService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class EmailLivePublisher implements ShouldQueue
 {
@@ -33,9 +31,10 @@ class EmailLivePublisher implements ShouldQueue
             if ($change) {
                 $service->publish($change);
             }
-            return;
         }
 
+        // Every hint job also advances bounded fanout/recovery work. A source
+        // change is not complete merely because its first claim succeeded.
         $service->publishPending();
     }
 }

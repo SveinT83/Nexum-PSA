@@ -443,7 +443,15 @@
                                                 <i class="bi bi-stars" aria-hidden="true"></i>
                                             </button>
                                         </div>
-                                        <textarea id="body_html" name="body_html" rows="9" class="form-control form-control-sm font-monospace @error('body_html') is-invalid @enderror" data-email-html>{{ old('body_html') }}</textarea>
+                                        <x-forms.html-editor
+                                            id="body_html"
+                                            name="body_html"
+                                            :value="old('body_html')"
+                                            :rows="9"
+                                            :height="360"
+                                            class="form-control-sm @error('body_html') is-invalid @enderror"
+                                            data-email-html
+                                        />
                                         <div class="form-text">Known data placeholders: <code>@{{ contact_name }}</code>, <code>@{{ client_name }}</code>, <code>@{{ company_name }}</code>, <code>@{{ unsubscribe_url }}</code>. Campaign text should be written directly in this email.</div>
                                         @error('body_html')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         <div class="collapse mt-2" id="emailAiPromptNew">
@@ -566,7 +574,15 @@
                                                         <i class="bi bi-stars" aria-hidden="true"></i>
                                                     </button>
                                                 </div>
-                                                <textarea id="body_html_{{ $email->id }}" name="body_html" rows="9" class="form-control form-control-sm font-monospace" data-email-html>{{ old('body_html', $email->effectiveBodyHtml()) }}</textarea>
+                                                <x-forms.html-editor
+                                                    id="body_html_{{ $email->id }}"
+                                                    name="body_html"
+                                                    :value="old('body_html', $email->effectiveBodyHtml())"
+                                                    :rows="9"
+                                                    :height="360"
+                                                    class="form-control-sm"
+                                                    data-email-html
+                                                />
                                                 <div class="form-text">Known data placeholders: <code>@{{ contact_name }}</code>, <code>@{{ client_name }}</code>, <code>@{{ company_name }}</code>, <code>@{{ unsubscribe_url }}</code>. Campaign text should be written directly in this email.</div>
                                                 <div class="collapse mt-2" id="emailAiPrompt{{ $email->id }}">
                                                     <div class="border rounded p-2">
@@ -730,6 +746,7 @@
             const templateSnapshots = {!! \Illuminate\Support\Js::from($templateSnapshots) !!};
             const campaignEmailPreviewVariables = {!! \Illuminate\Support\Js::from($campaignEmailPreviewVariables) !!};
             const defaultTemplateId = '{{ $templates->first()?->id }}';
+            const campaignEmailPreviewUrl = '{{ route('tech.marketing.campaigns.emails.preview', $campaign) }}';
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
             document.querySelectorAll('[data-campaign-schedule-form]').forEach(function (form) {
@@ -756,84 +773,67 @@
                 syncScheduleFields();
             });
 
-            function previewDocument(html) {
-                const content = String(html || '').trim();
-
-                if (content.toLowerCase().includes('<html')) {
-                    return content;
-                }
-
-                const fallback = '\x3cp style="color:#6c757d;"\x3eNo HTML body.\x3c/p\x3e';
-
-                return [
-                    '\x3c!doctype html\x3e',
-                    '\x3chtml\x3e',
-                    '\x3chead\x3e',
-                    '\x3cmeta charset="utf-8"\x3e',
-                    '\x3cmeta name="viewport" content="width=device-width, initial-scale=1"\x3e',
-                    '\x3cstyle\x3e',
-                    'body { margin: 0; background: #f3f4f6; font-family: Arial, Helvetica, sans-serif; color: #111827; }',
-                    'main { max-width: 680px; margin: 24px auto; background: #ffffff; border: 1px solid #e5e7eb; padding: 24px; }',
-                    'a { color: #0d6efd; }',
-                    '\x3c/style\x3e',
-                    '\x3c/head\x3e',
-                    '\x3cbody\x3e\x3cmain\x3e',
-                    content || fallback,
-                    '\x3c/main\x3e\x3c/body\x3e',
-                    '\x3c/html\x3e',
-                ].join('');
-            }
-
             function field(scope, selector) {
                 return scope.querySelector(selector);
             }
 
-            function selectedTemplateSnapshot(scope) {
-                const templateSelect = field(scope, '[data-template-select]');
-
-                return templateSelect ? templateSnapshots[String(templateSelect.value)] : null;
-            }
-
-            function previewVariables(scope) {
-                const snapshot = selectedTemplateSnapshot(scope);
-
-                if (snapshot?.sample_variables) {
-                    return snapshot.sample_variables;
-                }
-
-                return campaignEmailPreviewVariables[String(scope.dataset.emailId)] || {};
-            }
-
-            function replacePreviewVariables(content, variables) {
-                let rendered = String(content || '');
-                const openToken = '{' + '{';
-                const closeToken = '}' + '}';
-
-                Object.entries(variables || {}).forEach(function ([key, value]) {
-                    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const pattern = new RegExp(openToken + '\\s*' + escapedKey + '\\s*' + closeToken, 'g');
-
-                    rendered = rendered.replace(pattern, value === null || value === undefined ? '' : String(value));
-                });
-
-                return rendered;
-            }
-
             function updatePreview(scope) {
-                const iframe = field(scope, '[data-email-preview]');
-                const html = field(scope, '[data-email-html]')?.value || '';
-                const subject = field(scope, '[data-email-subject]')?.value || '';
-                const subjectLabel = field(scope, '[data-email-preview-subject]');
-                const variables = previewVariables(scope);
-                const previewHtml = replacePreviewVariables(html, variables);
-                const previewSubject = replacePreviewVariables(subject, variables);
+                window.clearTimeout(scope.emailPreviewTimer);
+                scope.emailPreviewTimer = window.setTimeout(function () {
+                    renderPreview(scope);
+                }, 300);
+            }
 
-                if (iframe) {
-                    iframe.srcdoc = previewDocument(previewHtml);
+            async function renderPreview(scope) {
+                const iframe = field(scope, '[data-email-preview]');
+                const subjectLabel = field(scope, '[data-email-preview-subject]');
+                const templateId = field(scope, '[data-template-select]')?.value || null;
+                const campaignEmailId = scope.dataset.emailId === 'new' ? null : scope.dataset.emailId;
+
+                if (! templateId && ! campaignEmailId) {
+                    return;
                 }
 
-                if (subjectLabel) {
-                    subjectLabel.textContent = previewSubject;
+                scope.emailPreviewController?.abort();
+                scope.emailPreviewController = new AbortController();
+
+                try {
+                    const response = await fetch(campaignEmailPreviewUrl, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            email_template_id: templateId,
+                            campaign_email_id: campaignEmailId,
+                            email_name: field(scope, '[data-email-name]')?.value || '',
+                            email_subject: field(scope, '[data-email-subject]')?.value || '',
+                            body_html: field(scope, '[data-email-html]')?.value || '',
+                            body_text: field(scope, '[data-email-text]')?.value || '',
+                        }),
+                        signal: scope.emailPreviewController.signal,
+                    });
+                    const result = await response.json().catch(function () {
+                        return {};
+                    });
+
+                    if (! response.ok) {
+                        throw new Error(result.message || 'Preview failed.');
+                    }
+
+                    if (iframe) {
+                        iframe.srcdoc = result.html || '';
+                    }
+
+                    if (subjectLabel) {
+                        subjectLabel.textContent = result.subject || '';
+                    }
+                } catch (error) {
+                    if (error.name !== 'AbortError' && subjectLabel) {
+                        subjectLabel.textContent = error.message || 'Preview failed.';
+                    }
                 }
             }
 
@@ -850,6 +850,8 @@
 
                     if (input && value !== undefined && value !== null) {
                         input.value = value;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 });
 

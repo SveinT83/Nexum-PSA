@@ -151,4 +151,25 @@ class EmailLiveInvalidatorRuntimeGateTest extends TestCase
         $this->assertDatabaseMissing('email_live_projection_streams', ['user_id' => $user->id]);
         $this->assertDatabaseCount('email_live_projection_changes', 0);
     }
+
+    public function test_enabled_runtime_requires_caller_stable_idempotency_atomically(): void
+    {
+        config()->set('email_live.enabled', true);
+        $user = User::factory()->create();
+
+        try {
+            DB::transaction(fn () => app(EmailLiveInvalidator::class)->record([
+                'user' => [$user->id => [EmailLiveProjectionChange::TYPE_PERSONAL_STATE]],
+            ]));
+            $this->fail('A random internal live-invalidation identity was accepted.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertSame(
+                'Email live invalidation requires a stable, non-empty idempotency key.',
+                $exception->getMessage(),
+            );
+        }
+
+        $this->assertDatabaseMissing('email_live_projection_streams', ['user_id' => $user->id]);
+        $this->assertDatabaseCount('email_live_projection_changes', 0);
+    }
 }

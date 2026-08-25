@@ -68,7 +68,11 @@ class ApiAbilityCatalog
         'risk.update' => self::ACCESS_WRITE,
         'email.read' => self::ACCESS_READ,
         'email.update' => self::ACCESS_WRITE,
+        'email.drafts.read' => self::ACCESS_READ,
+        'email.drafts.write' => self::ACCESS_WRITE,
+        'email.send' => self::ACCESS_WRITE,
         'email.rules.read' => self::ACCESS_READ,
+        'email.rules.execute' => self::ACCESS_WRITE,
         'notifications.read' => self::ACCESS_READ,
         'notifications.update' => self::ACCESS_WRITE,
         'sales.read' => self::ACCESS_READ,
@@ -375,9 +379,29 @@ class ApiAbilityCatalog
             'description' => 'Mark authorized inbox messages as spam and queue polling for mailboxes the actor can organize.',
             'domain' => 'Email',
         ],
+        'email.drafts.read' => [
+            'label' => 'Read Mail drafts',
+            'description' => 'Read authorized private drafts and explicitly shared drafts when the separately gated collaboration runtime is ready.',
+            'domain' => 'Email',
+        ],
+        'email.drafts.write' => [
+            'label' => 'Manage Mail drafts',
+            'description' => 'Manage fenced private drafts and exact-lease shared drafts when the separately gated collaboration runtime is ready.',
+            'domain' => 'Email',
+        ],
+        'email.send' => [
+            'label' => 'Send Mail drafts',
+            'description' => 'Preview and submit an authorized private or gated shared Mail draft through the idempotent outbound pipeline.',
+            'domain' => 'Email',
+        ],
         'email.rules.read' => [
             'label' => 'Read email rules',
             'description' => 'List, view, and preview Email rule definitions with normal rule-management permission and mailbox access checks.',
+            'domain' => 'Email',
+        ],
+        'email.rules.execute' => [
+            'label' => 'Execute email rule recovery',
+            'description' => 'Apply a verified provider-operation inverse for an authorized Email rule execution.',
             'domain' => 'Email',
         ],
         'notifications.read' => [

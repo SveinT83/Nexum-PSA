@@ -241,6 +241,7 @@ class FetchImapAccount implements ShouldQueue
                 'account_id' => $account->id,
                 'code' => $code,
                 'exception' => $exception::class,
+                'failure_source' => $this->safeFailureSource($exception),
             ]);
 
             throw new RuntimeException('IMAP account polling could not complete.');
@@ -648,6 +649,27 @@ class FetchImapAccount implements ShouldQueue
             'last_error_code' => $code,
             'last_error_message' => $message,
         ])->save();
+    }
+
+    /**
+     * Keep operational diagnostics useful without logging provider messages,
+     * mailbox paths, credentials, or arbitrary exception text.
+     */
+    private function safeFailureSource(Throwable $exception): string
+    {
+        $projectRoot = rtrim(base_path(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+        $file = $exception->getFile();
+
+        if (! str_starts_with($file, $projectRoot)) {
+            return 'external';
+        }
+
+        $relative = substr($file, strlen($projectRoot));
+        if (! str_starts_with($relative, 'app/Modules/Email/')) {
+            return 'application';
+        }
+
+        return $relative.':'.max(1, $exception->getLine());
     }
 
     private function messageUidValidityColumnAvailable(): bool

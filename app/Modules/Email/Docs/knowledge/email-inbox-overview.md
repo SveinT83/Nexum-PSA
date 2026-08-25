@@ -5,6 +5,16 @@ The Tech inbox is available at `/tech/inbox`.
 
 Admin email account settings are available under `/tech/admin/settings/email/accounts`.
 
+## Current Dev Rollout Status
+
+Mail completion migrations `2026_08_24_110000`, `120000`, `125000`, `130000`, and `140000` ran in
+Dev batches 124 through 128. All live/Vite/operations/collaboration/UI/acknowledgement gates remain
+off. Both Dev accounts use Integration-owned binding version 2 and overlap-safe polling. Dev has one
+database `email,default` worker but no full Laravel scheduler or `notifications` worker. The 136
+unattempted inbound fanout jobs require an explicit human delivery decision because relevant Web
+Push settings are already enabled. Production remains untouched and still needs additive permission
+migration `2026_08_21_100000` when promoted; never substitute the full `RoleSeeder`.
+
 ## Mailbox Ownership And Access
 
 Email accounts are classified as shared, personal, or system mailboxes.
@@ -213,6 +223,9 @@ cursors after dispatch or worker loss. The `email`, `default`, and `notification
 external Laravel scheduler must be supervised; `email-idle` is required only when optional IDLE is
 enabled.
 
+Current Dev intentionally runs only targeted polling plus `email,default`. Do not start the full
+scheduler or `notifications` worker until the 136-job notification cohort has been reviewed.
+
 Cancel records an idempotent intent first. A transition job then waits for the same account provider
 lease used by in-flight reads, changes the run to `cancelling`, and lets bounded finalization drain
 pending work without publishing hidden content. The maintenance page may therefore briefly show an
@@ -220,10 +233,17 @@ active run with cancellation requested; repeated Cancel requests are safe.
 
 Order 7 has released focused automated evidence. Its exact 20 migrations `100000` through `118500`
 now report Ran one per step in recovered Dev batches 98-117. Browser, controlled-provider, scheduler, worker,
-queue/backlog, and rollback smoke remain operator-gated. The `HR-2026-08-16-007` review summary
-records Svein's 2026-08-19 approval, while its older detailed checklist still needs human record
-reconciliation. Automated SQLite and disposable MariaDB contracts do not replace current runtime
+queue/backlog, and rollback smoke remain operator-gated. `HR-2026-08-16-007` preserves Svein's
+2026-08-19 review and records the 2026-08-24 reopening for folder-cap/progress/runtime changes and
+current checks. Automated SQLite and disposable MariaDB contracts do not replace current runtime
 checks.
+
+Controlled account-2 run 2 read all 137 provider folders and finished terminal `stale` in `summary`:
+131 folders completed, 6 became stale with `provider_tuple_drift`, 8,427 observations and 7 confirmed
+missing items were recorded, and moves/conflicts/errors remained zero. Provider-wins local projection
+hid seven placements and soft-deleted caches where no active placement survived. Three pending
+observations are confined to the stale folders. The run issued no provider write and delivered no
+notification. The clean complete Email Feature directory passes 686 tests / 7,046 assertions.
 
 ## Mail Workspace And Personal State
 
@@ -286,8 +306,8 @@ only a rebuildable search aid: stored raw subjects, conversation identity, rules
 and provider evidence remain unchanged, and API responses continue to return the raw `subject`
 without exposing the derived field.
 
-On Dev, the initial nullable `subject_search` column/backfill migration `121000` ran in batch 96.
-The forward-only `121100` rebuild ran in batch 97. Dev review then exposed a historical MariaDB
+On recovered Dev, the initial nullable `subject_search` column/backfill migration `121000` ran in
+batch 95. The forward-only `121100` rebuild ran in batch 96. Dev review then exposed a historical MariaDB
 `received_at` definition with implicit `ON UPDATE CURRENT_TIMESTAMP`; that database clause, not the
 projection code, advanced receipt evidence during the rebuild and falsely staled five Smart Inbox
 suggestions. Migration `121200` ran after recovery in batch 97, removed the clause, and froze a 490-message audit
@@ -311,6 +331,16 @@ split projections are forward-reconciled. Unresolved evidence is retained for re
 changing provider or Ticket state. Existing message-level Ticket correlation and `TD-...` routing
 stay in place; Ticket conversation links add the durable conversation pointer without granting Mail
 access from Ticket access.
+
+Legacy messages that already have exact Ticket capture evidence but lack that durable conversation
+pointer are repaired only through an administrator-run preview/apply workflow. Preview is read-only,
+bounded, expires after 15 minutes, and records safe per-item status/reason evidence. Apply requires
+the same active authorized human and runs through the Email queue. Missing or conflicting Ticket,
+account, conversation, placement, capture or audience evidence is left blocked for review; Nexum
+never chooses a Ticket from competing claims. The repair does not move or mark provider mail, change
+`Unread for me`, recapture content, run rules, send notifications, publish to the portal, or alter
+existing `TD-...` behavior. Human review `HR-2026-08-16-013` must pass on a disposable data copy
+before shared-data apply.
 
 The grouped center list chooses one leader per durable conversation in the database before normal
 pagination, so Mail does not load every matching placement merely to group it in PHP. The reader
@@ -352,6 +382,40 @@ The unread baseline/handover implementation passes 13 focused tests / 118 assert
 historical-import plus delegation/break-glass tests / 340 assertions, and the broad affected-module
 runs of 171 / 1,548 plus 157 / 1,063. No live migration or provider operation was run for this slice;
 named Dev browser and migration review remains Pending under `HR-2026-08-16-003`.
+
+### Conversation acknowledgement safety status
+
+Conversation-wide acknowledgement is still unavailable in the Mail interface and remains off by
+default. The safety backend now requires a separate preview before apply. A preview freezes only the
+currently active placements in the selected account conversation, or exact placements the user
+explicitly selected across accounts. It does not add related mail based on subject, Message-ID,
+Ticket links or correlation. New mail arriving afterward is outside that preview and stays Unread for
+me.
+
+Every selected account needs ordinary View at preview and apply time. Provider **Mailbox read** is a
+separate optional effect and additionally needs Organize for that exact account/placement.
+Break-glass cannot change personal or provider state. Apply rechecks the same user, access epoch,
+conversation, message, folder, placement, UID namespace/UID, sync version and provider connection
+binding. Changed or revoked evidence is reported as denied/stale instead of being replaced by another
+message or account.
+
+Personal **Unread for me** changes go through the normal current-epoch personal action. Provider
+Seen is only recorded as a pending exact remote operation and remains pending until the existing
+provider reconciliation proves success. A provider denial, conflict or failure never erases a valid
+personal acknowledgement or appears as provider success. Preview/result evidence contains IDs,
+fingerprints, statuses and safe reason codes, not subjects, participants, bodies, attachment names,
+private paths, credentials or raw provider exceptions.
+
+If one message is visible in several active folders, personal Unread is still changed once for that
+message and access epoch. The first frozen placement carries that selected effect and later placement
+rows are shown as coalesced; provider Mailbox read remains a separate per-placement result. A failure
+on the selected personal effect is reported as a failure, not hidden by the coalesced rows.
+
+Forward migration `2026_08_24_140000_create_email_conversation_acknowledgement_action_ledger.php`
+adds the run/item ledger and refuses rollback after evidence exists. It ran in Dev batch 128 and the
+ledgers remain empty. Historical `2026_08_19_150000` stays an inert marker and creates no old acknowledgement table.
+Keep `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` until the accessible preview/confirmation interface,
+continuation/retry operations, dependency checks and named review `HR-2026-08-16-012` are complete.
 
 Only the explicit personal read controls change Nexum `Unread for me` state. The main command bar
 shows one `Mark read` action when the selected message is unread for the current user; `Mark unread
@@ -424,7 +488,9 @@ attachments, folders, provider flags, Tickets, Tasks, rules, categories, and tag
 The user still has to press Send manually. AI apply results, no-reply advice, and composer AI
 availability errors are shown inside the open composer instead of as a page-level Mail alert.
 
-The composer keeps local Nexum drafts for Compose, Reply, Reply All, and Forward. Autosave runs
+The composer keeps private local Nexum drafts for Compose, Reply, Reply All, and Forward. Each draft
+belongs to one active human technician, mailbox context, opaque generation, and signed version.
+Shared drafts remain unavailable while Mail collaboration is disabled. Autosave runs
 while fields change, Save draft persists the current fields explicitly, Close keeps changed local
 draft content, Discard draft prevents later restore, and confirmed SMTP acceptance marks the
 matching draft sent even when Sent follow-up later warns. An unresolved transport outcome leaves the
@@ -452,6 +518,42 @@ restore, provider Drafts sync, and draft attachment messages appear as compact c
 while the composer remains open; send and discard completion remain page-level feedback because
 those actions close the composer.
 
+### Presence and shared-draft safety status
+
+Order 9's backend/API safety boundary is implemented but unavailable by default. It does not add a
+visible Mail control or activate Reverb. Reading presence expires after 45 seconds, typing presence
+after 25 seconds, and visible tabs refresh no faster than every 10 seconds. Presence is an expiring
+cache hint only: it never changes Unread for me, provider Seen or opened-by history, and it creates no
+SQL heartbeat or permanent activity record. Ordinary shared-mailbox View is required for reading;
+ordinary View plus Send is required for typing. Cache/transport failure means the indicator is
+absent, never that an old user is still shown.
+
+A private Reply, Reply All or Forward draft can be shared only by its creator and only for the exact
+ordinary shared/system mailbox conversation/source. Shared read requires current View. Editing,
+attachments, rebase, discard and send require current View plus Send and one current 60-second lease.
+The lease uses an opaque token, a monotonic fence and exact content/source versions; after explicit
+expiry takeover, every old tab receives `423 Locked` and cannot overwrite or send. New inbound or
+changed source/provider/audience evidence blocks provider actions until a previewed rebase is
+confirmed. Rebase preserves the authored body and eligible draft attachments, while recalculating
+source, recipients, subject and threading. A stale draft may instead be discarded under its exact
+lease.
+
+Shared send uses the same once-only outbound submission and Sent-reconciliation evidence as private
+Mail. Authority, lease, fence, content and source are rechecked immediately before the durable
+provider-write marker. Attachment files are removed only after the matching lifecycle/evidence
+transaction commits. APIs expose safe lease holder/expiry/version state, never the lease token/hash,
+internal generation, source fingerprint, storage path/checksum or provider exception.
+
+Forward migration `2026_08_24_125000_add_email_shared_draft_coordination.php` ran in Dev batch 126;
+the existing draft remains private and shared ledgers are empty. Keep `EMAIL_LIVE_ENABLED`,
+`EMAIL_MAIL_COLLABORATION_ENABLED` and
+`EMAIL_MAIL_COLLABORATION_UI_ENABLED` false until Orders 8 and 9, disposable migration review and
+`HR-2026-08-16-009` pass. When either required server flag is false, the collaboration gate returns
+unavailable before checking the optional schema. The legacy `MailWorkspace` SQL-lock/presence and
+Echo whisper fallback has been removed; the workspace now requires private-live readiness, the
+separate collaboration UI flag, and `EmailCollaborationGate`. A fresh default-off asset build selects
+`app-DjAfqa_z.js` and contains no legacy presence/whisper activation marker.
+
 Provider Drafts folder messages imported by normal IMAP sync are shown separately as provider draft
 placements. `/tech/mail` has a Drafts view, a provider draft filter, and `Provider draft` badges in
 the list and reader. These imported provider draft placements hide ordinary Reply, Reply All,
@@ -460,9 +562,11 @@ the edited content through SMTP, and clean up the original provider Drafts UID a
 
 Sending uses the chosen mailbox account's SMTP configuration. Nexum sanitizes outgoing composer
 HTML, generates a plain-text fallback, and preserves In-Reply-To and References headers for reply
-modes when source message headers are available. Before SMTP, it atomically reserves the composer
-idempotency key and exact RFC `Message-ID` in the outbound Email log. Concurrent or repeated
-submission cannot claim a second send. Forward does not automatically reattach original inbound
+modes when source message headers are available. Before SMTP, it atomically reserves one immutable
+outbound submission for the exact private draft generation/version, prepared signature/body,
+threading, attachment manifest, provider binding, caller channel, and client idempotency key. It then
+reserves the exact RFC `Message-ID` in the outbound Email log. Concurrent or repeated submission of
+that snapshot cannot claim a second send. Forward does not automatically reattach original inbound
 attachments; technicians may add new attachments deliberately.
 
 An unexpected failure before provider delivery keeps the composer open and says the message could
@@ -486,7 +590,18 @@ it explicitly says **Do not resend it**. A follow-up filesystem/database error i
 same reserved idempotency key returns the accepted send or remains blocked as unresolved instead of
 calling SMTP again.
 If local draft cleanup itself fails after acceptance, the composer still closes with a sent warning
-and the reservation blocks resend, but that local draft may remain active until reviewed.
+and the reservation blocks resend. The local draft remains `send_reserved`, not editable/active,
+until reviewed.
+
+The same private draft/send boundary is available under `/api/v1/email/mailbox`. Tokens need
+`email.drafts.read` to list/show current private drafts, `email.drafts.write` to create/update/discard,
+upload/remove attachments, or explicitly sync provider Drafts, and `email.send` to preview/send and
+read the exact outbound/Sent-reconciliation status. Abilities are request ceilings: current human
+status, normal Email permission, exact mailbox View/Send access, active source placement, private
+ownership, opaque version, and provider binding are rechecked at use. Stale versions and bound or
+unresolved submissions return conflict; inaccessible IDs return Not Found. Responses expose no disk
+path, checksum, generation ID, Bcc, raw MIME, credential, or raw provider/exception evidence. A
+timeout or conflict is not permission to resend.
 
 Personal Mail signatures are owned by the Email module but edited from `/tech/profile`. `/tech/mail`
 keeps the page AI chat at the top of the right bar, followed by the conditional collapsed Mailbox
@@ -655,8 +770,21 @@ Email accounts can be marked as default senders for scoped workflows. Current sc
 default campaign sender, while each future campaign can still override the sender account.
 
 Email templates are owned by the Email domain and managed from the Templates hub. Templates support
-the `marketing` scope so campaign emails can reuse the shared renderer instead of storing separate
-template copies in Marketing.
+the `marketing` scope so campaign emails can reuse the same renderer while Marketing stores its own
+approved content and layout snapshot.
+
+`Body HTML` is edited with a visual toolbar and an explicit HTML source mode. Plaintext remains a
+separate field. The complete outer document is shown separately as `Layout HTML`: a normal
+`Branding managed` template follows current Company Profile branding, while `Customize layout`
+copies that current document into a custom advanced source field. Editing subject, body, plaintext,
+or variables does not switch the layout to custom. A custom layout stays frozen across later
+branding changes until an admin explicitly chooses `Reset to branding`.
+
+Custom Layout HTML must contain one `{{ email_body }}` slot. Body HTML is a fragment and cannot
+contain a complete `html`, `head`, or `body` document. Server validation rejects scripts, embedded
+frames/objects, forms and form controls, inline event handlers, unsafe URL schemes, meta refresh,
+and unsafe CSS. The rendered preview uses unsaved form values through the outbound renderer and is
+read-only in an empty sandbox.
 
 Ticket workflows use the same Email template system. The default
 `tickets/ticket_status_update` template is available for customer-facing workflow status changes
@@ -667,15 +795,18 @@ Published. Missing contact/account/template data and SMTP failures are recorded 
 without rolling back the Ticket transition.
 
 The renderer injects company branding variables such as `company_name`, `company_logo_url`,
-`brand_primary`, `brand_secondary`, `brand_accent`, `support_email`, and `website`. HTML bodies are
-wrapped in a simple brand-aware email layout unless the template already contains a complete HTML
-document. Plain text output remains separate and readable.
+`brand_primary`, `brand_secondary`, `brand_accent`, `support_email`, and `website`, plus explicit
+header, footer, page, content, and action-color variables. Branding-managed layouts use the Company
+Profile light-theme logo/colors on every render. Custom layouts use their stored HTML. Plaintext
+output remains separate and readable.
 
 The default template seeder creates a `marketing/marketing_campaign_default` template with branded
 HTML, plaintext fallback, clear recipient/company placeholders, and an `unsubscribe_url`
 placeholder. Campaign-specific marketing copy is edited directly in each campaign email snapshot;
 the default template does not use ambiguous campaign heading, intro, body, or call-to-action
-variables.
+variables. New and existing Marketing campaign emails also retain a materialized layout snapshot,
+so later reusable-template or Company Profile changes do not silently restyle an email that already
+belongs to a campaign.
 
 ## Inbox Rules
 
@@ -714,6 +845,20 @@ version's conditions, actions, routing phase, stop behavior, and account scope i
 state. Each matched message/rule-version pair records an idempotent execution attempt with action
 results, so repeated processing does not replay successful side effects for the same published
 version.
+
+Once an execution attempt is finished, its rule/version, message/placement, snapshots, action
+outcomes, status, and timestamps are immutable. A failed action is recorded as `failed`; every later
+position in that rule is recorded as `not_run`, and operational surfaces receive stable reason codes
+instead of raw exception or provider messages.
+
+Verified rule Undo is intentionally narrower than ordinary rule behavior. It is offered only when
+one completed successful attempt contains exactly one successful provider Archive or Move and its
+action position, type, target folder, account, placement, acknowledged status, and remote-operation
+ledger reference all agree. Nexum then uses the normal 15-minute verified provider Undo path, which
+rechecks current Mailbox Organize access, later operations, local/provider identity, and provider
+state before writing. Repeating Undo returns the same uniquely linked inverse. Local Archive/tags,
+mixed successful effects, stale or ambiguous evidence, and mismatched targets are never locally
+compensated or presented as undone.
 
 Admin Email rules support grouped conditions. Each condition row belongs to a named group, each
 group can require all or any rows, and the rule can require all groups or any group. The rule preview
@@ -829,7 +974,8 @@ application does not pretend it can chmod an existing path owned by the companio
 legacy `email/raw/2` and `email/attachments` roots have now been normalized to
 `www-data:www-data`; all 61 directories are `2770`, have group-rwx access/default ACLs, and contain no
 symlinks. Readiness reports `safe=true` and `received_at_schema_safe`. File-mode normalization still
-requires a root/operator: the read-only inventory sees 969 files, of which 79 remain
+requires a root/operator: the latest 2026-08-24 12:47 CEST read-only inventory sees 1,445 files, of
+which 79 remain
 `www-data`-owned `0644` that the SSH project user cannot chmod. Change only those 79 modes to `0660`
 without content, ownership, move, or deletion, then repeat the exact inventory and PHP-FPM/queue
 dual-runtime smoke under `HR-2026-08-15-003`.
@@ -841,25 +987,24 @@ is an explicit operator diagnostic and still prints no content. Missing referenc
 unreadable files, incomplete scans, and non-private modes fail the command; unreferenced files and
 checksum+size duplicate groups remain evidence only and never authorize deletion.
 
-The verified redacted post-recovery run changed no file, permission, database, provider, queue, or
-retention state. It inspected 969 files: `sent_pending` 322 (0 referenced / 322 unreferenced), `raw`
-547 (462 / 85), and `attachments` 100 (30 / 70), for 492 referenced and 477 unreferenced. It reports
-28 missing `message_raw` references, 79 non-private files, 15 duplicate unreferenced checksum+size
-groups, and zero unsafe or unreadable files. No result authorizes deletion.
+The verified redacted current run changed no file, permission, database, provider, queue, or
+retention state. It inspected 1,445 files: 968 referenced and 477 unreferenced. It reports 28 missing
+`message_raw` references, 79 non-private files, 15 duplicate unreferenced checksum+size groups, and
+zero unsafe or unreadable files. No result authorizes deletion.
 Focused command coverage passes 3 tests / 21 assertions.
 
-The restored database began with zero attachment rows and only counter sum 6. Recovery first froze
-and previewed the exact 19 message IDs without writes. Local raw/legacy evidence then restored 30
-rows/files across 16 messages; the idempotent rerun was unchanged. Four expected parts remain for
-messages `456`, `478`, and `479`. Their exact provider-recovery calls stopped at the fail-closed
-resolver with `dns_answer_set_denied` and made no database, file, provider-operation, or remote
-mailbox mutation. Do not bypass that endpoint decision or substitute a broad provider search.
+Current direct readback finds 32 of 34 expected attachment parts on exact source rows. Provider
+reconciliation confirmed message 479 absent from its source placement, hid placement 478 and
+soft-deleted that local cache; it still has neither raw nor attachments. Same-identity message 650
+remains active in Trash with independent raw plus two attachments and must not be substituted
+automatically. Messages 456 and 478 each retain one
+attachment row/file but lack raw snapshots. Do not guess, copy, or delete evidence.
 
 Original legacy sources, duplicate account-2 copies, and all 477 unreferenced files remain preserved
 and are not proven safe to purge. Focused coverage passes 15 / 110; earlier adjacent provider-read
 coverage passed 47 / 321, broad Email module/inbound coverage 155 / 1,308, and the complete Email
-directory 347 / 3,030. Browser/access review and safe disposition or recovery of the four blocked
-parts remain Rework Needed under `HR-2026-08-15-006`.
+directory 347 / 3,030. Browser/access review, the separate 479/650 canonical evidence, and raw
+snapshot evidence review for messages 456 and 478 remain Rework Needed under `HR-2026-08-15-006`.
 
 ## Controlled Dev Incident Recovery
 
@@ -880,14 +1025,16 @@ record.
 Automated Dev verification passes 74 tests / 613 assertions for the integrated runtime-focused
 package, 141 / 1,227 for `EmailModuleTest.php`, and 14 / 81 for
 `InboundAutomationTest.php`. Human review `HR-2026-08-15-003` remains Pending for the broader
-runtime, send, right-bar, and cross-user write checks. The two legacy trees are normalized and
-attachment readiness is safe; the remaining gate is the named human review, not another ACL repair.
+runtime, send, right-bar, and cross-user write checks. The two legacy directory trees are normalized,
+but a root/operator mode-only repair of the 79 non-private files plus dual web/FPM and queue-runtime
+smoke remains open. Current attachment evidence does not waive that storage or human review gate.
 
 ## API
 
 Email exposes Inbox routes under `/api/v1/email/inbox`, conversation classification and provider
 operations under `/api/v1/email/mailbox`, the user-scoped Smart Inbox review API under
-`/api/v1/email/smart-inbox`, and rule read/preview routes under `/api/v1/email/rules`.
+`/api/v1/email/smart-inbox`, and rule read/preview/execution/verified-Undo routes under
+`/api/v1/email/rules`.
 
 Implemented scopes:
 
@@ -895,9 +1042,11 @@ Implemented scopes:
 - `email.update`: mark authorized inbox messages as spam and queue polling for mailboxes the actor
   can organize; replace/clear conversation classification and dismiss/correct/apply authorized Smart
   Inbox suggestions.
-- `email.rules.read`: list, view, and preview admin-managed Email rules. The authenticated user must
-  also have Email rule-management permission, and rule preview requires mailbox View access to the
-  selected message.
+- `email.rules.read`: list, view, and preview admin-managed Email rules, and view account-scoped
+  execution/Undo eligibility. The authenticated user must also have Email rule-management
+  permission; previews and execution attempts require current mailbox View access.
+- `email.rules.execute`: apply an eligible exact provider inverse for an Admin rule execution. This
+  additionally requires current Mailbox Organize access and never authorizes local-only compensation.
 
 Implemented routes:
 
@@ -917,6 +1066,9 @@ Implemented routes:
 - `GET /api/v1/email/rules`
 - `GET /api/v1/email/rules/{rule}`
 - `POST /api/v1/email/rules/{rule}/preview`
+- `GET /api/v1/email/rules/executions/{attempt}`
+- `GET /api/v1/email/rules/executions/{attempt}/undo`
+- `POST /api/v1/email/rules/executions/{attempt}/undo`
 
 `GET /api/v1/email/inbox/messages` supports:
 
@@ -929,6 +1081,12 @@ Implemented routes:
 - `per_page`: page size.
 
 The API does not expose raw storage paths or email account secrets.
+
+Rule execution responses expose only action identity/status, stable reason codes, and opaque remote
+operation IDs. They omit message/condition content, folder paths, before/target snapshots, raw
+exceptions, and raw provider messages. Attempts outside the token user's current mailbox scope return
+Not Found. A specific token needs both `email.rules.read` for inspection and `email.rules.execute`
+for application; token abilities remain ceilings and do not replace current user or mailbox grants.
 
 API token abilities are request ceilings, not mailbox grants. `email.read` cannot read every mailbox;
 the authenticated token user must also have effective mailbox View access. `email.update` cannot
@@ -1144,31 +1302,37 @@ silently.
 
 ### Live update rollout status
 
-Private Reverb/Echo Mail updates are currently disabled while the bounded fanout, revocation,
-fallback and supervised-service contracts are completed. Disabled mode performs no projection-
-invalidation writes, rejects the module channel-auth endpoint, creates no Echo connection, and keeps
-ordinary Mail actions available. The disabled production bundle contains no Echo/Pusher client; an
-enabled build would expose only a lazy initializer that the independently enabled server-rendered
-Mail workspace may call. Forward repairs `2026_08_21_110000` and `120000` are installed in recovered
-Dev batches 122 and 123; the latter quarantines incomplete base-authority guards only while live mode is
-off. Do not set `EMAIL_LIVE_ENABLED` or `VITE_EMAIL_LIVE_ENABLED` true, start Reverb, or start an
-`email-live` worker until Feature Slice Order 8 and
-`HR-2026-08-16-008` pass. The historical shared-draft-lock and conversation-acknowledgement
+Private Reverb/Echo Mail updates remain disabled. The default-off publisher now freezes source
+fanout evidence with the Mail mutation, pages raw recipients in bounded durable claims, blocks
+finite failures without false source sealing, signs browser-applied version receipts, bounds catch-up
+and retention, and falls back to visible 15-second polling after a five-second socket failure. Exact
+origins and the one exact WebSocket CSP origin are required. Disabled mode performs no projection-
+invalidation writes, rejects module channel auth, creates no Echo connection, and keeps ordinary Mail
+actions available. Activation additionally requires `EMAIL_LIVE_RUNTIME_APPROVED=true`; this second
+gate must remain false with `EMAIL_LIVE_ENABLED` and `VITE_EMAIL_LIVE_ENABLED` until the authority
+writer/recompute and dedicated bounded current-page paths are complete and the supervised Reverb,
+Apache/Plesk, worker/scheduler and browser checks in `HR-2026-08-16-008` pass. Forward migration
+`2026_08_24_120000` ran in Dev batch 125 with every runtime gate false; migration deployment does
+not authorize activation.
+The historical shared-draft-lock and conversation-acknowledgement
 migration filenames from 2026-08-19 are registered as inert deploy markers in Dev batches 119 and 120; they
-created no tables. `EMAIL_MAIL_COLLABORATION_ENABLED` and
-`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` also default false; corrected designs require new forward
-migrations.
+created no tables. `EMAIL_MAIL_COLLABORATION_ENABLED`, `EMAIL_MAIL_COLLABORATION_UI_ENABLED`, and
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` also default false. Corrected Order 12 and Order 9 schemas ran in
+Dev batches 128 and 126 with empty ledgers, but their user-facing activation, private transport, UI,
+and operational review remain gated.
 
 Reply, Reply All and Forward now resolve the selected placement again at send time. This closes the
-undefined-placement error, but does not activate unfinished shared drafts or presence. Private drafts
-remain the required boundary until explicit shared scope and durable fencing are implemented and
-reviewed.
+undefined-placement error, but does not activate shared drafts or presence. Private drafts remain
+the only visible workspace boundary until the corrected shared scope/fencing migration, Order 8
+transport and human review are completed and explicitly enabled.
 
 Nexum captures header evidence from the original Webklex raw header block. Folded values are
 unfolded, but repeated `Received` and `Authentication-Results` fields keep their top-to-bottom order
 so the configured first receiving hop can be verified. Missing, malformed, or untrusted header
 evidence never establishes sender trust and must lead to review rather than an automatic write.
 
-Mail Reply, Reply All, Forward, and new compose sending are currently available through the Livewire
-workspace and the shared `SendEmailComposerMessage` action. A public multipart API endpoint for
-sending remains a later slice.
+Mail Reply, Reply All, Forward, provider-Draft editing, and new Compose sending use one private
+draft/submission boundary from both the Livewire workspace and the versioned draft, attachment,
+preview, send, submission-status, and Sent-reconciliation API. The same ledger also backs the
+default-off Order 9 shared API, but shared/team drafts remain unavailable in the workspace until its
+separate migration, runtime/UI activation and review are complete.

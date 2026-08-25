@@ -20,6 +20,14 @@ use Illuminate\Support\Str;
  */
 class ArticleQuery
 {
+    private const MAX_SEARCH_TERMS = 24;
+
+    private const MIN_RELEVANCE_SCORE = 14;
+
+    private const TITLE_TERM_SCORE = 6;
+
+    private const BODY_TERM_SCORE = 2;
+
     /**
      * Return paginated articles for the Tech knowledge base list.
      *
@@ -66,10 +74,11 @@ class ArticleQuery
     /**
      * Find the strongest published Knowledge articles for a ticket.
      *
-     * The search intentionally stays database-portable: ticket text is reduced
-     * to a small keyword set, candidates are fetched with LIKE filters, and the
-     * final ranking happens in PHP so SQLite tests and MySQL production behave
-     * predictably without requiring a full-text index.
+     * The search intentionally stays database-portable: ticket text and article
+     * content are reduced to normalized terms, and ranking happens in PHP so
+     * SQLite tests and MySQL production behave predictably without requiring a
+     * full-text index. Every eligible article is scored before the result limit
+     * is applied, preventing recent weak matches from hiding older strong ones.
      */
     public function relevantForTicket(Ticket $ticket, int $limit = 3): Collection
     {
@@ -92,17 +101,6 @@ class ArticleQuery
                     $query->orWhere('client_scope_id', $ticket->client_id);
                 }
             })
-            ->where(function ($query) use ($terms) {
-                foreach ($terms as $term) {
-                    $like = '%' . addcslashes($term, '%_\\') . '%';
-
-                    $query->orWhere('title', 'like', $like)
-                        ->orWhere('body_markdown', 'like', $like)
-                        ->orWhere('body_html', 'like', $like);
-                }
-            })
-            ->latest('updated_at')
-            ->limit(30)
             ->get();
 
         return $articles
@@ -111,8 +109,14 @@ class ArticleQuery
 
                 return $article;
             })
-            ->filter(fn (Article $article) => $article->relevance_score > 0)
-            ->sortByDesc('relevance_score')
+            ->filter(fn (Article $article) => $article->relevance_score >= self::MIN_RELEVANCE_SCORE)
+            ->sort(function (Article $left, Article $right) {
+                $scoreOrder = $right->relevance_score <=> $left->relevance_score;
+
+                return $scoreOrder !== 0
+                    ? $scoreOrder
+                    : $left->getKey() <=> $right->getKey();
+            })
             ->take($limit)
             ->values();
     }
@@ -133,44 +137,63 @@ class ArticleQuery
             ->implode(' ');
 
         $stopWords = [
-            'about', 'after', 'again', 'also', 'cannot', 'could', 'error', 'from',
-            'have', 'into', 'issue', 'med', 'not', 'og', 'på', 'saken', 'the',
-            'this', 'ticket', 'til', 'with',
+            'about', 'after', 'again', 'also', 'and', 'are', 'av', 'cannot',
+            'could', 'den', 'det', 'eller', 'en', 'er', 'error', 'et', 'for',
+            'fra', 'from', 'have', 'inn', 'into', 'issue', 'kan', 'med', 'not',
+            'og', 'på', 'saken', 'skal', 'som', 'the', 'this', 'ticket', 'til',
+            'vil', 'with',
         ];
 
-        return Str::of($context)
-            ->lower()
-            ->replaceMatches('/[^[:alnum:]\pL]+/u', ' ')
-            ->explode(' ')
-            ->map(fn ($term) => trim($term))
+        return collect($this->normalizedTokens($context))
             ->filter(fn ($term) => mb_strlen($term) >= 3 && ! in_array($term, $stopWords, true))
             ->countBy()
             ->sortDesc()
             ->keys()
-            ->take(10)
+            ->take(self::MAX_SEARCH_TERMS)
             ->values()
             ->all();
     }
 
     /**
-     * Rank title hits above body hits so a concise runbook title wins.
+     * Rank exact title terms above exact body terms so concise runbooks win.
      */
     private function scoreArticle(Article $article, array $terms): int
     {
-        $title = Str::lower($article->title);
-        $body = Str::lower(strip_tags((string) ($article->body_markdown ?: $article->body_html)));
+        $titleTerms = array_fill_keys($this->normalizedTokens($article->title), true);
+        $bodyTerms = array_fill_keys(
+            $this->normalizedTokens($article->body_markdown ?: $article->body_html),
+            true,
+        );
         $score = 0;
 
         foreach ($terms as $term) {
-            if (Str::contains($title, $term)) {
-                $score += 8;
+            if (isset($titleTerms[$term])) {
+                $score += self::TITLE_TERM_SCORE;
+
+                continue;
             }
 
-            if (Str::contains($body, $term)) {
-                $score += 2;
+            if (isset($bodyTerms[$term])) {
+                $score += self::BODY_TERM_SCORE;
             }
         }
 
         return $score;
+    }
+
+    /**
+     * Normalize prose into exact terms while keeping hyphenated words intact.
+     */
+    private function normalizedTokens(?string $text): array
+    {
+        return Str::of(strip_tags((string) $text))
+            ->lower()
+            ->replaceMatches('/(?<=\pL)(?:\p{Pd}|-)(?=\pL)/u', '')
+            ->replaceMatches('/[^[:alnum:]\pL]+/u', ' ')
+            ->explode(' ')
+            ->map(fn ($term) => trim($term))
+            ->filter()
+            ->values()
+            ->all();
     }
 }

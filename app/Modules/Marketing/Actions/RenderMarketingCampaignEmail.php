@@ -11,9 +11,7 @@ use RuntimeException;
 
 class RenderMarketingCampaignEmail
 {
-    public function __construct(private readonly EmailTemplateRenderer $renderer)
-    {
-    }
+    public function __construct(private readonly EmailTemplateRenderer $renderer) {}
 
     public function handle(MarketingCampaign $campaign, MarketingCampaignEmail $email, array $overrides = []): array
     {
@@ -53,6 +51,8 @@ class RenderMarketingCampaignEmail
             'body_text' => array_key_exists('body_text', $overrides)
                 ? (string) $overrides['body_text']
                 : $email->effectiveBodyText(),
+            'layout_mode' => $template->layout_mode ?? EmailTemplate::LAYOUT_BRANDING,
+            'layout_html' => $template->layout_html,
             'variables' => $email->variables_snapshot ?: (array) $email->template?->variables,
             'is_default' => false,
             'is_active' => true,

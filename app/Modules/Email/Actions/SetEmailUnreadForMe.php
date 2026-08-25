@@ -4,15 +4,17 @@ namespace App\Modules\Email\Actions;
 
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
+use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailMessageUserState;
+use App\Modules\Email\Services\EmailLiveInvalidator;
 use App\Modules\Email\Services\EmailOrdinaryMailboxEntitlementResolver;
 use App\Modules\Email\Services\EmailUnreadAccessEpochService;
 use App\Modules\Email\Services\EmailUnreadSchemaState;
-use App\Modules\Email\Services\EmailLiveInvalidator;
-use App\Modules\Email\Models\EmailLiveProjectionChange;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SetEmailUnreadForMe
 {
@@ -25,7 +27,9 @@ class SetEmailUnreadForMe
 
     public function handle(User $actor, EmailMessage $message, bool $isUnread): EmailMessageUserState
     {
-        return DB::transaction(function () use ($actor, $isUnread, $message): EmailMessageUserState {
+        $liveOperationId = (string) Str::uuid();
+
+        return DB::transaction(function () use ($actor, $isUnread, $liveOperationId, $message): EmailMessageUserState {
             $lockedAccount = EmailAccount::query()->lockForUpdate()->findOrFail($message->account_id);
             $lockedActor = User::query()->lockForUpdate()->findOrFail($actor->id);
 
@@ -82,10 +86,27 @@ class SetEmailUnreadForMe
                 'user' => [
                     $lockedActor->id => [EmailLiveProjectionChange::TYPE_PERSONAL_STATE],
                 ],
-                'conversations' => [$lockedMessage->conversation_id],
+                'conversations' => $this->conversationIds($lockedMessage),
+                'idempotency_key' => "unread-for-me:{$liveOperationId}",
             ]);
 
             return $state->fresh();
         });
+    }
+
+    /** @return list<int> */
+    private function conversationIds(EmailMessage $message): array
+    {
+        return EmailMailboxPlacement::query()
+            ->where('email_message_id', $message->id)
+            ->whereNotNull('email_conversation_id')
+            ->distinct()
+            ->orderBy('email_conversation_id')
+            ->limit(51)
+            ->pluck('email_conversation_id')
+            ->map(fn (mixed $identifier): int => (int) $identifier)
+            ->filter(fn (int $identifier): bool => $identifier > 0)
+            ->values()
+            ->all();
     }
 }

@@ -103,6 +103,7 @@
         $showAddMessage = old('_message_form') || old('body') || old('type');
         $showAddTimeModal = old('_time_entry_form');
         $actionDecision = fn (string $key) => $ticketActionDecisions[$key] ?? ['visible' => true, 'allowed' => true, 'reason' => null];
+        $canViewClientDetails = (bool) request()->user()?->can('client.view');
         $defaultTimeRateKey = old('rate_key', $timeRateOptions->first()['key'] ?? null);
         $currentTicketQuote = $ticket->salesContext?->opportunity?->currentQuoteVersion;
         $ticketQuoteVersions = collect($ticket->salesContext?->opportunity?->quotes ?? [])
@@ -131,6 +132,65 @@
             ->sortByDesc('date')
             ->values();
     @endphp
+
+    {{-- Operational identity stays visible without opening the Customer or Details accordions. --}}
+    <section id="ticketOperationalContext" class="mb-3" aria-labelledby="ticketOperationalContextHeading">
+        <h2 id="ticketOperationalContextHeading" class="visually-hidden">Ticket context</h2>
+        <dl class="row g-2 mb-0">
+            <div class="col-12 col-md-4">
+                <div class="border rounded bg-body-tertiary px-3 py-2 h-100">
+                    <dt class="small text-uppercase text-body-secondary mb-1">Assigned to</dt>
+                    <dd class="fw-semibold text-break mb-0" title="{{ $ticket->owner?->name ?? 'Unassigned' }}">
+                        {{ $ticket->owner?->name ?? 'Unassigned' }}
+                    </dd>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="border rounded bg-body-tertiary px-3 py-2 h-100">
+                    <dt class="small text-uppercase text-body-secondary mb-1">Customer</dt>
+                    <dd class="fw-semibold text-break mb-0">
+                        @if($ticket->workContext?->isInternal())
+                            Internal work
+                        @elseif($ticket->client)
+                            @if($canViewClientDetails)
+                                <a
+                                    href="{{ route('tech.clients.show', $ticket->client) }}"
+                                    class="link-primary link-offset-2 focus-ring rounded-1 text-break"
+                                    aria-label="Open customer {{ $ticket->client->name }}"
+                                    title="{{ $ticket->client->name }}">
+                                    {{ $ticket->client->name }}
+                                </a>
+                            @else
+                                <span title="{{ $ticket->client->name }}">{{ $ticket->client->name }}</span>
+                            @endif
+                        @else
+                            No customer
+                        @endif
+                    </dd>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="border rounded bg-body-tertiary px-3 py-2 h-100">
+                    <dt class="small text-uppercase text-body-secondary mb-1">Contact</dt>
+                    <dd class="fw-semibold text-break mb-0">
+                        @if($ticket->workContext?->isInternal() || ! $ticket->contact)
+                            No contact
+                        @elseif($canViewClientDetails)
+                            <a
+                                href="{{ route('tech.clients.user.show', $ticket->contact) }}"
+                                class="link-primary link-offset-2 focus-ring rounded-1 text-break"
+                                aria-label="Open contact {{ $ticket->contact->name }}"
+                                title="{{ $ticket->contact->name }}">
+                                {{ $ticket->contact->name }}
+                            </a>
+                        @else
+                            <span title="{{ $ticket->contact->name }}">{{ $ticket->contact->name }}</span>
+                        @endif
+                    </dd>
+                </div>
+            </div>
+        </dl>
+    </section>
 
     <div class="row">
         <div class="col-12">
@@ -1924,14 +1984,20 @@
                             <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
                                 <div class="min-w-0">
                                     <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Client</div>
-                                    <a href="{{ route('tech.clients.show', $ticket->client) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $ticket->client->name }}</a>
+                                    @if($canViewClientDetails)
+                                        <a href="{{ route('tech.clients.show', $ticket->client) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $ticket->client->name }}</a>
+                                    @else
+                                        <div class="fw-semibold text-truncate">{{ $ticket->client->name }}</div>
+                                    @endif
                                     @if($ticket->client->client_number)
                                         <div class="text-muted">{{ $ticket->client->client_number }}</div>
                                     @endif
                                 </div>
-                                <a href="{{ route('tech.clients.show', $ticket->client) }}" class="btn btn-sm btn-outline-secondary flex-shrink-0" title="Open client">
-                                    <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
-                                </a>
+                                @if($canViewClientDetails)
+                                    <a href="{{ route('tech.clients.show', $ticket->client) }}" class="btn btn-sm btn-outline-secondary flex-shrink-0" title="Open client">
+                                        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                                    </a>
+                                @endif
                             </div>
                             @if($clientWebsite !== '')
                                 <div class="text-truncate mb-1">
@@ -1952,7 +2018,11 @@
                                     <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
                                         <div class="min-w-0">
                                             <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Contact</div>
-                                            <a href="{{ route('tech.clients.user.show', $ticketContact) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $ticketContact->name }}</a>
+                                            @if($canViewClientDetails)
+                                                <a href="{{ route('tech.clients.user.show', $ticketContact) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $ticketContact->name }}</a>
+                                            @else
+                                                <div class="fw-semibold text-truncate">{{ $ticketContact->name }}</div>
+                                            @endif
                                             @if($ticketContact->role)
                                                 <div class="text-muted text-truncate">{{ $ticketContact->role }}</div>
                                             @endif
@@ -2002,11 +2072,17 @@
                                     <div class="d-flex align-items-start justify-content-between gap-2">
                                         <div class="min-w-0">
                                             <div class="text-muted text-uppercase mb-1" style="font-size: .68rem;">Site</div>
-                                            <a href="{{ route('tech.clients.sites.show', $customerSite) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $customerSite->name }}</a>
+                                            @if($canViewClientDetails)
+                                                <a href="{{ route('tech.clients.sites.show', $customerSite) }}" class="fw-semibold text-decoration-none text-truncate d-block">{{ $customerSite->name }}</a>
+                                            @else
+                                                <div class="fw-semibold text-truncate">{{ $customerSite->name }}</div>
+                                            @endif
                                         </div>
-                                        <a href="{{ route('tech.clients.sites.show', $customerSite) }}" class="btn btn-sm btn-outline-secondary flex-shrink-0" title="Open site">
-                                            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
-                                        </a>
+                                        @if($canViewClientDetails)
+                                            <a href="{{ route('tech.clients.sites.show', $customerSite) }}" class="btn btn-sm btn-outline-secondary flex-shrink-0" title="Open site">
+                                                <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                                            </a>
+                                        @endif
                                     </div>
                                     @if($customerSite->address)
                                         <div class="mt-1">{{ $customerSite->address }}</div>

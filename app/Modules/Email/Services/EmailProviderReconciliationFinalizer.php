@@ -298,10 +298,10 @@ final class EmailProviderReconciliationFinalizer
         }, 3);
     }
 
-    /** Preserve a concurrent cancellation while recording an import barrier. */
-    private function markWaitingForImports(EmailProviderReconciliationRun $run): void
+    /** Preserve cancellation and advance progress only when the barrier changes. */
+    private function markWaitingForImports(EmailProviderReconciliationRun $run): bool
     {
-        DB::transaction(function () use ($run): void {
+        return DB::transaction(function () use ($run): bool {
             $locked = EmailProviderReconciliationRun::query()
                 ->lockForUpdate()
                 ->findOrFail($run->id);
@@ -309,14 +309,20 @@ final class EmailProviderReconciliationFinalizer
                 || $locked->status === EmailProviderReconciliationRun::STATUS_CANCELLING
                 || $locked->cancellation_requested_at !== null
                 || (int) $locked->active_slot !== 1) {
-                return;
+                return false;
             }
 
             $locked->forceFill([
                 'status' => EmailProviderReconciliationRun::STATUS_WAITING_FOR_IMPORTS,
                 'phase' => EmailProviderReconciliationRun::PHASE_IMPORTS,
-                'last_progress_at' => now(),
-            ])->save();
+            ]);
+            if (! $locked->isDirty(['status', 'phase'])) {
+                return false;
+            }
+
+            $locked->forceFill(['last_progress_at' => now()])->save();
+
+            return true;
         }, 3);
     }
 
@@ -422,33 +428,53 @@ final class EmailProviderReconciliationFinalizer
                 return;
             }
 
+            $progressAt = now();
             $lockedFolder->forceFill([
                 'end_uid_validity' => $state->uidValidity,
                 'end_uid_next' => $state->uidNext,
                 'end_exists_count' => $state->existsCount,
                 'end_highest_modseq' => $state->supportsModseq ? $state->highestModseq : null,
                 'end_supports_modseq' => $state->supportsModseq,
-                'last_progress_at' => now(),
+                'last_progress_at' => $progressAt,
             ])->save();
+            $lockedRun->forceFill(['last_progress_at' => $progressAt])->save();
         }, 3);
     }
 
     private function finalizeRemoteFolder(
         EmailProviderReconciliationRun $run,
         EmailProviderReconciliationFolder $folderRun,
-    ): void {
+    ): bool {
+        $folderRun = $folderRun->fresh();
+        if (! $folderRun
+            || (int) $folderRun->email_provider_reconciliation_run_id !== (int) $run->id
+            || ! in_array(
+                $folderRun->discovery_state,
+                EmailProviderReconciliationFolder::REMOTE_DISCOVERY_STATES,
+                true,
+            )
+            || $folderRun->status
+                !== EmailProviderReconciliationFolder::STATUS_WAITING_FOR_IMPORTS
+            || ! in_array(
+                $folderRun->reason_code,
+                EmailProviderReconciliationFolder::STABLE_EVIDENCE_REASON_CODES,
+                true,
+            )) {
+            return false;
+        }
+
         if ($folderRun->expected_uid_validity !== null
             && (int) $folderRun->end_uid_validity !== (int) $folderRun->expected_uid_validity) {
             $this->blockFolderForUidValidityChange($folderRun);
 
-            return;
+            return true;
         }
 
         if ($this->hasUnsuccessfulImport($folderRun)) {
             $run->markAutomationScopeUnsafe();
             $this->markFolderStale($folderRun, 'import_incomplete');
 
-            return;
+            return true;
         }
 
         if (! in_array($folderRun->reason_code, [
@@ -458,12 +484,12 @@ final class EmailProviderReconciliationFinalizer
         ], true)) {
             $reason = $this->stabilityFailure($folderRun);
             if ($reason === self::PLACEMENT_SNAPSHOT_PENDING) {
-                return;
+                return true;
             }
             if ($reason !== null) {
                 $this->markFolderStale($folderRun, $reason);
 
-                return;
+                return true;
             }
 
             // Freeze all potential absence evidence before changing any
@@ -474,7 +500,7 @@ final class EmailProviderReconciliationFinalizer
                 'last_progress_at' => now(),
             ])->save();
 
-            return;
+            return true;
         }
 
         if ($folderRun->reason_code === 'stable_absence_freeze') {
@@ -483,19 +509,19 @@ final class EmailProviderReconciliationFinalizer
             // any concurrent version change before projection begins. This
             // avoids an O(n²) re-hash for very large missing inventories.
             if ($this->createAbsenceCandidates($run, $folderRun)) {
-                return;
+                return true;
             }
             $snapshotMatches = $this->placementSnapshotMatchesScan(
                 $folderRun,
                 EmailProviderReconciliationFolder::SNAPSHOT_REMOTE_PROJECTION,
             );
             if ($snapshotMatches === null) {
-                return;
+                return true;
             }
             if (! $snapshotMatches) {
                 $this->markFolderStale($folderRun, 'placement_version_drift');
 
-                return;
+                return true;
             }
 
             $folderRun->forceFill([
@@ -503,7 +529,7 @@ final class EmailProviderReconciliationFinalizer
                 'last_progress_at' => now(),
             ])->save();
 
-            return;
+            return true;
         }
 
         if ($folderRun->reason_code === 'stable_operation_projection') {
@@ -520,11 +546,11 @@ final class EmailProviderReconciliationFinalizer
                     if (! $this->placements->applyStableObservation($run, $observation)) {
                         $this->markFolderStale($folderRun, 'placement_version_drift');
 
-                        return;
+                        return true;
                     }
                 }
 
-                return;
+                return true;
             }
 
             $conflicts = EmailProviderReconciliationItem::query()
@@ -539,11 +565,11 @@ final class EmailProviderReconciliationFinalizer
                     if (! $this->finalizeObservedOperation($run, $conflict)) {
                         $this->markFolderStale($folderRun, 'placement_version_drift');
 
-                        return;
+                        return true;
                     }
                 }
 
-                return;
+                return true;
             }
 
             $folderRun->forceFill([
@@ -551,7 +577,7 @@ final class EmailProviderReconciliationFinalizer
                 'last_progress_at' => now(),
             ])->save();
 
-            return;
+            return true;
         }
 
         $pending = EmailProviderReconciliationItem::query()
@@ -566,56 +592,77 @@ final class EmailProviderReconciliationFinalizer
                 $this->projectAbsence($run, $item);
             }
 
-            return;
+            return true;
         }
 
         if ($this->hasStaleAbsence($folderRun)) {
             $this->markFolderStale($folderRun, 'placement_version_drift');
 
-            return;
+            return true;
         }
 
-        if (! $this->advanceFolderItemSummary($run, $folderRun)) {
-            return;
+        $summary = $this->advanceFolderItemSummary($run, $folderRun);
+        if (! $summary['complete']) {
+            return $summary['progressed'];
         }
         $folderRun = $folderRun->fresh();
         if ($folderRun->item_summary_nonterminal) {
             $this->markFolderStale($folderRun, 'folder_item_summary_nonterminal');
 
-            return;
+            return true;
         }
 
-        $this->completeRemoteFolder($run, $folderRun);
+        return $this->completeRemoteFolder($run, $folderRun);
     }
 
-    private function validateRemoteFolder(EmailProviderReconciliationFolder $folderRun): void
+    private function validateRemoteFolder(EmailProviderReconciliationFolder $folderRun): bool
     {
+        $folderRun = $folderRun->fresh();
+        if (! $folderRun
+            || ! in_array(
+                $folderRun->discovery_state,
+                EmailProviderReconciliationFolder::REMOTE_DISCOVERY_STATES,
+                true,
+            )
+            || $folderRun->status
+                !== EmailProviderReconciliationFolder::STATUS_WAITING_FOR_IMPORTS
+            || $folderRun->end_uid_validity === null
+            || in_array(
+                $folderRun->reason_code,
+                EmailProviderReconciliationFolder::STABLE_EVIDENCE_REASON_CODES,
+                true,
+            )) {
+            return false;
+        }
+
         if ($folderRun->expected_uid_validity !== null
             && (int) $folderRun->end_uid_validity !== (int) $folderRun->expected_uid_validity) {
             $this->blockFolderForUidValidityChange($folderRun);
 
-            return;
+            return true;
         }
         if ($this->hasUnsuccessfulImport($folderRun)) {
             $this->markFolderStale($folderRun, 'import_incomplete');
 
-            return;
+            return true;
         }
 
         $reason = $this->stabilityFailure($folderRun);
         if ($reason === self::PLACEMENT_SNAPSHOT_PENDING) {
-            return;
+            return true;
         }
         if ($reason !== null) {
             $this->markFolderStale($folderRun, $reason);
 
-            return;
+            return true;
         }
 
         $folderRun->forceFill([
             'reason_code' => 'stable_end_validated',
             'last_progress_at' => now(),
         ])->save();
+
+        return true;
     }
 
     private function finalizeObservedOperation(
@@ -1025,8 +1072,8 @@ final class EmailProviderReconciliationFinalizer
     private function completeRemoteFolder(
         EmailProviderReconciliationRun $run,
         EmailProviderReconciliationFolder $folderRun,
-    ): void {
-        DB::transaction(function () use ($folderRun, $run): void {
+    ): bool {
+        return DB::transaction(function () use ($folderRun, $run): bool {
             $lockedRun = EmailProviderReconciliationRun::query()
                 ->lockForUpdate()
                 ->find($run->id);
@@ -1041,7 +1088,7 @@ final class EmailProviderReconciliationFinalizer
                 || $locked->item_summary_status
                     !== EmailProviderReconciliationFolder::ITEM_SUMMARY_SEALED
                 || $locked->item_summary_nonterminal) {
-                return;
+                return false;
             }
 
             $locked->forceFill([
@@ -1066,13 +1113,24 @@ final class EmailProviderReconciliationFinalizer
                 'sync_error_message' => null,
                 'updated_at' => now(),
             ]);
+
+            return true;
         }, 3);
     }
 
     private function finalizeLocalOnlyFolder(
         EmailProviderReconciliationRun $run,
         EmailProviderReconciliationFolder $folderRun,
-    ): void {
+    ): bool {
+        $folderRun = $folderRun->fresh();
+        if (! $folderRun
+            || (int) $folderRun->email_provider_reconciliation_run_id !== (int) $run->id
+            || $folderRun->discovery_state
+                !== EmailProviderReconciliationFolder::DISCOVERY_LOCAL_ONLY
+            || $folderRun->status !== EmailProviderReconciliationFolder::STATUS_PENDING) {
+            return false;
+        }
+
         $completedHistory = EmailProviderReconciliationFolder::query()
             ->join('email_provider_reconciliation_runs as history_runs', 'history_runs.id', '=', 'email_provider_reconciliation_folders.email_provider_reconciliation_run_id')
             ->where('email_provider_reconciliation_folders.email_folder_id', $folderRun->email_folder_id)
@@ -1107,7 +1165,7 @@ final class EmailProviderReconciliationFinalizer
                 'finished_at' => now(),
             ])->save();
 
-            return;
+            return true;
         }
 
         if ($this->operations->hasUnresolvedForFolder((int) $folderRun->email_folder_id)) {
@@ -1118,7 +1176,7 @@ final class EmailProviderReconciliationFinalizer
                 'finished_at' => now(),
             ])->save();
 
-            return;
+            return true;
         }
 
         if (! in_array($folderRun->reason_code, [
@@ -1138,7 +1196,7 @@ final class EmailProviderReconciliationFinalizer
                     'finished_at' => now(),
                 ])->save();
 
-                return;
+                return true;
             }
 
             $baseline = $this->placementSnapshots->advance(
@@ -1146,7 +1204,7 @@ final class EmailProviderReconciliationFinalizer
                 EmailProviderReconciliationFolder::SNAPSHOT_LOCAL_FREEZE,
             );
             if (! $baseline['complete']) {
-                return;
+                return true;
             }
             $folderRun->forceFill([
                 'uid_namespace_id' => $activeNamespaceId,
@@ -1158,24 +1216,24 @@ final class EmailProviderReconciliationFinalizer
                 'last_progress_at' => now(),
             ])->save();
 
-            return;
+            return true;
         }
 
         if ($folderRun->reason_code === 'stable_folder_absence_freeze') {
             if ($this->createAbsenceCandidates($run, $folderRun->fresh())) {
-                return;
+                return true;
             }
             $snapshotMatches = $this->placementSnapshotMatchesScan(
                 $folderRun,
                 EmailProviderReconciliationFolder::SNAPSHOT_LOCAL_PROJECTION,
             );
             if ($snapshotMatches === null) {
-                return;
+                return true;
             }
             if (! $snapshotMatches) {
                 $this->markFolderStale($folderRun, 'placement_version_drift');
 
-                return;
+                return true;
             }
 
             $folderRun->forceFill([
@@ -1183,7 +1241,7 @@ final class EmailProviderReconciliationFinalizer
                 'last_progress_at' => now(),
             ])->save();
 
-            return;
+            return true;
         }
 
         $pending = EmailProviderReconciliationItem::query()
@@ -1198,23 +1256,24 @@ final class EmailProviderReconciliationFinalizer
                 $this->projectAbsence($run, $item);
             }
 
-            return;
+            return true;
         }
 
         if ($this->hasStaleAbsence($folderRun)) {
             $this->markFolderStale($folderRun, 'placement_version_drift');
 
-            return;
+            return true;
         }
 
-        if (! $this->advanceFolderItemSummary($run, $folderRun)) {
-            return;
+        $summary = $this->advanceFolderItemSummary($run, $folderRun);
+        if (! $summary['complete']) {
+            return $summary['progressed'];
         }
         $folderRun = $folderRun->fresh();
         if ($folderRun->item_summary_nonterminal) {
             $this->markFolderStale($folderRun, 'folder_item_summary_nonterminal');
 
-            return;
+            return true;
         }
 
         EmailFolder::query()->whereKey($folderRun->email_folder_id)->update([
@@ -1233,6 +1292,8 @@ final class EmailProviderReconciliationFinalizer
             'conflict_count' => $folderRun->item_summary_conflict_count,
             'finished_at' => now(),
         ])->save();
+
+        return true;
     }
 
     private function hasUnsuccessfulImport(EmailProviderReconciliationFolder $folderRun): bool
@@ -1299,12 +1360,14 @@ final class EmailProviderReconciliationFinalizer
     /**
      * Freeze and consume one folder-item page. The caller must return after a
      * page; only a later invocation may publish the sealed folder outcome.
+     *
+     * @return array{complete: bool, progressed: bool}
      */
     private function advanceFolderItemSummary(
         EmailProviderReconciliationRun $run,
         EmailProviderReconciliationFolder $folderRun,
-    ): bool {
-        return DB::transaction(function () use ($folderRun, $run): bool {
+    ): array {
+        return DB::transaction(function () use ($folderRun, $run): array {
             $lockedRun = EmailProviderReconciliationRun::query()
                 ->lockForUpdate()
                 ->find($run->id);
@@ -1316,7 +1379,7 @@ final class EmailProviderReconciliationFinalizer
                 || (int) $lockedFolder->email_provider_reconciliation_run_id
                     !== (int) $lockedRun->id
                 || ! $this->folderReadyForItemSummary($lockedFolder)) {
-                return false;
+                return ['complete' => false, 'progressed' => false];
             }
 
             if ($lockedFolder->item_summary_status === null) {
@@ -1334,7 +1397,7 @@ final class EmailProviderReconciliationFinalizer
                     'last_progress_at' => now(),
                 ])->save();
 
-                return false;
+                return ['complete' => false, 'progressed' => true];
             }
 
             if ($lockedFolder->item_summary_status
@@ -1352,15 +1415,15 @@ final class EmailProviderReconciliationFinalizer
                         'last_progress_at' => now(),
                     ])->save();
 
-                    return false;
+                    return ['complete' => false, 'progressed' => true];
                 }
 
-                return true;
+                return ['complete' => true, 'progressed' => false];
             }
 
             if ($lockedFolder->item_summary_status
                 !== EmailProviderReconciliationFolder::ITEM_SUMMARY_RUNNING) {
-                return false;
+                return ['complete' => false, 'progressed' => false];
             }
 
             $items = EmailProviderReconciliationItem::query()
@@ -1413,7 +1476,7 @@ final class EmailProviderReconciliationFinalizer
                 'last_progress_at' => now(),
             ])->save();
 
-            return false;
+            return ['complete' => false, 'progressed' => true];
         }, 3);
     }
 
@@ -1432,7 +1495,8 @@ final class EmailProviderReconciliationFinalizer
      * Serialize every DB-only projection against HTTP cancellation. The run
      * lock remains held through nested folder/item/placement transactions, so
      * either the bounded projection commits first or cancellation intent wins
-     * and the callback performs no write.
+     * and the callback performs no write. A callback must report whether it
+     * made durable progress; a stale/no-op callback never refreshes liveness.
      */
     private function withActiveFinalizationRun(
         EmailProviderReconciliationRun $run,
@@ -1446,7 +1510,15 @@ final class EmailProviderReconciliationFinalizer
                 return false;
             }
 
-            $callback($locked);
+            $progressed = (bool) $callback($locked);
+            if (! $progressed) {
+                return false;
+            }
+
+            // The callback and this heartbeat share the cancellation-owned
+            // run lock. Exceptions roll both back, while a cancellation that
+            // wins the lock prevents both the bounded step and its progress.
+            $locked->forceFill(['last_progress_at' => now()])->save();
 
             return true;
         }, 3);
@@ -1818,8 +1890,6 @@ final class EmailProviderReconciliationFinalizer
                 ->where('automation_status', EmailProviderReconciliationItem::AUTOMATION_RUNNING)
                 ->exists();
             if ($freshAutomationRunning) {
-                $locked->forceFill(['last_progress_at' => now()])->save();
-
                 return false;
             }
 
@@ -1831,8 +1901,6 @@ final class EmailProviderReconciliationFinalizer
                 // Notification-owned fanout is already durable and may have
                 // committed canonical/outbox rows. Drain it to a truthful
                 // terminal outcome instead of truncating or cancelling it.
-                $locked->forceFill(['last_progress_at' => now()])->save();
-
                 return false;
             }
 
@@ -1855,8 +1923,6 @@ final class EmailProviderReconciliationFinalizer
                 // A bounded DB-only worker may still be projecting personal
                 // read baselines. Keep the run CANCELLING and preserve its
                 // token until that worker finishes or crosses the orphan TTL.
-                $locked->forceFill(['last_progress_at' => now()])->save();
-
                 return false;
             }
 

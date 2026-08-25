@@ -8286,6 +8286,13 @@ class EmailModuleTest extends TestCase
                 'primary_color' => '#0055AA',
                 'secondary_color' => '#003366',
                 'accent_color' => '#AA5500',
+                'light_header_background' => '#003366',
+                'light_header_color' => '#FFFFFF',
+                'light_footer_background' => '#003366',
+                'light_footer_color' => '#FFFFFF',
+                'light_main_background' => '#EEF4F8',
+                'light_content_background' => '#FFFFFF',
+                'light_left_sidebar_color' => '#172B3A',
             ]),
         ]);
 
@@ -8309,9 +8316,137 @@ class EmailModuleTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('tech.admin.system.templatesManagement.email.edit', $template))
             ->assertOk()
-            ->assertSee('Rendered Preview')
+            ->assertSee('Rendered preview')
             ->assertSee('marketing', false)
             ->assertSee('unsubscribe_url');
+    }
+
+    #[Test]
+    public function branding_layout_tracks_company_colors_until_it_is_explicitly_customized(): void
+    {
+        $setting = CommonSetting::query()->create([
+            'type' => 'company_profile',
+            'name' => 'branding',
+            'description' => 'Template layout branding test',
+            'value' => 'Layout Company',
+            'json' => json_encode([
+                'company_name' => 'Layout Company',
+                'light_header_background' => '#123456',
+                'light_header_color' => '#FFFFFF',
+                'light_footer_background' => '#234567',
+                'light_footer_color' => '#FFFFFF',
+                'light_main_background' => '#EAF0F4',
+                'light_content_background' => '#FFFFFF',
+                'light_left_sidebar_color' => '#102030',
+                'light_primary_button_background' => '#345678',
+                'accent_color' => '#ABCDEF',
+            ]),
+        ]);
+        $template = EmailTemplate::query()->create([
+            'scope' => 'marketing',
+            'key' => 'managed_branding_test',
+            'name' => 'Managed branding test',
+            'subject' => 'Hello {{ contact_name }}',
+            'body_html' => '<p>First body</p>',
+            'body_text' => 'First body',
+            'layout_mode' => EmailTemplate::LAYOUT_BRANDING,
+            'variables' => ['contact_name'],
+            'is_active' => true,
+        ]);
+        $renderer = app(EmailTemplateRenderer::class);
+
+        $this->assertStringContainsString('#123456', $renderer->render($template, [])['html']);
+
+        $frozenLayout = $renderer->materializeLayout($template);
+        $template->forceFill([
+            'layout_mode' => EmailTemplate::LAYOUT_CUSTOM,
+            'layout_html' => $frozenLayout,
+            'body_html' => '<p>Updated body</p>',
+        ])->save();
+        $setting->update([
+            'json' => json_encode([
+                'company_name' => 'Layout Company',
+                'light_header_background' => '#654321',
+                'light_header_color' => '#FFFFFF',
+                'light_footer_background' => '#765432',
+                'light_footer_color' => '#FFFFFF',
+                'light_main_background' => '#F4F0EA',
+                'light_content_background' => '#FFFFFF',
+                'light_left_sidebar_color' => '#302010',
+                'light_primary_button_background' => '#876543',
+                'accent_color' => '#FEDCBA',
+            ]),
+        ]);
+
+        $custom = $renderer->render($template->fresh(), []);
+        $this->assertStringContainsString('#123456', $custom['html']);
+        $this->assertStringNotContainsString('#654321', $custom['html']);
+        $this->assertStringContainsString('Updated body', $custom['html']);
+
+        $template->forceFill([
+            'layout_mode' => EmailTemplate::LAYOUT_BRANDING,
+            'layout_html' => null,
+        ])->save();
+
+        $this->assertStringContainsString('#654321', $renderer->render($template->fresh(), [])['html']);
+    }
+
+    #[Test]
+    public function template_editor_uses_a_sandboxed_preview_and_validates_body_and_layout_html(): void
+    {
+        $template = EmailTemplate::query()->create([
+            'scope' => 'marketing',
+            'key' => 'editor_policy_test',
+            'name' => 'Editor policy test',
+            'subject' => 'Preview {{ contact_name }}',
+            'body_html' => '<p>Safe body</p>',
+            'body_text' => 'Safe body',
+            'layout_mode' => EmailTemplate::LAYOUT_BRANDING,
+            'variables' => ['contact_name'],
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.templatesManagement.email.edit', $template))
+            ->assertOk()
+            ->assertSee('data-html-editor', false)
+            ->assertSee('data-template-preview', false)
+            ->assertSee('sandbox=""', false)
+            ->assertSee('Customize layout')
+            ->assertDontSee('&amp;lt;!doctype html', false);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('tech.admin.system.templatesManagement.email.preview'), [
+                'subject' => 'Preview {{ contact_name }}',
+                'body_html' => '<p>Unsaved safe body</p>',
+                'body_text' => 'Unsaved safe body',
+                'layout_mode' => EmailTemplate::LAYOUT_CUSTOM,
+                'layout_html' => '<!doctype html><html><body><main>{{ email_body }}</main></body></html>',
+                'variables' => 'contact_name',
+            ])
+            ->assertOk()
+            ->assertJsonPath('subject', 'Preview Ola Nordmann')
+            ->assertJsonPath('text', 'Unsaved safe body')
+            ->assertJsonPath('html', '<!doctype html><html><body><main><p>Unsaved safe body</p></main></body></html>');
+
+        $this->actingAs($this->admin)
+            ->postJson(route('tech.admin.system.templatesManagement.email.preview'), [
+                'subject' => 'Unsafe layout',
+                'body_html' => '<p>Safe body</p>',
+                'layout_mode' => EmailTemplate::LAYOUT_CUSTOM,
+                'layout_html' => '<html><body>{{ email_body }}<script>alert(1)</script></body></html>',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('layout_html');
+
+        $this->actingAs($this->admin)
+            ->postJson(route('tech.admin.system.templatesManagement.email.preview'), [
+                'subject' => 'Wrong field',
+                'body_html' => '<html><body>Document in body</body></html>',
+                'layout_mode' => EmailTemplate::LAYOUT_BRANDING,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('body_html');
     }
 
     #[Test]

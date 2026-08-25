@@ -3494,6 +3494,8 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function ticket_show_displays_customer_contact_card_with_clickable_contact_details(): void
     {
+        $this->tech->givePermissionTo('client.view');
+
         $client = Client::factory()->create([
             'name' => 'Customer Card Client',
             'client_number' => 'C-100',
@@ -3541,6 +3543,12 @@ class TicketModuleTest extends TestCase
         $this->actingAs($this->tech)
             ->get(route('tech.tickets.show', $ticket))
             ->assertOk()
+            ->assertSee('id="ticketOperationalContext"', false)
+            ->assertSeeInOrder([
+                'Assigned to', $this->tech->name,
+                'Customer', 'Customer Card Client',
+                'Contact', 'Ada Lovelace',
+            ])
             ->assertSee('Customer Card Client')
             ->assertSee('C-100')
             ->assertSee('href="https://customer.example"', false)
@@ -3552,10 +3560,97 @@ class TicketModuleTest extends TestCase
             ->assertSee('mailto:ada@customer.example', false)
             ->assertSee('mailto:support@customer.example', false)
             ->assertSee(route('tech.clients.show', $client), false)
+            ->assertSee('aria-label="Open customer Customer Card Client"', false)
             ->assertSee(route('tech.clients.user.show', $ticketContact), false)
+            ->assertSee('aria-label="Open contact Ada Lovelace"', false)
             ->assertSee(route('tech.clients.sites.show', $site), false)
             ->assertSee('Serviceveien 1')
-            ->assertSee('1234 Oslo');
+            ->assertSee('1234 Oslo')
+            ->assertSee('ticketCustomerHeading', false)
+            ->assertSee('ticketDetailsHeading', false);
+    }
+
+    #[Test]
+    public function ticket_show_renders_client_context_as_text_without_client_view_permission(): void
+    {
+        $client = Client::factory()->create(['name' => 'Restricted Customer']);
+        $site = ClientSite::factory()->create([
+            'client_id' => $client->id,
+            'name' => 'Restricted Site',
+        ]);
+        $ticketContact = ClientUser::factory()->create([
+            'client_site_id' => $site->id,
+            'name' => 'Restricted Contact',
+        ]);
+        $ticket = $this->createTicket($ticketContact, [
+            'ticket_key' => 'TD-2026-999045',
+            'client_id' => $client->id,
+            'site_id' => $site->id,
+            'contact_id' => $ticketContact->id,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee('id="ticketOperationalContext"', false)
+            ->assertSee('Restricted Customer')
+            ->assertSee('Restricted Contact')
+            ->assertSee('Restricted Site')
+            ->assertDontSee(route('tech.clients.show', $client), false)
+            ->assertDontSee(route('tech.clients.user.show', $ticketContact), false)
+            ->assertDontSee(route('tech.clients.sites.show', $site), false);
+    }
+
+    #[Test]
+    public function ticket_show_displays_explicit_operational_identity_fallbacks(): void
+    {
+        $client = Client::factory()->create(['name' => 'Client Without Contact']);
+        $clientTicket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999046',
+            'client_id' => $client->id,
+            'contact_id' => null,
+            'owner_id' => null,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $clientTicket))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Assigned to', 'Unassigned',
+                'Customer', 'Client Without Contact',
+                'Contact', 'No contact',
+            ]);
+
+        $internalTicket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999047',
+            'client_id' => null,
+            'contact_id' => null,
+            'work_context_id' => app(ResolveWorkContext::class)->internal()->id,
+            'subject' => 'Imported customer name is not identity',
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $internalTicket))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Customer', 'Internal work',
+                'Contact', 'No contact',
+            ]);
+
+        $unscopedTicket = $this->createTicket(null, [
+            'ticket_key' => 'TD-2026-999048',
+            'client_id' => null,
+            'contact_id' => null,
+            'work_context_id' => null,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tickets.show', $unscopedTicket))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Customer', 'No customer',
+                'Contact', 'No contact',
+            ]);
     }
 
     #[Test]

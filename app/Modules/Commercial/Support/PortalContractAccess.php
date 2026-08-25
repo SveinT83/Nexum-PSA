@@ -44,10 +44,9 @@ class PortalContractAccess
     public function statusLabel(Contracts $contract): string
     {
         return match ($contract->approval_status) {
-            'sent_quote' => 'Quote pending',
-            'sent_contract' => 'Awaiting acceptance',
-            'won' => 'Accepted',
-            'approved' => 'Approved',
+            'sent_quote' => 'Tilbud sendt',
+            'sent_contract' => 'Avtale sendt',
+            'won', 'approved' => 'Godkjent',
             default => ucfirst(str_replace('_', ' ', $contract->approval_status ?? '')),
         };
     }

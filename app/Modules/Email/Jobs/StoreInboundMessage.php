@@ -27,6 +27,7 @@ use App\Modules\Email\Support\EmailAccountProviderLock;
 use App\Modules\Email\Support\EmailAccountProviderLockContext;
 use App\Modules\Email\Support\EmailProviderPath;
 use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
+use DateTimeInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\QueryException;
@@ -42,6 +43,13 @@ class StoreInboundMessage implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 60;
+
+    public int $tries = 40;
+
+    public int $maxExceptions = 10;
+
+    /** @var array<int, int> */
+    public array $backoff = [15, 30, 60];
 
     protected ?int $providerBindingVersion = null;
 
@@ -68,6 +76,18 @@ class StoreInboundMessage implements ShouldQueue
             $this->payload['provider_binding_version'] = app(EmailAccountProviderRuntimeResolver::class)
                 ->captureBindingVersion($account);
         }
+
+        $this->onQueue('email');
+    }
+
+    /**
+     * Lock releases count as queue attempts. Keep a bounded time window so an
+     * inbound store can wait for the account fetch which dispatched it without
+     * being failed by a worker-level --tries=1 default.
+     */
+    public function retryUntil(): DateTimeInterface
+    {
+        return now()->addMinutes(10);
     }
 
     /**
@@ -162,6 +182,17 @@ class StoreInboundMessage implements ShouldQueue
 
         $providerLock = EmailAccountProviderLock::acquire($accountId, $this->timeout + 60);
         if (! $providerLock) {
+            // A queued store commonly becomes visible before its account poll
+            // releases the shared provider lease. That is normal contention,
+            // not a security failure. Synchronous work still fails closed
+            // because it has no durable queue on which to wait.
+            if ($this->job !== null
+                && ! $this->job instanceof \Illuminate\Queue\Jobs\SyncJob) {
+                $this->release(EmailAccountProviderLock::RELEASE_AFTER_SECONDS);
+
+                return;
+            }
+
             throw new EmailProviderSecurityException('provider_work_locked');
         }
 

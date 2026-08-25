@@ -112,7 +112,7 @@
                             @if(Route::has('customer-portal.contracts.index'))
                                 <a href="{{ route('customer-portal.contracts.index') }}" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>
-                                    Contracts
+                                    Avtaler
                                 </a>
                             @endif
                             @if(Route::has('customer-portal.licenses.index')

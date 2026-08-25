@@ -43,9 +43,11 @@ class ServiceStoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('services')->ignore($this->route('service'))
+                Rule::unique('services')->ignore($this->route('service')),
             ],
             'unitId' => ['required', 'numeric', 'max:255'],
+            'customer_unit_singular' => ['nullable', 'string', 'max:255'],
+            'customer_unit_plural' => ['nullable', 'string', 'max:255'],
             'sla_id' => ['nullable', 'exists:sla,id'],
             'status' => ['nullable', 'in:draft,published,archived'],
             'icon' => ['nullable', 'string', 'max:255'],

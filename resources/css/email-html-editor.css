@@ -1,0 +1,41 @@
+.jodit-container:not(.jodit_inline) {
+    border-color: var(--bs-border-color) !important;
+    border-radius: var(--bs-border-radius) !important;
+    background: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.jodit-toolbar__box,
+.jodit-status-bar {
+    border-color: var(--bs-border-color) !important;
+    background: var(--bs-tertiary-bg) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.jodit-toolbar-button__button,
+.jodit-toolbar-button__trigger {
+    color: var(--bs-body-color) !important;
+}
+
+.jodit-toolbar-button__button:hover,
+.jodit-toolbar-button__trigger:hover,
+.jodit-toolbar-button_active .jodit-toolbar-button__button {
+    background: color-mix(in srgb, var(--bs-primary) 16%, transparent) !important;
+}
+
+.jodit-wysiwyg,
+.jodit-source__mirror,
+.jodit-source__textarea {
+    background: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.jodit-workplace {
+    border-color: var(--bs-border-color) !important;
+}
+
+.jodit-popup,
+.jodit-dialog__panel {
+    background: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+}

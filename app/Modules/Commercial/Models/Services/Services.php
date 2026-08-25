@@ -53,6 +53,8 @@ class Services extends Model
         'timebank_interval',
         'short_description',
         'long_description',
+        'customer_unit_singular',
+        'customer_unit_plural',
         'category_id',
         'created_by_user_id',
         'updated_by_user_id',

@@ -5,18 +5,22 @@ namespace App\Modules\CustomerPortal\Tests\Feature;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
+use App\Modules\Commercial\Actions\CaptureContractCustomerDocument;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Commercial\Support\ContractTermSnapshotReadiness;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
+use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Sales\Models\SalesActivity;
 use App\Modules\Sales\Models\SalesOpportunity;
 use App\Modules\Sales\Models\SalesQuote;
 use App\Modules\Sales\Models\SalesQuoteLine;
 use App\Modules\Sales\Models\SalesQuoteVersion;
+use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -125,12 +129,17 @@ class CustomerPortalQuoteContractAcceptanceTest extends TestCase
     #[Test]
     public function portal_user_can_accept_own_sent_commercial_contract(): void
     {
+        app(CompanyProfileSettings::class)->update([
+            'legal_name' => 'Portal Supplier AS',
+            'organization_number' => '999888777',
+        ]);
         [$client, $site, $portalUser, $account, $membership, $contact] = $this->portalFixture('contracts-accept@example.test');
+        $client->forceFill(['org_no' => '987654321'])->save();
         [, , $sitePortalUser] = $this->portalFixture('site-contracts-accept@example.test', $client, $site);
         $otherClient = Client::factory()->create(['name' => 'Other Contract Client AS', 'active' => true]);
         $tech = $this->techUser();
 
-        $sentContract = $this->contract($client, $tech, 'Portal Binding Contract', 'sent_contract');
+        $sentContract = $this->contract($client, $tech, 'Portal Binding Contract', 'draft');
         $draftContract = $this->contract($client, $tech, 'Draft Internal Contract', 'draft');
         $otherContract = $this->contract($otherClient, $tech, 'Other Client Contract', 'sent_contract');
 
@@ -143,11 +152,23 @@ class CustomerPortalQuoteContractAcceptanceTest extends TestCase
             'unit' => 'month',
             'billing_interval' => 'monthly',
         ]);
+        app(ContractTermSnapshotReadiness::class)->markReviewed($sentContract, $tech->id);
+        app(CaptureContractCustomerDocument::class)->handle($sentContract, 'sent_contract');
+        $sentContract->forceFill([
+            'approval_status' => 'sent_contract',
+            'sent_at' => now(),
+        ])->saveQuietly();
+        $sentContract->refresh();
 
         $this->actingAs($portalUser)
             ->get(route('customer-portal.contracts.index'))
             ->assertOk()
+            ->assertSee('Avtaler')
+            ->assertSee('Avtale sendt')
+            ->assertSee('1 500,00 kr')
             ->assertSee('Portal Binding Contract')
+            ->assertDontSee('Contracts')
+            ->assertDontSee('Awaiting acceptance')
             ->assertDontSee('Draft Internal Contract')
             ->assertDontSee('Other Client Contract');
 
@@ -160,7 +181,7 @@ class CustomerPortalQuoteContractAcceptanceTest extends TestCase
             ->get(route('customer-portal.contracts.show', $sentContract))
             ->assertOk()
             ->assertSee('Managed Support')
-            ->assertSee('Accept contract');
+            ->assertSee('Godkjenn');
 
         $this->actingAs($portalUser)
             ->post(route('customer-portal.contracts.accept', $sentContract), [
@@ -245,7 +266,23 @@ class CustomerPortalQuoteContractAcceptanceTest extends TestCase
             'status' => CustomerPortalMembership::STATUS_ACTIVE,
         ]);
 
+        $this->disablePortalMail($user);
+
         return [$client, $site, $user, $account, $membership, $contact];
+    }
+
+    private function disablePortalMail(User $user): void
+    {
+        foreach (NotificationSetting::CUSTOMER_PORTAL_TYPES as $type => $label) {
+            NotificationSetting::updateOrCreate(
+                ['user_id' => $user->id, 'notification_type' => $type],
+                [
+                    'mail_enabled' => false,
+                    'database_enabled' => true,
+                    'nextcloud_talk_enabled' => false,
+                ],
+            );
+        }
     }
 
     private function techUser(): User

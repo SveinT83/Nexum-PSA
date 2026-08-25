@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Conversation Acknowledgement And Explicit Multi-Account Actions
 
-Status: Queued / Dependency Gated
+Status: Safety Rework Implemented / Full Slice Dependency Gated
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -28,6 +28,34 @@ Implementation starts after completion orders 5-9 and 11 are stable. It uses:
   placement change.
 
 The current selected-message command remains the fast default and is not widened by this slice.
+
+## 2026-08-24 Safety Rework
+
+The default-off backend safety boundary is implemented without activating the full user-facing
+slice. Forward migration `2026_08_24_140000_create_email_conversation_acknowledgement_action_ledger.php`
+adds the approved run/item evidence model and leaves historical inert `150000` unchanged. Preview
+freezes an exact active-account conversation or explicit placement selection; apply requires the
+same actor and rechecks every mailbox, epoch, message, conversation, placement, folder, UID namespace,
+UID, sync version and provider binding. Personal state uses `SetEmailUnreadForMe`; optional provider
+Seen is recorded separately through `RecordEmailRemoteOperation` without provider I/O. Personal
+success is not rolled back or relabelled when provider work is denied, stale, conflicted or failed.
+When one EmailMessage has several active placements, preview deterministically selects the first
+placement-ID row for the one account/message/access-epoch/target personal effect and freezes later
+rows as non-selected `coalesced` evidence. That selection participates in the immutable item hash;
+provider Seen remains independently selected and reserved once per exact placement.
+
+The implicit legacy action now fails closed, the Livewire method cannot bypass preview, and
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` remains false. During implementation, this repair was verified
+against isolated SQLite `:memory:` and an actual socket-only MariaDB 10.11.14 disposable schema,
+without shared-Dev migration or provider execution. The forward migration later ran in Dev batch
+128; both acknowledgement ledgers remain empty, the gate remains false, and no acknowledgement apply
+or provider action ran. The MariaDB contract proves the forward schema, named indexes and foreign
+keys, boolean defaults, empty rollback, non-empty evidence refusal, and that the frozen `pending` /
+`coalesced` personal statuses and selection values fit and round-trip. Order 8 is not a backend
+blocker while invalidation remains its explicit disabled no-op. Order 9 and the complete Order 8
+contract still gate shared-draft-safe Archive/Move/Trash expansion, public Livewire/API
+preview/confirmation, continuation/retry/cancel and private invalidation behavior. Those unchecked
+parts remain required before activation or completion of the full slice.
 
 ## User-Visible Behavior
 
@@ -65,6 +93,8 @@ Safe canonical correlation may propose additional visible copies but does not se
 Message-ID, Ticket link, canonical root, or UI group never grants access or causes a cross-account
 action by itself. Each selected placement remains the provider operation identity and each message's
 current user-state epoch remains the personal acknowledgement identity.
+Duplicate placements for that same message/epoch/target therefore never repeat the personal effect;
+they remain separate provider identities and explicit ledger rows.
 
 The preview stores no inaccessible IDs/counts. Account labels and members are added only after the
 actor's current ordinary View decision; provider actions additionally require Organize. Personal
@@ -189,6 +219,9 @@ state.
   leaves other users, opened receipts and access baselines unchanged.
 - Optional provider Seen is separately labelled/statused, requires Organize, creates one remote
   operation per exact placement, and never fabricates success or replays acknowledged work.
+- Two active placements for one message select and execute one immutable personal effect, mark the
+  later row coalesced, retain provider work per placement and never turn a selected personal failure
+  into false partial/success evidence.
 - Active-account default versus explicit two-/many-account selection, unselected accounts unchanged,
   safe correlation without auto-selection, and no inaccessible count/identity leak.
 - Revoked/expired delegation, personal account owner, blocked personal direct grant, break-glass,
@@ -218,6 +251,8 @@ provider conflict, API scope, mobile/keyboard UI, worker health and sanitized ev
 
 ## Done Criteria
 
+- [x] The default-off safety rework removes the implicit action and provides a frozen exact-placement
+  ledger with same-actor/per-item reauthorization and separate personal/provider outcomes.
 - [ ] Dependencies 5-9 and 11 are stable and the final access/epoch/provider/draft boundaries are
   used rather than duplicated.
 - [ ] Preview freezes an exact bounded authorized scope; apply reauthorizes every item and never

@@ -1,351 +1,238 @@
 @extends('layouts.default_tech')
 
-@section('title', 'Contracts')
+@section('title', 'Kontrakt')
 
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1>Contract #{{ $contract->id }} - Preview</h1>
-            <p class="text-muted mb-0 small">Client: <strong>{{ $client->name }}</strong> ({{ $client->client_number }})</p>
+            @if($validation['legacy_attestation_preview_available'])
+                <h1>{{ $customerDocument['document']['type'] }} #{{ $customerDocument['document']['contract_number'] }} – forhåndsvisning</h1>
+                <p class="text-muted mb-0 small">Kunde: <strong>{{ $customerDocument['parties']['customer']['name'] }}</strong></p>
+            @else
+                <h1>Historisk kundedokument – dokumenttype må velges</h1>
+                <p class="text-muted mb-0 small">Ingen rekonstruksjon vises før originalunderlaget har fastslått dokumenttypen.</p>
+            @endif
         </div>
-        <div>
-            <x-buttons.back url="{{ route('tech.contracts.index') }}"> Back</x-buttons.back>
-        </div>
+        <x-buttons.back url="{{ route('tech.contracts.index') }}">Tilbake</x-buttons.back>
     </div>
 @endsection
 
 @section('content')
-    <style>
-        /* Contract preview tabs need explicit contrast inside the operational card surface. */
-        #contractTabs .nav-link {
-            color: #495057;
-            background-color: #f8f9fa;
-            border-color: #dee2e6 #dee2e6 transparent;
-        }
+    <div class="row g-4">
+        <div class="col-xl-9">
+            @if($validation['customer_document_evidence_blockers'] !== [])
+                <div class="alert alert-danger border-0 shadow-sm mb-4" role="alert">
+                    <h2 class="h6 mb-2">Historisk kundedokument er sperret</h2>
+                    <ul class="mb-2 small">
+                        @foreach($validation['customer_document_evidence_blockers'] as $blocker)
+                            <li>{{ $blocker }}</li>
+                        @endforeach
+                    </ul>
+                    @if($validation['legacy_attestation_preview_available'])
+                        <p class="mb-0 small">
+                            Visningen under er kun et internt, skrivebeskyttet rekonstruksjonsgrunnlag.
+                            PDF, kundelenke og kundeportal er sperret til grunnlaget er sammenlignet med
+                            originalt sendt eller godkjent underlag og attestert av en navngitt tekniker.
+                        </p>
+                    @else
+                        <p class="mb-0 small">
+                            Ingen rekonstruksjon vises før dokumenttypen er kontrollert mot originalunderlaget.
+                            PDF, kundelenke og kundeportal forblir sperret.
+                        </p>
+                    @endif
 
-        #contractTabs .nav-link:hover,
-        #contractTabs .nav-link:focus {
-            color: #0d6efd;
-            background-color: #ffffff;
-        }
+                    @if($validation['legacy_attestation_available'])
+                        <hr>
+                        <h3 class="h6">Attester kontrollert rekonstruksjon</h3>
+                        <p class="small">
+                            Dagens parts- og tjenestedata er ikke i seg selv historisk bevis. Kontroller
+                            alle viste parter, beløp, perioder og vedlegg mot originalunderlaget før du
+                            fryser denne rekonstruksjonen. Et eksisterende snapshot blir aldri erstattet.
+                        </p>
 
-        #contractTabs .nav-link.active {
-            color: #212529;
-            background-color: #ffffff;
-            border-color: #dee2e6 #dee2e6 #ffffff;
-            font-weight: 600;
-        }
-    </style>
+                        @if($validation['legacy_attestation_document_type_ambiguous'])
+                            <p class="small fw-semibold mb-2">
+                                Statusen beviser ikke om originalen var et tilbud eller en avtale. Velg
+                                typen som originalunderlaget dokumenterer, og kontroller den nye visningen.
+                            </p>
+                            <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Historisk dokumenttype">
+                                @foreach(['Tilbud', 'Avtale'] as $documentType)
+                                    <a href="{{ route('tech.contracts.show', ['contract' => $contract, 'legacy_document_type' => $documentType]) }}"
+                                       class="btn {{ $validation['legacy_attestation_document_type'] === $documentType ? 'btn-danger' : 'btn-outline-danger' }}">
+                                        Kontroller som {{ strtolower($documentType) }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
 
-    <div class="row">
-        <div class="col-md-9">
-            {{--
-                Validation Alert Section
-                Shows a summary of why a contract is not yet "ready" for approval.
-                Conditions checked: items presence, terms snapshot status, and start date.
-            --}}
+                        @if($validation['customer_document_missing_identity'] !== [])
+                            <p class="small fw-semibold mb-1">Rekonstruksjonen mangler nødvendige partsdata:</p>
+                            <ul class="small">
+                                @foreach($validation['customer_document_missing_identity'] as $missingIdentity)
+                                    <li>{{ ucfirst($missingIdentity) }} mangler i dagens grunnlag.</li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        @if($validation['legacy_attestation_preview_available'])
+                            <form action="{{ route('tech.contracts.customer-document.attest-legacy', $contract) }}"
+                                  method="POST"
+                                  onsubmit="return confirm('Har du kontrollert hele rekonstruksjonen mot originalunderlaget? Snapshotet kan ikke erstattes etterpå.')">
+                            @csrf
+                            <input type="hidden" name="legacy_attestation_fingerprint"
+                                   value="{{ $validation['legacy_attestation_fingerprint'] }}">
+                            <input type="hidden" name="legacy_attestation_document_type"
+                                   value="{{ $validation['legacy_attestation_document_type'] }}">
+                            <label for="attestation_note" class="form-label small fw-semibold">
+                                Kontrollnotat og referanse til originalunderlag
+                            </label>
+                            <textarea id="attestation_note" name="attestation_note" rows="3"
+                                      class="form-control form-control-sm mb-2"
+                                      minlength="20" maxlength="2000" required>{{ old('attestation_note') }}</textarea>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" value="1"
+                                       id="confirm_legacy_attestation" name="confirm_legacy_attestation" required>
+                                <label class="form-check-label small" for="confirm_legacy_attestation">
+                                    Jeg har kontrollert hele dokumentet mot originalt sendt eller godkjent underlag.
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    @disabled($validation['customer_document_missing_identity'] !== [] || $validation['legacy_attestation_fingerprint'] === null || $validation['legacy_attestation_document_type'] === null)>
+                                Attester og frys rekonstruksjonen
+                            </button>
+                            @if($validation['legacy_attestation_document_type_ambiguous'] && $validation['legacy_attestation_document_type'] === null)
+                                <div class="small text-danger mt-2">
+                                    Velg dokumenttypen originalunderlaget beviser før attestering.
+                                </div>
+                            @elseif($validation['legacy_attestation_fingerprint'] === null && $validation['customer_document_missing_identity'] === [])
+                                <div class="small text-danger mt-2">
+                                    Rekonstruksjonen er ikke et komplett v1-dokument og kan ikke attesteres.
+                                </div>
+                            @endif
+                            </form>
+                        @endif
+                    @endif
+                </div>
+            @endif
+
             @if($validation['show_readiness_status'] && !$validation['ready'])
                 <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4">
-                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3" aria-hidden="true"></i>
                     <div>
-                        <h4 class="h6 mb-1">Contract not ready for approval</h4>
+                        <h2 class="h6 mb-1">Kontrakten er ikke klar</h2>
                         <ul class="mb-0 small">
-                            @if(!$validation['has_items']) <li>Missing services/items.</li> @endif
-                            @if(!$validation['has_terms'])
-                                <li>Terms snapshot has not been generated.
-                                    <a href="{{ route('tech.contracts.terms', $contract) }}" class="alert-link">Edit Terms</a>
-                                </li>
-                            @endif
-                            @if($validation['has_missing_terms'] && $validation['has_terms'])
-                                <li>New services have been added, but terms have not been refreshed.
-                                    <a href="{{ route('tech.contracts.terms', $contract) }}" class="alert-link">Refresh Terms</a>
-                                </li>
-                            @endif
-                            @if(!$validation['future_start_date']) <li>Start date must be in the future.</li> @endif
+                            @if(!$validation['has_items']) <li>Minst én tjeneste må legges til.</li> @endif
+                            @if(!$validation['has_terms']) <li>Vilkårssnapshot mangler.</li> @endif
+                            @if($validation['has_missing_terms'] && $validation['has_terms']) <li>Vilkårene må oppdateres etter tjenesteendringen.</li> @endif
+                            @if(!$validation['future_start_date']) <li>Avtalestart må være i fremtiden før utsending.</li> @endif
+                            @if(!$validation['valid_contract_period'] && $contract->start_date) <li>Bindingstiden må ligge innenfor avtalens start- og sluttdato.</li> @endif
+                            @foreach($validation['customer_document_missing_identity'] as $missingIdentity)
+                                <li>{{ ucfirst($missingIdentity) }} mangler.</li>
+                            @endforeach
                         </ul>
                     </div>
                 </div>
             @elseif($validation['show_readiness_status'])
-                <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4">
-                    <i class="bi bi-check-circle-fill fs-4 me-3"></i>
-                    <div>
-                        <h4 class="h6 mb-1">Contract is ready</h4>
-                        <p class="mb-0 small">All requirements met. You can now approve or download the documents.</p>
-                    </div>
+                <div class="alert alert-success border-0 shadow-sm mb-4">
+                    <i class="bi bi-check-circle-fill me-2" aria-hidden="true"></i>Kontrakten er klar for utsending.
                 </div>
             @endif
 
-            {{--
-                Included Services Summary
-                A detailed list of all line items currently attached to the contract.
-                Shows quantity, billing interval, unit price, and calculated line totals.
-            --}}
-            <x-card.default title="Included Services">
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Service</th>
-                                <th>SLA</th>
-                                <th>Rates</th>
-                                <th>Quantity</th>
-                                <th>Interval</th>
-                                <th class="text-end">Unit Price</th>
-                                <th class="text-end">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($contract->items as $item)
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold">{{ $item->name }}</div>
-                                        <small class="text-muted">{{ $item->sku }}</small>
-                                    </td>
-                                    <td>
-                                        @if($item->uses_contract_default_sla)
-                                            <span class="badge text-bg-light border">Contract default</span>
-                                            <div class="small text-muted">{{ $contract->sla?->name ?? 'System default' }}</div>
-                                        @else
-                                            <span class="badge text-bg-primary">{{ $item->sla_snapshot['name'] ?? $item->slaPolicy?->name ?? 'Custom SLA' }}</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @forelse($item->timeRates->where('is_active', true) as $rate)
-                                            <div class="small">
-                                                <span class="fw-semibold">{{ $rate->name }}</span>
-                                                <span class="text-muted">{{ number_format((float) $rate->amount_ex_vat, 2, ',', ' ') }} {{ $rate->currency }}/{{ $rate->unit }}</span>
-                                            </div>
-                                        @empty
-                                            <span class="text-muted small">No rates</span>
-                                        @endforelse
-                                    </td>
-                                    <td>{{ $item->quantity }} {{ $item->unit }}</td>
-                                    <td><span class="badge bg-light text-dark">{{ ucfirst($item->billing_interval) }}</span></td>
-                                    <td class="text-end">{{ number_format($item->unit_price, 2, ',', ' ') }} kr</td>
-                                    <td class="text-end fw-bold">{{ number_format($item->line_total, 2, ',', ' ') }} kr</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot class="table-light">
-                            <tr>
-                                <th colspan="6" class="text-end">Monthly Total:</th>
-                                <th class="text-end">{{ number_format($contract->total_monthly_amount, 2, ',', ' ') }} kr</th>
-                            </tr>
-                        </tfoot>
-                    </table>
+            @if($validation['legacy_attestation_preview_available'])
+                @include('commercial::Shared.customer-document-web', ['customerDocument' => $customerDocument])
+            @else
+                <div class="alert alert-secondary border-0 shadow-sm" role="status">
+                    Velg «Kontroller som tilbud» eller «Kontroller som avtale» ovenfor for å bygge riktig,
+                    skrivebeskyttet rekonstruksjon.
                 </div>
-            </x-card.default>
-
-            {{--
-                Document Previews (Tabbed Interface)
-                Displays the snapshotted legal text for various document types.
-                Tabs include: General Terms, DPA, Legal/GDPR, SLA, and General comments.
-            --}}
-            <ul class="nav nav-tabs mt-4" id="contractTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="terms-tab" data-bs-toggle="tab" data-bs-target="#terms-pane" type="button" role="tab">General Terms</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="dpa-tab" data-bs-toggle="tab" data-bs-target="#dpa-pane" type="button" role="tab">DPA</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="legal-tab" data-bs-toggle="tab" data-bs-target="#legal-pane" type="button" role="tab">Legal & GDPR</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="sla-tab" data-bs-toggle="tab" data-bs-target="#sla-pane" type="button" role="tab">SLA</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="general-tab" data-bs-toggle="tab" data-bs-target="#general-pane" type="button" role="tab">General</button>
-                </li>
-            </ul>
-            <div class="tab-content border border-top-0 p-4 bg-white shadow-sm mb-5" id="contractTabsContent">
-                <div class="tab-pane fade show active" id="terms-pane" role="tabpanel">
-                    <div class="pre-scrollable" style="white-space: pre-wrap; font-size: 0.9rem;">{{ $contract->terms_snapshot ?: 'No terms generated.' }}</div>
-                </div>
-                <div class="tab-pane fade" id="dpa-pane" role="tabpanel">
-                    <div class="pre-scrollable" style="white-space: pre-wrap; font-size: 0.9rem;">{{ $contract->dpa_snapshot ?: 'No DPA content generated.' }}</div>
-                </div>
-                <div class="tab-pane fade" id="legal-pane" role="tabpanel">
-                    <div class="pre-scrollable" style="white-space: pre-wrap; font-size: 0.9rem;">{{ $contract->legal_snapshot ?: 'No legal content generated.' }}</div>
-                </div>
-                <div class="tab-pane fade" id="sla-pane" role="tabpanel">
-                    <div class="pre-scrollable" style="white-space: pre-wrap; font-size: 0.9rem;">{{ $contract->sla_snapshot ?: 'No SLA content generated.' }}</div>
-                </div>
-                <div class="tab-pane fade" id="general-pane" role="tabpanel">
-                    <div class="pre-scrollable" style="white-space: pre-wrap; font-size: 0.9rem;">{{ $contract->general_snapshot ?: 'No general content generated.' }}</div>
-                </div>
-            </div>
+            @endif
         </div>
 
-        <div class="col-md-3">
-            {{--
-                Action Sidebar
-                Main controls for approving the contract or navigating back to editors.
-                Approve and PDF buttons are disabled if the contract is not "ready".
-            --}}
-            @if($contract->approval_status === 'won')
-                <div class="alert alert-success border-0 shadow-sm mb-4">
-                    <h6 class="mb-1"><i class="bi bi-trophy-fill me-2"></i>Contract Won</h6>
-                    <p class="small mb-0">Accepted by: <strong>{{ $contract->accepted_by_name }}</strong></p>
-                    <p class="small mb-0">Date: {{ $contract->accepted_at->format('d.m.Y H:i') }}</p>
+        <div class="col-xl-3">
+            @if($contract->approval_status === 'won' && $validation['legacy_attestation_preview_available'])
+                <div class="alert alert-success border-0 shadow-sm">
+                    <div class="fw-semibold"><i class="bi bi-trophy-fill me-2" aria-hidden="true"></i>Godkjent</div>
+                    <div class="small">{{ $customerDocument['approval']['text'] }}</div>
                 </div>
             @endif
 
-            <x-card.default title="Actions">
+            <x-card.default title="Handlinger">
                 <div class="d-grid gap-2">
-                    <div class="mb-3">
-                        <label for="cc_email" class="form-label small fw-bold">CC Email (Optional):</label>
-                        <input type="email" name="cc_email" id="cc_email" class="form-control form-control-sm" placeholder="cc@example.com" value="{{ $contract->cc_email }}" form="sendQuoteForm">
-                        <script>
-                            document.getElementById('cc_email').addEventListener('input', function() {
-                                document.querySelectorAll('.cc-input-sync').forEach(el => el.value = this.value);
-                            });
-                        </script>
+                    <div>
+                        <label for="cc_email" class="form-label small fw-bold">Kopi til e-post</label>
+                        <input type="email" id="cc_email" class="form-control form-control-sm" value="{{ $contract->cc_email }}">
                     </div>
 
                     @if($contract->isEditable())
-                        <form action="{{ route('tech.contracts.send-quote', $contract) }}" method="POST" id="sendQuoteForm">
+                        <form action="{{ route('tech.contracts.send-quote', $contract) }}" method="POST">
                             @csrf
                             <input type="hidden" name="cc_email" class="cc-input-sync" value="{{ $contract->cc_email }}">
-                            <button type="submit" class="btn btn-outline-primary w-100" @if(!$validation['ready']) disabled @endif>
-                                <i class="bi bi-send me-2"></i> Send Quote
+                            <button type="submit" class="btn btn-outline-primary w-100" @disabled(!$validation['ready'])>
+                                <i class="bi bi-send me-2" aria-hidden="true"></i>Send tilbud
                             </button>
                         </form>
-                        <form action="{{ route('tech.contracts.send-contract', $contract) }}" method="POST" id="sendContractForm">
+                        <form action="{{ route('tech.contracts.send-contract', $contract) }}" method="POST">
                             @csrf
                             <input type="hidden" name="cc_email" class="cc-input-sync" value="{{ $contract->cc_email }}">
-                            <button type="submit" class="btn btn-primary w-100" @if(!$validation['ready']) disabled @endif>
-                                <i class="bi bi-send-check me-2"></i> Send Contract
-                            </button>
-                        </form>
-                    @endif
-
-                    @if(in_array($contract->approval_status, ['sent_quote', 'sent_contract']))
-                        <div class="alert alert-info py-2 small mb-2">
-                            <i class="bi bi-link-45deg me-1"></i>
-                            <a href="{{ route('contracts.public.view', $contract->secure_token) }}" target="_blank" class="alert-link">Public Link</a>
-                        </div>
-                        <form action="{{ route('tech.contracts.resend', $contract) }}" method="POST" id="resendForm">
-                            @csrf
-                            <input type="hidden" name="cc_email" class="cc-input-sync" value="{{ $contract->cc_email }}">
-                            <button type="submit" class="btn btn-outline-info w-100 mb-2">
-                                <i class="bi bi-reply-all me-2"></i> Resend Email
+                            <button type="submit" class="btn btn-primary w-100" @disabled(!$validation['ready'])>
+                                <i class="bi bi-send-check me-2" aria-hidden="true"></i>Send avtale
                             </button>
                         </form>
                     @endif
 
-                    @if($contract->approval_status !== 'won')
-                        <form action="{{ route('tech.contracts.approve-manual', $contract) }}" method="POST" onsubmit="return confirm('Are you sure you want to manually approve this contract?')">
+                    @if(in_array($contract->approval_status, ['sent_quote', 'sent_contract'], true) && $validation['customer_access_available'])
+                        <a href="{{ route('contracts.public.view', $contract->secure_token) }}" target="_blank" rel="noopener" class="btn btn-outline-info">
+                            <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Offentlig kundelenke
+                        </a>
+                        <form action="{{ route('tech.contracts.resend', $contract) }}" method="POST">
                             @csrf
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="bi bi-check2-all me-2"></i> Manual Approve
+                            <input type="hidden" name="cc_email" class="cc-input-sync" value="{{ $contract->cc_email }}">
+                            <button type="submit" class="btn btn-outline-info w-100">Send e-post på nytt</button>
+                        </form>
+                    @endif
+
+                    @if(in_array($contract->approval_status, ['draft', 'negotiation', 'quote_lost', 'sent_quote', 'sent_contract'], true))
+                        <form action="{{ route('tech.contracts.approve-manual', $contract) }}" method="POST" onsubmit="return confirm('Vil du godkjenne kontrakten manuelt?')">
+                            @csrf
+                            <button type="submit" class="btn btn-success w-100"
+                                    @disabled($validation['customer_document_missing_identity'] !== [] || $validation['customer_document_evidence_blockers'] !== [])>
+                                <i class="bi bi-check2-all me-2" aria-hidden="true"></i>Godkjenn manuelt
                             </button>
                         </form>
                     @endif
 
                     @if($validation['pdf_available'])
                         <a href="{{ route('tech.contracts.pdf', $contract) }}" class="btn btn-outline-dark">
-                            <i class="bi bi-file-earmark-pdf me-2"></i> Download PDF
+                            <i class="bi bi-file-earmark-pdf me-2" aria-hidden="true"></i>Last ned PDF
                         </a>
-                    @else
-                        <button class="btn btn-outline-dark" disabled>
-                            <i class="bi bi-file-earmark-pdf me-2"></i> Download PDF
-                        </button>
                     @endif
-                    <hr>
+
                     @if($contract->isEditable())
-                        <a href="{{ route('tech.contracts.edit', $contract) }}" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-pencil me-2"></i> Edit Details
-                        </a>
-                        <a href="{{ route('tech.contracts.services.edit', $contract) }}" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-list-check me-2"></i> Edit Services
-                        </a>
-                        <a href="{{ route('tech.contracts.terms', $contract) }}" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-file-text me-2"></i> Edit Terms
-                        </a>
+                        <hr>
+                        <a href="{{ route('tech.contracts.edit', $contract) }}" class="btn btn-sm btn-outline-warning">Rediger kontraktsdata</a>
+                        <a href="{{ route('tech.contracts.services.edit', $contract) }}" class="btn btn-sm btn-outline-warning">Rediger tjenester</a>
+                        <a href="{{ route('tech.contracts.terms', $contract) }}" class="btn btn-sm btn-outline-warning">Rediger vilkår</a>
                     @endif
                 </div>
             </x-card.default>
 
-            {{--
-                Contract Meta Info
-                Secondary information about the contract status and critical dates.
-            --}}
-            <x-card.default title="Contract Info">
-                <div class="small">
-                    <div class="mb-2">
-                        <span class="text-muted d-block small uppercase font-weight-bold mb-1">Status:</span>
-                        @php
-                            $statusClass = match($contract->approval_status) {
-                                'draft' => 'bg-secondary',
-                                'negotiation' => 'bg-info text-dark',
-                                'sent_quote', 'sent_contract' => 'bg-primary',
-                                'won' => 'bg-success',
-                                'lost', 'quote_lost' => 'bg-danger',
-                                default => 'bg-secondary'
-                            };
-                        @endphp
-                        <span class="badge {{ $statusClass }}">{{ ucfirst(str_replace('_', ' ', $contract->approval_status)) }}</span>
-                    </div>
-                    <div class="mb-2">
-                        <span class="text-muted d-block small uppercase font-weight-bold mb-1">Start Date:</span>
-                        <span class="{{ $validation['future_start_date'] ? 'text-success' : 'text-danger fw-bold' }}">
-                            {{ $contract->start_date ? $contract->start_date->format('d.m.Y') : 'Not set' }}
-                        </span>
-                    </div>
-                    <div class="mb-2">
-                        <span class="text-muted d-block small uppercase font-weight-bold mb-1">SLA Policy:</span>
-                        @if($contract->sla)
-                            <span class="badge text-bg-primary">{{ $contract->sla->name }}</span>
-                        @else
-                            <span class="badge text-bg-light border">System default</span>
-                            <div class="text-muted mt-1">{{ $defaultSla?->name ?? 'No default SLA configured' }}</div>
-                        @endif
-                    </div>
-                </div>
-            </x-card.default>
-
-            @php
-                $effectiveSla = $contract->sla ?? $defaultSla;
-                $formatSlaTime = fn ($value, $type) => filled($value) ? $value.' '.$type : '—';
-            @endphp
-
-            <!-- SLA summary: shows the effective policy without requiring admins to open the full SLA module. -->
-            <x-card.default title="SLA Summary">
-                @if($effectiveSla)
-                    <div class="small mb-2">
-                        <span class="text-muted d-block small uppercase font-weight-bold mb-1">Effective policy:</span>
-                        <span class="fw-semibold">{{ $effectiveSla->name }}</span>
-                    </div>
-                    <div class="row g-2 small">
-                        <div class="col-12">
-                            <div class="border rounded bg-light px-2 py-1">
-                                <div class="text-muted text-uppercase" style="font-size: .68rem;">Low priority</div>
-                                <div>First response {{ $formatSlaTime($effectiveSla->low_firstResponse, $effectiveSla->low_firstResponse_type) }}</div>
-                                <div>Onsite {{ $formatSlaTime($effectiveSla->low_onsite, $effectiveSla->low_onsite_type) }}</div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="border rounded bg-light px-2 py-1">
-                                <div class="text-muted text-uppercase" style="font-size: .68rem;">Medium priority</div>
-                                <div>First response {{ $formatSlaTime($effectiveSla->medium_firstResponse, $effectiveSla->medium_firstResponse_type) }}</div>
-                                <div>Onsite {{ $formatSlaTime($effectiveSla->medium_onsite, $effectiveSla->medium_onsite_type) }}</div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="border rounded bg-light px-2 py-1">
-                                <div class="text-muted text-uppercase" style="font-size: .68rem;">High priority</div>
-                                <div>First response {{ $formatSlaTime($effectiveSla->high_firstResponse, $effectiveSla->high_firstResponse_type) }}</div>
-                                <div>Onsite {{ $formatSlaTime($effectiveSla->high_onsite, $effectiveSla->high_onsite_type) }}</div>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <p class="text-muted small mb-0">No contract SLA or system default SLA is configured.</p>
-                @endif
+            <!-- Internal operational metadata remains outside the customer document. -->
+            <x-card.default title="Intern kontraktsinfo">
+                <dl class="small mb-0">
+                    <dt class="text-muted">Intern status</dt>
+                    <dd>{{ ucfirst(str_replace('_', ' ', $contract->approval_status)) }}</dd>
+                    <dt class="text-muted">Intern SLA-kobling</dt>
+                    <dd>{{ $contract->sla?->name ?? $defaultSla?->name ?? 'Ikke konfigurert' }}</dd>
+                </dl>
             </x-card.default>
         </div>
     </div>
+
+    <script>
+        document.getElementById('cc_email')?.addEventListener('input', function () {
+            document.querySelectorAll('.cc-input-sync').forEach((input) => input.value = this.value);
+        });
+    </script>
 @endsection
 
 @section('sidebar')

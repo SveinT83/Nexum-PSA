@@ -34,6 +34,12 @@ Current merge behavior includes:
 
 The source ticket is soft-deleted and stores merge metadata so old links can redirect to the target ticket.
 
+Mail's legacy conversation-link migration is not a merge repair. Its preview blocks a deleted or
+merged Ticket and never transfers, demotes, unlinks, or chooses between competing conversation
+relationships. Complete relationship transfer/deduplication during Ticket merge belongs to the
+separately reviewed Order 15 compatibility work; administrators must not use the Order 13 backfill
+to bypass that gate.
+
 ## Merge Redirects
 
 When a merged source ticket is opened, the show route redirects to the target ticket and shows a warning.
