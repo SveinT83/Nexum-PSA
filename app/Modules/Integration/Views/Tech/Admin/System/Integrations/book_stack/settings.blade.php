@@ -285,9 +285,17 @@
     </div>
 
     @if($integration && $integration->last_error)
+        @php
+            $lastErrorAt = data_get($integration->config, 'last_error_at') ?? $integration->last_sync_at;
+        @endphp
         <div class="alert alert-danger">
             <h6>Last Error:</h6>
-            <p class="small mb-0">{{ $integration->last_error }}</p>
+            <p class="small mb-1">{{ $integration->last_error }}</p>
+            @if($lastErrorAt)
+                <p class="small text-muted mb-0">Recorded: {{ \Illuminate\Support\Carbon::parse($lastErrorAt)->format('Y-m-d H:i:s T') }}</p>
+            @else
+                <p class="small text-muted mb-0">Recorded time unavailable for this historical error.</p>
+            @endif
         </div>
     @endif
 

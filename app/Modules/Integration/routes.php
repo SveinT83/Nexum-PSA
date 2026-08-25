@@ -2,6 +2,7 @@
 
 use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
 use App\Modules\Integration\Controllers\Admin\AiPrivacyController;
+use App\Modules\Integration\Controllers\Admin\AiTelemetryController;
 use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\CloudFactoryController;
 use App\Modules\Integration\Controllers\Admin\EmailProviderController;
@@ -161,7 +162,12 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/admin/system/integrations/ai', [AiIntegrationController::class, 'index'])
         ->name('admin.system.integrations.ai.index');
-
+    Route::get('/admin/system/integrations/ai/telemetry', [AiTelemetryController::class, 'index'])
+        ->name('admin.system.integrations.ai.telemetry.index');
+    Route::get('/admin/system/integrations/ai/telemetry/{event}', [AiTelemetryController::class, 'show'])
+        ->name('admin.system.integrations.ai.telemetry.show');
+    Route::get('/admin/system/integrations/ai/rate-cards', [AiTelemetryController::class, 'rateCards'])
+        ->name('admin.system.integrations.ai.rate-cards.index');
     Route::post('/admin/system/integrations/ai/providers', [AiIntegrationController::class, 'storeProvider'])
         ->name('admin.system.integrations.ai.providers.store');
 

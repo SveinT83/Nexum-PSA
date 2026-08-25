@@ -4,6 +4,7 @@ namespace App\Modules\LeadIntelligence\Actions;
 
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Services\AiChatResponder;
+use App\Modules\Integration\Support\AiExecutionContext;
 use App\Modules\LeadIntelligence\Models\LeadResearchRun;
 use App\Modules\LeadIntelligence\Models\LeadSegment;
 use Illuminate\Support\Arr;
@@ -30,10 +31,20 @@ class ReviewLeadCandidateWithAi
         }
 
         try {
+            $executionContext = new AiExecutionContext(
+                executionId: (string) Str::uuid(),
+                featureKey: 'lead_intelligence.candidate_review',
+                operationKey: 'review',
+                domain: 'lead_intelligence',
+                billingClassification: 'lead_intelligence',
+                subjectType: 'lead_research_run',
+                subjectId: (string) $run->id,
+            );
+
             $reply = $this->responder->complete($agent, [
                 ['role' => 'system', 'content' => $this->systemPrompt($settings)],
                 ['role' => 'user', 'content' => json_encode($this->context($candidate, $segment, $run, $settings), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)],
-            ], self::TIMEOUT_SECONDS);
+            ], self::TIMEOUT_SECONDS, $executionContext);
 
             $review = $this->sanitize($this->decodeJson($reply), $candidate);
             $review['used_ai'] = true;

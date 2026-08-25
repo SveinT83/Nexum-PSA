@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 
 class AiUsageRecorder
 {
+    public function __construct(private readonly AiCostCalculator $costCalculator) {}
+
     /**
      * Persist one sanitized event for one actual outbound provider attempt.
      */
@@ -69,7 +71,28 @@ class AiUsageRecorder
             'provider_timing' => $usage->providerTiming ?: null,
             'non_token_usage' => $usage->nonTokenUsage ?: null,
             'provider_usage' => $usage->providerUsage ?: null,
+            ...$this->calculateCosts($agent, $result),
         ]);
+    }
+
+    private function calculateCosts(AiAgent $agent, AiModelResult $result): array
+    {
+        if (! $result->successful || ! $agent->provider) {
+            return [];
+        }
+
+        $calc = $this->costCalculator->calculate(
+            $result->usage,
+            $agent->provider,
+            $result->actualModel ?: $agent->model ?: $agent->provider->default_model
+        );
+
+        return [
+            'calculated_cost' => $calc['total_cost'],
+            'effective_cost' => $result->usage->providerReportedCost ?: $calc['total_cost'],
+            'cost_source' => $calc['source'],
+            'pricing_snapshot' => $calc['pricing_snapshot'],
+        ];
     }
 
     private function limited(?string $value, int $length): ?string

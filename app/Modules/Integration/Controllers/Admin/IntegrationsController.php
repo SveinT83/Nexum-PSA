@@ -265,6 +265,8 @@ class IntegrationsController extends Controller
             $integration->is_healthy = false;
             $integration->last_error = null;
         }
+        $config['last_error_at'] = null;
+        $integration->config = $config;
 
         $integration->save();
 
@@ -287,6 +289,10 @@ class IntegrationsController extends Controller
             $integration->is_healthy = false;
             $integration->last_error = 'BookStack token ID and token secret are required.';
         }
+
+        $config = $integration->config ?? [];
+        $config['last_error_at'] = $integration->last_error ? now()->toIso8601String() : null;
+        $integration->config = $config;
 
         $integration->save();
 
@@ -334,6 +340,7 @@ class IntegrationsController extends Controller
             ];
             $config['last_pull_at'] = now()->toIso8601String();
 
+            $config['last_error_at'] = now()->toIso8601String();
             $integration->forceFill([
                 'config' => $config,
                 'last_sync_at' => now(),

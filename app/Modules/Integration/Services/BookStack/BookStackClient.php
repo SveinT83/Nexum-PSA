@@ -4,6 +4,7 @@ namespace App\Modules\Integration\Services\BookStack;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 use RuntimeException;
@@ -14,9 +15,9 @@ class BookStackClient
 
     /**
      * Minimum seconds between API requests to stay under BookStack's rate limit.
-     * BookStack defaults to 180 requests/minute (3/sec); 350ms gives safe headroom.
+     * One request/second leaves room for unrelated BookStack activity.
      */
-    private const DEFAULT_REQUEST_DELAY_SECONDS = 0.35;
+    private const DEFAULT_REQUEST_DELAY_SECONDS = 1.0;
 
     /**
      * Maximum retries for HTTP 429 (Too Many Attempts) responses.
@@ -25,14 +26,9 @@ class BookStackClient
 
     /**
      * Base delay in seconds for exponential backoff on 429 responses.
-     * Actual delay: base * 2^attempt (2s, 4s, 8s).
+     * Actual delay: base * 2^attempt (15s, 30s, 60s).
      */
-    private const RETRY_BASE_DELAY_SECONDS = 2;
-
-    /**
-     * Timestamp of the last API request, used to enforce minimum inter-request delay.
-     */
-    private static float $lastRequestTime = 0.0;
+    private const RETRY_BASE_DELAY_SECONDS = 15;
 
     public function __construct(
         private readonly string $baseUrl,
@@ -478,26 +474,20 @@ class BookStackClient
             $attempts++;
 
             if ($response->status() === 429) {
+                $backoffSeconds = $this->retryDelaySeconds($response, $retryCount);
+                $this->deferSharedRequests($backoffSeconds);
+
                 if ($retryCount >= $this->maxRetries) {
                     $retryAfter = $response->header('Retry-After');
                     $attemptLabel = $attempts === 1 ? 'attempt' : 'attempts';
                     throw new RuntimeException(
                         "BookStack API rate limit exceeded after {$attempts} {$attemptLabel}."
-                        .' Consider increasing sync_interval_minutes'
-                        .' or reducing the number of synced pages.'
+                        .' Requests for this BookStack connection are now in shared cooldown.'
                         .($retryAfter ? " Retry-After header: {$retryAfter}s." : '')
                     );
                 }
 
-                $backoffSeconds = self::RETRY_BASE_DELAY_SECONDS * (2 ** $retryCount);
-                $retryAfter = $response->header('Retry-After');
-
-                if ($retryAfter && is_numeric($retryAfter)) {
-                    $backoffSeconds = max($backoffSeconds, (float) $retryAfter);
-                }
-
                 $retryCount++;
-                Sleep::for($backoffSeconds)->seconds();
 
                 continue;
             }
@@ -507,21 +497,99 @@ class BookStackClient
     }
 
     /**
-     * Enforce minimum inter-request delay by sleeping if the last request was too recent.
+     * Reserve one shared request slot for this exact BookStack connection.
      *
-     * BookStack's default rate limit is 180 requests/minute (3/sec).
-     * A 350ms delay between requests provides safe headroom.
+     * A cache-backed reservation coordinates HTTP workers, queue workers, and
+     * scheduler processes. The previous process-local timestamp allowed each
+     * process to consume the provider limit independently.
      */
     private function paceRequest(): void
     {
-        $elapsed = microtime(true) - self::$lastRequestTime;
 
-        if ($elapsed < $this->requestDelaySeconds && self::$lastRequestTime > 0) {
-            $sleepSeconds = $this->requestDelaySeconds - $elapsed;
-            usleep((int) ($sleepSeconds * 1_000_000));
+        $now = microtime(true);
+        $scheduledAt = Cache::lock($this->throttleLockKey(), 10)->block(5, function () use ($now): float {
+            $availableAt = (float) Cache::get($this->throttleKey(), 0);
+            $scheduledAt = max($now, $availableAt);
+
+            Cache::put(
+                $this->throttleKey(),
+                $scheduledAt + $this->requestDelaySeconds,
+                now()->addMinutes(10),
+            );
+
+            return $scheduledAt;
+        });
+
+        $waitSeconds = $scheduledAt - $now;
+
+        if ($waitSeconds > 0) {
+            Sleep::for($waitSeconds)->seconds();
+        }
+    }
+
+    /**
+     * Publish provider cooldown so other PHP processes stop before retrying.
+     */
+    private function deferSharedRequests(float $delaySeconds): void
+    {
+        $now = microtime(true);
+
+        Cache::lock($this->throttleLockKey(), 10)->block(5, function () use ($now, $delaySeconds): void {
+            $availableAt = (float) Cache::get($this->throttleKey(), 0);
+
+            Cache::put(
+                $this->throttleKey(),
+                max($availableAt, $now + $delaySeconds),
+                now()->addMinutes(10),
+            );
+        });
+    }
+
+    /**
+     * Resolve a provider-aware cooldown from Retry-After or reset metadata.
+     */
+    private function retryDelaySeconds(Response $response, int $retryCount): float
+    {
+        $delaySeconds = (float) (self::RETRY_BASE_DELAY_SECONDS * (2 ** $retryCount));
+        $retryAfter = trim((string) $response->header('Retry-After'));
+
+        if ($retryAfter !== '') {
+            if (is_numeric($retryAfter)) {
+                $delaySeconds = max($delaySeconds, (float) $retryAfter);
+            } elseif (($retryAt = strtotime($retryAfter)) !== false) {
+                $delaySeconds = max($delaySeconds, $retryAt - time());
+            }
         }
 
-        self::$lastRequestTime = microtime(true);
+        $resetAt = trim((string) $response->header('X-RateLimit-Reset'));
+
+        if ($resetAt !== '' && is_numeric($resetAt)) {
+            $resetValue = (float) $resetAt;
+            $resetDelay = $resetValue > time()
+                ? $resetValue - microtime(true)
+                : $resetValue;
+            $delaySeconds = max($delaySeconds, $resetDelay);
+        }
+
+        return max(1.0, $delaySeconds);
+    }
+
+    private function throttleKey(): string
+    {
+        return 'book-stack:request-slot:'.$this->throttleIdentity();
+    }
+
+    private function throttleLockKey(): string
+    {
+        return 'book-stack:request-lock:'.$this->throttleIdentity();
+    }
+
+    /**
+     * Hash connection identity so cache keys expose neither token ID nor URL.
+     */
+    private function throttleIdentity(): string
+    {
+        return hash('sha256', strtolower(rtrim($this->baseUrl, '/')).'|'.$this->tokenId);
     }
 
     private function endpoint(string $path): string

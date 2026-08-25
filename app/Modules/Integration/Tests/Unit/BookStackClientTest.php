@@ -4,6 +4,7 @@ namespace App\Modules\Integration\Tests\Unit;
 
 use App\Modules\Integration\Services\BookStack\BookStackClient;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,6 +18,7 @@ class BookStackClientTest extends TestCase
 
         Http::preventStrayRequests();
         Sleep::fake();
+        Cache::flush();
     }
 
     protected function tearDown(): void
@@ -53,11 +55,10 @@ class BookStackClientTest extends TestCase
         $this->assertSame(42, $page['id']);
         $this->assertSame(4, $attempts);
         Http::assertSentCount(4);
-        Sleep::assertSequence([
-            Sleep::for(2)->seconds(),
-            Sleep::for(4)->seconds(),
-            Sleep::for(8)->seconds(),
-        ]);
+        Sleep::assertSleptTimes(3);
+        Sleep::assertSlept(fn ($duration) => $duration->totalSeconds > 14.9 && $duration->totalSeconds <= 15, 1);
+        Sleep::assertSlept(fn ($duration) => $duration->totalSeconds > 29.9 && $duration->totalSeconds <= 30, 1);
+        Sleep::assertSlept(fn ($duration) => $duration->totalSeconds > 59.9 && $duration->totalSeconds <= 60, 1);
     }
 
     #[Test]
@@ -70,7 +71,7 @@ class BookStackClientTest extends TestCase
             $attempts++;
 
             return $attempts === 1
-                ? Http::response(['message' => 'Too Many Attempts'], 429, ['Retry-After' => '7'])
+                ? Http::response(['message' => 'Too Many Attempts'], 429, ['Retry-After' => '45'])
                 : Http::response(['id' => 42], 200);
         });
 
@@ -84,9 +85,8 @@ class BookStackClientTest extends TestCase
 
         $this->assertSame(42, $client->readPage(42)['id']);
         $this->assertSame(2, $attempts);
-        Sleep::assertSequence([
-            Sleep::for(7)->seconds(),
-        ]);
+        Sleep::assertSleptTimes(1);
+        Sleep::assertSlept(fn ($duration) => $duration->totalSeconds > 44.9 && $duration->totalSeconds <= 45, 1);
     }
 
     #[Test]
@@ -112,5 +112,31 @@ class BookStackClientTest extends TestCase
         $this->assertStringContainsString('rate limit exceeded after 1 attempt', $result['message']);
         Http::assertSentCount(1);
         Sleep::assertNeverSlept();
+    }
+
+    #[Test]
+    public function separate_clients_share_one_connection_request_pace(): void
+    {
+        Http::fake([
+            'https://docs.example.test/api/books*' => Http::response(['data' => []], 200),
+        ]);
+
+        $first = new BookStackClient(
+            'https://docs.example.test',
+            'token-id',
+            'token-secret',
+        );
+        $second = new BookStackClient(
+            'https://docs.example.test',
+            'token-id',
+            'token-secret',
+        );
+
+        $this->assertTrue($first->testConnection()['success']);
+        $this->assertTrue($second->testConnection()['success']);
+
+        Http::assertSentCount(2);
+        Sleep::assertSleptTimes(1);
+        Sleep::assertSlept(fn ($duration) => $duration->totalSeconds > 0.9 && $duration->totalSeconds <= 1, 1);
     }
 }

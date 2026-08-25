@@ -55,6 +55,7 @@ class PullBookStackToKnowledge implements ShouldQueue
             $this->markMisconfigured($integration, ! $actor
                 ? 'BookStack scheduled pull could not find an active sync actor.'
                 : 'BookStack scheduled pull is missing server, token id, or token secret.');
+
             return;
         }
 
@@ -101,7 +102,11 @@ class PullBookStackToKnowledge implements ShouldQueue
 
     private function markMisconfigured(Integration $integration, string $message): void
     {
+        $config = $integration->config ?? [];
+        $config['last_error_at'] = now()->toIso8601String();
+
         $integration->forceFill([
+            'config' => $config,
             'is_healthy' => false,
             'last_error' => $message,
         ])->save();

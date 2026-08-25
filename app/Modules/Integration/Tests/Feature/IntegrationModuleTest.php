@@ -1720,6 +1720,11 @@ class IntegrationModuleTest extends TestCase
         $this->assertSame('BookStack API is unavailable', $integration->last_error);
         $this->assertSame(1, $integration->config['last_sync_summary']['failed']);
         $this->assertNotNull($integration->last_sync_at);
+        $this->assertNotNull($integration->config['last_error_at']);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.integrations.book_stack.settings'))
+            ->assertSee('Recorded:');
     }
 
     #[Test]

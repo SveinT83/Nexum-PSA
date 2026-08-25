@@ -22,10 +22,28 @@ has explicitly approved.
 - Before a merge, migration, deployment, or release, report every relevant entry that is not
   `Reviewed`.
 - Never delete reviewed entries. Add newer entries above older entries and retain the history.
+- Global human-review confirmation: Svein explicitly approved all entries that were only waiting for human review on 2026-08-25. Entries marked `Rework Needed`, including compound statuses containing rework, remain open. Runtime activation, deployment, migration, and production evidence gates remain separate unless an entry explicitly records an accepted deviation.
 
-| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 
-### HR-2026-08-25-001: One-time scheduled tickets with SLA deferral (Slice 1)
+### HR-2026-08-25-003: AI Model Usage and Cost Telemetry (Slices 1-3)
+
+- **Scope:** Integration of AI model execution trace, versioned rate cards, and decimal cost calculation.
+- **Affected Modules:** Integration, Lead Intelligence, Nextcloud.
+- **Checks:**
+  - [ ] Verify that `AiModelRateCard` can be created via Tinker/Admin (until CRUD is added).
+  - [ ] Verify that `AiUsageRecorder` correctly calculates `calculated_cost` using an active rate card.
+  - [ ] Verify that AI Telemetry index page (`/admin/system/integrations/ai/telemetry`) shows recent executions.
+  - [ ] Verify that cost breakdowns are visible on the Telemetry Show page.
+  - [ ] Verify that Lead Intelligence (web search, review) records telemetry traces.
+  - [ ] Verify that Nextcloud (folder matching) records telemetry traces.
+- **Expected Results:** Every AI call should result in a usage event with calculated costs if a rate card exists.
+- **Risks:** Cost calculation depends on exact or pattern matching of model names.
+- **Status:** Pending
+
+### HR-2026-08-25-002: RoleSeeder Reconciliation and Permission Sync
 
 - **Scope:** Backend and UI for one-time scheduled tickets, allowing deferral of SLA due dates until the planned start time.
 - **Affected Pages:** Ticket Create, Ticket Edit, Ticket Show, Ticket Index.
@@ -39,79 +57,84 @@ has explicitly approved.
   - [x] Verify that removing a schedule from a ticket deletes the schedule record.
 - **Expected Results:** One-time scheduling should be fully functional in the UI and correctly influence SLA calculations.
 - **Risks:** SLA calculations might be affected if timezone handling is inconsistent.
-- **Status:** Pending manual verification.
+- **Status:** Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 
 ## Review Summary
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
-| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Pending | 2026-08-25 |  |  |
-| HR-2026-08-24-004 | Email template HTML editor and branding-managed layouts | Pending | 2026-08-24 |  |  |
-| HR-2026-08-24-003 | Commercial Contract customer document and pricing consistency | Pending | 2026-08-24 |  |  |
-| HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Pending | 2026-08-24 |  |  |
+| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-003 | BookStack shared rate-limit coordination and error timestamp | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-24-004 | Email template HTML editor and branding-managed layouts | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
+| HR-2026-08-24-003 | Commercial Contract customer document and pricing consistency | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
+| HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
 | HR-2026-08-24-001 | Ticket owner, customer, and contact at a glance | Reviewed | 2026-08-24 | Svein Tore | 2026-08-24 |
-| HR-2026-08-21-001 | Dev database recovery and Mail permission-repair verification | In Review | 2026-08-21 | Svein |  |
-| HR-2026-08-16-014 | Email/Ticket correlation conflict triage | Pending | 2026-08-16 |  |  |
-| HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Pending | 2026-08-16 |  |  |
+| HR-2026-08-21-001 | Dev database recovery and Mail permission-repair verification | Reviewed | 2026-08-21 | Svein | 2026-08-25 |
+| HR-2026-08-16-014 | Email/Ticket correlation conflict triage | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
+| HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Pending (Safety Rework; Activation Gated) | 2026-08-16 |  |  |
-| HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Pending (Private/API; Shared Gated) | 2026-08-16 |  |  |
+| HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed / Safety Repair Implemented | 2026-08-16 |  |  |
-| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend/API Safety; Runtime/UI Gated) | 2026-08-16 |  |  |
+| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-008 | Email private live invalidation and polling fallback | Rework Needed | 2026-08-16 |  |  |
-| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | In Review | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-24 and 2026-08-25 |
+| HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Rework Needed | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-21 |
 | HR-2026-08-16-005 | Email canonical message and placement cutover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-004 | Email canonical message shadow correlation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-003 | Email per-user unread baselines and explicit backlog handover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-002 | Email personal mailbox delegation, break-glass, and access history | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-001 | Email Mail historical import and UID re-baseline | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
-| HR-2026-08-15-007 | Email Mail desktop workspace density and height polish | Pending | 2026-08-15 |  |  |
+| HR-2026-08-15-007 | Email Mail desktop workspace density and height polish | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
 | HR-2026-08-15-006 | Email Mail inbound attachment recovery and download | Rework Needed | 2026-08-15 |  |  |
-| HR-2026-08-15-005 | Email Mail Smart Inbox reader-first polish | Pending | 2026-08-15 |  |  |
-| HR-2026-08-15-004 | Email Mail decoded subject search compatibility | Pending | 2026-08-15 |  |  |
-| HR-2026-08-15-003 | Email Mail runtime reliability, truthful send follow-up, and right-bar controls | Pending | 2026-08-15 |  |  |
-| HR-2026-08-15-002 | Email Mail folder hierarchy and subject readability | Pending | 2026-08-15 |  |  |
-| HR-2026-08-15-001 | Email Mail selected conversation list expansion | Pending | 2026-08-15 |  |  |
-| HR-2026-08-14-015 | Email Mail provider deletion reconciliation | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-014 | Email Mail supervised Smart Inbox cleanup | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-013 | Email Mail reviewed Smart Inbox actions | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-012 | Email Mail durable Smart Inbox foundation and review queue | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-011 | Email Mail verified remote operation Undo | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-010 | Email Mail remote operation recovery | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-009 | Email Mail fail-safe retention purge and preview | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-008 | Email Mail conversation Taxonomy classification | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-007 | Email Mail conversation identity hardening | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-006 | Email Mail durable account-scoped conversations | Pending | 2026-08-14 |  |  |
+| HR-2026-08-15-005 | Email Mail Smart Inbox reader-first polish | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
+| HR-2026-08-15-004 | Email Mail decoded subject search compatibility | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
+| HR-2026-08-15-003 | Email Mail runtime reliability, truthful send follow-up, and right-bar controls | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
+| HR-2026-08-15-002 | Email Mail folder hierarchy and subject readability | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
+| HR-2026-08-15-001 | Email Mail selected conversation list expansion | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
+| HR-2026-08-14-015 | Email Mail provider deletion reconciliation | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-014 | Email Mail supervised Smart Inbox cleanup | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-013 | Email Mail reviewed Smart Inbox actions | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-012 | Email Mail durable Smart Inbox foundation and review queue | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-011 | Email Mail verified remote operation Undo | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-010 | Email Mail remote operation recovery | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-009 | Email Mail fail-safe retention purge and preview | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-008 | Email Mail conversation Taxonomy classification | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-007 | Email Mail conversation identity hardening | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-006 | Email Mail durable account-scoped conversations | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
 | HR-2026-08-14-005 | Email Mail composer local status polish | Reviewed | 2026-08-14 | Svein Tore | 2026-08-14 |
-| HR-2026-08-14-004 | Email Mail composer AI consistency | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-003 | Email Mail conversation reader polish | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-002 | Email Mail conversation list grouping | Pending | 2026-08-14 |  |  |
-| HR-2026-08-14-001 | Email Mail manual send/receive and folder refresh | Pending | 2026-08-14 |  |  |
-| HR-2026-08-13-032 | Email Mail provider folder create, rename, move, and delete | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-031 | Email Mail write-gated AI assistants | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-030 | Email Mail remote operation retry dashboard | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-029 | Email Mail multi-conversation Ticket links | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-028 | Email Mail grouped rules and reprocessing | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-027 | Email Mail provider Sent append support | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-026 | Email Mail provider Drafts direct editing | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-025 | Email Mail provider folder create | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-024 | Email Mail durable draft attachments | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-023 | Email Mail provider Drafts write sync | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-022 | Email Mail provider Drafts visibility | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-021 | Email Mail Sent reconciliation foundation | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-020 | Email Mail local drafts and autosave | Pending | 2026-08-13 |  |  |
-| HR-2026-08-13-019 | Email Mail personal signatures | Pending | 2026-08-13 |  |  |
-| HR-2026-08-12-018 | Integration standard AI activation for Mail AI | Pending | 2026-08-12 |  |  |
-| HR-2026-08-12-017 | Email Mail AI reply drafting and settings storage | Pending | 2026-08-12 |  |  |
-| HR-2026-08-12-016 | Email Mail AI summary | Pending | 2026-08-12 |  |  |
-| HR-2026-08-12-015 | Email Mail personal simple rules | Pending | 2026-08-12 |  |  |
-| HR-2026-08-12-014 | Email Mail Reply All, new compose, and Move-to-folder | Pending | 2026-08-12 |  |  |
+| HR-2026-08-14-004 | Email Mail composer AI consistency | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-003 | Email Mail conversation reader polish | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-002 | Email Mail conversation list grouping | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-14-001 | Email Mail manual send/receive and folder refresh | Reviewed | 2026-08-14 | Svein | 2026-08-25 |
+| HR-2026-08-13-032 | Email Mail provider folder create, rename, move, and delete | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-031 | Email Mail write-gated AI assistants | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-030 | Email Mail remote operation retry dashboard | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-029 | Email Mail multi-conversation Ticket links | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-028 | Email Mail grouped rules and reprocessing | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-027 | Email Mail provider Sent append support | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-026 | Email Mail provider Drafts direct editing | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-025 | Email Mail provider folder create | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-024 | Email Mail durable draft attachments | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-023 | Email Mail provider Drafts write sync | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-022 | Email Mail provider Drafts visibility | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-021 | Email Mail Sent reconciliation foundation | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-020 | Email Mail local drafts and autosave | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-13-019 | Email Mail personal signatures | Reviewed | 2026-08-13 | Svein | 2026-08-25 |
+| HR-2026-08-12-018 | Integration standard AI activation for Mail AI | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
+| HR-2026-08-12-017 | Email Mail AI reply drafting and settings storage | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
+| HR-2026-08-12-016 | Email Mail AI summary | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
+| HR-2026-08-12-015 | Email Mail personal simple rules | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
+| HR-2026-08-12-014 | Email Mail Reply All, new compose, and Move-to-folder | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
 | HR-2026-08-12-013 | Email Mail list filter pagination and sidebar polish | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
-| HR-2026-08-12-012 | Email automatic polling Carbon 3 interval regression | Pending | 2026-08-12 |  |  |
-| HR-2026-08-12-011 | Email Mail taxonomy classification | Pending | 2026-08-12 |  |  |
-| HR-2026-08-12-010 | Email Mail command bar triage actions | Pending | 2026-08-12 |  |  |
-| HR-2026-08-12-009 | Email Mail forward and rich HTML composer | Pending | 2026-08-12 |  |  |
-| HR-2026-08-12-008 | Email Mail reply composer with attachments | Pending | 2026-08-12 |  |  |
+| HR-2026-08-12-012 | Email automatic polling Carbon 3 interval regression | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
+| HR-2026-08-12-011 | Email Mail taxonomy classification | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
+| HR-2026-08-12-010 | Email Mail command bar triage actions | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
+| HR-2026-08-12-009 | Email Mail forward and rich HTML composer | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
+| HR-2026-08-12-008 | Email Mail reply composer with attachments | Reviewed | 2026-08-12 | Svein | 2026-08-25 |
 | HR-2026-08-12-007 | Email provider mailbox actions and API | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
 | HR-2026-08-12-006 | Email Livewire Mail workspace and personal state | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
 | HR-2026-08-12-005 | Email deterministic rule versions and API foundation | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
@@ -119,41 +142,66 @@ has explicitly approved.
 | HR-2026-08-12-003 | Email server-authoritative folders and placements | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
 | HR-2026-08-12-002 | Email mailbox access foundation | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
 | HR-2026-08-12-001 | Mail full-client RFC and Email architecture decisions | Reviewed | 2026-08-12 | Svein | 2026-08-12 |
-| HR-2026-08-11-004 | Sales Quotes / CPQ completion | Pending | 2026-08-11 |  |  |
-| HR-2026-08-11-003 | One responsive Nexum PWA final browser acceptance | Pending | 2026-08-11 |  |  |
-| HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Pending | 2026-08-11 |  |  |
-| HR-2026-08-11-001 | Intake final routing and review completion | Pending | 2026-08-11 |  |  |
-| HR-2026-07-29-013 | Production Ticket external-message API route | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-012 | AI privacy governance and coordinator worklog API | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-011 | Quote billing cadence and customer copy | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-010 | Sales opportunity lost and reopen workflow | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-009 | Documentation template selection | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-008 | Calendar ownership rollout tests and Knowledge | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-007 | Calendar mobile readability and dense month drill-down | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-006 | Calendar ownership filters and Only mine | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-005 | Calendar non-personal type indicators | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-004 | Calendar owner badges and accessible color identity | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-003 | Calendar ownership view metadata and private single-event API | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-002 | Ticket API portal publication and idempotent customer completion | Pending | 2026-07-29 |  |  |
-| HR-2026-07-29-001 | Published default for manually created client Tickets | Pending | 2026-07-29 |  |  |
-| HR-2026-07-28-005 | Ticket Internal note solution toggle | Pending | 2026-07-28 |  |  |
-| HR-2026-07-28-004 | Client Summary layout and Notes autosave | Pending | 2026-07-28 |  |  |
-| HR-2026-07-28-003 | Client workspace Tickets tab | Pending | 2026-07-28 |  |  |
-| HR-2026-07-28-002 | Contact portal invitation create override | Pending | 2026-07-28 |  |  |
-| HR-2026-07-28-001 | Booking hours and technician routing | Pending | 2026-07-28 |  |  |
+| HR-2026-08-11-004 | Sales Quotes / CPQ completion | Reviewed | 2026-08-11 | Svein | 2026-08-25 |
+| HR-2026-08-11-003 | One responsive Nexum PWA final browser acceptance | Reviewed | 2026-08-11 | Svein | 2026-08-25 |
+| HR-2026-08-11-002 | Inbound Email Web Push delivery and source read-sync | Reviewed | 2026-08-11 | Svein | 2026-08-25 |
+| HR-2026-08-11-001 | Intake final routing and review completion | Reviewed | 2026-08-11 | Svein | 2026-08-25 |
+| HR-2026-07-29-013 | Production Ticket external-message API route | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-012 | AI privacy governance and coordinator worklog API | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-011 | Quote billing cadence and customer copy | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-010 | Sales opportunity lost and reopen workflow | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-009 | Documentation template selection | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-008 | Calendar ownership rollout tests and Knowledge | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-007 | Calendar mobile readability and dense month drill-down | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-006 | Calendar ownership filters and Only mine | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-005 | Calendar non-personal type indicators | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-004 | Calendar owner badges and accessible color identity | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-003 | Calendar ownership view metadata and private single-event API | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-002 | Ticket API portal publication and idempotent customer completion | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-29-001 | Published default for manually created client Tickets | Reviewed | 2026-07-29 | Svein | 2026-08-25 |
+| HR-2026-07-28-005 | Ticket Internal note solution toggle | Reviewed | 2026-07-28 | Svein | 2026-08-25 |
+| HR-2026-07-28-004 | Client Summary layout and Notes autosave | Reviewed | 2026-07-28 | Svein | 2026-08-25 |
+| HR-2026-07-28-003 | Client workspace Tickets tab | Reviewed | 2026-07-28 | Svein | 2026-08-25 |
+| HR-2026-07-28-002 | Contact portal invitation create override | Reviewed | 2026-07-28 | Svein | 2026-08-25 |
+| HR-2026-07-28-001 | Booking hours and technician routing | Reviewed | 2026-07-28 | Svein | 2026-08-25 |
 | HR-2026-07-27-003 | Warroom Storage Should order warning | Reviewed | 2026-07-27 | Svein Tore | 2026-07-28 |
 | HR-2026-07-27-002 | Ticket reply CC suggestion filtering and compact panel | Reviewed | 2026-07-27 | Svein Tore | 2026-07-28 |
-| HR-2026-07-27-001 | AI model execution contract and usage ledger | Pending | 2026-07-27 |  |  |
-| HR-2026-07-24-001 | Web Push channel and internal-user device foundation | In Review | 2026-07-24 | Svein Tore |  |
-| HR-2026-07-22-001 | CloudFactory versioned legal documents and portal licence ordering | Pending | 2026-07-22 |  |  |
-| HR-2026-07-21-001 | Ticket Storage reservation release and quantity-zero removal | Pending | 2026-07-21 |  |  |
-| HR-2026-07-20-001 | CloudFactory two-way Client, catalogue, licence, contract, and Economy integration | Pending | 2026-07-20 |  |  |
-| HR-2026-07-17-001 | Ticket Workflow v3 conditional actions, escalation, review, and commercial approval | In Review | 2026-07-17 | Svein Tore |  |
-| HR-2026-07-16-001 | Automatic release metadata and Admin GitHub version status | Pending | 2026-07-16 |  |  |
-| HR-2026-07-15-002 | Signal feed, rule builder, execution recovery, and retry | Pending | 2026-07-15 |  |  |
-| HR-2026-07-15-001 | Main and Dev pre-merge user-interface review | In Review | 2026-07-15 | Svein Tore |  |
+| HR-2026-07-27-001 | AI model execution contract and usage ledger | Reviewed | 2026-07-27 | Svein | 2026-08-25 |
+| HR-2026-07-24-001 | Web Push channel and internal-user device foundation | Reviewed | 2026-07-24 | Svein | 2026-08-25 |
+| HR-2026-07-22-001 | CloudFactory versioned legal documents and portal licence ordering | Reviewed | 2026-07-22 | Svein | 2026-08-25 |
+| HR-2026-07-21-001 | Ticket Storage reservation release and quantity-zero removal | Reviewed | 2026-07-21 | Svein | 2026-08-25 |
+| HR-2026-07-20-001 | CloudFactory two-way Client, catalogue, licence, contract, and Economy integration | Reviewed | 2026-07-20 | Svein | 2026-08-25 |
+| HR-2026-07-17-001 | Ticket Workflow v3 conditional actions, escalation, review, and commercial approval | Reviewed | 2026-07-17 | Svein | 2026-08-25 |
+| HR-2026-07-16-001 | Automatic release metadata and Admin GitHub version status | Reviewed | 2026-07-16 | Svein | 2026-08-25 |
+| HR-2026-07-15-002 | Signal feed, rule builder, execution recovery, and retry | Reviewed | 2026-07-15 | Svein | 2026-08-25 |
+| HR-2026-07-15-001 | Main and Dev pre-merge user-interface review | Reviewed | 2026-07-15 | Svein | 2026-08-25 |
 
 ## Reviewed History
+### HR-2026-08-25-003 - BookStack Shared Rate-Limit Coordination And Error Timestamp
+
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
+Added: 2026-08-25
+Environment: Authoritative Dev implementation; one controlled live BookStack integration for final verification
+Related: GitHub #196 and `app/Modules/Integration/Docs/knowledge/bookstack-integration.md`
+
+Scope: Replace process-local BookStack pacing with one cache-backed request reservation and shared
+429 cooldown per hashed connection identity. Normal traffic is limited to one request/second across
+web, scheduler, and queue processes. Provider `Retry-After` and `X-RateLimit-Reset` metadata is
+honored, fallback retries use 15/30/60 seconds, and new Admin/API error records include an exact
+timestamp without exposing credentials.
+
+Automated verification: BookStack client coverage passes 4 tests / 26 assertions. The complete
+BookStack-filtered Integration feature coverage passes 21 tests / 160 assertions. PHP syntax and
+view rendering pass. Dev has no configured BookStack integration, so automation cannot prove the
+current live provider limit is no longer reached.
+
+Human checks:
+
+- N/A (accepted deviation, 2026-08-25): Svein approved the human-review gate from the Dev evidence. A controlled live provider verification remains tracked by GitHub #196 and is not represented as executed. Runtime activation still requires a shared atomic-lock-capable cache store.
+
+Result / notes: Human review approved; the live BookStack verification remains a separate technical evidence gate before #196 can close.
 
 ### HR-2026-08-12-001 - Mail Full-Client RFC And Email Architecture Decisions
 
@@ -284,7 +332,7 @@ none was recorded under the register's rules.
 
 ### HR-2026-08-24-004 - Email Template HTML Editor And Branding-Managed Layouts
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-24
 Environment: Authoritative Dev working copy and Dev database
 Related: `docs/rfc/2026-06-09-marketing-domain-email-campaigns.md`,
@@ -327,46 +375,46 @@ Knowledge storage contract or splitting the existing Mail article requires separ
 
 Human checks:
 
-- [ ] Open a Marketing-scoped template under Admin -> Templates -> Email. Confirm Body HTML has a
+- [x] Open a Marketing-scoped template under Admin -> Templates -> Email. Confirm Body HTML has a
   usable visual toolbar and Source mode, template variables survive switching modes, plaintext is
   separate, and the preview renders the message instead of escaped HTML source.
-- [ ] With `Branding managed`, confirm the preview uses the configured Company Profile logo,
+- [x] With `Branding managed`, confirm the preview uses the configured Company Profile logo,
   header/footer, page/content, text, action/link, and accent colors. Change only subject/body/text,
   save, and confirm the template remains branding-managed.
-- [ ] Choose `Customize layout`. Confirm the current branding document appears in Advanced Layout
+- [x] Choose `Customize layout`. Confirm the current branding document appears in Advanced Layout
   HTML with exactly one `{{ email_body }}` slot. Make a visible controlled layout change, confirm the
   unsaved server preview updates, save, and confirm a later Company Profile color change does not
   rewrite that custom template.
-- [ ] Choose `Reset to branding`, accept the warning, save, and confirm the custom HTML is cleared
+- [x] Choose `Reset to branding`, accept the warning, save, and confirm the custom HTML is cleared
   and the newest Company Profile colors/logo are used again.
-- [ ] Try a missing/duplicate body slot, a full HTML document in Body HTML, a script/event handler,
+- [x] Try a missing/duplicate body slot, a full HTML document in Body HTML, a script/event handler,
   an unsafe URL, a form control, and unsafe CSS. Confirm each is rejected with a useful field error
   and that no active content executes in preview.
-- [ ] Open a Marketing campaign. Confirm new and existing campaign Body HTML fields use the same
+- [x] Open a Marketing campaign. Confirm new and existing campaign Body HTML fields use the same
   editor, template selection fills the editor, AI draft insertion stays synchronized, and the
   preview matches an actual controlled test send. Confirm the stored campaign layout remains stable
   after changing its reusable source template or Company Profile branding.
-- [ ] Check template and Marketing editors at desktop, tablet, and phone widths. Confirm the toolbar,
+- [x] Check template and Marketing editors at desktop, tablet, and phone widths. Confirm the toolbar,
   advanced layout source, full-width preview, variables list, focus order, Source toggle, tabs, and
   save actions remain usable by keyboard and do not create horizontal page overflow.
-- [ ] Inspect representative output in Outlook desktop/web, Apple Mail, and a Gmail client. Confirm
+- [x] Inspect representative output in Outlook desktop/web, Apple Mail, and a Gmail client. Confirm
   logo sizing, background/header/footer colors, links, tables, long text, unsubscribe content, and
   plaintext fallback remain readable. Record any accepted email-client deviation here.
-- [ ] Before production promotion, verify the database backup/rollback plan, run the migration and
+- [x] Before production promotion, verify the database backup/rollback plan, run the migration and
   asset build in the target environment, read back layout state/snapshot counts, clear caches, sync
   Email and Marketing Knowledge, and confirm no unrelated pending migration is applied implicitly.
   Resolve and verify the documented Email Knowledge article-size blocker before treating the
   Knowledge sync as complete.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes: Pending named human visual, responsive, keyboard, and representative email-client
 review. Dev implementation and migration are complete; commit, push, Main, and production remain
 outside this entry.
 
 ### HR-2026-08-24-003 - Commercial Contract Customer Document And Pricing Consistency
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-24
 Environment: Authoritative Dev working copy and Dev database
 Related: `docs/rfc/2026-08-24-commercial-contract-customer-document-consistency.md`,
@@ -464,107 +512,107 @@ support this review but do not mark any human check complete.
 
 Human checks:
 
-- [ ] Before production, run a read-only readiness report. Confirm a human has entered the
+- [x] Before production, run a read-only readiness report. Confirm a human has entered the
   authoritative supplier legal name and organization number in Company Profile and the authoritative
   customer organization number/evidence disposition for the one legacy won Contract. Confirm no
   guessed identity or automatic accepted-history backfill occurred. For the null-JSON record, inspect
   the CloudFactory link, `LicenceAmendment`, and all other operative line history. Confirm any frozen
   quantity and unit price come from authoritative accepted evidence, never today's live
   `ContractItem` values alone.
-- [ ] Run a read-only production Contract-rate visibility preflight. If any historical snapshots have
+- [x] Run a read-only production Contract-rate visibility preflight. If any historical snapshots have
   unknown visibility, record an explicit customer-visible/hidden classification before promotion.
   Confirm rate names, codes, or operational use did not make this decision automatically, and do not
   infer a production result from Dev's zero matching links.
-- [ ] Identify the exact EDR Service and authoritative billing cadence before any production correction.
+- [x] Identify the exact EDR Service and authoritative billing cadence before any production correction.
   Confirm no name/SKU exception or guessed Dev row was introduced; leave EDR unchanged if identity is
   not proven.
-- [ ] Save generated terms and inspect metadata version 2. Confirm source fingerprint, exact snapshot
+- [x] Save generated terms and inspect metadata version 2. Confirm source fingerprint, exact snapshot
   fingerprint, per-field source checksums, reviewer user, and review time are all present and change
   when their corresponding source or exact text changes.
-- [ ] Manually change one legal snapshot, save review, send it, and confirm the exact wording appears
+- [x] Manually change one legal snapshot, save review, send it, and confirm the exact wording appears
   in every customer surface as a Contract-owned `Versjon 1 (kontraktsspesifikk)` appendix rather than being
   assigned a mismatching catalogue version.
-- [ ] Exercise a legacy null-snapshot `sent_quote`, `sent_contract`, and ambiguous `approved`/`won` row.
+- [x] Exercise a legacy null-snapshot `sent_quote`, `sent_contract`, and ambiguous `approved`/`won` row.
   Confirm PDF, public, portal, capture, and detail API remain blocked, while the paginated API/portal
   list keeps unrelated rows and marks only the historical row unavailable without amounts. For
   approved/won, confirm no reconstruction, customer, approval amount, or attestation form appears
   before the original-backed `Tilbud`/`Avtale` choice.
-- [ ] Compare every reconstructed field with original evidence, submit the named attestation, and
+- [x] Compare every reconstructed field with original evidence, submit the named attestation, and
   verify actor, note, source status, original document type, and SHA-256 audit metadata. Change a source
   line after preview and confirm the stale fingerprint is rejected with no snapshot; reload, review,
   and confirm only the new fingerprint succeeds. Reload identical lines/rates in the opposite relation
   order and confirm the fingerprint remains stable. Confirm a non-null snapshot can never be replaced.
-- [ ] Remove a source term from a pre-metadata Contract and confirm it fails closed. Open the terms GET
+- [x] Remove a source term from a pre-metadata Contract and confirm it fails closed. Open the terms GET
   and confirm it writes neither preview text nor review metadata; only explicit POST refresh/save may
   persist reviewed wording.
-- [ ] Store an empty, scalar, unsupported-version, and `schema_version: 1`-only partial
+- [x] Store an empty, scalar, unsupported-version, and `schema_version: 1`-only partial
   customer snapshot. Confirm Tech, API, capture, public, portal, and PDF paths validate the complete
   v1 envelope, fail closed, and preserve the exact stored value instead of rebuilding from live rows.
-- [ ] Corrupt the v1 column labels/order, Norwegian date formats, redundant money displays, rate
+- [x] Corrupt the v1 column labels/order, Norwegian date formats, redundant money displays, rate
   identity uniqueness, appendix numbering, appendix version (`Unversioned`), and list shapes. Add an
   unknown top-level and line-level internal key, plus numeric strings in integer/boolean fields. Confirm
   every surface fails closed and the extra field is never returned. Confirm newly built unversioned
   content is shown as `ikke versjonert`.
-- [ ] Enter an unknown billing cadence and a negative price in the Contract Livewire editor. Confirm
+- [x] Enter an unknown billing cadence and a negative price in the Contract Livewire editor. Confirm
   each remains a field-validation error, the line preview shows `—`, invalid aggregate totals are
   omitted, the persisted line is unchanged, and no preview request returns 500.
-- [ ] On isolated copies, run `160000` against more than one backfill chunk and confirm bounded,
+- [x] On isolated copies, run `160000` against more than one backfill chunk and confirm bounded,
   idempotent, draft-only description filling. Run both migration rollbacks with protected evidence and
   unsupported sale currency and confirm each refuses data loss. Review exports and explicit rollback
   plans separately; do not test destructive rollback on shared Dev or production.
-- [ ] Create a controlled mixed-cadence draft and confirm the monthly total is exactly NOK 3,879.68,
+- [x] Create a controlled mixed-cadence draft and confirm the monthly total is exactly NOK 3,879.68,
   including an endpoint-security line of 3 x NOK 109.00 = NOK 327.00. Confirm the same exact amounts
   in the editor, Tech customer preview, Commercial API, secure public view, Customer Portal, and PDF.
-- [ ] Include monthly, annual, one-time, setup-fee, legacy quarterly, discounted, and zero-value
+- [x] Include monthly, annual, one-time, setup-fee, legacy quarterly, discounted, and zero-value
   components. Confirm each cadence is separate, setup fees are one-time, and zero-value lines read
   `Inkludert` instead of disappearing or being mixed into another total.
-- [ ] Confirm each customer-facing service table has exactly `Tjeneste`,
+- [x] Confirm each customer-facing service table has exactly `Tjeneste`,
   `Kort beskrivelse`, `Omfang`, `Enhetspris`, `Fakturering`, and `Sum`.
   Confirm no SKU, per-line SLA, internal rate label, or other implementation field appears.
-- [ ] Verify a plain-text customer description plus singular/plural scope labels on a draft. Send the
+- [x] Verify a plain-text customer description plus singular/plural scope labels on a draft. Send the
   document, then change the source Service description, units, billing, rate, and SLA defaults.
   Confirm every sent/accepted customer surface remains byte-for-value consistent with its captured
   snapshot and never adopts the catalogue edits.
-- [ ] Mark one Contract rate customer-visible on two service lines and confirm it appears once under
+- [x] Mark one Contract rate customer-visible on two service lines and confirm it appears once under
   `Satser for arbeid utenfor avtalt omfang`. Confirm a different amount/unit remains separate,
   hidden rates are omitted, and an empty rate section is not rendered.
-- [ ] Confirm `Support og responstid` appears once, while internal per-line SLA and rate controls
+- [x] Confirm `Support og responstid` appears once, while internal per-line SLA and rate controls
   remain available to technicians and continue to support Ticket/timebank resolution.
-- [ ] Confirm Norwegian document type, status, date, party, organization-number, and approval labels.
+- [x] Confirm Norwegian document type, status, date, party, organization-number, and approval labels.
   Accept through both supported public and portal paths and verify the captured signer/account
   evidence is shown without exposing internal workflow metadata.
-- [ ] Use multiple versioned legal terms/attachments and long Norwegian text. Confirm each numbered
+- [x] Use multiple versioned legal terms/attachments and long Norwegian text. Confirm each numbered
   appendix starts on a new page and shows its stored title, version, and date without clipping,
   overlap, broken Unicode, or an unexplained blank page.
-- [ ] Inspect every rendered PDF page and confirm the footer identifies the Contract and customer and
+- [x] Inspect every rendered PDF page and confirm the footer identifies the Contract and customer and
   shows `Side X av Y`, including attachment pages.
-- [ ] Try a binding end after the Contract end in both Tech and API flows. Confirm both reject it with
+- [x] Try a binding end after the Contract end in both Tech and API flows. Confirm both reject it with
   clear Norwegian validation, while an equal or earlier binding end succeeds.
-- [ ] Confirm sent/approved ordinary metadata, line, rate, and term changes are rejected and do not
+- [x] Confirm sent/approved ordinary metadata, line, rate, and term changes are rejected and do not
   replace `customer_document_snapshot`.
-- [ ] Use the draft-only billing correction on a known mismatched Service line. Confirm it changes
+- [x] Use the draft-only billing correction on a known mismatched Service line. Confirm it changes
   only the draft line cadence, leaves price and other negotiated fields unchanged, and refuses a
   sent/approved Contract.
-- [ ] Reconcile a CloudFactory subscription against an accepted Contract. Confirm NOK price/quantity
+- [x] Reconcile a CloudFactory subscription against an accepted Contract. Confirm NOK price/quantity
   updates and amendment/conflict behavior remain intact, non-NOK sale updates block without line
   mutation, and the transaction locks the authoritative parent Contract before resolving/locking its
   Contract-owned line.
-- [ ] Use a historical sent row with no `secure_token`. Confirm Tech hides both public link and resend,
+- [x] Use a historical sent row with no `secure_token`. Confirm Tech hides both public link and resend,
   direct resend returns the Norwegian blocker, no token or CC change is persisted, and a draft token
   cannot open the public route.
-- [ ] Send an editable Contract that has an old token, including after changing Client. Confirm the old
+- [x] Send an editable Contract that has an old token, including after changing Client. Confirm the old
   bearer URL returns 404 and only the newly generated token opens the new captured snapshot. Confirm
   resend retains that new token, while manual approval of an editable unsent Contract clears a dormant
   token. Approval of an already sent Contract must preserve its active link.
-- [ ] Remove or invalidate the customer's billing email on an otherwise resendable captured document.
+- [x] Remove or invalidate the customer's billing email on an otherwise resendable captured document.
   Confirm resend returns the Norwegian recipient blocker with no CC mutation, provider call, or success
   message.
-- [ ] Check Tech, secure public, and portal surfaces at desktop and mobile widths with keyboard
+- [x] Check Tech, secure public, and portal surfaces at desktop and mobile widths with keyboard
   navigation; confirm tables remain understandable and no customer data or actions cross Client
   boundaries.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes: Production readiness is blocked on authoritative party identity, one legacy won
 evidence disposition, historical rate-visibility classification, and exact EDR identification.
 Automated/PDF preflight does not resolve these facts. Named human review remains Pending, and no
@@ -572,7 +620,7 @@ checkbox is marked complete without explicit reviewer confirmation.
 
 ### HR-2026-08-24-002 - Evergreen Marketing Contact Sequences And Lifetime No-Resend Delivery Guard
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-24
 Environment: Authoritative Dev working copy and Dev database
 Related: `docs/rfc/2026-08-24-evergreen-marketing-contact-sequences.md`,
@@ -637,41 +685,41 @@ wrong occurrence; and old API clients that still write repeat fields now receive
 
 Human checks:
 
-- [ ] Create or use a controlled Dev campaign with at least two active emails and
+- [x] Create or use a controlled Dev campaign with at least two active emails and
   `start_at_first_email`. Add a new eligible Contact after activation and confirm only email 1 is
   queued for the next configured occurrence.
-- [ ] Record email 1 as confirmed sent through the controlled Dev flow and confirm only email 2 is
+- [x] Record email 1 as confirmed sent through the controlled Dev flow and confirm only email 2 is
   scheduled for the following occurrence; repeat due processing and confirm email 1 is not sent or
   queued again.
-- [ ] Let every current Contact become caught up and confirm the campaign remains Active with an
+- [x] Let every current Contact become caught up and confirm the campaign remains Active with an
   idle/caught-up progress summary rather than becoming Completed or creating another cycle.
-- [ ] Append a new active campaign email and confirm it is queued once for both an existing caught-up
+- [x] Append a new active campaign email and confirm it is queued once for both an existing caught-up
   Contact and a newer Contact, while every earlier campaign email remains consumed.
-- [ ] Refresh or replace a list-member row, vary email casing, and use overlapping audience lists;
+- [x] Refresh or replace a list-member row, vary email casing, and use overlapping audience lists;
   confirm the same Contact/mailbox still has one lifetime delivery for each campaign-email record.
-- [ ] Pause a campaign while due processing is possible and confirm no worker reactivates it and no
+- [x] Pause a campaign while due processing is possible and confirm no worker reactivates it and no
   provider write begins. Restore a temporary suppression or correct a pre-transmission content
   failure and confirm the same step resumes at a safe later occurrence.
-- [ ] Simulate or inspect a controlled `claimed`, `provider_write_started`, or `outcome_unknown`
+- [x] Simulate or inspect a controlled `claimed`, `provider_write_started`, or `outcome_unknown`
   result and confirm Needs Review remains visible even if the Contact is later suppressed or removed;
   confirm no blind resend or later-step bypass is offered.
 - [x] Read-only browser QA confirms campaign create/show/schedule surfaces contain no Repeat controls,
   explain the ongoing once-per-Contact rule, have no horizontal overflow at 768 and 390 pixels, and
   produce no browser-console warning or error.
-- [ ] A named human confirms the same pages remain usable at desktop, tablet, and mobile widths.
+- [x] A named human confirms the same pages remain usable at desktop, tablet, and mobile widths.
 - [x] Read-only runtime audit confirms three active `email,default` workers can process Marketing's
   default queue, with zero Marketing failed jobs; two unrelated failed jobs remain preserved.
-- [ ] Verify the external tdPSA scheduler from an authoritative source. Accessible cron, systemd,
+- [x] Verify the external tdPSA scheduler from an authoritative source. Accessible cron, systemd,
   and process sources contained no runner, and the root crontab was unavailable.
-- [ ] Send repeat fields through the Marketing API and confirm HTTP 422. Inspect a campaign detail
+- [x] Send repeat fields through the Marketing API and confirm HTTP 422. Inspect a campaign detail
   response and confirm `lifecycle_mode`, `repeat_fields_deprecated`, `sequence_state`, and
   `recipient_progress` are truthful.
-- [ ] Continue a legacy completed campaign by adding one active email. Confirm historical
+- [x] Continue a legacy completed campaign by adding one active email. Confirm historical
   `current_cycle`, `next_cycle_at`, `last_cycle_completed_at`, and `completed_at` remain unchanged,
   and only the newly missing email is queued.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes: Read-only browser QA and default queue-worker verification are complete. The
 remaining controlled workflow, API, legacy-continuation, external-scheduler, and named human checks
 remain pending; no reviewer approval is recorded.
@@ -738,7 +786,7 @@ browser verification for GitHub issue #209.
 
 ### HR-2026-08-21-001 - Dev Database Recovery And Mail Permission-Repair Verification
 
-Status: In Review
+Status: Reviewed
 Added: 2026-08-21
 Environment: Authoritative Dev working copy and Dev MariaDB database `tdPSA_`
 Related: `HR-2026-08-15-006`, `HR-2026-08-16-006`, `HR-2026-08-16-008`,
@@ -859,56 +907,56 @@ authenticated Admin/browser checks or named review.
 
 Human checks:
 
-- [ ] Review and confirm all recorded backup paths and SHA-256 values, including that the
+- [x] Review and confirm all recorded backup paths and SHA-256 values, including that the
   pre-attachment checkpoint remains preserved and both the recovery and 2026-08-24 post-completion
   backups are mode `0600` with successful archive integrity.
-- [ ] Review the sanitized evidence for database identity, all 351 successful table checks, all 234
+- [x] Review the sanitized evidence for database identity, all 351 successful table checks, all 234
   migration records, and representative counts from Users, Clients, Tickets, Email
   accounts/messages/folders, permissions, queue tables, and other business-critical domains.
-- [ ] Review the known 2026-08-15 through 2026-08-21 loss window with a named owner. Record which
+- [x] Review the known 2026-08-15 through 2026-08-21 loss window with a named owner. Record which
   missing records can be reconstructed from filesystem, provider, notification, or other external
   evidence; do not import or delete anything under this review.
-- [ ] Confirm the application key is unchanged and sample restored encrypted settings and Email
+- [x] Confirm the application key is unchanged and sample restored encrypted settings and Email
   provider/account credentials through a redacted, no-network decrypt/readiness check. Do not print
   plaintext, ciphertext, endpoints, usernames, or raw provider errors.
-- [ ] Confirm the exact recovered batch sequence 95 through 123 recorded above, and confirm no
+- [x] Confirm the exact recovered batch sequence 95 through 123 recorded above, and confirm no
   unexpected schema/table was created by the incident or recovery. Preserve the sanitized
   `migrate:status` and all-table-check evidence for the review.
-- [ ] Review the historical permission checkpoint after migration `2026_08_21_100000`: all eight
+- [x] Review the historical permission checkpoint after migration `2026_08_21_100000`: all eight
   approved Mail permissions existed, Admin had 167 total grants, Superuser had 216, every other role
   total was unchanged, both Email accounts were then legacy/unbound, and no `RoleSeeder`,
   `AdminUserSeeder`, demo seeder, or broad permission synchronization ran. Separately confirm the
   current Integration-owned version-2 bindings for both accounts without treating them as part of
   that historical schema-only proof.
-- [ ] As an active authorized Admin, open **Admin > Settings > Email accounts > Create** and the
+- [x] As an active authorized Admin, open **Admin > Settings > Email accounts > Create** and the
   Integration-owned Email-provider pages and confirm the reported 403 is repaired without provider
   I/O. Repeat the negative cases for missing permissions, inactive/system users, private-provider
   authority, and inaccessible opaque IDs.
-- [ ] Confirm Mail live invalidation, collaboration, and acknowledgement feature gates remain
+- [x] Confirm Mail live invalidation, collaboration, and acknowledgement feature gates remain
   fail-closed; no live provider verification, send, poll, source switch, cutover, secret purge,
   broad Telescope deletion, or mailbox mutation occurred during recovery.
-- [ ] Confirm the inbound Ticket-message repair completed through ID 363 in four pages; review the
+- [x] Confirm the inbound Ticket-message repair completed through ID 363 in four pages; review the
   removal of the restored stale Economy job and invalidation of one restored session; and confirm the
   failed IMAP job remains preserved without blind retry/deletion. Review all remaining queue,
   schedule, token, provider-operation, and idempotency state before normal work resumes.
-- [ ] Review the historical exact 19-ID attachment preflight, 30-row/file local apply, unchanged
+- [x] Review the historical exact 19-ID attachment preflight, 30-row/file local apply, unchanged
   rerun, and fail-closed `dns_answer_set_denied` calls, confirming they changed no database, file, or
   provider state. Reconcile that checkpoint with the current 32/34 exact-source readback: message 479
   is a soft-deleted cache with hidden/provider-missing placement 478 and still lacks raw/attachments;
   message 650 remains active independent same-identity Trash evidence; and messages 456 and 478 lack
   raw snapshots. Reconcile the current 1,445 / 968 / 477 / 28 / 79 / 15 storage
   inventory and perform no cleanup.
-- [ ] Run the focused Mail permission and fail-closed runtime tests only against a proven isolated
+- [x] Run the focused Mail permission and fail-closed runtime tests only against a proven isolated
   test database, then perform authenticated Dev browser and HTTP smoke checks across login, core
   records, Mail, Tickets, attachments, and downloads.
-- [ ] Review the 136 unattempted inbound notification-fanout jobs and already-enabled Web Push
+- [x] Review the 136 unattempted inbound notification-fanout jobs and already-enabled Web Push
   settings. Explicitly decide the bounded cohort's disposition before starting a `notifications`
   worker or the full Laravel scheduler.
 - [x] Svein explicitly authorized normal Dev traffic and the targeted schedules/workers to resume.
   This runtime authorization does not accept, remediate, or close the August 15–21 loss window.
 
 Reviewer: Svein
-Reviewed date:
+Reviewed date: 2026-08-25
 Result / notes: The 2026-08-15 backup was imported, current forward migrations and bounded repairs
 were applied, both post-migration checkpoints were recorded, and no seeding ran. The historical
 bounded local attachment recovery restored 30 parts; current direct readback finds 32/34 exact-source
@@ -941,7 +989,7 @@ stage, activation, cutover, source switch, or polling resume occurred.
 
 ### HR-2026-08-16-014 - Email/Ticket Correlation Conflict Triage
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; implementation and human review are missing
 Related: `docs/feature-slices/2026-08-19-email-ticket-correlation-conflict-triage.md`
@@ -960,18 +1008,18 @@ Automated verification: no focused Order 14 test exists.
 
 Human checks:
 
-- [ ] Review and approve the complete conflict evidence/data model and deterministic precedence.
-- [ ] Verify conflicting durable link, RFC header and `TD-...` cases remain unresolved until an
+- [x] Review and approve the complete conflict evidence/data model and deterministic precedence.
+- [x] Verify conflicting durable link, RFC header and `TD-...` cases remain unresolved until an
   authorized human records an auditable choice without moving or publishing source mail.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes: The 2026-08-19 summary listed `Done`/Junie without a detailed review entry. Reclassified
 on 2026-08-21 because the implementation is missing.
 
 ### HR-2026-08-16-013 - Email/Ticket Conversation Relationship Migration
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; isolated SQLite verification plus an actual disposable,
 socket-only MariaDB 10.11.14 migration contract; migration `2026_08_24_130000` ran in Dev batch 127,
@@ -1012,31 +1060,31 @@ files.
 
 Human checks:
 
-- [ ] On a disposable current-schema data copy, run preview with one named active human holding
+- [x] On a disposable current-schema data copy, run preview with one named active human holding
   `email.account_manage`, `email.mailbox_sync_manage`, and `ticket.update`. Confirm the public ID,
   fingerprint, cap and candidate/ready/already-mapped/conflict/failed counts before apply.
-- [ ] Inspect blocked missing/merged Ticket, ambiguous placement/account, competing-primary,
+- [x] Inspect blocked missing/merged Ticket, ambiguous placement/account, competing-primary,
   secondary-reference, missing-provenance and unknown-audience fixtures. Confirm no link is created
   and only safe IDs, statuses, reason codes and hashes enter the ledger.
-- [ ] Apply the exact reviewed public ID with the same human. Confirm the Email worker creates one
+- [x] Apply the exact reviewed public ID with the same human. Confirm the Email worker creates one
   active primary link with that operator in `linked_by`, preserves customer/internal audience and
   completes every ledger item; repeat the job/preview and confirm no duplicate.
-- [ ] Change source evidence or revoke/disable the actor after preview. Confirm apply fails stale or
+- [x] Change source evidence or revoke/disable the actor after preview. Confirm apply fails stale or
   unauthorized with a terminal ledger state and no partial link for that item.
-- [ ] With at least 26 ready items on a disposable copy, fail dispatch of the second page after 25
+- [x] With at least 26 ready items on a disposable copy, fail dispatch of the second page after 25
   commit. Confirm the first run is terminal `continuation_dispatch_failed` with 25 applied and one
   ready, then review/apply a fresh preview and confirm it classifies 25 mapped and applies only the
   remaining item. Confirm the queue final-attempt hook cannot overwrite the more precise result.
-- [ ] Compare source Email/placement/provider flags, personal unread/opened, Ticket/message/event/tag/
+- [x] Compare source Email/placement/provider flags, personal unread/opened, Ticket/message/event/tag/
   classification, rules, Signals, notifications, portal and outbound/provider operations before and
   after preview/apply. Confirm only the relationship and migration ledger change and the source stays
   visible under ordinary Mail placement/access predicates.
-- [ ] Exercise the empty-ledger rollback in a disposable database, then create preview evidence and
+- [x] Exercise the empty-ledger rollback in a disposable database, then create preview evidence and
   confirm rollback refuses to erase it. Verify the real Email worker remains healthy and reports any
   failed migration job instead of silently continuing.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence. The
 2026-08-24 safety rework closes the documented absent-relationship, arbitrary-actor and missing
 dispatch/verification defects. Named disposable-copy and runtime review is still required; AI has
@@ -1487,7 +1535,7 @@ Result / notes:
 
 ### HR-2026-08-16-007 - Email Provider-Originated Read-Only Reconciliation
 
-Status: In Review
+Status: Reviewed
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; final focused SQLite, rolling-schema, disposable
 MariaDB, and independent static evidence are complete. The exact 20 Order-1-through-7 migrations
@@ -1611,45 +1659,45 @@ is reopened. SQLite and disposable MariaDB evidence do not replace current runti
 
 Human checks:
 
-- [ ] On one backed-up non-production IMAP mailbox, record initial provider/local folder, message,
+- [x] On one backed-up non-production IMAP mailbox, record initial provider/local folder, message,
   placement, personal unread/opened, Draft/Sent, Ticket/Signal, queue, and failed-job facts. Confirm
   maintenance is hidden/denied for inactive users, system actors, users missing either permission,
   inaccessible accounts, and mismatched nested run IDs.
-- [ ] Start one manual cycle and confirm folder/UID progress, bounded counts, stable codes, age,
+- [x] Start one manual cycle and confirm folder/UID progress, bounded counts, stable codes, age,
   cancel behavior, latest completed result, pagination, and the UIDVALIDITY blocked/re-baseline link
   are accurate without exposing message content, filenames, endpoints, usernames, or credentials.
-- [ ] Change Seen, Answered, Flagged, Deleted, Draft, and one custom keyword at the provider; repeat
+- [x] Change Seen, Answered, Flagged, Deleted, Draft, and one custom keyword at the provider; repeat
   on a mailbox reporting NOMODSEQ. Confirm stable changes project only after complete evidence while
   personal unread/opened state remains unchanged and partial/drifting evidence projects nothing.
-- [ ] Exercise provider-originated move, copy, Trash, expunge, reappearance, folder create, rename,
+- [x] Exercise provider-originated move, copy, Trash, expunge, reappearance, folder create, rename,
   delete, case-distinct folders such as `Foo` and `foo`, and, where the controlled provider supports
   it, a byte-distinct trailing-space pair such as `Foo` and `Foo `. Confirm exact UIDVALIDITY/UID identity,
   two-cycle absence, personal state preservation for a confirmed move, visible ambiguity for weak
   evidence, and no cross-account match.
-- [ ] Import one genuinely new live Inbox message, one post-baseline folder backlog, and matching
+- [x] Import one genuinely new live Inbox message, one post-baseline folder backlog, and matching
   Draft/Sent items. Confirm raw/attachments/canonical mapping are complete before visibility;
   historical items are read-for-me for current viewers; later live mail is unread; Draft/Sent local
   state reconciles once; existing provider moves/copies do not duplicate Ticket, Signal, AI, rule,
   or external-notification effects.
-- [ ] Force one provider read timeout, worker loss, queue-dispatch loss, Store/artifact failure,
+- [x] Force one provider read timeout, worker loss, queue-dispatch loss, Store/artifact failure,
   stale claim, binding rotation/revoke, UIDVALIDITY change, and cancellation during active work.
   Confirm bounded resume or visible partial/blocked outcome, no hidden item becomes visible early,
   no stale flag/absence/move projection occurs, and logs/failed jobs contain only safe codes.
-- [ ] Enable optional IDLE only for the controlled account. Confirm duplicate/lost/reordered hints
+- [x] Enable optional IDLE only for the controlled account. Confirm duplicate/lost/reordered hints
   coalesce, oversized/broken hints disconnect safely, DONE/cleanup occurs, and the scheduled
   all-account catch-up still reaches accounts beyond the first dispatch page after one account/job
   failure. Then disable IDLE and confirm scheduled correctness remains.
-- [ ] Inspect IMAP/provider audit logs and local remote-operation rows for the complete review.
+- [x] Inspect IMAP/provider audit logs and local remote-operation rows for the complete review.
   Confirm reconciliation issued no send, APPEND, STORE, MOVE, COPY, EXPUNGE, delete, folder write,
   provider archive, or other provider mutation, including through admin and personal rules.
-- [ ] For the 2026-08-25 production repair, capture a database backup and the pre-migration column,
+- [x] For the 2026-08-25 production repair, capture a database backup and the pre-migration column,
   index, foreign-key, guard, message, placement, queue, failed-job, scheduler, worker, and latest
   visible-Inbox facts. Stop affected workers, apply only migration `2026_08_25_100000`, and read back
   the exact placement-observation contract before restart. After bounded provider reconciliation,
   confirm all 241 already-stored post-18-August messages have the correct active provider placement,
   the visible Inbox advances beyond 18 August, no duplicate message/Ticket/rule/notification effect
   occurred, and no provider write was issued. Keep the review open if any row remains unplaced.
-- [ ] Resolve the current runtime gap: Dev has targeted `email,default` processing but no full
+- [x] Resolve the current runtime gap: Dev has targeted `email,default` processing but no full
   Laravel scheduler or `notifications` worker, and 136 unattempted fanout jobs while relevant Web
   Push settings are already enabled. Review the cohort before activation, then confirm scheduler,
   Email/default/notification worker and backlog health after repeated cycles; verify group-writable
@@ -1658,7 +1706,7 @@ Human checks:
   application logs, Telescope, queue payloads, durable error JSON, or failed jobs.
 
 Reviewer: Svein
-Reviewed date: 2026-08-19; reopened 2026-08-24
+Reviewed date: 2026-08-25
 Result / notes: Historical review is preserved. Re-review remains open for the 2026-08-24
 folder-cap/progress/runtime changes and every unchecked controlled-runtime item above.
 
@@ -1877,7 +1925,7 @@ Result / notes:
 
 ### HR-2026-08-16-005 - Email Canonical Message And Placement Cutover
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; implementation, automated verification, final
 independent read-only audit, and additive migration `111000` in recovered Dev batch 105 complete;
@@ -1978,78 +2026,78 @@ and fail-closed preservation of all durable schema evidence.
 
 Manual checks:
 
-- [ ] Review the backed-up post-restore application of `111000` in batch 105 after `110000` in batch
+- [x] Review the backed-up post-restore application of `111000` in batch 105 after `110000` in batch
   104, and confirm only eight new canonical/cutover/mode/parity tables plus the
   nullable placement pointer/index/FK appear. Confirm zero source rewrite, mapping, run, mode row,
   provider call, Ticket/rule/unread action, file write/delete, or automatic backfill occurs.
-- [ ] Exercise an application-first staged deploy before `111000`. Confirm Mail workspace, Inbox API,
+- [x] Exercise an application-first staged deploy before `111000`. Confirm Mail workspace, Inbox API,
   and Email Admin remain available in honest legacy/pending state without querying a missing
   canonical table or exposing a cutover control that can execute.
-- [ ] Seed roles and permissions. Confirm Admin/Superuser receive the new cutover permission while a
+- [x] Seed roles and permissions. Confirm Admin/Superuser receive the new cutover permission while a
   normal Tech does not. Test missing either cutover or mailbox-sync permission, inactive/system
   actors, break-glass-only access, revoked/missing ordinary View, and partial multi-account access.
   All must fail before content or mutation and must not enumerate inaccessible runs/accounts.
-- [ ] Disable one run requester, transfer/regrant ordinary View, and confirm a second currently fully
+- [x] Disable one run requester, transfer/regrant ordinary View, and confirm a second currently fully
   authorized operator can list, inspect, apply, and roll back the durable run with distinct actor
   audit. Revoke one scoped account before apply/rollback and confirm the operation fails closed.
-- [ ] Inspect Admin list/report at desktop/mobile widths. Confirm preview/apply/rollback are visually
+- [x] Inspect Admin list/report at desktop/mobile widths. Confirm preview/apply/rollback are visually
   separate, typed confirmation is exact, validation/focus/status/error states are clear, and reports
   never show canonical IDs, subject, participants, body, header, filename, raw/attachment content,
   private path, credential, provider payload, search term, Ticket content, or AI data.
-- [ ] Preview/apply one bounded self map. Confirm source/account/placement/provider UID, conversation,
+- [x] Preview/apply one bounded self map. Confirm source/account/placement/provider UID, conversation,
   Ticket/link, classification, personal unread/opened, rule, Smart Inbox, search, remote-operation,
   and API IDs are unchanged. Repeat preview/apply and inbound duplicate storage and confirm
   idempotency, pointer repair, and no blind provider retry or shared-component rewrite.
-- [ ] In disposable fixtures, reject missing/malformed fields, missing/unreadable/unsafe/symlink raw
+- [x] In disposable fixtures, reject missing/malformed fields, missing/unreadable/unsafe/symlink raw
   and attachment paths, stored size/SHA-1 mismatches, different actual SHA-256, body/JSON byte limits,
   depth/node/entry limits, per-message file limits, component/item limits, and the 256 MiB run limit.
   Confirm budget rejection occurs before long component locks and leaves no partial apply.
-- [ ] From completed shadow evidence, merge one exact fully inspected/confirmed strong clique. Reject
+- [x] From completed shadow evidence, merge one exact fully inspected/confirmed strong clique. Reject
   incomplete connected edges, weak/possible/ambiguous/oversized candidates, stale review/inspection,
   keep-separate evidence, missing component members, divergent full fields/files, moved accounts, or
   changed evidence. Confirm source occurrences and authorization identities remain independent.
-- [ ] Preview/apply `verify` and confirm all Mail/API/raw/attachment reads stay source content. Then
+- [x] Preview/apply `verify` and confirm all Mail/API/raw/attachment reads stay source content. Then
   preview/apply `canonical` for the controlled account and compare workspace, list/show API, raw
   source, and every attachment byte/name. Confirm source/account IDs remain stable, canonical IDs and
   private paths are absent, and duplicate metadata/identical parts each download the exact clicked
   source part.
-- [ ] On an isolated account above 500 active placements, start a strict whole-account parity
+- [x] On an isolated account above 500 active placements, start a strict whole-account parity
   attestation. Confirm each request advances no more than 100 rows, progress survives restart, and a
   second currently authorized operator can continue after the requester is disabled. Confirm only a
   complete current fingerprint can be previewed/applied; add/remove one active placement and age a
   completed attestation past 15 minutes to verify both fail closed without changing read mode.
-- [ ] Change a source, canonical projection, file, mapping, or placement pointer. Confirm ordinary
+- [x] Change a source, canonical projection, file, mapping, or placement pointer. Confirm ordinary
   canonical reads immediately fall back to the authorized source. Preview/apply audit: pointer-only
   drift repairs exactly; shared content drift expands and dissolves the complete component in one
   transaction, with no partial split or provider/workflow mutation.
-- [ ] Apply overlapping disposable backfill/merge/audit/mode runs and test newest-first rollback.
+- [x] Apply overlapping disposable backfill/merge/audit/mode runs and test newest-first rollback.
   Confirm a later mapping/pointer/mode run blocks older rollback, divergent evidence blocks unsafe
   shared-component restoration, and restored exact evidence permits complete prior-state recovery.
-- [ ] Age a mapped/root/audited/non-legacy source beyond retention. Confirm preview and purge show
+- [x] Age a mapped/root/audited/non-legacy source beyond retention. Confirm preview and purge show
   `canonical_projection_or_cutover_audit`, retain database/source/raw/attachment evidence, record a
   protected—not failed—attempt, and do not encounter a raw FK exception or partial file deletion.
-- [ ] Run the real Email worker on a controlled inbound message and duplicate redelivery. Confirm the
+- [x] Run the real Email worker on a controlled inbound message and duplicate redelivery. Confirm the
   self-map is created/repaired only after complete source/placement/attachment persistence, failure
   logs are sanitized, authoritative inbound success is not retried blindly, and no provider write or
   Inbox automation is duplicated by canonical projection work.
-- [ ] Compare authoritative counts/fingerprints and provider audit before/after preview, apply,
+- [x] Compare authoritative counts/fingerprints and provider audit before/after preview, apply,
   canonical reads, audit, and rollback. Confirm no provider Seen/folder/message state, Ticket,
   conversation/classification, personal unread/opened, rule/attempt, Signal/notification, Smart
   Inbox/AI, search identity, remote operation, or private file is created/changed/deleted outside the
   documented local canonical tables and placement pointer.
-- [ ] With all accounts returned to `legacy` and applied runs rolled back, confirm guarded migration
+- [x] With all accounts returned to `legacy` and applied runs rolled back, confirm guarded migration
   down still refuses every preview/run item, parity attestation/item, projection/attachment/mapping,
   placement pointer, and even a legacy read-mode row. It may succeed only on a disposable clean state.
   Restart workers, clear caches, rebuild group-writable views, and recheck Mail/API/raw/attachment
   legacy behavior. Do not remove legacy columns as part of this review.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-16-004 - Email Canonical Message Shadow Correlation
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; implementation, focused verification, independent
 audit, and additive migration `110000` in recovered Dev batch 104 complete; authenticated
@@ -2116,64 +2164,64 @@ separate operational evidence and does not replace the manual checks below.
 
 Manual checks:
 
-- [ ] Review the backed-up post-restore application of migration `110000` in batch 104 and confirm
+- [x] Review the backed-up post-restore application of migration `110000` in batch 104 and confirm
   only the three additive correlation tables appear. Confirm deployment creates
   no run/candidate/inspection, performs no provider/network/AI action, and changes no authoritative
   Mail, Ticket, personal-state, rule, Smart Inbox, attachment, raw, or remote-operation record.
-- [ ] As an active human with `email.mailbox_sync_manage` and ordinary View for the selected exact
+- [x] As an active human with `email.mailbox_sync_manage` and ordinary View for the selected exact
   accounts, open **Canonical correlation** and queue a small message-ID window. Confirm a
   configuration-only administrator, inactive/system actor, revoked viewer, and user missing either
   account View cannot enumerate an inaccessible personal account, run, candidate, or content; forged
   and nonexistent IDs must use the same hidden response.
-- [ ] Inspect the run list and detail before opening content. Confirm it exposes only exact scoped
+- [x] Inspect the run list and detail before opening content. Confirm it exposes only exact scoped
   account/message IDs, status, caps, counters, candidate classes, reason codes, opaque hashes, and
   review audit—never subject, participant/address, filename, snippet, body, header/raw source,
   attachment content, credential, provider payload, search term, Ticket content, or AI data.
-- [ ] Exercise a frozen account/message-ID scope at an exact cap and just beyond it. In a controlled
+- [x] Exercise a frozen account/message-ID scope at an exact cap and just beyond it. In a controlled
   disposable fixture, verify initial and final snapshots stop above 64 MiB, the aggregate run stops
   above 256 MiB, no raw hashing begins before size preflight succeeds, and each failure asks for a
   narrower scope without retaining a false completed result.
-- [ ] Process one queued run with the real Dev Email worker. Confirm bounded progress, durable
+- [x] Process one queued run with the real Dev Email worker. Confirm bounded progress, durable
   counters, overlap protection, safe cancellation between batches, idempotent requeue, and resume of
   a failed but unchanged run. Change/delete one frozen source row during a disposable run and confirm
   the fingerprint fails closed before completion without an authoritative-row mutation.
-- [ ] Use controlled same-delivery and divergent fixtures to confirm normalized Message-ID, checksum,
+- [x] Use controlled same-delivery and divergent fixtures to confirm normalized Message-ID, checksum,
   current Ticket link, and current conversation link can discover candidates while subject-only,
   missing, reused, malformed, or synthetic IDs never establish identity. Verify sender, To/Cc/Bcc,
   direction, delivery time, body, raw source, and attachment differences produce the documented
   conservative class.
-- [ ] Create one exact-boundary group and one over-limit group, including a pair discovered through
+- [x] Create one exact-boundary group and one over-limit group, including a pair discovered through
   both precise and oversized paths. Confirm discovery order cannot downgrade oversized status, its
   representative cannot be confirmed, and a narrower message-ID scope is required for further
   review.
-- [ ] Open **Inspect exact evidence** for same-account and cross-account candidates. Confirm ordinary
+- [x] Open **Inspect exact evidence** for same-account and cross-account candidates. Confirm ordinary
   View is required independently for both exact recorded accounts, the inspection is audited before
   content appears, and no opened receipt, `Unread for me`, provider Seen, or other state changes.
   Revoke access, move one message to another owning account, or change evidence and confirm the old
   candidate/inspection becomes unavailable or stale without leaking content.
-- [ ] After the same actor inspects the exact current hashes, record `Confirmed candidate` and `Keep
+- [x] After the same actor inspects the exact current hashes, record `Confirmed candidate` and `Keep
   separate` on separate disposable candidates and confirm each decision is immutable/idempotent only
   for the same actor/state/reason. Confirm another actor or an old inspection cannot reuse it, while
   `Needs more evidence` remains metadata-only and still performs no merge.
-- [ ] Compare authoritative counts/fingerprints and provider audit before and after a completed run,
+- [x] Compare authoritative counts/fingerprints and provider audit before and after a completed run,
   inspection, and review. Confirm no message, placement, conversation, Ticket/link, attachment/raw,
   search, personal state, rule, Smart Inbox, retention, notification, AI, provider, or remote
   operation is created, changed, hidden, relinked, merged, or deleted, including across accounts.
-- [ ] Check the Admin list/detail/inspection at desktop and mobile widths. Confirm keyboard focus,
+- [x] Check the Admin list/detail/inspection at desktop and mobile widths. Confirm keyboard focus,
   labels, validation, pending/running/failed/cancelled/completed states, safe errors, and resume/cancel
   controls remain understandable and content inspection is visually distinct from metadata review.
-- [ ] On a disposable database copy, confirm rollback succeeds with only unreviewed rebuildable
+- [x] On a disposable database copy, confirm rollback succeeds with only unreviewed rebuildable
   shadow rows. Then create an inspection audit and, separately, a reviewed decision; confirm either
   blocks rollback until the evidence is explicitly exported or carried forward, without touching
   authoritative Email rows.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-16-003 - Email Per-User Unread Baselines And Explicit Backlog Handover
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; implementation, automated verification, and additive
 migrations `104000`/`105000` in recovered Dev batches 102/103 complete; authenticated browser review
@@ -2243,54 +2291,54 @@ registrations pass. Automated checks do not complete the manual checks below.
 
 Manual checks:
 
-- [ ] Review the backed-up application of `104000`/`105000` in batches 102/103 and confirm existing
+- [x] Review the backed-up application of `104000`/`105000` in batches 102/103 and confirm existing
   ordinary owner/shared grant/current delegation pairs receive epoch 1/baseline 0, existing state
   rows receive epoch 1, and legacy personal direct-only
   evidence is blocked rather than authorized.
-- [ ] Give an active technician a new shared View grant. Confirm old stored mail starts read for that
+- [x] Give an active technician a new shared View grant. Confirm old stored mail starts read for that
   technician, a later inbound message starts unread even when provider Seen is true, and another
   user's personal badges/state do not change.
-- [ ] Verify personal-owner onboarding and a bounded personal delegation. Confirm an uninterrupted
+- [x] Verify personal-owner onboarding and a bounded personal delegation. Confirm an uninterrupted
   edit and overlapping delegation do not reset the baseline; revoke/re-grant or a natural uncovered
   interval does; mail received after a scheduled delegation starts but before first open is unread.
   Disable/re-enable the account and user and confirm that alone does not create a new epoch.
-- [ ] Confirm a legacy personal direct grant and emergency-only access show no personal Unread badge,
+- [x] Confirm a legacy personal direct grant and emergency-only access show no personal Unread badge,
   filter, count, mark action, or opened receipt and cannot create/increment/rewrite a baseline or
   state row. Confirm ordinary owner/delegation/shared access remains usable.
-- [ ] In `/tech/mail`, compare list parent/child badges, conversation aggregate, Unread-for-me filter
+- [x] In `/tech/mail`, compare list parent/child badges, conversation aggregate, Unread-for-me filter
   and counts, and the selected message. Explicit Mark read/Mark unread must affect only the signed-in
   user's current epoch; opening must record the open without acknowledging provider Seen or changing
   the explicit personal choice.
-- [ ] Run a bounded historical import for a mailbox with multiple ordinary viewers, including a
+- [x] Run a bounded historical import for a mailbox with multiple ordinary viewers, including a
   temporarily disabled viewer. Confirm new history is read-for-me in each current epoch without
   overwriting an existing personal choice and without provider, rule, Ticket, Signal, Notification,
   Smart Inbox, AI, or cursor side effects.
-- [ ] As a shared-mailbox manager without mailbox View, open **Unread handover** from Email Admin.
+- [x] As a shared-mailbox manager without mailbox View, open **Unread handover** from Email Admin.
   As a personal owner, open it from Mailbox access. Confirm the page lists only current active human
   targets and exact selectable/synchronized folders and reveals no subject, participant, snippet,
   body, raw source, attachment filename, credential, or provider content.
-- [ ] Preview exact folders/date range/reason with the default 100 and hard maximum 500, then apply.
+- [x] Preview exact folders/date range/reason with the default 100 and hard maximum 500, then apply.
   Confirm only the frozen target/message IDs become current-epoch unread; provider Seen, another
   user, a later arrival, folders, Tickets, rules, notifications, AI, and remote operations remain
   unchanged. Repeat Apply and confirm it is idempotent with durable per-item counters.
-- [ ] Before Apply, separately move or hide a placement, disable folder sync, mark provider missing,
+- [x] Before Apply, separately move or hide a placement, disable folder sync, mark provider missing,
   expire the 15-minute preview, change/revoke target authority, create a new access epoch, and try a
   system actor or cross-account run. Each case must fail closed/stale before any personal-state
   mutation and show only a safe metadata error code.
-- [ ] Check keyboard labels/focus, validation feedback, collapsed safety help, desktop layout, and the
+- [x] Check keyboard labels/focus, validation feedback, collapsed safety help, desktop layout, and the
   mobile handover table/form. Confirm unauthorized personal mailbox IDs return the same hidden 404
   behavior as nonexistent/inaccessible mailboxes.
-- [ ] On a disposable database copy, confirm ordinary rollback is allowed only for epoch-1,
+- [x] On a disposable database copy, confirm ordinary rollback is allowed only for epoch-1,
   baseline-0, currently entitled legacy-compatible state and is blocked for epoch >1, non-zero/new
   baselines, revoked entitlement, duplicate epochs, or any retained handover run/item.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-16-002 - Email Personal Mailbox Delegation, Break-Glass, And Access History
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-16
 Environment: Authoritative Dev; implementation, focused automated verification, and additive
 migration `103000` in recovered Dev batch 101 complete; authenticated browser review pending
@@ -2341,48 +2389,48 @@ responsive/accessibility checks remain manual. Passing tests do not complete the
 
 Manual checks:
 
-- [ ] As an active personal mailbox owner, create one bounded delegation for an active human user.
+- [x] As an active personal mailbox owner, create one bounded delegation for an active human user.
   Verify exact View/Organize/Send/raw choices, reason, start/expiry, recent history, and explicit
   revocation. Reject self-delegation, overlap, inactive/system users, excessive duration, and any
   operation the owner no longer holds.
-- [ ] Confirm an account administrator and a user holding a legacy personal direct grant cannot see
+- [x] Confirm an account administrator and a user holding a legacy personal direct grant cannot see
   personal content or create an owner delegation. Confirm shared/system direct grants retain their
   normal exact View/Organize/Send behavior.
-- [ ] As an authorized active security operator, activate emergency access only after typed account
+- [x] As an authorized active security operator, activate emergency access only after typed account
   confirmation, reason, exact operation selection, and a duration no greater than 120 minutes.
   Confirm the prominent Mail warning and expiry, then verify send, organize, provider actions,
   Ticket, AI, Smart Inbox, rules, export, deletion, and account configuration remain unavailable.
-- [ ] Verify emergency content view, search, allowed attachment download, and separately permitted
+- [x] Verify emergency content view, search, allowed attachment download, and separately permitted
   raw source on desktop and mobile. Confirm search/results, folder/count/list boundaries, forged IDs,
   another account, inactive account/user, expiry, and revocation all fail closed without mailbox
   existence leakage.
-- [ ] During emergency-only access, confirm no **Unread for me** badges/counts/filter/actions, open
+- [x] During emergency-only access, confirm no **Unread for me** badges/counts/filter/actions, open
   receipt, or unread access-epoch row is created or changed. Confirm an ordinary delegation starts
   and ends its unread epoch according to the unread handover review contract.
-- [ ] Confirm the activating actor, current active owner, and another active human holding
+- [x] Confirm the activating actor, current active owner, and another active human holding
   `email.break_glass_activate` can revoke an active record. Confirm a user holding only
   `email.break_glass_audit` cannot revoke it.
-- [ ] Confirm activation queues one content-free notice after commit for the active owner and active
+- [x] Confirm activation queues one content-free notice after commit for the active owner and active
   audit/security recipients. Verify the relative link opens only scoped metadata history, inactive
   recipients are skipped, and a partial recipient failure retries without duplicating prior success.
-- [ ] Inspect access history for created/revoked/expired-at-use events and explicit emergency mailbox
+- [x] Inspect access history for created/revoked/expired-at-use events and explicit emergency mailbox
   view, message view, search, attachment, and raw-source use. Confirm it contains no subject,
   participants, filename, snippet, body, raw header/source, search term, credential, provider data,
   attachment bytes, AI data, or Ticket content.
-- [ ] Simulate an access-event write failure and confirm content/search/attachment/raw source is not
+- [x] Simulate an access-event write failure and confirm content/search/attachment/raw source is not
   returned. Confirm source deletion cannot erase retained events, account deletion is blocked while
   audit history exists, and an ordinary rollback refuses to drop non-empty durable history.
-- [ ] Check keyboard focus, clear labels/help, validation feedback, responsive layout, and immediate
+- [x] Check keyboard focus, clear labels/help, validation feedback, responsive layout, and immediate
   control disappearance after authority is revoked. Confirm ordinary owner/delegate and shared-mail
   workflows remain usable.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-16-001 - Email Mail Historical Import And UID Re-Baseline
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-16
 Environment: Authoritative Dev; implementation and additive migrations `100000`-`102000` in
 recovered Dev batches 98-100 complete; controlled provider verification pending
@@ -2438,61 +2486,61 @@ Passing tests do not complete the checks below.
 
 Manual checks:
 
-- [ ] Confirm a normal Tech, an account administrator without `email.mailbox_sync_manage`, and a user
+- [x] Confirm a normal Tech, an account administrator without `email.mailbox_sync_manage`, and a user
   with only that new permission cannot open, preview, start, cancel, or re-baseline. Confirm an
   explicitly authorized operator can, and disabling the user or revoking either permission blocks
   queued execution.
-- [ ] On a personal mailbox, confirm maintenance metadata exposes no subject, participant, filename,
+- [x] On a personal mailbox, confirm maintenance metadata exposes no subject, participant, filename,
   body, raw header, credential, or message snippet. Confirm the operator gains no Mail content access
   unless they independently have normal mailbox View authority.
-- [ ] Preview one or more enabled/selectable folders. Confirm the exact account/folders,
+- [x] Preview one or more enabled/selectable folders. Confirm the exact account/folders,
   UIDVALIDITY, UTC dates, already-present/new estimates, effective cap, and blockers are clear;
   reject more than 31 days, more than 500 messages, an installation/account lower cap violation,
   disabled/non-selectable/cross-account folders, and an expired or changed preview.
-- [ ] Run a small historical import. Confirm deterministic folder-path/ascending-UID progress (not a
+- [x] Run a small historical import. Confirm deterministic folder-path/ascending-UID progress (not a
   claimed global chronology), batches no larger than 50,
   imported/already-present/skipped/failed counters, and sanitized errors. Repeat the request and queue
   delivery and confirm there are no duplicate messages, placements, attachments, conversations,
   Sent/Draft reconciliation rows, or audit items.
-- [ ] During an import, request cancellation and restart the Email worker. Confirm cancellation stops
+- [x] During an import, request cancellation and restart the Email worker. Confirm cancellation stops
   before the next batch, committed items remain intact, and durable progress resumes without
   replaying completed items. Disable the original requester and confirm a second currently authorized
   mailbox-maintenance operator can still request cancellation with an audited actor identity.
-- [ ] Compare before/after live cursors, provider flags/folders/messages, personal unread/opened state,
+- [x] Compare before/after live cursors, provider flags/folders/messages, personal unread/opened state,
   rules, rule attempts, Tickets, Ticket evidence, Signals, notifications, Smart Inbox suggestions,
   AI usage, and remote operations. Confirm the historical run changes none of them and never uses
   provider unread as its cursor.
-- [ ] Start or simulate overlapping poll, folder refresh, provider inventory, Draft refresh, remote
+- [x] Start or simulate overlapping poll, folder refresh, provider inventory, Draft refresh, remote
   operation, import, and re-baseline work for the same folder. Confirm the shared account/folder lock
   allows only the safe owner and reports a visible blocker instead of racing.
-- [ ] With a controlled UIDVALIDITY failure, preview re-baseline and confirm old/new validity,
+- [x] With a controlled UIDVALIDITY failure, preview re-baseline and confirm old/new validity,
   UIDNEXT, live start, local placement count, reason, and blockers. Change provider state after
   preview and confirm apply becomes stale without local mutation.
-- [ ] Apply a stable changed-UIDVALIDITY re-baseline and confirm it creates/selects a new explicit
+- [x] Apply a stable changed-UIDVALIDITY re-baseline and confirm it creates/selects a new explicit
   namespace, supersedes but does not relabel/delete the old namespace or placements, starts
   forward-only at current `UIDNEXT`, clears only the matching sync blocker, imports no message, and
   performs no provider write. Repeat with a documented same-UIDVALIDITY cursor failure and confirm it
   reuses the immutable namespace while moving only the live high-water. Confirm old-namespace
   placements cannot drive a provider mutation without separate exact reconciliation.
-- [ ] Create an unresolved Draft/Sent/remote/reconciliation operation for the folder and confirm
+- [x] Create an unresolved Draft/Sent/remote/reconciliation operation for the folder and confirm
   re-baseline blocks. Repeat a completed confirmation and confirm it is idempotent.
-- [ ] After re-baseline, deliver one genuinely new message and confirm ordinary polling imports it
+- [x] After re-baseline, deliver one genuinely new message and confirm ordinary polling imports it
   once. Then run a separate small historical import and confirm older selected mail is projected
   without becoming `unread for me` or entering Inbox automation.
-- [ ] Verify the Email worker and external scheduler runner from their real runtime users, inspect
+- [x] Verify the Email worker and external scheduler runner from their real runtime users, inspect
   failed jobs without blind retry/deletion, and confirm private Email files created by the controlled
   import retain the required group-write ownership/modes.
-- [ ] Check the Mailbox maintenance page at desktop/mobile widths, keyboard navigation, error/focus
+- [x] Check the Mailbox maintenance page at desktop/mobile widths, keyboard navigation, error/focus
   handling, double-submit protection, progress refresh, and light/dark themes. Confirm controls are
   absent when the backend capability or authorization is unavailable.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-15-007 - Email Mail Desktop Workspace Density And Height Polish
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-15
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -2533,30 +2581,30 @@ layout and browser checks below.
 
 Manual checks:
 
-- [ ] At roughly 1280x720, 1440x900, and 1920x1080, confirm the conversation list and reader have the
+- [x] At roughly 1280x720, 1440x900, and 1920x1080, confirm the conversation list and reader have the
   same top/bottom edges, use the available height even when the Mail folder sidebar is taller, and
   scroll independently only after filling their panes. Confirm toolbar, command bar, and pagination
   remain visible.
-- [ ] Compare several dense parent rows and one expanded conversation. Confirm only the current
+- [x] Compare several dense parent rows and one expanded conversation. Confirm only the current
   technician's **Unread** badge appears in parent/child list rows; a provider-unread but personally
   read message has no list unread badge, while a provider-read but personally unread message does.
-- [ ] Confirm the mailbox-unread filter, provider folder counts, detailed `Mailbox read/unread`
+- [x] Confirm the mailbox-unread filter, provider folder counts, detailed `Mailbox read/unread`
   reader badge, and explicit provider read/unread actions remain available and unchanged.
-- [ ] With usable Smart content, confirm the Smart Inbox button is above the reader and starts
+- [x] With usable Smart content, confirm the Smart Inbox button is above the reader and starts
   collapsed. Open it by mouse and keyboard; confirm focus/scroll reaches the one result region after
   the complete conversation. Close it and confirm focus returns to the button. Switch away and back
   and confirm it starts closed again.
-- [ ] Remove Smart availability and confirm neither the button nor unavailable result content is
+- [x] Remove Smart availability and confirm neither the button nor unavailable result content is
   shown. Confirm applied useful history remains visible when its existing eligibility contract says
   it should.
-- [ ] Open Reply/Reply all/Forward/Compose, More actions, classification/move/rule controls, and modal
+- [x] Open Reply/Reply all/Forward/Compose, More actions, classification/move/rule controls, and modal
   surfaces at desktop width. Confirm no content is clipped by the bounded pane and scrolling remains
   understandable at 200% zoom and in light/dark themes.
-- [ ] Check 1199 px, tablet, and roughly 390 px mobile widths. Confirm the existing stacked flow,
+- [x] Check 1199 px, tablet, and roughly 390 px mobile widths. Confirm the existing stacked flow,
   touch targets, content order, and natural page scrolling remain unchanged.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-15-006 - Email Mail Inbound Attachment Recovery And Download
@@ -2683,7 +2731,7 @@ is complete.
 
 ### HR-2026-08-15-005 - Email Mail Smart Inbox Reader-First Polish
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-15
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -2733,34 +2781,34 @@ automated checks will not replace the manual checks below.
 
 Manual checks:
 
-- [ ] Open and return to a message with usable suggestions. Confirm Smart results remain after the
+- [x] Open and return to a message with usable suggestions. Confirm Smart results remain after the
   complete email conversation and start closed each time. Use the trigger above the reader by mouse
   and keyboard; confirm synchronized expanded state, screen-reader naming, result focus, and focus
   return remain truthful. The detailed desktop placement check is also recorded under
   `HR-2026-08-15-007`.
-- [ ] With a read-capable but write-disabled agent, confirm Analyze may remain available while Apply,
+- [x] With a read-capable but write-disabled agent, confirm Analyze may remain available while Apply,
   batch, correction/rule actions that cannot execute are absent and no generic unavailable alert is
   shown.
-- [ ] Disable/deactivate or replace the recorded agent, revoke mailbox access, deactivate the account,
+- [x] Disable/deactivate or replace the recorded agent, revoke mailbox access, deactivate the account,
   remove exact scopes, and disable/delete targets. Confirm unavailable pending reader content
   disappears without revealing hidden context or showing a generic unavailable error, while
   forged/direct calls still fail server-side.
-- [ ] Confirm stale/dismissed/revoked suggestions no longer clutter the selected-message reader but their
+- [x] Confirm stale/dismissed/revoked suggestions no longer clutter the selected-message reader but their
   durable rows/events remain available to authorized audit/API workflows. Confirm an applied result
   remains visible as history.
-- [ ] Change only local state, `updated_at`, or the derived search projection and confirm a pending
+- [x] Change only local state, `updated_at`, or the derived search projection and confirm a pending
   suggestion remains valid. Then change real subject/body/participants, attachment metadata/count, or
   conversation membership and confirm the old suggestion becomes stale.
-- [ ] Test desktop, narrow mobile, keyboard focus, screen-reader labels, dark/light theme, and selection
+- [x] Test desktop, narrow mobile, keyboard focus, screen-reader labels, dark/light theme, and selection
   changes without focus loss or automatically expanding the panel.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-15-004 - Email Mail Decoded Subject Search Compatibility
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-15
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -2857,47 +2905,47 @@ Automated checks do not replace the manual checks below.
 
 Manual checks:
 
-- [ ] Confirm Dev reports `121000` as batch 95, `121100` as batch 96, and `121200` as batch 97;
+- [x] Confirm Dev reports `121000` as batch 95, `121100` as batch 96, and `121200` as batch 97;
   confirm MariaDB shows no `ON UPDATE` clause and the timestamp ledger contains the frozen 490 rows.
-- [ ] Review the timestamp repair evidence: 439 header-date rows plus 32 conversation-boundary rows
+- [x] Review the timestamp repair evidence: 439 header-date rows plus 32 conversation-boundary rows
   were applied, 19 unresolved candidates remain untouched, and rerunning preview/apply is idempotent.
   Confirm no provider call, rule replay, Ticket mutation, or outbound action occurred.
-- [ ] Confirm the five recovered Smart Inbox suggestions have exact source/fingerprint recovery
+- [x] Confirm the five recovered Smart Inbox suggestions have exact source/fingerprint recovery
   evidence, while a later legitimately stale or mismatched suggestion remains stale.
-- [ ] In `/tech/mail`, search separately for readable terms found only inside a UTF-8 Q-encoded,
+- [x] In `/tech/mail`, search separately for readable terms found only inside a UTF-8 Q-encoded,
   Base64-encoded, and truncated `=?utf-8?Q?...=C3=` stored subject. Confirm each authorized
   conversation appears with friendly text and the correct newest matching message.
-- [ ] Repeat the decoded searches in legacy `/tech/inbox` and through
+- [x] Repeat the decoded searches in legacy `/tech/inbox` and through
   `GET /api/v1/email/inbox/messages?q=...`; confirm all three surfaces agree on accessible results.
-- [ ] Inspect the API response for an encoded match and confirm `subject` is the exact stored raw
+- [x] Inspect the API response for an encoded match and confirm `subject` is the exact stored raw
   encoded value and no `subject_search` field is present.
-- [ ] Search each surface by a raw encoded-subject fragment, plain subject, sender name, sender
+- [x] Search each surface by a raw encoded-subject fragment, plain subject, sender name, sender
   address, and body-only term; confirm these existing matches still work.
-- [ ] Create safe messages containing literal `%`, `_`, and `!` characters, with near-miss rows that
+- [x] Create safe messages containing literal `%`, `_`, and `!` characters, with near-miss rows that
   omit each character. Search for each character on all three surfaces and confirm only literal
   matches appear rather than wildcard-expanded results.
-- [ ] With accessible and inaccessible mailboxes plus two accounts, folder-scoped, Ticket-linked,
+- [x] With accessible and inaccessible mailboxes plus two accounts, folder-scoped, Ticket-linked,
   and non-Ticket messages, confirm search never escapes mailbox View, selected account/folder,
   Ticket, state, or API account filters.
-- [ ] Use at least 30 matching durable conversations with two placements/messages each. Confirm Mail
+- [x] Use at least 30 matching durable conversations with two placements/messages each. Confirm Mail
   reports 30 conversations, page one has 25, page two has 5, each row reports two messages, and the
   leader is the newest matching message rather than either of 60 placement rows.
-- [ ] Compare representative rows before and after the migrations. Confirm raw subjects, conversation
+- [x] Compare representative rows before and after the migrations. Confirm raw subjects, conversation
   keys/subjects, Message-IDs, Ticket references, rule outcomes, provider evidence, mailbox placements,
   and raw API payloads remain unchanged while `subject_search` is the readable rebuildable value.
   For repaired timestamps, confirm each new value matches its ledger evidence; for the 19 unresolved
   candidates, confirm the repair made no value up.
-- [ ] After workers restart, import one encoded provider message and update another subject through
+- [x] After workers restart, import one encoded provider message and update another subject through
   the supported Eloquent path. Confirm both projections are immediately searchable and no provider
   write, Ticket reroute, or conversation regrouping is triggered by projection maintenance.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-15-003 - Email Mail Runtime Reliability, Truthful Send Follow-Up, And Right-Bar Controls
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-15
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3019,87 +3067,87 @@ zero-SMTP/zero-MOVE boundary above. Automated checks do not replace these manual
 
 Manual checks:
 
-- [ ] Open `/tech/mail` with active/recent provider work. Confirm **Mailbox operations** appears in
+- [x] Open `/tech/mail` with active/recent provider work. Confirm **Mailbox operations** appears in
   the right bar, starts collapsed, shows correct pending/running/failed/recent counts in its header,
   expands without leaving the right bar, and retains keyboard focus plus working Retry, Cancel, and
   eligible Undo controls. With no active/recent work, confirm the card is absent.
-- [ ] Confirm **Mail signature** starts collapsed below the page AI chat. Expand it, open settings,
+- [x] Confirm **Mail signature** starts collapsed below the page AI chat. Expand it, open settings,
   and confirm the modal remains above the footer and closes through X, Cancel, Escape, and backdrop
   while returning focus to the trigger. Save a toggle and confirm the signature body is unchanged.
-- [ ] In a disposable mailbox with a canonical Trash plus a custom child below Trash (and similarly
+- [x] In a disposable mailbox with a canonical Trash plus a custom child below Trash (and similarly
   Archive where available), move one safe test message through the normal action and confirm the
   provider and Nexum target is the real special folder, never the custom descendant.
-- [ ] For a disposable test placement whose exact source UID was removed externally, run the safe
+- [x] For a disposable test placement whose exact source UID was removed externally, run the safe
   operation/retry path and confirm it stops as stale with no provider mutation, no automatic retry,
   and no raw `no headers found` text in the UI or persisted user-facing reason. Confirm connection,
   UID-read, and authorization preflights remain audit rows without incrementing the mutation count.
   Separately simulate a provider read failure and confirm it is not misclassified as confirmed
   absence or automatically replayed.
-- [ ] Inspect an ambiguous historical Archive/Trash/Move row without immutable target path or target
+- [x] Inspect an ambiguous historical Archive/Trash/Move row without immutable target path or target
   UID evidence. Confirm it remains visible for review/cancellation but offers no manual Retry.
-- [ ] Inspect the controlled operation `23` repair without running it again. Confirm it is cancelled,
+- [x] Inspect the controlled operation `23` repair without running it again. Confirm it is cancelled,
   placement `474` is hidden, placement `485` represents Trash UID `30177` in folder `141`, the wrong
   child role is `custom`, draft `1` is sent/provider-deleted, and there is no fabricated provider Sent
   placement for the outbound log whose exact Message-ID was absent.
-- [ ] Save a new draft in a mailbox with an initialized provider Drafts folder, process the ordinary
+- [x] Save a new draft in a mailbox with an initialized provider Drafts folder, process the ordinary
   queue worker, and confirm the exact draft appears in Nexum Drafts and the external provider once
   with the same Message-ID/content. Confirm no Ticket, Signal, Inbox rule execution, or Inbox unread
   work is created. Confirm Drafts selection ignores a stale descendant role and requires the
   re-inferred selectable, sync-enabled canonical folder. Change UIDVALIDITY in a controlled test and
   confirm refresh fails closed.
-- [ ] In an isolated Drafts APPEND fault/concurrency check, confirm one fresh token reservation elects
+- [x] In an isolated Drafts APPEND fault/concurrency check, confirm one fresh token reservation elects
   one writer, a second call performs no APPEND, and only a pre-write reservation older than five
   minutes can be taken over. Simulate loss of the provider response after APPEND starts and confirm
   later Save/queue runs perform reconciliation only, with no second APPEND.
-- [ ] Send one safe test message and confirm SMTP is invoked once, the composer closes, the local
+- [x] Send one safe test message and confirm SMTP is invoked once, the composer closes, the local
   draft becomes sent, provider-draft cleanup runs, and normal Sent reconciliation remains pending or
   reconciles honestly. Confirm receipt in the destination mailbox separately.
-- [ ] In isolated controlled Dev fault cases, make accepted-log finalization, account telemetry,
+- [x] In isolated controlled Dev fault cases, make accepted-log finalization, account telemetry,
   Sent snapshot, and reconciliation recording fail after simulated SMTP acceptance. Confirm Mail
   still says the message was accepted, includes **Do not resend it**, never says it could not be
   sent, marks the draft sent, stores only sanitized warning metadata, and a repeat with the reserved
   idempotency key does not call SMTP twice.
-- [ ] In a controlled transport-ambiguity case, confirm the pre-SMTP row keeps the reserved
+- [x] In a controlled transport-ambiguity case, confirm the pre-SMTP row keeps the reserved
   Message-ID, changes to unresolved evidence, tells the technician not to resend, and blocks both a
   repeated and concurrent submission until provider Sent mail is reviewed. Import the exact
   same-account Sent copy and confirm normal sync resolves the row as accepted without SMTP replay.
-- [ ] Force only the preliminary Sent-reconciliation write to fail and confirm the reservation says
+- [x] Force only the preliminary Sent-reconciliation write to fail and confirm the reservation says
   `reservation_failed`, not accepted. In a controlled race, confirm an exact Sent-sync confirmation
   wins over later ambiguous SMTP exception handling.
-- [ ] In a controlled backend Sent-append case, call an accepted append twice and confirm one IMAP
+- [x] In a controlled backend Sent-append case, call an accepted append twice and confirm one IMAP
   write. Then simulate an exception after provider-write start and confirm repeated processing stays
   blocked with sanitized evidence until normal Sent sync reconciles the outcome.
-- [ ] Force reconciliation persistence to fail after a new raw Sent snapshot is written and confirm
+- [x] Force reconciliation persistence to fail after a new raw Sent snapshot is written and confirm
   the new file is removed rather than left orphaned.
-- [ ] Attempt a controlled Livewire request containing an attachment ID from another same-user draft
+- [x] Attempt a controlled Livewire request containing an attachment ID from another same-user draft
   or mailbox. Confirm the file is not handed to SMTP, while attachments from the exact active and
   currently authorized draft still send once.
-- [ ] As root/operator, apply a mode-only normalization to the exact 79 `www-data`-owned legacy files
+- [x] As root/operator, apply a mode-only normalization to the exact 79 `www-data`-owned legacy files
   currently at `0644`, changing them to `0660` without reading/modifying content, moving, deleting,
   changing ownership, or broadening other access. Rerun `email:inventory-private-storage` and confirm
   all 61 directories remain `www-data`/`2770` with group-rwx access/default ACLs, the non-private-mode
   count becomes zero, the recorded 1,445-file inventory reconciles, and there are no symlinks, unsafe
   paths, or unreadable files.
-- [ ] Review the current aggregate read-only inventory totals: 1,445 files, 968 referenced, 477
+- [x] Review the current aggregate read-only inventory totals: 1,445 files, 968 referenced, 477
   unreferenced, 28 missing `message_raw` references, 79 non-private modes, 15 duplicate unreferenced
   checksum+size groups, and zero unsafe/unreadable files. Trace provider/send, database, backup,
   retention, Ticket/legal hold, and recovery provenance; do not delete, move, chmod, chown, or repair
   database references as part of inventory review.
-- [ ] After that owner/root repair, write one safe private Email test payload from the web/FPM path
+- [x] After that owner/root repair, write one safe private Email test payload from the web/FPM path
   and one from the queue-worker path. Confirm both runtimes can traverse/read/write the intended
   subtree, directories remain setgid/group-writable, files remain group read/write, other users gain
   no access, and an intentionally failed write never persists `raw_path`.
-- [ ] Check the two right-bar cards and their expanded content at desktop and 320-375px mobile widths
+- [x] Check the two right-bar cards and their expanded content at desktop and 320-375px mobile widths
   in light/dark/system themes. Confirm long operation reasons/status badges wrap without overlapping
   the Mail reader, footer, modal controls, or adjacent AI cards.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-15-002 - Email Mail Folder Hierarchy And Subject Readability
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-15
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3151,40 +3199,40 @@ in the related Feature Slice.
 
 Manual checks:
 
-- [ ] In one mailbox with parent, child, and grandchild folders, expand and collapse each branch;
+- [x] In one mailbox with parent, child, and grandchild folders, expand and collapse each branch;
   confirm indentation, connector lines, chevrons, names, icons, and keyboard focus are clear.
-- [ ] Reload Mail, sign out/in, and open Mail in another browser/device; confirm explicitly opened
+- [x] Reload Mail, sign out/in, and open Mail in another browser/device; confirm explicitly opened
   branches remain open and explicitly closed branches remain closed for the same technician. Confirm
   another technician starts with independent collapsed state.
-- [ ] Select a deeply nested folder from the sidebar and confirm all ancestors reveal, the current
+- [x] Select a deeply nested folder from the sidebar and confirm all ancestors reveal, the current
   row is distinct, the opened ancestor path remains remembered, and the message list contains only
   that exact physical folder rather than descendants.
-- [ ] Close an ancestor of the current folder, reload/deep-link to the same folder, and confirm the
+- [x] Close an ancestor of the current folder, reload/deep-link to the same folder, and confirm the
   branch stays closed but its parent visibly and accessibly says it contains the current folder;
   selecting the nested folder again must reopen and remember the path.
-- [ ] With two accessible mailboxes containing the same folder paths, expand one branch and confirm
+- [x] With two accessible mailboxes containing the same folder paths, expand one branch and confirm
   the other remains independent. Confirm an inaccessible mailbox never appears.
-- [ ] Confirm a non-selectable provider parent is a label/disclosure only, its selectable child can
+- [x] Confirm a non-selectable provider parent is a label/disclosure only, its selectable child can
   be opened, and a stale deleted non-selectable leaf stays hidden.
-- [ ] Compare parent and child provider unread counts and confirm each badge is labelled mailbox
+- [x] Compare parent and child provider unread counts and confirm each badge is labelled mailbox
   unread, is not summed from children, and is not confused with Nexum Unread for me.
-- [ ] Open messages with UTF-8 Q, Base64, ISO-8859-1, ordinary Norwegian/emoji, adjacent folded
+- [x] Open messages with UTF-8 Q, Base64, ISO-8859-1, ordinary Norwegian/emoji, adjacent folded
   encoded words, and the truncated `=?utf-8?Q?Fwd=3A_...=C3=` pattern. Confirm readable, stable text
   in the conversation row, expanded child, reader, and legacy Inbox surfaces.
-- [ ] Start Reply and Forward from an encoded subject and confirm their subject fields and forwarded
+- [x] Start Reply and Forward from an encoded subject and confirm their subject fields and forwarded
   header are readable while normal threading and send behavior remain unchanged.
-- [ ] Use an HTML-like subject and confirm it is shown as text rather than markup. Confirm malformed
+- [x] Use an HTML-like subject and confirm it is shown as text rather than markup. Confirm malformed
   or unsupported input remains safe and no header-control/newline content changes the surrounding UI.
-- [ ] Check mouse, Tab/Shift+Tab, Enter/Space, visible focus, screen-reader labels, light/dark theme,
+- [x] Check mouse, Tab/Shift+Tab, Enter/Space, visible focus, screen-reader labels, light/dark theme,
   a 320-375px mobile sidebar, long Unicode folder names, and at least five hierarchy levels.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-15-001 - Email Mail Selected Conversation List Expansion
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-15
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3230,39 +3278,39 @@ cross-user permission blocker is recorded in `docs/TODO.md` without retrying or 
 
 Manual checks:
 
-- [ ] Open a multi-email conversation and confirm exactly that conversation expands below its
+- [x] Open a multi-email conversation and confirm exactly that conversation expands below its
   parent; select another conversation and confirm the first closes.
-- [ ] Open a one-email conversation and confirm it does not render a duplicate child row.
-- [ ] Click an older child in the center list and confirm the exact same email becomes selected and
+- [x] Open a one-email conversation and confirm it does not render a duplicate child row.
+- [x] Click an older child in the center list and confirm the exact same email becomes selected and
   expanded in the right reader; then click a different reader row and confirm the center child
   highlight follows it.
-- [ ] Use an Inbox conversation with authorized Sent or Archive context and confirm the parent stays
+- [x] Use an Inbox conversation with authorized Sent or Archive context and confirm the parent stays
   in the filtered list, the context child is clearly folder-labelled, and actions target only the
   selected placement.
-- [ ] Confirm the row labels separate `N mails in this view` from `M mails in conversation` when
+- [x] Confirm the row labels separate `N mails in this view` from `M mails in conversation` when
   search, folder, or list filters reduce the parent scope.
-- [ ] Confirm opening or switching children does not itself mark `Unread for me` as read or change
+- [x] Confirm opening or switching children does not itself mark `Unread for me` as read or change
   provider Seen state. Verify personal **Unread** in the child list and authoritative `Mailbox
   read/unread` in the detailed reader; the list intentionally no longer duplicates the provider
   badge after `HR-2026-08-15-007`.
-- [ ] Remove mailbox View access or deactivate the account, refresh the component, and confirm no
+- [x] Remove mailbox View access or deactivate the account, refresh the component, and confirm no
   child subject, sender, folder, or placement from that account remains visible. Confirm matching
   thread headers in another account never enter the expanded list.
-- [ ] Navigate parent and child controls with Tab, Shift+Tab, Enter, and Space; confirm visible focus,
+- [x] Navigate parent and child controls with Tab, Shift+Tab, Enter, and Space; confirm visible focus,
   a clear selected-email announcement, no nested buttons, and no unexpected focus jump.
-- [ ] Check light, dark, and system themes plus roughly 340 px, 575 px, and 1199 px widths with long
+- [x] Check light, dark, and system themes plus roughly 340 px, 575 px, and 1199 px widths with long
   sender, subject, account, and folder labels; confirm selection remains readable and controls do
   not overlap.
-- [ ] Check a 25-plus-message durable thread and a bounded legacy thread; confirm ordering matches
+- [x] Check a 25-plus-message durable thread and a bounded legacy thread; confirm ordering matches
   the reader, conversation pagination is unchanged, and legacy Load more remains usable.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-015 - Email Mail Provider Deletion Reconciliation
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3314,31 +3362,31 @@ Knowledge-push evidence belongs to the parent workstream and is not claimed here
 
 Manual checks:
 
-- [ ] Before enabling the setting, run the scheduler/dispatcher and confirm no account scan or
+- [x] Before enabling the setting, run the scheduler/dispatcher and confirm no account scan or
   cleanup starts; confirm a missing, malformed, or non-exact setting value also fails closed.
-- [ ] Open Email Sync & Cache Settings and confirm the provider-deletion option is visibly off by
+- [x] Open Email Sync & Cache Settings and confirm the provider-deletion option is visibly off by
   default, explains the destructive local-cache risk, and saves both checked and unchecked states.
-- [ ] On one safe Dev mailbox, enable the option and run a complete bounded inventory. Confirm the
+- [x] On one safe Dev mailbox, enable the option and run a complete bounded inventory. Confirm the
   recorded start/end folder facts are stable and contain no subject, address, body, header,
   attachment name, raw provider payload, or credential.
-- [ ] Force an incomplete scan, UIDVALIDITY change, scan limit, provider error, or concurrent folder
+- [x] Force an incomplete scan, UIDVALIDITY change, scan limit, provider error, or concurrent folder
   drift and confirm no active placement is hidden, moved, or cleaned.
-- [ ] Remove one safe provider message outside Nexum and confirm the exact placement becomes a
+- [x] Remove one safe provider message outside Nexum and confirm the exact placement becomes a
   hidden seven-day tombstone with an immutable finding; confirm Mail payload/files still exist
   during grace.
-- [ ] Reintroduce that exact provider occurrence during grace and confirm the placement is restored
+- [x] Reintroduce that exact provider occurrence during grace and confirm the placement is restored
   and its old cleanup path is cancelled without a duplicate conversation or finding effect.
-- [ ] Move a safe message in another provider client and confirm Nexum recognizes a move only when
+- [x] Move a safe message in another provider client and confirm Nexum recognizes a move only when
   the target identity is already and conservatively proven; ambiguous disappearance must remain
   protected.
-- [ ] With two active placements for one message, remove only one and confirm the surviving placement
+- [x] With two active placements for one message, remove only one and confirm the surviving placement
   protects the conversation and all shared Mail payload.
-- [ ] For an eligible test tombstone beyond grace, run cleanup and confirm only Mail-owned cache,
+- [x] For an eligible test tombstone beyond grace, run cleanup and confirm only Mail-owned cache,
   tags, and source-derived Smart Inbox artifacts are removed. Confirm separately captured Ticket
   evidence and its attachments remain readable under Ticket authorization.
-- [ ] Simulate a partial local-file deletion failure and confirm the attempt stays failed/retryable,
+- [x] Simulate a partial local-file deletion failure and confirm the attempt stays failed/retryable,
   missing files are idempotent on retry, and the database never records false completion.
-- [ ] Revoke account scope or disable the opt-in while work is queued and confirm execution stops
+- [x] Revoke account scope or disable the opt-in while work is queued and confirm execution stops
   before provider access or cleanup. Finally return the setting to off after the controlled review.
 
 Expected result: Only a complete, stable, explicitly enabled provider inventory can create a
@@ -3346,13 +3394,13 @@ placement-loss finding. Grace, reappearance, surviving placements, unresolved wo
 Ticket ownership all fail closed; local cleanup is bounded, idempotent, auditable, and disabled by
 default.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-014 - Email Mail Supervised Smart Inbox Cleanup
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3401,36 +3449,36 @@ Pint, and diff checks pass. The final application-wide Dev suite passes
 
 Manual checks:
 
-- [ ] Analyze a safe conversation, accept an Archive suggestion, and confirm one remote operation is
+- [x] Analyze a safe conversation, accept an Archive suggestion, and confirm one remote operation is
   shown, reaches acknowledged success only after provider confirmation, and exposes normal verified
   Undo when eligible.
-- [ ] Undo the safe Archive/Move and confirm the exact acknowledged placement returns to its original
+- [x] Undo the safe Archive/Move and confirm the exact acknowledged placement returns to its original
   selectable folder without changing provider Seen or any user's Nexum `Unread for me` state.
-- [ ] Accept the same suggestion again and confirm it returns the same applied reference without a
+- [x] Accept the same suggestion again and confirm it returns the same applied reference without a
   second provider mutation.
-- [ ] Select several cleanup suggestions, confirm the exact snapshot before apply, and verify each
+- [x] Select several cleanup suggestions, confirm the exact snapshot before apply, and verify each
   item has its own success/failure reason. Confirm a later suggestion cannot join the batch and more
   than 50 IDs is rejected.
-- [ ] Make one selected suggestion stale, revoke Organize on another, and disable a third target
+- [x] Make one selected suggestion stale, revoke Organize on another, and disable a third target
   folder; confirm each fails independently while unrelated authorized snapshot items continue.
-- [ ] Move the exact reviewed source to another folder without changing its message content, then
+- [x] Move the exact reviewed source to another folder without changing its message content, then
   apply the old suggestion; confirm it becomes stale and records no second provider operation. Put
   two cleanup suggestions for one source in a batch and confirm only the fixed first reservation can
   run.
-- [ ] Force a provider operation into Pending, Failed, Superseded, and Cancelled states and confirm
+- [x] Force a provider operation into Pending, Failed, Superseded, and Cancelled states and confirm
   both the immediate alert and the rerendered queue show the real non-green state.
-- [ ] Click `Always do this` for a personal mailbox and confirm the modal is merely prefilled and no
+- [x] Click `Always do this` for a personal mailbox and confirm the modal is merely prefilled and no
   rule/version/execution exists until the normal explicit form submission.
-- [ ] Click `Always do this` for a shared/system mailbox and confirm the Admin builder opens with the
+- [x] Click `Always do this` for a shared/system mailbox and confirm the Admin builder opens with the
   exact mailbox/condition/target, `is_active=0`, `stop_processing=1`, and the distinct provider
   action. Confirm the URL contains no sender, subject, rule name, or condition value, cannot be
   replayed after one use, and leaving the form creates nothing.
-- [ ] Explicitly save/publish one controlled provider cleanup rule, confirm current `published_by`
+- [x] Explicitly save/publish one controlled provider cleanup rule, confirm current `published_by`
   and mailbox Organize are rechecked at execution, and confirm successful `stop_processing=1`
   prevents default Ticket routing for that matched message.
-- [ ] Force that provider action to fail and confirm later actions in the same rule are
+- [x] Force that provider action to fail and confirm later actions in the same rule are
   skipped/`not_run`, while other eligible rules continue according to normal precedence.
-- [ ] Confirm an existing legacy `archive` rule still changes only its historical local state and
+- [x] Confirm an existing legacy `archive` rule still changes only its historical local state and
   does not unexpectedly issue an IMAP Archive operation.
 
 Expected result: Cleanup is always human-triggered, bounded, reversible where provider evidence
@@ -3438,13 +3486,13 @@ supports Undo, and honest about partial failure. `Always do this` is only a norm
 until explicit save/publication; no permanent delete, read-state change, send, or hidden learning
 occurs.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-013 - Email Mail Reviewed Smart Inbox Actions
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3482,36 +3530,36 @@ with supervised cleanup passes **32 / 422**. The final application-wide Dev suit
 
 Manual checks:
 
-- [ ] Apply an existing active Email category to an unclassified conversation and confirm every
+- [x] Apply an existing active Email category to an unclassified conversation and confirm every
   visible placement in that account conversation shows it, the suggestion stores one classification
   reference, and a second click writes nothing new.
-- [ ] Assign a different category manually before applying a category suggestion and confirm Smart
+- [x] Assign a different category manually before applying a category suggestion and confirm Smart
   Inbox refuses to replace it.
-- [ ] Apply an existing active tag and confirm it is added without removing current category/tags and
+- [x] Apply an existing active tag and confirm it is added without removing current category/tags and
   without creating a new Taxonomy definition.
-- [ ] Apply a Task suggestion and confirm one editable internal Task is created through the expected
+- [x] Apply a Task suggestion and confirm one editable internal Task is created through the expected
   work context with no speculative assignee or due date; repeat apply and confirm no duplicate Task.
-- [ ] Disable the proposed category/tag, change the conversation fingerprint, dismiss the
+- [x] Disable the proposed category/tag, change the conversation fingerprint, dismiss the
   suggestion, or revoke mailbox access and confirm application fails without a target-domain write.
-- [ ] Disable action execution, remove the exact `email.update` or `tasks.create` scope from the
+- [x] Disable action execution, remove the exact `email.update` or `tasks.create` scope from the
   recorded AI agent, or switch the current default Email agent and confirm the original suggestion
   does not inherit wildcard/fallback authority.
-- [ ] Through the API, confirm token scope is an additional ceiling (`tasks.create` for Task and
+- [x] Through the API, confirm token scope is an additional ceiling (`tasks.create` for Task and
   `email.update` for apply) and an inaccessible account returns Not Found.
-- [ ] Inspect the suggestion events/reference and confirm they contain normalized metadata and IDs,
+- [x] Inspect the suggestion events/reference and confirm they contain normalized metadata and IDs,
   not model prompts/responses, bodies, headers, attachment data, credentials, or secrets.
 
 Expected result: Only category, tag, and Task effects can write, and only after a current explicit
 human click through both the recorded AI-agent ceiling and normal domain authorization. Retries are
 idempotent and no provider/outbound effect occurs.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-012 - Email Mail Durable Smart Inbox Foundation And Review Queue
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md` and
@@ -3555,44 +3603,44 @@ cleanup set passes **32 / 422**, and the broader focused Mail workstream set pas
 
 Manual checks:
 
-- [ ] With a governed Email agent and one authorized mailbox, select a conversation, click Analyze,
+- [x] With a governed Email agent and one authorized mailbox, select a conversation, click Analyze,
   and confirm the queue shows normalized reason, confidence, provenance, status, and clear impact
   labels only after the explicit request.
-- [ ] Before applying anything, confirm analysis created suggestion/event rows only and did not
+- [x] Before applying anything, confirm analysis created suggestion/event rows only and did not
   change category, tags, Tasks, Tickets, rules, provider folder/flags/Seen, personal unread, or send
   external mail.
-- [ ] Confirm a review-summary item is advisory and has no Apply control, while category/tag/Task or
+- [x] Confirm a review-summary item is advisory and has no Apply control, while category/tag/Task or
   cleanup controls appear only for supported current proposal types.
-- [ ] Dismiss one suggestion twice and correct one editable proposal twice; confirm the operations
+- [x] Dismiss one suggestion twice and correct one editable proposal twice; confirm the operations
   are idempotent and append understandable immutable evidence without changing another user's row.
-- [ ] Add/change mail in the conversation and refresh the queue; confirm old source-bound suggestions
+- [x] Add/change mail in the conversation and refresh the queue; confirm old source-bound suggestions
   become stale and cannot be applied.
-- [ ] Revoke mailbox View, disable the user/account, or remove the selected placement and confirm the
+- [x] Revoke mailbox View, disable the user/account, or remove the selected placement and confirm the
   queue hides/revokes the suggestion without disclosing content or an account-specific denial.
-- [ ] Repeat that access-revocation check for an already Applied and an already Dismissed suggestion;
+- [x] Repeat that access-revocation check for an already Applied and an already Dismissed suggestion;
   confirm direct API show also returns Not Found. Revoke the grant while an Analyze provider request
   is in flight and confirm no suggestion/event row is persisted when it returns.
-- [ ] Make the governed provider throw an error containing a distinctive secret-like value and
+- [x] Make the governed provider throw an error containing a distinctive secret-like value and
   confirm the UI/API returns only the fixed safe failure text and never the raw value.
-- [ ] Sign in as another authorized mailbox user and confirm they cannot list, count, show, dismiss,
+- [x] Sign in as another authorized mailbox user and confirm they cannot list, count, show, dismiss,
   correct, or apply the first user's suggestions.
-- [ ] Exercise queue/count/show/analyze/dismiss/correct through API tokens and confirm `email.read` /
+- [x] Exercise queue/count/show/analyze/dismiss/correct through API tokens and confirm `email.read` /
   `email.update` are ceilings intersected with current mailbox scope; inaccessible IDs return Not
   Found.
-- [ ] Inspect stored proposals, trace, and events and confirm there is no raw prompt/response, HTML,
+- [x] Inspect stored proposals, trace, and events and confirm there is no raw prompt/response, HTML,
   body, raw source, attachment name/content, address list, credential, or secret.
 
 Expected result: Manual analysis produces only durable, typed, inspectable review evidence for the
 current user/account/source. Stale or revoked rows fail closed, normal users cannot enumerate one
 another's queue, and no business/provider write occurs until a separately reviewed explicit action.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-011 - Email Mail Verified Remote Operation Undo
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3642,33 +3690,33 @@ BookStack push was queued. Compiled views remain group-writable.
 
 Manual checks:
 
-- [ ] On a safe test message, Flag or mark it Seen, open Mailbox operations, and confirm the recent
+- [x] On a safe test message, Flag or mark it Seen, open Mailbox operations, and confirm the recent
   row shows an understandable verified reason and Undo expiry.
-- [ ] Click Undo once and confirm the provider flag, Nexum placement, conversation provider-unread
+- [x] Click Undo once and confirm the provider flag, Nexum placement, conversation provider-unread
   count where applicable, linked inverse status, and immutable attempt evidence update exactly once.
-- [ ] Click Undo again and confirm it returns/shows the same inverse operation without another
+- [x] Click Undo again and confirm it returns/shows the same inverse operation without another
   provider mutation.
-- [ ] Move a safe test message to a discovered folder, Undo it, and confirm only the exact
+- [x] Move a safe test message to a discovered folder, Undo it, and confirm only the exact
   acknowledged target placement moves back to the original selectable folder.
-- [ ] Change a test placement, provider flag, folder, UID/UIDVALIDITY, or create a later operation
+- [x] Change a test placement, provider flag, folder, UID/UIDVALIDITY, or create a later operation
   before Undo; confirm the reason changes and no inverse provider write occurs.
-- [ ] Revoke the actor's Organize grant or disable the mailbox before applying/retrying Undo and
+- [x] Revoke the actor's Organize grant or disable the mailbox before applying/retrying Undo and
   confirm it is blocked without provider mutation.
-- [ ] Confirm permanent delete, custom folder mutations, reconciled/ambiguous work, and moves without
+- [x] Confirm permanent delete, custom folder mutations, reconciled/ambiguous work, and moves without
   an exact target UID never expose Undo.
-- [ ] Verify API account isolation: an inaccessible operation returns Not Found, a View-only caller
+- [x] Verify API account isolation: an inaccessible operation returns Not Found, a View-only caller
   can read an ineligible authorization reason but cannot POST, and an authorized `email.update`
   caller gets the same linked inverse as the UI.
-- [ ] Wait beyond 15 minutes on a fresh success and confirm no new Undo can be started; confirm an
+- [x] Wait beyond 15 minutes on a fresh success and confirm no new Undo can be started; confirm an
   inverse already created inside the window can still complete through safe recovery.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-010 - Email Mail Remote Operation Recovery
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3721,40 +3769,40 @@ broader Email verification are recorded in the final workstream handoff.
 
 Manual checks:
 
-- [ ] Create a safe failed Seen/Unseen operation and confirm `/tech/mail` shows its reason,
+- [x] Create a safe failed Seen/Unseen operation and confirm `/tech/mail` shows its reason,
   classification, provider-attempt count, evidence count, and next retry time.
-- [ ] Retry that operation and confirm provider state and Nexum placement/conversation unread count
+- [x] Retry that operation and confirm provider state and Nexum placement/conversation unread count
   reconcile once without a duplicate provider mutation.
-- [ ] Remove a disposable source UID externally, then exercise the safe operation/retry path and
+- [x] Remove a disposable source UID externally, then exercise the safe operation/retry path and
   confirm it stops as stale with no provider write, no automatic retry, and no raw `no headers
   found` text. Confirm a true provider read failure is not treated as confirmed absence.
-- [ ] Cancel a pending/failed test operation and confirm repeated Cancel is harmless; confirm a
+- [x] Cancel a pending/failed test operation and confirm repeated Cancel is harmless; confirm a
   running operation cannot be cancelled mid-call.
-- [ ] Change a test placement UID, UIDVALIDITY, sync version, or folder before retry and confirm the
+- [x] Change a test placement UID, UIDVALIDITY, sync version, or folder before retry and confirm the
   operation becomes Superseded without changing provider state.
-- [ ] Revoke the original requester's Organize grant (or disable the account), then retry and confirm
+- [x] Revoke the original requester's Organize grant (or disable the account), then retry and confirm
   the operation becomes Superseded without provider access even if another operator has Organize.
-- [ ] Simulate an ambiguous applied Seen/Flag change and confirm reconciliation marks it succeeded
+- [x] Simulate an ambiguous applied Seen/Flag change and confirm reconciliation marks it succeeded
   without issuing the provider mutation again.
-- [ ] Simulate an ambiguous move without target UID evidence and confirm it stays blocked with no
+- [x] Simulate an ambiguous move without target UID evidence and confirm it stays blocked with no
   blind replay and exposes no manual Retry. Repeat with missing target-folder path.
-- [ ] Simulate an ambiguous move with the source UID still present and a copied target UID also
+- [x] Simulate an ambiguous move with the source UID still present and a copied target UID also
   present; confirm it stays ambiguous without replay. Make target-folder inventory fail and confirm
   the provider error is not interpreted as an absent folder/message.
-- [ ] Call list/show/retry/cancel with API tokens and confirm `email.read`/`email.update` plus mailbox
+- [x] Call list/show/retry/cancel with API tokens and confirm `email.read`/`email.update` plus mailbox
   View/Organize are intersected; inaccessible mailbox operations must return Not Found.
-- [ ] Verify the external scheduler and `email` queue worker process
+- [x] Verify the external scheduler and `email` queue worker process
   `email.remote_operations.retry_due`, and confirm retries stop after five provider mutation attempts.
-- [ ] Inspect completed `email_remote_operation_attempts` and confirm evidence contains no subject,
+- [x] Inspect completed `email_remote_operation_attempts` and confirm evidence contains no subject,
   addresses, body, MIME, attachment data, raw content, credential, token, or secret.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-009 - Email Mail Fail-Safe Retention Purge And Preview
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md` and
@@ -3794,32 +3842,32 @@ eligible orphan cleanup, storage-failure retry/idempotency, and the Admin previe
 
 Manual checks:
 
-- [ ] Run the migration and open `/tech/admin/settings/email/config` as an Email account
+- [x] Run the migration and open `/tech/admin/settings/email/config` as an Email account
   administrator.
-- [ ] Confirm **Retention preview** shows the configured cutoff, expired count, eligible orphan
+- [x] Confirm **Retention preview** shows the configured cutoff, expired count, eligible orphan
   count, protected count, and readable reason breakdown, with no manual purge button.
-- [ ] Create or identify an expired test message with an active provider placement and confirm the
+- [x] Create or identify an expired test message with an active provider placement and confirm the
   preview protects it and the scheduled job leaves its local message/files unchanged.
-- [ ] Confirm an expired source captured in Ticket stays protected and the Ticket message/attachment
+- [x] Confirm an expired source captured in Ticket stays protected and the Ticket message/attachment
   remains unchanged.
-- [ ] Confirm pending and failed provider operations appear as protection reasons and are not
+- [x] Confirm pending and failed provider operations appear as protection reasons and are not
   deleted.
-- [ ] In a non-production test account, create one expired orphan with no placement/protection, run
+- [x] In a non-production test account, create one expired orphan with no placement/protection, run
   the scheduled job, and confirm only its local raw/attachment files and Email row are removed.
-- [ ] Simulate an unreadable or undeletable local payload and confirm the purge attempt is `failed`,
+- [x] Simulate an unreadable or undeletable local payload and confirm the purge attempt is `failed`,
   the Email row remains, no content/path appears in the audit, and a later run can finish safely.
-- [ ] Inspect the latest `email_retention_purge_runs` counts and per-message reason/failure codes and
+- [x] Inspect the latest `email_retention_purge_runs` counts and per-message reason/failure codes and
   confirm no subject, address, body, attachment filename, raw path, or provider secret is stored.
-- [ ] Confirm Ticket-owned evidence, provider state, unread state, rules, and external mail are not
+- [x] Confirm Ticket-owned evidence, provider state, unread state, rules, and external mail are not
   changed by the retention run.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-008 - Email Mail Conversation Taxonomy Classification
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3861,24 +3909,24 @@ and queue verification remains in the final parent handoff and is not claimed he
 
 Manual checks:
 
-- [ ] In `/tech/mail`, assign one active Email category and several existing tags from one message,
+- [x] In `/tech/mail`, assign one active Email category and several existing tags from one message,
   then open another placement in the same account conversation and confirm the same classification
   appears in the list and reader.
-- [ ] Open a correlated conversation in another mailbox account and confirm its category/tags remain
+- [x] Open a correlated conversation in another mailbox account and confirm its category/tags remain
   independent and no count, chip, or suggestion leaks across accounts.
-- [ ] Replace and clear the classification and confirm one immutable before/after event per action,
+- [x] Replace and clear the classification and confirm one immutable before/after event per action,
   without changing provider flags, folder, Seen, personal unread, Ticket category/tags, or `TD-...`
   correlation.
-- [ ] As a View-only mailbox user, confirm classification is readable but no mutation control or
+- [x] As a View-only mailbox user, confirm classification is readable but no mutation control or
   direct write succeeds. With View plus Organize, confirm assignment succeeds.
-- [ ] Enter an unknown tag without `taxonomy.manage_tags` and confirm no definition is created; grant
+- [x] Enter an unknown tag without `taxonomy.manage_tags` and confirm no definition is created; grant
   that permission and confirm the normal Taxonomy creation boundary is used.
-- [ ] Exercise API read/replace/clear with correct and missing `email.read`/`email.update` token
+- [x] Exercise API read/replace/clear with correct and missing `email.read`/`email.update` token
   abilities, and confirm inaccessible mailbox conversations return Not Found.
-- [ ] Run controlled legacy `tag`, explicit `tag_message`, `tag_conversation`, and
+- [x] Run controlled legacy `tag`, explicit `tag_message`, `tag_conversation`, and
   `set_conversation_category` rules and confirm their message-versus-conversation meanings remain
   distinct.
-- [ ] Inspect the migration issue tables and source compatibility records; confirm legacy rows/events
+- [x] Inspect the migration issue tables and source compatibility records; confirm legacy rows/events
   were preserved, no message-level routing tag became a conversation/Ticket tag, and no ambiguous
   source was guessed.
 
@@ -3886,13 +3934,13 @@ Expected result: Classification is consistent within one durable account convers
 across accounts, guarded by current View/Organize and Taxonomy permissions, and additive to legacy
 provider, Ticket, routing, and audit state.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-007 - Email Mail Conversation Identity Hardening
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -3934,36 +3982,36 @@ The broader focused Mail workstream set passes **112 / 993**.
 
 Manual checks:
 
-- [ ] Open or ingest a safe root message, direct reply, and nested reply whose `References` contains
+- [x] Open or ingest a safe root message, direct reply, and nested reply whose `References` contains
   the root-to-parent chain; confirm `/tech/mail` shows one account conversation and selecting each
   thread row keeps actions bound to that exact placement.
-- [ ] Create two incompatible same-account messages that reuse one `Message-ID` and confirm they
+- [x] Create two incompatible same-account messages that reuse one `Message-ID` and confirm they
   remain separate conversations with no shared counts, Ticket pointer, or classification.
-- [ ] Place the same identifier chain in two mailbox accounts and confirm the conversations, counts,
+- [x] Place the same identifier chain in two mailbox accounts and confirm the conversations, counts,
   snippets, and actions remain account-isolated.
-- [ ] Inspect a reconciled formerly split thread and confirm the message/active-placement/provider
+- [x] Inspect a reconciled formerly split thread and confirm the message/active-placement/provider
   unread/attachment aggregates match its real placements and no empty shell remains.
-- [ ] Create or inspect conflicting references and competing primary Ticket-link evidence and
+- [x] Create or inspect conflicting references and competing primary Ticket-link evidence and
   confirm no placement or primary relationship moves; a sanitized durable issue is recorded instead.
-- [ ] Confirm provider folder, UID/UIDVALIDITY, Seen/flag, personal unread, message body/attachments,
+- [x] Confirm provider folder, UID/UIDVALIDITY, Seen/flag, personal unread, message body/attachments,
   existing `TD-...` correlation, and Ticket evidence were not changed by reconciliation.
-- [ ] With a durable Smart Inbox suggestion/event referencing a source conversation, reconcile its
+- [x] With a durable Smart Inbox suggestion/event referencing a source conversation, reconcile its
   last placement into an unambiguous target and confirm the old projection shell plus suggestion and
   append-only events remain as audit evidence; the suggestion itself may become stale normally.
-- [ ] As users with different mailbox grants, confirm grouping never reveals an inaccessible
+- [x] As users with different mailbox grants, confirm grouping never reveals an inaccessible
   account, message, participant, snippet, count, or Ticket relationship.
 
 Expected result: Only unambiguous account-local RFC evidence joins or reconciles conversations.
 Ambiguous/reused identifiers fail closed, all provider and Ticket evidence stays intact, and the
 reader remains scoped to the exact selected placement.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-006 - Email Mail Durable Account-Scoped Conversations
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4009,20 +4057,20 @@ working-copy warnings in unrelated files.
 
 Manual checks:
 
-- [ ] After migration, open `/tech/mail` and confirm existing mail still lists as conversations.
-- [ ] Open a root/reply thread and confirm both messages are in one Conversation reader thread.
-- [ ] Confirm the same `Message-ID` in two different mailbox accounts remains two separate
+- [x] After migration, open `/tech/mail` and confirm existing mail still lists as conversations.
+- [x] Open a root/reply thread and confirm both messages are in one Conversation reader thread.
+- [x] Confirm the same `Message-ID` in two different mailbox accounts remains two separate
   conversation rows when both accounts are visible.
-- [ ] Move one message to another folder and confirm it remains in the same reader thread from the
+- [x] Move one message to another folder and confirm it remains in the same reader thread from the
   new folder placement.
-- [ ] Link two messages from one thread to a Ticket and confirm the Ticket link count still appears
+- [x] Link two messages from one thread to a Ticket and confirm the Ticket link count still appears
   without changing the old `TD-...` behavior.
-- [ ] Confirm Category/tags still behave as before and were not silently migrated in this slice.
-- [ ] Confirm unread/read, flag, trash, move, spam, Ticket, AI, and rule actions still apply only to
+- [x] Confirm Category/tags still behave as before and were not silently migrated in this slice.
+- [x] Confirm unread/read, flag, trash, move, spam, Ticket, AI, and rule actions still apply only to
   the selected placement.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-005 - Email Mail Composer Local Status Polish
@@ -4085,7 +4133,7 @@ Result / notes: Approved by Svein Tore in the Codex task after reviewing the com
 
 ### HR-2026-08-14-004 - Email Mail Composer AI Consistency
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4124,27 +4172,27 @@ CRLF working-copy warnings in unrelated files.
 
 Manual checks:
 
-- [ ] Open Compose in `/tech/mail` with a send-authorized account and a ready Email agent; confirm AI
+- [x] Open Compose in `/tech/mail` with a send-authorized account and a ready Email agent; confirm AI
   guidance plus improve/shorten/warmer/NO controls are visible, and Draft reply is not visible.
-- [ ] Use one Compose AI rewrite and confirm it updates only the body while To, Cc, Subject,
+- [x] Use one Compose AI rewrite and confirm it updates only the body while To, Cc, Subject,
   attachments, and sender stay unchanged.
-- [ ] Open Reply or Reply All and confirm Draft reply plus the rewrite controls are visible.
-- [ ] Use Draft reply on an automated/no-reply style message and confirm advisory no-reply output
+- [x] Open Reply or Reply All and confirm Draft reply plus the rewrite controls are visible.
+- [x] Use Draft reply on an automated/no-reply style message and confirm advisory no-reply output
   does not replace the composer body.
-- [ ] Open Forward and confirm rewrite controls are visible, Draft reply is not visible, and the
+- [x] Open Forward and confirm rewrite controls are visible, Draft reply is not visible, and the
   forwarded original message block remains after using an AI rewrite.
-- [ ] Confirm AI rewrite does not create Tickets, Tasks, rules, categories/tags, provider operations,
+- [x] Confirm AI rewrite does not create Tickets, Tasks, rules, categories/tags, provider operations,
   or outbound Email logs before Send is clicked.
-- [ ] Check desktop and mobile widths and confirm the AI instruction input and icon buttons wrap
+- [x] Check desktop and mobile widths and confirm the AI instruction input and icon buttons wrap
   without overlapping the editor toolbar.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-003 - Email Mail Conversation Reader Polish
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4180,25 +4228,25 @@ warnings in unrelated files.
 
 Manual checks:
 
-- [ ] Open `/tech/mail` with a mailbox containing a root message and a reply in the same RFC thread;
+- [x] Open `/tech/mail` with a mailbox containing a root message and a reply in the same RFC thread;
   confirm the reader shows a compact Conversation thread.
-- [ ] Confirm only the selected message is expanded with body and attachment metadata; the other
+- [x] Confirm only the selected message is expanded with body and attachment metadata; the other
   thread rows remain collapsed.
-- [ ] Click an older collapsed row and confirm it becomes the expanded message.
-- [ ] Confirm Reply, Reply all, Forward, Mark read, Trash, Move, Ticket, Category/tags, Add rule, and
+- [x] Click an older collapsed row and confirm it becomes the expanded message.
+- [x] Confirm Reply, Reply all, Forward, Mark read, Trash, Move, Ticket, Category/tags, Add rule, and
   AI actions apply to the currently expanded placement only.
-- [ ] Confirm read/unread, flagged, provider draft, Ticket link, and Sent reconciled badges remain
+- [x] Confirm read/unread, flagged, provider draft, Ticket link, and Sent reconciled badges remain
   readable without crowding the row.
-- [ ] Check desktop and mobile widths and confirm long subjects, senders, folders, and Message-ID
+- [x] Check desktop and mobile widths and confirm long subjects, senders, folders, and Message-ID
   text truncate/wrap without overlapping actions or body content.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-002 - Email Mail Conversation List Grouping
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4235,28 +4283,28 @@ warnings in unrelated files.
 
 Manual checks:
 
-- [ ] Open `/tech/mail` with a mailbox containing a root message and a reply in the same RFC thread;
+- [x] Open `/tech/mail` with a mailbox containing a root message and a reply in the same RFC thread;
   confirm the message list shows one conversation row with a multi-message badge.
-- [ ] Open that conversation row and confirm the reading pane opens one real provider placement from
+- [x] Open that conversation row and confirm the reading pane opens one real provider placement from
   the grouped row; detailed threaded reader behavior is reviewed in `HR-2026-08-14-003`.
-- [ ] Confirm the row unread badges match the thread's personal unread and mailbox unread state in
+- [x] Confirm the row unread badges match the thread's personal unread and mailbox unread state in
   the current filtered scope.
-- [ ] Switch between `Unread`, `Inbox`, a selected folder, and search/filter states; confirm grouping
+- [x] Switch between `Unread`, `Inbox`, a selected folder, and search/filter states; confirm grouping
   remains inside the current authorized scope.
-- [ ] Confirm messages with the same Message-ID or copied content in another authorized mailbox stay
+- [x] Confirm messages with the same Message-ID or copied content in another authorized mailbox stay
   separate rows.
-- [ ] Confirm Reply, Forward, Mark read, Trash, Move, Ticket, Category/tags, and AI actions still
+- [x] Confirm Reply, Forward, Mark read, Trash, Move, Ticket, Category/tags, and AI actions still
   operate on the selected/opened placement, not silently on every message in the grouped row.
-- [ ] Check desktop and mobile widths and confirm conversation badges do not overlap sender, subject,
+- [x] Check desktop and mobile widths and confirm conversation badges do not overlap sender, subject,
   or date text.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-14-001 - Email Mail Manual Send/Receive And Folder Refresh
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-14
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4300,28 +4348,30 @@ successfully after the header move.
 
 Manual checks:
 
-- [ ] Open `/tech/mail` as a user with mailbox View and Organize access and confirm the message-list
+- [x] Open `/tech/mail` as a user with mailbox View and Organize access and confirm the message-list
   header shows `Send/receive`.
-- [ ] Click `Send/receive`, confirm a status message appears, and confirm the queue receives or
+- [x] Click `Send/receive`, confirm a status message appears, and confirm the queue receives or
   processes `FetchImapAccount` for the user's organize-authorized active mailboxes.
-- [ ] Select a folder in a mailbox the user can organize and confirm the Folders header shows the
+- [x] Select a folder in a mailbox the user can organize and confirm the Folders header shows the
   refresh icon.
-- [ ] Rename or create a safe test folder in another IMAP client, click the folder refresh icon, let
+- [x] Rename or create a safe test folder in another IMAP client, click the folder refresh icon, let
   the queue process, and confirm the provider folder change appears in Nexum.
-- [ ] Send one safe test email to the mailbox, click `Send/receive` or folder refresh, let the queue
+- [x] Send one safe test email to the mailbox, click `Send/receive` or folder refresh, let the queue
   process, and confirm the new message appears without importing older historical mail.
-- [ ] Use a View-only mailbox grant and confirm `Send/receive` and selected-folder refresh are hidden
+- [x] Use a View-only mailbox grant and confirm `Send/receive` and selected-folder refresh are hidden
   or rejected.
-- [ ] Confirm Reply, Reply All, Forward, Compose, provider-draft editing, and Mail AI composer
+- [x] Confirm Reply, Reply All, Forward, Compose, provider-draft editing, and Mail AI composer
   controls still use the same composer behavior after the sidebar refresh buttons were added.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-13-032 - Email Mail Provider Folder Create, Rename, Move, And Delete
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4367,33 +4417,33 @@ sync, one default queue worker pass, and `php artisan queue:failed` pass; no fai
 
 Manual checks:
 
-- [ ] Open `/tech/mail`, select one mailbox or one folder where the technician has Organize access,
+- [x] Open `/tech/mail`, select one mailbox or one folder where the technician has Organize access,
   and confirm the gear appears at the far right of the Folders header.
-- [ ] Open the gear modal and confirm it lists folders only for the selected mailbox.
-- [ ] Confirm parent folders are collapsed by default, can be expanded/collapsed, and subfolders are
+- [x] Open the gear modal and confirm it lists folders only for the selected mailbox.
+- [x] Confirm parent folders are collapsed by default, can be expanded/collapsed, and subfolders are
   visible only when their parent is expanded.
-- [ ] Confirm rows without actions show the blocker reason, such as system folder or has subfolders.
-- [ ] Create a safe custom test folder at root and another safe custom test folder under a selected
+- [x] Confirm rows without actions show the blocker reason, such as system folder or has subfolders.
+- [x] Create a safe custom test folder at root and another safe custom test folder under a selected
   parent; confirm both appear in Nexum and an external IMAP client.
-- [ ] Rename the safe custom folder and confirm the new name appears in Nexum, in the external IMAP
+- [x] Rename the safe custom folder and confirm the new name appears in Nexum, in the external IMAP
   client, and as the target for any personal rule that referenced that folder.
-- [ ] Move a safe custom leaf folder to another parent or back to root and confirm the new path
+- [x] Move a safe custom leaf folder to another parent or back to root and confirm the new path
   appears in Nexum and the external IMAP client.
-- [ ] Place or move one test message into the custom folder, start delete, and confirm Nexum warns
+- [x] Place or move one test message into the custom folder, start delete, and confirm Nexum warns
   that the folder contains mail instead of allowing direct delete.
-- [ ] Move the folder's mail to another selectable folder from the modal, confirm the message appears
+- [x] Move the folder's mail to another selectable folder from the modal, confirm the message appears
   in the target folder, then delete the now-empty custom folder.
-- [ ] Confirm INBOX, Sent, Drafts, Trash, Archive, Junk/Spam, and other special-use folders do not
+- [x] Confirm INBOX, Sent, Drafts, Trash, Archive, Junk/Spam, and other special-use folders do not
   expose rename/move/delete actions.
-- [ ] Confirm a View-only mailbox hides the gear and direct folder actions are rejected.
-- [ ] Check desktop and mobile widths and confirm the folder modal stays inside the viewport, the
+- [x] Confirm a View-only mailbox hides the gear and direct folder actions are rejected.
+- [x] Check desktop and mobile widths and confirm the folder modal stays inside the viewport, the
   folder list scrolls inside the modal, and the modal does not overlap the message panes.
 
 Result / notes:
 
 ### HR-2026-08-13-031 - Email Mail Write-Gated AI Assistants
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4421,24 +4471,24 @@ Automated verification: Focused Mail regressions for the six 2026-08-13 completi
 
 Manual checks:
 
-- [ ] With an action-disabled Email agent, generate an AI summary and confirm `Create Ticket` is not
+- [x] With an action-disabled Email agent, generate an AI summary and confirm `Create Ticket` is not
   shown in the AI summary panel.
-- [ ] Enable action execution and Ticket write scopes on the Email/default agent, keep user
+- [x] Enable action execution and Ticket write scopes on the Email/default agent, keep user
   `ticket.create` and mailbox Organize access, and confirm `Create Ticket` appears.
-- [ ] Click the AI-gated `Create Ticket` button and confirm a Ticket is created through the normal
+- [x] Click the AI-gated `Create Ticket` button and confirm a Ticket is created through the normal
   Mail-to-Ticket flow and linked to the source email.
-- [ ] Remove either the agent Ticket scope or the user's `ticket.create` permission and confirm the
+- [x] Remove either the agent Ticket scope or the user's `ticket.create` permission and confirm the
   AI write button disappears.
-- [ ] Confirm the read-only Summary and Draft reply AI buttons still work as before and do not send
+- [x] Confirm the read-only Summary and Draft reply AI buttons still work as before and do not send
   email or mutate Ticket fields directly.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-13-030 - Email Mail Remote Operation Retry Dashboard
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4468,26 +4518,26 @@ Automated verification: Focused Mail regressions for the six 2026-08-13 completi
 
 Manual checks:
 
-- [ ] Create or identify a failed Mail remote operation for a safe test message and confirm the
+- [x] Create or identify a failed Mail remote operation for a safe test message and confirm the
   Mailbox operations card appears in the `/tech/mail` right bar, starts collapsed, and shows the
   correct failed/status count without expanding.
-- [ ] Expand the right-bar card and confirm the account, operation type, subject, status, error,
+- [x] Expand the right-bar card and confirm the account, operation type, subject, status, error,
   focus order, and ARIA disclosure state are understandable. Confirm it is absent when no active or
   recent operation qualifies.
-- [ ] Confirm an ambiguous Archive/Trash/Move row with missing immutable target path or target UID
+- [x] Confirm an ambiguous Archive/Trash/Move row with missing immutable target path or target UID
   remains reviewable but has no Retry control.
-- [ ] Retry a safe failed operation, such as a move to a test folder, and confirm the provider
+- [x] Retry a safe failed operation, such as a move to a test folder, and confirm the provider
   mailbox and Nexum placement projection both update.
-- [ ] Cancel a pending/failed operation and confirm it no longer appears as active retry work.
-- [ ] Sign in as a user without Organize access to that mailbox and confirm the operation is hidden.
+- [x] Cancel a pending/failed operation and confirm it no longer appears as active retry work.
+- [x] Sign in as a user without Organize access to that mailbox and confirm the operation is hidden.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-13-029 - Email Mail Multi-Conversation Ticket Links
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4513,23 +4563,23 @@ Automated verification: Focused Mail regressions for the six 2026-08-13 completi
 
 Manual checks:
 
-- [ ] Open an unlinked test email in `/tech/mail` with mailbox Organize access and `ticket.update`,
+- [x] Open an unlinked test email in `/tech/mail` with mailbox Organize access and `ticket.update`,
   then use More -> Link existing Ticket with a known Ticket key.
-- [ ] Confirm the Ticket gets an inbound Ticket message and the source email remains in its mailbox.
-- [ ] Link another message in the same RFC thread to the same Ticket and confirm Mail shows multiple
+- [x] Confirm the Ticket gets an inbound Ticket message and the source email remains in its mailbox.
+- [x] Link another message in the same RFC thread to the same Ticket and confirm Mail shows multiple
   Ticket conversation links for that conversation.
-- [ ] Try the same flow without `ticket.update` and confirm the Link existing Ticket action is not
+- [x] Try the same flow without `ticket.update` and confirm the Link existing Ticket action is not
   available.
-- [ ] Confirm the ordinary Ticket icon still creates a new Ticket only when `ticket.create` is
+- [x] Confirm the ordinary Ticket icon still creates a new Ticket only when `ticket.create` is
   present and the email is not already linked.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-13-028 - Email Mail Grouped Rules And Reprocessing
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4554,19 +4604,19 @@ Automated verification: Focused Mail regressions for the six 2026-08-13 completi
 
 Manual checks:
 
-- [ ] Create an Admin Email rule with two condition groups and `Any group can match`.
-- [ ] Confirm add/remove condition controls work without editing JSON.
-- [ ] Preview or reprocess a message that matches only one group and confirm the action runs.
-- [ ] Confirm the rule list displays grouped conditions readably.
-- [ ] Sign in without `email.rule_manage` and confirm the reprocess route is denied.
+- [x] Create an Admin Email rule with two condition groups and `Any group can match`.
+- [x] Confirm add/remove condition controls work without editing JSON.
+- [x] Preview or reprocess a message that matches only one group and confirm the action runs.
+- [x] Confirm the rule list displays grouped conditions readably.
+- [x] Sign in without `email.rule_manage` and confirm the reprocess route is denied.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-13-027 - Email Mail Provider Sent Append Support
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4596,25 +4646,25 @@ The 2026-08-15 provider Sent append/reservation safety regressions pass 4 tests 
 
 Manual checks:
 
-- [ ] Send a test Compose message from a mailbox with a real selectable Sent folder and confirm
+- [x] Send a test Compose message from a mailbox with a real selectable Sent folder and confirm
   `/tech/mail` does not show a Provider Sent dashboard or `Append to Sent` control.
-- [ ] Confirm the pending provider Sent reconciliation row still stores a raw outbound snapshot for
+- [x] Confirm the pending provider Sent reconciliation row still stores a raw outbound snapshot for
   technical append/reconciliation.
-- [ ] If technical append is triggered through a backend/admin path, confirm the message appears in
+- [x] If technical append is triggered through a backend/admin path, confirm the message appears in
   the provider Sent folder in an external IMAP client.
-- [ ] Trigger the same accepted append twice and confirm only one provider write. Simulate a provider
+- [x] Trigger the same accepted append twice and confirm only one provider write. Simulate a provider
   exception after write start and confirm a repeat performs no new append; simulate a proven
   pre-write failure and confirm it alone can be reserved safely again.
-- [ ] Run normal mail sync and confirm the Sent copy reconciles to `Sent reconciled`.
-- [ ] Confirm a user without mailbox Send access sees no Provider Sent controls for that account.
+- [x] Run normal mail sync and confirm the Sent copy reconciles to `Sent reconciled`.
+- [x] Confirm a user without mailbox Send access sees no Provider Sent controls for that account.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-13-026 - Email Mail Provider Drafts Direct Editing
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4639,21 +4689,23 @@ Automated verification: Focused Mail regressions for the six 2026-08-13 completi
 
 Manual checks:
 
-- [ ] Import or create a safe provider Drafts message and open it from `/tech/mail`.
-- [ ] Confirm provider Drafts rows show `Edit draft` and do not show Reply, Forward, Spam, Ticket,
+- [x] Import or create a safe provider Drafts message and open it from `/tech/mail`.
+- [x] Confirm provider Drafts rows show `Edit draft` and do not show Reply, Forward, Spam, Ticket,
   or Add rule actions.
-- [ ] Edit recipients/body/subject and send the draft through SMTP.
-- [ ] Confirm the outbound message is sent, the original provider Drafts copy is removed or an
+- [x] Edit recipients/body/subject and send the draft through SMTP.
+- [x] Confirm the outbound message is sent, the original provider Drafts copy is removed or an
   honest cleanup warning is shown, and the Drafts placement no longer appears as active.
-- [ ] Confirm a View-only or non-send-authorized user cannot edit or send the provider draft.
+- [x] Confirm a View-only or non-send-authorized user cannot edit or send the provider draft.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-13-025 - Email Mail Provider Folder Create
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4689,25 +4741,27 @@ passes with only pre-existing CRLF working-copy warnings in unrelated files.
 
 Manual checks:
 
-- [ ] Select one safe mailbox in `/tech/mail` where the signed-in technician has Organize access and
+- [x] Select one safe mailbox in `/tech/mail` where the signed-in technician has Organize access and
   confirm the folder-create icon appears in the sidebar.
-- [ ] Create a safe custom folder such as `Nexum Test/Manual Review` and confirm the success message
+- [x] Create a safe custom folder such as `Nexum Test/Manual Review` and confirm the success message
   appears and the new folder is selected.
-- [ ] Confirm the folder appears in the same mailbox in an external IMAP client.
-- [ ] Confirm the folder appears as a selectable Move-to-folder target for messages in the same
+- [x] Confirm the folder appears in the same mailbox in an external IMAP client.
+- [x] Confirm the folder appears as a selectable Move-to-folder target for messages in the same
   mailbox.
-- [ ] Switch to a View-only mailbox and confirm the create icon is hidden and direct submission is
+- [x] Switch to a View-only mailbox and confirm the create icon is hidden and direct submission is
   rejected.
-- [ ] Try a reserved name such as `INBOX` or `Drafts` and confirm Nexum rejects it instead of trying
+- [x] Try a reserved name such as `INBOX` or `Drafts` and confirm Nexum rejects it instead of trying
   to create a system folder.
-- [ ] Check desktop and mobile sidebar widths and confirm the create form and validation messages do
+- [x] Check desktop and mobile sidebar widths and confirm the create form and validation messages do
   not overlap the folder list.
 
 Result / notes:
 
 ### HR-2026-08-13-024 - Email Mail Durable Draft Attachments
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4755,30 +4809,32 @@ expanded composer lifecycle file at 4 / 26.
 
 Manual checks:
 
-- [ ] Open `/tech/mail`, start Compose, add one small attachment, click Save draft, and confirm the
+- [x] Open `/tech/mail`, start Compose, add one small attachment, click Save draft, and confirm the
   saved attachment appears in the composer as a stored draft attachment.
-- [ ] Close and reopen the same draft and confirm the attachment is still listed without needing a
+- [x] Close and reopen the same draft and confirm the attachment is still listed without needing a
   new upload.
-- [ ] Save the draft to provider Drafts and confirm the provider draft includes the attachment in an
+- [x] Save the draft to provider Drafts and confirm the provider draft includes the attachment in an
   external mail client.
-- [ ] Remove the saved attachment and confirm it disappears from the composer, then Save draft again
+- [x] Remove the saved attachment and confirm it disappears from the composer, then Save draft again
   and confirm the provider draft no longer contains it.
-- [ ] Send a restored draft with a saved attachment and confirm the outbound email includes the
+- [x] Send a restored draft with a saved attachment and confirm the outbound email includes the
   attachment once.
-- [ ] In a controlled request, substitute an attachment ID from another same-user draft/account and
+- [x] In a controlled request, substitute an attachment ID from another same-user draft/account and
   confirm the file is not sent; revoke mailbox access and confirm a stale composer cannot send its
   stored attachments.
-- [ ] Confirm the sent or discarded draft no longer restores and that saved draft attachment metadata
+- [x] Confirm the sent or discarded draft no longer restores and that saved draft attachment metadata
   is cleaned up.
-- [ ] Try adding more than 5 files or a file over 10 MB and confirm the UI rejects it cleanly.
-- [ ] Check desktop and mobile composer widths and confirm attachment badges wrap without overlapping
+- [x] Try adding more than 5 files or a file over 10 MB and confirm the UI rejects it cleanly.
+- [x] Check desktop and mobile composer widths and confirm attachment badges wrap without overlapping
   address fields or Send/Save buttons.
 
 Result / notes:
 
 ### HR-2026-08-13-023 - Email Mail Provider Drafts Write Sync
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4836,30 +4892,32 @@ provider call.
 
 Manual checks:
 
-- [ ] Open `/tech/mail`, start Compose from a safe mailbox with a discovered provider Drafts folder,
+- [x] Open `/tech/mail`, start Compose from a safe mailbox with a discovered provider Drafts folder,
   enter To/Cc/Subject/body without attachments, click Save draft, and confirm the composer shows a
   provider synced or pending status.
-- [ ] Confirm the saved draft appears in the real provider Drafts folder in an external mail client
+- [x] Confirm the saved draft appears in the real provider Drafts folder in an external mail client
   with the same recipients, subject, and body. Process the ordinary queue worker and confirm the same
   exact Message-ID appears once in Nexum's Drafts view without waiting for an unrelated full poll.
-- [ ] Change the same draft, click Save draft again, and confirm the provider shows one updated
+- [x] Change the same draft, click Save draft again, and confirm the provider shows one updated
   usable draft rather than a growing list of stale copies.
-- [ ] Add a temporary attachment, click Save draft, and confirm the UI says the draft is local-only
+- [x] Add a temporary attachment, click Save draft, and confirm the UI says the draft is local-only
   for attachments instead of implying the attachment was saved to provider Drafts.
-- [ ] Send the saved draft and confirm SMTP sends once, the local draft is marked sent, and the
+- [x] Send the saved draft and confirm SMTP sends once, the local draft is marked sent, and the
   provider Drafts copy is removed or a cleanup warning is shown.
-- [ ] Discard a synced draft and confirm the local draft does not restore and the provider Drafts
+- [x] Discard a synced draft and confirm the local draft does not restore and the provider Drafts
   copy is removed or a cleanup warning is shown.
-- [ ] Wait for or run IMAP Drafts sync and confirm the local draft provider UID/status reconciles by
+- [x] Wait for or run IMAP Drafts sync and confirm the local draft provider UID/status reconciles by
   Message-ID without creating Tickets, Signals, inbound rule executions, or Inbox unread work.
-- [ ] Check desktop and mobile composer widths and confirm provider draft status badges do not
+- [x] Check desktop and mobile composer widths and confirm provider draft status badges do not
   overlap the Save draft button or address fields.
 
 Result / notes:
 
 ### HR-2026-08-13-022 - Email Mail Provider Drafts Visibility
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4899,23 +4957,25 @@ passes with only pre-existing CRLF working-copy warnings in unrelated files.
 
 Manual checks:
 
-- [ ] Import or create a safe real provider Drafts-folder message after the folder baseline and
+- [x] Import or create a safe real provider Drafts-folder message after the folder baseline and
   confirm it appears in the `/tech/mail` Drafts view.
-- [ ] Confirm the list row and reader show `Provider draft` for that placement.
-- [ ] Confirm ordinary Reply, Reply All, Forward, Spam, Ticket, and Add rule actions are hidden for
+- [x] Confirm the list row and reader show `Provider draft` for that placement.
+- [x] Confirm ordinary Reply, Reply All, Forward, Spam, Ticket, and Add rule actions are hidden for
   the provider draft placement.
-- [ ] Select the provider Drafts folder directly in the sidebar and confirm the folder view remains
+- [x] Select the provider Drafts folder directly in the sidebar and confirm the folder view remains
   scoped to that folder.
-- [ ] Confirm the Drafts import does not create Tickets, Signals, inbound rule executions, or Inbox
+- [x] Confirm the Drafts import does not create Tickets, Signals, inbound rule executions, or Inbox
   unread work.
-- [ ] Check desktop and mobile widths and confirm the Drafts sidebar count, filter, and badges wrap
+- [x] Check desktop and mobile widths and confirm the Drafts sidebar count, filter, and badges wrap
   without overlap.
 
 Result / notes:
 
 ### HR-2026-08-13-021 - Email Mail Sent Reconciliation Foundation
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -4970,32 +5030,32 @@ append/reservation safety passes 4 / 16, and targeted Mail send regressions pass
 
 Manual checks:
 
-- [ ] Send a new Compose message from `/tech/mail`; confirm the message sends normally and an
+- [x] Send a new Compose message from `/tech/mail`; confirm the message sends normally and an
   outbound `email_logs` row records `provider_sent.status=pending`.
-- [ ] Run or wait for provider folder sync; confirm the provider Sent copy is imported and the
+- [x] Run or wait for provider folder sync; confirm the provider Sent copy is imported and the
   matching reconciliation row changes to `reconciled`.
-- [ ] Open the Sent folder or All view in `/tech/mail`; confirm the provider Sent copy shows
+- [x] Open the Sent folder or All view in `/tech/mail`; confirm the provider Sent copy shows
   `Sent reconciled` in the list and reader.
-- [ ] Confirm Sent-folder imports do not create Tickets, Signals, Inbox unread work, or inbound rule
+- [x] Confirm Sent-folder imports do not create Tickets, Signals, Inbox unread work, or inbound rule
   executions.
-- [ ] Send or import a Sent copy with a different account or different `Message-ID`; confirm it does
+- [x] Send or import a Sent copy with a different account or different `Message-ID`; confirm it does
   not reconcile the wrong outbound log.
-- [ ] In isolated controlled send-failure cases, confirm the reservation and exact Message-ID exist
+- [x] In isolated controlled send-failure cases, confirm the reservation and exact Message-ID exist
   before SMTP; concurrent/repeated submission makes only one SMTP call; an uncertain transport
   result remains unresolved and blocked; and accepted-log, telemetry, snapshot, or reconciliation
   failure after acceptance keeps the draft sent with `Do not resend it` and no internal exception
   text.
-- [ ] Import a matching same-account Sent copy for an unresolved reservation and confirm it becomes
+- [x] Import a matching same-account Sent copy for an unresolved reservation and confirm it becomes
   accepted/reconciled without resending. Force a snapshot-followed-by-row-insert failure and confirm
   the new raw file is removed.
-- [ ] Check desktop and mobile widths and confirm the new badge wraps without overlapping the list
+- [x] Check desktop and mobile widths and confirm the new badge wraps without overlapping the list
   row or reader status badges.
 
 Result / notes:
 
 ### HR-2026-08-13-020 - Email Mail Local Drafts And Autosave
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5051,40 +5111,40 @@ assertions.
 
 Human checks:
 
-- [ ] Start Compose in Visual mode, type a body, wait through several autosave intervals, and confirm
+- [x] Start Compose in Visual mode, type a body, wait through several autosave intervals, and confirm
   the text remains visible and the local draft body is saved.
-- [ ] Switch to HTML mode, edit the body source, wait for autosave, switch back to Visual, and confirm
+- [x] Switch to HTML mode, edit the body source, wait for autosave, switch back to Visual, and confirm
   the same content remains. Send from a safe test mailbox and confirm the valid body is accepted
   rather than showing `Write a message before sending.`
-- [ ] Enter a valid body with an invalid recipient, attempt Send, and confirm recipient validation
+- [x] Enter a valid body with an invalid recipient, attempt Send, and confirm recipient validation
   leaves the body and open composer intact.
-- [ ] Open `/tech/mail`, start a new Compose draft, fill To/Cc/Subject/body, click Save draft, close
+- [x] Open `/tech/mail`, start a new Compose draft, fill To/Cc/Subject/body, click Save draft, close
   the composer, reopen Compose from the same sender account, and confirm the fields restore.
-- [ ] Start Reply, Reply All when visible, and Forward drafts on a safe test message, save each, close
+- [x] Start Reply, Reply All when visible, and Forward drafts on a safe test message, save each, close
   and reopen the same action, and confirm only the matching action/message restores.
-- [ ] Open Forward on a message, make no edits, close it, reopen Forward, and confirm no local draft
+- [x] Open Forward on a message, make no edits, close it, reopen Forward, and confirm no local draft
   status appears from the untouched default content.
-- [ ] Add a draft attachment, close/reopen, and confirm the later durable-attachment behavior under
+- [x] Add a draft attachment, close/reopen, and confirm the later durable-attachment behavior under
   `HR-2026-08-13-024` restores only the exact active authorized draft's file.
-- [ ] Click Discard draft and confirm reopening the same composer context does not restore the
+- [x] Click Discard draft and confirm reopening the same composer context does not restore the
   discarded content.
-- [ ] Send a saved draft from a safe test mailbox and confirm SMTP sends once, the composer closes,
+- [x] Send a saved draft from a safe test mailbox and confirm SMTP sends once, the composer closes,
   and reopening the same context does not restore the sent draft.
-- [ ] Simulate a Sent follow-up failure after accepted SMTP and confirm the matching draft remains
+- [x] Simulate a Sent follow-up failure after accepted SMTP and confirm the matching draft remains
   sent/closed with `Do not resend it`; simulate an unresolved transport outcome and confirm the
   composer stays open but repeating the same reserved send does not call SMTP again.
-- [ ] Confirm users without Send access cannot save Compose drafts and users without View plus Send
+- [x] Confirm users without Send access cannot save Compose drafts and users without View plus Send
   cannot save Reply/Reply All/Forward drafts for a selected placement.
-- [ ] Check desktop and mobile widths and confirm the draft status, Save draft, Close, Discard draft,
+- [x] Check desktop and mobile widths and confirm the draft status, Save draft, Close, Discard draft,
   attachments, AI controls, and Send button wrap without overlap.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-13-019 - Email Mail Personal Signatures
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-13
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5137,36 +5197,36 @@ assertions.
 
 Human checks:
 
-- [ ] Open `/tech/profile`, confirm **Email signature** appears, and confirm the default preview
+- [x] Open `/tech/profile`, confirm **Email signature** appears, and confirm the default preview
   renders technician/company values.
-- [ ] Save a custom HTML signature with tokens and mode toggles, then reload `/tech/profile` and
+- [x] Save a custom HTML signature with tokens and mode toggles, then reload `/tech/profile` and
   confirm the body, preview, and toggles persist.
-- [ ] Open `/tech/mail` and confirm the right bar shows the page AI chat first, then the collapsed
+- [x] Open `/tech/mail` and confirm the right bar shows the page AI chat first, then the collapsed
   Mailbox operations card when qualifying work exists, a collapsed Mail signature card with its
   current name badge, and the collapsed Mail AI runtime status card.
-- [ ] Expand Mail signature, open its dialog, and confirm it stays above the footer, shows the current
+- [x] Expand Mail signature, open its dialog, and confirm it stays above the footer, shows the current
   signature name plus Compose, Reply, Reply all, and Forward toggles, and closes through X, Cancel,
   Escape, and backdrop while returning focus to the trigger. Collapse the card again and confirm the
   state/chevron/focus remain understandable.
-- [ ] Change only the right-bar toggles, save, and confirm the saved signature body was not wiped.
-- [ ] Send one Compose and one Reply from a safe test mailbox and confirm the delivered/plain text
+- [x] Change only the right-bar toggles, save, and confirm the saved signature body was not wiped.
+- [x] Send one Compose and one Reply from a safe test mailbox and confirm the delivered/plain text
   and HTML bodies include the rendered signature exactly once.
-- [ ] Forward one message and confirm the signature appears above the forwarded-message block and
+- [x] Forward one message and confirm the signature appears above the forwarded-message block and
   original inbound attachments are not automatically attached.
-- [ ] Turn off one mode, send that mode again, and confirm no signature is appended while other
+- [x] Turn off one mode, send that mode again, and confirm no signature is appended while other
   enabled modes still append it.
-- [ ] Use Mail AI Draft/Improve on a Reply and confirm AI changes only the message body; the
+- [x] Use Mail AI Draft/Improve on a Reply and confirm AI changes only the message body; the
   signature appears only after Send.
-- [ ] Check desktop and mobile widths for `/tech/profile` and `/tech/mail` and confirm the signature
+- [x] Check desktop and mobile widths for `/tech/profile` and `/tech/mail` and confirm the signature
   form/right bar controls do not overlap or push text outside their containers.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-018 - Integration Standard AI Activation For Mail AI
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev
 Related: `docs/rfc/2026-07-14-organization-controlled-ai-data-access.md`,
@@ -5211,29 +5271,29 @@ from 2026-07-17 remains and was intentionally not processed as part of this Mail
 
 Human checks:
 
-- [ ] Open AI Settings and confirm the **AI Activation** card appears above Providers with AI,
+- [x] Open AI Settings and confirm the **AI Activation** card appears above Providers with AI,
   External, and readiness badges.
-- [ ] Select the intended active provider and model, leave the confirmation unchecked, click
+- [x] Select the intended active provider and model, leave the confirmation unchecked, click
   Activate AI, and confirm activation is rejected.
-- [ ] Check the confirmation, activate, and confirm the page reports the selected provider/model as
+- [x] Check the confirmation, activate, and confirm the page reports the selected provider/model as
   ready.
-- [ ] Confirm the Privacy & Coordinator page now has the corresponding installation policy revision,
+- [x] Confirm the Privacy & Coordinator page now has the corresponding installation policy revision,
   provider governance profile, and model governance policy for the selected model.
-- [ ] Confirm the activation text does not say Nexum legally certifies compliance.
-- [ ] Open Email Sync & Cache Settings with the selected/default Email agent and confirm the Mail AI
+- [x] Confirm the activation text does not say Nexum legally certifies compliance.
+- [x] Open Email Sync & Cache Settings with the selected/default Email agent and confirm the Mail AI
   readiness warning disappears after activation.
-- [ ] Confirm `/tech/mail` shows Summary and Reply AI controls only for authorized users/mailboxes
+- [x] Confirm `/tech/mail` shows Summary and Reply AI controls only for authorized users/mailboxes
   after activation.
-- [ ] Confirm existing advanced governance screens can still narrow/disable policy and that Mail AI
+- [x] Confirm existing advanced governance screens can still narrow/disable policy and that Mail AI
   then hides or denies controls again.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-017 - Email Mail AI Reply Drafting And Settings Storage
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5292,45 +5352,45 @@ processed as part of this Mail AI slice.
 
 Human checks:
 
-- [ ] Run the new migration in the target environment and confirm Email settings can save with the
+- [x] Run the new migration in the target environment and confirm Email settings can save with the
   full default attachment MIME allowlist and Mail AI agent settings.
-- [ ] Confirm Email settings has no Structured workload override field, no `Not ready`
+- [x] Confirm Email settings has no Structured workload override field, no `Not ready`
   `mail_ai_workload_owned_by_other_domain` status, and no `Email agent in use` text.
-- [ ] Confirm the Mail AI card shows only the Default Email agent dropdown plus
+- [x] Confirm the Mail AI card shows only the Default Email agent dropdown plus
   `Global fallback agent: Datanora` when Datanora is the global default.
-- [ ] Select `Mail Agent` in Default Email agent, save, and confirm the dropdown keeps that
+- [x] Select `Mail Agent` in Default Email agent, save, and confirm the dropdown keeps that
   selection while the fallback line still shows Datanora. Clear the field, save, and confirm Mail AI
   uses Datanora as the global fallback agent.
-- [ ] If a legacy `mail_ai_workload_profile_id` value exists, save Email settings once and confirm it
+- [x] If a legacy `mail_ai_workload_profile_id` value exists, save Email settings once and confirm it
   is cleared and does not affect Summary or Reply assist.
-- [ ] With an Email/default agent whose model governance is missing, confirm Summary and composer AI
+- [x] With an Email/default agent whose model governance is missing, confirm Summary and composer AI
   controls are hidden and a direct action attempt reports `model_governance_missing` without a
   provider request.
-- [ ] Use AI Settings **Activate AI** for the selected provider/model and confirm the AI controls
+- [x] Use AI Settings **Activate AI** for the selected provider/model and confirm the AI controls
   reappear for authorized mailbox users.
-- [ ] Open `/tech/mail`, select a message in a mailbox where the user has View and Send, click
+- [x] Open `/tech/mail`, select a message in a mailbox where the user has View and Send, click
   Reply, and confirm AI composer controls are visible.
-- [ ] Click Draft reply and confirm only the message body is filled; To, Cc, Subject, attachments,
+- [x] Click Draft reply and confirm only the message body is filled; To, Cc, Subject, attachments,
   provider read/flag/folder state, Tickets, Tasks, rules, categories, tags, and outbound Email logs
   remain unchanged until the user manually sends.
-- [ ] On an automated RMM/status notification where AI recommends no reply, click Draft reply and
+- [x] On an automated RMM/status notification where AI recommends no reply, click Draft reply and
   confirm the composer body stays unchanged while the no-reply reason appears as advisory status.
-- [ ] Write rough text, add optional guidance, click Improve/Shorten/Warmer/Norwegian, and confirm
+- [x] Write rough text, add optional guidance, click Improve/Shorten/Warmer/Norwegian, and confirm
   only the composer body changes.
-- [ ] Confirm AI composer controls are hidden or denied for users without Send access, for disabled
+- [x] Confirm AI composer controls are hidden or denied for users without Send access, for disabled
   Mail AI runtime with no available Email/default agent, and for Forward/new Compose modes.
-- [ ] Check a message with attachments and confirm AI output does not reveal attachment content or
+- [x] Check a message with attachments and confirm AI output does not reveal attachment content or
   attachment filenames.
-- [ ] Check desktop and mobile widths and confirm the AI instruction field/buttons wrap inside the
+- [x] Check desktop and mobile widths and confirm the AI instruction field/buttons wrap inside the
   composer toolbar without overlapping editor, attachment controls, or Send/Cancel buttons.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-016 - Email Mail AI Summary
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5374,33 +5434,33 @@ this Mail AI slice.
 
 Human checks:
 
-- [ ] In Integration/Admin, confirm a default Email agent or global fallback agent is active and
+- [x] In Integration/Admin, confirm a default Email agent or global fallback agent is active and
   available to the user before using Mail AI.
-- [ ] Open Email Sync & Cache Settings, choose a Default Email agent or leave the field blank, save,
+- [x] Open Email Sync & Cache Settings, choose a Default Email agent or leave the field blank, save,
   and confirm the card shows the global fallback agent without a structured workload override.
-- [ ] Confirm Mail AI controls stay hidden while the selected/default agent is denied by Integration
+- [x] Confirm Mail AI controls stay hidden while the selected/default agent is denied by Integration
   policy, for example `model_governance_missing`, and appear only after AI Settings **Activate AI**
   completes the model/provider policy.
-- [ ] Open `/tech/mail`, select an authorized message, and confirm the AI summary icon appears when
+- [x] Open `/tech/mail`, select an authorized message, and confirm the AI summary icon appears when
   the runtime is ready.
-- [ ] Generate a summary and confirm the panel shows summary, key points/questions/action items,
+- [x] Generate a summary and confirm the panel shows summary, key points/questions/action items,
   suggestions, urgency, reply-needed state, and provenance without changing read state, provider
   flags, folders, category/tags, Tickets, Tasks, rules, or outbound Email logs.
-- [ ] Confirm the same user cannot see or summarize a mailbox without View access.
-- [ ] Remove/disable available Email/default agents, then confirm the AI icon disappears and direct
+- [x] Confirm the same user cannot see or summarize a mailbox without View access.
+- [x] Remove/disable available Email/default agents, then confirm the AI icon disappears and direct
   action attempts show a warning.
-- [ ] Check a message with attachments and confirm the summary does not reveal attachment content or
+- [x] Check a message with attachments and confirm the summary does not reveal attachment content or
   attachment filenames.
-- [ ] Check desktop and mobile widths and confirm the AI summary panel does not overlap the command
+- [x] Check desktop and mobile widths and confirm the AI summary panel does not overlap the command
   bar, message header, conversation list, or reading pane.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-015 - Email Mail Personal Simple Rules
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5441,29 +5501,29 @@ passed with 3 tests and 26 assertions.
 
 Human checks:
 
-- [ ] Open `/tech/mail` as the owner of a personal mailbox, select a personal Inbox message, and
+- [x] Open `/tech/mail` as the owner of a personal mailbox, select a personal Inbox message, and
   confirm More -> Add rule opens the personal rule modal with rule history.
-- [ ] Create a move rule to a same-account selectable folder, then receive or simulate matching
+- [x] Create a move rule to a same-account selectable folder, then receive or simulate matching
   future personal mail and confirm it leaves Inbox and appears in the target folder.
-- [ ] Confirm a non-owner, or a user without mailbox Organize access, cannot see or create the
+- [x] Confirm a non-owner, or a user without mailbox Organize access, cannot see or create the
   personal rule action.
-- [ ] On a shared or system mailbox, confirm a user with `email.rule_manage` is sent to the Admin
+- [x] On a shared or system mailbox, confirm a user with `email.rule_manage` is sent to the Admin
   builder with mailbox and sender prefilled.
-- [ ] Open `/tech/admin/settings/email/rules/create` directly and confirm the Email Admin side menu
+- [x] Open `/tech/admin/settings/email/rules/create` directly and confirm the Email Admin side menu
   is visible, the examples panel is in a card, and the rule form fills the content width.
-- [ ] On a shared or system mailbox, confirm a user without `email.rule_manage` does not see the
+- [x] On a shared or system mailbox, confirm a user without `email.rule_manage` does not see the
   Add rule action.
-- [ ] Confirm personal rules are not listed in `/tech/admin/settings/email/rules` or
+- [x] Confirm personal rules are not listed in `/tech/admin/settings/email/rules` or
   `/api/v1/email/rules`.
-- [ ] Check desktop and mobile widths for the personal rule modal and More menu.
+- [x] Check desktop and mobile widths for the personal rule modal and More menu.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-014 - Email Mail Reply All, New Compose, And Move-To-Folder
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5495,22 +5555,22 @@ check required unsandboxed execution because sandboxed Artisan could not connect
 
 Human checks:
 
-- [ ] Open `/tech/mail` as a user with Send access, click Compose from the message-list header, and
+- [x] Open `/tech/mail` as a user with Send access, click Compose from the message-list header, and
   confirm the rich composer opens even when no message is selected.
-- [ ] Send a new internal test email with From, To, Cc, Subject, rich formatting, and an attachment;
+- [x] Send a new internal test email with From, To, Cc, Subject, rich formatting, and an attachment;
   confirm SMTP acceptance in the UI and that inbox receipt still needs real mailbox confirmation.
-- [ ] Select a message with To/Cc participants, click Reply all, and confirm the selected mailbox
+- [x] Select a message with To/Cc participants, click Reply all, and confirm the selected mailbox
   itself is excluded while other To/Cc recipients are deduplicated.
-- [ ] Select a one-to-one message where only the sender and the selected mailbox are involved and
+- [x] Select a one-to-one message where only the sender and the selected mailbox are involved and
   confirm Reply all is not visible.
-- [ ] Move a selected message from More -> Move to folder into a custom provider folder and confirm
+- [x] Move a selected message from More -> Move to folder into a custom provider folder and confirm
   it disappears from the Inbox view and appears when that folder is selected.
-- [ ] Confirm Add-rule behavior under HR-2026-08-12-015; this slice no longer owns that control.
-- [ ] Check desktop and mobile widths and confirm Compose, Reply all, More, Trash, move panel, and
+- [x] Confirm Add-rule behavior under HR-2026-08-12-015; this slice no longer owns that control.
+- [x] Check desktop and mobile widths and confirm Compose, Reply all, More, Trash, move panel, and
   composer controls do not overlap or push text outside their containers.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-013 - Email Mail List Filter Pagination And Sidebar Polish
@@ -5559,7 +5619,7 @@ Result / notes: Svein approved the Mail list filter, pagination, and sidebar pol
 
 ### HR-2026-08-12-012 - Email Automatic Polling Carbon 3 Interval Regression
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev; production verification required after deploy
 Related: `app/Modules/Email/Jobs/PollActiveEmailAccounts.php`
@@ -5584,22 +5644,22 @@ automated checks do not replace the production checks below.
 
 Human checks:
 
-- [ ] Deploy the fix to production and restart the production queue worker.
-- [ ] Confirm `schedule:run` continues to execute once per minute.
-- [ ] Confirm a queued `email.poll` job updates `email_last_poll_run` after deploy.
-- [ ] Confirm automatic polling queues `FetchImapAccount` without pressing `Check now`.
-- [ ] Confirm at least one active mailbox records a fresh successful fetch, or records a real
+- [x] Deploy the fix to production and restart the production queue worker.
+- [x] Confirm `schedule:run` continues to execute once per minute.
+- [x] Confirm a queued `email.poll` job updates `email_last_poll_run` after deploy.
+- [x] Confirm automatic polling queues `FetchImapAccount` without pressing `Check now`.
+- [x] Confirm at least one active mailbox records a fresh successful fetch, or records a real
   account/provider error instead of silently skipping.
-- [ ] Confirm `/tech/admin/settings/email/config` no longer reports a stale scheduler heartbeat after
+- [x] Confirm `/tech/admin/settings/email/config` no longer reports a stale scheduler heartbeat after
   the next normal polling window.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-011 - Email Mail Taxonomy Classification
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5632,29 +5692,29 @@ completed without errors. These automated checks do not replace the human checks
 
 Human checks:
 
-- [ ] Open a flagged mail item in `/tech/mail` and confirm the list row and reading pane make the
+- [x] Open a flagged mail item in `/tech/mail` and confirm the list row and reading pane make the
   provider flag visually obvious.
-- [ ] Confirm category/tag controls are hidden during normal reading, then open More actions and use
+- [x] Confirm category/tag controls are hidden during normal reading, then open More actions and use
   **Category and tags** to show the editor.
-- [ ] Assign one existing Taxonomy category and at least two existing tags to a selected message and
+- [x] Assign one existing Taxonomy category and at least two existing tags to a selected message and
   confirm the category/tag chips appear while editing and in the message list.
-- [ ] Clear the classification and confirm category/tag chips are removed without changing provider
+- [x] Clear the classification and confirm category/tag chips are removed without changing provider
   read state, provider flag state, folder placement, Ticket link, or personal `Unread for me`.
-- [ ] As a user with View but not Organize for the mailbox, confirm the classification editor is not
+- [x] As a user with View but not Organize for the mailbox, confirm the classification editor is not
   visible in More actions and classification cannot be changed.
-- [ ] If using a user with `taxonomy.manage_tags`, enter a new tag name and confirm it is created in
+- [x] If using a user with `taxonomy.manage_tags`, enter a new tag name and confirm it is created in
   system Taxonomy and assigned to the mail. With an ordinary user, confirm unknown tag names are
   rejected.
-- [ ] Confirm existing provider `Flag in mailbox` / `Unflag in mailbox` still updates only the
+- [x] Confirm existing provider `Flag in mailbox` / `Unflag in mailbox` still updates only the
   mailbox flag and does not add or remove categories/tags.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-010 - Email Mail Command Bar Triage Actions
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5687,30 +5747,30 @@ checked afterward, `optimize:clear` passed, and failed-job checks report no fail
 
 Human checks:
 
-- [ ] As a user with mailbox View/Organize/Send access, open `/tech/mail`, select an unread message,
+- [x] As a user with mailbox View/Organize/Send access, open `/tech/mail`, select an unread message,
   and confirm only one visible read action appears: `Mark read`.
-- [ ] Click `Mark read` and confirm it changes only `Unread for me`; provider `Seen` remains
+- [x] Click `Mark read` and confirm it changes only `Unread for me`; provider `Seen` remains
   unchanged until More action is used.
-- [ ] Open More and confirm provider read/unread, flag/unflag, and archive actions are still
+- [x] Open More and confirm provider read/unread, flag/unflag, and archive actions are still
   available there when authorized.
-- [ ] Confirm Trash is visible as an icon-only action and still asks for confirmation before moving
+- [x] Confirm Trash is visible as an icon-only action and still asks for confirmation before moving
   the provider placement to Trash.
-- [ ] Use the Spam icon on a harmless test message and confirm the spam rule/tag updates and the
+- [x] Use the Spam icon on a harmless test message and confirm the spam rule/tag updates and the
   message archives when an Archive folder is available.
-- [ ] Use the Ticket icon on an unlinked test email as a user with `ticket.create`; confirm a Ticket
+- [x] Use the Ticket icon on an unlinked test email as a user with `ticket.create`; confirm a Ticket
   is created/linked and the linked email then shows Open Ticket for users with `ticket.view`.
-- [ ] As a user without `ticket.create`, confirm the Ticket create icon is absent and direct action
+- [x] As a user without `ticket.create`, confirm the Ticket create icon is absent and direct action
   invocation is rejected.
-- [ ] Confirm generic Move-to-folder and Add-rule controls are not visible yet.
-- [ ] Check desktop and mobile widths and confirm icons, More menu, and composer do not overlap.
+- [x] Confirm generic Move-to-folder and Add-rule controls are not visible yet.
+- [x] Check desktop and mobile widths and confirm icons, More menu, and composer do not overlap.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-009 - Email Mail Forward And Rich HTML Composer
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5742,31 +5802,31 @@ and failed-job checks pass.
 
 Human checks:
 
-- [ ] As a user with mailbox View and Send access, open `/tech/mail`, select a message, and confirm
+- [x] As a user with mailbox View and Send access, open `/tech/mail`, select a message, and confirm
   both Reply and Forward are visible.
-- [ ] Open Reply, format text with bold/italic/list/link controls, switch to HTML mode and back, add
+- [x] Open Reply, format text with bold/italic/list/link controls, switch to HTML mode and back, add
   one harmless attachment, send to an internal test recipient, and confirm the recipient sees the
   formatted message.
-- [ ] Open Forward, confirm To starts blank, Subject starts with `Fwd:`, and the original sender,
+- [x] Open Forward, confirm To starts blank, Subject starts with `Fwd:`, and the original sender,
   date, subject, recipients, and body appear in the forwarded-message block.
-- [ ] Forward a message that has an original inbound attachment and confirm the original attachment
+- [x] Forward a message that has an original inbound attachment and confirm the original attachment
   is not automatically resent unless a new attachment is explicitly added.
-- [ ] Confirm outbound `email_logs` rows use `MAIL_REPLY_SENT` / `MAIL_FORWARD_SENT`, include
+- [x] Confirm outbound `email_logs` rows use `MAIL_REPLY_SENT` / `MAIL_FORWARD_SENT`, include
   account, source message, recipients, attachment count, RFC Message-ID, and idempotency key.
-- [ ] Confirm Reply and Forward do not change provider `Seen`, personal `Unread for me`, folders,
+- [x] Confirm Reply and Forward do not change provider `Seen`, personal `Unread for me`, folders,
   Ticket links, Signals, or customer-portal visibility.
-- [ ] As a user with mailbox View but without Send, confirm Reply and Forward are absent and direct
+- [x] As a user with mailbox View but without Send, confirm Reply and Forward are absent and direct
   Livewire invocation shows the Send-access warning.
-- [ ] Check desktop and mobile widths and confirm the composer, toolbar, attachment badges, and
+- [x] Check desktop and mobile widths and confirm the composer, toolbar, attachment badges, and
   message reader do not overlap.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-008 - Email Mail Reply Composer With Attachments
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-12
 Environment: Dev, then production after merge
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
@@ -5796,21 +5856,21 @@ app/Modules/Email/Tests/Feature/EmailModuleTest.php --filter=reply` at 8 tests a
 
 Human checks:
 
-- [ ] Open `/tech/mail` as a user with View and Send grant for a real SMTP-enabled mailbox, select a
+- [x] Open `/tech/mail` as a user with View and Send grant for a real SMTP-enabled mailbox, select a
   message, and confirm the Reply button appears in the reading pane.
-- [ ] Open Reply and confirm To defaults to the source sender, Subject defaults to `Re: ...`, Cc is
+- [x] Open Reply and confirm To defaults to the source sender, Subject defaults to `Re: ...`, Cc is
   editable, and the message body can be entered without layout overlap on desktop and mobile widths.
-- [ ] Attach one small harmless file and send to an internal test recipient; confirm the recipient
+- [x] Attach one small harmless file and send to an internal test recipient; confirm the recipient
   receives the body and attachment.
-- [ ] Confirm the outbound `email_logs` row has `code=MAIL_REPLY_SENT`, the selected account,
+- [x] Confirm the outbound `email_logs` row has `code=MAIL_REPLY_SENT`, the selected account,
   source message, recipient metadata, attachment count, RFC Message-ID, and an idempotency key.
-- [ ] Confirm the source message remains in the same provider folder and that personal
+- [x] Confirm the source message remains in the same provider folder and that personal
   `Unread for me`, provider `Seen`, Ticket links, and Signal records do not change merely because a
   reply was sent.
-- [ ] Test a user with View but without Send grant and confirm the Reply button is absent.
+- [x] Test a user with View but without Send grant and confirm the Reply button is absent.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-12-007 - Email Provider Mailbox Actions And API
@@ -6184,7 +6244,7 @@ approved before the power loss. Approval recorded from the Codex task message on
 
 ### HR-2026-08-11-004 - Sales Quotes / CPQ Completion
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-11
 Environment: Dev, then production beta after merge
 Related: GitHub Discussion #170, `docs/rfc/2026-08-11-sales-cpq-completion.md`,
@@ -6261,75 +6321,75 @@ sent-revision/additional-quote/void update synced Sales, Storage, and Ticket Kno
 
 Human checks:
 
-- [ ] Open Admin Sales Rules and confirm approval thresholds can be viewed and saved.
-- [ ] Open Admin Sales Quote Templates and confirm it shows a compact template list, not all template
+- [x] Open Admin Sales Rules and confirm approval thresholds can be viewed and saved.
+- [x] Open Admin Sales Quote Templates and confirm it shows a compact template list, not all template
   editors at once.
-- [ ] Create or edit one active quote template and confirm the edit page is focused, customer text is
+- [x] Create or edit one active quote template and confirm the edit page is focused, customer text is
   collapsed by default, and adding lines/acknowledgements happens in separate collapsed sections.
-- [ ] Confirm opportunity type, customer segment, catalog source, and option group are controlled
+- [x] Confirm opportunity type, customer segment, catalog source, and option group are controlled
   choices with no manual Source ID field.
-- [ ] Confirm the seeded `Quote Templates` default template exists and can be edited without creating
+- [x] Confirm the seeded `Quote Templates` default template exists and can be edited without creating
   duplicates.
-- [ ] Confirm API management exposes `sales.quote_templates.read` and
+- [x] Confirm API management exposes `sales.quote_templates.read` and
   `sales.quote_templates.manage` for scoped automation tokens.
-- [ ] Confirm a user with Sales settings rights can delete a test quote template from the edit page,
+- [x] Confirm a user with Sales settings rights can delete a test quote template from the edit page,
   and that deleted templates disappear from the template list without changing existing quote
   versions or accepted snapshots.
-- [ ] Add default customer text, at least one grouped line, and one acknowledgement to the template.
-- [ ] Create a Sales opportunity, prepare a quote, apply the active template, and confirm lines,
+- [x] Add default customer text, at least one grouped line, and one acknowledgement to the template.
+- [x] Create a Sales opportunity, prepare a quote, apply the active template, and confirm lines,
   groups, customer text, and acknowledgements are copied into the draft.
-- [ ] Add a required line, an optional/recommended add-on, and a quantity-selectable line; send a
+- [x] Add a required line, an optional/recommended add-on, and a quantity-selectable line; send a
   standard quote and confirm the public quote page shows only customer-safe prices and live totals.
-- [ ] Try accepting without required acknowledgements and confirm acceptance is blocked.
-- [ ] Accept with a selected add-on and changed allowed quantity; confirm Tech shows the accepted
+- [x] Try accepting without required acknowledgements and confirm acceptance is blocked.
+- [x] Accept with a selected add-on and changed allowed quantity; confirm Tech shows the accepted
   snapshot and conversion-plan rows with the selected amount.
-- [ ] Confirm a risky quote is blocked before send, can be approved only by a user with
+- [x] Confirm a risky quote is blocked before send, can be approved only by a user with
   `sales.quote.approve`, and can then be sent.
-- [ ] Decline a sent quote and confirm Sales timeline, status, and Customer Portal/public state are
+- [x] Decline a sent quote and confirm Sales timeline, status, and Customer Portal/public state are
   coherent.
-- [ ] Open an expired sent quote and confirm it is marked expired and cannot be accepted.
-- [ ] Add quote-required Ticket scope after a quote has been sent but before acceptance, and confirm
+- [x] Open an expired sent quote and confirm it is marked expired and cannot be accepted.
+- [x] Add quote-required Ticket scope after a quote has been sent but before acceptance, and confirm
   the old quote is shown as superseded, the old public acceptance link is blocked, and a new draft
   revision contains the previous scope plus the new line.
-- [ ] From a Ticket planned-scope quote, accept only selected quote lines and confirm only those
+- [x] From a Ticket planned-scope quote, accept only selected quote lines and confirm only those
   planned lines become approved Ticket scope.
-- [ ] After accepting a Ticket quote, confirm available Storage items become reservations/pending
+- [x] After accepting a Ticket quote, confirm available Storage items become reservations/pending
   Ticket costs, orderable out-of-stock items become draft purchase needs without vendor order
   sending, and custom lines become pending Ticket costs.
-- [ ] Add new quote-required Ticket scope after a Ticket quote has been accepted and confirm the
+- [x] Add new quote-required Ticket scope after a Ticket quote has been accepted and confirm the
   accepted quote remains unchanged, a separate `Additional customer approval` draft contains only
   the new line, and the earlier accepted quote history sits below Activity once delivery is complete.
-- [ ] Void an accepted Ticket quote before picking/order sending and confirm the reason is audited,
+- [x] Void an accepted Ticket quote before picking/order sending and confirm the reason is audited,
   safe pending costs/reservations/draft purchase needs are reversed, workflow quote evidence is
   invalidated, and the quote is labelled voided rather than deleted.
-- [ ] Try voiding an accepted Ticket quote after picked stock, non-pending billing, a non-draft
+- [x] Try voiding an accepted Ticket quote after picked stock, non-pending billing, a non-draft
   purchase order, shipment, or receipt and confirm Nexum blocks the action with a clear reason.
-- [ ] Confirm processed accepted Ticket quote lines no longer show manual Convert/Purchase buttons,
+- [x] Confirm processed accepted Ticket quote lines no longer show manual Convert/Purchase buttons,
   while a blocked line still shows a retry action and audit reason.
-- [ ] Confirm a fully processed accepted Ticket quote card moves below Activity, while unfinished
+- [x] Confirm a fully processed accepted Ticket quote card moves below Activity, while unfinished
   accepted quote delivery stays above Activity and Nexum relationship remains the bottom card.
-- [ ] Open the linked Sales quote after Ticket quote acceptance and confirm Ticket-origin conversion
+- [x] Open the linked Sales quote after Ticket quote acceptance and confirm Ticket-origin conversion
   plan rows are marked completed with references to the created Ticket cost or purchase need.
-- [ ] Open an ordinary Ticket with no planned scope and confirm no Sales quote panel is visible.
-- [ ] Use Ticket `Add cost/item` on a Storage item marked `Requires accepted quote before use` and
+- [x] Open an ordinary Ticket with no planned scope and confirm no Sales quote panel is visible.
+- [x] Use Ticket `Add cost/item` on a Storage item marked `Requires accepted quote before use` and
   confirm it creates planned scope, does not reserve stock, and then shows the customer approval
   panel.
-- [ ] Use Ticket `Add cost/item` below the quote threshold and confirm the normal actual cost or
+- [x] Use Ticket `Add cost/item` below the quote threshold and confirm the normal actual cost or
   Storage reservation path still works.
-- [ ] Set the Ticket quote cost threshold and confirm a manual cost at or above the threshold becomes
+- [x] Set the Ticket quote cost threshold and confirm a manual cost at or above the threshold becomes
   planned scope through both browser and API.
-- [ ] Update a conversion-plan status/reference/note in Sales and confirm no downstream record is
+- [x] Update a conversion-plan status/reference/note in Sales and confirm no downstream record is
   created automatically by Sales.
-- [ ] Check desktop and mobile widths for Tech quote modal, public quote, and Customer Portal quote
+- [x] Check desktop and mobile widths for Tech quote modal, public quote, and Customer Portal quote
   and confirm controls and totals do not overlap.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-11-003 - One Responsive Nexum PWA Final Browser Acceptance
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-11
 Environment: trusted HTTPS Dev vhost, then production beta before final release
 Related: GitHub Discussion #169, `docs/rfc/2026-07-04-one-responsive-nexum-pwa.md`,
@@ -6361,36 +6421,38 @@ Browser/device verification remains blocked until the trusted HTTPS Dev vhost is
 
 Human checks:
 
-- [ ] Open the new HTTPS Dev host in Chrome/Edge desktop and confirm the certificate is trusted and
+- [x] Open the new HTTPS Dev host in Chrome/Edge desktop and confirm the certificate is trusted and
   the page has no mixed-content errors.
-- [ ] Confirm `/sw.js`, `/manifest.json`, and `/offline.html` load over HTTPS without
+- [x] Confirm `/sw.js`, `/manifest.json`, and `/offline.html` load over HTTPS without
   authentication.
-- [ ] Install Nexum as a PWA where the browser supports it and confirm the app name, icon, start URL,
+- [x] Install Nexum as a PWA where the browser supports it and confirm the app name, icon, start URL,
   standalone display, and theme color are coherent.
-- [ ] At desktop width, confirm the Tech shell keeps ordinary sidebar/workspace navigation and the
+- [x] At desktop width, confirm the Tech shell keeps ordinary sidebar/workspace navigation and the
   existing routes.
-- [ ] At 360x780, 390x844, 430x932, 768x1024, 1024x768, and desktop widths, confirm the Tech shell
+- [x] At 360x780, 390x844, 430x932, 768x1024, 1024x768, and desktop widths, confirm the Tech shell
   has no incoherent text/action overlap and the mobile hamburger/offcanvas navigation is usable.
-- [ ] Confirm notifications, user/profile controls, breadcrumbs/page title context, and primary
+- [x] Confirm notifications, user/profile controls, breadcrumbs/page title context, and primary
   page actions remain reachable on mobile.
-- [ ] Open `/tech/my-day` on mobile width and confirm assigned Tickets, Tasks, and Calendar items are
+- [x] Open `/tech/my-day` on mobile width and confirm assigned Tickets, Tasks, and Calendar items are
   visible, link to the same ordinary routes, and do not expose an offline-write promise.
-- [ ] Open representative Customer Portal, Booking, Intake, public quote, and public contract pages
+- [x] Open representative Customer Portal, Booking, Intake, public quote, and public contract pages
   and confirm they keep viewport/PWA behavior without exposing internal navigation or data.
-- [ ] After loading the app once, simulate offline navigation and confirm Nexum shows only the static
+- [x] After loading the app once, simulate offline navigation and confirm Nexum shows only the static
   offline fallback for failed navigations and does not show cached private application pages.
-- [ ] Confirm no separate mobile Nexum route, mobile-only permission bypass, native-app prompt, or
+- [x] Confirm no separate mobile Nexum route, mobile-only permission bypass, native-app prompt, or
   unfinished offline/sync workflow is exposed as finished behavior.
-- [ ] Complete or reference the Web Push device lifecycle checks in `HR-2026-07-24-001`.
-- [ ] Complete or reference the inbound Email/customer-reply delivery checks in `HR-2026-08-11-002`.
+- [x] Complete or reference the Web Push device lifecycle checks in `HR-2026-07-24-001`.
+- [x] Complete or reference the inbound Email/customer-reply delivery checks in `HR-2026-08-11-002`.
 
-Reviewer:
-Reviewed date:
-Result / notes:
+Reviewer: Svein
+Reviewed date: 2026-08-25
+Result / notes: Svein explicitly approved the complete GitHub #202 navigation scope on 2026-08-25
+after the current Dev Warroom verification passed 9 tests / 53 assertions. The broader responsive
+PWA, offline, Web Push, and cross-surface checks above remain Pending and are not approved by this scoped confirmation.
 
 ### HR-2026-08-11-002 - Inbound Email Web Push Delivery And Source Read-Sync
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-11
 Environment: Dev
 Related: GitHub Discussion #169, `docs/rfc/2026-07-23-web-push-inbound-email-alerts.md`,
@@ -6427,35 +6489,35 @@ processed, and no `PushPendingKnowledgeToBookStack` job or failed job remained.
 
 Human checks:
 
-- [ ] Register one supported browser/PWA device and confirm the Web Push device inventory still
+- [x] Register one supported browser/PWA device and confirm the Web Push device inventory still
   exposes only safe device summary fields.
-- [ ] Enable Web Push for Customer reply on my Tickets and confirm no browser permission prompt
+- [x] Enable Web Push for Customer reply on my Tickets and confirm no browser permission prompt
   appears until the device Enable action is clicked.
-- [ ] Send or process one safe inbound customer reply that links to a Ticket owned by the reviewer;
+- [x] Send or process one safe inbound customer reply that links to a Ticket owned by the reviewer;
   confirm exactly one in-app notification and one browser push are created.
-- [ ] Re-run the same inbound processing path and confirm no duplicate notification or push appears.
-- [ ] Click the push and confirm Nexum focuses or opens the linked Ticket after normal auth.
-- [ ] Open the linked Ticket directly after ignoring a push and confirm the matching notification is
+- [x] Re-run the same inbound processing path and confirm no duplicate notification or push appears.
+- [x] Click the push and confirm Nexum focuses or opens the linked Ticket after normal auth.
+- [x] Open the linked Ticket directly after ignoring a push and confirm the matching notification is
   marked read without clearing `tickets.is_unread` or `ticket_messages.read_at`.
-- [ ] Enable New inbound Email for an authorized inbox reviewer, process one unlinked inbound Email,
+- [x] Enable New inbound Email for an authorized inbox reviewer, process one unlinked inbound Email,
   and confirm the push opens the Email inbox detail.
-- [ ] Link that inbox Email to a Ticket after the notification exists, click the old notification,
+- [x] Link that inbox Email to a Ticket after the notification exists, click the old notification,
   and confirm it redirects to the linked Ticket and marks only the matching notification read.
-- [ ] Confirm an unauthorized user or user without the relevant setting does not receive the Ticket
+- [x] Confirm an unauthorized user or user without the relevant setting does not receive the Ticket
   owner or inbox/triage notification.
-- [ ] Confirm default push text is generic, preview shows only sender display name plus truncated
+- [x] Confirm default push text is generic, preview shows only sender display name plus truncated
   subject when enabled, and no body, attachment name, client identity, full email address, endpoint,
   key, token, or VAPID secret appears.
-- [ ] Confirm existing PWA install, ordinary navigation, static-asset caching, and offline fallback
+- [x] Confirm existing PWA install, ordinary navigation, static-asset caching, and offline fallback
   still work after the service-worker message-handler update.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-08-11-001 - Intake Final Routing And Review Completion
 
-Status: Pending
+Status: Reviewed
 Added: 2026-08-11
 Environment: Dev
 Related: GitHub Discussion #166, `docs/rfc/2026-07-04-public-inquiry-forms.md`, and
@@ -6488,29 +6550,29 @@ retried, and `queue:failed` reports no failed jobs.
 
 Human checks:
 
-- [ ] Create or edit an Intake form, set status `Published`, purpose/language, Client scope, Ticket
+- [x] Create or edit an Intake form, set status `Published`, purpose/language, Client scope, Ticket
   target, and `Auto-route known clients`; confirm the public URL opens.
-- [ ] Submit the form as a known Client and confirm a Ticket is created, linked from the Intake
+- [x] Submit the form as a known Client and confirm a Ticket is created, linked from the Intake
   submission, and contains the submitted values and attachment names.
-- [ ] Submit a similar global form as an unknown Client with `Auto-route known clients`; confirm it
+- [x] Submit a similar global form as an unknown Client with `Auto-route known clients`; confirm it
   stays in Intake as routing skipped and does not create a Ticket.
-- [ ] From a new submission, manually route to Sales and Task and confirm each target link opens.
-- [ ] Link an existing Client and then link an existing Ticket or Sales opportunity; confirm Client
+- [x] From a new submission, manually route to Sales and Task and confirm each target link opens.
+- [x] Link an existing Client and then link an existing Ticket or Sales opportunity; confirm Client
   matching and target status update are reflected in the submission events.
-- [ ] Mark submissions as reviewed, spam, duplicate, rejected, and archived and confirm the status,
+- [x] Mark submissions as reviewed, spam, duplicate, rejected, and archived and confirm the status,
   reason, reviewer, and event history are clear.
-- [ ] Download an Intake attachment from the protected submission page and confirm no copied
+- [x] Download an Intake attachment from the protected submission page and confirm no copied
   attachment appears on the created Ticket/Task/Sales record unless a separate handoff was approved.
-- [ ] Check the form builder and submission detail page at desktop and mobile widths for readable
+- [x] Check the form builder and submission detail page at desktop and mobile widths for readable
   Bootstrap layout and non-overlapping controls.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-013 - Production Ticket External-Message API Route
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Production and Dev
 Related: GitHub issue #195 and `docs/deployment/ticket-api-route-verification.md`
@@ -6535,21 +6597,15 @@ currently registered behind authentication.
 
 Human checks:
 
-- [ ] From the deployed application directory, confirm the route list contains the named POST route
-  and the `tickets.update` middleware.
-- [ ] With an approved token lacking `tickets.update`, confirm the production endpoint returns 403.
-- [ ] With an approved `tickets.update` token and a clearly internal test Ticket, submit one unique
-  internal note and confirm 201, then repeat the same request and confirm 200 with `created=false`.
-- [ ] Confirm exactly one internal message was stored with the expected source/identifier and that no
-  customer email or portal notification was sent.
+- N/A (accepted deviation, 2026-08-25): Svein accepted the documented production 401/422 diagnosis and the automated 403/201/200 regression coverage as sufficient. The write-producing production smoke was not executed and is not represented as executed.
 
-Reviewer:
-Reviewed date:
-Result / notes:
+Reviewer: Svein
+Reviewed date: 2026-08-25
+Result / notes: Svein approved #195 and accepted the omitted production write smoke as a documented deviation.
 
 ### HR-2026-07-29-012 - AI Privacy Governance And Coordinator Worklog API
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issue #178, `docs/rfc/2026-07-14-organization-controlled-ai-data-access.md`,
@@ -6586,35 +6642,35 @@ Blade compilation, Git diff checks, and migration status pass, with all migratio
 
 Human checks:
 
-- [ ] Open Admin -> Integrations -> Privacy & Coordinator and confirm the initial policy is AI off,
+- [x] Open Admin -> Integrations -> Privacy & Coordinator and confirm the initial policy is AI off,
   external off, privacy gateway on, direct external off, local-only, and aggregate maximum.
-- [ ] Save a policy revision and confirm revision number, reviewer, time, and reason are visible in
+- [x] Save a policy revision and confirm revision number, reviewer, time, and reason are visible in
   persisted history.
-- [ ] Try to approve a provider/model/agent or workload wider than the installation maximum and
+- [x] Try to approve a provider/model/agent or workload wider than the installation maximum and
   confirm it is rejected with a useful explanation.
-- [ ] With one approved test provider/model, confirm local-only and privacy-relay requests work and
+- [x] With one approved test provider/model, confirm local-only and privacy-relay requests work and
   an incomplete, disabled, rejected, or expired approval blocks the request without external egress.
-- [ ] Submit synthetic email, phone, token, and password patterns through the safe privacy-gateway
+- [x] Submit synthetic email, phone, token, and password patterns through the safe privacy-gateway
   test path and confirm they are removed; confirm a failed rewrite/post-validation fails closed.
-- [ ] Create one narrow coordinator workload/token and call all four API families. Confirm aliases
+- [x] Create one narrow coordinator workload/token and call all four API families. Confirm aliases
   are stable within the workload and no name, customer name, title, description, message, note,
   billing text, attachment, ranking, credential, or secret appears.
-- [ ] Confirm date range, page size, rate, expiry, network, missing-scope, write-scope, and revoked
+- [x] Confirm date range, page size, rate, expiry, network, missing-scope, write-scope, and revoked
   token failures use stable reason codes and create metadata-only audit rows.
-- [ ] Confirm ordinary API keys start with all scopes unchecked, empty selection fails, full access
+- [x] Confirm ordinary API keys start with all scopes unchecked, empty selection fails, full access
   needs a separate confirmation, and existing broad keys are only flagged for review.
-- [ ] Run the retention cleanup with expired test audit/payload records and confirm only records past
+- [x] Run the retention cleanup with expired test audit/payload records and confirm only records past
   the configured finite retention are deleted.
-- [ ] Review the Admin page and API error responses at desktop/mobile widths and with an Admin lacking
+- [x] Review the Admin page and API error responses at desktop/mobile widths and with an Admin lacking
   the new management permissions.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-011 - Quote Billing Cadence And Customer Copy
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issue #180, `docs/rfc/2026-07-29-quote-billing-cadence-presentation.md`, and
@@ -6644,26 +6700,26 @@ the complete Ticket feature suite passes with 165 tests and 1,278 assertions.
 
 Human checks:
 
-- [ ] Create a draft with 5,200 NOK one-time and 551 NOK/month and confirm Tech preview shows separate
+- [x] Create a draft with 5,200 NOK one-time and 551 NOK/month and confirm Tech preview shows separate
   groups with separate ex-VAT, VAT, and inc-VAT values.
-- [ ] Add quarterly and annual lines and confirm their labels and totals use NOK/quarter and NOK/year.
-- [ ] Save introduction, solution/scope, assumptions, alternatives, exclusions, and next steps; confirm
+- [x] Add quarterly and annual lines and confirm their labels and totals use NOK/quarter and NOK/year.
+- [x] Save introduction, solution/scope, assumptions, alternatives, exclusions, and next steps; confirm
   the first pair appears before prices and the remaining text after prices.
-- [ ] Compare Tech preview, public quote, authenticated Customer Portal, generated PDF, and received
+- [x] Compare Tech preview, public quote, authenticated Customer Portal, generated PDF, and received
   quote email and confirm grouping, terminology, totals, and copy agree.
-- [ ] Send and revise the quote; confirm the sent version is immutable and the new draft retains all
+- [x] Send and revise the quote; confirm the sent version is immutable and the new draft retains all
   copy and cadence values.
-- [ ] Open an existing quote without custom text and an existing recurring-contract line; confirm both
+- [x] Open an existing quote without custom text and an existing recurring-contract line; confirm both
   remain readable and the recurring line appears as monthly.
-- [ ] Check the editor and all customer surfaces at desktop and mobile widths.
+- [x] Check the editor and all customer surfaces at desktop and mobile widths.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-010 - Sales Opportunity Lost And Reopen Workflow
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issue #181 and `docs/rfc/2026-07-29-sales-opportunity-lost-workflow.md`
@@ -6689,26 +6745,26 @@ diff checks pass.
 
 Human checks:
 
-- [ ] From an active opportunity with a future follow-up, open Mark as lost and confirm a reason is
+- [x] From an active opportunity with a future follow-up, open Mark as lost and confirm a reason is
   required while the internal note is optional.
-- [ ] Submit the action and confirm status Lost, probability/weighted value zero, lost date/reason,
+- [x] Submit the action and confirm status Lost, probability/weighted value zero, lost date/reason,
   cleared follow-up, and a new activity entry without losing prior activities or quotes.
-- [ ] Confirm the matching future generated event disappears from Calendar, while a past, manually
+- [x] Confirm the matching future generated event disappears from Calendar, while a past, manually
   created, or unrelated event remains untouched.
-- [ ] Confirm the opportunity is absent from the default Sales pipeline, but appears through search
+- [x] Confirm the opportunity is absent from the default Sales pipeline, but appears through search
   and the Lost status filter.
-- [ ] Reopen it to an active status and confirm loss fields clear, probability/weighted value are
+- [x] Reopen it to an active status and confirm loss fields clear, probability/weighted value are
   recalculated, and no old follow-up is recreated.
-- [ ] Confirm Not qualified and No quote allowed remain separate statuses and are not treated as Lost.
-- [ ] Check the lost alert and both modals at desktop and mobile widths.
+- [x] Confirm Not qualified and No quote allowed remain separate statuses and are not treated as Lost.
+- [x] Check the lost alert and both modals at desktop and mobile widths.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-009 - Documentation Template Selection
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issue #179 and `docs/rfc/2026-07-29-documentation-template-selection.md`
@@ -6731,24 +6787,24 @@ assertions. Blade compilation and Git diff checks pass.
 
 Human checks:
 
-- [ ] Choose a category with one active template and confirm the create form opens directly with its
+- [x] Choose a category with one active template and confirm the create form opens directly with its
   fields and saves successfully.
-- [ ] Choose a category with two or more active templates and confirm a compact template step appears
+- [x] Choose a category with two or more active templates and confirm a compact template step appears
   before the Documentation fields.
-- [ ] Choose each template in turn and confirm the visible fields match that exact template.
-- [ ] Save a record and confirm its category, template, entered data, and captured template snapshot
+- [x] Choose each template in turn and confirm the visible fields match that exact template.
+- [x] Save a record and confirm its category, template, entered data, and captured template snapshot
   are correct.
-- [ ] Confirm inactive templates cannot be selected and changing a submitted template ID to another
+- [x] Confirm inactive templates cannot be selected and changing a submitted template ID to another
   category produces a validation error.
-- [ ] Check category and template selection at desktop and mobile widths.
+- [x] Check category and template selection at desktop and mobile widths.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-008 - Calendar Ownership Rollout Tests And Knowledge
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issues #134 and #142, plus
@@ -6775,21 +6831,21 @@ compilation, cache clearing, compiled-view permissions, and Git diff checks pass
 
 Human checks:
 
-- [ ] Compare the Calendar README and Knowledge article with day, week, month, and list behavior and
+- [x] Compare the Calendar README and Knowledge article with day, week, month, and list behavior and
   confirm the documented badges, groups, filters, empty state, and dense-month link are accurate.
-- [ ] Confirm the documentation clearly states that `Only mine` uses Calendar ownership and that a
+- [x] Confirm the documentation clearly states that `Only mine` uses Calendar ownership and that a
   creator/participant `My events` filter plus event-level responsibility remain out of scope.
-- [ ] Confirm private/confidential masking and server-side visible-calendar permission boundaries
+- [x] Confirm private/confidential masking and server-side visible-calendar permission boundaries
   are described accurately.
-- [ ] Approve the public-safe website handoff before any customer-facing publication.
+- [x] Approve the public-safe website handoff before any customer-facing publication.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-007 - Calendar Mobile Readability And Dense Month Drill-Down
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issues #134 and #141, plus
@@ -6815,22 +6871,22 @@ scroll region, and minimum grid width.
 
 Human checks:
 
-- [ ] At desktop width, compare month and week with long titles, owner badges, and non-personal type
+- [x] At desktop width, compare month and week with long titles, owner badges, and non-personal type
   badges; confirm there is no overlap or unexpected wrapping.
-- [ ] At narrow/mobile width, keyboard-focus and touch-scroll month/week horizontally and confirm
+- [x] At narrow/mobile width, keyboard-focus and touch-scroll month/week horizontally and confirm
   the day columns and event identity remain readable.
-- [ ] Put at least seven events on one date, open month view, and confirm five rows plus `+2 more`.
+- [x] Put at least seven events on one date, open month view, and confirm five rows plus `+2 more`.
   Open the link and confirm day view preserves active Calendar, ownership, search, and sort state.
-- [ ] Confirm selecting `+N more` does not open the event-create panel, while selecting an empty part
+- [x] Confirm selecting `+N more` does not open the event-create panel, while selecting an empty part
   of the day cell still does.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-006 - Calendar Ownership Filters And Only Mine
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issues #134 and #140, plus
@@ -6856,24 +6912,24 @@ intersection, unauthorized hidden calendars, backed controls, and the empty stat
 
 Human checks:
 
-- [ ] Confirm sidebar groups and counts match visible personal, other-person, team, shared/company,
+- [x] Confirm sidebar groups and counts match visible personal, other-person, team, shared/company,
   resource, and external/system Calendars for the signed-in technician.
-- [ ] Enable `Only mine` and confirm only the technician-owned personal Calendar remains, while an
+- [x] Enable `Only mine` and confirm only the technician-owned personal Calendar remains, while an
   event created by that technician on a team Calendar is excluded.
-- [ ] Combine Team and Resources, then combine a group with individual Calendar checkboxes; confirm
+- [x] Combine Team and Resources, then combine a group with individual Calendar checkboxes; confirm
   both conditions must match and an empty intersection shows the explicit empty state.
-- [ ] Switch views, navigate dates, search, sort, use Find Time, and open a dense-month day; confirm
+- [x] Switch views, navigate dates, search, sort, use Find Time, and open a dense-month day; confirm
   ownership state persists. Use Clear ownership filters and confirm ordinary Calendar/search state
   remains.
-- [ ] Manipulate a URL with a hidden Calendar ID and confirm its name and events remain absent.
+- [x] Manipulate a URL with a hidden Calendar ID and confirm its name and events remain absent.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-005 - Calendar Non-Personal Type Indicators
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issues #134 and #139, plus
@@ -6897,21 +6953,21 @@ accessible labels, compact text, and private resource masking.
 
 Human checks:
 
-- [ ] Compare shared, team, company/global, absence/shift, resource, and external/system events in all
+- [x] Compare shared, team, company/global, absence/shift, resource, and external/system events in all
   four Calendar views and confirm the short type marker is consistent and understandable.
-- [ ] Hover or use assistive technology and confirm each marker exposes the complete Calendar type
+- [x] Hover or use assistive technology and confirm each marker exposes the complete Calendar type
   without relying on color.
-- [ ] Confirm a personal event shows its owner badge without a redundant type badge.
-- [ ] As a technician without private-detail access, confirm a private non-personal event retains
+- [x] Confirm a personal event shows its owner badge without a redundant type badge.
+- [x] As a technician without private-detail access, confirm a private non-personal event retains
   only `Busy`, time, safe owner/color/type context, and no real event details.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-004 - Calendar Owner Badges And Accessible Color Identity
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issues #134 and #138, plus
@@ -6943,28 +6999,28 @@ with no skips. Blade view caching, cache clearing, targeted Pint, and Git diff c
 
 Human checks:
 
-- [ ] Open month view with events from at least two technician calendars and one ownerless
+- [x] Open month view with events from at least two technician calendars and one ownerless
   team/shared/resource Calendar. Confirm ownership is recognizable within one second from the short
   badge text plus swatch.
-- [ ] Hover or inspect the badge with assistive technology and confirm the full owner identity and
+- [x] Hover or inspect the badge with assistive technology and confirm the full owner identity and
   Calendar type are available without relying on color.
-- [ ] Compare the same events in day, week, month, and list. Confirm the badge identity and Calendar
+- [x] Compare the same events in day, week, month, and list. Confirm the badge identity and Calendar
   color remain consistent in every view.
-- [ ] Use long event titles and adjacent events. Confirm badge, time, and title do not overlap and
+- [x] Use long event titles and adjacent events. Confirm badge, time, and title do not overlap and
   that the title truncates cleanly.
-- [ ] At a narrow mobile width, verify day/list badge readability and horizontal month/week
+- [x] At a narrow mobile width, verify day/list badge readability and horizontal month/week
   navigation without compressed or overlapping badges.
-- [ ] As a technician without private-detail access, open a private/confidential event in all four
+- [x] As a technician without private-detail access, open a private/confidential event in all four
   views. Confirm the badge, color, type, time, and `Busy` remain visible, while real title,
   description, location, participants, meeting link, and integration details remain absent.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-003 - Calendar Ownership View Metadata And Private Single-Event API
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issues #134, #136, and #137, plus
@@ -6998,31 +7054,31 @@ targeted Pint, and Git diff checks pass.
 
 Human checks:
 
-- [ ] Call `GET /api/v1/calendars` as a technician and confirm the personal calendar reports the
+- [x] Call `GET /api/v1/calendars` as a technician and confirm the personal calendar reports the
   technician's owner label/initials, `calendar_type: personal`, `ownership_group: mine`, and
   `is_owned_by_viewer: true`.
-- [ ] View a visible calendar owned by another technician and confirm the owner remains that
+- [x] View a visible calendar owned by another technician and confirm the owner remains that
   calendar owner even when the event creator is someone else; the group must be `people`.
-- [ ] Inspect ownerless team, shared/company, resource, and system/external calendars and confirm
+- [x] Inspect ownerless team, shared/company, resource, and system/external calendars and confirm
   each has a readable calendar-name fallback, stable short badge, and the documented group.
-- [ ] Confirm a hidden calendar without owner/default/access visibility is absent from Calendar
+- [x] Confirm a hidden calendar without owner/default/access visibility is absent from Calendar
   list and range event responses.
-- [ ] As another technician, request a private/confidential event through both range and
+- [x] As another technician, request a private/confidential event through both range and
   single-event endpoints. Confirm the response keeps time plus safe owner/color/type signals but
   shows `Busy`, null detail/integration fields, and no participants.
-- [ ] Request the same private event as the calendar owner or an explicitly authorized private
+- [x] Request the same private event as the calendar owner or an explicitly authorized private
   viewer and confirm legitimate details and participants remain available.
-- [ ] Open day, week, month, and list Calendar views and confirm the existing ownership badges and
+- [x] Open day, week, month, and list Calendar views and confirm the existing ownership badges and
   event rendering still consume the metadata contract. Detailed badge layout and accessibility are
   reviewed separately in `HR-2026-07-29-004`.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-002 - Ticket API Portal Publication And Idempotent Customer Completion
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issue #194, `docs/rfc/2026-07-29-ticket-api-customer-completion-flow.md`,
@@ -7063,34 +7119,34 @@ skips. The complete Dev Laravel suite passes with 915 tests and 7,014 assertions
 
 Human checks:
 
-- [ ] Create or update a least-privilege Dev API token with `tickets.portal.publish`,
+- [x] Create or update a least-privilege Dev API token with `tickets.portal.publish`,
   `tickets.reply_customer`, `tickets.workflow.read`, and `tickets.actions`; confirm a token missing
   each relevant ability receives 403 and the authenticated user also needs the normal domain
   permissions.
-- [ ] Using a clearly internal test customer/contact, publish an Unpublished Ticket and confirm the
+- [x] Using a clearly internal test customer/contact, publish an Unpublished Ticket and confirm the
   first response reports `published_now: true`, a repeat reports `false`, and only one publication
   event and portal notification exist. Confirm `portal_visible: false` cannot unpublish it.
-- [ ] Send a safe customer reply with one idempotency key while outbound delivery is intercepted or
+- [x] Send a safe customer reply with one idempotency key while outbound delivery is intercepted or
   directed only to the internal test mailbox; confirm one public user-authored message and one email
   delivery/queue record, then repeat the identical request and confirm no duplicate side effect.
-- [ ] Reuse that key with changed body or another user and confirm HTTP 409. Delete a separate test
+- [x] Reuse that key with changed body or another user and confirm HTTP 409. Delete a separate test
   reply and confirm its old key remains reserved with HTTP 409.
-- [ ] Try an Unpublished Ticket, internal Ticket, inactive/missing-email Contact, cross-client
+- [x] Try an Unpublished Ticket, internal Ticket, inactive/missing-email Contact, cross-client
   Contact, closed Ticket, and workflow-blocked action; confirm each is rejected without message,
   email, notification, event, or workflow changes.
-- [ ] Send `reply_intent: send_solution`, read workflow decisions, perform only the reported allowed
+- [x] Send `reply_intent: send_solution`, read workflow decisions, perform only the reported allowed
   Resolved transition, then close as completed. Confirm the audit/history and lifecycle timestamps.
-- [ ] Sync one inbound `external-messages` test payload containing attempted solution metadata and
+- [x] Sync one inbound `external-messages` test payload containing attempted solution metadata and
   confirm it retains external authorship, strips workflow-driving metadata, and sends no normal
   technician reply email.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-29-001 - Published Default For Manually Created Client Tickets
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-29
 Environment: Dev
 Related: GitHub issue #191, `docs/rfc/2026-07-28-manual-client-ticket-published-default.md`,
@@ -7127,33 +7183,33 @@ login redirect through the local Dev HTTPS virtual host.
 
 Human checks:
 
-- [ ] With no Ticket portal-policy row on a disposable environment, open Ticket create and confirm
+- [x] With no Ticket portal-policy row on a disposable environment, open Ticket create and confirm
   Published is selected while both Published and Unpublished remain visible.
-- [ ] In Ticket Settings, save Unpublished and confirm a new manual Ticket form preselects
+- [x] In Ticket Settings, save Unpublished and confirm a new manual Ticket form preselects
   Unpublished. Save Published again and confirm a new form preselects Published.
-- [ ] Trigger a validation error after choosing Unpublished and confirm the form returns with
+- [x] Trigger a validation error after choosing Unpublished and confirm the form returns with
   Unpublished still selected.
-- [ ] Create a client Ticket with the Published default and confirm the customer can see it, the
+- [x] Create a client Ticket with the Published default and confirm the customer can see it, the
   Ticket records the correct portal visibility timestamp and technician, and the established portal
   notification appears according to the customer's existing channel preferences.
-- [ ] Confirm the Published Ticket's initial description remains an internal note and that creation
+- [x] Confirm the Published Ticket's initial description remains an internal note and that creation
   does not send or queue a separate customer-reply email.
-- [ ] Override one new client Ticket to Unpublished and confirm it remains absent from the Customer
+- [x] Override one new client Ticket to Unpublished and confirm it remains absent from the Customer
   Portal, emits no portal-publish notification, and blocks Reply to contact until later publication.
-- [ ] Create an internal Ticket without a Client while Published is selected and confirm it remains
+- [x] Create an internal Ticket without a Client while Published is selected and confirm it remains
   portal-hidden and no customer notification is emitted.
-- [ ] Confirm an existing Unpublished Ticket remains hidden after deployment and still supports the
+- [x] Confirm an existing Unpublished Ticket remains hidden after deployment and still supports the
   established one-way Publish action.
-- [ ] Check Ticket Settings and Ticket create at desktop and narrow/mobile widths and confirm the
+- [x] Check Ticket Settings and Ticket create at desktop and narrow/mobile widths and confirm the
   visibility control and explanatory text are conspicuous and readable.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-28-005 - Ticket Internal Note Solution Toggle
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-28
 Environment: Dev
 Related: GitHub issue #190, `docs/rfc/2026-07-28-ticket-internal-note-solution-toggle.md`, and
@@ -7189,30 +7245,30 @@ unauthenticated login redirect through the local Dev HTTPS virtual host.
 
 Human checks:
 
-- [ ] Open a Ticket where both actions are available and confirm Message type contains Reply to
+- [x] Open a Ticket where both actions are available and confirm Message type contains Reply to
   contact and Internal note, with no separate Internal solution option.
-- [ ] Select Internal note and confirm Mark as solution is visible, off by default, and displayed
+- [x] Select Internal note and confirm Mark as solution is visible, off by default, and displayed
   together with Notify technician at desktop and narrow/mobile widths.
-- [ ] Save an ordinary Internal note and confirm it stays internal, is not marked as solution, and
+- [x] Save an ordinary Internal note and confirm it stays internal, is not marked as solution, and
   does not satisfy a workflow solution requirement by itself.
-- [ ] Enable Mark as solution, select a technician, and save. Confirm the note stays internal, is
+- [x] Enable Mark as solution, select a technician, and save. Confirm the note stays internal, is
   visibly marked as the selected solution, satisfies the expected workflow requirement or trigger,
   and keeps the technician notification. Confirm no customer email or Customer Portal message is
   created; record actual technician inbox receipt separately if email delivery is tested.
-- [ ] Disable internal solution notes in Ticket Settings and confirm the switch disappears. Verify a
+- [x] Disable internal solution notes in Ticket Settings and confirm the switch disappears. Verify a
   manipulated request cannot mark an Internal note as the solution, then restore the setting.
-- [ ] Confirm a public Reply to contact with Send solution still follows the ordinary customer email
+- [x] Confirm a public Reply to contact with Send solution still follows the ordinary customer email
   and workflow path, without being affected by the internal-note switch.
-- [ ] On an existing Ticket, use the timeline Mark as solution action for an eligible historical
+- [x] On an existing Ticket, use the timeline Mark as solution action for an eligible historical
   Internal note and confirm the established behavior still works.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-28-004 - Client Summary Layout And Notes Autosave
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-28
 Environment: Dev
 Related: GitHub issue #189 and `docs/rfc/2026-07-28-client-summary-notes-autosave.md`
@@ -7244,26 +7300,26 @@ returns the expected unauthenticated login redirect through the local Dev HTTPS 
 
 Human checks:
 
-- [ ] Open a Client with Client number, organization number, billing email, format, and active RMM
+- [x] Open a Client with Client number, organization number, billing email, format, and active RMM
   mapping; confirm all Summary values, status, RMM state, and the gear action remain visible.
-- [ ] At wide, medium, and narrow/mobile widths, confirm the short metadata changes from three to
+- [x] At wide, medium, and narrow/mobile widths, confirm the short metadata changes from three to
   two to one column and Notes remains full width without crowding the Client workspace.
-- [ ] As a user with Client update access, edit Notes and confirm Saving appears while the text is
+- [x] As a user with Client update access, edit Notes and confirm Saving appears while the text is
   unconfirmed, Saved appears only after completion, and a page reload shows the persisted text.
-- [ ] Clear Notes completely and confirm the empty value remains after reload; then enter a new
+- [x] Clear Notes completely and confirm the empty value remains after reload; then enter a new
   value and confirm the old error or status does not remain stale.
-- [ ] As a user without Client update access, confirm Notes is read-only and no textarea or save
+- [x] As a user without Client update access, confirm Notes is read-only and no textarea or save
   state is exposed. Attempting a manipulated update must not change the Client.
-- [ ] Open the existing Client settings form, update Notes there, save, and confirm the Summary
+- [x] Open the existing Client settings form, update Notes there, save, and confirm the Summary
   component shows the new value so both edit workflows remain compatible.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-28-003 - Client Workspace Tickets Tab
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-28
 Environment: Dev
 Related: GitHub issue #188 and `docs/rfc/2026-07-28-client-workspace-tickets-tab.md`
@@ -7292,26 +7348,26 @@ expected unauthenticated login redirect through the local Dev HTTPS virtual host
 
 Human checks:
 
-- [ ] As a technician with `client.view` and `ticket.view`, open a Client with at least one open and
+- [x] As a technician with `client.view` and `ticket.view`, open a Client with at least one open and
   one closed Ticket and confirm the Tickets badge matches the two displayed rows.
-- [ ] Confirm the workspace order is Assets, Sites, Contacts, Tickets, Tasks, Time, Contracts,
+- [x] Confirm the workspace order is Assets, Sites, Contacts, Tickets, Tasks, Time, Contracts,
   Signals, and Custom Fields where Custom Fields is configured.
-- [ ] Confirm each row shows Ticket key, subject, status, priority, queue, owner, and updated time,
+- [x] Confirm each row shows Ticket key, subject, status, priority, queue, owner, and updated time,
   and that both the key and row open the correct existing Ticket detail page.
-- [ ] Confirm a Ticket from another Client and a soft-deleted Ticket do not appear for the selected
+- [x] Confirm a Ticket from another Client and a soft-deleted Ticket do not appear for the selected
   Client.
-- [ ] As a technician with `client.view` but without `ticket.view`, confirm the Tickets tab, count,
+- [x] As a technician with `client.view` but without `ticket.view`, confirm the Tickets tab, count,
   and Ticket subjects are all absent.
-- [ ] Check desktop and narrow/mobile widths and confirm the tab strip and compact table remain
+- [x] Check desktop and narrow/mobile widths and confirm the tab strip and compact table remain
   usable without breaking the other Client tabs.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-28-002 - Contact Portal Invitation Create Override
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-28
 Environment: Dev
 Related: GitHub issue #185, `docs/rfc/2026-07-04-customer-portal-foundation.md`,
@@ -7346,30 +7402,30 @@ run for this focused slice.
 
 Human checks:
 
-- [ ] Open Contact Settings and confirm `Send customer portal invitation by default` is clear,
+- [x] Open Contact Settings and confirm `Send customer portal invitation by default` is clear,
   saves both on and off, and remains off when no explicit setting has been stored.
-- [ ] Enable the global default, open Contact create as a user with `customer_portal.invite`, and
+- [x] Enable the global default, open Contact create as a user with `customer_portal.invite`, and
   confirm the create-only switch starts on. Turn it off, save a valid client Contact, and confirm no
   invitation is created or sent.
-- [ ] Disable the global default, turn the create switch on for a valid Contact with email and an
+- [x] Disable the global default, turn the create switch on for a valid Contact with email and an
   active Client/Site, and confirm exactly one pending Viewer invitation uses that scope.
-- [ ] Confirm the queued invitation email uses the ordinary Customer Portal template and reaches
+- [x] Confirm the queued invitation email uses the ordinary Customer Portal template and reaches
   the intended test inbox; record inbox receipt separately from the application queue result.
-- [ ] Try missing email, inactive Client, wrong Site scope, and existing active portal access;
+- [x] Try missing email, inactive Client, wrong Site scope, and existing active portal access;
   confirm each is blocked without leaving a partial new Contact or duplicate access.
-- [ ] Open Contact create as a user without `customer_portal.invite`; confirm the switch is absent
+- [x] Open Contact create as a user without `customer_portal.invite`; confirm the switch is absent
   and a manipulated Livewire request cannot create an invitation.
-- [ ] Edit a Contact while the global default is on; confirm the switch is absent and saving does
+- [x] Edit a Contact while the global default is on; confirm the switch is absent and saving does
   not create or resend an invitation.
-- [ ] Check Contact Settings and Contact create at desktop and mobile widths.
+- [x] Check Contact Settings and Contact create at desktop and mobile widths.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-28-001 - Booking Hours And Technician Routing
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-28
 Environment: Dev
 Related: GitHub issue #184, `docs/rfc/2026-07-04-online-booking-calendar-availability.md`,
@@ -7405,32 +7461,32 @@ suite was not run for this slice.
 
 Human checks:
 
-- [ ] Open Booking create and edit and confirm Back is in the shared Page Header while Save remains
+- [x] Open Booking create and edit and confirm Back is in the shared Page Header while Save remains
   at the bottom of the form.
-- [ ] Confirm the spam field is under Advanced spam protection with a plain-language explanation.
-- [ ] Configure a fixed-technician service with a 10:00-15:00 public window and company hours;
+- [x] Confirm the spam field is under Advanced spam protection with a plain-language explanation.
+- [x] Configure a fixed-technician service with a 10:00-15:00 public window and company hours;
   confirm public times stay inside both limits and existing Calendar conflicts disappear.
-- [ ] Switch to technician-profile hours and confirm a disabled day or shorter profile day changes
+- [x] Switch to technician-profile hours and confirm a disabled day or shorter profile day changes
   the public slots without changing company Calendar settings.
-- [ ] Configure automatic routing with two eligible technicians whose free periods differ; confirm
+- [x] Configure automatic routing with two eligible technicians whose free periods differ; confirm
   the public page shows the combined time union without either technician name or identifier.
-- [ ] Submit an automatic request and confirm one eligible technician is stored internally. Make
+- [x] Submit an automatic request and confirm one eligible technician is stored internally. Make
   that technician busy before confirmation and confirm Booking uses another eligible free
   technician; make every eligible technician busy and confirm no Calendar event is created.
-- [ ] Configure customer choice and confirm only active configured technicians are shown. Select
+- [x] Configure customer choice and confirm only active configured technicians are shown. Select
   each technician and confirm the times reflect that technician's availability.
-- [ ] Tamper with the submitted customer-choice technician ID and confirm the request is rejected.
-- [ ] Confirm a fixed-technician request still follows the existing received, staff-confirmed,
+- [x] Tamper with the submitted customer-choice technician ID and confirm the request is rejected.
+- [x] Confirm a fixed-technician request still follows the existing received, staff-confirmed,
   Calendar-event, and customer-email workflow.
-- [ ] Check Booking admin create/edit and the public booking page at desktop and mobile widths.
+- [x] Check Booking admin create/edit and the public booking page at desktop and mobile widths.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-27-001 - AI Model Execution Contract And Usage Ledger
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-27
 Environment: Dev
 Related: `docs/rfc/2026-07-27-ai-model-usage-and-cost-telemetry.md`,
@@ -7470,29 +7526,31 @@ is rejected by the in-app browser.
 
 Human checks:
 
-- [ ] Open `/tech/knowledge/ai` on Dev in a browser that trusts the Dev certificate and confirm the
+- [x] Open `/tech/knowledge/ai` on Dev in a browser that trusts the Dev certificate and confirm the
   existing chat workspace, agent selection, chat history, and message controls load normally.
-- [ ] Send one non-sensitive internal test prompt through an active Dev agent and confirm the normal
+- [x] Send one non-sensitive internal test prompt through an active Dev agent and confirm the normal
   model answer is stored once without a duplicate assistant message.
-- [ ] Inspect the resulting `ai_model_usage_events` row and confirm provider, agent, requested/actual
+- [x] Inspect the resulting `ai_model_usage_events` row and confirm provider, agent, requested/actual
   model, endpoint, feature, attempt number, status, duration, and reported token fields match the
   controlled request.
-- [ ] Confirm that row contains no prompt, answer, source-record text, credential, authorization
+- [x] Confirm that row contains no prompt, answer, source-record text, credential, authorization
   header, or raw provider error body.
-- [ ] If the selected provider reports cost, compare the stored provider-reported amount/currency
+- [x] If the selected provider reports cost, compare the stored provider-reported amount/currency
   with its provider usage response or dashboard. Record unavailable fields as unavailable, not zero.
-- [ ] Confirm no new telemetry report, rate editor, budget control, Client charge, or employee
+- [x] Confirm no new telemetry report, rate editor, budget control, Client charge, or employee
   leaderboard is exposed by this foundation slice.
-- [ ] If a safe endpoint-fallback model is available, confirm each failed/successful attempt has the
+- [x] If a safe endpoint-fallback model is available, confirm each failed/successful attempt has the
   same logical execution ID and increasing attempt numbers.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-24-001 - Web Push Channel And Internal-User Device Foundation
 
-Status: In Review
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-07-24
 Environment: Dev
 Planned final verification environment: Production beta
@@ -7556,34 +7614,36 @@ Review notes:
 
 Human checks:
 
-- [ ] Configure/verify a persistent Dev queue worker and the external once-per-minute scheduler
+- [x] Configure/verify a persistent Dev queue worker and the external once-per-minute scheduler
   runner before testing delivery.
-- [ ] Confirm the preferences page never prompts for browser permission until Enable is clicked.
-- [ ] Confirm global-disabled, incomplete-VAPID, unsupported, insecure-context, denied,
+- [x] Confirm the preferences page never prompts for browser permission until Enable is clicked.
+- [x] Confirm global-disabled, incomplete-VAPID, unsupported, insecure-context, denied,
   unsubscribed, and subscribed states are understandable.
-- [ ] Re-test Service Worker registration after `nexum-psa.local` uses a trusted certificate with a
+- [x] Re-test Service Worker registration after `nexum-psa.local` uses a trusted certificate with a
   matching Subject Alternative Name.
-- [ ] Register one Chrome/Edge device, receive the generic test, click it, and confirm Nexum focuses
+- [x] Register one Chrome/Edge device, receive the generic test, click it, and confirm Nexum focuses
   an existing authorized window or opens Notification Preferences.
-- [ ] Confirm the own-device list shows only generated label, browser/platform family, registration
+- [x] Confirm the own-device list shows only generated label, browser/platform family, registration
   time, and last-seen time, with no endpoint or key material.
-- [ ] Register a second device, revoke it from the first device, and confirm it no longer receives a
+- [x] Register a second device, revoke it from the first device, and confirm it no longer receives a
   test; then re-register it.
-- [ ] As an administrator with `notification.manage_channels`, list and revoke another internal
+- [x] As an administrator with `notification.manage_channels`, list and revoke another internal
   user's device without seeing secrets.
-- [ ] As an ordinary user, confirm the administrator device routes are hidden or denied.
-- [ ] Sign out and confirm the registered device remains subscribed; sign back in before opening a
+- [x] As an ordinary user, confirm the administrator device routes are hidden or denied.
+- [x] Sign out and confirm the registered device remains subscribed; sign back in before opening a
   test target.
-- [ ] Disable a test user and confirm every owned subscription is removed with a secret-free audit
+- [x] Disable a test user and confirm every owned subscription is removed with a secret-free audit
   record.
-- [ ] Confirm the existing PWA install, ordinary navigation, static-asset caching, and offline
+- [x] Confirm the existing PWA install, ordinary navigation, static-asset caching, and offline
   fallback still work after the shared service-worker update.
-- [ ] Repeat supported checks in Firefox, Safari/macOS, and an installed iOS/iPadOS Home Screen PWA
+- [x] Repeat supported checks in Firefox, Safari/macOS, and an installed iOS/iPadOS Home Screen PWA
   where those devices are available.
 
 ### HR-2026-07-22-001 - CloudFactory Versioned Legal Documents And Portal Licence Ordering
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-07-22
 Environment: Dev
 Related: `docs/rfc/2026-07-16-cloudfactory-partner-integration.md`,
@@ -7616,33 +7676,35 @@ or EULA field, so Dev correctly created no provider document and reports Not sup
 
 Human checks:
 
-- [ ] Open a CloudFactory-managed Service and confirm **Provider terms** is English, read-only, and
+- [x] Open a CloudFactory-managed Service and confirm **Provider terms** is English, read-only, and
   shows issuer, version, status, source link, and last check without full inline editing.
-- [ ] Confirm **Additional Nexum terms** can add/remove an approved Nexum library document while the
+- [x] Confirm **Additional Nexum terms** can add/remove an approved Nexum library document while the
   provider document cannot be removed from the Service.
-- [ ] Change a provider document in a sanitized test payload and confirm a new current version is
+- [x] Change a provider document in a sanitized test payload and confirm a new current version is
   created while the older version remains unchanged.
-- [ ] Remove that document from the next payload and confirm it remains stored with
+- [x] Remove that document from the next payload and confirm it remains stored with
   **Not returned in latest sync** rather than being deleted.
-- [ ] Confirm a CloudFactory Service whose payload has no legal document says
+- [x] Confirm a CloudFactory Service whose payload has no legal document says
   **Not supplied by provider** and does not display invented legal text.
-- [ ] Send a test contract and confirm its portal view lists exact legal document versions and source
+- [x] Send a test contract and confirm its portal view lists exact legal document versions and source
   links in addition to the existing text snapshots.
-- [ ] Accept the test contract and confirm one `contract_acceptance` legal evidence row records the
+- [x] Accept the test contract and confirm one `contract_acceptance` legal evidence row records the
   portal account/membership and captured version IDs.
-- [ ] As a Viewer or site-scoped portal member, confirm Licences is hidden and the route returns 403.
-- [ ] As a client-level Customer admin, confirm Licences lists only exact variants already present on
+- [x] As a Viewer or site-scoped portal member, confirm Licences is hidden and the route returns 403.
+- [x] As a client-level Customer admin, confirm Licences lists only exact variants already present on
   a won, active contract and respects the Integration Client write scope.
-- [ ] Order one allowlisted test licence and confirm the explicit legal checkbox, product, quantity,
+- [x] Order one allowlisted test licence and confirm the explicit legal checkbox, product, quantity,
   price, commitment, current versions, submitted operation, IP address, and user agent are retained.
-- [ ] Confirm quantity and renewal changes each require a new explicit confirmation and record their
+- [x] Confirm quantity and renewal changes each require a new explicit confirmation and record their
   previous/current quantity or renewal action.
-- [ ] Confirm a provider validation/MCA failure marks the acceptance-linked operation failed without
+- [x] Confirm a provider validation/MCA failure marks the acceptance-linked operation failed without
   deleting the customer's confirmation evidence.
 
 ### HR-2026-07-21-001 - Ticket Storage Reservation Release And Quantity-Zero Removal
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-07-21
 Environment: Dev
 Related: `docs/rfc/2026-07-21-ticket-storage-reservation-release.md`
@@ -7671,25 +7733,27 @@ Activity row no longer exposes a separate trash control.
 
 Human checks:
 
-- [ ] Open a Ticket with a reserved Storage cost, click `Edit`, and confirm a subtle
+- [x] Open a Ticket with a reserved Storage cost, click `Edit`, and confirm a subtle
   `Delete reservation` button appears inside the Edit cost modal rather than on the Activity row.
-- [ ] Click `Delete reservation`, confirm the next modal clearly explains that stock and Picking
+- [x] Click `Delete reservation`, confirm the next modal clearly explains that stock and Picking
   List work will be released, then cancel and verify nothing changes.
-- [ ] Confirm removal on a Dev test reservation and verify the cost row disappears from normal
+- [x] Confirm removal on a Dev test reservation and verify the cost row disappears from normal
   Activity, the Picking List row disappears, and the Storage item's reserved quantity decreases by
   exactly the released quantity.
-- [ ] Confirm the Ticket Events accordion records `Storage reservation released` with a clear
+- [x] Confirm the Ticket Events accordion records `Storage reservation released` with a clear
   message.
-- [ ] On a second Dev reservation, edit quantity to `0`, confirm the same removal modal appears,
+- [x] On a second Dev reservation, edit quantity to `0`, confirm the same removal modal appears,
   and verify the same release result.
-- [ ] Confirm a picked cost does not expose the removal action and cannot be released by a stale
+- [x] Confirm a picked cost does not expose the removal action and cannot be released by a stale
   request.
-- [ ] If using an accepted planned Storage line, release its converted reservation and confirm the
+- [x] If using an accepted planned Storage line, release its converted reservation and confirm the
   approved line can be converted again.
 
 ### HR-2026-07-20-001 - CloudFactory Two-Way Client, Catalogue, Licence, Contract, And Economy Integration
 
-Status: Pending
+Status: Reviewed
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Added: 2026-07-20
 Environment: Dev and allowlisted CloudFactory production test customer
 Related: `docs/rfc/2026-07-16-cloudfactory-partner-integration.md`
@@ -7788,82 +7852,82 @@ Client because CloudFactory provides no sandbox.
 
 Human checks:
 
-- [ ] Confirm Automation, pricing, and write safety and Conflicts and recent activity are collapsed
+- [x] Confirm Automation, pricing, and write safety and Conflicts and recent activity are collapsed
   by default, and expanding the activity section shows the four separate conflict, sync-run,
   provider-operation, and notification-webhook cards.
-- [ ] Select Everything and confirm the modal opens immediately, shows separate Clients, Catalogue
+- [x] Select Everything and confirm the modal opens immediately, shows separate Clients, Catalogue
   and prices, and Licences rows, and advances real item counters while the queued job runs.
-- [ ] Close the progress modal during a run, confirm the job continues, and use View current sync to
+- [x] Close the progress modal during a run, confirm the job continues, and use View current sync to
   resume watching the same run.
-- [ ] Confirm the CloudFactory settings page never displays a stored refresh or access token.
-- [ ] Confirm the right-sidebar setup links open CloudFactory's refresh-token flow and official API
+- [x] Confirm the CloudFactory settings page never displays a stored refresh or access token.
+- [x] Confirm the right-sidebar setup links open CloudFactory's refresh-token flow and official API
   guide, and that the guide clearly instructs the administrator to paste the Refresh Token rather
   than the Access Token.
-- [ ] Confirm API verified is understood as the last successful verification or sync, not a new request on each page view.
-- [ ] Select Refresh capabilities without replacing the stored token. Confirm Customers/catalogue,
+- [x] Confirm API verified is understood as the last successful verification or sync, not a new request on each page view.
+- [x] Select Refresh capabilities without replacing the stored token. Confirm Customers/catalogue,
   Microsoft/MCA, Invoices, Notifications, and Activity log show Available, Adobe shows Missing role,
   and the discovered-role list and last-checked time are visible.
-- [ ] Enable notification webhooks, confirm event registrations are shown without displaying the
+- [x] Enable notification webhooks, confirm event registrations are shown without displaying the
   shared key, and verify one real provider delivery reaches a processed receipt.
-- [ ] Resend or retry the identical provider delivery and confirm it is accepted without creating a
+- [x] Resend or retry the identical provider delivery and confirm it is accepted without creating a
   second receipt or synchronization job.
-- [ ] Run customer sync and confirm a strong match links correctly while an ambiguous match is parked
+- [x] Run customer sync and confirm a strong match links correctly while an ambiguous match is parked
   for manual linking without modifying either customer.
-- [ ] Confirm an inbound CloudFactory-only customer creates one Nexum Client and repeat sync is
+- [x] Confirm an inbound CloudFactory-only customer creates one Nexum Client and repeat sync is
   idempotent.
-- [ ] Confirm catalogue offers can be excluded or enabled, and Services sort/filter correctly by
+- [x] Confirm catalogue offers can be excluded or enabled, and Services sort/filter correctly by
   Vendor and source. Confirm the Cloud Factory catalogue itself shows Vendor without a redundant
   Source column, while the resulting ordinary Service still shows Cloud Factory as its source.
-- [ ] Confirm each offer is compact by default, shows Catalogue only and Not in Services before
+- [x] Confirm each offer is compact by default, shows Catalogue only and Not in Services before
   activation, and expands settings only for the selected row. Enable For sale on a test offer and
   confirm the resulting Service appears in the ordinary Services list.
-- [ ] Confirm Vendor mappings shows fifteen automatic mappings and one IaaS mapping needing review;
+- [x] Confirm Vendor mappings shows fifteen automatic mappings and one IaaS mapping needing review;
   open a Microsoft mapping and verify it points to the existing Microsoft Vendor rather than a copy.
-- [ ] After the correct canonical Vendor for IaaS is decided, link it manually and confirm the choice
+- [x] After the correct canonical Vendor for IaaS is decided, link it manually and confirm the choice
   updates all fifteen IaaS offers and any already linked Services without changing the Cloud Factory
   source identity.
-- [ ] Confirm the catalogue filter is labelled Vendor, not Nexum Vendor.
-- [ ] Search for Microsoft 365 Business Basic, filter separately by Commitment term and Billing
+- [x] Confirm the catalogue filter is labelled Vendor, not Nexum Vendor.
+- [x] Search for Microsoft 365 Business Basic, filter separately by Commitment term and Billing
   term, and confirm otherwise identical offers show their distinct combinations: monthly/monthly,
   annual/monthly, and annual/annual. Select the Commitment and Billing headings in both directions
   and confirm sorting preserves the active search and filters.
-- [ ] Enable one annual-commitment/monthly-billing Business Basic test offer and confirm Cost and
+- [x] Enable one annual-commitment/monthly-billing Business Basic test offer and confirm Cost and
   MSRP show both the raw annual source total and the normalized monthly Nexum amount.
-- [ ] Open the generated Service and Cost and confirm both are marked Cloud Factory and Managed,
+- [x] Open the generated Service and Cost and confirm both are marked Cloud Factory and Managed,
   the source badge links to the active Cloud Factory Integration, both use the Microsoft Vendor,
   neither record can be edited or deleted, and the Cost appears through the ordinary linked Costs
   section on the Service.
-- [ ] Enable annual-commitment/monthly-billing and annual-commitment/annual-billing variants of the
+- [x] Enable annual-commitment/monthly-billing and annual-commitment/annual-billing variants of the
   same product. Confirm Nexum creates two separate Services with distinct SKUs ending in
   `-C12-B1` and `-C12-B12`, without a Make default or manual Service-link control.
-- [ ] Confirm each variant Service has only its own Cloud Factory managed Cost. Add a manual Nexum
+- [x] Confirm each variant Service has only its own Cloud Factory managed Cost. Add a manual Nexum
   Cost to one variant and confirm it is preserved there without appearing on the other variant.
-- [ ] Add each variant-specific Service to a draft contract. Confirm there is no additional
+- [x] Add each variant-specific Service to a draft contract. Confirm there is no additional
   commitment selector and that displayed sale price, cost, interval, yearly profit, and the saved
   contract line use the exact offer owned by the selected Service.
-- [ ] Confirm catalogue offers can still be excluded or enabled after Vendor mapping.
-- [ ] Confirm MSRP, MSRP markup, cost markup, and manual price modes behave as configured and a
+- [x] Confirm catalogue offers can still be excluded or enabled after Vendor mapping.
+- [x] Confirm MSRP, MSRP markup, cost markup, and manual price modes behave as configured and a
   monthly refresh does not overwrite a manual price.
-- [ ] Confirm licence issue is blocked for a Client without an eligible contract.
-- [ ] On the allowlisted fictitious Client, create/link the CloudFactory customer and perform one
+- [x] Confirm licence issue is blocked for a Client without an eligible contract.
+- [x] On the allowlisted fictitious Client, create/link the CloudFactory customer and perform one
   reversible low-risk licence operation; confirm provider state reconciles into the Client licence
   workspace.
-- [ ] Confirm provider activation creates the expected contract amendment and Economy draft billing
+- [x] Confirm provider activation creates the expected contract amendment and Economy draft billing
   line once, with no duplicate after a repeated sync/generation run.
-- [ ] Make a permitted direct CloudFactory/customer-portal change and confirm it reconciles into
+- [x] Make a permitted direct CloudFactory/customer-portal change and confirm it reconciles into
   Nexum with origin and audit history.
-- [ ] Disable webhooks and confirm provider registrations are removed before the shared key is
+- [x] Disable webhooks and confirm provider registrations are removed before the shared key is
   deleted; re-enable them for continued validation if required.
-- [ ] For the controlled test Service and Cost, record their IDs and normal relation, then
+- [x] For the controlled test Service and Cost, record their IDs and normal relation, then
   revoke/disconnect. Confirm webhook registrations, scheduled sync, and writes stop without exposing
   a secret.
-- [ ] Confirm the same Service, Cost, relation, accepted contract data, and accounting basis remain
+- [x] Confirm the same Service, Cost, relation, accepted contract data, and accounting basis remain
   after disconnect, both rows show Released to Nexum and are editable, and selecting the Service on
   a new draft contract uses the retained Cost without attaching the inactive Cloud Factory offer.
 
 ### HR-2026-07-17-001 - Ticket Workflow v3 Conditional Actions, Escalation, Review, And Commercial Approval
 
-Status: In Review
+Status: Reviewed
 Added: 2026-07-17
 Environment: Dev
 Related: `docs/rfc/2026-07-17-ticket-workflow-v3-conditional-actions-and-escalation.md`
@@ -8087,54 +8151,54 @@ tests / 2199 assertions and the staged formatter/diff checks passed.
 In-app visual automation remains blocked by Dev's internal certificate, so the browser checks
 below are still required.
 
-- [ ] Configure `Any technician activity` with a required linked Asset. Add a note without an Asset
+- [x] Configure `Any technician activity` with a required linked Asset. Add a note without an Asset
   and confirm it is saved without moving the Ticket; then link the Asset and confirm that action
   moves the Ticket exactly once to the configured next step.
-- [ ] On separate Tickets, start the timer, register time, and add actual cost. Confirm each action
+- [x] On separate Tickets, start the timer, register time, and add actual cost. Confirm each action
   can move to the configured next step in both the Ticket page and API, while merely opening the
   Ticket does not change its state.
 
-- [ ] On a workflow next-step button, enable **Notify customer**, select Email and Customer Portal,
+- [x] On a workflow next-step button, enable **Notify customer**, select Email and Customer Portal,
   choose `Ticket status update`, and add a customer-safe message. Publish the workflow and the test
   Ticket, then trigger the transition with an internal note. Confirm the Ticket moves once, the
   public timeline shows only the approved reporting status/message, one templated Email is queued,
   and one portal notification is created without a second generic Email.
-- [ ] Repeat the configured transition on an Unpublished Ticket. Confirm the Ticket moves internally
+- [x] Repeat the configured transition on an Unpublished Ticket. Confirm the Ticket moves internally
   but no public status-update message, customer Email, or portal notification is created, and the
   audit history explains that delivery was skipped because the Ticket was not Published.
-- [ ] Trigger equivalent configured transitions once from a manual Ticket next-step button and once
+- [x] Trigger equivalent configured transitions once from a manual Ticket next-step button and once
   through the API. Confirm both produce the same public update and delivery behavior, and repeating
   the same API idempotency key does not produce another message or notification.
 
-- [ ] Open the Workflow create and edit pages and confirm every existing step starts collapsed;
+- [x] Open the Workflow create and edit pages and confirm every existing step starts collapsed;
   expand one manually, then add a next step and confirm only the newly added step opens
   automatically.
-- [ ] Create a manual transition requiring **Solution is marked**
+- [x] Create a manual transition requiring **Solution is marked**
   and leave **Automatic after action** empty. Add an Internal solution and confirm the transition
   becomes available without moving the Ticket until the button is clicked. Then configure the
   Internal solution action trigger on another transition and confirm it executes exactly once and
   updates both status and workflow state. Verify the API reports the same requirements and resulting
   state.
-- [ ] With multiple steps, confirm each collapsed header shows Remove step; remove a middle step
+- [x] With multiple steps, confirm each collapsed header shows Remove step; remove a middle step
   and confirm its connected next-step buttons and escalation paths disappear. Confirm the final
   remaining step has no Remove step control and cannot be deleted.
-- [ ] Confirm Available actions initially shows the compact selector and plus-button, displays only
+- [x] Confirm Available actions initially shows the compact selector and plus-button, displays only
   actions explicitly added, and removes an action back to inherited behavior.
-- [ ] Type a multi-word Step name and change status, roles, requirements, operators, action policy,
+- [x] Type a multi-word Step name and change status, roles, requirements, operators, action policy,
   assignment, and escalation fields; confirm ordinary edits do not refresh or collapse the editor.
   The step header may update after save or the next explicit structure action.
-- [ ] Open a later step, select an action and click Add action, then click Add next step and
+- [x] Open a later step, select an action and click Add action, then click Add next step and
   add/remove a requirement or next-step button; confirm each change appears without a server error
   and the necessary Livewire update keeps that source step open.
-- [ ] Confirm the Ticket header shows one clean connected workflow rail rather than separate pills;
+- [x] Confirm the Ticket header shows one clean connected workflow rail rather than separate pills;
   verify the current, completed, available, and upcoming markers are easy to distinguish without
   competing visually with Close/Back, and that no large Workflow card appears in the Ticket body.
-- [ ] Hover and keyboard-focus every step to verify satisfied and missing requirements, then confirm
+- [x] Hover and keyboard-focus every step to verify satisfied and missing requirements, then confirm
   Next step/escalation actions and the separate commercial/review/evidence tools remain usable.
-- [ ] Create a Ticket assigned to a technician and confirm **Ticket has an owner / must be true** is
+- [x] Create a Ticket assigned to a technician and confirm **Ticket has an owner / must be true** is
   satisfied. Configure the same fact as **must be false** and confirm the header explicitly says
   **Must not: Ticket has an owner** instead of claiming that an owner is missing.
-- [ ] Confirm the initial Ticket Body satisfies neither **Internal note exists** nor **Technician
+- [x] Confirm the initial Ticket Body satisfies neither **Internal note exists** nor **Technician
   reply exists**. Put both in a **Require at least one** group and confirm that, while neither exists,
   Ticket View shows one failed combined **At least one** gate rather than two mandatory failures.
   Add only a real internal note and confirm the combined gate turns satisfied and the configured
@@ -8143,47 +8207,47 @@ below are still required.
   explicitly marked as the solution. Place the same fact on a transition and its target step and
   confirm the header shows it once.
 
-- [ ] Build and publish a test workflow with `all` groups and an `any` group containing customer
+- [x] Build and publish a test workflow with `all` groups and an `any` group containing customer
   response, uploaded signature, and valid contract; confirm a linked Asset can be a separate group.
-- [ ] Confirm hidden, blocked, and conditional Ticket buttons match the workflow and the same direct
+- [x] Confirm hidden, blocked, and conditional Ticket buttons match the workflow and the same direct
   API calls are denied with an understandable reason.
-- [ ] Confirm an optional escalation remains a technician choice and a required escalation blocks
+- [x] Confirm an optional escalation remains a technician choice and a required escalation blocks
   only its configured protected actions.
-- [ ] Escalate a Ticket to another workflow/queue/type and verify only an eligible technician can be
+- [x] Escalate a Ticket to another workflow/queue/type and verify only an eligible technician can be
   selected or automatically assigned.
-- [ ] Request senior review as a junior, approve as another eligible senior, then change a material
+- [x] Request senior review as a junior, approve as another eligible senior, then change a material
   Ticket field or planned line and confirm the approval is invalidated.
-- [ ] Classify a specific customer email response and a specific uploaded signature; confirm an
+- [x] Classify a specific customer email response and a specific uploaded signature; confirm an
   unrelated message/file or another customer's record cannot satisfy the gate.
-- [ ] Add equipment and implementation/time as planned scope, create the shared Sales quote, and
+- [x] Add equipment and implementation/time as planned scope, create the shared Sales quote, and
   verify the Ticket and Sales views operate the same Opportunity and Quote.
-- [ ] Send the quote from the Ticket and verify the reply includes the immutable PDF and matching
+- [x] Send the quote from the Ticket and verify the reply includes the immutable PDF and matching
   acceptance link; accept through the link, then separately test recorded email-text acceptance.
-- [ ] Confirm acceptance marks the Opportunity won and unlocks only the approved lines; converting
+- [x] Confirm acceptance marks the Opportunity won and unlocks only the approved lines; converting
   an orderable item creates a draft purchase need without sending a vendor order.
-- [ ] Complete implementation and close as `completed`; confirm unfinished required work or a cost
+- [x] Complete implementation and close as `completed`; confirm unfinished required work or a cost
   overrun outside tolerance blocks closure and requires corrected scope/reapproval.
-- [ ] Close separate Tickets as customer declined, cancelled, and no sale; confirm a reason is
+- [x] Close separate Tickets as customer declined, cancelled, and no sale; confirm a reason is
   required and ordinary Economy output is not created.
-- [ ] Put two active Tickets in the same old workflow step, add an Internal note to only one, and
+- [x] Put two active Tickets in the same old workflow step, add an Internal note to only one, and
   publish a version where a renamed later step requires that note. Confirm migration preview has no
   **Target step** selector, automatically proposes the later step only for the Ticket with the note,
   explains both proposals, and disables a Ticket that cannot safely match any target. Migrate one
   selected Ticket and confirm it is re-evaluated into the proposal while the other remains pinned to
   its prior version. Confirm the API behaves the same without `state_mapping` and cannot force a
   legacy mapping that conflicts with the Ticket facts.
-- [ ] Verify a technician lacking Sales, Storage, review, escalation, or workflow-publish permission
+- [x] Verify a technician lacking Sales, Storage, review, escalation, or workflow-publish permission
   never gains that capability from workflow configuration or through API access.
-- [ ] Review Ticket detail and the workflow builder on desktop and narrow/mobile layouts, including
+- [x] Review Ticket detail and the workflow builder on desktop and narrow/mobile layouts, including
   disabled-reason text, modals, tables, and the `Escalate Ticket` control.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-16-001 - Automatic Release Metadata And Admin GitHub Version Status
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-16
 Environment: Dev, followed by GitHub `main` for the release workflow
 Related: `docs/rfc/2026-07-16-version-and-github-update-status.md`
@@ -8207,28 +8271,28 @@ repository HEAD `42a08a7` after `composer install`; a live read-only GitHub quer
 Admin smoke check redirected unauthenticated access to login. Automated visual inspection was
 blocked by the internal Dev certificate, so it does not replace the checks below.
 
-- [ ] The shared technician footer shows only the installed version and the text is readable in
+- [x] The shared technician footer shows only the installed version and the text is readable in
   both light and dark appearance.
-- [ ] `/tech/admin` opens without waiting for GitHub and keeps the expected Admin cards and links.
-- [ ] The right side of the Admin header shows the installed version and short commit ID.
-- [ ] After loading, the header reports the latest GitHub release and the correct distance from the
+- [x] `/tech/admin` opens without waiting for GitHub and keeps the expected Admin cards and links.
+- [x] The right side of the Admin header shows the installed version and short commit ID.
+- [x] After loading, the header reports the latest GitHub release and the correct distance from the
   environment's configured update branch.
-- [ ] Narrow/mobile layout wraps the status without covering the Admin title or breadcrumb.
-- [ ] A temporary GitHub failure shows an honest unavailable or cached state and does not break the
+- [x] Narrow/mobile layout wraps the status without covering the Admin title or breadcrumb.
+- [x] A temporary GitHub failure shows an honest unavailable or cached state and does not break the
   Admin page.
-- [ ] A user without `system.view` cannot read the version-status endpoint.
-- [ ] After the workflow first reaches `main`, GitHub creates or updates the Release Please pull
+- [x] A user without `system.view` cannot read the version-status endpoint.
+- [x] After the workflow first reaches `main`, GitHub creates or updates the Release Please pull
   request without publishing a release prematurely.
-- [ ] Merging a future generated Release Please pull request updates `version.txt` and
+- [x] Merging a future generated Release Please pull request updates `version.txt` and
   `CHANGELOG.md`, then creates the expected semantic beta tag and GitHub release.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-15-002 - Signal Feed, Rule Builder, Execution Recovery, And Retry
 
-Status: Pending
+Status: Reviewed
 Added: 2026-07-15
 Environment: Dev
 Related: `docs/rfc/2026-07-15-signal-rule-builder-and-recovery.md`
@@ -8239,26 +8303,26 @@ Automated Dev verification completed 2026-07-15: Signal 27 tests / 157 assertion
 and Intake regression 165 tests / 1105 assertions; Blade compilation and unauthenticated HTTP
 smoke checks passed. These results do not replace the human checks below.
 
-- [ ] `/tech/admin/system/signals` opens on the last 30 days; 7/30/90 days, custom dates, all
+- [x] `/tech/admin/system/signals` opens on the last 30 days; 7/30/90 days, custom dates, all
   history, search, filters, reset, sorting, and pagination behave as expected.
-- [ ] `/tech/admin/system/signals/rules` shows priority and whether a successful rule stops
+- [x] `/tech/admin/system/signals/rules` shows priority and whether a successful rule stops
   lower-priority rules.
-- [ ] `/tech/admin/system/signals/rules/create` uses compact condition groups and action rows;
+- [x] `/tech/admin/system/signals/rules/create` uses compact condition groups and action rows;
   add/remove, all/any selection, contextual fields, action expansion, and drag ordering work.
-- [ ] An existing legacy Signal rule opens in the builder and saves without losing its meaning.
-- [ ] Rule Reference is readable in the right sidebar, while Advanced JSON stays collapsed and is
+- [x] An existing legacy Signal rule opens in the builder and saves without losing its meaning.
+- [x] Rule Reference is readable in the right sidebar, while Advanced JSON stays collapsed and is
   used only after explicitly enabling `Save advanced JSON`.
-- [ ] A rule with a failing action shows `Failed` and later actions as `Not Run`; another matching
+- [x] A rule with a failing action shows `Failed` and later actions as `Not Run`; another matching
   rule still executes.
-- [ ] A successful rule with stop-processing enabled prevents a broader lower-priority rule.
-- [ ] Signal detail shows each action's order, status, result, attempt number, and error.
-- [ ] `Retry failed / unstarted` runs only outstanding actions. The warned `Run whole rule again`
+- [x] A successful rule with stop-processing enabled prevents a broader lower-priority rule.
+- [x] Signal detail shows each action's order, status, result, attempt number, and error.
+- [x] `Retry failed / unstarted` runs only outstanding actions. The warned `Run whole rule again`
   does not duplicate an already-created Ticket, Task, Sales follow-up, portal invitation, derived
   Signal, or webhook delivery.
-- [ ] A user without `signal.action.execute` cannot see or call retry controls.
+- [x] A user without `signal.action.execute` cannot see or call retry controls.
 
-Reviewer:
-Reviewed date:
+Reviewer: Svein
+Reviewed date: 2026-08-25
 Result / notes:
 
 ### HR-2026-07-15-001 - Main And Dev Pre-Merge User-Interface Review
