@@ -6,6 +6,7 @@ use App\Modules\Email\DTOs\EmailPlacementCreateResult;
 use App\Modules\Email\DTOs\EmailProviderReconciliationMessageMetadata;
 use App\Modules\Email\DTOs\EmailProviderReconciliationPeekedMessage;
 use App\Modules\Email\DTOs\EmailProviderReconciliationStoredMessage;
+use App\Modules\Email\Jobs\ImportEmailProviderReconciliationItem;
 use App\Modules\Email\Jobs\ProcessEmailProviderReconciliationAutomation;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailFolder;
@@ -252,6 +253,31 @@ class EmailProviderReconciliationImportActivationTest extends TestCase
         $this->assertSame(EmailProviderReconciliationItem::STATUS_PENDING, $item->status);
         $this->assertSame('provider_import_failed', $item->error_code);
         $this->assertNotNull($item->last_attempt_at);
+    }
+
+    #[Test]
+    public function failed_import_delivery_heartbeats_only_its_terminal_commit(): void
+    {
+        $scope = $this->scope(address: 'activation-terminal-failure@example.test');
+        $scope['run']->forceFill([
+            'last_progress_at' => now()->subMinutes(5)->startOfSecond(),
+        ])->save();
+        $beforeFailure = $scope['run']->fresh()->last_progress_at;
+        Queue::fake();
+
+        $job = new ImportEmailProviderReconciliationItem($scope['item']->id);
+        $job->failed(new RuntimeException('PRIVATE-IMPORT-FAILURE-CANARY'));
+
+        $item = $scope['item']->fresh();
+        $afterFailure = $scope['run']->fresh()->last_progress_at;
+        $this->assertSame(EmailProviderReconciliationItem::STATUS_FAILED, $item->status);
+        $this->assertSame('provider_import_failed', $item->error_code);
+        $this->assertTrue($afterFailure->greaterThan($beforeFailure));
+        $this->assertTrue($afterFailure->equalTo($item->completed_at));
+
+        $this->travel(2)->seconds();
+        $job->failed(new RuntimeException('PRIVATE-IMPORT-REDELIVERY-CANARY'));
+        $this->assertTrue($scope['run']->fresh()->last_progress_at->equalTo($afterFailure));
     }
 
     #[Test]

@@ -39,7 +39,11 @@ class DispatchEmailAccountPolling
                     if ($asynchronously) {
                         FetchImapAccount::dispatch($account->id, max(1, $batchSize));
                     } else {
-                        FetchImapAccount::dispatchSync($account->id, max(1, $batchSize));
+                        // A synchronous operator check must also persist every
+                        // fetched message before returning. Keeping Store jobs
+                        // inside the already-held provider lock prevents a
+                        // concurrent worker from racing the parent fetch.
+                        FetchImapAccount::dispatchSync($account->id, max(1, $batchSize), true);
                     }
 
                     $result['started']++;

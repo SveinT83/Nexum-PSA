@@ -22,6 +22,22 @@ class TicketSlaResolver
     public function resolve(array $context, TicketPriority $priority, ?Carbon $createdAt = null): array
     {
         $createdAt ??= now();
+
+        // Handle scheduled SLA deferral
+        $isScheduled = data_get($context, 'is_scheduled', false);
+        $slaMode = data_get($context, 'sla_mode', 'defer_until_planned_start');
+        $plannedStartAt = data_get($context, 'planned_start_at');
+
+        if ($isScheduled) {
+            if ($slaMode === 'non_sla_until_start') {
+                return $this->emptyResolution();
+            }
+
+            if ($slaMode === 'defer_until_planned_start' && $plannedStartAt) {
+                $createdAt = Carbon::parse($plannedStartAt);
+            }
+        }
+
         $resolution = $this->policyFromRule($context)
             ?? $this->policyFromContract($context)
             ?? $this->defaultPolicy();

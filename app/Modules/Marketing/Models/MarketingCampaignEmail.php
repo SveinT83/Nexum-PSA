@@ -22,6 +22,7 @@ class MarketingCampaignEmail extends Model
         'subject_snapshot',
         'body_html_snapshot',
         'body_text_snapshot',
+        'layout_html_snapshot',
         'variables_snapshot',
         'metadata',
     ];
@@ -61,7 +62,8 @@ class MarketingCampaignEmail extends Model
     {
         return filled($this->subject_snapshot)
             || filled($this->body_html_snapshot)
-            || filled($this->body_text_snapshot);
+            || filled($this->body_text_snapshot)
+            || filled($this->layout_html_snapshot);
     }
 
     public function displayName(): string
@@ -107,6 +109,10 @@ class MarketingCampaignEmail extends Model
             'subject' => $this->effectiveSubject() ?? '',
             'body_html' => $this->effectiveBodyHtml(),
             'body_text' => $this->effectiveBodyText(),
+            'layout_mode' => filled($this->layout_html_snapshot)
+                ? EmailTemplate::LAYOUT_CUSTOM
+                : ($this->template?->layout_mode ?? EmailTemplate::LAYOUT_BRANDING),
+            'layout_html' => $this->layout_html_snapshot ?: $this->template?->layout_html,
             'variables' => $this->variables_snapshot ?: (array) $this->template?->variables,
             'is_default' => false,
             'is_active' => true,

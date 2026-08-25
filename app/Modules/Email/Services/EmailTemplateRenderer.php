@@ -9,26 +9,119 @@ class EmailTemplateRenderer
 {
     /*
     |--------------------------------------------------------------------------
-    | Simple variable renderer
+    | Email template renderer
     |--------------------------------------------------------------------------
     |
-    | Version 1 supports direct {{ variable }} replacement. Future versions can
-    | add branding, language fallback, partials, and stricter variable checks
-    | without changing outbound jobs.
+    | Content and document layout are intentionally separate. Branding-managed
+    | templates materialize the current organization profile on every render;
+    | custom templates preserve their stored layout until explicitly reset.
     |
     */
-    public function __construct(private readonly CompanyProfileSettings $companyProfile) {}
+    public function __construct(
+        private readonly CompanyProfileSettings $companyProfile,
+        private readonly OutboundEmailHtmlPolicy $htmlPolicy,
+    ) {}
 
     public function render(EmailTemplate $template, array $variables): array
     {
         $variables = array_merge($this->brandingVariables(), $variables);
-        $html = $this->replace($template->body_html ?? '', $variables);
+        unset($variables['email_body']);
+
+        $this->htmlPolicy->assertBody($template->body_html);
+        $body = $this->replace($template->body_html ?? '', $variables);
+        $layout = $this->replace($this->materializeLayout($template), $variables);
+        $html = preg_replace_callback(
+            OutboundEmailHtmlPolicy::BODY_SLOT_PATTERN,
+            static fn (): string => $body,
+            $layout,
+            1,
+        ) ?? $layout;
 
         return [
             'subject' => $this->replace($template->subject, $variables),
-            'html' => $html !== '' ? $this->wrapHtml($html, $variables) : '',
+            'html' => $html,
             'text' => $this->replace($template->body_text ?? '', $variables),
         ];
+    }
+
+    /**
+     * Return the exact outer document used for this template, with the body slot intact.
+     */
+    public function materializeLayout(EmailTemplate $template): string
+    {
+        $layout = $template->usesCustomLayout()
+            ? (string) $template->layout_html
+            : $this->brandingLayout();
+
+        $this->htmlPolicy->assertLayout($layout);
+
+        return $layout;
+    }
+
+    /**
+     * Produce the current light-theme email layout from organization branding.
+     */
+    public function brandingLayout(): string
+    {
+        $profile = $this->companyProfile->get();
+        $companyName = e($profile['company_name'] ?? config('app.name', 'Nexum PSA'));
+        $headerBackground = e($profile['light_header_background'] ?? '#333333');
+        $headerColor = e($profile['light_header_color'] ?? '#ffffff');
+        $footerBackground = e($profile['light_footer_background'] ?? '#333333');
+        $footerColor = e($profile['light_footer_color'] ?? '#ffffff');
+        $pageBackground = e($profile['light_main_background'] ?? '#f3f4f6');
+        $contentBackground = e($profile['light_content_background'] ?? '#ffffff');
+        $contentColor = e($profile['light_left_sidebar_color'] ?? '#212529');
+        $linkColor = e($profile['light_primary_button_background'] ?? $profile['primary_color'] ?? '#FF6D1F');
+        $accentColor = e($profile['accent_color'] ?? '#e5e7eb');
+        $logoUrl = $profile['logo_light_url'] ?? $profile['logo_url'] ?? null;
+        $website = $profile['website'] ?? null;
+        $supportEmail = $profile['support_email'] ?? null;
+        $logo = filled($logoUrl)
+            ? '<img src="'.e($logoUrl).'" alt="'.$companyName.'" style="display:block;max-height:52px;max-width:240px;width:auto;height:auto;">'
+            : '<strong style="font-size:20px;color:'.$headerColor.';">'.$companyName.'</strong>';
+        $footerParts = array_filter([
+            $website ? '<a href="'.e($website).'" style="color:'.$footerColor.';">'.e($website).'</a>' : null,
+            $supportEmail ? '<a href="mailto:'.e($supportEmail).'" style="color:'.$footerColor.';">'.e($supportEmail).'</a>' : null,
+        ]);
+        $footerLinks = $footerParts !== []
+            ? '<div style="margin-top:8px;">'.implode(' &middot; ', $footerParts).'</div>'
+            : '';
+
+        return '<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>'.$companyName.'</title>
+  <style>
+    .email-content a { color: '.$linkColor.'; }
+    .email-content img { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:'.$pageBackground.';font-family:Arial,Helvetica,sans-serif;color:'.$contentColor.';">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;background:'.$pageBackground.';padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:680px;background:'.$contentBackground.';border:1px solid '.$accentColor.';border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="background:'.$headerBackground.';color:'.$headerColor.';padding:20px 24px;">'.$logo.'</td>
+          </tr>
+          <tr>
+            <td class="email-content" style="background:'.$contentBackground.';color:'.$contentColor.';padding:32px 24px;font-size:15px;line-height:1.6;">'.OutboundEmailHtmlPolicy::BODY_SLOT.'</td>
+          </tr>
+          <tr>
+            <td style="background:'.$footerBackground.';color:'.$footerColor.';padding:18px 24px;font-size:12px;line-height:1.5;">
+              <div>'.$companyName.'</div>
+              '.$footerLinks.'
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>';
     }
 
     public function sampleVariables(EmailTemplate $template): array
@@ -108,64 +201,17 @@ class EmailTemplateRenderer
             'brand_primary' => $profile['primary_color'] ?? '#FF6D1F',
             'brand_secondary' => $profile['secondary_color'] ?? '#fc7730',
             'brand_accent' => $profile['accent_color'] ?? '#faba98',
+            'brand_header_background' => $profile['light_header_background'] ?? '#333333',
+            'brand_header_color' => $profile['light_header_color'] ?? '#ffffff',
+            'brand_footer_background' => $profile['light_footer_background'] ?? '#333333',
+            'brand_footer_color' => $profile['light_footer_color'] ?? '#ffffff',
+            'brand_page_background' => $profile['light_main_background'] ?? '#f3f4f6',
+            'brand_content_background' => $profile['light_content_background'] ?? '#ffffff',
+            'brand_content_color' => $profile['light_left_sidebar_color'] ?? '#212529',
+            'brand_action_background' => $profile['light_primary_button_background'] ?? '#FF6D1F',
+            'brand_action_color' => $profile['light_primary_button_color'] ?? '#ffffff',
             'support_email' => $profile['support_email'] ?? null,
             'website' => $profile['website'] ?? null,
         ];
-    }
-
-    private function wrapHtml(string $body, array $variables): string
-    {
-        if (str_contains(strtolower($body), '<html')) {
-            return $body;
-        }
-
-        $companyName = e($variables['company_name'] ?? config('app.name', 'Nexum PSA'));
-        $primary = e($variables['brand_primary'] ?? '#FF6D1F');
-        $secondary = e($variables['brand_secondary'] ?? '#fc7730');
-        $logoUrl = $variables['company_logo_url'] ?? null;
-        $website = $variables['website'] ?? null;
-        $supportEmail = $variables['support_email'] ?? null;
-        $logo = filled($logoUrl)
-            ? '<img src="'.e($logoUrl).'" alt="'.$companyName.'" style="max-height:48px;max-width:220px;">'
-            : '<strong style="font-size:20px;color:#ffffff;">'.$companyName.'</strong>';
-
-        $footerParts = array_filter([
-            $website ? '<a href="'.e($website).'" style="color:'.$primary.';">'.e($website).'</a>' : null,
-            $supportEmail ? '<a href="mailto:'.e($supportEmail).'" style="color:'.$primary.';">'.e($supportEmail).'</a>' : null,
-        ]);
-        $footer = $footerParts !== []
-            ? '<div style="margin-top:8px;">'.implode(' &middot; ', $footerParts).'</div>'
-            : '';
-
-        return '<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>'.$companyName.'</title>
-</head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#111827;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f4f6;padding:24px 0;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border:1px solid #e5e7eb;">
-          <tr>
-            <td style="background:'.$secondary.';padding:18px 24px;">'.$logo.'</td>
-          </tr>
-          <tr>
-            <td style="padding:28px 24px;font-size:15px;line-height:1.55;">'.$body.'</td>
-          </tr>
-          <tr>
-            <td style="padding:18px 24px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;">
-              <div>'.$companyName.'</div>
-              '.$footer.'
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>';
     }
 }

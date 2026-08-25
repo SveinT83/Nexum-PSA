@@ -21,6 +21,7 @@ class TimeRate extends Model
         'applies_without_contract',
         'applies_with_contract',
         'is_active',
+        'is_customer_visible',
         'sort_order',
     ];
 
@@ -31,6 +32,7 @@ class TimeRate extends Model
             'applies_without_contract' => 'boolean',
             'applies_with_contract' => 'boolean',
             'is_active' => 'boolean',
+            'is_customer_visible' => 'boolean',
             'sort_order' => 'integer',
         ];
     }

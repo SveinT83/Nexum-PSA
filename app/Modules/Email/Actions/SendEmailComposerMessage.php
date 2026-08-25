@@ -4,13 +4,15 @@ namespace App\Modules\Email\Actions;
 
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailComposerDraft;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Services\BodyNormalizer;
-use App\Modules\Email\Services\EmailSendOutcomeUnresolvedException;
 use App\Modules\Email\Services\EmailAccountProviderRuntimeResolver;
+use App\Modules\Email\Services\EmailSendOutcomeUnresolvedException;
 use App\Modules\Email\Services\EmailSentReconciliationService;
+use App\Modules\Email\Services\EmailSharedDraftAuthorization;
 use App\Modules\Email\Services\EmailSignatureRenderer;
 use App\Modules\Email\Services\HtmlSanitizer;
 use App\Modules\Email\Services\MailboxAccess;
@@ -111,9 +113,113 @@ class SendEmailComposerMessage
 
         $account = $this->ensureActiveSender($account);
 
+        $mode = (string) ($payload['mode'] ?? self::MODE_COMPOSE);
+
         return $this->sendThroughAccount($account, $actor, [
-            'mode' => self::MODE_COMPOSE,
-        ] + $payload, null, null, [self::MODE_COMPOSE]);
+            'mode' => $mode,
+        ] + $payload, null, null, [self::MODE_COMPOSE, self::MODE_PROVIDER_DRAFT]);
+    }
+
+    /**
+     * Build the exact sanitized outbound snapshot used by the send path without
+     * reserving a provider write. The API uses this for honest preview and for
+     * its immutable submission fingerprint.
+     *
+     * @param  array<int, array<string, mixed>>  $attachments
+     * @return array<string, mixed>
+     */
+    public function previewDraft(EmailComposerDraft $draft, User $actor, array $attachments): array
+    {
+        $draft->loadMissing(['account', 'placement.message']);
+        $account = $draft->account;
+        $placement = $draft->placement;
+
+        if (! $account
+            || (int) $draft->user_id !== (int) $actor->id
+            || $draft->scope !== EmailComposerDraft::SCOPE_PRIVATE
+            || $draft->status !== EmailComposerDraft::STATUS_ACTIVE) {
+            throw ValidationException::withMessages([
+                'draft' => 'The private Mail draft is no longer available.',
+            ]);
+        }
+
+        if (in_array($draft->mode, [self::MODE_COMPOSE, self::MODE_PROVIDER_DRAFT], true)) {
+            if (! $this->mailboxAccess->canAccessAccount($actor, $account, MailboxAccess::SEND)) {
+                throw ValidationException::withMessages([
+                    'draft' => 'You do not have permission to send from this mailbox.',
+                ]);
+            }
+
+            $allowedModes = [self::MODE_COMPOSE, self::MODE_PROVIDER_DRAFT];
+            $source = null;
+        } else {
+            if (! $placement
+                || (int) $placement->account_id !== (int) $account->id
+                || ! $placement->message
+                || ! $placement->message->hasActiveProviderPlacement($placement)
+                || ! $this->mailboxAccess->canAccessAccount($actor, $account, MailboxAccess::VIEW)
+                || ! $this->mailboxAccess->canAccessAccount($actor, $account, MailboxAccess::SEND)) {
+                throw ValidationException::withMessages([
+                    'draft' => 'The selected mailbox placement is no longer available for sending.',
+                ]);
+            }
+
+            $allowedModes = [self::MODE_REPLY, self::MODE_REPLY_ALL, self::MODE_FORWARD];
+            $source = $placement->message;
+        }
+
+        $account = $this->ensureActiveSender($account);
+
+        return $this->prepareMessage($account, $actor, [
+            'mode' => $draft->mode,
+            'to' => $draft->to_recipients,
+            'cc' => $draft->cc_recipients,
+            'subject' => $draft->subject,
+            'body_html' => $draft->body_html,
+            'idempotency_key' => $draft->idempotency_key,
+            'attachments' => $attachments,
+        ], $placement, $source, $allowedModes);
+    }
+
+    /**
+     * Build the same outbound snapshot for an already lease-authorized shared
+     * draft. Authorization is repeated here so the lower send boundary never
+     * trusts a controller or an earlier composer read.
+     *
+     * @param  array<int, array<string, mixed>>  $attachments
+     * @return array<string, mixed>
+     */
+    public function previewSharedDraft(EmailComposerDraft $draft, User $actor, array $attachments): array
+    {
+        $draft->loadMissing(['account', 'conversation', 'placement.message']);
+
+        if ($draft->scope !== EmailComposerDraft::SCOPE_SHARED
+            || $draft->status !== EmailComposerDraft::STATUS_ACTIVE
+            || ! $draft->account
+            || ! $draft->conversation
+            || ! $draft->placement
+            || ! in_array($draft->mode, [self::MODE_REPLY, self::MODE_REPLY_ALL, self::MODE_FORWARD], true)) {
+            throw ValidationException::withMessages([
+                'draft' => 'The shared Mail draft is no longer available.',
+            ]);
+        }
+
+        app(EmailSharedDraftAuthorization::class)->assertDraft($actor, $draft, true);
+        $account = $this->ensureActiveSender($draft->account);
+
+        return $this->prepareMessage($account, $actor, [
+            'mode' => $draft->mode,
+            'to' => $draft->to_recipients,
+            'cc' => $draft->cc_recipients,
+            'subject' => $draft->subject,
+            'body_html' => $draft->body_html,
+            'idempotency_key' => $draft->idempotency_key,
+            'attachments' => $attachments,
+        ], $draft->placement, $draft->placement->message, [
+            self::MODE_REPLY,
+            self::MODE_REPLY_ALL,
+            self::MODE_FORWARD,
+        ]);
     }
 
     /**
@@ -137,38 +243,23 @@ class SendEmailComposerMessage
         ?EmailMessage $source,
         array $allowedModes,
     ): EmailLog {
-        $validated = Validator::make($payload, [
-            'mode' => ['required', 'string', Rule::in($allowedModes)],
-            'to' => ['required', 'string', 'max:2000'],
-            'cc' => ['nullable', 'string', 'max:2000'],
-            'subject' => ['required', 'string', 'max:512'],
-            'body' => ['nullable', 'string', 'max:50000'],
-            'body_html' => ['nullable', 'string', 'max:120000'],
-            'idempotency_key' => ['required', 'string', 'max:120'],
-            'attachments' => ['array', 'max:5'],
-        ])->validate();
-
-        $mode = (string) $validated['mode'];
-        $toRecipients = $this->parseRecipients((string) $validated['to']);
-        $ccRecipients = $this->parseRecipients((string) ($validated['cc'] ?? ''));
-
-        if ($toRecipients === []) {
-            throw ValidationException::withMessages([
-                'to' => 'Add at least one valid To recipient.',
-            ]);
-        }
-
-        [$bodyHtml, $bodyText] = $this->normalizeComposerBody(
-            $validated['body_html'] ?? null,
-            $validated['body'] ?? null,
+        $prepared = $this->prepareMessage(
+            $account,
+            $actor,
+            $payload,
+            $placement,
+            $source,
+            $allowedModes,
         );
-
-        if ($bodyText === '') {
-            throw ValidationException::withMessages([
-                'body_html' => 'Write a message before sending.',
-            ]);
-        }
-
+        $validated = $prepared['validated'];
+        $mode = $prepared['mode'];
+        $toRecipients = $prepared['to'];
+        $ccRecipients = $prepared['cc'];
+        $bodyHtml = $prepared['body_html'];
+        $bodyText = $prepared['body_text'];
+        $attachments = $prepared['attachments'];
+        $headers = $prepared['headers'];
+        $signatureResult = $prepared['signature'];
         $idempotencyKey = 'mail-'.$mode.':'.(int) $actor->id.':'.Str::of((string) $validated['idempotency_key'])->trim();
         $sentCode = $this->sentCode($mode);
         $existing = EmailLog::query()
@@ -179,14 +270,6 @@ class SendEmailComposerMessage
             return $this->reuseAcceptedOrBlock($existing, $sentCode);
         }
 
-        $signatureResult = $this->signatures->appendForMode($bodyHtml, $mode, $actor);
-        $bodyHtml = $signatureResult['body_html'];
-        $bodyText = $signatureResult['body_text'];
-
-        $attachments = $this->attachmentsForMailer($payload['attachments'] ?? []);
-        $headers = $source && in_array($mode, [self::MODE_REPLY, self::MODE_REPLY_ALL], true)
-            ? $this->replyHeaders($source)
-            : [];
         $reservedMessageId = $this->mailer->generateMessageId($account);
         $providerBindingVersion = app(EmailAccountProviderRuntimeResolver::class)->bindingVersion($account);
         $context = [
@@ -698,6 +781,89 @@ class SendEmailComposerMessage
     }
 
     /**
+     * @param  array<string, mixed>  $payload
+     * @param  array<int, string>  $allowedModes
+     * @return array{
+     *   validated: array<string, mixed>,
+     *   mode: string,
+     *   to: array<int, array{email: string, name: string}>,
+     *   cc: array<int, array{email: string, name: string}>,
+     *   body_html: string,
+     *   body_text: string,
+     *   attachments: array<int, array{path: string, filename: string, content_type?: string|null}>,
+     *   headers: array<string, mixed>,
+     *   signature: array<string, mixed>
+     * }
+     */
+    private function prepareMessage(
+        EmailAccount $account,
+        User $actor,
+        array $payload,
+        ?EmailMailboxPlacement $placement,
+        ?EmailMessage $source,
+        array $allowedModes,
+    ): array {
+        $validated = Validator::make($payload, [
+            'mode' => ['required', 'string', Rule::in($allowedModes)],
+            'to' => ['required', 'string', 'max:2000'],
+            'cc' => ['nullable', 'string', 'max:2000'],
+            'subject' => ['required', 'string', 'max:512'],
+            'body' => ['nullable', 'string', 'max:50000'],
+            'body_html' => ['nullable', 'string', 'max:120000'],
+            'idempotency_key' => ['required', 'string', 'max:120'],
+            'attachments' => ['array', 'max:5'],
+        ])->validate();
+
+        $mode = (string) $validated['mode'];
+        $toRecipients = $this->parseRecipients((string) $validated['to']);
+        $ccRecipients = $this->parseRecipients((string) ($validated['cc'] ?? ''));
+
+        if ($toRecipients === []) {
+            throw ValidationException::withMessages([
+                'to' => 'Add at least one valid To recipient.',
+            ]);
+        }
+
+        [$bodyHtml, $bodyText] = $this->normalizeComposerBody(
+            $validated['body_html'] ?? null,
+            $validated['body'] ?? null,
+        );
+
+        if ($bodyText === '') {
+            throw ValidationException::withMessages([
+                'body_html' => 'Write a message before sending.',
+            ]);
+        }
+
+        $signatureResult = $this->signatures->appendForMode($bodyHtml, $mode, $actor);
+        $attachments = $this->attachmentsForMailer($payload['attachments'] ?? []);
+
+        if (count($attachments) !== count((array) ($payload['attachments'] ?? []))) {
+            throw ValidationException::withMessages([
+                'attachments' => 'One draft attachment is missing or cannot be read.',
+            ]);
+        }
+
+        $headers = $source && in_array($mode, [self::MODE_REPLY, self::MODE_REPLY_ALL], true)
+            ? $this->replyHeaders($source)
+            : [];
+
+        return [
+            'validated' => $validated,
+            'mode' => $mode,
+            'to' => $toRecipients,
+            'cc' => $ccRecipients,
+            'body_html' => $signatureResult['body_html'],
+            'body_text' => $signatureResult['body_text'],
+            'attachments' => $attachments,
+            'headers' => $headers,
+            'signature' => $signatureResult,
+            'account_id' => $account->id,
+            'source_placement_id' => $placement?->id,
+        ];
+    }
+
+    /**
      * @return array{0: string, 1: string}
      */
     private function normalizeComposerBody(?string $html, ?string $text): array
@@ -792,6 +958,7 @@ class SendEmailComposerMessage
             self::MODE_FORWARD => 'MAIL_FORWARD_SENT',
             self::MODE_REPLY_ALL => 'MAIL_REPLY_ALL_SENT',
             self::MODE_COMPOSE => 'MAIL_COMPOSE_SENT',
+            self::MODE_PROVIDER_DRAFT => 'MAIL_PROVIDER_DRAFT_SENT',
             default => 'MAIL_REPLY_SENT',
         };
     }
@@ -802,6 +969,7 @@ class SendEmailComposerMessage
             self::MODE_FORWARD => 'MAIL_FORWARD_SEND_RESERVED',
             self::MODE_REPLY_ALL => 'MAIL_REPLY_ALL_SEND_RESERVED',
             self::MODE_COMPOSE => 'MAIL_COMPOSE_SEND_RESERVED',
+            self::MODE_PROVIDER_DRAFT => 'MAIL_PROVIDER_DRAFT_SEND_RESERVED',
             default => 'MAIL_REPLY_SEND_RESERVED',
         };
     }
@@ -812,6 +980,7 @@ class SendEmailComposerMessage
             self::MODE_FORWARD => 'MAIL_FORWARD_SEND_UNRESOLVED',
             self::MODE_REPLY_ALL => 'MAIL_REPLY_ALL_SEND_UNRESOLVED',
             self::MODE_COMPOSE => 'MAIL_COMPOSE_SEND_UNRESOLVED',
+            self::MODE_PROVIDER_DRAFT => 'MAIL_PROVIDER_DRAFT_SEND_UNRESOLVED',
             default => 'MAIL_REPLY_SEND_UNRESOLVED',
         };
     }
@@ -822,6 +991,7 @@ class SendEmailComposerMessage
             self::MODE_FORWARD => 'Mail forward sent.',
             self::MODE_REPLY_ALL => 'Mail reply all sent.',
             self::MODE_COMPOSE => 'Mail message sent.',
+            self::MODE_PROVIDER_DRAFT => 'Mail provider draft sent.',
             default => 'Mail reply sent.',
         };
     }

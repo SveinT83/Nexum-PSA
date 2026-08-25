@@ -363,6 +363,9 @@ class ProjectHistoricalEmailReadBaseline
             if ($advanced !== 1) {
                 throw new RuntimeException(self::FAILURE_PROJECTION);
             }
+            if ($lastScannedId > $cursor) {
+                $this->recordDurableProgress($run, $now);
+            }
 
             return $hasMore ? self::RECONCILIATION_PENDING : 'ready_to_complete';
         }, 3);
@@ -460,6 +463,7 @@ class ProjectHistoricalEmailReadBaseline
 
             if ($this->activeBaselineRun($run)) {
                 $this->failLockedReconciliationItem($item, $this->safeCode($safeCode));
+                $this->recordDurableProgress($run, now());
             }
         }, 3);
     }
@@ -553,6 +557,7 @@ class ProjectHistoricalEmailReadBaseline
                 'automation_status' => null,
                 'automation_claim_token' => null,
             ])->save();
+            $this->recordDurableProgress($run, $now);
 
             return self::RECONCILIATION_COMPLETED;
         }, 3);
@@ -702,6 +707,14 @@ class ProjectHistoricalEmailReadBaseline
             'historical_baseline_completed_at' => $now,
             'historical_baseline_error_code' => $safeCode,
         ])->save();
+    }
+
+    /** Record only a committed baseline cursor or terminal-state transition. */
+    private function recordDurableProgress(
+        EmailProviderReconciliationRun $run,
+        \DateTimeInterface $progressAt,
+    ): void {
+        $run->forceFill(['last_progress_at' => $progressAt])->save();
     }
 
     private function safeCode(string $code): string

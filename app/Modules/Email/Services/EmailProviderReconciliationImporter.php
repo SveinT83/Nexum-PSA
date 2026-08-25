@@ -148,12 +148,14 @@ final class EmailProviderReconciliationImporter
                     || $run->final_summary_status !== null)) {
                     return null;
                 }
+                $progressAt = now();
                 $locked->forceFill([
                     'status' => EmailProviderReconciliationItem::STATUS_STALE,
                     'error_code' => 'provider_import_scope_missing',
-                    'completed_at' => now(),
+                    'completed_at' => $progressAt,
                 ])->save();
                 $run?->markAutomationScopeUnsafe();
+                $this->recordDurableProgress($run, $progressAt);
 
                 return null;
             }
@@ -170,12 +172,14 @@ final class EmailProviderReconciliationImporter
                     || ($run->status === EmailProviderReconciliationRun::STATUS_WAITING_FOR_IMPORTS
                         && $run->phase === EmailProviderReconciliationRun::PHASE_IMPORTS));
             if ($failedFolderOwnsImport) {
+                $progressAt = now();
                 $locked->forceFill([
                     'status' => EmailProviderReconciliationItem::STATUS_FAILED,
                     'error_code' => 'provider_import_folder_failed',
-                    'completed_at' => now(),
+                    'completed_at' => $progressAt,
                 ])->save();
                 $run->markAutomationScopeUnsafe();
+                $this->recordDurableProgress($run, $progressAt);
 
                 return null;
             }
@@ -197,12 +201,14 @@ final class EmailProviderReconciliationImporter
             }
 
             if ((int) $locked->attempt_count >= self::MAX_ATTEMPTS) {
+                $progressAt = now();
                 $locked->forceFill([
                     'status' => EmailProviderReconciliationItem::STATUS_FAILED,
                     'error_code' => 'provider_import_attempt_limit',
-                    'completed_at' => now(),
+                    'completed_at' => $progressAt,
                 ])->save();
                 $run->markAutomationScopeUnsafe();
+                $this->recordDurableProgress($run, $progressAt);
 
                 return null;
             }
@@ -235,12 +241,14 @@ final class EmailProviderReconciliationImporter
                 return (string) ($locked?->status ?? EmailProviderReconciliationItem::STATUS_STALE);
             }
 
+            $progressAt = now();
             $locked->forceFill([
                 'status' => EmailProviderReconciliationItem::STATUS_STALE,
                 'error_code' => $code,
-                'completed_at' => now(),
+                'completed_at' => $progressAt,
             ])->save();
             $run->markAutomationScopeUnsafe();
+            $this->recordDurableProgress($run, $progressAt);
 
             return EmailProviderReconciliationItem::STATUS_STALE;
         }, 3);
@@ -477,6 +485,7 @@ final class EmailProviderReconciliationImporter
                     }
 
                     $this->completeItem(
+                        $run,
                         $item,
                         $placement,
                         $stored,
@@ -545,6 +554,7 @@ final class EmailProviderReconciliationImporter
                     ? EmailProviderReconciliationItem::STATUS_WAITING_FOR_BASELINE
                     : EmailProviderReconciliationItem::STATUS_PROJECTED;
                 $this->completeItem(
+                    $run,
                     $item,
                     $placement->refresh(),
                     $stored,
@@ -565,6 +575,7 @@ final class EmailProviderReconciliationImporter
     }
 
     private function completeItem(
+        EmailProviderReconciliationRun $run,
         EmailProviderReconciliationItem $item,
         EmailMailboxPlacement $placement,
         EmailProviderReconciliationStoredMessage $stored,
@@ -625,6 +636,7 @@ final class EmailProviderReconciliationImporter
                 'placement_sync_version_after' => max(1, (int) $placement->sync_version),
                 'updated_at' => $now,
             ]);
+        $this->recordDurableProgress($run, $now);
     }
 
     private function markConflict(
@@ -633,18 +645,36 @@ final class EmailProviderReconciliationImporter
         ?EmailMailboxPlacement $placement,
         string $code,
     ): string {
+        $progressAt = now();
         $item->forceFill([
             'status' => EmailProviderReconciliationItem::STATUS_CONFLICT,
             'result_placement_id' => $placement?->id,
             'error_code' => $code,
-            'completed_at' => now(),
+            'completed_at' => $progressAt,
             'automation_required' => false,
             'automation_status' => null,
             'automation_claim_token' => null,
         ])->save();
         $run->markAutomationScopeUnsafe();
+        $this->recordDurableProgress($run, $progressAt);
 
         return EmailProviderReconciliationItem::STATUS_CONFLICT;
+    }
+
+    /** Record only an accepted terminal import transition while the run is locked. */
+    private function recordDurableProgress(
+        ?EmailProviderReconciliationRun $run,
+        \DateTimeInterface $progressAt,
+    ): void {
+        if (! $run
+            || $run->terminal()
+            || (int) $run->active_slot !== 1
+            || $run->cancellation_requested_at !== null
+            || $run->status === EmailProviderReconciliationRun::STATUS_CANCELLING) {
+            return;
+        }
+
+        $run->forceFill(['last_progress_at' => $progressAt])->save();
     }
 
     private function projectLocalDraftOrSent(

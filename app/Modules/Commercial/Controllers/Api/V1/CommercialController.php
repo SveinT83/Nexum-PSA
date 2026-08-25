@@ -13,6 +13,7 @@ use App\Modules\Commercial\Resources\Api\V1\CommercialServiceResource;
 use App\Modules\Commercial\Resources\Api\V1\CommercialSlaResource;
 use App\Modules\Commercial\Resources\Api\V1\CommercialTimeRateResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
@@ -90,7 +91,7 @@ class CommercialController extends Controller
     public function contracts(Request $request)
     {
         $query = Contracts::query()
-            ->with(['client', 'sla'])
+            ->with(['client', 'sla', 'items.service', 'items.timeRates', 'termSnapshots.termVersion'])
             ->withCount('items')
             ->latest('id');
 
@@ -138,8 +139,16 @@ class CommercialController extends Controller
     #[OA\Patch(path: '/api/v1/commercial/contracts/{contract}', operationId: 'updateCommercialContract', summary: 'Update commercial contract draft metadata', security: [['bearerAuth' => []]], tags: ['Commercial'], parameters: [new OA\Parameter(name: 'contract', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'Contract updated'), new OA\Response(response: 422, description: 'Validation error')])]
     public function updateContract(Request $request, Contracts $contract)
     {
-        $data = array_merge($this->contractPayload($contract), $this->validatedContract($request, $contract));
-        $contract->update($data);
+        $contract = DB::transaction(function () use ($request, $contract): Contracts {
+            $locked = Contracts::query()->lockForUpdate()->findOrFail($contract->getKey());
+            abort_unless($locked->isEditable(), 409, 'Sent and accepted contract snapshots are immutable.');
+
+            $data = array_merge($this->contractPayload($locked), $this->validatedContract($request, $locked));
+            $locked->forceFill(['customer_document_snapshot' => null]);
+            $locked->update($data);
+
+            return $locked;
+        });
 
         return new CommercialContractResource($this->loadContract($contract->refresh()));
     }
@@ -246,6 +255,8 @@ class CommercialController extends Controller
             'sku' => [$service ? 'sometimes' : 'required', 'string', 'max:255', Rule::unique('services', 'sku')->ignore($service)],
             'name' => [$service ? 'sometimes' : 'required', 'string', 'max:255'],
             'unitId' => [$service ? 'sometimes' : 'required', Rule::exists('units', 'id')],
+            'customer_unit_singular' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'customer_unit_plural' => ['sometimes', 'nullable', 'string', 'max:255'],
             'sla_id' => ['sometimes', 'nullable', Rule::exists('sla', 'id')],
             'category_id' => ['sometimes', 'nullable', Rule::exists('categories', 'id')],
             'status' => ['sometimes', 'nullable', 'string', 'max:50'],
@@ -272,7 +283,7 @@ class CommercialController extends Controller
     private function servicePayload(Services $service): array
     {
         return $service->only([
-            'sku', 'name', 'unitId', 'sla_id', 'category_id', 'status', 'availability_audience',
+            'sku', 'name', 'unitId', 'customer_unit_singular', 'customer_unit_plural', 'sla_id', 'category_id', 'status', 'availability_audience',
             'orderable', 'taxable', 'setup_fee', 'billing_cycle', 'price_ex_vat',
             'price_including_tax', 'one_time_fee', 'one_time_fee_recurrence',
             'recurrence_value_x', 'default_discount_value', 'default_discount_type',
@@ -283,21 +294,34 @@ class CommercialController extends Controller
 
     private function validatedContract(Request $request, ?Contracts $contract = null): array
     {
-        return $request->validate([
+        $payload = $contract
+            ? array_merge($this->contractPayload($contract), $request->all())
+            : $request->all();
+        $bindingEndRules = ['sometimes', 'nullable', 'date', 'after_or_equal:start_date'];
+
+        if (filled($payload['end_date'] ?? null)) {
+            $bindingEndRules[] = 'before_or_equal:end_date';
+        }
+
+        return validator($payload, [
             'client_id' => [$contract ? 'sometimes' : 'required', Rule::exists('clients', 'id')],
             'sla_id' => ['sometimes', 'nullable', Rule::exists('sla', 'id')],
             'created_by' => ['sometimes', Rule::exists((new User)->getTable(), 'id')],
             'description' => ['sometimes', 'nullable', 'string'],
             'start_date' => [$contract ? 'sometimes' : 'required', 'date'],
             'end_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:start_date'],
-            'binding_end_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:start_date'],
+            'binding_end_date' => $bindingEndRules,
             'auto_renew' => ['sometimes', 'boolean'],
             'renewal_months' => ['sometimes', 'nullable', 'integer', 'min:1'],
             'allow_indexing_during_binding' => ['sometimes', 'boolean'],
             'allow_decrease_during_binding' => ['sometimes', 'boolean'],
             'max_index_pct_binding' => ['sometimes', 'nullable', 'numeric'],
             'post_binding_index_pct' => ['sometimes', 'nullable', 'numeric'],
-        ]);
+        ], [
+            'end_date.after_or_equal' => 'Avtalens sluttdato kan ikke være før avtalestart.',
+            'binding_end_date.after_or_equal' => 'Bindingstiden kan ikke slutte før avtalestart.',
+            'binding_end_date.before_or_equal' => 'Bindingstiden kan ikke slutte etter at avtalen er avsluttet.',
+        ])->validate();
     }
 
     private function contractPayload(Contracts $contract): array
@@ -356,6 +380,7 @@ class CommercialController extends Controller
             'applies_without_contract' => ['sometimes', 'boolean'],
             'applies_with_contract' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
+            'is_customer_visible' => ['sometimes', 'boolean'],
             'sort_order' => ['sometimes', 'nullable', 'integer', 'min:0'],
         ]);
     }
@@ -364,7 +389,7 @@ class CommercialController extends Controller
     {
         return $rate->only([
             'name', 'code', 'rate_type', 'unit', 'amount_ex_vat', 'currency', 'description',
-            'applies_without_contract', 'applies_with_contract', 'is_active', 'sort_order',
+            'applies_without_contract', 'applies_with_contract', 'is_active', 'is_customer_visible', 'sort_order',
         ]);
     }
 
@@ -388,7 +413,9 @@ class CommercialController extends Controller
 
     private function loadContract(Contracts $contract): Contracts
     {
-        return $contract->load(['client', 'sla'])->loadCount('items');
+        return $contract
+            ->load(['client', 'sla', 'items.service', 'items.timeRates', 'termSnapshots.termVersion'])
+            ->loadCount('items');
     }
 
     private function loadSla(Sla $sla): Sla

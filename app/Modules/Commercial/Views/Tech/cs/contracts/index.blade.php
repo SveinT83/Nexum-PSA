@@ -208,7 +208,7 @@
                                     <span class="text-muted">&mdash;</span>
                                 @endif
                             </td>
-                            <td>{{ number_format($contract->total_monthly_amount, 2, ',', '.') }} kr</td>
+                            <td>{{ $contract->pricingTotals()['monthly']['display'] }}</td>
                             <td>
                                 <span class="text-success fw-bold">
                                     {{ number_format($contract->yearly_profit, 2, ',', '.') }} kr

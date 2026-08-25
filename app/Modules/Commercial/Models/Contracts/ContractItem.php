@@ -2,9 +2,12 @@
 
 namespace App\Modules\Commercial\Models\Contracts;
 
+use App\Modules\Commercial\Actions\SyncContractPricingSummary;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Commercial\Support\ContractPricing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use InvalidArgumentException;
 
 class ContractItem extends Model
 {
@@ -23,7 +26,11 @@ class ContractItem extends Model
         'licence_metadata',
         'name',
         'sku',
+        'customer_description',
+        'customer_unit_singular',
+        'customer_unit_plural',
         'unit_price',
+        'price_currency',
         'cost_unit_price',
         'cost_currency',
         'quantity',
@@ -41,6 +48,7 @@ class ContractItem extends Model
 
     protected $casts = [
         'unit_price' => 'decimal:2',
+        'price_currency' => 'string',
         'cost_unit_price' => 'decimal:4',
         'quantity' => 'integer',
         'unit' => 'string',
@@ -55,6 +63,29 @@ class ContractItem extends Model
         'billing_effective_at' => 'datetime',
         'licence_metadata' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (ContractItem $item): void {
+            $currency = strtoupper(trim((string) ($item->price_currency ?: 'NOK')));
+
+            if ($currency !== 'NOK') {
+                throw new InvalidArgumentException(
+                    'Contract sale currency must be NOK. Cost currency is stored separately.'
+                );
+            }
+
+            $item->price_currency = $currency;
+        });
+
+        static::saved(function (ContractItem $item): void {
+            app(SyncContractPricingSummary::class)->handle((int) $item->contract_id);
+        });
+
+        static::deleted(function (ContractItem $item): void {
+            app(SyncContractPricingSummary::class)->handle((int) $item->contract_id);
+        });
+    }
 
     // -----------------------------
     // Relationships
@@ -94,18 +125,9 @@ class ContractItem extends Model
     // Helpers (optional)
     // -----------------------------
 
-    public function getLineTotalAttribute(): float
+    public function getLineTotalAttribute(): string
     {
-        $base = (float) $this->unit_price * (int) $this->quantity;
-
-        if ($this->discount_value && $this->discount_type === 'percent') {
-            return $base * (1 - ($this->discount_value / 100));
-        }
-
-        if ($this->discount_value && $this->discount_type === 'amount') {
-            return max(0, $base - $this->discount_value);
-        }
-
-        return $base;
+        return app(ContractPricing::class)
+            ->calculateLine($this)['line_total']['decimal'];
     }
 }

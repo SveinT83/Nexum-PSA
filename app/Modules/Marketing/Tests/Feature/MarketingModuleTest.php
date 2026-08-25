@@ -13,6 +13,7 @@ use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailTemplate;
+use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Integration\Models\AiAgent;
 use App\Modules\Integration\Models\AiChatMessage;
@@ -1489,13 +1490,45 @@ class MarketingModuleTest extends TestCase
             ])
             ->assertRedirect(route('tech.marketing.campaigns.show', $campaign));
 
-        $this->assertSame('<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p><p><a href="{{ unsubscribe_url }}">Unsubscribe</a></p>', $campaign->emails()->firstOrFail()->body_html_snapshot);
+        $campaignEmail = $campaign->emails()->firstOrFail();
+        $this->assertSame('<p>Hello {{ contact_name }}</p><p><a href="https://example.test/cybersecurity">Read more</a></p><p><a href="{{ unsubscribe_url }}">Unsubscribe</a></p>', $campaignEmail->body_html_snapshot);
+        $this->assertNotNull($campaignEmail->layout_html_snapshot);
+        $this->assertStringContainsString('{{ email_body }}', $campaignEmail->layout_html_snapshot);
+        $layoutSnapshot = $campaignEmail->layout_html_snapshot;
 
         $template->forceFill([
             'subject' => 'Changed live template subject',
             'body_html' => '<p>Changed live template body</p>',
             'body_text' => 'Changed live template text',
+            'layout_mode' => EmailTemplate::LAYOUT_CUSTOM,
+            'layout_html' => '<html><body><div id="changed-live-layout">{{ email_body }}</div></body></html>',
         ])->save();
+        $campaignEmail->refresh();
+        $renderedSnapshot = app(EmailTemplateRenderer::class)->render(
+            $campaignEmail->renderableTemplate(),
+            [
+                'contact_name' => 'Campaign Contact',
+                'unsubscribe_url' => 'https://example.test/unsubscribe',
+            ],
+        );
+
+        $this->assertSame($layoutSnapshot, $campaignEmail->layout_html_snapshot);
+        $this->assertStringNotContainsString('changed-live-layout', $renderedSnapshot['html']);
+        $this->assertStringContainsString('Hello Campaign Contact', $renderedSnapshot['html']);
+
+        $previewResponse = $this->actingAs($user)
+            ->postJson(route('tech.marketing.campaigns.emails.preview', $campaign), [
+                'campaign_email_id' => $campaignEmail->id,
+                'email_subject' => $campaignEmail->effectiveSubject(),
+                'body_html' => $campaignEmail->effectiveBodyHtml(),
+                'body_text' => $campaignEmail->effectiveBodyText(),
+            ])
+            ->assertOk()
+            ->assertJsonPath('subject', 'Hello Campaign Contact');
+        $previewHtml = (string) $previewResponse->json('html');
+
+        $this->assertStringNotContainsString('changed-live-layout', $previewHtml);
+        $this->assertStringContainsString('Hello Campaign Contact', $previewHtml);
 
         $this->actingAs($user)
             ->post(route('tech.marketing.campaigns.approve', $campaign))

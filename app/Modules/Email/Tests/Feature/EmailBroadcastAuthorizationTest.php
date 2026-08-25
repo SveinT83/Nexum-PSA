@@ -18,6 +18,8 @@ class EmailBroadcastAuthorizationTest extends TestCase
         parent::setUp();
 
         config()->set('email_live.enabled', true);
+        config()->set('email_live.runtime_approved', true);
+        config()->set('email_live.allowed_origins', ['https://nexum.example.test']);
         config()->set('broadcasting.default', 'reverb');
         config()->set('broadcasting.connections.reverb', [
             'driver' => 'reverb',
@@ -116,6 +118,29 @@ class EmailBroadcastAuthorizationTest extends TestCase
     {
         config()->set('email_live.enabled', false);
         $user = $this->activeInternalUser();
+
+        $this->actingAs($user)
+            ->postJson(route('tech.mail.broadcast.auth'), [
+                'socket_id' => '1234.5678',
+                'channel_name' => "private-email.user.{$user->id}",
+            ])
+            ->assertStatus(503);
+    }
+
+    public function test_unapproved_or_wildcard_origin_runtime_refuses_channel_authentication(): void
+    {
+        $user = $this->activeInternalUser();
+        config()->set('email_live.runtime_approved', false);
+
+        $this->actingAs($user)
+            ->postJson(route('tech.mail.broadcast.auth'), [
+                'socket_id' => '1234.5678',
+                'channel_name' => "private-email.user.{$user->id}",
+            ])
+            ->assertStatus(503);
+
+        config()->set('email_live.runtime_approved', true);
+        config()->set('email_live.allowed_origins', ['*']);
 
         $this->actingAs($user)
             ->postJson(route('tech.mail.broadcast.auth'), [

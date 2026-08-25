@@ -20,6 +20,7 @@ class ContractItemTimeRate extends Model
         'amount_ex_vat',
         'currency',
         'is_active',
+        'is_customer_visible',
         'sort_order',
         'metadata',
     ];
@@ -29,6 +30,7 @@ class ContractItemTimeRate extends Model
         return [
             'amount_ex_vat' => 'decimal:2',
             'is_active' => 'boolean',
+            'is_customer_visible' => 'boolean',
             'sort_order' => 'integer',
             'metadata' => 'array',
         ];

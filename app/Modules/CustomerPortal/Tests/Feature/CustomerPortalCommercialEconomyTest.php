@@ -5,8 +5,10 @@ namespace App\Modules\CustomerPortal\Tests\Feature;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
+use App\Modules\Commercial\Actions\CaptureContractCustomerDocument;
 use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\Contracts;
+use App\Modules\Commercial\Support\ContractTermSnapshotReadiness;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Contact\Models\ContactEmail;
 use App\Modules\Contact\Models\ContactRelation;
@@ -14,6 +16,7 @@ use App\Modules\CustomerPortal\Models\CustomerPortalAccount;
 use App\Modules\CustomerPortal\Models\CustomerPortalMembership;
 use App\Modules\Economy\Models\EconomyOrder;
 use App\Modules\Economy\Models\EconomyOrderLine;
+use App\Modules\System\Support\CompanyProfileSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
@@ -29,6 +32,12 @@ class CustomerPortalCommercialEconomyTest extends TestCase
 
         Role::firstOrCreate(['name' => 'Tech'])
             ->givePermissionTo('economy.order_manage');
+
+        app(CompanyProfileSettings::class)->update([
+            'company_name' => 'Portal Supplier',
+            'legal_name' => 'Portal Supplier AS',
+            'organization_number' => '999888777',
+        ]);
     }
 
     #[Test]
@@ -36,13 +45,17 @@ class CustomerPortalCommercialEconomyTest extends TestCase
     {
         [$client, $site, $portalUser] = $this->portalFixture('contracts@example.test');
         [, , $sitePortalUser] = $this->portalFixture('site-contracts@example.test', $client, $site);
-        $otherClient = Client::factory()->create(['name' => 'Other Contract Client AS', 'active' => true]);
+        $otherClient = Client::factory()->create([
+            'name' => 'Other Contract Client AS',
+            'org_no' => '123456789',
+            'active' => true,
+        ]);
         $tech = $this->techUser();
 
-        $approved = $this->contract($client, $tech, 'Approved Portal Contract', 'approved');
-        $won = $this->contract($client, $tech, 'Won Portal Contract', 'won');
+        $approved = $this->contract($client, $tech, 'Approved Portal Contract', 'draft');
+        $won = $this->contract($client, $tech, 'Won Portal Contract', 'draft');
         $draft = $this->contract($client, $tech, 'Draft Internal Contract', 'draft');
-        $other = $this->contract($otherClient, $tech, 'Other Client Contract', 'approved');
+        $other = $this->contract($otherClient, $tech, 'Other Client Contract', 'draft');
 
         ContractItem::query()->create([
             'contract_id' => $approved->id,
@@ -53,6 +66,20 @@ class CustomerPortalCommercialEconomyTest extends TestCase
             'unit' => 'month',
             'billing_interval' => 'monthly',
         ]);
+        foreach ([$won, $other] as $contract) {
+            ContractItem::query()->create([
+                'contract_id' => $contract->id,
+                'name' => 'Stored portal line',
+                'sku' => 'PORTAL-STORED',
+                'unit_price' => 100,
+                'quantity' => 1,
+                'unit' => 'month',
+                'billing_interval' => 'monthly',
+            ]);
+        }
+        $this->capturePortalContract($approved, 'approved', $tech);
+        $this->capturePortalContract($won, 'won', $tech);
+        $this->capturePortalContract($other, 'approved', $tech);
 
         $this->actingAs($portalUser)
             ->get(route('customer-portal.contracts.index'))
@@ -79,6 +106,84 @@ class CustomerPortalCommercialEconomyTest extends TestCase
             ->get(route('customer-portal.contracts.index'))
             ->assertOk()
             ->assertDontSee('Approved Portal Contract');
+    }
+
+    #[Test]
+    public function portal_contract_pagination_keeps_authorized_blocked_legacy_rows_without_live_document_data(): void
+    {
+        [$client, , $portalUser] = $this->portalFixture('paginated-contracts@example.test');
+        $tech = $this->techUser();
+
+        foreach (range(1, 15) as $sequence) {
+            $contract = $this->contract(
+                $client,
+                $tech,
+                sprintf('Paginated immutable contract %02d', $sequence),
+                'draft',
+            );
+            ContractItem::query()->create([
+                'contract_id' => $contract->id,
+                'name' => 'Immutable portal line '.$sequence,
+                'sku' => 'PORTAL-PAGE-'.$sequence,
+                'unit_price' => 100 + $sequence,
+                'quantity' => 1,
+                'unit' => 'month',
+                'billing_interval' => 'monthly',
+            ]);
+            $this->capturePortalContract($contract, 'approved', $tech);
+        }
+
+        $blocked = $this->contract($client, $tech, 'Blocked authorized legacy contract', 'draft');
+        ContractItem::query()->create([
+            'contract_id' => $blocked->id,
+            'name' => 'Unsafe live legacy line',
+            'sku' => 'PORTAL-BLOCKED-LIVE',
+            'unit_price' => 9876.54,
+            'quantity' => 1,
+            'unit' => 'month',
+            'billing_interval' => 'monthly',
+        ]);
+        $blocked->forceFill([
+            'approval_status' => 'sent_contract',
+            'start_date' => now()->addYears(3)->toDateString(),
+            'end_date' => now()->addYears(4)->toDateString(),
+            'sent_at' => now(),
+            'customer_document_snapshot' => null,
+        ])->saveQuietly();
+
+        $firstPage = $this->actingAs($portalUser)
+            ->get(route('customer-portal.contracts.index'))
+            ->assertOk()
+            ->assertSee('Kundedokument #'.$blocked->id)
+            ->assertSee('Under manuell kontroll')
+            ->assertSee('Kundedokumentet er sperret i påvente av manuell verifisering.')
+            ->assertSee('aria-label="Beløp utilgjengelig"', false)
+            ->assertDontSee(route('customer-portal.contracts.show', $blocked), false)
+            ->assertDontSee('9 876,54 kr');
+
+        $firstPage->assertViewHas('contracts', function ($contracts) use ($blocked): bool {
+            return $contracts->total() === 16
+                && $contracts->count() === 15
+                && $contracts->currentPage() === 1
+                && $contracts->lastPage() === 2
+                && $contracts->getCollection()->contains(
+                    fn (Contracts $contract): bool => $contract->is($blocked),
+                );
+        });
+
+        $this->actingAs($portalUser)
+            ->get(route('customer-portal.contracts.index', ['page' => 2]))
+            ->assertOk()
+            ->assertDontSee('Kundedokument #'.$blocked->id)
+            ->assertViewHas('contracts', fn ($contracts): bool => $contracts->total() === 16
+                && $contracts->count() === 1
+                && $contracts->currentPage() === 2
+                && $contracts->lastPage() === 2);
+
+        $this->actingAs($portalUser)
+            ->get(route('customer-portal.contracts.show', $blocked))
+            ->assertStatus(409);
+        $this->assertNull($blocked->fresh()->customer_document_snapshot);
     }
 
     #[Test]
@@ -154,7 +259,11 @@ class CustomerPortalCommercialEconomyTest extends TestCase
      */
     private function portalFixture(string $email, ?Client $client = null, ?ClientSite $site = null): array
     {
-        $client ??= Client::factory()->create(['name' => 'Portal Commerce Client AS', 'active' => true]);
+        $client ??= Client::factory()->create([
+            'name' => 'Portal Commerce Client AS',
+            'org_no' => '987654321',
+            'active' => true,
+        ]);
         $site ??= ClientSite::factory()->create(['client_id' => $client->id, 'name' => 'Main Office']);
         $contact = Contact::query()->create([
             'type' => 'person',
@@ -215,10 +324,21 @@ class CustomerPortalCommercialEconomyTest extends TestCase
             'created_by' => $tech->id,
             'description' => $description,
             'approval_status' => $status,
-            'start_date' => now()->subMonth()->toDateString(),
+            'start_date' => now()->addMonth()->toDateString(),
             'end_date' => now()->addYear()->toDateString(),
             'terms_snapshot' => 'Customer-facing contract terms.',
         ]);
+    }
+
+    private function capturePortalContract(Contracts $contract, string $status, User $tech): void
+    {
+        app(ContractTermSnapshotReadiness::class)->markReviewed($contract, $tech->id);
+        app(CaptureContractCustomerDocument::class)->handle($contract, $status);
+        $contract->forceFill([
+            'approval_status' => $status,
+            'accepted_at' => now(),
+        ])->saveQuietly();
+        $contract->refresh();
     }
 
     private function order(Client $client, string $orderNumber, mixed $portalVisibleAt): EconomyOrder

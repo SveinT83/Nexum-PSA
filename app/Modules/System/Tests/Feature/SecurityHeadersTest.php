@@ -10,8 +10,7 @@ class SecurityHeadersTest extends TestCase
     #[Test]
     public function application_responses_include_security_headers(): void
     {
-        $this->withServerVariables(['HTTPS' => 'on'])
-            ->get('/login')
+        $this->get('https://localhost/login')
             ->assertOk()
             ->assertHeader('X-Frame-Options', 'DENY')
             ->assertHeader('X-Content-Type-Options', 'nosniff')
@@ -29,12 +28,34 @@ class SecurityHeadersTest extends TestCase
             'session.same_site' => 'lax',
         ]);
 
-        $response = $this->withServerVariables(['HTTPS' => 'on'])->get('/login');
+        $response = $this->get('https://localhost/login');
         $setCookie = strtolower(implode("\n", $response->headers->all('Set-Cookie')));
 
         $this->assertStringContainsString('secure', $setCookie);
         $this->assertStringContainsString('httponly', $setCookie);
         $this->assertStringContainsString('samesite=lax', $setCookie);
+    }
+
+    #[Test]
+    public function websocket_csp_uses_only_the_exact_configured_reverb_origin(): void
+    {
+        config()->set('email_live.enabled', true);
+        config()->set('email_live.runtime_approved', true);
+        config()->set('email_live.allowed_origins', ['https://nexum.example.test']);
+        config()->set('broadcasting.default', 'reverb');
+        config()->set('reverb.servers.reverb.host', '127.0.0.1');
+        config()->set('broadcasting.connections.reverb.options.host', 'mail-live.example.test');
+        config()->set('broadcasting.connections.reverb.options.port', 443);
+        config()->set('broadcasting.connections.reverb.options.scheme', 'https');
+
+        $policy = (string) $this->get('/login')->headers->get('Content-Security-Policy');
+
+        $this->assertStringContainsString(
+            "connect-src 'self' https: wss://mail-live.example.test:443",
+            $policy,
+        );
+        $this->assertDoesNotMatchRegularExpression('/(?:^|\s)wss?:($|\s|;)/', $policy);
+        $this->assertStringNotContainsString('*', $policy);
     }
 
     #[Test]

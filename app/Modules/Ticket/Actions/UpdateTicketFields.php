@@ -52,7 +52,35 @@ class UpdateTicketFields
                 }
             }
 
-            if ($after === []) {
+            if (array_key_exists('is_scheduled', $data)) {
+                $isScheduled = (bool) $data['is_scheduled'];
+                $schedule = $ticket->schedule()->first(); // Use query to avoid stale cache
+
+                if ($isScheduled) {
+                    $scheduleData = [
+                        'schedule_type' => $data['schedule_type'] ?? 'one_time',
+                        'planned_start_at' => $data['planned_start_at'] ?? null,
+                        'planned_end_at' => $data['planned_end_at'] ?? null,
+                        'timezone' => $data['timezone'] ?? 'UTC',
+                        'sla_mode' => $data['sla_mode'] ?? 'defer_until_planned_start',
+                        'updated_by' => $actor?->id,
+                    ];
+
+                    if ($schedule) {
+                        $schedule->update($scheduleData);
+                    } else {
+                        $scheduleData['created_by'] = $actor?->id;
+                        $ticket->schedule()->create($scheduleData);
+                        $after['is_scheduled'] = true;
+                    }
+                } elseif ($schedule) {
+                    $schedule->delete();
+                    $before['is_scheduled'] = true;
+                    $after['is_scheduled'] = false;
+                }
+            }
+
+            if ($after === [] && ! array_key_exists('is_scheduled', $data)) {
                 return $ticket;
             }
 

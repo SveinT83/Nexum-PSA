@@ -31,13 +31,15 @@ use App\Modules\Integration\Services\CloudFactory\CloudFactoryAudit;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryCatalogueSync;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryClientMapper;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryIntegration;
-use App\Modules\Integration\Services\CloudFactory\CloudFactoryLicenceService;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryLegalTermsSync;
+use App\Modules\Integration\Services\CloudFactory\CloudFactoryLicenceService;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryServiceManager;
 use App\Modules\Integration\Services\CloudFactory\CloudFactorySubscriptionSync;
 use App\Modules\Integration\Services\CloudFactory\CloudFactorySynchronizer;
 use App\Modules\Integration\Services\CloudFactory\CloudFactorySyncProgress;
 use App\Modules\Integration\Services\CloudFactory\CloudFactoryWebhookRegistration;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Database\Query\Grammars\SQLiteGrammar;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -1027,6 +1029,64 @@ class CloudFactoryIntegrationTest extends TestCase
     }
 
     #[Test]
+    public function contract_line_uses_exact_half_up_cloudfactory_markup_price(): void
+    {
+        $client = Client::factory()->create();
+        $unit = Units::query()->create(['name' => 'Licence', 'short' => 'lic']);
+        $integration = $this->activeIntegration([
+            'default_unit_id' => $unit->id,
+            'configured_by' => $this->admin->id,
+            'pricing_mode' => 'cost_markup',
+            'markup_percent' => '0.05',
+        ]);
+        $manager = app(CloudFactoryServiceManager::class);
+        $vendor = $manager->vendor($integration, 'Microsoft');
+        $offer = Offer::query()->create([
+            'integration_id' => $integration->id,
+            'external_product_id' => 'contract-exact-half-cent',
+            'sku' => 'CONTRACT-EXACT-HALF-CENT',
+            'name' => 'Exact half-cent Contract licence',
+            'provider_family' => 'microsoft',
+            'vendor_name' => 'Microsoft',
+            'vendor_id' => $vendor->id,
+            'recurrence_term' => 12,
+            'billing_term' => 1,
+            'cost' => '120.0000',
+            'msrp' => '180.0000',
+            'currency' => 'NOK',
+            'sell_enabled' => true,
+            'purchasable' => true,
+        ]);
+
+        $service = $manager->ensureService($offer);
+
+        $this->assertNotNull($service);
+        $this->assertSame('10.01', $manager->calculatedSalePrice($offer->fresh(), $service));
+        $this->assertSame('10.01', $service->price_ex_vat);
+        $this->assertSame('12.51', $service->price_including_tax);
+
+        $contract = Contracts::query()->create([
+            'client_id' => $client->id,
+            'description' => 'Exact Contract sale-price boundary.',
+            'start_date' => now()->addMonth()->toDateString(),
+            'approval_status' => 'draft',
+            'created_by' => $this->admin->id,
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test(ContractItemsEditor::class, ['contract' => $contract])
+            ->call('addItem')
+            ->set('items.0.service_id', $service->id)
+            ->assertHasNoErrors();
+
+        $item = $contract->items()->sole();
+
+        $this->assertSame('10.01', $item->unit_price);
+        $this->assertSame('NOK', $item->price_currency);
+        $this->assertSame('monthly', $item->billing_interval);
+    }
+
+    #[Test]
     public function cloudfactory_variants_create_separate_services_and_managed_costs(): void
     {
         $unit = Units::query()->create(['name' => 'Licence', 'short' => 'lic']);
@@ -1192,7 +1252,7 @@ class CloudFactoryIntegrationTest extends TestCase
             'created_by' => $this->admin->id,
         ]);
 
-        Livewire::actingAs($this->admin)
+        $editor = Livewire::actingAs($this->admin)
             ->test(ContractItemsEditor::class, ['contract' => $contract])
             ->call('addItem')
             ->set('items.0.service_id', $monthlyService->id)
@@ -1201,6 +1261,8 @@ class CloudFactoryIntegrationTest extends TestCase
             ->set('items.0.service_id', $yearlyService->id)
             ->assertSet('items.0.cloudfactory_offer_id', $yearly->id)
             ->assertSet('items.0.billing_interval', 'yearly');
+
+        $this->assertSame([], $editor->errors()->toArray());
 
         Livewire::actingAs($this->admin)
             ->test(ContractItemsEditor::class, ['contract' => $contract])
@@ -1217,6 +1279,15 @@ class CloudFactoryIntegrationTest extends TestCase
         $this->assertSame(12, $item->licence_metadata['cloudfactory_commitment_term']);
         $this->assertSame(12, $item->licence_metadata['cloudfactory_billing_term']);
         $this->assertEqualsWithDelta(129.7916, $contract->refresh()->yearly_profit, 0.0001);
+
+        $item->forceFill(['billing_interval' => 'monthly'])->save();
+
+        Livewire::actingAs($this->admin)
+            ->test(ContractItemsEditor::class, ['contract' => $contract->fresh()])
+            ->call('syncBillingIntervalFromService', 0)
+            ->assertSet('items.0.billing_interval', 'yearly');
+
+        $this->assertSame('yearly', $item->fresh()->billing_interval);
     }
 
     #[Test]
@@ -1487,6 +1558,234 @@ class CloudFactoryIntegrationTest extends TestCase
         $this->assertSame(5.0, (float) $line->quantity);
         $this->assertSame(120.0, (float) $line->unit_price_ex_vat);
         $this->assertSame(600.0, (float) $line->line_total_ex_vat);
+
+        $beforeForeignCurrency = $item->fresh()->only([
+            'unit_price',
+            'price_currency',
+            'quantity',
+            'provider_subscription_id',
+        ]);
+        $offer->forceFill([
+            'currency' => 'EUR',
+            'msrp' => 999,
+        ])->save();
+        $foreignCurrencyRun = SyncRun::query()->create([
+            'integration_id' => $integration->id,
+            'kind' => 'subscriptions',
+            'status' => 'running',
+            'started_at' => now(),
+        ]);
+
+        app(CloudFactorySubscriptionSync::class)->run($integration, $foreignCurrencyRun);
+
+        $subscription = $contract->cloudFactorySubscriptions()->firstOrFail();
+        $conflict = Conflict::query()
+            ->where('conflict_type', 'contract_price_currency')
+            ->where('external_id', 'microsoft-subscription-1')
+            ->firstOrFail();
+
+        $this->assertSame('blocked', $subscription->billing_state);
+        $this->assertSame('NOK', data_get($conflict->fields, 'supported_currency'));
+        $this->assertSame('EUR', data_get($conflict->fields, 'incoming_currency'));
+        $this->assertSame($beforeForeignCurrency, $item->fresh()->only([
+            'unit_price',
+            'price_currency',
+            'quantity',
+            'provider_subscription_id',
+        ]));
+    }
+
+    #[Test]
+    public function subscription_reconciliation_locks_authoritative_contract_before_scoped_item(): void
+    {
+        $client = Client::factory()->create(['name' => 'Lock boundary client']);
+        $unit = Units::query()->create(['name' => 'Licence', 'short' => 'lic']);
+        $integration = $this->activeIntegration([
+            'default_unit_id' => $unit->id,
+            'configured_by' => $this->admin->id,
+        ]);
+        $service = Services::query()->create([
+            'name' => 'Locked CloudFactory licence',
+            'sku' => 'CF-LOCKED',
+            'unitId' => $unit->id,
+            'source' => 'cloudfactory',
+            'status' => 'Active',
+            'availability_audience' => 'business',
+            'orderable' => true,
+            'taxable' => 25,
+            'billing_cycle' => 'monthly',
+            'price_ex_vat' => 120,
+            'price_including_tax' => 150,
+            'cost_price' => 90,
+            'suggested_sale_price' => 120,
+            'price_currency' => 'NOK',
+            'created_by_user_id' => $this->admin->id,
+            'updated_by_user_id' => $this->admin->id,
+        ]);
+        $offer = Offer::query()->create([
+            'integration_id' => $integration->id,
+            'external_product_id' => 'contract-lock-product',
+            'sku' => $service->sku,
+            'name' => $service->name,
+            'provider_family' => 'microsoft',
+            'service_id' => $service->id,
+            'cost' => 90,
+            'msrp' => 120,
+            'currency' => 'NOK',
+            'sell_enabled' => true,
+            'purchasable' => true,
+        ]);
+        $contractData = [
+            'client_id' => $client->id,
+            'created_by' => $this->admin->id,
+            'description' => 'CloudFactory lock boundary',
+            'approval_status' => 'won',
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'allow_license_increases' => true,
+            'allow_license_price_updates' => true,
+        ];
+        $oldContract = Contracts::query()->create(array_replace($contractData, [
+            'description' => 'Older CloudFactory contract',
+            'accepted_at' => now()->subDay(),
+        ]));
+        $oldItem = ContractItem::query()->create([
+            'contract_id' => $oldContract->id,
+            'service_id' => $service->id,
+            'name' => $service->name,
+            'sku' => $service->sku,
+            'unit_price' => 120,
+            'quantity' => 1,
+            'unit' => 'licence',
+            'billing_interval' => 'monthly',
+        ]);
+        $contract = Contracts::query()->create(array_replace($contractData, [
+            'description' => 'Authoritative CloudFactory contract',
+            'accepted_at' => now(),
+        ]));
+        $snapshot = [
+            'schema_version' => 1,
+            'immutable_marker' => 'preserve-cloudfactory-customer-document',
+        ];
+        $contract->forceFill(['customer_document_snapshot' => $snapshot])->saveQuietly();
+        $item = ContractItem::query()->create([
+            'contract_id' => $contract->id,
+            'service_id' => $service->id,
+            'name' => $service->name,
+            'sku' => $service->sku,
+            'unit_price' => 120,
+            'quantity' => 1,
+            'unit' => 'licence',
+            'billing_interval' => 'monthly',
+        ]);
+        $subscription = \App\Modules\Integration\Models\CloudFactory\Subscription::query()->create([
+            'integration_id' => $integration->id,
+            'client_id' => $client->id,
+            'offer_id' => $offer->id,
+            'service_id' => $service->id,
+            'contract_id' => $oldContract->id,
+            'contract_item_id' => $oldItem->id,
+            'provider_family' => 'microsoft',
+            'external_subscription_id' => 'contract-lock-subscription',
+            'name' => $service->name,
+            'quantity' => 3,
+            'status' => 'active',
+            'auto_renew' => true,
+            'unit_cost' => 90,
+            'unit_sale_price' => 120,
+            'currency' => 'NOK',
+            'provider_payload' => ['source' => 'lock-boundary-test'],
+        ]);
+        $before = $subscription->replicate()->forceFill([
+            'quantity' => 1,
+            'unit_sale_price' => '120.0000',
+        ]);
+        $baselineTransactionLevel = DB::transactionLevel();
+        $queries = [];
+
+        DB::listen(function ($query) use (&$queries): void {
+            $sql = str_replace('`', '', strtolower($query->sql));
+
+            if (! str_contains($sql, 'contracts') && ! str_contains($sql, 'contract_items')) {
+                return;
+            }
+
+            $queries[] = [
+                'sql' => $sql,
+                'transaction_level' => DB::transactionLevel(),
+            ];
+        });
+
+        $method = new \ReflectionMethod(CloudFactorySubscriptionSync::class, 'applyContract');
+        $method->setAccessible(true);
+        $connection = DB::connection();
+        $originalGrammar = $connection->getQueryGrammar();
+
+        if ($connection->getDriverName() === 'sqlite') {
+            // SQLite drops lock clauses. Compile a harmless SQL comment so the
+            // test still proves that both production builders request a lock.
+            $connection->setQueryGrammar(new class($connection) extends SQLiteGrammar
+            {
+                protected function compileLock(QueryBuilder $query, $value)
+                {
+                    return $value ? ' /* for update */' : '';
+                }
+            });
+        }
+
+        try {
+            $method->invoke(app(CloudFactorySubscriptionSync::class), $subscription, $before);
+        } finally {
+            $connection->setQueryGrammar($originalGrammar);
+        }
+
+        $contractQueryIndex = collect($queries)->search(
+            fn (array $query): bool => str_contains($query['sql'], 'contracts')
+                && ! str_contains($query['sql'], 'contract_items')
+        );
+        $firstItemIndex = collect($queries)->search(
+            fn (array $query): bool => str_contains($query['sql'], 'contract_items')
+        );
+
+        $this->assertNotFalse($contractQueryIndex, 'The authoritative Contract was not re-read.');
+        $this->assertNotFalse($firstItemIndex, 'The ContractItem was not re-read.');
+        $this->assertTrue(
+            $contractQueryIndex < $firstItemIndex,
+            'The parent Contract must be resolved before its item.'
+        );
+        $this->assertStringContainsString('contract_id', $queries[$firstItemIndex]['sql']);
+        $this->assertGreaterThan($baselineTransactionLevel, $queries[$contractQueryIndex]['transaction_level']);
+        $this->assertGreaterThan($baselineTransactionLevel, $queries[$firstItemIndex]['transaction_level']);
+
+        $this->assertStringContainsString('for update', $queries[$contractQueryIndex]['sql']);
+        $this->assertStringContainsString('for update', $queries[$firstItemIndex]['sql']);
+
+        $this->assertSame(1, $oldItem->fresh()->quantity);
+        $this->assertNull($oldItem->provider_subscription_id);
+        $this->assertSame(3, $item->fresh()->quantity);
+        $this->assertSame('contract-lock-subscription', $item->fresh()->provider_subscription_id);
+        $subscription->refresh();
+        $this->assertSame($contract->id, $subscription->contract_id);
+        $this->assertSame($item->id, $subscription->contract_item_id);
+        $this->assertSame('confirmed', $subscription->billing_state);
+        $this->assertSame($snapshot, $contract->fresh()->customer_document_snapshot);
+        $this->assertDatabaseHas('cloudfactory_licence_amendments', [
+            'subscription_id' => $subscription->id,
+            'contract_id' => $contract->id,
+            'contract_item_id' => $item->id,
+            'old_quantity' => 1,
+            'new_quantity' => 3,
+        ]);
+        $this->assertDatabaseHas('cloudfactory_billing_periods', [
+            'subscription_id' => $subscription->id,
+            'contract_item_id' => $item->id,
+            'quantity' => 3,
+            'status' => 'confirmed',
+        ]);
+        $this->assertSame(0, Conflict::query()
+            ->where('external_id', $subscription->external_subscription_id)
+            ->whereIn('conflict_type', ['contract_link', 'contract_quantity', 'contract_price_currency'])
+            ->count());
     }
 
     #[Test]

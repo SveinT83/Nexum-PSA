@@ -56,6 +56,22 @@
         </div>
 
         <!-- ------------------------------------------------- -->
+        <!-- Customer-facing quantity labels -->
+        <!-- ------------------------------------------------- -->
+        <div class="row justify-content-between pb-3 mt-3 mb-3">
+
+            <!-- Singular customer unit -->
+            <div class="col-md-6 mb-3">
+                <x-forms.input_text name="customer_unit_singular" labelName="Customer Unit (Singular)" type="text" value="{{ old('customer_unit_singular', $service->customer_unit_singular ?? '') }}" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
+            </div>
+
+            <!-- Plural customer unit -->
+            <div class="col-md-6 mb-3">
+                <x-forms.input_text name="customer_unit_plural" labelName="Customer Unit (Plural)" type="text" value="{{ old('customer_unit_plural', $service->customer_unit_plural ?? '') }}" enabled="{{ $enabled }}" errorMsg="{{ $message ?? '' }}"></x-forms.input_text>
+            </div>
+        </div>
+
+        <!-- ------------------------------------------------- -->
         <!-- short_description -->
         <!-- ------------------------------------------------- -->
         <div class="row justify-content-between pb-3 mt-3 mb-3">

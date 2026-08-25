@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Presence, Shared Draft Locks, And Stale Composer Protection
 
-Status: Queued / Dependency Gated
+Status: Backend/API Safety Rework Implemented / Runtime And UI Dependency Gated
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -69,8 +69,10 @@ Implement an Email-owned presence service and heartbeat endpoint over Redis/Reve
 
 ### Shared draft and fencing
 
-Reserve migration `2026_08_16_131000_add_email_shared_draft_coordination.php`, after order 8's
-`130000` migration.
+The reviewed forward implementation reserves
+`2026_08_24_125000_add_email_shared_draft_coordination.php`. It follows Order 11's `110000`
+draft/submission schema, which later ran in Dev batch 124, and leaves the historical inert Order 9
+`140000` marker unchanged.
 
 Add compatible fields to `email_composer_drafts`:
 
@@ -141,8 +143,8 @@ existing outbound/Sent reconciliation ledger and is never blindly retried.
   provider Draft APPEND redesign.
 - Ticket-originated UI. Order 18 may reuse the Email actions after it supplies exact Email source
   identity and current Mail authority.
-- Compose/send API parity, review/approval workflow, assignments/comments, snooze/follow-up, or
-  reporting; these remain later slices.
+- Review/approval workflow, assignments/comments, snooze/follow-up, or reporting remain later
+  slices. Order 11 compose/send API parity is an implemented dependency reused here.
 
 ## Permissions
 
@@ -161,7 +163,8 @@ existing outbound/Sent reconciliation ledger and is never blindly retried.
 Add Email-module routes for bounded heartbeat/leave, presence snapshot, share/acquire/renew/release,
 stale preview/rebase, and shared-draft state. Session routes use `web`, `auth`, `tech`, `2fa.required`,
 CSRF, exact throttles, and module permission exemptions only where ordinary mailbox authority is
-evaluated inside the action. API parity waits for order 11.
+evaluated inside the action. Order 11 API parity is now reused by the default-off collaboration API;
+its token abilities remain ceilings and never replace current ordinary mailbox authority.
 
 Use the existing Livewire/Alpine runtime and order 8 client module; do not import Alpine again.
 Presence indicators are compact, accessible text plus status, not color only. Lock and stale banners
@@ -205,8 +208,11 @@ application rollback precedes any guarded schema rollback.
 ## Done Criteria
 
 - [ ] Order 8 and all listed dependencies are stable before shared integration starts.
-- [ ] Ephemeral private presence expires and contains no content or permanent heartbeat history.
-- [ ] Shared drafts are explicit, account/conversation scoped, and protected by durable fencing.
-- [ ] Every stale source/audience/provider/access condition blocks send until explicit rebase.
+- [x] Ephemeral private presence expires and contains no content or permanent heartbeat history in
+  the backend/API safety suite; browser/Reverb operation remains gated by Order 8.
+- [x] Shared drafts are explicit, account/conversation scoped, and protected by durable fencing in
+  the unactivated backend/API boundary.
+- [x] Stale source/audience/provider/access evidence blocks shared submission; explicit rebase and
+  the Order 11 once-only ledger are implemented.
 - [ ] Focused, affected-module, asset, route, worker, Reverb/Redis outage, and responsive tests pass.
-- [ ] Docs/TODO/index/Knowledge and `HR-2026-08-16-009` are updated; human review remains Pending.
+- [x] Docs/TODO/index/Knowledge and `HR-2026-08-16-009` are updated; human review remains Pending.

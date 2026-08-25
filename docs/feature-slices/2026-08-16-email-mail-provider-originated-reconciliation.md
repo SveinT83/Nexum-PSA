@@ -244,11 +244,11 @@ correctness fallback for flag changes, expunges, lost/duplicate/out-of-order hin
 - The Notification scheduler dispatches one page of at most 100 pending/abandoned inbound external
   outbox rows every minute on the `notifications` queue.
 
-The documented Dev runtime previously had only an external hard-coded `email:poll --account=1` cron
-and no observed `schedule:run`. Order 7 is implemented and automatically verified, but it is not
-operationally complete until an operator applies the pending migrations on a backed-up Dev database,
-installs/verifies the Laravel scheduler runner or equivalent explicit all-account commands, and
-verifies the required Email/default/notification workers plus optional `email-idle` worker.
+The current Dev runtime uses an explicit all-account `email:poll --scheduled` cron and one database
+`email,default` worker. Both Integration-bound accounts repeatedly poll successfully. The complete
+Laravel scheduler and `notifications` worker are still absent. Because 136 notification-fanout jobs
+are unattempted while relevant Web Push settings are already enabled, an operator must review that
+cohort before activating notification delivery or the full scheduler.
 
 ## Authorization And UI
 
@@ -295,9 +295,11 @@ standalone durable-fanout contract (**34 / 468**) and the rolling unread-schema 
 contract (**4 / 26**). The existing disposable MariaDB guard/path/Integration matrix passes
 **3 / 434**, and the final `118500` contract passes **3 / 163** using Laravel's `mysql` driver
 against a real private MariaDB server. These are focused results, not a claim that the complete
-repository suite is clean. The final complete Email Feature directory passes **621 tests / 6,345
-assertions** after three stale fixtures were aligned with existing Ticket-pointer, unresolved-
-operation serialization and frozen provider-observation contracts; no production guard was relaxed.
+repository suite is clean. The clean final 2026-08-24 complete Email Feature directory passes
+**686 tests / 7,046 assertions**, including the ordinary-folder-cap and truthful child-progress
+regressions: scheduled/manual/catch-up runs accept the exact existing hard cap of 500 folders and
+fail closed at 501, while durable import/baseline/automation/fanout work advances run progress and
+no-op/retry/wait polls do not. No production guard was relaxed.
 Exact scopes are recorded in `HR-2026-08-16-007`; passing automation
 does not complete any manual checkbox or authorize a provider run, migration, scheduler change,
 worker restart, or deployment.
@@ -310,13 +312,19 @@ The external scheduler, required Email/notification workers, and optional IDLE p
 operator tasks; no deployment automatically starts provider reconciliation or enables destructive
 cleanup.
 
-Connectivity to the authoritative Dev/Plesk MySQL endpoint is restored. A sanitized, read-only
-`php artisan migrate:status` check on 2026-08-21 reports the exact 20 Order-1-through-7 migrations
-`100000` through `118500` as Ran in Dev batches 99-103. Authenticated browser/provider checks,
+Connectivity to the authoritative Dev/Plesk MySQL endpoint is restored. The exact 20
+Order-1-through-7 migrations `100000` through `118500` are Ran in recovered Dev batches 98–117. A
+controlled account-2 catch-up initially exposed 137 eligible folders against the old ordinary
+default of 100 and failed without observations. Corrected replacement run 2 read the complete
+bounded scope and finished terminal `stale` in `summary`: 137 folders, 131 complete and 6 stale with
+`provider_tuple_drift`; 8,427 observations; 7 confirmed missing; and 0 moves, conflicts or errors.
+Provider-wins projection hid seven local placements and soft-deleted caches where no active
+placement survived; three pending observations are confined to the stale folders. No provider write
+or notification delivery occurred. Authenticated browser/provider checks,
 scheduler/worker/queue/backlog validation, and rollback smoke remain operator-gated. The
-`HR-2026-08-16-007` review summary records Svein's 2026-08-19 approval, while its older detailed
-checklist still needs human record reconciliation. SQLite and disposable private-socket MariaDB
-automation do not replace current runtime checks.
+`HR-2026-08-16-007` history preserves Svein's 2026-08-19 review and records the 2026-08-24 reopening
+for the folder-cap/progress/runtime changes and current checks. SQLite and disposable private-socket
+MariaDB automation do not replace current runtime checks.
 
 The still-open detailed `HR-2026-08-16-007` checks require controlled verification of:
 external flags, move/copy/Trash, folder lifecycle, Draft/Sent, unchanged personal unread, visible

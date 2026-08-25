@@ -63,11 +63,13 @@ class TimeRateController extends Controller
             'applies_without_contract' => ['nullable', 'boolean'],
             'applies_with_contract' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
+            'is_customer_visible' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]) + [
             'applies_without_contract' => false,
             'applies_with_contract' => false,
             'is_active' => false,
+            'is_customer_visible' => false,
             'sort_order' => 0,
         ];
     }

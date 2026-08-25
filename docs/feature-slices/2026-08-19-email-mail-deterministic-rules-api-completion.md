@@ -1,13 +1,48 @@
 # Feature Slice: Email Deterministic Rules API Completion
 
-Status: Rework Needed
+Status: Safety Rework Implemented / Full Slice Dependency Gated
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 10)
 Review ID: `HR-2026-08-16-010`
 
-2026-08-21 audit: the current Undo scaffold changes local folder state without a provider operation
-or the complete immutable execution/reversal contract. The slice has no focused completion tests and
-must not be represented as API/Undo parity.
+2026-08-21 audit: the then-current Undo scaffold changed local folder state without a provider
+operation or the complete immutable execution/reversal contract. It had no focused completion tests
+and could not be represented as API/Undo parity.
+
+## 2026-08-24 Beta-Critical Safety Repair
+
+The unsafe scaffold is replaced by the smallest complete contract that can be enabled before the
+full dependency-gated slice:
+
+- A completed `EmailRuleExecutionAttempt` is immutable. Rule execution records `failed` for the
+  first failed action and `not_run` for every later action, using stable reason codes rather than raw
+  exceptions.
+- Admin rule execution detail and Undo eligibility are exposed through account-scoped REST routes
+  using `email.rules.read`; applying Undo additionally requires `email.rules.execute`, current
+  `email.rule_manage`, and current Mailbox Organize access.
+- Undo is available only when the whole successful attempt is represented by exactly one allowlisted
+  provider Archive or Move result. The immutable action position/type/target, account, placement,
+  operation type, acknowledged result, and source remote-operation ID must all agree.
+- The inverse is delegated to the existing verified `UndoEmailRemoteOperation` contract. It rechecks
+  the 15-minute window, current mailbox authority, exact local/provider evidence, later operations,
+  and provider state; repeated requests return the same uniquely linked inverse.
+- Mixed successful effects, compatibility local Archive, tags, cross-domain actions, missing ledger
+  evidence, mismatched targets, stale state, and ambiguous outcomes fail closed before any inverse or
+  local compensation is created. The execution attempt is never rewritten as `reverted`.
+- Execution API output contains only action identity/status, stable reason codes, and opaque operation
+  IDs. It omits condition/message content, before/target evidence, folder paths, and raw exception or
+  provider messages.
+
+No migration, database data change, queue/scheduler change, provider call, cron change, or runtime
+activation was performed for this repair. Focused SQLite verification passes 5 tests / 65 assertions;
+adjacent Email Undo, supervised cleanup, inbound automation, and Integration coverage passes 91 /
+875; targeted existing Rules API/runtime coverage passes 3 / 36.
+
+This safety repair does not complete the full Order 10 target in
+`docs/feature-slices/2026-08-16-email-mail-deterministic-rules-api-completion.md`. Separate durable
+draft editing, bounded selection previews, reprocess run/item/action ledgers, retry/full-rerun
+coordination, and complete API/OpenAPI parity remain dependency-gated by the unfinished Orders 8-9.
+The slice and human review therefore remain open.
 
 ## Purpose
 
@@ -45,4 +80,5 @@ This slice completes the Email Rules API by implementing full versioning, drafti
 
 - **Boundary:** Focused on deterministic execution; no AI-based rule suggestions here.
 - **Risk:** Complex undo logic for destructive or external actions (replies).
-- **Mitigation:** Focus undo on internal state changes (folders, tags).
+- **Mitigation:** Offer Undo only through an allowlisted, exact, provider-verified inverse; reject
+  local-only or mixed compensation.

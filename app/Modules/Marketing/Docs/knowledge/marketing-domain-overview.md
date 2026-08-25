@@ -113,8 +113,10 @@ Cloud. Default interest tags prepare later open/click tracking and Sales categor
 Marketing campaigns are created as drafts from one or more mailing lists, send rhythm, sender
 account, and send preferences. Campaign emails are added after the campaign exists from the campaign detail page.
 Each campaign email uses an active Email template with the `marketing` scope as its starting point,
-then stores its own subject, HTML body, plaintext body, and template metadata as a snapshot. Each
-campaign can choose a sender account. If it does not, Marketing uses the active Email account marked
+then stores its own subject, HTML body, plaintext body, materialized outer layout, and template
+metadata as a snapshot. The body uses the shared visual/source HTML editor; layout ownership stays
+with the reusable Email template and is not edited from the campaign. Each campaign can choose a
+sender account. If it does not, Marketing uses the active Email account marked
 as default for the `marketing` scope.
 
 A campaign must be approved by a technician with `marketing.campaign.approve` before sending. On
@@ -158,7 +160,8 @@ inert until explicitly continued or extended, at which point the same lifetime n
 
 Campaign emails send from their stored snapshot, not from the live Email template. This means an
 administrator can later change a reusable Marketing template without silently changing draft,
-approved, active, or historical campaign emails that were already created from it.
+approved, active, or historical campaign emails that were already created from it. Company Profile
+branding is materialized into that layout snapshot at campaign-email creation for the same reason.
 
 Adding a sequence email to an approved or active campaign creates the next eligible pending step for
 current list members at their next configured occurrence. Contacts that are still progressing reach
@@ -166,11 +169,12 @@ the appended email in order; caught-up contacts receive it as their next step. T
 shows ongoing sequence behavior and derived in-progress, caught-up, blocked/review, and next-due
 information instead of completion and repeat controls.
 
-Preview uses the editable HTML body in the campaign email form. Known recipient/company
-placeholders such as `contact_name`, `client_name`, `company_name`, and `unsubscribe_url` are
-rendered with real campaign/audience-list context when available, then clear sample values. Unknown
-placeholders stay visible in preview so operators can see that the system does not know what data
-should replace them. Test-send uses the current editor fields and sends through the campaign sender
+Preview uses the editable visual/source HTML body and the campaign's stored layout. It calls the same
+server renderer as outbound delivery instead of building a second browser-only layout. Known
+recipient/company placeholders such as `contact_name`, `client_name`, `company_name`, and
+`unsubscribe_url` are rendered with real campaign/audience-list context when available, then clear
+sample values. Unknown placeholders stay visible so operators can see that the system does not know
+what data should replace them. Test-send uses the current editor fields and sends through the campaign sender
 account or the default `marketing` account. The test recipient defaults to the current technician
 email address and can be overwritten for a colleague. AI planning and drafting open from compact
 icon controls on the campaign and email editor surfaces, so the prompt is hidden until a technician

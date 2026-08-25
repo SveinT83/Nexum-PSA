@@ -25,6 +25,7 @@ class CommercialTimeRateResource extends JsonResource
             'applies_without_contract' => $this->applies_without_contract,
             'applies_with_contract' => $this->applies_with_contract,
             'is_active' => $this->is_active,
+            'is_customer_visible' => $this->is_customer_visible,
             'sort_order' => $this->sort_order,
             'services_count' => $this->whenCounted('services'),
             'created_at' => $this->created_at,

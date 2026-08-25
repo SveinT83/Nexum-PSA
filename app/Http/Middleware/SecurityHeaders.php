@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\Email\Services\EmailLiveRuntimeReadiness;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,6 +39,19 @@ class SecurityHeaders
      */
     private function contentSecurityPolicy(): string
     {
+        $connectSources = ["'self'", 'https:'];
+        if (app(EmailLiveRuntimeReadiness::class)->ready()) {
+            $host = trim((string) config('broadcasting.connections.reverb.options.host'));
+            $port = (int) config('broadcasting.connections.reverb.options.port', 443);
+            $scheme = config('broadcasting.connections.reverb.options.scheme', 'https') === 'https'
+                ? 'wss'
+                : 'ws';
+
+            if ($host !== '' && preg_match('/^[A-Za-z0-9.-]+$/D', $host) === 1 && $port > 0) {
+                $connectSources[] = "{$scheme}://{$host}:{$port}";
+            }
+        }
+
         return implode('; ', [
             "default-src 'self'",
             "base-uri 'self'",
@@ -47,7 +61,7 @@ class SecurityHeaders
             "font-src 'self' data: https:",
             "style-src 'self' 'unsafe-inline' https:",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
-            "connect-src 'self' https: ws: wss:",
+            'connect-src '.implode(' ', array_unique($connectSources)),
             "frame-src 'self' https:",
         ]);
     }

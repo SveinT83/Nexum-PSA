@@ -85,7 +85,7 @@
 
             <div class="card shadow-sm mt-3">
                 <div class="card-header bg-body">
-                    <h2 class="h6 mb-0">Quotes, Contracts and Orders</h2>
+                    <h2 class="h6 mb-0">Tilbud, avtaler og bestillinger</h2>
                 </div>
                 <div class="card-body">
                     <div class="row g-2">
@@ -93,7 +93,7 @@
                             <div class="col-sm-4">
                                 <a href="{{ route('customer-portal.quotes.index') }}" class="btn btn-outline-primary w-100 text-start">
                                     <i class="bi bi-file-earmark-check me-1" aria-hidden="true"></i>
-                                    Quotes
+                                    Tilbud
                                 </a>
                             </div>
                         @endif
@@ -101,7 +101,7 @@
                             <div class="col-sm-4">
                                 <a href="{{ route('customer-portal.contracts.index') }}" class="btn btn-outline-primary w-100 text-start">
                                     <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>
-                                    Contracts
+                                    Avtaler
                                 </a>
                             </div>
                         @endif
@@ -109,7 +109,7 @@
                             <div class="col-sm-4">
                                 <a href="{{ route('customer-portal.orders.index') }}" class="btn btn-outline-primary w-100 text-start">
                                     <i class="bi bi-receipt me-1" aria-hidden="true"></i>
-                                    Orders
+                                    Bestillinger
                                 </a>
                             </div>
                         @endif

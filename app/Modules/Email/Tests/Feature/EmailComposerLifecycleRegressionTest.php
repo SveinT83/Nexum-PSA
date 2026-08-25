@@ -201,7 +201,7 @@ class EmailComposerLifecycleRegressionTest extends TestCase
             'subject' => 'Unresolved provider append',
             'body_html' => '<p>Locally edited while reconciliation is pending.</p>',
             'idempotency_key' => 'unresolved-provider-append',
-        ]);
+        ], false, (int) $draft->version);
 
         $this->assertSame(
             EmailComposerDraft::PROVIDER_DRAFT_APPEND_OUTCOME_UNRESOLVED,

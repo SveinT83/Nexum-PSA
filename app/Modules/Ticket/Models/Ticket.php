@@ -242,6 +242,11 @@ class Ticket extends Model
         return $this->morphMany(Task::class, 'owner');
     }
 
+    public function schedule(): HasOne
+    {
+        return $this->hasOne(TicketSchedule::class);
+    }
+
     public function syncLinks(): HasMany
     {
         return $this->hasMany(NexumSyncLink::class, 'local_id')

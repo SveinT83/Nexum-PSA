@@ -22,6 +22,8 @@ class CommercialServiceResource extends JsonResource
             'integration_managed' => $this->isIntegrationManaged(),
             'name' => $this->name,
             'unit_id' => $this->unitId,
+            'customer_unit_singular' => $this->customer_unit_singular,
+            'customer_unit_plural' => $this->customer_unit_plural,
             'sla_id' => $this->sla_id,
             'category_id' => $this->category_id,
             'status' => $this->status,

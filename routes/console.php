@@ -297,9 +297,24 @@ Artisan::command('ai:cleanup-chats {--queue : Dispatch cleanup to the queue inst
 })->purpose('Clean up AI chat sessions based on retention settings');
 
 // Manual polling via CLI: php artisan email:poll [--account=ID] [--async]
-Artisan::command('email:poll {--account=} {--async}', function () {
+// Operations may add --scheduled for the all-account pause/interval-aware
+// tick without installing the cross-application Laravel scheduler.
+Artisan::command('email:poll {--account=} {--async} {--scheduled}', function () {
     $accountOption = $this->option('account');
     $accountId = null;
+
+    if ((bool) $this->option('scheduled')) {
+        if ($accountOption !== null) {
+            $this->error('The --scheduled option always evaluates all active accounts.');
+
+            return ConsoleCommand::INVALID;
+        }
+
+        app()->call([new PollActiveEmailAccounts, 'handle']);
+        $this->info('Scheduled all-account poll tick evaluated.');
+
+        return ConsoleCommand::SUCCESS;
+    }
 
     if ($accountOption !== null) {
         $validatedAccountId = filter_var(
@@ -344,7 +359,7 @@ Artisan::command('email:poll {--account=} {--async}', function () {
     }
 
     return ConsoleCommand::SUCCESS;
-})->purpose('Fetch new mail for active accounts (optionally one account)');
+})->purpose('Fetch new mail for active accounts or run the pause-aware scheduled tick');
 
 // Manual inbound rule processing: php artisan email:process-inbound-rules [--message=ID] [--limit=100] [--async]
 Artisan::command('email:process-inbound-rules {--message=} {--limit=100} {--async}', function () {

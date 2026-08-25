@@ -15,10 +15,10 @@ class EmailTemplate extends Model
     | rendered and sent by the outbound email flow, even when edited from the
     | global Templates hub.
     |
-    | Version 1 assumes a small set of seeded templates, typically one template
-    | per outbound use such as ticket_reply. Future routing can choose templates
-    | by client, language, brand, queue, or workflow rule without changing the
-    | storage model.
+    | Body HTML is content owned by the template. The surrounding document is
+    | either generated from live company branding or stored as an intentional
+    | custom layout. This explicit state prevents ordinary copy edits from
+    | accidentally freezing future branding changes.
     |
     */
     protected $fillable = [
@@ -28,6 +28,8 @@ class EmailTemplate extends Model
         'subject',
         'body_html',
         'body_text',
+        'layout_mode',
+        'layout_html',
         'variables',
         'is_default',
         'is_active',
@@ -39,6 +41,15 @@ class EmailTemplate extends Model
         'is_active' => 'boolean',
     ];
 
+    public const LAYOUT_BRANDING = 'branding';
+
+    public const LAYOUT_CUSTOM = 'custom';
+
+    public const LAYOUT_MODES = [
+        self::LAYOUT_BRANDING => 'Branding managed',
+        self::LAYOUT_CUSTOM => 'Custom HTML',
+    ];
+
     public const SCOPES = [
         'tickets' => 'Tickets',
         'system' => 'System notifications',
@@ -46,4 +57,9 @@ class EmailTemplate extends Model
         'marketing' => 'Marketing',
         'alerts' => 'Alerts',
     ];
+
+    public function usesCustomLayout(): bool
+    {
+        return $this->layout_mode === self::LAYOUT_CUSTOM;
+    }
 }

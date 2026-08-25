@@ -6,22 +6,31 @@ use App\Http\Controllers\Controller;
 use App\Mail\ContractLinkSent;
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Modules\Commercial\Actions\AttestLegacyContractCustomerDocument;
 use App\Modules\Commercial\Actions\BuildContractTermSnapshots;
+use App\Modules\Commercial\Actions\CaptureContractCustomerDocument;
 use App\Modules\Commercial\Actions\CaptureContractTermVersions;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\Commercial\Requests\ContractsRequest;
+use App\Modules\Commercial\Support\ContractCustomerDocument;
+use App\Modules\Commercial\Support\ContractDocumentReadiness;
+use App\Modules\Commercial\Support\ContractTermSnapshotReadiness;
 use App\Modules\Email\Services\BodyNormalizer;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\EmailProviderBindingSnapshot;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
 use App\Modules\System\Support\CompanyProfileSettings;
+use DomainException;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use UnexpectedValueException;
 
 /**
  * Class ContractController
@@ -48,10 +57,11 @@ class ContractController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function show(Contracts $contract)
+    public function show(Request $request, Contracts $contract)
     {
         $contract->load([
             'client',
+            'termSnapshots.termVersion',
             'sla',
             'items.slaPolicy',
             'items.timeRates',
@@ -59,25 +69,82 @@ class ContractController extends Controller
             'items.service.costRelations.cost',
         ]);
 
-        // Check for missing terms (services that have terms not in snapshot)
-        // This ensures the legal base is synchronized with the actual service list.
-        $hasMissingTerms = false;
-        foreach ($contract->items as $item) {
-            if ($item->service && $item->service->serviceTerms->count() > 0 && empty($contract->terms_snapshot)) {
-                $hasMissingTerms = true;
-                break;
-            }
+        // A reviewed fingerprint keeps appendix text aligned with the exact
+        // Service term versions that will be named in the frozen document.
+        $termReadiness = app(ContractTermSnapshotReadiness::class);
+        $hasMissingTerms = $contract->isEditable() && ! $termReadiness->isCurrent($contract);
+        $customerDocuments = app(ContractCustomerDocument::class);
+        $documentEvidenceBlockers = [];
+        $requiredLegacyDocumentType = match ((string) $contract->approval_status) {
+            'sent_quote' => 'Tilbud',
+            'sent_contract' => 'Avtale',
+            default => null,
+        };
+        $requestedLegacyDocumentType = $request->query('legacy_document_type');
+        $legacyDocumentType = $requiredLegacyDocumentType
+            ?? (in_array($requestedLegacyDocumentType, ['Tilbud', 'Avtale'], true)
+                ? $requestedLegacyDocumentType
+                : null);
+        $legacyDocumentTypeAmbiguous = $requiredLegacyDocumentType === null;
+
+        try {
+            $customerDocument = $customerDocuments->resolve($contract);
+        } catch (DomainException $exception) {
+            $documentEvidenceBlockers[] = $exception->getMessage();
+            $customerDocument = $customerDocuments->previewForLegacyAttestation(
+                $contract,
+                null,
+                $legacyDocumentType,
+            );
+        } catch (UnexpectedValueException) {
+            return redirect()->route('tech.contracts.index')
+                ->with('error', 'Kundedokumentets lagrede format kan ikke leses. Ingen live fallback ble brukt.');
         }
 
         // Readiness logic for the UI to enable/disable approval and export actions.
+        $documentReadiness = app(ContractDocumentReadiness::class);
+        $missingLegalIdentity = $documentReadiness->missingLegalIdentity($contract);
+        $hasCapturedCustomerDocument = $customerDocuments->hasStoredSnapshot($contract);
+        $legacyAttestationAvailable = ! $contract->isEditable()
+            && ! $hasCapturedCustomerDocument
+            && in_array($contract->approval_status, ['sent_quote', 'sent_contract', 'approved', 'won'], true);
+        $identityRequiredForNextTransition = $contract->isEditable() || ! $hasCapturedCustomerDocument;
+        $blockingLegalIdentity = $identityRequiredForNextTransition ? $missingLegalIdentity : [];
+        $legacyAttestationFingerprint = null;
+        if ($legacyAttestationAvailable
+            && $blockingLegalIdentity === []
+            && $legacyDocumentType !== null) {
+            try {
+                $legacyAttestationFingerprint = $customerDocuments->fingerprint($customerDocument);
+            } catch (UnexpectedValueException) {
+                // The marked internal aid may still be inspected, but an
+                // incomplete v1 document cannot be attested or released.
+            }
+        }
         $validation = [
             'has_items' => $contract->items->count() > 0,
             'has_terms' => ! empty($contract->terms_snapshot) || ! empty($contract->dpa_snapshot) || ! empty($contract->legal_snapshot),
             'future_start_date' => $contract->start_date && $contract->start_date->isFuture(),
-            'ready' => $contract->isReady(),
+            'valid_contract_period' => $contract->hasValidContractPeriod(),
+            'ready' => $contract->isReady() && ! $hasMissingTerms && $blockingLegalIdentity === [],
             'has_missing_terms' => $hasMissingTerms,
             'show_readiness_status' => ! in_array($contract->approval_status, ['approved', 'won'], true),
-            'pdf_available' => $this->canDownloadPdf($contract),
+            'pdf_available' => $this->canDownloadPdf($contract)
+                && $documentEvidenceBlockers === []
+                && ($hasCapturedCustomerDocument || $missingLegalIdentity === []),
+            'customer_access_available' => $documentEvidenceBlockers === []
+                && ($hasCapturedCustomerDocument || $missingLegalIdentity === [])
+                && filled($contract->secure_token),
+            'customer_document_missing_identity' => $blockingLegalIdentity,
+            'customer_document_evidence_blockers' => $documentEvidenceBlockers,
+            'legacy_attestation_available' => $legacyAttestationAvailable,
+            'legacy_attestation_fingerprint' => $legacyAttestationFingerprint,
+            'legacy_attestation_document_type' => $legacyDocumentType,
+            'legacy_attestation_document_type_ambiguous' => $legacyAttestationAvailable
+                && $legacyDocumentTypeAmbiguous,
+            'legacy_attestation_preview_available' => ! ($legacyAttestationAvailable
+                && $legacyDocumentTypeAmbiguous
+                && $legacyDocumentType === null),
         ];
 
         return view('commercial::Tech.cs.contracts.show', [
@@ -85,6 +152,7 @@ class ContractController extends Controller
             'client' => $contract->client,
             'validation' => $validation,
             'defaultSla' => Sla::query()->where('is_default', true)->orderBy('name')->first(),
+            'customerDocument' => $customerDocument,
         ]);
     }
 
@@ -93,6 +161,7 @@ class ContractController extends Controller
         $contract->load([
             'client',
             'sla',
+            'termSnapshots.termVersion',
             'items.slaPolicy',
             'items.timeRates',
         ]);
@@ -101,9 +170,45 @@ class ContractController extends Controller
             return back()->with('error', 'Contract is not ready for PDF export. Please add services, terms, and a valid start date first.');
         }
 
+        $readiness = app(ContractDocumentReadiness::class);
+        $documents = app(ContractCustomerDocument::class);
+        $profile = $companyProfile->get();
+        $hasStoredSnapshot = $documents->hasStoredSnapshot($contract);
+
+        // Historical evidence is the first gate. Populating today's identity
+        // cannot prove what was sent or accepted in the past.
+        if (! $hasStoredSnapshot && ! $contract->isEditable()) {
+            try {
+                $documents->resolve($contract, $profile);
+            } catch (DomainException $exception) {
+                return back()->with('error', $exception->getMessage());
+            } catch (UnexpectedValueException) {
+                return back()->with(
+                    'error',
+                    'Kundedokumentets lagrede format kan ikke leses. Ingen live fallback ble brukt.'
+                );
+            }
+        }
+
+        if (! $hasStoredSnapshot && $readiness->missingLegalIdentity($contract, $profile) !== []) {
+            return back()->with('error', $readiness->failureMessage($contract, $profile));
+        }
+
+        try {
+            $customerDocument = $documents->resolve($contract, $profile);
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        } catch (UnexpectedValueException) {
+            return back()->with(
+                'error',
+                'Kundedokumentets lagrede format kan ikke leses. Ingen live fallback ble brukt.'
+            );
+        }
+
         $html = view('commercial::Tech.cs.contracts.pdf', [
             'contract' => $contract,
-            'companyProfile' => $companyProfile->get(),
+            'companyProfile' => $profile,
+            'customerDocument' => $customerDocument,
         ])->render();
 
         $options = new Options;
@@ -114,6 +219,19 @@ class ContractController extends Controller
         $dompdf->loadHtml($html, 'UTF-8');
         $dompdf->setPaper('A4');
         $dompdf->render();
+
+        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans', 'normal');
+        $footerLeft = $customerDocument['document']['type'].' #'.$customerDocument['document']['contract_number']
+            .' · '.Str::limit((string) ($customerDocument['parties']['customer']['name'] ?? ''), 48);
+        $dompdf->getCanvas()->page_text(
+            36,
+            816,
+            $footerLeft,
+            $font,
+            8,
+            [0.35, 0.4, 0.47],
+        );
+        $dompdf->getCanvas()->page_text(485, 816, 'Side {PAGE_NUM} av {PAGE_COUNT}', $font, 8, [0.35, 0.4, 0.47]);
 
         return response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
@@ -140,7 +258,7 @@ class ContractController extends Controller
 
         $contractsQuery = Contracts::query()
             ->select('contracts.*')
-            ->selectRaw($this->monthlyPriceSortExpression().' as monthly_price_sort')
+            ->selectRaw('COALESCE(contracts.total_monthly_amount, 0) as monthly_price_sort')
             ->selectRaw($this->yearlyProfitSortExpression().' as yearly_profit_sort')
             ->with(['client', 'sla', 'items.service.costRelations.cost'])
             ->when($request->filled('q'), function ($query) use ($request): void {
@@ -192,24 +310,6 @@ class ContractController extends Controller
             'filters' => $request->only(['q', 'status', 'client_id', 'period', 'sort', 'direction']),
             'defaultSla' => Sla::query()->where('is_default', true)->orderBy('name')->first(),
         ]);
-    }
-
-    /**
-     * Build the SQL expression used for sorting by the same monthly line totals shown in the index.
-     */
-    private function monthlyPriceSortExpression(): string
-    {
-        return <<<SQL
-            (
-                SELECT COALESCE(SUM(
-                    CASE WHEN contract_items.billing_interval = 'monthly' THEN
-                        {$this->contractItemLineTotalExpression('contract_items')}
-                    ELSE 0 END
-                ), 0)
-                FROM contract_items
-                WHERE contract_items.contract_id = contracts.id
-            )
-        SQL;
     }
 
     /**
@@ -424,7 +524,22 @@ class ContractController extends Controller
             $validatedData['post_binding_index_pct'] = str_replace(',', '.', $request->post_binding_index_pct);
         }
 
-        $contract->update($validatedData);
+        $updated = DB::transaction(function () use ($contract, $validatedData): bool {
+            $locked = Contracts::query()->lockForUpdate()->findOrFail($contract->getKey());
+
+            if (! $locked->isEditable()) {
+                return false;
+            }
+
+            $locked->update($validatedData);
+            $locked->forceFill(['customer_document_snapshot' => null])->save();
+
+            return true;
+        });
+
+        if (! $updated) {
+            return back()->with('error', 'Only editable contract drafts can be changed.');
+        }
 
         return redirect()->route('tech.contracts.services.edit', [
             'contract' => $contract->id,
@@ -466,36 +581,68 @@ class ContractController extends Controller
      * 1. Aggregates all legal/terms/SLA/DPA entries from every service attached to the contract.
      * 2. Categorizes them into distinct buckets (terms, dpa, legal, sla, general).
      * 3. Deduplicates identical terms across multiple services to prevent redundant clauses.
-     * 4. Auto-fills snapshots if they are empty, creating a point-in-time legal baseline.
-     * 5. Supports 'refreshing' snapshots if the service list has changed.
+     * 4. Previews generated text for empty fields without mutating the contract on GET.
      *
      * @return \Illuminate\View\View
      */
-    public function terms(Contracts $contract, Request $request)
+    public function terms(Contracts $contract)
     {
-        $contract->load(['client', 'items.service.serviceTerms']);
-        $isRefresh = $request->has('refresh');
-        $builder = app(BuildContractTermSnapshots::class);
-        $termsByType = $builder->groupTermsByType($contract);
-        $snapshots = $builder->handle($contract);
-
-        foreach ($snapshots as $field => $content) {
-            if (empty($contract->$field) || $isRefresh) {
-                $contract->$field = $content;
-            }
+        if (! $contract->isEditable()) {
+            return redirect()->route('tech.contracts.show', $contract)->with('error', 'Accepted and sent contract terms are immutable.');
         }
 
-        // Persist generated snapshots so contract preview, public quote, and readiness checks
-        // all see the same legal content without requiring an extra manual save.
-        if ($contract->isDirty(['terms_snapshot', 'dpa_snapshot', 'legal_snapshot', 'sla_snapshot', 'general_snapshot'])) {
-            $contract->save();
+        $contract->load(['client', 'items.service.serviceTerms']);
+        $builder = app(BuildContractTermSnapshots::class);
+        $generatedSnapshots = $builder->handle($contract);
+        $hasGeneratedPreview = false;
+
+        // Empty fields show a generated preview, but only an explicit CSRF-protected POST
+        // may persist legal text or attest that a person reviewed it.
+        foreach ($generatedSnapshots as $field => $content) {
+            if (blank($contract->{$field}) && $content !== '') {
+                $contract->setAttribute($field, $content);
+                $hasGeneratedPreview = true;
+            }
         }
 
         return view('commercial::Tech.cs.contracts.terms.terms', [
             'contract' => $contract,
             'client' => $contract->client,
-            'termsByType' => $termsByType,
+            'termsByType' => $builder->groupTermsByType($contract),
+            'hasGeneratedPreview' => $hasGeneratedPreview,
         ]);
+    }
+
+    /**
+     * Replace draft term snapshots from the current Service sources after an explicit review action.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function termsRefresh(Contracts $contract)
+    {
+        $updated = DB::transaction(function () use ($contract): bool {
+            $locked = Contracts::query()->lockForUpdate()->findOrFail($contract->getKey());
+
+            if (! $locked->isEditable()) {
+                return false;
+            }
+
+            $locked->load('items.service.serviceTerms');
+            $locked->forceFill(array_merge(
+                app(BuildContractTermSnapshots::class)->handle($locked),
+                ['customer_document_snapshot' => null],
+            ))->save();
+            app(ContractTermSnapshotReadiness::class)->markReviewed($locked, auth()->id());
+
+            return true;
+        });
+
+        if (! $updated) {
+            return redirect()->route('tech.contracts.show', $contract)->with('error', 'Accepted and sent contract terms are immutable.');
+        }
+
+        return redirect()->route('tech.contracts.terms', $contract)
+            ->with('success', 'Contract terms refreshed and snapshotted successfully.');
     }
 
     /**
@@ -508,13 +655,30 @@ class ContractController extends Controller
      */
     public function termsUpdate(Request $request, Contracts $contract)
     {
-        $contract->update([
+        $updates = [
             'terms_snapshot' => $request->terms_snapshot,
             'dpa_snapshot' => $request->dpa_snapshot,
             'legal_snapshot' => $request->legal_snapshot,
             'sla_snapshot' => $request->sla_snapshot,
             'general_snapshot' => $request->general_snapshot,
-        ]);
+        ];
+        $updated = DB::transaction(function () use ($contract, $updates): bool {
+            $locked = Contracts::query()->lockForUpdate()->findOrFail($contract->getKey());
+
+            if (! $locked->isEditable()) {
+                return false;
+            }
+
+            $locked->update($updates);
+            $locked->forceFill(['customer_document_snapshot' => null])->save();
+            app(ContractTermSnapshotReadiness::class)->markReviewed($locked, auth()->id());
+
+            return true;
+        });
+
+        if (! $updated) {
+            return redirect()->route('tech.contracts.show', $contract)->with('error', 'Accepted and sent contract terms are immutable.');
+        }
 
         return redirect()->route('tech.contracts.index')
             ->with('success', 'Contract terms updated and snapshotted successfully.');
@@ -526,18 +690,13 @@ class ContractController extends Controller
      */
     public function sendQuote(Request $request, Contracts $contract, SendCustomerPortalNotification $portalNotifications)
     {
-        if (! $contract->isReady()) {
-            return back()->with('error', 'Contract is not ready to be sent. Please check items and terms.');
+        $transition = $this->transitionForSending($contract, 'sent_quote', $request->cc_email);
+        if (isset($transition['error'])) {
+            return back()->with('error', $transition['error']);
         }
 
-        $previousStatus = $contract->approval_status;
-        app(CaptureContractTermVersions::class)->replace($contract);
-        $contract->generateSecureToken();
-        $contract->update([
-            'approval_status' => 'sent_quote',
-            'sent_at' => now(),
-            'cc_email' => $request->cc_email,
-        ]);
+        $contract = $transition['contract'];
+        $previousStatus = $transition['previous_status'];
 
         if ($previousStatus !== 'sent_quote' && $contract->client_id) {
             $portalNotifications->handle(
@@ -570,18 +729,13 @@ class ContractController extends Controller
      */
     public function sendContract(Request $request, Contracts $contract, SendCustomerPortalNotification $portalNotifications)
     {
-        if (! $contract->isReady()) {
-            return back()->with('error', 'Contract is not ready to be sent. Please check items and terms.');
+        $transition = $this->transitionForSending($contract, 'sent_contract', $request->cc_email);
+        if (isset($transition['error'])) {
+            return back()->with('error', $transition['error']);
         }
 
-        $previousStatus = $contract->approval_status;
-        app(CaptureContractTermVersions::class)->replace($contract);
-        $contract->generateSecureToken();
-        $contract->update([
-            'approval_status' => 'sent_contract',
-            'sent_at' => now(),
-            'cc_email' => $request->cc_email,
-        ]);
+        $contract = $transition['contract'];
+        $previousStatus = $transition['previous_status'];
 
         if ($previousStatus !== 'sent_contract' && $contract->client_id) {
             $portalNotifications->handle(
@@ -609,19 +763,114 @@ class ContractController extends Controller
     }
 
     /**
+     * Atomically freeze terms, customer economics and the sent status while
+     * holding the same parent-row lock used by the contract item editor.
+     *
+     * @return array{contract?: Contracts, previous_status?: string, error?: string}
+     */
+    private function transitionForSending(Contracts $contract, string $status, ?string $ccEmail): array
+    {
+        return DB::transaction(function () use ($contract, $status, $ccEmail): array {
+            $locked = Contracts::query()
+                ->with('client')
+                ->lockForUpdate()
+                ->findOrFail($contract->getKey());
+
+            if (! $locked->isEditable()) {
+                return ['error' => 'Only editable contract drafts can be sent.'];
+            }
+
+            if (! $locked->isReady()) {
+                return ['error' => 'Contract is not ready to be sent. Please check items and terms.'];
+            }
+
+            $readiness = app(ContractDocumentReadiness::class);
+            if ($readiness->missingLegalIdentity($locked) !== []) {
+                return ['error' => $readiness->failureMessage($locked)];
+            }
+
+            $termReadiness = app(ContractTermSnapshotReadiness::class);
+            if (! $termReadiness->isCurrent($locked)) {
+                return ['error' => $termReadiness->failureMessage()];
+            }
+
+            $previousStatus = (string) $locked->approval_status;
+            app(CaptureContractTermVersions::class)->replace($locked);
+            app(CaptureContractCustomerDocument::class)->replace($locked, $status);
+            $locked->forceFill([
+                'approval_status' => $status,
+                'sent_at' => now(),
+                'cc_email' => $ccEmail,
+                // A newly sent document is a new bearer capability. Never let
+                // a link shared for an older draft/client open this snapshot.
+                'secure_token' => Str::random(64),
+            ])->save();
+
+            return [
+                'contract' => $locked,
+                'previous_status' => $previousStatus,
+            ];
+        });
+    }
+
+    /**
      * Resend the contract or quote email.
      */
     public function resend(Request $request, Contracts $contract)
     {
-        $type = ($contract->approval_status === 'sent_quote') ? 'quote' : 'contract';
+        try {
+            $result = DB::transaction(function () use ($request, $contract): array {
+                $locked = Contracts::query()
+                    ->with('client')
+                    ->lockForUpdate()
+                    ->findOrFail($contract->getKey());
 
-        $contract->update([
-            'cc_email' => $request->cc_email,
-        ]);
+                if (! in_array($locked->approval_status, ['sent_quote', 'sent_contract'], true)) {
+                    return ['error' => 'Only a sent quote or agreement can be resent.'];
+                }
 
-        if ($contract->client && $contract->client->billing_email) {
-            $this->sendEmailViaAccount($contract, $type);
+                if (blank($locked->secure_token)) {
+                    return [
+                        'error' => 'Kundelenke mangler for dette historiske dokumentet. Ny offentlig tilgang må opprettes gjennom en separat, kontrollert utsending.',
+                    ];
+                }
+
+                // A resend may expose the public customer link. Require the
+                // same complete immutable evidence as the customer surfaces.
+                app(ContractCustomerDocument::class)->resolve($locked);
+
+                $billingEmail = trim((string) $locked->client?->billing_email);
+                if (Validator::make(
+                    ['billing_email' => $billingEmail],
+                    ['billing_email' => ['required', 'email']],
+                )->fails()) {
+                    return [
+                        'error' => 'Kundens faktura-e-post mangler eller er ugyldig. Ingen e-post ble sendt, og kopi-adressen ble ikke endret.',
+                    ];
+                }
+
+                $locked->forceFill(['cc_email' => $request->cc_email])->save();
+
+                return [
+                    'contract' => $locked,
+                    'type' => $locked->approval_status === 'sent_quote' ? 'quote' : 'contract',
+                ];
+            });
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        } catch (UnexpectedValueException) {
+            return back()->with(
+                'error',
+                'Kundedokumentets lagrede format kan ikke behandles automatisk. Ingen live fallback ble brukt.'
+            );
         }
+
+        if (isset($result['error'])) {
+            return back()->with('error', $result['error']);
+        }
+
+        $resolvedContract = $result['contract'];
+        $this->sendEmailViaAccount($resolvedContract, $result['type']);
 
         return back()->with('success', 'Contract email resent successfully.');
     }
@@ -677,16 +926,139 @@ class ContractController extends Controller
     }
 
     /**
+     * Freeze a manually verified reconstruction for a historical contract
+     * that predates immutable customer-document snapshots.
+     */
+    public function attestLegacyCustomerDocument(
+        Request $request,
+        Contracts $contract,
+        AttestLegacyContractCustomerDocument $attestation,
+    ) {
+        $validated = $request->validate([
+            'attestation_note' => ['required', 'string', 'min:20', 'max:2000'],
+            'confirm_legacy_attestation' => ['accepted'],
+            'legacy_attestation_fingerprint' => ['required', 'string', 'size:64', 'regex:/\A[0-9a-f]{64}\z/D'],
+            'legacy_attestation_document_type' => ['required', 'string', 'in:Tilbud,Avtale'],
+        ], [
+            'attestation_note.required' => 'Beskriv hvilket originalt underlag som er kontrollert.',
+            'attestation_note.min' => 'Attestasjonen må være minst 20 tegn.',
+            'confirm_legacy_attestation.accepted' => 'Du må bekrefte den manuelle kontrollen.',
+            'legacy_attestation_fingerprint.required' => 'Rekonstruksjonsgrunnlaget mangler. Last siden på nytt og kontroller dokumentet igjen.',
+            'legacy_attestation_fingerprint.size' => 'Rekonstruksjonsgrunnlaget er ugyldig. Last siden på nytt.',
+            'legacy_attestation_fingerprint.regex' => 'Rekonstruksjonsgrunnlaget er ugyldig. Last siden på nytt.',
+            'legacy_attestation_document_type.required' => 'Velg og kontroller den historiske dokumenttypen.',
+            'legacy_attestation_document_type.in' => 'Historisk dokumenttype må være Tilbud eller Avtale.',
+        ]);
+
+        /** @var User $attestedBy */
+        $attestedBy = $request->user();
+
+        try {
+            $attestation->handle(
+                $contract,
+                $attestedBy,
+                $validated['attestation_note'],
+                $request->boolean('confirm_legacy_attestation'),
+                $validated['legacy_attestation_fingerprint'],
+                $validated['legacy_attestation_document_type'],
+            );
+        } catch (DomainException $exception) {
+            return back()->withInput()->with('error', $exception->getMessage());
+        } catch (UnexpectedValueException) {
+            return back()->withInput()->with(
+                'error',
+                'Rekonstruksjonen er ikke et komplett støttet kundedokument og ble ikke lagret.'
+            );
+        }
+
+        return back()->with(
+            'success',
+            'Det historiske kundedokumentet er attestert og lagret som et uforanderlig snapshot.'
+        );
+    }
+
+    /**
      * Manually approve the contract.
      * Used when acceptance is received outside the system.
      */
     public function approveManual(Contracts $contract)
     {
-        $contract->update([
-            'approval_status' => 'won',
-            'accepted_at' => now(),
-            'accepted_by_name' => 'Internal Approval',
-        ]);
+        $approvedBy = auth()->user();
+
+        try {
+            $approval = DB::transaction(function () use ($contract, $approvedBy): array {
+                $locked = Contracts::query()
+                    ->with('client')
+                    ->lockForUpdate()
+                    ->findOrFail($contract->getKey());
+
+                if (! in_array($locked->approval_status, ['draft', 'negotiation', 'quote_lost', 'sent_quote', 'sent_contract'], true)) {
+                    return ['error' => 'This contract cannot be manually approved in its current status.'];
+                }
+
+                $wasEditable = $locked->isEditable();
+
+                if ($wasEditable && ! $locked->isReady()) {
+                    return ['error' => 'Kontrakten må ha tjenester, vilkår og gyldig avtalestart før manuell godkjenning.'];
+                }
+
+                $customerDocuments = app(ContractCustomerDocument::class);
+
+                if ($wasEditable) {
+                    $readiness = app(ContractDocumentReadiness::class);
+                    if ($readiness->missingLegalIdentity($locked) !== []) {
+                        return ['error' => $readiness->failureMessage($locked)];
+                    }
+
+                    $termReadiness = app(ContractTermSnapshotReadiness::class);
+                    if (! $termReadiness->isCurrent($locked)) {
+                        return ['error' => $termReadiness->failureMessage()];
+                    }
+                } else {
+                    // Resolve historical evidence before considering today's
+                    // identity or term sources. A missing legacy snapshot must
+                    // first pass the explicit named attestation workflow.
+                    $customerDocuments->resolve($locked);
+                }
+
+                if ($wasEditable) {
+                    app(CaptureContractTermVersions::class)->replace($locked);
+                    app(CaptureContractCustomerDocument::class)->replace($locked, 'won');
+                } else {
+                    app(CaptureContractCustomerDocument::class)->handle($locked, 'won');
+                }
+
+                $approvedAt = now();
+                $approvalValues = [
+                    'approval_status' => 'won',
+                    'accepted_at' => $approvedAt,
+                    'accepted_by_name' => $approvedBy?->name ?: 'Intern godkjenning',
+                    'approval_approved_at' => $approvedAt,
+                    'approval_approved_by' => $approvedBy?->id,
+                ];
+
+                if ($wasEditable) {
+                    // Manual approval did not send a customer link. Remove any
+                    // dormant capability left by an older editable lifecycle.
+                    $approvalValues['secure_token'] = null;
+                }
+
+                $locked->forceFill($approvalValues)->save();
+
+                return ['contract' => $locked];
+            });
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        } catch (UnexpectedValueException) {
+            return back()->with(
+                'error',
+                'Kundedokumentets lagrede format kan ikke behandles automatisk. Ingen live fallback ble brukt.'
+            );
+        }
+
+        if (isset($approval['error'])) {
+            return back()->with('error', $approval['error']);
+        }
 
         return back()->with('success', 'Contract manually approved and marked as Won.');
     }
@@ -694,7 +1066,7 @@ class ContractController extends Controller
     private function canDownloadPdf(Contracts $contract): bool
     {
         return $contract->isReady()
-            || in_array($contract->approval_status, ['sent_quote', 'sent_contract', 'won'], true);
+            || in_array($contract->approval_status, ['approved', 'sent_quote', 'sent_contract', 'won'], true);
     }
 
     private function pdfFileName(Contracts $contract): string
@@ -709,15 +1081,25 @@ class ContractController extends Controller
      */
     public function destroy(Contracts $contract)
     {
-        if ($contract->approval_status !== 'draft') {
-            return back()->with('error', 'Only draft contracts can be deleted.');
-        }
+        $result = DB::transaction(function () use ($contract): ?string {
+            $locked = Contracts::query()->lockForUpdate()->findOrFail($contract->getKey());
 
-        if ($contract->end_date && $contract->end_date->isPast()) {
-            return back()->with('error', 'Cannot delete a contract that has already ended.');
-        }
+            if ($locked->approval_status !== 'draft') {
+                return 'Only draft contracts can be deleted.';
+            }
 
-        $contract->delete();
+            if ($locked->end_date && $locked->end_date->isPast()) {
+                return 'Cannot delete a contract that has already ended.';
+            }
+
+            $locked->delete();
+
+            return null;
+        });
+
+        if ($result !== null) {
+            return back()->with('error', $result);
+        }
 
         return redirect()->route('tech.contracts.index')->with('success', 'Contract deleted successfully.');
     }

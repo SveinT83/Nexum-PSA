@@ -116,6 +116,7 @@ class DispatchInboundEmailNotification
                     || $run->cancellation_requested_at !== null
                     || $run->status === EmailProviderReconciliationRun::STATUS_CANCELLING) {
                     $this->failRunningItem(
+                        $run,
                         $item,
                         $automationToken,
                         'provider_reconciliation_automation_cancelled_after_rules',
@@ -136,6 +137,7 @@ class DispatchInboundEmailNotification
                         $intent->emailMessageId,
                     )) {
                     $this->failRunningItem(
+                        $run,
                         $item,
                         $automationToken,
                         NotificationInboundEmailFanout::ERROR_ITEM_SCOPE_STALE,
@@ -150,6 +152,7 @@ class DispatchInboundEmailNotification
                     ->first();
                 if (! $email) {
                     $this->failRunningItem(
+                        $run,
                         $item,
                         $automationToken,
                         NotificationInboundEmailFanout::ERROR_ITEM_SCOPE_STALE,
@@ -160,12 +163,14 @@ class DispatchInboundEmailNotification
 
                 $email->load('tags');
                 if ($this->isSuppressed($email)) {
+                    $progressAt = now();
                     $item->forceFill([
                         'automation_status' => EmailProviderReconciliationItem::AUTOMATION_COMPLETED,
                         'automation_claim_token' => null,
-                        'automation_completed_at' => now(),
+                        'automation_completed_at' => $progressAt,
                         'automation_error_code' => null,
                     ])->save();
+                    $this->recordDurableReconciliationProgress($run, $progressAt);
 
                     return null;
                 }
@@ -181,6 +186,7 @@ class DispatchInboundEmailNotification
                 if ($fanout->email_provider_reconciliation_item_id !== null
                     && (int) $fanout->email_provider_reconciliation_item_id !== (int) $item->id) {
                     $this->failRunningItem(
+                        $run,
                         $item,
                         $automationToken,
                         NotificationInboundEmailFanout::ERROR_ITEM_SCOPE_STALE,
@@ -190,18 +196,20 @@ class DispatchInboundEmailNotification
                 }
 
                 if ($fanout->terminal()) {
+                    $progressAt = now();
                     $item->forceFill([
                         'automation_status' => $fanout->status
                             === NotificationInboundEmailFanout::STATUS_COMPLETED
                             ? EmailProviderReconciliationItem::AUTOMATION_COMPLETED
                             : EmailProviderReconciliationItem::AUTOMATION_FAILED,
                         'automation_claim_token' => null,
-                        'automation_completed_at' => now(),
+                        'automation_completed_at' => $progressAt,
                         'automation_error_code' => $fanout->status
                             === NotificationInboundEmailFanout::STATUS_COMPLETED
                             ? null
                             : self::ERROR_FANOUT_FAILED,
                     ])->save();
+                    $this->recordDurableReconciliationProgress($run, $progressAt);
 
                     return null;
                 }
@@ -214,6 +222,7 @@ class DispatchInboundEmailNotification
                 } elseif (! is_string($fanout->automation_claim_token)
                     || ! hash_equals($fanout->automation_claim_token, $automationToken)) {
                     $this->failRunningItem(
+                        $run,
                         $item,
                         $automationToken,
                         NotificationInboundEmailFanout::ERROR_ITEM_SCOPE_STALE,
@@ -226,6 +235,7 @@ class DispatchInboundEmailNotification
                     'automation_status' => EmailProviderReconciliationItem::AUTOMATION_AWAITING_NOTIFICATION_FANOUT,
                     'automation_error_code' => null,
                 ])->save();
+                $this->recordDurableReconciliationProgress($run, now());
 
                 return (int) $fanout->id;
             }, 3);
@@ -571,6 +581,9 @@ class DispatchInboundEmailNotification
                 'completed_at' => $completed ? now() : null,
                 'error_code' => null,
             ])->save();
+            if ($authority['run']) {
+                $this->recordDurableReconciliationProgress($authority['run'], now());
+            }
 
             return [
                 'external_delivery_ids' => array_values(array_unique($externalDeliveryIds)),
@@ -583,7 +596,12 @@ class DispatchInboundEmailNotification
      * Lock the durable page authority in one global order. Pre-reads choose
      * only lock keys; every fact is revalidated after its owning row is locked.
      *
-     * @return array{fanout:?NotificationInboundEmailFanout,authoritative:bool,linked:bool}
+     * @return array{
+     *     fanout:?NotificationInboundEmailFanout,
+     *     run:?EmailProviderReconciliationRun,
+     *     authoritative:bool,
+     *     linked:bool
+     * }
      */
     private function lockFanoutPageAuthority(int $fanoutId): array
     {
@@ -597,7 +615,12 @@ class DispatchInboundEmailNotification
                 'automation_claim_token',
             ]);
         if (! $reference) {
-            return ['fanout' => null, 'authoritative' => false, 'linked' => false];
+            return [
+                'fanout' => null,
+                'run' => null,
+                'authoritative' => false,
+                'linked' => false,
+            ];
         }
 
         $itemId = (int) ($reference->email_provider_reconciliation_item_id ?? 0);
@@ -618,6 +641,7 @@ class DispatchInboundEmailNotification
 
             return [
                 'fanout' => $fanout,
+                'run' => null,
                 'authoritative' => (bool) $authoritative,
                 'linked' => false,
             ];
@@ -632,7 +656,12 @@ class DispatchInboundEmailNotification
                 ->lockForUpdate()
                 ->first();
 
-            return ['fanout' => $fanout, 'authoritative' => false, 'linked' => true];
+            return [
+                'fanout' => $fanout,
+                'run' => null,
+                'authoritative' => false,
+                'linked' => true,
+            ];
         }
 
         $run = EmailProviderReconciliationRun::query()
@@ -682,6 +711,7 @@ class DispatchInboundEmailNotification
 
         return [
             'fanout' => $fanout,
+            'run' => $run,
             'authoritative' => (bool) $authoritative,
             'linked' => true,
         ];
@@ -842,18 +872,20 @@ class DispatchInboundEmailNotification
                 || $run->status === EmailProviderReconciliationRun::STATUS_CANCELLING;
             $completed = $fanout->status === NotificationInboundEmailFanout::STATUS_COMPLETED
                 && ! $cancelled;
+            $progressAt = now();
             $item->forceFill([
                 'automation_status' => $completed
                     ? EmailProviderReconciliationItem::AUTOMATION_COMPLETED
                     : EmailProviderReconciliationItem::AUTOMATION_FAILED,
                 'automation_claim_token' => null,
-                'automation_completed_at' => now(),
+                'automation_completed_at' => $progressAt,
                 'automation_error_code' => $completed
                     ? null
                     : ($cancelled && $fanout->status === NotificationInboundEmailFanout::STATUS_COMPLETED
                         ? self::ERROR_COMPLETED_AFTER_CANCELLATION
                         : self::ERROR_FANOUT_FAILED),
             ])->save();
+            $this->recordDurableReconciliationProgress($run, $progressAt);
 
             return true;
         }, 3);
@@ -882,12 +914,14 @@ class DispatchInboundEmailNotification
                 return false;
             }
 
+            $progressAt = now();
             $item->forceFill([
                 'automation_status' => EmailProviderReconciliationItem::AUTOMATION_FAILED,
                 'automation_claim_token' => null,
-                'automation_completed_at' => now(),
+                'automation_completed_at' => $progressAt,
                 'automation_error_code' => self::ERROR_FANOUT_MISSING,
             ])->save();
+            $this->recordDurableReconciliationProgress($run, $progressAt);
 
             return true;
         }, 3);
@@ -898,22 +932,51 @@ class DispatchInboundEmailNotification
     }
 
     private function failRunningItem(
+        EmailProviderReconciliationRun $run,
         EmailProviderReconciliationItem $item,
         string $token,
         string $errorCode,
-    ): void {
+    ): bool {
         if ($item->automation_status !== EmailProviderReconciliationItem::AUTOMATION_RUNNING
             || ! is_string($item->automation_claim_token)
             || ! hash_equals($item->automation_claim_token, $token)) {
-            return;
+            return false;
         }
 
+        $progressAt = now();
         $item->forceFill([
             'automation_status' => EmailProviderReconciliationItem::AUTOMATION_FAILED,
             'automation_claim_token' => null,
-            'automation_completed_at' => now(),
+            'automation_completed_at' => $progressAt,
             'automation_error_code' => $errorCode,
         ])->save();
+        $this->recordDurableReconciliationProgress($run, $progressAt);
+
+        return true;
+    }
+
+    /** Record only a linked automation/fanout commit while the run is active. */
+    private function recordDurableReconciliationProgress(
+        EmailProviderReconciliationRun $run,
+        \DateTimeInterface $progressAt,
+    ): void {
+        $activePhase = in_array($run->phase, [
+            EmailProviderReconciliationRun::PHASE_DISCOVER_END,
+            EmailProviderReconciliationRun::PHASE_IMPORTS,
+        ], true);
+        $activeStatus = in_array($run->status, [
+            EmailProviderReconciliationRun::STATUS_RUNNING,
+            EmailProviderReconciliationRun::STATUS_WAITING_FOR_IMPORTS,
+            EmailProviderReconciliationRun::STATUS_CANCELLING,
+        ], true);
+        if ($run->terminal()
+            || (int) $run->active_slot !== 1
+            || ! $activePhase
+            || ! $activeStatus) {
+            return;
+        }
+
+        $run->forceFill(['last_progress_at' => $progressAt])->save();
     }
 
     private function reconciliationTargetIsStillAuthoritative(

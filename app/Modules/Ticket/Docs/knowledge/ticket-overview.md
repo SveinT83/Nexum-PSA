@@ -110,6 +110,13 @@ Ticket show:
 
 The show page is the primary work surface. It contains ticket details, conversation/activity, a workflow cockpit, missing requirements, next steps, escalation, reviews and evidence, planned commercial scope, linked Sales quote, Storage/purchase conversion, replies, notes, time and actual cost registration, assignment, SLA details, customer contact cards, and Knowledge suggestions. Buttons are shown, disabled, or hidden from the current workflow decision.
 
+An always-visible context strip below the Ticket header shows **Assigned to**, **Customer**, and
+**Contact** before any sidebar accordion is opened. It reads only the Ticket's existing owner,
+Client, Contact, and Work Context relations; uses explicit **Unassigned**, **Internal work**,
+**No customer**, and **No contact** states; and never infers identity from the subject or imported
+text. Customer, Contact, and Site names link to their existing detail pages only when the technician
+has `client.view`; the existing Customer and Details accordions remain available.
+
 When an active Nexum relationship is available, the show page also displays a
 Nexum relationship panel. The panel shows existing remote sync links and allows
 authorized technicians to escalate a Published ticket to a real configured

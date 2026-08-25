@@ -17,6 +17,7 @@ use App\Modules\Integration\Models\CloudFactory\Subscription;
 use App\Modules\Integration\Models\CloudFactory\SyncRun;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CloudFactorySubscriptionSync
@@ -304,26 +305,23 @@ class CloudFactorySubscriptionSync
 
     private function applyContract(Subscription $subscription, ?Subscription $before): void
     {
-        $contract = $this->eligibleContract($subscription);
-        $item = $subscription->contract_item_id
-            ? ContractItem::query()->find($subscription->contract_item_id)
+        DB::transaction(function () use ($subscription, $before): void {
+            $authoritative = Subscription::query()->findOrFail($subscription->getKey());
+
+            $this->applyContractTransaction($authoritative, $before);
+        });
+    }
+
+    /**
+     * Resolve and mutate the won Contract boundary only inside applyContract's
+     * transaction. The locked parent remains authoritative for every child read.
+     */
+    private function applyContractTransaction(Subscription $subscription, ?Subscription $before): void
+    {
+        $contract = $this->lockedEligibleContract($subscription);
+        $item = $contract
+            ? $this->lockedContractItem($contract, $subscription)
             : null;
-
-        $item ??= $contract?->items()
-            ->where(function ($query) use ($subscription): void {
-                $query->where('provider_subscription_id', $subscription->external_subscription_id);
-
-                if ($subscription->service_id) {
-                    $query->orWhere(function ($query) use ($subscription): void {
-                        $query->where('service_id', $subscription->service_id)
-                            ->where(function ($query) use ($subscription): void {
-                                $query->where('cloudfactory_offer_id', $subscription->offer_id)
-                                    ->orWhereNull('cloudfactory_offer_id');
-                            });
-                    });
-                }
-            })
-            ->first();
 
         if (! $contract || ! $item) {
             $subscription->forceFill(['billing_state' => 'unlinked'])->save();
@@ -361,6 +359,24 @@ class CloudFactorySubscriptionSync
         $internalCost = (float) ($service?->costRelations
             ->filter(fn ($relation) => ! ($relation->cost?->managed_externally ?? false))
             ->sum(fn ($relation) => $relation->cost?->cost ?? 0) ?? 0);
+
+        if ($contract->allow_license_price_updates && $newPrice !== null) {
+            $incomingCurrency = strtoupper(trim((string) ($subscription->currency ?: 'NOK')));
+
+            if ($incomingCurrency !== 'NOK') {
+                $subscription->forceFill([
+                    'contract_id' => $contract->id,
+                    'contract_item_id' => $item->id,
+                    'billing_state' => 'blocked',
+                ])->save();
+                $this->subscriptionConflict($subscription, 'contract_price_currency', [
+                    'supported_currency' => 'NOK',
+                    'incoming_currency' => $incomingCurrency,
+                ]);
+
+                return;
+            }
+        }
 
         $itemUpdate = [
             'source' => 'cloudfactory',
@@ -414,7 +430,7 @@ class CloudFactorySubscriptionSync
         }
     }
 
-    private function eligibleContract(Subscription $subscription): ?Contracts
+    private function lockedEligibleContract(Subscription $subscription): ?Contracts
     {
         $today = now()->toDateString();
 
@@ -427,6 +443,38 @@ class CloudFactorySubscriptionSync
             })
             ->latest('accepted_at')
             ->latest('id')
+            ->lockForUpdate()
+            ->first();
+    }
+
+    private function lockedContractItem(Contracts $contract, Subscription $subscription): ?ContractItem
+    {
+        if ($subscription->contract_item_id) {
+            $linked = $contract->items()
+                ->whereKey($subscription->contract_item_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($linked) {
+                return $linked;
+            }
+        }
+
+        return $contract->items()
+            ->where(function ($query) use ($subscription): void {
+                $query->where('provider_subscription_id', $subscription->external_subscription_id);
+
+                if ($subscription->service_id) {
+                    $query->orWhere(function ($query) use ($subscription): void {
+                        $query->where('service_id', $subscription->service_id)
+                            ->where(function ($query) use ($subscription): void {
+                                $query->where('cloudfactory_offer_id', $subscription->offer_id)
+                                    ->orWhereNull('cloudfactory_offer_id');
+                            });
+                    });
+                }
+            })
+            ->lockForUpdate()
             ->first();
     }
 

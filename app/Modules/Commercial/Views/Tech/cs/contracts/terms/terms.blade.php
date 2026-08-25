@@ -35,6 +35,12 @@
         }
     </style>
 
+    @if($hasGeneratedPreview)
+        <div class="alert alert-info" role="status">
+            Generated Service terms are shown as a preview. Save or refresh explicitly to review and snapshot them.
+        </div>
+    @endif
+
     <form action="{{ route('tech.contracts.terms.update', $contract) }}" method="POST">
         @csrf
         <div class="row">
@@ -99,9 +105,13 @@
 
                 <div class="mt-4 mb-5 d-flex justify-content-between align-items-center">
                     <div>
-                        <a href="{{ route('tech.contracts.terms', [$contract, 'refresh' => 1]) }}" class="btn btn-outline-secondary btn-sm" onclick="return confirm('This will overwrite your current snapshots with the latest terms from the services. Are you sure?')">
+                        <button type="submit"
+                                formaction="{{ route('tech.contracts.terms.refresh', $contract) }}"
+                                class="btn btn-outline-secondary btn-sm"
+                                formnovalidate
+                                onclick="return confirm('This will overwrite your current snapshots with the latest terms from the services. Are you sure?')">
                             <i class="bi bi-arrow-clockwise me-1"></i> Refresh from Services
-                        </a>
+                        </button>
                     </div>
                     <button type="submit" class="btn btn-primary px-5">
                         <i class="bi bi-save me-2"></i> Save Snapshot

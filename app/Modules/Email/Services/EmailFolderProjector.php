@@ -6,12 +6,13 @@ use App\Modules\Email\DTOs\EmailPlacementCreateResult;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailFolderUidNamespace;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
-use App\Modules\Email\Models\EmailLiveProjectionChange;
-use App\Modules\Email\Services\EmailLiveInvalidator;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class EmailFolderProjector
 {
@@ -143,22 +144,28 @@ class EmailFolderProjector
             return null;
         }
 
-        $placement = EmailMailboxPlacement::query()->updateOrCreate(
-            $projection['identity'],
-            $projection['attributes'],
-        );
+        $liveOperationId = (string) Str::uuid();
 
-        $this->conversations->assignPlacement($placement);
+        return DB::transaction(function () use ($liveOperationId, $projection): EmailMailboxPlacement {
+            $placement = EmailMailboxPlacement::query()->updateOrCreate(
+                $projection['identity'],
+                $projection['attributes'],
+            );
 
-        $this->invalidator->record([
-            'account' => [
-                $placement->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
-            ],
-            'conversations' => $placement->email_conversation_id ? [$placement->email_conversation_id] : [],
-            'placements' => [$placement->id],
-        ]);
+            $this->conversations->assignPlacement($placement);
+            $placement->refresh();
 
-        return $placement->refresh();
+            $this->invalidator->record([
+                'account' => [
+                    $placement->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
+                ],
+                'conversations' => $placement->email_conversation_id ? [$placement->email_conversation_id] : [],
+                'placements' => [$placement->id],
+                'idempotency_key' => "placement-upsert:{$liveOperationId}",
+            ]);
+
+            return $placement->refresh();
+        });
     }
 
     /**
@@ -196,33 +203,39 @@ class EmailFolderProjector
                 : null;
         $projection['attributes']['last_provider_observed_at'] = now();
 
-        $placement = EmailMailboxPlacement::query()->firstOrCreate(
-            $projection['identity'],
-            $projection['attributes'],
-        );
+        $liveOperationId = (string) Str::uuid();
 
-        if (! $placement->wasRecentlyCreated) {
-            if (! $placement->email_conversation_id) {
-                // The placement insert is durable before conversation
-                // assignment. A hard loss in that narrow DB-only gap is
-                // resumed without applying any stale provider projection.
-                $this->conversations->assignPlacement($placement);
+        return DB::transaction(function () use ($liveOperationId, $projection): EmailMailboxPlacement {
+            $placement = EmailMailboxPlacement::query()->firstOrCreate(
+                $projection['identity'],
+                $projection['attributes'],
+            );
+
+            if (! $placement->wasRecentlyCreated) {
+                if (! $placement->email_conversation_id) {
+                    // The placement insert is durable before conversation
+                    // assignment. A hard loss in that narrow DB-only gap is
+                    // resumed without applying any stale provider projection.
+                    $this->conversations->assignPlacement($placement);
+                }
+
+                return $placement->refresh();
             }
 
+            $this->conversations->assignPlacement($placement);
+            $placement->refresh();
+
+            $this->invalidator->record([
+                'account' => [
+                    $placement->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
+                ],
+                'conversations' => $placement->email_conversation_id ? [$placement->email_conversation_id] : [],
+                'placements' => [$placement->id],
+                'idempotency_key' => "provider-placement:{$liveOperationId}",
+            ]);
+
             return $placement->refresh();
-        }
-
-        $this->conversations->assignPlacement($placement);
-
-        $this->invalidator->record([
-            'account' => [
-                $placement->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
-            ],
-            'conversations' => $placement->email_conversation_id ? [$placement->email_conversation_id] : [],
-            'placements' => [$placement->id],
-        ]);
-
-        return $placement->refresh();
+        });
     }
 
     /**

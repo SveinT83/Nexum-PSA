@@ -27,6 +27,12 @@ This slice stops those behaviors without destructively removing the legacy colum
 fields remain read-compatible during the rollback window, but they no longer authorize Mail access,
 hide a real provider placement, or silently decide conversation ownership.
 
+The 2026-08-24 safety repair documented in the Order 13 implementation summary replaces only the
+unsafe legacy-link backfill with a bounded frozen preview/apply ledger against the existing
+authoritative compatibility table. It does not complete this broader relationship/capture/event
+schema, shared-action, dual-write or read-path target, and it deliberately refuses conflicts owned by
+Orders 14-15.
+
 ## Dependencies
 
 Implementation starts after completion orders 5, 7 and 12 are stable. It uses canonical source

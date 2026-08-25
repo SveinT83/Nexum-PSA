@@ -18,6 +18,9 @@ class EmailQuarantinedMailSliceMigrationTest extends TestCase
         $this->assertFalse(config('email_live.conversation_acknowledgement_enabled'));
         $this->assertFalse(Schema::hasTable('email_mail_draft_locks'));
         $this->assertFalse(Schema::hasTable('email_mail_user_conversation_acknowledgements'));
+        $this->assertTrue(Schema::hasTable('email_shared_draft_locks'));
+        $this->assertTrue(Schema::hasTable('email_shared_draft_events'));
+        $this->assertTrue(Schema::hasColumn('email_composer_drafts', 'shared_scope_id'));
 
         foreach ([
             '2026_08_19_140000_create_email_mail_draft_locks_table.php',

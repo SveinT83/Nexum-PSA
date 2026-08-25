@@ -3,22 +3,39 @@
 namespace App\Modules\Commercial\Controllers\Tech\Contracts;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Commercial\Actions\CaptureContractCustomerDocument;
 use App\Modules\Commercial\Models\Contracts\Contracts;
-use App\Modules\System\Support\CompanyProfileSettings;
+use App\Modules\Commercial\Support\ContractCustomerDocument;
+use DomainException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use UnexpectedValueException;
 
 class PublicContractController extends Controller
 {
     /**
      * Display the contract for the customer.
      */
-    public function view($token, CompanyProfileSettings $companyProfile)
+    public function view($token)
     {
-        $contract = Contracts::with(['client', 'sla', 'items.slaPolicy', 'items.timeRates'])
+        $contract = Contracts::with(['client', 'sla', 'items.slaPolicy', 'items.timeRates', 'termSnapshots.termVersion'])
             ->where('secure_token', $token)
             ->firstOrFail();
+        abort_unless(
+            in_array($contract->approval_status, ['sent_quote', 'sent_contract', 'approved', 'won'], true),
+            404,
+        );
+        $documents = app(ContractCustomerDocument::class);
 
-        // Audit Logging for View
+        try {
+            $customerDocument = $documents->resolve($contract);
+        } catch (DomainException) {
+            abort(409, 'Kundedokumentet er sperret i påvente av manuell verifisering.');
+        } catch (UnexpectedValueException) {
+            abort(409, 'Kundedokumentets lagrede format kan ikke behandles.');
+        }
+
+        // Record a customer view only after the immutable document passed all release gates.
         $contract->update([
             'viewed_at' => now(),
             'viewed_ip' => request()->ip(),
@@ -27,7 +44,7 @@ class PublicContractController extends Controller
 
         return view('commercial::Tech.cs.contracts.public.view', [
             'contract' => $contract,
-            'companyProfile' => $companyProfile->get(),
+            'customerDocument' => $customerDocument,
         ]);
     }
 
@@ -36,28 +53,51 @@ class PublicContractController extends Controller
      */
     public function accept(Request $request, $token)
     {
-        $contract = Contracts::where('secure_token', $token)->firstOrFail();
+        Contracts::query()->where('secure_token', $token)->firstOrFail();
 
-        // Prevent acceptance if not in Sent status or already accepted
-        if (!in_array($contract->approval_status, ['sent_quote', 'sent_contract'])) {
-             return back()->with('error', 'This contract cannot be accepted in its current status.');
-        }
-
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
             'confirm' => 'required|accepted',
         ], [
-            'confirm.accepted' => 'You must confirm that you accept the contract.',
+            'name.required' => 'Navn må fylles ut.',
+            'name.string' => 'Navnet må være tekst.',
+            'name.max' => 'Navnet kan ikke være lengre enn 255 tegn.',
+            'confirm.required' => 'Du må bekrefte at du godtar dokumentet.',
+            'confirm.accepted' => 'Du må bekrefte at du godtar dokumentet.',
         ]);
 
-        $contract->update([
-            'approval_status' => 'won',
-            'accepted_at' => now(),
-            'accepted_by_name' => $request->name,
-            'accepted_ip' => $request->ip(),
-            'accepted_ua' => $request->userAgent(),
-        ]);
+        try {
+            $accepted = DB::transaction(function () use ($request, $token, $data): bool {
+                $locked = Contracts::query()
+                    ->where('secure_token', $token)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-        return back()->with('success', 'Contract successfully accepted. Thank you!');
+                if (! in_array($locked->approval_status, ['sent_quote', 'sent_contract'], true)) {
+                    return false;
+                }
+
+                app(CaptureContractCustomerDocument::class)->handle($locked, 'won');
+                $locked->forceFill([
+                    'approval_status' => 'won',
+                    'accepted_at' => now(),
+                    'accepted_by_name' => $data['name'],
+                    'accepted_ip' => $request->ip(),
+                    'accepted_ua' => $request->userAgent(),
+                ])->save();
+
+                return true;
+            });
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        } catch (UnexpectedValueException) {
+            return back()->with('error', 'Dokumentversjonen kan ikke behandles automatisk. Kontakt leverandøren.');
+        }
+
+        if (! $accepted) {
+            return back()->with('error', 'Dokumentet kan ikke godkjennes i nåværende status.');
+        }
+
+        return back()->with('success', 'Dokumentet er godkjent. Takk!');
     }
 }

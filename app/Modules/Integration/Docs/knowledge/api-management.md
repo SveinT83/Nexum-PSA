@@ -117,8 +117,19 @@ Implemented scopes:
 - `risk.update`: update risk assessments, risk items, and risk item history.
 - `email.read`: list and view authorized unrouted inbox messages by mailbox View access.
 - `email.update`: mark authorized inbox messages as spam and queue polling for mailboxes the actor can organize.
+- `email.drafts.read`: list/view the current human user's private Mail drafts and, only while the
+  separate collaboration runtime is ready, read exact currently authorized shared drafts and safe
+  attachment/lease state.
+- `email.drafts.write`: create/update/discard/attach/provider-sync private drafts and, only while
+  collaboration is ready, share or mutate an exact leased shared draft. It never replaces current
+  ordinary mailbox authority or a draft/version/lease fence.
+- `email.send`: preview/send one exact private or gated shared draft snapshot and read its outbound
+  submission/Sent-reconciliation status; it never grants permission to retry an unresolved provider
+  outcome.
 - `email.rules.read`: list, view, and preview Email rules with rule-management permission and
   mailbox View checks.
+- `email.rules.execute`: apply one eligible verified provider-operation inverse for an authorized
+  Email rule execution; current rule-management and Mailbox Organize access remain mandatory.
 - `notifications.read`: list and view the authenticated user notifications.
 - `notifications.update`: mark the authenticated user notifications as read.
 - `sales.read`: list and view sales opportunities and activities.
@@ -1071,11 +1082,70 @@ organize. It does not run IMAP polling inside the HTTP request.
 API token abilities are request ceilings. `email.read` and `email.update` never replace Email
 mailbox grants.
 
+Mail draft and send routes use separate request ceilings and the same private/outbound boundary as
+the Livewire composer:
+
+- `GET/POST /api/v1/email/mailbox/drafts` and
+  `GET/PATCH/DELETE /api/v1/email/mailbox/drafts/{draft}` list, create, show, update, and discard
+  current private drafts.
+- `POST /api/v1/email/mailbox/drafts/{draft}/attachments` and
+  `DELETE /api/v1/email/mailbox/drafts/{draft}/attachments/{attachment}` mutate exact-generation
+  private attachments.
+- `POST /api/v1/email/mailbox/drafts/{draft}/provider-sync` explicitly invokes the existing guarded
+  provider-Drafts synchronization. Autosave remains local-only.
+- `POST /api/v1/email/mailbox/drafts/{draft}/preview` returns the exact sanitized/signature/threading
+  snapshot without provider access; `POST .../{draft}/send` binds one caller idempotency key to one
+  version-specific outbound submission before SMTP.
+- `GET /api/v1/email/mailbox/submissions/{submission}` and
+  `GET .../{submission}/sent-reconciliation` return safe delivery and exact normal-Sent convergence
+  status.
+
+The Order 9 collaboration routes remain unavailable unless both the private-live and collaboration
+server flags are enabled, Order 8 private runtime readiness passes, and the separate shared schema
+is installed. The gate checks disabled configuration first, so a default-off/pre-migration server
+does not query the optional schema.
+
+- `GET/POST/DELETE /api/v1/email/mailbox/conversations/{conversation}/presence` reads, refreshes or
+  leaves one exact expiring cache presence scope. Reading requires current ordinary mailbox View;
+  typing requires ordinary View plus Send. No SQL heartbeat is written.
+- `POST /api/v1/email/mailbox/drafts/{draft}/share` explicitly converts only the creator's active
+  private Reply/Reply All/Forward draft. Exact redelivery is idempotent.
+- `GET/PATCH/DELETE /api/v1/email/mailbox/shared-drafts/{draft}` reads, mutates or discards one
+  currently authorized shared draft. Mutation/discard requires its exact lease/fence/content/source
+  versions.
+- `POST/PATCH/DELETE /api/v1/email/mailbox/shared-drafts/{draft}/lease` acquires, renews or releases
+  the 60-second lease. An active/lost/expired token boundary returns `423 Locked`; explicit expired
+  takeover increments the monotonic fence.
+- Shared attachment routes, `rebase-preview`, `rebase`, `preview` and `send` keep the same exact
+  fence. Rebase preserves authored body/eligible attachments while recalculating the source/audience;
+  send uses the same once-only Order 11 outbound submission and Sent-reconciliation ledger.
+
+These routes require `email.drafts.read`, `email.drafts.write`, or `email.send` as documented in the
+ability list. The current user must also be active and non-system and retain normal Email permission
+plus exact mailbox View/Send access. Private mutation requires the opaque version token; shared
+mutation additionally requires the current opaque lease token, fence, content and source versions.
+Stale/bound/unresolved requests return `409`, lost shared leases return `423`, out-of-scope IDs return
+Not Found, and neither timeout nor conflict permits resend. Responses omit lease tokens/hashes, disk
+paths, checksums, generation/fingerprint evidence, Bcc, raw MIME, credentials, canonical identities,
+and raw provider/exception evidence.
+
 `GET /api/v1/email/rules`, `GET /api/v1/email/rules/{rule}`, and
 `POST /api/v1/email/rules/{rule}/preview` use `email.rules.read`. The authenticated user must also
 have Email rule-management permission. Preview reports the published rule version, account scope,
 condition matches, and actions that would run for one authorized message without changing the
 message, tags, Tickets, Signals, or rule execution history.
+
+`GET /api/v1/email/rules/executions/{attempt}` and
+`GET /api/v1/email/rules/executions/{attempt}/undo` also use `email.rules.read`. They require current
+mailbox View access and return Not Found outside the caller's account scope. Output is content-free:
+action identity/status, stable reason codes, and opaque provider-operation IDs only.
+
+`POST /api/v1/email/rules/executions/{attempt}/undo` uses `email.rules.execute` in addition to current
+`email.rule_manage` and Mailbox Organize access. It can reverse only a completed attempt represented
+entirely by one exactly matched provider Archive/Move ledger result, and delegates to the normal
+15-minute verified provider Undo contract. Mixed/local-only, stale, ambiguous, missing, or mismatched
+evidence fails before an inverse or local compensation is created; repeated requests return the same
+unique inverse.
 
 ## Notification API
 

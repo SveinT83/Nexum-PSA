@@ -16,6 +16,22 @@ The current behavior supports:
 
 The main action for new inbound tickets is `CreateTicketFromInboundEmail`. Existing ticket linking is handled by `LinkInboundEmailToTicket`.
 
+Historical inbound messages may already contain the scalar Ticket pointer and exact Ticket-message
+source evidence while missing Mail's durable conversation-link row. Administrators repair only this
+proven compatibility gap through Mail's separate bounded preview/apply command. It requires one
+named active human with both Mail maintenance permissions and `ticket.update`, blocks competing or
+stale Ticket/conversation/audience evidence, and records the exact operator. The repair inserts the
+missing Mail-owned primary relationship only: it does not create another Ticket message, change
+Ticket events/tags/classification/timestamps, move or mark mail, run Ticket/Email rules, notify or
+publish. `TD-...` correlation and ordinary Ticket access remain unchanged, and Ticket access still
+does not grant access to the source mailbox. Shared-data apply remains gated by human review
+`HR-2026-08-16-013`.
+
+The queue processes no more than 25 frozen items at a time. If dispatch of the next page fails after
+one page commits, the old run records a terminal continuation-dispatch failure instead of looking
+active forever. Its remaining rows are not guessed or skipped: an administrator creates and reviews
+a new preview, which treats committed links as already mapped and resumes only proven ready items.
+
 ## Default Inbound Policy
 
 Inbound processing runs after explicit Email Rules and subject/header linking.

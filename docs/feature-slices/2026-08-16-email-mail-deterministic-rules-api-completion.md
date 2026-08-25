@@ -8,6 +8,14 @@ ADR: `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`
 Owner: Svein / Codex
 Human Review: `HR-2026-08-16-010`
 
+2026-08-24 implementation note: the beta-critical unsafe legacy reversal scaffold is repaired under
+the 2026-08-19 tracking slice. Completed attempts are immutable; failed actions stop later positions
+as `not_run`; and an account-scoped Rules execution API can delegate exactly one fully evidenced
+provider Archive/Move effect to the existing verified, idempotent remote-operation inverse. Mixed,
+local-only, stale, ambiguous, mismatched, and unauthorized requests fail closed. This is a safety
+repair only and does not satisfy the draft, bounded preview, durable reprocess/retry/full-rerun, or
+complete API/OpenAPI requirements below. No migration or runtime/provider operation was performed.
+
 ## Goal
 
 Finish one deterministic Email rule boundary shared by Admin, REST API, personal-rule proposals,

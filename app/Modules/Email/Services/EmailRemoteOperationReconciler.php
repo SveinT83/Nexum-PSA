@@ -6,10 +6,11 @@ use App\Modules\Email\Actions\ManageProviderEmailFolder;
 use App\Modules\Email\Actions\PerformEmailRemoteOperation;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailFolderUidNamespace;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailRemoteOperation;
-use App\Modules\Email\Models\EmailLiveProjectionChange;
 use App\Modules\Email\Support\EmailProviderPath;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
@@ -18,6 +19,7 @@ class EmailRemoteOperationReconciler
     public function __construct(
         private readonly EmailLiveInvalidator $invalidator,
     ) {}
+
     public const APPLIED = 'applied';
 
     public const NOT_APPLIED = 'not_applied';
@@ -83,24 +85,64 @@ class EmailRemoteOperationReconciler
             return $this->notApplied('REMOTE_RECONCILIATION_NOT_APPLIED', 'Provider state proves the requested flag change was not applied.', $state);
         }
 
-        $placement->forceFill([
-            $field => $expected,
-            'sync_status' => EmailMailboxPlacement::SYNC_SYNCED,
-            'sync_version' => ((int) $placement->sync_version) + 1,
-            'last_reconciled_at' => now(),
-            'sync_error_code' => null,
-            'sync_error_message' => null,
-        ])->save();
+        $committed = DB::transaction(function () use (
+            $expected,
+            $field,
+            $operation,
+            $placement,
+            $sourcePath,
+            $sourceUidValidity,
+        ): bool {
+            $lockedPlacement = EmailMailboxPlacement::query()
+                ->lockForUpdate()
+                ->find($placement->id);
+            if (! $lockedPlacement
+                || ! $this->hasExactActiveSourceNamespace(
+                    $operation,
+                    $lockedPlacement,
+                    $sourcePath,
+                    $sourceUidValidity,
+                )) {
+                return false;
+            }
 
-        $this->invalidator->record([
-            'account' => [
-                $placement->account_id => [EmailLiveProjectionChange::TYPE_PERSONAL_STATE],
-            ],
-            'conversations' => $placement->email_conversation_id ? [$placement->email_conversation_id] : [],
-            'placements' => [$placement->id],
-        ]);
+            $lockedPlacement->forceFill([
+                $field => $expected,
+                'sync_status' => EmailMailboxPlacement::SYNC_SYNCED,
+                'sync_version' => ((int) $lockedPlacement->sync_version) + 1,
+                'last_reconciled_at' => now(),
+                'sync_error_code' => null,
+                'sync_error_message' => null,
+            ])->save();
 
-        app(EmailConversationProjector::class)->refreshForPlacement($placement->refresh());
+            app(EmailConversationProjector::class)->refreshForPlacement($lockedPlacement->refresh());
+            $lockedPlacement->refresh();
+
+            $this->invalidator->record([
+                'account' => [
+                    $lockedPlacement->account_id => [EmailLiveProjectionChange::TYPE_PERSONAL_STATE],
+                ],
+                'conversations' => $lockedPlacement->email_conversation_id
+                    ? [$lockedPlacement->email_conversation_id]
+                    : [],
+                'placements' => [$lockedPlacement->id],
+                'idempotency_key' => implode(':', [
+                    'remote-reconciliation',
+                    $operation->id,
+                    $field,
+                    (int) $expected,
+                ]),
+            ]);
+
+            return true;
+        });
+
+        if (! $committed) {
+            return $this->unresolved(
+                'REMOTE_RECONCILIATION_SOURCE_NAMESPACE',
+                'The frozen source UID namespace changed before the local projection transaction.',
+            );
+        }
 
         return $this->applied('REMOTE_RECONCILIATION_APPLIED', 'Provider state confirms the requested flag change was applied.', $state);
     }
@@ -203,34 +245,80 @@ class EmailRemoteOperationReconciler
             $attributes['email_conversation_id'] = $source->email_conversation_id;
         }
 
-        $target = EmailMailboxPlacement::query()->updateOrCreate([
-            'account_id' => $source->account_id,
-            'email_folder_id' => $targetFolder->id,
-            'uid_namespace_id' => $targetNamespace->id,
-            'imap_uid_validity' => $targetUidValidity,
-            'imap_uid' => $targetUid,
-        ], $attributes);
+        $target = DB::transaction(function () use (
+            $attributes,
+            $operation,
+            $source,
+            $sourcePath,
+            $sourceUidValidity,
+            $targetFolder,
+            $targetNamespace,
+            $targetUid,
+            $targetUidValidity,
+        ): ?EmailMailboxPlacement {
+            $lockedSource = EmailMailboxPlacement::query()->lockForUpdate()->find($source->id);
+            $lockedTargetFolder = EmailFolder::query()->lockForUpdate()->find($targetFolder->id);
+            $lockedTargetNamespace = EmailFolderUidNamespace::query()->lockForUpdate()->find($targetNamespace->id);
 
-        $source->forceFill([
-            'local_state' => EmailMailboxPlacement::LOCAL_HIDDEN,
-            'sync_status' => EmailMailboxPlacement::SYNC_SYNCED,
-            'sync_version' => ((int) $source->sync_version) + 1,
-            'provider_missing_at' => now(),
-            'last_reconciled_at' => now(),
-            'sync_error_code' => null,
-            'sync_error_message' => null,
-        ])->save();
+            if (! $lockedSource
+                || ! $lockedTargetFolder
+                || ! $lockedTargetNamespace
+                || (int) $lockedTargetFolder->active_uid_namespace_id !== (int) $lockedTargetNamespace->id
+                || ! $this->hasExactActiveSourceNamespace(
+                    $operation,
+                    $lockedSource,
+                    $sourcePath,
+                    $sourceUidValidity,
+                )) {
+                return null;
+            }
 
-        $this->invalidator->record([
-            'account' => [
-                $source->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
-            ],
-            'conversations' => $source->email_conversation_id ? [$source->email_conversation_id] : [],
-            'placements' => [$source->id, $target->id],
-        ]);
+            $target = EmailMailboxPlacement::query()->updateOrCreate([
+                'account_id' => $lockedSource->account_id,
+                'email_folder_id' => $lockedTargetFolder->id,
+                'uid_namespace_id' => $lockedTargetNamespace->id,
+                'imap_uid_validity' => $targetUidValidity,
+                'imap_uid' => $targetUid,
+            ], $attributes);
 
-        app(EmailConversationProjector::class)->refreshForPlacement($source->refresh());
-        app(EmailConversationProjector::class)->refreshForPlacement($target->refresh());
+            $lockedSource->forceFill([
+                'local_state' => EmailMailboxPlacement::LOCAL_HIDDEN,
+                'sync_status' => EmailMailboxPlacement::SYNC_SYNCED,
+                'sync_version' => ((int) $lockedSource->sync_version) + 1,
+                'provider_missing_at' => now(),
+                'last_reconciled_at' => now(),
+                'sync_error_code' => null,
+                'sync_error_message' => null,
+            ])->save();
+
+            app(EmailConversationProjector::class)->refreshForPlacement($lockedSource->refresh());
+            app(EmailConversationProjector::class)->refreshForPlacement($target->refresh());
+            $lockedSource->refresh();
+            $target->refresh();
+
+            $conversationIds = array_values(array_unique(array_filter([
+                $lockedSource->email_conversation_id,
+                $target->email_conversation_id,
+            ], fn (mixed $identifier): bool => is_int($identifier) && $identifier > 0)));
+
+            $this->invalidator->record([
+                'account' => [
+                    $lockedSource->account_id => [EmailLiveProjectionChange::TYPE_MAIL_PROJECTION],
+                ],
+                'conversations' => $conversationIds,
+                'placements' => [$lockedSource->id, $target->id],
+                'idempotency_key' => 'remote-reconciliation:'.$operation->id.':move',
+            ]);
+
+            return $target->refresh();
+        });
+
+        if (! $target) {
+            return $this->unresolved(
+                'REMOTE_RECONCILIATION_SOURCE_NAMESPACE',
+                'The local source or target namespace changed before projection commit.',
+            );
+        }
 
         return $this->applied('REMOTE_RECONCILIATION_APPLIED', 'Provider evidence confirms the move and the local placement was reconciled.', [
             'target_folder_path' => $targetPath,

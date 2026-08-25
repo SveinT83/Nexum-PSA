@@ -1,7 +1,7 @@
 <?php
 
-use App\Modules\Marketing\Controllers\PublicTrackingController;
 use App\Modules\Marketing\Controllers\Admin\MarketingSettingsController;
+use App\Modules\Marketing\Controllers\PublicTrackingController;
 use App\Modules\Marketing\Controllers\Tech\MarketingCampaignController;
 use App\Modules\Marketing\Controllers\Tech\MarketingController;
 use App\Modules\Marketing\Controllers\Tech\MarketingListController;
@@ -45,6 +45,8 @@ Route::put('/marketing/campaigns/{campaign}/schedule', [MarketingCampaignControl
     ->name('marketing.campaigns.schedule.update');
 Route::post('/marketing/campaigns/{campaign}/emails', [MarketingCampaignController::class, 'storeEmail'])
     ->name('marketing.campaigns.emails.store');
+Route::post('/marketing/campaigns/{campaign}/emails/preview', [MarketingCampaignController::class, 'previewEmail'])
+    ->name('marketing.campaigns.emails.preview');
 Route::post('/marketing/campaigns/{campaign}/emails/ai-draft', [MarketingCampaignController::class, 'draftEmailWithAi'])
     ->name('marketing.campaigns.emails.ai-draft');
 Route::put('/marketing/campaigns/{campaign}/emails/{email}', [MarketingCampaignController::class, 'updateEmail'])

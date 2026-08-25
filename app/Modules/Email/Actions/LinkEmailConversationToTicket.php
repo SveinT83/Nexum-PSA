@@ -3,15 +3,16 @@
 namespace App\Modules\Email\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Email\Models\EmailLiveProjectionChange;
 use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailTicketConversationLink;
 use App\Modules\Email\Services\EmailConversationProjector;
 use App\Modules\Email\Services\EmailLiveInvalidator;
-use App\Modules\Email\Models\EmailLiveProjectionChange;
 use App\Modules\Ticket\Actions\LinkInboundEmailToTicket;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class LinkEmailConversationToTicket
@@ -43,8 +44,9 @@ class LinkEmailConversationToTicket
         $audience = $audience === EmailTicketConversationLink::AUDIENCE_INTERNAL
             ? EmailTicketConversationLink::AUDIENCE_INTERNAL
             : EmailTicketConversationLink::AUDIENCE_CUSTOMER;
+        $liveOperationId = (string) Str::uuid();
 
-        return DB::transaction(function () use ($placement, $ticket, $actor, $role, $audience): EmailTicketConversationLink {
+        return DB::transaction(function () use ($placement, $ticket, $actor, $role, $audience, $liveOperationId): EmailTicketConversationLink {
             $message = $placement->message;
             $conversation = $this->conversations->assignPlacement($placement);
             $conversationKey = $conversation?->conversation_key ?: $this->conversationKey($message);
@@ -112,6 +114,7 @@ class LinkEmailConversationToTicket
                     $placement->account_id => [EmailLiveProjectionChange::TYPE_TICKET_LINK],
                 ],
                 'conversations' => $conversation ? [$conversation->id] : [],
+                'idempotency_key' => "ticket-conversation-link:{$liveOperationId}",
             ]);
 
             return $link;

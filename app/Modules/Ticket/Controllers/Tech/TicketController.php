@@ -280,6 +280,12 @@ class TicketController extends Controller
             'impact' => 'nullable|integer|min:1|max:5',
             'urgency' => 'nullable|integer|min:1|max:5',
             'customer_portal_visibility' => ['nullable', 'string', Rule::in(array_keys(TicketPortalPolicy::visibilityOptions()))],
+            'is_scheduled' => 'nullable|boolean',
+            'planned_start_at' => 'nullable|date',
+            'planned_end_at' => 'nullable|date',
+            'timezone' => 'nullable|string',
+            'schedule_type' => 'nullable|string|in:one_time,recurring',
+            'sla_mode' => 'nullable|string|in:defer_until_planned_start,non_sla_until_start,normal',
         ]);
 
         if (! empty($data['contact_id']) && empty($data['client_id'])) {
@@ -752,6 +758,12 @@ class TicketController extends Controller
             'owner_id' => ['nullable', Rule::exists((new User)->getTable(), 'id')],
             'tag_names' => 'nullable|array',
             'tag_names.*' => 'nullable|string|max:80',
+            'is_scheduled' => 'nullable|boolean',
+            'planned_start_at' => 'nullable|date',
+            'planned_end_at' => 'nullable|date',
+            'timezone' => 'nullable|string',
+            'schedule_type' => 'nullable|string|in:one_time,recurring',
+            'sla_mode' => 'nullable|string|in:defer_until_planned_start,non_sla_until_start,normal',
         ]);
 
         $queue = TicketQueue::where('is_active', true)->findOrFail($data['queue_id']);
@@ -796,6 +808,10 @@ class TicketController extends Controller
             ? null
             : $this->validateAssetScope($data['asset_id'], $clientId, $contactId, $siteId)->id;
 
+        if (app()->environment('testing')) {
+             throw new \Exception('is_scheduled: ' . json_encode($data['is_scheduled'] ?? 'MISSING'));
+        }
+
         $updateTicketFields->handle($ticket, [
             'subject' => $data['subject'],
             'description' => $data['description'] ?? null,
@@ -807,6 +823,12 @@ class TicketController extends Controller
             'owner_id' => $data['owner_id'] ?? null,
             'site_id' => $siteId,
             'asset_id' => $assetId,
+            'is_scheduled' => $data['is_scheduled'] ?? null,
+            'planned_start_at' => $data['planned_start_at'] ?? null,
+            'planned_end_at' => $data['planned_end_at'] ?? null,
+            'timezone' => $data['timezone'] ?? null,
+            'schedule_type' => $data['schedule_type'] ?? null,
+            'sla_mode' => $data['sla_mode'] ?? null,
         ], $request->user());
 
         $transitionWorkflow->handleToStatus($ticket->refresh(), $status, $request->user());

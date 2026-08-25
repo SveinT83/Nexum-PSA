@@ -7,13 +7,16 @@ use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailMessage;
+use App\Modules\Email\Models\EmailRemoteOperation;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailRuleExecutionAttempt;
 use App\Modules\Email\Services\EmailRulePublisher;
 use App\Modules\Email\Services\EmailRuleReversalService;
+use App\Modules\Email\Services\MailboxAccess;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketQueue;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -170,14 +173,56 @@ class RulesController extends Controller
         return back()->with('success', 'Email message #'.$message->id.' was submitted for rule reprocessing.');
     }
 
-    public function undoExecution(EmailRuleExecutionAttempt $attempt, EmailRuleReversalService $reversalService): RedirectResponse
-    {
-        try {
-            $reversalService->revert($attempt);
+    public function undoExecution(
+        Request $request,
+        EmailRuleExecutionAttempt $attempt,
+        EmailRuleReversalService $reversalService,
+        MailboxAccess $mailboxAccess,
+    ): RedirectResponse {
+        abort_unless($request->user()?->can('email.rule_manage'), 403);
 
-            return redirect()->back()->with('success', 'Rule execution successfully reverted.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Reversal failed: ' . $e->getMessage());
+        $attempt->loadMissing(['rule', 'version', 'message.account', 'placement.account']);
+        $account = $attempt->placement?->account ?? $attempt->message?->account;
+        $ruleKind = $attempt->version?->rule_kind ?? $attempt->rule?->rule_kind;
+        abort_if(
+            $ruleKind !== EmailRule::KIND_ADMIN
+            || ! $account
+            || ! $mailboxAccess->canAccessAccount($request->user(), $account, MailboxAccess::VIEW),
+            404,
+        );
+
+        try {
+            $inverse = $reversalService->revert($attempt, $request->user());
+
+            return match ($inverse->status) {
+                EmailRemoteOperation::STATUS_SUCCEEDED => back()->with(
+                    'success',
+                    'The rule provider effect was undone through a verified inverse operation.',
+                ),
+                EmailRemoteOperation::STATUS_PENDING,
+                EmailRemoteOperation::STATUS_RUNNING => back()->with(
+                    'success',
+                    'Rule Undo was recorded and is waiting for provider acknowledgement.',
+                ),
+                EmailRemoteOperation::STATUS_SUPERSEDED => back()->with(
+                    'error',
+                    'Rule Undo stopped safely because mailbox or provider state changed.',
+                ),
+                default => back()->with(
+                    'error',
+                    'Rule Undo is recorded but requires safe mailbox-operation recovery.',
+                ),
+            };
+        } catch (AuthorizationException) {
+            return back()->with('error', 'Current rule-management and Mailbox Organize access is required.');
+        } catch (ValidationException $exception) {
+            return back()->with(
+                'error',
+                (string) (collect($exception->errors())->flatten()->first()
+                    ?: 'This rule execution cannot be undone safely.'),
+            );
+        } catch (\Throwable) {
+            return back()->with('error', 'Rule Undo could not be started safely. No success was reported.');
         }
     }
 

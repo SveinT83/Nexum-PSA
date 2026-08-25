@@ -10,7 +10,10 @@ use App\Modules\Commercial\Models\Services\Services;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Integration\Models\CloudFactory\Conflict;
 use App\Modules\Integration\Models\CloudFactory\Offer;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class CloudFactoryServiceManager
 {
@@ -155,26 +158,110 @@ class CloudFactoryServiceManager
         ];
 
         if ($mode !== 'manual' || $offer->manual_sale_price !== null) {
-            $update['price_ex_vat'] = round($sale, 2);
-            $update['price_including_tax'] = round($sale * 1.25, 2);
+            $update['price_ex_vat'] = $sale;
+            $update['price_including_tax'] = (string) BigDecimal::of($sale)
+                ->multipliedBy('1.25')
+                ->toScale(2, RoundingMode::HALF_UP);
         }
 
         $service->forceFill($update)->save();
     }
 
-    public function calculatedSalePrice(Offer $offer, Services $service): float
+    /**
+     * Return the Contract-bound sale price as a canonical two-decimal string.
+     * Provider cost/profit storage remains unchanged; only the customer sale
+     * price path is normalized and marked up without binary floating point.
+     */
+    public function calculatedSalePrice(Offer $offer, Services $service): string
     {
         $mode = $this->priceMode($offer);
-        $markup = $this->markup($offer);
-        $cost = $offer->normalizedCost();
-        $msrp = $offer->normalizedMsrp();
-
-        return match ($mode) {
-            'manual' => (float) ($offer->manual_sale_price ?? $service->price_ex_vat),
-            'msrp_markup' => (float) ($msrp ?? 0) * (1 + $markup / 100),
-            'cost_markup' => (float) ($cost ?? 0) * (1 + $markup / 100),
-            default => (float) ($msrp ?? 0),
+        $markup = $this->markupDecimal($offer);
+        $sale = match ($mode) {
+            'manual' => $this->decimal(
+                $offer->manual_sale_price ?? $service->price_ex_vat,
+                'manual_sale_price',
+            ),
+            'msrp_markup' => $this->applyMarkup(
+                $this->normalizedSaleBasis($offer, $offer->msrp, 'msrp'),
+                $markup,
+            ),
+            'cost_markup' => $this->applyMarkup(
+                $this->normalizedSaleBasis($offer, $offer->cost, 'cost'),
+                $markup,
+            ),
+            default => $this->normalizedSaleBasis($offer, $offer->msrp, 'msrp'),
         };
+
+        return (string) $sale->toScale(2, RoundingMode::HALF_UP);
+    }
+
+    private function normalizedSaleBasis(Offer $offer, mixed $price, string $field): BigDecimal
+    {
+        if ($price === null || $price === '') {
+            return BigDecimal::zero()->toScale(4);
+        }
+
+        $amount = $this->decimal($price, $field);
+        $commitmentMonths = (int) $offer->recurrence_term;
+
+        if ($commitmentMonths <= 0) {
+            return $amount->toScale(4, RoundingMode::HALF_UP);
+        }
+
+        $commercialMonths = match ($offer->commercialBillingInterval()) {
+            'monthly' => 1,
+            'quarterly' => 3,
+            'yearly' => 12,
+            default => $commitmentMonths,
+        };
+
+        return $amount
+            ->multipliedBy($commercialMonths)
+            ->dividedBy($commitmentMonths, 4, RoundingMode::HALF_UP);
+    }
+
+    private function applyMarkup(BigDecimal $amount, BigDecimal $markup): BigDecimal
+    {
+        return $amount
+            ->multipliedBy(BigDecimal::of(100)->plus($markup))
+            ->dividedBy(100);
+    }
+
+    private function markupDecimal(Offer $offer): BigDecimal
+    {
+        return $this->decimal(
+            $offer->markup_percent
+                ?? data_get($offer->integration->config, 'markup_percent', 0),
+            'markup_percent',
+        );
+    }
+
+    private function decimal(mixed $value, string $field): BigDecimal
+    {
+        if ($value instanceof BigDecimal) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            $value = (string) $value;
+        } elseif (is_float($value)) {
+            if (! is_finite($value)) {
+                throw new InvalidArgumentException("{$field} must be a finite decimal value.");
+            }
+
+            $value = json_encode($value, JSON_PRESERVE_ZERO_FRACTION);
+        }
+
+        if (! is_string($value)) {
+            throw new InvalidArgumentException("{$field} must be a decimal string or number.");
+        }
+
+        $value = trim($value);
+        if (! preg_match('/^[+-]?\\d+(?:\\.\\d+)?$/D', $value)) {
+            throw new InvalidArgumentException("{$field} must use an unambiguous decimal value.");
+        }
+
+        return BigDecimal::of($value);
     }
 
     private function syncManagedCost(Offer $offer, Services $service): ?Cost
