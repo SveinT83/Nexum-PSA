@@ -163,6 +163,10 @@ class TicketController extends Controller
                 : collect(),
             'assetOptions' => $this->assetOptions($selectedClient?->id, $selectedContact?->id, $selectedSite?->id),
             'technicians' => $this->technicians(),
+            'calendars' => \App\Modules\Calendar\Models\Calendar::query()
+                ->where('owner_type', User::class)
+                ->where('owner_id', auth()->id())
+                ->get(),
             'selectedClient' => $selectedClient,
             'selectedContact' => $selectedContact,
             'selectedSite' => $selectedSite,
@@ -455,6 +459,10 @@ class TicketController extends Controller
                 : collect(),
             'assetOptions' => $this->assetOptions($ticket->client_id, $ticket->contact_id, $ticket->site_id),
             'technicians' => $this->technicians(),
+            'calendars' => \App\Modules\Calendar\Models\Calendar::query()
+                ->where('owner_type', User::class)
+                ->where('owner_id', auth()->id())
+                ->get(),
         ]);
     }
 

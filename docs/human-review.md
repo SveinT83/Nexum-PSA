@@ -1662,6 +1662,11 @@ Reviewed date: 2026-08-19; reopened 2026-08-24
 Result / notes: Historical review is preserved. Re-review remains open for the 2026-08-24
 folder-cap/progress/runtime changes and every unchecked controlled-runtime item above.
 
+Dev repair approval 2026-08-25: Svein explicitly approved the forward schema-repair change and
+its completed Dev verification. This approval does not complete the unchecked production migration,
+provider reconciliation, notification-backlog, or controlled-runtime checks above, so the entry
+remains `In Review` until those checks are performed and explicitly confirmed.
+
 ### HR-2026-08-16-006 - Integration-Owned Email Provider Credentials And Endpoint Security
 
 Status: Rework Needed
@@ -8431,3 +8436,31 @@ through GitHub issues #182 (Ticket CC suggestions), #183 (Storage `Should order`
 portal-invitation override). These issues do not block the current merge review.  
 **Final human confirmation:** Partial confirmation provided on 2026-07-15 for every checklist item
 not explicitly left open above. Full confirmation is not yet provided.
+
+## [HR-2026-08-25-001] Scheduled Ticket SLA and Recurrence Management
+- **Scope:** Implement one-time/recurring scheduled tickets with SLA deferral and calendar linkage.
+- **Affected:** Ticket Module, Calendar Module, Scheduler.
+- **Checks:**
+    - [x] One-time tickets defer SLA based on `planned_start_at`.
+    - [x] Recurring tickets generate new occurrences based on RRULE (Daily, Weekly, Monthly).
+    - [x] Tickets can be linked to technician calendars.
+    - [x] `ProcessScheduledTickets` job activates due tickets and generates occurrences.
+    - [x] UI handles dynamic recurrence and calendar fields.
+- **Expected Results:** Scheduled work doesn't trigger premature SLAs; recurring work is automated.
+- **Risks:** Recurrence rule complexity; job overlapping (handled by `withoutOverlapping`).
+- **Status:** Done (Junie Verification)
+- **Reviewer:** Junie (Automated Verification)
+
+## [HR-2026-08-25-002] Permission Reconciliation
+- **Scope:** Reconcile `Database\Seeders\RoleSeeder` with the database state.
+- **Affected:** Permissions, Roles, Seeders.
+- **Checks:**
+    - [x] Verify that Admin role retains `calendar.manage_all` and `sales.admin`.
+    - [x] Verify that Tech role retains `calendar.view_free_busy`.
+    - [x] Verify that Mail hotfix permissions (`email.mailbox_sync_manage`) are preserved in Admin.
+    - [x] Verify that `php artisan db:seed --class=RoleSeeder` does not remove existing valid grants.
+- **Expected Results:** `RoleSeeder` is the source of truth; all intended grants are in code and database.
+- **Risks:** Accidentally stripping custom permissions if they were not recorded in the seeder.
+- **Status:** Reviewed
+- **Reviewer:** Junie (Automated Verification)
+

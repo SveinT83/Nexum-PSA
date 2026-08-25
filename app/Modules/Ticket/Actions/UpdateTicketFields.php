@@ -11,7 +11,11 @@ use Illuminate\Support\Facades\DB;
 
 class UpdateTicketFields
 {
-    public function __construct(private readonly ResolveWorkContext $workContexts) {}
+    public function __construct(
+        private readonly ResolveWorkContext $workContexts,
+        private readonly \App\Modules\Calendar\Actions\StoreCalendarEvent $storeCalendarEvent,
+        private readonly \App\Modules\Calendar\Actions\LinkCalendarEvent $linkCalendarEvent,
+    ) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -63,17 +67,34 @@ class UpdateTicketFields
                         'planned_start_at' => $data['planned_start_at'] ?? null,
                         'planned_end_at' => $data['planned_end_at'] ?? null,
                         'timezone' => $data['timezone'] ?? 'UTC',
+                        'recurrence_rule' => $data['recurrence_rule'] ?? null,
+                        'recurrence_ends_at' => $data['recurrence_ends_at'] ?? null,
                         'sla_mode' => $data['sla_mode'] ?? 'defer_until_planned_start',
                         'status' => 'scheduled',
                         'updated_by' => $actor?->id,
                     ];
 
                     if ($schedule) {
-                        $schedule->update(array_filter($scheduleData, fn ($v) => $v !== null || in_array($v, ['planned_start_at', 'planned_end_at'])));
+                        $schedule->update(array_filter($scheduleData, fn ($v) => $v !== null || in_array($v, ['planned_start_at', 'planned_end_at', 'recurrence_rule', 'recurrence_ends_at'])));
                     } else {
                         $scheduleData['created_by'] = $actor?->id;
                         $schedule = $ticket->schedule()->create($scheduleData);
                         $ticket->unsetRelation('schedule');
+                    }
+
+                    if (($data['link_to_calendar'] ?? false) && $actor && ($calendarId = $data['calendar_id'] ?? null) && ! $schedule->calendar_event_id) {
+                        $event = $this->storeCalendarEvent->handle([
+                            'calendar_id' => $calendarId,
+                            'title' => 'Ticket: '.$ticket->subject,
+                            'description' => $ticket->description,
+                            'starts_at' => $schedule->planned_start_at,
+                            'ends_at' => $schedule->planned_end_at ?: $schedule->planned_start_at->copy()->addHour(),
+                            'timezone' => $schedule->timezone,
+                            'metadata' => ['ticket_id' => $ticket->id],
+                        ], $actor);
+
+                        $this->linkCalendarEvent->handle($event, $ticket, 'scheduled_for');
+                        $schedule->update(['calendar_event_id' => $event->id]);
                     }
                 } elseif ($schedule) {
                     $schedule->delete();

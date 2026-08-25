@@ -196,8 +196,8 @@
         </x-card.default>
 
         <!-- ------------------------------------------------- -->
-        <!-- Schedule card (Slice 1) -->
-        <!-- Allows deferring SLA and marking the ticket for future work. -->
+        <!-- Schedule card -->
+        <!-- Allows deferring SLA, marking the ticket for future work, and setting recurrence. -->
         <!-- ------------------------------------------------- -->
         <x-card.default title="Schedule">
             @php
@@ -211,9 +211,39 @@
 
             <div id="schedule_details" class="{{ $isScheduled ? '' : 'd-none' }}">
                 <div class="mb-3">
+                    <label for="schedule_type" class="form-label">Schedule type</label>
+                    <select id="schedule_type" name="schedule_type" class="form-select">
+                        <option value="one_time" @selected(old('schedule_type', $schedule?->schedule_type) == 'one_time')>One-time</option>
+                        <option value="recurring" @selected(old('schedule_type', $schedule?->schedule_type) == 'recurring')>Recurring</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label for="planned_start_at" class="form-label">Planned start</label>
                     <input type="datetime-local" id="planned_start_at" name="planned_start_at" class="form-control @error('planned_start_at') is-invalid @enderror" value="{{ old('planned_start_at', $schedule?->planned_start_at?->format('Y-m-d\TH:i')) }}">
                     @error('planned_start_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="planned_end_at" class="form-label">Planned end</label>
+                    <input type="datetime-local" id="planned_end_at" name="planned_end_at" class="form-control @error('planned_end_at') is-invalid @enderror" value="{{ old('planned_end_at', $schedule?->planned_end_at?->format('Y-m-d\TH:i')) }}">
+                    @error('planned_end_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div id="recurrence_details" class="{{ old('schedule_type', $schedule?->schedule_type) == 'recurring' ? '' : 'd-none' }}">
+                    <div class="mb-3">
+                        <label for="recurrence_rule" class="form-label">Recurrence rule</label>
+                        <select id="recurrence_rule" name="recurrence_rule" class="form-select">
+                            <option value="FREQ=DAILY" @selected(old('recurrence_rule', $schedule?->recurrence_rule) == 'FREQ=DAILY')>Daily</option>
+                            <option value="FREQ=WEEKLY" @selected(old('recurrence_rule', $schedule?->recurrence_rule) == 'FREQ=WEEKLY' || (!old('recurrence_rule') && !$schedule?->recurrence_rule))>Weekly</option>
+                            <option value="FREQ=MONTHLY" @selected(old('recurrence_rule', $schedule?->recurrence_rule) == 'FREQ=MONTHLY')>Monthly</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recurrence_ends_at" class="form-label">Ends at (optional)</label>
+                        <input type="date" id="recurrence_ends_at" name="recurrence_ends_at" class="form-control @error('recurrence_ends_at') is-invalid @enderror" value="{{ old('recurrence_ends_at', $schedule?->recurrence_ends_at?->format('Y-m-d')) }}">
+                        @error('recurrence_ends_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -223,13 +253,23 @@
                         <option value="non_sla_until_start" @selected(old('sla_mode', $schedule?->sla_mode) == 'non_sla_until_start')>No SLA until start</option>
                         <option value="normal" @selected(old('sla_mode', $schedule?->sla_mode) == 'normal')>Normal (calculate from creation)</option>
                     </select>
-                    <div class="form-text">
-                        Controls how due dates are calculated for scheduled tickets.
+                </div>
+
+                <div class="border-top pt-3 mt-3">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="link_to_calendar" name="link_to_calendar" value="1" @checked(old('link_to_calendar', $schedule?->calendar_event_id))>
+                        <label class="form-check-label" for="link_to_calendar">Add to calendar</label>
+                    </div>
+                    <div id="calendar_selection" class="{{ old('link_to_calendar', $schedule?->calendar_event_id) ? '' : 'd-none' }}">
+                        <select name="calendar_id" class="form-select">
+                            @foreach($calendars as $calendar)
+                                <option value="{{ $calendar->id }}" @selected(old('calendar_id', $schedule?->calendar_event_id ? \App\Modules\Calendar\Models\CalendarEvent::find($schedule->calendar_event_id)?->calendar_id : null) == $calendar->id || (!old('calendar_id') && !$schedule?->calendar_event_id && $calendar->is_default))>{{ $calendar->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
-                <input type="hidden" name="schedule_type" value="one_time">
-                <input type="hidden" name="timezone" value="{{ $schedule?->timezone ?? config('app.timezone') }}">
+                <input type="hidden" name="timezone" value="{{ old('timezone', $schedule?->timezone ?? config('app.timezone')) }}">
             </div>
         </x-card.default>
 
@@ -244,6 +284,37 @@
 @section('sidebar')
     <x-nav.work-menu />
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const isScheduledSwitch = document.getElementById('is_scheduled');
+            const scheduleDetails = document.getElementById('schedule_details');
+            const scheduleTypeSelect = document.getElementById('schedule_type');
+            const recurrenceDetails = document.getElementById('recurrence_details');
+            const linkToCalendarCheckbox = document.getElementById('link_to_calendar');
+            const calendarSelection = document.getElementById('calendar_selection');
+
+            if (isScheduledSwitch && scheduleDetails) {
+                isScheduledSwitch.addEventListener('change', function () {
+                    scheduleDetails.classList.toggle('d-none', !this.checked);
+                });
+            }
+
+            if (scheduleTypeSelect && recurrenceDetails) {
+                scheduleTypeSelect.addEventListener('change', function () {
+                    recurrenceDetails.classList.toggle('d-none', this.value !== 'recurring');
+                });
+            }
+
+            if (linkToCalendarCheckbox && calendarSelection) {
+                linkToCalendarCheckbox.addEventListener('change', function () {
+                    calendarSelection.classList.toggle('d-none', !this.checked);
+                });
+            }
+        });
+    </script>
+@endpush
 
 @section('rightbar')
     <x-card.default title="Current details">

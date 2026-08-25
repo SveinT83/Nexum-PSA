@@ -28,6 +28,8 @@ class StoreTicket
         private readonly TicketWorkflowDefinitionService $workflowDefinitions,
         private readonly ResolveWorkContext $workContexts,
         private readonly RecordSignal $recordSignal,
+        private readonly \App\Modules\Calendar\Actions\StoreCalendarEvent $storeCalendarEvent,
+        private readonly \App\Modules\Calendar\Actions\LinkCalendarEvent $linkCalendarEvent,
     ) {}
 
     public function handle(array $data, ?User $actor = null): Ticket
@@ -87,7 +89,7 @@ class StoreTicket
             ]);
 
             if ($data['is_scheduled'] ?? false) {
-                $ticket->schedule()->create([
+                $schedule = $ticket->schedule()->create([
                     'schedule_type' => $data['schedule_type'] ?? 'one_time',
                     'planned_start_at' => $data['planned_start_at'] ?? null,
                     'planned_end_at' => $data['planned_end_at'] ?? null,
@@ -99,6 +101,21 @@ class StoreTicket
                     'created_by' => $actor?->id,
                     'updated_by' => $actor?->id,
                 ]);
+
+                if (($data['link_to_calendar'] ?? false) && $actor && ($calendarId = $data['calendar_id'] ?? null)) {
+                    $event = $this->storeCalendarEvent->handle([
+                        'calendar_id' => $calendarId,
+                        'title' => 'Ticket: '.$ticket->subject,
+                        'description' => $ticket->description,
+                        'starts_at' => $schedule->planned_start_at,
+                        'ends_at' => $schedule->planned_end_at ?: $schedule->planned_start_at->copy()->addHour(),
+                        'timezone' => $schedule->timezone,
+                        'metadata' => ['ticket_id' => $ticket->id],
+                    ], $actor);
+
+                    $this->linkCalendarEvent->handle($event, $ticket, 'scheduled_for');
+                    $schedule->update(['calendar_event_id' => $event->id]);
+                }
             }
 
             if (! empty($data['description']) && ($data['channel'] ?? 'manual') !== 'email') {

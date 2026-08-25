@@ -112,6 +112,12 @@ Schedule::job(new CleanupEmailProviderDeletionCache)
     ->name('email.provider_deletion.cleanup')
     ->withoutOverlapping(120);
 
+// Scheduled Ticket activation and recurrence generation
+Schedule::job(new \App\Modules\Ticket\Jobs\ProcessScheduledTickets)
+    ->everyMinute()
+    ->name('ticket.scheduled_process')
+    ->withoutOverlapping(5);
+
 // Supplier-order import dispatch owns a durable scheduler heartbeat and claims
 // due rows before queueing, so overlapping scheduler invocations remain safe.
 Schedule::call(fn () => app(DispatchDueSupplierOrderImports::class)->handle())
