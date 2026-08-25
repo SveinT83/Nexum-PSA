@@ -23,10 +23,29 @@ has explicitly approved.
   `Reviewed`.
 - Never delete reviewed entries. Add newer entries above older entries and retain the history.
 
+| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Pending | 2026-08-25 |  |  |
+
+### HR-2026-08-25-001: One-time scheduled tickets with SLA deferral (Slice 1)
+
+- **Scope:** Backend and UI for one-time scheduled tickets, allowing deferral of SLA due dates until the planned start time.
+- **Affected Pages:** Ticket Create, Ticket Edit, Ticket Show, Ticket Index.
+- **Checks:**
+  - [x] Verify that "Schedule for later" toggle exists on Ticket Create and Edit pages.
+  - [x] Verify that checking "Schedule for later" reveals start time and SLA mode fields.
+  - [ ] Verify that a scheduled ticket shows the "Scheduled" badge with start time on the Show page.
+  - [ ] Verify that a scheduled ticket shows a calendar icon on the Index page.
+  - [x] Verify that SLA due dates are deferred until `planned_start_at` when `defer_until_planned_start` mode is selected.
+  - [x] Verify that existing SLA is preserved when adding a schedule to an existing ticket (per RFC).
+  - [x] Verify that removing a schedule from a ticket deletes the schedule record.
+- **Expected Results:** One-time scheduling should be fully functional in the UI and correctly influence SLA calculations.
+- **Risks:** SLA calculations might be affected if timezone handling is inconsistent.
+- **Status:** Pending manual verification.
+
 ## Review Summary
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Pending | 2026-08-25 |  |  |
 | HR-2026-08-24-004 | Email template HTML editor and branding-managed layouts | Pending | 2026-08-24 |  |  |
 | HR-2026-08-24-003 | Commercial Contract customer document and pricing consistency | Pending | 2026-08-24 |  |  |
 | HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Pending | 2026-08-24 |  |  |

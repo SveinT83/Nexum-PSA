@@ -55,6 +55,7 @@ class UpdateTicketFields
             if (array_key_exists('is_scheduled', $data)) {
                 $isScheduled = (bool) $data['is_scheduled'];
                 $schedule = $ticket->schedule()->first(); // Use query to avoid stale cache
+                $changed = true;
 
                 if ($isScheduled) {
                     $scheduleData = [
@@ -63,20 +64,20 @@ class UpdateTicketFields
                         'planned_end_at' => $data['planned_end_at'] ?? null,
                         'timezone' => $data['timezone'] ?? 'UTC',
                         'sla_mode' => $data['sla_mode'] ?? 'defer_until_planned_start',
+                        'status' => 'scheduled',
                         'updated_by' => $actor?->id,
                     ];
 
                     if ($schedule) {
-                        $schedule->update($scheduleData);
+                        $schedule->update(array_filter($scheduleData, fn ($v) => $v !== null || in_array($v, ['planned_start_at', 'planned_end_at'])));
                     } else {
                         $scheduleData['created_by'] = $actor?->id;
-                        $ticket->schedule()->create($scheduleData);
-                        $after['is_scheduled'] = true;
+                        $schedule = $ticket->schedule()->create($scheduleData);
+                        $ticket->unsetRelation('schedule');
                     }
                 } elseif ($schedule) {
                     $schedule->delete();
-                    $before['is_scheduled'] = true;
-                    $after['is_scheduled'] = false;
+                    $ticket->unsetRelation('schedule');
                 }
             }
 
@@ -84,8 +85,12 @@ class UpdateTicketFields
                 return $ticket;
             }
 
-            $wasUnassigned = blank($ticket->owner_id);
             $changed = true;
+            if (isset($after['is_scheduled'])) {
+                unset($after['is_scheduled']);
+            }
+
+            $wasUnassigned = blank($ticket->owner_id);
             $ownerWasSubmitted = array_key_exists('owner_id', $updates);
 
             $ticket->forceFill(array_merge($after, [

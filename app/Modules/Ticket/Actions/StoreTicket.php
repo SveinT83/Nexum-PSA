@@ -86,7 +86,7 @@ class StoreTicket
                 'resolve_due_at' => $sla['resolve_due_at'],
             ]);
 
-            if (! empty($data['is_scheduled'])) {
+            if ($data['is_scheduled'] ?? false) {
                 $ticket->schedule()->create([
                     'schedule_type' => $data['schedule_type'] ?? 'one_time',
                     'planned_start_at' => $data['planned_start_at'] ?? null,

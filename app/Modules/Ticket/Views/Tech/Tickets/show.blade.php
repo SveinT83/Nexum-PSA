@@ -14,6 +14,12 @@
                 @if ($ticket->is_unread)
                     <span class="badge text-bg-primary">Unread</span>
                 @endif
+                @if ($ticket->schedule)
+                    <span class="badge text-bg-info">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Scheduled: {{ $ticket->schedule->planned_start_at->format('Y-m-d H:i') }}
+                    </span>
+                @endif
             </div>
             <p class="text-muted mb-0">{{ $ticket->subject }}</p>
         </div>

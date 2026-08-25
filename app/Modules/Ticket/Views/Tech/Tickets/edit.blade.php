@@ -195,6 +195,44 @@
             </div>
         </x-card.default>
 
+        <!-- ------------------------------------------------- -->
+        <!-- Schedule card (Slice 1) -->
+        <!-- Allows deferring SLA and marking the ticket for future work. -->
+        <!-- ------------------------------------------------- -->
+        <x-card.default title="Schedule">
+            @php
+                $isScheduled = old('is_scheduled', $ticket->schedule()->exists());
+                $schedule = $ticket->schedule;
+            @endphp
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="is_scheduled" name="is_scheduled" value="1" @checked($isScheduled)>
+                <label class="form-check-label" for="is_scheduled">Schedule for later</label>
+            </div>
+
+            <div id="schedule_details" class="{{ $isScheduled ? '' : 'd-none' }}">
+                <div class="mb-3">
+                    <label for="planned_start_at" class="form-label">Planned start</label>
+                    <input type="datetime-local" id="planned_start_at" name="planned_start_at" class="form-control @error('planned_start_at') is-invalid @enderror" value="{{ old('planned_start_at', $schedule?->planned_start_at?->format('Y-m-d\TH:i')) }}">
+                    @error('planned_start_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="sla_mode" class="form-label">SLA Deferral</label>
+                    <select id="sla_mode" name="sla_mode" class="form-select">
+                        <option value="defer_until_planned_start" @selected(old('sla_mode', $schedule?->sla_mode) == 'defer_until_planned_start')>Defer until planned start</option>
+                        <option value="non_sla_until_start" @selected(old('sla_mode', $schedule?->sla_mode) == 'non_sla_until_start')>No SLA until start</option>
+                        <option value="normal" @selected(old('sla_mode', $schedule?->sla_mode) == 'normal')>Normal (calculate from creation)</option>
+                    </select>
+                    <div class="form-text">
+                        Controls how due dates are calculated for scheduled tickets.
+                    </div>
+                </div>
+
+                <input type="hidden" name="schedule_type" value="one_time">
+                <input type="hidden" name="timezone" value="{{ $schedule?->timezone ?? config('app.timezone') }}">
+            </div>
+        </x-card.default>
+
         <div class="d-flex justify-content-between mt-3">
             <a href="{{ route('tech.tickets.show', $ticket) }}" class="btn btn-outline-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">Save ticket</button>
@@ -229,6 +267,20 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Toggle schedule details
+            const isScheduledCheckbox = document.getElementById('is_scheduled');
+            const scheduleDetails = document.getElementById('schedule_details');
+
+            if (isScheduledCheckbox && scheduleDetails) {
+                isScheduledCheckbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        scheduleDetails.classList.remove('d-none');
+                    } else {
+                        scheduleDetails.classList.add('d-none');
+                    }
+                });
+            }
+
             const clientSelect = document.getElementById('client_id');
             const contactSelect = document.getElementById('contact_id');
             const normalizeTag = (value) => value.trim().replace(/\s+/g, ' ');
