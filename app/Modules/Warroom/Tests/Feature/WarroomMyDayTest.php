@@ -43,6 +43,19 @@ class WarroomMyDayTest extends TestCase
     }
 
     #[Test]
+    public function my_day_shows_warroom_side_menu(): void
+    {
+        $this->actingAs($this->tech)
+            ->get(route('tech.my-day.index'))
+            ->assertOk()
+            ->assertSee('Warroom') // Side menu title
+            ->assertSee('Dashboard')
+            ->assertSee('My Day')
+            ->assertSee(route('tech.dashboard'))
+            ->assertSee(route('tech.my-day.index'));
+    }
+
+    #[Test]
     public function my_day_navigation_keeps_dashboard_group_active_and_marks_only_my_day_current(): void
     {
         $response = $this->actingAs($this->tech)

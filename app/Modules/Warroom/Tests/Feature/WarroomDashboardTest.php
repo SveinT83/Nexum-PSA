@@ -35,6 +35,19 @@ class WarroomDashboardTest extends TestCase
     }
 
     #[Test]
+    public function dashboard_shows_warroom_side_menu(): void
+    {
+        $this->actingAs($this->tech)
+            ->get(route('tech.dashboard'))
+            ->assertOk()
+            ->assertSee('Warroom') // Side menu title
+            ->assertSee('Dashboard')
+            ->assertSee('My Day')
+            ->assertSee(route('tech.dashboard'))
+            ->assertSee(route('tech.my-day.index'));
+    }
+
+    #[Test]
     public function dashboard_navigation_groups_dashboard_and_my_day_and_links_the_warroom_lane(): void
     {
         $response = $this->actingAs($this->tech)

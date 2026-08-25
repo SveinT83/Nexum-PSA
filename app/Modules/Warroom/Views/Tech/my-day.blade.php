@@ -232,6 +232,8 @@
 @endsection
 
 @section('sidebar')
+    @include('warroom::Tech.partials._sidebar')
+
     <!-- Quick actions -->
     <div class="card mb-3">
         <div class="card-header py-2">
