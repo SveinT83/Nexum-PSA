@@ -155,6 +155,10 @@ class TicketActionGuard
             return 'The Ticket is already closed.';
         }
 
+        if ($action === TicketAction::REOPEN && ! $this->isClosed($ticket)) {
+            return 'The Ticket is already open.';
+        }
+
         return null;
     }
 

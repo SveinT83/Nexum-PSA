@@ -273,6 +273,8 @@
             </div>
         </x-card.default>
 
+        @include('ticket::Tech.Tickets.partials.custom-fields-form')
+
         <div class="d-flex justify-content-between mt-3">
             <a href="{{ route('tech.tickets.show', $ticket) }}" class="btn btn-outline-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">Save ticket</button>

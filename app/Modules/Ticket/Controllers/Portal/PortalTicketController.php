@@ -6,14 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Modules\CustomerPortal\Actions\RecordCustomerPortalAudit;
 use App\Modules\CustomerPortal\Support\CustomerPortalContext;
 use App\Modules\Notification\Actions\SendCustomerPortalNotification;
-use App\Modules\Ticket\Actions\ApplyTicketWorkflowActionTrigger;
+use App\Modules\Ticket\Actions\AddTicketMessage;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
-use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Support\PortalTicketAccess;
-use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +21,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PortalTicketController extends Controller
 {
+    public function __construct(
+        private readonly AddTicketMessage $addTicketMessage,
+    ) {}
+
     public function index(Request $request, PortalTicketAccess $access): View
     {
         $context = $this->context($request);
@@ -82,7 +84,14 @@ class PortalTicketController extends Controller
                 ]),
             ])->save();
 
-            $message = $this->createPortalMessage($ticket, $request, $context, $validated['description'], 'Ticket created from customer portal.');
+            $message = $this->createPortalMessage(
+                $ticket,
+                $request,
+                $context,
+                $validated['description'],
+                triggerWorkflow: false,
+                sourceAction: 'PortalTicketController.store',
+            );
 
             $audit->handle('portal_ticket_created', $context->account, $request->user(), $context->contact, $context->client, $site, [
                 'ticket_id' => $ticket->id,
@@ -132,7 +141,7 @@ class PortalTicketController extends Controller
         ]);
     }
 
-    public function reply(Request $request, Ticket $ticket, PortalTicketAccess $access, RecordCustomerPortalAudit $audit, ApplyTicketWorkflowActionTrigger $workflowTrigger): RedirectResponse
+    public function reply(Request $request, Ticket $ticket, PortalTicketAccess $access, RecordCustomerPortalAudit $audit): RedirectResponse
     {
         $context = $this->context($request);
         abort_unless($access->canView($context, $ticket), 404);
@@ -141,15 +150,15 @@ class PortalTicketController extends Controller
             'body' => ['required', 'string', 'max:5000'],
         ]);
 
-        DB::transaction(function () use ($request, $ticket, $context, $validated, $audit, $workflowTrigger): void {
-            $message = $this->createPortalMessage($ticket, $request, $context, $validated['body'], 'Customer portal reply added.');
-
-            $ticket->forceFill([
-                'is_unread' => true,
-                'updated_by' => $request->user()?->id,
-            ])->touch();
-
-            $workflowTrigger->handle($ticket->refresh(), TicketAction::CUSTOMER_REPLY_RECEIVED, $request->user());
+        DB::transaction(function () use ($request, $ticket, $context, $validated, $audit): void {
+            $message = $this->createPortalMessage(
+                $ticket,
+                $request,
+                $context,
+                $validated['body'],
+                triggerWorkflow: true,
+                sourceAction: 'PortalTicketController.reply',
+            );
 
             $audit->handle('portal_ticket_reply_created', $context->account, $request->user(), $context->contact, $context->client, $context->site, [
                 'ticket_id' => $ticket->id,
@@ -177,12 +186,16 @@ class PortalTicketController extends Controller
         return Storage::disk($disk)->download($attachment->path, $attachment->filename);
     }
 
-    private function createPortalMessage(Ticket $ticket, Request $request, CustomerPortalContext $context, string $body, string $eventMessage): TicketMessage
-    {
-        $message = TicketMessage::query()->create([
-            'ticket_id' => $ticket->id,
-            'author_id' => $request->user()?->id,
-            'author_type' => 'portal_user',
+    private function createPortalMessage(
+        Ticket $ticket,
+        Request $request,
+        CustomerPortalContext $context,
+        string $body,
+        bool $triggerWorkflow,
+        string $sourceAction,
+    ): TicketMessage {
+        return $this->addTicketMessage->handle($ticket, [
+            '_author_type' => 'portal_user',
             'type' => 'customer_reply',
             'visibility' => 'public',
             'subject' => $ticket->subject,
@@ -192,21 +205,13 @@ class PortalTicketController extends Controller
                 'customer_portal_account_id' => $context->account->id,
                 'contact_id' => $context->contact->id,
             ],
-        ]);
-
-        TicketEvent::query()->create([
-            'ticket_id' => $ticket->id,
-            'actor_id' => $request->user()?->id,
-            'type' => 'portal_message_added',
-            'message' => $eventMessage,
-            'after' => [
-                'message_id' => $message->id,
-                'visibility' => 'public',
-                'source' => 'customer_portal',
-            ],
-        ]);
-
-        return $message;
+            'suppress_notifications' => true,
+            'suppress_workflow_trigger' => ! $triggerWorkflow,
+            '_suppress_reply_delivery' => true,
+            '_suppress_assignment_claim' => true,
+            '_event_source_channel' => 'customer_portal',
+            '_event_source_action' => $sourceAction,
+        ], $request->user());
     }
 
     private function context(Request $request): CustomerPortalContext

@@ -10,6 +10,8 @@ RFCs are required before Level 3 changes and recommended for unclear Level 2 cha
 
 Approved:
 
+- `2026-08-25-rmm-alert-rules.md`
+- `2026-08-25-task-stopwatch-and-time-registration.md`
 - `2026-07-29-ticket-api-customer-completion-flow.md`
 - `2026-07-28-manual-client-ticket-published-default.md`
 - `2026-07-28-ticket-internal-note-solution-toggle.md`

@@ -21,6 +21,30 @@ return [
         ['label' => 'Admin', 'route' => 'tech.admin.index'],
     ],
 
+    // Provider-neutral RMM alert pre-routing rules.
+    'tech.admin.system.integrations.rmm-alert-rules.index' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Integrations', 'route' => 'tech.admin.system.integrations.index'],
+        ['label' => 'RMM Alert Rules'],
+    ],
+
+    'tech.admin.system.integrations.rmm-alert-rules.create' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Integrations', 'route' => 'tech.admin.system.integrations.index'],
+        ['label' => 'RMM Alert Rules', 'route' => 'tech.admin.system.integrations.rmm-alert-rules.index'],
+        ['label' => 'New rule'],
+    ],
+
+    'tech.admin.system.integrations.rmm-alert-rules.edit' => [
+        ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
+        ['label' => 'Admin', 'route' => 'tech.admin.index'],
+        ['label' => 'Integrations', 'route' => 'tech.admin.system.integrations.index'],
+        ['label' => 'RMM Alert Rules', 'route' => 'tech.admin.system.integrations.rmm-alert-rules.index'],
+        ['label' => 'Edit rule'],
+    ],
+
     'admin.system.company-profile.edit' => [
         ['label' => 'Dashboard', 'route' => 'tech.dashboard'],
         ['label' => 'Admin', 'route' => 'tech.admin.index'],

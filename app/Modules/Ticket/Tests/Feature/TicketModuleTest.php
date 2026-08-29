@@ -126,6 +126,47 @@ class TicketModuleTest extends TestCase
     }
 
     #[Test]
+    public function automatic_ticket_key_allocation_is_locked_and_skips_an_occupied_sequence(): void
+    {
+        $year = (int) now()->format('Y');
+        $prefix = 'TD-'.$year.'-';
+        $duplicateKey = $prefix.'999990';
+        $nextKey = $prefix.'999991';
+        $this->createTicket(null, [
+            'ticket_key' => $duplicateKey,
+            'subject' => 'Existing collision ticket',
+        ]);
+
+        DB::table('ticket_key_sequences')->updateOrInsert(
+            ['year' => $year],
+            [
+                'next_sequence' => 999990,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        $ticket = DB::transaction(fn (): Ticket => app(StoreTicket::class)->handle([
+            'subject' => 'Nested collision retry ticket',
+            'description' => 'Created exactly once after the Ticket key collision.',
+            'owner_id' => $this->tech->id,
+            'suppress_notifications' => true,
+        ], $this->tech));
+
+        $this->assertSame($nextKey, $ticket->ticket_key);
+        $this->assertDatabaseHas('ticket_key_sequences', [
+            'year' => $year,
+            'next_sequence' => 999992,
+        ]);
+        $this->assertSame(1, Ticket::query()->where('subject', $ticket->subject)->count());
+        $this->assertSame(1, $ticket->events()->where('type', 'created')->count());
+        $this->assertSame(1, $ticket->messages()
+            ->where('type', 'internal_note')
+            ->where('metadata->is_default_initial_note', true)
+            ->count());
+    }
+
+    #[Test]
     public function ticket_cannot_be_closed_when_it_has_unresolved_tasks(): void
     {
         $ticket = $this->createTicket(null, [
@@ -1364,7 +1405,7 @@ class TicketModuleTest extends TestCase
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
         $this->assertSame(2, TicketMessage::count());
-        $this->assertSame(1, $ticket->events()->where('type', 'message_added')->count());
+        $this->assertSame(2, $ticket->events()->where('type', 'message_added')->count());
     }
 
     #[Test]
@@ -5507,6 +5548,11 @@ class TicketModuleTest extends TestCase
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $admin->assignRole('Tech');
         $admin->assignRole('Admin');
+        $admin->givePermissionTo([
+            'ticket.manage_rules',
+            'ticket.rule_publish',
+            'ticket.update',
+        ]);
         $defaults = app(EnsureTicketDefaults::class)->handle();
 
         $this->actingAs($admin)
@@ -5540,6 +5586,11 @@ class TicketModuleTest extends TestCase
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $admin->assignRole('Tech');
         $admin->assignRole('Admin');
+        $admin->givePermissionTo([
+            'ticket.manage_rules',
+            'ticket.rule_publish',
+            'signal.action.execute',
+        ]);
 
         $this->actingAs($admin)
             ->post(route('tech.admin.settings.tickets.rules.store'), [

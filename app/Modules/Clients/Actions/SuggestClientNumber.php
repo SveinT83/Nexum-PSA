@@ -14,7 +14,9 @@ class SuggestClientNumber
         $maxNumber = Client::query()
             ->whereNotNull('client_number')
             ->pluck('client_number')
-            ->map(fn (mixed $number): int => (int) (preg_replace('/\D+/', '', (string) $number) ?: 0))
+            ->map(fn (mixed $number): string => trim((string) $number))
+            ->filter(fn (string $number): bool => $number !== '' && ctype_digit($number))
+            ->map(fn (string $number): int => (int) $number)
             ->max() ?: 0;
 
         do {

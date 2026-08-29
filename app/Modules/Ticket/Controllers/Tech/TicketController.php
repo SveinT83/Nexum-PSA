@@ -9,6 +9,7 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Services\AiAgentResolver;
@@ -27,12 +28,14 @@ use App\Modules\Ticket\Actions\MarkTicketAsNotTicket;
 use App\Modules\Ticket\Actions\MarkTicketMessageSolution;
 use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\MergeTickets;
+use App\Modules\Ticket\Actions\MutateTicketTags;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
 use App\Modules\Ticket\Actions\PublishTicketToCustomerPortal;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\ReleaseTicketStorageReservation;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\StoreTicketCostOrQuoteScope;
+use App\Modules\Ticket\Actions\SyncTicketCustomFieldValues;
 use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Actions\UpdateTicketStorageReservation;
@@ -54,6 +57,7 @@ use App\Modules\Ticket\Queries\TicketTimeRateOptions;
 use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
 use App\Modules\Ticket\Services\TicketMergeSuggestionService;
+use App\Modules\Ticket\Services\TicketMutationScopeGuard;
 use App\Modules\Ticket\Services\TicketReplyContactResolver;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Ticket\Support\TicketAction;
@@ -122,8 +126,12 @@ class TicketController extends Controller
         ]);
     }
 
-    public function create(Request $request, EnsureTicketDefaults $defaults, TicketPortalPolicy $portalPolicy): View
-    {
+    public function create(
+        Request $request,
+        EnsureTicketDefaults $defaults,
+        TicketPortalPolicy $portalPolicy,
+        CustomFieldPresenter $customFieldPresenter,
+    ): View {
         $defaults->handle();
 
         $selectedClientId = $request->integer('client_id') ?: null;
@@ -178,6 +186,9 @@ class TicketController extends Controller
                     ->latest('updated_at')
                     ->limit(8)
                     ->get()
+                : collect(),
+            'customFields' => config('ticket_rules.capabilities.custom_fields.ui_write', false)
+                ? $customFieldPresenter->editableFor(new Ticket, $request->user())
                 : collect(),
         ]);
     }
@@ -267,8 +278,13 @@ class TicketController extends Controller
         ]);
     }
 
-    public function store(Request $request, StoreTicket $storeTicket, TicketPortalPolicy $portalPolicy, PublishTicketToCustomerPortal $publishToPortal): RedirectResponse
-    {
+    public function store(
+        Request $request,
+        StoreTicket $storeTicket,
+        TicketPortalPolicy $portalPolicy,
+        PublishTicketToCustomerPortal $publishToPortal,
+        SyncTicketCustomFieldValues $syncCustomFields,
+    ): RedirectResponse {
         $data = $request->validate([
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -294,7 +310,11 @@ class TicketController extends Controller
             'timezone' => 'nullable|string',
             'schedule_type' => 'nullable|string|in:one_time,recurring',
             'sla_mode' => 'nullable|string|in:defer_until_planned_start,non_sla_until_start,normal',
+            'custom_fields' => ['sometimes', 'array'],
         ]);
+        $hasCustomFieldInput = array_key_exists('custom_fields', $data);
+        $customFieldValues = (array) ($data['custom_fields'] ?? []);
+        unset($data['custom_fields']);
 
         if (! empty($data['contact_id']) && empty($data['client_id'])) {
             return back()
@@ -342,18 +362,51 @@ class TicketController extends Controller
 
         $data['channel'] = 'manual';
 
-        $ticket = $storeTicket->handle($data, $request->user());
+        $actor = $request->user();
+        $ticket = DB::transaction(function () use (
+            $actor,
+            $customerPortalVisibility,
+            $customFieldValues,
+            $data,
+            $hasCustomFieldInput,
+            $publishToPortal,
+            $storeTicket,
+            $syncCustomFields,
+        ): Ticket {
+            $ticket = $storeTicket->handle($data, $actor);
 
-        if (! empty($data['client_id']) && $customerPortalVisibility === TicketPortalPolicy::VISIBILITY_PUBLISHED) {
-            $publishToPortal->handle($ticket, $request->user());
-        }
+            if ($hasCustomFieldInput || config('ticket_rules.capabilities.custom_fields.ui_write', false)) {
+                $syncCustomFields->handle($ticket, $customFieldValues, $actor, 'ui', [
+                    'operation' => 'create',
+                    'require_complete' => true,
+                    'source_channel' => 'tech',
+                    'source_action' => 'TicketController.store',
+                ]);
+            }
+
+            if (! empty($data['client_id']) && $customerPortalVisibility === TicketPortalPolicy::VISIBILITY_PUBLISHED) {
+                $publishToPortal->handle($ticket, $actor);
+            }
+
+            return $ticket->refresh();
+        });
 
         return redirect()->route('tech.tickets.show', $ticket)
             ->with('success', 'Ticket '.$ticket->ticket_key.' created.');
     }
 
-    public function show(Ticket $ticket, ArticleQuery $articleQuery, TicketActionGuard $actionGuard, TicketWorkflowRuntime $workflowRuntime, TicketTimeRateOptions $timeRateOptions, TicketSolutionPolicy $solutionPolicy, TicketReplyContactResolver $replyContactResolver, MarkNotificationsReadBySource $markNotificationsReadBySource): View|RedirectResponse
-    {
+    public function show(
+        Ticket $ticket,
+        ArticleQuery $articleQuery,
+        TicketActionGuard $actionGuard,
+        TicketWorkflowRuntime $workflowRuntime,
+        TicketTimeRateOptions $timeRateOptions,
+        TicketSolutionPolicy $solutionPolicy,
+        TicketReplyContactResolver $replyContactResolver,
+        MarkNotificationsReadBySource $markNotificationsReadBySource,
+        CustomFieldPresenter $customFieldPresenter,
+        TicketMutationScopeGuard $scopeGuard,
+    ): View|RedirectResponse {
         app(EnsureTicketDefaults::class)->handle();
 
         if ($ticket->trashed() && $ticket->merged_into_ticket_id) {
@@ -433,11 +486,18 @@ class TicketController extends Controller
                 ->get()
                 ->groupBy(fn (EmailLog $log) => (int) ($log->context_json['ticket_message_id'] ?? 0)),
             'closedNotificationTags' => $notificationReadSync['web_push_tags'],
+            'canViewTicketRuleExecutions' => (bool) request()->user()?->can('ticket.view')
+                && (bool) request()->user()?->can('ticket.rule_execution_view'),
+            'customFields' => $this->customFieldsForTicket($ticket, request()->user(), $customFieldPresenter, $scopeGuard),
         ]);
     }
 
-    public function edit(Ticket $ticket): View
-    {
+    public function edit(
+        Request $request,
+        Ticket $ticket,
+        CustomFieldPresenter $customFieldPresenter,
+        TicketMutationScopeGuard $scopeGuard,
+    ): View {
         app(EnsureTicketDefaults::class)->handle();
 
         return view('ticket::Tech.Tickets.edit', [
@@ -463,6 +523,9 @@ class TicketController extends Controller
                 ->where('owner_type', User::class)
                 ->where('owner_id', auth()->id())
                 ->get(),
+            'customFields' => config('ticket_rules.capabilities.custom_fields.ui_write', false)
+                ? $this->customFieldsForTicket($ticket, $request->user(), $customFieldPresenter, $scopeGuard, editable: true)
+                : collect(),
         ]);
     }
 
@@ -750,15 +813,23 @@ class TicketController extends Controller
         return Storage::disk($disk)->download($attachment->path, $attachment->filename);
     }
 
-    public function update(Request $request, Ticket $ticket, UpdateTicketFields $updateTicketFields, TransitionTicketWorkflow $transitionWorkflow, TicketActionGuard $actionGuard): RedirectResponse
-    {
-        \Illuminate\Support\Facades\Log::emergency("TICKET ID: " . $ticket->id);
+    public function update(
+        Request $request,
+        Ticket $ticket,
+        UpdateTicketFields $updateTicketFields,
+        TransitionTicketWorkflow $transitionWorkflow,
+        TicketActionGuard $actionGuard,
+        MutateTicketTags $mutateTicketTags,
+        SyncTicketCustomFieldValues $syncCustomFields,
+    ): RedirectResponse {
+        \Illuminate\Support\Facades\Log::emergency('TICKET ID: '.$ticket->id);
         if ($reason = $actionGuard->reason($ticket, TicketAction::UPDATE_FIELDS, $request->user())) {
-            \Illuminate\Support\Facades\Log::emergency("BLOCKED BY ACTION GUARD: " . $reason);
+            \Illuminate\Support\Facades\Log::emergency('BLOCKED BY ACTION GUARD: '.$reason);
+
             return back()->withErrors(['ticket' => $reason])->withInput();
         }
 
-        \Illuminate\Support\Facades\Log::emergency("VALIDATING DATA...");
+        \Illuminate\Support\Facades\Log::emergency('VALIDATING DATA...');
         try {
             $data = $request->validate([
                 'subject' => 'required|string|max:255',
@@ -780,19 +851,23 @@ class TicketController extends Controller
                 'timezone' => 'nullable|string',
                 'schedule_type' => 'nullable|string|in:one_time,recurring',
                 'sla_mode' => 'nullable|string|in:defer_until_planned_start,non_sla_until_start,normal',
+                'custom_fields' => ['sometimes', 'array'],
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Illuminate\Support\Facades\Log::emergency("VALIDATION FAILED: " . json_encode($e->errors()));
+            \Illuminate\Support\Facades\Log::emergency('VALIDATION FAILED: '.json_encode($e->errors()));
             throw $e;
         }
-        \Illuminate\Support\Facades\Log::emergency("DATA VALIDATED.");
+        \Illuminate\Support\Facades\Log::emergency('DATA VALIDATED.');
+        $hasCustomFieldInput = array_key_exists('custom_fields', $data);
+        $customFieldValues = (array) ($data['custom_fields'] ?? []);
+        unset($data['custom_fields']);
 
         $queue = TicketQueue::where('is_active', true)->findOrFail($data['queue_id']);
-        \Illuminate\Support\Facades\Log::emergency("QUEUE FOUND.");
+        \Illuminate\Support\Facades\Log::emergency('QUEUE FOUND.');
         $status = TicketStatus::where('is_active', true)->findOrFail($data['status_id']);
-        \Illuminate\Support\Facades\Log::emergency("STATUS FOUND.");
+        \Illuminate\Support\Facades\Log::emergency('STATUS FOUND.');
         $priority = TicketPriority::where('is_active', true)->findOrFail($data['priority_id']);
-        \Illuminate\Support\Facades\Log::emergency("PRIORITY FOUND.");
+        \Illuminate\Support\Facades\Log::emergency('PRIORITY FOUND.');
         $categoryId = empty($data['category_id'])
             ? null
             : $this->ticketCategoryId((int) $data['category_id']);
@@ -802,24 +877,27 @@ class TicketController extends Controller
 
         if ((int) ($data['owner_id'] ?? 0) !== (int) ($ticket->owner_id ?? 0)
             && ($reason = $actionGuard->reason($ticket, TicketAction::ASSIGN_OTHER, $request->user()))) {
-            \Illuminate\Support\Facades\Log::emergency("ASSIGN OTHER BLOCKED. Owner in data: " . ($data['owner_id'] ?? 'null') . ", Owner in ticket: " . ($ticket->owner_id ?? 'null') . ", User: " . $request->user()->id . ", Reason: " . $reason);
+            \Illuminate\Support\Facades\Log::emergency('ASSIGN OTHER BLOCKED. Owner in data: '.($data['owner_id'] ?? 'null').', Owner in ticket: '.($ticket->owner_id ?? 'null').', User: '.$request->user()->id.', Reason: '.$reason);
+
             return back()->withErrors(['owner_id' => $reason])->withInput();
         }
 
         if ($contactId && ! $clientId) {
-            \Illuminate\Support\Facades\Log::emergency("CONTACT WITHOUT CLIENT.");
+            \Illuminate\Support\Facades\Log::emergency('CONTACT WITHOUT CLIENT.');
+
             return back()
                 ->withErrors(['client_id' => 'Select a client before selecting a contact.'])
                 ->withInput();
         }
 
         if ($contactId && $clientId && ! $this->contactBelongsToClient((int) $contactId, (int) $clientId)) {
-            \Illuminate\Support\Facades\Log::emergency("CONTACT DOES NOT BELONG TO CLIENT.");
+            \Illuminate\Support\Facades\Log::emergency('CONTACT DOES NOT BELONG TO CLIENT.');
+
             return back()
                 ->withErrors(['contact_id' => 'The selected contact does not belong to the selected client.'])
                 ->withInput();
         }
-        \Illuminate\Support\Facades\Log::emergency("CLIENT/CONTACT CHECKS PASSED.");
+        \Illuminate\Support\Facades\Log::emergency('CLIENT/CONTACT CHECKS PASSED.');
 
         if ($clientChanged) {
             if (! empty($data['site_id']) && (! $clientId || ! ClientSite::where('client_id', $clientId)->whereKey($data['site_id'])->exists())) {
@@ -855,10 +933,37 @@ class TicketController extends Controller
             'sla_mode' => $data['sla_mode'] ?? null,
         ];
 
-        $updateTicketFields->handle($ticket, $updateData, $request->user());
+        $actor = $request->user();
+        DB::transaction(function () use (
+            $actor,
+            $customFieldValues,
+            $data,
+            $hasCustomFieldInput,
+            $mutateTicketTags,
+            $status,
+            $syncCustomFields,
+            $ticket,
+            $transitionWorkflow,
+            $updateData,
+            $updateTicketFields,
+        ): void {
+            $updateTicketFields->handle($ticket, $updateData, $actor);
+            $transitionWorkflow->handleToStatus($ticket->refresh(), $status, $actor);
+            $mutateTicketTags->replace(
+                $ticket->refresh(),
+                $this->resolveTagIds($data['tag_names'] ?? []),
+                $actor,
+                ['source_channel' => 'tech', 'source_action' => 'TicketController.update'],
+            );
 
-        $transitionWorkflow->handleToStatus($ticket->refresh(), $status, $request->user());
-        $ticket->tags()->syncWithPivotValues($this->resolveTagIds($data['tag_names'] ?? []), ['module' => 'ticket']);
+            if ($hasCustomFieldInput) {
+                $syncCustomFields->handle($ticket->refresh(), $customFieldValues, $actor, 'ui', [
+                    'operation' => 'update',
+                    'source_channel' => 'tech',
+                    'source_action' => 'TicketController.update',
+                ]);
+            }
+        });
 
         return redirect()->route('tech.tickets.show', $ticket->refresh())
             ->with('success', 'Ticket updated.');
@@ -1393,6 +1498,27 @@ class TicketController extends Controller
             ->firstWhere('id', $categoryId)
             ?->id
             ?? abort(422, 'Invalid ticket category.');
+    }
+
+    /**
+     * Invalid Ticket ownership context must never disclose Custom Field definitions or values.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function customFieldsForTicket(
+        Ticket $ticket,
+        ?User $actor,
+        CustomFieldPresenter $presenter,
+        TicketMutationScopeGuard $scopeGuard,
+        bool $editable = false,
+    ): Collection {
+        try {
+            $scopeGuard->assert($ticket);
+        } catch (\Illuminate\Validation\ValidationException) {
+            return collect();
+        }
+
+        return $editable ? $presenter->editableFor($ticket, $actor) : $presenter->visibleFor($ticket, $actor);
     }
 
     private function activeTags(): Collection

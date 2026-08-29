@@ -47,9 +47,18 @@ Priority level is used by the Ticket list and SLA risk context. Priorities refer
 
 ## Ticket Rules
 
-Ticket Rules classify and route tickets on creation.
+Ticket Rules currently classify and route tickets on creation through the legacy runtime. The
+versioned runtime adds typed create/update/message/tag/assignment/Custom Field/Workflow triggers,
+grouped All/Any conditions, ordered Then and Else actions, and Continue/Stop flow.
 
-Rules can set type, queue, priority, category, tags, and SLA. Rules should be ordered from specific to broad.
+The English Livewire builder provides typed targets, draft save, no-write preview, immutable
+publication, detail, and execution history. Queue is the routing group and Owner is the individual
+assignment. Publishing a version does not enable it or switch runtime authority.
+
+All v2 trigger, action, Custom Field write, authority, and full-rerun gates remain default-off until
+compatibility evidence, human review, and a separate release decision pass. Rules should be ordered
+from specific to broad. See `Ticket Rules and Assignment` for the complete behavior and
+`Ticket Technical Operations` for migration and activation controls.
 
 ## Assignment Rules
 

@@ -17,5 +17,6 @@ Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show')
 Route::patch('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
 Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status.update');
 Route::patch('/tasks/{task}/assign', [TaskController::class, 'assign'])->name('tasks.assign');
+Route::post('/tasks/{task}/time-entries', [TaskController::class, 'storeTimeEntry'])->name('tasks.time-entries.store');
 Route::post('/tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
 Route::patch('/tasks/{task}/checklist/{item}', [TaskController::class, 'toggleChecklistItem'])->name('tasks.checklist.toggle');

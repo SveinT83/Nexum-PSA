@@ -4,12 +4,22 @@ namespace App\Modules\Task\Support;
 
 use App\Models\Settings\CommonSetting;
 use App\Modules\Task\Actions\EnsureTaskDefaults;
+use App\Modules\Task\Models\Task;
 use App\Modules\Task\Models\TaskStatus;
 use App\Modules\Ticket\Models\TicketPriority;
 use Illuminate\Support\Facades\DB;
 
 class TaskSettings
 {
+    public const TICKET_BILLING_ACTUAL = 'actual';
+
+    public const TICKET_BILLING_ESTIMATE_MINIMUM = 'estimate_minimum';
+
+    public const TICKET_BILLING_MODES = [
+        self::TICKET_BILLING_ACTUAL,
+        self::TICKET_BILLING_ESTIMATE_MINIMUM,
+    ];
+
     private const TYPE = 'task';
 
     private const NAME = 'defaults';
@@ -17,6 +27,7 @@ class TaskSettings
     private const DEFAULTS = [
         'default_priority_id' => null,
         'default_estimated_minutes' => null,
+        'ticket_billing_minutes_mode' => self::TICKET_BILLING_ACTUAL,
     ];
 
     public function get(): array
@@ -36,7 +47,7 @@ class TaskSettings
         CommonSetting::query()->updateOrCreate(
             ['type' => self::TYPE, 'name' => self::NAME],
             [
-                'description' => 'Task module defaults for manual task creation.',
+                'description' => 'Task defaults and Ticket-owned Task billing policy.',
                 'value' => $settings['default_priority_id'] ? (string) $settings['default_priority_id'] : null,
                 'json' => json_encode($settings),
             ],
@@ -74,6 +85,20 @@ class TaskSettings
         );
     }
 
+    /**
+     * Resolve customer-billable minutes without changing technician actual time.
+     */
+    public function ticketBillingMinutes(Task $task, int $actualMinutes): int
+    {
+        $actualMinutes = max(0, $actualMinutes);
+
+        if ($this->get()['ticket_billing_minutes_mode'] !== self::TICKET_BILLING_ESTIMATE_MINIMUM) {
+            return $actualMinutes;
+        }
+
+        return max($actualMinutes, (int) ($task->estimated_minutes ?? 0));
+    }
+
     private function normalize(array $payload): array
     {
         $payload = array_merge(self::DEFAULTS, array_intersect_key($payload, self::DEFAULTS));
@@ -90,9 +115,14 @@ class TaskSettings
             ? max(1, (int) $payload['default_estimated_minutes'])
             : null;
 
+        $billingMode = in_array($payload['ticket_billing_minutes_mode'] ?? null, self::TICKET_BILLING_MODES, true)
+            ? $payload['ticket_billing_minutes_mode']
+            : self::TICKET_BILLING_ACTUAL;
+
         return [
             'default_priority_id' => $priorityId,
             'default_estimated_minutes' => $estimatedMinutes,
+            'ticket_billing_minutes_mode' => $billingMode,
         ];
     }
 }

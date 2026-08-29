@@ -54,7 +54,11 @@ timebank registration when Commercial policy allows it, and lists time usage fro
 entries, Tickets, and Tasks that have not already been included on an Economy order line. Editable
 rows can be corrected by the technician who owns the entry or by users with the relevant higher
 permission. Quick Client and Ticket rows can also have their time rate changed before they are
-ordered; Task time does not currently store a billing rate snapshot.
+ordered; Task time does not currently store a billing rate snapshot. Ticket-owned Task work is shown
+as two clearly labelled rows when billing differs from actual time: `Task tracked` is the
+technician's actual time, while `Task billing` is the linked customer-billable Ticket projection.
+These coupled rows cannot be edited independently from Client Time because that would desynchronize
+technician reporting and customer billing.
 
 The `Licences` tab is the Client-level workspace for Cloud Factory subscriptions. It shows provider,
 Vendor, Service, quantity, renewal, binding dates, contract link, billing state, and recent
@@ -68,6 +72,18 @@ The Client index has a compact search row and an advanced filter panel behind th
 Technicians can filter by active status, Client format, contract presence, won contracts, and RMM
 link state when RMM is configured. Client index filters are remembered in the technician session for
 two hours or until the technician uses `Clear`.
+
+## Client Number Allocation
+
+The New Client form displays the next five-digit Client number. Nexum treats the unchanged
+suggestion as an automatic value and revalidates it when the form is saved. If another Client used
+that number while the form was open, Nexum allocates the next available number and still creates
+the Client, default Site, and primary Contact transactionally. Pure numeric legacy values remain
+part of the sequence; alphanumeric external or imported identifiers do not advance it.
+
+A number changed by the technician is manual. Duplicate manual numbers produce a field-level
+validation error and do not create partial related records. The database unique constraint remains
+the final integrity guard for UI, API, and Data Exchange creation.
 
 ## Sites
 

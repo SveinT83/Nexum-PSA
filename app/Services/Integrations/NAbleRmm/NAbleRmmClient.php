@@ -27,7 +27,7 @@ class NAbleRmmClient
     /**
      * Initializes the client with configuration from the 'rmm' integration.
      *
-     * @param Integration|null $integration Optional integration model to override default lookup
+     * @param  Integration|null  $integration  Optional integration model to override default lookup
      */
     public function __construct(?Integration $integration = null)
     {
@@ -39,21 +39,18 @@ class NAbleRmmClient
     /**
      * Set credentials manually (useful for testing connection before saving)
      *
-     * @param string $server
-     * @param string $apiKey
      * @return $this
      */
     public function setCredentials(string $server, string $apiKey): self
     {
         $this->server = $server;
         $this->apiKey = $apiKey;
+
         return $this;
     }
 
     /**
      * Checks if the integration is fully configured (URL, Key, and Status).
-     *
-     * @return bool
      */
     public function isConfigured(): bool
     {
@@ -67,12 +64,12 @@ class NAbleRmmClient
      */
     public function testConnection(): array
     {
-        if (!$this->server || !$this->apiKey) {
+        if (! $this->server || ! $this->apiKey) {
             return ['success' => false, 'error' => 'Server URL or API Key missing.'];
         }
 
         try {
-            $url = rtrim($this->server, '/') . '/api/';
+            $url = rtrim($this->server, '/').'/api/';
             $response = Http::get($url, [
                 'apikey' => $this->apiKey,
                 'service' => 'list_clients',
@@ -84,15 +81,16 @@ class NAbleRmmClient
                 if ($xml && (string) $xml->attributes()->status === 'OK') {
                     return ['success' => true];
                 }
+
                 return [
                     'success' => false,
-                    'error' => $xml ? 'RMM Error: ' . (string) $xml->attributes()->status : 'Invalid XML response.'
+                    'error' => $xml ? 'RMM Error: '.(string) $xml->attributes()->status : 'Invalid XML response.',
                 ];
             }
 
             return [
                 'success' => false,
-                'error' => 'HTTP Error: ' . $response->status()
+                'error' => 'HTTP Error: '.$response->status(),
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
@@ -107,44 +105,44 @@ class NAbleRmmClient
      */
     public function listClients(): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return ['error' => 'Integration not fully configured or active.'];
         }
 
         try {
-            $url = rtrim($this->server, '/') . '/api/';
-            Log::info('Fetching N-able RMM clients from: ' . $url);
+            $url = rtrim($this->server, '/').'/api/';
+            Log::info('Fetching N-able RMM clients from: '.$url);
             $response = Http::get($url, [
                 'apikey' => $this->apiKey,
                 'service' => 'list_clients',
             ]);
 
             if ($response->failed()) {
-                $errorMsg = 'N-able RMM API error. Status: ' . $response->status();
-                Log::error($errorMsg . ' Body: ' . $response->body());
+                $errorMsg = 'N-able RMM API error. Status: '.$response->status();
+                Log::error($errorMsg.' Body: '.$response->body());
+
                 return ['error' => $errorMsg];
             }
 
             return $this->parseXmlClients($response->body());
         } catch (\Exception $e) {
-            $errorMsg = 'N-able RMM API exception: ' . $e->getMessage();
+            $errorMsg = 'N-able RMM API exception: '.$e->getMessage();
             Log::error($errorMsg);
+
             return ['error' => $errorMsg];
         }
     }
 
     /**
      * Parse the XML response from list_clients.
-     *
-     * @param string $xmlString
-     * @return array
      */
     protected function parseXmlClients(string $xmlString): array
     {
         try {
             $xml = simplexml_load_string($xmlString);
-            if (!$xml) {
+            if (! $xml) {
                 Log::error('N-able RMM XML parse error: Could not parse XML.');
+
                 return ['error' => 'Invalid XML response from RMM.'];
             }
 
@@ -156,8 +154,9 @@ class NAbleRmmClient
             }
 
             if ($status !== 'OK' && $status !== 'SUCCESS') {
-                Log::error('N-able RMM API error status in XML: ' . $status, ['xml' => $xmlString]);
-                return ['error' => 'API returned status: ' . ($status ?: 'Unknown status')];
+                Log::error('N-able RMM API error status in XML: '.$status, ['xml' => $xmlString]);
+
+                return ['error' => 'API returned status: '.($status ?: 'Unknown status')];
             }
 
             $clients = [];
@@ -183,8 +182,9 @@ class NAbleRmmClient
 
             return $clients;
         } catch (\Exception $e) {
-            $errorMsg = 'N-able RMM XML parse error: ' . $e->getMessage();
+            $errorMsg = 'N-able RMM XML parse error: '.$e->getMessage();
             Log::error($errorMsg);
+
             return ['error' => $errorMsg];
         }
     }
@@ -192,17 +192,16 @@ class NAbleRmmClient
     /**
      * Add a client to N-able RMM.
      *
-     * @param string $name
      * @return array ['success' => bool, 'error' => ?string, 'clientid' => ?string]
      */
     public function addClient(string $name): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return ['success' => false, 'error' => 'Integration not fully configured or active.'];
         }
 
         try {
-            $url = rtrim($this->server, '/') . '/api/';
+            $url = rtrim($this->server, '/').'/api/';
             $response = Http::get($url, [
                 'apikey' => $this->apiKey,
                 'service' => 'add_client',
@@ -210,32 +209,32 @@ class NAbleRmmClient
             ]);
 
             if ($response->failed()) {
-                return ['success' => false, 'error' => 'HTTP Error: ' . $response->status()];
+                return ['success' => false, 'error' => 'HTTP Error: '.$response->status()];
             }
 
             $xml = simplexml_load_string($response->body());
 
             // Check success field in data node as per example
-            if ($xml && isset($xml->data->success) && (string)$xml->data->success === '1') {
+            if ($xml && isset($xml->data->success) && (string) $xml->data->success === '1') {
                 return [
                     'success' => true,
-                    'clientid' => (string)($xml->data->clientid ?? $xml->items->client->clientid ?? '')
+                    'clientid' => (string) ($xml->data->clientid ?? $xml->items->client->clientid ?? ''),
                 ];
             }
 
             // Fallback to checking status attribute if data->success is not present
-            $status = $xml ? (string)($xml->attributes()->status ?? $xml->status ?? '') : null;
+            $status = $xml ? (string) ($xml->attributes()->status ?? $xml->status ?? '') : null;
 
             if ($status === 'OK' || $status === 'SUCCESS') {
-                $clientid = (string)($xml->data->clientid ?? $xml->items->client->clientid ?? $xml->items->client->id ?? $xml->clientid ?? '');
+                $clientid = (string) ($xml->data->clientid ?? $xml->items->client->clientid ?? $xml->items->client->id ?? $xml->clientid ?? '');
 
                 return [
                     'success' => true,
-                    'clientid' => $clientid ?: null
+                    'clientid' => $clientid ?: null,
                 ];
             }
 
-            $errorMsg = $xml ? (string)($xml->attributes()->status ?? $xml->status ?? $xml->error ?? '') : 'Invalid XML response.';
+            $errorMsg = $xml ? (string) ($xml->attributes()->status ?? $xml->status ?? $xml->error ?? '') : 'Invalid XML response.';
             if (empty($errorMsg) && $xml) {
                 $errorMsg = 'Unknown RMM Error (No status provided)';
             }
@@ -243,18 +242,19 @@ class NAbleRmmClient
             Log::error('N-able RMM addClient failed', [
                 'name' => $name,
                 'status' => $status,
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
 
             return [
                 'success' => false,
-                'error' => 'RMM Error: ' . $errorMsg
+                'error' => 'RMM Error: '.$errorMsg,
             ];
         } catch (\Exception $e) {
             Log::error('N-able RMM addClient exception', [
                 'name' => $name,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -262,17 +262,17 @@ class NAbleRmmClient
     /**
      * Lists all sites for a specific client ID in N-able RMM.
      *
-     * @param string $clientid The RMM internal client ID
+     * @param  string  $clientid  The RMM internal client ID
      * @return array List of sites or error message
      */
     public function listSites(string $clientid): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return ['error' => 'Integration not fully configured or active.'];
         }
 
         try {
-            $url = rtrim($this->server, '/') . '/api/';
+            $url = rtrim($this->server, '/').'/api/';
             $response = Http::get($url, [
                 'apikey' => $this->apiKey,
                 'service' => 'list_sites',
@@ -280,7 +280,7 @@ class NAbleRmmClient
             ]);
 
             if ($response->failed()) {
-                return ['error' => 'HTTP Error: ' . $response->status()];
+                return ['error' => 'HTTP Error: '.$response->status()];
             }
 
             return $this->parseXmlSites($response->body());
@@ -292,13 +292,13 @@ class NAbleRmmClient
     /**
      * Lists all devices (servers or workstations) for a specific client ID in N-able RMM.
      *
-     * @param string $clientid The RMM internal client ID
-     * @param string $deviceType 'server' or 'workstation'
+     * @param  string  $clientid  The RMM internal client ID
+     * @param  string  $deviceType  'server' or 'workstation'
      * @return array List of devices or error message
      */
     public function listDevices(string $clientid, string $deviceType = 'server'): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return ['error' => 'Integration not fully configured or active.'];
         }
 
@@ -311,7 +311,7 @@ class NAbleRmmClient
         }
 
         try {
-            $url = rtrim($this->server, '/') . '/api/';
+            $url = rtrim($this->server, '/').'/api/';
             $response = Http::get($url, [
                 'apikey' => $this->apiKey,
                 'service' => 'list_devices_at_client',
@@ -320,7 +320,7 @@ class NAbleRmmClient
             ]);
 
             if ($response->failed()) {
-                return ['error' => 'HTTP Error: ' . $response->status()];
+                return ['error' => 'HTTP Error: '.$response->status()];
             }
 
             return $this->parseXmlDevices($response->body());
@@ -332,15 +332,12 @@ class NAbleRmmClient
     /**
      * Parse the XML response from list_devices_at_client.
      * The structure can be nested: items -> client -> site -> (server|workstation)
-     *
-     * @param string $xmlString
-     * @return array
      */
     protected function parseXmlDevices(string $xmlString): array
     {
         try {
             $xml = simplexml_load_string($xmlString);
-            if (!$xml) {
+            if (! $xml) {
                 return ['error' => 'Invalid XML response.'];
             }
 
@@ -355,12 +352,12 @@ class NAbleRmmClient
             // Log for debugging if status is not OK
             if ($status !== 'OK' && $status !== 'SUCCESS') {
                 \Illuminate\Support\Facades\Log::warning("N-able RMM API returned non-OK status: $status", [
-                    'xml' => $xmlString
+                    'xml' => $xmlString,
                 ]);
             }
 
             if ($status !== 'OK' && $status !== 'SUCCESS') {
-                return ['error' => 'API Error: ' . ($status ?: 'Unknown status')];
+                return ['error' => 'API Error: '.($status ?: 'Unknown status')];
             }
 
             $devices = [];
@@ -461,10 +458,9 @@ class NAbleRmmClient
     /**
      * Maps a device XML node to a standard array format.
      *
-     * @param \SimpleXMLElement $device
-     * @param string $siteId
-     * @param string $type
-     * @return array
+     * @param  \SimpleXMLElement  $device
+     * @param  string  $siteId
+     * @param  string  $type
      */
     protected function mapDeviceData($device, $siteId, $type): array
     {
@@ -489,21 +485,18 @@ class NAbleRmmClient
             'serial_number' => (string) ($device->serial_number ?? $device->serialnumber ?? $device->serial_no ?? $device->system_serial ?? ''),
             'vendor' => (string) ($device->vendor ?? $device->manufacturer ?? $device->system_manufacturer ?? ''),
             'model' => (string) ($device->model ?? $device->product ?? $device->system_product ?? ''),
-            'type' => $mappedType
+            'type' => $mappedType,
         ];
     }
 
     /**
      * Parse the XML response from list_sites.
-     *
-     * @param string $xmlString
-     * @return array
      */
     protected function parseXmlSites(string $xmlString): array
     {
         try {
             $xml = simplexml_load_string($xmlString);
-            if (!$xml) {
+            if (! $xml) {
                 return ['error' => 'Invalid XML response.'];
             }
 
@@ -515,7 +508,7 @@ class NAbleRmmClient
             }
 
             if ($status !== 'OK' && $status !== 'SUCCESS') {
-                return ['error' => 'API Error: ' . ($status ?: 'Unknown status')];
+                return ['error' => 'API Error: '.($status ?: 'Unknown status')];
             }
 
             $sites = [];
@@ -548,18 +541,16 @@ class NAbleRmmClient
     /**
      * Add a site to a client in N-able RMM.
      *
-     * @param string $clientid
-     * @param string $sitename
      * @return array ['success' => bool, 'error' => ?string, 'siteid' => ?string]
      */
     public function addSite(string $clientid, string $sitename): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return ['success' => false, 'error' => 'Integration not fully configured or active.'];
         }
 
         try {
-            $url = rtrim($this->server, '/') . '/api/';
+            $url = rtrim($this->server, '/').'/api/';
             $response = Http::get($url, [
                 'apikey' => $this->apiKey,
                 'service' => 'add_site',
@@ -568,31 +559,32 @@ class NAbleRmmClient
             ]);
 
             if ($response->failed()) {
-                return ['success' => false, 'error' => 'HTTP Error: ' . $response->status()];
+                return ['success' => false, 'error' => 'HTTP Error: '.$response->status()];
             }
 
             $xml = simplexml_load_string($response->body());
 
             // Handle structure from user example: <result><data><success>1</success><siteid>123</siteid></data></result>
-            if ($xml && isset($xml->data->success) && (string)$xml->data->success === '1') {
+            if ($xml && isset($xml->data->success) && (string) $xml->data->success === '1') {
                 return [
                     'success' => true,
-                    'siteid' => (string)($xml->data->siteid ?? $xml->items->site->siteid ?? '')
+                    'siteid' => (string) ($xml->data->siteid ?? $xml->items->site->siteid ?? ''),
                 ];
             }
 
             // Fallback for different RMM API version/response style
-            $status = $xml ? (string)($xml->attributes()->status ?? $xml->status ?? '') : null;
+            $status = $xml ? (string) ($xml->attributes()->status ?? $xml->status ?? '') : null;
 
             if ($status === 'OK' || $status === 'SUCCESS') {
-                $siteid = (string)($xml->data->siteid ?? $xml->items->site->siteid ?? $xml->items->site->id ?? $xml->siteid ?? '');
+                $siteid = (string) ($xml->data->siteid ?? $xml->items->site->siteid ?? $xml->items->site->id ?? $xml->siteid ?? '');
+
                 return [
                     'success' => true,
-                    'siteid' => $siteid ?: null
+                    'siteid' => $siteid ?: null,
                 ];
             }
 
-            $errorMsg = $xml ? (string)($xml->attributes()->status ?? $xml->status ?? $xml->error ?? '') : 'Invalid XML response.';
+            $errorMsg = $xml ? (string) ($xml->attributes()->status ?? $xml->status ?? $xml->error ?? '') : 'Invalid XML response.';
             if (empty($errorMsg) && $xml) {
                 $errorMsg = 'Unknown RMM Error (No status provided)';
             }
@@ -601,19 +593,20 @@ class NAbleRmmClient
                 'clientid' => $clientid,
                 'sitename' => $sitename,
                 'status' => $status,
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
 
             return [
                 'success' => false,
-                'error' => 'RMM Error: ' . $errorMsg
+                'error' => 'RMM Error: '.$errorMsg,
             ];
         } catch (\Exception $e) {
             Log::error('N-able RMM addSite exception', [
                 'clientid' => $clientid,
                 'sitename' => $sitename,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -623,25 +616,30 @@ class NAbleRmmClient
      */
     public function listFailingChecks(): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return ['error' => 'Integration not fully configured or active.'];
         }
 
         try {
-            $url = rtrim($this->server, '/') . '/api/';
+            $url = rtrim($this->server, '/').'/api/';
             $response = Http::get($url, [
                 'apikey' => $this->apiKey,
                 'service' => 'list_failing_checks',
             ]);
 
             if ($response->failed()) {
-                return ['error' => 'HTTP Error: ' . $response->status()];
+                return ['error' => 'HTTP Error: '.$response->status()];
             }
 
             return $this->parseXmlFailingChecks($response->body());
         } catch (\Exception $e) {
-            Log::error('N-able RMM listFailingChecks exception', ['message' => $e->getMessage()]);
-            return ['error' => $e->getMessage()];
+            // HTTP exceptions can include the full request URL. The N-able API key is a
+            // query parameter, so log only the exception class and return a fixed error.
+            Log::error('N-able RMM listFailingChecks request failed.', [
+                'exception' => $e::class,
+            ]);
+
+            return ['error' => 'N-able RMM request failed.'];
         }
     }
 
@@ -652,17 +650,17 @@ class NAbleRmmClient
     {
         try {
             $xml = simplexml_load_string($xmlString);
-            if (!$xml) {
+            if (! $xml) {
                 return ['error' => 'Invalid XML response.'];
             }
 
-            $status = (string)($xml->attributes()->status ?? $xml->status ?? '');
+            $status = (string) ($xml->attributes()->status ?? $xml->status ?? '');
             if (empty($status) && isset($xml->items)) {
                 $status = 'OK';
             }
 
             if ($status !== 'OK' && $status !== 'SUCCESS') {
-                return ['error' => 'API Error: ' . ($status ?: 'Unknown status')];
+                return ['error' => 'API Error: '.($status ?: 'Unknown status')];
             }
 
             $checks = [];
@@ -676,17 +674,20 @@ class NAbleRmmClient
             if ($allChecks) {
                 foreach ($allChecks as $check) {
                     $checks[] = [
-                        'checkid' => (string)$check->checkid,
-                        'deviceid' => (string)($check->deviceid ?? $check->xpath('ancestor::workstation/id')[0] ?? $check->xpath('ancestor::server/id')[0] ?? ''),
-                        'description' => (string)$check->description,
-                        'status' => (string)$check->status,
+                        'checkid' => (string) $check->checkid,
+                        'deviceid' => (string) ($check->deviceid ?? $check->xpath('ancestor::workstation/id')[0] ?? $check->xpath('ancestor::server/id')[0] ?? ''),
+                        'description' => (string) $check->description,
+                        'status' => (string) $check->status,
+                        'severity' => (string) ($check->severity ?? ''),
+                        'priority' => (string) ($check->priority ?? ''),
+                        'checktype' => (string) ($check->checktype ?? $check->check_type ?? ''),
                     ];
                 }
             }
 
             return $checks;
-        } catch (\Exception $e) {
-            return ['error' => $e->getMessage()];
+        } catch (\Exception) {
+            return ['error' => 'Unable to parse N-able failing checks response.'];
         }
     }
 }

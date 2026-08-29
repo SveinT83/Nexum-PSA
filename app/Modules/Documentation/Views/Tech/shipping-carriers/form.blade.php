@@ -207,7 +207,7 @@
 
     <hr class="my-3">
 
-    <x-nav.side-bar :items="$sidebarMenuItems" title="Documentation categories" />
+    <x-nav.side-bar :items="$sidebarMenuItems" title="Documentation" />
 @endsection
 
 @section('rightbar')

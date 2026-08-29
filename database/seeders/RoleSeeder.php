@@ -10,15 +10,59 @@ use Spatie\Permission\PermissionRegistrar;
 class RoleSeeder extends Seeder
 {
     /**
+     * Reviewed high-impact grants are deployed by their additive migration.
+     * Broad role synchronization may preserve, but never recreate, these grants.
+     * A completely empty role table is the explicit fresh-install bootstrap case.
+     *
+     * @var list<string>
+     */
+    private const MIGRATION_MANAGED_PERMISSIONS = [
+        'ticket.rule_retry',
+        'ticket.rule_full_rerun',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    private const MIGRATION_MANAGED_BOOTSTRAP_ROLES = [
+        'Admin',
+        'Superuser',
+    ];
+
+    /**
      * Seed standard Nexum PSA roles and their default permission sets.
      */
     public function run(): void
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        $freshRoleBootstrap = ! Role::query()
+            ->where('guard_name', 'web')
+            ->exists();
+
         foreach ($this->roles() as $roleName => $permissions) {
             $role = Role::findOrCreate($roleName, 'web');
-            $role->syncPermissions($permissions);
+            $preservedMigrationGrants = $role->permissions()
+                ->whereIn('name', self::MIGRATION_MANAGED_PERMISSIONS)
+                ->pluck('name')
+                ->all();
+            $broadPermissions = array_values(array_diff(
+                $permissions,
+                self::MIGRATION_MANAGED_PERMISSIONS,
+            ));
+            $role->syncPermissions(array_values(array_unique(array_merge(
+                $broadPermissions,
+                $preservedMigrationGrants,
+            ))));
+
+            // Migrations precede seeders on a fresh installation, so the
+            // reviewed roles do not exist when the additive migration runs.
+            // This one-time empty-table bootstrap closes that ordering gap
+            // without re-granting a permission removed from an existing role.
+            if ($freshRoleBootstrap
+                && in_array($roleName, self::MIGRATION_MANAGED_BOOTSTRAP_ROLES, true)) {
+                $role->givePermissionTo(self::MIGRATION_MANAGED_PERMISSIONS);
+            }
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
@@ -61,6 +105,9 @@ class RoleSeeder extends Seeder
                 'contact.manage_settings',
                 'asset.manage_settings',
                 'ticket.manage_rules',
+                'ticket.rule_publish',
+                'ticket.rule_preview',
+                'ticket.rule_execution_view',
                 'ticket.manage_workflows',
                 'ticket.workflow_publish',
                 'ticket.workflow_migrate',

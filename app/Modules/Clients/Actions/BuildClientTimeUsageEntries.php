@@ -17,8 +17,7 @@ class BuildClientTimeUsageEntries
     public function __construct(
         private readonly CalculateClientTimebankBalances $balances,
         private readonly TicketTimeRateOptions $ticketTimeRateOptions,
-    ) {
-    }
+    ) {}
 
     public function handle(Client $client, ?User $actor = null): Collection
     {
@@ -67,7 +66,7 @@ class BuildClientTimeUsageEntries
     private function ticketEntries(Client $client, ?User $actor): Collection
     {
         return TicketTimeEntry::query()
-            ->with(['user', 'ticket'])
+            ->with(['user', 'ticket', 'task'])
             ->whereHas('ticket', fn ($query) => $query->where('client_id', $client->id))
             ->latest('work_date')
             ->latest('id')
@@ -78,9 +77,13 @@ class BuildClientTimeUsageEntries
                 return [
                     'source' => 'ticket',
                     'id' => $entry->id,
-                    'label' => 'Ticket',
-                    'context' => trim(($entry->ticket?->ticket_key ? $entry->ticket->ticket_key.' - ' : '').($entry->ticket?->subject ?? 'Ticket')),
-                    'context_url' => route('tech.tickets.show', $entry->ticket),
+                    'label' => $entry->task_id ? 'Task billing' : 'Ticket',
+                    'context' => $entry->task_id
+                        ? trim(($entry->task?->title ?? 'Task').' - '.($entry->ticket?->ticket_key ?? 'Ticket'))
+                        : trim(($entry->ticket?->ticket_key ? $entry->ticket->ticket_key.' - ' : '').($entry->ticket?->subject ?? 'Ticket')),
+                    'context_url' => $entry->task_id
+                        ? route('tech.tasks.show', $entry->task)
+                        : route('tech.tickets.show', $entry->ticket),
                     'work_date' => $entry->work_date,
                     'minutes' => $entry->minutes,
                     'user' => $entry->user,
@@ -90,7 +93,7 @@ class BuildClientTimeUsageEntries
                     'rate_amount_ex_vat' => $entry->rate_amount_ex_vat,
                     'overused_minutes' => null,
                     'ordered' => $ordered,
-                    'can_edit' => $this->canEditTicket($entry, $actor) && ! $ordered,
+                    'can_edit' => ! $entry->task_id && $this->canEditTicket($entry, $actor) && ! $ordered,
                     'rate_options' => $entry->ticket ? $this->ticketTimeRateOptions->forTicket($entry->ticket)->map(fn (array $option): array => [
                         'value' => $option['key'],
                         'label' => trim($option['label'].' - '.$option['description']),
@@ -117,7 +120,7 @@ class BuildClientTimeUsageEntries
             ->map(fn (TaskTimeEntry $entry): array => [
                 'source' => 'task',
                 'id' => $entry->id,
-                'label' => 'Task',
+                'label' => $entry->task?->owner instanceof \App\Modules\Ticket\Models\Ticket ? 'Task tracked' : 'Task',
                 'context' => $entry->task?->title ?: 'Task',
                 'context_url' => route('tech.tasks.show', $entry->task),
                 'work_date' => $entry->work_date,
@@ -125,11 +128,12 @@ class BuildClientTimeUsageEntries
                 'user' => $entry->user,
                 'note' => $entry->note,
                 'invoice_text' => null,
-                'rate_name' => $entry->billable ? 'Billable task time' : 'Task time',
+                'rate_name' => $entry->billable ? 'Technician actual time' : 'Task time',
                 'rate_amount_ex_vat' => null,
                 'overused_minutes' => null,
                 'ordered' => false,
-                'can_edit' => $this->canEditTask($entry, $actor),
+                'can_edit' => ! ($entry->task?->owner instanceof \App\Modules\Ticket\Models\Ticket)
+                    && $this->canEditTask($entry, $actor),
                 'rate_options' => collect(),
                 'current_rate_source' => null,
                 'sort_at' => ($entry->work_date?->toDateString() ?? $entry->created_at?->toDateString() ?? '0000-00-00').' '.$entry->id,

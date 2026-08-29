@@ -1,8 +1,10 @@
 # RFC: Ticket Rules Triggers, Ordered Actions, And Audited Execution
 
-Status: Draft
+Status: Approved
 Date: 2026-08-25
 Owner: Svein / Codex
+Approved by: Svein
+Approved on: 2026-08-25
 Related issue: GitHub #231
 Related RFCs: `2026-07-08-email-ticket-signal-rule-alignment.md` and
 `2026-07-17-ticket-workflow-v3-conditional-actions-and-escalation.md`
@@ -81,8 +83,12 @@ versions, and execution history.
   as an automatic runtime permission grant.
 - Do not bypass Workflow v3 requirements, action policy, state mapping, review evidence, or terminal
   close guards.
-- Do not infer a Ticket team model from Spatie roles, Workflow eligible-user lists, or queues. The
-  product meaning of `team` must be resolved explicitly.
+- Do not create a first-class Ticket team model, membership table, or team action provider in this
+  RFC. Queue is the approved routing group/team concept, while Owner is the individual assignment.
+  Spatie roles and Workflow eligible-user pools do not become Ticket teams.
+- Do not add language files, translation keys, Norwegian copy, or partial localization in these
+  Feature Slices. All new developer-owned Ticket Rules copy remains English until a separately
+  approved language-file effort.
 - Do not add timers, SLA-warning schedules, or time-based rule polling in the first implementation.
   The event registry may be extended by a later approved slice.
 - Do not silently activate invalid legacy rules or rewrite existing Ticket, Workflow, Signal, or
@@ -158,7 +164,8 @@ target includes:
 - `ticket.message_added`, filtered by customer reply, public update, internal note, or source;
 - `ticket.tags_changed`, including added and removed tag IDs;
 - `ticket.custom_fields_changed`, including definition IDs and before/after values;
-- `ticket.assignment_changed`, including owner/unassigned and the approved team meaning;
+- `ticket.assignment_changed`, including owner/unassigned changes. Team-style routing is represented
+  by Queue changes rather than a separate team relation;
 - `ticket.workflow_changed`;
 - `ticket.workflow_state_changed`; and
 - `ticket.status_changed` as a composite result of the authoritative Workflow transition.
@@ -225,8 +232,8 @@ The target action catalogue includes:
 
 - set supported standard Ticket fields, including type, queue, priority, SLA, category, context,
   impact, and urgency;
+- set Queue as the routing group/team concept;
 - assign a specific eligible owner, unassign, or explicitly rerun the Assignment Engine;
-- apply the approved team target after the team decision is resolved;
 - add and remove Taxonomy tags through one audited Ticket tag Action;
 - set or clear a registered Ticket Custom Field through the Custom Field domain;
 - add an internal system note without impersonating a technician;
@@ -252,8 +259,8 @@ revision before implementation.
 Actions execute in their configured order. Later successful rules may overwrite an earlier field
 write (`last successful writer wins`) unless an earlier rule stops processing. Every overwrite is
 visible in the execution evidence. Creation-time fallback assignment runs only when no successful
-rule action made an explicit owner/team decision; administrators may choose a separate `rerun
-assignment` action when reassessment is intended.
+rule action made an explicit Queue routing or Owner assignment decision; administrators may choose a
+separate `rerun assignment` action when reassessment is intended.
 
 ### 6. Runtime Authority And Permissions
 
@@ -263,7 +270,7 @@ as causation evidence but is not impersonated and does not lend permissions to t
 
 - The system actor receives only code-approved Ticket Rule action permissions.
 - Rule UI and imported JSON cannot grant or synchronize actor permissions.
-- Publishing requires `ticket.rules.publish` plus any action-specific publication authority.
+- Publishing requires `ticket.rule_publish` plus any action-specific publication authority.
 - Runtime reauthorizes the system actor through `TicketActionGuard` and the target domain on every
   action.
 - An unavailable action, inactive target, missing permission, incompatible Workflow state, or
@@ -372,6 +379,11 @@ The Ticket Rules UI uses Bootstrap and the same interaction language as Email Ru
   warnings; and
 - paginated execution history with filters by rule, Ticket, event, result, and date.
 
+All new Ticket Rules builder labels, validation, previews, execution results, logs, and help text are
+English-only. Do not introduce hardcoded Norwegian copy or partial language files. Localization is a
+separate future effort; English registry labels should remain centralized and stable so they can be
+moved into language files deliberately later.
+
 Small UI-only components may be shared where they are genuinely domain-neutral. Ticket condition and
 action dictionaries, validation, permissions, and execution remain Ticket-owned. No unfinished
 trigger/action is shown as selectable.
@@ -418,34 +430,77 @@ Use additive, forward-safe migrations:
 
 1. Add Ticket Rule draft/publish lifecycle fields and immutable `ticket_rule_versions` snapshots.
 2. Add root run and per-rule execution tables with correlation, idempotency, condition/action result,
-   before/after summary, actor/source, timing, and immutable-completion guards.
+   before/after summary, actor/source, timing, and immutable-completion guards. Add exact loop reason
+   and blocked semantic-event fingerprint evidence without replacing the unique wrapper fingerprint.
 3. Add only the minimal Ticket Workflow pause metadata approved by this RFC; do not clear existing
    Workflow/version/state data.
 4. Add Ticket Custom Field registration/value integration in its dedicated Feature Slice.
-5. Add team-related schema only if the open team decision explicitly requires a first-class model.
+5. Add mutable builder draft payload/checksum/editor/time plus a unique first-save creation token.
+   These fields never become runtime authority and cannot cross the legacy mutation boundary.
+6. Do not add team-related schema. Queue remains the routing group/team concept and Owner remains the
+   individual assignment.
 
 Backfill each existing rule deterministically:
 
+- enumerate `TicketRule::withTrashed()` so rows already soft-deleted before backfill retain immutable
+  compatibility evidence instead of disappearing from history;
 - `on_create` becomes `ticket.created`;
 - the flat condition list becomes one root `ALL` group;
 - existing actions retain their exact order and values;
 - Else is empty;
 - weight/order, active state, stop behavior, hit count, timestamps, and creator/updater are preserved;
-- each valid active rule receives immutable compatibility version 1 and remains behaviorally active;
-- each valid inactive rule becomes Disabled with compatibility version 1; and
-- an invalid or ambiguous rule is disabled, flagged for Admin review, and never silently repaired.
+- each valid non-deleted active rule receives immutable compatibility version 1 and remains behaviorally
+  active;
+- each valid non-deleted inactive rule becomes Disabled with compatibility version 1;
+- each valid already-deleted rule receives immutable compatibility version 1, retains truthful deletion
+  lifecycle evidence, and is never selected for execution;
+- legacy compatibility versions use nullable `published_by` and `published_at` because no historical
+  publication event exists. They record truthful `provenance=legacy_backfill`, backfill batch/time,
+  and a non-user deployment/operator provenance key when available. That key is nullable when the
+  environment cannot identify one; it never creates or impersonates a User and never presents
+  creator/updater as publisher; and
+- an invalid or ambiguous rule keeps its current `is_active` value and legacy behavior, is marked
+  v2-ineligible, and blocks v2 activation until an administrator records an explicit repair,
+  disablement, or new publication. It is never silently repaired or deactivated by the foundation.
+
+Compatibility version 1 stores a canonical definition-only checksum. The checksum includes normalized
+weight/order, trigger, condition tree, ordered Then/Else actions, stop behavior, and definition schema
+version while excluding hit counters, timestamps, and other operational metadata. While the mutable
+legacy reader remains authoritative, preflight compares that checksum with the current legacy
+definition.
+
+A rule edited or reordered after backfill is reported as drifted and blocks v2 activation. Version 1
+is never overwritten. A later explicit conversion/publication creates a new immutable version after
+validation and preserves version 1 as historical compatibility evidence. Once v2 owns editing,
+reordering requires a new published version.
+
+Activation preflight proves a complete one-to-one mapping between every current non-deleted legacy
+rule and an eligible immutable version or explicit administrator disposition. A new unversioned rule,
+unresolved drift, or v2-ineligible rule blocks activation. Current active/disabled state is reconciled
+truthfully without rewriting the version snapshot. A soft-deleted rule keeps versions as history but
+is never selected for execution.
+
+The eventual v2 cutover is one Ticket-owned atomic activation operation. It acquires the durable
+runtime-authority write fence, revalidates the full catalog generation, canonical catalog checksum,
+mapping/dispositions, and active/deleted state in the same transaction, then flips runtime authority.
+Every legacy create/edit/reorder/toggle/disable/soft-delete path uses that fence. A concurrent mutation
+invalidates the captured generation and makes activation abort/retry; after cutover, legacy writes are
+rejected or routed through versioned publication.
 
 During rollout, a compatibility reader can execute published version 1 with existing creation
-semantics until the new coordinator is enabled. Before activation, compare rule counts, active
-counts, order, normalized definitions, referenced targets, and representative dry-run results.
+semantics until the new coordinator is enabled. Before activation, compare rule counts, active and
+disabled state, soft-deleted history, normalized definitions/order, referenced targets,
+v2-ineligible/drift/unversioned results, and representative dry-run results.
 
 Preserve `ticket_rule_logs` and any rows as legacy read-only history. Do not drop legacy columns or
 tables in the same release. A later cleanup requires its own verified migration after the rollback
 window and human review.
 
-Rollback disables the new coordinator and returns compatible creation rules to the legacy reader
-while preserving new versions and execution evidence. Once update/workflow actions have run, schema
-destruction is not an automatic rollback; use the documented forward fix or a data-aware downgrade.
+The initial schema `down()` may remove new version fields/tables only while no version snapshot and no
+lifecycle reference exists. Once any compatibility version or lifecycle reference exists, `down()`
+must refuse destructive removal. Rollback then means a forward disable that returns compatible
+creation rules to the legacy reader while preserving versions and evidence. Once update/workflow
+actions have run, use the documented forward fix or a separately reviewed data-aware downgrade.
 
 Production deployment requires a database backup, additive migration and schema read-back, rule
 backfill/validation report, permission read-back, cache clear, queue-worker restart when after-commit
@@ -457,8 +512,20 @@ actions are enabled, focused smoke events, and a no-loop/no-failed-execution che
   Then/Else selection, ordered actions, last-writer-wins, Continue/Stop, and readable summaries.
 - Definition tests for draft isolation, publish validation, immutable versions, disabled state,
   frozen root rule sets, missing/deleted targets, and permission loss after publication.
-- Migration tests for valid active/inactive legacy rules, invalid targets, preserved order/actions,
-  retry-safe backfill, compatibility reader parity, rollback guard, and retained legacy logs.
+- Migration tests for valid active/inactive legacy rules, rules already soft-deleted before backfill,
+  invalid targets, preserved order/actions, truthful nullable non-user legacy provenance, retry-safe
+  backfill, edit/reorder-after-backfill drift detection, v2-ineligible activation blocking, and
+  compatibility reader parity.
+- Activation-preflight tests for new, toggle, disable, and soft-delete-after-backfill behavior; every
+  current non-deleted rule must map to an eligible version or explicit disposition, while deleted
+  versions remain history and are not selected.
+- Concurrent cutover tests prove a mutation cannot land between the accepted preflight and authority
+  switch: the shared fence and catalog generation/checksum either include the mutation or abort
+  activation without partially changing authority.
+- Permission seed tests prove `PermissionSeeder` catalogs `ticket.rule_publish`,
+  `RoleSeeder::adminPermissions()` preserves it for Admin, Superuser receives the full catalog, and
+  isolated fresh seeding does not alter unrelated grants.
+- Destructive rollback refusal on SQLite/MariaDB and retained legacy logs.
 - Creation-path tests for Tech UI, Customer Portal, Email, API, Intake, Relationship, Telephony,
   Signal, scheduled occurrences, Workflow/automation callers, and direct-production-creator audits.
 - Update trigger tests for each supported standard field, assignment, message/internal note, tags,
@@ -501,6 +568,84 @@ stable `docs/human-review.md` entry until a named reviewer explicitly confirms t
 - Add a public-safe Nexum website handoff only after verified implementation, with `do not publish`
   until human review and release status permit it.
 
+## Implementation Notes
+
+All six Feature Slices are implementation-complete on authoritative Dev. Runtime authority remains
+`legacy`, v2
+configuration and every trigger/action/Custom Field capability remain false, full rerun remains
+independently disabled, and no new capability is authorized for use.
+
+Slice 2 adds the frozen execution envelope, normalized events, grouped condition and branch
+evidence, per-Ticket locking, savepoint isolation, immutable audit, after-commit delivery evidence,
+retry selection, bounded loop controls, no-write preview, and creation-path consolidation. Seven
+focused suites pass 37 tests / 313 assertions. Pint passes for 46 focused files, changed PHP files
+pass syntax lint, the global Git diff check passes, and live MariaDB contracts prove both branch
+isolation and a competing `HY000` / `1205` lock timeout.
+
+Slices 3-5 add the complete typed trigger/action registry, authoritative field/message/tag/
+assignment boundaries, one composite Workflow/status result, and guarded Ticket Custom Fields.
+Focused standard-event/action/registry coverage passes 37 tests / 579 assertions. Workflow rule
+actions pass 9 / 86, manual/API Workflow composite regressions pass 2 / 42, and Ticket/core Custom
+Field coverage passes 17 / 225. Queue remains the routing group and Owner remains one individual;
+no team domain was added. All new operator/developer copy is English and no language files were
+introduced.
+
+Migrations 242000 and 243000 were recorded in Dev batch 7 by another concurrent task before the
+planned controlled migration step; they were not rerun and historical 242000 was not edited. The
+delivery reconciliation fingerprint was added through forward-only migration 050000 in batch 11
+after the scoped backup recorded in Ticket technical operations. Live read-back found ten
+completed-evidence immutability triggers, 22 foreign keys, the fixed two-permission/no-role actor,
+and the additive Admin/Superuser preview and execution-view grants.
+
+Slice 6 code now keeps the legacy HTTP mutation routes inside the current-operator, publication,
+action-permission, authority-fence, and catalogue-generation boundary. Draft storage, draft creation
+identity, and schema-2 publications cannot cross that boundary. The separate schema-2 enable/disable
+operation still requires v2 configuration/authority and current actor/target validation; publishing
+alone never enables a rule.
+
+Execution history and preview fail closed to one `Restricted evidence` projection when the
+viewer cannot inspect a referenced Ticket Custom Field, including withholding result and duration
+controls that could otherwise reveal an outcome. Retry remains limited to failed or `not_run`
+idempotent positions, with three total attempts per position by default, an application maximum of
+20, and a candidate-position maximum of 500.
+
+Runtime and no-write preview now share derived-event identity and the exact loop reason codes
+`repeated_event_fingerprint`, `depth_budget_exceeded`,
+`evaluated_rule_budget_exceeded`, and `action_budget_exceeded`.
+
+The final post-format Issue #231 plus Workflow matrix passes 198 tests / 2,419 assertions in
+106.37 seconds; the earlier complete Issue-only matrix passes 173 / 2,128 in 95.31 seconds, and the
+targeted privacy/compatibility regression passes 18 / 195 in 28.11 seconds. An independent
+cross-module matrix passes 239 / 1,978 in 117.98 seconds.
+
+The broad repository run completed 2,452 passing tests / 23,683 assertions in 984.31 seconds and
+initially reported ten failures. The Issue-related Email duplicate-link fixture was corrected to use
+canonical client work context and passes 1 / 3 in 20.15 seconds.
+`EmailProviderHealthDeadlineTest` passes isolated 2 / 34 in 22.88 seconds. The remaining eight
+failures are unrelated, independently reproducing baselines: three Customer Portal
+notification/provider-binding tests, three `EmailLivePublisherStateMachineTest` tests, one
+Integration `max_tokens` expectation, and one `UserProfileBackfill` count.
+
+Migrations 060000 through 120000 ran path-scoped in Dev batches 12 through 18. Read-back confirmed
+all expected Workflow pause, loop reason/fingerprint, operator permission, draft payload, and unique
+creation-token columns/indexes. The protected system actor is disabled for login, roleless, and has
+exactly the five approved direct permissions. Admin and Superuser have retry/full-rerun permissions;
+Tech has neither. Compatibility preflight returned compatible, mapping-complete, and fence-matched.
+The gated zero-row backfill completed with zero created/skipped under provenance
+`issue-231-dev-verification-2026-08-26`; authority remained `legacy` at generation 0. Rules,
+versions, drafts, paused Tickets, and loop events all read back zero.
+
+PHP lint passes 163 files with zero failures; scoped Pint passes all 162 changed files while excluding
+only tracked-clean `TicketRuleEngine.php`. Blade cache, route uniqueness, Livewire resolution,
+line-ending/whitespace, English-only/no-language-file, artifact, and diff checks pass. Caches were
+cleared and Blade recached. The in-app browser reached `nexum-psa.local`, but the direct rules URL
+redirected to `/login` because no authenticated session was available. Responsive, keyboard, touch,
+and authenticated builder interaction remain human-review checks.
+
+This implementation evidence does not satisfy human review, enable a trigger or action provider,
+authorize runtime activation, or authorize Main/production migration, promotion, or deployment.
+`HR-2026-08-25-013` remains Pending and blocks release/runtime activation.
+
 ## Feature Slice Plan
 
 Implementation must not be attempted as one broad change. After RFC approval, prepare and approve
@@ -518,12 +663,12 @@ the exact Feature Slice before starting each step:
 4. **Workflow actions and composite events:** exact transitions; create-time Workflow selection;
    guarded Workflow switching; approved stop/pause semantics; composite Workflow/status event;
    Workflow/assignment regressions and loop hardening.
-5. **Ticket Custom Fields and approved team semantics:** register and expose Ticket Custom Fields,
-   guarded value triggers/actions, and implement the team decision without overloading roles, queues,
-   or Workflow pools accidentally.
+5. **Ticket Custom Fields and assignment parity:** register and expose Ticket Custom Fields and
+   guarded value triggers/actions; retain Queue routing and individual Owner assignment without new
+   team schema.
 6. **Admin builder, execution history, and release hardening:** Bootstrap/Livewire UI; typed selectors;
    reorder; dry-run; publish; log/ticket-history views; Knowledge/TODO/API docs; broad tests; migration
-   report; Dev smoke; human-review checklist.
+   report; English-only copy; Dev smoke; human-review checklist.
 
 Later slices may begin only when the contracts they consume are stable and verification failures are
 fixed or explicitly deferred. Ticket Rule runtime activation remains default-off until compatibility
@@ -531,14 +676,20 @@ validation and the relevant human-review checks pass.
 
 ## Open Questions
 
-1. What does `team` mean for Issue #231? The current product has queues and individual owners, but no
-   first-class Ticket team. The recommended first rollout treats Queue as the routing group and Owner
-   as the individual assignment, while keeping a typed team provider unavailable. If the required
-   behavior is a persistent operational team independent of Queue, that model, membership,
-   permissions, Workflow interaction, and migration must be approved as part of Feature Slice 5.
+None for RFC approval. Slice-specific implementation questions must be resolved in the relevant
+Feature Slice before code or data changes begin.
+
+## Resolved Decisions
+
+1. Queue is the Ticket routing group/team concept. Owner is the individual assignment. This RFC does
+   not add a first-class Ticket team model, membership, permission boundary, or action provider.
+2. All new developer-owned Ticket Rules UI, validation, preview, execution, log, help, and operator
+   copy remains English. Language files and localization are deferred to separately approved future
+   work; these Feature Slices must not introduce mixed-language or partial translation scaffolding.
 
 ## Approval
 
-Pending. Implementation must not begin until Svein explicitly resolves the team meaning above and
-approves this RFC. Approval should change `Status` to `Approved`, record the approver/date here, and
-authorize only the separately reviewed Feature Slices, not Main promotion or production deployment.
+Approved by Svein on 2026-08-25 with the Queue/Owner assignment meaning and English-only constraint
+recorded above. This approval authorizes preparation and separate review of the Feature Slices. Each
+slice must be explicitly marked `Ready` before implementation. It does not authorize Main promotion
+or production deployment.

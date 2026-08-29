@@ -23,6 +23,7 @@ use App\Modules\Integration\Services\AiChatCleanup;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Notification\Jobs\DispatchPendingInboundEmailExternalNotifications;
 use App\Modules\Notification\Jobs\DispatchPendingInboundEmailNotificationFanouts;
+use App\Modules\Signal\Jobs\DispatchPendingSignalWebhookDeliveries;
 use App\Modules\Storage\Actions\DispatchDueSupplierOrderImports;
 use App\Modules\Storage\Actions\PurgeSupplierOrderImportTroubleshootingData;
 use App\Modules\Storage\Actions\RunSupplierOrderImportOperationsMaintenance;
@@ -80,6 +81,13 @@ Schedule::job(new DispatchPendingInboundEmailExternalNotifications)
 Schedule::job(new DispatchPendingInboundEmailNotificationFanouts)
     ->everyMinute()
     ->name('notification.inbound_email.fanout_dispatch')
+    ->withoutOverlapping(5);
+
+// Signal webhook rows are a durable outbox. The immediate post-commit wake-up
+// lowers latency; this bounded dispatcher closes the commit-to-broker gap.
+Schedule::job(new DispatchPendingSignalWebhookDeliveries)
+    ->everyMinute()
+    ->name('signal.webhook.dispatch')
     ->withoutOverlapping(5);
 
 // Email account health check every five minutes

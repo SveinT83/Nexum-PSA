@@ -35,7 +35,8 @@ class RegisterTicketTimeEntry
             $entry = TicketTimeEntry::create([
                 'ticket_id' => $ticket->id,
                 'user_id' => $actor?->id,
-                'type' => 'manual',
+                'task_id' => $data['task_id'] ?? null,
+                'type' => $data['type'] ?? 'manual',
                 'work_date' => $data['work_date'],
                 'minutes' => $data['minutes'],
                 'cost_account' => $rateOption['rate_code'] ?? null,

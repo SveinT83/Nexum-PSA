@@ -70,6 +70,7 @@ class WorklogController extends Controller
     private function ticketQuery(AiWorkloadProfile $workload, CarbonImmutable $from, CarbonImmutable $to): Builder
     {
         return TicketTimeEntry::query()
+            ->whereNull('task_id')
             ->whereBetween('work_date', [$from, $to])
             ->whereHas('ticket', fn (Builder $query) => $this->applyScope($query, $workload));
     }

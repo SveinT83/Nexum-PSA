@@ -43,6 +43,7 @@ use App\Modules\System\Support\CompanyProfileSettings;
 use App\Modules\Task\Livewire\Tech\TaskChecklistEditor;
 use App\Modules\Task\Livewire\Tech\TaskFormContext;
 use App\Modules\Taxonomy\Livewire\TagManager as TaxonomyTagManager;
+use App\Modules\Ticket\Livewire\Admin\RuleBuilder as TicketRuleBuilder;
 use App\Modules\Ticket\Livewire\Admin\WorkflowEditor as TicketWorkflowEditor;
 use App\Modules\UserManagement\Livewire\Roles\RolePermissions as UserManagementRolePermissions;
 use Illuminate\Pagination\Paginator;
@@ -175,6 +176,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('tech.tasks.checklist-editor', TaskChecklistEditor::class);
         Livewire::component('tech.tasks.form-context', TaskFormContext::class);
         Livewire::component('tech.admin.tickets.workflow-editor', TicketWorkflowEditor::class);
+        Livewire::component('tech.admin.tickets.rule-builder', TicketRuleBuilder::class);
         Livewire::component('tech.mail.sidebar', EmailMailSidebar::class);
         Livewire::component('tech.mail.workspace', EmailMailWorkspace::class);
         Livewire::component('tech.mail.smart-inbox-review-queue', EmailSmartInboxReviewQueue::class);

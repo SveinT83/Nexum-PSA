@@ -86,3 +86,13 @@ an AI agent needs to classify records consistently across modules.
 
 The API does not attach tags to arbitrary records in this slice. Record-specific tagging remains owned
 by each domain API because each domain must validate whether a tag can be applied to that record.
+
+Ticket tag attachment is owned by the Ticket domain. Tech, API, integration, and versioned Ticket
+Rule paths use the same audited Ticket tag mutation Action. It validates active tag targets,
+work context, source provenance, and current Ticket authority, records the exact added/removed ID
+delta, and emits no event for an identical write.
+
+Ticket Rule tag conditions and actions use typed active-tag selectors and never accept arbitrary
+Taxonomy model names or pivot queries. Add/remove actions run through the same Ticket Action and
+retain minimized tag identifiers in immutable execution evidence. The rule action capabilities
+remain default-off while Ticket Rule v2 authority is legacy.

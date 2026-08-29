@@ -365,6 +365,8 @@
             </div>
         </div>
 
+        @include('ticket::Tech.Tickets.partials.custom-fields-form')
+
         <!-- ------------------------------------------------- -->
         <!-- Form actions -->
         <!-- Keep actions outside cards so they apply to the whole create form. -->

@@ -86,7 +86,8 @@ Implemented scopes:
 - `marketing.campaigns.approve`: approve campaigns and queue recipients.
 - `marketing.campaigns.send`: queue due-send processing for approved campaigns.
 - `marketing.settings.update`: update consent, unsubscribe, tracking, quiet hours, and batching settings.
-- `tickets.read`: list and view tickets.
+- `tickets.read`: list and view tickets, and inspect paginated Ticket message metadata and
+  first-response verification without message content.
 - `tickets.create`: create tickets through the ticket engine.
 - `tickets.update`: update ticket fields and status.
 - `tickets.portal.publish`: publish an eligible client Ticket through the one-way Customer Portal action.
@@ -583,6 +584,26 @@ Common create fields:
 - `ticket_type_id`
 - `impact`
 - `urgency`
+
+Authorized Ticket create and update requests may also include:
+
+```json
+{
+  "custom_fields": {
+    "customer_reference": "REF-123"
+  }
+}
+```
+
+Ticket Custom Field values are returned only when the authenticated user may view their definitions.
+Writes additionally require the ordinary Ticket ability, matching work context, API-editable
+definition, field edit permission, and the default-off Ticket Custom Field API write gate. A disabled
+gate or incompatible value fails closed; it is not silently discarded.
+
+When the versioned Ticket Rule runtime is separately activated, create and update endpoints return
+the final refreshed Ticket after synchronous typed rules. API token abilities remain a request
+ceiling and never grant the protected automation actor additional authority. Internal rule
+conditions, action evidence, previews, and execution history are not part of Ticket API responses.
 
 The `{ticket}` route parameter is the public ticket key, for example `TD-2026-000001`.
 

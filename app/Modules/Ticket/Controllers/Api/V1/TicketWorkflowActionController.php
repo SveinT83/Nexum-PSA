@@ -122,7 +122,14 @@ class TicketWorkflowActionController extends Controller
     {
         $data = $request->validate(['idempotency_key' => ['nullable', 'string', 'max:100']]);
 
-        return new TicketResource($this->load($action->handle($ticket, $transitionKey, $request->user(), $data['idempotency_key'] ?? null)));
+        return new TicketResource($this->load($action->handle(
+            $ticket,
+            $transitionKey,
+            $request->user(),
+            $data['idempotency_key'] ?? null,
+            ruleEventSourceChannel: 'api',
+            ruleEventSourceAction: 'TicketWorkflowActionController.transition',
+        )));
     }
 
     public function escalate(Request $request, Ticket $ticket, string $pathKey, EscalateTicketWorkflow $action)
@@ -133,7 +140,14 @@ class TicketWorkflowActionController extends Controller
             'allow_repeat' => ['nullable', 'boolean'],
         ]);
 
-        return new TicketResource($this->load($action->handle($ticket, $pathKey, $data, $request->user())));
+        return new TicketResource($this->load($action->handle(
+            $ticket,
+            $pathKey,
+            $data,
+            $request->user(),
+            ruleEventSourceChannel: 'api',
+            ruleEventSourceAction: 'TicketWorkflowActionController.escalate',
+        )));
     }
 
     public function close(Request $request, Ticket $ticket, CloseTicket $action)

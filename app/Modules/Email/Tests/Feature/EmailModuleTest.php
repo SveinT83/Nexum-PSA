@@ -88,6 +88,7 @@ use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\UserManagement\Models\UserProfile;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Database\Seeders\EmailTemplateSeeder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -9208,6 +9209,7 @@ class EmailModuleTest extends TestCase
             'status_id' => TicketStatus::where('slug', 'new')->firstOrFail()->id,
             'priority_id' => \App\Modules\Ticket\Models\TicketPriority::where('slug', 'normal')->firstOrFail()->id,
             'client_id' => $client->id,
+            'work_context_id' => app(ResolveWorkContext::class)->client($client)->id,
             'site_id' => $site->id,
             'contact_id' => $contact->id,
             'channel' => 'email',

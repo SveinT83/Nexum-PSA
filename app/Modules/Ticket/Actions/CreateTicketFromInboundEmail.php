@@ -68,21 +68,8 @@ class CreateTicketFromInboundEmail
 
             $this->linkInboundEmailToTicket->handle($email->fresh(), $ticket);
 
-            $this->inheritEmailTags($email->fresh(), $ticket);
-
             return $ticket->fresh(['tags']);
         });
-    }
-
-    private function inheritEmailTags(EmailMessage $email, Ticket $ticket): void
-    {
-        $email->loadMissing('tags');
-
-        foreach ($email->tags as $tag) {
-            if (! $ticket->tags()->where('tags.id', $tag->id)->exists()) {
-                $ticket->tags()->attach($tag->id, ['module' => 'ticket']);
-            }
-        }
     }
 
     private function contactFromSender(EmailMessage $email): ?ClientUser
@@ -101,7 +88,7 @@ class CreateTicketFromInboundEmail
 
     private function subject(EmailMessage $email): string
     {
-        $subject = trim((string) $email->subject) ?: 'Inbound email from ' . ($email->from_email ?: 'unknown sender');
+        $subject = trim((string) $email->subject) ?: 'Inbound email from '.($email->from_email ?: 'unknown sender');
 
         return Str::limit($subject, 255, '');
     }

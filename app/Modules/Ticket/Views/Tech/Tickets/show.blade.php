@@ -1098,14 +1098,11 @@
         const ccInput = document.getElementById('cc');
         const ccSuggestions = document.getElementById('cc_contact_suggestions');
         const addTimeModal = document.getElementById('ticketAddTimeModal');
-        const addTimeForm = document.getElementById('ticketAddTimeForm');
         const shouldShowAddTimeModal = @json((bool) $showAddTimeModal);
         const timeAiDraft = document.getElementById('ticketTimeAiDraft');
         const timeInvoiceText = document.getElementById('time_invoice_text');
         const timeRateSelect = document.getElementById('time_rate_key');
         const timeAiDraftStatus = document.getElementById('ticketTimeAiDraftStatus');
-        const timeMinutes = document.getElementById('time_minutes');
-        const timeWorkDate = document.getElementById('time_work_date');
         const editTimeForm = document.getElementById('ticketEditTimeForm');
         const editTimeWorkDate = document.getElementById('edit_time_work_date');
         const editTimeMinutes = document.getElementById('edit_time_minutes');
@@ -1134,14 +1131,6 @@
         const costStorageFields = Array.from(document.querySelectorAll('[data-cost-storage-fields]'));
         const costManualFields = Array.from(document.querySelectorAll('[data-cost-manual-fields]'));
         let selectedCostItem = null;
-        const stopwatchDisplay = document.getElementById('ticketStopwatchDisplay');
-        const stopwatchState = document.getElementById('ticketStopwatchState');
-        const stopwatchStartGroup = document.getElementById('ticketStopwatchStartGroup');
-        const stopwatchControls = document.getElementById('ticketStopwatchControls');
-        const stopwatchStart = document.getElementById('ticketStopwatchStart');
-        const stopwatchToggle = document.getElementById('ticketStopwatchToggle');
-        const stopwatchStop = document.getElementById('ticketStopwatchStop');
-        const stopwatchStorageKey = @json('ticket-stopwatch-' . $ticket->ticket_key);
 
         const syncMessageType = function (value) {
             if (! type || ! visibility || ! replyRecipientGroup || ! replyIntentGroup || ! notifyTechnicianGroup) {
@@ -1255,174 +1244,6 @@
         if (shouldShowAddTimeModal && window.bootstrap && addTimeModal) {
             window.bootstrap.Modal.getOrCreateInstance(addTimeModal).show();
         }
-
-        const defaultStopwatchState = {
-            elapsedMs: 0,
-            startedAt: null,
-            running: false,
-        };
-        let stopwatch = { ...defaultStopwatchState };
-
-        const loadStopwatch = function () {
-            try {
-                stopwatch = { ...defaultStopwatchState, ...(JSON.parse(localStorage.getItem(stopwatchStorageKey)) || {}) };
-            } catch (error) {
-                stopwatch = { ...defaultStopwatchState };
-            }
-        };
-
-        const saveStopwatch = function () {
-            localStorage.setItem(stopwatchStorageKey, JSON.stringify(stopwatch));
-        };
-
-        const currentElapsedMs = function () {
-            if (! stopwatch.running || ! stopwatch.startedAt) {
-                return stopwatch.elapsedMs;
-            }
-
-            return stopwatch.elapsedMs + Math.max(0, Date.now() - stopwatch.startedAt);
-        };
-
-        const formatElapsed = function (milliseconds) {
-            const totalSeconds = Math.floor(milliseconds / 1000);
-            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-            const seconds = String(totalSeconds % 60).padStart(2, '0');
-
-            return `${hours}:${minutes}:${seconds}`;
-        };
-
-        const syncStopwatchUi = function () {
-            if (! stopwatchDisplay || ! stopwatchState) {
-                return;
-            }
-
-            const elapsed = currentElapsedMs();
-            stopwatchDisplay.textContent = formatElapsed(elapsed);
-            stopwatchState.textContent = stopwatch.running
-                ? 'Running'
-                : (elapsed > 0 ? 'Paused' : 'Not running');
-
-            stopwatchStartGroup?.classList.toggle('d-none', elapsed > 0);
-            stopwatchControls?.classList.toggle('d-none', elapsed <= 0);
-
-            if (stopwatchStart) {
-                const actionAllowed = stopwatchStart.dataset.actionAllowed === '1';
-                stopwatchStart.disabled = ! actionAllowed || stopwatch.running;
-                stopwatchStart.innerHTML = '<i class="bi bi-play-fill" aria-hidden="true"></i> Start';
-            }
-
-            if (stopwatchToggle) {
-                stopwatchToggle.disabled = elapsed <= 0;
-                stopwatchToggle.innerHTML = stopwatch.running
-                    ? '<i class="bi bi-pause-fill" aria-hidden="true"></i> Pause'
-                    : '<i class="bi bi-play" aria-hidden="true"></i> Resume';
-            }
-
-            if (stopwatchStop) {
-                stopwatchStop.disabled = elapsed <= 0;
-            }
-        };
-
-        const openTimeModalFromStopwatch = function (elapsedMs) {
-            const minutes = Math.max(1, Math.ceil(elapsedMs / 60000));
-            const today = new Date().toISOString().slice(0, 10);
-
-            if (timeMinutes) {
-                timeMinutes.value = minutes;
-            }
-
-            if (timeWorkDate) {
-                timeWorkDate.value = today;
-            }
-
-            if (window.bootstrap && addTimeModal) {
-                window.bootstrap.Modal.getOrCreateInstance(addTimeModal).show();
-            }
-        };
-
-        loadStopwatch();
-        syncStopwatchUi();
-        window.setInterval(syncStopwatchUi, 1000);
-
-        stopwatchStart?.addEventListener('click', async function () {
-            if (this.dataset.actionAllowed !== '1' || ! this.dataset.startUrl) {
-                return;
-            }
-
-            this.disabled = true;
-
-            try {
-                const response = await fetch(this.dataset.startUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': @json(csrf_token()),
-                    },
-                    body: JSON.stringify({}),
-                });
-                const payload = await response.json().catch(() => ({}));
-
-                if (! response.ok) {
-                    const validationMessage = Object.values(payload.errors || {}).flat()[0];
-                    throw new Error(validationMessage || payload.message || 'The timer could not be started.');
-                }
-
-                stopwatch = {
-                    elapsedMs: 0,
-                    startedAt: Date.now(),
-                    running: true,
-                };
-                saveStopwatch();
-                syncStopwatchUi();
-
-                if (payload.data?.transitioned) {
-                    window.location.reload();
-                }
-            } catch (error) {
-                window.alert(error.message || 'The timer could not be started.');
-                syncStopwatchUi();
-            }
-        });
-
-        stopwatchToggle?.addEventListener('click', function () {
-            if (currentElapsedMs() <= 0) {
-                return;
-            }
-
-            if (stopwatch.running) {
-                stopwatch.elapsedMs = currentElapsedMs();
-                stopwatch.startedAt = null;
-                stopwatch.running = false;
-            } else {
-                stopwatch.startedAt = Date.now();
-                stopwatch.running = true;
-            }
-
-            saveStopwatch();
-            syncStopwatchUi();
-        });
-
-        stopwatchStop?.addEventListener('click', function () {
-            const elapsed = currentElapsedMs();
-
-            if (elapsed <= 0) {
-                return;
-            }
-
-            stopwatch.elapsedMs = elapsed;
-            stopwatch.startedAt = null;
-            stopwatch.running = false;
-            saveStopwatch();
-            syncStopwatchUi();
-            openTimeModalFromStopwatch(elapsed);
-        });
-
-        addTimeForm?.addEventListener('submit', function () {
-            stopwatch = { ...defaultStopwatchState };
-            localStorage.removeItem(stopwatchStorageKey);
-        });
 
         timeAiDraft?.addEventListener('click', async function () {
             const originalText = timeAiDraft.innerHTML;
@@ -1716,46 +1537,21 @@
                 aria-labelledby="ticketTimeHeading"
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">
-                    <!-- Timer start is audited by the server; elapsed draft time stays local until Add time is saved. -->
-                    <div class="text-center border rounded bg-light px-2 py-3">
-                        <div id="ticketStopwatchDisplay" class="fw-semibold font-monospace" style="font-size: 1.75rem;">00:00:00</div>
-                        <div id="ticketStopwatchState" class="small text-muted mt-1">Not running</div>
-                    </div>
-                    <div id="ticketStopwatchStartGroup" class="d-grid gap-2 mt-3">
-                        @php
-                            $startTimerDecision = $actionDecision('start_timer');
-                        @endphp
-                        @if($startTimerDecision['visible'])
-                            <button
-                                id="ticketStopwatchStart"
-                                type="button"
-                                class="btn btn-sm btn-primary"
-                                data-start-url="{{ route('tech.tickets.timer.start', $ticket) }}"
-                                data-action-allowed="{{ $startTimerDecision['allowed'] ? '1' : '0' }}"
-                                @disabled(! $startTimerDecision['allowed'])
-                                title="{{ $startTimerDecision['reason'] }}">
-                                <i class="bi bi-play-fill" aria-hidden="true"></i>
-                                Start
-                            </button>
-                        @endif
-                    </div>
-                    <div id="ticketStopwatchControls" class="row g-2 mt-3 d-none">
-                        <div class="col-6">
-                            <button id="ticketStopwatchToggle" type="button" class="btn btn-sm btn-outline-secondary w-100" disabled>
-                                <i class="bi bi-pause-fill" aria-hidden="true"></i>
-                                Pause
-                            </button>
-                        </div>
-                        <div class="col-6">
-                            <button id="ticketStopwatchStop" type="button" class="btn btn-sm btn-outline-primary w-100" disabled>
-                                <i class="bi bi-stop-fill" aria-hidden="true"></i>
-                                Stop
-                            </button>
-                        </div>
-                    </div>
-                    <div class="small text-muted mt-2">
-                        Registered total: {{ $ticket->timeEntries->sum('minutes') }} min
-                    </div>
+                    @php
+                        $startTimerDecision = $actionDecision('start_timer');
+                    @endphp
+                    <x-time.stopwatch
+                        id="ticketStopwatch"
+                        storage-key="{{ 'ticket-stopwatch-'.$ticket->ticket_key }}"
+                        :registered-minutes="$ticket->timeEntries->sum('minutes')"
+                        start-url="{{ route('tech.tickets.timer.start', $ticket) }}"
+                        :start-visible="$startTimerDecision['visible']"
+                        :action-allowed="$startTimerDecision['allowed']"
+                        :action-reason="$startTimerDecision['reason']"
+                        modal-id="ticketAddTimeModal"
+                        minutes-input-id="time_minutes"
+                        work-date-input-id="time_work_date"
+                        reset-form-id="ticketAddTimeForm" />
                 </div>
             </div>
         </div>
@@ -2185,6 +1981,8 @@
             </div>
         </div>
 
+        @include('ticket::Tech.Tickets.partials.custom-fields-details')
+
         <div class="accordion-item border rounded mb-2 overflow-hidden">
             @php
                 $documentationRequests = $ticket->events
@@ -2365,6 +2163,15 @@
                         <div class="mb-3 small">
                             <div><strong>{{ ucfirst(str_replace('_', ' ', $event->type)) }}</strong></div>
                             <div class="text-muted">{{ $event->created_at?->diffForHumans() }}</div>
+                            @if ($event->type === 'automation_run'
+                                && $event->ticket_rule_run_id
+                                && $canViewTicketRuleExecutions)
+                                <div>
+                                    <a href="{{ route('tech.admin.settings.tickets.rules.executions.show', ['run' => $event->ticket_rule_run_id]) }}">
+                                        View automation execution #{{ $event->ticket_rule_run_id }}
+                                    </a>
+                                </div>
+                            @endif
                             @if ($event->message)
                                 <div>{{ $event->message }}</div>
                             @endif

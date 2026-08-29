@@ -84,6 +84,12 @@ class ClientTimeUsageController extends Controller
         $this->authorizeOwnerOrPermission($entry->user_id, $request, 'ticket.update');
         $this->abortIfOrdered($entry);
 
+        if ($entry->task_id) {
+            throw ValidationException::withMessages([
+                'time_usage' => 'Task billing is reconciled from Task time and cannot be edited here.',
+            ]);
+        }
+
         $rate = filled($data['time_rate_source'] ?? null)
             ? $ticketRates->findForTicket($entry->ticket, $data['time_rate_source'])
             : null;
@@ -133,6 +139,12 @@ class ClientTimeUsageController extends Controller
 
         abort_unless($belongsToClient || $belongsToClientTicket, 404);
         $this->authorizeOwnerOrPermission($entry->user_id, $request, 'task.update');
+
+        if ($belongsToClientTicket) {
+            throw ValidationException::withMessages([
+                'time_usage' => 'Ticket-owned Task time cannot be edited from Client time usage because billing is linked.',
+            ]);
+        }
 
         $entry->forceFill([
             'work_date' => $data['work_date'],

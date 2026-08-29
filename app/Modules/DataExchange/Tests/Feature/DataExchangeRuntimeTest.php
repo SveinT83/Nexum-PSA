@@ -4,6 +4,7 @@ namespace App\Modules\DataExchange\Tests\Feature;
 
 use App\Models\Clients\Client;
 use App\Models\Core\User;
+use App\Modules\Clients\Actions\SuggestClientNumber;
 use App\Modules\DataExchange\Actions\CommitDataExchangeImportPreview;
 use App\Modules\DataExchange\Actions\DeliverDataExchangeFile;
 use App\Modules\DataExchange\Actions\EnsureDataExchangeProfileTemplates;
@@ -21,7 +22,6 @@ use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
@@ -125,6 +125,37 @@ class DataExchangeRuntimeTest extends TestCase
             'client_number' => 'C-100',
             'name' => 'Imported Client AS',
             'billing_email' => 'billing@client.test',
+        ]);
+    }
+
+    #[Test]
+    public function client_import_without_a_number_retries_an_automatic_number_collision(): void
+    {
+        Client::factory()->create(['client_number' => '01004']);
+        $profile = app(EnsureDataExchangeProfileTemplates::class)->clientsBasicImportProfile($this->admin);
+        $file = UploadedFile::fake()->createWithContent(
+            'clients-with-automatic-number.csv',
+            "client_number,name,billing_email,site_name,contact_name,contact_email\n,Automatic Import AS,billing@automatic.test,Main,Import Contact,contact@automatic.test\n",
+        );
+
+        $preview = app(RunDataExchangeImportDryRun::class)->handle($profile, $file, $this->admin);
+        $this->assertSame(1, $preview->valid_count);
+        $this->assertSame(0, $preview->invalid_count);
+
+        $suggestClientNumber = \Mockery::mock(SuggestClientNumber::class);
+        $suggestClientNumber->shouldReceive('handle')
+            ->twice()
+            ->andReturn('01004', '01005');
+        $this->app->instance(SuggestClientNumber::class, $suggestClientNumber);
+
+        app(CommitDataExchangeImportPreview::class)->handle($preview, $this->admin);
+
+        $this->assertDatabaseHas('clients', [
+            'client_number' => '01005',
+            'name' => 'Automatic Import AS',
+        ]);
+        $this->assertDatabaseHas('client_sites', [
+            'name' => 'Main',
         ]);
     }
 

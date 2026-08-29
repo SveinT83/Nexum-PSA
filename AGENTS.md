@@ -257,6 +257,31 @@ affected code and tests.
 
 ## Local Tooling And Networked Services
 
+### Dev SSH Access
+
+- The Dev SSH endpoint is `sveintore@192.168.2.201`, and the authoritative
+  project path is `/var/Projects/tdPSA`.
+- On Windows Codex Desktop, use the dedicated current-user key at
+  `$HOME\.ssh\nexum_dev_ed25519`. Its non-default filename means it must be
+  selected explicitly; a plain `ssh sveintore@192.168.2.201` attempt may fail
+  even while the server and approved login are available.
+- Use this non-interactive command so authentication and host-key failures are
+  reported honestly instead of falling back to guessed credentials:
+
+  ```powershell
+  ssh.exe -i "$HOME\.ssh\nexum_dev_ed25519" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes sveintore@192.168.2.201
+  ```
+
+- Never copy the private key or a plaintext password into this repository,
+  logs, chat, command output, or documentation. If the exact key command fails,
+  distinguish TCP reachability, host-key verification, and authentication, then
+  report the exact blocker. Do not declare Dev unavailable merely because
+  default SSH identity discovery failed.
+- Separate authenticated SSH connections may run in parallel. OpenSSH
+  `MaxSessions` is a per-network-connection multiplexing limit, not a total
+  per-user login limit; another agent's active connection is not by itself an
+  exhausted login slot.
+
 - The SSH development server is an isolated development environment, and
   `/var/Projects/tdPSA` is the authoritative working copy for Nexum coding.
 - ALL ordinary code implementation and code editing MUST happen directly in

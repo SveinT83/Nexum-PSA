@@ -42,6 +42,9 @@ class Ticket extends Model
         'workflow_id',
         'workflow_version_id',
         'workflow_state_key',
+        'rule_workflow_paused_at',
+        'rule_workflow_paused_by',
+        'rule_workflow_pause_reason',
         'category_id',
         'client_id',
         'work_context_id',
@@ -83,6 +86,7 @@ class Ticket extends Model
         'closed_at' => 'datetime',
         'merged_at' => 'datetime',
         'portal_visible_at' => 'datetime',
+        'rule_workflow_paused_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string
@@ -188,6 +192,16 @@ class Ticket extends Model
     public function events(): HasMany
     {
         return $this->hasMany(TicketEvent::class);
+    }
+
+    public function ruleRuns(): HasMany
+    {
+        return $this->hasMany(TicketRuleRun::class);
+    }
+
+    public function ruleEvents(): HasMany
+    {
+        return $this->hasMany(TicketRuleEvent::class);
     }
 
     public function attachments(): HasMany

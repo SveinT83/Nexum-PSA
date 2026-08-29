@@ -53,8 +53,11 @@
                 <form action="{{ route('tech.admin.system.integrations.tactical_rmm.update_settings') }}" method="POST">
                     @csrf
                     <div class="card mb-4">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center gap-2">
                             <h5 class="mb-0">Automation Settings</h5>
+                            <a href="{{ route('tech.admin.system.integrations.rmm-alert-rules.index') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-diagram-3" aria-hidden="true"></i> Alert rules
+                            </a>
                         </div>
                         <div class="card-body">
                             <h6 class="mb-3">Synchronization Controls</h6>

@@ -99,7 +99,14 @@ class TicketWorkflowDefinitionController extends Controller
             'state_mapping.*' => ['string', 'max:160'],
         ]);
         $target = TicketWorkflowVersion::query()->findOrFail((int) $data['target_version_id']);
-        $count = $migrations->migrate($workflow, $target, array_map('intval', $data['ticket_ids']), $request->user());
+        $count = $migrations->migrate(
+            $workflow,
+            $target,
+            array_map('intval', $data['ticket_ids']),
+            $request->user(),
+            ruleEventSourceChannel: 'api',
+            ruleEventSourceAction: 'TicketWorkflowDefinitionController.migrate',
+        );
 
         return response()->json(['data' => ['migrated_count' => $count, 'target_version_id' => $target->id, 'placement_mode' => 'automatic']]);
     }

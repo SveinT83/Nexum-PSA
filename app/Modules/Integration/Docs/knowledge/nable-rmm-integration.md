@@ -12,6 +12,18 @@ endpoint is idempotent: sending the same `source` and `external_id` updates the 
 `author_type = external`, keep external author metadata, mark the Nexum ticket unread, and do not
 trigger outbound Nexum email.
 
+## Alert Routing
+
+The shared `integrations:rmm-alert-sync` command polls active Tactical and N-able alert integrations
+every 15 minutes and dispatches provider jobs. New and reopened failures enter RMM Alert Rules;
+routine active refreshes and resolutions do not rerun routing.
+
+Configure the provider-neutral rules under **Admin > System > Integrations > RMM Alert Rules**.
+N-able severity and check type are retained when supplied by the failing-check feed. Missing or
+unknown severity defaults to `warning`. Existing alerts are not routed retroactively.
+
+Automatic alert routing requires the Laravel scheduler runner and a queue worker.
+
 ## Requirements
 
 The integration must be active and configured with:
@@ -20,13 +32,14 @@ The integration must be active and configured with:
 - API key.
 - Enabled synchronization settings for the data direction that should run.
 
-Automatic sync is scheduled hourly through:
+Client, Site, and Asset inventory synchronization is a separate hourly job:
 
 ```text
 App\Jobs\Integrations\NAbleRmmSyncJob
 ```
 
-The server must run both the Laravel scheduler and a queue worker for automatic sync to process.
+This hourly inventory job does not replace the 15-minute alert polling described above. The server
+must run both the Laravel scheduler and a queue worker for either automatic flow to process.
 
 ## Client And Site Mapping
 

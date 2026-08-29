@@ -4,17 +4,14 @@ namespace App\Modules\Ticket\Actions;
 
 use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketAttachment;
-use App\Modules\Ticket\Models\TicketStatus;
-use App\Modules\Ticket\Services\TicketSlaResolver;
+use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class StoreScheduledTicketOccurrence
 {
     public function __construct(
-        private readonly TicketSlaResolver $slaResolver
+        private readonly StoreTicket $storeTicket,
     ) {}
 
     public function handle(Ticket $parent, \Carbon\Carbon $plannedStart): Ticket
@@ -22,45 +19,38 @@ class StoreScheduledTicketOccurrence
         return DB::transaction(function () use ($parent, $plannedStart) {
             $schedule = $parent->schedule;
 
-            // Resolve SLA for the new occurrence
-            $sla = $this->slaResolver->resolve([
-                'priority_id' => $parent->priority_id,
-                'planned_start_at' => $plannedStart,
-                'sla_mode' => $schedule?->sla_mode ?? 'defer_until_planned_start',
-            ], $parent->priority);
+            $actor = $parent->created_by
+                ? User::query()->find((int) $parent->created_by)
+                : null;
 
-            // Create the occurrence ticket
-            $occurrence = Ticket::create([
-                'ticket_key' => $this->nextTicketKey(),
-                'type' => $parent->type,
+            $occurrence = $this->storeTicket->handle([
                 'ticket_type_id' => $parent->ticket_type_id,
                 'queue_id' => $parent->queue_id,
-                'status_id' => $this->initialStatusId(),
                 'priority_id' => $parent->priority_id,
-                'sla_id' => $sla['sla_id'],
-                'sla_snapshot' => $sla['sla_snapshot'],
                 'workflow_id' => $parent->workflow_id,
-                'workflow_version_id' => $parent->workflow_version_id,
-                'workflow_state_key' => 'new', // Always start as new
+                '_workflow_version_id' => $parent->workflow_version_id,
                 'category_id' => $parent->category_id,
                 'client_id' => $parent->client_id,
-                'work_context_id' => $parent->work_context_id,
                 'site_id' => $parent->site_id,
                 'contact_id' => $parent->contact_id,
                 'asset_id' => $parent->asset_id,
                 'owner_id' => $parent->owner_id,
-                'created_by' => $parent->created_by,
                 'channel' => 'scheduled',
                 'subject' => $parent->subject,
                 'description' => $parent->description,
-                'first_response_due_at' => $sla['first_response_due_at'],
-                'resolve_due_at' => $sla['resolve_due_at'],
+                'sla_mode' => $schedule?->sla_mode ?? 'defer_until_planned_start',
+                '_sla_planned_start_at' => $plannedStart,
+                '_created_by_id' => $parent->created_by,
+                '_skip_initial_description_note' => true,
+                '_source_action' => 'StoreScheduledTicketOccurrence',
+                '_delivery_key' => 'scheduled-occurrence:'.$parent->id.':'.$plannedStart->toISOString(),
+                'suppress_notifications' => true,
                 'metadata' => array_merge($parent->metadata ?? [], [
                     'is_occurrence' => true,
                     'parent_ticket_id' => $parent->id,
                     'occurrence_planned_start' => $plannedStart->toISOString(),
                 ]),
-            ]);
+            ], $actor);
 
             // Clone messages from parent (internal notes/templates)
             foreach ($parent->messages()->where('visibility', 'internal')->get() as $message) {
@@ -95,28 +85,5 @@ class StoreScheduledTicketOccurrence
 
             return $occurrence;
         });
-    }
-
-    private function nextTicketKey(): string
-    {
-        $prefix = config('ticket.key_prefix', 'TD-');
-        $latest = Ticket::query()
-            ->where('ticket_key', 'like', $prefix.'%')
-            ->orderByDesc('id')
-            ->first();
-
-        if (! $latest) {
-            return $prefix.'1000';
-        }
-
-        $number = (int) str_replace($prefix, '', $latest->ticket_key);
-
-        return $prefix.($number + 1);
-    }
-
-    private function initialStatusId(): int
-    {
-        return TicketStatus::query()->where('is_default', true)->value('id')
-            ?? TicketStatus::query()->orderBy('sort_order')->value('id');
     }
 }

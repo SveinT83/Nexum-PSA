@@ -23,6 +23,7 @@
                 'tone' => $myDay['counts']['unread'] > 0 ? 'warning' : 'primary',
                 'icon' => 'bi-ticket-detailed',
                 'href' => route('tech.tickets.index', ['ownership' => 'mine', 'lifecycle' => 'open']),
+                'aria_label' => 'Open tickets assigned to you: '.$myDay['counts']['tickets'],
             ],
             [
                 'label' => 'Tasks',
@@ -30,6 +31,7 @@
                 'tone' => 'info',
                 'icon' => 'bi-check2-square',
                 'href' => route('tech.tasks.index', ['mine' => 1]),
+                'aria_label' => 'Open tasks assigned to you: '.$myDay['counts']['tasks'],
             ],
             [
                 'label' => 'Events',
@@ -37,6 +39,7 @@
                 'tone' => 'secondary',
                 'icon' => 'bi-calendar3',
                 'href' => route('tech.calendar.index', ['view' => 'day', 'date' => $myDay['generated_at']->toDateString()]),
+                'aria_label' => 'Calendar events for '.$myDay['generated_at']->toDateString().': '.$myDay['counts']['events'],
             ],
             [
                 'label' => 'Overdue',
@@ -44,13 +47,14 @@
                 'tone' => $myDay['counts']['overdue'] > 0 ? 'danger' : 'success',
                 'icon' => 'bi-exclamation-triangle',
                 'href' => route('tech.my-day.index', ['focus' => 'overdue']),
+                'aria_label' => 'Overdue tickets and tasks: '.$myDay['counts']['overdue'],
             ],
         ];
     @endphp
     <div class="row g-2 mb-3">
         @foreach($metrics as $metric)
             <div class="col-6 col-xl-3">
-                <a href="{{ $metric['href'] }}" class="card h-100 border-{{ $metric['tone'] }} text-decoration-none focus-ring" aria-label="{{ $metric['value'] }} {{ $metric['label'] }}">
+                <a href="{{ $metric['href'] }}" class="card h-100 border-{{ $metric['tone'] }} text-decoration-none focus-ring" aria-label="{{ $metric['aria_label'] }}">
                     <div class="card-body py-3">
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div>
@@ -253,13 +257,13 @@
             <h2 class="h6 mb-0">Queue</h2>
         </div>
         <div class="list-group list-group-flush">
-            <a href="{{ route('tech.tickets.index', ['ownership' => 'mine', 'lifecycle' => 'open', 'unread' => 1]) }}" class="list-group-item list-group-item-action d-flex justify-content-between py-2 focus-ring" aria-label="{{ $myDay['counts']['unread'] }} Unread tickets">
+            <a href="{{ route('tech.tickets.index', ['ownership' => 'mine', 'lifecycle' => 'open', 'unread' => 1]) }}" class="list-group-item list-group-item-action d-flex justify-content-between py-2 focus-ring" aria-label="Unread open tickets assigned to you: {{ $myDay['counts']['unread'] }}">
                 <span>Unread</span>
                 <span class="badge text-bg-{{ $myDay['counts']['unread'] > 0 ? 'warning' : 'light' }} {{ $myDay['counts']['unread'] > 0 ? '' : 'text-dark' }}">
                     {{ $myDay['counts']['unread'] }}
                 </span>
             </a>
-            <a href="{{ route('tech.my-day.index', ['focus' => 'overdue']) }}" class="list-group-item list-group-item-action d-flex justify-content-between py-2 focus-ring" aria-label="{{ $myDay['counts']['overdue'] }} Overdue items">
+            <a href="{{ route('tech.my-day.index', ['focus' => 'overdue']) }}" class="list-group-item list-group-item-action d-flex justify-content-between py-2 focus-ring" aria-label="Overdue tickets and tasks: {{ $myDay['counts']['overdue'] }}">
                 <span>Overdue</span>
                 <span class="badge text-bg-{{ $myDay['counts']['overdue'] > 0 ? 'danger' : 'success' }}">
                     {{ $myDay['counts']['overdue'] }}

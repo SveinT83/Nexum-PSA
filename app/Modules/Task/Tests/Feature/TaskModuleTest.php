@@ -18,6 +18,7 @@ use App\Modules\Task\Controllers\Tech\TaskController;
 use App\Modules\Task\Models\Task;
 use App\Modules\Task\Models\TaskDependency;
 use App\Modules\Task\Models\TaskStatus;
+use App\Modules\Task\Support\TaskSettings;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
@@ -290,13 +291,15 @@ class TaskModuleTest extends TestCase
             ->assertOk()
             ->assertViewIs('task::Admin.Settings.edit')
             ->assertSee('Task Settings')
-            ->assertSee('Manual Task Defaults');
+            ->assertSee('Manual Task Defaults')
+            ->assertSee('Ticket-owned Task Billing');
 
         $this->actingAs($this->tech)
             ->put(route('tech.admin.settings.tasks.update'), [
                 'default_status_id' => $status->id,
                 'default_priority_id' => $priority->id,
                 'default_estimated_minutes' => 25,
+                'ticket_billing_minutes_mode' => TaskSettings::TICKET_BILLING_ESTIMATE_MINIMUM,
             ])
             ->assertRedirect(route('tech.admin.settings.tasks'));
 
@@ -310,6 +313,7 @@ class TaskModuleTest extends TestCase
 
         $this->assertSame($priority->id, $settings['default_priority_id']);
         $this->assertSame(25, $settings['default_estimated_minutes']);
+        $this->assertSame(TaskSettings::TICKET_BILLING_ESTIMATE_MINIMUM, $settings['ticket_billing_minutes_mode']);
     }
 
     #[Test]
@@ -330,6 +334,7 @@ class TaskModuleTest extends TestCase
                 'default_status_id' => $status->id,
                 'default_priority_id' => $priority->id,
                 'default_estimated_minutes' => 35,
+                'ticket_billing_minutes_mode' => TaskSettings::TICKET_BILLING_ACTUAL,
             ])
             ->assertRedirect(route('tech.admin.settings.tasks'));
 
@@ -367,6 +372,220 @@ class TaskModuleTest extends TestCase
             'source_type' => 'estimated',
             'minutes' => 15,
         ]);
+    }
+
+    #[Test]
+    public function task_stopwatch_registers_manual_time_for_standalone_task(): void
+    {
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Document firewall rules',
+        ], $this->tech);
+
+        $this->actingAs($this->tech)
+            ->get(route('tech.tasks.show', $task))
+            ->assertOk()
+            ->assertSee('data-nexum-stopwatch', false)
+            ->assertSee('data-storage-key="task-stopwatch-'.$task->id.'"', false)
+            ->assertSee('id="taskAddTimeForm"', false)
+            ->assertSee(route('tech.tasks.time-entries.store', $task), false);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tasks.time-entries.store', $task), [
+                'time_work_date' => '2026-08-25',
+                'time_minutes' => 37,
+                'time_note' => 'Documented the approved rule set.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('task_time_entries', [
+            'task_id' => $task->id,
+            'user_id' => $this->tech->id,
+            'source_type' => 'manual',
+            'minutes' => 37,
+            'billable' => false,
+            'note' => 'Documented the approved rule set.',
+        ]);
+        $this->assertDatabaseHas('task_activities', [
+            'task_id' => $task->id,
+            'type' => 'time_entry_added',
+            'body' => '37 minutes registered.',
+        ]);
+        $this->assertNull($task->fresh()->completed_at);
+    }
+
+    #[Test]
+    public function ticket_owned_task_uses_estimate_as_one_cumulative_billing_minimum(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $ticket = Ticket::query()->create([
+            'ticket_key' => 'TD-2026-123463',
+            'queue_id' => $defaults['queue']->id,
+            'ticket_type_id' => $defaults['type']->id,
+            'type' => $defaults['type']->slug,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Timed ticket task',
+            'is_unread' => false,
+        ]);
+        $rate = TimeRate::query()->create([
+            'name' => 'Task timer support',
+            'slug' => 'task-timer-support-test',
+            'code' => 'TASK_TIMER_SUPPORT_TEST',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 1000,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Resolve timed ticket work',
+            'estimated_minutes' => 30,
+        ], $this->tech, $ticket);
+
+        app(TaskSettings::class)->update([
+            'ticket_billing_minutes_mode' => TaskSettings::TICKET_BILLING_ESTIMATE_MINIMUM,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tasks.time-entries.store', $task), [
+                'time_work_date' => '2026-08-25',
+                'time_minutes' => 5,
+                'time_rate_key' => 'global:'.$rate->id,
+                'time_invoice_text' => 'Resolved the assigned ticket task.',
+                'time_note' => 'Timer-backed Task entry.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('ticket_time_entries', [
+            'ticket_id' => $ticket->id,
+            'task_id' => $task->id,
+            'type' => 'task_billing',
+            'minutes' => 30,
+            'time_rate_id' => $rate->id,
+            'billing_status' => 'pending',
+            'invoice_text' => 'Resolved the assigned ticket task.',
+        ]);
+        $this->assertDatabaseHas('task_time_entries', [
+            'task_id' => $task->id,
+            'source_type' => 'ticket_time_entry',
+            'minutes' => 5,
+            'billable' => true,
+        ]);
+        $this->assertNull($task->fresh()->completed_at);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tasks.time-entries.store', $task), [
+                'time_work_date' => '2026-08-25',
+                'time_minutes' => 55,
+                'time_rate_key' => 'global:'.$rate->id,
+                'time_invoice_text' => 'Resolved the assigned ticket task.',
+                'time_note' => 'Second timer-backed Task entry.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(60, (int) $task->timeEntries()->sum('minutes'));
+        $this->assertSame(60, (int) $ticket->timeEntries()->where('task_id', $task->id)->sum('minutes'));
+        $this->assertSame([30, 30], $ticket->timeEntries()->where('task_id', $task->id)->orderBy('id')->pluck('minutes')->all());
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tasks.complete', $task))
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertNotNull($task->fresh()->completed_at);
+        $this->assertSame(2, $ticket->timeEntries()->count());
+        $this->assertSame(2, $task->timeEntries()->count());
+    }
+
+    #[Test]
+    public function ticket_owned_task_bills_actual_time_when_configured(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $ticket = Ticket::query()->create([
+            'ticket_key' => 'TD-2026-123464',
+            'queue_id' => $defaults['queue']->id,
+            'ticket_type_id' => $defaults['type']->id,
+            'type' => $defaults['type']->slug,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Actual-time ticket task',
+            'is_unread' => false,
+        ]);
+        $rate = TimeRate::query()->create([
+            'name' => 'Actual Task time',
+            'slug' => 'actual-task-time-test',
+            'code' => 'ACTUAL_TASK_TIME_TEST',
+            'rate_type' => 'labor',
+            'unit' => 'hour',
+            'amount_ex_vat' => 1000,
+            'currency' => 'NOK',
+            'applies_without_contract' => true,
+            'applies_with_contract' => false,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Bill actual Task time',
+            'estimated_minutes' => 30,
+        ], $this->tech, $ticket);
+
+        app(TaskSettings::class)->update([
+            'ticket_billing_minutes_mode' => TaskSettings::TICKET_BILLING_ACTUAL,
+        ]);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tasks.time-entries.store', $task), [
+                'time_work_date' => '2026-08-25',
+                'time_minutes' => 5,
+                'time_rate_key' => 'global:'.$rate->id,
+                'time_invoice_text' => 'Actual Task time.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(5, (int) $task->timeEntries()->sum('minutes'));
+        $this->assertSame(5, (int) $ticket->timeEntries()->where('task_id', $task->id)->sum('minutes'));
+    }
+
+    #[Test]
+    public function completed_task_rejects_new_time_and_task_view_permission_cannot_write_time(): void
+    {
+        $task = app(StoreTask::class)->handle(['title' => 'Already done'], $this->tech);
+        app(CompleteTask::class)->handle($task, $this->tech);
+
+        $this->actingAs($this->tech)
+            ->post(route('tech.tasks.time-entries.store', $task), [
+                'time_work_date' => '2026-08-25',
+                'time_minutes' => 10,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('time_entry');
+
+        $viewer = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $viewer->assignRole('Tech');
+        $viewer->givePermissionTo('task.view');
+        $openTask = app(StoreTask::class)->handle(['title' => 'Protected time'], $this->tech);
+
+        $this->actingAs($viewer)
+            ->post(route('tech.tasks.time-entries.store', $openTask), [
+                'time_work_date' => '2026-08-25',
+                'time_minutes' => 10,
+            ])
+            ->assertForbidden();
     }
 
     #[Test]

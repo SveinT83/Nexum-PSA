@@ -24,6 +24,25 @@ has explicitly approved.
 - Never delete reviewed entries. Add newer entries above older entries and retain the history.
 - Global human-review confirmation: Svein explicitly approved all entries that were only waiting for human review on 2026-08-25. Entries marked `Rework Needed`, including compound statuses containing rework, remain open. Runtime activation, deployment, migration, and production evidence gates remain separate unless an entry explicitly records an accepted deviation.
 
+| HR-2026-08-26-001 | Documentation Sidebar Reordering and Title Update | Pending | 2026-08-26 |  |  |
+| HR-2026-08-25-013 | Ticket Rules triggers, actions, and audited execution | Reviewed | 2026-08-25 | Svein | 2026-08-26 |
+
+### HR-2026-08-26-001: Documentation Sidebar Reordering And Title Update
+
+- **Scope:** Reorder the Documentation sidebar to prioritize Shipping Carriers, Suppliers, and Vendors above dynamic categories, and update the sidebar title to "Documentation".
+- **Affected Modules:** Documentation.
+- **Affected Pages And Workflows:** All Documentation pages (index, show, create, edit), Shipping Carriers pages, and Vendors/Suppliers pages.
+- **Remaining Human Checks:**
+  - [ ] Verify that "Shipping Carriers", "Suppliers", and "Vendors" appear at the top of the sidebar.
+  - [ ] Verify that a header "Documentation categories" appears after them, followed by "All" and dynamic categories.
+  - [ ] Verify that the sidebar title is "Documentation" on all relevant pages.
+- **Automated Dev Evidence (Not Human Review):**
+  - New test `App\Modules\Documentation\Tests\Feature\DocumentationsMenuTest` passes and verifies menu order and header logic.
+  - Existing `App\Modules\Documentation\Tests\Feature\DocumentationModuleTest` passes.
+| HR-2026-08-25-014 | RMM Alert Rules pre-routing and audited actions | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-012 | Task stopwatch and time registration | Reviewed | 2026-08-25 | Svein | 2026-08-26 |
+| HR-2026-08-25-011 | Ticket message read API and first-response verification | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-010 | Client automatic number allocation race fix | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-009 | Technician Task List Default Filter and Ordering | Pending | 2026-08-25 |  |  |
 | HR-2026-08-25-008 | AI View Sidebar and Button Group Consistency | Pending | 2026-08-25 |  |  |
 | HR-2026-08-25-007 | AI Model Rate Card Route and Navigation Fix | Pending | 2026-08-25 |  |  |
@@ -32,6 +51,342 @@ has explicitly approved.
 | HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+
+### HR-2026-08-25-013: Ticket Rules Triggers, Actions, And Audited Execution
+
+- **Scope:** Implement all six approved Feature Slices for GitHub Issue #231: immutable rule
+  versions and compatibility, the execution/audit/loop boundary, standard Ticket automation,
+  Workflow actions, Ticket Custom Fields, and the Admin builder/history/release hardening.
+- **Affected Modules:** Ticket, Workflow, CustomField, Taxonomy, Signal, Email, Integration,
+  Customer Portal, Intake, Relationship, Telephony, UserManagement, and shared permission middleware.
+- **Affected Pages And Workflows:** Ticket Rules list/builder/detail, preview and publish, execution
+  history/detail, Ticket internal history, every authoritative Ticket create/update/message/tag/
+  assignment/Workflow path, and Custom Field definition/value surfaces.
+- **Human Review Completed:** Svein explicitly approved the full checklist in Codex on 2026-08-26, including the authenticated builder and responsive, keyboard, and touch checks.
+  - [x] Review migrations 240000/241000 and the concurrent Dev batch-7 recording of 242000/243000.
+    Confirm historical 242000 remains unchanged, review the scoped pre-050000 backup and batch-11
+    forward reconciliation, read back schema/permissions/actor, and accept the documented
+    forward-disable rollback.
+  - [x] Review the ordered Slice 6 paths 060000, 070000, 080000, 090000, 100000, 110000, and
+    120000. Read back the protected actor grants; Workflow pause fields/index; exact loop reason and
+    blocked-fingerprint fields/index; Admin/Superuser retry/full-rerun grants with Tech denied; draft
+    payload fields/indexes; and unique draft creation token/index. Confirm authority and every
+    capability remain default-off.
+  - [x] Repeat the first Save Draft request and confirm it returns the original draft rather than
+    creating a duplicate. Confirm conflicting token reuse fails closed and legacy create/update/
+    toggle/delete routes cannot mutate draft creation/payload fields or schema-2 publications.
+  - [x] Run compatibility preflight and gated backfill; confirm every current rule is eligible or
+    explicitly blocked with sanitized evidence and runtime authority remains legacy until approved.
+  - [x] Confirm existing creation rules retain order, conditions, actions, active state, Signal
+    handoff, and Stop behavior before any v2 authority switch.
+  - [x] Independently repeat the Slice 2 no-write preview, failed-branch continuation, outer Ticket
+    survival, loop blocking, and two-connection per-Ticket lock checks on an approved disposable
+    Dev case.
+  - [x] Create and publish an English rule with grouped All/Any conditions, ordered Then and Else
+    actions, Move up/down controls, typed targets, and successful edit round-trip.
+  - [x] Preview that rule against an authorized Ticket and confirm no Ticket, audit, counter, queue,
+    Signal, notification, or external side effect is written.
+  - [x] Verify supported field, message, tag, Queue, Owner, assignment-engine, and SLA triggers/actions
+    produce one stable event only for actual relevant changes and preserve approved precedence.
+  - [x] Verify exact Workflow transition, Workflow selection/switch, and pause/resume behavior retains
+    pinned version, state/history/evidence, guards, non-terminal policy, and composite status event.
+  - [x] Define and edit a Ticket Custom Field through UI/API and verify typed conditions/actions,
+    permission filtering, clear/set behavior, audit minimization, and no cross-target access.
+  - [x] Inspect execution history and Ticket automation summary; confirm condition/branch/action
+    outcomes, causation, actor, duration, failure/loop reason, and deleted-user fallback are useful
+    while raw bodies, secrets, tokens, attachments, and unrestricted JSON remain absent.
+  - [x] Force a branch failure and an A-to-B-to-A loop; confirm branch-local rollback, later
+    not-run positions, later-rule policy, budgets, loop-blocked, and original mutation survival.
+  - [x] Verify Admin/Superuser publication access, preview/log permissions, protected non-login
+    automation actor grants, ordinary action guards, Tech denial by default, and customer non-disclosure.
+  - [x] Review the builder, list, preview, and execution pages on desktop and narrow/mobile widths,
+    including keyboard focus, touch targets, readable summaries, validation, and English-only copy.
+- **Automated Dev Evidence (Not Human Review):**
+  - Seven focused Slice 2 suites pass 37 tests / 313 assertions. Pint passes for 46 focused files,
+    changed PHP files pass syntax lint, and the global Git diff check passes.
+  - Final Dev read-back shows authority `legacy`, v2 configuration and all capabilities false, zero
+    rules, versions, drafts, paused Tickets, loop events, execution runs, and deliveries, plus ten
+    immutability triggers and 22 foreign keys. The disabled system actor is roleless and has exactly
+    `ticket.update`, `ticket.assign`, `ticket.note_internal`,
+    `ticket.workflow_escalate`, and `signal.action.execute`. Admin/Superuser have preview,
+    execution-view, retry, and full-rerun grants; Tech has no retry/full-rerun grant.
+  - An actual MariaDB contract proved branch savepoint rollback, later-rule continuation, outer
+    Ticket survival, immutable evidence, and rollback cleanup. Two independent connections proved
+    lock exclusion through the expected `HY000` / `1205` timeout before authority was restored to
+    `legacy`.
+  - Migrations 242000/243000 were recorded by a concurrent task in Dev batch 7 before the planned
+    controlled step and were not rerun. Historical 242000 stayed unchanged. Forward migration
+    050000 ran path-scoped in batch 11 after backup
+    `/tmp/nexum-issue231-backups/pre-ticket-rule-reconciliation-20260825T231826Z.sql` with SHA-256
+    `e080d1e4a597f22fd1242ab91ba41e77623318ba33bf0b6b551e923bac0dc305`.
+  - Slice 3 typed registry, canonical mutation, action, publication, and condition coverage passes
+    37 tests / 579 assertions. It covers actual field/message/tag/Queue/Owner changes, Assignment
+    Engine and SLA behavior, Signal after-commit handoff, no-op suppression, privacy, capability
+    drift, and combined message/status plus Owner roots.
+  - Slice 4 Workflow rule actions pass 9 tests / 86 assertions. Manual/API Workflow escalation and
+    explicit Workflow-version migration composite regressions pass 2 / 42. These boundaries
+    suppress nested status dispatch and preserve exact source, Workflow, status, Queue-routing, and
+    individual-Owner evidence.
+  - Slice 5 Ticket rule/surface plus core Custom Field coverage passes 17 tests / 225 assertions.
+    It covers canonical Ticket identity, typed UI/API normalization, permissions/work context,
+    redacted rule facts/actions, actual-change events, write gates, and Customer Portal isolation.
+  - The final post-format Issue #231 plus Workflow matrix passes 198 tests / 2,419 assertions in
+    106.37 seconds. The earlier complete Issue-only matrix passes 173 / 2,128 in 95.31 seconds.
+  - A targeted privacy/compatibility regression passes 18 / 195 in 28.11 seconds. Its dynamic default
+    Queue fixture is order-independent, and restricted-preview coverage asserts the stable generic
+    full-rerun denial.
+  - An independent Ticket, Workflow, Portal, Signal, Custom Field, and RMM cross-module matrix passes
+    239 tests / 1,978 assertions in 117.98 seconds.
+  - The broad repository run completed 2,452 passing tests / 23,683 assertions in 984.31 seconds with
+    ten initial failures. The Issue-related Email duplicate-link fixture was corrected to use
+    canonical client work context and passes 1 / 3 in 20.15 seconds.
+    `EmailProviderHealthDeadlineTest` passes isolated 2 / 34 in 22.88 seconds. The remaining eight
+    failures are unrelated, independently reproducing baselines: three Customer Portal
+    notification/provider-binding tests, three `EmailLivePublisherStateMachineTest` tests, one
+    Integration `max_tokens` expectation, and one `UserProfileBackfill` count.
+  - PHP lint passes for 163 files with zero failures; scoped Pint passes all 162 changed files while
+    excluding only tracked-clean `TicketRuleEngine.php`. Blade cache, 13 unique routes, Livewire
+    resolution, line-ending/whitespace/final-newline, English-only/no-language-file, artifact, and
+    full/scoped diff checks pass. Caches were cleared and Blade recached.
+  - Slice 6 history/preview code fails closed to one `Restricted evidence` projection when the
+    viewer cannot inspect a referenced Custom Field, including withholding result/duration controls
+    that could otherwise reveal outcomes.
+  - Action retry defaults to three total attempts per position including the original, has a hard
+    ceiling of 20, and bounds candidate positions by the action budget with a hard ceiling of 500.
+    Runtime and preview share the exact loop reasons `repeated_event_fingerprint`,
+    `depth_budget_exceeded`, `evaluated_rule_budget_exceeded`, and
+    `action_budget_exceeded`.
+  - Migrations 060000/070000/080000/090000/100000/110000/120000 ran path-scoped and in order in
+    Dev batches 12/13/14/15/16/17/18. Read-back confirmed the protected actor grants; Workflow pause
+    columns/index; exact loop reason and blocked-fingerprint columns/index; Admin/Superuser
+    retry/full-rerun grants with Tech denied; draft payload columns/indexes; and unique draft
+    creation token/index.
+  - Compatibility preflight returned compatible, mapping-complete, and fence-matched. The gated
+    backfill completed with zero created and zero skipped under provenance
+    `issue-231-dev-verification-2026-08-26`; legacy authority remained generation 0.
+  - The in-app browser had no authenticated Ticket Rules session. Svein explicitly approved the
+    complete authenticated builder and responsive, keyboard, and touch review in Codex on 2026-08-26.
+    No commit, push, Main promotion, deployment, or release occurred.
+- **Current Gate:** Reviewed by Svein on 2026-08-26. Release, Main promotion, production migration, deployment, and v2 runtime activation still require their separate explicit decisions and evidence.
+- **Expected Results:** Ticket Rules provide deterministic, guarded, versioned automation across the
+  approved Ticket lifecycle with truthful audit, bounded recursion, no privilege lending, and no
+  customer disclosure. Queue remains routing and Owner remains the individual assignment.
+- **Deploy Actions:** Back up the database; run only the reviewed Ticket Rule migrations in order;
+  read back schema, triggers, permissions, actor, and default-off capability state; run compatibility
+  preflight and the exact gated backfill; clear application caches. Restart queue workers only when
+  after-commit runtime actions are deployed. Do not switch production authority or deploy Main until
+  the reviewed production migration plan includes 242000, 243000, and the forward-only 050000
+  reconciliation in order. This checklist must be explicitly reviewed and the release decision
+  recorded first.
+- **Risks:** Recursive automation, stale targets, cross-context writes, Workflow ambiguity,
+  notification leakage before commit, irreversible audit deletion, and concurrent rule publication.
+  Runtime/capability gates and forward disable are the required rollback path after evidence exists.
+- **Status:** Reviewed
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-26
+
+### HR-2026-08-25-014: RMM Alert Rules Pre-Routing And Audited Actions
+
+- **Scope:** Implement GitHub Issue #226 according to its controlling comment as a provider-neutral
+  RMM Alert Rules layer before optional Ticket, Task, or Signal creation. This is not a direct
+  Alert-to-Task bridge.
+- **Affected Modules:** Integration, Asset, Ticket, Task, Signal, User Management system actors,
+  RMM provider jobs, the shared Ticket key allocator, Signal webhook scheduler/worker, and shared
+  Tech Admin route permission middleware.
+- **Affected Pages And Workflows:** Admin > System > Integrations > RMM Alert Rules; Tactical and
+  N-able settings links; 15-minute provider alert ingestion; Ticket/Task/Signal handoff.
+- **Checks:**
+  - [ ] Open the shared rule page from the Integrations hub and from both Tactical and N-able
+    settings. Confirm a user without `integration.rmm_manage` cannot read or mutate it.
+  - [ ] Create a disabled rule, add/reorder/remove supported actions, save it, edit it as a new
+    revision, then enable it. Confirm duplicate Client names remain distinguishable by ID.
+  - [ ] Confirm all configured conditions use implicit AND and match the occurrence's frozen
+    subject, severity, provider, fingerprint, Asset, and Client context.
+  - [ ] Confirm an unchanged active heartbeat and a resolution create no duplicate occurrence or
+    work, while a genuine resolved-to-active recurrence creates exactly one new occurrence.
+  - [ ] Verify create/update Ticket, create/reuse Task, emit Signal, and ignore. Confirm normal
+    Ticket Rules and Signal Rules still run only after their normal domain entry point.
+  - [ ] Save rules using active Queue, Type, Priority, Category, owner, and assignee targets, then
+    disable each target. Confirm each stale action fails closed, creates no target, and allows the
+    configured lower fallback rule to run.
+  - [ ] Close a linked Ticket and verify `reopen_ticket` uses the configured allowed Ticket Workflow
+    transition. With no linked Ticket, confirm the action is skipped and a lower create-Ticket
+    fallback can run.
+  - [ ] Move a test Asset between Clients/Sites before a recurrence. Confirm old customer work is
+    never updated or reopened and ownership drift before a side effect fails closed.
+  - [ ] Cause one controlled action failure. Confirm later actions in that rule show `not_run`, a
+    lower rule may continue, the failure is bounded, and no retry/full-rerun control is shown.
+  - [ ] Confirm ignore is the rule's only action and stops all lower rules. Confirm a successful
+    stop-enabled rule also stops lower rules, while an entirely skipped rule does not.
+  - [ ] Inspect the `Nexum RMM Alert Rules` system actor. Confirm login is disabled and its only
+    permissions are `ticket.create`, `ticket.note_internal`, `ticket.reopen`, `task.create`, and
+    `task.source_update`.
+  - [ ] Confirm the compact UI projection shows occurrence, rule revision/match, status/error, and
+    targets. Inspect the DB-backed audit for the exact definition snapshot, condition/action
+    results, and author/target IDs without credentials, headers, raw provider bodies, or
+    unrestricted check output.
+  - [ ] Assign an RMM-created Ticket to a technician and confirm create/update commits its durable
+    work link without sending a synchronous Ticket owner notification. Repeat for Workflow reopen.
+    Explicit RMM notification behavior is not part of this slice.
+  - [ ] Start parallel test Ticket creations that would otherwise select the same `TD-...` key.
+    Confirm the locked yearly sequence produces unique keys, each Ticket has one creation event and
+    initial note, and neither RMM action is terminalized by a uniqueness collision.
+  - [ ] Route an emitted RMM Signal to a test webhook. Confirm delivery occurs only after commit and
+    that a controlled rollback creates neither an external request nor retained delivery evidence.
+    Simulate queue-publication loss and confirm the committed row stays `pending` until the
+    every-minute dispatcher wakes it. Run duplicate delivery jobs and confirm one HTTP request.
+    Confirm an abandoned claim or ambiguous transport result becomes `unresolved` and is not
+    automatically replayed.
+  - [ ] Confirm pre-existing `asset_alerts` received no synthetic occurrence during migration and
+    that an inactive rule can be soft-deleted without deleting its execution evidence.
+  - [ ] Check the list, builder, action controls, validation messages, and execution table at desktop
+    and narrow/mobile widths.
+- **Expected Results:** RMM Alert Rules make an explicit, auditable pre-routing decision for each
+  future new/reopened alert. Target domains retain authority, duplicate work is prevented within the
+  same ownership context, cross-customer reuse is impossible, and post-execution failure is
+  terminal rather than silently replayed.
+- **Deploy Actions:** Dev uses migrations
+  `2026_08_25_230000_create_rmm_alert_rules_foundation.php` and
+  `2026_08_26_000000_add_processing_token_to_rmm_alert_occurrences.php`, plus
+  `2026_08_26_010000_add_claim_state_to_signal_webhook_deliveries.php`,
+  `2026_08_26_020000_create_ticket_key_sequences.php`,
+  `2026_08_26_030000_add_action_key_to_signal_webhook_deliveries.php`, and
+  `2026_08_26_040000_require_signal_webhook_action_key.php`. Dev batches are respectively 5, 6, 7,
+  8, 9, and 10. Read back processing/claim/action-key columns, the unique/non-null action-key and
+  outbox-dispatch indexes, sequence rows, and bounded cohort counts; then run
+  `php artisan optimize:clear` and scheduler/queue verification. Production later requires a
+  database backup and paused Signal webhook/RMM workers during the targeted migrations, followed by
+  the same read-back, cache clear, worker restart, and verification that an external job runs
+  `php artisan schedule:run` every minute. Do not activate production rules before this review is
+  explicitly completed.
+- **Risks:** A broad or wrongly ordered active rule can create unwanted work. Rule/action failures
+  after execution starts are deliberately terminal with no automatic replay. Asset reassignment,
+  Workflow availability, scheduler health, queue health, and provider field quality affect routing.
+  Scheduler/queue loss grows the Signal webhook `pending` cohort; `failed` or `unresolved` deliveries
+  require receiver reconciliation and must not be blindly reset for replay.
+- **Review Gate:** Pending human review blocks merge/promotion to Main, production migration,
+  production rule activation, and release. It does not block the isolated targeted Dev migration
+  and automated verification recorded for this change.
+- **Automated Evidence (2026-08-26):** The focused RMM rule/provider suite passed 25 tests with 226
+  assertions. Related suites passed: Signal 39/208, Task 31/202, and TicketModule 127/952. A live
+  two-connection MariaDB sequence probe completed without deadlock and rolled back. Separate broad
+  Ticket verification retains unrelated Ticket Rule compatibility and Portal provider-binding
+  failures outside #226; the RMM paths do not publish to Customer Portal. All six targeted
+  migrations are Ran on Dev in batches 5 through 10; read-back confirmed the schema, unique/non-null
+  Signal action key, outbox indexes, Ticket sequence rows, and zero RMM rules, occurrences,
+  executions, work links, AssetAlerts, active lease tokens, or Signal delivery rows. This was an
+  empty-cohort no-synthetic read-back, not a live historical-alert backfill exercise. The first
+  unrestricted Dev migrate also applied the pre-existing unrelated Ticket Rule migrations `242000`
+  and `243000` in batch 7; they were left intact to avoid a destructive rollback of another
+  contributor's shared work. Six routes are registered, Blade cache compiled/cleared, and
+  unauthenticated HTTP smoke returned the expected `302` login redirect. `schedule:list` registers
+  `signal.webhook.dispatch`, but no external `schedule:run` runner for `/var/Projects/tdPSA` was
+  found; the only verified every-minute Laravel systemd timer targets
+  `/var/projects/project-society`. Dev pending-outbox recovery therefore remains an operations gate
+  until an approved Nexum scheduler runner is configured. The latest broad Integration run passed
+  198 tests, skipped one
+  environment-gated contract, and retained one unrelated OpenAI legacy-completion `max_tokens`
+  expectation failure.
+  This entry was added after the earlier blanket 2026-08-25 approval and remains Pending until Svein
+  explicitly reviews it.
+- **Status:** Pending
+
+### HR-2026-08-25-012: Task Stopwatch And Time Registration
+
+- **Scope:** Add the shared Ticket/Task stopwatch UI and Task-owned time-registration workflow for
+  GitHub Issue #232, including settings-based separation of technician actual time and customer
+  billing minutes.
+- **Affected Modules:** Task, Ticket, Report, Clients, Economy integration boundary, and the shared
+  Blade component library.
+- **Checks:**
+  - [x] Open a standalone or Client-owned Task; start, pause, resume, and stop the timer. Confirm the
+    Add Task time modal opens with rounded-up elapsed minutes and today's work date.
+  - [x] Save standalone Task time and confirm the registered total and Task activity update without
+    creating Ticket billing time.
+  - [x] In Admin Task Settings, choose `Task estimate as minimum`. Open a Ticket-owned Task estimated
+    at 30 minutes, register 5 minutes, and confirm Task/technician time is 5 while pending Ticket
+    customer billing is 30.
+  - [x] Add another 55 minutes to the same Task and confirm cumulative Task/technician time is 60 and
+    cumulative Ticket customer billing is 60, not 90.
+  - [x] Change the setting to `Actual Task time`, register 5 minutes on another 30-minute estimated
+    Ticket Task, and confirm both tracked and billed totals are 5.
+  - [x] Confirm technician worklog reporting counts the Task actual time once and does not add the
+    linked Ticket billing projection.
+  - [x] Confirm Client Time labels the rows `Task tracked` and `Task billing`, and neither coupled row
+    can be edited independently.
+  - [x] Complete the already-timed Ticket Task without entering time again. Confirm no duplicate
+    Ticket or Task time row is created.
+  - [x] Confirm a completed Task disables timer start and rejects a manipulated time submission.
+  - [x] Recheck a normal Ticket stopwatch: audited start, pause/resume, stop, modal prefill, save,
+    registered total, and Ticket-index active-timer highlighting remain functional.
+  - [x] Verify the Task and Ticket rightbar timers remain usable on desktop and narrow/mobile width.
+- **Expected Results:** Task and Ticket use the same compact stopwatch controls. Task time always
+  represents actual technician effort; customer billing follows the selected Task setting and the
+  estimate minimum is applied once to the cumulative Task. Browser-local timer drafts do not become
+  persisted time until the relevant form is saved.
+- **Deploy Actions:** Back up the database, run migration
+  `2026_08_25_220000_add_task_source_to_ticket_time_entries`, read back the nullable Task foreign key
+  and index, then run the ordinary application cache clear. No queue, scheduler, package, or
+  frontend-build action.
+- **Risks:** Browser-local timer state is device/browser specific. Ticket-owned Task billing must not
+  be repeated across sessions or double-counted in technician reports. Coupled rows intentionally
+  require a future audited correction workflow instead of independent Client Time edits.
+- **Review Evidence:** Svein explicitly approved the complete manual review in the Codex task on
+  2026-08-26 against the Dev implementation and the checks above.
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-26
+- **Environment:** Dev
+- **Status:** Reviewed
+
+### HR-2026-08-25-011: Ticket Message Read API And First-Response Verification
+
+- **Scope:** Add a read-only, paginated Ticket message metadata endpoint under the existing
+  `tickets.read` ability for GitHub Issue #240.
+- **Affected Modules:** Ticket and Integration Knowledge documentation.
+- **Affected API:** `GET /api/v1/tickets/{ticket}/messages`.
+- **Checks:**
+  - [ ] Call the endpoint with a valid Ticket key and a token containing `tickets.read`; confirm
+    HTTP 200, pagination metadata, and newest-first message order.
+  - [ ] Confirm each item contains only ID, type, visibility, author type, and creation timestamp.
+  - [ ] Confirm the response contains persisted first-response and due timestamps plus the
+    due-time comparison.
+  - [ ] Confirm bodies, subjects, raw metadata, attachments, author IDs, and customer content are
+    absent.
+  - [ ] Confirm a token without `tickets.read` receives HTTP 403 and an unknown Ticket key
+    receives HTTP 404.
+  - [ ] Confirm `per_page=101` returns validation failure and ordinary bounded pagination works.
+- **Expected Results:** Coordinators can verify message existence and SLA first-response evidence
+  without receiving unnecessary customer or internal content.
+- **Deploy Actions:** Regenerate OpenAPI and sync Ticket/Integration Knowledge after deployment.
+  No migration, queue, scheduler, cache, or frontend build action is required.
+- **Risks:** This additive API contract must remain metadata-only.
+- **Status:** Pending
+
+### HR-2026-08-25-010: Client Automatic Number Allocation Race Fix
+
+- **Scope:** Revalidate unchanged Nexum-generated Client numbers at save time and retry only an
+  automatic-number database collision, while preserving manual duplicate validation.
+- **Affected Modules:** Clients and Data Exchange.
+- **Affected Pages And Workflows:** New Client form, Client create API, Clients basic import.
+- **Checks:**
+  - [x] Open New Client in two independent browser sessions and confirm both forms initially show
+    the same suggested Client number.
+  - [x] Submit the first form, then submit the second unchanged; confirm both Clients, default Sites,
+    and primary Contacts are created with different five-digit Client numbers.
+  - [x] Create two more ordinary Clients consecutively and confirm both succeed.
+  - N/A for separate manual replay: Svein accepted the passing automated field-validation and
+    no-partial-record coverage and explicitly instructed closing GitHub Issue #239.
+  - N/A for separate manual replay: Svein accepted the passing automated Forbidden/no-partial-record
+    coverage and explicitly instructed closing GitHub Issue #239.
+- **Expected Results:** Stale automatic suggestions never cause an unhandled duplicate failure;
+  manual duplicates remain explicit validation errors; the unique database constraint remains.
+- **Deploy Actions:** None. No migration, queue, scheduler, cache, or frontend build change.
+- **Risks:** No remaining review blocker recorded for this Level 1 regression fix.
+- **Status:** Reviewed
+- **Reviewer:** Svein
+- **Reviewed date:** 2026-08-25
+- **Result / notes:** Svein confirmed the requested two-session stale-form test and two consecutive
+  ordinary Client creations, then explicitly instructed that Issue #239 be closed with a comment.
 
 ### HR-2026-08-25-009: Technician Task List Default Filter and Ordering
 
@@ -139,6 +494,9 @@ Reviewed date: 2026-08-25
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-08-25-014 | RMM Alert Rules pre-routing and audited actions | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-011 | Ticket message read API and first-response verification | Pending | 2026-08-25 |  |  |
+| HR-2026-08-25-010 | Client automatic number allocation race fix | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-004 | AI Route Fixes and Discoverability Improvements | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
@@ -8616,4 +8974,3 @@ not explicitly left open above. Full confirmation is not yet provided.
 - **Risks:** Accidentally stripping custom permissions if they were not recorded in the seeder.
 - **Status:** Reviewed
 - **Reviewer:** Junie (Automated Verification)
-

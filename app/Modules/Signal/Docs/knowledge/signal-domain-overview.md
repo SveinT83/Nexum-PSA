@@ -127,6 +127,25 @@ detail, an operator with `signal.action.execute` can retry only failed/unstarted
 warned full-rule rerun. Stable action keys prevent the same side effect from being created twice.
 Webhook attempts are also tracked in `signal_webhook_deliveries`.
 
+### Webhook Outbox And Delivery States
+
+The delivery row is the durable outbox and its `action_key` is database-unique. It is created in the
+same transaction as the Signal action. Rollback retains neither delivery evidence nor an external
+request. After commit, Nexum attempts an immediate queue wake-up; `signal.webhook.dispatch` also runs
+every minute and recovers rows that remain `pending` if broker publication was lost.
+
+The delivery worker locks and claims one row with an opaque token. Only `pending` may start HTTP, so
+duplicate jobs cannot send the same action twice. The states are:
+
+- `pending`: committed but not yet claimed; safe for the dispatcher to wake;
+- `running`: one fresh worker claim may be performing the request;
+- `delivered`: the receiver returned a successful response;
+- `failed`: the receiver returned a non-success response; and
+- `unresolved`: transport failed after claim or the claim was abandoned, so receipt is ambiguous.
+
+`failed` and `unresolved` are terminal for automatic delivery. Reconcile them with the receiver
+before any explicit resend; resetting them blindly can duplicate external work.
+
 ### Storage Supplier Order Import Action
 
 `storage_supplier_order_import` hands a matching Signal to Storage's
@@ -224,3 +243,6 @@ Task and portal actions use the Signal rule owner as actor unless an `actor_id` 
 Signal rules can mutate customer-facing data, such as Contact email eligibility. Keep rules specific,
 use priority and stop-processing deliberately, and review per-action execution history after changing
 rule actions. Webhook delivery failure does not block signal recording.
+Monitor the every-minute `signal.webhook.dispatch` schedule and queue worker. A growing `pending`
+cohort indicates scheduler or queue publication trouble; `unresolved` requires operator
+reconciliation rather than automatic replay.

@@ -58,6 +58,10 @@ Approved workload-bound coordinator tokens can use:
 - `GET /api/v1/worklog/technicians` with `worklog.read`.
 - `GET /api/v1/worklog/time-entries` with `time-entries.read`.
 
+Worklog totals use Task entries as the technician-time authority for Ticket-owned Tasks.
+Task-originated Ticket billing projections are excluded from worklog endpoints so a customer
+billing minimum is not added to the technician's actual tracked minutes.
+
 Both accept `date_from` and `date_to`. Time entries also accept `page` and `per_page`. Policy sets
 maximum date range, page size, result count, and request rate.
 

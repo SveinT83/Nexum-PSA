@@ -28,6 +28,8 @@ class LinkTelephonyCallToTicket
                         'created_from' => 'telephony_call',
                         'telephony_call_id' => $call->id,
                     ],
+                    '_event_source_action' => 'LinkTelephonyCallToTicket',
+                    '_delivery_key' => 'telephony-call-note:'.$call->id,
                 ], $call->answeredBy);
             }
 
