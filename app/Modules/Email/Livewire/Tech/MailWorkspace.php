@@ -2,6 +2,8 @@
 
 namespace App\Modules\Email\Livewire\Tech;
 
+use App\Modules\Email\Livewire\Tech\Concerns\ManagesSharedComposerDraft;
+
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Actions\AssistEmailComposerWithAi;
@@ -81,6 +83,7 @@ use RuntimeException;
 
 class MailWorkspace extends Component
 {
+    use ManagesSharedComposerDraft;
     use WithFileUploads;
     use WithPagination;
 
@@ -1594,6 +1597,16 @@ class MailWorkspace extends Component
 
     public function cancelComposer(): void
     {
+        if ($this->composerShared) {
+            if ($this->composerSharedEditable()) {
+                $this->persistComposerDraft(false);
+                $this->releaseComposerSharedLease(false);
+            }
+            $this->resetComposer();
+
+            return;
+        }
+
         $this->persistComposerDraft(false);
         $this->resetComposer();
     }
@@ -1627,10 +1640,13 @@ class MailWorkspace extends Component
 
         $attachment = EmailComposerDraftAttachment::query()
             ->whereKey($id)
-            ->where('user_id', $user->id)
+            ->when(! $this->composerShared, fn ($query) => $query->where('user_id', $user->id))
             ->first();
 
         if (! $attachment) {
+            return;
+        }
+        if ($this->composerShared && $this->removeSharedComposerDraftAttachment($attachment)) {
             return;
         }
 
@@ -1900,6 +1916,10 @@ class MailWorkspace extends Component
 
     public function discardComposerDraft(): void
     {
+        if ($this->composerShared && $this->discardSharedComposerDraft()) {
+            return;
+        }
+
         $context = $this->composerDraftContext();
         $user = $this->user();
         $draft = null;
@@ -2023,6 +2043,7 @@ class MailWorkspace extends Component
                 $this->composerIdempotencyKey ?: (string) Str::uuid(),
                 SubmitEmailComposerDraft::CHANNEL_MAIL_WEB,
                 app(EmailDraftFence::class)->version($draft, $this->composerDraftFence),
+                $this->composerShared ? $this->sharedComposerLeaseContext() : null,
             );
             $sentLog = $submission->emailLog;
             $sentDraft = $submission->draft;
@@ -5059,6 +5080,10 @@ class MailWorkspace extends Component
 
     private function persistComposerDraft(bool $manual): ?EmailComposerDraft
     {
+        if ($this->composerShared) {
+            return $this->persistSharedComposerDraft($manual);
+        }
+
         $user = $this->user();
         $context = $this->composerDraftContext();
 
@@ -5123,6 +5148,10 @@ class MailWorkspace extends Component
 
     private function restoreComposerDraftIfAvailable(EmailAccount $account, ?EmailMailboxPlacement $placement): void
     {
+        if ($this->loadSharedComposerDraftIfAvailable($account, $placement)) {
+            return;
+        }
+
         $user = $this->user();
 
         if (! $user) {
@@ -5326,6 +5355,7 @@ class MailWorkspace extends Component
         $this->composerDraftHasUnsavedAttachments = false;
         $this->composerDraftAttachments = [];
         $this->composerDraftBaselineHash = '';
+        $this->resetSharedComposerDraftState();
     }
 
     private function resetComposerAiState(): void

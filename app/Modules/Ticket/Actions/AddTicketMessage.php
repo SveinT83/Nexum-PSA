@@ -156,11 +156,28 @@ class AddTicketMessage
                 && $ticket->owner_id !== $actor?->id) {
                 $owner = User::find($ticket->owner_id);
                 if ($owner) {
-                    $owner->notify(new TicketCommentAdded(
-                        ticket: $ticket,
-                        commentAuthor: $actor?->name ?? 'System',
-                        commentPreview: str($message->body)->limit(150),
-                    ));
+                    try {
+                        $owner->notify(new TicketCommentAdded(
+                            ticket: $ticket,
+                            commentAuthor: $actor?->name ?? 'System',
+                            commentPreview: str($message->body)->limit(150),
+                        ));
+                    } catch (\Throwable $exception) {
+                        // A notification transport failure must not roll back
+                        // the authoritative Ticket message. Record a safe,
+                        // retry-visible event without provider details.
+                        TicketEvent::query()->create([
+                            'ticket_id' => $ticket->id,
+                            'actor_id' => $actor?->id,
+                            'type' => 'notification_failed',
+                            'message' => 'Ticket owner notification could not be delivered.',
+                            'after' => [
+                                'message_id' => $message->id,
+                                'notification_type' => 'ticket_comment_added',
+                                'exception_class' => $exception::class,
+                            ],
+                        ]);
+                    }
                 }
             }
 

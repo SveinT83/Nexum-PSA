@@ -64,7 +64,11 @@ class PrepareTicketEmailCommunication
             ->with('draft')
             ->where('ticket_id', $ticket->id)
             ->where('email_ticket_conversation_link_id', $relationship->id)
-            ->where('actor_id', $actor->id)
+            ->where(function ($query) use ($actor): void {
+                $query->where('actor_id', $actor->id)
+                    ->orWhereHas('draft', fn ($draftQuery) => $draftQuery
+                        ->where('scope', \App\Modules\Email\Models\EmailComposerDraft::SCOPE_SHARED));
+            })
             ->where('operation_kind', $mode)
             ->where('state', TicketEmailOutboundCommunication::STATE_DRAFT)
             ->latest('id')

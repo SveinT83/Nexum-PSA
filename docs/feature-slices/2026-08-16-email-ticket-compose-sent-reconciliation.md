@@ -1,6 +1,6 @@
 # Feature Slice: Email/Ticket Compose And Sent Reconciliation
 
-Status: Core Implemented On Dev / Shared Collaboration UI Gated / Human Review Pending
+Status: Implemented On Dev / Runtime And Human Review Pending
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -29,10 +29,12 @@ and refuses rollback while communication evidence exists. Focused Ticket/Mail co
 tests / 44 assertions and adjacent Email compose/submission/Sent coverage passes 5 / 81. No real
 provider account, provider write, production migration or production test was used.
 
-Order 9's optional multi-user shared-draft UI remains runtime-gated. The Ticket flow does not create
-a second draft or SMTP path: it uses the exact private Mail draft today, while an explicitly shared
-draft is still subject to Order 9's lease/fence boundary. Two-user/two-tab shared editing therefore
-remains part of `HR-2026-08-16-009` and is not claimed by this implementation outcome.
+Order 9's multi-user shared-draft UI is implemented behind the existing runtime flags. The Ticket
+flow does not create a second draft or SMTP path: it uses the exact Mail draft, and an explicitly
+shared draft stays subject to Order 9's lease/fence boundary. An authorized peer can acquire the
+released/expired conversation lease, reauthorize Ticket and Mail, edit and send through the same
+communication/submission. Controlled Redis/Reverb and browser review remains under
+`HR-2026-08-16-009`.
 
 ## Goal
 

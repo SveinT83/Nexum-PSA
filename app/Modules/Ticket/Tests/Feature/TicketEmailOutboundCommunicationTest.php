@@ -17,6 +17,10 @@ use App\Modules\Email\Models\EmailOutboundSubmission;
 use App\Modules\Email\Models\EmailTicketConversationLink;
 use App\Modules\Email\Services\EmailConversationProjector;
 use App\Modules\Email\Services\EmailSentReconciliationService;
+use App\Modules\Email\Services\EmailDraftFence;
+use App\Modules\Email\Services\EmailLiveRuntimeReadiness;
+use App\Modules\Email\Services\EmailSharedDraftLeaseContext;
+use App\Modules\Email\Services\EmailSharedDraftService;
 use App\Modules\Email\Services\SmtpAccountMailer;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
 use App\Modules\Ticket\Actions\PrepareTicketEmailCommunication;
@@ -375,6 +379,87 @@ class TicketEmailOutboundCommunicationTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('must be preserved');
         $migration->down();
+    }
+
+
+    #[Test]
+    public function authorized_peer_uses_the_same_shared_ticket_draft_and_submission(): void
+    {
+        config()->set('email_live.enabled', true);
+        config()->set('email_live.collaboration_enabled', true);
+        $this->app->instance(EmailLiveRuntimeReadiness::class, new class extends EmailLiveRuntimeReadiness
+        {
+            public function ready(): bool
+            {
+                return true;
+            }
+        });
+        $peer = User::factory()->create(['status' => User::STATUS_ACTIVE, 'name' => 'Order 16 Peer']);
+        $peer->assignRole('Tech');
+        $peer->givePermissionTo(['ticket.view', 'ticket.update', 'ticket.reply_customer', 'email.inbox_view', 'email.inbox_manage']);
+        EmailAccountUserGrant::query()->create([
+            'email_account_id' => $this->account->id,
+            'user_id' => $peer->id,
+            'can_view' => true,
+            'can_organize' => true,
+            'can_send' => true,
+            'granted_at' => now(),
+        ]);
+        [, , $link] = $this->linkedMessage(801, '<shared-ticket-thread@example.test>');
+        $communication = app(PrepareTicketEmailCommunication::class)->handle($this->ticket, $link, $this->actor, 'reply');
+        $private = $communication->draft;
+        $shared = app(EmailSharedDraftService::class)->share(
+            $private,
+            $this->actor,
+            $private->version,
+            'ticket-share-1',
+        );
+
+        $peerCommunication = app(PrepareTicketEmailCommunication::class)->handle($this->ticket, $link, $peer, 'reply');
+        $this->assertSame($communication->id, $peerCommunication->id);
+        $lease = app(EmailSharedDraftService::class)->acquire($shared, $peer, 'ticket-peer-acquire-1');
+        $context = new EmailSharedDraftLeaseContext(
+            $lease['lease_token'],
+            (int) $lease['lock']->fencing_token,
+            (int) $lease['draft']->content_version,
+            app(EmailSharedDraftService::class)->sourceVersion($lease['draft']),
+        );
+        $shared = app(EmailSharedDraftService::class)->save($lease['draft'], $peer, $context, [
+            'body_html' => '<p>Shared Ticket reply by peer.</p>',
+        ]);
+        $context = new EmailSharedDraftLeaseContext(
+            $lease['lease_token'],
+            (int) $shared->sharedLock->fencing_token,
+            (int) $shared->content_version,
+            app(EmailSharedDraftService::class)->sourceVersion($shared),
+        );
+        $mailer = new class extends SmtpAccountMailer {
+            public int $calls = 0;
+            public function sendMessage(EmailAccount $account, array $toRecipients, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = [], array $options = []): string
+            {
+                $this->calls++;
+                return (string) $options['message_id'];
+            }
+        };
+        $this->app->instance(SmtpAccountMailer::class, $mailer);
+
+        $sharedSubmission = app(SubmitEmailComposerDraft::class)->submit(
+            $shared,
+            $peer,
+            'ticket-shared-peer-send-1',
+            SubmitEmailComposerDraft::CHANNEL_MAIL_WEB,
+            app(EmailDraftFence::class)->version($shared, app(EmailDraftFence::class)->issue($shared)),
+            $context,
+        );
+
+        $this->assertSame(1, $mailer->calls);
+        $this->assertSame(TicketEmailOutboundCommunication::STATE_ACCEPTED, $communication->fresh()->state);
+        $this->assertDatabaseCount('ticket_messages', 1);
+        $this->assertSame($peer->id, TicketMessage::query()->sole()->author_id);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $this->ticket->id,
+            'type' => 'notification_failed',
+        ]);
     }
 
     /** @return array{EmailMessage, EmailMailboxPlacement, EmailTicketConversationLink} */

@@ -600,7 +600,7 @@ Reviewed date: 2026-08-25
 | HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Pending (Safety Rework; Activation Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Pending (Private/API Rework Implemented; Shared Collaboration Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed / Safety Repair Implemented | 2026-08-16 |  |  |
-| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend/API Safety Rework Implemented; Runtime/UI Gated) | 2026-08-16 |  |  |
+| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend And Accessible UI Implemented; Runtime Disabled) | 2026-08-16 |  |  |
 | HR-2026-08-16-008 | Email private live invalidation and polling fallback | Rework Needed | 2026-08-16 |  |  |
 | HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Rework Needed | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-21 |
@@ -1863,13 +1863,13 @@ full Order 10 slice or this review.
 
 ### HR-2026-08-16-009 - Email Presence, Shared Draft Locks, And Stale-Composer Protection
 
-Status: Pending (Backend/API Safety Rework Implemented; Runtime/UI Gated)
+Status: Pending (Backend And Accessible UI Implemented; Runtime Disabled)
 Added: 2026-08-16
 Environment: Authoritative Dev working copy. Historical migration `2026_08_19_140000` remains an
 inert marker in recovered Dev batch 119. Forward migration
 `2026_08_24_125000_add_email_shared_draft_coordination.php` ran in Dev batch 126 after Order 11;
-the existing draft remains private, shared ledgers are empty, and collaboration/UI/live gates remain
-false.
+the pre-existing draft remains private and collaboration/UI/live gates remain false. Focused tests
+create and roll back isolated shared evidence only.
 Related: `docs/feature-slices/2026-08-19-email-mail-presence-shared-draft-locks-stale-composer.md`
 
 Scope and affected workflow: default-off API/backend boundary for authorized ephemeral
@@ -1892,7 +1892,8 @@ leakage through cache/events/API, irreversible attachment deletion before SQL co
 collaboration ahead of its private transport/UI review.
 
 Automated verification: isolated SQLite `:memory:`, array cache, unique `APP_CONFIG_CACHE`, cache
-maintenance and `HOME=/tmp`: `EmailSharedDraftCoordinationSafetyTest` passes 9 tests / 122 assertions;
+maintenance and `HOME=/tmp`: `EmailSharedDraftCoordinationSafetyTest` passes 10 tests / 134 assertions,
+including two-user workspace share/read-only/holder denial/release/takeover/edit/one-send;
 the relevant workspace/quarantine set passes 20 / 193. They cover config-first/live
 readiness, presence permissions/multi-tab filtering/no SQL, cross-user isolation, idempotent share,
 one lease, expiry takeover/monotonic fence, stale-token `423`, stale rebase/body/attachment
@@ -1934,9 +1935,10 @@ Human checks:
 - [ ] Send once and repeat the same idempotency key. Confirm one SMTP attempt, one Order 11 outbound
   submission, safe Accepted/Sent reconciliation, released lease, post-commit attachment cleanup and
   no retry after unresolved provider outcome.
-- [ ] Only after the backend review passes, review the accessible desktop/mobile Livewire controls,
-  status text (not color alone), focus/keyboard behavior and truthful unavailable state before the
-  separate UI gate is enabled.
+- [ ] Review the implemented accessible desktop/mobile Livewire controls: Share draft, current
+  holder/expiry/read-only state, release/expiry takeover, disabled edit/send controls, status text
+  (not color alone), focus/keyboard behavior and truthful unavailable state before enabling the UI
+  gate.
 
 Reviewer:
 Reviewed date:

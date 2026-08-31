@@ -150,12 +150,26 @@ class ChangeTicketStatus
                     $owner = User::find($ticket->owner_id);
                     if ($owner) {
                         $oldStatusName = TicketStatus::find($before['status_id'])?->name ?? 'Unknown';
-                        $owner->notify(new TicketStatusChanged(
-                            ticket: $ticket,
-                            oldStatus: $oldStatusName,
-                            newStatus: $status->name,
-                            changedBy: $actor?->name,
-                        ));
+                        try {
+                            $owner->notify(new TicketStatusChanged(
+                                ticket: $ticket,
+                                oldStatus: $oldStatusName,
+                                newStatus: $status->name,
+                                changedBy: $actor?->name,
+                            ));
+                        } catch (\Throwable $exception) {
+                            TicketEvent::query()->create([
+                                'ticket_id' => $ticket->id,
+                                'actor_id' => $actor?->id,
+                                'type' => 'notification_failed',
+                                'message' => 'Ticket owner status notification could not be delivered.',
+                                'after' => [
+                                    'status_id' => $status->id,
+                                    'notification_type' => 'ticket_status_changed',
+                                    'exception_class' => $exception::class,
+                                ],
+                            ]);
+                        }
                     }
                 }
 

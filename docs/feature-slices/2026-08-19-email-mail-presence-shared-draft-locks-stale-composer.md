@@ -1,11 +1,35 @@
 # Feature Slice: Email Presence, Shared Draft Locks, and Stale-Composer Protection
 
-Status: Safety Rework Implemented / Runtime And UI Gated / Human Review Pending
+Status: Backend And Accessible UI Implemented / Runtime Disabled / Human Review Pending
 Date: 2026-08-19
 Reworked: 2026-08-24
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 9)
 Approved contract: `2026-08-16-email-mail-presence-shared-draft-locks-stale-composer.md`
 Review ID: `HR-2026-08-16-009`
+
+
+## 2026-09-01 Accessible Workspace Completion
+
+The normal Mail composer now exposes the already-implemented safety boundary when all three
+existing live/collaboration/UI gates are ready. A private Reply, Reply all or Forward draft can be
+explicitly shared; the holder sees an editable shared state, another authorized user sees the same
+draft read-only with holder/expiry wording, and takeover is unavailable until the lease is released
+or expires. Save, attachments, discard and send all use the same opaque lease, monotonic fence,
+content/source version and Order 11 outbound submission as the API. Closing releases the current
+lease, and a stale or held draft cannot be edited or sent from the workspace.
+
+Ticket-selected conversation replies also reuse the same explicitly shared draft. A currently
+authorized peer rechecks both Ticket reply and ordinary Mail authority, acquires the conversation
+lease and sends through the same communication/submission record; no second Ticket draft or SMTP
+path is created. Notification transport failure can no longer roll back an authoritative Ticket
+message or workflow status transition; a sanitized `notification_failed` Ticket event preserves
+the operational failure without provider text.
+
+The focused Order 9 suite passes 10 tests / 134 assertions, including a two-user UI share, active
+holder denial, release, takeover, peer edit and one SMTP submission. Ticket shared-draft integration
+passes 7 / 50, and the Ticket canonical mutation regression passes 15 / 96. Blade cache compilation
+and diff checks pass. Runtime flags remain false and no Redis, Reverb, provider or production action
+was performed.
 
 ## Outcome
 
@@ -109,8 +133,9 @@ server/datadir was stopped and removed.
   `HR-2026-08-16-009`.
 - Order 8 remains rework-needed/runtime-disabled. Complete and review its bounded private transport,
   authorization generations, fallback, retention and supervised operations before enabling Order 9.
-- Build the accessible Livewire/Alpine presence, lock, stale/rebase and mobile controls only after
-  the private transport is stable. Per-user whispers are not a valid coworker transport.
+- The accessible Livewire composer share/lock/read-only/takeover controls are implemented behind the
+  existing UI gate. Complete the private transport plus supervised desktop/mobile, Redis/Reverb-loss
+  and two-user browser review before enabling the flags.
 - Perform two-user/two-tab browser, Redis-loss, Reverb-loss, access-revocation, lease-expiry,
   stale-source and one-send human review. Keep every collaboration flag false until named approval.
 

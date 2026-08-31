@@ -47,7 +47,8 @@ class ValidateTicketEmailDraftForSubmission
             $placement = $communication->sourcePlacement;
 
             if (! $ticket || ! $relationship || ! $placement || ! $communication->account
-                || (int) $communication->actor_id !== (int) $actor->id
+                || ((int) $communication->actor_id !== (int) $actor->id
+                    && $draft->scope !== EmailComposerDraft::SCOPE_SHARED)
                 || (int) $communication->email_account_id !== (int) $draft->email_account_id
                 || (int) $communication->source_email_mailbox_placement_id !== (int) $draft->email_mailbox_placement_id
                 || $relationship->status !== EmailTicketConversationLink::STATUS_ACTIVE

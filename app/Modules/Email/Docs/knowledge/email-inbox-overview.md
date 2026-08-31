@@ -520,8 +520,10 @@ those actions close the composer.
 
 ### Presence and shared-draft safety status
 
-Order 9's backend/API safety boundary is implemented but unavailable by default. It does not add a
-visible Mail control or activate Reverb. Reading presence expires after 45 seconds, typing presence
+Order 9's backend and accessible composer controls are implemented but unavailable by default.
+When all existing gates are ready, Reply/Reply all/Forward can explicitly Share draft, show the
+current editor and expiry, remain read-only for other users, release the lease, and allow takeover
+only after release or expiry. This does not activate Reverb by itself. Reading presence expires after 45 seconds, typing presence
 after 25 seconds, and visible tabs refresh no faster than every 10 seconds. Presence is an expiring
 cache hint only: it never changes Unread for me, provider Seen or opened-by history, and it creates no
 SQL heartbeat or permanent activity record. Ordinary shared-mailbox View is required for reading;
@@ -551,7 +553,9 @@ the existing draft remains private and shared ledgers are empty. Keep `EMAIL_LIV
 `HR-2026-08-16-009` pass. When either required server flag is false, the collaboration gate returns
 unavailable before checking the optional schema. The legacy `MailWorkspace` SQL-lock/presence and
 Echo whisper fallback has been removed; the workspace now requires private-live readiness, the
-separate collaboration UI flag, and `EmailCollaborationGate`. A fresh default-off asset build selects
+separate collaboration UI flag, and `EmailCollaborationGate`. Its shared composer uses the same
+lease/fence/source checks and outbound submission as the API, including Ticket-selected replies. A
+fresh default-off asset build selects
 `app-DjAfqa_z.js` and contains no legacy presence/whisper activation marker.
 
 Provider Drafts folder messages imported by normal IMAP sync are shown separately as provider draft
