@@ -11,6 +11,8 @@ use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\CustomField\Support\CustomFieldPresenter;
 use App\Modules\Email\Models\EmailLog;
+use App\Modules\Email\Models\EmailTicketConversationLink;
+use App\Modules\Email\Services\MailboxAccess;
 use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiChatResponder;
@@ -30,6 +32,7 @@ use App\Modules\Ticket\Actions\MarkTicketRead;
 use App\Modules\Ticket\Actions\MergeTickets;
 use App\Modules\Ticket\Actions\MutateTicketTags;
 use App\Modules\Ticket\Actions\PickTicketStorageReservation;
+use App\Modules\Ticket\Actions\PrepareTicketEmailCommunication;
 use App\Modules\Ticket\Actions\PublishTicketToCustomerPortal;
 use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Actions\ReleaseTicketStorageReservation;
@@ -43,6 +46,7 @@ use App\Modules\Ticket\Actions\UpdateTicketTimeEntry;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAttachment;
 use App\Modules\Ticket\Models\TicketCostEntry;
+use App\Modules\Ticket\Models\TicketEmailOutboundCommunication;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMergeSuggestionDismissal;
 use App\Modules\Ticket\Models\TicketMessage;
@@ -450,6 +454,22 @@ class TicketController extends Controller
 
         $workflowTransitionDecisions = $workflowRuntime->availableTransitionDecisions($ticket);
         $workflowEscalationDecisions = $workflowRuntime->escalationDecisions($ticket);
+        $mailboxAccess = app(MailboxAccess::class);
+        $emailTicketRelationships = EmailTicketConversationLink::query()
+            ->with(['message.account', 'placement.account', 'conversation'])
+            ->where('ticket_id', $ticket->id)
+            ->where('status', EmailTicketConversationLink::STATUS_ACTIVE)
+            ->orderByRaw("CASE WHEN relationship_role = 'primary' THEN 0 ELSE 1 END")
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (EmailTicketConversationLink $link): bool => $link->message !== null
+                && $mailboxAccess->canViewMessage(request()->user(), $link->message))
+            ->values();
+        $ticketEmailCommunications = TicketEmailOutboundCommunication::query()
+            ->with(['relationship', 'draft', 'submission'])
+            ->where('ticket_id', $ticket->id)
+            ->latest('id')
+            ->get();
 
         return view('ticket::Tech.Tickets.show', [
             'ticket' => $ticket,
@@ -478,6 +498,11 @@ class TicketController extends Controller
             'knowledgeSuggestions' => $articleQuery->relevantForTicket($ticket, 3),
             'relationshipSyncLinks' => $relationshipSyncLinks,
             'availableRelationships' => $availableRelationships,
+            'emailTicketRelationships' => $emailTicketRelationships,
+            'ticketEmailCommunications' => $ticketEmailCommunications,
+            'ticketEmailCommunicationsByMessageId' => $ticketEmailCommunications
+                ->whereNotNull('ticket_message_id')
+                ->groupBy('ticket_message_id'),
             'emailLogsByMessageId' => EmailLog::query()
                 ->where('direction', 'outbound')
                 ->where('scope', 'tickets')
@@ -1243,6 +1268,36 @@ class TicketController extends Controller
         }
 
         return back()->with('success', 'Merge suggestion dismissed.');
+    }
+
+    public function prepareEmailReply(
+        Request $request,
+        Ticket $ticket,
+        int $relationship,
+        PrepareTicketEmailCommunication $prepare,
+    ): RedirectResponse {
+        $data = $request->validate([
+            'mode' => ['required', 'string', 'in:reply,reply_all'],
+        ]);
+        $link = EmailTicketConversationLink::query()
+            ->whereKey($relationship)
+            ->where('ticket_id', $ticket->id)
+            ->where('status', EmailTicketConversationLink::STATUS_ACTIVE)
+            ->firstOrFail();
+
+        try {
+            $communication = $prepare->handle($ticket, $link, $request->user(), $data['mode']);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $exception) {
+            return back()->withErrors(['email_reply' => $exception->getMessage()]);
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            return back()->withErrors($exception->errors());
+        }
+
+        return redirect()->route('tech.mail.index', [
+            'account' => $communication->email_account_id,
+            'message' => $communication->source_email_mailbox_placement_id,
+            'compose' => $communication->operation_kind,
+        ])->with('success', 'The selected Ticket conversation is ready in the Mail composer.');
     }
 
     public function markNotTicket(Request $request, Ticket $ticket, MarkTicketAsNotTicket $markTicketAsNotTicket): RedirectResponse

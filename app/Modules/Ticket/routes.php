@@ -147,6 +147,9 @@ Route::post('/tickets/{ticket}/portal-visibility', [TicketController::class, 'up
 Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])
     ->name('tickets.assign');
 
+Route::post('/tickets/{ticket}/email-relationships/{relationship}/reply', [TicketController::class, 'prepareEmailReply'])
+    ->name('tickets.email-relationships.reply');
+
 Route::post('/tickets/{ticket}/not-ticket', [TicketController::class, 'markNotTicket'])
     ->name('tickets.not-ticket');
 

@@ -88,7 +88,10 @@
     @php
         $portalPublished = $ticket->isPortalVisible();
         $customerReplyBlockedByPortal = $ticket->client_id && ! $portalPublished;
-        $canReplyToContact = $portalPublished && $replyContacts->isNotEmpty() && ($ticketActions['customer_reply'] ?? true);
+        $canReplyToContact = $portalPublished
+            && $replyContacts->isNotEmpty()
+            && ($ticketActions['customer_reply'] ?? true)
+            && $emailTicketRelationships->isEmpty();
         $canAddInternalNote = $ticketActions['add_internal_note'] ?? true;
         $allowInternalSolutionNotes = $solutionPolicy['allow_internal_solution_notes'] ?? true;
         $defaultMessageType = $canReplyToContact ? 'customer_reply' : 'internal_note';
@@ -265,6 +268,59 @@
                 'quotePanelPlacement' => 'primary',
                 'deferAcceptedQuotePanel' => $deferAcceptedQuotePanel,
             ])
+
+            @if($emailTicketRelationships->isNotEmpty())
+                <!-- Each real Mail conversation remains separate; Ticket never combines recipient histories. -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                        <span>Mail conversations</span>
+                        <span class="badge text-bg-light border">{{ $emailTicketRelationships->count() }}</span>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @foreach($emailTicketRelationships as $mailRelationship)
+                            @php
+                                $sourcePlacement = $mailRelationship->placement;
+                                $sourceMessage = $mailRelationship->message;
+                                $latestCommunication = $ticketEmailCommunications
+                                    ->firstWhere('email_ticket_conversation_link_id', $mailRelationship->id);
+                            @endphp
+                            <div class="list-group-item">
+                                <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+                                    <div class="min-w-0">
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            <span class="fw-semibold text-truncate">{{ $sourceMessage?->displaySubject() ?: '(no subject)' }}</span>
+                                            <span class="badge {{ $mailRelationship->relationship_role === 'primary' ? 'text-bg-primary' : 'text-bg-secondary' }}">{{ ucfirst($mailRelationship->relationship_role) }}</span>
+                                            <span class="badge {{ $mailRelationship->audience === 'internal' ? 'text-bg-warning' : 'text-bg-light border' }}">{{ ucfirst($mailRelationship->audience) }}</span>
+                                            @if($latestCommunication)
+                                                <span class="badge text-bg-info">{{ str_replace('_', ' ', ucfirst($latestCommunication->state)) }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="small text-muted text-truncate">
+                                            {{ $sourceMessage?->from_email ?: 'Unknown sender' }}
+                                            @if($mailRelationship->account) &middot; {{ $mailRelationship->account->address }} @endif
+                                        </div>
+                                    </div>
+                                    @if($sourcePlacement && $mailRelationship->audience === 'customer' && ($ticketActions['customer_reply'] ?? false))
+                                        <div class="d-flex gap-2">
+                                            <form method="POST" action="{{ route('tech.tickets.email-relationships.reply', [$ticket, $mailRelationship->id]) }}">
+                                                @csrf
+                                                <input type="hidden" name="mode" value="reply">
+                                                <button type="submit" class="btn btn-sm btn-primary">Reply in Mail</button>
+                                            </form>
+                                            <form method="POST" action="{{ route('tech.tickets.email-relationships.reply', [$ticket, $mailRelationship->id]) }}">
+                                                @csrf
+                                                <input type="hidden" name="mode" value="reply_all">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Reply all</button>
+                                            </form>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                @error('email_reply')<div class="alert alert-danger">{{ $message }}</div>@enderror
+            @endif
 
             <div class="card mb-3">
                 <div class="card-header">Activity</div>
@@ -467,6 +523,7 @@
 
                                 @php
                                     $latestEmailLog = $emailLogsByMessageId->get($message->id)?->first();
+                                    $ticketEmailCommunication = $ticketEmailCommunicationsByMessageId->get($message->id)?->first();
                                     // Only customer-authored messages are unread workflow items for technicians.
                                     $isCustomerAuthoredMessage = in_array($message->author_type, ['contact', 'portal_user'], true);
                                     $isUnreadMessage = $isCustomerAuthoredMessage && blank($message->read_at);
@@ -545,7 +602,18 @@
                                                     </form>
                                                 </div>
                                             @endif
-                                            @if (in_array($message->type, ['customer_reply', 'status_update'], true) && $latestEmailLog)
+                                            @if($ticketEmailCommunication)
+                                                @php
+                                                    $communicationStatus = match ($ticketEmailCommunication->state) {
+                                                        'reconciled' => ['text-success', 'Reconciled with provider Sent mail'],
+                                                        'accepted' => ['text-success', 'SMTP accepted; awaiting Sent reconciliation'],
+                                                        'unresolved' => ['text-warning', 'Provider outcome unresolved; do not resend'],
+                                                        'failed_pre_send' => ['text-danger', 'Not sent; review the Mail draft'],
+                                                        default => ['text-muted', 'Mail send reserved'],
+                                                    };
+                                                @endphp
+                                                <div class="small {{ $communicationStatus[0] }} mb-2">{{ $communicationStatus[1] }}</div>
+                                            @elseif (in_array($message->type, ['customer_reply', 'status_update'], true) && $latestEmailLog)
                                                 <!-- Distinguish local reservation, SMTP acceptance, and an ambiguous provider outcome. -->
                                                 @php
                                                     $emailStatus = match ($latestEmailLog->code) {

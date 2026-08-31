@@ -125,6 +125,15 @@ class MailWorkspace extends Component
                 $this->liveGlobalAuthorizationGeneration,
             );
         }
+
+        if ($this->selectedPlacementId && in_array($this->openComposerMode, [
+            SendEmailComposerMessage::MODE_REPLY,
+            SendEmailComposerMessage::MODE_REPLY_ALL,
+        ], true)) {
+            $mode = $this->openComposerMode;
+            $this->openComposerMode = '';
+            $this->startComposer($mode);
+        }
     }
 
     public function getListeners()
@@ -236,6 +245,8 @@ class MailWorkspace extends Component
     public string $listFilter = 'all';
 
     public ?int $selectedPlacementId = null;
+
+    public string $openComposerMode = '';
 
     public int $perPage = 25;
 
@@ -364,6 +375,8 @@ class MailWorkspace extends Component
         'folderId' => ['as' => 'folder', 'except' => ''],
         'search' => ['as' => 'q', 'except' => ''],
         'listFilter' => ['as' => 'filter', 'except' => 'all'],
+        'selectedPlacementId' => ['as' => 'message', 'except' => null],
+        'openComposerMode' => ['as' => 'compose', 'except' => ''],
     ];
 
     public function setView(string $mode): void

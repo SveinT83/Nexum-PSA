@@ -1,12 +1,38 @@
 # Feature Slice: Email/Ticket Compose And Sent Reconciliation
 
-Status: Queued / Dependency Gated
+Status: Core Implemented On Dev / Shared Collaboration UI Gated / Human Review Pending
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
 ADR: `docs/adr/2026-08-11-email-conversations-as-ticket-communication-channels.md`
 Owners: Email / Ticket
 Human Review: `HR-2026-08-16-016`
+
+
+## 2026-09-01 Dev Implementation Outcome
+
+The selected-conversation customer path is implemented on authoritative Dev. A Ticket relationship
+prepares one existing Email-owned private draft for the exact account/source placement and redirects
+the technician to that same draft in Mail. Reply and Reply all use only the selected source, preserve
+external subject tokens, add the current `TD-...` key, and freeze recipient, thread, subject, source,
+relationship, Ticket and provider-binding evidence before Email reserves SMTP.
+
+`ticket_email_outbound_communications` and append-only events bind the Ticket intent to the Email
+draft, outbound submission, Ticket message and exact Sent reconciliation. Accepted and unresolved
+provider outcomes project one Ticket message through the normal Ticket action with the legacy Ticket
+SMTP job suppressed. Replays cannot create another SMTP call or Ticket message. A matching exact
+Sent occurrence updates the same communication and relationship capture idempotently. Deterministic
+pre-provider drift remains a usable Mail draft but records a durable stale communication.
+
+The migration `2026_09_01_090000_create_ticket_email_outbound_communications.php` is applied on Dev
+and refuses rollback while communication evidence exists. Focused Ticket/Mail coverage passes 6
+tests / 44 assertions and adjacent Email compose/submission/Sent coverage passes 5 / 81. No real
+provider account, provider write, production migration or production test was used.
+
+Order 9's optional multi-user shared-draft UI remains runtime-gated. The Ticket flow does not create
+a second draft or SMTP path: it uses the exact private Mail draft today, while an explicitly shared
+draft is still subject to Order 9's lease/fence boundary. Two-user/two-tab shared editing therefore
+remains part of `HR-2026-08-16-009` and is not claimed by this implementation outcome.
 
 ## Goal
 

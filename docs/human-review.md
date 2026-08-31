@@ -9114,3 +9114,37 @@ not explicitly left open above. Full confirmation is not yet provided.
   mailbox is no longer available to the operator.
 - **Status:** Pending
 - **Reviewer:** Not assigned
+
+
+## [HR-2026-08-16-016] Email/Ticket Compose And Sent Reconciliation
+- **Scope:** One selected Ticket Mail relationship uses the same Email-owned draft, outbound
+  reservation and exact provider Sent reconciliation as Mail.
+- **Affected:** Ticket show conversation cards, Mail Reply/Reply all composer, Email outbound
+  submission, Ticket timeline/captures, Sent import/reconciliation and legacy Ticket reply fallback.
+- **Checks:**
+    - [ ] Add a controlled active IMAP/SMTP account and link two separate conversations to one
+      Published Ticket. Confirm each card opens only its own source, sender, To/CC, thread and draft.
+    - [ ] Use Reply and Reply all. Confirm an external subject token remains, the current `TD-...`
+      key is added once, mailbox aliases are excluded and no recipient from the other conversation
+      appears.
+    - [ ] Send one controlled internal reply and confirm exactly one SMTP submission, one Ticket
+      message and no legacy `SendTicketReplyEmail` job for that selected-conversation path.
+    - [ ] Confirm an accepted message says it is awaiting Sent reconciliation, and that importing
+      the exact Sent occurrence changes it to Reconciled without adding a second Ticket message.
+    - [ ] Exercise a deliberately unresolved provider result in a controlled test and confirm the
+      UI says not to resend and another click cannot make a second SMTP attempt.
+    - [ ] Revoke Mail Send or alter the selected source/provider binding after opening the draft;
+      confirm submission fails before SMTP and the stale state is visible.
+    - [ ] Confirm Tickets without an accessible Mail relationship still use the established
+      Published/same-client `Reply to contact` fallback.
+    - [ ] Under Order 9 review, use two users/tabs on an explicitly shared draft and confirm lease,
+      stale-composer and one-send behavior before collaboration UI activation.
+- **Expected Results:** Ticket never chooses a second sender or SMTP path for a selected Mail
+  conversation. Recipient/thread context stays exact, provider outcomes are truthful and one exact
+  Sent occurrence is projected once.
+- **Migration:** `2026_09_01_090000_create_ticket_email_outbound_communications.php` is applied on
+  Dev. Production is untouched.
+- **Risks:** Real provider folder/thread behavior still requires the controlled account test. Order
+  9 collaboration UI remains default-off until its separate two-user review passes.
+- **Status:** Pending
+- **Reviewer:** Not assigned
