@@ -22,10 +22,59 @@ has explicitly approved.
 - Before a merge, migration, deployment, or release, report every relevant entry that is not
   `Reviewed`.
 - Never delete reviewed entries. Add newer entries above older entries and retain the history.
-- Global human-review confirmation: Svein explicitly approved all entries that were only waiting for human review on 2026-08-25. Entries marked `Rework Needed`, including compound statuses containing rework, remain open. Runtime activation, deployment, migration, and production evidence gates remain separate unless an entry explicitly records an accepted deviation.
+- Global human-review confirmation: Svein explicitly approved `HR-2026-08-26-001`, `HR-2026-08-25-014`, `HR-2026-08-25-011`, `HR-2026-08-25-009`, `HR-2026-08-25-008`, `HR-2026-08-25-007`, and `HR-2026-08-25-006` on 2026-08-31. Entries marked `Rework Needed`, entries for incomplete implementation, and operator/runtime work remain open. Deployment, migration, scheduler/queue activation, SSL-dependent production testing, and other production evidence are tracked as separate operational gates.
 
-| HR-2026-08-26-001 | Documentation Sidebar Reordering and Title Update | Pending | 2026-08-26 |  |  |
+## Recent Review Summary
+
+| ID | Update | Status | Added | Reviewer | Reviewed |
+| --- | --- | --- | --- | --- | --- |
+| HR-2026-08-30-001 | Dev database and Mail private-storage reconciliation | Pending | 2026-08-30 |  |  |
+| HR-2026-08-26-001 | Documentation Sidebar Reordering and Title Update | Reviewed | 2026-08-26 | Svein | 2026-08-31 |
+| HR-2026-08-25-014 | RMM Alert Rules pre-routing and audited actions | Reviewed | 2026-08-25 | Svein | 2026-08-31 |
 | HR-2026-08-25-013 | Ticket Rules triggers, actions, and audited execution | Reviewed | 2026-08-25 | Svein | 2026-08-26 |
+| HR-2026-08-25-012 | Task stopwatch and time registration | Reviewed | 2026-08-25 | Svein | 2026-08-26 |
+| HR-2026-08-25-011 | Ticket message read API and first-response verification | Reviewed | 2026-08-25 | Svein | 2026-08-31 |
+| HR-2026-08-25-010 | Client automatic number allocation race fix | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-009 | Technician Task List Default Filter and Ordering | Reviewed | 2026-08-25 | Svein | 2026-08-31 |
+| HR-2026-08-25-008 | AI View Sidebar and Button Group Consistency | Reviewed | 2026-08-25 | Svein | 2026-08-31 |
+| HR-2026-08-25-007 | AI Model Rate Card Route and Navigation Fix | Reviewed | 2026-08-25 | Svein | 2026-08-31 |
+| HR-2026-08-25-006 | AI Integration and Telemetry Layout Standardization | Reviewed | 2026-08-25 | Svein | 2026-08-31 |
+| HR-2026-08-25-005 | BookStack shared rate-limit coordination and error timestamp | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-004 | AI Route Fixes and Discoverability Improvements | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+
+### HR-2026-08-30-001: Dev Database And Mail Private-Storage Reconciliation
+
+- **Scope:** Reconcile the configured authoritative Dev database with the existing private Email
+  storage before any permission repair, retention decision, scheduler activation, notification
+  delivery, migration, or production-readiness claim.
+- **Affected Modules:** Email, Notification, Integration, queue/scheduler operations, and Dev
+  recovery evidence.
+- **Current Evidence:** On 2026-08-30, Laravel resolved MySQL database `tdPSA_` with 2 Users, 2
+  Clients, 0 Email accounts, 0 Email messages, and 0 queued jobs. The canonical private Email tree
+  contains 1,546 files, so the read-only inventory returned 0 referenced and 1,546 unreferenced
+  files. This conflicts with the coherent 2026-08-24 inventory and runtime evidence and must not be
+  interpreted as retention or deletion authority. A separate filesystem-only preflight confirmed
+  exactly 79 regular `www-data:www-data` files at mode `0644` and zero symlinks; non-interactive
+  sudo is unavailable, so no mode changed.
+- **Required Human/Operator Checks:**
+  - [ ] Identify and confirm the intended authoritative Dev database and explain the current
+    `tdPSA_` database state before changing `.env`, restoring data, or running migrations.
+  - [ ] Back up every database state that may be changed, then use the approved recovery process.
+  - [ ] Reconcile Email account/message/placement/attachment/raw-reference/job counts with the
+    private tree and prior recovery evidence. Preserve all files while provenance is unresolved.
+  - [ ] Re-evaluate the historical notification backlog on the confirmed database and explicitly
+    choose delivery, suppression, or another disposition before enabling the full scheduler or a
+    notifications worker.
+  - [ ] As root/operator, change only the revalidated 79 regular `0644` files to `0660`, preserving
+    content, ownership, location, and existence; then rerun inventory and dual-runtime smoke.
+  - [ ] Confirm the current Mail polling and queue crontab is appropriate for the restored database
+    before leaving it active.
+- **Expected Result:** Dev database records, private Email files, queue state, and active runtime
+  configuration describe one coherent environment; no file is deleted or relinked by assumption.
+- **Status:** Pending
 
 ### HR-2026-08-26-001: Documentation Sidebar Reordering And Title Update
 
@@ -33,24 +82,21 @@ has explicitly approved.
 - **Affected Modules:** Documentation.
 - **Affected Pages And Workflows:** All Documentation pages (index, show, create, edit), Shipping Carriers pages, and Vendors/Suppliers pages.
 - **Remaining Human Checks:**
-  - [ ] Verify that "Shipping Carriers", "Suppliers", and "Vendors" appear at the top of the sidebar.
-  - [ ] Verify that a header "Documentation categories" appears after them, followed by "All" and dynamic categories.
-  - [ ] Verify that the sidebar title is "Documentation" on all relevant pages.
+  - [x] Verify that "Shipping Carriers", "Suppliers", and "Vendors" appear at the top of the sidebar.
+  - [x] Verify that a header "Documentation categories" appears after them, followed by "All" and dynamic categories.
+  - [x] Verify that the sidebar title is "Documentation" on all relevant pages.
 - **Automated Dev Evidence (Not Human Review):**
   - New test `App\Modules\Documentation\Tests\Feature\DocumentationsMenuTest` passes and verifies menu order and header logic.
   - Existing `App\Modules\Documentation\Tests\Feature\DocumentationModuleTest` passes.
-| HR-2026-08-25-014 | RMM Alert Rules pre-routing and audited actions | Pending | 2026-08-25 |  |  |
-| HR-2026-08-25-012 | Task stopwatch and time registration | Reviewed | 2026-08-25 | Svein | 2026-08-26 |
-| HR-2026-08-25-011 | Ticket message read API and first-response verification | Pending | 2026-08-25 |  |  |
-| HR-2026-08-25-010 | Client automatic number allocation race fix | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-009 | Technician Task List Default Filter and Ordering | Pending | 2026-08-25 |  |  |
-| HR-2026-08-25-008 | AI View Sidebar and Button Group Consistency | Pending | 2026-08-25 |  |  |
-| HR-2026-08-25-007 | AI Model Rate Card Route and Navigation Fix | Pending | 2026-08-25 |  |  |
-| HR-2026-08-25-006 | AI Integration and Telemetry Layout Standardization | Pending | 2026-08-25 |  |  |
-| HR-2026-08-25-004 | AI Route Fixes and Discoverability Improvements | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+- **Review Evidence:** Svein explicitly approved the completed Dev human-review checks in the
+  Codex task on 2026-08-31.
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-31
+- **Environment:** Dev
+- **Result / Notes:** Completed Dev behavior is accepted. Any deployment, migration, scheduler/queue
+  activation, SSL-dependent production test, or other production evidence remains a separately
+  tracked operational gate.
+- **Status:** Reviewed
 
 ### HR-2026-08-25-013: Ticket Rules Triggers, Actions, And Audited Execution
 
@@ -144,6 +190,10 @@ has explicitly approved.
     failures are unrelated, independently reproducing baselines: three Customer Portal
     notification/provider-binding tests, three `EmailLivePublisherStateMachineTest` tests, one
     Integration `max_tokens` expectation, and one `UserProfileBackfill` count.
+  - Follow-up maintenance on 2026-08-30 resolved all eight recorded baseline failures without
+    weakening provider-binding or Email live-authority guards. The combined Customer Portal,
+    Email live publisher, Integration, and User-profile regression matrix passes 81 tests / 826
+    assertions. This automated follow-up does not alter the Reviewed status or production gates.
   - PHP lint passes for 163 files with zero failures; scoped Pint passes all 162 changed files while
     excluding only tracked-clean `TicketRuleEngine.php`. Blade cache, 13 unique routes, Livewire
     resolution, line-ending/whitespace/final-newline, English-only/no-language-file, artifact, and
@@ -196,50 +246,50 @@ has explicitly approved.
 - **Affected Pages And Workflows:** Admin > System > Integrations > RMM Alert Rules; Tactical and
   N-able settings links; 15-minute provider alert ingestion; Ticket/Task/Signal handoff.
 - **Checks:**
-  - [ ] Open the shared rule page from the Integrations hub and from both Tactical and N-able
+  - [x] Open the shared rule page from the Integrations hub and from both Tactical and N-able
     settings. Confirm a user without `integration.rmm_manage` cannot read or mutate it.
-  - [ ] Create a disabled rule, add/reorder/remove supported actions, save it, edit it as a new
+  - [x] Create a disabled rule, add/reorder/remove supported actions, save it, edit it as a new
     revision, then enable it. Confirm duplicate Client names remain distinguishable by ID.
-  - [ ] Confirm all configured conditions use implicit AND and match the occurrence's frozen
+  - [x] Confirm all configured conditions use implicit AND and match the occurrence's frozen
     subject, severity, provider, fingerprint, Asset, and Client context.
-  - [ ] Confirm an unchanged active heartbeat and a resolution create no duplicate occurrence or
+  - [x] Confirm an unchanged active heartbeat and a resolution create no duplicate occurrence or
     work, while a genuine resolved-to-active recurrence creates exactly one new occurrence.
-  - [ ] Verify create/update Ticket, create/reuse Task, emit Signal, and ignore. Confirm normal
+  - [x] Verify create/update Ticket, create/reuse Task, emit Signal, and ignore. Confirm normal
     Ticket Rules and Signal Rules still run only after their normal domain entry point.
-  - [ ] Save rules using active Queue, Type, Priority, Category, owner, and assignee targets, then
+  - [x] Save rules using active Queue, Type, Priority, Category, owner, and assignee targets, then
     disable each target. Confirm each stale action fails closed, creates no target, and allows the
     configured lower fallback rule to run.
-  - [ ] Close a linked Ticket and verify `reopen_ticket` uses the configured allowed Ticket Workflow
+  - [x] Close a linked Ticket and verify `reopen_ticket` uses the configured allowed Ticket Workflow
     transition. With no linked Ticket, confirm the action is skipped and a lower create-Ticket
     fallback can run.
-  - [ ] Move a test Asset between Clients/Sites before a recurrence. Confirm old customer work is
+  - [x] Move a test Asset between Clients/Sites before a recurrence. Confirm old customer work is
     never updated or reopened and ownership drift before a side effect fails closed.
-  - [ ] Cause one controlled action failure. Confirm later actions in that rule show `not_run`, a
+  - [x] Cause one controlled action failure. Confirm later actions in that rule show `not_run`, a
     lower rule may continue, the failure is bounded, and no retry/full-rerun control is shown.
-  - [ ] Confirm ignore is the rule's only action and stops all lower rules. Confirm a successful
+  - [x] Confirm ignore is the rule's only action and stops all lower rules. Confirm a successful
     stop-enabled rule also stops lower rules, while an entirely skipped rule does not.
-  - [ ] Inspect the `Nexum RMM Alert Rules` system actor. Confirm login is disabled and its only
+  - [x] Inspect the `Nexum RMM Alert Rules` system actor. Confirm login is disabled and its only
     permissions are `ticket.create`, `ticket.note_internal`, `ticket.reopen`, `task.create`, and
     `task.source_update`.
-  - [ ] Confirm the compact UI projection shows occurrence, rule revision/match, status/error, and
+  - [x] Confirm the compact UI projection shows occurrence, rule revision/match, status/error, and
     targets. Inspect the DB-backed audit for the exact definition snapshot, condition/action
     results, and author/target IDs without credentials, headers, raw provider bodies, or
     unrestricted check output.
-  - [ ] Assign an RMM-created Ticket to a technician and confirm create/update commits its durable
+  - [x] Assign an RMM-created Ticket to a technician and confirm create/update commits its durable
     work link without sending a synchronous Ticket owner notification. Repeat for Workflow reopen.
     Explicit RMM notification behavior is not part of this slice.
-  - [ ] Start parallel test Ticket creations that would otherwise select the same `TD-...` key.
+  - [x] Start parallel test Ticket creations that would otherwise select the same `TD-...` key.
     Confirm the locked yearly sequence produces unique keys, each Ticket has one creation event and
     initial note, and neither RMM action is terminalized by a uniqueness collision.
-  - [ ] Route an emitted RMM Signal to a test webhook. Confirm delivery occurs only after commit and
+  - [x] Route an emitted RMM Signal to a test webhook. Confirm delivery occurs only after commit and
     that a controlled rollback creates neither an external request nor retained delivery evidence.
     Simulate queue-publication loss and confirm the committed row stays `pending` until the
     every-minute dispatcher wakes it. Run duplicate delivery jobs and confirm one HTTP request.
     Confirm an abandoned claim or ambiguous transport result becomes `unresolved` and is not
     automatically replayed.
-  - [ ] Confirm pre-existing `asset_alerts` received no synthetic occurrence during migration and
+  - [x] Confirm pre-existing `asset_alerts` received no synthetic occurrence during migration and
     that an inactive rule can be soft-deleted without deleting its execution evidence.
-  - [ ] Check the list, builder, action controls, validation messages, and execution table at desktop
+  - [x] Check the list, builder, action controls, validation messages, and execution table at desktop
     and narrow/mobile widths.
 - **Expected Results:** RMM Alert Rules make an explicit, auditable pre-routing decision for each
   future new/reopened alert. Target domains retain authority, duplicate work is prevented within the
@@ -257,16 +307,16 @@ has explicitly approved.
   `php artisan optimize:clear` and scheduler/queue verification. Production later requires a
   database backup and paused Signal webhook/RMM workers during the targeted migrations, followed by
   the same read-back, cache clear, worker restart, and verification that an external job runs
-  `php artisan schedule:run` every minute. Do not activate production rules before this review is
-  explicitly completed.
+  `php artisan schedule:run` every minute. Keep production rules inactive until those separate
+  operational gates are completed and verified.
 - **Risks:** A broad or wrongly ordered active rule can create unwanted work. Rule/action failures
   after execution starts are deliberately terminal with no automatic replay. Asset reassignment,
   Workflow availability, scheduler health, queue health, and provider field quality affect routing.
   Scheduler/queue loss grows the Signal webhook `pending` cohort; `failed` or `unresolved` deliveries
   require receiver reconciliation and must not be blindly reset for replay.
-- **Review Gate:** Pending human review blocks merge/promotion to Main, production migration,
-  production rule activation, and release. It does not block the isolated targeted Dev migration
-  and automated verification recorded for this change.
+- **Review Gate:** Human review of the completed Dev implementation is approved. Production
+  migration, scheduler/queue activation, production rule activation, and production evidence remain
+  separate operational gates and are not completed by this review.
 - **Automated Evidence (2026-08-26):** The focused RMM rule/provider suite passed 25 tests with 226
   assertions. Related suites passed: Signal 39/208, Task 31/202, and TicketModule 127/952. A live
   two-connection MariaDB sequence probe completed without deadlock and rolled back. Separate broad
@@ -287,9 +337,15 @@ has explicitly approved.
   198 tests, skipped one
   environment-gated contract, and retained one unrelated OpenAI legacy-completion `max_tokens`
   expectation failure.
-  This entry was added after the earlier blanket 2026-08-25 approval and remains Pending until Svein
-  explicitly reviews it.
-- **Status:** Pending
+- **Review Evidence:** Svein explicitly approved the completed Dev human-review checks in the
+  Codex task on 2026-08-31.
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-31
+- **Environment:** Dev
+- **Result / Notes:** Completed Dev behavior is accepted. Any deployment, migration, scheduler/queue
+  activation, SSL-dependent production test, or other production evidence remains a separately
+  tracked operational gate.
+- **Status:** Reviewed
 
 ### HR-2026-08-25-012: Task Stopwatch And Time Registration
 
@@ -345,22 +401,30 @@ has explicitly approved.
 - **Affected Modules:** Ticket and Integration Knowledge documentation.
 - **Affected API:** `GET /api/v1/tickets/{ticket}/messages`.
 - **Checks:**
-  - [ ] Call the endpoint with a valid Ticket key and a token containing `tickets.read`; confirm
+  - [x] Call the endpoint with a valid Ticket key and a token containing `tickets.read`; confirm
     HTTP 200, pagination metadata, and newest-first message order.
-  - [ ] Confirm each item contains only ID, type, visibility, author type, and creation timestamp.
-  - [ ] Confirm the response contains persisted first-response and due timestamps plus the
+  - [x] Confirm each item contains only ID, type, visibility, author type, and creation timestamp.
+  - [x] Confirm the response contains persisted first-response and due timestamps plus the
     due-time comparison.
-  - [ ] Confirm bodies, subjects, raw metadata, attachments, author IDs, and customer content are
+  - [x] Confirm bodies, subjects, raw metadata, attachments, author IDs, and customer content are
     absent.
-  - [ ] Confirm a token without `tickets.read` receives HTTP 403 and an unknown Ticket key
+  - [x] Confirm a token without `tickets.read` receives HTTP 403 and an unknown Ticket key
     receives HTTP 404.
-  - [ ] Confirm `per_page=101` returns validation failure and ordinary bounded pagination works.
+  - [x] Confirm `per_page=101` returns validation failure and ordinary bounded pagination works.
 - **Expected Results:** Coordinators can verify message existence and SLA first-response evidence
   without receiving unnecessary customer or internal content.
 - **Deploy Actions:** Regenerate OpenAPI and sync Ticket/Integration Knowledge after deployment.
   No migration, queue, scheduler, cache, or frontend build action is required.
 - **Risks:** This additive API contract must remain metadata-only.
-- **Status:** Pending
+- **Review Evidence:** Svein explicitly approved the completed Dev human-review checks in the
+  Codex task on 2026-08-31.
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-31
+- **Environment:** Dev
+- **Result / Notes:** Completed Dev behavior is accepted. Any deployment, migration, scheduler/queue
+  activation, SSL-dependent production test, or other production evidence remains a separately
+  tracked operational gate.
+- **Status:** Reviewed
 
 ### HR-2026-08-25-010: Client Automatic Number Allocation Race Fix
 
@@ -393,54 +457,86 @@ has explicitly approved.
 - **Scope:** Changed the default Technician Task list to show only genuinely open work assigned to the authenticated user, ordered by priority (P1 first) and due date.
 - **Affected Modules:** Task.
 - **Checks:**
-  - [ ] Verify that navigating to `/tech/tasks` without parameters defaults to tasks assigned to the current user.
-  - [ ] Verify that the "Assigned to me" checkbox is checked by default.
-  - [ ] Verify that only Open, In Progress, and Blocked tasks are shown by default (Done/Cancelled excluded).
-  - [ ] Verify that tasks are ordered by Priority level (P1 first), then Due Date (earlier first), then Task ID (desc).
-  - [ ] Verify that tasks without a priority appear after prioritized tasks.
-  - [ ] Verify that unchecking "Assigned to me" or selecting a different user shows the expected tasks.
-  - [ ] Verify that clicking "Clear" resets to the new personal default view.
-  - [ ] Verify that manual sorting (e.g., by Title) overrides the default priority-based sorting.
+  - [x] Verify that navigating to `/tech/tasks` without parameters defaults to tasks assigned to the current user.
+  - [x] Verify that the "Assigned to me" checkbox is checked by default.
+  - [x] Verify that only Open, In Progress, and Blocked tasks are shown by default (Done/Cancelled excluded).
+  - [x] Verify that tasks are ordered by Priority level (P1 first), then Due Date (earlier first), then Task ID (desc).
+  - [x] Verify that tasks without a priority appear after prioritized tasks.
+  - [x] Verify that unchecking "Assigned to me" or selecting a different user shows the expected tasks.
+  - [x] Verify that clicking "Clear" resets to the new personal default view.
+  - [x] Verify that manual sorting (e.g., by Title) overrides the default priority-based sorting.
 - **Expected Results:** Technicians immediately see their most important open work; filters and UI state remain consistent during pagination and explicit overrides.
-- **Status:** Pending
+- **Review Evidence:** Svein explicitly approved the completed Dev human-review checks in the
+  Codex task on 2026-08-31.
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-31
+- **Environment:** Dev
+- **Result / Notes:** Completed Dev behavior is accepted. Any deployment, migration, scheduler/queue
+  activation, SSL-dependent production test, or other production evidence remains a separately
+  tracked operational gate.
+- **Status:** Reviewed
 
 ### HR-2026-08-25-008: AI View Sidebar and Button Group Consistency
 
 - **Scope:** Restored the side menu visibility on AI Telemetry and Rate Cards pages and unified the header button group across all AI administrative views.
 - **Affected Modules:** Integration.
 - **Checks:**
-  - [ ] Verify that the Admin side menu (sidebar) is visible on the AI Telemetry Index page.
-  - [ ] Verify that the Admin side menu (sidebar) is visible on the AI Model Rate Cards page.
-  - [ ] Verify that the Admin side menu (sidebar) is visible on the AI Execution Trace Details (Show) page.
-  - [ ] Verify that all five AI administrative pages (AI Integration Settings, Privacy, Telemetry Index, Telemetry Show, Rate Cards) share the same unified button group in their headers: `[ Telemetry ] [ Rate Cards ] [ AI Settings ]`.
-  - [ ] Verify that the buttons correctly highlight the active context or provide clear navigation between sections.
+  - [x] Verify that the Admin side menu (sidebar) is visible on the AI Telemetry Index page.
+  - [x] Verify that the Admin side menu (sidebar) is visible on the AI Model Rate Cards page.
+  - [x] Verify that the Admin side menu (sidebar) is visible on the AI Execution Trace Details (Show) page.
+  - [x] Verify that all five AI administrative pages (AI Integration Settings, Privacy, Telemetry Index, Telemetry Show, Rate Cards) share the same unified button group in their headers: `[ Telemetry ] [ Rate Cards ] [ AI Settings ]`.
+  - [x] Verify that the buttons correctly highlight the active context or provide clear navigation between sections.
 - **Expected Results:** Consistent sidebar visibility and unified navigation controls across the entire AI administrative module.
-- **Status:** Pending
+- **Review Evidence:** Svein explicitly approved the completed Dev human-review checks in the
+  Codex task on 2026-08-31.
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-31
+- **Environment:** Dev
+- **Result / Notes:** Completed Dev behavior is accepted. Any deployment, migration, scheduler/queue
+  activation, SSL-dependent production test, or other production evidence remains a separately
+  tracked operational gate.
+- **Status:** Reviewed
 
 ### HR-2026-08-25-007: AI Model Rate Card Route and Navigation Fix
 
 - **Scope:** Corrected the route name for AI Model Rate Cards and standardized navigation buttons across all AI-related views.
 - **Affected Modules:** Integration.
 - **Checks:**
-  - [ ] Verify that the "Rate Cards" button on the AI Integration settings page (`/tech/admin/system/integrations/ai`) now works and does not throw a "Route not defined" error.
-  - [ ] Verify that the "Rate Cards" button on the AI Telemetry index page now works.
-  - [ ] Verify that the "Telemetry", "Rate Cards", and "AI Settings" buttons are present and functional in the header of the AI Integration, Telemetry, and Rate Cards pages.
-  - [ ] Verify that the "Privacy & Coordinator" page header also includes "Telemetry" and "AI Settings" buttons.
+  - [x] Verify that the "Rate Cards" button on the AI Integration settings page (`/tech/admin/system/integrations/ai`) now works and does not throw a "Route not defined" error.
+  - [x] Verify that the "Rate Cards" button on the AI Telemetry index page now works.
+  - [x] Verify that the "Telemetry", "Rate Cards", and "AI Settings" buttons are present and functional in the header of the AI Integration, Telemetry, and Rate Cards pages.
+  - [x] Verify that the "Privacy & Coordinator" page header also includes "Telemetry" and "AI Settings" buttons.
 - **Expected Results:** No route errors when navigating to Rate Cards; consistent and easy navigation between all AI administrative sections.
-- **Status:** Pending
+- **Review Evidence:** Svein explicitly approved the completed Dev human-review checks in the
+  Codex task on 2026-08-31.
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-31
+- **Environment:** Dev
+- **Result / Notes:** Completed Dev behavior is accepted. Any deployment, migration, scheduler/queue
+  activation, SSL-dependent production test, or other production evidence remains a separately
+  tracked operational gate.
+- **Status:** Reviewed
 
 ### HR-2026-08-25-006: AI Integration and Telemetry Layout Standardization
 
 - **Scope:** Standardized the layout of AI Integration, Telemetry, and Rate Cards pages to match the project's Tech Admin standard. This includes moving titles, breadcrumbs, and action buttons to the `pageHeader` section.
 - **Affected Modules:** Integration.
 - **Checks:**
-  - [ ] Verify that AI Integration index (`/tech/admin/system/integrations/ai`) has breadcrumbs starting with "Admin" and a header with "Telemetry" and "Rate Cards" buttons.
-  - [ ] Verify that AI Telemetry index (`/tech/admin/system/integrations/ai/telemetry`) has breadcrumbs `Admin > Integrations > AI Integration > Telemetry` and "Rate Cards" / "AI Settings" buttons in the header.
-  - [ ] Verify that AI Model Rate Cards page has consistent breadcrumbs and header buttons.
-  - [ ] Verify that Execution Trace details page (Show) has consistent breadcrumbs and a "Back to Telemetry" button in the header.
-  - [ ] Verify that Integrations hub (`/tech/admin/system/integrations`) has standardized breadcrumbs.
+  - [x] Verify that AI Integration index (`/tech/admin/system/integrations/ai`) has breadcrumbs starting with "Admin" and a header with "Telemetry" and "Rate Cards" buttons.
+  - [x] Verify that AI Telemetry index (`/tech/admin/system/integrations/ai/telemetry`) has breadcrumbs `Admin > Integrations > AI Integration > Telemetry` and "Rate Cards" / "AI Settings" buttons in the header.
+  - [x] Verify that AI Model Rate Cards page has consistent breadcrumbs and header buttons.
+  - [x] Verify that Execution Trace details page (Show) has consistent breadcrumbs and a "Back to Telemetry" button in the header.
+  - [x] Verify that Integrations hub (`/tech/admin/system/integrations`) has standardized breadcrumbs.
 - **Expected Results:** Consistent header and breadcrumb behavior across all AI-related administration pages; no "visual jumping" of the title or action buttons when navigating between these pages.
-- **Status:** Pending
+- **Review Evidence:** Svein explicitly approved the completed Dev human-review checks in the
+  Codex task on 2026-08-31.
+- **Reviewer:** Svein
+- **Reviewed At:** 2026-08-31
+- **Environment:** Dev
+- **Result / Notes:** Completed Dev behavior is accepted. Any deployment, migration, scheduler/queue
+  activation, SSL-dependent production test, or other production evidence remains a separately
+  tracked operational gate.
+- **Status:** Reviewed
 
 ### HR-2026-08-25-004: AI Route Fixes and Discoverability Improvements
 
@@ -490,29 +586,21 @@ has explicitly approved.
 Reviewer: Svein
 Reviewed date: 2026-08-25
 
-## Review Summary
+## Earlier Review Summary
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
-| HR-2026-08-25-014 | RMM Alert Rules pre-routing and audited actions | Pending | 2026-08-25 |  |  |
-| HR-2026-08-25-011 | Ticket message read API and first-response verification | Pending | 2026-08-25 |  |  |
-| HR-2026-08-25-010 | Client automatic number allocation race fix | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-004 | AI Route Fixes and Discoverability Improvements | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
-| HR-2026-08-25-005 | BookStack shared rate-limit coordination and error timestamp | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-24-004 | Email template HTML editor and branding-managed layouts | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
 | HR-2026-08-24-003 | Commercial Contract customer document and pricing consistency | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
 | HR-2026-08-24-002 | Evergreen Marketing contact sequences and lifetime no-resend delivery guard | Reviewed | 2026-08-24 | Svein | 2026-08-25 |
 | HR-2026-08-24-001 | Ticket owner, customer, and contact at a glance | Reviewed | 2026-08-24 | Svein Tore | 2026-08-24 |
 | HR-2026-08-21-001 | Dev database recovery and Mail permission-repair verification | Reviewed | 2026-08-21 | Svein | 2026-08-25 |
-| HR-2026-08-16-014 | Email/Ticket correlation conflict triage | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
+| HR-2026-08-16-014 | Email/Ticket correlation conflict triage | In Review (implementation reopened) | 2026-08-16 | Svein | 2026-08-25; reopened 2026-08-31 |
 | HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Pending (Safety Rework; Activation Gated) | 2026-08-16 |  |  |
-| HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
+| HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Pending (Private/API Rework Implemented; Shared Collaboration Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed / Safety Repair Implemented | 2026-08-16 |  |  |
-| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
+| HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend/API Safety Rework Implemented; Runtime/UI Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-008 | Email private live invalidation and polling fallback | Rework Needed | 2026-08-16 |  |  |
 | HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Rework Needed | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-21 |
@@ -1436,33 +1524,49 @@ stage, activation, cutover, source switch, or polling resume occurred.
 
 ### HR-2026-08-16-014 - Email/Ticket Correlation Conflict Triage
 
-Status: Reviewed
+Status: In Review (implementation reopened)
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; implementation and human review are missing
+Environment: Authoritative Dev working copy; additive migration, guarded runtime service, admin
+triage UI, audit action and automated verification complete. Shared Dev has zero Email accounts and
+messages, so the controlled browser/mailbox runtime checks remain for the planned human test.
 Related: `docs/feature-slices/2026-08-19-email-ticket-correlation-conflict-triage.md`
 
 Scope and affected workflow: preserve durable links and RFC headers as authoritative, keep
 `TD-...` as an additive fallback, and introduce durable, audited conflict detection and human triage
 for inbound Email-to-Ticket correlation.
 
-Deploy / migration notes: no conflict table, migration, triage action, UI or deploy action is ready.
-Do not claim or activate this workflow until a complete reviewed implementation exists.
+Deploy / migration notes: deploy
+`2026_08_31_120000_create_email_ticket_correlation_conflicts_table.php`, clear caches, rebuild
+group-writable views and restart Email/default workers. The migration creates empty local audit schema
+only: no account, message, provider, Ticket or queue mutation occurs. Do not remove the table while
+conflict evidence exists.
 
 Risks: guessing between contradictory evidence can link mailbox content to the wrong Ticket or widen
-its audience. Existing correlation behavior must remain unchanged while the slice is incomplete.
+its audience. The implementation instead blocks automatic link/create whenever independent methods
+identify different Tickets. Human selection is limited to the recorded candidates and is audited.
 
-Automated verification: no focused Order 14 test exists.
+Automated verification: focused header-vs-subject, multiple-header, replay, safe-evidence, UI,
+resolution and audit checks pass. The complete Email feature suite passes 146 tests / 1,290
+assertions; the broad Ticket suite passes 128 / 963 and the provider matrix passes 69 / 607.
 
 Human checks:
 
 - [x] Review and approve the complete conflict evidence/data model and deterministic precedence.
 - [x] Verify conflicting durable link, RFC header and `TD-...` cases remain unresolved until an
   authorized human records an auditable choice without moving or publishing source mail.
+- [ ] With a disposable/control mailbox, import one header-vs-subject conflict and verify no Ticket
+  message is created before the administrator decision.
+- [ ] Open the conflict page as an Email administrator, select one recorded candidate, enter a
+  reason, and verify exactly one Ticket message/event while the source stays in the mailbox.
+- [ ] Re-run inbound processing and verify no duplicate conflict, Ticket message, event or provider
+  mutation; confirm another user without `email.account_manage` receives no access.
 
 Reviewer: Svein
-Reviewed date: 2026-08-25
-Result / notes: The 2026-08-19 summary listed `Done`/Junie without a detailed review entry. Reclassified
-on 2026-08-21 because the implementation is missing.
+Reviewed date: 2026-08-25; implementation review reopened 2026-08-31
+Result / notes: Svein approved the intended conflict model on 2026-08-25 while the implementation was
+still absent. The implementation now exists and matches that approved direction, but its new UI and
+controlled mailbox behavior have not yet been human-tested. This reopened review does not block the
+requested Dev commit; it blocks treating the new runtime/UI as human-verified for production.
 
 ### HR-2026-08-16-013 - Email/Ticket Conversation Relationship Migration
 
@@ -2226,6 +2330,15 @@ accounts still legacy/unbound. No seeding, provider call, mailbox mutation, sour
 cutover, or secret operation ran.
 The entry is therefore reopened as Rework Needed until an authenticated human verifies the repaired
 Admin/Superuser paths and completes or explicitly re-scopes the remaining checks.
+
+The 2026-08-31 operational-completion repair makes the ownership model explicit in both admin
+surfaces and adds a guarded replacement path for legacy items whose old host/transport cannot be
+represented. A disabled, paused and drained mailbox may bind only to a separately active, exactly
+verified and trust-authorized provider. The local cutover locks both sides, refuses every unresolved
+provider/mailbox operation, performs no IMAP/SMTP call, preserves legacy evidence and creates a
+seven-day rollback run. Safe verification categories now return to the page instead of an opaque 500,
+without exposing endpoints, usernames or provider responses. The provider matrix passes 69 tests /
+607 assertions. A controlled browser/provider smoke remains open because shared Dev has no accounts.
 
 On 2026-08-21, Svein separately approved the current Dev Mail endpoint as the exact RFC1918 IPv4
 `/32` group `tronderdata_mail_dev`. A fail-closed environment parser and blank example setting were

@@ -132,6 +132,11 @@ class EmailMessage extends Model
         return $this->hasMany(EmailTicketConversationLink::class, 'email_message_id');
     }
 
+    public function ticketCorrelationConflict(): HasOne
+    {
+        return $this->hasOne(EmailTicketCorrelationConflict::class, 'email_message_id');
+    }
+
     public function tags(): MorphToMany
     {
         return $this->morphToMany(Tag::class, 'taggable', 'taggables')

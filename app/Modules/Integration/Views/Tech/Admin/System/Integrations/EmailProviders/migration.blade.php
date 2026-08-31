@@ -11,6 +11,7 @@
 
 @section('content')
     @if(session('status'))<div class="alert alert-success" role="status">{{ session('status') }}</div>@endif
+    @if(session('error'))<div class="alert alert-danger" role="alert">{{ session('error') }}</div>@endif
     <div class="card shadow-sm mb-4"><div class="card-body d-flex flex-wrap gap-3">
         <span><strong>Accounts:</strong> {{ $run->account_count }}</span><span><strong>Ready:</strong> {{ $run->ready_count }}</span><span><strong>Blocked:</strong> {{ $run->blocked_count }}</span>
         @if($run->preview_expires_at)<span><strong>Preview expires:</strong> {{ $run->preview_expires_at->format('Y-m-d H:i') }}</span>@endif
@@ -68,6 +69,64 @@
             @endforeach
         </tbody>
     </table></div></div>
+
+    <!-- A blocked legacy configuration needs an explicit verified replacement, not an in-place secret edit. -->
+    @foreach($run->items->where('status', 'blocked') as $blockedItem)
+        @continue(! in_array($blockedItem->block_code, ['legacy_material_incomplete', 'legacy_configuration_not_supported'], true))
+        @php($blockedAccount = $blockedItem->account)
+        <div class="card border-warning shadow-sm mb-4">
+            <div class="card-header"><h2 class="h6 mb-0">Restore {{ $blockedAccount?->address ?? 'blocked mailbox' }} with a verified provider</h2></div>
+            <div class="card-body">
+                <p class="mb-2">
+                    The saved legacy connection cannot be migrated safely.
+                    @if($blockedItem->block_code === 'legacy_material_incomplete')
+                        Required legacy connection fields are missing.
+                    @else
+                        Its old port, transport, or authentication combination is outside the current security policy.
+                    @endif
+                </p>
+                <p class="small text-body-secondary">
+                    Create and verify a replacement under Email providers, then bind it here. The mailbox must be disabled and its provider work paused and drained. The binding change is local-only and retains the legacy evidence for a seven-day rollback window.
+                </p>
+
+                @if(!$blockedAccount)
+                    <div class="alert alert-danger mb-0" role="alert">The mailbox no longer exists.</div>
+                @elseif($blockedAccount->is_active)
+                    <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2 mb-0" role="alert">
+                        <span>Deactivate this mailbox before replacing its provider.</span>
+                        <a class="btn btn-sm btn-outline-dark" href="{{ route('tech.admin.settings.email.accounts.edit', $blockedAccount) }}">Open Email account</a>
+                    </div>
+                @elseif(!$blockedAccount->provider_runtime_paused_at || !$blockedAccount->provider_runtime_drained_at)
+                    <form method="POST" action="{{ route('tech.admin.system.integrations.email-providers.migrations.items.pause', [$run->public_id, $blockedItem->id]) }}">
+                        @csrf
+                        <input type="hidden" name="reason_code" value="provider_replacement">
+                        <button class="btn btn-outline-warning" type="submit">Pause and drain mailbox</button>
+                    </form>
+                @elseif($availableProviders->isEmpty())
+                    <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2 mb-0" role="status">
+                        <span>No active, exactly verified provider is available.</span>
+                        <a class="btn btn-sm btn-primary" href="{{ route('tech.admin.system.integrations.email-providers.create') }}">Create replacement provider</a>
+                    </div>
+                @else
+                    <form method="POST" action="{{ route('tech.admin.system.integrations.email-providers.migrations.items.rebind', [$run->public_id, $blockedItem->id]) }}" class="row g-3 align-items-end">
+                        @csrf
+                        <div class="col-md-8">
+                            <label for="provider_integration_id_{{ $blockedItem->id }}" class="form-label">Active verified provider</label>
+                            <select id="provider_integration_id_{{ $blockedItem->id }}" name="provider_integration_id" class="form-select" required>
+                                <option value="">Select provider</option>
+                                @foreach($availableProviders as $provider)
+                                    <option value="{{ $provider->getKey() }}">{{ $provider->integration?->name ?? 'Email provider' }} · IMAP/SMTP ready</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary w-100" type="submit">Bind verified provider</button>
+                        </div>
+                    </form>
+                @endif
+            </div>
+        </div>
+    @endforeach
 
     <div class="d-flex flex-wrap gap-2 justify-content-end">
         @if($run->operation === 'legacy_migration' && $run->status === 'staged')

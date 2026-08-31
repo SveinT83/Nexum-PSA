@@ -2,13 +2,14 @@
 
 namespace App\Modules\Ticket\Jobs;
 
+use App\Models\Clients\ClientUser;
 use App\Modules\Email\Models\EmailLog;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\EmailProviderBindingSnapshot;
+use App\Modules\Email\Services\EmailSendOutcomeUnresolvedException;
 use App\Modules\Email\Services\EmailTemplateRenderer;
 use App\Modules\Email\Services\SmtpAccountMailer;
-use App\Models\Clients\ClientUser;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -62,6 +63,7 @@ class SendTicketReplyEmail implements ShouldQueue
 
         if (! $ticket || empty($contact?->email)) {
             $this->log(null, $message->id, 'error', 'TICKET_EMAIL_NO_CONTACT', 'Ticket reply has no contact email.');
+
             return;
         }
 
@@ -69,6 +71,7 @@ class SendTicketReplyEmail implements ShouldQueue
 
         if (! $account) {
             $this->log(null, $message->id, 'error', 'TICKET_EMAIL_NO_ACCOUNT', 'No active ticket outbound email account is configured.');
+
             return;
         }
 
@@ -92,6 +95,13 @@ class SendTicketReplyEmail implements ShouldQueue
 
         if (! $template) {
             $this->log($account->id, $message->id, 'error', 'TICKET_EMAIL_NO_TEMPLATE', 'No active ticket_reply email template exists.');
+
+            return;
+        }
+
+        $idempotencyKey = 'ticket-reply:'.$message->id;
+
+        if (EmailLog::query()->where('idempotency_key', $idempotencyKey)->exists()) {
             return;
         }
 
@@ -103,7 +113,49 @@ class SendTicketReplyEmail implements ShouldQueue
                 'message_body' => $message->body,
                 'technician_name' => $message->author?->name ?? 'Support',
             ]);
+            $attachments = $this->attachmentsForMailer($message);
+            $ccRecipients = $this->ccRecipients($message);
+            $reservedMessageId = $mailer->generateMessageId($account);
+        } catch (\Throwable) {
+            // Preparation happened before SMTP, so no provider outcome is
+            // ambiguous and a queue retry remains safe.
+            $this->log(
+                $account->id,
+                $message->id,
+                'error',
+                'TICKET_EMAIL_PREPARATION_FAILED',
+                'Ticket reply preparation failed before SMTP. A retry is safe.',
+            );
 
+            throw new \RuntimeException('Ticket reply preparation failed before SMTP. A retry is safe.');
+        }
+
+        $log = EmailLog::query()->createOrFirst(
+            ['idempotency_key' => $idempotencyKey],
+            [
+                'direction' => 'outbound',
+                'account_id' => $account->id,
+                'scope' => 'tickets',
+                'level' => 'warning',
+                'code' => 'TICKET_EMAIL_RESERVED',
+                'message' => 'Ticket reply Email reserved before SMTP.',
+                'context_json' => [
+                    'ticket_message_id' => $message->id,
+                    'ticket_id' => $ticket->id,
+                    'provider_binding_version' => $this->providerBindingVersion,
+                ],
+                'rfc_message_id' => $reservedMessageId,
+            ],
+        );
+
+        // A prior reservation means delivery either completed or may have
+        // started. Never call SMTP again until explicit reconciliation proves
+        // the original provider outcome.
+        if (! $log->wasRecentlyCreated) {
+            return;
+        }
+
+        try {
             $messageId = $mailer->send(
                 $account,
                 $contact->email,
@@ -111,34 +163,54 @@ class SendTicketReplyEmail implements ShouldQueue
                 $rendered['subject'],
                 $this->appendReplyBoundaryToHtml($rendered['html']),
                 $this->appendReplyBoundaryToText($rendered['text']),
-                $this->attachmentsForMailer($message),
-                $this->ccRecipients($message),
-                ['provider_binding_version' => $this->providerBindingVersion],
+                $attachments,
+                $ccRecipients,
+                [
+                    'message_id' => $reservedMessageId,
+                    'provider_binding_version' => $this->providerBindingVersion,
+                ],
             );
 
-            $this->log($account->id, $message->id, 'info', 'TICKET_EMAIL_SENT', 'Ticket reply email sent.', [
-                'ticket_id' => $ticket->id,
-                'ticket_key' => $ticket->ticket_key,
-                'to' => $contact->email,
-                'cc' => collect($this->ccRecipients($message))->pluck('email')->all(),
-                'rfc_message_id' => $messageId,
-                'attachments_count' => $message->fileAttachments->count(),
-            ], $messageId);
-        } catch (\Throwable $e) {
+            $log->forceFill([
+                'level' => 'info',
+                'code' => 'TICKET_EMAIL_SENT',
+                'message' => 'Ticket reply Email accepted by SMTP.',
+                'rfc_message_id' => $this->cleanMessageId($messageId) ?: $reservedMessageId,
+                'context_json' => array_merge($log->context_json ?? [], [
+                    'smtp_delivery' => 'accepted',
+                    'attachments_count' => count($attachments),
+                    'accepted_at' => now()->toISOString(),
+                ]),
+            ])->save();
+        } catch (\Throwable) {
             $account->forceFill([
                 'last_error_code' => 'SMTP_SEND',
-                'last_error_message' => $e->getMessage(),
+                'last_error_message' => 'The ticket Email provider outcome could not be confirmed. Review Sent mail before retrying.',
             ])->save();
 
-            $this->log($account->id, $message->id, 'error', 'TICKET_EMAIL_SEND_FAILED', $e->getMessage(), [
-                'ticket_id' => $ticket->id,
-                'ticket_key' => $ticket->ticket_key,
-                'to' => $contact->email,
-                'cc' => collect($this->ccRecipients($message))->pluck('email')->all(),
-            ]);
+            $log->forceFill([
+                'level' => 'error',
+                'code' => 'TICKET_EMAIL_OUTCOME_UNRESOLVED',
+                'message' => 'The ticket reply provider outcome could not be confirmed. Do not resend until Sent mail is reconciled.',
+                'context_json' => array_merge($log->context_json ?? [], [
+                    'smtp_delivery' => 'unresolved',
+                    'failed_at' => now()->toISOString(),
+                ]),
+            ])->save();
 
-            throw $e;
+            // Sever the provider exception chain because it may contain an
+            // endpoint, username, recipient or provider response.
+            throw new EmailSendOutcomeUnresolvedException(
+                'The ticket reply provider outcome could not be confirmed. Do not resend until Sent mail is reconciled.',
+            );
         }
+    }
+
+    private function cleanMessageId(?string $messageId): ?string
+    {
+        $messageId = trim((string) preg_replace('/[\r\n]+/', '', (string) $messageId));
+
+        return $messageId !== '' ? $messageId : null;
     }
 
     private function recipientContact(TicketMessage $message): ?ClientUser
@@ -172,16 +244,16 @@ class SendTicketReplyEmail implements ShouldQueue
 
     private function appendReplyBoundaryToHtml(string $html): string
     {
-        $boundary = '<p style="margin-top:24px;color:#6c757d;font-size:12px;">' . e(self::REPLY_ABOVE_LINE) . '</p>';
+        $boundary = '<p style="margin-top:24px;color:#6c757d;font-size:12px;">'.e(self::REPLY_ABOVE_LINE).'</p>';
 
-        return str_contains($html, self::REPLY_ABOVE_LINE) ? $html : rtrim($html) . $boundary;
+        return str_contains($html, self::REPLY_ABOVE_LINE) ? $html : rtrim($html).$boundary;
     }
 
     private function appendReplyBoundaryToText(string $text): string
     {
         return str_contains($text, self::REPLY_ABOVE_LINE)
             ? $text
-            : rtrim($text) . "\n\n" . self::REPLY_ABOVE_LINE;
+            : rtrim($text)."\n\n".self::REPLY_ABOVE_LINE;
     }
 
     private function attachmentsForMailer(TicketMessage $message): array

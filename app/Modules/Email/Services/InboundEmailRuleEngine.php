@@ -25,9 +25,7 @@ use App\Modules\Signal\Actions\RecordSignal;
 use App\Modules\Signal\Models\Signal;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\CreateTicketFromInboundEmail;
-use App\Modules\Ticket\Actions\LinkInboundEmailToTicket;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Models\TicketType;
 use Illuminate\Support\Facades\Schema;
@@ -36,13 +34,13 @@ use Illuminate\Support\Str;
 class InboundEmailRuleEngine
 {
     public function __construct(
-        private readonly LinkInboundEmailToTicket $linkInboundEmailToTicket,
         private readonly CreateTicketFromInboundEmail $createTicketFromInboundEmail,
         private readonly RecordSignal $recordSignal,
         private readonly TrustedSenderAuthenticationFacts $trustedSenderAuthenticationFacts,
         private readonly ApplyEmailConversationRuleClassification $applyConversationClassification,
         private readonly MailboxAccess $mailboxAccess,
         private readonly PerformEmailRemoteOperation $performRemoteOperation,
+        private readonly InboundEmailTicketCorrelationService $ticketCorrelation,
     ) {}
 
     public function processPreclassification(
@@ -83,8 +81,7 @@ class InboundEmailRuleEngine
                 return;
             }
 
-            $this->linkByHeaderReferences($message);
-            $this->linkByTicketKey($message->fresh());
+            $this->ticketCorrelation->correlate($message);
 
             return;
         }
@@ -839,17 +836,13 @@ class InboundEmailRuleEngine
     private function createTicket(EmailMessage $message, string $queueValue = '', ?string $typeSlug = null): void
     {
         // create_ticket is only for unmatched inbound mail; replies must stay on the existing ticket thread.
-        $this->linkByHeaderReferences($message);
-        $message = $message->fresh();
-
-        if ($message->ticket_id !== null || $message->state === 'archived' || $this->isTicketSuppressedTagged($message)) {
+        if ($this->ticketCorrelation->correlate($message)) {
             return;
         }
 
-        $this->linkByTicketKey($message);
         $message = $message->fresh();
 
-        if ($message->ticket_id !== null || $message->state === 'archived' || $this->isTicketSuppressedTagged($message)) {
+        if ($message->state === 'archived' || $this->isTicketSuppressedTagged($message)) {
             return;
         }
 
@@ -865,23 +858,6 @@ class InboundEmailRuleEngine
             : null;
 
         $this->createTicketFromInboundEmail->handle($message->fresh(), $queue, $ticketType);
-    }
-
-    private function linkByTicketKey(EmailMessage $message): void
-    {
-        $ticketKey = $this->ticketKeyFromSubject($message->subject);
-
-        if (! $ticketKey) {
-            return;
-        }
-
-        $ticket = Ticket::where('ticket_key', $ticketKey)->first();
-
-        if (! $ticket) {
-            return;
-        }
-
-        $this->linkInboundEmailToTicket->handle($message->fresh(), $ticket);
     }
 
     private function linkBySalesKey(EmailMessage $message): bool
@@ -901,40 +877,6 @@ class InboundEmailRuleEngine
         $this->createSalesInboundActivity($message->fresh(), $opportunity);
 
         return true;
-    }
-
-    private function linkByHeaderReferences(EmailMessage $message): void
-    {
-        $messageIds = $this->referencedMessageIds($message);
-
-        if (empty($messageIds)) {
-            return;
-        }
-
-        $logs = EmailLog::query()
-            ->where('direction', 'outbound')
-            ->where('scope', 'tickets')
-            ->whereIn('rfc_message_id', $messageIds)
-            ->latest('id')
-            ->get();
-
-        foreach ($logs as $log) {
-            $ticketMessageId = (int) ($log->context_json['ticket_message_id'] ?? 0);
-
-            if (! $ticketMessageId) {
-                continue;
-            }
-
-            $ticketMessage = TicketMessage::with('ticket')->find($ticketMessageId);
-
-            if (! $ticketMessage?->ticket) {
-                continue;
-            }
-
-            $this->linkInboundEmailToTicket->handle($message->fresh(), $ticketMessage->ticket);
-
-            return;
-        }
     }
 
     private function linkBySalesHeaderReferences(EmailMessage $message): bool
@@ -1035,19 +977,13 @@ class InboundEmailRuleEngine
             return;
         }
 
-        $this->linkByHeaderReferences($message);
-
-        $message = $message->fresh();
-
-        if ($message->ticket_id !== null || $message->state === 'archived') {
+        if ($this->ticketCorrelation->correlate($message)) {
             return;
         }
 
-        $this->linkByTicketKey($message);
-
         $message = $message->fresh();
 
-        if ($message->ticket_id !== null || $message->state === 'archived' || $this->isTicketSuppressedTagged($message)) {
+        if ($message->state === 'archived' || $this->isTicketSuppressedTagged($message)) {
             return;
         }
 

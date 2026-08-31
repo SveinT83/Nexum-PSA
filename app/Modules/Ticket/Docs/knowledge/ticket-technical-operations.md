@@ -381,6 +381,9 @@ and drafts. Use a reviewed forward fix after evidence exists.
   three Customer Portal notification/provider-binding tests, three
   `EmailLivePublisherStateMachineTest` tests, one Integration `max_tokens` expectation, and one
   `UserProfileBackfill` count.
+- Follow-up maintenance on 2026-08-30 resolved those eight baseline failures without weakening the
+  provider-binding or Email live-authority guards. The combined Customer Portal, Email live
+  publisher, Integration, and User-profile matrix passes 81 tests / 826 assertions.
 - PHP lint passes 163 files with zero failures. Scoped Pint passes all 162 changed files, excluding
   only tracked-clean `TicketRuleEngine.php`. Blade cache, 13 unique routes, Livewire resolution,
   line-ending/whitespace/final-newline, English-only/no-language-file, artifact, and full/scoped diff
@@ -461,6 +464,18 @@ Important jobs:
 - `SendTicketInternalNotificationEmail`
 
 Queue workers must be running in environments where outbound ticket email should actually send.
+
+`SendTicketReplyEmail` prepares the template, attachments, CC list and reserved RFC Message-ID before
+the SMTP boundary. A deterministic preparation failure is safe to retry and creates no send
+reservation. Immediately before SMTP, the job creates one `ticket-reply:{message-id}` reservation.
+Any existing reservation blocks another provider call. Success means only **SMTP accepted**; it does
+not prove final inbox delivery. A failure after SMTP may have started is recorded as **Delivery needs
+review** and must be reconciled against provider Sent/bounce evidence before any manual resend.
+Recipient addresses and raw provider exceptions are absent from the ordinary send log.
+
+Inbound replies with contradictory RFC-header and `TD-...` evidence are not assigned to the first
+match. They stay unlinked in the Email mailbox and appear in the administrator correlation-conflict
+queue until one evidence-backed Ticket is selected with an audited reason.
 
 ## Testing
 

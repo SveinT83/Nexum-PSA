@@ -4515,7 +4515,7 @@ class TicketModuleTest extends TestCase
             ->assertSee('Technician reply')
             ->assertSee($this->tech->name)
             ->assertSee('Visible reply.')
-            ->assertSee('Email sent')
+            ->assertSee('SMTP accepted')
             ->assertSee('Ticket reply email sent.')
             ->assertSee('&lt;show-status@example.com&gt;', false);
     }
@@ -4571,6 +4571,7 @@ class TicketModuleTest extends TestCase
         ]);
 
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
             $mock->shouldReceive('send')
                 ->once()
                 ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments = []) => $resolvedAccount->is($account)
@@ -4600,6 +4601,8 @@ class TicketModuleTest extends TestCase
             'code' => 'TICKET_EMAIL_SENT',
             'rfc_message_id' => '<message-id@example.com>',
         ]);
+        $this->assertDatabaseCount('email_logs', 1);
+        $this->assertNotNull(EmailLog::query()->sole()->idempotency_key);
     }
 
     #[Test]
@@ -4650,6 +4653,7 @@ class TicketModuleTest extends TestCase
         ]);
 
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
             $mock->shouldReceive('send')
                 ->once()
                 ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments) => $resolvedAccount->is($account)
@@ -4720,6 +4724,7 @@ class TicketModuleTest extends TestCase
         ]);
 
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
             $mock->shouldReceive('send')
                 ->once()
                 ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments, $ccRecipients) => $resolvedAccount->is($account)
@@ -4915,6 +4920,7 @@ class TicketModuleTest extends TestCase
         EmailTemplate::create($this->ticketReplyTemplateData());
 
         $this->mock(SmtpAccountMailer::class, function ($mock) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
             $mock->shouldReceive('send')
                 ->once()
                 ->andThrow(new \RuntimeException('SMTP refused the message.'));
@@ -4927,9 +4933,12 @@ class TicketModuleTest extends TestCase
                 app(SmtpAccountMailer::class)
             );
 
-            $this->fail('Expected SMTP exception was not thrown.');
-        } catch (\RuntimeException $e) {
-            $this->assertSame('SMTP refused the message.', $e->getMessage());
+            $this->fail('Expected unresolved provider outcome exception was not thrown.');
+        } catch (\App\Modules\Email\Services\EmailSendOutcomeUnresolvedException $exception) {
+            $this->assertSame(
+                'The ticket reply provider outcome could not be confirmed. Do not resend until Sent mail is reconciled.',
+                $exception->getMessage(),
+            );
         }
 
         $this->assertDatabaseHas('email_logs', [
@@ -4937,10 +4946,64 @@ class TicketModuleTest extends TestCase
             'account_id' => $account->id,
             'scope' => 'tickets',
             'level' => 'error',
-            'code' => 'TICKET_EMAIL_SEND_FAILED',
-            'message' => 'SMTP refused the message.',
+            'code' => 'TICKET_EMAIL_OUTCOME_UNRESOLVED',
+            'message' => 'The ticket reply provider outcome could not be confirmed. Do not resend until Sent mail is reconciled.',
         ]);
         $this->assertSame('SMTP_SEND', $account->fresh()->last_error_code);
+        $this->assertSame(
+            'The ticket Email provider outcome could not be confirmed. Review Sent mail before retrying.',
+            $account->fresh()->last_error_message,
+        );
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_never_replays_an_existing_reservation(): void
+    {
+        $contact = ClientUser::factory()->create([
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999118']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Idempotent reply.',
+        ]);
+        EmailAccount::create($this->emailAccountData([
+            'address' => 'support-idempotent@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create($this->ticketReplyTemplateData());
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) {
+            $mock->shouldReceive('generateMessageId')
+                ->once()
+                ->andReturn('<reserved-ticket-reply@example.com>');
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn (...$arguments) => data_get($arguments, '8.message_id') === '<reserved-ticket-reply@example.com>')
+                ->andReturn('<reserved-ticket-reply@example.com>');
+        });
+
+        $job = app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id]);
+        $dependencies = [
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class),
+        ];
+
+        $job->handle(...$dependencies);
+        $job->handle(...$dependencies);
+
+        $this->assertDatabaseCount('email_logs', 1);
+        $this->assertDatabaseHas('email_logs', [
+            'idempotency_key' => 'ticket-reply:'.$message->id,
+            'code' => 'TICKET_EMAIL_SENT',
+            'rfc_message_id' => '<reserved-ticket-reply@example.com>',
+        ]);
     }
 
     #[Test]

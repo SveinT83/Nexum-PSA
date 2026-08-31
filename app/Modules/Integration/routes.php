@@ -76,6 +76,9 @@ Route::middleware('admin')->group(function () {
     Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/activate', [EmailProviderController::class, 'activateMigrationItem'])
         ->whereUuid('run')->whereNumber('item')
         ->name('admin.system.integrations.email-providers.migrations.items.activate');
+    Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/rebind', [EmailProviderController::class, 'rebindMigrationItem'])
+        ->whereUuid('run')->whereNumber('item')
+        ->name('admin.system.integrations.email-providers.migrations.items.rebind');
     Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/pause', [EmailProviderController::class, 'pauseAccount'])
         ->whereUuid('run')->whereNumber('item')
         ->name('admin.system.integrations.email-providers.migrations.items.pause');

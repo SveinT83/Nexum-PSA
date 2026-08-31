@@ -99,6 +99,7 @@ class EnforceTechRoutePermission
         'tech.admin.settings.email.accounts.*' => 'email.account_manage',
         'tech.admin.settings.email.canonical-cutover.*' => 'email.canonical_cutover_manage',
         'tech.admin.settings.email.correlation.*' => 'email.mailbox_sync_manage',
+        'tech.admin.settings.email.ticket-correlation-conflicts.*' => 'email.account_manage',
         'tech.admin.settings.email.emergency-access.*' => 'email.break_glass_activate',
         'tech.admin.settings.email.config' => 'email.account_manage',
         'tech.admin.settings.email.config.*' => 'email.account_manage',

@@ -106,7 +106,11 @@ final class VerifyEmailProviderCredential
                 $result = $this->deadline->run(fn (): array => $this->verifier->verify(
                     $this->runtimeFactory->exact($claim['connection'], $claim['version']),
                 ));
-            } catch (\Throwable) {
+            } catch (\Throwable $exception) {
+                $reasonCode = $exception instanceof EmailProviderSecurityException
+                    ? $exception->reasonCode
+                    : 'provider_verification_failed';
+
                 DB::transaction(function () use ($actor, $connection, $version, $claim): void {
                     $lockedConnection = EmailProviderConnection::query()->lockForUpdate()->find($connection->getKey());
                     $lockedVersion = EmailProviderCredentialVersion::query()->lockForUpdate()->find($version->id);
@@ -135,7 +139,7 @@ final class VerifyEmailProviderCredential
 
                 // Provider/library exceptions can contain endpoints, usernames, or
                 // response text. Do not retain them in the throwable chain.
-                throw new EmailProviderSecurityException('provider_verification_failed');
+                throw new EmailProviderSecurityException($reasonCode);
             }
 
             return DB::transaction(function () use (

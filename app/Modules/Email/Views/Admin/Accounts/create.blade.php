@@ -147,7 +147,14 @@
                   <span class="badge text-bg-{{ $account->providerConnection?->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($account->providerConnection?->status ?? 'unavailable') }}</span>
                   <span class="small text-body-secondary">IMAP {{ data_get($account->providerConnection?->capabilities, 'imap') ? 'ready' : 'pending' }} · SMTP {{ data_get($account->providerConnection?->capabilities, 'smtp') ? 'ready' : 'pending' }}</span>
                 </div>
-                <div class="form-text">Provider identity changes require a new verified Integration connection, explicit rebind, and mailbox rebaseline.</div>
+                <div class="form-text">
+                  Provider identity changes require a new verified Integration connection, explicit rebind, and mailbox rebaseline.
+                  @if($account->providerConnection)
+                    <a href="{{ route('tech.admin.system.integrations.email-providers.show', $account->providerConnection->getKey()) }}">Manage provider lifecycle</a>.
+                  @else
+                    The bound provider is unavailable; keep this mailbox disabled until the binding is repaired.
+                  @endif
+                </div>
               @else
                 <div class="alert alert-warning mb-0">
                   This account retains read-only legacy migration evidence. Endpoints, usernames, and credentials can no longer be edited here.
@@ -220,7 +227,7 @@
       <div class="col-12 d-flex justify-content-end gap-2">
         <a href="{{ route('tech.admin.settings.email.accounts') }}" class="btn btn-outline-secondary">Close</a>
         @if($isEdit)
-          <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('email-test-form')?.submit();">Run Full Test</button>
+          <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('email-test-form')?.submit();">Check IMAP and SMTP login</button>
         @endif
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
@@ -235,7 +242,8 @@
       @php($t = session('email_test'))
       <div class="col-12">
         <div class="alert {{ $t['overall'] === 'OK' ? 'alert-success' : ($t['overall'] === 'Warning' ? 'alert-warning' : 'alert-danger') }} mt-3">
-          <div class="fw-semibold">Connection test: {{ $t['overall'] }}</div>
+          <div class="fw-semibold">IMAP/SMTP login check: {{ $t['overall'] }}</div>
+          <div class="small mb-1">This verifies trusted connections and authentication. It does not send a message or prove recipient delivery.</div>
           <div class="small">IMAP: {{ $t['imap_ok'] ? 'OK' : 'Fail' }} ({{ $t['imap_ms'] }} ms) {{ $t['imap_error'] ? '— '.$t['imap_error'] : '' }}</div>
           <div class="small">SMTP: {{ $t['smtp_ok'] ? 'OK' : 'Fail' }} ({{ $t['smtp_ms'] }} ms) {{ $t['smtp_error'] ? '— '.$t['smtp_error'] : '' }}</div>
         </div>

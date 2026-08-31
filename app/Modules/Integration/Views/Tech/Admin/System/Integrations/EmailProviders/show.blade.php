@@ -11,6 +11,7 @@
 
 @section('content')
     @if(session('status'))<div class="alert alert-success" role="status">{{ session('status') }}</div>@endif
+    @if(session('error'))<div class="alert alert-danger" role="alert">{{ session('error') }}</div>@endif
     <div class="row g-4">
         <!-- Safe connection state -->
         <div class="col-lg-4"><div class="card shadow-sm h-100"><div class="card-header"><h2 class="h6 mb-0">Connection state</h2></div><div class="card-body">
@@ -38,6 +39,24 @@
                 <p class="text-body-secondary mb-0">Activate the initial verified version before staging an in-place secret rotation.</p>
             @endif
         </div></div></div>
+    </div>
+
+    <!-- Mailbox bindings are operational metadata, not provider credentials. -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2">
+            <h2 class="h6 mb-0">Bound Email accounts</h2>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ route('tech.admin.settings.email.accounts') }}">Manage accounts</a>
+        </div>
+        <div class="list-group list-group-flush">
+            @forelse($connection->emailAccounts as $account)
+                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3" href="{{ route('tech.admin.settings.email.accounts.edit', $account) }}">
+                    <span><span class="fw-semibold">{{ $account->address }}</span><span class="d-block small text-body-secondary">Mailbox settings, defaults, Ticket ingress and access</span></span>
+                    <span class="badge text-bg-{{ $account->is_active ? 'success' : 'secondary' }}">{{ $account->is_active ? 'Active' : 'Disabled' }}</span>
+                </a>
+            @empty
+                <div class="list-group-item text-body-secondary">No mailbox is bound to this provider yet. Activate a verified credential version, then add or rebind an Email account.</div>
+            @endforelse
+        </div>
     </div>
 
     <!-- Append-only version lifecycle -->

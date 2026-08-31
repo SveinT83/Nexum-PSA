@@ -546,12 +546,24 @@
                                                 </div>
                                             @endif
                                             @if (in_array($message->type, ['customer_reply', 'status_update'], true) && $latestEmailLog)
-                                                <!-- Shows the latest outbound email status for this ticket message so technicians can see delivery problems without opening email logs. -->
-                                                <div class="small {{ $latestEmailLog->level === 'error' ? 'text-danger' : 'text-success' }} mb-2">
-                                                    {{ $latestEmailLog->level === 'error' ? 'Email failed' : 'Email sent' }}:
-                                                    {{ $latestEmailLog->message }}
+                                                <!-- Distinguish local reservation, SMTP acceptance, and an ambiguous provider outcome. -->
+                                                @php
+                                                    $emailStatus = match ($latestEmailLog->code) {
+                                                        'TICKET_EMAIL_SENT' => ['text-success', 'SMTP accepted'],
+                                                        'TICKET_EMAIL_RESERVED' => ['text-warning', 'Waiting for provider'],
+                                                        'TICKET_EMAIL_OUTCOME_UNRESOLVED' => ['text-danger', 'Delivery needs review'],
+                                                        default => $latestEmailLog->level === 'error'
+                                                            ? ['text-danger', 'Email failed']
+                                                            : ['text-muted', 'Email status'],
+                                                    };
+                                                @endphp
+                                                <div class="small {{ $emailStatus[0] }} mb-2">
+                                                    {{ $emailStatus[1] }}: {{ $latestEmailLog->message }}
                                                     @if ($latestEmailLog->rfc_message_id)
                                                         <span class="text-muted">({{ $latestEmailLog->rfc_message_id }})</span>
+                                                    @endif
+                                                    @if ($latestEmailLog->code === 'TICKET_EMAIL_SENT')
+                                                        <span class="d-block text-body-secondary">The configured SMTP provider accepted the message. Final inbox delivery is not proven here; check customer replies or provider bounce notices.</span>
                                                     @endif
                                                 </div>
                                             @elseif (in_array($message->type, ['customer_reply', 'status_update'], true) && in_array($message->author_type, ['user', 'system'], true))

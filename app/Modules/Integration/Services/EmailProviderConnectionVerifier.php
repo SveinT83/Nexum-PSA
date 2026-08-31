@@ -4,7 +4,10 @@ namespace App\Modules\Integration\Services;
 
 use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
 use App\Modules\Integration\Support\EmailProviderRuntimeCredentials;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Throwable;
+use Webklex\PHPIMAP\Exceptions\AuthFailedException;
+use Webklex\PHPIMAP\Exceptions\ConnectionFailedException;
 
 class EmailProviderConnectionVerifier
 {
@@ -20,7 +23,14 @@ class EmailProviderConnectionVerifier
         $imap = $this->transports->makeImap($runtime, $this->remainingTimeout($deadline));
 
         try {
-            $imap->connect();
+            try {
+                $imap->connect();
+            } catch (AuthFailedException) {
+                throw new EmailProviderSecurityException('provider_authentication_rejected');
+            } catch (ConnectionFailedException) {
+                throw new EmailProviderSecurityException('provider_connection_failed');
+            }
+
             // Successful authenticated connect is the bounded IMAP probe.
             // Folder enumeration is intentionally excluded: a provider can
             // return an unbounded hierarchy and outlive the verification lease.
@@ -36,7 +46,11 @@ class EmailProviderConnectionVerifier
         $smtp = $this->transports->makeSmtp($runtime, $this->remainingTimeout($deadline));
 
         try {
-            $smtp->start();
+            try {
+                $smtp->start();
+            } catch (TransportExceptionInterface) {
+                throw new EmailProviderSecurityException('provider_connection_failed');
+            }
         } finally {
             try {
                 $smtp->stop();

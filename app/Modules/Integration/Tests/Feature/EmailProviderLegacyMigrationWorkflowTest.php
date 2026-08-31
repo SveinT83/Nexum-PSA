@@ -10,6 +10,7 @@ use App\Modules\Email\Support\EmailProviderIdlePresenceLease;
 use App\Modules\Integration\Actions\ActivateEmailProviderCredential;
 use App\Modules\Integration\Actions\ActivateLegacyEmailProviderMigrationItem;
 use App\Modules\Integration\Actions\ApplyEmailProviderCutover;
+use App\Modules\Integration\Actions\CreateEmailProviderConnection;
 use App\Modules\Integration\Actions\PauseEmailProviderAccountRuntime;
 use App\Modules\Integration\Actions\PreviewEmailProviderCutover;
 use App\Modules\Integration\Actions\PreviewLegacyEmailProviderMigration;
@@ -201,6 +202,68 @@ class EmailProviderLegacyMigrationWorkflowTest extends TestCase
     }
 
     #[Test]
+    public function blocked_legacy_mailbox_can_bind_a_separately_verified_provider_and_roll_back(): void
+    {
+        $account = $this->legacyAccount([
+            'is_active' => false,
+            'imap_port' => 143,
+            'imap_encryption' => 'ssl',
+        ]);
+        $preview = app(PreviewLegacyEmailProviderMigration::class)->execute($this->operator, [$account->id]);
+        $item = $preview->items->sole();
+        $this->assertSame('blocked', $item->status);
+        $this->assertSame('legacy_configuration_not_supported', $item->block_code);
+
+        $connection = $this->verifiedProvider();
+        $this->assertSame(1, $this->verifier->calls);
+        app(PauseEmailProviderAccountRuntime::class)->execute(
+            $this->operator,
+            $account,
+            'provider_replacement',
+        );
+
+        $this->actingAs($this->operator)
+            ->get(route('tech.admin.system.integrations.email-providers.migrations.show', $preview->public_id))
+            ->assertOk()
+            ->assertSee('Restore '.$account->address.' with a verified provider')
+            ->assertSee('Bind verified provider');
+
+        $response = $this->actingAs($this->operator)->post(route(
+            'tech.admin.system.integrations.email-providers.migrations.items.rebind',
+            [$preview->public_id, $item->id],
+        ), [
+            'provider_integration_id' => $connection->getKey(),
+        ]);
+
+        $cutover = EmailProviderMigrationRun::query()
+            ->where('operation', 'cutover')
+            ->where('source_run_id', $preview->id)
+            ->sole();
+        $response
+            ->assertRedirect(route('tech.admin.system.integrations.email-providers.migrations.show', $cutover->public_id))
+            ->assertSessionHas('status');
+
+        $account = $account->fresh();
+        $this->assertFalse($account->is_active);
+        $this->assertSame('integration', $account->provider_credential_source);
+        $this->assertSame($connection->getKey(), $account->provider_integration_id);
+        $this->assertSame(2, (int) $account->provider_binding_version);
+        $this->assertSame('applied', $cutover->status);
+        $this->assertSame('rebound', $item->fresh()->status);
+        $this->assertSame('superseded', $preview->fresh()->status);
+        $this->assertSame('imap-secret-legacy-canary', Crypt::decryptString($account->imap_secret));
+        $this->assertSame(1, $this->verifier->calls, 'The local binding must not call IMAP or SMTP.');
+
+        $rollback = app(RollbackEmailProviderCutover::class)->execute($this->operator, $cutover);
+        $account = $account->fresh();
+        $this->assertSame('legacy', $account->provider_credential_source);
+        $this->assertNull($account->provider_integration_id);
+        $this->assertSame(3, (int) $account->provider_binding_version);
+        $this->assertSame('applied', $rollback->status);
+        $this->assertSame(1, $this->verifier->calls, 'Rollback is local-only.');
+    }
+
+    #[Test]
     public function rollback_rejects_every_unresolved_provider_work_category_idle_and_reconciliation_before_binding_flip(): void
     {
         [$account, $cutover] = $this->appliedCutover();
@@ -377,6 +440,35 @@ class EmailProviderLegacyMigrationWorkflowTest extends TestCase
         $rollback = app(RollbackEmailProviderCutover::class)->execute($this->operator, $cutover->fresh());
         $this->assertSame('applied', $rollback->status);
         $this->assertSame('legacy', $account->fresh()->provider_credential_source);
+    }
+
+    private function verifiedProvider(): EmailProviderConnection
+    {
+        $connection = app(CreateEmailProviderConnection::class)->execute($this->operator, [
+            'name' => 'Replacement provider',
+            'imap_host' => '8.8.8.8',
+            'imap_port' => 993,
+            'imap_transport' => 'implicit_tls',
+            'imap_auth_type' => 'password',
+            'imap_username' => 'replacement-imap-user',
+            'imap_secret' => 'replacement-imap-secret',
+            'smtp_host' => '1.1.1.1',
+            'smtp_port' => 465,
+            'smtp_transport' => 'implicit_tls',
+            'smtp_auth_type' => 'password',
+            'smtp_username' => 'replacement-smtp-user',
+            'smtp_secret' => 'replacement-smtp-secret',
+            'trust_mode' => 'public',
+        ]);
+        $credential = $connection->credentialVersions()->sole();
+        app(VerifyEmailProviderCredential::class)->execute($this->operator, $connection, $credential);
+        app(ActivateEmailProviderCredential::class)->execute(
+            $this->operator,
+            $connection->fresh(),
+            $credential->fresh(),
+        );
+
+        return $connection->fresh(['activeCredentialVersion']);
     }
 
     /** @return array{EmailAccount, EmailProviderMigrationRun} */
