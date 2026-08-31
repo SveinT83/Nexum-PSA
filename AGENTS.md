@@ -201,12 +201,36 @@ affected code and tests.
 
 ## TODO Management
 
-- `docs/TODO.md` is the authoritative backlog for known follow-up work.
-- If missing work, missing documentation, technical debt, future improvements,
-  or required follow-up tasks are discovered, update `docs/TODO.md` when the
-  work is approved or recommend adding an entry when approval is unclear.
-- Before changing an area, check whether TODO/RFC/feature-slice items already
-  affect that area.
+- `docs/TODO.md` is the authoritative backlog for known follow-up work and the authoritative live
+  work-in-progress register.
+- Every active GitHub Issue, Draft RFC, Proposed ADR, and Draft/Ready/In Progress/Blocked/Rework
+  Feature Slice must be represented there with its current status, owner, related artifacts,
+  concrete next action, and human-review ID when one exists.
+- Before creating or starting a new Issue, RFC, ADR, or Feature Slice, reconcile
+  `docs/TODO.md`, the relevant GitHub state, planning-artifact status, and the authoritative Dev
+  working copy. Finish the already active item in that scope first.
+- A contributor should have one primary implementation in progress at a time. Parallel work is
+  allowed only for explicitly coordinated, non-overlapping slices that are each registered in
+  `docs/TODO.md`.
+- Starting new work while an existing item is merely inconvenient, uncommitted, unpushed, or
+  awaiting ordinary cleanup is a process violation. Existing work may be deferred only when it is
+  genuinely blocked by a recorded external dependency, required product decision, human-review
+  gate, or an explicitly approved reprioritization or urgent incident. Record the blocker, owner,
+  next action, and resume condition before switching.
+- Agents must push back when asked to start another ordinary Issue/RFC/ADR while earlier registered
+  work can be completed safely. Name the active item that should be finished first and continue
+  with it unless Svein explicitly reprioritizes.
+- Update the register in the same work session when work starts, becomes blocked, is superseded,
+  passes verification, receives human review, or is completed. Reconcile the linked GitHub Issue
+  and the status lines in its RFC/ADR/Feature Slices at the same time.
+- `Done On Dev` is based on the actual authoritative Dev working copy, verification, and required
+  documentation; commit and push are not prerequisites. Human review, Main promotion, migration,
+  deployment, runtime activation, and production verification remain separate gates and must be
+  stated separately.
+- If missing work, missing documentation, technical debt, future improvements, or required
+  follow-up tasks are discovered, update `docs/TODO.md` when the work is approved or recommend
+  adding an entry when approval is unclear.
+- Before changing an area, check whether TODO/RFC/feature-slice items already affect that area.
 
 ## Comment And Documentation Rules
 
