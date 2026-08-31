@@ -9087,3 +9087,30 @@ not explicitly left open above. Full confirmation is not yet provided.
 - **Risks:** Accidentally stripping custom permissions if they were not recorded in the seeder.
 - **Status:** Reviewed
 - **Reviewer:** Junie (Automated Verification)
+
+## [HR-2026-08-16-015] Email/Ticket Not-Ticket And Merge Compatibility
+- **Scope:** Durable conversation-scoped Ticket suppression and atomic Ticket merge compatibility.
+- **Affected:** Mail conversation actions, Ticket `Mark as not ticket`, Ticket bulk merge, inbound
+  Ticket correlation, Email/Ticket relationship audit and retired Ticket keys.
+- **Checks:**
+    - [ ] From Mail, mark one test conversation as `Not a Ticket`; confirm its current and later
+      messages remain in Mail and do not create or join a Ticket.
+    - [ ] Confirm the provider message remains in the same folder and keeps its Seen/flag state.
+    - [ ] From a Ticket created from test mail, use `Mark as not ticket`; confirm the Ticket leaves the
+      normal list and the exact Mail conversation remains accessible.
+    - [ ] Merge two test Tickets that link the same Mail conversation; confirm the preview names the
+      selected primary Ticket and the surviving Ticket shows one relationship with the expected
+      internal/customer audience.
+    - [ ] Change one selected Ticket in another tab after opening the merge dialog; confirm submit is
+      rejected as stale and neither Ticket is partially merged.
+    - [ ] Send/import a controlled reply containing the retired source `TD-...` key; confirm it
+      correlates to the surviving Ticket only.
+- **Expected Results:** Suppression is exact to one account/conversation, merge is atomic and current
+  authorization is rechecked, old keys remain deterministic aliases, and no provider operation is
+  issued by either workflow.
+- **Migration:** `2026_08_31_130000_create_email_ticket_suppressions_and_aliases.php` is applied on Dev.
+- **Risks:** A mistaken suppression intentionally blocks future automatic Ticket creation until a
+  separately authorized lift workflow is added; merge access can fail closed when an affected
+  mailbox is no longer available to the operator.
+- **Status:** Pending
+- **Reviewer:** Not assigned

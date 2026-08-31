@@ -17,6 +17,7 @@ use App\Modules\Email\Actions\RetryEmailRemoteOperation;
 use App\Modules\Email\Actions\SendEmailComposerMessage;
 use App\Modules\Email\Actions\SetEmailUnreadForMe;
 use App\Modules\Email\Actions\SubmitEmailComposerDraft;
+use App\Modules\Email\Actions\SuppressEmailConversationTicketCorrelation;
 use App\Modules\Email\Actions\SummarizeEmailWithAi;
 use App\Modules\Email\Actions\UndoEmailRemoteOperation;
 use App\Modules\Email\Actions\UpdateEmailConversationClassification;
@@ -668,6 +669,39 @@ class MailWorkspace extends Component
             'message' => 'Message was marked as spam and rule "'.$rule->name.'" was updated. No provider Archive folder is available.',
         ];
 
+        $this->dispatch('mail-state-changed');
+    }
+
+    public function suppressSelectedTicketCorrelation(): void
+    {
+        $placement = $this->selectedPlacementForAction();
+        $user = $this->user();
+
+        if (! $placement?->message || ! $user || ! $this->canOrganizePlacement($placement)) {
+            $this->mailActionStatus = [
+                'type' => 'warning',
+                'message' => 'You need mailbox Organize access before marking a conversation as not a Ticket.',
+            ];
+
+            return;
+        }
+
+        try {
+            app(SuppressEmailConversationTicketCorrelation::class)->handle($placement, $user);
+        } catch (\Throwable $exception) {
+            $this->mailActionStatus = [
+                'type' => 'danger',
+                'message' => 'Ticket correlation could not be suppressed: '.$exception->getMessage(),
+            ];
+
+            return;
+        }
+
+        $this->mailActionStatus = [
+            'type' => 'success',
+            'message' => 'This Mail conversation will no longer create or join Tickets automatically.',
+        ];
+        $this->resetTicketLinkPanel();
         $this->dispatch('mail-state-changed');
     }
 

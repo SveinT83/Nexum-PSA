@@ -46,9 +46,13 @@ Tickets that should not have become tickets can be returned to Inbox with `Mark 
 
 This action:
 
-- Moves the ticket context back toward Inbox handling.
-- Tags related email so matching messages do not automatically become tickets again.
-- Helps build operational rules for messages that are useful but not ticket-worthy.
+- Requires current ordinary Mail Organize access for every affected provider-backed message.
+- Stores an account-scoped suppression for the exact durable Mail conversation.
+- Returns linked local messages to untriaged Inbox handling and marks the relationship unlinked.
+- Stops later messages in the same conversation before header, Ticket-key, rule, or default Ticket
+  creation can run.
+- Never changes provider Seen/flag/folder/deletion state and does not create a broad sender+subject
+  rule that could suppress an unrelated future request.
 
 Future Operational Signals should extend this idea for machine-generated emails that should be logged, not treated as spam or work tickets.
 

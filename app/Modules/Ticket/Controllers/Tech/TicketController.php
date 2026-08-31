@@ -1158,6 +1158,8 @@ class TicketController extends Controller
             'ticket_ids' => 'required|array|min:2',
             'ticket_ids.*' => 'integer|exists:tickets,id',
             'target_ticket_id' => 'required|integer|exists:tickets,id',
+            'ticket_snapshots' => 'required|array|min:2',
+            'ticket_snapshots.*' => 'required|string|size:64',
             'reason' => 'nullable|string|max:1000',
         ]);
 
@@ -1192,9 +1194,13 @@ class TicketController extends Controller
         }
 
         try {
-            foreach ($tickets->except($target->id) as $source) {
-                $target = $mergeTickets->handle($source, $target, $request->user(), $data['reason'] ?? null);
-            }
+            $target = $mergeTickets->handleMany(
+                $tickets->except($target->id)->values(),
+                $target,
+                $request->user(),
+                $data['reason'] ?? null,
+                $data['ticket_snapshots'],
+            );
         } catch (\InvalidArgumentException $exception) {
             return back()->withErrors(['ticket_ids' => $exception->getMessage()]);
         }

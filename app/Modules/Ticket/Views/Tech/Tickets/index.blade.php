@@ -273,6 +273,7 @@
                                     value="{{ $ticket->id }}"
                                     data-ticket-key="{{ $ticket->ticket_key }}"
                                     data-ticket-subject="{{ $ticket->subject }}"
+                                    data-ticket-snapshot="{{ \App\Modules\Ticket\Support\TicketMergeSnapshot::fingerprint($ticket) }}"
                                     aria-label="Select ticket {{ $ticket->ticket_key }}">
                             </td>
                             <td>
@@ -422,6 +423,7 @@
                         id: checkbox.value,
                         key: checkbox.dataset.ticketKey,
                         subject: checkbox.dataset.ticketSubject,
+                        snapshot: checkbox.dataset.ticketSnapshot,
                     };
                 });
         };
@@ -448,6 +450,12 @@
                 hiddenInput.name = 'ticket_ids[]';
                 hiddenInput.value = ticket.id;
                 bulkHiddenInputs.appendChild(hiddenInput);
+
+                const snapshotInput = document.createElement('input');
+                snapshotInput.type = 'hidden';
+                snapshotInput.name = 'ticket_snapshots[' + ticket.id + ']';
+                snapshotInput.value = ticket.snapshot;
+                bulkHiddenInputs.appendChild(snapshotInput);
 
                 const option = document.createElement('label');
                 option.className = 'list-group-item d-flex gap-2 align-items-start';

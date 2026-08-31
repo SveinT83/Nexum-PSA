@@ -8,6 +8,7 @@ use App\Modules\Email\Models\EmailTicketConversationLink;
 use App\Modules\Email\Models\EmailTicketCorrelationConflict;
 use App\Modules\Ticket\Actions\LinkInboundEmailToTicket;
 use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Ticket\Models\TicketKeyAlias;
 use App\Modules\Ticket\Models\TicketMessage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,7 @@ class InboundEmailTicketCorrelationService
 {
     public function __construct(
         private readonly LinkInboundEmailToTicket $linkInboundEmailToTicket,
+        private readonly EmailTicketCorrelationSuppressionService $suppressions,
     ) {}
 
     /**
@@ -29,6 +31,13 @@ class InboundEmailTicketCorrelationService
         $message = $message->fresh() ?? $message;
 
         if ($message->ticket_id !== null) {
+            return true;
+        }
+
+        // Conversation suppression is durable local policy. It prevents both
+        // subject/header correlation and default Ticket creation without
+        // mutating provider mailbox state.
+        if ($this->suppressions->isSuppressed($message)) {
             return true;
         }
 
@@ -152,10 +161,21 @@ class InboundEmailTicketCorrelationService
             return [];
         }
 
-        return Ticket::query()
-            ->where('ticket_key', strtoupper($matches[1]))
-            ->pluck('id')
+        $ticketKey = strtoupper($matches[1]);
+        $ticketIds = Ticket::query()
+            ->where('ticket_key', $ticketKey)
+            ->pluck('id');
+
+        if ($ticketIds->isEmpty() && Schema::hasTable('ticket_key_aliases')) {
+            $ticketIds = TicketKeyAlias::query()
+                ->where('alias_key', $ticketKey)
+                ->pluck('ticket_id');
+        }
+
+        return $ticketIds
             ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
             ->all();
     }
 

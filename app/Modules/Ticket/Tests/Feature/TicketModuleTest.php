@@ -16,7 +16,10 @@ use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailConversationTicketSuppression;
+use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLog;
+use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailTemplate;
@@ -70,6 +73,7 @@ use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\Ticket\Support\TicketMergeSnapshot;
 use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use App\Modules\WorkContext\Support\WorkContextType;
@@ -989,6 +993,7 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function tech_user_can_mark_ticket_as_not_ticket_from_ticket_list(): void
     {
+        $this->tech->givePermissionTo(['email.inbox_view', 'email.inbox_manage']);
         $ticket = $this->createTicket(null, [
             'ticket_key' => 'TD-2026-999026',
             'subject' => 'Not ticket action target',
@@ -1006,6 +1011,26 @@ class TicketModuleTest extends TestCase
             'smtp_encryption' => 'tls',
             'smtp_username' => 'support@example.test',
             'smtp_secret' => 'secret',
+        ]);
+        DB::table('email_account_user_grants')->insert([
+            'email_account_id' => $account->id,
+            'user_id' => $this->tech->id,
+            'can_view' => true,
+            'can_organize' => true,
+            'can_send' => false,
+            'granted_by' => $this->tech->id,
+            'granted_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $folder = EmailFolder::create([
+            'account_id' => $account->id,
+            'path' => 'INBOX',
+            'name' => 'INBOX',
+            'role' => EmailFolder::ROLE_INBOX,
+            'is_selectable' => true,
+            'sync_enabled' => true,
+            'uid_validity' => 1,
         ]);
         $email = EmailMessage::create([
             'account_id' => $account->id,
@@ -1030,6 +1055,15 @@ class TicketModuleTest extends TestCase
             'state' => 'untriaged',
             'body_text' => 'Must remain untouched.',
             'ticket_id' => null,
+        ]);
+        EmailMailboxPlacement::create([
+            'email_message_id' => $email->id,
+            'account_id' => $account->id,
+            'email_folder_id' => $folder->id,
+            'folder_path' => 'INBOX',
+            'imap_uid_validity' => 1,
+            'imap_uid' => $email->imap_uid,
+            'local_state' => EmailMailboxPlacement::LOCAL_ACTIVE,
         ]);
         $ticketMessage = TicketMessage::create([
             'ticket_id' => $ticket->id,
@@ -1082,18 +1116,14 @@ class TicketModuleTest extends TestCase
             'type' => 'marked_not_ticket',
         ]);
 
-        $rule = EmailRule::query()->where('name', 'like', 'Not ticket:%')->first();
+        $suppression = EmailConversationTicketSuppression::query()->first();
 
-        $this->assertNotNull($rule);
-        $this->assertTrue($rule->is_active);
-        $this->assertTrue($rule->stop_processing);
-        $this->assertSame([
-            ['field' => 'from', 'operator' => 'equals', 'value' => 'sender@example.test'],
-            ['field' => 'subject', 'operator' => 'equals', 'value' => 'Newsletter status'],
-        ], $rule->conditions_json);
-        $this->assertSame([
-            ['type' => 'tag', 'value' => 'not-ticket'],
-        ], $rule->actions_json);
+        $this->assertNotNull($suppression);
+        $this->assertSame(EmailConversationTicketSuppression::STATUS_ACTIVE, $suppression->status);
+        $this->assertSame($account->id, $suppression->account_id);
+        $this->assertSame($ticket->id, $suppression->source_ticket_id);
+        $this->assertSame($this->tech->id, $suppression->suppressed_by);
+        $this->assertNull(EmailRule::query()->where('name', 'like', 'Not ticket:%')->first());
     }
 
     #[Test]
@@ -1166,6 +1196,10 @@ class TicketModuleTest extends TestCase
             ->post(route('tech.tickets.merge'), [
                 'ticket_ids' => [$target->id, $source->id],
                 'target_ticket_id' => $target->id,
+                'ticket_snapshots' => [
+                    $target->id => TicketMergeSnapshot::fingerprint($target),
+                    $source->id => TicketMergeSnapshot::fingerprint($source),
+                ],
                 'reason' => 'Same customer issue.',
             ])
             ->assertRedirect(route('tech.tickets.show', $target))

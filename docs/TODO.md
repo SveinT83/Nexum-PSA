@@ -42,7 +42,7 @@ Last reconciled against authoritative Dev on 2026-08-31.
 | `docs/feature-slices/2026-08-11-storage-operational-supplier-order-setup.md` | Ready | Named desktop/narrow-width review remains. |
 | `docs/feature-slices/2026-08-15-email-mail-inbound-attachment-recovery-download.md` | Rework Needed / Partial Recovery | Complete canonical evidence and operator repair before adjacent Mail expansion. |
 | `docs/feature-slices/2026-08-19-email-ticket-correlation-conflict-triage.md` | Done On Dev / Human Review Reopened | Run the new browser/runtime checks under `HR-2026-08-16-014`; implementation is complete and no longer blocks Order 15. |
-| `docs/feature-slices/2026-08-19-email-ticket-not-ticket-merge-compatibility.md` | In Progress / Dependency Gated | Resume only after its recorded Email/Ticket dependencies are satisfied. |
+| `docs/feature-slices/2026-08-19-email-ticket-not-ticket-merge-compatibility.md` | Done On Dev / Human Review Pending | Implementation and automated Dev verification are complete; run the exact browser/runtime checks under `HR-2026-08-16-015`. |
 
 ## Status Legend
 
