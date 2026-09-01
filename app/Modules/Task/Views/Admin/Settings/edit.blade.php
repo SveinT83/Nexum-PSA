@@ -17,7 +17,7 @@
         @csrf
         @method('PUT')
 
-        <div class="card shadow-sm">
+        <div class="card shadow-sm mb-3">
             <div class="card-header">
                 <h2 class="h6 mb-0">Manual Task Defaults</h2>
             </div>
@@ -67,6 +67,31 @@
                         @error('default_estimated_minutes') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ------------------------------------------------- -->
+        <!-- Ticket-owned Task Billing -->
+        <!-- ------------------------------------------------- -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Ticket-owned Task Billing</h2>
+            </div>
+            <div class="card-body">
+                <label for="ticket_billing_minutes_mode" class="form-label">Customer billing minutes</label>
+                <select id="ticket_billing_minutes_mode" name="ticket_billing_minutes_mode" class="form-select @error('ticket_billing_minutes_mode') is-invalid @enderror">
+                    <option value="actual" @selected(old('ticket_billing_minutes_mode', $settings['ticket_billing_minutes_mode']) === 'actual')>
+                        Actual Task time
+                    </option>
+                    <option value="estimate_minimum" @selected(old('ticket_billing_minutes_mode', $settings['ticket_billing_minutes_mode']) === 'estimate_minimum')>
+                        Task estimate as minimum, otherwise actual time
+                    </option>
+                </select>
+                @error('ticket_billing_minutes_mode') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                <div class="form-text">
+                    This affects customer billing for Ticket-owned Tasks only. Technician time always remains the actual registered time.
+                    With a 30-minute estimate, 5 tracked minutes bill 30 minutes; 60 tracked minutes bill 60 minutes.
+                </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     <a href="{{ route('tech.admin.index') }}" class="btn btn-outline-secondary">Cancel</a>
@@ -94,7 +119,7 @@
                 These defaults are applied when a technician creates a manual task. Ticket-owned tasks can still inherit ticket queue, priority, category, assignee, and tags.
             </p>
             <p class="mb-0">
-                Task statuses remain table-driven so later workflow and template features can reuse the same status catalog.
+                Task statuses remain table-driven so later workflow and template features can reuse the same status catalog. Ticket-owned Task billing is cumulative across time entries, so the estimate minimum is applied once per Task rather than once per timer session.
             </p>
         </div>
     </div>

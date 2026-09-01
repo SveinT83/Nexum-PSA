@@ -16,7 +16,10 @@ use App\Modules\Commercial\Models\TimeRate;
 use App\Modules\Contact\Models\Contact;
 use App\Modules\Documentation\Models\Vendor;
 use App\Modules\Email\Models\EmailAccount;
+use App\Modules\Email\Models\EmailConversationTicketSuppression;
+use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLog;
+use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailTemplate;
@@ -70,6 +73,7 @@ use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowTransition;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\Ticket\Support\TicketMergeSnapshot;
 use App\Modules\UserManagement\Models\UserProfile;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use App\Modules\WorkContext\Support\WorkContextType;
@@ -123,6 +127,47 @@ class TicketModuleTest extends TestCase
             'storage.reserve',
             'storage.pick',
         ]);
+    }
+
+    #[Test]
+    public function automatic_ticket_key_allocation_is_locked_and_skips_an_occupied_sequence(): void
+    {
+        $year = (int) now()->format('Y');
+        $prefix = 'TD-'.$year.'-';
+        $duplicateKey = $prefix.'999990';
+        $nextKey = $prefix.'999991';
+        $this->createTicket(null, [
+            'ticket_key' => $duplicateKey,
+            'subject' => 'Existing collision ticket',
+        ]);
+
+        DB::table('ticket_key_sequences')->updateOrInsert(
+            ['year' => $year],
+            [
+                'next_sequence' => 999990,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+        $ticket = DB::transaction(fn (): Ticket => app(StoreTicket::class)->handle([
+            'subject' => 'Nested collision retry ticket',
+            'description' => 'Created exactly once after the Ticket key collision.',
+            'owner_id' => $this->tech->id,
+            'suppress_notifications' => true,
+        ], $this->tech));
+
+        $this->assertSame($nextKey, $ticket->ticket_key);
+        $this->assertDatabaseHas('ticket_key_sequences', [
+            'year' => $year,
+            'next_sequence' => 999992,
+        ]);
+        $this->assertSame(1, Ticket::query()->where('subject', $ticket->subject)->count());
+        $this->assertSame(1, $ticket->events()->where('type', 'created')->count());
+        $this->assertSame(1, $ticket->messages()
+            ->where('type', 'internal_note')
+            ->where('metadata->is_default_initial_note', true)
+            ->count());
     }
 
     #[Test]
@@ -948,6 +993,7 @@ class TicketModuleTest extends TestCase
     #[Test]
     public function tech_user_can_mark_ticket_as_not_ticket_from_ticket_list(): void
     {
+        $this->tech->givePermissionTo(['email.inbox_view', 'email.inbox_manage']);
         $ticket = $this->createTicket(null, [
             'ticket_key' => 'TD-2026-999026',
             'subject' => 'Not ticket action target',
@@ -965,6 +1011,26 @@ class TicketModuleTest extends TestCase
             'smtp_encryption' => 'tls',
             'smtp_username' => 'support@example.test',
             'smtp_secret' => 'secret',
+        ]);
+        DB::table('email_account_user_grants')->insert([
+            'email_account_id' => $account->id,
+            'user_id' => $this->tech->id,
+            'can_view' => true,
+            'can_organize' => true,
+            'can_send' => false,
+            'granted_by' => $this->tech->id,
+            'granted_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $folder = EmailFolder::create([
+            'account_id' => $account->id,
+            'path' => 'INBOX',
+            'name' => 'INBOX',
+            'role' => EmailFolder::ROLE_INBOX,
+            'is_selectable' => true,
+            'sync_enabled' => true,
+            'uid_validity' => 1,
         ]);
         $email = EmailMessage::create([
             'account_id' => $account->id,
@@ -989,6 +1055,15 @@ class TicketModuleTest extends TestCase
             'state' => 'untriaged',
             'body_text' => 'Must remain untouched.',
             'ticket_id' => null,
+        ]);
+        EmailMailboxPlacement::create([
+            'email_message_id' => $email->id,
+            'account_id' => $account->id,
+            'email_folder_id' => $folder->id,
+            'folder_path' => 'INBOX',
+            'imap_uid_validity' => 1,
+            'imap_uid' => $email->imap_uid,
+            'local_state' => EmailMailboxPlacement::LOCAL_ACTIVE,
         ]);
         $ticketMessage = TicketMessage::create([
             'ticket_id' => $ticket->id,
@@ -1041,18 +1116,14 @@ class TicketModuleTest extends TestCase
             'type' => 'marked_not_ticket',
         ]);
 
-        $rule = EmailRule::query()->where('name', 'like', 'Not ticket:%')->first();
+        $suppression = EmailConversationTicketSuppression::query()->first();
 
-        $this->assertNotNull($rule);
-        $this->assertTrue($rule->is_active);
-        $this->assertTrue($rule->stop_processing);
-        $this->assertSame([
-            ['field' => 'from', 'operator' => 'equals', 'value' => 'sender@example.test'],
-            ['field' => 'subject', 'operator' => 'equals', 'value' => 'Newsletter status'],
-        ], $rule->conditions_json);
-        $this->assertSame([
-            ['type' => 'tag', 'value' => 'not-ticket'],
-        ], $rule->actions_json);
+        $this->assertNotNull($suppression);
+        $this->assertSame(EmailConversationTicketSuppression::STATUS_ACTIVE, $suppression->status);
+        $this->assertSame($account->id, $suppression->account_id);
+        $this->assertSame($ticket->id, $suppression->source_ticket_id);
+        $this->assertSame($this->tech->id, $suppression->suppressed_by);
+        $this->assertNull(EmailRule::query()->where('name', 'like', 'Not ticket:%')->first());
     }
 
     #[Test]
@@ -1125,6 +1196,10 @@ class TicketModuleTest extends TestCase
             ->post(route('tech.tickets.merge'), [
                 'ticket_ids' => [$target->id, $source->id],
                 'target_ticket_id' => $target->id,
+                'ticket_snapshots' => [
+                    $target->id => TicketMergeSnapshot::fingerprint($target),
+                    $source->id => TicketMergeSnapshot::fingerprint($source),
+                ],
                 'reason' => 'Same customer issue.',
             ])
             ->assertRedirect(route('tech.tickets.show', $target))
@@ -1364,7 +1439,7 @@ class TicketModuleTest extends TestCase
             ->assertRedirect(route('tech.tickets.show', $ticket));
 
         $this->assertSame(2, TicketMessage::count());
-        $this->assertSame(1, $ticket->events()->where('type', 'message_added')->count());
+        $this->assertSame(2, $ticket->events()->where('type', 'message_added')->count());
     }
 
     #[Test]
@@ -4474,7 +4549,7 @@ class TicketModuleTest extends TestCase
             ->assertSee('Technician reply')
             ->assertSee($this->tech->name)
             ->assertSee('Visible reply.')
-            ->assertSee('Email sent')
+            ->assertSee('SMTP accepted')
             ->assertSee('Ticket reply email sent.')
             ->assertSee('&lt;show-status@example.com&gt;', false);
     }
@@ -4530,6 +4605,7 @@ class TicketModuleTest extends TestCase
         ]);
 
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
             $mock->shouldReceive('send')
                 ->once()
                 ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments = []) => $resolvedAccount->is($account)
@@ -4559,6 +4635,8 @@ class TicketModuleTest extends TestCase
             'code' => 'TICKET_EMAIL_SENT',
             'rfc_message_id' => '<message-id@example.com>',
         ]);
+        $this->assertDatabaseCount('email_logs', 1);
+        $this->assertNotNull(EmailLog::query()->sole()->idempotency_key);
     }
 
     #[Test]
@@ -4609,6 +4687,7 @@ class TicketModuleTest extends TestCase
         ]);
 
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
             $mock->shouldReceive('send')
                 ->once()
                 ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments) => $resolvedAccount->is($account)
@@ -4679,6 +4758,7 @@ class TicketModuleTest extends TestCase
         ]);
 
         $this->mock(SmtpAccountMailer::class, function ($mock) use ($account) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
             $mock->shouldReceive('send')
                 ->once()
                 ->withArgs(fn ($resolvedAccount, $toEmail, $toName, $subject, $html, $text, $attachments, $ccRecipients) => $resolvedAccount->is($account)
@@ -4874,6 +4954,7 @@ class TicketModuleTest extends TestCase
         EmailTemplate::create($this->ticketReplyTemplateData());
 
         $this->mock(SmtpAccountMailer::class, function ($mock) {
+            $mock->shouldReceive('generateMessageId')->once()->andReturn('<reserved-ticket-reply@example.com>');
             $mock->shouldReceive('send')
                 ->once()
                 ->andThrow(new \RuntimeException('SMTP refused the message.'));
@@ -4886,9 +4967,12 @@ class TicketModuleTest extends TestCase
                 app(SmtpAccountMailer::class)
             );
 
-            $this->fail('Expected SMTP exception was not thrown.');
-        } catch (\RuntimeException $e) {
-            $this->assertSame('SMTP refused the message.', $e->getMessage());
+            $this->fail('Expected unresolved provider outcome exception was not thrown.');
+        } catch (\App\Modules\Email\Services\EmailSendOutcomeUnresolvedException $exception) {
+            $this->assertSame(
+                'The ticket reply provider outcome could not be confirmed. Do not resend until Sent mail is reconciled.',
+                $exception->getMessage(),
+            );
         }
 
         $this->assertDatabaseHas('email_logs', [
@@ -4896,10 +4980,64 @@ class TicketModuleTest extends TestCase
             'account_id' => $account->id,
             'scope' => 'tickets',
             'level' => 'error',
-            'code' => 'TICKET_EMAIL_SEND_FAILED',
-            'message' => 'SMTP refused the message.',
+            'code' => 'TICKET_EMAIL_OUTCOME_UNRESOLVED',
+            'message' => 'The ticket reply provider outcome could not be confirmed. Do not resend until Sent mail is reconciled.',
         ]);
         $this->assertSame('SMTP_SEND', $account->fresh()->last_error_code);
+        $this->assertSame(
+            'The ticket Email provider outcome could not be confirmed. Review Sent mail before retrying.',
+            $account->fresh()->last_error_message,
+        );
+    }
+
+    #[Test]
+    public function send_ticket_reply_email_job_never_replays_an_existing_reservation(): void
+    {
+        $contact = ClientUser::factory()->create([
+            'name' => 'Ada Contact',
+            'email' => 'ada@example.com',
+        ]);
+        $ticket = $this->createTicket($contact, ['ticket_key' => 'TD-2026-999118']);
+        $message = TicketMessage::create([
+            'ticket_id' => $ticket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Idempotent reply.',
+        ]);
+        EmailAccount::create($this->emailAccountData([
+            'address' => 'support-idempotent@example.com',
+            'defaults_for' => ['tickets'],
+        ]));
+        EmailTemplate::create($this->ticketReplyTemplateData());
+
+        $this->mock(SmtpAccountMailer::class, function ($mock) {
+            $mock->shouldReceive('generateMessageId')
+                ->once()
+                ->andReturn('<reserved-ticket-reply@example.com>');
+            $mock->shouldReceive('send')
+                ->once()
+                ->withArgs(fn (...$arguments) => data_get($arguments, '8.message_id') === '<reserved-ticket-reply@example.com>')
+                ->andReturn('<reserved-ticket-reply@example.com>');
+        });
+
+        $job = app(SendTicketReplyEmail::class, ['ticketMessageId' => $message->id]);
+        $dependencies = [
+            app(\App\Modules\Email\Services\DefaultEmailAccountResolver::class),
+            app(\App\Modules\Email\Services\EmailTemplateRenderer::class),
+            app(SmtpAccountMailer::class),
+        ];
+
+        $job->handle(...$dependencies);
+        $job->handle(...$dependencies);
+
+        $this->assertDatabaseCount('email_logs', 1);
+        $this->assertDatabaseHas('email_logs', [
+            'idempotency_key' => 'ticket-reply:'.$message->id,
+            'code' => 'TICKET_EMAIL_SENT',
+            'rfc_message_id' => '<reserved-ticket-reply@example.com>',
+        ]);
     }
 
     #[Test]
@@ -5507,6 +5645,11 @@ class TicketModuleTest extends TestCase
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $admin->assignRole('Tech');
         $admin->assignRole('Admin');
+        $admin->givePermissionTo([
+            'ticket.manage_rules',
+            'ticket.rule_publish',
+            'ticket.update',
+        ]);
         $defaults = app(EnsureTicketDefaults::class)->handle();
 
         $this->actingAs($admin)
@@ -5540,6 +5683,11 @@ class TicketModuleTest extends TestCase
         $admin = User::factory()->create(['status' => User::STATUS_ACTIVE]);
         $admin->assignRole('Tech');
         $admin->assignRole('Admin');
+        $admin->givePermissionTo([
+            'ticket.manage_rules',
+            'ticket.rule_publish',
+            'signal.action.execute',
+        ]);
 
         $this->actingAs($admin)
             ->post(route('tech.admin.settings.tickets.rules.store'), [

@@ -15,6 +15,8 @@ use App\Modules\Email\Services\EmailSharedDraftLockedException;
 use App\Modules\Email\Services\EmailSharedDraftService;
 use App\Modules\Email\Services\EmailSharedDraftStaleException;
 use App\Modules\Email\Services\EmailSubmissionConflictException;
+use App\Modules\Ticket\Actions\ProjectTicketEmailOutboundSubmission;
+use App\Modules\Ticket\Actions\ValidateTicketEmailDraftForSubmission;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -30,6 +32,8 @@ class SubmitEmailComposerDraft
         private readonly EmailComposerDraftService $drafts,
         private readonly EmailSharedDraftService $sharedDrafts,
         private readonly EmailAccountProviderRuntimeResolver $providerRuntime,
+        private readonly ValidateTicketEmailDraftForSubmission $ticketValidator,
+        private readonly ProjectTicketEmailOutboundSubmission $ticketProjector,
     ) {}
 
     /**
@@ -109,6 +113,8 @@ class SubmitEmailComposerDraft
                 EmailOutboundSubmission::STATUS_ACCEPTED,
                 EmailOutboundSubmission::STATUS_SENT_RECONCILED,
             ], true)) {
+                $this->projectTicketSafely($existingForClientKey, $actor);
+
                 return $this->loadResult($existingForClientKey);
             }
 
@@ -134,6 +140,7 @@ class SubmitEmailComposerDraft
         $preview = $this->preview($draft, $actor, $sharedLease);
         /** @var EmailComposerDraft $draft */
         $draft = $preview['draft'];
+        $this->ticketValidator->handle($draft, $actor, $preview);
 
         if ($expectedVersion === null || (int) $draft->version !== $expectedVersion) {
             throw new EmailDraftConflictException($draft);
@@ -178,6 +185,8 @@ class SubmitEmailComposerDraft
 
             throw $this->submissionAlreadyClaimed($submission);
         }
+
+        $this->projectTicketSafely($submission, $actor);
 
         // The version-specific submission ledger and this status transition
         // form the local pre-SMTP boundary. From this point, ordinary draft
@@ -311,6 +320,7 @@ class SubmitEmailComposerDraft
             if ($providerNotAttempted) {
                 $this->restoreAfterProviderNotAttempted($draft);
             }
+            $this->projectTicketSafely($submission->refresh(), $actor);
 
             throw new EmailSubmissionConflictException($submission->refresh(), $exception->getMessage());
         } catch (\Throwable $exception) {
@@ -335,6 +345,7 @@ class SubmitEmailComposerDraft
                     ? 'OUTBOUND_PREPARATION_FAILED'
                     : 'OUTBOUND_SEND_OUTCOME_UNRESOLVED',
             ])->save();
+            $this->projectTicketSafely($submission->refresh(), $actor);
 
             throw new EmailSubmissionConflictException(
                 $submission->refresh(),
@@ -364,6 +375,7 @@ class SubmitEmailComposerDraft
             'accepted_at' => now(),
             'reconciled_at' => $reconciled ? now() : null,
         ])->save();
+        $this->projectTicketSafely($submission->refresh(), $actor);
 
         // SMTP acceptance is authoritative even if local draft cleanup later
         // fails. The submission remains accepted and prevents another send.
@@ -607,6 +619,26 @@ class SubmitEmailComposerDraft
                 'status' => EmailComposerDraft::STATUS_ACTIVE,
                 'updated_at' => now(),
             ]);
+    }
+
+    private function projectTicketSafely(EmailOutboundSubmission $submission, User $actor): void
+    {
+        try {
+            $projected = $this->ticketProjector->handle($submission, $actor);
+            if ($projected && $submission->reason_code === 'SMTP_ACCEPTED_TICKET_PROJECTION_FAILED') {
+                $submission->forceFill(['reason_code' => null])->save();
+            }
+        } catch (\Throwable) {
+            // Provider truth remains authoritative. A projection repair may
+            // retry from the durable submission/communication IDs, and a
+            // projector failure must never invite a duplicate SMTP send.
+            if (in_array($submission->status, [
+                EmailOutboundSubmission::STATUS_ACCEPTED,
+                EmailOutboundSubmission::STATUS_SENT_RECONCILED,
+            ], true)) {
+                $submission->forceFill(['reason_code' => 'SMTP_ACCEPTED_TICKET_PROJECTION_FAILED'])->save();
+            }
+        }
     }
 
     private function loadResult(EmailOutboundSubmission $submission): EmailOutboundSubmission

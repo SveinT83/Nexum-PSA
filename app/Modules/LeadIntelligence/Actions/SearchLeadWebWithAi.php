@@ -3,6 +3,11 @@
 namespace App\Modules\LeadIntelligence\Actions;
 
 use App\Modules\Integration\Models\AiAgent;
+use App\Modules\Integration\Services\AiModelExecutor;
+use App\Modules\Integration\Support\AiExecutionContext;
+use App\Modules\Integration\Support\AiExecutionTrace;
+use App\Modules\Integration\Support\AiModelResult;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -10,6 +15,8 @@ use RuntimeException;
 class SearchLeadWebWithAi
 {
     private const TIMEOUT_SECONDS = 180;
+
+    public function __construct(private readonly AiModelExecutor $executor) {}
 
     public function search(string $query, int $limit, array $context = []): array
     {
@@ -36,28 +43,45 @@ class SearchLeadWebWithAi
             throw new RuntimeException('Select a model for the Lead Intelligence agent or provider before web search.');
         }
 
-        $response = Http::acceptJson()
-            ->withToken($apiKey)
-            ->timeout(self::TIMEOUT_SECONDS)
-            ->post(rtrim((string) ($provider->base_url ?: 'https://api.openai.com/v1'), '/').'/responses', [
-                'model' => $model,
-                'input' => $this->prompt($query, $limit, $context),
-                'tools' => [
-                    [
-                        'type' => 'web_search',
-                        'search_context_size' => 'low',
+        $trace = new AiExecutionTrace(new AiExecutionContext(
+            executionId: (string) Str::uuid(),
+            featureKey: 'lead_intelligence.web_search',
+            operationKey: 'search',
+            domain: 'lead_intelligence',
+            billingClassification: 'lead_intelligence',
+        ));
+
+        $attempt = $this->executor->attempt(
+            agent: $agent,
+            trace: $trace,
+            endpointKind: 'responses',
+            requestedModel: $model,
+            request: fn (): Response => Http::acceptJson()
+                ->withToken($apiKey)
+                ->timeout(self::TIMEOUT_SECONDS)
+                ->post(rtrim((string) ($provider->base_url ?: 'https://api.openai.com/v1'), '/').'/responses', [
+                    'model' => $model,
+                    'input' => $this->prompt($query, $limit, $context),
+                    'tools' => [
+                        [
+                            'type' => 'web_search',
+                            'search_context_size' => 'low',
+                        ],
                     ],
-                ],
-                'tool_choice' => 'required',
-                'max_output_tokens' => 2000,
-            ]);
+                    'tool_choice' => 'required',
+                    'max_output_tokens' => 2000,
+                ]),
+            normalize: fn (Response $response): AiModelResult => $this->normalizeResponse($response),
+        );
+
+        $response = $attempt->response;
 
         if (! $response->successful()) {
             throw new RuntimeException($this->failureMessage($response->status(), $response->body()));
         }
 
         $payload = $response->json();
-        $content = $this->responseOutputText($payload);
+        $content = $attempt->result->content ?: '';
         $results = $this->resultsFromJson($content, $limit);
 
         if ($results === []) {
@@ -274,6 +298,18 @@ PROMPT);
         $url = Str::startsWith($url, ['http://', 'https://']) ? $url : 'https://'.$url;
 
         return filter_var($url, FILTER_VALIDATE_URL) ? rtrim($url, '/') : null;
+    }
+
+    private function normalizeResponse(Response $response): AiModelResult
+    {
+        $payload = $response->json();
+        $payload = is_array($payload) ? $payload : [];
+
+        return AiModelResult::fromOpenAiCompatible(
+            response: $response,
+            endpointKind: 'responses',
+            content: $this->responseOutputText($payload)
+        );
     }
 
     private function failureMessage(int $status, string $body): string

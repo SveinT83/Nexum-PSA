@@ -9,6 +9,7 @@ use App\Modules\Integration\Models\AiWorkloadProfile;
 use App\Modules\Integration\Models\AiWorkloadTokenBinding;
 use App\Modules\Integration\Services\AiDataEgressPolicyEvaluator;
 use App\Modules\Integration\Services\AiPrivacyGateway;
+use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -233,22 +234,44 @@ class AiCoordinatorGovernanceTest extends TestCase
             'billable' => true,
             'note' => 'Secret technician note.',
         ]);
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Sensitive Task title',
+            'estimated_minutes' => 30,
+        ], $this->admin, $ticket);
+        $task->timeEntries()->create([
+            'user_id' => $this->admin->id,
+            'source_type' => 'ticket_time_entry',
+            'work_date' => now()->toDateString(),
+            'minutes' => 5,
+            'billable' => true,
+        ]);
+        $ticket->timeEntries()->create([
+            'task_id' => $task->id,
+            'user_id' => $this->admin->id,
+            'type' => 'task_billing',
+            'work_date' => now()->toDateString(),
+            'minutes' => 30,
+            'billable' => true,
+        ]);
 
         $technicians = $this->withToken($plainToken)->getJson('/api/v1/worklog/technicians');
         $technicians->assertOk()
-            ->assertJsonPath('data.0.total_minutes', 45)
-            ->assertJsonPath('data.0.billable_minutes', 45)
+            ->assertJsonPath('data.0.total_minutes', 50)
+            ->assertJsonPath('data.0.billable_minutes', 50)
+            ->assertJsonPath('data.0.entry_count', 2)
             ->assertJsonPath('meta.profile', 'pseudonymized');
 
         $entries = $this->withToken($plainToken)->getJson('/api/v1/worklog/time-entries');
         $entries->assertOk()
-            ->assertJsonPath('data.0.minutes', 45)
-            ->assertJsonPath('data.0.source', 'ticket')
+            ->assertJsonCount(2, 'data')
+            ->assertJsonFragment(['minutes' => 45, 'source' => 'ticket'])
+            ->assertJsonFragment(['minutes' => 5, 'source' => 'task'])
             ->assertJsonPath('meta.profile', 'pseudonymized');
         $body = $entries->getContent();
         $this->assertStringNotContainsString($this->admin->name, $body);
         $this->assertStringNotContainsString($this->admin->email, $body);
         $this->assertStringNotContainsString($ticket->subject, $body);
+        $this->assertStringNotContainsString($task->title, $body);
         $this->assertStringNotContainsString('Secret technician note', $body);
         $this->assertStringNotContainsString('description', $body);
         $this->assertStringNotContainsString('note', $body);

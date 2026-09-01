@@ -4,6 +4,7 @@ namespace App\Modules\Integration\Models;
 
 use App\Models\Core\User;
 use App\Models\System\Integrations\Integration;
+use App\Modules\Email\Models\EmailAccount;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -90,6 +91,11 @@ class EmailProviderConnection extends Model
     public function events(): HasMany
     {
         return $this->hasMany(EmailProviderEvent::class, 'provider_integration_id');
+    }
+
+    public function emailAccounts(): HasMany
+    {
+        return $this->hasMany(EmailAccount::class, 'provider_integration_id');
     }
 
     public function createdBy(): BelongsTo

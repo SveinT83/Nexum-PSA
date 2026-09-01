@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAccountUserGrant;
 use App\Modules\Email\Models\EmailMailboxDelegation;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailOrdinaryMailboxEntitlementResolver;
 use App\Modules\Email\Services\EmailTestService;
 use App\Modules\Email\Services\EmailUnreadAccessEpochService;
@@ -32,6 +33,7 @@ class AccountsController extends Controller
         private readonly EmailProviderManagementAuthorization $providerAuthorization,
         private readonly EmailProviderLifecycleAccountLocks $providerLifecycleLocks,
         private readonly EmailProviderRuntimeFactory $providerRuntime,
+        private readonly EmailLiveAuthorityCoordinator $liveAuthority,
     ) {}
 
     public function index()
@@ -103,8 +105,12 @@ class AccountsController extends Controller
 
                 $account = EmailAccount::query()->create($data);
                 $account = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
-                $this->syncGrants($account, $grants, $actor);
                 $users = $this->affectedViewUsers($account, $grants, $account->owner_id);
+                $generation = $this->liveAuthority->prepareAccountMutation(
+                    $account,
+                    $users->pluck('id')->all(),
+                );
+                $this->syncGrants($account, $grants, $actor, $generation);
                 $this->reconcileUnreadEpochs(
                     $account->fresh(),
                     $users,
@@ -177,9 +183,19 @@ class AccountsController extends Controller
                 $before = $users->mapWithKeys(fn (User $user): array => [
                     $user->id => $this->unreadEpochs->captureEntitlement($lockedAccount, $user),
                 ])->all();
-
-                $lockedAccount->update($data);
-                $this->syncGrants($lockedAccount->fresh(), $grants, $actor);
+                $nextOwnerId = isset($data['owner_id']) ? (int) $data['owner_id'] : null;
+                $ownerChanged = (int) ($lockedAccount->owner_id ?? 0) !== (int) ($nextOwnerId ?? 0);
+                $generation = $this->liveAuthority->prepareAccountMutation(
+                    $lockedAccount,
+                    $users->pluck('id')->all(),
+                    $nextOwnerId,
+                    $ownerChanged,
+                );
+                if ($ownerChanged) {
+                    $data['email_live_owner_enable_generation'] = $lockedAccount->email_live_owner_enable_generation;
+                }
+                $lockedAccount->forceFill($data)->save();
+                $this->syncGrants($lockedAccount->fresh(), $grants, $actor, $generation);
                 $this->reconcileUnreadEpochs(
                     $lockedAccount->fresh(),
                     $users,
@@ -230,6 +246,14 @@ class AccountsController extends Controller
                     }
                 }
 
+                $affectedUserIds = $this->affectedViewUsers(
+                    $lockedAccount,
+                    $lockedAccount->userGrants->map(fn (EmailAccountUserGrant $grant): array => [
+                        'user_id' => $grant->user_id,
+                    ])->all(),
+                    $lockedAccount->owner_id,
+                )->pluck('id')->all();
+                $this->liveAuthority->prepareAccountMutation($lockedAccount, $affectedUserIds);
                 $lockedAccount->is_active = ! $lockedAccount->is_active;
                 $lockedAccount->save();
             }, 3);
@@ -370,34 +394,55 @@ class AccountsController extends Controller
             ->all();
     }
 
-    private function syncGrants(EmailAccount $account, array $grants, ?User $actor): void
-    {
-        if ($account->isPersonal()) {
-            $account->userGrants()->delete();
+    private function syncGrants(
+        EmailAccount $account,
+        array $grants,
+        ?User $actor,
+        int $generation,
+    ): void {
+        $desired = $account->isPersonal() ? collect() : collect($grants)->keyBy('user_id');
 
-            return;
-        }
+        // Authority rows are retained and disabled instead of deleted so a
+        // frozen publication can prove that a prior path no longer qualifies.
+        $account->userGrants()->lockForUpdate()->get()->each(
+            function (EmailAccountUserGrant $existing) use ($desired, $generation): void {
+                if ($desired->has((int) $existing->user_id)) {
+                    return;
+                }
 
-        $keptUserIds = collect($grants)->pluck('user_id')->all();
-        $account->userGrants()
-            ->when($keptUserIds !== [], fn ($query) => $query->whereNotIn('user_id', $keptUserIds))
-            ->when($keptUserIds === [], fn ($query) => $query)
-            ->delete();
+                $existing->forceFill([
+                    'can_view' => false,
+                    'can_organize' => false,
+                    'can_send' => false,
+                    'email_live_enable_generation' => $generation,
+                ])->save();
+            },
+        );
 
-        foreach ($grants as $grant) {
-            EmailAccountUserGrant::query()->updateOrCreate(
-                [
+        foreach ($desired as $grant) {
+            $existing = EmailAccountUserGrant::query()
+                ->where('email_account_id', $account->id)
+                ->where('user_id', $grant['user_id'])
+                ->lockForUpdate()
+                ->first();
+            $values = [
+                'can_view' => $grant['can_view'],
+                'can_organize' => $grant['can_organize'],
+                'can_send' => $grant['can_send'],
+                'granted_by' => $actor?->id,
+                'granted_at' => now(),
+                'email_live_enable_generation' => $generation,
+            ];
+
+            if ($existing) {
+                $existing->forceFill($values)->save();
+            } else {
+                EmailAccountUserGrant::query()->forceCreate([
                     'email_account_id' => $account->id,
                     'user_id' => $grant['user_id'],
-                ],
-                [
-                    'can_view' => $grant['can_view'],
-                    'can_organize' => $grant['can_organize'],
-                    'can_send' => $grant['can_send'],
-                    'granted_by' => $actor?->id,
-                    'granted_at' => now(),
-                ]
-            );
+                    ...$values,
+                ]);
+            }
         }
     }
 

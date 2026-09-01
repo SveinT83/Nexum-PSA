@@ -4,6 +4,7 @@ namespace App\Modules\Ticket\Services;
 
 use App\Models\Core\User;
 use App\Modules\Ticket\Actions\ChangeTicketStatus;
+use App\Modules\Ticket\Actions\DispatchTicketRuleMutationEvent;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketStatus;
@@ -19,6 +20,8 @@ class TicketWorkflowMigrationService
         private readonly ChangeTicketStatus $changeStatus,
         private readonly TicketAssignmentEngine $assignments,
         private readonly TicketWorkflowRequirementEvaluator $requirements,
+        private readonly TicketRuleWorkflowCompositeEventFactory $ruleEvents,
+        private readonly DispatchTicketRuleMutationEvent $dispatchRules,
     ) {}
 
     public function preview(TicketWorkflow $workflow, ?TicketWorkflowVersion $targetVersion = null): array
@@ -79,13 +82,19 @@ class TicketWorkflowMigrationService
     /**
      * @param  array<int, int>  $ticketIds
      */
-    public function migrate(TicketWorkflow $workflow, TicketWorkflowVersion $targetVersion, array $ticketIds, User $actor): int
-    {
+    public function migrate(
+        TicketWorkflow $workflow,
+        TicketWorkflowVersion $targetVersion,
+        array $ticketIds,
+        User $actor,
+        string $ruleEventSourceChannel = 'tech',
+        string $ruleEventSourceAction = 'TicketWorkflowMigrationService',
+    ): int {
         if ((int) $targetVersion->ticket_workflow_id !== (int) $workflow->id || $targetVersion->status !== 'published') {
             throw ValidationException::withMessages(['target_version_id' => 'Choose a published version of this workflow.']);
         }
 
-        return DB::transaction(function () use ($workflow, $targetVersion, $ticketIds, $actor): int {
+        return DB::transaction(function () use ($workflow, $targetVersion, $ticketIds, $actor, $ruleEventSourceChannel, $ruleEventSourceAction): int {
             $tickets = Ticket::query()->with(['status', 'workflowVersion'])->lockForUpdate()->whereIn('id', $ticketIds)->get();
             $migrated = 0;
 
@@ -103,6 +112,7 @@ class TicketWorkflowMigrationService
                     ]);
                 }
 
+                $ruleBefore = $this->ruleEvents->snapshot($ticket);
                 $before = $ticket->only(['workflow_version_id', 'workflow_state_key', 'status_id', 'owner_id']);
                 $ticket->forceFill([
                     'workflow_version_id' => $targetVersion->id,
@@ -111,14 +121,20 @@ class TicketWorkflowMigrationService
                 ])->save();
 
                 if ((int) $target['ticket_status_id'] !== (int) $ticket->status_id) {
-                    $this->changeStatus->handle($ticket, TicketStatus::query()->findOrFail((int) $target['ticket_status_id']), $actor, enforceWorkflow: false);
+                    $this->changeStatus->handle(
+                        $ticket,
+                        TicketStatus::query()->findOrFail((int) $target['ticket_status_id']),
+                        $actor,
+                        enforceWorkflow: false,
+                        ruleContext: ['_suppress_ticket_rule_dispatch' => true],
+                    );
                 }
 
                 $this->assignments->assign($ticket->refresh(), force: false);
                 $ticket->refresh();
                 $after = $ticket->only(['workflow_version_id', 'workflow_state_key', 'status_id', 'owner_id']);
 
-                TicketWorkflowHistory::query()->create([
+                $history = TicketWorkflowHistory::query()->create([
                     'ticket_id' => $ticket->id,
                     'actor_id' => $actor->id,
                     'workflow_version_id' => $targetVersion->id,
@@ -147,6 +163,40 @@ class TicketWorkflowMigrationService
                         'placement_reason' => $placement['reason'],
                     ],
                 ]);
+                $ticket->refresh();
+                $ruleAfter = $this->ruleEvents->snapshot($ticket);
+                $ownerChanged = ($ruleBefore['owner_id'] ?? null) !== ($ruleAfter['owner_id'] ?? null);
+                $queueChanged = ($ruleBefore['queue_id'] ?? null) !== ($ruleAfter['queue_id'] ?? null);
+                $ruleEvent = $this->ruleEvents->make(
+                    ticket: $ticket,
+                    before: $ruleBefore,
+                    after: $ruleAfter,
+                    operation: 'switch',
+                    actionKey: 'workflow-version-migration-'.$targetVersion->id,
+                    deliveryIdentity: (string) $history->idempotency_key,
+                    assignment: [
+                        'before_queue_id' => $ruleBefore['queue_id'] ?? null,
+                        'after_queue_id' => $ruleAfter['queue_id'] ?? null,
+                        'before_owner_id' => $ruleBefore['owner_id'] ?? null,
+                        'after_owner_id' => $ruleAfter['owner_id'] ?? null,
+                        'queue_changed' => $queueChanged,
+                        'owner_changed' => $ownerChanged,
+                        'assignment_decision' => $queueChanged || $ownerChanged,
+                        'outcome' => $ownerChanged
+                            ? (($ruleAfter['owner_id'] ?? null) === null ? 'owner_cleared' : 'owner_assigned')
+                            : ($queueChanged ? 'queue_changed' : 'assignment_retained'),
+                    ],
+                    invalidation: [
+                        'reviews_invalidated' => 0,
+                        'evidence_invalidated' => 0,
+                    ],
+                    history: $history,
+                    sourceChannel: $ruleEventSourceChannel,
+                    sourceAction: $ruleEventSourceAction,
+                );
+                if ($ruleEvent) {
+                    $this->dispatchRules->handle($ticket, $ruleEvent, $actor);
+                }
                 $migrated++;
             }
 

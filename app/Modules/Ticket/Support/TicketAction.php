@@ -12,6 +12,8 @@ class TicketAction
 
     public const CHANGE_STATUS = 'change_status';
 
+    public const REOPEN = 'reopen';
+
     public const ASSIGN_OWNER = 'assign_owner';
 
     public const ADD_INTERNAL_NOTE = 'add_internal_note';
@@ -76,6 +78,7 @@ class TicketAction
         return [
             self::UPDATE_FIELDS => ['label' => 'Update ticket fields', 'type' => 'ticket', 'write' => true, 'permission' => 'ticket.update'],
             self::CHANGE_STATUS => ['label' => 'Change status', 'type' => 'workflow', 'write' => true, 'permission' => 'ticket.update'],
+            self::REOPEN => ['label' => 'Reopen ticket', 'type' => 'workflow', 'write' => true, 'permission' => 'ticket.reopen'],
             self::ASSIGN_OWNER => ['label' => 'Assign owner', 'type' => 'assignment', 'write' => true, 'permission' => 'ticket.assign'],
             self::ASSIGN_SELF => ['label' => 'Assign to myself', 'type' => 'assignment', 'write' => true, 'permission' => 'ticket.assign'],
             self::ASSIGN_OTHER => ['label' => 'Assign another technician', 'type' => 'assignment', 'write' => true, 'permission' => 'ticket.assign'],

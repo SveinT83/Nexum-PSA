@@ -7,6 +7,7 @@ use App\Modules\Commercial\Models\Contracts\ContractItem;
 use App\Modules\Commercial\Models\Contracts\ContractItemTimeRate;
 use App\Modules\Commercial\Models\Contracts\Contracts;
 use App\Modules\Commercial\Models\TimeRate;
+use App\Modules\Task\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,7 @@ class TicketTimeEntry extends Model
 
     protected $fillable = [
         'ticket_id',
+        'task_id',
         'user_id',
         'type',
         'work_date',
@@ -55,6 +57,14 @@ class TicketTimeEntry extends Model
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
+    }
+
+    /**
+     * The originating Task when this row is a customer-billing projection.
+     */
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class);
     }
 
     public function user(): BelongsTo

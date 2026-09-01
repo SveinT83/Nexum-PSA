@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\User;
 use App\Modules\UserManagement\Actions\SendUserInvite;
 use App\Modules\UserManagement\Actions\StoreUser;
+use App\Modules\UserManagement\Actions\SyncUserRoles;
 use App\Modules\UserManagement\Actions\UpdateUserProfile;
 use App\Modules\UserManagement\Actions\UpdateUserStatus;
 use App\Modules\UserManagement\Models\UserProfile;
@@ -185,7 +186,7 @@ class UserManagementController extends Controller
     }
 
     #[OA\Post(path: '/api/v1/users/{user}/roles', operationId: 'updateUserRoles', summary: 'Replace user roles', security: [['bearerAuth' => []]], tags: ['Users'], parameters: [new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'User roles updated'), new OA\Response(response: 422, description: 'Validation error')])]
-    public function updateRoles(Request $request, User $user): UserResource
+    public function updateRoles(Request $request, User $user, SyncUserRoles $syncUserRoles): UserResource
     {
         $this->ensureHumanUser($user);
         $validated = $request->validate([
@@ -197,7 +198,7 @@ class UserManagementController extends Controller
             ->whereIn('id', $validated['role_ids'] ?? [])
             ->get();
 
-        $user->syncRoles($roles);
+        $syncUserRoles->handle($user, $roles);
 
         return UserResource::make($this->loadUser($user->refresh()));
     }

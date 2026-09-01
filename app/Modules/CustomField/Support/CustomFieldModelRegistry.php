@@ -4,6 +4,7 @@ namespace App\Modules\CustomField\Support;
 
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
+use App\Modules\Ticket\Models\Ticket;
 
 class CustomFieldModelRegistry
 {
@@ -19,11 +20,13 @@ class CustomFieldModelRegistry
     public const MODELS = [
         'client' => Client::class,
         'client_site' => ClientSite::class,
+        'ticket' => Ticket::class,
     ];
 
     public const LABELS = [
         'client' => 'Client',
         'client_site' => 'Client site',
+        'ticket' => 'Ticket',
     ];
 
     public function all(): array
@@ -50,6 +53,24 @@ class CustomFieldModelRegistry
     public function classFor(string $aliasOrClass): ?string
     {
         return self::MODELS[$aliasOrClass] ?? (in_array($aliasOrClass, self::MODELS, true) ? $aliasOrClass : null);
+    }
+
+    public function aliasFor(string $aliasOrClass): ?string
+    {
+        $class = $this->classFor($aliasOrClass);
+
+        if ($class === null) {
+            return null;
+        }
+
+        $alias = array_search($class, self::MODELS, true);
+
+        return $alias === false ? null : $alias;
+    }
+
+    public function canonicalStorageType(string $aliasOrClass): ?string
+    {
+        return $this->classFor($aliasOrClass);
     }
 
     /**

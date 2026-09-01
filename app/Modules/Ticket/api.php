@@ -3,6 +3,7 @@
 use App\Modules\Integration\Http\Middleware\EnforceCoordinatorWorkload;
 use App\Modules\Ticket\Controllers\Api\V1\StaleTicketController;
 use App\Modules\Ticket\Controllers\Api\V1\TicketController;
+use App\Modules\Ticket\Controllers\Api\V1\TicketMessageController;
 use App\Modules\Ticket\Controllers\Api\V1\TicketWorkflowActionController;
 use App\Modules\Ticket\Controllers\Api\V1\TicketWorkflowDefinitionController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,10 @@ Route::get('tickets/{ticket}', [TicketController::class, 'show'])
 Route::match(['put', 'patch'], 'tickets/{ticket}', [TicketController::class, 'update'])
     ->name('tickets.update')
     ->middleware(CheckAbilities::class.':tickets.update');
+
+Route::get('tickets/{ticket}/messages', [TicketMessageController::class, 'index'])
+    ->name('tickets.messages.index')
+    ->middleware(CheckAbilities::class.':tickets.read');
 
 Route::post('tickets/{ticket}/external-messages', [TicketController::class, 'storeExternalMessage'])
     ->name('tickets.external-messages.store')

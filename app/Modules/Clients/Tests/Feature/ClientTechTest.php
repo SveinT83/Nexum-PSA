@@ -143,8 +143,62 @@ class ClientTechTest extends TestCase
     {
         Client::factory()->create(['client_number' => '1002']);
         Client::factory()->create(['client_number' => '01003']);
+        Client::factory()->create(['client_number' => 'EXT-999999']);
 
         $this->assertSame('01004', app(SuggestClientNumber::class)->handle());
+    }
+
+    #[Test]
+    public function automatic_api_client_number_retries_when_the_unique_guard_wins_a_race(): void
+    {
+        Client::factory()->create(['client_number' => '01004']);
+
+        $suggestClientNumber = \Mockery::mock(SuggestClientNumber::class);
+        $suggestClientNumber->shouldReceive('handle')
+            ->twice()
+            ->andReturn('01004', '01005');
+        $this->app->instance(SuggestClientNumber::class, $suggestClientNumber);
+
+        Sanctum::actingAs($this->techUser, ['clients.create']);
+
+        $this->postJson(route('api.v1.clients.store'), [
+            'name' => 'Concurrent API Client AS',
+            'site' => [
+                'name' => 'Main Office',
+            ],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.client_number', '01005');
+
+        $this->assertDatabaseHas('clients', [
+            'name' => 'Concurrent API Client AS',
+            'client_number' => '01005',
+        ]);
+    }
+
+    #[Test]
+    public function manual_duplicate_api_client_number_returns_validation_without_a_partial_site(): void
+    {
+        Client::factory()->create(['client_number' => '54321']);
+
+        Sanctum::actingAs($this->techUser, ['clients.create']);
+
+        $this->postJson(route('api.v1.clients.store'), [
+            'name' => 'Duplicate API Client AS',
+            'client_number' => '54321',
+            'site' => [
+                'name' => 'Duplicate API Site',
+            ],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('client_number');
+
+        $this->assertDatabaseMissing('clients', [
+            'name' => 'Duplicate API Client AS',
+        ]);
+        $this->assertDatabaseMissing('client_sites', [
+            'name' => 'Duplicate API Site',
+        ]);
     }
 
     #[Test]
@@ -735,6 +789,64 @@ class ClientTechTest extends TestCase
     }
 
     #[Test]
+    public function ticket_task_actual_and_billing_rows_are_distinguished_and_cannot_be_edited_independently(): void
+    {
+        Permission::findOrCreate('task.update', 'web');
+        Permission::findOrCreate('ticket.update', 'web');
+        $this->techUser->givePermissionTo(['task.update', 'ticket.update']);
+
+        $client = Client::factory()->create();
+        $ticket = Ticket::factory()->create([
+            'client_id' => $client->id,
+            'owner_id' => $this->techUser->id,
+        ]);
+        $task = app(StoreTask::class)->handle([
+            'title' => 'Linked billing Task',
+            'estimated_minutes' => 30,
+        ], $this->techUser, $ticket);
+        $tracked = $task->timeEntries()->create([
+            'user_id' => $this->techUser->id,
+            'source_type' => 'ticket_time_entry',
+            'work_date' => now()->toDateString(),
+            'minutes' => 5,
+            'billable' => true,
+        ]);
+        $billing = $ticket->timeEntries()->create([
+            'task_id' => $task->id,
+            'user_id' => $this->techUser->id,
+            'type' => 'task_billing',
+            'work_date' => now()->toDateString(),
+            'minutes' => 30,
+            'billable' => true,
+            'billing_status' => 'pending',
+            'timebank_status' => 'pending',
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->get(route('tech.clients.show', ['client' => $client->id, 'tab' => 'time-usage']))
+            ->assertOk()
+            ->assertSee('Task tracked')
+            ->assertSee('Task billing');
+
+        $this->actingAs($this->techUser)
+            ->patch(route('tech.clients.time-usage.update', [$client, 'ticket', $billing->id]), [
+                'work_date' => now()->toDateString(),
+                'minutes' => 10,
+            ])
+            ->assertSessionHasErrors('time_usage');
+
+        $this->actingAs($this->techUser)
+            ->patch(route('tech.clients.time-usage.update', [$client, 'task', $tracked->id]), [
+                'work_date' => now()->toDateString(),
+                'minutes' => 10,
+            ])
+            ->assertSessionHasErrors('time_usage');
+
+        $this->assertSame(5, $tracked->fresh()->minutes);
+        $this->assertSame(30, $billing->fresh()->minutes);
+    }
+
+    #[Test]
     public function it_can_list_client_users_for_a_client()
     {
         $client = Client::factory()->create();
@@ -996,6 +1108,7 @@ class ClientTechTest extends TestCase
         $response->assertViewHas('clientFormats');
         $response->assertSee('<h1>New Client</h1>', false);
         $response->assertSee('<h2 class="h5 mb-0">Create Client</h2>', false);
+        $response->assertSee('name="suggested_client_number"', false);
         $response->assertSee('AS');
         $response->assertDontSee('Widgets (later)');
     }
@@ -1024,6 +1137,103 @@ class ClientTechTest extends TestCase
         $this->assertDatabaseHas('clients', ['name' => 'New Test Client', 'client_number' => '99999', 'client_format_id' => $format->id]);
         $this->assertDatabaseHas('client_sites', ['name' => 'Main Site']);
         $this->assertDatabaseHas('client_users', ['name' => 'Primary Contact', 'email' => 'contact@test.com']);
+    }
+
+    #[Test]
+    public function two_authorized_users_can_submit_forms_opened_with_the_same_suggestion(): void
+    {
+        $firstForm = $this->actingAs($this->techUser)->get(route('tech.clients.create'));
+        $secondForm = $this->actingAs($this->techUser)->get(route('tech.clients.create'));
+        $suggestion = $firstForm->viewData('suggestedClientNumber');
+
+        $this->assertSame($suggestion, $secondForm->viewData('suggestedClientNumber'));
+
+        $firstResponse = $this->actingAs($this->techUser)
+            ->post(route('tech.clients.store'), [
+                'name' => 'First Concurrent Client',
+                'client_number' => $suggestion,
+                'suggested_client_number' => $suggestion,
+                'site_name' => 'First Main Site',
+                'user_name' => 'First Primary Contact',
+                'user_email' => 'first@example.test',
+            ]);
+
+        $secondResponse = $this->actingAs($this->techUser)
+            ->post(route('tech.clients.store'), [
+                'name' => 'Second Concurrent Client',
+                'client_number' => $suggestion,
+                'suggested_client_number' => $suggestion,
+                'site_name' => 'Second Main Site',
+                'user_name' => 'Second Primary Contact',
+                'user_email' => 'second@example.test',
+            ]);
+
+        $firstResponse->assertRedirect(route('tech.clients.index'));
+        $secondResponse->assertRedirect(route('tech.clients.index'));
+
+        $first = Client::query()->where('name', 'First Concurrent Client')->firstOrFail();
+        $second = Client::query()->where('name', 'Second Concurrent Client')->firstOrFail();
+
+        $this->assertSame($suggestion, $first->client_number);
+        $this->assertNotSame($first->client_number, $second->client_number);
+        $this->assertDatabaseHas('client_sites', [
+            'client_id' => $second->id,
+            'name' => 'Second Main Site',
+        ]);
+        $this->assertDatabaseHas('client_users', [
+            'name' => 'Second Primary Contact',
+            'email' => 'second@example.test',
+        ]);
+    }
+
+    #[Test]
+    public function manual_duplicate_client_number_returns_a_field_error_without_partial_records(): void
+    {
+        Client::factory()->create(['client_number' => '54321']);
+        $clientCount = Client::query()->count();
+        $siteCount = ClientSite::query()->count();
+        $userCount = ClientUser::query()->count();
+
+        $response = $this->actingAs($this->techUser)
+            ->from(route('tech.clients.create'))
+            ->post(route('tech.clients.store'), [
+                'name' => 'Duplicate Manual Client',
+                'client_number' => '54321',
+                'suggested_client_number' => '00001',
+                'site_name' => 'Should Not Exist',
+                'user_name' => 'Should Not Exist',
+                'user_email' => 'duplicate@example.test',
+            ]);
+
+        $response
+            ->assertRedirect(route('tech.clients.create'))
+            ->assertSessionHasErrors('client_number')
+            ->assertSessionHasInput('client_number', '54321');
+
+        $this->assertSame($clientCount, Client::query()->count());
+        $this->assertSame($siteCount, ClientSite::query()->count());
+        $this->assertSame($userCount, ClientUser::query()->count());
+        $this->assertDatabaseMissing('clients', ['name' => 'Duplicate Manual Client']);
+        $this->assertDatabaseMissing('client_sites', ['name' => 'Should Not Exist']);
+    }
+
+    #[Test]
+    public function technician_without_client_create_permission_receives_forbidden_response(): void
+    {
+        $viewer = User::factory()->create(['status' => User::STATUS_ACTIVE]);
+        $viewer->assignRole('Tech');
+
+        $this->actingAs($viewer)
+            ->post(route('tech.clients.store'), [
+                'name' => 'Forbidden Client',
+                'client_number' => '12345',
+                'site_name' => 'Forbidden Site',
+                'user_name' => 'Forbidden Contact',
+                'user_email' => 'forbidden@example.test',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('clients', ['name' => 'Forbidden Client']);
     }
 
     #[Test]

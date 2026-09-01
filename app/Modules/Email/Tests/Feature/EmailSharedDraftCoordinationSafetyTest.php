@@ -521,6 +521,72 @@ class EmailSharedDraftCoordinationSafetyTest extends TestCase
         Storage::disk($attachment->disk)->assertExists($attachment->path);
     }
 
+
+    #[Test]
+    public function mail_workspace_shared_draft_ui_uses_one_lease_and_one_send_across_two_users(): void
+    {
+        $this->enableCollaboration();
+        config()->set('email_live.collaboration_ui_enabled', true);
+        $mailbox = $this->mailboxFixture();
+        $mailer = new class extends SmtpAccountMailer
+        {
+            public int $calls = 0;
+
+            public function sendMessage(EmailAccount $account, array $toRecipients, string $subject, string $html, string $text, array $attachments = [], array $ccRecipients = [], array $options = []): string
+            {
+                $this->calls++;
+
+                return (string) $options['message_id'];
+            }
+        };
+        $this->app->instance(SmtpAccountMailer::class, $mailer);
+
+        $this->actingAs($this->actor);
+        $actorWorkspace = app(MailWorkspace::class);
+        $actorWorkspace->mount();
+        $actorWorkspace->selectedPlacementId = $mailbox['placement']->id;
+        $actorWorkspace->startReply();
+        $actorWorkspace->composerBodyHtml = '<p>Shared UI body from actor.</p>';
+        $actorWorkspace->saveComposerDraft(false);
+        $actorWorkspace->shareComposerDraft();
+
+        $this->assertTrue($actorWorkspace->composerShared);
+        $this->assertTrue($actorWorkspace->composerSharedEditable());
+        $this->assertSame(
+            EmailComposerDraft::SCOPE_SHARED,
+            EmailComposerDraft::query()->findOrFail($actorWorkspace->composerDraftId)->scope,
+        );
+
+        $this->actingAs($this->peer);
+        $peerWorkspace = app(MailWorkspace::class);
+        $peerWorkspace->mount();
+        $peerWorkspace->selectedPlacementId = $mailbox['placement']->id;
+        $peerWorkspace->startReply();
+
+        $this->assertTrue($peerWorkspace->composerShared);
+        $this->assertFalse($peerWorkspace->composerSharedEditable());
+        $this->assertSame('Order 9 Actor', $peerWorkspace->composerSharedHolderName);
+        $peerWorkspace->acquireComposerSharedLease();
+        $this->assertFalse($peerWorkspace->composerSharedEditable());
+
+        $this->actingAs($this->actor);
+        $actorWorkspace->releaseComposerSharedLease(false);
+        $this->assertFalse($actorWorkspace->composerSharedEditable());
+
+        $this->actingAs($this->peer);
+        $peerWorkspace->acquireComposerSharedLease();
+        $this->assertTrue($peerWorkspace->composerSharedEditable());
+        $peerWorkspace->composerBodyHtml = '<p>Final shared UI body from peer.</p>';
+        $peerWorkspace->saveComposerDraft(false);
+        $peerWorkspace->sendComposer();
+
+        $this->assertSame(1, $mailer->calls);
+        $this->assertSame(EmailComposerDraft::STATUS_SENT, EmailComposerDraft::query()
+            ->findOrFail($peerWorkspace->composerDraftId ?: $actorWorkspace->composerDraftId)
+            ->status);
+        $this->assertDatabaseCount('email_outbound_submissions', 1);
+    }
+
     private function enableCollaboration(): void
     {
         config()->set('email_live.enabled', true);

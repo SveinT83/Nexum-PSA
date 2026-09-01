@@ -42,6 +42,40 @@ class TicketAssignmentEngine
         return $this->assignByProfileScore($ticket, $eligibleUserIds);
     }
 
+    /**
+     * Resolve the same deterministic owner decision without mutating the Ticket,
+     * assignment-rule counters, history, or workload records.
+     *
+     * @param list<int>|null $eligibleUserIds
+     */
+    public function plan(
+        Ticket $ticket,
+        bool $force = false,
+        ?array $eligibleUserIds = null,
+    ): ?int {
+        $policy = app(TicketWorkflowRuntime::class)->currentState($ticket)['assignment_policy'] ?? [];
+        $eligibleUserIds ??= $this->eligibleUserIds($policy);
+        $strategy = (string) ($policy['strategy'] ?? 'keep_if_eligible');
+
+        if ($strategy === 'unassigned') {
+            return null;
+        }
+
+        $currentOwnerId = $ticket->owner_id === null ? null : (int) $ticket->owner_id;
+        if ($currentOwnerId !== null
+            && ! $force
+            && ($eligibleUserIds === null || in_array($currentOwnerId, $eligibleUserIds, true))) {
+            return $currentOwnerId;
+        }
+
+        $ruleOwnerId = $this->assignByRule($ticket, $eligibleUserIds, false);
+        if ($ruleOwnerId) {
+            return $ruleOwnerId;
+        }
+
+        return $this->assignByProfileScore($ticket, $eligibleUserIds, false);
+    }
+
     /** @param array<string, mixed> $policy */
     private function eligibleUserIds(array $policy): ?array
     {
@@ -58,7 +92,11 @@ class TicketAssignmentEngine
             ->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
     }
 
-    private function assignByRule(Ticket $ticket, ?array $eligibleUserIds = null): ?int
+    private function assignByRule(
+        Ticket $ticket,
+        ?array $eligibleUserIds = null,
+        bool $apply = true,
+    ): ?int
     {
         if (! Schema::hasTable('ticket_assignment_rules')) {
             return null;
@@ -78,14 +116,15 @@ class TicketAssignmentEngine
             if ($eligibleUserIds !== null && ! in_array($ownerId, $eligibleUserIds, true)) {
                 continue;
             }
-            $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment rule: '.$rule->name, [
-                'assignment_rule_id' => $rule->id,
-            ]);
-
-            $rule->forceFill([
-                'last_hit_at' => now(),
-                'hit_count' => $rule->hit_count + 1,
-            ])->save();
+            if ($apply) {
+                $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment rule: '.$rule->name, [
+                    'assignment_rule_id' => $rule->id,
+                ]);
+                $rule->forceFill([
+                    'last_hit_at' => now(),
+                    'hit_count' => $rule->hit_count + 1,
+                ])->save();
+            }
 
             return $ownerId;
         }
@@ -93,7 +132,11 @@ class TicketAssignmentEngine
         return null;
     }
 
-    private function assignByProfileScore(Ticket $ticket, ?array $eligibleUserIds = null): ?int
+    private function assignByProfileScore(
+        Ticket $ticket,
+        ?array $eligibleUserIds = null,
+        bool $apply = true,
+    ): ?int
     {
         if (! Schema::hasTable('ticket_assignment_settings')) {
             return null;
@@ -141,10 +184,12 @@ class TicketAssignmentEngine
         }
 
         $ownerId = $winner['profile']->user_id;
-        $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment settings scoring.', [
-            'score' => $winner['score'],
-            'open_tickets' => $winner['open_tickets'],
-        ]);
+        if ($apply) {
+            $this->applyOwner($ticket, $ownerId, 'Ticket assigned by assignment settings scoring.', [
+                'score' => $winner['score'],
+                'open_tickets' => $winner['open_tickets'],
+            ]);
+        }
 
         return $ownerId;
     }

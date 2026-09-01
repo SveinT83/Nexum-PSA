@@ -8,6 +8,7 @@ use App\Modules\Email\Controllers\Admin\EmergencyMailboxAccessController;
 use App\Modules\Email\Controllers\Admin\MailboxMaintenanceController;
 use App\Modules\Email\Controllers\Admin\RulesController;
 use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
+use App\Modules\Email\Controllers\Admin\TicketCorrelationConflictController;
 use App\Modules\Email\Controllers\Tech\EmailBroadcastingController;
 use App\Modules\Email\Controllers\Tech\InboxController;
 use App\Modules\Email\Controllers\Tech\MailAttachmentController;
@@ -114,6 +115,10 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/admin/settings/email/accounts', [AccountsController::class, 'index'])
         ->name('admin.settings.email.accounts');
+    Route::get('/admin/settings/email/ticket-correlation-conflicts', [TicketCorrelationConflictController::class, 'index'])
+        ->name('admin.settings.email.ticket-correlation-conflicts.index');
+    Route::post('/admin/settings/email/ticket-correlation-conflicts/{conflict}/resolve', [TicketCorrelationConflictController::class, 'resolve'])
+        ->name('admin.settings.email.ticket-correlation-conflicts.resolve');
     Route::get('/admin/settings/email/accounts/create', [AccountsController::class, 'create'])
         ->name('admin.settings.email.accounts.create');
     Route::post('/admin/settings/email/accounts', [AccountsController::class, 'store'])

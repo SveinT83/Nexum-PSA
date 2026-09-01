@@ -8,14 +8,13 @@ use App\Models\Clients\ClientUser;
 use App\Models\System\Integrations\ClientRmmLink;
 use App\Models\System\Integrations\Integration;
 use App\Services\Integrations\NAbleRmm\NAbleRmmClient;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Creates a client with its required default site and primary contact.
  */
 class CreateClientWithDefaults
 {
-    public function __construct(private readonly SuggestClientNumber $suggestClientNumber) {}
+    public function __construct(private readonly CreateClientRecord $createClientRecord) {}
 
     /**
      * @return array{client: Client, warning: string|null}
@@ -23,19 +22,18 @@ class CreateClientWithDefaults
     public function handle(array $data): array
     {
         $warning = null;
-        $client = DB::transaction(function () use ($data, &$warning): Client {
-            $client = Client::query()->create([
-                'name' => $data['name'],
-                'client_number' => $data['client_number'] ?? $this->suggestClientNumber->handle(),
-                'org_no' => $data['org_no'] ?? null,
-                'client_format_id' => $data['client_format_id'] ?? null,
-                'website' => $data['website'] ?? null,
-                'sales_category_id' => $data['sales_category_id'] ?? null,
-                'lead_temperature' => $data['lead_temperature'] ?? 3,
-                'billing_email' => $data['billing_email'] ?? null,
-                'notes' => $data['notes'] ?? null,
-                'active' => $data['active'] ?? true,
-            ]);
+        $client = $this->createClientRecord->handle([
+            'name' => $data['name'],
+            'client_number' => $data['client_number'] ?? null,
+            'org_no' => $data['org_no'] ?? null,
+            'client_format_id' => $data['client_format_id'] ?? null,
+            'website' => $data['website'] ?? null,
+            'sales_category_id' => $data['sales_category_id'] ?? null,
+            'lead_temperature' => $data['lead_temperature'] ?? 3,
+            'billing_email' => $data['billing_email'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'active' => $data['active'] ?? true,
+        ], function (Client $client) use ($data, &$warning): void {
 
             $site = ClientSite::query()->create([
                 'client_id' => $client->id,
@@ -79,8 +77,6 @@ class CreateClientWithDefaults
                     }
                 }
             }
-
-            return $client;
         });
 
         return ['client' => $client, 'warning' => $warning];

@@ -20,6 +20,9 @@ class EmailAccountUserGrant extends Model
         'granted_at',
     ];
 
+    // Written only by EmailLiveAuthorityCoordinator.
+    protected $guarded = ['email_live_enable_generation'];
+
     protected $casts = [
         'can_view' => 'boolean',
         'can_organize' => 'boolean',

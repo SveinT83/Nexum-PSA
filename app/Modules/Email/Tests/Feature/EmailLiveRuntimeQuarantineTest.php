@@ -35,8 +35,13 @@ class EmailLiveRuntimeQuarantineTest extends TestCase
             'delete_policy' => 'local_only',
         ]);
 
-        $this->assertDatabaseMissing('email_live_account_authority_states', [
+        $this->assertDatabaseHas('email_live_account_authority_states', [
             'email_account_id' => $account->id,
+            'audience_generation' => 1,
+        ]);
+        $this->assertDatabaseHas('email_live_user_access_states', [
+            'user_id' => $user->id,
+            'recompute_status' => 'pending',
         ]);
 
         EmailAccountUserGrant::query()->create([

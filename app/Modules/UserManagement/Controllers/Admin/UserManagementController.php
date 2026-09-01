@@ -8,6 +8,7 @@ use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketAssignmentSetting;
 use App\Modules\UserManagement\Actions\SendUserInvite;
 use App\Modules\UserManagement\Actions\StoreUser;
+use App\Modules\UserManagement\Actions\SyncUserRoles;
 use App\Modules\UserManagement\Actions\UpdateUserProfile;
 use App\Modules\UserManagement\Actions\UpdateUserStatus;
 use App\Modules\UserManagement\Menus\SideBar\UserManagementMenu;
@@ -124,7 +125,7 @@ class UserManagementController extends Controller
             ->with('success', 'User status updated successfully.');
     }
 
-    public function updateRoles(Request $request, User $user): RedirectResponse
+    public function updateRoles(Request $request, User $user, SyncUserRoles $syncUserRoles): RedirectResponse
     {
         $this->ensureHumanUser($user);
         $validated = $request->validate([
@@ -136,7 +137,7 @@ class UserManagementController extends Controller
             ->whereIn('id', $validated['roles'] ?? [])
             ->get();
 
-        $user->syncRoles($roles);
+        $syncUserRoles->handle($user, $roles);
 
         return redirect()->route('tech.admin.user_management.show', $user)
             ->with('success', 'User roles updated successfully.');

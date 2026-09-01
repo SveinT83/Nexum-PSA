@@ -282,3 +282,39 @@ normal Ticket domain permissions and action guard in addition to the token abili
 Use stable state, transition, and escalation keys. Test a new draft with representative Tickets, publish it, and use migration preview before moving active work. Do not delete or rename facts in a way that makes a published version unreadable.
 
 Workflow publishing, migration, escalation, approval recording, evidence classification, quote-line handling, accepted-quote voiding, and senior review have separate permissions. Every transition, escalation, review, evidence classification, accepted quote, voided accepted quote, conversion, purchase need, migration, and close outcome is written to the Ticket audit history.
+
+## Ticket Rule Workflow Automation
+
+The versioned Ticket Rule runtime integrates through Workflow v3 Actions; it never direct-patches
+`status_id`, `workflow_id`, `workflow_version_id`, or `workflow_state_key`.
+
+Typed rule actions can:
+
+- select one active published Workflow and pinned initial state during Ticket creation;
+- take one exact non-terminal transition by transition key;
+- switch to an exact published Workflow version and target-state mapping after requirements pass;
+- pause only rule-driven automatic Workflow movement; and
+- resume that automatic movement without forcing a transition.
+
+Selection, transition, and switching recheck the protected automation actor, Ticket action guard,
+Workflow action policy, current pinned version/state, exact transition or mapping, entry
+requirements, evidence/history rules, work context, and assignment policy. Ambiguous reporting
+status is never accepted as a transition target.
+
+After a successful operation, Ticket Rules receive one composite event with the final Workflow,
+pinned version, state, reporting status, assignment result, exact operation key, and minimized
+evidence invalidation. Nested status and Owner writes are composed into that result rather than
+starting duplicate root runs. Failed branches roll back their Workflow, status, pause, history, and
+assignment writes to the branch savepoint.
+
+Manual Tech/API escalation and explicit Workflow-version migration use the same authoritative
+composite boundary. They preserve the initiating source, suppress nested low-level status dispatch,
+and expose Queue routing and individual Owner changes once in the completed result.
+
+Rule-driven movement checks `rule_workflow_paused_at`; manual Workflow actions remain available
+while paused. The pause keeps the Workflow, version, state, history, requirements, evidence, and
+manual action policy intact. The stored reason is bounded and audit-sanitized.
+
+All Workflow Ticket Rule triggers and actions remain default-off while runtime authority is
+`legacy`. They require the relevant capability gates, v2 authority, the fixed non-login actor, and
+separate human/release approval before use.

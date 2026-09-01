@@ -24,6 +24,13 @@ technician. When no Client is selected, standalone tasks are internal work for
 the owning organization. This keeps personal or delegated work visible without
 forcing it into a ticket.
 
+By default, the technician task list shows only genuinely open work (Open, In
+Progress, or Blocked) assigned to the authenticated user. The default ordering
+prioritizes the most important work: tasks are sorted by priority level (P1 first),
+then by due date (earlier dates first), with a final tie-breaker on the task ID.
+Technicians can explicitly change these filters or sort options to see all tasks
+or different priorities.
+
 Tasks are internal in the beta version. They are not sent to customers and do not
 replace ticket replies.
 

@@ -28,6 +28,8 @@
         <div class="card-body">
             <form method="post" action="{{ route('tech.clients.store') }}">
                 @csrf
+                <input type="hidden" name="suggested_client_number"
+                       value="{{ old('suggested_client_number', $suggestedClientNumber) }}">
 
                 <!-- ------------------------------------------------- -->
                 <!-- Top Row: Client number, Name, Org No, Format -->

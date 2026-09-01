@@ -295,7 +295,14 @@ class ClientController extends Controller
      */
     public function store(ClientRequest $request, CreateClientWithDefaults $createClient): RedirectResponse
     {
-        $result = $createClient->handle($request->validated());
+        $data = $request->validated();
+        if ($request->usesUnchangedSuggestedClientNumber()) {
+            $data['client_number'] = null;
+        }
+
+        unset($data['suggested_client_number']);
+
+        $result = $createClient->handle($data);
 
         $response = redirect()->route('tech.clients.index')->with('status', 'Client created');
         if ($result['warning']) {

@@ -148,6 +148,11 @@
 
 @section('rightbar')
   <div class="mt-3">
+    <x-card.default title="Ticket reply conflicts">
+      <p class="small text-muted">Review inbound messages where RFC headers and Ticket keys identify different Tickets.</p>
+      <a href="{{ route('tech.admin.settings.email.ticket-correlation-conflicts.index') }}" class="btn btn-sm btn-outline-warning">Review conflicts</a>
+    </x-card.default>
+
     <!-- -------------------------------------------------------------------------------------------------- -->
     <!-- Email template shortcut -->
     <!-- Keeps outbound template management reachable from Email Settings as well as the Templates hub. -->

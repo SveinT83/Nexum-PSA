@@ -23,9 +23,38 @@ class MyDayWorkQuery
         $startsAt = $now->copy()->startOfDay();
         $endsAt = $now->copy()->endOfDay();
 
-        $tickets = $this->tickets($user);
-        $tasks = $this->tasks($user);
-        $events = $this->events($user, $startsAt, $endsAt);
+        $ticketsQuery = $this->ticketsQuery($user);
+        $tasksQuery = $this->tasksQuery($user);
+        $eventsQuery = $this->eventsQuery($user, $startsAt, $endsAt);
+
+        $ticketsFullCount = $ticketsQuery->count();
+        $tasksFullCount = $tasksQuery->count();
+        $eventsFullCount = $eventsQuery->count();
+
+        $tickets = $ticketsQuery
+            ->orderByRaw('CASE WHEN resolve_due_at IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('resolve_due_at')
+            ->orderByDesc('is_unread')
+            ->orderByDesc('updated_at')
+            ->limit(8)
+            ->get();
+
+        $tasks = $tasksQuery
+            ->orderByRaw('CASE WHEN scheduled_start_at IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('scheduled_start_at')
+            ->orderByRaw('CASE WHEN due_at IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_at')
+            ->orderByDesc('updated_at')
+            ->limit(8)
+            ->get();
+
+        $events = $eventsQuery
+            ->orderBy('starts_at')
+            ->limit(12)
+            ->get();
+
+        $unreadCount = $this->ticketsQuery($user)->where('is_unread', true)->count();
+        $overdueCount = $this->overdueCount($user, $now);
 
         return [
             'generated_at' => $now,
@@ -34,11 +63,11 @@ class MyDayWorkQuery
                 'ends_at' => $endsAt,
             ],
             'counts' => [
-                'tickets' => $tickets->count(),
-                'tasks' => $tasks->count(),
-                'events' => $events->count(),
-                'overdue' => $this->overdueCount($tickets, $tasks, $now),
-                'unread' => $tickets->where('is_unread', true)->count(),
+                'tickets' => $ticketsFullCount,
+                'tasks' => $tasksFullCount,
+                'events' => $eventsFullCount,
+                'overdue' => $overdueCount,
+                'unread' => $unreadCount,
             ],
             'tickets' => $tickets,
             'tasks' => $tasks,
@@ -47,10 +76,10 @@ class MyDayWorkQuery
         ];
     }
 
-    private function tickets(User $user): Collection
+    private function ticketsQuery(User $user): Builder
     {
         if (! Schema::hasTable('tickets')) {
-            return collect();
+            return Ticket::query()->whereRaw('1=0');
         }
 
         return Ticket::query()
@@ -61,19 +90,13 @@ class MyDayWorkQuery
             ])
             ->where('owner_id', $user->id)
             ->whereNull('closed_at')
-            ->whereDoesntHave('status', fn (Builder $query) => $query->where('is_closed', true))
-            ->orderByRaw('CASE WHEN resolve_due_at IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('resolve_due_at')
-            ->orderByDesc('is_unread')
-            ->orderByDesc('updated_at')
-            ->limit(8)
-            ->get();
+            ->whereDoesntHave('status', fn (Builder $query) => $query->where('is_closed', true));
     }
 
-    private function tasks(User $user): Collection
+    private function tasksQuery(User $user): Builder
     {
         if (! Schema::hasTable('tasks')) {
-            return collect();
+            return Task::query()->whereRaw('1=0');
         }
 
         return Task::query()
@@ -90,20 +113,13 @@ class MyDayWorkQuery
                     ->orWhereHas('status', fn (Builder $status) => $status
                         ->where('is_done', false)
                         ->where('is_cancelled', false));
-            })
-            ->orderByRaw('CASE WHEN scheduled_start_at IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('scheduled_start_at')
-            ->orderByRaw('CASE WHEN due_at IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('due_at')
-            ->orderByDesc('updated_at')
-            ->limit(8)
-            ->get();
+            });
     }
 
-    private function events(User $user, Carbon $startsAt, Carbon $endsAt): Collection
+    private function eventsQuery(User $user, Carbon $startsAt, Carbon $endsAt): Builder
     {
         if (! Schema::hasTable('calendar_events')) {
-            return collect();
+            return CalendarEvent::query()->whereRaw('1=0');
         }
 
         $relations = [];
@@ -142,21 +158,18 @@ class MyDayWorkQuery
                                 ->orWhere('email', $user->email);
                         }));
                 }
-            })
-            ->orderBy('starts_at')
-            ->limit(12)
-            ->get();
+            });
     }
 
-    private function overdueCount(Collection $tickets, Collection $tasks, Carbon $now): int
+    private function overdueCount(User $user, Carbon $now): int
     {
-        $overdueTickets = $tickets->filter(
-            fn (Ticket $ticket): bool => $ticket->resolve_due_at?->lt($now) ?? false
-        )->count();
+        $overdueTickets = $this->ticketsQuery($user)
+            ->where('resolve_due_at', '<', $now->copy()->utc())
+            ->count();
 
-        $overdueTasks = $tasks->filter(
-            fn (Task $task): bool => $task->due_at?->lt($now) ?? false
-        )->count();
+        $overdueTasks = $this->tasksQuery($user)
+            ->where('due_at', '<', $now->copy()->utc())
+            ->count();
 
         return $overdueTickets + $overdueTasks;
     }

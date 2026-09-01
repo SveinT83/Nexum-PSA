@@ -53,6 +53,7 @@ use App\Modules\Email\Models\EmailSentReconciliation;
 use App\Modules\Email\Models\EmailSignature;
 use App\Modules\Email\Models\EmailTemplate;
 use App\Modules\Email\Models\EmailTicketConversationLink;
+use App\Modules\Email\Models\EmailTicketCorrelationConflict;
 use App\Modules\Email\Services\DefaultEmailAccountResolver;
 use App\Modules\Email\Services\EmailConversationProjector;
 use App\Modules\Email\Services\EmailSentReconciliationService;
@@ -88,6 +89,7 @@ use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\UserManagement\Models\UserProfile;
+use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Database\Seeders\EmailTemplateSeeder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -7703,7 +7705,7 @@ class EmailModuleTest extends TestCase
             ->assertOk()
             ->assertSee('1 active')
             ->assertSee('Latest successful fetch was')
-            ->assertSee('Ready: none. Reserved: none. Failed: 0.');
+            ->assertSee('Ready: none. Reserved: none. Failed on default/email: 0. Failed on other queues: 0.');
     }
 
     #[Test]
@@ -7756,8 +7758,36 @@ class EmailModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Queue worker')
             ->assertSee('Error')
-            ->assertSee('Failed: 1')
+            ->assertSee('Failed on default/email: 1')
             ->assertSee('Stale ready jobs on default/email: default=1');
+    }
+
+    #[Test]
+    public function email_config_health_does_not_report_other_queue_failures_as_mail_errors(): void
+    {
+        config(['queue.default' => 'database']);
+        Cache::put('email_last_poll_run', now());
+        EmailAccount::create($this->emailAccountPayload([
+            'address' => 'healthy-mail-queue@example.test',
+            'is_active' => true,
+            'last_successful_fetch_at' => now(),
+        ]));
+
+        DB::table('failed_jobs')->insert([
+            'uuid' => (string) Str::uuid(),
+            'connection' => 'database',
+            'queue' => 'notifications',
+            'payload' => '{}',
+            'exception' => 'Unrelated notification failure',
+            'failed_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.email.config'))
+            ->assertOk()
+            ->assertSee('Other queue failures')
+            ->assertSee('Failed on default/email: 0')
+            ->assertSee('Failed on other queues: 1');
     }
 
     #[Test]
@@ -8825,6 +8855,200 @@ class EmailModuleTest extends TestCase
     }
 
     #[Test]
+    public function conflicting_header_and_subject_ticket_evidence_requires_audited_resolution(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $headerTicket = Ticket::create([
+            'ticket_key' => 'TD-2026-700001',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Header candidate',
+            'is_unread' => false,
+        ]);
+        $subjectTicket = Ticket::create([
+            'ticket_key' => 'TD-2026-700002',
+            'queue_id' => $defaults['queue']->id,
+            'status_id' => $defaults['status']->id,
+            'priority_id' => $defaults['priority']->id,
+            'owner_id' => $this->tech->id,
+            'created_by' => $this->tech->id,
+            'updated_by' => $this->tech->id,
+            'channel' => 'manual',
+            'subject' => 'Subject candidate',
+            'is_unread' => false,
+        ]);
+        $outboundMessage = TicketMessage::create([
+            'ticket_id' => $headerTicket->id,
+            'author_id' => $this->tech->id,
+            'author_type' => 'user',
+            'type' => 'customer_reply',
+            'visibility' => 'public',
+            'body' => 'Previous reply.',
+        ]);
+        EmailLog::create([
+            'direction' => 'outbound',
+            'scope' => 'tickets',
+            'level' => 'info',
+            'code' => 'TICKET_EMAIL_SENT',
+            'message' => 'SMTP accepted.',
+            'context_json' => ['ticket_message_id' => $outboundMessage->id],
+            'rfc_message_id' => '<header-ticket@example.test>',
+        ]);
+        $account = EmailAccount::create([
+            'address' => 'support@example.test',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support@example.test',
+            'imap_secret' => 'encrypted',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support@example.test',
+            'smtp_secret' => 'encrypted',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 701,
+            'message_id' => '<conflicting-correlation@example.test>',
+            'in_reply_to' => '<header-ticket@example.test>',
+            'subject' => 'Re: [TD-2026-700002] Conflicting evidence',
+            'from_email' => 'private-customer@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'This reply must wait for a decision.',
+        ]);
+        $this->activeProviderOccurrence($email);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $conflict = EmailTicketCorrelationConflict::query()->sole();
+
+        $this->assertNull($email->fresh()->ticket_id);
+        $this->assertSame('untriaged', $email->fresh()->state);
+        $this->assertSame(EmailTicketCorrelationConflict::STATUS_PENDING, $conflict->status);
+        $this->assertEqualsCanonicalizing(
+            [$headerTicket->id, $subjectTicket->id],
+            $conflict->candidate_ticket_ids,
+        );
+        $this->assertSame([$headerTicket->id], $conflict->evidence['rfc_headers']);
+        $this->assertSame([$subjectTicket->id], $conflict->evidence['subject_key']);
+        $this->assertStringNotContainsString('private-customer@example.test', (string) $conflict->getRawOriginal('evidence'));
+        $this->assertDatabaseCount('ticket_messages', 1);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.settings.email.ticket-correlation-conflicts.index'))
+            ->assertOk()
+            ->assertSee('TD-2026-700001')
+            ->assertSee('TD-2026-700002')
+            ->assertSee('Needs decision');
+
+        $this->actingAs($this->admin)
+            ->post(route('tech.admin.settings.email.ticket-correlation-conflicts.resolve', $conflict), [
+                'ticket_id' => $subjectTicket->id,
+                'reason' => 'The customer intentionally retained the current Ticket key.',
+            ])
+            ->assertRedirect(route('tech.admin.settings.email.ticket-correlation-conflicts.index'));
+
+        $this->assertSame($subjectTicket->id, $email->fresh()->ticket_id);
+        $this->assertSame('linked', $email->fresh()->state);
+        $this->assertSame(EmailTicketCorrelationConflict::STATUS_RESOLVED, $conflict->fresh()->status);
+        $this->assertSame($this->admin->id, $conflict->fresh()->resolved_by);
+        $this->assertDatabaseHas('ticket_events', [
+            'ticket_id' => $subjectTicket->id,
+            'actor_id' => $this->admin->id,
+            'type' => 'email_correlation_conflict_resolved',
+        ]);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $this->assertSame(1, TicketMessage::where('ticket_id', $subjectTicket->id)->count());
+        $this->assertDatabaseCount('email_ticket_correlation_conflicts', 1);
+    }
+
+    #[Test]
+    public function references_to_two_tickets_are_not_silently_routed_to_the_latest_log(): void
+    {
+        $defaults = app(EnsureTicketDefaults::class)->handle();
+        $tickets = collect([1, 2])->map(function (int $index) use ($defaults): Ticket {
+            return Ticket::create([
+                'ticket_key' => 'TD-2026-71000'.$index,
+                'queue_id' => $defaults['queue']->id,
+                'status_id' => $defaults['status']->id,
+                'priority_id' => $defaults['priority']->id,
+                'owner_id' => $this->tech->id,
+                'created_by' => $this->tech->id,
+                'updated_by' => $this->tech->id,
+                'channel' => 'manual',
+                'subject' => 'Header candidate '.$index,
+                'is_unread' => false,
+            ]);
+        });
+
+        foreach ($tickets as $index => $ticket) {
+            $outbound = TicketMessage::create([
+                'ticket_id' => $ticket->id,
+                'author_id' => $this->tech->id,
+                'author_type' => 'user',
+                'type' => 'customer_reply',
+                'visibility' => 'public',
+                'body' => 'Previous reply '.$index,
+            ]);
+            EmailLog::create([
+                'direction' => 'outbound',
+                'scope' => 'tickets',
+                'level' => 'info',
+                'code' => 'TICKET_EMAIL_SENT',
+                'message' => 'SMTP accepted.',
+                'context_json' => ['ticket_message_id' => $outbound->id],
+                'rfc_message_id' => '<multi-header-'.$index.'@example.test>',
+            ]);
+        }
+
+        $account = EmailAccount::create([
+            'address' => 'support-headers@example.test',
+            'imap_host' => 'imap.example.test',
+            'imap_port' => 993,
+            'imap_encryption' => 'ssl',
+            'imap_username' => 'support-headers@example.test',
+            'imap_secret' => 'encrypted',
+            'smtp_host' => 'smtp.example.test',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'tls',
+            'smtp_username' => 'support-headers@example.test',
+            'smtp_secret' => 'encrypted',
+        ]);
+        $email = EmailMessage::create([
+            'account_id' => $account->id,
+            'mailbox' => 'INBOX',
+            'imap_uid' => 702,
+            'message_id' => '<multi-header-reply@example.test>',
+            'references' => '<multi-header-0@example.test> <multi-header-1@example.test>',
+            'subject' => 'Re: no Ticket key',
+            'from_email' => 'customer@example.test',
+            'received_at' => now(),
+            'state' => 'untriaged',
+            'body_text' => 'Ambiguous header reply.',
+        ]);
+        $this->activeProviderOccurrence($email);
+
+        app()->call([new ProcessInboundRules($email->id), 'handle']);
+
+        $this->assertNull($email->fresh()->ticket_id);
+        $this->assertEqualsCanonicalizing(
+            $tickets->pluck('id')->all(),
+            EmailTicketCorrelationConflict::query()->sole()->candidate_ticket_ids,
+        );
+    }
+
+    #[Test]
     public function inbound_ticket_reply_strips_quoted_email_history(): void
     {
         $defaults = app(EnsureTicketDefaults::class)->handle();
@@ -9208,6 +9432,7 @@ class EmailModuleTest extends TestCase
             'status_id' => TicketStatus::where('slug', 'new')->firstOrFail()->id,
             'priority_id' => \App\Modules\Ticket\Models\TicketPriority::where('slug', 'normal')->firstOrFail()->id,
             'client_id' => $client->id,
+            'work_context_id' => app(ResolveWorkContext::class)->client($client)->id,
             'site_id' => $site->id,
             'contact_id' => $contact->id,
             'channel' => 'email',

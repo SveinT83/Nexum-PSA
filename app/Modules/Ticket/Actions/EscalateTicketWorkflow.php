@@ -11,6 +11,7 @@ use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowHistory;
 use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
+use App\Modules\Ticket\Services\TicketRuleWorkflowCompositeEventFactory;
 use App\Modules\Ticket\Services\TicketWorkflowRequirementEvaluator;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Ticket\Support\TicketAction;
@@ -25,15 +26,23 @@ class EscalateTicketWorkflow
         private readonly TicketActionGuard $guard,
         private readonly TicketAssignmentEngine $assignments,
         private readonly ChangeTicketStatus $changeStatus,
+        private readonly TicketRuleWorkflowCompositeEventFactory $ruleEvents,
+        private readonly DispatchTicketRuleMutationEvent $dispatchRules,
     ) {}
 
-    public function handle(Ticket $ticket, string $pathKey, array $data, User $actor): Ticket
-    {
+    public function handle(
+        Ticket $ticket,
+        string $pathKey,
+        array $data,
+        User $actor,
+        string $ruleEventSourceChannel = 'tech',
+        string $ruleEventSourceAction = 'EscalateTicketWorkflow',
+    ): Ticket {
         if ($reason = $this->guard->reason($ticket, TicketAction::ESCALATE, $actor)) {
             throw ValidationException::withMessages(['escalation' => $reason]);
         }
 
-        return DB::transaction(function () use ($ticket, $pathKey, $data, $actor): Ticket {
+        return DB::transaction(function () use ($ticket, $pathKey, $data, $actor, $ruleEventSourceChannel, $ruleEventSourceAction): Ticket {
             $locked = Ticket::query()->lockForUpdate()->findOrFail($ticket->id);
             $path = collect($this->runtime->definitionFor($locked)['escalation_paths'] ?? [])
                 ->firstWhere('path_key', $pathKey);
@@ -74,6 +83,7 @@ class EscalateTicketWorkflow
 
             $this->guardAgainstCycle($locked, $targetWorkflow->id, $targetState['state_key'], $data, $actor);
 
+            $ruleBefore = $this->ruleEvents->snapshot($locked);
             $before = $locked->only([
                 'workflow_id', 'workflow_version_id', 'workflow_state_key', 'status_id',
                 'queue_id', 'ticket_type_id', 'type', 'owner_id',
@@ -98,6 +108,7 @@ class EscalateTicketWorkflow
                     TicketStatus::query()->findOrFail((int) $targetState['ticket_status_id']),
                     $actor,
                     enforceWorkflow: false,
+                    ruleContext: ['_suppress_ticket_rule_dispatch' => true],
                 );
                 $locked->refresh();
             }
@@ -106,14 +117,14 @@ class EscalateTicketWorkflow
             $this->applyAssignment($locked, $path, $data, $eligibleUserIds, $actor);
             $locked->refresh();
 
-            app(InvalidateTicketWorkflowReviews::class)->handle($locked, 'Ticket was internally escalated to another workflow.', $actor);
+            $reviewsInvalidated = app(InvalidateTicketWorkflowReviews::class)->handle($locked, 'Ticket was internally escalated to another workflow.', $actor);
 
             $after = $locked->only([
                 'workflow_id', 'workflow_version_id', 'workflow_state_key', 'status_id',
                 'queue_id', 'ticket_type_id', 'type', 'owner_id',
             ]);
 
-            TicketWorkflowHistory::query()->create([
+            $history = TicketWorkflowHistory::query()->create([
                 'ticket_id' => $locked->id,
                 'actor_id' => $actor->id,
                 'workflow_version_id' => $targetVersion->id,
@@ -137,6 +148,41 @@ class EscalateTicketWorkflow
                 'message' => 'Ticket internally escalated to '.$targetWorkflow->name.'.',
                 'metadata' => ['path_key' => $pathKey, 'reason' => $data['reason'] ?? null],
             ]);
+
+            $locked->refresh();
+            $ruleAfter = $this->ruleEvents->snapshot($locked);
+            $ownerChanged = ($ruleBefore['owner_id'] ?? null) !== ($ruleAfter['owner_id'] ?? null);
+            $queueChanged = ($ruleBefore['queue_id'] ?? null) !== ($ruleAfter['queue_id'] ?? null);
+            $ruleEvent = $this->ruleEvents->make(
+                ticket: $locked,
+                before: $ruleBefore,
+                after: $ruleAfter,
+                operation: 'switch',
+                actionKey: $pathKey,
+                deliveryIdentity: 'workflow-history:'.$history->id,
+                assignment: [
+                    'before_queue_id' => $ruleBefore['queue_id'] ?? null,
+                    'after_queue_id' => $ruleAfter['queue_id'] ?? null,
+                    'before_owner_id' => $ruleBefore['owner_id'] ?? null,
+                    'after_owner_id' => $ruleAfter['owner_id'] ?? null,
+                    'queue_changed' => $queueChanged,
+                    'owner_changed' => $ownerChanged,
+                    'assignment_decision' => $queueChanged || $ownerChanged,
+                    'outcome' => $ownerChanged
+                        ? (($ruleAfter['owner_id'] ?? null) === null ? 'owner_cleared' : 'owner_assigned')
+                        : ($queueChanged ? 'queue_changed' : 'assignment_retained'),
+                ],
+                invalidation: [
+                    'reviews_invalidated' => $reviewsInvalidated,
+                    'evidence_invalidated' => 0,
+                ],
+                history: $history,
+                sourceChannel: $ruleEventSourceChannel,
+                sourceAction: $ruleEventSourceAction,
+            );
+            if ($ruleEvent) {
+                $this->dispatchRules->handle($locked, $ruleEvent, $actor);
+            }
 
             return $locked;
         });

@@ -5,6 +5,7 @@ namespace App\Modules\Email\Actions;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailBreakGlassAccess;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailMailboxAccessEventRecorder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class RevokeEmailBreakGlassAccess
 {
-    public function __construct(private readonly EmailMailboxAccessEventRecorder $events) {}
+    public function __construct(
+        private readonly EmailMailboxAccessEventRecorder $events,
+        private readonly EmailLiveAuthorityCoordinator $liveAuthority,
+    ) {}
 
     /**
      * @throws AuthorizationException
@@ -58,10 +62,15 @@ class RevokeEmailBreakGlassAccess
                 return $locked;
             }
 
+            $generation = $this->liveAuthority->prepareAccountMutation(
+                $account,
+                [$locked->actor_id],
+            );
             $locked->forceFill([
                 'revoked_by' => $currentActor->id,
                 'revocation_reason' => $reason,
                 'revoked_at' => now(),
+                'email_live_enable_generation' => $generation,
             ])->save();
 
             $locked->setRelation('account', $account);

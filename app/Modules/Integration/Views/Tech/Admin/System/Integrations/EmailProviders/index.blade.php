@@ -19,13 +19,28 @@
         <div class="alert alert-success" role="status">{{ session('status') }}</div>
     @endif
 
+    @if(session('error'))
+        <div class="alert alert-danger" role="alert">{{ session('error') }}</div>
+    @endif
+
+    <!-- Explain the provider/account boundary before lifecycle actions. -->
+    <div class="alert alert-info" role="status">
+        <div class="fw-semibold mb-1">How Email configuration is split</div>
+        <div class="small">
+            A provider stores the protected IMAP/SMTP connection and credential lifecycle. An Email account stores the mailbox address, defaults, Ticket ingress and user access, then binds to one active verified provider.
+            Create or migrate the provider first, verify and activate it, and then manage the mailbox under
+            <a class="alert-link" href="{{ route('tech.admin.settings.email.accounts') }}">Email Accounts</a>.
+            Endpoint or username changes use a new verified provider and an explicit replacement cutover; stored connection values are never shown again.
+        </div>
+    </div>
+
     <!-- Provider lifecycle records -->
     <div class="card shadow-sm mb-4">
         <div class="card-header"><h2 class="h6 mb-0">Provider connections</h2></div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead class="table-light">
-                    <tr><th>Label</th><th>Status</th><th>Verified version</th><th>Capabilities</th><th class="text-end">Action</th></tr>
+                    <tr><th>Label</th><th>Status</th><th>Verified version</th><th>Capabilities</th><th>Mailboxes</th><th class="text-end">Action</th></tr>
                 </thead>
                 <tbody>
                     @forelse($connections as $connection)
@@ -46,10 +61,11 @@
                                 IMAP {{ data_get($connection->capabilities, 'imap') ? 'ready' : 'pending' }} ·
                                 SMTP {{ data_get($connection->capabilities, 'smtp') ? 'ready' : 'pending' }}
                             </td>
+                            <td class="small">{{ $connection->email_accounts_count }} bound</td>
                             <td class="text-end"><a href="{{ route('tech.admin.system.integrations.email-providers.show', $connection->getKey()) }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="text-center text-body-secondary py-4">No Integration-owned Email providers yet.</td></tr>
+                        <tr><td colspan="6" class="text-center text-body-secondary py-4">No Integration-owned Email providers yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -60,7 +76,12 @@
     <div class="card shadow-sm mb-4">
         <div class="card-header"><h2 class="h6 mb-0">Legacy mailbox migration</h2></div>
         <div class="card-body">
-            <p class="small text-body-secondary">Preview is read-only. It records an exact account scope and does not perform DNS or provider calls.</p>
+            <p class="small text-body-secondary mb-2">Preview is the first safety step for accounts that still contain legacy connection evidence. It makes no DNS or provider call and changes nothing.</p>
+            <ol class="small text-body-secondary mb-3">
+                <li>Preview the selected mailbox.</li>
+                <li>Stage its legacy settings, or choose a separately verified replacement if the old configuration is blocked.</li>
+                <li>Verify and activate the provider, pause and drain the mailbox, preview cutover, then apply it.</li>
+            </ol>
             <form method="POST" action="{{ route('tech.admin.system.integrations.email-providers.migrations.preview') }}">
                 @csrf
                 <div class="vstack gap-2 mb-3">

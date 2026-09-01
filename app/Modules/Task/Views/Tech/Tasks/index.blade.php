@@ -18,11 +18,16 @@
             || filled($filters['queue_id'] ?? null)
             || filled($filters['priority_id'] ?? null)
             || filled($filters['assigned_to'] ?? null)
-            || ! empty($filters['mine'])
+            || (isset($filters['mine']) && $filters['mine'] && request()->hasAny(['mine', 'assigned_to']))
             || ! empty($filters['include_done']);
 
         $filterCount = collect(['status_id', 'queue_id', 'priority_id', 'assigned_to', 'mine', 'include_done'])
-            ->filter(fn ($key) => filled($filters[$key] ?? null))
+            ->filter(function ($key) use ($filters) {
+                if ($key === 'mine') {
+                    return ! empty($filters[$key]) && request()->hasAny(['mine', 'assigned_to']);
+                }
+                return filled($filters[$key] ?? null);
+            })
             ->count();
 
         $sortLink = function (string $column) use ($sort, $direction) {
@@ -110,12 +115,14 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-check">
+                            <input type="hidden" name="mine" value="0">
                             <input type="checkbox" class="form-check-input" id="mine" name="mine" value="1" @checked(! empty($filters['mine']))>
                             <label class="form-check-label" for="mine">Assigned to me</label>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-check">
+                            <input type="hidden" name="include_done" value="0">
                             <input type="checkbox" class="form-check-input" id="include_done" name="include_done" value="1" @checked(! empty($filters['include_done']))>
                             <label class="form-check-label" for="include_done">Show completed tasks</label>
                         </div>

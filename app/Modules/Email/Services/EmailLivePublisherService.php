@@ -66,6 +66,11 @@ class EmailLivePublisherService
             return;
         }
 
+        if ($change->stream->stream_type !== EmailLiveProjectionStream::TYPE_USER
+            && $this->authorityDriftExists()) {
+            return;
+        }
+
         if ($change->publication_status === EmailLiveProjectionChange::STATUS_PENDING) {
             $change = $this->claimChange((int) $change->id);
         }
@@ -85,6 +90,18 @@ class EmailLivePublisherService
         if (! $change->publication()->exists()) {
             $this->failChange($change, self::ERROR_APPEND);
         }
+    }
+
+    private function authorityDriftExists(): bool
+    {
+        $generation = (int) (DB::table('email_live_global_authority_states')
+            ->where('id', 1)
+            ->value('authorization_generation') ?? 0);
+
+        return DB::table('email_live_user_access_states')
+            ->where('global_authorization_generation_seen', '<', $generation)
+            ->limit(1)
+            ->exists();
     }
 
     private function enabled(): bool

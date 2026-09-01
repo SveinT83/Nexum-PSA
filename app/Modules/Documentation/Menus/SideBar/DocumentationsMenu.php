@@ -27,9 +27,8 @@ class DocumentationsMenu
             ->orderBy('name')
             ->get();
 
-        // Default option to view all documentations
+        // Start with the primary documentation pages
         $menu = [
-            ['name' => 'All', 'route' => 'tech.documentations.index', 'params' => ['cat' => 'all']],
             [
                 'name' => 'Shipping Carriers',
                 'route' => 'tech.documentations.shipping-carriers.index',
@@ -37,24 +36,27 @@ class DocumentationsMenu
             ],
         ];
 
-        // Add each category that has templatesManagement to the menu
-        foreach ($categories as $category) {
-            $menu[] = [
-                'name' => $category->name,
-                'route' => 'tech.documentations.index',
-                'params' => ['cat' => $category->slug],
-            ];
-        }
-
-        foreach ([['Vendors', 'vendors'], ['Suppliers', 'suppliers']] as [$name, $slug]) {
-            if ($categories->contains('slug', $slug)) {
-                continue;
-            }
-
+        foreach ([['Suppliers', 'suppliers'], ['Vendors', 'vendors']] as [$name, $slug]) {
             $menu[] = [
                 'name' => $name,
                 'route' => 'tech.documentations.index',
                 'params' => ['cat' => $slug],
+            ];
+        }
+
+        // Add Documentation Categories header
+        $menu[] = ['name' => 'Documentation categories', 'is_header' => true];
+
+        // Add 'All' under categories
+        $menu[] = ['name' => 'All', 'route' => 'tech.documentations.index', 'params' => ['cat' => 'all']];
+
+        $dynamicCategories = $categories->filter(fn ($c) => ! in_array($c->slug, ['vendors', 'suppliers'], true));
+
+        foreach ($dynamicCategories as $category) {
+            $menu[] = [
+                'name' => $category->name,
+                'route' => 'tech.documentations.index',
+                'params' => ['cat' => $category->slug],
             ];
         }
 

@@ -44,6 +44,40 @@ the user has not approved the edit yet.
 New domains and large new capabilities should wait unless they unblock beta completion or have an
 approved RFC.
 
+## Work-In-Progress Discipline
+
+The default is finish before starting. Contributors must not create a trail of partly implemented
+Issues, RFCs, ADRs, Feature Slices, documentation updates, and unverified Dev changes.
+
+Before creating or starting a new Issue, RFC, ADR, or Feature Slice:
+
+1. Reconcile `docs/TODO.md`, relevant GitHub Issues, planning-artifact status lines, the Dev
+   working copy, and open human-review entries.
+2. Identify the existing active item in the same or dependent scope.
+3. Complete and verify that item first when safe progress is possible.
+4. If it is genuinely blocked, record the exact blocker, owner, next action, resume condition, and
+   linked human-review ID before switching work.
+5. Start another item only after completion, an explicit approved reprioritization, or an urgent
+   beta/security/production incident.
+
+Each contributor should own one primary implementation at a time. Explicitly coordinated,
+non-overlapping Feature Slices may run in parallel only when every slice has its own TODO row or
+clearly identified parent workstream, owner, scope, status, and handoff.
+
+Uncommitted or unpushed work is still active work. On authoritative Dev, implementation is
+`Done On Dev` when the requested behavior is present, relevant tests/checks pass, and required
+documentation is current. Commit, push, merge, Main promotion, migration, deployment, runtime
+activation, production verification, and human review are separate states.
+
+Agents must enforce this discipline, including with human collaborators. When a new ordinary task
+would increase avoidable WIP, the agent must name the existing finishable item and recommend or
+continue its completion first. Silence, age, a passing partial test, or switching branches does not
+close an item.
+
+The active register must be updated in the same work session whenever an item starts, blocks,
+changes scope, is superseded, passes verification, receives human review, or completes. Related
+GitHub Issue state and RFC/ADR/Feature Slice status must be reconciled at the same time.
+
 ## Change Levels
 
 ### Level 1: Small Fix
@@ -204,11 +238,28 @@ create avoidable rework.
 
 ## TODO Management
 
-`docs/TODO.md` is the authoritative backlog for known follow-up work.
+`docs/TODO.md` is the authoritative backlog and live work-in-progress register.
 
 When a contributor discovers missing work, missing documentation, technical debt, future
 improvements, or required follow-up tasks, it should recommend adding a TODO entry. If the user has
 already approved the work, update `docs/TODO.md` directly.
+
+Every active entry must identify the owner, exact status, related Issue/RFC/ADR/Feature Slice,
+current evidence, next action, and human-review ID when applicable. Do not leave an item as
+`In Progress` after it is complete, and do not mark implementation incomplete merely because the
+verified Dev change is uncommitted or unpushed.
+
+At the start and end of medium or large work, reconcile:
+
+- Active TODO workstreams.
+- Open GitHub Issues in scope.
+- Draft RFCs and Proposed ADRs.
+- Draft, Ready, In Progress, Blocked, and Rework Feature Slices.
+- Human-review state.
+- Actual Dev implementation and verification evidence.
+
+Accepted ADRs and Approved RFCs are decision records, not unfinished work by themselves. Their
+implementation state belongs in the linked Feature Slice and TODO workstream.
 
 ## Documentation Maintenance
 

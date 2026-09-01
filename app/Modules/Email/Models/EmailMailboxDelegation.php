@@ -30,6 +30,9 @@ class EmailMailboxDelegation extends Model
         'revoked_at',
     ];
 
+    // Written only by EmailLiveAuthorityCoordinator.
+    protected $guarded = ['email_live_enable_generation'];
+
     protected $casts = [
         'email_account_id' => 'integer',
         'owner_id' => 'integer',

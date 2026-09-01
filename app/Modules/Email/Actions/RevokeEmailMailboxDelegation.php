@@ -5,6 +5,7 @@ namespace App\Modules\Email\Actions;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailMailboxDelegation;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailMailboxAccessEventRecorder;
 use App\Modules\Email\Services\EmailUnreadAccessEpochService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -16,6 +17,7 @@ class RevokeEmailMailboxDelegation
     public function __construct(
         private readonly EmailMailboxAccessEventRecorder $events,
         private readonly EmailUnreadAccessEpochService $unreadEpochs,
+        private readonly EmailLiveAuthorityCoordinator $liveAuthority,
     ) {}
 
     /**
@@ -59,10 +61,15 @@ class RevokeEmailMailboxDelegation
                 ? $this->unreadEpochs->captureEntitlement($account, $delegate)
                 : false;
 
+            $generation = $this->liveAuthority->prepareAccountMutation(
+                $account,
+                [$locked->delegate_id],
+            );
             $locked->forceFill([
                 'revoked_by' => $currentActor->id,
                 'revocation_reason' => $reason,
                 'revoked_at' => now(),
+                'email_live_enable_generation' => $generation,
             ])->save();
 
             $this->events->recordDelegationRevoked($locked);

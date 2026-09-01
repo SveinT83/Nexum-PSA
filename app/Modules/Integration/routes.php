@@ -2,10 +2,12 @@
 
 use App\Modules\Integration\Controllers\Admin\AiIntegrationController;
 use App\Modules\Integration\Controllers\Admin\AiPrivacyController;
+use App\Modules\Integration\Controllers\Admin\AiTelemetryController;
 use App\Modules\Integration\Controllers\Admin\ApiController;
 use App\Modules\Integration\Controllers\Admin\CloudFactoryController;
 use App\Modules\Integration\Controllers\Admin\EmailProviderController;
 use App\Modules\Integration\Controllers\Admin\IntegrationsController;
+use App\Modules\Integration\Controllers\Admin\RmmAlertRuleController;
 use App\Modules\Integration\Controllers\Public\CloudFactoryWebhookController;
 use App\Modules\Integration\Controllers\Tech\AiChatController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +23,20 @@ if (($tdpsaLoadingCloudFactoryPublicRoutes ?? false) === true) {
 Route::middleware('admin')->group(function () {
     Route::get('/admin/system/integrations', [IntegrationsController::class, 'index'])
         ->name('admin.system.integrations.index');
+
+    // RMM Alert Rules are the shared provider-neutral pre-routing layer.
+    Route::get('/admin/system/integrations/rmm-alert-rules', [RmmAlertRuleController::class, 'index'])
+        ->name('admin.system.integrations.rmm-alert-rules.index');
+    Route::get('/admin/system/integrations/rmm-alert-rules/create', [RmmAlertRuleController::class, 'create'])
+        ->name('admin.system.integrations.rmm-alert-rules.create');
+    Route::post('/admin/system/integrations/rmm-alert-rules', [RmmAlertRuleController::class, 'store'])
+        ->name('admin.system.integrations.rmm-alert-rules.store');
+    Route::get('/admin/system/integrations/rmm-alert-rules/{rule}/edit', [RmmAlertRuleController::class, 'edit'])
+        ->name('admin.system.integrations.rmm-alert-rules.edit');
+    Route::put('/admin/system/integrations/rmm-alert-rules/{rule}', [RmmAlertRuleController::class, 'update'])
+        ->name('admin.system.integrations.rmm-alert-rules.update');
+    Route::delete('/admin/system/integrations/rmm-alert-rules/{rule}', [RmmAlertRuleController::class, 'destroy'])
+        ->name('admin.system.integrations.rmm-alert-rules.destroy');
 
     // Email providers are independent Integration records. The generic
     // single-record toggle must never mutate this multi-record lifecycle.
@@ -60,6 +76,9 @@ Route::middleware('admin')->group(function () {
     Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/activate', [EmailProviderController::class, 'activateMigrationItem'])
         ->whereUuid('run')->whereNumber('item')
         ->name('admin.system.integrations.email-providers.migrations.items.activate');
+    Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/rebind', [EmailProviderController::class, 'rebindMigrationItem'])
+        ->whereUuid('run')->whereNumber('item')
+        ->name('admin.system.integrations.email-providers.migrations.items.rebind');
     Route::post('/admin/system/integrations/email-providers/migrations/{run}/items/{item}/pause', [EmailProviderController::class, 'pauseAccount'])
         ->whereUuid('run')->whereNumber('item')
         ->name('admin.system.integrations.email-providers.migrations.items.pause');
@@ -161,7 +180,12 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/admin/system/integrations/ai', [AiIntegrationController::class, 'index'])
         ->name('admin.system.integrations.ai.index');
-
+    Route::get('/admin/system/integrations/ai/telemetry', [AiTelemetryController::class, 'index'])
+        ->name('admin.system.integrations.ai.telemetry.index');
+    Route::get('/admin/system/integrations/ai/telemetry/{event}', [AiTelemetryController::class, 'show'])
+        ->name('admin.system.integrations.ai.telemetry.show');
+    Route::get('/admin/system/integrations/ai/rate-cards', [AiTelemetryController::class, 'rateCards'])
+        ->name('admin.system.integrations.ai.rate-cards.index');
     Route::post('/admin/system/integrations/ai/providers', [AiIntegrationController::class, 'storeProvider'])
         ->name('admin.system.integrations.ai.providers.store');
 

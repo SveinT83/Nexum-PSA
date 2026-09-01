@@ -48,6 +48,28 @@ mixed public/private or otherwise unsafe set rejects the complete connection. Ne
 address but keeps the original normalized hostname for SNI and certificate verification, requires
 TLS 1.2 or newer, and authenticates only after TLS is established.
 
+The web request never weakens this deadline. When PHP-FPM cannot own the required signal alarm,
+**Verify** queues one unique opaque-ID job on the `email` queue. The CLI Email worker performs the
+same exact-version, authorization, DNS, TLS, IMAP, SMTP, claim, and sanitized-result workflow with
+the hard deadline available. The job never serializes endpoints, usernames, passwords, ciphertext,
+or resolved addresses. Keep the documented database `email,default` worker running.
+
+### Verification Failures
+
+A failed **Verify** returns to the provider page and keeps the provider and credential version in
+**Staged** state. The alert gives only a safe action category:
+
+- endpoint, port, transport, or approved trust-policy mismatch: review the staged connection;
+- DNS or address-policy rejection: review the hostname and approved network scope;
+- TLS or reachability failure: check certificate trust, transport, and provider availability;
+- authentication rejection: correct the staged IMAP and SMTP credentials;
+- timeout or another active verification: wait for the bounded attempt to finish and retry;
+- stale credential or configuration snapshot: reload the page and verify the current staged version.
+
+Nexum does not display or retain raw provider responses, hostnames, usernames, passwords, resolved
+addresses, certificate internals, stack traces, or exception chains in these alerts. Do not weaken
+TLS, endpoint, private-network, or credential policy to make verification pass.
+
 ## Approved Private Endpoints
 
 Private endpoints are unavailable until the installation defines a named CIDR group, for example:
@@ -94,6 +116,10 @@ Existing accounts remain `legacy` until every explicit step succeeds. Never run 
 
 1. Select exact legacy accounts and create a read-only migration preview.
 2. Review its account scope and blockers. Preview reads no provider and exposes no secret.
+   If the legacy host/transport cannot be represented safely, create and exactly verify a replacement
+   provider first. Deactivate, pause and drain the mailbox, then use **Bind verified provider** on the
+   blocked item. This source/reference-only cutover performs no IMAP/SMTP call, preserves legacy
+   evidence for the rollback window, and refuses unresolved mailbox/provider work.
 3. Choose public or approved named-private trust for each item and **Stage locally**. Staging locks
    the exact source fingerprint, decrypts and re-encrypts only in process, and performs no DNS,
    provider call, send, mailbox mutation, deduplication, or source switch.

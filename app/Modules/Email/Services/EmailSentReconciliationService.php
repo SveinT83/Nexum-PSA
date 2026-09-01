@@ -8,6 +8,7 @@ use App\Modules\Email\Models\EmailMailboxPlacement;
 use App\Modules\Email\Models\EmailOutboundSubmission;
 use App\Modules\Email\Models\EmailSentReconciliation;
 use App\Modules\Email\Support\EmailAccountProviderLock;
+use App\Modules\Ticket\Actions\ProjectTicketEmailSentReconciliation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -251,8 +252,13 @@ class EmailSentReconciliationService
             $this->syncLogContext($reconciliation->emailLog, $reconciliation);
 
             if (Schema::hasTable('email_outbound_submissions')) {
-                EmailOutboundSubmission::query()
+                $submissionIds = EmailOutboundSubmission::query()
                     ->where('email_log_id', $reconciliation->email_log_id)
+                    ->pluck('id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->all();
+                EmailOutboundSubmission::query()
+                    ->whereIn('id', $submissionIds)
                     ->whereIn('status', [
                         EmailOutboundSubmission::STATUS_ACCEPTED,
                         EmailOutboundSubmission::STATUS_OUTCOME_UNRESOLVED,
@@ -266,7 +272,7 @@ class EmailSentReconciliationService
                     ]);
 
                 EmailOutboundSubmission::query()
-                    ->where('email_log_id', $reconciliation->email_log_id)
+                    ->whereIn('id', $submissionIds)
                     ->whereIn('reason_code', [
                         'SMTP_SEND_OUTCOME_UNRESOLVED',
                         'OUTBOUND_SEND_OUTCOME_UNRESOLVED',
@@ -275,6 +281,15 @@ class EmailSentReconciliationService
                         'reason_code' => null,
                         'updated_at' => now(),
                     ]);
+
+                foreach ($submissionIds as $submissionId) {
+                    try {
+                        app(ProjectTicketEmailSentReconciliation::class)->handle($submissionId);
+                    } catch (\Throwable) {
+                        // Sent reconciliation remains durable and may be
+                        // projected again from the exact submission ID.
+                    }
+                }
             }
         }
 

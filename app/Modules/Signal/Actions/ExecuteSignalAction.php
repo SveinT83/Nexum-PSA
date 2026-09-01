@@ -19,6 +19,10 @@ use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -514,29 +518,88 @@ class ExecuteSignalAction
         $existing = SignalWebhookDelivery::query()
             ->where('signal_id', $signal->id)
             ->where('signal_rule_id', $rule->id)
-            ->where('payload->signal_action_key', $idempotencyKey)
+            ->where(function ($query) use ($idempotencyKey): void {
+                $query->where('action_key', $idempotencyKey)
+                    ->orWhere(function ($legacy) use ($idempotencyKey): void {
+                        $legacy->whereNull('action_key')
+                            ->where('payload->signal_action_key', $idempotencyKey);
+                    });
+            })
             ->first();
 
         if ($existing) {
             return ['type' => 'webhook', 'status' => 'skipped', 'message' => 'Webhook delivery already exists for this action.', 'delivery_id' => $existing->id];
         }
 
-        $delivery = SignalWebhookDelivery::query()->create([
-            'signal_id' => $signal->id,
-            'signal_rule_id' => $rule->id,
-            'url' => $url,
-            'status' => 'pending',
-            'payload' => [
-                'signal_action_key' => $idempotencyKey,
-                'signal' => $signal->toArray(),
-                'rule' => ['id' => $rule->id, 'name' => $rule->name],
-                'action' => $action,
-            ],
-        ]);
+        try {
+            // A savepoint keeps an action-key collision recoverable even when
+            // Signal is executing inside the outer RMM occurrence transaction.
+            $delivery = DB::transaction(fn (): SignalWebhookDelivery => SignalWebhookDelivery::query()->create([
+                'signal_id' => $signal->id,
+                'signal_rule_id' => $rule->id,
+                'action_key' => $idempotencyKey,
+                'url' => $url,
+                'status' => SignalWebhookDelivery::STATUS_PENDING,
+                'payload' => [
+                    'signal_action_key' => $idempotencyKey,
+                    'signal' => $signal->toArray(),
+                    'rule' => ['id' => $rule->id, 'name' => $rule->name],
+                    'action' => $action,
+                ],
+            ]));
+        } catch (UniqueConstraintViolationException $exception) {
+            if (! $this->isWebhookActionKeyConflict($exception)) {
+                throw $exception;
+            }
 
-        DeliverSignalWebhook::dispatch($delivery->id);
+            // This locking read sees the concurrent committed row even when
+            // an enclosing MariaDB transaction has an older read snapshot.
+            $delivery = SignalWebhookDelivery::query()
+                ->where('action_key', $idempotencyKey)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $delivery) {
+                throw new \RuntimeException(
+                    'The Signal webhook action key collided without a readable delivery row.',
+                    0,
+                    $exception,
+                );
+            }
+
+            return [
+                'type' => 'webhook',
+                'status' => 'skipped',
+                'message' => 'Webhook delivery already exists for this action.',
+                'delivery_id' => $delivery->id,
+            ];
+        }
+
+        // The row is the durable outbox. This immediate wake-up is best effort;
+        // the scheduler recovers a pending row if queue publication itself fails.
+        $deliveryId = (int) $delivery->id;
+        DB::afterCommit(static function () use ($deliveryId): void {
+            try {
+                Bus::dispatch(new DeliverSignalWebhook($deliveryId));
+            } catch (\Throwable $exception) {
+                Log::warning('Signal webhook outbox wake-up failed; scheduled recovery remains pending.', [
+                    'delivery_id' => $deliveryId,
+                    'exception_class' => $exception::class,
+                ]);
+            }
+        });
 
         return ['type' => 'webhook', 'status' => 'queued', 'delivery_id' => $delivery->id];
+    }
+
+    private function isWebhookActionKeyConflict(UniqueConstraintViolationException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'signal_webhook_deliveries_action_key_unique')
+            || str_contains($message, 'unique constraint failed: signal_webhook_deliveries.action_key')
+            || str_contains($message, "for key 'signal_webhook_deliveries.action_key'")
+            || str_contains($message, "for key 'action_key'");
     }
 
     private function idempotencyKey(Signal $signal, SignalRule $rule, int $actionIndex): string

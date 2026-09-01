@@ -15,31 +15,94 @@
 @endsection
 
 @section('content')
-    <!-- Personal pulse -->
+    @php
+        $metrics = [
+            [
+                'label' => 'Tickets',
+                'value' => $myDay['counts']['tickets'],
+                'tone' => $myDay['counts']['unread'] > 0 ? 'warning' : 'primary',
+                'icon' => 'bi-ticket-detailed',
+                'href' => route('tech.tickets.index', ['ownership' => 'mine', 'lifecycle' => 'open']),
+                'aria_label' => 'Open tickets assigned to you: '.$myDay['counts']['tickets'],
+            ],
+            [
+                'label' => 'Tasks',
+                'value' => $myDay['counts']['tasks'],
+                'tone' => 'info',
+                'icon' => 'bi-check2-square',
+                'href' => route('tech.tasks.index', ['mine' => 1]),
+                'aria_label' => 'Open tasks assigned to you: '.$myDay['counts']['tasks'],
+            ],
+            [
+                'label' => 'Events',
+                'value' => $myDay['counts']['events'],
+                'tone' => 'secondary',
+                'icon' => 'bi-calendar3',
+                'href' => route('tech.calendar.index', ['view' => 'day', 'date' => $myDay['generated_at']->toDateString()]),
+                'aria_label' => 'Calendar events for '.$myDay['generated_at']->toDateString().': '.$myDay['counts']['events'],
+            ],
+            [
+                'label' => 'Overdue',
+                'value' => $myDay['counts']['overdue'],
+                'tone' => $myDay['counts']['overdue'] > 0 ? 'danger' : 'success',
+                'icon' => 'bi-exclamation-triangle',
+                'href' => route('tech.my-day.index', ['focus' => 'overdue']),
+                'aria_label' => 'Overdue tickets and tasks: '.$myDay['counts']['overdue'],
+            ],
+        ];
+    @endphp
     <div class="row g-2 mb-3">
-        @foreach([
-            ['label' => 'Tickets', 'value' => $myDay['counts']['tickets'], 'tone' => $myDay['counts']['unread'] > 0 ? 'warning' : 'primary', 'icon' => 'bi-ticket-detailed'],
-            ['label' => 'Tasks', 'value' => $myDay['counts']['tasks'], 'tone' => 'info', 'icon' => 'bi-check2-square'],
-            ['label' => 'Events', 'value' => $myDay['counts']['events'], 'tone' => 'secondary', 'icon' => 'bi-calendar3'],
-            ['label' => 'Overdue', 'value' => $myDay['counts']['overdue'], 'tone' => $myDay['counts']['overdue'] > 0 ? 'danger' : 'success', 'icon' => 'bi-exclamation-triangle'],
-        ] as $metric)
+        @foreach($metrics as $metric)
             <div class="col-6 col-xl-3">
-                <div class="card h-100 border-{{ $metric['tone'] }}">
+                <a href="{{ $metric['href'] }}" class="card h-100 border-{{ $metric['tone'] }} text-decoration-none focus-ring" aria-label="{{ $metric['aria_label'] }}">
                     <div class="card-body py-3">
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div>
                                 <div class="small text-uppercase text-muted fw-semibold">{{ $metric['label'] }}</div>
-                                <div class="h2 mb-0">{{ $metric['value'] }}</div>
+                                <div class="h2 mb-0 text-dark">{{ $metric['value'] }}</div>
                             </div>
                             <span class="badge text-bg-{{ $metric['tone'] }} rounded-pill">
                                 <i class="bi {{ $metric['icon'] }}" aria-hidden="true"></i>
                             </span>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
         @endforeach
     </div>
+
+    @if(isset($myDay['overdue_items']))
+        <div class="card mb-3 border-danger">
+            <div class="card-header py-2 d-flex align-items-center justify-content-between bg-danger-subtle">
+                <h2 class="h6 mb-0 text-danger">Overdue Work Items</h2>
+                <a href="{{ route('tech.my-day.index') }}" class="btn btn-sm btn-outline-danger">Close focus</a>
+            </div>
+            <div class="list-group list-group-flush">
+                @forelse($myDay['overdue_items'] as $item)
+                    <a href="{{ $item['url'] }}" class="list-group-item list-group-item-action py-3">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div class="min-w-0">
+                                <div class="fw-semibold text-truncate">{{ $item['title'] }}</div>
+                                <div class="small text-muted text-truncate">
+                                    <span class="badge text-bg-light border text-dark text-uppercase small">{{ $item['type'] }}</span>
+                                    @if(isset($item['key'])) {{ $item['key'] }} @endif
+                                    @if($item['client']) <span class="mx-1">/</span>{{ $item['client'] }} @endif
+                                </div>
+                            </div>
+                            <div class="text-end flex-shrink-0">
+                                <span class="badge text-bg-danger">Overdue</span>
+                                @if(!empty($item['is_unread']))
+                                    <span class="badge text-bg-warning">Unread</span>
+                                @endif
+                            </div>
+                        </div>
+                    </a>
+                @empty
+                    <div class="list-group-item text-muted py-4 text-center">No overdue items.</div>
+                @endforelse
+            </div>
+        </div>
+    @endif
 
     <!-- Schedule -->
     <div class="card mb-3">
@@ -173,6 +236,8 @@
 @endsection
 
 @section('sidebar')
+    @include('warroom::Tech.partials._sidebar')
+
     <!-- Quick actions -->
     <div class="card mb-3">
         <div class="card-header py-2">
@@ -192,18 +257,18 @@
             <h2 class="h6 mb-0">Queue</h2>
         </div>
         <div class="list-group list-group-flush">
-            <div class="list-group-item d-flex justify-content-between py-2">
+            <a href="{{ route('tech.tickets.index', ['ownership' => 'mine', 'lifecycle' => 'open', 'unread' => 1]) }}" class="list-group-item list-group-item-action d-flex justify-content-between py-2 focus-ring" aria-label="Unread open tickets assigned to you: {{ $myDay['counts']['unread'] }}">
                 <span>Unread</span>
                 <span class="badge text-bg-{{ $myDay['counts']['unread'] > 0 ? 'warning' : 'light' }} {{ $myDay['counts']['unread'] > 0 ? '' : 'text-dark' }}">
                     {{ $myDay['counts']['unread'] }}
                 </span>
-            </div>
-            <div class="list-group-item d-flex justify-content-between py-2">
+            </a>
+            <a href="{{ route('tech.my-day.index', ['focus' => 'overdue']) }}" class="list-group-item list-group-item-action d-flex justify-content-between py-2 focus-ring" aria-label="Overdue tickets and tasks: {{ $myDay['counts']['overdue'] }}">
                 <span>Overdue</span>
                 <span class="badge text-bg-{{ $myDay['counts']['overdue'] > 0 ? 'danger' : 'success' }}">
                     {{ $myDay['counts']['overdue'] }}
                 </span>
-            </div>
+            </a>
         </div>
     </div>
 @endsection

@@ -2044,6 +2044,107 @@
                 ]
             }
         },
+        "/api/v1/email/mailbox/conversations/{conversation}/classification": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Read one account-scoped Mail conversation classification",
+                "operationId": "getEmailConversationClassification",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conversation classification or null"
+                    },
+                    "404": {
+                        "description": "Conversation not found or inaccessible"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Update one account-scoped Mail conversation classification",
+                "operationId": "updateEmailConversationClassification",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated conversation classification"
+                    },
+                    "403": {
+                        "description": "Mailbox Organize access required"
+                    },
+                    "404": {
+                        "description": "Conversation not found or inaccessible"
+                    },
+                    "422": {
+                        "description": "Invalid category, tags, or conversation placement"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Clear one account-scoped Mail conversation classification",
+                "operationId": "clearEmailConversationClassification",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cleared conversation classification"
+                    },
+                    "403": {
+                        "description": "Mailbox Organize access required"
+                    },
+                    "404": {
+                        "description": "Conversation not found or inaccessible"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/email/inbox/messages": {
             "get": {
                 "tags": [
@@ -2192,6 +2293,1144 @@
                     },
                     "403": {
                         "description": "Missing email.update scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/drafts/{draft}/attachments": {
+            "post": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Upload bounded private attachments to an exact draft version",
+                "operationId": "storeEmailMailboxDraftAttachments",
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Draft with safe attachment metadata"
+                    },
+                    "409": {
+                        "description": "Opaque draft version conflict"
+                    },
+                    "422": {
+                        "description": "Attachment validation failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/drafts/{draft}/attachments/{attachment}": {
+            "delete": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Remove one exact-generation private draft attachment",
+                "operationId": "deleteEmailMailboxDraftAttachment",
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Draft after attachment removal"
+                    },
+                    "404": {
+                        "description": "Draft or attachment outside current scope"
+                    },
+                    "409": {
+                        "description": "Opaque draft version conflict"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/drafts": {
+            "get": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "List current private Mail drafts",
+                "operationId": "listEmailMailboxDrafts",
+                "responses": {
+                    "200": {
+                        "description": "Authorized private drafts"
+                    },
+                    "403": {
+                        "description": "Missing email.drafts.read ability"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Create one private fenced Mail draft",
+                "operationId": "createEmailMailboxDraft",
+                "responses": {
+                    "201": {
+                        "description": "Private draft created"
+                    },
+                    "404": {
+                        "description": "Mailbox or source placement outside current scope"
+                    },
+                    "422": {
+                        "description": "Validation error or unsupported shared scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/drafts/{draft}": {
+            "get": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Show one authorized private Mail draft",
+                "operationId": "showEmailMailboxDraft",
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Private draft"
+                    },
+                    "404": {
+                        "description": "Draft outside current scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Discard an exact fenced private draft version",
+                "operationId": "discardEmailMailboxDraft",
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Draft discarded"
+                    },
+                    "409": {
+                        "description": "Opaque draft version conflict"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Update an exact fenced private draft version",
+                "operationId": "updateEmailMailboxDraft",
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Draft updated"
+                    },
+                    "409": {
+                        "description": "Opaque draft version conflict"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/drafts/{draft}/provider-sync": {
+            "post": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Explicitly synchronize an exact private draft to provider Drafts",
+                "operationId": "syncEmailMailboxProviderDraft",
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current provider Drafts status"
+                    },
+                    "409": {
+                        "description": "Version or provider evidence conflict"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/drafts/{draft}/preview": {
+            "post": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Preview the exact sanitized and signed outbound snapshot",
+                "operationId": "previewEmailMailboxDraftSubmission",
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Safe outbound preview without provider write"
+                    },
+                    "409": {
+                        "description": "Opaque draft version conflict"
+                    },
+                    "422": {
+                        "description": "Outbound validation failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/drafts/{draft}/send": {
+            "post": {
+                "tags": [
+                    "Email Mail drafts"
+                ],
+                "summary": "Reserve and send one exact private draft snapshot",
+                "description": "A timeout or conflict is not permission to resend. Accepted repeats return the same submission; unresolved outcomes forbid another provider write.",
+                "operationId": "submitEmailMailboxDraft",
+                "parameters": [
+                    {
+                        "name": "draft",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Outbound submission created and accepted"
+                    },
+                    "200": {
+                        "description": "Existing accepted submission returned idempotently"
+                    },
+                    "409": {
+                        "description": "Version, idempotency, or provider outcome conflict"
+                    },
+                    "422": {
+                        "description": "Outbound validation failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/placements/{placement}/operations": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Run a provider mailbox operation",
+                "operationId": "createMailboxPlacementOperation",
+                "parameters": [
+                    {
+                        "name": "placement",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation executed or returned existing idempotent result"
+                    },
+                    "403": {
+                        "description": "Missing email.update scope or mailbox organize grant"
+                    },
+                    "404": {
+                        "description": "Mailbox placement not found"
+                    },
+                    "422": {
+                        "description": "Unsupported operation or provider target folder missing"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/conversations/{conversation}/presence": {
+            "get": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Show current authorized expiring reading/typing presence",
+                "operationId": "showEmailMailboxPresence",
+                "responses": {
+                    "200": {
+                        "description": "Current permission-filtered presence"
+                    },
+                    "404": {
+                        "description": "Conversation/source outside current scope"
+                    },
+                    "503": {
+                        "description": "Collaboration remains disabled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Refresh one bounded per-tab reading or typing presence hint",
+                "operationId": "heartbeatEmailMailboxPresence",
+                "responses": {
+                    "200": {
+                        "description": "Heartbeat accepted or presence safely unavailable"
+                    },
+                    "404": {
+                        "description": "Conversation/source outside current scope"
+                    },
+                    "503": {
+                        "description": "Collaboration remains disabled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Best-effort leave for one opaque tab presence hint",
+                "operationId": "leaveEmailMailboxPresence",
+                "responses": {
+                    "204": {
+                        "description": "Presence removed or left to expire"
+                    },
+                    "503": {
+                        "description": "Collaboration remains disabled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/submissions/{submission}": {
+            "get": {
+                "tags": [
+                    "Email Mail submissions"
+                ],
+                "summary": "Show one owned outbound Mail submission",
+                "operationId": "showEmailMailboxSubmission",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Safe outbound state and Email-log status"
+                    },
+                    "404": {
+                        "description": "Submission outside current scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/submissions/{submission}/sent-reconciliation": {
+            "get": {
+                "tags": [
+                    "Email Mail submissions"
+                ],
+                "summary": "Show exact provider Sent reconciliation status",
+                "operationId": "showEmailMailboxSubmissionSentReconciliation",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Safe submission and Sent-reconciliation status"
+                    },
+                    "404": {
+                        "description": "Submission outside current scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/remote-operations": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "List authorized mailbox provider operations",
+                "operationId": "listEmailRemoteOperations",
+                "responses": {
+                    "200": {
+                        "description": "Account-scoped operation list"
+                    },
+                    "404": {
+                        "description": "Requested mailbox is outside the caller scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/remote-operations/{operation}": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Show one authorized mailbox provider operation and its attempts",
+                "operationId": "showEmailRemoteOperation",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation detail"
+                    },
+                    "404": {
+                        "description": "Operation not found in caller mailbox scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/remote-operations/{operation}/retry": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Safely retry an eligible mailbox provider operation",
+                "operationId": "retryEmailRemoteOperation",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Retry outcome"
+                    },
+                    "403": {
+                        "description": "Mailbox Organize access required"
+                    },
+                    "404": {
+                        "description": "Operation not found in caller mailbox scope"
+                    },
+                    "422": {
+                        "description": "Operation is not safely retryable"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/remote-operations/{operation}/cancel": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Cancel an eligible mailbox provider operation",
+                "operationId": "cancelEmailRemoteOperation",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancellation outcome"
+                    },
+                    "403": {
+                        "description": "Mailbox Organize access required"
+                    },
+                    "404": {
+                        "description": "Operation not found in caller mailbox scope"
+                    },
+                    "422": {
+                        "description": "Operation is already running or terminal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/remote-operations/{operation}/undo": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Show verified Undo eligibility for one mailbox provider operation",
+                "operationId": "showEmailRemoteOperationUndoEligibility",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current local Undo eligibility and reason"
+                    },
+                    "404": {
+                        "description": "Operation not found in caller mailbox scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Create or return the verified inverse mailbox provider operation",
+                "operationId": "applyEmailRemoteOperationUndo",
+                "parameters": [
+                    {
+                        "name": "operation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Existing or newly executed inverse operation"
+                    },
+                    "403": {
+                        "description": "Mailbox Organize access required"
+                    },
+                    "404": {
+                        "description": "Operation not found in caller mailbox scope"
+                    },
+                    "422": {
+                        "description": "Source result is no longer safely reversible"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/drafts/{draft}/share": {
+            "post": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Explicitly share one exact private reply draft",
+                "operationId": "shareEmailMailboxDraft",
+                "responses": {
+                    "201": {
+                        "description": "Shared draft created"
+                    },
+                    "404": {
+                        "description": "Draft/source outside ordinary shared scope"
+                    },
+                    "409": {
+                        "description": "Draft version conflict"
+                    },
+                    "503": {
+                        "description": "Collaboration remains disabled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/shared-drafts/{draft}": {
+            "get": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Read one explicitly shared draft with current ordinary mailbox View",
+                "operationId": "showEmailSharedMailboxDraft",
+                "responses": {
+                    "200": {
+                        "description": "Shared draft and safe lease state"
+                    },
+                    "404": {
+                        "description": "Shared draft outside current scope"
+                    },
+                    "503": {
+                        "description": "Collaboration remains disabled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Update shared content under exact lease/fence/content/source versions",
+                "operationId": "updateEmailSharedDraft",
+                "responses": {
+                    "200": {
+                        "description": "Updated shared draft"
+                    },
+                    "409": {
+                        "description": "Source context stale"
+                    },
+                    "423": {
+                        "description": "Lease token/fence/version is no longer current"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/shared-drafts/{draft}/lease": {
+            "post": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Acquire or explicitly take over an expired shared-draft lease",
+                "operationId": "acquireEmailSharedDraftLease",
+                "responses": {
+                    "200": {
+                        "description": "Opaque lease token issued once"
+                    },
+                    "409": {
+                        "description": "Source context stale"
+                    },
+                    "423": {
+                        "description": "Another current editor holds the lease"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Release only the exact current lease",
+                "operationId": "releaseEmailSharedDraftLease",
+                "responses": {
+                    "200": {
+                        "description": "Lease released"
+                    },
+                    "423": {
+                        "description": "Lease token/fence/version is no longer current"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Renew the exact current lease no faster than the bounded floor",
+                "operationId": "renewEmailSharedDraftLease",
+                "responses": {
+                    "200": {
+                        "description": "Current lease state"
+                    },
+                    "409": {
+                        "description": "Source context stale"
+                    },
+                    "423": {
+                        "description": "Lease token/fence/version is no longer current"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/shared-drafts/{draft}/rebase-preview": {
+            "post": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Preview current sender/audience/thread source without changing authored content",
+                "operationId": "previewEmailSharedDraftRebase",
+                "responses": {
+                    "200": {
+                        "description": "Bounded rebase proposal"
+                    },
+                    "423": {
+                        "description": "Lease token/fence/version is no longer current"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/shared-drafts/{draft}/rebase": {
+            "post": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Confirm one exact rebase while preserving authored body and attachments",
+                "operationId": "rebaseEmailSharedDraft",
+                "responses": {
+                    "200": {
+                        "description": "Rebased shared draft"
+                    },
+                    "409": {
+                        "description": "Rebase preview changed"
+                    },
+                    "423": {
+                        "description": "Lease token/fence/version is no longer current"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/shared-drafts/{draft}/preview": {
+            "post": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Preview the exact Order 11 outbound snapshot under the current lease",
+                "operationId": "previewEmailSharedDraftSend",
+                "responses": {
+                    "200": {
+                        "description": "Safe exact outbound preview"
+                    },
+                    "409": {
+                        "description": "Source context stale"
+                    },
+                    "423": {
+                        "description": "Lease token/fence/version is no longer current"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/shared-drafts/{draft}/send": {
+            "post": {
+                "tags": [
+                    "Email Mail collaboration"
+                ],
+                "summary": "Reauthorize, fence and submit the shared snapshot through Order 11 once",
+                "operationId": "sendEmailSharedDraft",
+                "responses": {
+                    "200": {
+                        "description": "Accepted or reconciled submission"
+                    },
+                    "409": {
+                        "description": "Stale or submission conflict; never permission to resend"
+                    },
+                    "423": {
+                        "description": "Lease token/fence/version is no longer current"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/smart-inbox/suggestions": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "List the current user Smart Inbox review queue",
+                "operationId": "listEmailSmartInboxSuggestions",
+                "responses": {
+                    "200": {
+                        "description": "User and mailbox scoped suggestion queue"
+                    },
+                    "404": {
+                        "description": "Requested mailbox is outside the caller scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/smart-inbox/suggestions/count": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Count current user Smart Inbox suggestions by state",
+                "operationId": "countEmailSmartInboxSuggestions",
+                "responses": {
+                    "200": {
+                        "description": "Suggestion counts"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/smart-inbox/suggestions/{suggestion}": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Show one current user Smart Inbox suggestion",
+                "operationId": "showEmailSmartInboxSuggestion",
+                "responses": {
+                    "200": {
+                        "description": "Suggestion detail and audit events"
+                    },
+                    "404": {
+                        "description": "Suggestion not found in caller scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Correct one current Smart Inbox suggestion",
+                "operationId": "correctEmailSmartInboxSuggestion",
+                "parameters": [
+                    {
+                        "name": "suggestion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Corrected bounded proposal and audit events"
+                    },
+                    "404": {
+                        "description": "Suggestion not found in caller scope"
+                    },
+                    "422": {
+                        "description": "Suggestion is stale, terminal, or invalid"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/mailbox/conversations/{conversation}/smart-inbox/analyze": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Explicitly analyze one authorized Mail conversation",
+                "operationId": "analyzeEmailConversationForSmartInbox",
+                "responses": {
+                    "200": {
+                        "description": "Durable non-writing review suggestions"
+                    },
+                    "404": {
+                        "description": "Conversation or placement not found in caller scope"
+                    },
+                    "422": {
+                        "description": "AI governance or source state blocked analysis"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/smart-inbox/suggestions/{suggestion}/dismiss": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Dismiss one current Smart Inbox suggestion",
+                "operationId": "dismissEmailSmartInboxSuggestion",
+                "parameters": [
+                    {
+                        "name": "suggestion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dismissed suggestion and audit events"
+                    },
+                    "404": {
+                        "description": "Suggestion not found in caller scope"
+                    },
+                    "422": {
+                        "description": "Suggestion is stale or terminal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/email/smart-inbox/suggestions/{suggestion}/apply": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Apply one reviewed and currently authorized Smart Inbox suggestion",
+                "operationId": "applyEmailSmartInboxSuggestion",
+                "parameters": [
+                    {
+                        "name": "suggestion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Applied suggestion with durable domain reference"
+                    },
+                    "403": {
+                        "description": "Current target or agent authority is missing"
+                    },
+                    "404": {
+                        "description": "Suggestion not found in caller scope"
+                    },
+                    "422": {
+                        "description": "Suggestion is stale, terminal, conflicted, or invalid"
                     }
                 },
                 "security": [
@@ -3036,6 +4275,76 @@
                 ]
             }
         },
+        "/api/v1/sales/opportunities/{opportunity}/lost": {
+            "post": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Mark a sales opportunity as lost",
+                "operationId": "markSalesOpportunityLost",
+                "parameters": [
+                    {
+                        "name": "opportunity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opportunity marked as lost"
+                    },
+                    "403": {
+                        "description": "Missing sales.update scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/sales/opportunities/{opportunity}/reopen": {
+            "post": {
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Reopen a lost sales opportunity",
+                "operationId": "reopenSalesOpportunity",
+                "parameters": [
+                    {
+                        "name": "opportunity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Opportunity reopened"
+                    },
+                    "403": {
+                        "description": "Missing sales.update scope"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/sales/opportunities/{opportunity}/activities": {
             "post": {
                 "tags": [
@@ -3094,6 +4403,788 @@
                     },
                     "403": {
                         "description": "Missing sales.update scope"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders": {
+            "get": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "List Storage purchase orders",
+                "operationId": "getStoragePurchaseOrderList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "vendor_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "warehouse_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "tracking_number",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "expected_after",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "expected_before",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated purchase-order list"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.read ability"
+                    },
+                    "422": {
+                        "description": "Invalid filter"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Register an externally placed purchase order or draft need",
+                "operationId": "createStoragePurchaseOrder",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "po_number",
+                                    "vendor_id",
+                                    "deliver_to_warehouse_id",
+                                    "status",
+                                    "currency",
+                                    "lines"
+                                ],
+                                "properties": {
+                                    "po_number": {
+                                        "type": "string"
+                                    },
+                                    "vendor_id": {
+                                        "type": "integer"
+                                    },
+                                    "deliver_to_warehouse_id": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "ordered"
+                                        ]
+                                    },
+                                    "ordered_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "expected_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "NOK"
+                                    },
+                                    "lines": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Purchase order created"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.manage ability"
+                    },
+                    "422": {
+                        "description": "Validation or lifecycle error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}": {
+            "get": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Get a purchase order with shipment and receipt history",
+                "operationId": "getStoragePurchaseOrder",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Purchase order"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.read ability"
+                    },
+                    "404": {
+                        "description": "Purchase order not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Update editable purchase-order data and lines",
+                "operationId": "updateStoragePurchaseOrder",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Purchase order updated"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.manage ability"
+                    },
+                    "404": {
+                        "description": "Purchase order not found"
+                    },
+                    "422": {
+                        "description": "Validation or lifecycle error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}/shipments": {
+            "post": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Register a shipment with allocations and tracking identifiers",
+                "operationId": "createStoragePurchaseShipment",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Shipment created"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.manage ability"
+                    },
+                    "422": {
+                        "description": "Validation or lifecycle error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}/shipments/{purchaseShipment}/status": {
+            "patch": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Change a shipment manual lifecycle status",
+                "operationId": "updateStoragePurchaseShipmentStatus",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "purchaseShipment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "in_transit",
+                                            "delivered",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "occurred_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Shipment status updated"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.manage ability"
+                    },
+                    "404": {
+                        "description": "Order or shipment not found"
+                    },
+                    "422": {
+                        "description": "Validation or lifecycle error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}/shipments/{purchaseShipment}/trackings": {
+            "post": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Append a tracking identifier to an existing shipment",
+                "operationId": "appendStoragePurchaseShipmentTracking",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "purchaseShipment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tracking_number"
+                                ],
+                                "properties": {
+                                    "shipping_carrier_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "tracking_number": {
+                                        "type": "string"
+                                    },
+                                    "tracking_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "master",
+                                            "parcel",
+                                            "last_mile",
+                                            "other",
+                                            "legacy"
+                                        ]
+                                    },
+                                    "label": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "direct_url": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "nullable": true
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "maximum": 65535,
+                                        "minimum": 0
+                                    },
+                                    "metadata": {
+                                        "type": "object",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tracking identifier appended"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.manage ability"
+                    },
+                    "422": {
+                        "description": "Validation or safe-link error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}/lines/{purchaseOrderLine}/cancel": {
+            "post": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Cancel an outstanding purchase-order line quantity",
+                "operationId": "cancelStoragePurchaseOrderLineQuantity",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "purchaseOrderLine",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "quantity",
+                                    "reason"
+                                ],
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Quantity cancelled and order lifecycle refreshed"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.manage ability"
+                    },
+                    "422": {
+                        "description": "Validation or lifecycle error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}/close": {
+            "post": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Close a fully received purchase order",
+                "operationId": "closeStoragePurchaseOrder",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Purchase order closed"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.manage ability"
+                    },
+                    "422": {
+                        "description": "Validation or lifecycle error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}/cancel": {
+            "post": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Cancel an eligible unreceived purchase order",
+                "operationId": "cancelStoragePurchaseOrder",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Purchase order cancelled"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.manage ability"
+                    },
+                    "422": {
+                        "description": "Validation or lifecycle error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}/receipts": {
+            "post": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Post an idempotent goods receipt",
+                "description": "Posts accepted quantities atomically. Reusing the same token with the same payload returns the existing receipt; a different payload is rejected. Overages additionally require storage.purchase.receive_overage.",
+                "operationId": "postStoragePurchaseReceipt",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "idempotency_token",
+                                    "lines"
+                                ],
+                                "properties": {
+                                    "idempotency_token": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "purchase_shipment_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "delivery_note_ref": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "received_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "warehouse_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "room_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "box_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "lines": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Existing idempotent receipt"
+                    },
+                    "201": {
+                        "description": "Receipt posted and inventory updated"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.receive ability"
+                    },
+                    "422": {
+                        "description": "Validation, idempotency, overage, or lifecycle error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/storage/purchase-orders/{purchaseOrder}/receipts/{purchaseReceipt}/reverse": {
+            "post": {
+                "tags": [
+                    "Storage Purchase Orders"
+                ],
+                "summary": "Reverse a posted goods receipt",
+                "description": "Creates an immutable negative receipt and stock movements. The operation is guarded and idempotent.",
+                "operationId": "reverseStoragePurchaseReceipt",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "purchaseReceipt",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "idempotency_token",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "idempotency_token": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "reason": {
+                                        "type": "string"
+                                    },
+                                    "reversed_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Existing idempotent reversal"
+                    },
+                    "201": {
+                        "description": "Reversal receipt posted"
+                    },
+                    "403": {
+                        "description": "Missing storage.purchase.reverse ability"
+                    },
+                    "422": {
+                        "description": "Validation, idempotency, stock-safety, or lifecycle error"
                     }
                 },
                 "security": [
@@ -4611,6 +6702,57 @@
             }
         },
         "/api/v1/tickets/{ticket}/messages": {
+            "get": {
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Get Ticket message metadata",
+                "description": "Returns paginated Ticket message metadata and first-response verification without message content.",
+                "operationId": "getTicketMessageMetadata",
+                "parameters": [
+                    {
+                        "name": "ticket",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 25,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated message metadata and first-response summary"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Missing tickets.read scope"
+                    },
+                    "404": {
+                        "description": "Ticket not found"
+                    },
+                    "422": {
+                        "description": "Invalid pagination request"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Tickets"
@@ -4971,6 +7113,18 @@
             "description": "API endpoints for inbox messages and email operations."
         },
         {
+            "name": "Email Mail drafts",
+            "description": "Private, fenced Mail drafts and idempotent submission."
+        },
+        {
+            "name": "Email Mail collaboration",
+            "description": "Default-off shared Mail coordination without content-bearing events."
+        },
+        {
+            "name": "Email Mail submissions",
+            "description": "Safe outbound and provider Sent status for private Mail submissions."
+        },
+        {
             "name": "Knowledge",
             "description": "API endpoints for knowledge articles."
         },
@@ -4989,6 +7143,10 @@
         {
             "name": "Sales",
             "description": "API endpoints for sales opportunities and sales activities."
+        },
+        {
+            "name": "Storage Purchase Orders",
+            "description": "Purchase-order, shipment, tracking, goods-receipt, and reversal operations."
         },
         {
             "name": "Storage",

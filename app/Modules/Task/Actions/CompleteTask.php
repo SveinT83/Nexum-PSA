@@ -7,7 +7,6 @@ use App\Modules\Task\Models\Task;
 use App\Modules\Task\Models\TaskActivity;
 use App\Modules\Task\Models\TaskStatus;
 use App\Modules\Task\Models\TaskTimeEntry;
-use App\Modules\Ticket\Actions\RegisterTicketTimeEntry;
 use App\Modules\Ticket\Models\Ticket;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -16,10 +15,8 @@ class CompleteTask
 {
     public function __construct(
         private readonly EnsureTaskDefaults $ensureDefaults,
-        private readonly RegisterTicketTimeEntry $registerTicketTimeEntry,
-    )
-    {
-    }
+        private readonly RegisterTaskTimeEntry $registerTaskTimeEntry,
+    ) {}
 
     /**
      * Mark a task done and create estimated time when no actual time exists.
@@ -57,7 +54,7 @@ class CompleteTask
                 throw new RuntimeException('Task is already complete.');
             }
 
-            if ($task->owner instanceof Ticket) {
+            if ($task->owner instanceof Ticket && $task->timeEntries()->sum('minutes') === 0) {
                 if (! $rateOption) {
                     throw new RuntimeException('Select an available time rate before completing this ticket task.');
                 }
@@ -68,22 +65,12 @@ class CompleteTask
                     }
                 }
 
-                $ticketEntry = $this->registerTicketTimeEntry->handle($task->owner, [
+                $this->registerTaskTimeEntry->handle($task, $user, [
                     'work_date' => $billingData['work_date'],
                     'minutes' => $billingData['minutes'],
                     'invoice_text' => $billingData['invoice_text'],
                     'note' => $billingData['note'] ?? null,
-                ], $rateOption, $user);
-
-                TaskTimeEntry::query()->create([
-                    'task_id' => $task->id,
-                    'user_id' => $user->id,
-                    'source_type' => 'ticket_time_entry',
-                    'work_date' => $billingData['work_date'],
-                    'minutes' => $billingData['minutes'],
-                    'billable' => true,
-                    'note' => 'Registered on ticket time entry #' . $ticketEntry->id . '.',
-                ]);
+                ], $rateOption);
             } elseif ($task->timeEntries()->sum('minutes') === 0 && $task->estimated_minutes) {
                 TaskTimeEntry::query()->create([
                     'task_id' => $task->id,

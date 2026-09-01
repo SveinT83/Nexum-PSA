@@ -11,18 +11,43 @@ use App\Modules\Ticket\Jobs\SendTicketReplyEmail;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Services\TicketRuleMessageMutationEventFactory;
 use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AddTicketMessage
 {
+    public function __construct(
+        private readonly DispatchTicketRuleMutationEvent $dispatchRules,
+        private readonly TicketRuleMessageMutationEventFactory $messageEvents,
+    ) {}
+
     public function handle(Ticket $ticket, array $data, ?User $actor = null): TicketMessage
     {
-        return DB::transaction(function () use ($ticket, $data, $actor) {
+        $managedSystemActor = $actor?->isSystemActor() === true;
+        if ($managedSystemActor) {
+            // A managed actor is never presented as a technician and cannot
+            // turn an unattended note into customer-visible delivery.
+            $data['type'] = 'internal_note';
+            $data['visibility'] = 'internal';
+            $data['suppress_notifications'] = true;
+            $data['suppress_workflow_trigger'] = true;
+            unset($data['notify_user_id']);
+            if (is_array($data['metadata'] ?? null)) {
+                unset($data['metadata']['notify_user_id']);
+            }
+        }
+
+        $authorType = $this->authorType($data, $managedSystemActor);
+        $suppressReplyDelivery = (bool) ($data['_suppress_reply_delivery'] ?? false);
+
+        return DB::transaction(function () use ($ticket, $data, $actor, $authorType, $suppressReplyDelivery) {
+            $beforeOwnerId = $ticket->owner_id ? (int) $ticket->owner_id : null;
             $message = TicketMessage::create([
                 'ticket_id' => $ticket->id,
                 'author_id' => $actor?->id,
-                'author_type' => 'user',
+                'author_type' => $authorType,
                 'type' => $data['type'] ?? 'internal_note',
                 'visibility' => $data['visibility'] ?? 'internal',
                 'subject' => $data['subject'] ?? null,
@@ -36,19 +61,26 @@ class AddTicketMessage
                 app(StoreTicketAttachment::class)->fromUpload($message, $attachment, $actor);
             }
 
+            $externalAuthor = in_array($authorType, ['portal_user', 'external'], true);
             $ticketUpdates = [
                 'updated_by' => $actor?->id,
-                'is_unread' => false,
+                'is_unread' => $externalAuthor,
             ];
 
-            if ($message->type === 'customer_reply' && $message->visibility === 'public' && ! $ticket->first_responded_at) {
+            if ($message->type === 'customer_reply'
+                && $message->visibility === 'public'
+                && ! $externalAuthor
+                && ! $ticket->first_responded_at) {
                 $ticketUpdates['first_responded_at'] = now();
             }
 
             $ticket->forceFill($ticketUpdates)->touch();
-            app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'message_added');
+            $claimedTicket = null;
+            if (! ($data['_suppress_assignment_claim'] ?? false)) {
+                $claimedTicket = app(ClaimUnassignedTicket::class)->handle($ticket, $actor, 'message_added');
+            }
 
-            TicketEvent::create([
+            TicketEvent::query()->create([
                 'ticket_id' => $ticket->id,
                 'actor_id' => $actor?->id,
                 'type' => 'message_added',
@@ -61,7 +93,7 @@ class AddTicketMessage
                 ],
             ]);
 
-            if ($message->type === 'customer_reply') {
+            if ($message->type === 'customer_reply' && ! $suppressReplyDelivery) {
                 SendTicketReplyEmail::dispatch($message->id)->afterCommit();
                 DB::afterCommit(fn () => app(SyncTicketMessageToRelationship::class)->handle($message->id));
             } elseif (! empty($message->metadata['notify_user_id'])) {
@@ -69,6 +101,7 @@ class AddTicketMessage
             }
 
             if (
+                ! $suppressReplyDelivery &&
                 $message->type === 'customer_reply'
                 && $message->visibility === 'public'
                 && $ticket->isPortalVisible()
@@ -102,20 +135,70 @@ class AddTicketMessage
                 }
             }
 
+            $eventContext = $data;
+            if ($claimedTicket) {
+                $eventContext['_assignment_before_owner_id'] = $beforeOwnerId;
+                $eventContext['_assignment_after_owner_id'] = (int) $claimedTicket->owner_id;
+            }
+            $mutationEvent = $this->messageEvents->make(
+                $ticket->refresh(),
+                $message,
+                $eventContext,
+                $actor,
+            );
+            if (! ($data['_suppress_ticket_rule_dispatch'] ?? false)) {
+                $this->dispatchRules->handle($ticket->refresh(), $mutationEvent, $actor);
+            }
+
             // Notify the ticket owner (if not the comment author)
-            if ($ticket->owner_id && $ticket->owner_id !== $actor?->id) {
+            if (! ($data['suppress_notifications'] ?? false)
+                && $ticket->owner_id
+                && $ticket->owner_id !== $actor?->id) {
                 $owner = User::find($ticket->owner_id);
                 if ($owner) {
-                    $owner->notify(new TicketCommentAdded(
-                        ticket: $ticket,
-                        commentAuthor: $actor?->name ?? 'System',
-                        commentPreview: str($message->body)->limit(150),
-                    ));
+                    try {
+                        $owner->notify(new TicketCommentAdded(
+                            ticket: $ticket,
+                            commentAuthor: $actor?->name ?? 'System',
+                            commentPreview: str($message->body)->limit(150),
+                        ));
+                    } catch (\Throwable $exception) {
+                        // A notification transport failure must not roll back
+                        // the authoritative Ticket message. Record a safe,
+                        // retry-visible event without provider details.
+                        TicketEvent::query()->create([
+                            'ticket_id' => $ticket->id,
+                            'actor_id' => $actor?->id,
+                            'type' => 'notification_failed',
+                            'message' => 'Ticket owner notification could not be delivered.',
+                            'after' => [
+                                'message_id' => $message->id,
+                                'notification_type' => 'ticket_comment_added',
+                                'exception_class' => $exception::class,
+                            ],
+                        ]);
+                    }
                 }
             }
 
             return $message;
         });
+    }
+
+    private function authorType(array $data, bool $managedSystemActor): string
+    {
+        if ($managedSystemActor) {
+            return 'system';
+        }
+
+        $authorType = $data['_author_type'] ?? 'user';
+        if (! is_string($authorType) || ! in_array($authorType, ['user', 'portal_user', 'external'], true)) {
+            throw ValidationException::withMessages([
+                '_author_type' => 'The internal Ticket message author type is invalid.',
+            ]);
+        }
+
+        return $authorType;
     }
 
     private function messageMetadata(array $data, ?User $actor): array

@@ -30,6 +30,7 @@ use App\Modules\Signal\Controllers\Api\V1\SignalController as SignalApiControlle
 use App\Modules\Signal\Controllers\Tech\SignalController;
 use App\Modules\Signal\Controllers\Tech\SignalSettingsController;
 use App\Modules\Signal\Jobs\DeliverSignalWebhook;
+use App\Modules\Signal\Jobs\DispatchPendingSignalWebhookDeliveries;
 use App\Modules\Signal\Models\Signal;
 use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Signal\Models\SignalRuleExecution;
@@ -38,10 +39,16 @@ use App\Modules\Signal\Support\SignalSettings;
 use App\Modules\Task\Models\Task;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Permission;
@@ -52,6 +59,25 @@ class SignalModuleTest extends TestCase
 {
     use ApprovesExternalAiForTests;
     use RefreshDatabase;
+
+    /** @param array<string, mixed> $overrides */
+    private function webhookDelivery(array $overrides = []): SignalWebhookDelivery
+    {
+        $signal = Signal::query()->create([
+            'source_domain' => 'marketing',
+            'signal_type' => 'marketing_click',
+            'summary' => 'Webhook outbox test',
+            'occurred_at' => now(),
+        ]);
+
+        return SignalWebhookDelivery::query()->create(array_merge([
+            'signal_id' => $signal->id,
+            'action_key' => 'test:delivery:signal:'.$signal->id,
+            'url' => 'https://example.test/signal',
+            'status' => SignalWebhookDelivery::STATUS_PENDING,
+            'payload' => ['signal' => ['id' => $signal->id]],
+        ], $overrides));
+    }
 
     #[Test]
     public function signal_route_is_owned_by_signal_module(): void
@@ -269,7 +295,10 @@ class SignalModuleTest extends TestCase
         $this->assertSame(1, $client->fresh()->tags()->where('slug', 'marketing-interest')->count());
         $this->assertSame(1, SignalWebhookDelivery::query()->count());
 
-        Queue::assertPushed(DeliverSignalWebhook::class);
+        Queue::assertPushed(
+            DeliverSignalWebhook::class,
+            fn (DeliverSignalWebhook $job): bool => $job->afterCommit === true,
+        );
     }
 
     #[Test]
@@ -608,6 +637,7 @@ class SignalModuleTest extends TestCase
         ]);
         $delivery = SignalWebhookDelivery::query()->create([
             'signal_id' => $signal->id,
+            'action_key' => 'test:success:signal:'.$signal->id,
             'url' => 'https://example.test/signal',
             'payload' => ['signal' => ['id' => $signal->id]],
         ]);
@@ -616,6 +646,293 @@ class SignalModuleTest extends TestCase
 
         $this->assertSame('delivered', $delivery->fresh()->status);
         $this->assertSame(200, $delivery->fresh()->response_status);
+        $this->assertSame(1, $delivery->fresh()->attempts);
+        $this->assertNotNull($delivery->fresh()->completed_at);
+    }
+
+    #[Test]
+    public function pending_webhook_outbox_rows_are_redispatched_by_the_scheduler_worker(): void
+    {
+        Queue::fake();
+        $delivery = $this->webhookDelivery();
+
+        app(DispatchPendingSignalWebhookDeliveries::class)->handle();
+
+        Queue::assertPushed(
+            DeliverSignalWebhook::class,
+            fn (DeliverSignalWebhook $job): bool => $job->deliveryId === $delivery->id,
+        );
+        $this->assertSame(SignalWebhookDelivery::STATUS_PENDING, $delivery->fresh()->status);
+    }
+
+    #[Test]
+    public function duplicate_webhook_jobs_claim_and_send_a_delivery_only_once(): void
+    {
+        Http::fake([
+            'example.test/*' => Http::response('ok', 200),
+        ]);
+        $delivery = $this->webhookDelivery();
+
+        (new DeliverSignalWebhook($delivery->id))->handle();
+        (new DeliverSignalWebhook($delivery->id))->handle();
+
+        Http::assertSentCount(1);
+        $delivery->refresh();
+        $this->assertSame(SignalWebhookDelivery::STATUS_DELIVERED, $delivery->status);
+        $this->assertSame(1, $delivery->attempts);
+    }
+
+    #[Test]
+    public function webhook_action_key_is_database_unique_and_executor_reuses_the_delivery(): void
+    {
+        Queue::fake();
+        $signal = Signal::query()->create([
+            'source_domain' => 'rmm',
+            'signal_type' => 'rmm.backup_failed',
+            'summary' => 'RMM backup failure',
+            'occurred_at' => now(),
+        ]);
+        $rule = SignalRule::query()->create([
+            'name' => 'Unique RMM webhook handoff',
+            'is_active' => true,
+            'priority' => 10,
+            'conditions' => [],
+            'actions' => [],
+        ]);
+        $action = ['type' => 'webhook', 'url' => 'https://example.test/rmm'];
+
+        $first = app(ExecuteSignalAction::class)->handle($signal, $rule, $action);
+        $second = app(ExecuteSignalAction::class)->handle($signal, $rule, $action);
+
+        $this->assertSame('queued', $first['status']);
+        $this->assertSame('skipped', $second['status']);
+        $this->assertSame($first['delivery_id'], $second['delivery_id']);
+        $this->assertDatabaseCount('signal_webhook_deliveries', 1);
+
+        $delivery = SignalWebhookDelivery::query()->firstOrFail();
+        try {
+            SignalWebhookDelivery::query()->create([
+                'signal_id' => $signal->id,
+                'signal_rule_id' => $rule->id,
+                'action_key' => $delivery->action_key,
+                'url' => 'https://example.test/duplicate',
+                'status' => SignalWebhookDelivery::STATUS_PENDING,
+            ]);
+            $this->fail('The database must reject a duplicate Signal webhook action key.');
+        } catch (UniqueConstraintViolationException) {
+            $this->assertDatabaseCount('signal_webhook_deliveries', 1);
+        }
+    }
+
+    #[Test]
+    public function webhook_action_key_migrations_fail_closed_for_legacy_duplicate_work(): void
+    {
+        $actionKeyMigration = require database_path(
+            'migrations/2026_08_26_030000_add_action_key_to_signal_webhook_deliveries.php',
+        );
+        $requiredKeyMigration = require database_path(
+            'migrations/2026_08_26_040000_require_signal_webhook_action_key.php',
+        );
+        $requiredKeyMigration->down();
+        $actionKeyMigration->down();
+        $schemaRestored = false;
+
+        try {
+            $signal = Signal::query()->create([
+                'source_domain' => 'rmm',
+                'signal_type' => 'rmm.backup_failed',
+                'summary' => 'Legacy duplicate migration test',
+                'occurred_at' => now(),
+            ]);
+            $actionKey = 'signal:'.$signal->id.':rule:7:action:0';
+            $payload = json_encode(['signal_action_key' => $actionKey], JSON_THROW_ON_ERROR);
+            $timestamp = now();
+            $pendingId = DB::table('signal_webhook_deliveries')->insertGetId([
+                'signal_id' => $signal->id,
+                'url' => 'https://example.test/pending',
+                'status' => SignalWebhookDelivery::STATUS_PENDING,
+                'payload' => $payload,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+            $deliveredId = DB::table('signal_webhook_deliveries')->insertGetId([
+                'signal_id' => $signal->id,
+                'url' => 'https://example.test/delivered',
+                'status' => SignalWebhookDelivery::STATUS_DELIVERED,
+                'payload' => $payload,
+                'delivered_at' => $timestamp,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+            $lateActionKey = 'signal:'.$signal->id.':rule:8:action:0';
+            $latePayload = json_encode(['signal_action_key' => $lateActionKey], JSON_THROW_ON_ERROR);
+            $earlyPendingId = DB::table('signal_webhook_deliveries')->insertGetId([
+                'signal_id' => $signal->id,
+                'url' => 'https://example.test/early-pending',
+                'status' => SignalWebhookDelivery::STATUS_PENDING,
+                'payload' => $latePayload,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+
+            $actionKeyMigration->up();
+
+            $lateDeliveredId = DB::table('signal_webhook_deliveries')->insertGetId([
+                'signal_id' => $signal->id,
+                'url' => 'https://example.test/late-delivered',
+                'status' => SignalWebhookDelivery::STATUS_DELIVERED,
+                'payload' => $latePayload,
+                'delivered_at' => $timestamp,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+            $uniqueLateActionKey = 'signal:'.$signal->id.':rule:9:action:0';
+            $uniqueLatePendingId = DB::table('signal_webhook_deliveries')->insertGetId([
+                'signal_id' => $signal->id,
+                'url' => 'https://example.test/late-unique',
+                'status' => SignalWebhookDelivery::STATUS_PENDING,
+                'payload' => json_encode(['signal_action_key' => $uniqueLateActionKey], JSON_THROW_ON_ERROR),
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+
+            $this->assertDatabaseHas('signal_webhook_deliveries', [
+                'id' => $deliveredId,
+                'action_key' => $actionKey,
+                'status' => SignalWebhookDelivery::STATUS_DELIVERED,
+            ]);
+            $this->assertDatabaseHas('signal_webhook_deliveries', [
+                'id' => $pendingId,
+                'action_key' => null,
+                'status' => SignalWebhookDelivery::STATUS_UNRESOLVED,
+            ]);
+            $this->assertNotNull(DB::table('signal_webhook_deliveries')->find($pendingId)->completed_at);
+
+            $requiredKeyMigration->up();
+            $schemaRestored = true;
+
+            $this->assertDatabaseHas('signal_webhook_deliveries', [
+                'id' => $pendingId,
+                'action_key' => 'legacy:delivery:'.$pendingId,
+                'status' => SignalWebhookDelivery::STATUS_UNRESOLVED,
+            ]);
+            $this->assertDatabaseHas('signal_webhook_deliveries', [
+                'id' => $lateDeliveredId,
+                'action_key' => $lateActionKey,
+                'status' => SignalWebhookDelivery::STATUS_DELIVERED,
+            ]);
+            $this->assertDatabaseHas('signal_webhook_deliveries', [
+                'id' => $earlyPendingId,
+                'action_key' => 'legacy:delivery:'.$earlyPendingId,
+                'status' => SignalWebhookDelivery::STATUS_UNRESOLVED,
+            ]);
+            $this->assertDatabaseHas('signal_webhook_deliveries', [
+                'id' => $uniqueLatePendingId,
+                'action_key' => $uniqueLateActionKey,
+                'status' => SignalWebhookDelivery::STATUS_PENDING,
+            ]);
+
+            try {
+                DB::table('signal_webhook_deliveries')->insert([
+                    'signal_id' => $signal->id,
+                    'url' => 'https://example.test/missing-key',
+                    'status' => SignalWebhookDelivery::STATUS_PENDING,
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp,
+                ]);
+                $this->fail('The database must reject a webhook delivery without an action key.');
+            } catch (QueryException) {
+                $this->assertSame(5, DB::table('signal_webhook_deliveries')->count());
+            }
+        } finally {
+            if (! $schemaRestored) {
+                if (! Schema::hasColumn('signal_webhook_deliveries', 'action_key')) {
+                    $actionKeyMigration->up();
+                }
+
+                $requiredKeyMigration->up();
+            }
+        }
+    }
+
+    #[Test]
+    public function abandoned_webhook_claim_is_unresolved_and_never_replayed(): void
+    {
+        Http::fake();
+        $delivery = $this->webhookDelivery([
+            'status' => SignalWebhookDelivery::STATUS_RUNNING,
+            'attempts' => 1,
+            'claim_token' => 'abandoned-claim',
+            'last_attempted_at' => now()->subSeconds(DeliverSignalWebhook::ABANDONED_CLAIM_SECONDS + 1),
+        ]);
+
+        (new DeliverSignalWebhook($delivery->id))->handle();
+
+        Http::assertNothingSent();
+        $delivery->refresh();
+        $this->assertSame(SignalWebhookDelivery::STATUS_UNRESOLVED, $delivery->status);
+        $this->assertNull($delivery->claim_token);
+        $this->assertNotNull($delivery->completed_at);
+    }
+
+    #[Test]
+    public function ambiguous_webhook_transport_failure_is_not_automatically_retried(): void
+    {
+        Http::fake(fn () => throw new \RuntimeException('sensitive transport detail'));
+        $delivery = $this->webhookDelivery();
+
+        (new DeliverSignalWebhook($delivery->id))->handle();
+        (new DeliverSignalWebhook($delivery->id))->handle();
+
+        $delivery->refresh();
+        $this->assertSame(SignalWebhookDelivery::STATUS_UNRESOLVED, $delivery->status);
+        $this->assertSame(1, $delivery->attempts);
+        $this->assertStringNotContainsString('sensitive transport detail', (string) $delivery->last_error);
+    }
+
+    #[Test]
+    public function queue_publication_failure_leaves_a_committed_pending_webhook_for_recovery(): void
+    {
+        Bus::shouldReceive('dispatch')
+            ->once()
+            ->andThrow(new \RuntimeException('queue broker unavailable'));
+        $signal = Signal::query()->create([
+            'source_domain' => 'rmm',
+            'signal_type' => 'rmm.backup_failed',
+            'summary' => 'RMM backup failure',
+            'occurred_at' => now(),
+        ]);
+        $rule = SignalRule::query()->create([
+            'name' => 'RMM webhook handoff',
+            'is_active' => true,
+            'priority' => 10,
+            'conditions' => [],
+            'actions' => [],
+        ]);
+
+        $result = DB::transaction(fn (): array => app(ExecuteSignalAction::class)->handle(
+            $signal,
+            $rule,
+            ['type' => 'webhook', 'url' => 'https://example.test/rmm'],
+        ));
+
+        $this->assertSame('queued', $result['status']);
+        $this->assertDatabaseHas('signal_webhook_deliveries', [
+            'id' => $result['delivery_id'],
+            'status' => SignalWebhookDelivery::STATUS_PENDING,
+            'attempts' => 0,
+        ]);
+    }
+
+    #[Test]
+    public function signal_webhook_outbox_dispatch_is_registered_every_minute(): void
+    {
+        $event = collect(app(Schedule::class)->events())
+            ->first(fn ($event): bool => $event->description === 'signal.webhook.dispatch');
+
+        $this->assertNotNull($event);
+        $this->assertSame('* * * * *', $event->expression);
+        $this->assertTrue($event->withoutOverlapping);
     }
 
     #[Test]

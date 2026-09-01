@@ -2,18 +2,25 @@
 
 namespace App\Modules\Ticket\Actions;
 
+use App\Models\Core\User;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Services\TicketRuleMessageMutationEventFactory;
 use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class SyncExternalTicketMessage
 {
-    public function handle(Ticket $ticket, array $data): array
+    public function __construct(
+        private readonly DispatchTicketRuleMutationEvent $dispatchRules,
+        private readonly TicketRuleMessageMutationEventFactory $messageEvents,
+    ) {}
+
+    public function handle(Ticket $ticket, array $data, ?User $initiator = null): array
     {
-        return DB::transaction(function () use ($ticket, $data): array {
+        return DB::transaction(function () use ($ticket, $data, $initiator): array {
             $source = $data['source'];
             $externalId = $data['external_id'];
             $occurredAt = isset($data['occurred_at']) ? Carbon::parse($data['occurred_at']) : now();
@@ -87,6 +94,13 @@ class SyncExternalTicketMessage
                     $this->workflowActionFor($message),
                     null
                 );
+
+                $mutationEvent = $this->messageEvents->make($ticket->refresh(), $message->refresh(), [
+                    '_event_source_channel' => 'integration',
+                    '_event_source_action' => 'SyncExternalTicketMessage:'.$source,
+                    '_delivery_key' => 'external-message:'.hash('sha256', $source.'|'.$externalId),
+                ]);
+                $this->dispatchRules->handle($ticket->refresh(), $mutationEvent, $initiator);
             }
 
             return [$message->refresh(), $created];

@@ -100,6 +100,35 @@ Push summaries include shelves, books, chapters, pages, skipped, failed, total, 
 records caused by missing synced parents are treated as unhealthy so API agents can detect and repair
 the hierarchy before retrying.
 
+## Rate-Limit Coordination And Diagnostics
+
+BookStack requests for the same configured server and token identity share one cache-backed request
+reservation across web, scheduler, and queue processes. The cache key contains only a hash of the
+connection identity; it does not expose the server address, token ID, or token secret.
+
+Normal requests default to one request per second. A `429 Too Many Attempts` response publishes a
+shared cooldown, honors numeric or HTTP-date `Retry-After` values and `X-RateLimit-Reset`, and falls
+back to 15, 30, and 60 second retry delays. This prevents a second PHP process from immediately
+repeating a request while another process is already rate limited.
+
+The Integration cache store must support atomic locks and be shared by every web and worker process
+for cross-process coordination. The standard database, Redis, and file cache stores support this
+contract when all processes use the same configured store.
+
+New BookStack failures record `last_error_at`. Admin shows the exact recorded timestamp with the
+last error, and the sanitized status API returns it without credentials or raw provider payloads.
+Historical errors without recorded timing are labelled accordingly.
+
+## Large Page Storage
+
+Knowledge stores `articles.body_markdown` and nullable `articles.body_html` as `MEDIUMTEXT`. This
+preserves BookStack pages above the 65,535-byte `TEXT` ceiling without truncation. The schema change
+is owned by `2026_08_25_210000_expand_knowledge_article_body_capacity`; its rollback refuses to
+shrink while either body contains more than 65,535 bytes.
+
+A production rollout requires a database backup, paused BookStack/default workers during migration,
+column-type read-back, `php artisan optimize:clear`, worker restart, and one controlled full pull.
+
 ## Safety Rules
 
 Do not overwrite BookStack source metadata when updating repository-owned documentation.

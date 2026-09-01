@@ -19,10 +19,15 @@ use App\Modules\Ticket\Actions\StoreManualTicketCostEntry;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\StoreTicketPlannedLine;
 use App\Modules\Ticket\Actions\TicketQuoteDeliveryAutomationActor;
+use App\Modules\Ticket\Actions\TicketRuleAutomationActor;
 use App\Modules\Ticket\Livewire\Admin\WorkflowEditor;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketMessage;
 use App\Modules\Ticket\Models\TicketPlannedLine;
+use App\Modules\Ticket\Models\TicketRuleAuthorityFence;
+use App\Modules\Ticket\Models\TicketRuleEvent;
+use App\Modules\Ticket\Models\TicketRuleRun;
+use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowEvidence;
 use App\Modules\Ticket\Models\TicketWorkflowHistory;
@@ -30,6 +35,7 @@ use App\Modules\Ticket\Models\TicketWorkflowReview;
 use App\Modules\Ticket\Services\TicketWorkflowDefinitionService;
 use App\Modules\Ticket\Services\TicketWorkflowRequirementEvaluator;
 use App\Modules\Ticket\Support\TicketAction;
+use App\Modules\Ticket\Support\TicketRuleTriggerRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -50,6 +56,7 @@ class TicketWorkflowV3Test extends TestCase
     {
         parent::setUp();
 
+        config()->set('ticket_rules.v2_enabled', false);
         Role::findOrCreate('Tech', 'web');
         Role::findOrCreate('Admin', 'web');
         $this->tech = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -984,6 +991,7 @@ class TicketWorkflowV3Test extends TestCase
         Permission::findOrCreate('ticket.workflow_escalate', 'web');
         $this->tech->givePermissionTo('ticket.workflow_escalate');
         $status = app(EnsureTicketDefaults::class)->handle()['status'];
+        $targetStatus = TicketStatus::query()->where('slug', 'in-progress')->firstOrFail();
         $definitions = app(TicketWorkflowDefinitionService::class);
 
         $senior = User::factory()->create(['status' => User::STATUS_ACTIVE]);
@@ -997,7 +1005,7 @@ class TicketWorkflowV3Test extends TestCase
             'sort_order' => 41,
         ]);
         $definitions->saveDraft($target, [
-            'states' => [$this->state('sales-intake', $status->id, 'Sales intake', true)],
+            'states' => [$this->state('sales-intake', $targetStatus->id, 'Sales intake', true)],
             'transitions' => [],
             'escalation_paths' => [],
         ]);
@@ -1075,6 +1083,23 @@ class TicketWorkflowV3Test extends TestCase
             ->assertJsonPath('data.actions.close.allowed', false)
             ->assertJsonPath('data.actions.close.mode', 'required_escalation');
 
+        app(TicketRuleAutomationActor::class)->resolve();
+        config()->set('ticket_rules.v2_enabled', true);
+        config()->set('ticket_rules.allow_sqlite_mutations_for_tests', true);
+        config()->set('ticket_rules.capabilities.triggers', array_replace(
+            (array) config('ticket_rules.capabilities.triggers', []),
+            [
+                TicketRuleTriggerRegistry::WORKFLOW_CHANGED => true,
+                TicketRuleTriggerRegistry::STATUS_CHANGED => true,
+                TicketRuleTriggerRegistry::ASSIGNMENT_CHANGED => true,
+            ],
+        ));
+        $this->assertSame(1, TicketRuleAuthorityFence::query()
+            ->whereKey(TicketRuleAuthorityFence::SCOPE)
+            ->update([
+                'runtime_authority' => TicketRuleAuthorityFence::AUTHORITY_V2,
+            ]));
+
         $this->postJson(route('api.v1.tickets.workflow-escalations.store', [$ticket, 'escalate-to-sales']), [
             'owner_id' => $senior->id,
             'reason' => 'The planned equipment makes this a commercial case.',
@@ -1090,6 +1115,18 @@ class TicketWorkflowV3Test extends TestCase
             'event_type' => 'escalated',
             'transition_key' => 'escalate-to-sales',
         ]);
+
+        $run = TicketRuleRun::query()->where('ticket_id', $ticket->id)->sole();
+        $event = TicketRuleEvent::query()->where('run_id', $run->id)->sole();
+        $this->assertSame(TicketRuleTriggerRegistry::WORKFLOW_CHANGED, $event->event_key);
+        $this->assertSame('api', $event->source_channel);
+        $this->assertSame('TicketWorkflowActionController.escalate', $event->source_action);
+        $this->assertSame(
+            ['owner_id', 'status_id', 'workflow_id', 'workflow_state_key', 'workflow_version_id'],
+            $event->changed_fields_json,
+        );
+        $this->assertSame(1, TicketRuleRun::query()->where('ticket_id', $ticket->id)->count());
+        config()->set('ticket_rules.v2_enabled', false);
     }
 
     #[Test]
@@ -1166,6 +1203,7 @@ class TicketWorkflowV3Test extends TestCase
     public function active_tickets_can_be_explicitly_migrated_to_a_new_published_version(): void
     {
         $status = app(EnsureTicketDefaults::class)->handle()['status'];
+        $targetStatus = TicketStatus::query()->where('slug', 'in-progress')->firstOrFail();
         $workflow = TicketWorkflow::query()->create([
             'name' => 'Versioned support',
             'slug' => 'versioned-support',
@@ -1188,6 +1226,7 @@ class TicketWorkflowV3Test extends TestCase
 
         $versionTwoDefinition = $versionOneDefinition;
         $versionTwoDefinition['states'][0]['name'] = 'Validated intake';
+        $versionTwoDefinition['states'][0]['ticket_status_id'] = $targetStatus->id;
         $definitions->saveDraft($workflow, $versionTwoDefinition);
         $versionTwo = $definitions->publish($workflow, $this->tech);
 
@@ -1203,6 +1242,23 @@ class TicketWorkflowV3Test extends TestCase
             ->assertJsonPath('data.tickets.0.target_state_key', 'intake')
             ->assertJsonPath('data.tickets.0.placement_strategy', 'stable_state_key')
             ->assertJsonPath('data.placement_mode', 'automatic');
+
+        app(TicketRuleAutomationActor::class)->resolve();
+        config()->set('ticket_rules.v2_enabled', true);
+        config()->set('ticket_rules.allow_sqlite_mutations_for_tests', true);
+        config()->set('ticket_rules.capabilities.triggers', array_replace(
+            (array) config('ticket_rules.capabilities.triggers', []),
+            [
+                TicketRuleTriggerRegistry::WORKFLOW_CHANGED => true,
+                TicketRuleTriggerRegistry::STATUS_CHANGED => true,
+                TicketRuleTriggerRegistry::ASSIGNMENT_CHANGED => true,
+            ],
+        ));
+        $this->assertSame(1, TicketRuleAuthorityFence::query()
+            ->whereKey(TicketRuleAuthorityFence::SCOPE)
+            ->update([
+                'runtime_authority' => TicketRuleAuthorityFence::AUTHORITY_V2,
+            ]));
 
         $this->postJson(route('api.v1.ticket-workflows.migrations.store', $workflow), [
             'target_version_id' => $versionTwo->id,
@@ -1227,6 +1283,19 @@ class TicketWorkflowV3Test extends TestCase
             'stable_state_key',
             data_get($history->metadata, 'placement_strategy'),
         );
+
+        $this->assertSame($targetStatus->id, (int) $ticket->refresh()->status_id);
+        $run = TicketRuleRun::query()->where('ticket_id', $ticket->id)->sole();
+        $event = TicketRuleEvent::query()->where('run_id', $run->id)->sole();
+        $this->assertSame(TicketRuleTriggerRegistry::WORKFLOW_CHANGED, $event->event_key);
+        $this->assertSame('api', $event->source_channel);
+        $this->assertSame('TicketWorkflowDefinitionController.migrate', $event->source_action);
+        $this->assertSame(
+            ['status_id', 'workflow_version_id'],
+            $event->changed_fields_json,
+        );
+        $this->assertSame(1, TicketRuleRun::query()->where('ticket_id', $ticket->id)->count());
+        config()->set('ticket_rules.v2_enabled', false);
     }
 
     #[Test]

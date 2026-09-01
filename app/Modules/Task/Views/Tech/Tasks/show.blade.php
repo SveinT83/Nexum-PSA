@@ -10,6 +10,10 @@
     $isTicketTask = $task->owner instanceof \App\Modules\Ticket\Models\Ticket;
     $defaultInvoiceText = 'Task: '.$task->title;
     $defaultTicketRateKey = old('rate_key', $task->metadata['ticket_rate_key'] ?? ($timeRateOptions->first()['key'] ?? null));
+    $defaultTaskTimeRateKey = old('time_rate_key', $task->metadata['ticket_rate_key'] ?? ($timeRateOptions->first()['key'] ?? null));
+    $showTaskTimeModal = $errors->hasAny(['time_entry', 'time_work_date', 'time_minutes', 'time_rate_key', 'time_invoice_text', 'time_note']);
+    $estimateMinimumBilling = $isTicketTask
+        && $taskSettings['ticket_billing_minutes_mode'] === \App\Modules\Task\Support\TaskSettings::TICKET_BILLING_ESTIMATE_MINIMUM;
 @endphp
 
 @section('pageHeader')
@@ -120,9 +124,22 @@
         <div class="card mb-3">
             <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <span class="fw-semibold">Complete With Ticket Time</span>
-                <span class="small text-muted">Creates ticket activity and pending billing/timebank entry</span>
+                <span class="small text-muted">
+                    {{ $task->actual_minutes > 0 ? 'Uses already registered Task time' : 'Creates ticket activity and pending billing/timebank entry' }}
+                </span>
             </div>
-            <form method="post" action="{{ route('tech.tasks.complete', $task) }}">
+            @if($task->actual_minutes > 0)
+                <form method="post" action="{{ route('tech.tasks.complete', $task) }}">
+                    @csrf
+                    <div class="card-body small">
+                        {{ $task->actual_minutes }} minutes are already registered. Completing the Task will not add duplicate Ticket time.
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="submit" class="btn btn-sm btn-success" @disabled((bool) $task->completed_at)>Complete Task</button>
+                    </div>
+                </form>
+            @else
+                <form method="post" action="{{ route('tech.tasks.complete', $task) }}">
                 @csrf
                 <div class="card-body">
                     <div class="row g-3">
@@ -161,7 +178,8 @@
                 <div class="card-footer text-end">
                     <button type="submit" class="btn btn-sm btn-success" @disabled($timeRateOptions->isEmpty() || (bool) $task->completed_at)>Complete Task</button>
                 </div>
-            </form>
+                </form>
+            @endif
         </div>
     @endif
 
@@ -256,6 +274,76 @@
             </div>
         </div>
     </div>
+
+    <!-- ------------------------------------------------- -->
+    <!-- Task time registration -->
+    <!-- ------------------------------------------------- -->
+    <div class="modal fade" id="taskAddTimeModal" tabindex="-1" aria-labelledby="taskAddTimeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="taskAddTimeForm" method="post" action="{{ route('tech.tasks.time-entries.store', $task) }}" class="modal-content">
+                @csrf
+                <div class="modal-header">
+                    <h2 class="modal-title h6" id="taskAddTimeModalLabel">Add Task time</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label" for="task_time_work_date">Work date</label>
+                            <input type="date" class="form-control" id="task_time_work_date" name="time_work_date" value="{{ old('time_work_date', now()->toDateString()) }}" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="task_time_minutes">Minutes</label>
+                            <input type="number" min="1" max="1440" class="form-control" id="task_time_minutes" name="time_minutes" value="{{ old('time_minutes', 30) }}" required>
+                        </div>
+
+                        @if($isTicketTask)
+                            <div class="col-12">
+                                <div class="alert alert-light border small mb-0">
+                                    Technician time is saved as the actual minutes entered.
+                                    @if($estimateMinimumBilling && $task->estimated_minutes)
+                                        Customer billing uses at least the {{ $task->estimated_minutes }}-minute Task estimate across all registrations, then follows actual time when it becomes higher.
+                                    @else
+                                        Customer billing follows the actual registered Task time.
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($isTicketTask)
+                            <div class="col-12">
+                                <label class="form-label" for="task_time_rate_key">Rate</label>
+                                <select class="form-select" id="task_time_rate_key" name="time_rate_key" @disabled($timeRateOptions->isEmpty()) required>
+                                    <option value="">Select rate</option>
+                                    @foreach($timeRateOptions as $rateOption)
+                                        <option value="{{ $rateOption['key'] }}" @selected($defaultTaskTimeRateKey === $rateOption['key'])>
+                                            {{ $rateOption['label'] }} - {{ $rateOption['description'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @if($timeRateOptions->isEmpty())
+                                    <div class="form-text text-danger">No available Ticket time rates. Add a global or contract rate before registering time.</div>
+                                @endif
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="task_time_invoice_text">Invoice text</label>
+                                <textarea class="form-control" id="task_time_invoice_text" name="time_invoice_text" rows="2" required>{{ old('time_invoice_text', $defaultInvoiceText) }}</textarea>
+                            </div>
+                        @endif
+
+                        <div class="col-12">
+                            <label class="form-label" for="task_time_note">Internal note</label>
+                            <textarea class="form-control" id="task_time_note" name="time_note" rows="2">{{ old('time_note') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary" @disabled($isTicketTask && $timeRateOptions->isEmpty())>Save time</button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @section('sidebar')
@@ -264,6 +352,31 @@
 
 @section('rightbar')
     <div class="accordion mb-3" id="taskDetailRightbar">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="taskTimeHeading">
+                <button class="accordion-button py-2" type="button" data-bs-toggle="collapse" data-bs-target="#taskTimeCollapse" aria-expanded="true" aria-controls="taskTimeCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
+                        <span>Time</span>
+                        <span class="badge text-bg-light border">{{ $task->actual_minutes }} min</span>
+                    </span>
+                </button>
+            </h2>
+            <div id="taskTimeCollapse" class="accordion-collapse collapse show" aria-labelledby="taskTimeHeading" data-bs-parent="#taskDetailRightbar">
+                <div class="accordion-body small">
+                    <x-time.stopwatch
+                        id="taskStopwatch"
+                        storage-key="{{ 'task-stopwatch-'.$task->id }}"
+                        :registered-minutes="$task->actual_minutes"
+                        :action-allowed="! $task->completed_at"
+                        :action-reason="$task->completed_at ? 'Completed Tasks cannot register more time.' : null"
+                        modal-id="taskAddTimeModal"
+                        minutes-input-id="task_time_minutes"
+                        work-date-input-id="task_time_work_date"
+                        reset-form-id="taskAddTimeForm" />
+                </div>
+            </div>
+        </div>
         <div class="accordion-item">
             <h2 class="accordion-header" id="taskStatusHeading">
                 <button class="accordion-button py-2" type="button" data-bs-toggle="collapse" data-bs-target="#taskStatusCollapse" aria-expanded="true" aria-controls="taskStatusCollapse">
@@ -327,4 +440,18 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+    @if($showTaskTimeModal)
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const modal = document.getElementById('taskAddTimeModal');
+
+                if (window.bootstrap && modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modal).show();
+                }
+            });
+        </script>
+    @endif
 @endsection

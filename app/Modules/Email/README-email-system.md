@@ -1289,6 +1289,21 @@ SMTP:
   available.
 
 
+### Inbound Ticket correlation conflicts
+
+Inbound Ticket correlation evaluates three independent evidence sources: an active durable
+Email/Ticket link, every RFC `In-Reply-To`/`References` match to a reserved outbound Ticket message,
+and an additive `TD-...` key in the subject. One agreed Ticket is linked through
+`LinkInboundEmailToTicket`. Different candidate Tickets create one pending
+`email_ticket_correlation_conflicts` row and stop all automatic link/create attempts.
+
+Administrators resolve pending items under **Admin > Settings > Email accounts > Review conflicts**.
+They must choose one of the evidence-backed Tickets and record a reason. Resolution is idempotent,
+uses the same guarded inbound action, and records the actor and Ticket event. Conflict evidence stores
+only Email/Ticket identifiers and source categories, never addresses, body, subject, raw headers or
+provider responses. Detection and resolution do not move, delete, mark read or publish provider mail.
+
+
 ## Storage layout and sanitation
 
 - Raw `.eml` files, attachments, durable draft attachments, and outbound Sent snapshots stay on the
@@ -1836,7 +1851,7 @@ PHP-FPM and queue-worker write/read smoke, and perform the remaining runtime che
 `HR-2026-08-15-003`. No deletion is authorized by the inventory.
 
 Functional checks:
-- Use the Accounts Create/Edit view to run “Full Test” and confirm IMAP/SMTP connectivity.
+- Use the provider lifecycle view to run **Check IMAP and SMTP login**. It verifies authentication only; it sends no message and does not prove recipient delivery.
 - Verify that polling schedules are running (scheduler + queues) and that `email_messages` grows when new mail arrives.
 
 Common issues:

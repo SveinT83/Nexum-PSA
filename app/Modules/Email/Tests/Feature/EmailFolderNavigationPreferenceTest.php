@@ -92,7 +92,7 @@ class EmailFolderNavigationPreferenceTest extends TestCase
     }
 
     #[Test]
-    public function preferences_are_removed_when_their_folder_or_user_is_deleted(): void
+    public function folder_preferences_cascade_but_live_authority_prevents_hard_user_deletion(): void
     {
         $firstUser = User::factory()->create();
         $secondUser = User::factory()->create();
@@ -121,9 +121,14 @@ class EmailFolderNavigationPreferenceTest extends TestCase
         $this->assertDatabaseMissing('email_folder_navigation_preferences', ['id' => $folderPreference->id]);
         $this->assertDatabaseHas('email_folder_navigation_preferences', ['id' => $userPreference->id]);
 
-        $firstUser->delete();
+        try {
+            $firstUser->delete();
+            $this->fail('Expected durable live-authority evidence to prevent hard user deletion.');
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString('FOREIGN KEY constraint failed', $exception->getMessage());
+        }
 
-        $this->assertDatabaseMissing('email_folder_navigation_preferences', ['id' => $userPreference->id]);
+        $this->assertDatabaseHas('email_folder_navigation_preferences', ['id' => $userPreference->id]);
         $this->assertDatabaseHas('email_folder_navigation_preferences', ['id' => $retainedPreference->id]);
     }
 

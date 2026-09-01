@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Models\Core\User;
-use App\Modules\Ticket\Models\Ticket;
+use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Task\Actions\CompleteTask;
 use App\Modules\Task\Actions\EnsureTaskDefaults;
+use App\Modules\Task\Actions\RegisterTaskTimeEntry;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Task\Actions\SuggestTaskFieldsWithAi;
-use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Task\Models\Task;
 use App\Modules\Task\Models\TaskActivity;
 use App\Modules\Task\Models\TaskChecklistItem;
@@ -20,17 +20,18 @@ use App\Modules\Task\Queries\TaskIndexQuery;
 use App\Modules\Task\Support\TaskSettings;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
+use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
 use App\Modules\Ticket\Queries\TicketTimeRateOptions;
 use App\Modules\WorkContext\Actions\ResolveWorkContext;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 use RuntimeException;
 
 class TaskController extends Controller
@@ -45,8 +46,11 @@ class TaskController extends Controller
             'queues' => TicketQueue::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'priorities' => TicketPriority::query()->where('is_active', true)->orderBy('sort_order')->orderBy('level')->get(),
             'users' => User::query()->where('status', User::STATUS_ACTIVE)->orderBy('name')->get(),
-            'filters' => $request->only(['q', 'status_id', 'queue_id', 'priority_id', 'assigned_to', 'mine', 'include_done', 'sort', 'direction']),
-            'sort' => $request->input('sort', 'updated_at'),
+            'filters' => array_merge(
+                ['mine' => ! $request->has('assigned_to') && ! $request->has('mine')],
+                $request->only(['q', 'status_id', 'queue_id', 'priority_id', 'assigned_to', 'mine', 'include_done', 'sort', 'direction'])
+            ),
+            'sort' => $request->input('sort'),
             'direction' => $request->input('direction') === 'asc' ? 'asc' : 'desc',
         ]);
     }
@@ -110,7 +114,7 @@ class TaskController extends Controller
         ]));
     }
 
-    public function show(Task $task, EnsureTaskDefaults $defaults, TicketTimeRateOptions $timeRateOptions): View
+    public function show(Task $task, EnsureTaskDefaults $defaults, TicketTimeRateOptions $timeRateOptions, TaskSettings $settings): View
     {
         $defaults->handle();
 
@@ -138,6 +142,7 @@ class TaskController extends Controller
             'task' => $task,
             'statuses' => TaskStatus::query()->active()->orderBy('sort_order')->get(),
             'timeRateOptions' => $task->owner instanceof Ticket ? $timeRateOptions->forTicket($task->owner) : collect(),
+            'taskSettings' => $settings->get(),
         ]);
     }
 
@@ -210,11 +215,11 @@ class TaskController extends Controller
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'site_id' => ['nullable', 'integer', 'exists:client_sites,id'],
             'ticket_id' => ['nullable', 'integer', 'exists:tickets,id'],
-            'parent_id' => ['nullable', 'integer', Rule::exists((new Task())->getTable(), 'id')],
+            'parent_id' => ['nullable', 'integer', Rule::exists((new Task)->getTable(), 'id')],
             'queue_id' => ['nullable', 'integer', 'exists:ticket_queues,id'],
             'priority_id' => ['nullable', 'integer', 'exists:ticket_priorities,id'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'assigned_to' => ['nullable', 'integer', Rule::exists((new User())->getTable(), 'id')],
+            'assigned_to' => ['nullable', 'integer', Rule::exists((new User)->getTable(), 'id')],
             'estimated_minutes' => ['nullable', 'integer', 'min:1'],
             'ticket_rate_key' => ['nullable', 'string', 'max:100'],
             'tag_names' => ['nullable', 'array'],
@@ -263,7 +268,7 @@ class TaskController extends Controller
     public function assign(Request $request, Task $task): RedirectResponse
     {
         $data = $request->validate([
-            'assigned_to' => ['nullable', 'integer', Rule::exists((new User())->getTable(), 'id')],
+            'assigned_to' => ['nullable', 'integer', Rule::exists((new User)->getTable(), 'id')],
         ]);
 
         $oldAssignee = $task->assignee?->name;
@@ -302,7 +307,7 @@ class TaskController extends Controller
             'user_id' => $request->user()?->id,
             'type' => $checked ? 'checklist_checked' : 'checklist_unchecked',
             'visibility' => Task::VISIBILITY_INTERNAL,
-            'body' => ($checked ? 'Checklist item completed: ' : 'Checklist item reopened: ') . $item->title,
+            'body' => ($checked ? 'Checklist item completed: ' : 'Checklist item reopened: ').$item->title,
         ]);
 
         return back()->with('success', 'Checklist updated.');
@@ -313,8 +318,9 @@ class TaskController extends Controller
         $task->loadMissing('owner');
         $billingData = [];
         $rateOption = null;
+        $hasActualTime = $task->timeEntries()->sum('minutes') > 0;
 
-        if ($task->owner instanceof Ticket) {
+        if ($task->owner instanceof Ticket && ! $hasActualTime) {
             $billingData = $request->validate([
                 'work_date' => ['required', 'date'],
                 'minutes' => ['required', 'integer', 'min:1', 'max:1440'],
@@ -339,6 +345,48 @@ class TaskController extends Controller
         }
 
         return back()->with('success', 'Task completed.');
+    }
+
+    public function storeTimeEntry(
+        Request $request,
+        Task $task,
+        RegisterTaskTimeEntry $registerTaskTimeEntry,
+        TicketTimeRateOptions $timeRateOptions,
+    ): RedirectResponse {
+        $task->loadMissing('owner');
+
+        $rules = [
+            'time_work_date' => ['required', 'date'],
+            'time_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
+            'time_note' => ['nullable', 'string', 'max:2000'],
+        ];
+
+        if ($task->owner instanceof Ticket) {
+            $rules['time_rate_key'] = ['required', 'string', 'max:100'];
+            $rules['time_invoice_text'] = ['required', 'string', 'max:2000'];
+        }
+
+        $data = $request->validate($rules);
+        $rateOption = null;
+
+        if ($task->owner instanceof Ticket) {
+            $rateOption = $timeRateOptions->findForTicket($task->owner, $data['time_rate_key']);
+
+            if (! $rateOption) {
+                return back()
+                    ->withErrors(['time_rate_key' => 'Select an available time rate for this ticket task.'])
+                    ->withInput();
+            }
+        }
+
+        $registerTaskTimeEntry->handle($task, $request->user(), [
+            'work_date' => $data['time_work_date'],
+            'minutes' => $data['time_minutes'],
+            'invoice_text' => $data['time_invoice_text'] ?? null,
+            'note' => $data['time_note'] ?? null,
+        ], $rateOption);
+
+        return back()->with('success', 'Task time registered.');
     }
 
     public function docs()
@@ -370,8 +418,8 @@ class TaskController extends Controller
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'assigned_to' => ['nullable', 'integer', Rule::exists((new User())->getTable(), 'id')],
-            'parent_id' => ['nullable', 'integer', Rule::exists((new Task())->getTable(), 'id')],
+            'assigned_to' => ['nullable', 'integer', Rule::exists((new User)->getTable(), 'id')],
+            'parent_id' => ['nullable', 'integer', Rule::exists((new Task)->getTable(), 'id')],
             'status_id' => ['nullable', 'integer', 'exists:task_statuses,id'],
             'queue_id' => ['nullable', 'integer', 'exists:ticket_queues,id'],
             'priority_id' => ['nullable', 'integer', 'exists:ticket_priorities,id'],
@@ -404,14 +452,14 @@ class TaskController extends Controller
 
         $allowed = [
             Client::class,
-            (new Client())->getMorphClass(),
+            (new Client)->getMorphClass(),
             Ticket::class,
-            (new Ticket())->getMorphClass(),
+            (new Ticket)->getMorphClass(),
         ];
 
         abort_unless(in_array($ownerType, $allowed, true), 422, 'Unsupported task owner type.');
 
-        if (in_array($ownerType, [Client::class, (new Client())->getMorphClass()], true)) {
+        if (in_array($ownerType, [Client::class, (new Client)->getMorphClass()], true)) {
             return Client::query()->findOrFail($ownerId);
         }
 

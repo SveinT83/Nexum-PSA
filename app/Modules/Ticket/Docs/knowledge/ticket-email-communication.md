@@ -46,9 +46,13 @@ Tickets that should not have become tickets can be returned to Inbox with `Mark 
 
 This action:
 
-- Moves the ticket context back toward Inbox handling.
-- Tags related email so matching messages do not automatically become tickets again.
-- Helps build operational rules for messages that are useful but not ticket-worthy.
+- Requires current ordinary Mail Organize access for every affected provider-backed message.
+- Stores an account-scoped suppression for the exact durable Mail conversation.
+- Returns linked local messages to untriaged Inbox handling and marks the relationship unlinked.
+- Stops later messages in the same conversation before header, Ticket-key, rule, or default Ticket
+  creation can run.
+- Never changes provider Seen/flag/folder/deletion state and does not create a broad sender+subject
+  rule that could suppress an unrelated future request.
 
 Future Operational Signals should extend this idea for machine-generated emails that should be logged, not treated as spam or work tickets.
 
@@ -61,16 +65,29 @@ Unpublished client tickets are intentionally silent externally: technicians can 
 but Nexum does not queue outbound customer reply email from the normal ticket composer until the
 ticket has been Published.
 
-Customer replies:
+When the Ticket has an authorized live Mail relationship, the Ticket page shows each real
+conversation separately. `Reply in Mail` or `Reply all` selects one exact relationship/source and
+opens one Email-owned draft in Mail. That path:
 
-- Are saved as ticket messages.
-- Are queued for outbound email after database commit.
-- Use the Email account marked as default for the `tickets` scope.
-- Render the `tickets/ticket_reply` email template.
-- Can target the ticket contact or another active contact for the same client.
-- Can include CC recipients.
-- Can include attachments.
-- Stamp `first_responded_at` the first time a technician sends a public reply.
+- Keeps the selected mailbox as sender authority and never borrows recipients from another linked
+  conversation or from the Ticket Contact field.
+- Preserves the source Message-ID/References and external subject tokens, while adding the current
+  `TD-...` key when it is absent.
+- Rechecks Ticket reply plus ordinary Mail View/Send authority and freezes the recipient, thread,
+  relationship, source and provider-binding context before SMTP.
+- Uses the normal durable Email outbound submission and Sent reconciliation. Accepted, unresolved
+  and reconciled states appear on the Ticket timeline and cannot be replayed into a second send.
+- Creates one Ticket message/capture without dispatching `SendTicketReplyEmail`; the Ticket never
+  becomes a second SMTP transport for a selected Mail conversation.
+
+The established `Reply to contact` composer remains only when the Ticket has no accessible live Mail
+relationship. That legacy fallback:
+
+- Saves the customer reply as a Ticket message and queues it after commit.
+- Uses the Email account marked as default for the `tickets` scope and the `tickets/ticket_reply`
+  template.
+- Can target the Ticket contact or another active same-client Contact, include CC and attachments,
+  and stamp `first_responded_at` on the first public reply.
 
 The CC field accepts manually entered email addresses and shows contact suggestions. Suggestions are
 limited to other active contacts connected to the Ticket client. The Ticket contact and the currently

@@ -63,6 +63,7 @@ class SyncBookStackToKnowledge
         $config = $this->integration->config ?? [];
         $config['last_sync_summary'] = $summary;
         $config['last_pull_at'] = now()->toIso8601String();
+        $config['last_error_at'] = $summary['failed'] === 0 ? null : now()->toIso8601String();
         $this->integration->config = $config;
         $this->integration->last_sync_at = now();
         $this->integration->is_healthy = $summary['failed'] === 0;
@@ -282,7 +283,7 @@ class SyncBookStackToKnowledge
     }
 
     /**
-     * @param array<string, Book> $books
+     * @param  array<string, Book>  $books
      * @return array<string, Chapter>
      */
     private function syncChapters(array $books): array

@@ -3,7 +3,17 @@
 @section('title', 'Integrations')
 
 @section('pageHeader')
-    <h1 class="h4 mb-0">Integrations</h1>
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('tech.admin.index') }}">Admin</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Integrations</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">Integrations</h1>
+        </div>
+    </div>
 @endsection
 
 @section('content')
@@ -66,6 +76,7 @@
                 'badge' => ['label' => 'Config', 'class' => 'text-bg-light border'],
                 'actions' => [
                     ['label' => 'AI Settings', 'icon' => 'bi-cpu', 'route' => 'tech.admin.system.integrations.ai.index'],
+                    ['label' => 'AI Telemetry', 'icon' => 'bi-graph-up', 'route' => 'tech.admin.system.integrations.ai.telemetry.index'],
                     ['label' => 'Privacy & Coordinator', 'icon' => 'bi-shield-check', 'route' => 'tech.admin.system.integrations.ai.privacy.index'],
                 ],
             ],
@@ -79,6 +90,18 @@
                 ],
             ],
         ];
+
+        if (auth()->user()?->can('integration.rmm_manage')) {
+            $integrationCards[] = [
+                'title' => 'RMM Alert Rules',
+                'icon' => 'bi-diagram-3',
+                'description' => 'Route normalized Tactical and N-able alerts to guarded Ticket, Task, Signal, reopen, or ignore actions.',
+                'badge' => ['label' => 'Pre-routing rules', 'class' => 'text-bg-light border'],
+                'actions' => [
+                    ['label' => 'Manage RMM Alert Rules', 'icon' => 'bi-diagram-3', 'route' => 'tech.admin.system.integrations.rmm-alert-rules.index'],
+                ],
+            ];
+        }
 
         if (Route::has('tech.admin.nextcloud.connections.index')) {
             $integrationCards[] = [

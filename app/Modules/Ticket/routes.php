@@ -3,6 +3,8 @@
 use App\Modules\CustomerPortal\Middleware\EnsureCustomerPortalAccess;
 use App\Modules\Ticket\Controllers\Admin\AssignmentRuleAdminController;
 use App\Modules\Ticket\Controllers\Admin\TicketAssignmentSettingsAdminController;
+use App\Modules\Ticket\Controllers\Admin\TicketRuleExecutionController;
+use App\Modules\Ticket\Controllers\Admin\TicketRuleReadController;
 use App\Modules\Ticket\Controllers\Admin\TicketSettingsController;
 use App\Modules\Ticket\Controllers\Portal\PortalTicketController;
 use App\Modules\Ticket\Controllers\Tech\TicketAssignmentSettingsController;
@@ -145,6 +147,9 @@ Route::post('/tickets/{ticket}/portal-visibility', [TicketController::class, 'up
 Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])
     ->name('tickets.assign');
 
+Route::post('/tickets/{ticket}/email-relationships/{relationship}/reply', [TicketController::class, 'prepareEmailReply'])
+    ->name('tickets.email-relationships.reply');
+
 Route::post('/tickets/{ticket}/not-ticket', [TicketController::class, 'markNotTicket'])
     ->name('tickets.not-ticket');
 
@@ -209,10 +214,23 @@ Route::middleware('admin')->group(function () {
 
     Route::get('/admin/settings/tickets/rules', [TicketSettingsController::class, 'rules'])
         ->name('admin.settings.tickets.rules');
+    Route::get('/admin/settings/tickets/rules/executions', [TicketRuleExecutionController::class, 'index'])
+        ->name('admin.settings.tickets.rules.executions.index');
+    Route::get('/admin/settings/tickets/rules/executions/{run}', [TicketRuleExecutionController::class, 'show'])
+        ->name('admin.settings.tickets.rules.executions.show');
+    Route::post('/admin/settings/tickets/rules/executions/{run}/actions/{actionResult}/retry', [TicketRuleExecutionController::class, 'retryAction'])
+        ->name('admin.settings.tickets.rules.executions.actions.retry');
+    Route::post('/admin/settings/tickets/rules/executions/{run}/full-rerun/preview', [TicketRuleExecutionController::class, 'previewFullRerun'])
+        ->name('admin.settings.tickets.rules.executions.rerun.preview');
+    Route::post('/admin/settings/tickets/rules/executions/{run}/full-rerun', [TicketRuleExecutionController::class, 'fullRerun'])
+        ->name('admin.settings.tickets.rules.executions.rerun.store');
     Route::get('/admin/settings/tickets/rules/create', [TicketSettingsController::class, 'createRule'])
         ->name('admin.settings.tickets.rules.create');
     Route::post('/admin/settings/tickets/rules', [TicketSettingsController::class, 'storeRule'])
         ->name('admin.settings.tickets.rules.store');
+    Route::get('/admin/settings/tickets/rules/{rule}', [TicketRuleReadController::class, 'show'])
+        ->withTrashed()
+        ->name('admin.settings.tickets.rules.show');
     Route::get('/admin/settings/tickets/rules/{rule}/edit', [TicketSettingsController::class, 'editRule'])
         ->name('admin.settings.tickets.rules.edit');
     Route::put('/admin/settings/tickets/rules/{rule}', [TicketSettingsController::class, 'updateRule'])

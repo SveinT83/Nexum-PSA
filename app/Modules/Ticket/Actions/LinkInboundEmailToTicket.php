@@ -8,6 +8,7 @@ use App\Modules\Notification\Services\InboundEmailNotificationFanoutReadiness;
 use App\Modules\Ticket\Models\Ticket;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketMessage;
+use App\Modules\Ticket\Services\TicketRuleMessageMutationEventFactory;
 use App\Modules\Ticket\Support\TicketAction;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,9 @@ class LinkInboundEmailToTicket
 {
     public function __construct(
         private readonly InboundEmailNotificationFanoutReadiness $fanoutReadiness,
+        private readonly DispatchTicketRuleMutationEvent $dispatchRules,
+        private readonly TicketRuleMessageMutationEventFactory $messageEvents,
+        private readonly MutateTicketTags $ticketTags,
     ) {}
 
     public function handle(EmailMessage $email, Ticket $ticket): TicketMessage
@@ -119,6 +123,13 @@ class LinkInboundEmailToTicket
                     TicketAction::CUSTOMER_REPLY_RECEIVED,
                 );
 
+                $mutationEvent = $this->messageEvents->make($ticket->refresh(), $message->refresh(), [
+                    '_event_source_channel' => 'email',
+                    '_event_source_action' => 'LinkInboundEmailToTicket',
+                    '_delivery_key' => 'inbound-email-message:'.$email->id,
+                ]);
+                $this->dispatchRules->handle($ticket->refresh(), $mutationEvent, null);
+
                 return $message;
             });
         } catch (QueryException) {
@@ -165,11 +176,15 @@ class LinkInboundEmailToTicket
     {
         $email->loadMissing('tags');
 
-        foreach ($email->tags as $tag) {
-            if (! $ticket->tags()->where('tags.id', $tag->id)->exists()) {
-                $ticket->tags()->attach($tag->id, ['module' => 'ticket']);
-            }
-        }
+        $this->ticketTags->addFromTrustedSource(
+            $ticket,
+            $email->tags->pluck('id')->all(),
+            [
+                'source_channel' => 'email',
+                'source_action' => 'LinkInboundEmailToTicket',
+                'delivery_identity' => 'inbound-email-tags:'.$email->id,
+            ],
+        );
     }
 
     private function copyEmailAttachments(EmailMessage $email, TicketMessage $message): void

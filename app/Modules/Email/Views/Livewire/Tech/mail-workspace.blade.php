@@ -938,6 +938,11 @@
                                                     </button>
                                                 </li>
                                             @endif
+                                            <li>
+                                                <button type="button" class="dropdown-item" wire:click="suppressSelectedTicketCorrelation" onclick="return confirm('Mark this whole Mail conversation as not a Ticket? Future messages in it will not create or join Tickets automatically.');">
+                                                    <i class="bi bi-ticket-detailed-fill me-2" aria-hidden="true"></i>Not a Ticket
+                                                </button>
+                                            </li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li>
                                                 <button type="button" class="dropdown-item" wire:click="toggleClassificationEditor">

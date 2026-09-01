@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Tech\Clients;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ClientRequest extends FormRequest
 {
@@ -13,10 +14,16 @@ class ClientRequest extends FormRequest
 
     public function rules(): array
     {
+        $clientNumberRules = ['required', 'string', 'regex:/^\d{5}$/'];
+        if (! $this->usesUnchangedSuggestedClientNumber()) {
+            $clientNumberRules[] = Rule::unique('clients', 'client_number');
+        }
+
         return [
             // Client
             'name' => ['required','string','max:255'],
-            'client_number' => ['required','string','regex:/^\d{5}$/','unique:clients,client_number'],
+            'client_number' => $clientNumberRules,
+            'suggested_client_number' => ['nullable', 'string', 'regex:/^\d{5}$/'],
             'org_no' => ['nullable','string','max:50'],
             'client_format_id' => ['nullable','exists:client_formats,id'],
             'billing_email' => ['nullable','email','max:255'],
@@ -40,6 +47,17 @@ class ClientRequest extends FormRequest
     {
         return [
             'client_number.regex' => 'Client number must be exactly 5 digits.',
+            'client_number.unique' => 'This client number is already in use.',
         ];
+    }
+
+    public function usesUnchangedSuggestedClientNumber(): bool
+    {
+        $suggested = trim((string) $this->input('suggested_client_number', ''));
+        $submitted = trim((string) $this->input('client_number', ''));
+
+        return $suggested !== ''
+            && $submitted !== ''
+            && hash_equals($suggested, $submitted);
     }
 }

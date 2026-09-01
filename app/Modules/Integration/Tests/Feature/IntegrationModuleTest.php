@@ -1499,6 +1499,9 @@ class IntegrationModuleTest extends TestCase
     #[Test]
     public function admin_can_sync_book_stack_pages_into_knowledge_articles(): void
     {
+        $largeHtml = '<h1>VPN Setup</h1><p>'.str_repeat('H', 70_000).'</p>';
+        $largeMarkdown = '# VPN Setup'.PHP_EOL.str_repeat('M', 70_000);
+
         Http::fake([
             'https://docs.example.test/api/shelves/2' => Http::response([
                 'id' => 2,
@@ -1541,8 +1544,8 @@ class IntegrationModuleTest extends TestCase
                 'chapter_id' => null,
                 'name' => 'VPN Setup',
                 'slug' => 'vpn-setup',
-                'html' => '<h1>VPN Setup</h1><p>Use the managed profile.</p>',
-                'markdown' => '# VPN Setup',
+                'html' => $largeHtml,
+                'markdown' => $largeMarkdown,
                 'draft' => false,
                 'updated_at' => '2026-05-14T10:00:00.000000Z',
                 'book' => [
@@ -1595,6 +1598,10 @@ class IntegrationModuleTest extends TestCase
         $book = Book::where('source_system', 'book_stack')->where('source_type', 'book')->firstOrFail();
 
         $this->assertSame('VPN Setup', $article->title);
+        $this->assertSame($largeHtml, $article->body_html);
+        $this->assertSame($largeMarkdown, $article->body_markdown);
+        $this->assertGreaterThan(65_535, strlen($article->body_html));
+        $this->assertGreaterThan(65_535, strlen($article->body_markdown));
         $this->assertSame('published', $article->status);
         $this->assertSame('page', $article->source_type);
         $this->assertSame('42', $article->source_id);
@@ -1720,6 +1727,11 @@ class IntegrationModuleTest extends TestCase
         $this->assertSame('BookStack API is unavailable', $integration->last_error);
         $this->assertSame(1, $integration->config['last_sync_summary']['failed']);
         $this->assertNotNull($integration->last_sync_at);
+        $this->assertNotNull($integration->config['last_error_at']);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.integrations.book_stack.settings'))
+            ->assertSee('Recorded:');
     }
 
     #[Test]

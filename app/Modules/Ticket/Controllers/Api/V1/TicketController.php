@@ -13,6 +13,7 @@ use App\Modules\Ticket\Actions\PublishTicketToCustomerPortal;
 use App\Modules\Ticket\Actions\StoreIdempotentTicketCustomerReply;
 use App\Modules\Ticket\Actions\StoreTicket;
 use App\Modules\Ticket\Actions\SyncExternalTicketMessage;
+use App\Modules\Ticket\Actions\SyncTicketCustomFieldValues;
 use App\Modules\Ticket\Actions\TransitionTicketWorkflow;
 use App\Modules\Ticket\Actions\UpdateTicketFields;
 use App\Modules\Ticket\Exceptions\TicketMessageIdempotencyConflict;
@@ -26,6 +27,7 @@ use App\Modules\Ticket\Services\TicketReplyContactResolver;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\WorkContext\Support\WorkContextType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
@@ -143,6 +145,7 @@ class TicketController extends Controller
                     new OA\Property(property: 'owner_id', type: 'integer', nullable: true),
                     new OA\Property(property: 'priority_id', type: 'integer', nullable: true),
                     new OA\Property(property: 'ticket_type_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'custom_fields', type: 'object', nullable: true),
                 ],
                 type: 'object'
             )
@@ -154,9 +157,13 @@ class TicketController extends Controller
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
-    public function store(Request $request, StoreTicket $storeTicket)
+    public function store(Request $request, StoreTicket $storeTicket, SyncTicketCustomFieldValues $syncCustomFields)
     {
         $data = $this->validateStorePayload($request);
+        $hasCustomFieldInput = array_key_exists('custom_fields', $data);
+        $customFieldValues = (array) ($data['custom_fields'] ?? []);
+        unset($data['custom_fields']);
+
         $this->validateContext($data);
 
         if (! empty($data['ticket_type_id'])) {
@@ -164,7 +171,24 @@ class TicketController extends Controller
             $data['type'] = $type->slug;
         }
 
-        $ticket = $storeTicket->handle(array_merge($data, ['channel' => $data['channel'] ?? 'api']), $request->user());
+        $actor = $request->user();
+        $ticket = DB::transaction(function () use ($actor, $customFieldValues, $data, $hasCustomFieldInput, $storeTicket, $syncCustomFields): Ticket {
+            $ticket = $storeTicket->handle(
+                array_merge($data, ['channel' => $data['channel'] ?? 'api']),
+                $actor,
+            );
+
+            if ($hasCustomFieldInput || config('ticket_rules.capabilities.custom_fields.api_write', false)) {
+                $syncCustomFields->handle($ticket, $customFieldValues, $actor, 'api', [
+                    'operation' => 'create',
+                    'require_complete' => true,
+                    'source_channel' => 'api',
+                    'source_action' => 'Api\\V1\\TicketController.store',
+                ]);
+            }
+
+            return $ticket->refresh();
+        });
 
         return (new TicketResource($this->loadTicket($ticket)))
             ->response()
@@ -212,13 +236,18 @@ class TicketController extends Controller
         Ticket $ticket,
         UpdateTicketFields $updateTicketFields,
         TransitionTicketWorkflow $transitionWorkflow,
-        TicketActionGuard $actionGuard
+        TicketActionGuard $actionGuard,
+        SyncTicketCustomFieldValues $syncCustomFields,
     ) {
         if ($reason = $actionGuard->reason($ticket, TicketAction::UPDATE_FIELDS, $request->user())) {
             throw ValidationException::withMessages(['ticket' => $reason]);
         }
 
         $data = $this->validateUpdatePayload($request);
+        $hasCustomFieldInput = array_key_exists('custom_fields', $data);
+        $customFieldValues = (array) ($data['custom_fields'] ?? []);
+        unset($data['custom_fields']);
+
         $this->validateContext(array_merge([
             'client_id' => $ticket->client_id,
             'contact_id' => $ticket->contact_id,
@@ -241,14 +270,35 @@ class TicketController extends Controller
             throw ValidationException::withMessages(['owner_id' => $reason]);
         }
 
-        if ($fieldData !== []) {
-            $updateTicketFields->handle($ticket, $fieldData, $request->user());
-        }
+        $actor = $request->user();
+        DB::transaction(function () use (
+            $actor,
+            $customFieldValues,
+            $data,
+            $fieldData,
+            $hasCustomFieldInput,
+            $syncCustomFields,
+            $ticket,
+            $transitionWorkflow,
+            $updateTicketFields,
+        ): void {
+            if ($fieldData !== []) {
+                $updateTicketFields->handle($ticket, $fieldData, $actor);
+            }
 
-        if (! empty($data['status_id']) && (int) $data['status_id'] !== (int) $ticket->refresh()->status_id) {
-            $status = TicketStatus::query()->where('is_active', true)->findOrFail($data['status_id']);
-            $transitionWorkflow->handleToStatus($ticket->refresh(), $status, $request->user());
-        }
+            if (! empty($data['status_id']) && (int) $data['status_id'] !== (int) $ticket->refresh()->status_id) {
+                $status = TicketStatus::query()->where('is_active', true)->findOrFail($data['status_id']);
+                $transitionWorkflow->handleToStatus($ticket->refresh(), $status, $actor);
+            }
+
+            if ($hasCustomFieldInput) {
+                $syncCustomFields->handle($ticket->refresh(), $customFieldValues, $actor, 'api', [
+                    'operation' => 'update',
+                    'source_channel' => 'api',
+                    'source_action' => 'Api\\V1\\TicketController.update',
+                ]);
+            }
+        });
 
         return new TicketResource($this->loadTicket($ticket->refresh()));
     }
@@ -274,7 +324,11 @@ class TicketController extends Controller
     )]
     public function storeExternalMessage(Request $request, Ticket $ticket, SyncExternalTicketMessage $syncExternalTicketMessage)
     {
-        [$message, $created] = $syncExternalTicketMessage->handle($ticket, $this->validateExternalMessagePayload($request));
+        [$message, $created] = $syncExternalTicketMessage->handle(
+            $ticket,
+            $this->validateExternalMessagePayload($request),
+            $request->user(),
+        );
 
         return response()->json([
             'data' => [
@@ -437,6 +491,7 @@ class TicketController extends Controller
             'channel' => ['nullable', 'string', 'max:50'],
             'impact' => ['nullable', 'integer', 'min:1', 'max:5'],
             'urgency' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'custom_fields' => ['sometimes', 'array'],
         ]);
     }
 
@@ -448,6 +503,7 @@ class TicketController extends Controller
             'queue_id' => ['sometimes', 'required', Rule::exists('ticket_queues', 'id')->where('is_active', true)],
             'status_id' => ['sometimes', 'required', Rule::exists('ticket_statuses', 'id')->where('is_active', true)],
             'priority_id' => ['sometimes', 'required', Rule::exists('ticket_priorities', 'id')->where('is_active', true)],
+            'custom_fields' => ['sometimes', 'array'],
             'category_id' => ['sometimes', 'nullable', Rule::exists((new Category)->getTable(), 'id')->where('type', 'ticket')],
             'owner_id' => ['sometimes', 'nullable', Rule::exists((new User)->getTable(), 'id')->where('status', User::STATUS_ACTIVE)],
             'site_id' => ['sometimes', 'nullable', Rule::exists('client_sites', 'id')],

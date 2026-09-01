@@ -2,8 +2,11 @@
 
 namespace App\Modules\Ticket\Resources\Api\V1;
 
+use App\Modules\CustomField\Support\CustomFieldPresenter;
+use App\Modules\Ticket\Services\TicketMutationScopeGuard;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Validation\ValidationException;
 
 class TicketResource extends JsonResource
 {
@@ -85,6 +88,7 @@ class TicketResource extends JsonResource
                 'status' => $this->workflowVersion?->status,
             ]),
             'metadata' => $this->metadata,
+            'custom_fields' => $this->customFieldsFor($request),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'links' => [
@@ -94,5 +98,27 @@ class TicketResource extends JsonResource
                 'customer_reply' => route('api.v1.tickets.messages.store', $this->ticket_key),
             ],
         ];
+    }
+
+    /**
+     * Ticket values require both the API read ability and ordinary Ticket view permission.
+     *
+     * @return array<string, mixed>
+     */
+    private function customFieldsFor(Request $request): array
+    {
+        $actor = $request->user();
+
+        if (! $actor?->tokenCan('tickets.read') || ! $actor->can('ticket.view')) {
+            return [];
+        }
+
+        try {
+            app(TicketMutationScopeGuard::class)->assert($this->resource);
+        } catch (ValidationException) {
+            return [];
+        }
+
+        return app(CustomFieldPresenter::class)->apiFor($this->resource, $actor);
     }
 }

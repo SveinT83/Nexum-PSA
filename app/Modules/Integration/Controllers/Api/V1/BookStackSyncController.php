@@ -28,7 +28,11 @@ class BookStackSyncController extends Controller
         $client = $this->client($integration);
         $test = $client->testConnection();
 
+        $config = $integration->config ?? [];
+        $config['last_error_at'] = $test['success'] ? null : now()->toIso8601String();
+
         $integration->forceFill([
+            'config' => $config,
             'is_healthy' => $test['success'],
             'last_error' => $test['success'] ? null : $test['message'],
         ])->save();
@@ -63,6 +67,7 @@ class BookStackSyncController extends Controller
             $config = $integration->config ?? [];
             $config['last_sync_summary'] = $summary;
             $config['last_pull_at'] = now()->toIso8601String();
+            $config['last_error_at'] = now()->toIso8601String();
 
             $integration->forceFill([
                 'config' => $config,
@@ -143,6 +148,7 @@ class BookStackSyncController extends Controller
             'server' => $integration?->server,
             'is_healthy' => (bool) ($integration?->is_healthy ?? false),
             'last_error' => $integration?->last_error,
+            'last_error_at' => $config['last_error_at'] ?? null,
             'last_sync_at' => $integration?->last_sync_at,
             'last_pull_at' => $config['last_pull_at'] ?? null,
             'last_push_at' => $config['last_push_at'] ?? null,

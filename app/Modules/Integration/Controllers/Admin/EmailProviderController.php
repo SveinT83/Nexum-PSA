@@ -10,6 +10,7 @@ use App\Modules\Integration\Actions\CreateEmailProviderConnection;
 use App\Modules\Integration\Actions\PauseEmailProviderAccountRuntime;
 use App\Modules\Integration\Actions\PreviewEmailProviderCutover;
 use App\Modules\Integration\Actions\PreviewLegacyEmailProviderMigration;
+use App\Modules\Integration\Actions\RebindLegacyEmailAccountToProvider;
 use App\Modules\Integration\Actions\ResumeEmailProviderAccountRuntime;
 use App\Modules\Integration\Actions\RevokeEmailProviderCredential;
 use App\Modules\Integration\Actions\RollbackEmailProviderCutover;
@@ -17,12 +18,17 @@ use App\Modules\Integration\Actions\StageEmailProviderCredential;
 use App\Modules\Integration\Actions\StageLegacyEmailProviderMigration;
 use App\Modules\Integration\Actions\VerifyEmailProviderCredential;
 use App\Modules\Integration\Actions\VerifyLegacyEmailProviderMigrationItem;
+use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
+use App\Modules\Integration\Jobs\VerifyEmailProviderCredentialJob;
 use App\Modules\Integration\Models\EmailProviderConnection;
 use App\Modules\Integration\Models\EmailProviderCredentialVersion;
 use App\Modules\Integration\Models\EmailProviderMigrationItem;
 use App\Modules\Integration\Models\EmailProviderMigrationRun;
 use App\Modules\Integration\Services\EmailProviderManagementAuthorization;
 use App\Modules\Integration\Services\EmailProviderRuntimeFactory;
+use App\Modules\Integration\Services\EmailProviderVerificationDeadline;
+use App\Modules\Integration\Services\EmailProviderVerificationFailurePresenter;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -32,6 +38,8 @@ final class EmailProviderController extends Controller
 {
     public function __construct(
         private readonly EmailProviderManagementAuthorization $authorization,
+        private readonly EmailProviderVerificationFailurePresenter $verificationFailures,
+        private readonly EmailProviderVerificationDeadline $verificationDeadline,
     ) {}
 
     public function index(Request $request): View
@@ -41,6 +49,7 @@ final class EmailProviderController extends Controller
         return view('integration::Tech.Admin.System.Integrations.EmailProviders.index', [
             'connections' => EmailProviderConnection::query()
                 ->with(['integration', 'activeCredentialVersion'])
+                ->withCount('emailAccounts')
                 ->orderByDesc('created_at')
                 ->get(),
             'legacyAccounts' => EmailAccount::query()
@@ -89,8 +98,13 @@ final class EmailProviderController extends Controller
         $connection = $this->connection($request, $connection);
 
         return view('integration::Tech.Admin.System.Integrations.EmailProviders.show', [
-            'connection' => $connection->load(['integration', 'credentialVersions' => fn ($query) => $query->orderByDesc('version')]),
+            'connection' => $connection->load([
+                'integration',
+                'credentialVersions' => fn ($query) => $query->orderByDesc('version'),
+                'emailAccounts' => fn ($query) => $query->orderBy('address'),
+            ]),
             'isRuntimeReady' => app(EmailProviderRuntimeFactory::class)->databaseReady($connection->getKey()),
+            'verificationMessage' => $this->verificationMessage($connection),
         ]);
     }
 
@@ -122,7 +136,25 @@ final class EmailProviderController extends Controller
     ): RedirectResponse {
         $connection = $this->connection($request, $connection);
         $credential = $this->credential($connection, $version);
-        $verify->execute($request->user(), $connection, $credential);
+
+        if (! $this->verificationDeadline->available()) {
+            VerifyEmailProviderCredentialJob::dispatch(
+                (int) $request->user()->getKey(),
+                (string) $connection->getKey(),
+                (int) $credential->version,
+            );
+
+            return back()->with('status', 'Provider verification is running securely in the Email worker. Reload this page in a moment to see the result.');
+        }
+
+        try {
+            $verify->execute($request->user(), $connection, $credential);
+        } catch (EmailProviderSecurityException $exception) {
+            return back()->with(
+                'error',
+                $this->verificationFailures->message($exception->reasonCode),
+            );
+        }
 
         return back()->with('status', 'The exact staged credential version was verified.');
     }
@@ -177,12 +209,32 @@ final class EmailProviderController extends Controller
         $run = $this->run($run)->load(['items.account']);
         $canManagePrivate = $request->user()->can(EmailProviderManagementAuthorization::PRIVATE_ENDPOINT_PERMISSION);
 
+        $availableProviders = EmailProviderConnection::query()
+            ->with(['integration', 'activeCredentialVersion'])
+            ->where('status', 'active')
+            ->orderBy('integration_id')
+            ->get()
+            ->filter(function (EmailProviderConnection $connection) use ($request): bool {
+                try {
+                    $this->authorization->authorizeConnectionTrust($request->user(), $connection);
+                } catch (AuthorizationException|EmailProviderSecurityException) {
+                    return false;
+                }
+
+                return app(EmailProviderRuntimeFactory::class)->databaseReadySnapshot(
+                    $connection,
+                    $connection->activeCredentialVersion,
+                );
+            })
+            ->values();
+
         return view('integration::Tech.Admin.System.Integrations.EmailProviders.migration', [
             'run' => $run,
             'canManagePrivate' => $canManagePrivate,
             'trustedCidrNames' => $canManagePrivate
                 ? array_keys((array) config('email_provider_security.trusted_private_cidrs', []))
                 : [],
+            'availableProviders' => $availableProviders,
         ]);
     }
 
@@ -211,9 +263,42 @@ final class EmailProviderController extends Controller
     ): RedirectResponse {
         $run = $this->run($run);
         $item = $this->item($run, $item);
-        $verify->execute($request->user(), $item);
+
+        try {
+            $verify->execute($request->user(), $item);
+        } catch (EmailProviderSecurityException $exception) {
+            return back()->with('error', $this->verificationFailures->message($exception->reasonCode));
+        }
 
         return back()->with('status', 'The staged migration item was verified against its provider.');
+    }
+
+    public function rebindMigrationItem(
+        Request $request,
+        string $run,
+        int $item,
+        RebindLegacyEmailAccountToProvider $rebind,
+    ): RedirectResponse {
+        $run = $this->run($run);
+        $item = $this->item($run, $item);
+        $data = $request->validate([
+            'provider_integration_id' => [
+                'required',
+                'uuid',
+                'exists:integration_email_provider_connections,integration_id',
+            ],
+        ]);
+        $connection = EmailProviderConnection::query()->findOrFail($data['provider_integration_id']);
+
+        try {
+            $cutover = $rebind->execute($request->user(), $run, $item, $connection);
+        } catch (EmailProviderSecurityException $exception) {
+            return back()->with('error', $this->verificationFailures->message($exception->reasonCode));
+        }
+
+        return redirect()
+            ->route('tech.admin.system.integrations.email-providers.migrations.show', $cutover->public_id)
+            ->with('status', 'The disabled mailbox is now bound to the exact verified provider. Legacy evidence remains available for rollback.');
     }
 
     public function activateMigrationItem(
@@ -325,6 +410,20 @@ final class EmailProviderController extends Controller
         int $version,
     ): EmailProviderCredentialVersion {
         return $connection->credentialVersions()->where('version', $version)->firstOrFail();
+    }
+
+    private function verificationMessage(EmailProviderConnection $connection): ?string
+    {
+        $code = (string) ($connection->last_verification_code ?? '');
+
+        if ($code === '' || in_array($code, [
+            'verified',
+            'verification_in_progress',
+        ], true)) {
+            return null;
+        }
+
+        return $this->verificationFailures->message($code);
     }
 
     private function run(string $publicId): EmailProviderMigrationRun

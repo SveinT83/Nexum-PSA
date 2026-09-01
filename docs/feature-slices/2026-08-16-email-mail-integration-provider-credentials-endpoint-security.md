@@ -24,6 +24,9 @@ fallback send path.
   It never displays or returns stored usernames, secrets, endpoints, or raw provider errors.
 - Legacy accounts keep using their exact legacy source until a separate preview, stage, verify, and
   cutover succeeds. A failed Integration provider never falls back to legacy or a system mailer.
+- A legacy item whose old endpoint/transport is unsupported can bind only to a separately created,
+  active and exactly verified replacement provider after the mailbox is disabled, paused and drained.
+  The guarded local cutover preserves rollback evidence and performs no provider call.
 
 ## Scope
 

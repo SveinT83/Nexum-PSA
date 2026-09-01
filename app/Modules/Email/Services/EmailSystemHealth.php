@@ -243,7 +243,16 @@ class EmailSystemHealth
                 ->map(fn ($count): int => (int) $count)
                 ->all();
 
-            $failedJobs = (int) DB::table('failed_jobs')->count();
+            $failedByQueue = DB::table('failed_jobs')
+                ->select('queue', DB::raw('count(*) as aggregate'))
+                ->groupBy('queue')
+                ->pluck('aggregate', 'queue')
+                ->map(fn ($count): int => (int) $count)
+                ->all();
+            $failedWatchedJobs = collect($failedByQueue)
+                ->only(['default', 'email'])
+                ->sum();
+            $failedOtherJobs = max(0, array_sum($failedByQueue) - $failedWatchedJobs);
         } catch (Throwable $exception) {
             return $this->item(
                 'Queue worker',
@@ -253,11 +262,11 @@ class EmailSystemHealth
             );
         }
 
-        if ($failedJobs > 0) {
+        if ($failedWatchedJobs > 0) {
             return $this->item(
                 'Queue worker',
                 'error',
-                $this->queueDetail($readyByQueue, $reservedByQueue, $staleWatchedJobs, $failedJobs),
+                $this->queueDetail($readyByQueue, $reservedByQueue, $staleWatchedJobs, $failedWatchedJobs, $failedOtherJobs),
                 'Error',
             );
         }
@@ -266,25 +275,40 @@ class EmailSystemHealth
             return $this->item(
                 'Queue worker',
                 'error',
-                $this->queueDetail($readyByQueue, $reservedByQueue, $staleWatchedJobs, $failedJobs),
+                $this->queueDetail($readyByQueue, $reservedByQueue, $staleWatchedJobs, $failedWatchedJobs, $failedOtherJobs),
                 'Stale jobs',
+            );
+        }
+
+        if ($failedOtherJobs > 0) {
+            return $this->item(
+                'Queue worker',
+                'warning',
+                $this->queueDetail($readyByQueue, $reservedByQueue, $staleWatchedJobs, $failedWatchedJobs, $failedOtherJobs),
+                'Other queue failures',
             );
         }
 
         return $this->item(
             'Queue worker',
             'ok',
-            $this->queueDetail($readyByQueue, $reservedByQueue, $staleWatchedJobs, $failedJobs),
+            $this->queueDetail($readyByQueue, $reservedByQueue, $staleWatchedJobs, $failedWatchedJobs, $failedOtherJobs),
             'OK',
         );
     }
 
-    private function queueDetail(array $readyByQueue, array $reservedByQueue, array $staleWatchedJobs, int $failedJobs): string
-    {
+    private function queueDetail(
+        array $readyByQueue,
+        array $reservedByQueue,
+        array $staleWatchedJobs,
+        int $failedWatchedJobs,
+        int $failedOtherJobs,
+    ): string {
         $parts = [
             'Ready: '.$this->queueCounts($readyByQueue),
             'Reserved: '.$this->queueCounts($reservedByQueue),
-            'Failed: '.$failedJobs,
+            'Failed on default/email: '.$failedWatchedJobs,
+            'Failed on other queues: '.$failedOtherJobs,
         ];
 
         if (array_sum($staleWatchedJobs) > 0) {

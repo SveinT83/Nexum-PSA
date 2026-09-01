@@ -7,7 +7,7 @@ use App\Http\Resources\Api\V1\Clients\ClientResource;
 use App\Models\Clients\Client;
 use App\Models\Clients\ClientSite;
 use App\Modules\Asset\Resources\Api\V1\AssetResource;
-use App\Modules\Clients\Actions\SuggestClientNumber;
+use App\Modules\Clients\Actions\CreateClientRecord;
 use App\Modules\Clients\Resources\Api\V1\ClientSiteResource;
 use App\Modules\CustomField\Actions\SyncCustomFieldValues;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
@@ -166,14 +166,13 @@ class ClientController extends Controller
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
-    public function store(Request $request, SuggestClientNumber $suggestClientNumber, SyncCustomFieldValues $customFields)
+    public function store(Request $request, CreateClientRecord $createClient, SyncCustomFieldValues $customFields)
     {
         $validated = $this->validateClientPayload($request, creating: true);
 
-        $client = DB::transaction(function () use ($request, $validated, $suggestClientNumber, $customFields): Client {
-            $client = Client::query()->create([
+        $client = $createClient->handle([
                 'name' => $validated['name'],
-                'client_number' => $validated['client_number'] ?? $suggestClientNumber->handle(),
+                'client_number' => $validated['client_number'] ?? null,
                 'org_no' => $validated['org_no'] ?? null,
                 'client_format_id' => $validated['client_format_id'] ?? null,
                 'website' => $validated['website'] ?? null,
@@ -182,14 +181,12 @@ class ClientController extends Controller
                 'billing_email' => $validated['billing_email'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'active' => $validated['active'] ?? true,
-            ]);
+            ], function (Client $client) use ($request, $customFields): void {
 
             $sitePayload = $this->sitePayloadFromRequest($request, 'Default');
             $sitePayload['is_default'] = true;
             $client->sites()->create($sitePayload);
             $customFields->handle($client, (array) $request->input('custom_fields', []), $request->user(), 'api');
-
-            return $client;
         });
 
         return (new ClientResource($client->load('sites')))

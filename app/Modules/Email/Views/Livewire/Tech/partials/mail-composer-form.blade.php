@@ -103,6 +103,17 @@
                 @else
                     <span class="badge text-bg-light border">Local draft</span>
                 @endif
+                @if($composerShared)
+                    <span class="badge text-bg-primary ms-1">Shared draft</span>
+                    @if($this->composerSharedEditable())
+                        <span class="ms-1 text-success">You are editing.</span>
+                        <span class="visually-hidden" wire:poll.20s="renewComposerSharedLease">Editing lease renews while this composer is active.</span>
+                    @elseif($composerSharedLockActive)
+                        <span class="ms-1 text-warning">Locked by {{ $composerSharedHolderName ?: 'another editor' }} until {{ $composerSharedLeaseExpiresAt }}.</span>
+                    @else
+                        <span class="ms-1 text-muted">Read-only until an editing lease is acquired.</span>
+                    @endif
+                @endif
                 @if($composerAttachments)
                     <span class="ms-1 text-warning">New attachments save with the draft.</span>
                 @endif
@@ -119,9 +130,26 @@
                     </span>
                 @endif
             </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="saveComposerDraft" wire:loading.attr="disabled" wire:target="saveComposerDraft" x-on:click="sync()">
-                <i class="bi bi-save me-1" aria-hidden="true"></i>Save draft
-            </button>
+            <div class="d-flex flex-wrap gap-2">
+                @if($collaborationEnabled && ! $composerShared && $composerDraftId && in_array($composerMode, ['reply', 'reply_all', 'forward'], true))
+                    <button type="button" class="btn btn-sm btn-outline-primary" wire:click="shareComposerDraft" wire:loading.attr="disabled" wire:target="shareComposerDraft" x-on:click="sync()">
+                        <i class="bi bi-people me-1" aria-hidden="true"></i>Share draft
+                    </button>
+                @elseif($composerShared)
+                    @if($this->composerSharedEditable())
+                        <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="releaseComposerSharedLease">
+                            Release editing lease
+                        </button>
+                    @else
+                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="acquireComposerSharedLease" @disabled($composerSharedLockActive)>
+                            {{ $composerSharedLockActive ? 'Shared draft locked' : 'Edit shared draft' }}
+                        </button>
+                    @endif
+                @endif
+                <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="saveComposerDraft" wire:loading.attr="disabled" wire:target="saveComposerDraft" x-on:click="sync()" @disabled($composerShared && ! $this->composerSharedEditable())>
+                    <i class="bi bi-save me-1" aria-hidden="true"></i>Save draft
+                </button>
+            </div>
         </div>
         <div class="col-12 col-lg-4">
             <label for="mail-composer-from" class="form-label small fw-semibold mb-1">From</label>
@@ -140,7 +168,7 @@
         </div>
         <div class="col-12 col-lg-4">
             <label for="mail-composer-to" class="form-label small fw-semibold mb-1">To</label>
-            <input id="mail-composer-to" type="text" class="form-control form-control-sm @error('composerTo') is-invalid @enderror" wire:model.live.debounce.1500ms="composerTo" wire:blur="saveComposerDraft(false)">
+            <input id="mail-composer-to" type="text" class="form-control form-control-sm @error('composerTo') is-invalid @enderror" wire:model.live.debounce.1500ms="composerTo" wire:blur="saveComposerDraft(false)" @disabled($composerShared && ! $this->composerSharedEditable())>
             @error('composerTo')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
@@ -150,14 +178,14 @@
         </div>
         <div class="col-12 col-lg-4">
             <label for="mail-composer-cc" class="form-label small fw-semibold mb-1">Cc</label>
-            <input id="mail-composer-cc" type="text" class="form-control form-control-sm @error('composerCc') is-invalid @enderror" wire:model.live.debounce.1500ms="composerCc" wire:blur="saveComposerDraft(false)">
+            <input id="mail-composer-cc" type="text" class="form-control form-control-sm @error('composerCc') is-invalid @enderror" wire:model.live.debounce.1500ms="composerCc" wire:blur="saveComposerDraft(false)" @disabled($composerShared && ! $this->composerSharedEditable())>
             @error('composerCc')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
         <div class="col-12">
             <label for="mail-composer-subject" class="form-label small fw-semibold mb-1">Subject</label>
-            <input id="mail-composer-subject" type="text" class="form-control form-control-sm @error('composerSubject') is-invalid @enderror" wire:model.live.debounce.1500ms="composerSubject" wire:blur="saveComposerDraft(false)">
+            <input id="mail-composer-subject" type="text" class="form-control form-control-sm @error('composerSubject') is-invalid @enderror" wire:model.live.debounce.1500ms="composerSubject" wire:blur="saveComposerDraft(false)" @disabled($composerShared && ! $this->composerSharedEditable())>
             @error('composerSubject')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
@@ -257,7 +285,7 @@
                 x-ref="editor"
                 wire:ignore
                 class="mail-html-editor-surface form-control form-control-sm bg-white @error('composerBodyHtml') is-invalid @enderror"
-                contenteditable="true"
+                contenteditable="{{ $composerShared && ! $this->composerSharedEditable() ? 'false' : 'true' }}"
                 role="textbox"
                 aria-multiline="true"
                 x-on:input.debounce.500ms="sync(); $wire.saveComposerDraft(false)"
@@ -267,7 +295,7 @@
                 x-model="value"
                 id="mail-html-editor-source"
                 class="mail-html-editor-source form-control form-control-sm font-monospace @error('composerBodyHtml') is-invalid @enderror"
-                x-on:input.debounce.500ms="sync(); $wire.saveComposerDraft(false)"></textarea>
+                x-on:input.debounce.500ms="sync(); $wire.saveComposerDraft(false)" @disabled($composerShared && ! $this->composerSharedEditable())></textarea>
             @error('composerBodyHtml')
                 <div class="invalid-feedback d-block">{{ $message }}</div>
             @enderror
@@ -280,10 +308,10 @@
         </div>
         <div class="col-12">
             <div class="d-flex flex-wrap align-items-center gap-2">
-                <label for="mail-composer-attachments" class="btn btn-sm btn-outline-secondary mb-0">
+                <label for="mail-composer-attachments" class="btn btn-sm btn-outline-secondary mb-0 {{ $composerShared && ! $this->composerSharedEditable() ? 'disabled' : '' }}">
                     <i class="bi bi-paperclip me-1" aria-hidden="true"></i>Attach
                 </label>
-                <input id="mail-composer-attachments" type="file" class="visually-hidden" wire:model="composerAttachments" multiple>
+                <input id="mail-composer-attachments" type="file" class="visually-hidden" wire:model="composerAttachments" multiple @disabled($composerShared && ! $this->composerSharedEditable())>
                 <span class="text-muted small">Up to 5 draft files, 10 MB each.</span>
             </div>
             @error('composerAttachments')
@@ -320,7 +348,7 @@
             <button type="button" class="btn btn-sm btn-outline-danger" wire:click="discardComposerDraft" onclick="return confirm('Discard this local draft?');">
                 <i class="bi bi-trash me-1" aria-hidden="true"></i>Discard draft
             </button>
-            <button type="submit" class="btn btn-sm btn-primary" wire:loading.attr="disabled" wire:target="sendComposer,composerAttachments">
+            <button type="submit" class="btn btn-sm btn-primary" wire:loading.attr="disabled" wire:target="sendComposer,composerAttachments" @disabled($composerShared && ! $this->composerSharedEditable())>
                 <i class="bi bi-send me-1" aria-hidden="true"></i>Send {{ $composerSubmitLabel }}
             </button>
         </div>

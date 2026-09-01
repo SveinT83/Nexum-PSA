@@ -250,6 +250,8 @@
 @endsection
 
 @section('sidebar')
+    @include('warroom::Tech.partials._sidebar')
+
     <!-- Warroom lanes -->
     @if($settings->sectionEnabled($warroom['settings'], 'lanes'))
         <div class="card mb-3">

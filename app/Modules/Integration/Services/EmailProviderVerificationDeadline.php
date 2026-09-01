@@ -4,8 +4,17 @@ namespace App\Modules\Integration\Services;
 
 use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
 
-final class EmailProviderVerificationDeadline
+class EmailProviderVerificationDeadline
 {
+    public function available(): bool
+    {
+        return function_exists('pcntl_alarm')
+            && function_exists('pcntl_signal')
+            && function_exists('pcntl_signal_get_handler')
+            && function_exists('pcntl_async_signals')
+            && defined('SIGALRM');
+    }
+
     /**
      * Bound DNS resolution and both authenticated provider probes with one
      * absolute wall-clock alarm. If this runtime cannot interrupt blocking I/O
@@ -13,11 +22,7 @@ final class EmailProviderVerificationDeadline
      */
     public function run(#[\SensitiveParameter] \Closure $callback): mixed
     {
-        if (! function_exists('pcntl_alarm')
-            || ! function_exists('pcntl_signal')
-            || ! function_exists('pcntl_signal_get_handler')
-            || ! function_exists('pcntl_async_signals')
-            || ! defined('SIGALRM')) {
+        if (! $this->available()) {
             throw new EmailProviderSecurityException('provider_verification_deadline_unavailable');
         }
 

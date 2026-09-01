@@ -6,6 +6,7 @@ use App\Models\Core\User;
 use App\Modules\Integration\Models\AiChat;
 use App\Modules\Integration\Services\AiAgentResolver;
 use App\Modules\Integration\Services\AiChatResponder;
+use App\Modules\Integration\Support\AiExecutionContext;
 use App\Modules\LeadIntelligence\Models\LeadSegment;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -41,6 +42,19 @@ class DraftLeadSegmentWithAi
             ],
             'last_message_at' => now(),
         ]);
+
+        $executionContext = new AiExecutionContext(
+            executionId: (string) Str::uuid(),
+            featureKey: 'lead_intelligence.segment_draft',
+            operationKey: 'draft',
+            domain: 'lead_intelligence',
+            billingClassification: 'lead_intelligence',
+            actorUserId: (int) $user->id,
+            subjectType: 'lead_segment',
+            subjectId: $segment ? (string) $segment->id : null,
+            aiChatId: (int) $chat->id,
+        );
+
         $chat->messages()->create([
             'user_id' => $user->id,
             'role' => 'user',
@@ -51,7 +65,7 @@ class DraftLeadSegmentWithAi
             $reply = $this->responder->complete($agent, [
                 ['role' => 'system', 'content' => $this->systemPrompt()],
                 ['role' => 'user', 'content' => json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)],
-            ], self::SEGMENT_DRAFT_TIMEOUT_SECONDS);
+            ], self::SEGMENT_DRAFT_TIMEOUT_SECONDS, $executionContext);
         } catch (\Throwable $exception) {
             $chat->messages()->create([
                 'role' => 'assistant',

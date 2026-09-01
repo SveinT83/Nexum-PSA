@@ -7,6 +7,10 @@ Technicians add time from the ticket show page using the `Add time` action near 
 
 The Time widget in the ticket rightbar includes a local per-ticket stopwatch. Technicians can start the timer, pause or resume it with the same button, and stop it when the work is ready to register. Stopping the timer opens the Add time modal with elapsed minutes prefilled. The timer is local browser draft state and does not create a database record until the modal is saved.
 
+Ticket and Task details reuse one shared stopwatch presentation and browser-draft component. Their
+forms, permissions, activity, and persistence remain domain-owned. Ticket continues to audit timer
+start through its guarded action, while a Task creates no server record until Task time is saved.
+
 Saved time entries appear as rows in the ticket Activity timeline together with replies and internal notes. The rightbar Time widget is focused on the active stopwatch instead of repeating the time log.
 
 The ticket index reads the local stopwatch state and lightly highlights rows that have an active or paused timer in the current browser. The list also shows the assigned technician for each ticket, or `Unassigned` when no owner is set.
@@ -19,5 +23,12 @@ Available rates come from two sources:
 When a time entry is saved, Nexum snapshots the selected rate name, code, type, unit, amount, currency, and any contract references onto `ticket_time_entries`. This protects old ticket work from future price edits.
 
 Saved entries start with `billing_status = pending` and `timebank_status = pending`. Billing or ticket resolution workflows can later decide whether the minutes should be consumed from a contract timebank or invoiced at the stored rate. The initial registration step does not deduct minutes.
+
+Ticket-owned Tasks create a separate Ticket billing projection with `type = task_billing` and a
+Task reference. Its minutes follow the Task billing policy: either cumulative actual Task time, or
+the Task estimate as a one-time minimum until actual time becomes higher. Economy continues to use
+the Ticket projection for customer billing. Technician worklog reporting excludes that projection
+and uses the linked Task entries, so 5 actual minutes with a 30-minute billing minimum remains 5
+minutes of technician time rather than 35.
 
 The AI draft button assists with invoice text. It uses selected time rate, the technician's existing draft text, previous time entries, ticket replies, internal notes, and ticket context to propose a concise billing description without changing the saved time automatically. Driving or travel rates should produce driving/travel descriptions, not copied technical repair text.

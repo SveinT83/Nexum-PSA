@@ -272,8 +272,8 @@ class EmailProviderCredentialLifecycleTest extends TestCase
 
         $connection = $connection->fresh();
         $this->assertNull($connection->verification_claim_token);
-        $this->assertSame('verification_failed', $connection->last_verification_code);
-        $this->assertSame('verification_failed', $version->fresh()->verification_code);
+        $this->assertSame('provider_verification_failed', $connection->last_verification_code);
+        $this->assertSame('provider_verification_failed', $version->fresh()->verification_code);
     }
 
     #[Test]

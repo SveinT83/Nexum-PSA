@@ -6,6 +6,34 @@ Use `docs/processes/feature-slice-process.md` for the required process and templ
 
 Feature Slices break approved RFCs and beta-completion work into small, complete, testable pieces.
 
+## Ticket Rules Triggers, Ordered Actions, And Audited Execution
+
+1. `2026-08-25-ticket-rules-architecture-versions-legacy-compatibility.md` (Done)
+2. `2026-08-25-ticket-rules-execution-envelope-audit-loop-foundation.md` (Done)
+3. `2026-08-25-ticket-rules-standard-update-message-assignment-tag-automation.md` (Done)
+4. `2026-08-25-ticket-rules-workflow-actions-composite-events.md` (Done)
+5. `2026-08-25-ticket-rules-ticket-custom-fields-assignment-parity.md` (Done)
+6. `2026-08-25-ticket-rules-admin-builder-execution-history-release-hardening.md` (Done)
+
+All six Feature Slices are implementation-complete on authoritative Dev. All new Ticket Rules copy
+remains English and no language files were added. Runtime activation remains default-off until the
+relevant human review and separate release approval permit it. Database authority remains legacy;
+every v2 trigger, action, Custom Field, and full-rerun capability remains off. Authenticated
+responsive/keyboard/touch review remains Pending under `HR-2026-08-25-013`.
+
+## RMM Alert Rules
+
+1. `2026-08-25-rmm-alert-rules-occurrence-and-audit-foundation.md` (Done on Dev; human review pending)
+2. `2026-08-25-rmm-alert-rules-domain-actions.md` (Done on Dev; human review pending)
+3. `2026-08-25-rmm-alert-rules-admin-and-operations.md` (Done on Dev; human review pending)
+
+Rule definitions remain inactive by default. Controlled retry, recurrence windows, resolution
+actions, notifications, scripts/remediation, webhooks, and AI require later approved slices.
+
+## Task Stopwatch And Time Registration
+
+1. `2026-08-25-task-ticket-billing-minimum-and-time-authority.md` (Done on Dev; migration and human review pending)
+
 
 ## Calendar Ownership Rollout
 
@@ -20,6 +48,10 @@ Feature Slices break approved RFCs and beta-completion work into small, complete
 1. `2026-07-29-ticket-api-portal-publication.md` (Done)
 2. `2026-07-29-ticket-api-idempotent-customer-reply.md` (Done)
 3. `2026-07-29-ticket-api-solution-completion.md` (Done)
+
+## Ticket API Read Completion
+
+1. `2026-08-25-ticket-message-read-api.md` (Done; human review pending)
 
 ## AI Model Usage And Cost Telemetry
 

@@ -51,10 +51,10 @@ class EmailComposerLifecycleRegressionTest extends TestCase
             $source,
         );
         $this->assertStringContainsString('x-on:submit.capture="sync()"', $source);
-        $this->assertMatchesRegularExpression(
-            '/<div\s+[^>]*x-ref="editor"[^>]*wire:ignore[^>]*contenteditable="true"/s',
-            $source,
-        );
+        $this->assertStringContainsString('x-ref="editor"', $source);
+        $this->assertStringContainsString('wire:ignore', $source);
+        $this->assertStringContainsString('contenteditable="{{ $composerShared', $source);
+        $this->assertStringContainsString("composerSharedEditable() ? 'false' : 'true' }}\"", $source);
     }
 
     #[Test]

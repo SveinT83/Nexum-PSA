@@ -10,6 +10,7 @@ use App\Modules\Email\Jobs\DispatchEmailProviderIdleListeners;
 use App\Modules\Email\Jobs\DispatchEmailProviderReconciliation;
 use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\EmailRetentionPurgeJob;
+use App\Modules\Email\Jobs\MaintainEmailLiveAuthority;
 use App\Modules\Email\Jobs\PollActiveEmailAccounts;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Jobs\RetryDueEmailRemoteOperations;
@@ -23,6 +24,7 @@ use App\Modules\Integration\Services\AiChatCleanup;
 use App\Modules\Marketing\Jobs\SendDueMarketingCampaignEmails;
 use App\Modules\Notification\Jobs\DispatchPendingInboundEmailExternalNotifications;
 use App\Modules\Notification\Jobs\DispatchPendingInboundEmailNotificationFanouts;
+use App\Modules\Signal\Jobs\DispatchPendingSignalWebhookDeliveries;
 use App\Modules\Storage\Actions\DispatchDueSupplierOrderImports;
 use App\Modules\Storage\Actions\PurgeSupplierOrderImportTroubleshootingData;
 use App\Modules\Storage\Actions\RunSupplierOrderImportOperationsMaintenance;
@@ -82,6 +84,19 @@ Schedule::job(new DispatchPendingInboundEmailNotificationFanouts)
     ->name('notification.inbound_email.fanout_dispatch')
     ->withoutOverlapping(5);
 
+// Signal webhook rows are a durable outbox. The immediate post-commit wake-up
+// lowers latency; this bounded dispatcher closes the commit-to-broker gap.
+Schedule::job(new DispatchPendingSignalWebhookDeliveries)
+    ->everyMinute()
+    ->name('signal.webhook.dispatch')
+    ->withoutOverlapping(5);
+
+// Durable live authority and publication recovery remains safe while transport is disabled.
+Schedule::job(new MaintainEmailLiveAuthority)
+    ->everyMinute()
+    ->name('email.live.maintain')
+    ->withoutOverlapping(5);
+
 // Email account health check every five minutes
 Schedule::call(function () {
     EmailAccount::query()
@@ -111,6 +126,12 @@ Schedule::job(new CleanupEmailProviderDeletionCache)
     ->dailyAt('05:00')
     ->name('email.provider_deletion.cleanup')
     ->withoutOverlapping(120);
+
+// Scheduled Ticket activation and recurrence generation
+Schedule::job(new \App\Modules\Ticket\Jobs\ProcessScheduledTickets)
+    ->everyMinute()
+    ->name('ticket.scheduled_process')
+    ->withoutOverlapping(5);
 
 // Supplier-order import dispatch owns a durable scheduler heartbeat and claims
 // due rows before queueing, so overlapping scheduler invocations remain safe.

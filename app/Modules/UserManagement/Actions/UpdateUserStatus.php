@@ -3,7 +3,9 @@
 namespace App\Modules\UserManagement\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Notification\Actions\RemoveUserWebPushSubscriptions;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Updates the account lifecycle status for an application user.
@@ -16,6 +18,7 @@ class UpdateUserStatus
 {
     public function __construct(
         private readonly RemoveUserWebPushSubscriptions $removeWebPushSubscriptions,
+        private readonly EmailLiveAuthorityCoordinator $liveAuthority,
     ) {}
 
     public function handle(User $user, string $status): User
@@ -23,7 +26,18 @@ class UpdateUserStatus
         $becameDisabled = $status === User::STATUS_DISABLED
             && $user->status !== User::STATUS_DISABLED;
 
-        $user->update(['status' => $status]);
+        DB::transaction(function () use ($status, $user): void {
+            $locked = User::query()->lockForUpdate()->findOrFail($user->id);
+            if ($locked->status === $status) {
+                return;
+            }
+            $generation = $this->liveAuthority->prepareUserLifecycleMutation((int) $locked->id);
+            $locked->forceFill([
+                'status' => $status,
+                'email_live_enable_generation' => $generation,
+            ])->save();
+        }, 3);
+        $user->refresh();
 
         if ($becameDisabled) {
             $this->removeWebPushSubscriptions->handle($user);

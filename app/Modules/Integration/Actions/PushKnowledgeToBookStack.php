@@ -415,6 +415,7 @@ class PushKnowledgeToBookStack
         $config = $this->integration->config ?? [];
         $config['last_push_summary'] = $summary;
         $config['last_push_at'] = now()->toIso8601String();
+        $config['last_error_at'] = $summary['failed'] === 0 && $summary['skipped'] === 0 ? null : now()->toIso8601String();
         $this->integration->config = $config;
         $this->integration->last_sync_at = now();
         $this->integration->is_healthy = $summary['failed'] === 0 && $summary['skipped'] === 0;

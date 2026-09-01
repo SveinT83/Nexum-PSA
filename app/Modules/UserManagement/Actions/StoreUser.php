@@ -3,7 +3,9 @@
 namespace App\Modules\UserManagement\Actions;
 
 use App\Models\Core\User;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\UserManagement\Models\UserProfile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -20,19 +22,26 @@ use Spatie\Permission\Models\Role;
  */
 class StoreUser
 {
+    public function __construct(private readonly EmailLiveAuthorityCoordinator $liveAuthority) {}
+
     public function handle(array $data): User
     {
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make(Str::random(32)),
-            'status' => $data['status'] ?? User::STATUS_PENDING,
-        ]);
+        $user = DB::transaction(function () use ($data): User {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make(Str::random(32)),
+                'status' => $data['status'] ?? User::STATUS_PENDING,
+            ]);
 
-        if (! empty($data['role'])) {
-            $role = Role::findOrFail($data['role']);
-            $user->assignRole($role);
-        }
+            if (! empty($data['role'])) {
+                $role = Role::findOrFail($data['role']);
+                $user->assignRole($role);
+            }
+            $this->liveAuthority->initializeUser($user);
+
+            return $user;
+        }, 3);
 
         UserProfile::query()->firstOrCreate(
             ['user_id' => $user->id],

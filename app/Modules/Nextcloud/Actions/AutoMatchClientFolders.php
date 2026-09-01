@@ -4,9 +4,14 @@ namespace App\Modules\Nextcloud\Actions;
 
 use App\Models\Clients\Client;
 use App\Modules\Integration\Models\AiAgent;
+use App\Modules\Integration\Services\AiModelExecutor;
+use App\Modules\Integration\Support\AiExecutionContext;
+use App\Modules\Integration\Support\AiExecutionTrace;
+use App\Modules\Integration\Support\AiModelResult;
 use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Nextcloud\Models\NextcloudFolderMapping;
 use App\Modules\Nextcloud\Services\NextcloudReadClient;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -14,8 +19,10 @@ use RuntimeException;
 
 class AutoMatchClientFolders
 {
-    public function __construct(private readonly NextcloudReadClient $client)
-    {
+    public function __construct(
+        private readonly NextcloudReadClient $client,
+        private readonly AiModelExecutor $executor,
+    ) {
     }
 
     public function handle(NextcloudConnection $connection): array
@@ -191,56 +198,77 @@ class AutoMatchClientFolders
             return '';
         }
 
+        $trace = new AiExecutionTrace(new AiExecutionContext(
+            executionId: (string) Str::uuid(),
+            featureKey: 'nextcloud.folder_matching',
+            operationKey: 'auto_match',
+            domain: 'nextcloud',
+        ));
+
         return match ($provider->provider_key) {
-            'openai', 'custom_openai_compatible' => $this->openAiCompatible($provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages),
-            'mistral' => $this->openAiCompatible($provider->base_url ?: 'https://api.mistral.ai/v1', $provider->getSecret('api_key'), $model, $messages),
-            'openrouter' => $this->openAiCompatible($provider->base_url ?: 'https://openrouter.ai/api/v1', $provider->getSecret('api_key'), $model, $messages),
-            'ollama' => $this->ollama($provider->base_url, $model, $messages),
+            'openai', 'custom_openai_compatible' => $this->openAiCompatible($agent, $trace, $provider->base_url ?: 'https://api.openai.com/v1', $provider->getSecret('api_key'), $model, $messages),
+            'mistral' => $this->openAiCompatible($agent, $trace, $provider->base_url ?: 'https://api.mistral.ai/v1', $provider->getSecret('api_key'), $model, $messages),
+            'openrouter' => $this->openAiCompatible($agent, $trace, $provider->base_url ?: 'https://openrouter.ai/api/v1', $provider->getSecret('api_key'), $model, $messages),
+            'ollama' => $this->ollama($agent, $trace, $provider->base_url, $model, $messages),
             default => '',
         };
     }
 
-    private function openAiCompatible(?string $baseUrl, ?string $apiKey, string $model, array $messages): string
+    private function openAiCompatible(AiAgent $agent, AiExecutionTrace $trace, ?string $baseUrl, ?string $apiKey, string $model, array $messages): string
     {
         if (! $apiKey) {
             return '';
         }
 
-        $response = Http::acceptJson()
-            ->withToken($apiKey)
-            ->timeout(60)
-            ->post(rtrim((string) $baseUrl, '/').'/chat/completions', [
-                'model' => $model,
-                'messages' => $messages,
-            ]);
+        $attempt = $this->executor->attempt(
+            agent: $agent,
+            trace: $trace,
+            endpointKind: 'chat_completions',
+            requestedModel: $model,
+            request: fn (): Response => Http::acceptJson()
+                ->withToken($apiKey)
+                ->timeout(60)
+                ->post(rtrim((string) $baseUrl, '/').'/chat/completions', [
+                    'model' => $model,
+                    'messages' => $messages,
+                ]),
+            normalize: fn (Response $response): AiModelResult => AiModelResult::fromOpenAiCompatible($response, 'chat_completions'),
+        );
 
-        if (! $response->successful()) {
-            throw new RuntimeException('AI folder matching failed with HTTP '.$response->status().'.');
+        if (! $attempt->result->successful) {
+            throw new RuntimeException('AI folder matching failed with HTTP '.$attempt->response->status().'.');
         }
 
-        return (string) $response->json('choices.0.message.content');
+        return (string) $attempt->result->content;
     }
 
-    private function ollama(?string $baseUrl, string $model, array $messages): string
+    private function ollama(AiAgent $agent, AiExecutionTrace $trace, ?string $baseUrl, string $model, array $messages): string
     {
         if (! $baseUrl) {
             return '';
         }
 
-        $response = Http::acceptJson()
-            ->timeout(120)
-            ->post(rtrim($baseUrl, '/').'/api/chat', [
-                'model' => $model,
-                'messages' => $messages,
-                'format' => 'json',
-                'stream' => false,
-            ]);
+        $attempt = $this->executor->attempt(
+            agent: $agent,
+            trace: $trace,
+            endpointKind: 'ollama_chat',
+            requestedModel: $model,
+            request: fn (): Response => Http::acceptJson()
+                ->timeout(120)
+                ->post(rtrim($baseUrl, '/').'/api/chat', [
+                    'model' => $model,
+                    'messages' => $messages,
+                    'format' => 'json',
+                    'stream' => false,
+                ]),
+            normalize: fn (Response $response): AiModelResult => AiModelResult::fromOllama($response),
+        );
 
-        if (! $response->successful()) {
-            throw new RuntimeException('AI folder matching failed with HTTP '.$response->status().'.');
+        if (! $attempt->result->successful) {
+            throw new RuntimeException('AI folder matching failed with HTTP '.$attempt->response->status().'.');
         }
 
-        return (string) $response->json('message.content');
+        return (string) $attempt->result->content;
     }
 
     private function jsonFromResponse(string $response): string

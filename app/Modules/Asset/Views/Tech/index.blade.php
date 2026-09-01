@@ -9,6 +9,10 @@
     $canSyncTactical = $client && $tacticalIntegration && $client->rmmLinks()->where('integration_id', $tacticalIntegration->id)->exists();
     $sort = request('sort', 'last_seen_at');
     $direction = request('direction') === 'asc' ? 'asc' : 'desc';
+    $filters = $filters ?? [];
+    $activeFilterCount = $activeFilterCount ?? 0;
+    $filtersOpen = $activeFilterCount > 0;
+
     $sortLink = function (string $column) use ($sort, $direction) {
         $nextDirection = $sort === $column && $direction === 'asc' ? 'desc' : 'asc';
 
@@ -33,17 +37,22 @@
          - Page title with only navigation-level action
          ====================================================================== -->
     <div class="d-flex justify-content-between align-items-center">
-        <h1>
-            @if($client)
-                Assets for {{ $client->name }}
-            @else
-                Assets
-            @endif
-        </h1>
         <div>
+            <h1>
+                @if($client)
+                    Assets for {{ $client->name }}
+                @else
+                    Assets
+                @endif
+            </h1>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
             @if($client)
                 <x-buttons.back :url="route('tech.clients.show', $client->id)" class="mb-0">Back</x-buttons.back>
             @endif
+            <a href="{{ route('tech.assets.create') }}" class="btn btn-primary mb-0">
+                <i class="bi bi-plus-lg"></i> New Asset
+            </a>
         </div>
     </div>
 @endsection
@@ -55,89 +64,137 @@
          ====================================================================== -->
     <div class="card mb-3">
         <div class="card-body">
-            <form action="{{ $client ? route('tech.clients.assets.index', $client->id) : route('tech.assets.index') }}" method="GET" class="row g-3">
-                @if(!$client)
-                    <div class="col-md-3">
-                        <label for="context_type" class="form-label text-muted small fw-bold text-uppercase">Context</label>
-                        <select name="context_type" id="context_type" class="form-select">
-                            <option value="">All Contexts</option>
-                            <option value="client" {{ request('context_type') === 'client' ? 'selected' : '' }}>Client</option>
-                            <option value="internal" {{ request('context_type') === 'internal' ? 'selected' : '' }}>Internal</option>
-                        </select>
+            <form action="{{ $client ? route('tech.clients.assets.index', $client->id) : route('tech.assets.index') }}" method="GET">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="bi bi-search text-muted"></i>
+                            </span>
+                            <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" class="form-control border-start-0 ps-0" placeholder="Search asset name or hostname..." aria-label="Search assets">
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label for="client_id" class="form-label text-muted small fw-bold text-uppercase">Client</label>
-                        <select name="client_id" id="client_id" class="form-select">
-                            <option value="">All Clients</option>
-                            @foreach($clients as $c)
-                                <option value="{{ $c->id }}" {{ request('client_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
-                            @endforeach
-                        </select>
+
+                    <div class="col-auto">
+                        <button class="btn btn-outline-secondary position-relative" type="button" data-bs-toggle="collapse" data-bs-target="#assetAdvancedFilters" aria-expanded="{{ $filtersOpen ? 'true' : 'false' }}" aria-controls="assetAdvancedFilters">
+                            <i class="bi bi-funnel"></i> Filter
+                            @if($activeFilterCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                    {{ $activeFilterCount }}
+                                    <span class="visually-hidden">active filters</span>
+                                </span>
+                            @endif
+                        </button>
                     </div>
-                @endif
-                <div class="col-md-3">
-                    <label for="type" class="form-label text-muted small fw-bold text-uppercase">Type</label>
-                    <select name="type" id="type" class="form-select">
-                        <option value="">All Types</option>
-                        <option value="server" {{ request('type') == 'server' ? 'selected' : '' }}>Server</option>
-                        <option value="pc" {{ request('type') == 'pc' ? 'selected' : '' }}>PC</option>
-                        <option value="laptop" {{ request('type') == 'laptop' ? 'selected' : '' }}>Laptop</option>
-                        <option value="switch" {{ request('type') == 'switch' ? 'selected' : '' }}>Switch</option>
-                        <option value="ap" {{ request('type') == 'ap' ? 'selected' : '' }}>Access Point</option>
-                        <option value="firewall" {{ request('type') == 'firewall' ? 'selected' : '' }}>Firewall</option>
-                        <option value="other" {{ request('type') == 'other' ? 'selected' : '' }}>Other</option>
-                    </select>
+
+                    @if($activeFilterCount > 0 || !empty($filters['search']))
+                        <div class="col-auto">
+                            <a href="{{ $client ? route('tech.clients.assets.index', ['client' => $client->id, 'clear_filters' => 1]) : route('tech.assets.index', ['clear_filters' => 1]) }}" class="btn btn-link text-decoration-none p-0 ms-2">
+                                Clear
+                            </a>
+                        </div>
+                    @endif
+
+                    <div class="col-auto ms-auto">
+                        <button type="submit" class="btn btn-primary">
+                            Apply
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <label for="status" class="form-label text-muted small fw-bold text-uppercase">Status</label>
-                    <select name="status" id="status" class="form-select">
-                        <option value="">All Statuses</option>
-                        <option value="online" {{ request('status') == 'online' ? 'selected' : '' }}>Online</option>
-                        <option value="offline" {{ request('status') == 'offline' ? 'selected' : '' }}>Offline</option>
-                        <option value="unknown" {{ request('status') == 'unknown' ? 'selected' : '' }}>Unknown</option>
-                        <option value="in_service" {{ request('status') == 'in_service' ? 'selected' : '' }}>In Service</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="sensitivity_level" class="form-label text-muted small fw-bold text-uppercase">Sensitivity</label>
-                    <select name="sensitivity_level" id="sensitivity_level" class="form-select">
-                        <option value="">All Sensitivity</option>
-                        <option value="low" {{ request('sensitivity_level') == 'low' ? 'selected' : '' }}>Low</option>
-                        <option value="medium" {{ request('sensitivity_level') == 'medium' ? 'selected' : '' }}>Medium</option>
-                        <option value="high" {{ request('sensitivity_level') == 'high' ? 'selected' : '' }}>High</option>
-                        <option value="ultra" {{ request('sensitivity_level') == 'ultra' ? 'selected' : '' }}>Ultra</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="criticality_level" class="form-label text-muted small fw-bold text-uppercase">Criticality</label>
-                    <select name="criticality_level" id="criticality_level" class="form-select">
-                        <option value="">All Criticality</option>
-                        <option value="low" {{ request('criticality_level') == 'low' ? 'selected' : '' }}>Low</option>
-                        <option value="medium" {{ request('criticality_level') == 'medium' ? 'selected' : '' }}>Medium</option>
-                        <option value="high" {{ request('criticality_level') == 'high' ? 'selected' : '' }}>High</option>
-                        <option value="critical" {{ request('criticality_level') == 'critical' ? 'selected' : '' }}>Critical</option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" name="has_alerts" value="1" id="has_alerts" {{ request('has_alerts') ? 'checked' : '' }}>
-                        <label class="form-check-label text-muted small fw-bold text-uppercase" for="has_alerts">
-                            With Active Alerts
-                        </label>
+
+                <div @class(['collapse mt-3', 'show' => $filtersOpen]) id="assetAdvancedFilters">
+                    <div class="row g-3">
+                        @if(!$client)
+                            <div class="col-md-3">
+                                <label for="context_type" class="form-label text-muted small fw-bold text-uppercase">Context</label>
+                                <select name="context_type" id="context_type" class="form-select">
+                                    <option value="">All Contexts</option>
+                                    <option value="client" {{ ($filters['context_type'] ?? '') === 'client' ? 'selected' : '' }}>Client</option>
+                                    <option value="internal" {{ ($filters['context_type'] ?? '') === 'internal' ? 'selected' : '' }}>Internal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                @php
+                                    $selectedClientForFilter = !empty($filters['client_id'])
+                                        ? $clients->firstWhere('id', (int) $filters['client_id'])
+                                        : null;
+                                    $selectedClientLabel = $selectedClientForFilter
+                                        ? $selectedClientForFilter->name . ($selectedClientForFilter->client_number ? ' (' . $selectedClientForFilter->client_number . ')' : '')
+                                        : '';
+                                @endphp
+                                <label for="client_lookup" class="form-label text-muted small fw-bold text-uppercase">Client</label>
+                                <input
+                                    id="client_lookup"
+                                    type="search"
+                                    class="form-control"
+                                    value="{{ $selectedClientLabel }}"
+                                    list="client_suggestions"
+                                    placeholder="Search client..."
+                                    autocomplete="off"
+                                >
+                                <input id="client_id_filter" name="client_id" type="hidden" value="{{ $filters['client_id'] ?? '' }}">
+                                <datalist id="client_suggestions">
+                                    @foreach($clients as $c)
+                                        <option value="{{ $c->name }}@if ($c->client_number) ({{ $c->client_number }})@endif" data-id="{{ $c->id }}"></option>
+                                    @endforeach
+                                </datalist>
+                            </div>
+                        @endif
+                        <div class="col-md-3">
+                            <label for="type" class="form-label text-muted small fw-bold text-uppercase">Type</label>
+                            <select name="type" id="type" class="form-select">
+                                <option value="">All Types</option>
+                                <option value="server" {{ ($filters['type'] ?? '') == 'server' ? 'selected' : '' }}>Server</option>
+                                <option value="pc" {{ ($filters['type'] ?? '') == 'pc' ? 'selected' : '' }}>PC</option>
+                                <option value="laptop" {{ ($filters['type'] ?? '') == 'laptop' ? 'selected' : '' }}>Laptop</option>
+                                <option value="switch" {{ ($filters['type'] ?? '') == 'switch' ? 'selected' : '' }}>Switch</option>
+                                <option value="ap" {{ ($filters['type'] ?? '') == 'ap' ? 'selected' : '' }}>Access Point</option>
+                                <option value="firewall" {{ ($filters['type'] ?? '') == 'firewall' ? 'selected' : '' }}>Firewall</option>
+                                <option value="other" {{ ($filters['type'] ?? '') == 'other' ? 'selected' : '' }}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label text-muted small fw-bold text-uppercase">Status</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="online" {{ ($filters['status'] ?? '') == 'online' ? 'selected' : '' }}>Online</option>
+                                <option value="offline" {{ ($filters['status'] ?? '') == 'offline' ? 'selected' : '' }}>Offline</option>
+                                <option value="unknown" {{ ($filters['status'] ?? '') == 'unknown' ? 'selected' : '' }}>Unknown</option>
+                                <option value="in_service" {{ ($filters['status'] ?? '') == 'in_service' ? 'selected' : '' }}>In Service</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sensitivity_level" class="form-label text-muted small fw-bold text-uppercase">Sensitivity</label>
+                            <select name="sensitivity_level" id="sensitivity_level" class="form-select">
+                                <option value="">All Sensitivity</option>
+                                <option value="low" {{ ($filters['sensitivity_level'] ?? '') == 'low' ? 'selected' : '' }}>Low</option>
+                                <option value="medium" {{ ($filters['sensitivity_level'] ?? '') == 'medium' ? 'selected' : '' }}>Medium</option>
+                                <option value="high" {{ ($filters['sensitivity_level'] ?? '') == 'high' ? 'selected' : '' }}>High</option>
+                                <option value="ultra" {{ ($filters['sensitivity_level'] ?? '') == 'ultra' ? 'selected' : '' }}>Ultra</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="criticality_level" class="form-label text-muted small fw-bold text-uppercase">Criticality</label>
+                            <select name="criticality_level" id="criticality_level" class="form-select">
+                                <option value="">All Criticality</option>
+                                <option value="low" {{ ($filters['criticality_level'] ?? '') == 'low' ? 'selected' : '' }}>Low</option>
+                                <option value="medium" {{ ($filters['criticality_level'] ?? '') == 'medium' ? 'selected' : '' }}>Medium</option>
+                                <option value="high" {{ ($filters['criticality_level'] ?? '') == 'high' ? 'selected' : '' }}>High</option>
+                                <option value="critical" {{ ($filters['criticality_level'] ?? '') == 'critical' ? 'selected' : '' }}>Critical</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="has_alerts" value="1" id="has_alerts" {{ ($filters['has_alerts'] ?? '') ? 'checked' : '' }}>
+                                <label class="form-check-label text-muted small fw-bold text-uppercase" for="has_alerts">
+                                    With Active Alerts
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <input type="hidden" name="sort" value="{{ $sort }}">
                 <input type="hidden" name="direction" value="{{ $direction }}">
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-funnel"></i> Filter
-                    </button>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <a href="{{ route('tech.assets.create') }}" class="btn btn-primary w-100 mb-0">
-                        <i class="bi bi-plus-lg"></i> New Asset
-                    </a>
-                </div>
             </form>
         </div>
     </div>
@@ -370,13 +427,31 @@
                         @endphp
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <a href="{{ route('tech.assets.docs') }}" class="btn btn-primary" target="_blank">
-                        <i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const clientLookup = document.getElementById('client_lookup');
+            const clientId = document.getElementById('client_id_filter');
+            const clientSuggestions = document.getElementById('client_suggestions');
+
+            if (clientLookup && clientSuggestions) {
+                const clientOptions = Array.from(clientSuggestions.options);
+
+                function selectedOption(options, value) {
+                    return options.find(function (option) {
+                        return option.value === value;
+                    });
+                }
+
+                clientLookup.addEventListener('change', function () {
+                    const option = selectedOption(clientOptions, this.value);
+                    clientId.value = option ? option.dataset.id : '';
+                });
+
+                clientLookup.addEventListener('input', function () {
+                    const option = selectedOption(clientOptions, this.value);
+                    clientId.value = option ? option.dataset.id : '';
+                });
+            }
+        });
+    </script>
 @endsection

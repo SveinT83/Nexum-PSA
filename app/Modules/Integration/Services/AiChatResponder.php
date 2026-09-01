@@ -158,7 +158,7 @@ class AiChatResponder
                     'model' => $model,
                     'messages' => $messages,
                 ]),
-            normalize: fn (Response $response): AiModelResult => $this->openAiCompatibleResult($response, 'chat_completions'),
+            normalize: fn (Response $response): AiModelResult => AiModelResult::fromOpenAiCompatible($response, 'chat_completions'),
         );
         $response = $attempt->response;
 
@@ -198,9 +198,8 @@ class AiChatResponder
                 ->post(rtrim((string) $baseUrl, '/').'/completions', [
                     'model' => $model,
                     'prompt' => $this->completionPrompt($messages),
-                    'max_tokens' => 2000,
                 ]),
-            normalize: fn (Response $response): AiModelResult => $this->openAiCompatibleResult($response, 'completions'),
+            normalize: fn (Response $response): AiModelResult => AiModelResult::fromOpenAiCompatible($response, 'completions'),
         );
         $response = $attempt->response;
 
@@ -242,7 +241,11 @@ class AiChatResponder
                     'input' => $this->completionPrompt($messages),
                     'max_output_tokens' => 1200,
                 ]),
-            normalize: fn (Response $response): AiModelResult => $this->openAiCompatibleResult($response, 'responses'),
+            normalize: fn (Response $response): AiModelResult => AiModelResult::fromOpenAiCompatible(
+                response: $response,
+                endpointKind: 'responses',
+                content: $this->responseOutputText((array) $response->json())
+            ),
         );
         $response = $attempt->response;
 
@@ -282,7 +285,7 @@ class AiChatResponder
                     'messages' => $messages,
                     'stream' => false,
                 ]),
-            normalize: fn (Response $response): AiModelResult => $this->ollamaResult($response),
+            normalize: fn (Response $response): AiModelResult => AiModelResult::fromOllama($response),
         );
         $response = $attempt->response;
 
@@ -295,109 +298,6 @@ class AiChatResponder
         }
 
         return (string) $attempt->result->content;
-    }
-
-    private function openAiCompatibleResult(Response $response, string $endpointKind): AiModelResult
-    {
-        $payload = $response->json();
-        $payload = is_array($payload) ? $payload : [];
-        $usage = AiModelUsage::fromOpenAiCompatible($payload);
-        $actualModel = $this->stringValue(data_get($payload, 'model'));
-        $providerRequestId = $this->providerRequestId($response, $payload);
-        $finishReason = $this->stringValue(
-            data_get($payload, 'choices.0.finish_reason')
-                ?? data_get($payload, 'incomplete_details.reason')
-                ?? data_get($payload, 'status')
-        );
-
-        if (! $response->successful()) {
-            return AiModelResult::failure(
-                usage: $usage,
-                actualModel: $actualModel,
-                providerRequestId: $providerRequestId,
-                finishReason: $finishReason,
-                httpStatus: $response->status(),
-                errorCategory: 'provider_http_error',
-                errorCode: $this->stringValue(data_get($payload, 'error.code')) ?: 'http_'.$response->status(),
-            );
-        }
-
-        $content = match ($endpointKind) {
-            'chat_completions' => data_get($payload, 'choices.0.message.content'),
-            'completions' => data_get($payload, 'choices.0.text'),
-            'responses' => $this->responseOutputText($payload),
-            default => null,
-        };
-
-        if (! filled($content)) {
-            return AiModelResult::failure(
-                usage: $usage,
-                actualModel: $actualModel,
-                providerRequestId: $providerRequestId,
-                finishReason: $finishReason,
-                httpStatus: $response->status(),
-                errorCategory: 'empty_response',
-            );
-        }
-
-        return AiModelResult::success(
-            content: trim((string) $content),
-            usage: $usage,
-            actualModel: $actualModel,
-            providerRequestId: $providerRequestId,
-            finishReason: $finishReason,
-            httpStatus: $response->status(),
-        );
-    }
-
-    private function ollamaResult(Response $response): AiModelResult
-    {
-        $payload = $response->json();
-        $payload = is_array($payload) ? $payload : [];
-        $usage = AiModelUsage::fromOllama($payload);
-        $actualModel = $this->stringValue(data_get($payload, 'model'));
-        $finishReason = $this->stringValue(data_get($payload, 'done_reason'));
-
-        if (! $response->successful()) {
-            return AiModelResult::failure(
-                usage: $usage,
-                actualModel: $actualModel,
-                providerRequestId: $this->providerRequestId($response, $payload),
-                finishReason: $finishReason,
-                httpStatus: $response->status(),
-                errorCategory: 'provider_http_error',
-                errorCode: $this->stringValue(data_get($payload, 'error.code')) ?: 'http_'.$response->status(),
-            );
-        }
-
-        $content = data_get($payload, 'message.content');
-
-        if (! filled($content)) {
-            return AiModelResult::failure(
-                usage: $usage,
-                actualModel: $actualModel,
-                providerRequestId: $this->providerRequestId($response, $payload),
-                finishReason: $finishReason,
-                httpStatus: $response->status(),
-                errorCategory: 'empty_response',
-            );
-        }
-
-        return AiModelResult::success(
-            content: trim((string) $content),
-            usage: $usage,
-            actualModel: $actualModel,
-            providerRequestId: $this->providerRequestId($response, $payload),
-            finishReason: $finishReason,
-            httpStatus: $response->status(),
-        );
-    }
-
-    private function providerRequestId(Response $response, array $payload): ?string
-    {
-        return $this->stringValue(data_get($payload, 'id'))
-            ?: $this->stringValue($response->header('x-request-id'))
-            ?: $this->stringValue($response->header('openai-request-id'));
     }
 
     private function stringValue(mixed $value): ?string

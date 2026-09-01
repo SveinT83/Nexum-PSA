@@ -107,6 +107,8 @@ class PortalTicketTest extends TestCase
     #[Test]
     public function existing_ticket_is_hidden_until_technician_publishes_it_to_portal(): void
     {
+        Notification::fake();
+
         [$client, $site, $contact, $portalUser] = $this->portalFixture('hidden-ticket@example.test');
         $ticket = $this->ticketFor($client, $site, $contact, [
             'subject' => 'Hidden internal ticket',
@@ -319,6 +321,7 @@ class PortalTicketTest extends TestCase
     public function portal_user_can_create_visible_ticket_without_customer_reply_email(): void
     {
         Queue::fake();
+        Notification::fake();
 
         [$client, $site, $contact, $portalUser] = $this->portalFixture('create-ticket@example.test');
 

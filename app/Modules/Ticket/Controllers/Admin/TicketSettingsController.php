@@ -9,6 +9,8 @@ use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Actions\EnsureTicketDefaults;
+use App\Modules\Ticket\Actions\LegacyTicketRuleMutationBoundary;
+use App\Modules\Ticket\Actions\SetPublishedTicketRuleEnabled;
 use App\Modules\Ticket\Actions\UpdateDefaultTicketEmailAccount;
 use App\Modules\Ticket\Models\TicketEvent;
 use App\Modules\Ticket\Models\TicketPriority;
@@ -18,12 +20,15 @@ use App\Modules\Ticket\Models\TicketStatus;
 use App\Modules\Ticket\Models\TicketType;
 use App\Modules\Ticket\Models\TicketWorkflow;
 use App\Modules\Ticket\Models\TicketWorkflowVersion;
+use App\Modules\Ticket\Queries\TicketRuleAdminIndexQuery;
+use App\Modules\Ticket\Services\TicketRuleRuntimeGate;
 use App\Modules\Ticket\Services\TicketWorkflowDefinitionService;
 use App\Modules\Ticket\Services\TicketWorkflowMigrationService;
 use App\Modules\Ticket\Services\TicketWorkflowRequirementEvaluator;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Ticket\Support\TicketPortalPolicy;
 use App\Modules\Ticket\Support\TicketQuoteCostPolicy;
+use App\Modules\Ticket\Support\TicketRuleDefinitionRegistry;
 use App\Modules\Ticket\Support\TicketSolutionPolicy;
 use App\Modules\Ticket\Support\TicketWorkflowCustomerNotificationPolicy;
 use Illuminate\Http\RedirectResponse;
@@ -32,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use RuntimeException;
 
 class TicketSettingsController extends Controller
 {
@@ -268,45 +274,49 @@ class TicketSettingsController extends Controller
         return back()->with('success', 'Ticket merge settings updated.');
     }
 
-    public function rules(): View
-    {
-        return view('ticket::Admin.Settings.rules.index', [
-            'rules' => TicketRule::query()->orderBy('weight')->orderBy('id')->get(),
-            'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
-            'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
-            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
-            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
-            'categories' => Category::forTickets()->active()->orderBy('name')->get(),
-            'tags' => Tag::where('active', true)->orderBy('name')->get(),
+    public function rules(
+        Request $request,
+        TicketRuleAdminIndexQuery $rules,
+        TicketRuleRuntimeGate $runtimeGate,
+    ): View {
+        $request->validate([
+            'search' => ['nullable', 'string', 'max:150'],
+            'state' => ['nullable', 'string', 'in:active,inactive,draft'],
+            'lifecycle' => ['nullable', 'string', 'in:legacy,published,disabled'],
+            'sort' => ['nullable', 'string', 'in:name,weight,published_at,draft_updated_at,updated_at'],
+            'direction' => ['nullable', 'string', 'in:asc,desc'],
+        ]);
+
+        $publishedV2ToggleAvailable = false;
+        try {
+            if ($runtimeGate->enabled()) {
+                $runtimeGate->requireExistingActor();
+                $publishedV2ToggleAvailable = true;
+            }
+        } catch (RuntimeException) {
+            // The index exposes no unsafe activation control when authority prerequisites drift.
+        }
+
+        return view('ticket::Admin.Settings.rules.index-builder', [
+            'rules' => $rules->get($request),
+            'publishedV2ToggleAvailable' => $publishedV2ToggleAvailable,
         ]);
     }
 
     public function createRule(): View
     {
-        return view('ticket::Admin.Settings.rules.create', [
-            'rule' => new TicketRule([
-                'trigger' => TicketRule::TRIGGER_CREATE,
-                'weight' => 10,
-                'is_active' => true,
-                'stop_processing' => false,
-                'conditions_json' => [['field' => 'channel', 'operator' => 'equals', 'value' => 'email']],
-                'actions_json' => [['type' => 'set_ticket_type', 'value' => '']],
-            ]),
-            'mode' => 'create',
-            'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
-            'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
-            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
-            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
-            'categories' => Category::forTickets()->active()->orderBy('name')->get(),
-            'tags' => Tag::where('active', true)->orderBy('name')->get(),
+        return view('ticket::Admin.Settings.rules.builder', [
+            'ruleId' => null,
         ]);
     }
 
-    public function storeRule(Request $request): RedirectResponse
-    {
+    public function storeRule(
+        Request $request,
+        LegacyTicketRuleMutationBoundary $ruleCatalog,
+    ): RedirectResponse {
         $data = $this->validatedRule($request);
 
-        TicketRule::create($data + [
+        $ruleCatalog->create($request->user(), $data + [
             'trigger' => TicketRule::TRIGGER_CREATE,
             'created_by' => $request->user()?->id,
             'updated_by' => $request->user()?->id,
@@ -318,21 +328,17 @@ class TicketSettingsController extends Controller
 
     public function editRule(TicketRule $rule): View
     {
-        return view('ticket::Admin.Settings.rules.create', [
-            'rule' => $rule,
-            'mode' => 'edit',
-            'types' => TicketType::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
-            'queues' => TicketQueue::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
-            'priorities' => TicketPriority::where('is_active', true)->orderBy('level')->get(),
-            'slas' => Sla::query()->orderByDesc('is_default')->orderBy('name')->get(),
-            'categories' => Category::forTickets()->active()->orderBy('name')->get(),
-            'tags' => Tag::where('active', true)->orderBy('name')->get(),
+        return view('ticket::Admin.Settings.rules.builder', [
+            'ruleId' => (int) $rule->id,
         ]);
     }
 
-    public function updateRule(Request $request, TicketRule $rule): RedirectResponse
-    {
-        $rule->update($this->validatedRule($request) + [
+    public function updateRule(
+        Request $request,
+        TicketRule $rule,
+        LegacyTicketRuleMutationBoundary $ruleCatalog,
+    ): RedirectResponse {
+        $ruleCatalog->update($request->user(), $rule, $this->validatedRule($request) + [
             'updated_by' => $request->user()?->id,
         ]);
 
@@ -340,16 +346,57 @@ class TicketSettingsController extends Controller
             ->with('success', 'Ticket rule updated.');
     }
 
-    public function toggleRule(TicketRule $rule): RedirectResponse
-    {
-        $rule->forceFill(['is_active' => ! $rule->is_active])->save();
+    public function toggleRule(
+        Request $request,
+        TicketRule $rule,
+        LegacyTicketRuleMutationBoundary $ruleCatalog,
+        SetPublishedTicketRuleEnabled $publishedRules,
+    ): RedirectResponse {
+        $rule->load('publishedVersion');
+        $publishedSchema = $rule->publishedVersion?->definition_schema_version;
+
+        try {
+            if (! $rule->publishedVersion && $rule->draft_payload_json !== null) {
+                throw ValidationException::withMessages([
+                    'rule' => 'Publish an immutable Ticket Rule version before changing runtime status.',
+                ]);
+            } elseif ((int) $publishedSchema === TicketRuleDefinitionRegistry::CURRENT_PUBLICATION_SCHEMA_VERSION) {
+                $data = $request->validate([
+                    'published_version_id' => ['required', 'integer', 'min:1'],
+                    'definition_checksum' => ['required', 'string', 'regex:/\\A[0-9a-f]{64}\\z/'],
+                    'expected_enabled' => ['required', 'boolean'],
+                ]);
+                $publishedRules->handle(
+                    $rule,
+                    $request->user(),
+                    (int) $data['published_version_id'],
+                    (string) $data['definition_checksum'],
+                    (bool) $data['expected_enabled'],
+                );
+            } elseif ($rule->publishedVersion
+                && (int) $publishedSchema !== TicketRuleDefinitionRegistry::SCHEMA_VERSION) {
+                throw ValidationException::withMessages([
+                    'rule' => 'This published Ticket Rule schema cannot be toggled from this catalogue.',
+                ]);
+            } else {
+                // Schema-1 compatibility rows remain authoritative through the legacy fenced boundary.
+                $ruleCatalog->toggle($request->user(), $rule);
+            }
+        } catch (RuntimeException) {
+            return back()->withErrors([
+                'rule' => 'The Ticket Rule status cannot be changed under the current runtime authority. Reload and verify the required capability and permissions.',
+            ]);
+        }
 
         return back()->with('success', 'Ticket rule status updated.');
     }
 
-    public function destroyRule(TicketRule $rule): RedirectResponse
-    {
-        $rule->delete();
+    public function destroyRule(
+        Request $request,
+        TicketRule $rule,
+        LegacyTicketRuleMutationBoundary $ruleCatalog,
+    ): RedirectResponse {
+        $ruleCatalog->delete($request->user(), $rule);
 
         return back()->with('success', 'Ticket rule deleted.');
     }

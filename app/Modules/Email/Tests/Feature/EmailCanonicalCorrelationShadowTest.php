@@ -13,10 +13,12 @@ use App\Modules\Email\Models\EmailCanonicalCorrelationCandidate;
 use App\Modules\Email\Models\EmailCanonicalCorrelationRun;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Services\EmailCanonicalCorrelationEvidence;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailCanonicalCorrelationRunner;
 use App\Modules\Email\Services\EmailCanonicalCorrelationScope;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -31,6 +33,23 @@ class EmailCanonicalCorrelationShadowTest extends TestCase
     private User $operator;
 
     private int $nextUid = 1000;
+
+
+    private function transferAccountOwnership(EmailAccount $account, User $newOwner): EmailAccount
+    {
+        return DB::transaction(function () use ($account, $newOwner): EmailAccount {
+            $locked = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
+            app(EmailLiveAuthorityCoordinator::class)->prepareAccountMutation(
+                account: $locked,
+                affectedUserIds: [(int) $locked->owner_id, (int) $newOwner->id],
+                nextOwnerId: (int) $newOwner->id,
+                ownerChanged: true,
+            );
+            $locked->forceFill(['owner_id' => $newOwner->id])->save();
+
+            return $locked->refresh();
+        }, 3);
+    }
 
     protected function setUp(): void
     {
@@ -515,7 +534,7 @@ class EmailCanonicalCorrelationShadowTest extends TestCase
         $this->message($account, '<revoked@example.test>', 'second');
         $run = app(StartEmailCanonicalCorrelationRun::class)->handle($this->operator, [$account->id]);
 
-        $account->update(['owner_id' => User::factory()->create()->id]);
+        $this->transferAccountOwnership($account, User::factory()->create());
         app(EmailCanonicalCorrelationRunner::class)->processBatch($run->id);
 
         $this->assertSame(EmailCanonicalCorrelationRun::STATUS_FAILED, $run->fresh()->status);

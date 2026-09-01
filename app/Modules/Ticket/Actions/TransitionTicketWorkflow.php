@@ -12,6 +12,7 @@ use App\Modules\Ticket\Models\TicketWorkflowHistory;
 use App\Modules\Ticket\Services\TicketActionGuard;
 use App\Modules\Ticket\Services\TicketApprovedScopeGuard;
 use App\Modules\Ticket\Services\TicketAssignmentEngine;
+use App\Modules\Ticket\Services\TicketRuleWorkflowCompositeEventFactory;
 use App\Modules\Ticket\Services\TicketWorkflowRuntime;
 use App\Modules\Ticket\Support\TicketAction;
 use App\Modules\Ticket\Support\TicketWorkflowCustomerNotificationPolicy;
@@ -26,6 +27,8 @@ class TransitionTicketWorkflow
         private readonly TicketActionGuard $guard,
         private readonly TicketAssignmentEngine $assignments,
         private readonly TicketApprovedScopeGuard $approvedScope,
+        private readonly TicketRuleWorkflowCompositeEventFactory $ruleEvents,
+        private readonly DispatchTicketRuleMutationEvent $dispatchRules,
     ) {}
 
     public function handle(
@@ -36,6 +39,12 @@ class TransitionTicketWorkflow
         bool $enforceActionGuard = true,
         bool $allowTerminal = true,
         bool $syncRelationship = true,
+        bool $notificationsEnabled = true,
+        bool $suppressTicketRuleDispatch = false,
+        string $ruleEventSourceChannel = 'tech',
+        string $ruleEventSourceAction = 'TransitionTicketWorkflow',
+        ?string $correlationUuid = null,
+        ?string $causationUuid = null,
     ): Ticket {
         if ($idempotencyKey && $existing = TicketWorkflowHistory::query()->where('idempotency_key', $idempotencyKey)->first()) {
             return $existing->ticket()->firstOrFail();
@@ -45,7 +54,7 @@ class TransitionTicketWorkflow
             throw ValidationException::withMessages(['transition' => $reason]);
         }
 
-        return DB::transaction(function () use ($ticket, $transitionKey, $actor, $idempotencyKey, $enforceActionGuard, $allowTerminal, $syncRelationship): Ticket {
+        return DB::transaction(function () use ($ticket, $transitionKey, $actor, $idempotencyKey, $enforceActionGuard, $allowTerminal, $syncRelationship, $notificationsEnabled, $suppressTicketRuleDispatch, $ruleEventSourceChannel, $ruleEventSourceAction, $correlationUuid, $causationUuid): Ticket {
             $locked = Ticket::query()->lockForUpdate()->findOrFail($ticket->id);
             $transition = $this->runtime->transitionDefinition($locked, $transitionKey);
 
@@ -71,6 +80,7 @@ class TransitionTicketWorkflow
                 $this->approvedScope->assertWithinApprovedScope($locked);
                 $locked->forceFill(['close_outcome' => $locked->close_outcome ?: 'completed'])->save();
             }
+            $ruleBefore = $this->ruleEvents->snapshot($locked);
             $before = [
                 'workflow_id' => $locked->workflow_id,
                 'workflow_version_id' => $locked->workflow_version_id,
@@ -87,6 +97,8 @@ class TransitionTicketWorkflow
                     enforceWorkflow: false,
                     syncRelationship: $syncRelationship,
                     notifyCustomerPortal: false,
+                    notifyOwner: $notificationsEnabled,
+                    ruleContext: ['_suppress_ticket_rule_dispatch' => true],
                 );
                 $locked->refresh();
             }
@@ -98,7 +110,7 @@ class TransitionTicketWorkflow
 
             $this->applyAssignmentPolicy($locked, $target['assignment_policy'] ?? []);
 
-            $locked->workflowReviews()
+            $invalidatedReviews = $locked->workflowReviews()
                 ->where('state_key', '!=', $target['state_key'])
                 ->whereIn('status', ['pending', 'approved'])
                 ->whereNull('invalidated_at')
@@ -142,9 +154,44 @@ class TransitionTicketWorkflow
                 'metadata' => ['transition_key' => $transitionKey],
             ]);
 
-            $this->queueCustomerUpdate($locked, $history, $transition, $before, $after, $actor);
+            if ($notificationsEnabled) {
+                $this->queueCustomerUpdate($locked, $history, $transition, $before, $after, $actor);
+            }
 
-            return $locked->refresh();
+            $locked->refresh();
+            $ruleAfter = $this->ruleEvents->snapshot($locked);
+            $ownerChanged = ($ruleBefore['owner_id'] ?? null) !== ($ruleAfter['owner_id'] ?? null);
+            $ruleEvent = $this->ruleEvents->make(
+                ticket: $locked,
+                before: $ruleBefore,
+                after: $ruleAfter,
+                operation: 'transition',
+                actionKey: $transitionKey,
+                deliveryIdentity: $idempotencyKey ?: 'workflow-history:'.$history->id,
+                assignment: [
+                    'before_owner_id' => $ruleBefore['owner_id'] ?? null,
+                    'after_owner_id' => $ruleAfter['owner_id'] ?? null,
+                    'owner_changed' => $ownerChanged,
+                    'assignment_decision' => $ownerChanged,
+                    'outcome' => $ownerChanged
+                        ? (($ruleAfter['owner_id'] ?? null) === null ? 'owner_cleared' : 'owner_assigned')
+                        : (($ruleAfter['owner_id'] ?? null) === null ? 'already_unassigned' : 'owner_retained'),
+                ],
+                invalidation: [
+                    'reviews_invalidated' => (int) $invalidatedReviews,
+                    'evidence_invalidated' => 0,
+                ],
+                history: $history,
+                sourceChannel: $ruleEventSourceChannel,
+                sourceAction: $ruleEventSourceAction,
+                correlationUuid: $correlationUuid,
+                causationUuid: $causationUuid,
+            );
+            if ($ruleEvent && ! $suppressTicketRuleDispatch) {
+                $this->dispatchRules->handle($locked, $ruleEvent, $actor);
+            }
+
+            return $locked;
         });
     }
 
@@ -156,6 +203,7 @@ class TransitionTicketWorkflow
         bool $enforceActionGuard = true,
         bool $allowTerminal = true,
         bool $syncRelationship = true,
+        bool $notificationsEnabled = true,
     ): Ticket {
         if ((int) $ticket->status_id === (int) $targetStatus->id) {
             return $ticket;
@@ -183,6 +231,7 @@ class TransitionTicketWorkflow
             $enforceActionGuard,
             $allowTerminal,
             $syncRelationship,
+            $notificationsEnabled,
         );
     }
 

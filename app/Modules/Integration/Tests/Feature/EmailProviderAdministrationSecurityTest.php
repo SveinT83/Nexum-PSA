@@ -118,6 +118,39 @@ class EmailProviderAdministrationSecurityTest extends TestCase
     }
 
     #[Test]
+    public function staged_provider_page_explains_verification_and_replacement_without_disclosing_connection_details(): void
+    {
+        $provider = $this->activeProvider('Staged lifecycle provider', 'public');
+        $provider->activeCredentialVersion()->dissociate();
+        $provider->forceFill([
+            'status' => 'staged',
+            'verified_configuration_version' => null,
+            'verified_credential_version' => null,
+            'last_verified_at' => null,
+        ])->save();
+        $provider->credentialVersions()->update([
+            'state' => EmailProviderCredentialVersion::STATE_STAGED,
+            'verified_configuration_version' => null,
+            'verification_code' => null,
+            'verified_by' => null,
+            'activated_by' => null,
+            'verified_at' => null,
+            'activated_at' => null,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.integrations.email-providers.show', $provider->getKey()))
+            ->assertOk()
+            ->assertSee('This provider already has a saved staged configuration and credential version.')
+            ->assertSee('Go to verification')
+            ->assertSee('Create replacement provider')
+            ->assertSee('Verify')
+            ->assertDontSee('public-host-canary.example')
+            ->assertDontSee('username-ui-canary')
+            ->assertDontSee('secret-ui-canary');
+    }
+
+    #[Test]
     #[DataProvider('missingEmailAccountBindingPermissionProvider')]
     public function email_account_create_fails_closed_without_each_provider_binding_permission(
         string $missingPermission,
