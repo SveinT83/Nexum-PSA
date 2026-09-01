@@ -9,6 +9,7 @@ use App\Modules\Integration\Models\EmailProviderConnection;
 use App\Modules\Integration\Models\EmailProviderCredentialVersion;
 use App\Modules\Integration\Models\EmailProviderEvent;
 use App\Modules\Integration\Services\EmailProviderCredentialCipher;
+use App\Modules\Integration\Services\EmailProviderManagementAuthorization;
 use App\Providers\TelescopeServiceProvider;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -56,125 +57,86 @@ class EmailProviderAdministrationSecurityTest extends TestCase
     }
 
     #[Test]
-    public function email_account_ui_filters_private_connections_and_never_renders_endpoint_username_or_secret(): void
+    public function email_account_pages_offer_one_direct_imap_smtp_form_without_provider_or_migration_workflow(): void
     {
-        $public = $this->activeProvider('Public lifecycle provider', 'public');
-        $private = $this->activeProvider('Private lifecycle provider', 'trusted_private');
+        $provider = $this->activeProvider('Hidden internal provider', 'public');
+        Role::findByName('Admin')->revokePermissionTo(
+            EmailProviderManagementAuthorization::MANAGE_PERMISSION,
+        );
+        $admin = $this->admin->fresh();
 
-        $this->actingAs($this->admin)
-            ->get(route('tech.admin.settings.email.accounts.create'))
-            ->assertOk()
-            ->assertSee('Public lifecycle provider')
-            ->assertDontSee('Private lifecycle provider')
-            ->assertDontSee('public-host-canary.example')
-            ->assertDontSee('private-host-canary.example')
-            ->assertDontSee('username-ui-canary')
-            ->assertDontSee('secret-ui-canary');
-
-        $this->actingAs($this->superuser)
-            ->get(route('tech.admin.settings.email.accounts.create'))
-            ->assertOk()
-            ->assertSee('Public lifecycle provider')
-            ->assertSee('Private lifecycle provider')
-            ->assertDontSee('private-host-canary.example')
-            ->assertDontSee('username-ui-canary')
-            ->assertDontSee('secret-ui-canary');
-
-        $payload = $this->accountPayload($private);
-        $this->actingAs($this->admin)
-            ->post(route('tech.admin.settings.email.accounts.store'), $payload)
-            ->assertForbidden();
-        $this->assertDatabaseCount('email_accounts', 0);
-
-        $this->actingAs($this->superuser)
-            ->post(route('tech.admin.settings.email.accounts.store'), $payload)
-            ->assertRedirect(route('tech.admin.settings.email.accounts'));
-
-        $account = EmailAccount::query()->sole();
-        $this->assertSame('integration', $account->provider_credential_source);
-        $this->assertSame($private->getKey(), $account->provider_integration_id);
-        $this->assertSame(1, (int) $account->provider_binding_version);
-        foreach ([
-            'imap_host', 'imap_port', 'imap_encryption', 'imap_username', 'imap_secret', 'imap_auth_type',
-            'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_username', 'smtp_secret', 'smtp_auth_type',
-        ] as $legacyField) {
-            $this->assertNull($account->{$legacyField}, $legacyField);
-        }
-
-        $this->actingAs($this->admin)
-            ->post(route('tech.admin.settings.email.accounts.toggle', $account))
-            ->assertForbidden();
-        $this->assertTrue($account->fresh()->is_active);
-
-        $this->actingAs($this->superuser)
+        $this->actingAs($admin)
             ->get(route('tech.admin.settings.email.accounts'))
             ->assertOk()
-            ->assertSee('Private lifecycle provider')
-            ->assertDontSee('private-host-canary.example')
+            ->assertSee('data-telemetry="click_add_account"', false)
+            ->assertDontSee('No active verified Email provider is available.')
+            ->assertDontSee('Legacy Migration')
+            ->assertDontSee('Staged');
+
+        $this->actingAs($admin)
+            ->get(route('tech.admin.settings.email.accounts.create'))
+            ->assertOk()
+            ->assertSee('id="imap_host"', false)
+            ->assertSee('id="imap_secret"', false)
+            ->assertSee('id="smtp_host"', false)
+            ->assertSee('id="smtp_secret"', false)
+            ->assertSee('Save and test connection')
+            ->assertDontSee('provider_integration_id')
+            ->assertDontSee('Hidden internal provider')
+            ->assertDontSee('Legacy Migration')
+            ->assertDontSee('Staged');
+
+        $this->actingAs($this->superuser)
+            ->get(route('tech.admin.settings.email.accounts.create'))
+            ->assertOk()
+            ->assertDontSee('Hidden internal provider')
+            ->assertDontSee('public-host-canary.example')
             ->assertDontSee('username-ui-canary')
             ->assertDontSee('secret-ui-canary');
 
-        $this->assertNotNull($public);
+        $this->assertTrue($provider->fresh()->activeCredentialVersion->hasCiphertext());
     }
 
     #[Test]
-    public function staged_provider_page_explains_verification_and_replacement_without_disclosing_connection_details(): void
+    public function internal_provider_pages_redirect_to_the_email_account_workflow(): void
     {
-        $provider = $this->activeProvider('Staged lifecycle provider', 'public');
-        $provider->activeCredentialVersion()->dissociate();
-        $provider->forceFill([
-            'status' => 'staged',
-            'verified_configuration_version' => null,
-            'verified_credential_version' => null,
-            'last_verified_at' => null,
-        ])->save();
-        $provider->credentialVersions()->update([
-            'state' => EmailProviderCredentialVersion::STATE_STAGED,
-            'verified_configuration_version' => null,
-            'verification_code' => null,
-            'verified_by' => null,
-            'activated_by' => null,
-            'verified_at' => null,
-            'activated_at' => null,
-        ]);
+        $provider = $this->activeProvider('Redirected internal provider', 'public');
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.integrations.email-providers.index'))
+            ->assertRedirect(route('tech.admin.settings.email.accounts'));
+
+        $this->actingAs($this->admin)
+            ->get(route('tech.admin.system.integrations.email-providers.create'))
+            ->assertRedirect(route('tech.admin.settings.email.accounts.create'));
 
         $this->actingAs($this->admin)
             ->get(route('tech.admin.system.integrations.email-providers.show', $provider->getKey()))
-            ->assertOk()
-            ->assertSee('This provider already has a saved staged configuration and credential version.')
-            ->assertSee('Go to verification')
-            ->assertSee('Create replacement provider')
-            ->assertSee('Verify')
-            ->assertDontSee('public-host-canary.example')
-            ->assertDontSee('username-ui-canary')
-            ->assertDontSee('secret-ui-canary');
+            ->assertRedirect(route('tech.admin.settings.email.accounts'));
     }
 
     #[Test]
-    #[DataProvider('missingEmailAccountBindingPermissionProvider')]
-    public function email_account_create_fails_closed_without_each_provider_binding_permission(
+    #[DataProvider('missingEmailAccountConfigurationPermissionProvider')]
+    public function email_account_create_fails_closed_without_each_account_configuration_permission(
         string $missingPermission,
     ): void {
-        $this->activeProvider('Denied account binding provider', 'public');
         Role::findByName('Admin')->revokePermissionTo($missingPermission);
         $admin = $this->admin->fresh();
 
         $this->assertFalse($admin->can($missingPermission));
-        $this->assertTrue($admin->can('email.account_manage'));
         $before = $this->emailProviderPersistenceFingerprint();
 
         $this->actingAs($admin)
             ->get(route('tech.admin.settings.email.accounts.create'))
             ->assertForbidden();
 
-        // A denied read must not create, update, or remove account/provider lifecycle data.
         $this->assertSame($before, $this->emailProviderPersistenceFingerprint());
     }
 
     /** @return iterable<string, array{string}> */
-    public static function missingEmailAccountBindingPermissionProvider(): iterable
+    public static function missingEmailAccountConfigurationPermissionProvider(): iterable
     {
-        yield 'provider management permission' => ['integration.email_provider_manage'];
+        yield 'email account management permission' => ['email.account_manage'];
         yield 'mailbox sync permission' => ['email.mailbox_sync_manage'];
     }
 
@@ -182,20 +144,27 @@ class EmailProviderAdministrationSecurityTest extends TestCase
     public function validation_never_flashes_provider_endpoints_credentials_or_private_trust_material(): void
     {
         $public = $this->activeProvider('Public validation provider', 'public');
-        $payload = $this->accountPayload($public) + [
+        $payload = array_merge($this->accountPayload($public), [
+            'address' => 'not-an-email',
             'imap_host' => 'old-input-host-canary.example',
+            'imap_port' => 993,
+            'imap_encryption' => 'implicit_tls',
             'imap_username' => 'old-input-user-canary',
             'imap_secret' => 'old-input-secret-canary',
+            'smtp_host' => 'old-input-smtp-host-canary.example',
+            'smtp_port' => 587,
+            'smtp_encryption' => 'starttls',
+            'smtp_username' => 'old-input-smtp-user-canary',
             'smtp_secret' => 'old-input-smtp-secret-canary',
             'private_endpoint_reason' => 'old-input-reason-canary',
             'trusted_cidr_name' => 'old-input-cidr-canary',
-        ];
+        ]);
 
         $this->actingAs($this->admin)
             ->from(route('tech.admin.settings.email.accounts.create'))
             ->post(route('tech.admin.settings.email.accounts.store'), $payload)
             ->assertRedirect(route('tech.admin.settings.email.accounts.create'))
-            ->assertSessionHasErrors(['imap_host', 'imap_username', 'imap_secret', 'smtp_secret']);
+            ->assertSessionHasErrors('address');
 
         $oldInput = session()->get('_old_input', []);
         foreach ([
@@ -356,6 +325,27 @@ class EmailProviderAdministrationSecurityTest extends TestCase
         $connection->forceFill(['active_credential_version_id' => $version->id])->save();
 
         return $connection->fresh('activeCredentialVersion');
+    }
+
+    /** @return array<string, mixed> */
+    private function providerFormPayload(): array
+    {
+        return [
+            'name' => 'Account workflow provider',
+            'imap_host' => '8.8.8.8',
+            'imap_port' => 993,
+            'imap_transport' => 'implicit_tls',
+            'imap_username' => 'account-flow-imap-user-canary',
+            'imap_secret' => 'account-flow-imap-secret-canary',
+            'smtp_host' => '1.1.1.1',
+            'smtp_port' => 465,
+            'smtp_transport' => 'implicit_tls',
+            'smtp_username' => 'account-flow-smtp-user-canary',
+            'smtp_secret' => 'account-flow-smtp-secret-canary',
+            'trust_mode' => 'public',
+            'trusted_cidr_name' => null,
+            'private_endpoint_reason' => null,
+        ];
     }
 
     /** @return array<string, mixed> */

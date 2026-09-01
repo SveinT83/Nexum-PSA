@@ -3,15 +3,17 @@
 namespace App\Modules\Email\Controllers\Admin;
 
 use App\Models\Core\User;
+use App\Modules\Email\Jobs\TestEmailAccountConnectionJob;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAccountUserGrant;
 use App\Modules\Email\Models\EmailMailboxDelegation;
 use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailOrdinaryMailboxEntitlementResolver;
-use App\Modules\Email\Services\EmailTestService;
 use App\Modules\Email\Services\EmailUnreadAccessEpochService;
+use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
 use App\Modules\Integration\Models\EmailProviderConnection;
 use App\Modules\Integration\Models\EmailProviderCredentialVersion;
+use App\Modules\Integration\Services\EmailProviderEndpointPolicy;
 use App\Modules\Integration\Services\EmailProviderLifecycleAccountLocks;
 use App\Modules\Integration\Services\EmailProviderManagementAuthorization;
 use App\Modules\Integration\Services\EmailProviderRuntimeFactory;
@@ -19,8 +21,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -33,147 +35,119 @@ class AccountsController extends Controller
         private readonly EmailProviderManagementAuthorization $providerAuthorization,
         private readonly EmailProviderLifecycleAccountLocks $providerLifecycleLocks,
         private readonly EmailProviderRuntimeFactory $providerRuntime,
+        private readonly EmailProviderEndpointPolicy $endpointPolicy,
         private readonly EmailLiveAuthorityCoordinator $liveAuthority,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $accounts = EmailAccount::query()
-            ->with(['owner', 'userGrants.user', 'folders', 'providerConnection.integration', 'providerConnection.activeCredentialVersion'])
+            ->with(['owner', 'userGrants.user', 'folders'])
             ->orderBy('address')
             ->get();
 
-        return view('email::Admin.Accounts.index', compact('accounts'));
+        return view('email::Admin.Accounts.index', [
+            'accounts' => $accounts,
+            'canCreateAccounts' => $this->canConfigureAccounts($request->user()),
+        ]);
     }
 
     public function create(Request $request)
     {
-        $actor = $this->providerAuthorization->authorizeBinding($request->user());
+        $this->providerAuthorization->authorizeAccountConfiguration($request->user());
 
         return view('email::Admin.Accounts.create', [
             'users' => $this->grantableUsers(),
-            'providers' => $this->availableProviders($actor),
         ]);
     }
 
     public function store(Request $request)
     {
+        $actor = $this->providerAuthorization->authorizeAccountConfiguration($request->user());
         $data = $this->validateData($request);
+        $requestedActive = (bool) $data['is_active'];
         $grants = $this->grantData($data['grants'] ?? []);
         unset($data['grants']);
+        $data = $this->prepareConnectionData($data, null, $actor);
+        $data['is_active'] = false;
+        $data['last_test_result'] = 'Testing';
+        $data['last_test_at'] = null;
+        $data['last_error_code'] = null;
+        $data['last_error_message'] = null;
 
-        $actor = $this->providerAuthorization->authorizeBinding($request->user());
-        $connection = EmailProviderConnection::query()->findOrFail($data['provider_integration_id']);
-        $actor = $this->providerAuthorization->authorizeConnectionTrust($actor, $connection);
-        $providerLocks = $this->providerLifecycleLocks->acquire((string) $connection->getKey());
-        $data = array_merge($data, [
-            'provider_credential_source' => 'integration',
-            'provider_binding_version' => 1,
-            'provider_bound_at' => now(),
-            'provider_bound_by' => $actor->id,
-            // New Email accounts never duplicate endpoint or credential data.
-            'imap_host' => null,
-            'imap_port' => null,
-            'imap_encryption' => null,
-            'imap_username' => null,
-            'imap_secret' => null,
-            'imap_auth_type' => null,
-            'smtp_host' => null,
-            'smtp_port' => null,
-            'smtp_encryption' => null,
-            'smtp_username' => null,
-            'smtp_secret' => null,
-            'smtp_auth_type' => null,
-        ]);
-        try {
-            DB::transaction(function () use ($actor, $connection, $data, $grants): void {
-                $lockedConnection = EmailProviderConnection::query()
-                    ->lockForUpdate()
-                    ->findOrFail($connection->getKey());
-                $actor = $this->providerAuthorization->authorizeConnectionTrust($actor, $lockedConnection);
-                $activeCredential = $lockedConnection->active_credential_version_id
-                    ? EmailProviderCredentialVersion::query()
-                        ->lockForUpdate()
-                        ->find($lockedConnection->active_credential_version_id)
-                    : null;
+        $account = DB::transaction(function () use ($actor, $data, $grants): EmailAccount {
+            $account = EmailAccount::query()->create($data);
+            $account = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
+            $users = $this->affectedViewUsers($account, $grants, $account->owner_id);
+            $generation = $this->liveAuthority->prepareAccountMutation(
+                $account,
+                $users->pluck('id')->all(),
+            );
+            $this->syncGrants($account, $grants, $actor, $generation);
+            $this->reconcileUnreadEpochs(
+                $account->fresh(),
+                $users,
+                $users->mapWithKeys(fn (User $user): array => [$user->id => false])->all(),
+                $actor,
+            );
 
-                if (! $this->providerRuntime->databaseReadySnapshot($lockedConnection, $activeCredential)) {
-                    throw ValidationException::withMessages([
-                        'provider_integration_id' => 'Select an active, exactly verified Email provider.',
-                    ]);
-                }
+            return $account->fresh();
+        }, 3);
 
-                $account = EmailAccount::query()->create($data);
-                $account = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
-                $users = $this->affectedViewUsers($account, $grants, $account->owner_id);
-                $generation = $this->liveAuthority->prepareAccountMutation(
-                    $account,
-                    $users->pluck('id')->all(),
-                );
-                $this->syncGrants($account, $grants, $actor, $generation);
-                $this->reconcileUnreadEpochs(
-                    $account->fresh(),
-                    $users,
-                    $users->mapWithKeys(fn (User $user): array => [$user->id => false])->all(),
-                    $actor,
-                );
-            }, 3);
-        } finally {
-            $this->providerLifecycleLocks->release($providerLocks);
-        }
+        TestEmailAccountConnectionJob::dispatch(
+            (int) $account->id,
+            (int) $account->provider_binding_version,
+            $requestedActive,
+        )->afterCommit();
 
-        return redirect()->route('tech.admin.settings.email.accounts');
+        return redirect()
+            ->route('tech.admin.settings.email.accounts.edit', $account)
+            ->with('status', 'Saved. Nexum is testing incoming and outgoing mail now.');
     }
 
     public function edit(EmailAccount $account, Request $request)
     {
-        $account->load(['owner', 'userGrants.user', 'providerConnection.integration', 'providerConnection.activeCredentialVersion']);
-        $actor = $this->providerAuthorization->authorizeBinding($request->user());
+        $account->load(['owner', 'userGrants.user']);
+        $this->providerAuthorization->authorizeAccountConfiguration($request->user());
 
         return view('email::Admin.Accounts.create', [
             'account' => $account,
             'users' => $this->grantableUsers(),
-            'providers' => $this->availableProviders($actor),
         ]);
     }
 
     public function update(EmailAccount $account, Request $request)
     {
+        $actor = $this->providerAuthorization->authorizeAccountConfiguration($request->user());
         $data = $this->validateData($request, $account->id);
+        $requestedActive = (bool) $data['is_active'];
         $grants = $this->grantData($data['grants'] ?? []);
         unset($data['grants']);
-        $actor = $this->providerAuthorization->authorizeBinding($request->user());
-        $connection = $account->provider_credential_source === 'integration'
-            ? $account->providerConnection()->firstOrFail()
-            : null;
+        $data = $this->prepareConnectionData($data, $account, $actor);
         $locks = [];
 
-        if ($connection) {
-            $actor = $this->providerAuthorization->authorizeConnectionTrust($actor, $connection);
-            $locks = $this->providerLifecycleLocks->acquire((string) $connection->getKey());
+        if ($account->usesIntegrationProvider() && $account->provider_integration_id) {
+            $connection = $account->providerConnection()->first();
+            if ($connection) {
+                $this->providerAuthorization->authorizeConnectionTrust($actor, $connection);
+                $locks = $this->providerLifecycleLocks->acquire((string) $connection->getKey());
+            }
         }
 
         try {
-            DB::transaction(function () use ($account, $actor, $connection, $data, $grants): void {
+            $account = DB::transaction(function () use ($account, $actor, $data, $grants): EmailAccount {
                 $lockedAccount = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
-                if ($connection) {
-                    $lockedConnection = EmailProviderConnection::query()
-                        ->lockForUpdate()
-                        ->findOrFail($connection->getKey());
-                    $actor = $this->providerAuthorization->authorizeConnectionTrust($actor, $lockedConnection);
-                    $activeCredential = $lockedConnection->active_credential_version_id
-                        ? EmailProviderCredentialVersion::query()
-                            ->lockForUpdate()
-                            ->find($lockedConnection->active_credential_version_id)
-                        : null;
-
-                    if (($data['is_active'] ?? false)
-                        && ! $this->providerRuntime->databaseReadySnapshot($lockedConnection, $activeCredential)) {
-                        throw ValidationException::withMessages([
-                            'is_active' => 'The Email provider must remain active and exactly verified.',
-                        ]);
-                    }
-                }
+                $data['provider_binding_version'] = max(
+                    1,
+                    (int) $lockedAccount->provider_binding_version + 1,
+                );
+                $data['is_active'] = false;
+                $data['last_test_result'] = 'Testing';
+                $data['last_test_at'] = null;
+                $data['last_error_code'] = null;
+                $data['last_error_message'] = null;
+                $data['last_successful_fetch_at'] = null;
+                $data['last_successful_send_at'] = null;
 
                 $users = $this->affectedViewUsers(
                     $lockedAccount,
@@ -202,17 +176,27 @@ class AccountsController extends Controller
                     $before,
                     $actor,
                 );
+
+                return $lockedAccount->fresh();
             }, 3);
         } finally {
             $this->providerLifecycleLocks->release($locks);
         }
 
-        return redirect()->route('tech.admin.settings.email.accounts');
+        TestEmailAccountConnectionJob::dispatch(
+            (int) $account->id,
+            (int) $account->provider_binding_version,
+            $requestedActive,
+        )->afterCommit();
+
+        return redirect()
+            ->route('tech.admin.settings.email.accounts.edit', $account)
+            ->with('status', 'Saved. Nexum is testing incoming and outgoing mail now.');
     }
 
     public function toggleActive(EmailAccount $account, Request $request)
     {
-        $actor = $this->providerAuthorization->authorizeBinding($request->user());
+        $actor = $this->providerAuthorization->authorizeAccountConfiguration($request->user());
         $connection = $account->provider_credential_source === 'integration'
             ? $account->providerConnection()->firstOrFail()
             : null;
@@ -228,6 +212,14 @@ class AccountsController extends Controller
         try {
             DB::transaction(function () use ($account, $actor, $connection): void {
                 $lockedAccount = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
+                if (! $connection
+                    && ! $lockedAccount->is_active
+                    && $lockedAccount->last_test_result !== 'OK') {
+                    throw ValidationException::withMessages([
+                        'is_active' => 'Save and pass the incoming and outgoing connection test before activation.',
+                    ]);
+                }
+
                 if ($connection && ! $lockedAccount->is_active) {
                     $lockedConnection = EmailProviderConnection::query()
                         ->lockForUpdate()
@@ -278,22 +270,16 @@ class AccountsController extends Controller
             'defaults_for.*' => 'string|in:'.implode(',', array_keys(EmailAccount::DEFAULT_SCOPES)),
             'ticket_ingress_enabled' => 'sometimes|boolean',
             'delete_policy' => 'required|in:local_only,sync_delete,auto_delete,legacy_default',
-            'provider_integration_id' => $id
-                ? ['prohibited']
-                : ['required', 'uuid', 'exists:integration_email_provider_connections,integration_id'],
-            // Integration is the sole endpoint and credential writer.
-            'imap_host' => ['prohibited'],
-            'imap_port' => ['prohibited'],
-            'imap_encryption' => ['prohibited'],
-            'imap_username' => ['prohibited'],
-            'imap_secret' => ['prohibited'],
-            'imap_auth_type' => ['prohibited'],
-            'smtp_host' => ['prohibited'],
-            'smtp_port' => ['prohibited'],
-            'smtp_encryption' => ['prohibited'],
-            'smtp_username' => ['prohibited'],
-            'smtp_secret' => ['prohibited'],
-            'smtp_auth_type' => ['prohibited'],
+            'imap_host' => ['required', 'string', 'max:253'],
+            'imap_port' => ['required', 'integer', Rule::in([143, 993])],
+            'imap_encryption' => ['required', Rule::in(['implicit_tls', 'starttls'])],
+            'imap_username' => ['required', 'string', 'max:320'],
+            'imap_secret' => [$id ? 'nullable' : 'required', 'string', 'max:4096'],
+            'smtp_host' => ['required', 'string', 'max:253'],
+            'smtp_port' => ['required', 'integer', Rule::in([465, 587])],
+            'smtp_encryption' => ['required', Rule::in(['implicit_tls', 'starttls'])],
+            'smtp_username' => ['required', 'string', 'max:320'],
+            'smtp_secret' => [$id ? 'nullable' : 'required', 'string', 'max:4096'],
             'grants' => 'nullable|array',
             'grants.*.user_id' => 'required|integer|exists:user_management,id',
             'grants.*.can_view' => 'nullable|boolean',
@@ -322,25 +308,39 @@ class AccountsController extends Controller
         return $data;
     }
 
-    public function test(EmailAccount $account, EmailTestService $tester, Request $request)
+    public function test(EmailAccount $account, Request $request)
     {
-        $actor = $this->providerAuthorization->authorizeBinding($request->user());
-        if ($account->provider_credential_source === 'integration') {
-            $connection = $account->providerConnection()->firstOrFail();
-            $this->providerAuthorization->authorizeConnectionTrust($actor, $connection);
+        $this->providerAuthorization->authorizeAccountConfiguration($request->user());
+
+        if (! in_array((string) $account->provider_credential_source, ['account', 'legacy'], true)) {
+            return redirect()
+                ->route('tech.admin.settings.email.accounts.edit', $account)
+                ->with('error', 'Enter the IMAP and SMTP settings on this account, then save and test it.');
         }
 
-        $result = $tester->run($account);
+        $account = DB::transaction(function () use ($account): EmailAccount {
+            $locked = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
+            $locked->forceFill([
+                'provider_binding_version' => max(1, (int) $locked->provider_binding_version + 1),
+                'is_active' => false,
+                'last_test_result' => 'Testing',
+                'last_test_at' => null,
+                'last_error_code' => null,
+                'last_error_message' => null,
+            ])->save();
 
-        return Redirect::back()->with('email_test', [
-            'overall' => $result->overall(),
-            'imap_ok' => $result->imap_ok,
-            'imap_ms' => round($result->imap_ms, 1),
-            'imap_error' => $result->imap_error_message,
-            'smtp_ok' => $result->smtp_ok,
-            'smtp_ms' => round($result->smtp_ms, 1),
-            'smtp_error' => $result->smtp_error_message,
-        ]);
+            return $locked->fresh();
+        }, 3);
+
+        TestEmailAccountConnectionJob::dispatch(
+            (int) $account->id,
+            (int) $account->provider_binding_version,
+            true,
+        )->afterCommit();
+
+        return redirect()
+            ->route('tech.admin.settings.email.accounts.edit', $account)
+            ->with('status', 'Nexum is testing incoming and outgoing mail now.');
     }
 
     private function grantableUsers()
@@ -357,26 +357,90 @@ class AccountsController extends Controller
         return $query->get(['id', 'name', 'email']);
     }
 
-    private function availableProviders(User $actor): Collection
+    private function canConfigureAccounts(User $actor): bool
     {
-        return EmailProviderConnection::query()
-            ->with(['integration', 'activeCredentialVersion'])
-            ->where('status', 'active')
-            ->orderBy('integration_id')
-            ->get()
-            ->filter(function (EmailProviderConnection $connection) use ($actor): bool {
-                try {
-                    $this->providerAuthorization->authorizeConnectionTrust($actor, $connection);
-                } catch (AuthorizationException) {
-                    return false;
+        try {
+            $this->providerAuthorization->authorizeAccountConfiguration($actor);
+        } catch (AuthorizationException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Normalize and encrypt one account-owned IMAP/SMTP configuration.
+     *
+     * Password fields are write-only. Blank edit values preserve an existing
+     * account-owned ciphertext, while a provider-bound account must be
+     * re-entered completely before it can leave the old internal binding.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function prepareConnectionData(
+        array $data,
+        ?EmailAccount $account,
+        User $actor,
+    ): array {
+        try {
+            $imap = $this->endpointPolicy->normalize(
+                'imap',
+                (string) $data['imap_host'],
+                (int) $data['imap_port'],
+                (string) $data['imap_encryption'],
+            );
+            $smtp = $this->endpointPolicy->normalize(
+                'smtp',
+                (string) $data['smtp_host'],
+                (int) $data['smtp_port'],
+                (string) $data['smtp_encryption'],
+            );
+        } catch (EmailProviderSecurityException) {
+            throw ValidationException::withMessages([
+                'imap_host' => 'Use a valid public IMAP host with port 993 TLS or port 143 STARTTLS.',
+                'smtp_host' => 'Use a valid public SMTP host with port 465 TLS or port 587 STARTTLS.',
+            ]);
+        }
+
+        foreach (['imap', 'smtp'] as $protocol) {
+            $key = $protocol.'_secret';
+            $replacement = (string) ($data[$key] ?? '');
+
+            if ($replacement === '') {
+                if (! $account
+                    || ! in_array((string) ($account->provider_credential_source ?: 'legacy'), ['account', 'legacy'], true)
+                    || blank($account->getAttribute($key))) {
+                    throw ValidationException::withMessages([
+                        $key => 'Enter the '.$protocol.' password.',
+                    ]);
                 }
 
-                return $this->providerRuntime->databaseReadySnapshot(
-                    $connection,
-                    $connection->activeCredentialVersion,
-                );
-            })
-            ->values();
+                $data[$key] = $account->getAttribute($key);
+            } else {
+                $data[$key] = Crypt::encryptString($replacement);
+            }
+        }
+
+        $data['imap_host'] = $imap->host();
+        $data['imap_port'] = $imap->port();
+        $data['imap_encryption'] = $imap->transport();
+        $data['imap_auth_type'] = 'password';
+        $data['smtp_host'] = $smtp->host();
+        $data['smtp_port'] = $smtp->port();
+        $data['smtp_encryption'] = $smtp->transport();
+        $data['smtp_auth_type'] = 'password';
+        $data['provider_integration_id'] = null;
+        $data['provider_credential_source'] = 'account';
+        $data['provider_binding_version'] = $account
+            ? max(1, (int) $account->provider_binding_version + 1)
+            : 1;
+        $data['provider_bound_at'] = now();
+        $data['provider_bound_by'] = $actor->id;
+        $data['provider_runtime_paused_at'] = null;
+        $data['provider_runtime_drained_at'] = null;
+
+        return $data;
     }
 
     private function grantData(array $grants): array

@@ -39,7 +39,36 @@ final class EmailAccountProviderRuntimeResolver
             return $this->integrationRuntime->active((string) $account->provider_integration_id);
         }
 
-        if ($this->source($account) !== 'legacy') {
+        if (! in_array($this->source($account), ['account', 'legacy'], true)) {
+            throw new EmailProviderSecurityException('provider_source_invalid');
+        }
+
+        return $this->legacyRuntime($account);
+    }
+
+    /**
+     * Resolve saved account-owned credentials for an administrator-initiated
+     * connection check. The account may remain inactive until both probes pass.
+     */
+    public function resolveForConfigurationTest(
+        #[\SensitiveParameter] EmailAccount $account,
+        int $expectedBindingVersion,
+    ): EmailProviderRuntimeCredentials {
+        $account = EmailAccount::query()->findOrFail($account->id);
+
+        if ($this->bindingVersion($account) !== $expectedBindingVersion) {
+            throw new EmailProviderSecurityException('provider_binding_stale');
+        }
+
+        if ($this->source($account) === 'integration') {
+            if (blank($account->provider_integration_id)) {
+                throw new EmailProviderSecurityException('provider_binding_missing');
+            }
+
+            return $this->integrationRuntime->active((string) $account->provider_integration_id);
+        }
+
+        if (! in_array($this->source($account), ['account', 'legacy'], true)) {
             throw new EmailProviderSecurityException('provider_source_invalid');
         }
 
@@ -69,7 +98,7 @@ final class EmailAccountProviderRuntimeResolver
                 && $this->integrationRuntime->databaseReady((string) $account->provider_integration_id);
         }
 
-        if ($this->source($account) !== 'legacy') {
+        if (! in_array($this->source($account), ['account', 'legacy'], true)) {
             return false;
         }
 
@@ -88,6 +117,7 @@ final class EmailAccountProviderRuntimeResolver
             );
             $this->authentication->normalizeLegacy('imap', (string) $account->imap_auth_type);
             $this->authentication->normalizeLegacy('smtp', (string) $account->smtp_auth_type);
+
             return filled($account->imap_username)
                 && filled($account->smtp_username)
                 && filled($account->imap_secret)

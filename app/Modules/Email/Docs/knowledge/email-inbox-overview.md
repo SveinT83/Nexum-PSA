@@ -86,50 +86,43 @@ AI data, or Ticket content. Sensitive content access fails closed when its audit
 written. Access-event history is append-only and retained even when a source delegation or emergency
 record is removed; ordinary rollback refuses to discard non-empty durable access history.
 
-## Provider Connections And Account Binding
+## Email Account Connection Setup
 
-Email provider hosts, usernames, and passwords are managed only under **Admin > System >
-Integrations > Email providers**. Email account settings own mailbox identity, defaults, owner,
-Ticket ingress, grants, and health. They show only the provider's safe label, explicit
-`legacy|integration` source, readiness, and capabilities; they never display or accept an endpoint,
-username, password, pinned address, ciphertext, or raw provider response.
+Password-based IMAP and SMTP settings are managed directly on the Email account under **Admin >
+Email > Email Accounts**. The account form owns mailbox identity, defaults, owner, Ticket ingress,
+access grants, server settings, and connection health. There is no separate provider-selection or
+mailbox-migration step in the ordinary workflow.
 
-An administrator creating a mailbox selects one active, exactly verified Integration provider. The
-binding is rechecked under the provider lifecycle lock when the account is saved or enabled. A
-private/internal provider is not listed and cannot be bound or tested unless the active operator is
-also a Superuser with `integration.email_private_endpoint_manage`. Account-management permission
-does not grant provider management or private-endpoint authority.
+**Add account** opens one mail-client-style form for the email address, display name, IMAP
+server/port/security/username/password, SMTP server/port/security/username/password, mailbox purpose,
+and access grants. **Save and test connection** encrypts the write-only passwords and queues one
+bounded check that authenticates to incoming and outgoing mail independently. The account stays
+inactive while testing and becomes active only when both checks pass and activation was requested.
 
-Provider credentials have separate staged, verified, active, retired, revoked, and destroyed
-states. Saving or rotating passwords does not make a version usable. Only explicit **Verify** may
-connect, and **Activate** accepts the exact verified version. A secret-only rotation stays on the
-same mailbox binding. Changing either provider username or endpoint means a new Integration
-connection, explicit rebind, and mailbox re-baseline; Nexum rejects an identity change disguised as
-a rotation.
+When a check fails, open and edit the same account. A blank password field preserves the saved
+password; a value replaces it. Correct the server, port, security, username, or password and save to
+test again. Safe alerts distinguish incoming and outgoing results without displaying raw provider
+responses, resolved addresses, certificate internals, credentials, or ciphertext.
 
-Every Mail/provider job records the mailbox account and positive binding version before durable
-dispatch or reservation. It rechecks that frozen binding under the account provider lock immediately
-before IMAP/SMTP. A cutover, rollback, endpoint change, or rebind therefore makes old work stale
-before network I/O. Revocation blocks new authentication, while a secret-only rotation lets current
-work resolve the new active secret. Queue, session, event, audit, and diagnostic payloads contain no
-runtime credentials.
+Every durable Mail job freezes the account binding version and rechecks it immediately before
+IMAP/SMTP. Saving new settings makes an older queued check stale, so an old result cannot activate a
+newer configuration. Queue, session, event, audit, and diagnostic payloads contain no runtime
+credentials.
 
-Existing accounts stay on their exact legacy source until the separate Integration migration flow
-completes read-only preview, local staging, explicit provider verification, activation, pause/drain,
-and exact cutover readiness. Staging alone performs no DNS lookup, provider call, send, provider
-mutation, folder change, or source switch. Cutover changes only the provider reference/source.
-Rollback is available only while the original legacy ciphertext is intact and later provider work
-has not invalidated the rollback window. Legacy-secret purge requires a later named review and
-backup/recovery proof.
+Older internal provider records may remain as historical audit evidence. An existing account is
+updated in place by entering its complete IMAP and SMTP settings; its mailbox identity, messages,
+Ticket links, and access grants do not move to a replacement account. Ordinary navigation does not
+expose the internal provider lifecycle.
 
-No failed or unavailable provider falls back to legacy credentials or Laravel's system mailer. This
-also applies to Ticket, Sales, Marketing, Commercial, Customer Portal, Storage, Booking,
-notifications, and password-reset email. An ambiguous SMTP acceptance is recorded for review and is
-never blindly retried.
+No failed or unavailable account falls back to another credential source or Laravel's system
+mailer. This also applies to Ticket, Sales, Marketing, Commercial, Customer Portal, Storage,
+Booking, notifications, and password-reset email. An ambiguous SMTP acceptance is recorded for
+review and is never blindly retried.
 
-Deployment and controlled one-account migration checks remain Pending under
-`HR-2026-08-16-006`. Automated tests do not authorize a live Verify, cutover, rollback, or secret
-purge.
+The setup change adds no migration or seeding requirement. Deployment must clear Laravel caches and
+restart the long-lived `email,default` queue worker. The external every-minute Laravel scheduler
+runner remains required for polling, health checks, reconciliation, and scheduled Mail work.
+Controlled production account and receive/send checks are tracked under `HR-2026-09-01-001`.
 
 ## Provider Folders And Placements
 

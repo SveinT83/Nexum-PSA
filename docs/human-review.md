@@ -9152,6 +9152,43 @@ not explicitly left open above. Full confirmation is not yet provided.
 - **Status:** Pending
 - **Reviewer:** Not assigned
 
+## [HR-2026-09-01-001] Simple Email Account Connection Setup
+
+- **Scope:** Replace the ordinary provider/staging/migration administration with one account-owned
+  IMAP/SMTP Add, Edit, Save, and Test workflow.
+- **Affected:** Admin Email Accounts, encrypted account credentials, IMAP/SMTP connection checks,
+  account activation, Email worker, and the hidden historical Integration provider routes.
+- **Checks:**
+    - [ ] Confirm Email Accounts has one visible **Add account** action and no ordinary Email
+      provider, staged-credential, replacement-provider, or mailbox-migration workflow.
+    - [ ] Add a controlled account using its email address, IMAP details, and SMTP details; confirm
+      the page shows Testing and then separate incoming/outgoing success or safe failure guidance.
+    - [ ] Enter a deliberately wrong password; confirm the same account remains inactive and
+      editable, then replace the password on that account and pass both checks without creating a
+      new account.
+    - [ ] Leave both password fields blank during a non-password edit; confirm the saved passwords
+      remain valid and both checks can run again.
+    - [ ] Confirm the account becomes active only after both authenticated checks pass when
+      **Activate after a successful test** is selected.
+    - [ ] Receive one controlled message through IMAP and confirm it appears in the correct mailbox.
+    - [ ] Send one clearly internal controlled message and confirm SMTP acceptance, recipient
+      receipt, Sent reconciliation, and no duplicate send.
+    - [ ] Confirm an operator without Email account or mailbox-sync management cannot configure an
+      account, and that configuration authority alone does not grant mailbox-content access.
+    - [ ] Review the Add/Edit page at desktop and narrow width; confirm all labels and failure text
+      are understandable without internal architecture knowledge.
+- **Expected Results:** A mailbox is configured and repaired like an ordinary mail client. One
+  account status truthfully reports whether incoming and outgoing authentication passed. Failed or
+  stale checks never activate the account or reveal credentials.
+- **Deploy Actions:** No migration and no seeding. Run `php artisan optimize:clear`, restart
+  long-lived queue workers with `php artisan queue:restart`, and confirm the `email,default` worker
+  plus the every-minute external scheduler runner are active.
+- **Risks:** Incorrect credentials leave the mailbox inactive; a stopped Email worker leaves the UI
+  in Testing; authenticated SMTP still needs one controlled delivery test to prove recipient and
+  Sent-folder behavior in production.
+- **Status:** Pending
+- **Reviewer:** Svein Tore
+
 
 ## [HR-2026-08-16-016] Email/Ticket Compose And Sent Reconciliation
 - **Scope:** One selected Ticket Mail relationship uses the same Email-owned draft, outbound

@@ -259,7 +259,6 @@
         ],
         'integrations' => [
             ['name' => 'All integrations', 'route' => 'tech.admin.system.integrations.index', 'pattern' => 'tech.admin.system.integrations.index'],
-            ['name' => 'Email providers', 'route' => 'tech.admin.system.integrations.email-providers.index', 'pattern' => 'tech.admin.system.integrations.email-providers.*', 'permission' => 'integration.email_provider_manage'],
             ['name' => 'Cloud Factory', 'route' => 'tech.admin.system.integrations.cloudfactory.index', 'pattern' => 'tech.admin.system.integrations.cloudfactory.*'],
             ['name' => 'Nexum relationships', 'route' => 'tech.admin.system.relationships.index', 'pattern' => 'tech.admin.system.relationships.*'],
             ['name' => 'N-able RMM', 'route' => 'tech.admin.system.integrations.nable_rmm.settings', 'pattern' => 'tech.admin.system.integrations.nable_rmm.*'],

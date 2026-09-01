@@ -2,7 +2,7 @@
 
 Status: Approved
 Date: 2026-07-04
-Last updated: 2026-08-12
+Last updated: 2026-09-01
 Owner: Svein / Codex
 Level: 3
 GitHub Discussion: https://github.com/SveinT83/Nexum-PSA/discussions/38
@@ -12,6 +12,7 @@ Architecture decisions:
 - `../adr/2026-08-11-email-canonical-message-mailbox-placement.md`
 - `../adr/2026-08-11-email-mailbox-access-and-rule-authority.md`
 - `../adr/2026-08-11-email-conversations-as-ticket-communication-channels.md`
+- `../adr/2026-09-01-email-account-owned-imap-smtp-configuration.md`
 
 ## Context
 
@@ -74,16 +75,22 @@ AI/privacy policy, cross-module actions, and substantial technician/admin workfl
   boundaries.
 - Deliver the target in independently testable Feature Slices without describing the first slice as
   the finished product.
+- Make password-based IMAP/SMTP account setup as direct as an ordinary mail client: one Email account
+  form owns the mailbox address, incoming and outgoing server settings, usernames and replaceable
+  passwords. Saving runs one connection check and reports IMAP and SMTP separately.
+- Keep provider lifecycle, credential versions, cutover, staging, and compatibility migration
+  terminology out of ordinary Email administration.
 
 ## Non-Goals
 
 - Do not create a second `Mail` domain beside the existing `Email` domain.
 - Do not implement the full target as one change or one pull request.
 - Do not replace Email rules or Ticket rules with Signal rules.
-- Do not move the target ownership of reusable provider connections, OAuth lifecycle, shared provider
-  secret governance, or AI provider governance out of Integration. Existing encrypted IMAP/SMTP
-  secrets on `email_accounts` are an acknowledged legacy compatibility path until their staged
-  migration is implemented and verified.
+- Do not move OAuth client registration, shared third-party provider governance, or AI provider
+  governance out of Integration. Ordinary password-based IMAP/SMTP mailbox settings are not a
+  reusable Integration product: they belong to the Email account that uses them.
+- Do not require a separate provider record, provider activation, credential-version workflow,
+  migration preview, cutover, or replacement provider to create or repair an IMAP/SMTP account.
 - Do not give an administrator content access to personal mailboxes merely because the administrator
   can configure accounts or inspect connection health.
 - Do not let a personal rule override mandatory security, retention, routing, or compliance policy.
@@ -388,11 +395,18 @@ INBOX:
   local operation that conflicts with a provider change becomes visible for retry, cancellation, or
   reconciliation rather than silently overwriting either side.
 
-Integration owns new provider connections, OAuth/client registration, token lifecycle, and shared
-secret governance. Email owns mailbox behavior and normalized provider operations. Existing
-password-based IMAP/SMTP secrets currently stored encrypted on `email_accounts` remain a documented
-compatibility path until a dedicated migration slice moves or references them safely; this RFC does
-not pretend that boundary is already complete or perform a silent credential migration.
+Email owns ordinary password-based IMAP/SMTP account configuration together with mailbox behavior.
+The account form accepts and edits the address, endpoints, ports, TLS modes and usernames. Passwords
+are write-only: an edit form leaves them blank and preserves the stored encrypted value unless the
+administrator enters a replacement. One save action runs bounded IMAP authentication and bounded
+SMTP authentication. A passing check activates the requested account state; a failed check leaves
+the account editable and inactive with a specific safe error.
+
+Integration continues to own OAuth/client registration, reusable third-party provider connections,
+shared token lifecycle, AI provider governance and central external-data policy. Existing
+Integration-owned password-provider rows may be retained as internal audit/rollback evidence, but
+ordinary Email administration does not expose their lifecycle and does not require a migration
+workflow. An existing account can be repaired by re-entering its settings in place.
 
 Every provider path has a non-configurable security floor: verified TLS with hostname/certificate
 validation and no silent downgrade or certificate bypass; least-scope OAuth or provider credentials;
@@ -949,9 +963,10 @@ external mail or replay stale mailbox changes.
 ## Impact Analysis
 
 - **Email:** primary domain, routes, controllers, actions, queries, policies, models, migrations, jobs,
-  services, views, API resources, tests, README, and Knowledge docs.
-- **Integration:** account-provider secret boundary, OAuth/provider setup, Email API abilities, AI
-  data-egress decisions, workload/provider readiness, and usage/cost telemetry.
+  services, password-based IMAP/SMTP account configuration, views, API resources, tests, README, and
+  Knowledge docs.
+- **Integration:** OAuth/reusable-provider setup, Email API abilities, AI data-egress decisions,
+  workload/provider readiness, and usage/cost telemetry.
 - **UserManagement/permissions:** global Email abilities, user lifecycle, delegation/break-glass role
   permissions, and disabled-user handling.
 - **Contact/Clients/Relationship:** sender/recipient resolution, permission-filtered context, and safe
@@ -1029,10 +1044,12 @@ existing mail.
 9. Remove or repurpose legacy placement fields only in a later forward migration after data parity,
    rollback window, human review, and production-safe backfill verification.
 
-Existing credentials remain encrypted in their current owner during compatibility migration. New
-provider/OAuth connections follow the Integration boundary. No data migration calls an external
-provider or AI model, sends mail, re-runs rules, imports historical messages, or changes remote/read
-state.
+Existing credentials remain encrypted in their current owner until an administrator saves that
+account through the final account form. The save replaces the account's password-based runtime
+configuration in place and leaves obsolete Integration provider rows as non-runtime audit evidence;
+it does not require a bulk credential migration. New OAuth/reusable provider connections still
+follow the Integration boundary. No data migration calls an external provider or AI model, sends
+mail, re-runs rules, imports historical messages, or changes remote/read state.
 
 Rollback order is feature disablement, worker/scheduler stop, provider-sync stop, read-path fallback,
 and preservation/export of audit/send records. Destructive schema rollback is not the first recovery
@@ -1222,12 +1239,13 @@ and expected-result checks.
 
 ## Feature Slice Order
 
-1. **Personal/shared account ownership, Admin grants, ingress isolation, and mailbox authorization
-   foundation.** Add safe account kinds, personal owner, real shared provider accounts, independent
-   `view`/`organize`/`send` grants, config-versus-content separation, account-scoped legacy rules,
-   personal `ticket_ingress_enabled = false`, scoped Inbox/API views, migrations, tests, and
-   Knowledge. Preserve current shared/ticket routing only for the explicitly selected shared/system
-   accounts.
+1. **Simple account-owned IMAP/SMTP setup and mailbox authorization foundation.** Add safe account
+   kinds, personal owner, real shared accounts, independent `view`/`organize`/`send` grants,
+   config-versus-content separation, account-scoped rules, personal
+   `ticket_ingress_enabled = false`, scoped Inbox/API views, tests, and Knowledge. Password-based
+   IMAP/SMTP is created, edited, tested and activated in the Email account form without provider or
+   migration terminology. Preserve current shared/ticket routing only for the explicitly selected
+   shared/system accounts.
 2. **Server-authoritative folders and canonical mailbox placements.** Add all-folder discovery,
    provider-authoritative placement state, bidirectional incremental sync, notification/IMAP IDLE plus
    scheduled reconciliation, idempotent remote-operation tracking, conservative canonical
@@ -1408,3 +1426,18 @@ human-review entry `Reviewed`. Restricted automatic replies remain off by defaul
 allowlists, sensitive-case exclusions, layered opt-ins, loop/duplicate/rate/cost limits, delivery
 reconciliation, emergency stop, no-send-on-uncertainty behavior, tests, operational review, and named
 human review are all complete.
+
+### Account Setup Amendment Approval - 2026-09-01
+
+Svein explicitly rejected the subsequently implemented provider-first administration workflow and
+approved replacing it with the final account-owned flow described above. The approval requires one
+ordinary Email account surface where an administrator can add or edit IMAP/SMTP settings, re-enter a
+wrong password or server, and run the connection check again without creating another provider.
+
+Terms and controls such as `Staged`, credential versions, `Legacy mailbox migration`, migration
+preview, provider cutover and replacement provider are not part of the ordinary administrator
+workflow. Svein confirmed that existing account settings may be entered again; no bulk/hybrid
+migration experience is required. This approval supersedes the provider-first UI and ordinary
+password-credential ownership parts added after the original RFC approval. It does not weaken the
+mandatory TLS, endpoint, secret encryption, authorization, audit, bounded-I/O, no-blind-send or
+human-review requirements.

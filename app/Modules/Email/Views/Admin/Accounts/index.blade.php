@@ -3,105 +3,91 @@
 @section('title', 'Email accounts')
 
 @section('pageHeader')
-  <div class="d-flex align-items-center justify-content-between">
-    <h1>Email Accounts</h1>
-    <a href="{{ route('tech.admin.settings.email.accounts.create') }}" class="btn btn-primary" data-telemetry="click_add_account">Add account</a>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <h1>Email accounts</h1>
+    @if($canCreateAccounts)
+      <a href="{{ route('tech.admin.settings.email.accounts.create') }}" class="btn btn-primary" data-telemetry="click_add_account">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Add account
+      </a>
+    @endif
   </div>
 @endsection
 
 @section('content')
   <div class="col-12">
-    @if(isset($missingTable) && $missingTable)
-      <div class="alert alert-warning" role="alert">
-        Email accounts table not found. Run migrations to continue.
-      </div>
+    @if(session('status'))
+      <div class="alert alert-info">{{ session('status') }}</div>
     @endif
 
     @if(!isset($accounts) || $accounts->isEmpty())
       <div class="text-center py-5" data-telemetry="email_accounts_index_empty">
         <h2 class="h5 text-muted mb-3">No email accounts configured</h2>
-        <a href="{{ route('tech.admin.settings.email.accounts.create') }}" class="btn btn-outline-primary">Add account</a>
+        @if($canCreateAccounts)
+          <a href="{{ route('tech.admin.settings.email.accounts.create') }}" class="btn btn-outline-primary">Add account</a>
+        @endif
       </div>
     @else
       <div class="table-responsive" data-telemetry="email_accounts_index_opened">
         <table class="table table-sm align-middle">
           <thead class="table-light">
             <tr>
-              <th scope="col">Account / Address</th>
+              <th scope="col">Account</th>
               <th scope="col" style="width: 180px;">Kind</th>
-              <th scope="col" class="text-center" style="width: 140px;">Status</th>
+              <th scope="col" style="width: 220px;">Connection</th>
               <th scope="col" style="width: 180px;">Folders</th>
-              <th scope="col" style="width: 320px;">Defaults</th>
-              <th scope="col" style="width: 180px;">Access</th>
-              <th scope="col" class="text-end" style="width: 160px;">Actions</th>
+              <th scope="col" style="width: 280px;">Defaults</th>
+              <th scope="col" style="width: 170px;">Access</th>
+              <th scope="col" class="text-end" style="width: 210px;">Actions</th>
             </tr>
           </thead>
           <tbody>
             @foreach($accounts as $account)
               @php
-                $hasError = !empty($account->last_error_code) || !empty($account->last_error_message);
-                $defaults = (array)($account->defaults_for ?? []);
+                $defaults = (array) ($account->defaults_for ?? []);
+                $isTesting = $account->last_test_result === 'Testing';
+                $isVerified = $account->last_test_result === 'OK';
+                $hasError = ! $isTesting && ! $isVerified && filled($account->last_test_result);
               @endphp
               <tr data-telemetry="email_account_row" data-account-id="{{ $account->id }}">
                 <td>
-                  <div class="d-flex align-items-start gap-2">
-                    @if($hasError)
-                      <span class="text-warning" aria-hidden="true" title="Connection error">&#9888;</span>
-                    @endif
-                    <div>
-                      <div class="fw-semibold">{{ $account->address }}</div>
-                      @if($account->usesIntegrationProvider())
-                        <div class="text-muted small">
-                          Provider: {{ $account->providerConnection?->integration?->name ?? 'Unavailable' }} ·
-                          {{ $account->providerConnection?->status === 'active' ? 'Ready' : 'Unavailable' }}
-                        </div>
-                      @else
-                        <div class="text-muted small">Legacy credential evidence · migration required</div>
-                      @endif
-                    </div>
-                  </div>
+                  <a href="{{ route('tech.admin.settings.email.accounts.edit', $account) }}" class="fw-semibold text-decoration-none">{{ $account->address }}</a>
+                  @if($account->description)<div class="text-muted small">{{ $account->description }}</div>@endif
                 </td>
                 <td>
                   <span class="badge text-bg-light">{{ \App\Modules\Email\Models\EmailAccount::KINDS[$account->account_kind] ?? ucfirst((string) $account->account_kind) }}</span>
-                  @if($account->owner)
-                    <div class="text-muted small mt-1">{{ $account->owner->name }}</div>
-                  @endif
-                  @if($account->ticket_ingress_enabled)
-                    <div class="small mt-1"><span class="badge text-bg-info">Ticket ingress</span></div>
-                  @endif
+                  @if($account->owner)<div class="text-muted small mt-1">{{ $account->owner->name }}</div>@endif
+                  @if($account->ticket_ingress_enabled)<div class="small mt-1"><span class="badge text-bg-info">Ticket ingress</span></div>@endif
                 </td>
-                <td class="text-center">
-                  @if($account->is_active)
-                    <span class="badge rounded-pill text-bg-success" aria-label="Status Active">Active</span>
+                <td>
+                  @if($isTesting)
+                    <span class="badge text-bg-info">Testing</span>
+                    <div class="small text-muted mt-1">Incoming and outgoing login</div>
+                  @elseif($isVerified && $account->is_active)
+                    <span class="badge text-bg-success">Active</span>
+                    <div class="small text-muted mt-1">IMAP and SMTP passed</div>
+                  @elseif($isVerified)
+                    <span class="badge text-bg-secondary">Verified · inactive</span>
+                  @elseif($hasError)
+                    <span class="badge text-bg-danger">Connection failed</span>
+                    <div class="small text-danger mt-1">{{ $account->last_error_message ?: 'Edit the settings and test again.' }}</div>
                   @else
-                    <span class="badge rounded-pill text-bg-secondary" aria-label="Status Disabled">Disabled</span>
+                    <span class="badge text-bg-secondary">Not tested</span>
                   @endif
                 </td>
                 <td>
                   @php
                     $folders = $account->folders ?? collect();
                     $folderErrors = $folders->where('sync_status', \App\Modules\Email\Models\EmailFolder::SYNC_ERROR)->count();
-                    $inboxFolder = $folders->firstWhere('role', \App\Modules\Email\Models\EmailFolder::ROLE_INBOX);
                   @endphp
-                  <div class="small">
-                    <span class="fw-semibold">{{ $folders->count() }}</span>
-                    <span class="text-muted">discovered</span>
-                  </div>
-                  @if($inboxFolder)
-                    <div class="small text-muted">INBOX UIDVALIDITY: {{ $inboxFolder->uid_validity ?: 'Pending' }}</div>
-                  @endif
-                  @if($folderErrors > 0)
-                    <span class="badge text-bg-warning">{{ $folderErrors }} sync issue{{ $folderErrors === 1 ? '' : 's' }}</span>
-                  @endif
+                  <div class="small"><span class="fw-semibold">{{ $folders->count() }}</span> <span class="text-muted">discovered</span></div>
+                  @if($folderErrors > 0)<span class="badge text-bg-warning">{{ $folderErrors }} sync issue{{ $folderErrors === 1 ? '' : 's' }}</span>@endif
                 </td>
                 <td>
                   <div class="d-flex flex-wrap gap-2">
-                    @if($account->is_global_default)
-                      <span class="badge text-bg-primary" aria-label="Default Global">Default (Global)</span>
-                    @endif
+                    @if($account->is_global_default)<span class="badge text-bg-primary">Global</span>@endif
                     @foreach(\App\Modules\Email\Models\EmailAccount::DEFAULT_SCOPES as $scope => $label)
-                      @continue(! in_array($scope, $defaults))
-                      <span class="badge {{ $scope === 'alerts' ? 'text-bg-warning' : 'text-bg-info' }}" aria-label="Default {{ $label }}">Default ({{ $label }})</span>
+                      @continue(! in_array($scope, $defaults, true))
+                      <span class="badge {{ $scope === 'alerts' ? 'text-bg-warning' : 'text-bg-info' }}">{{ $label }}</span>
                     @endforeach
                   </div>
                 </td>
@@ -119,19 +105,18 @@
                   @endif
                 </td>
                 <td class="text-end">
-                  @if($account->is_active && (!$account->isPersonal() || (int)$account->owner_id === (int)auth()->id()))
-                    <a href="{{ route('tech.mail.unread-handover.index', $account) }}" class="btn btn-outline-primary btn-sm">Unread handover</a>
-                  @endif
                   @can('email.mailbox_sync_manage')
-                    <a href="{{ route('tech.admin.settings.email.accounts.mailbox-maintenance', $account) }}" class="btn btn-outline-primary btn-sm" data-telemetry="email_mailbox_maintenance">Maintenance</a>
+                    <a href="{{ route('tech.admin.settings.email.accounts.mailbox-maintenance', $account) }}" class="btn btn-outline-primary btn-sm">Maintenance</a>
                   @endcan
-                  <a href="{{ route('tech.admin.settings.email.accounts.edit', $account) }}" class="btn btn-outline-secondary btn-sm" data-telemetry="click_edit">Edit</a>
-                  <form action="{{ route('tech.admin.settings.email.accounts.toggle', $account) }}" method="POST" class="d-inline" data-telemetry="toggle_status">
-                    @csrf
-                    <button type="submit" class="btn btn-sm {{ $account->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}">
-                      {{ $account->is_active ? 'Deactivate' : 'Activate' }}
-                    </button>
-                  </form>
+                  <a href="{{ route('tech.admin.settings.email.accounts.edit', $account) }}" class="btn btn-outline-secondary btn-sm">Edit</a>
+                  @if($account->is_active || $isVerified)
+                    <form action="{{ route('tech.admin.settings.email.accounts.toggle', $account) }}" method="POST" class="d-inline">
+                      @csrf
+                      <button type="submit" class="btn btn-sm {{ $account->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}">
+                        {{ $account->is_active ? 'Deactivate' : 'Activate' }}
+                      </button>
+                    </form>
+                  @endif
                 </td>
               </tr>
             @endforeach
@@ -148,18 +133,18 @@
 
 @section('rightbar')
   <div class="mt-3">
+    <x-card.default title="Connection checks">
+      <p class="small text-muted mb-0">Saving an account securely tests authenticated IMAP and SMTP. A failed account remains inactive and can be edited and tested again.</p>
+    </x-card.default>
+
     <x-card.default title="Ticket reply conflicts">
       <p class="small text-muted">Review inbound messages where RFC headers and Ticket keys identify different Tickets.</p>
       <a href="{{ route('tech.admin.settings.email.ticket-correlation-conflicts.index') }}" class="btn btn-sm btn-outline-warning">Review conflicts</a>
     </x-card.default>
 
-    <!-- -------------------------------------------------------------------------------------------------- -->
-    <!-- Email template shortcut -->
-    <!-- Keeps outbound template management reachable from Email Settings as well as the Templates hub. -->
-    <!-- -------------------------------------------------------------------------------------------------- -->
     <x-card.default title="Templates">
       <p class="small text-muted">Manage outbound email templates for tickets, system notifications, and future workflows.</p>
-      <a href="{{ route('tech.admin.system.templatesManagement.email.index') }}" class="btn btn-sm btn-outline-primary">Email Templates</a>
+      <a href="{{ route('tech.admin.system.templatesManagement.email.index') }}" class="btn btn-sm btn-outline-primary">Email templates</a>
     </x-card.default>
   </div>
 @endsection

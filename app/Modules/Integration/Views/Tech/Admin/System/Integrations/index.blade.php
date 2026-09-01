@@ -86,7 +86,6 @@
                 'description' => 'Manage independent IMAP/SMTP provider records, credential versions, verification, and legacy mailbox cutover.',
                 'badge' => ['label' => 'Managed lifecycle', 'class' => 'text-bg-light border'],
                 'actions' => [
-                    ['label' => 'Email Providers', 'icon' => 'bi-envelope-lock', 'route' => 'tech.admin.system.integrations.email-providers.index'],
                 ],
             ],
         ];

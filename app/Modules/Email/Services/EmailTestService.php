@@ -8,6 +8,7 @@ use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
 use App\Modules\Integration\Services\EmailProviderTransportFactory;
 use App\Modules\Integration\Services\EmailProviderVerificationDeadline;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class EmailTestService
@@ -28,8 +29,7 @@ class EmailTestService
     public function run(
         #[\SensitiveParameter] EmailAccount $account,
         #[\SensitiveParameter] ?int $expectedBindingVersion = null,
-    ): EmailTestResult
-    {
+    ): EmailTestResult {
         $providerLock = EmailAccountProviderLock::acquire((int) $account->id, $this->lockSeconds());
 
         if (! $providerLock) {
@@ -37,7 +37,24 @@ class EmailTestService
         }
 
         try {
-            return $this->runLocked($account, $expectedBindingVersion);
+            return $this->runLocked($account, $expectedBindingVersion, false);
+        } finally {
+            $providerLock->release();
+        }
+    }
+
+    public function runConfiguration(
+        #[\SensitiveParameter] EmailAccount $account,
+        int $expectedBindingVersion,
+    ): EmailTestResult {
+        $providerLock = EmailAccountProviderLock::acquire((int) $account->id, $this->lockSeconds());
+
+        if (! $providerLock) {
+            throw new EmailProviderSecurityException('provider_work_locked');
+        }
+
+        try {
+            return $this->runLocked($account, $expectedBindingVersion, true);
         } finally {
             $providerLock->release();
         }
@@ -46,17 +63,19 @@ class EmailTestService
     private function runLocked(
         #[\SensitiveParameter] EmailAccount $account,
         #[\SensitiveParameter] ?int $expectedBindingVersion,
-    ): EmailTestResult
-    {
-        $res = new EmailTestResult();
+        bool $allowInactiveConfiguration,
+    ): EmailTestResult {
+        $res = new EmailTestResult;
         $expectedBindingVersion ??= $this->runtimeResolver
             ->captureBindingVersion($account);
 
         try {
-            $this->deadline->run(function () use ($account, $expectedBindingVersion, $res): void {
+            $this->deadline->run(function () use ($account, $expectedBindingVersion, $res, $allowInactiveConfiguration): void {
                 $absoluteDeadline = microtime(true) + $this->deadlineSeconds();
                 try {
-                    $runtime = $this->runtimeResolver->resolve($account, $expectedBindingVersion);
+                    $runtime = $allowInactiveConfiguration
+                        ? $this->runtimeResolver->resolveForConfigurationTest($account, $expectedBindingVersion)
+                        : $this->runtimeResolver->resolve($account, $expectedBindingVersion);
                 } catch (\Throwable $exception) {
                     $this->rethrowDeadline($exception);
                     $res->imap_error_code = 'PROVIDER_RUNTIME_UNAVAILABLE';
@@ -160,7 +179,7 @@ class EmailTestService
             ]);
         }
 
-        $this->persistResult($account, $res);
+        $this->persistResult($account, $res, $expectedBindingVersion);
 
         return $res;
     }
@@ -168,29 +187,36 @@ class EmailTestService
     private function persistResult(
         #[\SensitiveParameter] EmailAccount $account,
         EmailTestResult $res,
+        int $expectedBindingVersion,
     ): void {
-        // Persist health
-        $account->last_test_at = Carbon::now();
-        $account->last_test_result = $res->overall();
-        $account->last_error_code = null;
-        $account->last_error_message = null;
-        if (! $res->imap_ok || ! $res->smtp_ok) {
-            // choose worst error
-            if (! $res->imap_ok) {
-                $account->last_error_code = $res->imap_error_code;
-                $account->last_error_message = $res->imap_error_message;
-            } else {
-                $account->last_error_code = $res->smtp_error_code;
-                $account->last_error_message = $res->smtp_error_message;
+        DB::transaction(function () use ($account, $res, $expectedBindingVersion): void {
+            $current = EmailAccount::query()->lockForUpdate()->find($account->id);
+
+            if (! $current || (int) $current->provider_binding_version !== $expectedBindingVersion) {
+                return;
             }
-        }
-        if ($res->imap_ok) {
-            $account->last_successful_fetch_at = Carbon::now();
-        }
-        if ($res->smtp_ok) {
-            $account->last_successful_send_at = Carbon::now();
-        }
-        $account->save();
+
+            $current->last_test_at = Carbon::now();
+            $current->last_test_result = $res->overall();
+            $current->last_error_code = null;
+            $current->last_error_message = null;
+            if (! $res->imap_ok || ! $res->smtp_ok) {
+                if (! $res->imap_ok) {
+                    $current->last_error_code = $res->imap_error_code;
+                    $current->last_error_message = $res->imap_error_message;
+                } else {
+                    $current->last_error_code = $res->smtp_error_code;
+                    $current->last_error_message = $res->smtp_error_message;
+                }
+            }
+            if ($res->imap_ok) {
+                $current->last_successful_fetch_at = Carbon::now();
+            }
+            if ($res->smtp_ok) {
+                $current->last_successful_send_at = Carbon::now();
+            }
+            $current->save();
+        }, 3);
     }
 
     private function rethrowDeadline(#[\SensitiveParameter] \Throwable $exception): void
@@ -248,20 +274,38 @@ class EmailTestService
     private function imapErrorClassify(#[\SensitiveParameter] \Throwable $e): array
     {
         $m = strtolower($e->getMessage());
-        if (str_contains($m, 'auth')) return ['IMAP_AUTH', 'Authentication failed'];
-        if (str_contains($m, 'connect') && str_contains($m, 'timeout')) return ['IMAP_CONNECT', 'Connection timed out'];
-        if (str_contains($m, 'connect') && str_contains($m, 'refused')) return ['IMAP_CONNECT', 'Connection refused'];
-        if (str_contains($m, 'tls') || str_contains($m, 'ssl')) return ['IMAP_TLS', 'TLS/SSL negotiation failed'];
+        if (str_contains($m, 'auth')) {
+            return ['IMAP_AUTH', 'Authentication failed'];
+        }
+        if (str_contains($m, 'connect') && str_contains($m, 'timeout')) {
+            return ['IMAP_CONNECT', 'Connection timed out'];
+        }
+        if (str_contains($m, 'connect') && str_contains($m, 'refused')) {
+            return ['IMAP_CONNECT', 'Connection refused'];
+        }
+        if (str_contains($m, 'tls') || str_contains($m, 'ssl')) {
+            return ['IMAP_TLS', 'TLS/SSL negotiation failed'];
+        }
+
         return ['IMAP_ERROR', 'The IMAP provider check failed.'];
     }
 
     private function smtpErrorClassify(#[\SensitiveParameter] \Throwable $e): array
     {
         $m = strtolower($e->getMessage());
-        if (str_contains($m, 'auth')) return ['SMTP_AUTH', 'Authentication failed'];
-        if (str_contains($m, 'connect') && str_contains($m, 'timeout')) return ['SMTP_CONNECT', 'Connection timed out'];
-        if (str_contains($m, 'connect') && str_contains($m, 'refused')) return ['SMTP_CONNECT', 'Connection refused'];
-        if (str_contains($m, 'tls') || str_contains($m, 'ssl') || str_contains($m, 'starttls')) return ['SMTP_TLS', 'TLS/SSL negotiation failed'];
+        if (str_contains($m, 'auth')) {
+            return ['SMTP_AUTH', 'Authentication failed'];
+        }
+        if (str_contains($m, 'connect') && str_contains($m, 'timeout')) {
+            return ['SMTP_CONNECT', 'Connection timed out'];
+        }
+        if (str_contains($m, 'connect') && str_contains($m, 'refused')) {
+            return ['SMTP_CONNECT', 'Connection refused'];
+        }
+        if (str_contains($m, 'tls') || str_contains($m, 'ssl') || str_contains($m, 'starttls')) {
+            return ['SMTP_TLS', 'TLS/SSL negotiation failed'];
+        }
+
         return ['SMTP_ERROR', 'The SMTP provider check failed.'];
     }
 }
