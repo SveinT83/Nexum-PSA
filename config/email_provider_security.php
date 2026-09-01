@@ -3,10 +3,6 @@
 use App\Modules\Integration\Support\EmailProviderTrustedPrivateCidrConfiguration;
 
 return [
-    // Provider-first staging and migration are retired. This switch exists
-    // only so the historical lifecycle tests can remain executable.
-    'legacy_lifecycle_enabled' => (bool) env('EMAIL_PROVIDER_LEGACY_LIFECYCLE_ENABLED', false),
-
     /*
     |--------------------------------------------------------------------------
     | Email provider endpoint security

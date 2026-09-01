@@ -62,7 +62,8 @@ Positive:
 Negative:
 
 - Password-based credentials are account-scoped and cannot be reused implicitly across mailboxes.
-- Historical provider-first tests remain executable only under an explicit test-environment switch.
+- Historical provider-first tests remain executable only while Laravel is running as the automated
+  test environment; there is no Dev or production switch for the retired lifecycle.
 - OAuth accounts will need a later driver-specific connection action inside the same account
   workflow while Integration retains token governance.
 - Historical provider/migration rows remain inert audit evidence, not a second configurable system.

@@ -40,7 +40,7 @@ Route::middleware('admin')->group(function () {
 
     // The retired provider-first lifecycle is available only to the historical
     // automated test suite. Normal installations expose one Email account flow.
-    if (config('email_provider_security.legacy_lifecycle_enabled')) {
+    if (app()->environment('testing')) {
         Route::get('/admin/system/integrations/email-providers', [EmailProviderController::class, 'index'])
             ->name('admin.system.integrations.email-providers.index');
         Route::get('/admin/system/integrations/email-providers/create', [EmailProviderController::class, 'create'])

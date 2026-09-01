@@ -31,7 +31,7 @@ final class EmailAccountProviderRuntimeResolver
         $account = EmailAccount::query()->findOrFail($account->id);
         $this->assertUsableAccount($account, $expectedBindingVersion);
 
-        if ($this->source($account) === 'integration' && $this->legacyLifecycleEnabled()) {
+        if ($this->source($account) === 'integration' && $this->legacyTestCompatibilityEnabled()) {
             if (blank($account->provider_integration_id)) {
                 throw new EmailProviderSecurityException('provider_binding_missing');
             }
@@ -60,7 +60,7 @@ final class EmailAccountProviderRuntimeResolver
             throw new EmailProviderSecurityException('provider_binding_stale');
         }
 
-        if ($this->source($account) === 'integration' && $this->legacyLifecycleEnabled()) {
+        if ($this->source($account) === 'integration' && $this->legacyTestCompatibilityEnabled()) {
             if (blank($account->provider_integration_id)) {
                 throw new EmailProviderSecurityException('provider_binding_missing');
             }
@@ -93,7 +93,7 @@ final class EmailAccountProviderRuntimeResolver
             return false;
         }
 
-        if ($this->source($account) === 'integration' && $this->legacyLifecycleEnabled()) {
+        if ($this->source($account) === 'integration' && $this->legacyTestCompatibilityEnabled()) {
             return filled($account->provider_integration_id)
                 && $this->integrationRuntime->databaseReady((string) $account->provider_integration_id);
         }
@@ -219,17 +219,17 @@ final class EmailAccountProviderRuntimeResolver
 
     private function source(#[\SensitiveParameter] EmailAccount $account): string
     {
-        return (string) ($account->provider_credential_source ?: ($this->legacyLifecycleEnabled() ? 'legacy' : ''));
+        return (string) ($account->provider_credential_source ?: ($this->legacyTestCompatibilityEnabled() ? 'legacy' : ''));
     }
 
     private function isAccountOwnedSource(#[\SensitiveParameter] EmailAccount $account): bool
     {
         return $this->source($account) === 'account'
-            || ($this->legacyLifecycleEnabled() && $this->source($account) === 'legacy');
+            || ($this->legacyTestCompatibilityEnabled() && $this->source($account) === 'legacy');
     }
 
-    private function legacyLifecycleEnabled(): bool
+    private function legacyTestCompatibilityEnabled(): bool
     {
-        return (bool) config('email_provider_security.legacy_lifecycle_enabled', false);
+        return app()->environment('testing');
     }
 }
