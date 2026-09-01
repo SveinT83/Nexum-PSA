@@ -3,6 +3,10 @@
 use App\Modules\Integration\Support\EmailProviderTrustedPrivateCidrConfiguration;
 
 return [
+    // Provider-first staging and migration are retired. This switch exists
+    // only so the historical lifecycle tests can remain executable.
+    'legacy_lifecycle_enabled' => (bool) env('EMAIL_PROVIDER_LEGACY_LIFECYCLE_ENABLED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Email provider endpoint security
@@ -21,8 +25,7 @@ return [
         env('EMAIL_PROVIDER_TRONDERDATA_MAIL_DEV_CIDR'),
     ),
 
-    // Compatibility-only mapping: email_account_id => named CIDR. New
-    // private connections must use the reviewed Integration lifecycle.
+    // Installation-reviewed mapping: email_account_id => named CIDR.
     'legacy_trusted_private_accounts' => [],
 
     'dns' => [

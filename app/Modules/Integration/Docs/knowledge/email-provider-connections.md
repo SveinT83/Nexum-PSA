@@ -31,10 +31,10 @@ The page shows **Testing**, a successful result, or safe incoming/outgoing failu
 account remains inactive and editable. Raw provider responses, resolved addresses, certificate
 internals, usernames, passwords, and ciphertext are never shown in alerts or logs.
 
-An older account that still uses an internal connection record is corrected in place: enter the
-complete IMAP and SMTP settings on that account and save it. The mailbox identity and access grants
-remain on the same Email account. Historical internal records may remain as audit evidence, but they
-are not part of the ordinary setup workflow.
+Deployment automatically promotes an older exactly verified internal binding into the same Email
+account. The mailbox identity, health result and access grants remain unchanged. Historical rows
+may remain as inert audit evidence, but their duplicate encrypted credentials are destroyed and
+cannot be selected or used by Mail runtime.
 
 ## Supported Secure Connections
 
@@ -64,9 +64,10 @@ requested activation state. A stale job cannot activate newer saved settings. Ke
 database worker for `email,default` running and restart long-lived queue workers after deployment so
 they load the new job class.
 
-This account-flow change adds no database migration and requires no seeding. After deployment, clear
-Laravel caches and restart queue workers. The normal scheduler runner remains required for polling,
-health checks, reconciliation, and other scheduled Mail work.
+This change includes a one-way, fail-closed database migration. Back up the database, run
+`php artisan migrate --force`, clear Laravel caches and restart queue workers. No seeding is
+required. The normal scheduler runner remains required for polling, health checks, reconciliation,
+and other scheduled Mail work.
 
 Human review checklist `HR-2026-09-01-001` covers the controlled production account test and the
 first real receive/send confirmation.

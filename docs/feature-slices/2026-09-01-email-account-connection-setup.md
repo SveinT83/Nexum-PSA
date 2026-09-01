@@ -21,28 +21,31 @@ setup and repair workflow.
 - A failure leaves the same account editable and inactive with safe protocol-specific guidance.
 - Password fields are blank on edit and preserve the stored password unless a replacement is entered.
 - Ordinary navigation no longer exposes Email Providers or Legacy mailbox migration.
+- Existing exactly verified provider-bound accounts are promoted automatically; no hybrid warning
+  or manual re-entry is required.
 
 ## Scope
 
 - Email account controller, form, index and connection health presentation.
 - Encrypted account-owned password storage.
 - Background connection-check and activation job.
-- Deprecation/redirect of ordinary provider administration.
+- Removal of provider administration routes from normal installations.
+- One-way promotion of existing credentials and destruction of obsolete duplicate ciphertext.
 - Tests, Knowledge, TODO and human-review updates.
 
 ## Out Of Scope
 
 - OAuth driver setup.
-- Destructive removal of historical Integration provider/migration records.
+- Removal of inert historical audit rows and tables.
 - Sending a real message to a recipient; SMTP authentication proves write capability without
   transmitting mail.
-- Bulk credential migration.
 
 ## Data Touched
 
 - Existing `email_accounts` endpoint, encrypted credential, binding and health columns.
 - Existing queue and failed-job infrastructure.
-- Historical Integration provider records remain unchanged unless an account is explicitly re-saved.
+- Historical provider rows are disabled and their credential ciphertext is destroyed after every
+  bound account has been promoted successfully in one transaction.
 
 ## Permissions
 
@@ -54,7 +57,9 @@ setup and repair workflow.
 
 - Create stores encrypted account-owned credentials and dispatches the bounded check.
 - Edit preserves blank passwords and replaces entered passwords.
-- Integration-bound account can be corrected in place by re-entering complete settings.
+- Existing Integration-bound account is promoted in place without manual secret re-entry.
+- One-way cutover promotes only an exactly verified binding and fails closed on incomplete evidence.
+- Normal runtime and routes reject the retired provider-owned path.
 - Stale queued checks cannot activate a newer configuration.
 - Passing IMAP/SMTP activates only when requested; failure remains inactive and editable.
 - UI contains no provider/staged/legacy-migration workflow.
@@ -73,6 +78,7 @@ setup and repair workflow.
 - [x] One account-owned Add/Edit form is implemented.
 - [x] Background IMAP/SMTP test and safe activation are implemented.
 - [x] Provider/migration lifecycle is absent from ordinary UI.
+- [x] Existing provider binding is promoted automatically and the duplicate secret store is destroyed.
 - [x] Relevant Dev tests pass.
 - [ ] Production browser review confirms desktop and narrow layouts.
 - [x] TODO and human-review evidence are current.

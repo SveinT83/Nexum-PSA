@@ -37,9 +37,9 @@ The Email account is the only ordinary administration surface for password-based
   legacy migration preview or cutover history.
 
 Integration continues to own OAuth client registration, reusable third-party connections, token
-lifecycle, AI provider governance and central data-egress policy. Internal historical provider rows
-may remain as rollback/audit evidence, but they are not required or selected by the ordinary
-password-based Email account workflow.
+lifecycle, AI provider governance and central data-egress policy. Password-based Email provider
+rows may remain only as inert audit metadata. Their duplicate credential ciphertext is destroyed,
+their lifecycle routes are disabled, and Mail runtime refuses to use them.
 
 ## Rationale
 
@@ -47,7 +47,8 @@ password-based Email account workflow.
 - One status answers whether Nexum can receive and send for the account.
 - Correcting a typo or password is an edit, not a migration.
 - The backend can keep security and audit controls without exposing lifecycle jargon.
-- Existing Integration rows do not need destructive cleanup during the UX correction.
+- Existing verified provider-bound accounts are promoted automatically and fail closed if their
+  exact active credential cannot be proven and decrypted.
 
 ## Consequences
 
@@ -61,11 +62,10 @@ Positive:
 Negative:
 
 - Password-based credentials are account-scoped and cannot be reused implicitly across mailboxes.
-- Existing provider-first tests and documentation must be replaced.
+- Historical provider-first tests remain executable only under an explicit test-environment switch.
 - OAuth accounts will need a later driver-specific connection action inside the same account
   workflow while Integration retains token governance.
-- Historical provider/migration tables may remain until a separately reviewed cleanup proves they
-  are no longer needed for rollback or audit.
+- Historical provider/migration rows remain inert audit evidence, not a second configurable system.
 
 ## Alternatives Considered
 
@@ -73,8 +73,9 @@ Negative:
   lifecycle remain unnecessary for ordinary IMAP/SMTP.
 - Automatically create a visible provider behind the account form. Rejected as a user concept; an
   internal adapter may exist, but it cannot become a second object the administrator must manage.
-- Bulk-migrate all credentials immediately. Rejected because the administrator accepted re-entry,
-  and destructive migration is unnecessary for delivering the final workflow safely.
+- Require manual re-entry for every existing account. Rejected after Dev exposed the resulting
+  hybrid warning. Exactly verified credentials can be promoted automatically without revealing
+  them, and the obsolete duplicate ciphertext can then be destroyed.
 - Remove endpoint and TLS policy with the provider UI. Rejected because simpler UX must not weaken
   transport security or allow arbitrary internal-network access.
 
@@ -82,6 +83,7 @@ Negative:
 
 - Implement the approved Feature Slice
   `../feature-slices/2026-09-01-email-account-connection-setup.md`.
-- Deprecate the ordinary Email Providers navigation and provider/migration UI.
+- Disable the Email Providers lifecycle routes and reject provider-owned Mail runtime in normal
+  installations.
 - Update Email and Integration Knowledge documentation.
-- Keep historical provider data until cleanup has its own evidence and human review.
+- Run the one-way credential promotion migration under `HR-2026-09-01-001`.

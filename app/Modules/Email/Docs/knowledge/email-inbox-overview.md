@@ -109,19 +109,20 @@ IMAP/SMTP. Saving new settings makes an older queued check stale, so an old resu
 newer configuration. Queue, session, event, audit, and diagnostic payloads contain no runtime
 credentials.
 
-Older internal provider records may remain as historical audit evidence. An existing account is
-updated in place by entering its complete IMAP and SMTP settings; its mailbox identity, messages,
-Ticket links, and access grants do not move to a replacement account. Ordinary navigation does not
-expose the internal provider lifecycle.
+Older internal provider rows may remain as inert historical audit evidence. Deployment promotes an
+exactly verified binding into the same account and destroys the obsolete duplicate ciphertext; the
+mailbox identity, messages, Ticket links, health state and access grants do not move. Ordinary
+navigation and runtime do not expose or use the retired provider lifecycle.
 
 No failed or unavailable account falls back to another credential source or Laravel's system
 mailer. This also applies to Ticket, Sales, Marketing, Commercial, Customer Portal, Storage,
 Booking, notifications, and password-reset email. An ambiguous SMTP acceptance is recorded for
 review and is never blindly retried.
 
-The setup change adds no migration or seeding requirement. Deployment must clear Laravel caches and
-restart the long-lived `email,default` queue worker. The external every-minute Laravel scheduler
-runner remains required for polling, health checks, reconciliation, and scheduled Mail work.
+The setup change includes a one-way, fail-closed migration and no seeding. Back up the database,
+run `php artisan migrate --force`, clear Laravel caches and restart the long-lived `email,default`
+queue worker. The external every-minute Laravel scheduler runner remains required for polling,
+health checks, reconciliation, and scheduled Mail work.
 Controlled production account and receive/send checks are tracked under `HR-2026-09-01-001`.
 
 ## Provider Folders And Placements

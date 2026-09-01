@@ -11,12 +11,8 @@ use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailOrdinaryMailboxEntitlementResolver;
 use App\Modules\Email\Services\EmailUnreadAccessEpochService;
 use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
-use App\Modules\Integration\Models\EmailProviderConnection;
-use App\Modules\Integration\Models\EmailProviderCredentialVersion;
 use App\Modules\Integration\Services\EmailProviderEndpointPolicy;
-use App\Modules\Integration\Services\EmailProviderLifecycleAccountLocks;
 use App\Modules\Integration\Services\EmailProviderManagementAuthorization;
-use App\Modules\Integration\Services\EmailProviderRuntimeFactory;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -33,8 +29,6 @@ class AccountsController extends Controller
         private readonly EmailUnreadAccessEpochService $unreadEpochs,
         private readonly EmailOrdinaryMailboxEntitlementResolver $ordinaryEntitlements,
         private readonly EmailProviderManagementAuthorization $providerAuthorization,
-        private readonly EmailProviderLifecycleAccountLocks $providerLifecycleLocks,
-        private readonly EmailProviderRuntimeFactory $providerRuntime,
         private readonly EmailProviderEndpointPolicy $endpointPolicy,
         private readonly EmailLiveAuthorityCoordinator $liveAuthority,
     ) {}
@@ -124,64 +118,50 @@ class AccountsController extends Controller
         $grants = $this->grantData($data['grants'] ?? []);
         unset($data['grants']);
         $data = $this->prepareConnectionData($data, $account, $actor);
-        $locks = [];
+        $account = DB::transaction(function () use ($account, $actor, $data, $grants): EmailAccount {
+            $lockedAccount = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
+            $data['provider_binding_version'] = max(
+                1,
+                (int) $lockedAccount->provider_binding_version + 1,
+            );
+            $data['is_active'] = false;
+            $data['last_test_result'] = 'Testing';
+            $data['last_test_at'] = null;
+            $data['last_error_code'] = null;
+            $data['last_error_message'] = null;
+            $data['last_successful_fetch_at'] = null;
+            $data['last_successful_send_at'] = null;
 
-        if ($account->usesIntegrationProvider() && $account->provider_integration_id) {
-            $connection = $account->providerConnection()->first();
-            if ($connection) {
-                $this->providerAuthorization->authorizeConnectionTrust($actor, $connection);
-                $locks = $this->providerLifecycleLocks->acquire((string) $connection->getKey());
+            $users = $this->affectedViewUsers(
+                $lockedAccount,
+                $grants,
+                isset($data['owner_id']) ? (int) $data['owner_id'] : null,
+            );
+            $before = $users->mapWithKeys(fn (User $user): array => [
+                $user->id => $this->unreadEpochs->captureEntitlement($lockedAccount, $user),
+            ])->all();
+            $nextOwnerId = isset($data['owner_id']) ? (int) $data['owner_id'] : null;
+            $ownerChanged = (int) ($lockedAccount->owner_id ?? 0) !== (int) ($nextOwnerId ?? 0);
+            $generation = $this->liveAuthority->prepareAccountMutation(
+                $lockedAccount,
+                $users->pluck('id')->all(),
+                $nextOwnerId,
+                $ownerChanged,
+            );
+            if ($ownerChanged) {
+                $data['email_live_owner_enable_generation'] = $lockedAccount->email_live_owner_enable_generation;
             }
-        }
+            $lockedAccount->forceFill($data)->save();
+            $this->syncGrants($lockedAccount->fresh(), $grants, $actor, $generation);
+            $this->reconcileUnreadEpochs(
+                $lockedAccount->fresh(),
+                $users,
+                $before,
+                $actor,
+            );
 
-        try {
-            $account = DB::transaction(function () use ($account, $actor, $data, $grants): EmailAccount {
-                $lockedAccount = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
-                $data['provider_binding_version'] = max(
-                    1,
-                    (int) $lockedAccount->provider_binding_version + 1,
-                );
-                $data['is_active'] = false;
-                $data['last_test_result'] = 'Testing';
-                $data['last_test_at'] = null;
-                $data['last_error_code'] = null;
-                $data['last_error_message'] = null;
-                $data['last_successful_fetch_at'] = null;
-                $data['last_successful_send_at'] = null;
-
-                $users = $this->affectedViewUsers(
-                    $lockedAccount,
-                    $grants,
-                    isset($data['owner_id']) ? (int) $data['owner_id'] : null,
-                );
-                $before = $users->mapWithKeys(fn (User $user): array => [
-                    $user->id => $this->unreadEpochs->captureEntitlement($lockedAccount, $user),
-                ])->all();
-                $nextOwnerId = isset($data['owner_id']) ? (int) $data['owner_id'] : null;
-                $ownerChanged = (int) ($lockedAccount->owner_id ?? 0) !== (int) ($nextOwnerId ?? 0);
-                $generation = $this->liveAuthority->prepareAccountMutation(
-                    $lockedAccount,
-                    $users->pluck('id')->all(),
-                    $nextOwnerId,
-                    $ownerChanged,
-                );
-                if ($ownerChanged) {
-                    $data['email_live_owner_enable_generation'] = $lockedAccount->email_live_owner_enable_generation;
-                }
-                $lockedAccount->forceFill($data)->save();
-                $this->syncGrants($lockedAccount->fresh(), $grants, $actor, $generation);
-                $this->reconcileUnreadEpochs(
-                    $lockedAccount->fresh(),
-                    $users,
-                    $before,
-                    $actor,
-                );
-
-                return $lockedAccount->fresh();
-            }, 3);
-        } finally {
-            $this->providerLifecycleLocks->release($locks);
-        }
+            return $lockedAccount->fresh();
+        }, 3);
 
         TestEmailAccountConnectionJob::dispatch(
             (int) $account->id,
@@ -196,62 +176,29 @@ class AccountsController extends Controller
 
     public function toggleActive(EmailAccount $account, Request $request)
     {
-        $actor = $this->providerAuthorization->authorizeAccountConfiguration($request->user());
-        $connection = $account->provider_credential_source === 'integration'
-            ? $account->providerConnection()->firstOrFail()
-            : null;
-        $locks = [];
-
-        if ($connection) {
-            $actor = $this->providerAuthorization->authorizeConnectionTrust($actor, $connection);
-            $locks = $this->providerLifecycleLocks->acquire((string) $connection->getKey());
-        }
-
+        $this->providerAuthorization->authorizeAccountConfiguration($request->user());
         // Account enablement gates runtime access, but it is not an ordinary
         // entitlement source and therefore must not manufacture a new epoch.
-        try {
-            DB::transaction(function () use ($account, $actor, $connection): void {
-                $lockedAccount = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
-                if (! $connection
-                    && ! $lockedAccount->is_active
-                    && $lockedAccount->last_test_result !== 'OK') {
-                    throw ValidationException::withMessages([
-                        'is_active' => 'Save and pass the incoming and outgoing connection test before activation.',
-                    ]);
-                }
+        DB::transaction(function () use ($account): void {
+            $lockedAccount = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
+            if (! $lockedAccount->is_active
+                && $lockedAccount->last_test_result !== 'OK') {
+                throw ValidationException::withMessages([
+                    'is_active' => 'Save and pass the incoming and outgoing connection test before activation.',
+                ]);
+            }
 
-                if ($connection && ! $lockedAccount->is_active) {
-                    $lockedConnection = EmailProviderConnection::query()
-                        ->lockForUpdate()
-                        ->findOrFail($connection->getKey());
-                    $this->providerAuthorization->authorizeConnectionTrust($actor, $lockedConnection);
-                    $activeCredential = $lockedConnection->active_credential_version_id
-                        ? EmailProviderCredentialVersion::query()
-                            ->lockForUpdate()
-                            ->find($lockedConnection->active_credential_version_id)
-                        : null;
-
-                    if (! $this->providerRuntime->databaseReadySnapshot($lockedConnection, $activeCredential)) {
-                        throw ValidationException::withMessages([
-                            'is_active' => 'The Email provider must remain active and exactly verified.',
-                        ]);
-                    }
-                }
-
-                $affectedUserIds = $this->affectedViewUsers(
-                    $lockedAccount,
-                    $lockedAccount->userGrants->map(fn (EmailAccountUserGrant $grant): array => [
-                        'user_id' => $grant->user_id,
-                    ])->all(),
-                    $lockedAccount->owner_id,
-                )->pluck('id')->all();
-                $this->liveAuthority->prepareAccountMutation($lockedAccount, $affectedUserIds);
-                $lockedAccount->is_active = ! $lockedAccount->is_active;
-                $lockedAccount->save();
-            }, 3);
-        } finally {
-            $this->providerLifecycleLocks->release($locks);
-        }
+            $affectedUserIds = $this->affectedViewUsers(
+                $lockedAccount,
+                $lockedAccount->userGrants->map(fn (EmailAccountUserGrant $grant): array => [
+                    'user_id' => $grant->user_id,
+                ])->all(),
+                $lockedAccount->owner_id,
+            )->pluck('id')->all();
+            $this->liveAuthority->prepareAccountMutation($lockedAccount, $affectedUserIds);
+            $lockedAccount->is_active = ! $lockedAccount->is_active;
+            $lockedAccount->save();
+        }, 3);
 
         return back();
     }
@@ -312,7 +259,7 @@ class AccountsController extends Controller
     {
         $this->providerAuthorization->authorizeAccountConfiguration($request->user());
 
-        if (! in_array((string) $account->provider_credential_source, ['account', 'legacy'], true)) {
+        if ((string) $account->provider_credential_source !== 'account') {
             return redirect()
                 ->route('tech.admin.settings.email.accounts.edit', $account)
                 ->with('error', 'Enter the IMAP and SMTP settings on this account, then save and test it.');
@@ -372,8 +319,7 @@ class AccountsController extends Controller
      * Normalize and encrypt one account-owned IMAP/SMTP configuration.
      *
      * Password fields are write-only. Blank edit values preserve an existing
-     * account-owned ciphertext, while a provider-bound account must be
-     * re-entered completely before it can leave the old internal binding.
+     * account-owned ciphertext.
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
@@ -409,7 +355,7 @@ class AccountsController extends Controller
 
             if ($replacement === '') {
                 if (! $account
-                    || ! in_array((string) ($account->provider_credential_source ?: 'legacy'), ['account', 'legacy'], true)
+                    || (string) $account->provider_credential_source !== 'account'
                     || blank($account->getAttribute($key))) {
                     throw ValidationException::withMessages([
                         $key => 'Enter the '.$protocol.' password.',

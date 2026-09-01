@@ -9157,10 +9157,12 @@ not explicitly left open above. Full confirmation is not yet provided.
 - **Scope:** Replace the ordinary provider/staging/migration administration with one account-owned
   IMAP/SMTP Add, Edit, Save, and Test workflow.
 - **Affected:** Admin Email Accounts, encrypted account credentials, IMAP/SMTP connection checks,
-  account activation, Email worker, and the hidden historical Integration provider routes.
+  account activation, Email worker, and the one-way retirement of Integration provider credentials.
 - **Checks:**
     - [ ] Confirm Email Accounts has one visible **Add account** action and no ordinary Email
       provider, staged-credential, replacement-provider, or mailbox-migration workflow.
+    - [ ] After migration, confirm every Email account has account-owned settings, no account is
+      provider-bound, and historical provider credential ciphertext is destroyed.
     - [ ] Add a controlled account using its email address, IMAP details, and SMTP details; confirm
       the page shows Testing and then separate incoming/outgoing success or safe failure guidance.
     - [ ] Enter a deliberately wrong password; confirm the same account remains inactive and
@@ -9180,12 +9182,15 @@ not explicitly left open above. Full confirmation is not yet provided.
 - **Expected Results:** A mailbox is configured and repaired like an ordinary mail client. One
   account status truthfully reports whether incoming and outgoing authentication passed. Failed or
   stale checks never activate the account or reveal credentials.
-- **Deploy Actions:** No migration and no seeding. Run `php artisan optimize:clear`, restart
-  long-lived queue workers with `php artisan queue:restart`, and confirm the `email,default` worker
-  plus the every-minute external scheduler runner are active.
-- **Risks:** Incorrect credentials leave the mailbox inactive; a stopped Email worker leaves the UI
-  in Testing; authenticated SMTP still needs one controlled delivery test to prove recipient and
-  Sent-folder behavior in production.
+- **Deploy Actions:** Back up the database, run `php artisan migrate --force` (the credential
+  promotion is one-way and fails closed), then run `php artisan optimize:clear` and
+  `php artisan queue:restart`. Confirm the `email,default` worker plus the every-minute external
+  scheduler runner are active. No seeding is required.
+- **Risks:** The migration intentionally destroys the obsolete provider ciphertext after a verified
+  transactional copy and cannot be rolled back to the provider-first design. Incorrect replacement
+  credentials leave the mailbox inactive; a stopped Email worker leaves the UI in Testing;
+  authenticated SMTP still needs one controlled delivery test to prove recipient and Sent-folder
+  behavior in production.
 - **Status:** Pending
 - **Reviewer:** Svein Tore
 

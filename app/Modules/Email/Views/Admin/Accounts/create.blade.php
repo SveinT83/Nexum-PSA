@@ -6,11 +6,11 @@
     $defaultsFor = old('defaults_for', $isEdit ? ($account->defaults_for ?? []) : []);
     $selectedKind = old('account_kind', $isEdit ? ($account->account_kind ?? \App\Modules\Email\Models\EmailAccount::KIND_SHARED) : \App\Modules\Email\Models\EmailAccount::KIND_SHARED);
     $selectedOwnerId = (int) old('owner_id', $isEdit ? ($account->owner_id ?? 0) : 0);
-    $hasAccountCredentials = $isEdit && in_array((string) ($account->provider_credential_source ?: 'legacy'), ['account', 'legacy'], true);
-    $imapTransport = old('imap_encryption', $hasAccountCredentials ? ($account->imap_encryption ?? 'implicit_tls') : 'implicit_tls');
-    $smtpTransport = old('smtp_encryption', $hasAccountCredentials ? ($account->smtp_encryption ?? 'starttls') : 'starttls');
-    $imapTransport = in_array($imapTransport, ['ssl', 'tls'], true) && (int) old('imap_port', $hasAccountCredentials ? $account->imap_port : 993) === 993 ? 'implicit_tls' : $imapTransport;
-    $smtpTransport = in_array($smtpTransport, ['ssl', 'tls'], true) && (int) old('smtp_port', $hasAccountCredentials ? $account->smtp_port : 587) === 465 ? 'implicit_tls' : $smtpTransport;
+    $hasSavedCredentials = $isEdit && filled($account->imap_secret) && filled($account->smtp_secret);
+    $imapTransport = old('imap_encryption', $isEdit ? ($account->imap_encryption ?? 'implicit_tls') : 'implicit_tls');
+    $smtpTransport = old('smtp_encryption', $isEdit ? ($account->smtp_encryption ?? 'starttls') : 'starttls');
+    $imapTransport = in_array($imapTransport, ['ssl', 'tls'], true) && (int) old('imap_port', $isEdit ? $account->imap_port : 993) === 993 ? 'implicit_tls' : $imapTransport;
+    $smtpTransport = in_array($smtpTransport, ['ssl', 'tls'], true) && (int) old('smtp_port', $isEdit ? $account->smtp_port : 587) === 465 ? 'implicit_tls' : $smtpTransport;
     $imapTransport = $imapTransport === 'tls' ? 'starttls' : $imapTransport;
     $smtpTransport = $smtpTransport === 'tls' ? 'starttls' : $smtpTransport;
     $grantRows = collect(old('grants', []))->keyBy('user_id');
@@ -71,12 +71,6 @@
         </div>
       @endif
 
-      @if(! $hasAccountCredentials)
-        <div class="alert alert-warning">
-          This account uses an older internal connection. Enter the complete incoming and outgoing
-          settings below and save it. The same account will be updated in place.
-        </div>
-      @endif
     @endif
 
     <form method="POST" action="{{ $isEdit ? route('tech.admin.settings.email.accounts.update', $account) : route('tech.admin.settings.email.accounts.store') }}" class="row g-3" autocomplete="off">
@@ -180,12 +174,12 @@
             <div class="row g-3">
               <div class="col-sm-8">
                 <label for="imap_host" class="form-label">Server</label>
-                <input type="text" class="form-control @error('imap_host') is-invalid @enderror" id="imap_host" name="imap_host" required value="{{ old('imap_host', $hasAccountCredentials ? $account->imap_host : '') }}" placeholder="mail.example.com">
+                <input type="text" class="form-control @error('imap_host') is-invalid @enderror" id="imap_host" name="imap_host" required value="{{ old('imap_host', $isEdit ? $account->imap_host : '') }}" placeholder="mail.example.com">
                 @error('imap_host')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-sm-4">
                 <label for="imap_port" class="form-label">Port</label>
-                <input type="number" class="form-control @error('imap_port') is-invalid @enderror" id="imap_port" name="imap_port" min="1" max="65535" required value="{{ old('imap_port', $hasAccountCredentials ? $account->imap_port : 993) }}">
+                <input type="number" class="form-control @error('imap_port') is-invalid @enderror" id="imap_port" name="imap_port" min="1" max="65535" required value="{{ old('imap_port', $isEdit ? $account->imap_port : 993) }}">
                 @error('imap_port')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-12">
@@ -198,14 +192,14 @@
               </div>
               <div class="col-12">
                 <label for="imap_username" class="form-label">Username</label>
-                <input type="text" class="form-control @error('imap_username') is-invalid @enderror" id="imap_username" name="imap_username" required value="{{ old('imap_username', $hasAccountCredentials ? $account->imap_username : '') }}" autocomplete="username">
+                <input type="text" class="form-control @error('imap_username') is-invalid @enderror" id="imap_username" name="imap_username" required value="{{ old('imap_username', $isEdit ? $account->imap_username : '') }}" autocomplete="username">
                 @error('imap_username')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-12">
                 <label for="imap_secret" class="form-label">Password</label>
-                <input type="password" class="form-control @error('imap_secret') is-invalid @enderror" id="imap_secret" name="imap_secret" {{ $hasAccountCredentials ? '' : 'required' }} autocomplete="new-password">
+                <input type="password" class="form-control @error('imap_secret') is-invalid @enderror" id="imap_secret" name="imap_secret" {{ $hasSavedCredentials ? '' : 'required' }} autocomplete="new-password">
                 @error('imap_secret')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                @if($hasAccountCredentials)<div class="form-text">Leave blank to keep the saved password.</div>@endif
+                @if($hasSavedCredentials)<div class="form-text">Leave blank to keep the saved password.</div>@endif
               </div>
             </div>
           </div>
@@ -219,12 +213,12 @@
             <div class="row g-3">
               <div class="col-sm-8">
                 <label for="smtp_host" class="form-label">Server</label>
-                <input type="text" class="form-control @error('smtp_host') is-invalid @enderror" id="smtp_host" name="smtp_host" required value="{{ old('smtp_host', $hasAccountCredentials ? $account->smtp_host : '') }}" placeholder="mail.example.com">
+                <input type="text" class="form-control @error('smtp_host') is-invalid @enderror" id="smtp_host" name="smtp_host" required value="{{ old('smtp_host', $isEdit ? $account->smtp_host : '') }}" placeholder="mail.example.com">
                 @error('smtp_host')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-sm-4">
                 <label for="smtp_port" class="form-label">Port</label>
-                <input type="number" class="form-control @error('smtp_port') is-invalid @enderror" id="smtp_port" name="smtp_port" min="1" max="65535" required value="{{ old('smtp_port', $hasAccountCredentials ? $account->smtp_port : 587) }}">
+                <input type="number" class="form-control @error('smtp_port') is-invalid @enderror" id="smtp_port" name="smtp_port" min="1" max="65535" required value="{{ old('smtp_port', $isEdit ? $account->smtp_port : 587) }}">
                 @error('smtp_port')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-12">
@@ -237,14 +231,14 @@
               </div>
               <div class="col-12">
                 <label for="smtp_username" class="form-label">Username</label>
-                <input type="text" class="form-control @error('smtp_username') is-invalid @enderror" id="smtp_username" name="smtp_username" required value="{{ old('smtp_username', $hasAccountCredentials ? $account->smtp_username : '') }}" autocomplete="username">
+                <input type="text" class="form-control @error('smtp_username') is-invalid @enderror" id="smtp_username" name="smtp_username" required value="{{ old('smtp_username', $isEdit ? $account->smtp_username : '') }}" autocomplete="username">
                 @error('smtp_username')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-12">
                 <label for="smtp_secret" class="form-label">Password</label>
-                <input type="password" class="form-control @error('smtp_secret') is-invalid @enderror" id="smtp_secret" name="smtp_secret" {{ $hasAccountCredentials ? '' : 'required' }} autocomplete="new-password">
+                <input type="password" class="form-control @error('smtp_secret') is-invalid @enderror" id="smtp_secret" name="smtp_secret" {{ $hasSavedCredentials ? '' : 'required' }} autocomplete="new-password">
                 @error('smtp_secret')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                @if($hasAccountCredentials)<div class="form-text">Leave blank to keep the saved password.</div>@endif
+                @if($hasSavedCredentials)<div class="form-text">Leave blank to keep the saved password.</div>@endif
               </div>
             </div>
           </div>

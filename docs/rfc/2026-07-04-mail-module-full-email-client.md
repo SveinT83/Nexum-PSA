@@ -1436,8 +1436,12 @@ wrong password or server, and run the connection check again without creating an
 
 Terms and controls such as `Staged`, credential versions, `Legacy mailbox migration`, migration
 preview, provider cutover and replacement provider are not part of the ordinary administrator
-workflow. Svein confirmed that existing account settings may be entered again; no bulk/hybrid
-migration experience is required. This approval supersedes the provider-first UI and ordinary
-password-credential ownership parts added after the original RFC approval. It does not weaken the
-mandatory TLS, endpoint, secret encryption, authorization, audit, bounded-I/O, no-blind-send or
-human-review requirements.
+workflow. After the first simplified implementation still exposed an "older internal connection"
+warning, Svein clarified that no old operational system may remain. Deployment therefore performs
+one automatic, transactional, fail-closed promotion of exactly verified provider credentials into
+the existing account, destroys the obsolete duplicate ciphertext, disables the old lifecycle
+routes and makes Mail runtime accept only account-owned credentials. Historical rows may remain as
+inert audit evidence, never as a configurable or runnable second system. This approval supersedes
+the provider-first UI and ordinary password-credential ownership parts added after the original RFC
+approval. It does not weaken the mandatory TLS, endpoint, secret encryption, authorization, audit,
+bounded-I/O, no-blind-send or human-review requirements.
