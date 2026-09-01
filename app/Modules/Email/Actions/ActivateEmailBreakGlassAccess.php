@@ -5,6 +5,7 @@ namespace App\Modules\Email\Actions;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailBreakGlassAccess;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailMailboxAccessEventRecorder;
 use App\Modules\Notification\Actions\ScheduleMailboxBreakGlassActivationNotification;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -16,6 +17,7 @@ class ActivateEmailBreakGlassAccess
     public function __construct(
         private readonly EmailMailboxAccessEventRecorder $events,
         private readonly ScheduleMailboxBreakGlassActivationNotification $notifications,
+        private readonly EmailLiveAuthorityCoordinator $liveAuthority,
     ) {}
 
     /**
@@ -92,14 +94,20 @@ class ActivateEmailBreakGlassAccess
                 ]);
             }
 
+            $generation = $this->liveAuthority->prepareAccountMutation(
+                $lockedAccount,
+                [$currentActor->id],
+            );
             $startsAt = now()->utc();
-            $access = EmailBreakGlassAccess::query()->create([
+            $access = EmailBreakGlassAccess::query()->forceCreate([
                 'email_account_id' => $lockedAccount->id,
                 'actor_id' => $currentActor->id,
                 ...$operations,
                 'reason' => $reason,
                 'starts_at' => $startsAt,
                 'expires_at' => $startsAt->copy()->addMinutes($duration),
+                'email_live_enable_generation' => $generation,
+                'email_live_start_invalidated_at' => now(),
             ]);
 
             $access->setRelation('account', $lockedAccount);

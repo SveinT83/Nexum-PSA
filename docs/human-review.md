@@ -601,7 +601,7 @@ Reviewed date: 2026-08-25
 | HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Pending (Private/API Rework Implemented; Shared Collaboration Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed / Safety Repair Implemented | 2026-08-16 |  |  |
 | HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend And Accessible UI Implemented; Runtime Disabled) | 2026-08-16 |  |  |
-| HR-2026-08-16-008 | Email private live invalidation and polling fallback | Rework Needed | 2026-08-16 |  |  |
+| HR-2026-08-16-008 | Email private live invalidation and polling fallback | Pending | 2026-08-16 |  |  |
 | HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Rework Needed | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-21 |
 | HR-2026-08-16-005 | Email canonical message and placement cutover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
@@ -1948,7 +1948,7 @@ human-review Order 8 transport, MariaDB deployment, Redis/Reverb, browser UI or 
 
 ### HR-2026-08-16-008 - Email Private Live Invalidation And Polling Fallback
 
-Status: Rework Needed
+Status: Pending
 Added: 2026-08-16
 Environment: Authoritative Dev working copy; migration `130000` is Ran in recovered Dev batch 118,
 forward repairs `2026_08_21_110000` and `120000` are Ran in batches 122 and 123, server config/cache and Vite assets
@@ -2003,6 +2003,14 @@ channel, five-second degradation, visible 15-second polling, 15/30/60 HTTP backo
 checks and hidden/offline pause. Reverb origins and CSP are exact, and a separate operations approval
 gate prevents an accidental environment toggle. Guarded retention protects unfinished fanout and
 unacknowledged user versions.
+
+The 2026-09-01 completion adds transactional authority generation for account, grant, delegation,
+emergency-access, user lifecycle, user-role, and Mail content-permission writers; bounded durable
+user recompute; one-time future start/expiry invalidation; and a dedicated bounded current-view
+projector. The forward guard migration is null-safe and refuses installation while live mode is
+enabled. Migration `2026_09_01_100000` ran on Dev in batch 22 after both live flags read back false; zero accounts or users lacked bootstrapped authority. Focused authority plus delegation/break-glass coverage passes 19 / 225. These changes remove
+the static implementation defects but do not complete the unchecked real-provider/browser/runtime
+checks below, so the entry is Pending rather than Reviewed.
 
 Deploy / migration notes: Migration `130000` ran in recovered Dev batch 118 before this audit;
 forward-only `2026_08_21_110000` ran in batch 122 after a SQLite contract test and a MariaDB pretend

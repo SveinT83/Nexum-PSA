@@ -28,6 +28,7 @@ use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRetentionPurgeAttempt;
 use App\Modules\Email\Models\EmailRetentionPurgeRun;
 use App\Modules\Email\Services\EmailCanonicalContentResolver;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailCanonicalCorrelationRunner;
 use App\Modules\Email\Services\EmailCanonicalCutoverEvidence;
 use App\Modules\Email\Services\EmailCanonicalSelfMapper;
@@ -36,6 +37,7 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -53,6 +55,23 @@ class EmailCanonicalPlacementCutoverTest extends TestCase
     private User $operator;
 
     private int $nextUid = 7000;
+
+
+    private function transferAccountOwnership(EmailAccount $account, User $newOwner): EmailAccount
+    {
+        return DB::transaction(function () use ($account, $newOwner): EmailAccount {
+            $locked = EmailAccount::query()->lockForUpdate()->findOrFail($account->id);
+            app(EmailLiveAuthorityCoordinator::class)->prepareAccountMutation(
+                account: $locked,
+                affectedUserIds: [(int) $locked->owner_id, (int) $newOwner->id],
+                nextOwnerId: (int) $newOwner->id,
+                ownerChanged: true,
+            );
+            $locked->forceFill(['owner_id' => $newOwner->id])->save();
+
+            return $locked->refresh();
+        }, 3);
+    }
 
     protected function setUp(): void
     {
@@ -213,7 +232,7 @@ class EmailCanonicalPlacementCutoverTest extends TestCase
         }
 
         $fresh = app(PreviewEmailCanonicalCutover::class)->backfill($this->operator, [$account->id]);
-        $account->update(['owner_id' => User::factory()->create()->id]);
+        $this->transferAccountOwnership($account, User::factory()->create());
         $this->expectException(AuthorizationException::class);
         app(ApplyEmailCanonicalCutover::class)->handle($fresh, $this->operator);
     }
@@ -591,7 +610,7 @@ class EmailCanonicalPlacementCutoverTest extends TestCase
             'email.mailbox_sync_manage',
             'email.canonical_cutover_manage',
         ]);
-        $account->update(['owner_id' => $replacement->id]);
+        $this->transferAccountOwnership($account, $replacement);
         $this->operator->update(['status' => User::STATUS_DISABLED]);
 
         $this->actingAs($replacement)
@@ -653,7 +672,7 @@ class EmailCanonicalPlacementCutoverTest extends TestCase
             'email.mailbox_sync_manage',
             'email.canonical_cutover_manage',
         ]);
-        $account->update(['owner_id' => $replacement->id]);
+        $this->transferAccountOwnership($account, $replacement);
         $this->operator->update(['status' => User::STATUS_DISABLED]);
 
         $attestation = $this->completeParityAttestation($attestation, $replacement, $process);

@@ -10,6 +10,7 @@ use App\Modules\Email\Jobs\DispatchEmailProviderIdleListeners;
 use App\Modules\Email\Jobs\DispatchEmailProviderReconciliation;
 use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\EmailRetentionPurgeJob;
+use App\Modules\Email\Jobs\MaintainEmailLiveAuthority;
 use App\Modules\Email\Jobs\PollActiveEmailAccounts;
 use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Jobs\RetryDueEmailRemoteOperations;
@@ -88,6 +89,12 @@ Schedule::job(new DispatchPendingInboundEmailNotificationFanouts)
 Schedule::job(new DispatchPendingSignalWebhookDeliveries)
     ->everyMinute()
     ->name('signal.webhook.dispatch')
+    ->withoutOverlapping(5);
+
+// Durable live authority and publication recovery remains safe while transport is disabled.
+Schedule::job(new MaintainEmailLiveAuthority)
+    ->everyMinute()
+    ->name('email.live.maintain')
     ->withoutOverlapping(5);
 
 // Email account health check every five minutes

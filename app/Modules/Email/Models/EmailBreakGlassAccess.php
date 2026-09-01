@@ -30,6 +30,9 @@ class EmailBreakGlassAccess extends Model
         'security_notification_sent_at',
     ];
 
+    // Written only by EmailLiveAuthorityCoordinator.
+    protected $guarded = ['email_live_enable_generation'];
+
     protected $casts = [
         'email_account_id' => 'integer',
         'actor_id' => 'integer',

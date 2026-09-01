@@ -2,8 +2,6 @@
 
 namespace App\Modules\Email\Livewire\Tech;
 
-use App\Modules\Email\Livewire\Tech\Concerns\ManagesSharedComposerDraft;
-
 use App\Models\Core\User;
 use App\Models\Settings\CommonSetting;
 use App\Modules\Email\Actions\AssistEmailComposerWithAi;
@@ -19,11 +17,12 @@ use App\Modules\Email\Actions\RetryEmailRemoteOperation;
 use App\Modules\Email\Actions\SendEmailComposerMessage;
 use App\Modules\Email\Actions\SetEmailUnreadForMe;
 use App\Modules\Email\Actions\SubmitEmailComposerDraft;
-use App\Modules\Email\Actions\SuppressEmailConversationTicketCorrelation;
 use App\Modules\Email\Actions\SummarizeEmailWithAi;
+use App\Modules\Email\Actions\SuppressEmailConversationTicketCorrelation;
 use App\Modules\Email\Actions\UndoEmailRemoteOperation;
 use App\Modules\Email\Actions\UpdateEmailConversationClassification;
 use App\Modules\Email\Jobs\FetchImapAccount;
+use App\Modules\Email\Livewire\Tech\Concerns\ManagesSharedComposerDraft;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailBreakGlassAccess;
 use App\Modules\Email\Models\EmailComposerDraft;
@@ -48,6 +47,7 @@ use App\Modules\Email\Services\EmailConversationProjector;
 use App\Modules\Email\Services\EmailDraftConflictException;
 use App\Modules\Email\Services\EmailDraftFence;
 use App\Modules\Email\Services\EmailLiveCatchUpService;
+use App\Modules\Email\Services\EmailLiveCurrentViewProjector;
 use App\Modules\Email\Services\EmailLiveRuntimeReadiness;
 use App\Modules\Email\Services\EmailRemoteOperationEvidenceSanitizer;
 use App\Modules\Email\Services\EmailRemoteOperationUndoEligibility;
@@ -98,6 +98,14 @@ class MailWorkspace extends Component
     public bool $liveEnabled = false;
 
     public bool $collaborationEnabled = false;
+
+    /** @var array<string, mixed> */
+    public array $liveCurrentViewSnapshot = [];
+
+    /** @var array<string, mixed> */
+    public array $liveStaticRenderSnapshot = [];
+
+    public bool $liveBoundedRefreshPending = false;
 
     public function mount(): void
     {
@@ -195,8 +203,14 @@ class MailWorkspace extends Component
             return;
         }
 
+        $this->liveCurrentViewSnapshot = app(EmailLiveCurrentViewProjector::class)->project(
+            $user,
+            $this->viewMode,
+            $this->accountId,
+            $this->folderId,
+        );
+        $this->liveBoundedRefreshPending = true;
         $this->refreshMailState();
-
     }
 
     public function acknowledgeConversation(): void
@@ -2156,7 +2170,10 @@ class MailWorkspace extends Component
 
     public function render(): View
     {
-        $navigation = $this->navigationData();
+        $bounded = $this->liveBoundedRefreshPending && $this->liveCurrentViewSnapshot !== [];
+        $navigation = $bounded
+            ? $this->boundedNavigationData($this->liveCurrentViewSnapshot)
+            : $this->navigationData();
         $accountIds = $navigation['accountIds'];
         $placements = $this->conversationPlacementPaginator($accountIds);
         $selectedPlacement = $this->selectedPlacement($accountIds);
@@ -2178,6 +2195,23 @@ class MailWorkspace extends Component
             ? $this->placementConversationGroupKey($selectedPlacement, app(EmailConversationProjector::class))
             : null;
 
+        $mailCategories = $bounded
+            ? Category::query()->whereIn('id', $this->liveStaticRenderSnapshot['category_ids'] ?? [])->get()
+            : $this->classificationCategories();
+        $mailTags = $bounded
+            ? Tag::query()->whereIn('id', $this->liveStaticRenderSnapshot['tag_ids'] ?? [])->get()
+            : $this->classificationTags();
+        $sendableAccounts = $bounded
+            ? $this->boundedSendableAccounts($this->liveStaticRenderSnapshot['sendable_account_ids'] ?? [])
+            : $this->sendableAccounts(app(MailboxAccess::class));
+        $remoteOperationsDashboard = $bounded
+            ? ($this->liveStaticRenderSnapshot['remote_operations_dashboard'] ?? ['visible' => false, 'stats' => [], 'items' => []])
+            : $this->remoteOperationsDashboard();
+        if (! $bounded) {
+            $this->rememberStaticRenderSnapshot($mailCategories, $mailTags, $sendableAccounts, $remoteOperationsDashboard);
+        }
+        $this->liveBoundedRefreshPending = false;
+
         return view('email::Livewire.Tech.mail-workspace', [
             'placements' => $placements,
             'selectedPlacement' => $selectedPlacement,
@@ -2187,11 +2221,91 @@ class MailWorkspace extends Component
             'conversationPlacementsTruncated' => $conversationThread['truncated'],
             'conversationPlacementsCanLoadMore' => $conversationThread['can_load_more'],
             'legacyConversationListTruncated' => $this->legacyConversationListTruncated,
-            'mailCategories' => $this->classificationCategories(),
-            'mailTags' => $this->classificationTags(),
-            'sendableAccounts' => $this->sendableAccounts(app(MailboxAccess::class)),
-            'remoteOperationsDashboard' => $this->remoteOperationsDashboard(),
+            'mailCategories' => $mailCategories,
+            'mailTags' => $mailTags,
+            'sendableAccounts' => $sendableAccounts,
+            'remoteOperationsDashboard' => $remoteOperationsDashboard,
+            'statsTruncated' => $navigation['statsTruncated'] ?? [],
+            'navigationTruncated' => $navigation['navigationTruncated'] ?? false,
         ] + $navigation);
+    }
+
+    /** @param array<string, mixed> $snapshot */
+    private function boundedNavigationData(array $snapshot): array
+    {
+        $accountIds = collect($snapshot['account_ids'] ?? [])->map(fn ($id): int => (int) $id)->filter()->take(100)->all();
+        $accounts = $this->authorizedContentAccounts(
+            EmailAccount::query()->whereIn('id', $accountIds)->where('is_active', true)->orderBy('id')->get(),
+            ResolveMailboxAccessDecision::CONTENT_VIEW,
+        );
+        $accountIds = $accounts->pluck('id')->map(fn ($id): int => (int) $id)->all();
+        $ordinaryAccountIds = collect($snapshot['ordinary_account_ids'] ?? [])
+            ->map(fn ($id): int => (int) $id)
+            ->intersect($accountIds)
+            ->take(100)
+            ->values()
+            ->all();
+        $this->ordinaryAccountIdsCache = $ordinaryAccountIds;
+        $this->normalizeFilters($accountIds, $ordinaryAccountIds);
+
+        $folders = EmailFolder::query()
+            ->whereIn('id', collect($snapshot['folder_ids'] ?? [])->take(100)->all())
+            ->whereIn('account_id', $accountIds)
+            ->orderBy('account_id')
+            ->orderBy('id')
+            ->get();
+        $activeBreakGlass = EmailBreakGlassAccess::query()
+            ->whereIn('id', collect($snapshot['break_glass_ids'] ?? [])->take(100)->all())
+            ->where('actor_id', $this->user()?->id)
+            ->with('account:id,address,account_kind,is_active')
+            ->effective()
+            ->get();
+
+        return [
+            'accounts' => $accounts,
+            'accountIds' => $accountIds,
+            'folders' => $folders,
+            'foldersByAccount' => $folders->groupBy('account_id'),
+            'stats' => $snapshot['stats'] ?? [],
+            'statsTruncated' => $snapshot['stats_truncated'] ?? [],
+            'navigationTruncated' => (bool) ($snapshot['navigation_truncated'] ?? false),
+            'hasOrdinaryMailboxAccess' => $ordinaryAccountIds !== [],
+            'activeBreakGlassAccesses' => $activeBreakGlass,
+        ];
+    }
+
+    /** @param array<int> $accountIds */
+    private function boundedSendableAccounts(array $accountIds): Collection
+    {
+        $user = $this->user();
+        if (! $user) {
+            return collect();
+        }
+
+        return EmailAccount::query()
+            ->whereIn('id', collect($accountIds)->map(fn ($id): int => (int) $id)->take(100)->all())
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (EmailAccount $account): bool => app(MailboxAccess::class)
+                ->canAccessAccount($user, $account, MailboxAccess::SEND))
+            ->filter(fn (EmailAccount $account): bool => app(\App\Modules\Email\Services\EmailAccountProviderRuntimeResolver::class)
+                ->databaseReady($account))
+            ->values();
+    }
+
+    private function rememberStaticRenderSnapshot(
+        Collection $categories,
+        Collection $tags,
+        Collection $sendableAccounts,
+        array $remoteOperationsDashboard,
+    ): void {
+        $this->liveStaticRenderSnapshot = [
+            'category_ids' => $categories->pluck('id')->map(fn ($id): int => (int) $id)->take(100)->all(),
+            'tag_ids' => $tags->pluck('id')->map(fn ($id): int => (int) $id)->take(100)->all(),
+            'sendable_account_ids' => $sendableAccounts->pluck('id')->map(fn ($id): int => (int) $id)->take(100)->all(),
+            'remote_operations_dashboard' => $remoteOperationsDashboard,
+        ];
     }
 
     public function canCreateFolderForSelectedAccount(): bool

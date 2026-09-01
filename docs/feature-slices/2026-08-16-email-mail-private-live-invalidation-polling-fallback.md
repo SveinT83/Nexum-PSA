@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Private Live Invalidation And Polling Fallback
 
-Status: Static Publisher Rework Implemented / Runtime Disabled
+Status: Implemented On Dev / Runtime Disabled / Human Review Pending
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -65,11 +65,28 @@ The final isolated Order 8 SQLite matrix passes 32 tests / 161 assertions; adjac
 projection/deletion/reconciliation coverage passes 52 / 457; the actual MariaDB contract passes
 1 / 14; Pint and `npm run build` pass.
 
-Runtime remains prohibited. The quarantined base-authority writers still need one coordinated
-generation/recompute implementation, and periodic refresh still needs extraction of the current
-25-row page/selection/counts from the monolithic workspace render. After those static dependencies,
-the remaining external gate is supervised Reverb, Apache/Plesk proxy/CSP, worker/scheduler health,
-and named browser/revocation/outage review under `HR-2026-08-16-008`.
+## 2026-09-01 Authority And Bounded-View Completion
+
+Account owners, grants, delegations, emergency access, user lifecycle, user roles, and the Mail
+content permission now update durable authority generations inside their domain transactions.
+Exact affected users enter a resumable two-phase access recompute; role-wide changes advance one
+global generation and the minute maintenance job reconciles users in pages of at most 100. Future
+delegation and emergency-access start/expiry boundaries are stamped once and invalidate the exact
+account/user audience without relying on a browser request.
+
+The forced refresh path now projects only current authorized account IDs, allowlisted navigation
+metadata, explicitly capped counts, the selected conversation, and the current 25-row page. It no
+longer invokes the monolithic full-workspace navigation render. Forward migration
+`2026_09_01_100000_restore_email_live_authority_writer_guards.php` bootstraps missing authority rows,
+adds account/user bootstrap triggers, and restores null-safe database writer guards while live mode
+is disabled. It ran on Dev in batch 22 after both live flags were read back as false; bootstrap
+read-back found zero accounts or users without authority state. Focused authority plus
+delegation/break-glass coverage passes 19 tests / 225 assertions.
+
+Runtime remains disabled. The remaining gate is operational and human verification with a real
+provider: supervised Reverb, Apache/Plesk proxy/CSP, dedicated worker and scheduler health, socket
+loss/polling fallback, two-user browser behavior, and named revocation/outage review under
+`HR-2026-08-16-008`.
 
 ## User-Visible Behavior
 

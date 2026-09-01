@@ -3,11 +3,11 @@
 namespace App\Modules\Email\Models;
 
 use App\Models\Core\User;
+use App\Modules\Integration\Models\EmailProviderConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Modules\Integration\Models\EmailProviderConnection;
 
 class EmailAccount extends Model
 {
@@ -49,6 +49,9 @@ class EmailAccount extends Model
         'last_test_at', 'last_test_result', 'last_error_code', 'last_error_message',
         'last_successful_fetch_at', 'last_successful_send_at',
     ];
+
+    // Written only by EmailLiveAuthorityCoordinator.
+    protected $guarded = ['email_live_owner_enable_generation'];
 
     protected $casts = [
         'is_active' => 'boolean',

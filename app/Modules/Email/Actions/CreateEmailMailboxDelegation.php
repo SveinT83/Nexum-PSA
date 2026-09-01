@@ -5,6 +5,7 @@ namespace App\Modules\Email\Actions;
 use App\Models\Core\User;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailMailboxDelegation;
+use App\Modules\Email\Services\EmailLiveAuthorityCoordinator;
 use App\Modules\Email\Services\EmailMailboxAccessEventRecorder;
 use App\Modules\Email\Services\EmailUnreadAccessEpochService;
 use App\Modules\Email\Services\MailboxAccess;
@@ -21,6 +22,7 @@ class CreateEmailMailboxDelegation
         private readonly ResolveMailboxAccessDecision $decisions,
         private readonly EmailMailboxAccessEventRecorder $events,
         private readonly EmailUnreadAccessEpochService $unreadEpochs,
+        private readonly EmailLiveAuthorityCoordinator $liveAuthority,
     ) {}
 
     /**
@@ -89,7 +91,11 @@ class CreateEmailMailboxDelegation
                 ]);
             }
 
-            $delegation = EmailMailboxDelegation::query()->create([
+            $generation = $this->liveAuthority->prepareAccountMutation(
+                $lockedAccount,
+                [$currentDelegate->id],
+            );
+            $delegation = EmailMailboxDelegation::query()->forceCreate([
                 'email_account_id' => $lockedAccount->id,
                 'owner_id' => $currentActor->id,
                 'delegate_id' => $currentDelegate->id,
@@ -98,6 +104,8 @@ class CreateEmailMailboxDelegation
                 'starts_at' => $startsAt,
                 'expires_at' => $expiresAt,
                 'created_by' => $currentActor->id,
+                'email_live_enable_generation' => $generation,
+                'email_live_start_invalidated_at' => $startsAt->lessThanOrEqualTo(now()) ? now() : null,
             ]);
 
             $this->events->recordDelegationCreated($delegation);

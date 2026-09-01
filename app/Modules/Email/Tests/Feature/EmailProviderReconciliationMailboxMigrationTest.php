@@ -46,7 +46,6 @@ class EmailProviderReconciliationMailboxMigrationTest extends TestCase
             );
         } finally {
             $message->forceDelete();
-            $account->delete();
             $this->restoreExpandedSchema($migration);
         }
     }
@@ -77,7 +76,6 @@ class EmailProviderReconciliationMailboxMigrationTest extends TestCase
             );
         } finally {
             $folder->delete();
-            $account->delete();
             $this->restoreExpandedSchema($migration);
         }
     }
@@ -111,7 +109,6 @@ class EmailProviderReconciliationMailboxMigrationTest extends TestCase
             );
         } finally {
             $run->delete();
-            $account->delete();
             $this->restoreExpandedSchema($migration);
         }
     }

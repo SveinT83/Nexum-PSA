@@ -198,12 +198,14 @@ class EmailLiveCatchUpService
                 return;
             }
 
-            DB::table('email_live_user_access_states')
-                ->where('id', $access->id)
-                ->update([
-                    'last_bounded_refresh_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            if ($access->recompute_status === 'sealed') {
+                DB::table('email_live_user_access_states')
+                    ->where('id', $access->id)
+                    ->update([
+                        'last_bounded_refresh_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+            }
 
             if (! $stream || $version < 1) {
                 return;

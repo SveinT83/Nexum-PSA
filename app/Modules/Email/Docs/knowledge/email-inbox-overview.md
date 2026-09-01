@@ -15,6 +15,13 @@ unattempted inbound fanout jobs require an explicit human delivery decision beca
 Push settings are already enabled. Production remains untouched and still needs additive permission
 migration `2026_08_21_100000` when promoted; never substitute the full `RoleSeeder`.
 
+Order 8 live invalidation is code-complete on Dev but remains disabled. Account/user/role authority
+changes and scheduled delegation/emergency-access boundaries now force a bounded current-view
+refresh through durable generations and a minute maintenance job. Migration `2026_09_01_100000` ran on Dev in batch 22 and
+restores the database writer guards. Do not enable Reverb or the live client until the named
+real-provider, worker, scheduler, proxy, socket-loss, and two-user checks in `HR-2026-08-16-008`
+have passed.
+
 ## Mailbox Ownership And Access
 
 Email accounts are classified as shared, personal, or system mailboxes.
