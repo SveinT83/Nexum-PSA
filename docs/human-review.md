@@ -2431,6 +2431,21 @@ unset and no messages are present. The focused repair passes 23 tests / 274 asse
 complete Integration Email-provider matrix passes 71 tests / 624 assertions. Browser
 URL policy prevented Codex from inspecting the local page; remaining browser/account/send checks stay open.
 
+Controlled Dev mailbox E2E evidence 2026-09-01: the bounded Full Test persisted `OK` after
+authenticated IMAP in 173.9 ms and SMTP in 209.0 ms. The provider-binding actor was the only active
+Email administrator; the newly created shared mailbox had no content/send grant, so the protected
+live-authority contract correctly rejected a direct grant write. The same actor then received an
+explicit View/Organize/Send grant through the authoritative generation coordinator and effective Send
+authorization read back true. One self-addressed internal test message was accepted once by SMTP,
+imported into INBOX, and created no Ticket while `ticket_ingress_enabled=false`. Because this generic
+SMTP provider did not create a Sent copy itself, the existing locked/deduplicating Mail backend
+performed one controlled provider Sent APPEND; the next folder sync imported it and changed the exact
+reconciliation from `pending` to `reconciled`. All five discovered folders synchronized, the account
+retained no error, the Nexum every-minute database worker/poll crons were present, and the
+`email`/`default` queues were empty. The only failed-job row was an unrelated 2026-08-26 Customer
+Portal invitation. This runtime evidence does not complete the remaining browser, responsive,
+rotation/revoke/cutover, deliberate Ticket-ingress, production, or named human checks.
+
 Human checks:
 
 - [ ] Back up Dev and capture the listed Email account/source/binding/legacy-ciphertext,
