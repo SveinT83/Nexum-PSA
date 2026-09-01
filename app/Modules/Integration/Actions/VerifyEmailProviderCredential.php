@@ -111,7 +111,7 @@ final class VerifyEmailProviderCredential
                     ? $exception->reasonCode
                     : 'provider_verification_failed';
 
-                DB::transaction(function () use ($actor, $connection, $version, $claim): void {
+                DB::transaction(function () use ($actor, $connection, $version, $claim, $reasonCode): void {
                     $lockedConnection = EmailProviderConnection::query()->lockForUpdate()->find($connection->getKey());
                     $lockedVersion = EmailProviderCredentialVersion::query()->lockForUpdate()->find($version->id);
 
@@ -122,12 +122,12 @@ final class VerifyEmailProviderCredential
                     }
 
                     $lockedConnection->forceFill([
-                        'last_verification_code' => 'verification_failed',
+                        'last_verification_code' => $reasonCode,
                         'last_verified_at' => null,
                         'updated_by' => $actor->id,
                         ...$this->clearedClaim(),
                     ])->save();
-                    $lockedVersion->forceFill(['verification_code' => 'verification_failed'])->save();
+                    $lockedVersion->forceFill(['verification_code' => $reasonCode])->save();
                     $this->events->record(
                         $lockedConnection,
                         $actor,

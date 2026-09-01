@@ -19,12 +19,14 @@ use App\Modules\Integration\Actions\StageLegacyEmailProviderMigration;
 use App\Modules\Integration\Actions\VerifyEmailProviderCredential;
 use App\Modules\Integration\Actions\VerifyLegacyEmailProviderMigrationItem;
 use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
+use App\Modules\Integration\Jobs\VerifyEmailProviderCredentialJob;
 use App\Modules\Integration\Models\EmailProviderConnection;
 use App\Modules\Integration\Models\EmailProviderCredentialVersion;
 use App\Modules\Integration\Models\EmailProviderMigrationItem;
 use App\Modules\Integration\Models\EmailProviderMigrationRun;
 use App\Modules\Integration\Services\EmailProviderManagementAuthorization;
 use App\Modules\Integration\Services\EmailProviderRuntimeFactory;
+use App\Modules\Integration\Services\EmailProviderVerificationDeadline;
 use App\Modules\Integration\Services\EmailProviderVerificationFailurePresenter;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +39,7 @@ final class EmailProviderController extends Controller
     public function __construct(
         private readonly EmailProviderManagementAuthorization $authorization,
         private readonly EmailProviderVerificationFailurePresenter $verificationFailures,
+        private readonly EmailProviderVerificationDeadline $verificationDeadline,
     ) {}
 
     public function index(Request $request): View
@@ -101,6 +104,7 @@ final class EmailProviderController extends Controller
                 'emailAccounts' => fn ($query) => $query->orderBy('address'),
             ]),
             'isRuntimeReady' => app(EmailProviderRuntimeFactory::class)->databaseReady($connection->getKey()),
+            'verificationMessage' => $this->verificationMessage($connection),
         ]);
     }
 
@@ -132,6 +136,16 @@ final class EmailProviderController extends Controller
     ): RedirectResponse {
         $connection = $this->connection($request, $connection);
         $credential = $this->credential($connection, $version);
+
+        if (! $this->verificationDeadline->available()) {
+            VerifyEmailProviderCredentialJob::dispatch(
+                (int) $request->user()->getKey(),
+                (string) $connection->getKey(),
+                (int) $credential->version,
+            );
+
+            return back()->with('status', 'Provider verification is running securely in the Email worker. Reload this page in a moment to see the result.');
+        }
 
         try {
             $verify->execute($request->user(), $connection, $credential);
@@ -396,6 +410,20 @@ final class EmailProviderController extends Controller
         int $version,
     ): EmailProviderCredentialVersion {
         return $connection->credentialVersions()->where('version', $version)->firstOrFail();
+    }
+
+    private function verificationMessage(EmailProviderConnection $connection): ?string
+    {
+        $code = (string) ($connection->last_verification_code ?? '');
+
+        if ($code === '' || in_array($code, [
+            'verified',
+            'verification_in_progress',
+        ], true)) {
+            return null;
+        }
+
+        return $this->verificationFailures->message($code);
     }
 
     private function run(string $publicId): EmailProviderMigrationRun

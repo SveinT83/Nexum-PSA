@@ -4,15 +4,19 @@ namespace App\Modules\Integration\Tests\Feature;
 
 use App\Models\Core\User;
 use App\Modules\Integration\Actions\CreateEmailProviderConnection;
+use App\Modules\Integration\Actions\VerifyEmailProviderCredential;
 use App\Modules\Integration\Exceptions\EmailProviderSecurityException;
+use App\Modules\Integration\Jobs\VerifyEmailProviderCredentialJob;
 use App\Modules\Integration\Models\EmailProviderConnection;
 use App\Modules\Integration\Models\EmailProviderCredentialVersion;
 use App\Modules\Integration\Models\EmailProviderEvent;
 use App\Modules\Integration\Services\EmailProviderConnectionVerifier;
+use App\Modules\Integration\Services\EmailProviderVerificationDeadline;
 use App\Modules\Integration\Support\EmailProviderRuntimeCredentials;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
@@ -66,9 +70,9 @@ class EmailProviderCredentialVerificationResponseTest extends TestCase
             ->assertSee('role="alert"', false);
 
         $this->assertSame('staged', $connection->fresh()->status);
-        $this->assertSame('verification_failed', $connection->fresh()->last_verification_code);
+        $this->assertSame($reasonCode, $connection->fresh()->last_verification_code);
         $this->assertSame(EmailProviderCredentialVersion::STATE_STAGED, $credential->fresh()->state);
-        $this->assertSame('verification_failed', $credential->fresh()->verification_code);
+        $this->assertSame($reasonCode, $credential->fresh()->verification_code);
         $this->assertDatabaseHas('integration_email_provider_events', [
             'provider_integration_id' => $connection->getKey(),
             'event_type' => 'credential_verification_failed',
@@ -103,6 +107,48 @@ class EmailProviderCredentialVerificationResponseTest extends TestCase
                 json_encode(session()->all(), JSON_THROW_ON_ERROR),
             );
         }
+    }
+
+    #[Test]
+    public function verify_route_queues_the_bounded_probe_when_the_web_runtime_has_no_signal_deadline(): void
+    {
+        Queue::fake();
+        $deadline = new class extends EmailProviderVerificationDeadline
+        {
+            public function available(): bool
+            {
+                return false;
+            }
+
+            public function run(#[\SensitiveParameter] \Closure $callback): mixed
+            {
+                return $callback();
+            }
+        };
+        $this->app->instance(EmailProviderVerificationDeadline::class, $deadline);
+        $connection = $this->createProvider();
+        $credential = $connection->credentialVersions()->sole();
+
+        $response = $this->actingAs($this->operator)
+            ->post(route(
+                'tech.admin.system.integrations.email-providers.credentials.verify',
+                [$connection->getKey(), $credential->version],
+            ));
+
+        $response->assertRedirect()->assertSessionHas('status', 'Provider verification is running securely in the Email worker. Reload this page in a moment to see the result.');
+        $this->assertSame(0, $this->verifier->calls);
+        Queue::assertPushed(VerifyEmailProviderCredentialJob::class, function (VerifyEmailProviderCredentialJob $job) use ($connection, $credential): bool {
+            $this->assertStringNotContainsString('imap-user-canary', serialize($job));
+            $this->assertStringNotContainsString('imap-secret-canary', serialize($job));
+            $job->handle(app(VerifyEmailProviderCredential::class));
+
+            return $job->providerIntegrationId === $connection->getKey()
+                && $job->credentialVersion === (int) $credential->version;
+        });
+
+        $this->assertSame(1, $this->verifier->calls);
+        $this->assertNotNull($credential->fresh()->verified_at);
+        $this->assertSame('verified', $connection->fresh()->last_verification_code);
     }
 
     #[Test]

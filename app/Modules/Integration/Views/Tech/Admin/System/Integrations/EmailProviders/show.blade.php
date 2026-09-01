@@ -13,6 +13,7 @@
     @php($stagedCredential = $connection->credentialVersions->firstWhere('state', 'staged'))
     @if(session('status'))<div class="alert alert-success" role="status">{{ session('status') }}</div>@endif
     @if(session('error'))<div class="alert alert-danger" role="alert">{{ session('error') }}</div>@endif
+    @if(! session('error') && $verificationMessage)<div class="alert alert-danger" role="alert">{{ $verificationMessage }}</div>@endif
 
     <!-- Provider identity and endpoint changes require a fresh binding by design. -->
     <div class="alert alert-info d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3" role="note">

@@ -48,6 +48,12 @@ mixed public/private or otherwise unsafe set rejects the complete connection. Ne
 address but keeps the original normalized hostname for SNI and certificate verification, requires
 TLS 1.2 or newer, and authenticates only after TLS is established.
 
+The web request never weakens this deadline. When PHP-FPM cannot own the required signal alarm,
+**Verify** queues one unique opaque-ID job on the `email` queue. The CLI Email worker performs the
+same exact-version, authorization, DNS, TLS, IMAP, SMTP, claim, and sanitized-result workflow with
+the hard deadline available. The job never serializes endpoints, usernames, passwords, ciphertext,
+or resolved addresses. Keep the documented database `email,default` worker running.
+
 ### Verification Failures
 
 A failed **Verify** returns to the provider page and keeps the provider and credential version in

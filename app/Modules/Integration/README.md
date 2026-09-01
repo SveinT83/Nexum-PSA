@@ -50,6 +50,9 @@ and credential version under provider/account locks, retires the previous versio
 ciphertext. **Revoke** destroys local ciphertext and blocks new runtime use; it does not claim that a
 provider-side password was revoked. Only secret rotation is allowed in place. A username or endpoint
 change requires a new connection, explicit account rebind, and mailbox re-baseline.
+When PHP-FPM cannot provide the hard signal deadline, the Verify route queues one unique opaque-ID
+job on the existing database `email` queue. The CLI Email worker performs the same bounded operation;
+no endpoint or credential material enters the job payload.
 
 The legacy migration surface is deliberately staged: read-only preview, local locked re-encryption,
 separate provider Verify, pause/drain, exact cutover readiness, source/reference-only cutover, and a

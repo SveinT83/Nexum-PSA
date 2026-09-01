@@ -2419,6 +2419,18 @@ recorded above; it does not replace the open browser checks.
 Independent read-only code-security audit reports GO with no remaining order-6 P0/P1. Automated
 evidence does not change this reopened entry to `Reviewed`.
 
+Dev rework evidence 2026-09-01: the first browser Verify exposed that PHP-FPM lacks the signal
+functions required by the hard provider deadline. The page incorrectly categorized that immediate
+runtime limitation as a provider timeout even though sanitized direct checks reached both configured
+ports and completed authenticated IMAP and SMTP in under one second. The Verify route now dispatches
+one unique opaque-ID job to the existing database `email` worker only when the web runtime lacks that
+deadline; the CLI worker reauthorizes and performs the unchanged exact-version bounded probe. The
+controlled provider version completed through this worker, was explicitly activated, and is runtime
+ready. One shared Email account was then bound at version 1 and activated; its health result remains
+unset and no messages are present. The focused repair passes 23 tests / 274 assertions; the
+complete Integration Email-provider matrix passes 71 tests / 624 assertions. Browser
+URL policy prevented Codex from inspecting the local page; remaining browser/account/send checks stay open.
+
 Human checks:
 
 - [ ] Back up Dev and capture the listed Email account/source/binding/legacy-ciphertext,
