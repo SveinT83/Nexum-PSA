@@ -9191,7 +9191,11 @@ not explicitly left open above. Full confirmation is not yet provided.
   credentials leave the mailbox inactive; a stopped Email worker leaves the UI in Testing;
   authenticated SMTP still needs one controlled delivery test to prove recipient and Sent-folder
   behavior in production.
-- **Status:** Pending
+- **Review Notes:** On 2026-09-02 Svein found a stale **Email Providers** card on the Integrations
+  hub after the provider lifecycle had been retired. The card and its provider/migration copy were
+  removed, regression coverage was added, and Dev browser read-back confirmed the card is absent.
+  The remaining controlled account and production checks above still require explicit review.
+- **Status:** In Review
 - **Reviewer:** Svein Tore
 
 

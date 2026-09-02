@@ -80,14 +80,6 @@
                     ['label' => 'Privacy & Coordinator', 'icon' => 'bi-shield-check', 'route' => 'tech.admin.system.integrations.ai.privacy.index'],
                 ],
             ],
-            [
-                'title' => 'Email Providers',
-                'icon' => 'bi-envelope-lock',
-                'description' => 'Manage independent IMAP/SMTP provider records, credential versions, verification, and legacy mailbox cutover.',
-                'badge' => ['label' => 'Managed lifecycle', 'class' => 'text-bg-light border'],
-                'actions' => [
-                ],
-            ],
         ];
 
         if (auth()->user()?->can('integration.rmm_manage')) {
