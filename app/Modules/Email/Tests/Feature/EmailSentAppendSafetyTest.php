@@ -2,6 +2,7 @@
 
 namespace App\Modules\Email\Tests\Feature;
 
+use App\Modules\Email\Jobs\AppendEmailProviderSentCopy;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailLog;
@@ -78,6 +79,43 @@ class EmailSentAppendSafetyTest extends TestCase
         $this->assertSame(['Sent'], $client->folderPaths);
         $this->assertSame(EmailSentReconciliation::STATUS_APPENDED, $first->status);
         $this->assertSame(EmailSentReconciliation::STATUS_APPENDED, $second->status);
+    }
+
+    #[Test]
+    public function queued_sent_append_uses_the_same_duplicate_safe_service_boundary(): void
+    {
+        [$account, $reconciliation] = $this->pendingReconciliation('queued-append');
+        $client = new class($account) extends ImapClient
+        {
+            public int $writes = 0;
+
+            public function connect(): void {}
+
+            public function disconnect(): void {}
+
+            public function appendSent(string $folderPath, string $message): array
+            {
+                $this->writes++;
+
+                return [
+                    'ok' => true,
+                    'folder_path' => $folderPath,
+                    'imap_uid_validity' => 900,
+                    'imap_uid' => 903,
+                ];
+            }
+        };
+        $this->app->bind(ImapClient::class, fn () => $client);
+
+        $job = new AppendEmailProviderSentCopy($reconciliation->id);
+        $job->handle(app(EmailSentReconciliationService::class));
+        $job->handle(app(EmailSentReconciliationService::class));
+
+        $this->assertSame(1, $client->writes);
+        $this->assertSame(
+            EmailSentReconciliation::STATUS_APPENDED,
+            $reconciliation->fresh()->status,
+        );
     }
 
     #[Test]

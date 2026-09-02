@@ -2,7 +2,7 @@
 
 Status: Approved
 Date: 2026-07-04
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 Owner: Svein / Codex
 Level: 3
 GitHub Discussion: https://github.com/SveinT83/Nexum-PSA/discussions/38
@@ -402,11 +402,11 @@ administrator enters a replacement. One save action runs bounded IMAP authentica
 SMTP authentication. A passing check activates the requested account state; a failed check leaves
 the account editable and inactive with a specific safe error.
 
-Integration continues to own OAuth/client registration, reusable third-party provider connections,
-shared token lifecycle, AI provider governance and central external-data policy. Existing
-Integration-owned password-provider rows may be retained as internal audit/rollback evidence, but
-ordinary Email administration does not expose their lifecycle and does not require a migration
-workflow. An existing account can be repaired by re-entering its settings in place.
+Integration continues to own OAuth client registration, shared third-party token lifecycle, AI
+provider governance and central external-data policy. Email owns every mailbox account and its
+password-based IMAP/SMTP configuration. Historical provider-first rows may remain only as inert
+metadata after their credential ciphertext is destroyed; they are neither a connection source nor a
+second runtime. An existing account is repaired by editing and testing that same account in place.
 
 Every provider path has a non-configurable security floor: verified TLS with hostname/certificate
 validation and no silent downgrade or certificate bypass; least-scope OAuth or provider credentials;
@@ -740,8 +740,8 @@ Automatic replies must be visually and operationally distinct from summaries and
 
 | Domain | Ownership |
 | --- | --- |
-| Email | Accounts, folders, sync, canonical messages/placements, threads, drafts, sending, Mail UI/API, message-local rules, rule execution, Mail AI suggestions. |
-| Integration | New provider connections/OAuth and token lifecycle, AI providers/models, central data-egress policy, managed workload execution, provider governance, usage/cost telemetry, API ability catalog. Legacy encrypted IMAP/SMTP secrets remain in Email until a dedicated migration. |
+| Email | Mailbox accounts, password-based IMAP/SMTP settings and health, folders, sync, canonical messages/placements, threads, drafts, sending, Mail UI/API, message-local rules, rule execution, and Mail AI suggestions. |
+| Integration | OAuth client registration and shared token governance for driver-specific account connections, AI providers/models, central data-egress policy, managed workload execution, usage/cost telemetry, and the API ability catalog. It does not own password-based IMAP/SMTP accounts or credentials. |
 | UserManagement | User lifecycle and global role permissions; Email owns per-mailbox grants/delegation. |
 | Contact / Clients / Relationship | Identity and organization/vendor records; Email stores links and suggestions, not duplicate master records. |
 | Ticket / Sales / Task | Domain record creation and mutation through their guarded actions. Ticket owns case workflow, portal visibility, internal notes, and retained case documentation. Email owns the live mailbox placement/cache and account-scoped conversation; guarded links project authorized conversation messages into the Ticket timeline. |

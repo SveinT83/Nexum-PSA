@@ -1011,6 +1011,12 @@ coverage passed 47 / 321, broad Email module/inbound coverage 155 / 1,308, and t
 directory 347 / 3,030. Browser/access review, the separate 479/650 canonical evidence, and raw
 snapshot evidence review for messages 456 and 478 remain Rework Needed under `HR-2026-08-15-006`.
 
+Current Dev was read back on 2026-09-02 and now contains message IDs 1-20, none of those historical
+IDs, and no message whose stored attachment counter exceeds its attachment rows. The old target is
+therefore retired from the active repair gate without copying or deleting evidence. The current
+placement-bound download and recovery contract passes 15 tests / 110 assertions; browser and access
+checks remain In Review under `HR-2026-08-15-006`.
+
 ## Controlled Dev Incident Recovery
 
 The 2026-08-15 recovery of the reported Trash/draft/send incident used fresh exact provider evidence

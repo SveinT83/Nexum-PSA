@@ -3,6 +3,7 @@
 namespace App\Modules\Email\Tests\Feature;
 
 use App\Models\Core\User;
+use App\Modules\Email\Jobs\AppendEmailProviderSentCopy;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailAccountUserGrant;
 use App\Modules\Email\Models\EmailComposerDraft;
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
@@ -175,6 +177,8 @@ class EmailComposeDraftSendApiParityTest extends TestCase
     #[Test]
     public function preview_send_idempotency_and_sent_reconciliation_use_one_safe_api_contract(): void
     {
+        Queue::fake();
+
         $account = $this->sendableAccount([$this->actor]);
         $mailer = new class extends SmtpAccountMailer
         {
@@ -238,6 +242,7 @@ class EmailComposeDraftSendApiParityTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.id', $submissionId)
             ->assertJsonPath('data.sent_reconciliation.status', EmailSentReconciliation::STATUS_PENDING);
+        Queue::assertPushed(AppendEmailProviderSentCopy::class, 1);
 
         $submission = EmailOutboundSubmission::query()->where('public_id', $submissionId)->sole();
         $folder = EmailFolder::query()->create([

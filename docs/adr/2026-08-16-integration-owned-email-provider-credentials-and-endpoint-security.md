@@ -1,9 +1,15 @@
 # ADR: Integration-Owned Email Provider Credentials And Endpoint Security
 
-Status: Accepted
+Status: Superseded
 Date: 2026-08-16
 Decision Makers: Svein / Codex
 Related RFC: `../rfc/2026-07-04-mail-module-full-email-client.md`
+Superseded by: `2026-09-01-email-account-owned-imap-smtp-configuration.md`
+
+> Historical decision only. It must not be used to design, configure, or operate Mail. Email now
+> owns password-based IMAP/SMTP settings and credentials on each account. The provider-first UI,
+> staging, credential-version, migration-preview, cutover, and provider-owned runtime described
+> below are retired and disabled.
 Related ADR: `2026-08-11-email-owned-mail-client-domain.md`
 Feature Slice: `../feature-slices/2026-08-16-email-mail-integration-provider-credentials-endpoint-security.md`
 

@@ -24,7 +24,7 @@ Current non-goals for this foundation slice:
   Smart Inbox suggestions, and expose only the documented human-reviewed actions after normal user,
   mailbox, target-domain, agent-action, and exact agent-scope checks pass.
 
-## Current Dev rollout record (2026-08-24)
+## Current Dev rollout record (updated 2026-09-02)
 
 - Mail completion migrations `2026_08_24_110000`, `120000`, `125000`, `130000`, and `140000`
   ran in Dev batches 124 through 128, one per step. The existing draft remains private and all new
@@ -34,9 +34,11 @@ Current non-goals for this foundation slice:
 - Keep `EMAIL_LIVE_ENABLED`, `EMAIL_LIVE_RUNTIME_APPROVED`, `VITE_EMAIL_LIVE_ENABLED`,
   `EMAIL_MAIL_COLLABORATION_ENABLED`, `EMAIL_MAIL_COLLABORATION_UI_ENABLED`, and
   `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` false. Schema deployment does not activate those features.
-- Both Dev accounts use Integration-owned provider bindings at version 2 and the approved exact
-  private `/32`. The targeted cron dispatches polling and runs one database `email,default` worker.
-  The complete Laravel scheduler and the `notifications` worker are not active.
+- Dev has one active shared account with account-owned password-based IMAP/SMTP settings and a
+  positive account configuration version. No account is bound to an Integration provider, no
+  provider credential ciphertext remains, and normal runtime exposes no provider lifecycle routes.
+  The targeted cron dispatches polling and runs one database `email,default` worker. The complete
+  Laravel scheduler and the `notifications` worker are not active.
 - There are 136 unattempted inbound notification-fanout jobs. Web Push is already enabled for the
   relevant types, so an operator must review that cohort before starting notification delivery or
   the complete scheduler. No notification preference was changed during completion.
@@ -75,6 +77,9 @@ Current non-goals for this foundation slice:
   `AssistEmailComposerWithAi`, `PerformEmailRemoteOperation`, `RecordEmailRemoteOperation`,
   `RunEmailRemoteOperation`, `RetryEmailRemoteOperation`, `CancelEmailRemoteOperation`,
   `RunDueEmailRemoteOperations`
+- Jobs: `AppendEmailProviderSentCopy` queues exactly one duplicate-safe provider Sent append after
+  SMTP acceptance and durable reconciliation evidence. Normal Sent-folder synchronization confirms
+  the exact Message-ID and completes the outbound submission without another SMTP write.
 - Services: `ImapClient`, `EmailFolderProjector`, `EmailTestService`, `SmtpAccountMailer`,
   `EmailComposerDraftService`, `EmailProviderDraftSyncService`, `EmailSignatureRenderer`,
   `EmailPrivateStorage`,
@@ -499,6 +504,12 @@ snapshots. All original, duplicate, and unreferenced evidence remains preserved;
 operation copied, deleted, moved, or rewrote a file. Keep `HR-2026-08-15-006` open until a named
 human reviews the canonical evidence and browser/download behavior.
 
+That paragraph records the old recovery database. The current Dev readback on 2026-09-02 contains
+message IDs 1-20, does not contain 456/478/479, and has zero attachment-counter/row discrepancies.
+Those obsolete IDs are no longer an active code-rework target and must never be mapped onto current
+rows. The download/recovery implementation remains covered by 15 tests / 110 assertions; only its
+current browser/access human review remains open.
+
 ### EmailSignature — `app/Modules/Email/Models/EmailSignature.php`
 Backs `email_signatures`. Each technician has one Mail-owned personal signature, edited from the
 Profile workspace and surfaced below the page AI chat as a default-collapsed Mail right-bar card.
@@ -608,8 +619,9 @@ Backs `email_logs` (`database/migrations/2025_11_11_000005_create_email_logs_tab
 ### ImapClient — `app/Modules/Email/Services/ImapClient.php`
 A thin wrapper around Webklex to connect to a specific account and interact with provider folders.
 - `connect()`: resolves the exact source and expected positive binding version through
-  `EmailAccountProviderRuntimeResolver`, then builds a pinned verified-TLS transport through
-  Integration. It never selects a legacy or system fallback for an Integration-bound account.
+  `EmailAccountProviderRuntimeResolver`, then builds a pinned verified-TLS transport from the
+  account-owned IMAP settings through the shared endpoint-security policy. It never selects an
+  Integration provider, legacy secret, or system fallback.
 - `fetchUnseen(limit, page)`: opens INBOX and returns a bounded unseen page for explicit diagnostics. Automatic polling deliberately does not interpret unread state as backlog work.
 - `fetchRecent(limit)`: opens INBOX and returns the newest messages regardless of Seen state for explicit diagnostics and compatibility.
 - `mailboxState()`: returns INBOX `UIDVALIDITY` and `UIDNEXT` so automatic polling can establish and verify a durable live boundary.
@@ -626,9 +638,10 @@ Implementation notes:
 - Every provider-I/O caller holds the per-account provider lock through re-resolution, connect/auth,
   operation, and disconnect. Durable work must supply its frozen binding version; immediate work
   captures and rechecks the current version under that lock.
-- Integration enforces IMAP 993 implicit TLS or 143 STARTTLS (or a uniquely named installation
-  policy), pins the approved resolved address, keeps the original host for SNI/peer-name checks,
-  verifies certificates, rejects self-signed certificates, and requires TLS 1.2 or newer.
+- The shared endpoint-security policy enforces IMAP 993 implicit TLS or 143 STARTTLS (or a uniquely
+  named installation policy), pins the approved resolved address, keeps the original host for
+  SNI/peer-name checks, verifies certificates, rejects self-signed certificates, and requires TLS
+  1.2 or newer. Reusing security code does not transfer mailbox or credential ownership out of Email.
 - Header metadata is parsed from Webklex's supported `getHeader()->raw` source. Folded values are unfolded while repeated `Received` and `Authentication-Results` fields retain top-to-bottom order. Missing or malformed authentication evidence remains empty and therefore fails closed.
 
 ### EmailTestService — `app/Modules/Email/Services/EmailTestService.php`

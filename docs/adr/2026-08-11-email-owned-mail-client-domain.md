@@ -65,23 +65,21 @@ Email owns:
 
 ### Credential And Provider Boundary
 
-Integration owns:
+Email owns the complete mailbox account, including password-based IMAP/SMTP endpoints, usernames,
+encrypted write-only passwords, connection health, and every runtime read of those settings. An
+administrator creates, repairs, tests, and activates one account in the Email account form; no
+separate provider, staged credential, cutover, or migration object is part of that workflow.
 
-- new reusable provider connections,
-- OAuth/client registration and token lifecycle,
-- shared provider secret governance,
-- provider/model/agent/workload configuration for AI,
-- the central AI data-egress policy and privacy gateway,
-- AI governance, access metadata, usage/cost telemetry, and the shared API ability catalog.
+Integration owns OAuth client registration and shared token governance used by later driver-specific
+account connection actions. It also owns provider/model/agent/workload configuration for AI, the
+central AI data-egress policy and privacy gateway, AI governance, access metadata, usage/cost
+telemetry, and the shared API ability catalog. These responsibilities do not make the mailbox or its
+password credentials Integration-owned, and an OAuth adapter cannot widen Email mailbox authority.
 
-Email references the applicable Integration connection and owns the normalized mailbox behavior that
-uses it. A provider adapter cannot widen Email mailbox authorization.
-
-Existing encrypted IMAP/SMTP credentials on `email_accounts` remain a supported compatibility path
-until a dedicated Feature Slice introduces an Integration-owned credential/connection reference,
-backfills it safely, verifies runtime parity, provides rollback, and later removes obsolete secret
-fields. No first-slice migration may break current Email polling or SMTP callers merely to make the
-target boundary look complete.
+The account-owned password boundary supersedes the provider-first portion of the original decision;
+see `2026-09-01-email-account-owned-imap-smtp-configuration.md`. Historical provider-first rows may
+remain only as inert metadata after duplicate ciphertext destruction. They are not configurable and
+Mail runtime refuses to use them.
 
 ### Authorization Boundary
 

@@ -603,14 +603,14 @@ Reviewed date: 2026-08-25
 | HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend And Accessible UI Implemented; Runtime Disabled) | 2026-08-16 |  |  |
 | HR-2026-08-16-008 | Email private live invalidation and polling fallback | Pending | 2026-08-16 |  |  |
 | HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
-| HR-2026-08-16-006 | Integration-owned Email provider credentials and endpoint security | Rework Needed | 2026-08-16 | Svein | 2026-08-19; reopened 2026-08-21 |
+| HR-2026-08-16-006 | Superseded Integration-owned Email provider credentials and endpoint security | Superseded | 2026-08-16 | Svein | Replaced 2026-09-01 by HR-2026-09-01-001 |
 | HR-2026-08-16-005 | Email canonical message and placement cutover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-004 | Email canonical message shadow correlation | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-003 | Email per-user unread baselines and explicit backlog handover | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-002 | Email personal mailbox delegation, break-glass, and access history | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-16-001 | Email Mail historical import and UID re-baseline | Reviewed | 2026-08-16 | Svein | 2026-08-19 |
 | HR-2026-08-15-007 | Email Mail desktop workspace density and height polish | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
-| HR-2026-08-15-006 | Email Mail inbound attachment recovery and download | Rework Needed | 2026-08-15 |  |  |
+| HR-2026-08-15-006 | Email Mail inbound attachment recovery and download | In Review | 2026-08-15 |  | Current data has no discrepancy; browser/access review pending |
 | HR-2026-08-15-005 | Email Mail Smart Inbox reader-first polish | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
 | HR-2026-08-15-004 | Email Mail decoded subject search compatibility | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
 | HR-2026-08-15-003 | Email Mail runtime reliability, truthful send follow-up, and right-bar controls | Reviewed | 2026-08-15 | Svein | 2026-08-25 |
@@ -2278,8 +2278,10 @@ remains `In Review` until those checks are performed and explicitly confirmed.
 
 ### HR-2026-08-16-006 - Integration-Owned Email Provider Credentials And Endpoint Security
 
-Status: Rework Needed
+Status: Superseded
 Added: 2026-08-16
+Superseded: 2026-09-01 by `HR-2026-09-01-001` and
+`docs/adr/2026-09-01-email-account-owned-imap-smtp-configuration.md`
 Environment: Authoritative Dev working copy; implementation, automated verification, disposable
 MariaDB migration contract, independent read-only code-security audit, and the 2026-08-21 additive
 permission repair complete; controlled browser/provider/worker rollout, historical telemetry
@@ -2288,6 +2290,12 @@ Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-16-integration-owned-email-provider-credentials-and-endpoint-security.md`,
 `docs/feature-slices/2026-08-16-email-mail-integration-provider-credentials-endpoint-security.md`,
 `HR-2026-08-16-001`, `HR-2026-08-16-005`, and `HR-2026-08-16-007`
+
+Disposition: This entry is retained as historical evidence only. Svein rejected the provider-first
+ownership, staging, credential-version, migration-preview, cutover, and runtime model. Those checks
+must not be completed or resumed. The surviving endpoint/TLS, bounded-I/O, redaction, audit, and
+no-blind-send requirements moved into the account-owned replacement review. Current Mail completion
+and browser checks are tracked only under `HR-2026-09-01-001`.
 
 Scope: Integration becomes the sole writer and lifecycle owner for Email provider endpoints,
 usernames, and encrypted password credentials. One `type=email_provider` Integration root owns a
@@ -3206,10 +3214,10 @@ Result / notes:
 
 ### HR-2026-08-15-006 - Email Mail Inbound Attachment Recovery And Download
 
-Status: Rework Needed
+Status: In Review
 Added: 2026-08-15
-Environment: Recovered Dev; current direct readback finds 32 of 34 expected attachment parts on
-their exact source rows; canonical evidence, browser and named review remain pending
+Environment: Current Dev; no current attachment counter/row discrepancy; browser and named review
+remain pending
 Related: `docs/rfc/2026-07-04-mail-module-full-email-client.md`,
 `docs/adr/2026-08-11-email-canonical-message-mailbox-placement.md`,
 `docs/adr/2026-08-11-email-mailbox-access-and-rule-authority.md`,
@@ -3250,6 +3258,14 @@ attachments and must not be substituted automatically. Messages 456 and 478 each
 snapshots. This current evidence supersedes both the earlier 30/34 snapshot and later 34/34
 completion claims. No completion-pass operation copied, deleted, moved, or rewrote a file.
 
+2026-09-02 current-Dev correction: the current database contains 20 Email messages with IDs `1`
+through `20`. Historical recovery IDs `456`, `478`, and `479` are absent, and a full readback found
+zero current messages whose stored attachment counter exceeds their actual attachment-row count.
+Those old targets cannot be safely recovered into the current database and are retired from the
+active implementation gate without guessing a replacement row, copying bytes, or deleting evidence.
+A future discrepancy requires a new exact target/preflight. This does not complete the browser and
+access human-review checks below.
+
 The current 2026-08-24 12:47 CEST redacted inventory reports 1,445 files: 968 referenced and 477 unreferenced. It reports
 28 missing raw references, 79 non-private files, 15 duplicate unreferenced checksum+size groups, and
 zero unsafe or unreadable files. Original, duplicate, and unreferenced evidence remains preserved;
@@ -3277,7 +3293,8 @@ Automated verification: focused `EmailAttachmentAccessRecoveryTest` passes **15 
 assertions**. It covers exact placement/message ownership, active account/grant scope, private path
 allowlisting, safe response headers, bounded/idempotent snapshot/provider/legacy-directory recovery,
 readiness failure, rejection guards, no provider call for exact legacy evidence, and negative identity
-cases. Before this narrow follow-up, the adjacent exact provider-read package passed 47 / 321, the
+cases. The complete focused test passed again on 2026-09-02 with 15 tests / 110 assertions after the
+current-database readback. Before this narrow follow-up, the adjacent exact provider-read package passed 47 / 321, the
 broad Email module/inbound package 155 / 1,308, and the complete Email directory 347 / 3,030. Pint,
 PHP syntax, and diff checks pass for the follow-up. The controlled side-effect window created zero
 remote operations/attempts, rule attempts, outbound logs, Ticket-domain
@@ -3299,9 +3316,10 @@ Manual checks:
   `email/attachments/{account_id}/{imap_uid}` directory with exactly two policy-accepted direct files,
   preserved counter two, and no provider search. Confirm mismatch, symlink, nested/outside-root,
   empty/oversized, and denied-MIME cases fail without partial persistence.
-- [ ] Review messages `456`, `478`, `479`, and same-identity `650`. Confirm exact source-row evidence,
-  the missing raw snapshots, and why message 650's Trash raw/two attachments remain independent
-  evidence rather than an automatic substitute for 479. Approve no guessed copy or deletion.
+- [ ] Review the historical report for messages `456`, `478`, `479`, and same-identity `650` only as
+  preserved incident evidence. Confirm the current database no longer contains those IDs, has no
+  attachment counter/row discrepancy, and that no current row should receive a guessed copy or
+  deletion based on the obsolete report.
 - [ ] Confirm the original legacy source files, duplicate account-2 legacy copies, and previously
   recorded 477 unreferenced files remain preserved for a separate evidence review; approve no
   deletion as part of this check.
@@ -3322,9 +3340,9 @@ Manual checks:
 
 Reviewer:
 Reviewed date:
-Result / notes: Reopened as Rework Needed. Current direct readback finds 32 of 34 expected parts on
-exact source rows and preserves same-identity evidence separately; no browser or named human review
-is complete.
+Result / notes: Current implementation and data no longer require attachment rework. Historical
+targets are absent and current discrepancy count is zero; browser/access and named human review are
+still incomplete.
 
 ### HR-2026-08-15-005 - Email Mail Smart Inbox Reader-First Polish
 
@@ -9159,21 +9177,21 @@ not explicitly left open above. Full confirmation is not yet provided.
 - **Affected:** Admin Email Accounts, encrypted account credentials, IMAP/SMTP connection checks,
   account activation, Email worker, and the one-way retirement of Integration provider credentials.
 - **Checks:**
-    - [ ] Confirm Email Accounts has one visible **Add account** action and no ordinary Email
+    - [x] Confirm Email Accounts has one visible **Add account** action and no ordinary Email
       provider, staged-credential, replacement-provider, or mailbox-migration workflow.
-    - [ ] After migration, confirm every Email account has account-owned settings, no account is
+    - [x] After migration, confirm every Email account has account-owned settings, no account is
       provider-bound, and historical provider credential ciphertext is destroyed.
     - [ ] Add a controlled account using its email address, IMAP details, and SMTP details; confirm
       the page shows Testing and then separate incoming/outgoing success or safe failure guidance.
     - [ ] Enter a deliberately wrong password; confirm the same account remains inactive and
       editable, then replace the password on that account and pass both checks without creating a
       new account.
-    - [ ] Leave both password fields blank during a non-password edit; confirm the saved passwords
+    - [x] Leave both password fields blank during a non-password edit; confirm the saved passwords
       remain valid and both checks can run again.
-    - [ ] Confirm the account becomes active only after both authenticated checks pass when
+    - [x] Confirm the account becomes active only after both authenticated checks pass when
       **Activate after a successful test** is selected.
-    - [ ] Receive one controlled message through IMAP and confirm it appears in the correct mailbox.
-    - [ ] Send one clearly internal controlled message and confirm SMTP acceptance, recipient
+    - [x] Receive one controlled message through IMAP and confirm it appears in the correct mailbox.
+    - [x] Send one clearly internal controlled message and confirm SMTP acceptance, recipient
       receipt, Sent reconciliation, and no duplicate send.
     - [ ] Confirm an operator without Email account or mailbox-sync management cannot configure an
       account, and that configuration authority alone does not grant mailbox-content access.
@@ -9194,7 +9212,20 @@ not explicitly left open above. Full confirmation is not yet provided.
 - **Review Notes:** On 2026-09-02 Svein found a stale **Email Providers** card on the Integrations
   hub after the provider lifecycle had been retired. The card and its provider/migration copy were
   removed, regression coverage was added, and Dev browser read-back confirmed the card is absent.
-  The remaining controlled account and production checks above still require explicit review.
+  A fresh authenticated Dev review then found that clicking Send immediately after filling To and
+  Subject could validate the still-debounced server values as empty. The composer now flushes all
+  visible fields in the submit capture, and its regression passes 5 tests / 39 assertions. The
+  controlled internal message `[NEXUM DEV REVIEW] Account-owned mail verification 2026-09-02` was
+  accepted once by SMTP, received through IMAP in INBOX, appended once to `INBOX.Sent`, and reached
+  `sent_reconciled`; the two expected message rows have one active placement each and zero Ticket
+  links. The automatic Sent-append dispatch and duplicate/ambiguity guards pass 18 tests / 121
+  assertions. The complete Email feature suite passes 706 tests / 7,218 assertions. For the
+  blank-password preservation check, the existing account description was
+  changed only, both password fields were left blank, and Save and test passed both authenticated
+  checks and activated the account. The description was then reverted to its original value with both
+  passwords blank; both checks passed again and the account remained active. No credential was
+  exposed. The deliberate wrong-password, permission-boundary, narrow-layout, and production checks
+  still require explicit review.
 - **Status:** In Review
 - **Reviewer:** Svein Tore
 

@@ -23,6 +23,7 @@ use App\Modules\Email\Controllers\Admin\Templates\EmailTemplateController;
 use App\Modules\Email\Controllers\Tech\InboxController;
 use App\Modules\Email\Controllers\Tech\MailController;
 use App\Modules\Email\Controllers\Tech\SignatureController;
+use App\Modules\Email\Jobs\AppendEmailProviderSentCopy;
 use App\Modules\Email\Jobs\EmailAccountHealthCheckJob;
 use App\Modules\Email\Jobs\FetchImapAccount;
 use App\Modules\Email\Jobs\PollActiveEmailAccounts;
@@ -5204,6 +5205,8 @@ class EmailModuleTest extends TestCase
     #[Test]
     public function send_pipeline_records_pending_provider_sent_reconciliation_after_smtp_success(): void
     {
+        Queue::fake();
+
         $account = EmailAccount::create($this->emailAccountPayload([
             'address' => 'workspace-sent-pending@example.test',
             'from_name' => 'Workspace Sent Pending',
@@ -5238,6 +5241,7 @@ class EmailModuleTest extends TestCase
         $this->assertSame('pending-sent-copy@example.test', $reconciliation->normalized_message_id);
         $this->assertNull($reconciliation->sent_email_mailbox_placement_id);
         $this->assertSame(EmailSentReconciliation::STATUS_PENDING, $log->fresh()->context_json['provider_sent']['status']);
+        Queue::assertPushed(AppendEmailProviderSentCopy::class, 1);
     }
 
     #[Test]
@@ -5309,6 +5313,7 @@ class EmailModuleTest extends TestCase
     #[Test]
     public function provider_sent_append_service_keeps_technical_append_without_workspace_dashboard(): void
     {
+        Queue::fake();
         Storage::fake('local');
 
         $account = EmailAccount::create($this->emailAccountPayload([
@@ -5372,6 +5377,7 @@ class EmailModuleTest extends TestCase
         $reconciliation = EmailSentReconciliation::query()->sole();
         $this->assertSame(EmailSentReconciliation::STATUS_PENDING, $reconciliation->status);
         $this->assertNotEmpty($reconciliation->context_json['sent_raw_path'] ?? null);
+        Queue::assertPushed(AppendEmailProviderSentCopy::class, 1);
 
         app(EmailSentReconciliationService::class)->appendProviderSentCopy($reconciliation);
 

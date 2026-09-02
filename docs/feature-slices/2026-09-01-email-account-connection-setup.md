@@ -1,6 +1,6 @@
 # Feature Slice: Simple Email Account Connection Setup
 
-Status: Implemented On Dev - Production Human Review Pending
+Status: Implemented On Dev - Dev Human Review In Progress / Production Review Pending
 Date: 2026-09-01
 Parent: `../rfc/2026-07-04-mail-module-full-email-client.md`
 ADR: `../adr/2026-09-01-email-account-owned-imap-smtp-configuration.md`
@@ -64,6 +64,15 @@ setup and repair workflow.
 - Passing IMAP/SMTP activates only when requested; failure remains inactive and editable.
 - UI contains no provider/staged/legacy-migration workflow.
 - Existing Mail runtime, Ticket sending and permission tests remain green.
+- Immediate composer submit flushes debounced recipient and subject fields before Livewire
+  validation, so clicking Send directly after typing cannot validate stale empty server state.
+- SMTP acceptance queues one duplicate-safe provider Sent append from the durable reconciliation;
+  normal Sent-folder refresh confirms it without a second SMTP submission.
+- Authenticated account Edit with both password fields left blank preserves the saved IMAP/SMTP
+  credentials; a description-only save/test passed both checks, activated as requested, and a second
+  blank-password save/test after reverting the description passed again.
+- The complete Email feature suite passes 706 tests / 7,218 assertions with the account-owned
+  runtime, immediate-submit fix, queued Sent append, and compatibility expectations together.
 
 ## Documentation
 
@@ -80,5 +89,7 @@ setup and repair workflow.
 - [x] Provider/migration lifecycle is absent from ordinary UI.
 - [x] Existing provider binding is promoted automatically and the duplicate secret store is destroyed.
 - [x] Relevant Dev tests pass.
+- [x] Controlled Dev SMTP send, IMAP self-receipt, one Sent placement and durable Sent
+  reconciliation pass through the account-owned runtime.
 - [ ] Production browser review confirms desktop and narrow layouts.
 - [x] TODO and human-review evidence are current.

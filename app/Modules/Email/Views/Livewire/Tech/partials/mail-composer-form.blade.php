@@ -34,6 +34,13 @@
             return doc.body.innerHTML;
         },
         sync() {
+            // Debounced inputs can still have a pending client-side value when
+            // the user submits immediately after typing. Flush the visible
+            // fields into the same Livewire request before validation.
+            $wire.$set('composerTo', this.$refs.to.value || '', false);
+            $wire.$set('composerCc', this.$refs.cc.value || '', false);
+            $wire.$set('composerSubject', this.$refs.subject.value || '', false);
+
             if (this.mode === 'visual' && this.$refs.editor) {
                 const cleanValue = this.clean(this.$refs.editor.innerHTML);
                 if (cleanValue !== this.$refs.editor.innerHTML) {
@@ -168,7 +175,7 @@
         </div>
         <div class="col-12 col-lg-4">
             <label for="mail-composer-to" class="form-label small fw-semibold mb-1">To</label>
-            <input id="mail-composer-to" type="text" class="form-control form-control-sm @error('composerTo') is-invalid @enderror" wire:model.live.debounce.1500ms="composerTo" wire:blur="saveComposerDraft(false)" @disabled($composerShared && ! $this->composerSharedEditable())>
+            <input id="mail-composer-to" type="text" class="form-control form-control-sm @error('composerTo') is-invalid @enderror" wire:model.live.debounce.1500ms="composerTo" wire:blur="saveComposerDraft(false)" x-ref="to" @disabled($composerShared && ! $this->composerSharedEditable())>
             @error('composerTo')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
@@ -178,14 +185,14 @@
         </div>
         <div class="col-12 col-lg-4">
             <label for="mail-composer-cc" class="form-label small fw-semibold mb-1">Cc</label>
-            <input id="mail-composer-cc" type="text" class="form-control form-control-sm @error('composerCc') is-invalid @enderror" wire:model.live.debounce.1500ms="composerCc" wire:blur="saveComposerDraft(false)" @disabled($composerShared && ! $this->composerSharedEditable())>
+            <input id="mail-composer-cc" type="text" class="form-control form-control-sm @error('composerCc') is-invalid @enderror" wire:model.live.debounce.1500ms="composerCc" wire:blur="saveComposerDraft(false)" x-ref="cc" @disabled($composerShared && ! $this->composerSharedEditable())>
             @error('composerCc')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
         <div class="col-12">
             <label for="mail-composer-subject" class="form-label small fw-semibold mb-1">Subject</label>
-            <input id="mail-composer-subject" type="text" class="form-control form-control-sm @error('composerSubject') is-invalid @enderror" wire:model.live.debounce.1500ms="composerSubject" wire:blur="saveComposerDraft(false)" @disabled($composerShared && ! $this->composerSharedEditable())>
+            <input id="mail-composer-subject" type="text" class="form-control form-control-sm @error('composerSubject') is-invalid @enderror" wire:model.live.debounce.1500ms="composerSubject" wire:blur="saveComposerDraft(false)" x-ref="subject" @disabled($composerShared && ! $this->composerSharedEditable())>
             @error('composerSubject')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
