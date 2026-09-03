@@ -31,6 +31,9 @@ Last reconciled against authoritative Dev on 2026-08-31.
 
 | Artifact | Status | Owner / Next Gate |
 | --- | --- | --- |
+| `docs/rfc/2026-09-03-web-push-notification-type-registry.md` | Done On Dev | GitHub Issue #257 is implemented and verified on authoritative Dev. The registry covers all 27 current types, nine internal types are explicitly Web Push-eligible, and every exclusion has a reason. Human review remains `HR-2026-09-03-004`; Main/production promotion remains Svein's decision. |
+| `docs/feature-slices/2026-09-03-web-push-notification-registry-delivery.md` | Done On Dev | Authoritative type/channel metadata, safe queued best-effort delivery, current preference/recipient/permission/target checks, minimal payloads, and affected regressions are verified. The specialized inbound Email outbox remains unchanged. |
+| `docs/feature-slices/2026-09-03-web-push-preference-ui-documentation.md` | Done On Dev | Grouped, described, responsive and keyboard-native internal preferences are implemented and source-contract tested. Knowledge documentation is current; visual/device checks remain in `HR-2026-09-03-004`. |
 | `docs/rfc/2026-09-03-task-templates-and-scheduled-generation.md` | Done On Dev | All six slices are implemented and verified on authoritative Dev. Human review remains `HR-2026-09-03-001`; Main/production promotion remains Svein's decision. |
 | `docs/adr/2026-09-03-task-template-application-boundary.md` | Accepted | Task owns mutable templates, atomic group application, generated-task snapshots, and idempotent generation evidence; caller domains retain their rule authority. |
 | `docs/feature-slices/2026-09-03-task-template-application-foundation.md` | Done On Dev | Atomic Task-owned generation, provenance, graph validation, idempotency, and migration are verified. |

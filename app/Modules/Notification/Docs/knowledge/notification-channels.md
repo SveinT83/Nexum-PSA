@@ -114,6 +114,49 @@ Read behavior:
 Web Push remains best effort. Failed browser delivery does not roll back Email, Ticket, or canonical
 database notification persistence.
 
+### Event registry and ordinary queued delivery
+
+Notification owns one authoritative registry for all notification preferences. Every event declares
+its audience, group, description, supported channels, defaults, Web Push policy, and either the
+required permission/target contract or a specific exclusion reason. This keeps the preference page,
+server validation, defaults, and delivery policy synchronized when types are added or changed.
+
+Current internal Web Push-eligible events are:
+
+- Ticket assigned to you.
+- Ticket status changed.
+- Comment added on Ticket.
+- Customer reply on my Tickets.
+- New inbound Email.
+- Ticket SLA warning.
+- Asset alert.
+- Supplier import exception.
+- Supplier import daily digest.
+
+All Web Push event preferences default to off and are independently user-controlled. Portal events
+remain on the Customer Portal preference surface and cannot be enabled from an internal profile.
+Invitation delivery remains email-only. Catalogue entries without a complete emitter and safe
+payload/authorization contract remain visibly unavailable with an explanation.
+
+The ordinary Ticket, Asset, and Storage events queue a Notification-owned best-effort job only after
+the source notification has selected its authoritative channels. Immediately before provider
+delivery, the job rechecks that the recipient is an active non-system user, the exact preference is
+still enabled, the event is still eligible, the required domain permission is present, and the exact
+target still exists and is visible. A later opt-out, disabled user, removed permission, or deleted
+target suppresses the push without rerouting it.
+
+Ordinary lock-screen payloads are deliberately generic. They identify the event category and use an
+authorized same-origin route, but do not include Ticket subjects, comments, Client identity, Asset
+hostnames, raw monitoring text, Supplier names, order references, import errors, Email content, or
+credentials. Queue/provider failure does not remove the in-app notification or repeat the source
+domain action. Inbound Email and customer-reply events keep their stricter durable external-delivery
+outbox described below.
+
+Profile > Notifications groups internal events by domain and shows short descriptions plus labeled
+switches for supported channels. Unavailable channels show a reason instead of an unexplained empty
+cell. The responsive layout avoids the previous wide preference matrix and retains one Save
+preferences action.
+
 #### Durable external delivery and current recipient checks
 
 For a newly accepted inbound Email event, Notification commits the canonical database notification

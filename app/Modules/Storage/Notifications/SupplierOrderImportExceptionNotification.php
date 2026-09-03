@@ -3,17 +3,17 @@
 namespace App\Modules\Storage\Notifications;
 
 use App\Modules\Notification\Channels\NextcloudTalkChannel;
+use App\Modules\Notification\Channels\QueueInternalWebPushChannel;
 use App\Modules\Notification\Contracts\EmailAccountMailNotification;
+use App\Modules\Notification\Contracts\QueuesInternalWebPush;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Support\RoutesEmailThroughAccount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\WebPush\WebPushChannel;
-use NotificationChannels\WebPush\WebPushMessage;
 
-class SupplierOrderImportExceptionNotification extends Notification implements EmailAccountMailNotification
+class SupplierOrderImportExceptionNotification extends Notification implements EmailAccountMailNotification, QueuesInternalWebPush
 {
     use Queueable, RoutesEmailThroughAccount;
 
@@ -41,7 +41,7 @@ class SupplierOrderImportExceptionNotification extends Notification implements E
             $channels[] = $this->emailAccountMailChannel('alerts');
         }
         if ($setting->web_push_enabled) {
-            $channels[] = WebPushChannel::class;
+            $channels[] = QueueInternalWebPushChannel::class;
         }
         $talk = NotificationChannel::getByDriver('nextcloud_talk');
         if ($talk?->is_enabled && $setting->nextcloud_talk_enabled) {
@@ -76,18 +76,6 @@ class SupplierOrderImportExceptionNotification extends Notification implements E
         ];
     }
 
-    public function toWebPush(mixed $notifiable, Notification $notification): WebPushMessage
-    {
-        return (new WebPushMessage)
-            ->title('Nexum: '.$this->title)
-            ->body($this->summary)
-            ->icon('/logo.png')
-            ->badge('/logo.png')
-            ->tag('supplier-order-import-alert-'.$this->alertId)
-            ->data(['url' => $this->url(), 'kind' => 'storage_purchase_import_exception'])
-            ->options(['TTL' => 1800, 'urgency' => $this->severity === 'critical' ? 'high' : 'normal']);
-    }
-
     /** @return array<string, mixed> */
     public function toNextcloudTalk(object $notifiable): array
     {
@@ -105,5 +93,21 @@ class SupplierOrderImportExceptionNotification extends Notification implements E
     private function url(): string
     {
         return route('tech.storage.purchase-order-imports.index');
+    }
+
+    public function internalWebPushType(): string
+    {
+        return 'storage_purchase_import_exception';
+    }
+
+    public function internalWebPushPayload(): array
+    {
+        return [
+            'title' => 'Supplier-order import needs attention',
+            'body' => 'Open Nexum to review the supplier-order import exception.',
+            'target_id' => $this->alertId,
+            'ttl' => 1800,
+            'urgency' => $this->severity === 'critical' ? 'high' : 'normal',
+        ];
     }
 }

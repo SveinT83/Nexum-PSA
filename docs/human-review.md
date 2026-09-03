@@ -28,6 +28,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-09-03-004 | Web Push notification registry, eligible delivery, and grouped preferences | Pending | 2026-09-03 |  |  |
 | HR-2026-09-03-001 | Task templates, grouped generation, schedules, and automation actions | Pending | 2026-09-03 |  |  |
 | HR-2026-08-30-001 | Dev database and Mail private-storage reconciliation | Pending | 2026-08-30 |  |  |
 | HR-2026-08-26-001 | Documentation Sidebar Reordering and Title Update | Reviewed | 2026-08-26 | Svein | 2026-08-31 |
@@ -45,6 +46,51 @@ has explicitly approved.
 | HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+
+### HR-2026-09-03-004: Web Push Notification Registry, Delivery, And Preferences
+
+- **Scope:** Complete GitHub Issue #257 through one authoritative 27-type registry, nine explicitly
+  eligible internal Web Push events, queued best-effort Ticket/Asset/Storage delivery, current
+  authorization checks, privacy-safe payloads, and grouped responsive preferences.
+- **Affected Modules:** Notification, Ticket, Asset, Storage, Customer Portal preference policy,
+  UserManagement lifecycle checks, default queue worker, profile Notification UI, and Knowledge
+  documentation.
+- **Required Human Checks:**
+  - [ ] On desktop, open Profile > Notifications and confirm the event groups, descriptions,
+    associated switches, unavailable reasons, one Save preferences action, and absence of
+    Customer Portal-only events. Traverse and operate the controls using the keyboard.
+  - [ ] At a 390 px viewport, confirm the preference groups and labels remain readable and usable
+    without horizontal page overflow.
+  - [ ] On a registered test device, opt in to one representative Ticket event, Asset alert, and
+    supplier-import event. Trigger controlled authorized examples and confirm each push is generic,
+    opens only its guarded same-origin target, and leaves the in-app notification present.
+  - [ ] Queue a controlled event, turn its Web Push preference off before the worker runs, and
+    confirm provider delivery is suppressed while the in-app notification remains.
+  - [ ] In separate controlled tests, remove the required permission, disable the user, and delete
+    or hide the exact target before the worker runs. Confirm no push is rerouted or delivered.
+  - [ ] Simulate a provider failure and confirm the source Ticket/Asset/import action is not retried
+    or rolled back and no duplicate in-app notification is created.
+  - [ ] Confirm existing device registration, current-device test, revocation, expired-subscription
+    cleanup, service-worker click handling, and inbound Email/customer-reply delivery still behave
+    as documented.
+- **Expected Result:** Every safe implemented internal event is independently configurable. Push is
+  opt-in, minimal, authorized against current state, and isolated from authoritative domain and
+  in-app persistence. Unsupported, security-sensitive, and portal events remain unavailable with a
+  clear reason.
+- **Migration / Deploy Gate:** No migration, seeding, new permission, API, route, scheduler, service
+  worker, or provider setting is required. Deploy the code, run `php artisan optimize:clear`, and
+  restart long-lived default queue workers. Existing VAPID/HTTPS/device readiness remains required.
+  This Pending checklist blocks Main promotion and production release of the Level 3 change; it does
+  not block closing the Dev-complete Issue #257.
+- **Automated Dev Evidence (Not Human Review):** Registry/delivery/UI contract passes 6 tests / 322
+  assertions; Storage passes 20 / 167; Customer Portal passes 11 / 179; affected Ticket/SLA/Asset/
+  user coverage passes 145 / 1,079; scoped PHP syntax and Pint pass. The complete Notification
+  directory has 118 passing tests and two unrelated tracked-clean Email durability-test failures
+  under concurrent Email/test-bootstrap work; no passing claim is made for those two tests.
+- **Risks:** Lock-screen presentation varies by browser/OS. A stopped default worker delays pushes.
+  Provider ambiguity is contained but remains operationally inspectable. Registry policy must be
+  updated with any future event type or eligibility change.
+- **Status:** Pending
 
 ### HR-2026-09-03-001: Task Templates And Scheduled Generation
 

@@ -4,18 +4,16 @@ namespace App\Modules\Notification\Tests\Feature;
 
 use App\Models\Core\User;
 use App\Modules\Contact\Models\Contact;
+use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Notification\Actions\SendTransactionalSms;
 use App\Modules\Notification\Livewire\NotificationBell;
-use App\Modules\Nextcloud\Models\NextcloudConnection;
 use App\Modules\Notification\Models\NotificationChannel;
 use App\Modules\Notification\Models\NotificationSetting;
 use App\Modules\Notification\Models\NotificationSmsMessage;
 use App\Modules\Notification\Models\NotificationSmsTemplate;
 use App\Modules\Notification\Notifications\TicketAssigned;
 use App\Modules\Notification\Notifications\TicketStatusChanged;
-use App\Modules\Notification\Notifications\TicketCommentAdded;
-use App\Modules\Notification\Notifications\AssetAlertTriggered;
-use App\Modules\Notification\Notifications\TicketSlaWarning;
+use App\Modules\Notification\Support\NotificationTypeRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -95,7 +93,7 @@ class NotificationSystemTest extends TestCase
         $user->assignRole('Tech');
 
         $settings = [];
-        foreach (NotificationSetting::TYPES as $type => $label) {
+        foreach (array_keys(NotificationTypeRegistry::labels(NotificationTypeRegistry::AUDIENCE_INTERNAL)) as $type) {
             $settings[] = [
                 'notification_type' => $type,
                 'mail_enabled' => $type === 'ticket_assigned',
