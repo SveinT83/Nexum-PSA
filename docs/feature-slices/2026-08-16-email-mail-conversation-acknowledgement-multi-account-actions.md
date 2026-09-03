@@ -1,6 +1,6 @@
 # Feature Slice: Email Mail Conversation Acknowledgement And Explicit Multi-Account Actions
 
-Status: Implemented On Dev / Runtime Disabled / Human Review Pending
+Status: Implemented On Dev / Runtime Enabled For Named Review
 Date: 2026-08-16
 Level: 3
 Parent: `docs/rfc/2026-07-04-mail-module-full-email-client.md`
@@ -14,13 +14,14 @@ The accessible boundary is implemented on Dev. Mail now opens a bounded preview 
 one active-account conversation read or unread for the current user, displays provider Seen as a
 separate optional effect, and requires explicit confirmation. Versioned API routes support the same
 active-account preview plus exact placement selections across authorized accounts, content-free
-status, queued bounded apply/continuation, retry and cancel. The default queue calls the existing
-25-item apply boundary and redispatches only while local work remains. Provider work stays in the
+status, bounded apply/continuation, retry and cancel. The first 25-item apply page runs immediately;
+only remaining local work is continued on the default queue. Provider work stays in the
 existing remote-operation ledger; status refresh never invents provider acknowledgement.
 
-Focused coverage passes 13 tests / 133 assertions. The environment flag remains false by default, so
-deployment cannot expose the UI or execute a run until the named human review enables it. No preview,
-personal-state change or provider action was performed on shared Dev data.
+Focused coverage passes 13 tests / 135 assertions, and the full Email Feature suite passes 715 tests /
+7,296 assertions. The environment flag remains false by default; Dev enabled it through the cached
+runtime configuration on 2026-09-03 for Svein's named review. No preview, personal-state change or
+provider action existed when the review runtime was enabled.
 
 ## Goal
 

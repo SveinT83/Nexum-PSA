@@ -839,8 +839,9 @@ closed. Mail and API expose only the separate preview/confirmation boundary.
 `EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED` still defaults false. When enabled, Mail supports active-account
 conversation preview/confirm/status/cancel. API additionally accepts exact selected placements
 across authorized accounts and supports apply/retry/cancel. `ProcessEmailConversationAcknowledgementRun`
-continues at most 25 locally actionable items per invocation on the default queue; provider effects
-remain normal remote operations. Named review `HR-2026-08-16-012` gates activation.
+continues only after the first immediately applied page of at most 25 locally actionable items; every
+later page remains bounded to 25 on the default queue. Provider effects remain normal remote
+operations. Named review `HR-2026-08-16-012` gates activation outside the controlled Dev review.
 
 ### Mail workspace triage actions
 The `/tech/mail` command bar keeps common actions compact:

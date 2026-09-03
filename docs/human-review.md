@@ -1674,9 +1674,11 @@ current-schema copy before coordinated deployment. It later ran in Dev batch 128
 empty and the gate remains false. The empty down path is reversible; once either ledger contains
 evidence, rollback refuses to erase it. The migration
 itself creates no preview, personal state, provider operation or external call. Keep
-`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` after migration until this named review. Mail/API now use
-the explicit preview/confirmation interface; Apply dispatches bounded continuation on `default`, so
-the normal queue worker and `php artisan queue:restart` are required when the flag is enabled.
+`EMAIL_MAIL_ACKNOWLEDGEMENT_ENABLED=false` after migration until this named review. On 2026-09-03 Dev
+enabled the flag through cached runtime configuration for Svein's review. Mail/API use the explicit
+preview/confirmation interface and apply the first bounded page of at most 25 messages immediately;
+only a larger remainder continues on `default`, so the normal queue worker remains required for
+large conversations.
 
 Risks: accidental feature activation before named review; migration
 and index behavior on the deployment engine; stale/revoked placement, epoch, UID or provider binding;
@@ -1686,16 +1688,18 @@ placement or retarget a composer; disabled private invalidation remains an expli
 
 Automated verification: explicit SQLite `:memory:` with isolated `APP_CONFIG_CACHE`, array
 cache/maintenance/session stores and `HOME=/tmp`: focused
-`EmailConversationAcknowledgementSafetyTest` passes 13 tests / 133 assertions. It covers the
+`EmailConversationAcknowledgementSafetyTest` passes 13 tests / 135 assertions. It covers the
 default-off gate, forward schema and rollback refusal, preview no-mutation, active/future/explicit
 multi-account membership, inaccessible selection, exact actor/snapshot reauthorization, sanitized
 personal/provider partial failure, Organize revocation, provider pending/succeeded redelivery without
 IMAP or duplication, canonical multi-placement personal coalescing, unmasked selected failure,
-break-glass denial, closed implicit action, active and explicit-multi-account API, queued apply,
+break-glass denial, closed implicit action, active and explicit-multi-account API, immediate bounded
+apply without a worker, queued continuation,
 non-enumerating readback/cancel and enabled/disabled Mail UI. The combined focused plus
 historical-quarantine, unread-epoch and remote-operation recovery package passes 60 / 522. An
 isolated authorized Mail workspace render smoke adds 1 / 11, for 61 / 533 recorded handoff coverage.
-The full Email Feature suite passes 715 tests / 7,294 assertions after the Order 12 implementation.
+The full Email Feature suite passes 715 tests / 7,296 assertions after the immediate-apply and clearer
+personal-versus-mail-server status correction.
 The combined Order 12/13 opt-in migration contract passes 1 / 52 on MariaDB 10.11.14. For `140000`
 it proves up, every named index and foreign key, default-off configuration and boolean schema
 defaults, empty down, non-empty evidence refusal, and exact `pending` / `coalesced` status plus
