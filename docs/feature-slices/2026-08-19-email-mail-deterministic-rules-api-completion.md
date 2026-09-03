@@ -1,9 +1,15 @@
 # Feature Slice: Email Deterministic Rules API Completion
 
-Status: Safety Rework Implemented / Full Slice Dependency Gated
+Status: Superseded By Completed Order 10 Implementation
 Date: 2026-08-19
 Parent: `docs/plans/2026-08-16-email-mail-completion-slice-index.md` (Order 10)
 Review ID: `HR-2026-08-16-010`
+
+2026-09-03 completion: this historical safety-repair slice is retained as the audit trail, but its
+remaining work is now implemented by
+`docs/feature-slices/2026-08-16-email-mail-deterministic-rules-api-completion.md`. The durable draft,
+publication, bounded reprocess, per-action idempotency, retry/full-rerun, permissions and API work is
+on Dev. Human review remains open; this status does not claim production verification.
 
 2026-08-21 audit: the then-current Undo scaffold changed local folder state without a provider
 operation or the complete immutable execution/reversal contract. It had no focused completion tests

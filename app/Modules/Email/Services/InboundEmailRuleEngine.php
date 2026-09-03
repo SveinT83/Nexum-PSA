@@ -246,6 +246,116 @@ class InboundEmailRuleEngine
         ];
     }
 
+    /**
+     * Preview one immutable published version. Durable reprocessing must never
+     * fall through to mutable live-rule columns.
+     *
+     * @return array<string, mixed>
+     */
+    public function previewPublishedVersion(
+        EmailRule $rule,
+        EmailRuleVersion $version,
+        EmailMessage $message,
+    ): array {
+        if ((int) $version->email_rule_id !== (int) $rule->id) {
+            throw new \InvalidArgumentException('The Email rule version does not belong to this rule.');
+        }
+
+        $rule->loadMissing('accounts');
+        $snapshot = $this->snapshotFromVersion($version);
+        $accountMatched = $this->ruleAppliesToMessageAccount($rule, $message, $snapshot);
+        $matched = $accountMatched && $this->matches($message, $snapshot['conditions']);
+
+        return [
+            'rule_id' => $rule->id,
+            'version_id' => $version->id,
+            'version_number' => $version->version_number,
+            'message_id' => $message->id,
+            'account_scope_matched' => $accountMatched,
+            'matched' => $matched,
+            'stop_processing' => $snapshot['stop_processing'],
+            'actions' => collect($snapshot['actions'])->values()->map(
+                fn (array $action, int $position): array => [
+                    'position' => $position,
+                    'type' => (string) ($action['type'] ?? 'unknown'),
+                    'status' => $matched ? 'would_run' : 'not_run',
+                ],
+            )->all(),
+        ];
+    }
+
+    /**
+     * Execute exactly one immutable action position for the durable
+     * reprocessor. The caller owns the cross-run idempotency fence.
+     *
+     * @return array<string, mixed>
+     */
+    public function executePublishedVersionAction(
+        EmailRule $rule,
+        EmailRuleVersion $version,
+        EmailMessage $message,
+        int $position,
+        bool $allowProviderMutation,
+    ): array {
+        if ((int) $version->email_rule_id !== (int) $rule->id) {
+            throw new \InvalidArgumentException('The Email rule version does not belong to this rule.');
+        }
+
+        $rule->loadMissing('accounts');
+        $snapshot = $this->snapshotFromVersion($version);
+        $action = $snapshot['actions'][$position] ?? null;
+        if (! is_array($action)) {
+            return [
+                'position' => $position,
+                'type' => 'unknown',
+                'status' => EmailRuleExecutionAttempt::STATUS_FAILED,
+                'reason' => 'immutable_action_unavailable',
+            ];
+        }
+        if (! $this->ruleAppliesToMessageAccount($rule, $message, $snapshot)
+            || ! $this->matches($message, $snapshot['conditions'])) {
+            return [
+                'position' => $position,
+                'type' => (string) ($action['type'] ?? 'unknown'),
+                'status' => EmailRuleExecutionAttempt::STATUS_NOT_RUN,
+                'reason' => 'rule_no_longer_matches_source',
+            ];
+        }
+
+        $type = (string) ($action['type'] ?? '');
+        if (in_array($type, [
+            BuildEmailSmartInboxRulePrefill::ADMIN_ACTION_PROVIDER_ARCHIVE,
+            BuildEmailSmartInboxRulePrefill::ADMIN_ACTION_PROVIDER_MOVE,
+        ], true)) {
+            return $this->executeProviderCleanupAction(
+                $message,
+                $snapshot,
+                $action,
+                $position,
+                $allowProviderMutation,
+            );
+        }
+
+        try {
+            if (! $this->executeLocalAction($message, $rule, $action, $position)) {
+                throw new \UnexpectedValueException('Unsupported Email rule action.');
+            }
+
+            return [
+                'position' => $position,
+                'type' => $type,
+                'status' => EmailRuleExecutionAttempt::STATUS_SUCCEEDED,
+            ];
+        } catch (\Throwable) {
+            return [
+                'position' => $position,
+                'type' => $type,
+                'status' => EmailRuleExecutionAttempt::STATUS_FAILED,
+                'reason' => 'email_rule_action_failed',
+            ];
+        }
+    }
+
     public function allowsInboundAutomation(EmailMessage $message): bool
     {
         $message->loadMissing('account');
@@ -716,6 +826,29 @@ class InboundEmailRuleEngine
             'actions' => $rule->actions_json ?? [],
             'account_ids' => $rule->accounts
                 ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshotFromVersion(EmailRuleVersion $version): array
+    {
+        return [
+            'uses_published_version' => true,
+            'version_id' => $version->id,
+            'version_number' => $version->version_number,
+            'version_status' => $version->status,
+            'name' => $version->name,
+            'routing_phase' => $version->routing_phase,
+            'rule_kind' => $version->rule_kind ?? EmailRule::KIND_ADMIN,
+            'owner_id' => $version->owner_id ? (int) $version->owner_id : null,
+            'published_by' => $version->published_by ? (int) $version->published_by : null,
+            'stop_processing' => (bool) $version->stop_processing,
+            'conditions' => $version->conditions_json ?? [],
+            'actions' => $version->actions_json ?? [],
+            'account_ids' => collect($version->account_ids_json ?? [])
                 ->map(fn ($id): int => (int) $id)
                 ->values()
                 ->all(),

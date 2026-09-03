@@ -137,6 +137,8 @@ class EmailModuleTest extends TestCase
             'email.inbox_manage',
             'email.account_manage',
             'email.rule_manage',
+            'email.rule_publish',
+            'email.rule_reprocess',
             'email.template_manage',
             'email.mailbox_sync_manage',
             'integration.email_provider_manage',
@@ -152,6 +154,8 @@ class EmailModuleTest extends TestCase
         Role::create(['name' => 'Admin'])->givePermissionTo([
             $permissions['email.account_manage'],
             $permissions['email.rule_manage'],
+            $permissions['email.rule_publish'],
+            $permissions['email.rule_reprocess'],
             $permissions['email.template_manage'],
             $permissions['email.mailbox_sync_manage'],
             $permissions['integration.email_provider_manage'],
@@ -9842,6 +9846,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Archive obvious spam',
                 'description' => 'Hide sender domain before ticket routing.',
                 'weight' => 1,
@@ -9883,6 +9888,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Create inbound sales ticket',
                 'description' => 'Route known sales mailbox into Ticket.',
                 'weight' => 20,
@@ -9913,6 +9919,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Versioned spam archive',
                 'description' => 'Hide repeated spam without replaying side effects.',
                 'weight' => 1,
@@ -9975,6 +9982,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'API preview rule',
                 'description' => 'Preview before execution.',
                 'weight' => 7,
@@ -10037,6 +10045,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Grouped inbound rule',
                 'description' => 'Any condition group can match.',
                 'weight' => 9,
@@ -10091,11 +10100,16 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->from(route('tech.admin.settings.email.rules'))
-            ->post(route('tech.admin.settings.email.rules.reprocess'), [
+            ->post(route('tech.admin.settings.email.rules.reprocess-preview', $rule), [
                 'email_message_id' => $message->id,
-                'run_mode' => 'now',
             ])
             ->assertRedirect(route('tech.admin.settings.email.rules'));
+        $run = \App\Modules\Email\Models\EmailRuleReprocessRun::query()->firstOrFail();
+        app(\App\Modules\Email\Services\EmailRuleReprocessService::class)->apply($run, $this->admin);
+        (new \App\Modules\Email\Jobs\ProcessEmailRuleReprocessRun($run->id))->handle(
+            app(\App\Modules\Email\Services\InboundEmailRuleEngine::class),
+            app(\App\Modules\Email\Services\EmailRuleReprocessService::class),
+        );
 
         $this->assertTrue($message->fresh()->tags()->where('tags.name', 'grouped-rule-hit')->exists());
         $this->assertDatabaseHas('email_rule_execution_attempts', [
@@ -10115,6 +10129,7 @@ class EmailModuleTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('tech.admin.settings.email.rules.store'), [
+                'intent' => 'publish',
                 'name' => 'Emit vendor signal',
                 'description' => 'Hand selected inbound mail to Signal.',
                 'weight' => 5,

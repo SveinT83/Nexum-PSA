@@ -1174,9 +1174,9 @@ Views:
 - Manages ordered inbound rules, including the explicit `normal` and `preclassification` routing phases.
 - Rules are scoped through `email_rule_accounts` to selected shared/system mailboxes with Ticket
   ingress enabled. Personal accounts cannot inherit or run legacy shared rules.
-- Every Admin save/toggle publishes an immutable `EmailRuleVersion` snapshot. Runtime execution uses
-  the published snapshot and records idempotent `EmailRuleExecutionAttempt` rows per message,
-  placement, rule, and version.
+- Admin save writes a durable draft without changing runtime behavior. A separately authorized
+  publication previews an exact diff/checksum and creates an immutable `EmailRuleVersion`. Runtime
+  uses only the published snapshot and records idempotent execution evidence.
 - Admin views and the `/api/v1/email/rules` read/preview API list admin-managed rules only.
   Personal simple rules remain owner-scoped Mail behavior and are not exposed through the Admin rule
   list.
@@ -1191,6 +1191,9 @@ Views:
   account/placement/provider ledger agree. Mixed, local-only, stale, ambiguous, or mismatched effects
   fail closed without changing the attempt or performing local compensation. Repeated application
   returns the existing uniquely linked inverse.
+- Bounded reprocess preview selects one account plus exactly one message-ID list, folder, encrypted
+  search or UTC date. Apply rechecks the frozen selection/source evidence and queues a durable run on
+  `email-rules`. Retry and confirmed full rerun never replay a successful logical action position.
 
 ### Personal simple rules
 - `CreatePersonalEmailRule` creates owner-only `personal_simple` rules from `/tech/mail`.
@@ -1214,11 +1217,11 @@ Declared in `app/Modules/Email/routes.php` with the `tech.` name prefix. Key rou
 - `tech.admin.settings.email.accounts.toggle` — toggle active
 - `tech.admin.settings.email.accounts.test` — POST run connection test
 - Additional: `tech.admin.settings.email.config`, `tech.admin.settings.email.rules`
-- API: `/api/v1/email/rules` exposes rule read/preview plus account-scoped execution detail and Undo
-  eligibility through `email.rules.read`, intersected with `email.rule_manage` and current mailbox
-  View. `POST /api/v1/email/rules/executions/{attempt}/undo` additionally requires
-  `email.rules.execute` and current Mailbox Organize, then uses the verified provider-operation
-  inverse rather than local reversal.
+- API: `/api/v1/email/rules` exposes read/preview/history through `email.rules.read`, durable
+  draft/validate/publication through `email.rules.write`, and bounded reprocess runs through
+  `email.rules.execute`. Current `email.rule_manage`, publish/reprocess permission and mailbox access
+  remain mandatory. Verified provider Undo uses the same execute ceiling plus Organize and the
+  provider-operation inverse rather than local reversal.
 - API: `/api/v1/email/mailbox/remote-operations` exposes account-scoped list/show through
   `email.read`, and guarded retry/cancel endpoints through `email.update` plus mailbox Organize.
 - API: `/api/v1/email/mailbox/conversations/{conversation}/classification` exposes scoped

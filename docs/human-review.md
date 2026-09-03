@@ -599,7 +599,7 @@ Reviewed date: 2026-08-25
 | HR-2026-08-16-013 | Email/Ticket conversation relationship migration | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
 | HR-2026-08-16-012 | Email conversation acknowledgement and explicit multi-account actions | Pending (Safety Rework; Activation Gated) | 2026-08-16 |  |  |
 | HR-2026-08-16-011 | Email compose, draft, send, and Sent API parity | Pending (Private/API Rework Implemented; Shared Collaboration Gated) | 2026-08-16 |  |  |
-| HR-2026-08-16-010 | Email deterministic rules API completion | Rework Needed / Safety Repair Implemented | 2026-08-16 |  |  |
+| HR-2026-08-16-010 | Email deterministic rules API completion | In Review (Implemented On Dev) | 2026-08-16 |  |  |
 | HR-2026-08-16-009 | Email presence, shared draft locks, and stale-composer protection | Pending (Backend And Accessible UI Implemented; Runtime Disabled) | 2026-08-16 |  |  |
 | HR-2026-08-16-008 | Email private live invalidation and polling fallback | Pending | 2026-08-16 |  |  |
 | HR-2026-08-16-007 | Email provider-originated read-only reconciliation | Reviewed | 2026-08-16 | Svein | 2026-08-25 |
@@ -1819,33 +1819,41 @@ ready for named review; shared collaboration remains separately dependency-gated
 
 ### HR-2026-08-16-010 - Email Deterministic Rules API Completion
 
-Status: Rework Needed / Safety Repair Implemented
+Status: In Review (Implemented On Dev)
 Added: 2026-08-16
-Environment: Authoritative Dev working copy; code and isolated SQLite verification only
-Related: `docs/feature-slices/2026-08-19-email-mail-deterministic-rules-api-completion.md`
+Environment: Authoritative Dev working copy and Dev database
+Related: `docs/feature-slices/2026-08-16-email-mail-deterministic-rules-api-completion.md`
 
-Scope and affected workflow: complete draft/publish/preview/version/reprocess/retry/Undo parity with
-immutable attempts, account scope, precedence and Email/Signal loop protection.
+Scope and affected workflow: Admin/API Email rule draft, validation, publication diff/apply, immutable
+version history, bounded local-message preview, durable apply/cancel/retry/full-rerun, per-action
+idempotency, sanitized progress and verified provider Undo.
 
-Deploy / migration notes: no Order 10 migration, database-data change, provider call, queue/scheduler
-change, cron change, or runtime activation was performed. The 2026-08-24 safety repair removes the
-local-only reversal and routes an eligible action through the existing verified provider-operation
-Undo ledger. A specifically scoped API token must include `email.rules.execute`; current user,
-`email.rule_manage`, mailbox View/Organize, and provider evidence are still checked at request time.
+Deploy / migration notes: additive migration
+`2026_09_03_090000_complete_email_rule_drafts_and_reprocessing.php` ran in Dev batch 24. It creates
+draft, run, item and action ledgers and grants publish/reprocess only to Admin/Superuser. Deployment
+must run `php artisan migrate --force`, `php artisan optimize:clear`, and `php artisan queue:restart`,
+and a worker must consume the dedicated `email-rules` queue. Migration does not publish a draft,
+start a run, retry an action, call a provider or apply Undo; none was done during this Dev rollout.
 
-Risks: applying an eligible Undo is a real provider Move and must be tested only with an approved
-non-production fixture. Full rule drafts, durable bounded reprocess/retry/full-rerun coordination,
-and complete API/OpenAPI parity remain unimplemented and dependency-gated. Mixed/local-only effects
-cannot be presented as undone.
+Risks: Apply executes real rule effects, and eligible Undo can perform a real provider Move. Preview
+is local database-only, expires after 15 minutes, and defaults to 100 with a hard cap of 500. Jobs
+claim at most 25 items/about ten seconds and never replay a logical action already recorded as
+successful. An ambiguous in-flight action fails closed for operator review.
 
-Automated verification: isolated SQLite with explicit `:memory:`, array cache, isolated
-`APP_CONFIG_CACHE`, array maintenance store, and `HOME=/tmp`: focused Order 10 coverage passes 5 /
-65; adjacent Email Undo, supervised cleanup, inbound automation, and Integration passes 91 / 875;
-targeted existing rule publication/API/runtime passes 3 / 36. Pint passes for the changed PHP files.
+Automated verification: focused Order 10 and reconciliation boundary coverage passes 20 / 268; the
+complete Email Feature suite passes 712 / 7,271; and Integration/API catalog coverage passes 49 /
+499. Route listing, migration status, PHP syntax, Blade compilation, Pint and an authenticated Dev UI
+smoke also pass.
 
 Human checks:
 
-- [ ] Review and test the full rule draft/publish/version/preview/reprocess/retry contract.
+- [ ] Save a changed rule as a draft and confirm the currently published rule/version does not change.
+- [ ] Review the exact publication diff and account scope, publish it, and confirm one new immutable
+  version becomes current.
+- [ ] Preview one authorized message and one bounded folder/search/date scope. Confirm overflow,
+  expiry and changed-placement cases refuse Apply without effects.
+- [ ] Apply a disposable matched rule, confirm durable progress, then retry/full-rerun and confirm an
+  already successful action is reported as reused rather than executed again. Cancel a queued run.
 - [ ] With one approved non-production provider Move execution inside the 15-minute window, verify
   eligibility, apply Undo once, confirm the exact source folder/UID, and repeat the request to confirm
   that no second inverse/provider mutation is created.
@@ -1854,12 +1862,12 @@ Human checks:
 - [ ] Verify inaccessible account/attempt IDs return Not Found, View without Organize reports current
   authorization failure, and execution output contains no subject, address, folder path, before/target
   snapshot, raw exception, or raw provider message.
+- [ ] Confirm the production worker consumes `email-rules` and the queue drains without failed jobs.
 
 Reviewer:
 Reviewed date:
-Result / notes: The 2026-08-19 summary listed `Done`/Junie without detailed review evidence. The
-2026-08-24 safety repair closes the known local-only Undo/raw-failure defect but does not close the
-full Order 10 slice or this review.
+Result / notes: Implementation and automated/AI smoke evidence do not mark named human review
+complete. No production Apply, retry, full rerun, Undo or provider mutation has been performed.
 
 ### HR-2026-08-16-009 - Email Presence, Shared Draft Locks, And Stale-Composer Protection
 

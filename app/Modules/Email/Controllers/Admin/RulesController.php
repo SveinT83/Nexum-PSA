@@ -3,14 +3,16 @@
 namespace App\Modules\Email\Controllers\Admin;
 
 use App\Modules\Email\Actions\BuildEmailSmartInboxRulePrefill;
-use App\Modules\Email\Jobs\ProcessInboundRules;
 use App\Modules\Email\Models\EmailAccount;
 use App\Modules\Email\Models\EmailFolder;
 use App\Modules\Email\Models\EmailMessage;
 use App\Modules\Email\Models\EmailRemoteOperation;
 use App\Modules\Email\Models\EmailRule;
 use App\Modules\Email\Models\EmailRuleExecutionAttempt;
+use App\Modules\Email\Models\EmailRuleReprocessRun;
+use App\Modules\Email\Services\EmailRuleDraftService;
 use App\Modules\Email\Services\EmailRulePublisher;
+use App\Modules\Email\Services\EmailRuleReprocessService;
 use App\Modules\Email\Services\EmailRuleReversalService;
 use App\Modules\Email\Services\MailboxAccess;
 use App\Modules\Taxonomy\Models\Category;
@@ -27,16 +29,22 @@ use Illuminate\View\View;
 
 class RulesController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $rules = Schema::hasTable('email_rules')
-            ? EmailRule::query()->adminManaged()->with(['accounts', 'publishedVersion'])->orderBy('weight')->orderBy('id')->get()
+            ? EmailRule::query()->adminManaged()->with(['accounts', 'publishedVersion', 'draft'])->orderBy('weight')->orderBy('id')->get()
             : collect();
+
+        $previewId = $request->session()->get('email_rule_reprocess_preview');
+        $reprocessPreview = is_string($previewId)
+            ? EmailRuleReprocessRun::query()->with(['rule', 'items'])->where('public_id', $previewId)->first()
+            : null;
 
         return view('email::Admin.Rules.index', [
             'rules' => $rules,
             'systemRules' => $this->systemRules(),
             'missingTable' => ! Schema::hasTable('email_rules'),
+            'reprocessPreview' => $reprocessPreview,
         ]);
     }
 
@@ -64,7 +72,7 @@ class RulesController extends Controller
                 'routing_phase' => EmailRule::ROUTING_PHASE_NORMAL,
                 'weight' => 10,
                 'is_active' => $prefill['is_active'],
-                'lifecycle_status' => EmailRule::LIFECYCLE_PUBLISHED,
+                'lifecycle_status' => EmailRule::LIFECYCLE_DRAFT,
                 'stop_processing' => $prefill['stop_processing'],
                 'conditions_json' => $prefill['conditions'],
                 'actions_json' => $prefill['actions'],
@@ -75,35 +83,59 @@ class RulesController extends Controller
             'accounts' => $this->ruleAccounts(),
             'providerFolders' => $this->providerFolders(),
             'selectedAccountIds' => $prefill['account_ids'],
+            'draftPayload' => null,
+            'draftLockVersion' => null,
+            'publicationPreview' => null,
         ]);
     }
 
-    public function store(Request $request, EmailRulePublisher $publisher): RedirectResponse
-    {
+    public function store(
+        Request $request,
+        EmailRuleDraftService $drafts,
+        EmailRulePublisher $publisher,
+    ): RedirectResponse {
         $data = $this->validatedRule($request);
-
         $accountIds = $data['account_ids'];
         unset($data['account_ids']);
+        $intent = $request->input('intent', 'save_draft');
+        if ($intent === 'publish') {
+            $this->authorizePublish($request);
+        }
 
-        $rule = EmailRule::create($data + [
+        $rule = EmailRule::create([
+            'name' => $data['name'],
+            'description' => null,
             'trigger' => EmailRule::TRIGGER_INBOUND,
+            'routing_phase' => EmailRule::ROUTING_PHASE_NORMAL,
             'rule_kind' => EmailRule::KIND_ADMIN,
             'owner_id' => null,
+            'weight' => 10,
+            'is_active' => false,
+            'lifecycle_status' => EmailRule::LIFECYCLE_DRAFT,
+            'stop_processing' => false,
+            'conditions_json' => [],
+            'actions_json' => [],
             'created_by' => $request->user()?->id,
             'updated_by' => $request->user()?->id,
         ]);
-        $rule->accounts()->sync($accountIds);
-        $publisher->publish($rule, $request->user());
+        $draft = $drafts->save($rule, $data + ['account_ids' => $accountIds], $request->user());
 
-        return redirect()->route('tech.admin.settings.email.rules')
-            ->with('success', 'Email rule created.');
+        if ($intent === 'publish') {
+            $publisher->publishDraft($rule, $request->user(), $draft->checksum);
+
+            return redirect()->route('tech.admin.settings.email.rules')
+                ->with('success', 'Email rule published.');
+        }
+
+        return redirect()->route('tech.admin.settings.email.rules.edit', $rule)
+            ->with('success', 'Email rule draft saved. The published rule was not changed.');
     }
 
-    public function edit(EmailRule $rule): View
+    public function edit(EmailRule $rule, EmailRuleDraftService $drafts): View
     {
         abort_unless($rule->isAdminManaged(), 404);
 
-        $rule->load('accounts');
+        $rule->load(['accounts', 'draft', 'publishedVersion']);
 
         return view('email::Admin.Rules.create', [
             'rule' => $rule,
@@ -112,65 +144,103 @@ class RulesController extends Controller
             'emailCategories' => $this->emailCategories(),
             'accounts' => $this->ruleAccounts(),
             'providerFolders' => $this->providerFolders(),
+            'draftPayload' => $rule->draft?->payload_json,
+            'draftLockVersion' => $rule->draft?->lock_version,
+            'publicationPreview' => $rule->draft ? $drafts->publicationPreview($rule) : null,
         ]);
     }
 
-    public function update(Request $request, EmailRule $rule, EmailRulePublisher $publisher): RedirectResponse
-    {
+    public function update(
+        Request $request,
+        EmailRule $rule,
+        EmailRuleDraftService $drafts,
+        EmailRulePublisher $publisher,
+    ): RedirectResponse {
         abort_unless($rule->isAdminManaged(), 404);
 
         $data = $this->validatedRule($request);
         $accountIds = $data['account_ids'];
-        unset($data['account_ids']);
+        $intent = $request->input('intent', 'save_draft');
+        if ($intent === 'publish') {
+            $this->authorizePublish($request);
+        }
+        $draft = $drafts->save(
+            $rule,
+            $data,
+            $request->user(),
+            $request->integer('draft_lock_version') ?: null,
+        );
 
-        $rule->update($data + [
-            'updated_by' => $request->user()?->id,
-        ]);
-        $rule->accounts()->sync($accountIds);
-        $publisher->publish($rule, $request->user());
+        if ($intent === 'publish') {
+            $publisher->publishDraft($rule, $request->user(), $draft->checksum);
 
-        return redirect()->route('tech.admin.settings.email.rules')
-            ->with('success', 'Email rule updated.');
+            return redirect()->route('tech.admin.settings.email.rules')
+                ->with('success', 'Email rule published as a new immutable version.');
+        }
+
+        return redirect()->route('tech.admin.settings.email.rules.edit', $rule)
+            ->with('success', 'Email rule draft saved. The published rule is still active unchanged.');
     }
 
-    public function toggle(Request $request, EmailRule $rule, EmailRulePublisher $publisher): RedirectResponse
-    {
+    public function toggle(
+        Request $request,
+        EmailRule $rule,
+        EmailRuleDraftService $drafts,
+        EmailRulePublisher $publisher,
+    ): RedirectResponse {
         abort_unless($rule->isAdminManaged(), 404);
-
-        $rule->forceFill(['is_active' => ! $rule->is_active])->save();
-        $publisher->publish($rule, $request->user());
+        $this->authorizePublish($request);
+        if ($rule->draft()->exists()) {
+            return back()->with('error', 'Publish or discard the saved draft before changing rule status.');
+        }
+        $payload = $this->payloadFromPublishedRule($rule);
+        $payload['is_active'] = ! $payload['is_active'];
+        $draft = $drafts->save($rule, $payload, $request->user(), $rule->draft?->lock_version);
+        $publisher->publishDraft($rule, $request->user(), $draft->checksum);
 
         return back()->with('success', 'Email rule status updated.');
     }
 
-    public function destroy(EmailRule $rule): RedirectResponse
+    public function destroy(Request $request, EmailRule $rule): RedirectResponse
     {
         abort_unless($rule->isAdminManaged(), 404);
+        $this->authorizePublish($request);
 
         $rule->delete();
 
         return back()->with('success', 'Email rule deleted.');
     }
 
-    public function reprocess(Request $request): RedirectResponse
-    {
-        abort_unless($request->user()?->can('email.rule_manage'), 403);
-
+    public function reprocessPreview(
+        Request $request,
+        EmailRule $rule,
+        EmailRuleReprocessService $runs,
+    ): RedirectResponse {
+        $this->authorizeReprocess($request);
+        abort_unless($rule->isAdminManaged(), 404);
         $data = $request->validate([
             'email_message_id' => ['required', 'integer', 'exists:email_messages,id'],
-            'run_mode' => ['required', 'string', 'in:queue,now'],
+        ]);
+        $message = EmailMessage::query()->findOrFail((int) $data['email_message_id']);
+        $run = $runs->preview($rule, $request->user(), [
+            'account_id' => $message->account_id,
+            'message_ids' => [$message->id],
+            'cap' => 1,
         ]);
 
-        $message = EmailMessage::query()->findOrFail((int) $data['email_message_id']);
-        abort_unless($message->hasActiveProviderPlacement(), 404);
+        return back()->with('email_rule_reprocess_preview', $run->public_id)
+            ->with('success', 'Preview created. No rule actions have run.');
+    }
 
-        if ($data['run_mode'] === 'now') {
-            ProcessInboundRules::dispatchSync($message->id, true);
-        } else {
-            ProcessInboundRules::dispatch($message->id, true);
-        }
+    public function applyReprocess(
+        Request $request,
+        EmailRuleReprocessRun $run,
+        EmailRuleReprocessService $runs,
+    ): RedirectResponse {
+        $this->authorizeReprocess($request);
+        $runs->apply($run, $request->user());
 
-        return back()->with('success', 'Email message #'.$message->id.' was submitted for rule reprocessing.');
+        return back()->with('success', 'The verified reprocess run was queued on email-rules.');
     }
 
     public function undoExecution(
@@ -301,11 +371,43 @@ class RulesController extends Controller
             'weight' => $data['weight'],
             'routing_phase' => $data['routing_phase'] ?? EmailRule::ROUTING_PHASE_NORMAL,
             'is_active' => (bool) ($data['is_active'] ?? false),
-            'lifecycle_status' => EmailRule::LIFECYCLE_PUBLISHED,
             'stop_processing' => (bool) ($data['stop_processing'] ?? false),
             'conditions_json' => $this->groupedConditions($data),
             'actions_json' => $actions,
             'account_ids' => $accountIds,
+        ];
+    }
+
+    private function authorizePublish(Request $request): void
+    {
+        abort_unless($request->user()?->isActive()
+            && $request->user()?->can('email.rule_manage')
+            && $request->user()?->can('email.rule_publish'), 403);
+    }
+
+    private function authorizeReprocess(Request $request): void
+    {
+        abort_unless($request->user()?->isActive()
+            && $request->user()?->can('email.rule_manage')
+            && $request->user()?->can('email.rule_reprocess'), 403);
+    }
+
+    /** @return array<string, mixed> */
+    private function payloadFromPublishedRule(EmailRule $rule): array
+    {
+        $rule->loadMissing(['accounts', 'publishedVersion', 'draft']);
+        $version = $rule->publishedVersion;
+
+        return [
+            'name' => $version?->name ?? $rule->name,
+            'description' => $version?->description ?? $rule->description,
+            'weight' => $version?->weight ?? $rule->weight,
+            'routing_phase' => $version?->routing_phase ?? $rule->routing_phase,
+            'is_active' => (bool) ($version?->is_active ?? $rule->is_active),
+            'stop_processing' => (bool) ($version?->stop_processing ?? $rule->stop_processing),
+            'conditions_json' => $version?->conditions_json ?? $rule->conditions_json ?? [],
+            'actions_json' => $version?->actions_json ?? $rule->actions_json ?? [],
+            'account_ids' => $version?->account_ids_json ?? $rule->accounts->pluck('id')->all(),
         ];
     }
 
@@ -415,14 +517,8 @@ class RulesController extends Controller
                 ]);
             }
 
-            if (! $existing) {
-                Tag::create([
-                    'name' => $value,
-                    'slug' => $slug,
-                    'color' => '#6c757d',
-                    'active' => true,
-                ]);
-            }
+            // A draft is definition-only. New taxonomy targets are created
+            // inside the separately authorized publication transaction.
         }
     }
 

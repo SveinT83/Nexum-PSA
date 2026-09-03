@@ -865,11 +865,12 @@ state before writing. Repeating Undo returns the same uniquely linked inverse. L
 mixed successful effects, stale or ambiguous evidence, and mismatched targets are never locally
 compensated or presented as undone.
 
-Admin Email rules support grouped conditions. Each condition row belongs to a named group, each
-group can require all or any rows, and the rule can require all groups or any group. The rule preview
-API and runtime use the same grouped semantics. The Admin Email rules page also includes a guarded
-reprocess form where users with `email.rule_manage` can submit a stored Email message ID to run the
-published rule engine immediately or queue it.
+Admin Email rules support grouped conditions. Editing saves a durable draft that cannot affect the
+currently published rule. Publishing is a separate `email.rule_publish` action with an exact diff,
+account scope and draft checksum; it creates one immutable version. Reprocessing is also separate:
+`email.rule_reprocess` creates a bounded, local-database-only preview first, then Apply queues a
+durable run on `email-rules`. Retry and confirmed full rerun reuse successful logical action evidence
+and never replay it. Operational lists contain stable reason codes and counts, not mailbox content.
 
 Personal simple rules use the same published versions and execution-attempt ledger, but they are
 stored with `rule_kind=personal_simple` and an owner. They run only for that owner's personal Inbox
@@ -1053,11 +1054,12 @@ Implemented scopes:
 - `email.update`: mark authorized inbox messages as spam and queue polling for mailboxes the actor
   can organize; replace/clear conversation classification and dismiss/correct/apply authorized Smart
   Inbox suggestions.
-- `email.rules.read`: list, view, and preview admin-managed Email rules, and view account-scoped
-  execution/Undo eligibility. The authenticated user must also have Email rule-management
-  permission; previews and execution attempts require current mailbox View access.
-- `email.rules.execute`: apply an eligible exact provider inverse for an Admin rule execution. This
-  additionally requires current Mailbox Organize access and never authorizes local-only compensation.
+- `email.rules.read`: list, view, and preview admin-managed Email rules, version history, drafts and
+  account-scoped run/execution metadata.
+- `email.rules.write`: create and update drafts, validate them, preview an exact publication diff and
+  publish when the current user also has `email.rule_publish`.
+- `email.rules.execute`: create bounded reprocess previews and apply/cancel/retry/full-rerun them when
+  the current user also has `email.rule_reprocess`; it also applies an eligible provider inverse.
 
 Implemented routes:
 
@@ -1077,6 +1079,15 @@ Implemented routes:
 - `GET /api/v1/email/rules`
 - `GET /api/v1/email/rules/{rule}`
 - `POST /api/v1/email/rules/{rule}/preview`
+- `POST /api/v1/email/rules/drafts`
+- `GET|PUT /api/v1/email/rules/{rule}/draft`
+- `POST /api/v1/email/rules/{rule}/draft/validate`
+- `GET /api/v1/email/rules/{rule}/publish-preview`
+- `POST /api/v1/email/rules/{rule}/publish`
+- `GET /api/v1/email/rules/{rule}/versions`
+- `POST /api/v1/email/rules/{rule}/reprocess-preview`
+- `GET /api/v1/email/rule-reprocess-runs/{run}`
+- `POST /api/v1/email/rule-reprocess-runs/{run}/{apply|cancel|retry|full-rerun}`
 - `GET /api/v1/email/rules/executions/{attempt}`
 - `GET /api/v1/email/rules/executions/{attempt}/undo`
 - `POST /api/v1/email/rules/executions/{attempt}/undo`

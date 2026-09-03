@@ -72,6 +72,7 @@ class ApiAbilityCatalog
         'email.drafts.write' => self::ACCESS_WRITE,
         'email.send' => self::ACCESS_WRITE,
         'email.rules.read' => self::ACCESS_READ,
+        'email.rules.write' => self::ACCESS_WRITE,
         'email.rules.execute' => self::ACCESS_WRITE,
         'notifications.read' => self::ACCESS_READ,
         'notifications.update' => self::ACCESS_WRITE,
@@ -399,9 +400,14 @@ class ApiAbilityCatalog
             'description' => 'List, view, and preview Email rule definitions with normal rule-management permission and mailbox access checks.',
             'domain' => 'Email',
         ],
+        'email.rules.write' => [
+            'label' => 'Manage email rule drafts',
+            'description' => 'Create, validate, and publish authorized Email rule drafts through immutable versions.',
+            'domain' => 'Email',
+        ],
         'email.rules.execute' => [
-            'label' => 'Execute email rule recovery',
-            'description' => 'Apply a verified provider-operation inverse for an authorized Email rule execution.',
+            'label' => 'Execute email rule operations',
+            'description' => 'Preview and run bounded Email rule reprocessing, retry failed actions, cancel runs, and apply verified Undo.',
             'domain' => 'Email',
         ],
         'notifications.read' => [

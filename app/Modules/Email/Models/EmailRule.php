@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Schema;
 
@@ -92,6 +93,16 @@ class EmailRule extends Model
     public function executionAttempts(): HasMany
     {
         return $this->hasMany(EmailRuleExecutionAttempt::class, 'email_rule_id');
+    }
+
+    public function draft(): HasOne
+    {
+        return $this->hasOne(EmailRuleDraft::class, 'email_rule_id');
+    }
+
+    public function reprocessRuns(): HasMany
+    {
+        return $this->hasMany(EmailRuleReprocessRun::class, 'email_rule_id');
     }
 
     public function accounts(): BelongsToMany
