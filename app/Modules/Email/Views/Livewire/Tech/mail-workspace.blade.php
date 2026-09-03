@@ -1007,7 +1007,7 @@
                                         <div class="form-check mt-3">
                                             <input id="mail-conversation-provider-seen" class="form-check-input" type="checkbox" wire:model="conversationAcknowledgementProviderSeen">
                                             <label for="mail-conversation-provider-seen" class="form-check-label">
-                                                Also request Mailbox read for each exact provider placement
+                                                Also mark each visible message read on the mail server
                                             </label>
                                             <div class="form-text">This is a separate provider action and may remain pending or fail after the personal result succeeds.</div>
                                         </div>
@@ -1022,7 +1022,7 @@
                                         <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Status</div><div class="fw-semibold">{{ ucfirst(str_replace('_', ' ', $conversationAcknowledgementSummary['status'])) }}</div></div></div>
                                         <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Frozen messages</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['items'] }}</div></div></div>
                                         <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Personal applied</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['personal_applied'] }}</div></div></div>
-                                        <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Mailbox pending</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['provider_pending'] }}</div></div></div>
+                                        <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Mail server pending</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['provider_pending'] }}</div></div></div>
                                         <div class="col-6 col-md"><div class="border rounded p-2"><div class="small text-muted">Problems</div><div class="fw-semibold">{{ $conversationAcknowledgementSummary['denied'] + $conversationAcknowledgementSummary['stale'] + $conversationAcknowledgementSummary['failed'] }}</div></div></div>
                                     </div>
                                     @if($conversationAcknowledgementSummary['expires_at'] && $conversationAcknowledgementSummary['status'] === 'previewed')
@@ -1361,7 +1361,7 @@
                                                         {{ $this->isUnreadForMe($threadMessage) ? 'Unread for me' : 'Read for me' }}
                                                     </span>
                                                     <span class="badge {{ $threadPlacement->provider_seen ? 'text-bg-light border' : 'text-bg-warning' }}">
-                                                        {{ $threadPlacement->provider_seen ? 'Mailbox read' : 'Mailbox unread' }}
+                                                        {{ $threadPlacement->provider_seen ? 'Mail server read' : 'Mail server unread' }}
                                                     </span>
                                                 @endif
                                                 @if($threadPlacement->provider_answered)
