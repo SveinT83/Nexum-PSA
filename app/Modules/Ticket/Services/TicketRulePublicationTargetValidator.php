@@ -8,6 +8,7 @@ use App\Models\Clients\ClientUser;
 use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Sla\Sla;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\TicketPriority;
@@ -162,6 +163,10 @@ final class TicketRulePublicationTargetValidator
             TicketRuleActionProviderRegistry::REMOVE_TAGS,
         ], true)) {
             $this->activeIds(Tag::class, (array) ($input['tag_ids'] ?? []), 'active');
+        }
+
+        if ($type === TicketRuleActionProviderRegistry::APPLY_TASK_TEMPLATE) {
+            $this->activeValue(TaskTemplateGroup::class, $input['template_group_id'] ?? null, 'is_active');
         }
 
         if (in_array($type, [

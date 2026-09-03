@@ -28,6 +28,7 @@ has explicitly approved.
 
 | ID | Update | Status | Added | Reviewer | Reviewed |
 | --- | --- | --- | --- | --- | --- |
+| HR-2026-09-03-001 | Task templates, grouped generation, schedules, and automation actions | Pending | 2026-09-03 |  |  |
 | HR-2026-08-30-001 | Dev database and Mail private-storage reconciliation | Pending | 2026-08-30 |  |  |
 | HR-2026-08-26-001 | Documentation Sidebar Reordering and Title Update | Reviewed | 2026-08-26 | Svein | 2026-08-31 |
 | HR-2026-08-25-014 | RMM Alert Rules pre-routing and audited actions | Reviewed | 2026-08-25 | Svein | 2026-08-31 |
@@ -44,6 +45,71 @@ has explicitly approved.
 | HR-2026-08-25-003 | AI Model Usage and Cost Telemetry (Slices 1-3) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-002 | RoleSeeder Reconciliation and Permission Sync | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
 | HR-2026-08-25-001 | One-time scheduled tickets with SLA deferral (Slice 1) | Reviewed | 2026-08-25 | Svein | 2026-08-25 |
+
+### HR-2026-09-03-001: Task Templates And Scheduled Generation
+
+- **Scope:** Deliver GitHub Issue #227 through the approved RFC and six ordered Feature Slices:
+  mutable Task templates, atomic grouped generation, recurring schedules, manual Ticket/Client use,
+  and Signal/Ticket/RMM rule actions.
+- **Affected Modules:** Task, Ticket, Client, Signal, Integration/RMM, permissions, scheduler, and
+  shared Work Context/Taxonomy boundaries.
+- **Required Human Checks:**
+  - [ ] Create and directly edit a single-Task template; confirm Add Task fields keep visible labels,
+    saved Task editors are collapsed by default, and the newly created Task opens once for immediate
+    editing. Confirm there is no publish, approval, version, rollback, or migration workflow.
+  - [ ] Create a grouped template with nesting, checklists, and dependencies; preview and apply it,
+    then verify the generated Tasks and completion blocking.
+  - [ ] Edit the template and confirm existing Tasks remain unchanged while the next application
+    uses the current saved definition.
+  - [ ] Configure a recurring schedule, review its next run, use Generate now, and verify a due run
+    creates one group without duplicates.
+  - [ ] In Task Template application and schedules, choose User and Client from the searchable
+    lists. Confirm typing filters the choices, no internal owner ID is requested, and Ticket is not
+    offered as a future schedule owner.
+  - [ ] Create or edit a recurring Ticket, select a Task Template under Schedule, and generate an
+    occurrence. Confirm the occurrence receives one fresh Task group, the recurring parent receives
+    none, and running the generator again does not duplicate the group.
+  - [ ] Apply a template from an authorized Ticket and Client; confirm owner/client/site context and
+    narrow/mobile layout. Confirm Ticket application returns to the same Ticket and shows its Tasks.
+  - [ ] Exercise delivered Signal Rule, Ticket Rule, and RMM Alert Rule template actions; confirm
+    rule audit, permissions, and no duplicate groups.
+  - [ ] Confirm inactive/referenced template behavior, generation history, sanitized failures, and
+    the external every-minute scheduler runner before deployment or activation.
+- **Expected Result:** Authorized users maintain one simple current template definition. Every
+  manual, scheduled, or rule-triggered application creates the expected Task graph atomically;
+  existing Tasks never change when the template is edited.
+- **Migration / Deploy Gate:** Back up the database, run the approved additive migrations, seed or
+  read back permissions, clear caches, restart affected workers if introduced, and verify the real
+  external `schedule:run` runner before enabling schedules.
+- **Automated Dev Evidence (Not Human Review):**
+  - Migration `2026_09_03_150000_create_task_template_generation_foundation` ran in Dev batch 25.
+    Database inspection confirms the 23-column `task_template_runs` table, unique idempotency key,
+    owner/source indexes, `tasks.task_template_run_id`, and recurring schedule timezone/actor/
+    assignee/result fields.
+  - Migration `2026_09_03_160000_add_task_template_group_to_ticket_schedules` ran in Dev batch 26.
+    Fresh databases receive the same nullable Ticket-schedule reference through the original table
+    definition, while upgraded databases receive it through the additive migration.
+  - The post-fix combined Task Template verification matrix passes 154 tests / 1,534 assertions.
+    It includes the complete Task, Signal, and RMM Alert Rules suites plus the focused Ticket Rule
+    registry, executor, builder, preview, publication, scheduled-Ticket SLA, recurring occurrence,
+    and occurrence-parity matrices. Coverage includes atomic graph
+    copying, checklists, tags, dependencies, current-template-only edits, rollback, idempotency,
+    management fields, persistent add-field labels, default-collapsed editors, one-time expansion of
+    the newly created item, safe item deletion, owner visibility, inactive templates, schedule CRUD,
+    timezone input, DST-safe recurrence, schedule locking, searchable User/Client owner selection,
+    rejection of future Ticket owners, recurring Ticket template persistence, and exactly-once Task
+    generation for each Ticket occurrence.
+  - PHP syntax lint passes for all changed service/controller files. Eighteen Task Template routes
+    and the every-minute `task.templates.generate_due` schedule are registered.
+  - Dev's external every-minute `schedule:run` crontab is installed and read back. Scheduler log
+    evidence shows `task.templates.generate_due` completed at 08:52 and 08:53 UTC on 2026-09-03.
+  - The Task Template delivery is committed separately from unrelated Dev work. Push, Main
+    promotion, and production deployment remain separate actions.
+- **Current Gate:** Svein accepted the Dev implementation as complete and requested closure of
+  GitHub Issue #227 on 2026-09-03. The unchecked visual/workflow checks above still require explicit
+  review before Main promotion or production release; Issue closure does not mark that release gate
+  as Reviewed.
+- **Status:** Pending
 
 ### HR-2026-08-30-001: Dev Database And Mail Private-Storage Reconciliation
 

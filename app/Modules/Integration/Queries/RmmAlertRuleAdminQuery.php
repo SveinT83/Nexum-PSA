@@ -7,6 +7,7 @@ use App\Models\Core\User;
 use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Integration\Models\RmmAlertRule;
 use App\Modules\Integration\Models\RmmAlertRuleExecution;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Models\TicketPriority;
 use App\Modules\Ticket\Models\TicketQueue;
@@ -49,6 +50,7 @@ class RmmAlertRuleAdminQuery
                 ->orderBy('name')->get(['id', 'name']),
             'reopenStatuses' => TicketStatus::query()->where('is_active', true)->where('is_closed', false)
                 ->orderBy('sort_order')->get(['id', 'name']),
+            'taskTemplates' => TaskTemplateGroup::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ];
     }
 }

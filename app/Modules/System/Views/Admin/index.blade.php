@@ -105,6 +105,7 @@
             'links' => [
                 ['label' => 'Ticket settings', 'route' => route('tech.admin.settings.tickets')],
                 ['label' => 'Task settings', 'route' => route('tech.admin.settings.tasks')],
+                ['label' => 'Task Templates', 'route' => route('tech.admin.task-templates.index')],
                 ['label' => 'Technicians', 'route' => route('tech.admin.settings.tickets.technicians')],
                 ['label' => 'Assignment rules', 'route' => route('tech.admin.settings.tickets.assignment-rules')],
                 ['label' => 'Rules', 'route' => route('tech.admin.settings.tickets.rules')],

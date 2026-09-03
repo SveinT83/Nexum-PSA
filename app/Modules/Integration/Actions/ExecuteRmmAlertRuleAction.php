@@ -13,9 +13,11 @@ use App\Modules\Integration\Support\RmmAlertProcessingLeaseLost;
 use App\Modules\Signal\Actions\ProcessSignalRules;
 use App\Modules\Signal\Actions\RecordSignal;
 use App\Modules\Signal\Models\Signal;
+use App\Modules\Task\Actions\ApplyTaskTemplate;
 use App\Modules\Task\Actions\RecordTaskSourceActivity;
 use App\Modules\Task\Actions\StoreTask;
 use App\Modules\Task\Models\Task;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Ticket\Actions\ReopenTicket;
 use App\Modules\Ticket\Actions\StoreIdempotentTicketInternalNote;
@@ -40,6 +42,7 @@ class ExecuteRmmAlertRuleAction
         private readonly ReopenTicket $reopenTickets,
         private readonly StoreTask $tasks,
         private readonly RecordTaskSourceActivity $taskActivity,
+        private readonly ApplyTaskTemplate $taskTemplates,
         private readonly RecordSignal $signals,
         private readonly ProcessSignalRules $signalRules,
     ) {}
@@ -142,6 +145,50 @@ class ExecuteRmmAlertRuleAction
             $alert = $this->lockAlert($occurrence);
             if ($existing = $this->existingActionLink($occurrence, $rule, $actionIndex)) {
                 return $this->replayedResult($existing);
+            }
+
+            if (filled($action['template_group_id'] ?? null)) {
+                $actor = $this->actors->resolve();
+                $this->requirePermission($actor, 'task.create');
+                $template = TaskTemplateGroup::query()
+                    ->whereKey((int) $action['template_group_id'])
+                    ->where('is_active', true)
+                    ->first();
+                if (! $template) {
+                    throw new \RuntimeException('RMM Task template is missing or inactive.');
+                }
+                $asset = $alert->asset;
+                $run = $this->taskTemplates->handle(
+                    $template,
+                    $actor,
+                    $asset?->client ?: $actor,
+                    'rmm_alert_rule',
+                    $this->actionKey($occurrence, $rule, $actionIndex, 'task-template'),
+                    [
+                        'source_type' => $alert->getMorphClass(),
+                        'source_id' => $alert->id,
+                        'assigned_to' => $action['assigned_to'] ?? null,
+                        'due_offset_minutes' => $action['due_minutes_from_now'] ?? null,
+                        'metadata' => $this->targetMetadata($occurrence, $rule, $actionIndex),
+                    ],
+                );
+                $task = $run->tasks->sortBy('sort_order')->firstOrFail();
+                $taskIds = $run->tasks->pluck('id')->all();
+                $link = $this->createLink($occurrence, $rule, $execution, $actionIndex, 'create_task', $task, [
+                    'result' => 'created_from_template',
+                    'task_template_run_id' => $run->id,
+                    'task_ids' => $taskIds,
+                ]);
+
+                return [
+                    'type' => 'create_task',
+                    'status' => 'done',
+                    'result' => 'created_from_template',
+                    'task_id' => $task->id,
+                    'task_ids' => $taskIds,
+                    'task_template_run_id' => $run->id,
+                    'work_item_id' => $link->id,
+                ];
             }
 
             $task = $this->openLinkedTask($occurrence);

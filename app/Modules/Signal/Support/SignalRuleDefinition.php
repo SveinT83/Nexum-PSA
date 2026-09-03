@@ -2,6 +2,7 @@
 
 namespace App\Modules\Signal\Support;
 
+use App\Modules\Task\Models\TaskTemplateGroup;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -70,6 +71,7 @@ class SignalRuleDefinition
         'next_follow_up_note', 'append_to_existing', 'create_if_missing', 'subject', 'description',
         'role', 'email', 'site_id', 'contact_id', 'queue_id', 'ticket_type_id', 'priority_id',
         'category_id', 'impact', 'urgency', 'due_minutes_from_now', 'estimated_minutes', 'profile_id', 'queue',
+        'template_group_id',
     ];
 
     public function decodeAndValidate(?string $conditionsJson, string $actionsJson): array
@@ -403,7 +405,7 @@ class SignalRuleDefinition
 
     private function normalizeActionField(string $field, mixed $value): mixed
     {
-        if (in_array($field, ['confidence', 'actor_id', 'creator_id', 'owner_id', 'assigned_to', 'probability_percent', 'follow_up_minutes_from_now', 'site_id', 'contact_id', 'queue_id', 'ticket_type_id', 'priority_id', 'category_id', 'due_minutes_from_now', 'estimated_minutes', 'profile_id'], true)) {
+        if (in_array($field, ['confidence', 'actor_id', 'creator_id', 'owner_id', 'assigned_to', 'probability_percent', 'follow_up_minutes_from_now', 'site_id', 'contact_id', 'queue_id', 'ticket_type_id', 'priority_id', 'category_id', 'due_minutes_from_now', 'estimated_minutes', 'profile_id', 'template_group_id'], true)) {
             return (int) $value;
         }
         if ($field === 'estimated_value_ex_vat') {
@@ -438,6 +440,10 @@ class SignalRuleDefinition
             }
             if ($type === 'webhook' && ! filter_var((string) $action['url'], FILTER_VALIDATE_URL)) {
                 throw ValidationException::withMessages(['actions_json' => 'Action #'.($index + 1).' webhook URL must be valid.']);
+            }
+            if ($type === 'task_follow_up' && array_key_exists('template_group_id', $action)
+                && ! TaskTemplateGroup::query()->whereKey((int) $action['template_group_id'])->where('is_active', true)->exists()) {
+                throw ValidationException::withMessages(['actions_json' => 'Action #'.($index + 1).' references an unavailable Task template.']);
             }
             if ($type === 'storage_supplier_order_import'
                 && array_key_exists('profile_id', $action)

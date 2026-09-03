@@ -144,6 +144,16 @@
             </div>
 
             <div class="col-md-6" data-action-fields="task_follow_up">
+                <label class="form-label">Task template</label>
+                <select name="{{ $prefix }}[template_group_id]" class="form-select">
+                    <option value="">Single Task using the fields below</option>
+                    @foreach($taskTemplateOptions as $templateOption)
+                        <option value="{{ $templateOption->id }}" @selected((string) ($action['template_group_id'] ?? '') === (string) $templateOption->id)>{{ $templateOption->name }}</option>
+                    @endforeach
+                </select>
+                <div class="form-text">A template creates its full current Task group. Existing generated Tasks never change.</div>
+            </div>
+            <div class="col-md-6" data-action-fields="task_follow_up">
                 <label class="form-label">Assign task to</label>
                 <select name="{{ $prefix }}[assigned_to]" class="form-select">
                     <option value="">Unassigned</option>

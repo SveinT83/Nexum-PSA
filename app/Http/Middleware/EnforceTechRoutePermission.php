@@ -133,6 +133,7 @@ class EnforceTechRoutePermission
         'tech.admin.settings.tickets.*' => 'ticket.manage_settings',
         'tech.admin.settings.tasks' => 'task.manage_settings',
         'tech.admin.settings.tasks.*' => 'task.manage_settings',
+        'tech.admin.task-templates.*' => 'task.manage_templates',
         'tech.admin.settings.knowledge' => 'knowledge.manage_settings',
         'tech.admin.settings.knowledge.*' => 'knowledge.manage_settings',
         'tech.admin.settings.risk' => 'risk.manage_settings',
@@ -300,6 +301,7 @@ class EnforceTechRoutePermission
         'tech.tasks.status.*' => 'task.update',
         'tech.tasks.checklist.*' => 'task.update',
         'tech.tasks.*' => 'task.view',
+        'tech.task-templates.*' => 'task.create',
 
         'tech.calendar.events.store' => 'calendar.create',
         'tech.calendar.events.update' => 'calendar.update',

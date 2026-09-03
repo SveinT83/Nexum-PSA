@@ -3,6 +3,7 @@
 namespace App\Modules\Ticket\Models;
 
 use App\Models\Core\User;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -10,6 +11,7 @@ class TicketSchedule extends Model
 {
     protected $fillable = [
         'ticket_id',
+        'task_template_group_id',
         'schedule_type',
         'planned_start_at',
         'planned_end_at',
@@ -34,6 +36,11 @@ class TicketSchedule extends Model
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
+    }
+
+    public function taskTemplateGroup(): BelongsTo
+    {
+        return $this->belongsTo(TaskTemplateGroup::class, 'task_template_group_id');
     }
 
     public function creator(): BelongsTo

@@ -31,6 +31,14 @@ Last reconciled against authoritative Dev on 2026-08-31.
 
 | Artifact | Status | Owner / Next Gate |
 | --- | --- | --- |
+| `docs/rfc/2026-09-03-task-templates-and-scheduled-generation.md` | Done On Dev | All six slices are implemented and verified on authoritative Dev. Human review remains `HR-2026-09-03-001`; Main/production promotion remains Svein's decision. |
+| `docs/adr/2026-09-03-task-template-application-boundary.md` | Accepted | Task owns mutable templates, atomic group application, generated-task snapshots, and idempotent generation evidence; caller domains retain their rule authority. |
+| `docs/feature-slices/2026-09-03-task-template-application-foundation.md` | Done On Dev | Atomic Task-owned generation, provenance, graph validation, idempotency, and migration are verified. |
+| `docs/feature-slices/2026-09-03-task-template-admin-ui.md` | Done On Dev | Simple direct-edit CRUD, navigation, graph fields, permission gates, and guarded deletion are implemented. |
+| `docs/feature-slices/2026-09-03-task-template-recurring-schedules.md` | Done On Dev | Schedule CRUD, locked due generation, Generate now, history, and verified Dev external runner are implemented. |
+| `docs/feature-slices/2026-09-03-task-template-ticket-client-application.md` | Done On Dev | Ticket/Client chooser, no-write preview, visibility checks, and idempotent application are implemented. |
+| `docs/feature-slices/2026-09-03-task-template-rule-actions.md` | Done On Dev | Signal, Ticket, and RMM rules call the shared Task boundary with selectors, audit, target validation, and idempotency. |
+| `docs/feature-slices/2026-09-03-task-template-owner-search-and-recurring-ticket.md` | Done On Dev | Searchable User/Client selection replaces owner IDs, Ticket is rejected as a future schedule owner, and recurring Ticket occurrences receive the selected Task group once. |
 | `docs/rfc/2026-05-31-technician-profile-consolidation.md` | Draft | Reconcile approval history and finish or explicitly defer the remaining UserManagement skills ownership decision. |
 | `docs/rfc/2026-06-05-client-deletion-retention-policy.md` | Draft | Product decision and RFC approval required before implementation. |
 | `docs/feature-slices/2026-05-31-work-hours-and-skills-migration.md` | Partially Implemented | Finish or explicitly defer the general-skills ownership decision; keep aligned with the technician-profile RFC. |

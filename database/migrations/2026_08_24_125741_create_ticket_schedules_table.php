@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('ticket_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ticket_id')->constrained('tickets')->cascadeOnDelete();
+            $table->unsignedBigInteger('task_template_group_id')->nullable();
             $table->string('schedule_type')->default('one_time'); // one_time|recurring
             $table->timestamp('planned_start_at')->nullable();
             $table->timestamp('planned_end_at')->nullable();

@@ -1,5 +1,17 @@
 # Task Templates Plan
 
+Status: Superseded by the implemented Issue #227 design on 2026-09-03.
+
+Do not use the exploratory fields, version labels, or out-of-scope list below as current product
+direction. The delivered design is defined by
+`docs/rfc/2026-09-03-task-templates-and-scheduled-generation.md`,
+`docs/adr/2026-09-03-task-template-application-boundary.md`, and
+`app/Modules/Task/Docs/knowledge/task-templates.md`. It uses one directly editable current template,
+supports grouped Tasks, schedules, manual Ticket/Client use, and Signal/Ticket/RMM rule actions,
+and never migrates existing Tasks after a template edit.
+
+The remainder of this file is retained only as the original historical exploration.
+
 This plan captures the internal direction for Task Templates and Task Template Sets. It is a
 platform-building feature that can be implemented without first publishing a GitHub idea.
 

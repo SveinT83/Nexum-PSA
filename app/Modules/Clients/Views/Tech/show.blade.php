@@ -714,10 +714,18 @@
                                 <span class="fw-semibold">Tasks</span>
                                 <span class="badge text-bg-light border">{{ $clientTasks->count() }}</span>
                             </div>
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#clientTaskQuickCreateModal">
-                                <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                                New Task
-                            </button>
+                            <div class="d-flex flex-wrap gap-2">
+                                @can('task.create')
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('tech.task-templates.choose', ['owner_type' => 'client', 'owner_id' => $client->id]) }}">
+                                        <i class="bi bi-list-check" aria-hidden="true"></i>
+                                        Apply template
+                                    </a>
+                                @endcan
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#clientTaskQuickCreateModal">
+                                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                                    New Task
+                                </button>
+                            </div>
                         </div>
                         <div class="list-group list-group-flush">
                             @forelse($clientTasks as $task)

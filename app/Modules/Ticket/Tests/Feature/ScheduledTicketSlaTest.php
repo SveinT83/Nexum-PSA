@@ -3,15 +3,11 @@
 namespace App\Modules\Ticket\Tests\Feature;
 
 use App\Models\Core\User;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use App\Modules\Ticket\Models\Ticket;
-use App\Modules\Ticket\Models\TicketPriority;
-use App\Modules\Ticket\Models\TicketQueue;
-use App\Modules\Ticket\Models\TicketStatus;
-use App\Modules\Ticket\Models\TicketType;
-use App\Modules\Ticket\Models\TicketSchedule;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class ScheduledTicketSlaTest extends TestCase
 {
@@ -162,5 +158,39 @@ class ScheduledTicketSlaTest extends TestCase
         ]);
         $ticket = $ticket->fresh(['schedule']);
         $this->assertNull($ticket->schedule);
+    }
+
+    /** @test */
+    public function recurring_ticket_form_stores_an_active_task_template_for_future_occurrences()
+    {
+        $this->seed(\Database\Seeders\SlaSeeder::class);
+        $defaults = app(\App\Modules\Ticket\Actions\EnsureTicketDefaults::class)->handle();
+        $taskTemplate = TaskTemplateGroup::query()->create([
+            'name' => 'Standard Ticket Tasks',
+            'slug' => 'standard-ticket-tasks',
+            'is_active' => true,
+        ]);
+
+        $this->get(route('tech.tickets.create'))
+            ->assertOk()
+            ->assertSee('Tasks for generated Tickets')
+            ->assertSee('Standard Ticket Tasks');
+
+        $response = $this->post(route('tech.tickets.store'), [
+            'subject' => 'Recurring Ticket with Tasks',
+            'priority_id' => $defaults['priority']->id,
+            'ticket_type_id' => $defaults['type']->id,
+            'status_id' => $defaults['status']->id,
+            'queue_id' => $defaults['queue']->id,
+            'is_scheduled' => true,
+            'schedule_type' => 'recurring',
+            'planned_start_at' => Carbon::now()->addDay()->toDateTimeString(),
+            'recurrence_rule' => 'FREQ=WEEKLY',
+            'task_template_group_id' => $taskTemplate->id,
+            'sla_mode' => 'defer_until_planned_start',
+        ]);
+
+        $response->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame($taskTemplate->id, Ticket::query()->latest('id')->firstOrFail()->schedule->task_template_group_id);
     }
 }

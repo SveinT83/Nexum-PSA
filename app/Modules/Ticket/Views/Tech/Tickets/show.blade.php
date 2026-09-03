@@ -1663,11 +1663,17 @@
                 aria-labelledby="ticketTasksHeading"
                 data-bs-parent="#ticketRightbarAccordion">
                 <div class="accordion-body p-3">
-                    <div class="d-grid mb-3">
+                    <div class="d-grid gap-2 mb-3">
                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#ticketTaskQuickCreateModal">
                             <i class="bi bi-plus-lg" aria-hidden="true"></i>
                             New Task
                         </button>
+                        @can('task.create')
+                            <a class="btn btn-sm btn-outline-primary" href="{{ route('tech.task-templates.choose', ['owner_type' => 'ticket', 'owner_id' => $ticket->id]) }}">
+                                <i class="bi bi-list-check" aria-hidden="true"></i>
+                                Apply Task template
+                            </a>
+                        @endcan
                     </div>
 
                     <div class="list-group list-group-flush">

@@ -133,13 +133,17 @@ Template defaults may include:
 - dependency rules
 - checklist items
 
-Template application should create a previewable task tree before records are
-saved when the UI matures. The beta implementation may start with direct
-application, but the data model must support a predictable preview flow.
+Template application now provides a no-write preview and one atomic generation
+boundary. It records an idempotent generation run and copies the complete current
+tree, checklist, tags, dependencies, context, and date offsets. Templates are
+directly mutable configuration: there is no approval/version lifecycle, and an
+edit never mutates an existing Task.
 
-Recurring tasks use templates rather than duplicating task definitions directly.
-The recurrence record stores interval, next run time, owner context, and active
-state.
+Recurring Tasks use templates rather than duplicating Task definitions directly.
+The recurrence record stores interval, timezone, next run time, owner context,
+optional due/assignee overrides, active state, and latest outcome. Manual
+Ticket/Client application and Signal/Ticket/RMM rule actions use the same Task
+boundary.
 
 ## Taxonomy
 

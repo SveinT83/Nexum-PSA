@@ -111,7 +111,8 @@ Supported actions:
 - Emit a derived Signal.
 - Create a Sales follow-up opportunity/activity.
 - Create a Ticket follow-up.
-- Create a Task follow-up.
+- Create either one Task follow-up or the full current group from an active Task template. Template
+  execution remains duplicate-safe and later template edits never rewrite generated Tasks.
 - Send a Customer Portal invitation.
 - Queue a webhook delivery.
 - Queue a Storage supplier Purchase Order import.

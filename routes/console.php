@@ -30,6 +30,7 @@ use App\Modules\Storage\Actions\PurgeSupplierOrderImportTroubleshootingData;
 use App\Modules\Storage\Actions\RunSupplierOrderImportOperationsMaintenance;
 use App\Modules\Storage\Actions\SendSupplierOrderImportDailyDigest;
 use App\Modules\Storage\Jobs\RecordSupplierOrderImportQueueHeartbeat;
+use App\Modules\Task\Actions\RunDueTaskTemplateSchedules;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -131,6 +132,11 @@ Schedule::job(new CleanupEmailProviderDeletionCache)
 Schedule::job(new \App\Modules\Ticket\Jobs\ProcessScheduledTickets)
     ->everyMinute()
     ->name('ticket.scheduled_process')
+    ->withoutOverlapping(5);
+
+Schedule::call(fn () => app(RunDueTaskTemplateSchedules::class)->handle())
+    ->everyMinute()
+    ->name('task.templates.generate_due')
     ->withoutOverlapping(5);
 
 // Supplier-order import dispatch owns a durable scheduler heartbeat and claims

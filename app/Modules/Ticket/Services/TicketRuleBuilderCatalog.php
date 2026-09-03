@@ -10,6 +10,7 @@ use App\Models\Tech\Work\Assets\Asset;
 use App\Modules\Commercial\Models\Sla\Sla;
 use App\Modules\CustomField\Models\CustomFieldDefinition;
 use App\Modules\CustomField\Support\CustomFieldModelRegistry;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use App\Modules\Taxonomy\Models\Category;
 use App\Modules\Taxonomy\Models\Tag;
 use App\Modules\Ticket\Models\Ticket;
@@ -117,6 +118,9 @@ final class TicketRuleBuilderCatalog
                 'ticket_status.active' => $this->options(TicketStatus::query()->where('is_active', true)->orderBy('name')),
                 'ticket_workflow_version.published' => $workflows
                     ->map(fn (TicketWorkflowVersion $version): array => $this->workflowVersion($version))->all(),
+                'task_template.active' => $this->options(
+                    TaskTemplateGroup::query()->where('is_active', true)->orderBy('name')
+                ),
             ],
             'custom_fields' => $visibleCustomFields
                 ->take(self::MAX_CUSTOM_FIELDS)

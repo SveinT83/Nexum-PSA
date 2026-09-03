@@ -207,6 +207,7 @@
 
                 <div data-action-config="create_task" class="d-none">
                     <div class="row g-3">
+                        <div class="col-12"><label class="form-label">Task template</label><select name="actions[__INDEX__][template_group_id]" class="form-select"><option value="">Single Task using the fields below</option>@foreach($taskTemplates as $taskTemplate)<option value="{{ $taskTemplate->id }}">{{ $taskTemplate->name }}</option>@endforeach</select><div class="form-text">Selecting a template creates its full current Task group.</div></div>
                         <div class="col-md-6"><label class="form-label">Task title prefix</label><input name="actions[__INDEX__][title]" maxlength="255" class="form-control" placeholder="Defaults to [RMM]"></div>
                         <div class="col-md-6"><label class="form-label">Assignee</label><select name="actions[__INDEX__][assigned_to]" class="form-select"><option value="">Unassigned</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div>
                         <div class="col-md-4"><label class="form-label">Queue</label><select name="actions[__INDEX__][queue_id]" class="form-select"><option value="">Task default</option>@foreach($queues as $queue)<option value="{{ $queue->id }}">{{ $queue->name }}</option>@endforeach</select></div>

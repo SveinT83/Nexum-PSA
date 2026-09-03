@@ -5,7 +5,12 @@
 @section('pageHeader')
     <div class="d-flex justify-content-between align-items-center gap-2">
         <h1>Task Settings</h1>
-        <x-buttons.back :url="route('tech.admin.index')" class="mb-0">Back</x-buttons.back>
+        <div class="d-flex gap-2">
+            @can('task.manage_templates')
+                <a href="{{ route('tech.admin.task-templates.index') }}" class="btn btn-outline-primary">Task Templates</a>
+            @endcan
+            <x-buttons.back :url="route('tech.admin.index')" class="mb-0">Back</x-buttons.back>
+        </div>
     </div>
 @endsection
 

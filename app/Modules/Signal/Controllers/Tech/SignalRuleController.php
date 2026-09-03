@@ -9,6 +9,7 @@ use App\Modules\Intake\Models\IntakeForm;
 use App\Modules\Signal\Actions\EnsureSignalDefaults;
 use App\Modules\Signal\Models\SignalRule;
 use App\Modules\Signal\Support\SignalRuleDefinition;
+use App\Modules\Task\Models\TaskTemplateGroup;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -33,6 +34,7 @@ class SignalRuleController extends Controller
             'definition' => app(SignalRuleDefinition::class),
             'actorOptions' => $this->actorOptions(),
             'portalRoleOptions' => CustomerPortalMembership::roleOptions(),
+            'taskTemplateOptions' => $this->taskTemplateOptions(),
         ]);
     }
 
@@ -55,6 +57,7 @@ class SignalRuleController extends Controller
             'definition' => app(SignalRuleDefinition::class),
             'actorOptions' => $this->actorOptions(),
             'portalRoleOptions' => CustomerPortalMembership::roleOptions(),
+            'taskTemplateOptions' => $this->taskTemplateOptions(),
         ]);
     }
 
@@ -105,6 +108,11 @@ class SignalRuleController extends Controller
             ->where('status', User::STATUS_ACTIVE)
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
+    }
+
+    private function taskTemplateOptions()
+    {
+        return TaskTemplateGroup::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
     }
 
     private function newRuleFromRequest(Request $request): SignalRule

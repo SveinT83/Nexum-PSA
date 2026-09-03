@@ -32,6 +32,8 @@ final class TicketRuleActionProviderRegistry
 
     public const EMIT_SIGNAL = 'emit_signal';
 
+    public const APPLY_TASK_TEMPLATE = 'apply_task_template';
+
     public const SELECT_WORKFLOW = 'select_workflow';
 
     public const TRANSITION_WORKFLOW = 'transition_workflow';
@@ -401,6 +403,22 @@ final class TicketRuleActionProviderRegistry
                 idempotencyContract: 'workflow_pause_state_and_action_position',
                 retryable: true,
                 safeAuditProjection: ['reason' => 'length_and_sha256_only'],
+            ),
+            self::APPLY_TASK_TEMPLATE => $this->provider(
+                label: 'Apply Task Template',
+                help: 'Create the selected current Task template group for this Ticket without changing existing Tasks.',
+                inputSchema: $this->objectSchema([
+                    'template_group_id' => $this->positiveIntegerSchema(),
+                ], ['template_group_id']),
+                targetLookup: ['template_group_id' => 'task_template.active'],
+                permission: 'task.create',
+                phase: 'synchronous',
+                permittedTriggers: $allTriggers,
+                changedFields: [],
+                authoritativeMutation: 'task.apply_template',
+                idempotencyContract: 'template_run_and_action_position',
+                retryable: true,
+                safeAuditProjection: ['template_group_id' => 'identifier'],
             ),
             self::EMIT_SIGNAL => $this->provider(
                 label: 'Emit Signal',

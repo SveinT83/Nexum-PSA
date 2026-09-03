@@ -71,6 +71,7 @@ return [
             'pause_workflow_automation' => false,
             'resume_workflow_automation' => false,
             'emit_signal' => false,
+            'apply_task_template' => false,
         ],
         'custom_fields' => [
             'ui_write' => false,

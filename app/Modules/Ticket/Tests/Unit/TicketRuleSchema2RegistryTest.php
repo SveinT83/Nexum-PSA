@@ -81,6 +81,7 @@ class TicketRuleSchema2RegistryTest extends TestCase
             'switch_workflow',
             'pause_workflow_automation',
             'resume_workflow_automation',
+            'apply_task_template',
             'emit_signal',
         ], array_keys($this->actions->definitions()));
 
@@ -141,6 +142,10 @@ class TicketRuleSchema2RegistryTest extends TestCase
             'type' => 'emit_signal',
             'input' => ['signal_type' => 'Security Alert'],
         ]);
+        $template = $this->actions->canonicalizeAction([
+            'type' => 'apply_task_template',
+            'input' => ['template_group_id' => '42'],
+        ]);
         $forbidden = $this->actions->canonicalizeAction([
             'type' => 'set_queue',
             'input' => [
@@ -167,6 +172,8 @@ class TicketRuleSchema2RegistryTest extends TestCase
             'summary' => null,
             'payload_note' => null,
         ], $signal['action']['input']);
+        $this->assertTrue($template['valid']);
+        $this->assertSame(42, $template['action']['input']['template_group_id']);
         $this->assertFalse($forbidden['valid']);
         $this->assertSame('forbidden_executable_key', $forbidden['reason_code']);
         $this->assertFalse($blankNote['valid']);
